@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shlex
 import subprocess
 import sys
@@ -21,6 +22,7 @@ class Step:
     label: str
     cmd: list[str]
     cwd: Path = ROOT
+    env: dict[str, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -44,9 +46,11 @@ def _format_cmd(cmd: list[str]) -> str:
 
 def _run_step(step: Step, log_file) -> int:
     log_file.write(f"$ {_format_cmd(step.cmd)}\n")
+    env = None if step.env is None else {**os.environ, **step.env}
     proc = subprocess.run(
         step.cmd,
         cwd=str(step.cwd),
+        env=env,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -114,7 +118,7 @@ def _bootstrap_steps(python_cmd: str, run_npm_ci: bool) -> list[Step]:
 
 def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
     return {
-        "preflight": [
+        "backend-quality": [
             Step(
                 "ruff check",
                 [
@@ -158,19 +162,44 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 ],
             ),
             Step(
+                "config preflight (docker)",
+                [
+                    python_cmd,
+                    "tools/config/config_preflight.py",
+                    "apps/server/config.docker.yaml",
+                ],
+            ),
+            Step(
                 "verify no path indirections",
                 [python_cmd, "tools/dev/verify_no_path_indirections.py"],
             ),
+            Step(
+                "ws payload schema sync check",
+                [python_cmd, "-m", "vibesensor.ws_schema_export", "--check"],
+            ),
         ],
-        "tests": [
-            Step("ui sync", [python_cmd, "tools/sync_ui_to_pi_public.py"]),
+        "backend-typecheck": [
+            Step(
+                "mypy backend runtime/api boundary",
+                [python_cmd, "-m", "mypy", "--config-file", "pyproject.toml"],
+                cwd=ROOT / "apps" / "server",
+                env={
+                    "MYPYPATH": ".:../../libs/core/python:../../libs/shared/python",
+                },
+            ),
+        ],
+        "frontend-typecheck": [
             Step("ui typecheck", ["npm", "run", "typecheck"], cwd=ROOT / "apps" / "ui"),
+        ],
+        "ui-smoke": [
             Step(
                 "playwright install chromium",
                 ["npx", "playwright", "install", "chromium"],
                 cwd=ROOT / "apps" / "ui",
             ),
             Step("ui smoke", ["npm", "run", "test:smoke"], cwd=ROOT / "apps" / "ui"),
+        ],
+        "backend-tests": [
             Step(
                 "backend tests shard 1/4 (non-selenium)",
                 [
@@ -278,7 +307,14 @@ def main() -> int:
     parser.add_argument(
         "--job",
         action="append",
-        choices=["preflight", "tests", "e2e"],
+        choices=[
+            "backend-quality",
+            "backend-typecheck",
+            "frontend-typecheck",
+            "ui-smoke",
+            "backend-tests",
+            "e2e",
+        ],
         help="Run only selected job(s). Repeat to run multiple jobs.",
     )
     parser.add_argument(
@@ -307,7 +343,14 @@ def main() -> int:
         return bootstrap_rc
 
     all_jobs = _job_steps(python_cmd)
-    selected_jobs = args.job if args.job else ["preflight", "tests", "e2e"]
+    selected_jobs = args.job if args.job else [
+        "backend-quality",
+        "backend-typecheck",
+        "frontend-typecheck",
+        "ui-smoke",
+        "backend-tests",
+        "e2e",
+    ]
 
     started = time.monotonic()
     results: dict[str, JobResult] = {}

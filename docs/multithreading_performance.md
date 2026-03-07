@@ -16,8 +16,9 @@ throughput when multiple sensors are connected.
 - **Why it works**: `compute_metrics()` already uses a three-phase
   snapshot→compute→store design with brief locks. The heavy FFT math runs
   under NumPy, which releases the GIL, enabling true thread parallelism.
-- **Fix**: Added a `WorkerPool` (bounded `ThreadPoolExecutor`, 4 workers) and
-  changed `compute_all()` to dispatch per-client FFT tasks in parallel.
+- **Fix**: Added a `WorkerPool` wrapper with bounded outstanding work
+  (`max_workers=4`, plus a small bounded waiting queue) and changed
+  `compute_all()` to dispatch per-client FFT tasks in parallel.
   Single-client case stays sequential to avoid thread dispatch overhead.
 - **Impact**: P95 (tail) compute latency reduced by 25–30%, directly
   reducing live-view lag spikes under multi-sensor load.
@@ -43,9 +44,9 @@ with explicit drop logging.
 
 | Component | Change |
 |-----------|--------|
-| `worker_pool.py` | New module: fixed-size thread pool with bounded task queue, error isolation, observability counters, clean shutdown |
+| `worker_pool.py` | Bounded worker pool wrapper: caps running + queued tasks, applies caller backpressure, isolates task failures, exposes metrics, supports clean shutdown |
 | `processing/` | `compute_all()` dispatches per-client FFT in parallel; ingest/compute timing counters added |
-| `app.py` | Creates shared `WorkerPool(max_workers=4)`, injects into `SignalProcessor`, shuts down on stop |
+| `bootstrap.py` | Creates shared `WorkerPool(max_workers=4)`, injects into `SignalProcessor`, runtime shuts it down on stop |
 | Tests | 14 new tests: pool correctness, parallel/sequential equivalence, concurrent ingest+compute safety |
 | Benchmark | `tools/tests/benchmark_pipeline.py` — repeatable throughput measurement |
 
@@ -80,6 +81,8 @@ python ../../tools/tests/benchmark_pipeline.py --sensors 4 --rounds 20
 - **Single fast path**: ingest stays on the event loop, never blocked
 - **Snapshot approach**: `compute_metrics()` copies buffer data under a brief
   lock, then releases the lock for heavy FFT computation
+- **Bounded outstanding work**: once the pool's running + queued limit is
+  reached, submissions block instead of growing an unbounded executor backlog
 - **Bounded queues**: UDP ingest queue is bounded (configurable, default 1024);
   drops are logged with backpressure counters
 - **Error isolation**: one failing client's FFT doesn't block others

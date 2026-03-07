@@ -122,26 +122,43 @@ class _StubProcessor:
 
 def _make_runtime(**overrides: Any):
     """Build a RuntimeState with stubs for lifecycle testing."""
-    from vibesensor.runtime import RuntimeState
+    from vibesensor.runtime import (
+        RuntimeIngressServices,
+        RuntimeOperationsServices,
+        RuntimePlatformServices,
+        build_runtime_state,
+    )
 
-    defaults: dict[str, Any] = {
-        "config": _StubConfig(processing=_StubProcessingConfig()),
-        "registry": _StubRegistry(),
-        "processor": _StubProcessor(),
-        "control_plane": MagicMock(),
-        "ws_hub": MagicMock(),
-        "gps_monitor": MagicMock(),
-        "analysis_settings": MagicMock(),
-        "metrics_logger": MagicMock(),
-        "live_diagnostics": MagicMock(),
-        "settings_store": MagicMock(),
-        "history_db": MagicMock(),
-        "update_manager": MagicMock(),
-        "esp_flash_manager": MagicMock(),
-        "worker_pool": MagicMock(),
-    }
-    defaults.update(overrides)
-    return RuntimeState(**defaults)
+    config = overrides.pop("config", _StubConfig(processing=_StubProcessingConfig()))
+    ingress = RuntimeIngressServices(
+        registry=overrides.pop("registry", _StubRegistry()),
+        processor=overrides.pop("processor", _StubProcessor()),
+        control_plane=overrides.pop("control_plane", MagicMock()),
+    )
+    operations = RuntimeOperationsServices(
+        settings_store=overrides.pop("settings_store", MagicMock()),
+        analysis_settings=overrides.pop("analysis_settings", MagicMock()),
+        gps_monitor=overrides.pop("gps_monitor", MagicMock()),
+        metrics_logger=overrides.pop("metrics_logger", MagicMock()),
+        live_diagnostics=overrides.pop("live_diagnostics", MagicMock()),
+    )
+    platform = RuntimePlatformServices(
+        ws_hub=overrides.pop("ws_hub", MagicMock()),
+        history_db=overrides.pop("history_db", MagicMock()),
+        update_manager=overrides.pop("update_manager", MagicMock()),
+        esp_flash_manager=overrides.pop("esp_flash_manager", MagicMock()),
+        worker_pool=overrides.pop("worker_pool", MagicMock()),
+    )
+    rt = build_runtime_state(
+        config=config,
+        ingress=ingress,
+        operations=operations,
+        platform=platform,
+    )
+    if overrides:
+        for name, value in overrides.items():
+            setattr(rt, name, value)
+    return rt
 
 
 # ---------------------------------------------------------------------------

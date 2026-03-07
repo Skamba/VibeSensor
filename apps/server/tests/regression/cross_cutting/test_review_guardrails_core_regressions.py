@@ -126,18 +126,18 @@ class TestBuildOrderBandsLocation:
 
 
 class TestWorkerPoolSubmitTiming:
-    def test_submit_tracks_wait_time(self) -> None:
+    def test_submit_tracks_run_time(self) -> None:
         pool = WorkerPool(max_workers=2)
         try:
             future = pool.submit(time.sleep, 0.05)
             future.result()
             stats = pool.stats()
             assert stats["total_tasks"] == 1
-            assert stats["total_wait_s"] >= 0.04
+            assert stats["total_run_s"] >= 0.04
         finally:
             pool.shutdown()
 
-    def test_submit_timing_accumulates(self) -> None:
+    def test_submit_run_time_accumulates(self) -> None:
         pool = WorkerPool(max_workers=2)
         try:
             futures = [pool.submit(time.sleep, 0.02) for _ in range(3)]
@@ -145,7 +145,7 @@ class TestWorkerPoolSubmitTiming:
                 f.result()
             stats = pool.stats()
             assert stats["total_tasks"] == 3
-            assert stats["total_wait_s"] >= 0.05
+            assert stats["total_run_s"] >= 0.05
         finally:
             pool.shutdown()
 

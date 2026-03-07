@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from ..constants import SECONDS_PER_MINUTE
 from ..diagnostics_shared import build_order_bands, vehicle_orders_hz
@@ -51,7 +51,10 @@ def build_rotational_speeds_payload(
         reason: str | None = "speed_unavailable"
         orders_hz = None
     else:
-        orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
+        orders_hz = cast(
+            dict[str, float] | None,
+            vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings),
+        )
         reason = "invalid_vehicle_settings" if orders_hz is None else None
 
     if reason is not None:
@@ -64,6 +67,7 @@ def build_rotational_speeds_payload(
             "order_bands": None,
         }
 
+    assert orders_hz is not None
     wheel_rpm = float(orders_hz["wheel_hz"]) * SECONDS_PER_MINUTE
     drive_rpm = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
     engine_rpm = float(orders_hz["engine_hz"]) * SECONDS_PER_MINUTE

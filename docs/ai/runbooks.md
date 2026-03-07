@@ -1,26 +1,39 @@
-# AI Runbooks (Low-Noise)
+# AI Runbooks
 
-## Setup (minimal)
+## Setup
+
 ```bash
-python -m pip install -e "./apps/server[dev]"
+python3 -m pip install -e "./apps/server[dev]"
 cd apps/ui && npm ci
 ```
 
-## Run backend + simulator
+## Run the local stack
+
+Backend:
+
 ```bash
 vibesensor-server --config apps/server/config.dev.yaml
-# in another shell
+```
+
+UI dev server:
+
+```bash
+cd apps/ui && npm run dev
+```
+
+Simulator:
+
+```bash
 vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
 ```
 
-For the local UI/API, check `http://127.0.0.1` first (`:80` default). If the current config is using the backup/dev listener, use `http://127.0.0.1:8000`.
+Check `http://127.0.0.1` first. If the active config is using the development port, use `http://127.0.0.1:8000`.
 
-## Run simulator against Pi
+## Run against a Pi
+
 ```bash
-# Pi UI/API is normally on port 80; 8000 is the backup listener
 curl -sf http://10.4.0.1/api/clients || curl -sf http://10.4.0.1:8000/api/clients
 
-# Skip the pre-run speed-override POST if you only need UDP traffic
 vibesensor-sim \
   --count 5 \
   --duration 60 \
@@ -31,65 +44,68 @@ vibesensor-sim \
   --no-auto-server
 ```
 
-If you need the simulator to set speed over HTTP, keep `--server-http-port 80`. Only switch to `--server-http-port 8000` if the primary listener on port `80` is not answering.
+Use `--server-http-port 8000` only when the primary listener on port `80` is unavailable.
 
-## Fast check (quiet)
+## Fast local checks
+
 ```bash
-scripts/ai/task ai:check
-# or
+make lint
+make typecheck-backend
+make ui-typecheck
 make ai-check
-```
-
-## Targeted tests
-```bash
-# pass pytest args after --
-scripts/ai/task ai:test -- apps/server/tests/config/test_config.py -k self_heal -q
-# or
 make ai-test
-# or quicker backend loop with progress output
-make test-fast
-```
-
-## Minimal smoke
-```bash
-scripts/ai/task ai:smoke
-# or
 make ai-smoke
+make docs-lint
 ```
 
-## CI-parity suite (parallel)
+For focused backend tests:
+
+```bash
+python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
+pytest -q apps/server/tests/report/
+pytest -q apps/server/tests/regression/runtime/
+```
+
+## CI-parity runs
+
 ```bash
 make test-all
-# or select CI job groups
-python3 tools/tests/run_ci_parallel.py --job preflight --job tests
+python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests
+python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
 ```
 
-## Updater incident runbook (wheel-first)
+Required merge gates are now explicit: backend quality, backend type check, frontend type check, backend tests, UI smoke, and e2e.
 
-- Default updater model is wheel-based (`vibesensor/update_manager.py` installs release wheels).
+## Documentation drift check
+
+After any meaningful code change:
+
+1. Re-read the touched ownership boundary.
+2. Check whether `docs/testing.md`, `docs/ai/*.md`, the relevant README, and the relevant instruction files still match the live code.
+3. Update stale docs in the same change set.
+
+Do not defer doc cleanup unless the user explicitly asks for code-only work.
+
+## Updater incident runbook
+
+- Default updater model is wheel-based and lives in `apps/server/vibesensor/update/manager.py`.
 - Do not use direct runtime file patching as normal delivery.
-- Emergency-only path: if updater itself is broken on a live Pi, apply a temporary in-place patch to restore service.
+- Emergency-only path: if the updater itself is broken on a live Pi, apply a temporary in-place patch to restore service.
 - Mandatory follow-up after emergency patching:
   1. same fix in repo,
-  2. targeted tests + lint,
-  3. PR to green + merge,
-  4. rerun updater on device and confirm success (`state=success`) so device returns to wheel-managed state.
+  2. targeted tests plus lint,
+  3. PR to green plus merge,
+  4. rerun updater on the device and confirm success so the Pi returns to wheel-managed state.
 
-## Context bundle
+## Context bundle and triage
+
 ```bash
-scripts/ai/task ai:pack
-# or
 make ai-pack
-```
-
-## Scoped triage
-```bash
 scripts/ai/triage apps/server/vibesensor --symbol clients_with_recent_data
 ```
 
-## Debug with scoped output
-- Keep noisy command output in files under `artifacts/ai/logs/`.
-- Prefer scoped grep:
-  - `rg "self_heal" -g"*.py" apps/server/vibesensor/`
-  - `rg "vibesensor-hotspot" -g"*.service" apps/server/systemd/ infra/pi-image/pi-gen/assets/`
-- Avoid repo-wide unbounded scans.
+## Low-noise debugging
+
+- Keep noisy command output in `artifacts/ai/logs/`.
+- Prefer scoped `rg` searches over repo-wide scans.
+- Start with the owning package and its nearest tests before expanding outward.

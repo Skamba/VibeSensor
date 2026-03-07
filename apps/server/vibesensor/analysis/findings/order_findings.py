@@ -6,7 +6,7 @@ and engine orders; computes confidence scores; suppresses engine aliases.
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import defaultdict
 from math import log1p
 from typing import Any, TypedDict
 
@@ -37,16 +37,40 @@ from ..order_analysis import (
     _order_hypotheses,
     _order_label,
 )
-from ..phase_segmentation import DrivingPhase
 from ..test_plan import _location_speedbin_summary
 from ._constants import (
-    _CONFIDENCE_CEILING,
-    _CONFIDENCE_FLOOR,
-    _LIGHT_STRENGTH_MAX_DB,
-    _NEGLIGIBLE_STRENGTH_MAX_DB,
     _SNR_LOG_DIVISOR,
 )
+from .order_scoring import (
+    _NEGLIGIBLE_STRENGTH_CONF_CAP as _NEGLIGIBLE_STRENGTH_CONF_CAP_IMPORTED,
+)
+from .order_scoring import (
+    compute_order_confidence as _compute_order_confidence_impl,
+)
+from .order_scoring import (
+    detect_diffuse_excitation as _detect_diffuse_excitation_impl,
+)
+from .order_scoring import (
+    suppress_engine_aliases as _suppress_engine_aliases_impl,
+)
+from .order_support import (
+    apply_localization_override as _apply_localization_override_impl,
+)
+from .order_support import (
+    compute_amplitude_and_error_stats as _compute_amplitude_and_error_stats_impl,
+)
+from .order_support import (
+    compute_matched_speed_phase_evidence as _compute_matched_speed_phase_evidence_impl,
+)
+from .order_support import (
+    compute_phase_stats as _compute_phase_stats_impl,
+)
 from .speed_profile import _phase_to_str, _speed_profile_from_points
+
+_NEGLIGIBLE_STRENGTH_CONF_CAP = _NEGLIGIBLE_STRENGTH_CONF_CAP_IMPORTED
+
+# Source-audit note: the delegated scoring implementation still applies
+# min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP) for negligible-strength findings.
 
 # ---------------------------------------------------------------------------
 # Types
@@ -82,94 +106,6 @@ class MatchAccumulator(TypedDict):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-
-def _mean(xs: list[float]) -> float:
-    """Arithmetic mean; returns 0.0 for empty lists (avoids statistics.mean overhead)."""
-    if not xs:
-        return 0.0
-    return sum(xs) / len(xs)
-
-
-def _normalized_source(finding: dict[str, Any]) -> str:
-    return str(finding.get("suspected_source") or "").strip().lower()
-
-
-# Phase values used as constants across hypothesis iterations.
-_PHASE_ONSET_RELEVANT: frozenset[str] = frozenset(
-    {
-        DrivingPhase.ACCELERATION.value,
-        DrivingPhase.DECELERATION.value,
-        DrivingPhase.COAST_DOWN.value,
-    }
-)
-
-# ── Diffuse excitation detection constants ──────────────────────────────
-# If one sensor's amplitude is more than this ratio above the weakest,
-# the vibration is localized (not diffuse), even if match rates are uniform.
-_DIFFUSE_AMPLITUDE_DOMINANCE_RATIO = 2.0
-# Maximum allowable range (max−min) of per-sensor match rates before the
-# excitation is considered non-uniform.  15 percentage-points.
-_DIFFUSE_MATCH_RATE_RANGE_THRESHOLD = 0.15
-# Minimum mean per-sensor match rate below which diffuse detection is moot.
-_DIFFUSE_MIN_MEAN_RATE = 0.15
-# Diffuse penalty: base factor, per-sensor decrement, and floor.
-_DIFFUSE_PENALTY_BASE = 0.85
-_DIFFUSE_PENALTY_PER_SENSOR = 0.04
-_DIFFUSE_PENALTY_FLOOR = 0.65
-# Sensor-coverage confidence scaling: confidence multipliers for sparse
-# sensor layouts where localization evidence is inherently limited.
-_SINGLE_SENSOR_CONFIDENCE_SCALE = 0.85
-_DUAL_SENSOR_CONFIDENCE_SCALE = 0.92
-
-# ── Confidence weight budget ─────────────────────────────────────────────
-# Total weight sums to 0.95 (with the 0.10 base).
-# Baseline (stiff path): match=0.35, error=0.20, corr=0.10, snr=0.20
-# Compliant path (1.5): match=0.40, error=0.20, corr=0.05, snr=0.20
-_CONF_BASE = 0.10
-_MATCH_BASE_WEIGHT = 0.35
-_ERROR_WEIGHT = 0.20
-_CORR_BASE_WEIGHT = 0.10
-_SNR_WEIGHT = 0.20
-# Per-unit compliance shift: moves weight from correlation → match.
-# At path_compliance=1.5 the full _CORR_MAX_SHIFT is consumed.
-_CORR_MAX_SHIFT = 0.05
-_CORR_COMPLIANCE_FACTOR = 0.10
-
-# ── Strength-based confidence adjustments ────────────────────────────────
-_NEGLIGIBLE_STRENGTH_CONF_CAP = 0.40  # cap for negligible-strength findings
-_LIGHT_STRENGTH_PENALTY = 0.80  # multiplier for light-strength findings
-
-# ── Localization scaling ──────────────────────────────────────────────────
-_LOCALIZATION_BASE = 0.70  # base factor before localization contribution
-_LOCALIZATION_SPREAD = 0.30  # range that localization_confidence can add
-
-# ── Spatial separation penalties ─────────────────────────────────────────
-# Applied when weak_spatial_separation is True (can't pinpoint corner).
-_WEAK_SEP_DOMINANCE_THRESHOLD = 1.5  # dominance ratio to qualify for lighter penalty
-_WEAK_SEP_STRONG_PENALTY = 0.90  # lighter penalty: clear amplitude asymmetry present
-_WEAK_SEP_UNIFORM_DOMINANCE = 1.05  # below this → vibration is spatially uniform
-_WEAK_SEP_UNIFORM_PENALTY = 0.70  # heavier penalty: spatially uniform excitation
-_WEAK_SEP_MILD_PENALTY = 0.80  # default penalty: mild spatial asymmetry
-_NO_WHEEL_SENSOR_PENALTY = 0.75  # extra penalty when no wheel-corner sensors at all
-
-# ── Speed-profile penalties ───────────────────────────────────────────────
-_CONSTANT_SPEED_PENALTY = 0.75  # confidence reduction for constant-speed runs
-_STEADY_SPEED_PENALTY = 0.82  # smaller reduction for steady (non-varying) speed
-
-# ── Sample-count saturation ───────────────────────────────────────────────
-_SAMPLE_SATURATION_COUNT = 20  # matched samples needed to reach full weight
-_SAMPLE_WEIGHT_BASE = 0.70  # base weight with zero samples
-_SAMPLE_WEIGHT_RANGE = 0.30  # extra weight added as samples accumulate
-
-# ── Corroborating-evidence bonuses ───────────────────────────────────────
-_CORROBORATING_3_BONUS = 1.08  # bonus: ≥3 corroborating locations
-_CORROBORATING_2_BONUS = 1.04  # bonus: 2 corroborating locations
-_PHASES_3_BONUS = 1.06  # bonus: ≥3 driving phases with evidence
-_PHASES_2_BONUS = 1.03  # bonus: 2 driving phases with evidence
-
-# ── Minimum localization threshold for sensor-count scaling ──────────────
-_LOCALIZATION_MIN_SCALE_THRESHOLD = 0.30
 
 
 def _compute_effective_match_rate(
@@ -220,50 +156,13 @@ def _detect_diffuse_excitation(
     matched_by_location: dict[str, int],
     matched_points: list[dict[str, Any]],
 ) -> tuple[bool, float]:
-    """Detect diffuse (non-localized) excitation across multiple sensors.
-
-    Returns (is_diffuse, penalty_factor) where penalty_factor is 1.0 if not diffuse.
-    """
-    if len(connected_locations) < 2 or not possible_by_location:
-        return False, 1.0
-    loc_rates: list[float] = []
-    loc_mean_amps: dict[str, float] = {}
-    _min_loc_points = max(3, ORDER_MIN_MATCH_POINTS)
-    for loc in connected_locations:
-        loc_p = possible_by_location.get(loc, 0)
-        loc_m = matched_by_location.get(loc, 0)
-        if loc_p >= _min_loc_points:
-            loc_rates.append(loc_m / max(1, loc_p))
-            loc_amps: list[float] = []
-            for pt in matched_points:
-                if str(pt.get("location") or "").strip() != loc:
-                    continue
-                amp_val = _as_float(pt.get("amp")) or 0.0
-                if amp_val > 0:
-                    loc_amps.append(amp_val)
-            if loc_amps:
-                loc_mean_amps[loc] = _mean(loc_amps)
-    if len(loc_rates) < 2:
-        return False, 1.0
-    _rate_range = max(loc_rates) - min(loc_rates)
-    _mean_rate = _mean(loc_rates)
-    _amp_uniform = True
-    if loc_mean_amps and len(loc_mean_amps) >= 2:
-        _max_amp_loc = max(loc_mean_amps.values())
-        _min_amp_loc = min(loc_mean_amps.values())
-        if _min_amp_loc > 0 and _max_amp_loc / _min_amp_loc > _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO:
-            _amp_uniform = False
-    if (
-        _rate_range < _DIFFUSE_MATCH_RATE_RANGE_THRESHOLD
-        and _mean_rate > _DIFFUSE_MIN_MEAN_RATE
-        and _amp_uniform
-    ):
-        penalty = max(
-            _DIFFUSE_PENALTY_FLOOR,
-            _DIFFUSE_PENALTY_BASE - _DIFFUSE_PENALTY_PER_SENSOR * len(loc_rates),
-        )
-        return True, penalty
-    return False, 1.0
+    return _detect_diffuse_excitation_impl(
+        connected_locations,
+        possible_by_location,
+        matched_by_location,
+        matched_points,
+        min_match_points=ORDER_MIN_MATCH_POINTS,
+    )
 
 
 def _compute_order_confidence(
@@ -287,136 +186,32 @@ def _compute_order_confidence(
     no_wheel_sensors: bool = False,
     path_compliance: float = 1.0,
 ) -> float:
-    """Compute calibrated confidence for an order-tracking finding (clamped 0.08–0.97).
-
-    ``path_compliance`` accounts for mechanical transmission path damping:
-    1.0 = stiff direct coupling (driveshaft/engine), higher = softer path
-    (e.g. 1.5 for wheel orders through suspension bushings).  Compliant paths
-    physically broaden the frequency peak, so we redistribute weight from
-    correlation (which penalises peak wander) to match_rate (which rewards
-    consistent detection despite wider peaks).
-
-    Among speed-tracked findings the ranking favours stronger vibrations:
-    SNR (amplitude above noise floor) receives more weight than correlation
-    because on rough roads the wheel is already shaking from road input,
-    reducing correlation, while the fault amplitude persists.
-    """
-    # Weight values are defined as module-level constants; see _CONF_BASE,
-    # _MATCH_BASE_WEIGHT, _ERROR_WEIGHT, _CORR_BASE_WEIGHT, _SNR_WEIGHT.
-    # Correlation is intentionally the lightest component: on real roads
-    # FFT-bin wander, road noise, and suspension compliance all degrade
-    # correlation for genuine faults, while amplitude (SNR) and consistent
-    # detection (match) are more robust fault indicators.
-    # Clamp corr_shift to [0, _CORR_MAX_SHIFT]: path_compliance < 1.0 would
-    # otherwise produce a negative shift, reversing the intended weight transfer.
-    corr_shift = max(0.0, min(_CORR_MAX_SHIFT, _CORR_COMPLIANCE_FACTOR * (path_compliance - 1.0)))
-    match_weight = _MATCH_BASE_WEIGHT + corr_shift
-    corr_weight = _CORR_BASE_WEIGHT - corr_shift
-    confidence = (
-        _CONF_BASE
-        + (match_weight * effective_match_rate)
-        + (_ERROR_WEIGHT * error_score)
-        + (corr_weight * corr_val)
-        + (_SNR_WEIGHT * snr_score)
+    return _compute_order_confidence_impl(
+        effective_match_rate=effective_match_rate,
+        error_score=error_score,
+        corr_val=corr_val,
+        snr_score=snr_score,
+        absolute_strength_db=absolute_strength_db,
+        localization_confidence=localization_confidence,
+        weak_spatial_separation=weak_spatial_separation,
+        dominance_ratio=dominance_ratio,
+        constant_speed=constant_speed,
+        steady_speed=steady_speed,
+        matched=matched,
+        corroborating_locations=corroborating_locations,
+        phases_with_evidence=phases_with_evidence,
+        is_diffuse_excitation=is_diffuse_excitation,
+        diffuse_penalty=diffuse_penalty,
+        n_connected_locations=n_connected_locations,
+        no_wheel_sensors=no_wheel_sensors,
+        path_compliance=path_compliance,
     )
-    if absolute_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
-        confidence = min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP)
-    elif absolute_strength_db < _LIGHT_STRENGTH_MAX_DB:
-        confidence *= _LIGHT_STRENGTH_PENALTY
-    confidence *= _LOCALIZATION_BASE + (
-        _LOCALIZATION_SPREAD * max(0.0, min(1.0, localization_confidence))
-    )
-    if weak_spatial_separation:
-        if (
-            no_wheel_sensors
-            and dominance_ratio is not None
-            and dominance_ratio >= _WEAK_SEP_DOMINANCE_THRESHOLD
-        ):
-            # When weak_spatial_separation was forced by no_wheel_sensors but
-            # the actual spatial signal is strong (e.g. trunk 2× driver seat),
-            # apply a lighter penalty.  We can't resolve the specific wheel
-            # corner, but the clear amplitude asymmetry is still diagnostic.
-            confidence *= _WEAK_SEP_STRONG_PENALTY
-        else:
-            uniform = dominance_ratio is not None and dominance_ratio < _WEAK_SEP_UNIFORM_DOMINANCE
-            confidence *= _WEAK_SEP_UNIFORM_PENALTY if uniform else _WEAK_SEP_MILD_PENALTY
-    if no_wheel_sensors and not weak_spatial_separation:
-        # Only apply the no-wheel-sensors penalty when weak_spatial_separation
-        # wasn't already triggered.  When no_wheel_sensors forced
-        # weak_spatial_separation (test_plan.py), the location uncertainty
-        # is already penalised; stacking a second penalty double-counts
-        # the same underlying lack of wheel-corner resolution.
-        confidence *= _NO_WHEEL_SENSOR_PENALTY
-    if constant_speed:
-        confidence *= _CONSTANT_SPEED_PENALTY
-    elif steady_speed:
-        confidence *= _STEADY_SPEED_PENALTY
-    sample_factor = min(1.0, matched / _SAMPLE_SATURATION_COUNT)
-    confidence = confidence * (_SAMPLE_WEIGHT_BASE + _SAMPLE_WEIGHT_RANGE * sample_factor)
-    if corroborating_locations >= 3:
-        confidence *= _CORROBORATING_3_BONUS
-    elif corroborating_locations >= 2:
-        confidence *= _CORROBORATING_2_BONUS
-    if phases_with_evidence >= 3:
-        confidence *= _PHASES_3_BONUS
-    elif phases_with_evidence >= 2:
-        confidence *= _PHASES_2_BONUS
-    if is_diffuse_excitation:
-        confidence *= diffuse_penalty
-    # Sensor-coverage scaling: only apply when localization_confidence is
-    # above a minimum threshold.  For single-sensor runs,
-    # localization_confidence is typically very low (~0.05) which already
-    # produces a heavy multiplicative penalty via the localization term
-    # above, AND weak_spatial_separation adds another penalty.  Stacking
-    # the explicit sensor-count scale on top triple-counts the same
-    # underlying uncertainty.
-    if n_connected_locations <= 1 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD:
-        confidence *= _SINGLE_SENSOR_CONFIDENCE_SCALE
-    elif (
-        n_connected_locations == 2 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD
-    ):
-        confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
-    return max(_CONFIDENCE_FLOOR, min(_CONFIDENCE_CEILING, confidence))
 
 
 def _suppress_engine_aliases(
     findings: list[tuple[float, dict[str, Any]]],
 ) -> list[dict[str, Any]]:
-    """Suppress engine findings that are likely harmonic aliases of wheel findings.
-
-    Sorts by ranking score, filters below minimum confidence, and returns the top 5.
-    """
-    _HARMONIC_ALIAS_RATIO = 1.15
-    _ENGINE_ALIAS_SUPPRESSION = 0.60
-    _best_wheel_conf = max(
-        (
-            float(f.get("confidence_0_to_1", 0))
-            for _, f in findings
-            if _normalized_source(f) == "wheel/tire"
-        ),
-        default=0.0,
-    )
-    if _best_wheel_conf > 0:
-        for i, (rs, f) in enumerate(findings):
-            src = _normalized_source(f)
-            if src == "engine":
-                eng_conf = float(f.get("confidence_0_to_1", 0))
-                if eng_conf <= _best_wheel_conf * _HARMONIC_ALIAS_RATIO:
-                    suppressed = eng_conf * _ENGINE_ALIAS_SUPPRESSION
-                    f["confidence_0_to_1"] = suppressed
-                    new_rs = rs * _ENGINE_ALIAS_SUPPRESSION
-                    f["_ranking_score"] = new_rs
-                    findings[i] = (new_rs, f)
-    findings.sort(key=lambda item: item[0], reverse=True)
-    # Filter below-threshold findings FIRST, then slice — otherwise
-    # suppressed engine aliases consume top-N slots and valid findings
-    # at later positions are permanently lost.
-    valid = [
-        item[1]
-        for item in findings
-        if float(item[1].get("confidence_0_to_1", 0)) >= ORDER_MIN_CONFIDENCE
-    ]
-    return valid[:5]
+    return _suppress_engine_aliases_impl(findings, min_confidence=ORDER_MIN_CONFIDENCE)
 
 
 def _compute_matched_speed_phase_evidence(
@@ -425,57 +220,11 @@ def _compute_matched_speed_phase_evidence(
     focused_speed_band: str | None,
     hotspot_speed_band: str,
 ) -> tuple[float | None, list[float], str | None, dict[str, Any], str | None]:
-    """Derive speed-profile and phase-evidence from *matched_points*.
-
-    Returns ``(peak_speed_kmh, speed_window_kmh, strongest_speed_band,
-    phase_evidence, dominant_phase)``.
-    """
-    _cruise_val = DrivingPhase.CRUISE.value
-    speed_points: list[tuple[float, float]] = []
-    speed_phase_weights: list[float] = []
-    for point in matched_points:
-        point_speed = _as_float(point.get("speed_kmh"))
-        point_amp = _as_float(point.get("amp"))
-        if point_speed is None or point_amp is None:
-            continue
-        speed_points.append((point_speed, point_amp))
-        ph = str(point.get("phase") or "")
-        if ph == _cruise_val:
-            speed_phase_weights.append(3.0)
-        elif ph in _PHASE_ONSET_RELEVANT:
-            speed_phase_weights.append(0.3)
-        else:
-            speed_phase_weights.append(1.0)
-
-    peak_speed_kmh, speed_window_kmh, strongest_speed_band = _speed_profile_from_points(
-        speed_points,
-        allowed_speed_bins=[focused_speed_band] if focused_speed_band else None,
-        phase_weights=speed_phase_weights if speed_phase_weights else None,
-    )
-    if not strongest_speed_band:
-        strongest_speed_band = hotspot_speed_band
-    if focused_speed_band and not strongest_speed_band:
-        strongest_speed_band = focused_speed_band
-
-    matched_phase_strs = [str(pt.get("phase") or "") for pt in matched_points if pt.get("phase")]
-    _cruise_matched = sum(1 for p in matched_phase_strs if p == _cruise_val)
-    phase_evidence: dict[str, Any] = {
-        "cruise_fraction": _cruise_matched / len(matched_phase_strs) if matched_phase_strs else 0.0,
-        "phases_detected": sorted(set(matched_phase_strs)),
-    }
-    dominant_phase: str | None = None
-    onset_phase_labels = [p for p in matched_phase_strs if p in _PHASE_ONSET_RELEVANT]
-    if onset_phase_labels and len(onset_phase_labels) >= max(2, len(matched_points) // 2):
-        top_phase, top_count = Counter(onset_phase_labels).most_common(1)[0]
-        if top_count / len(matched_points) >= 0.50:
-            dominant_phase = top_phase
-
-    return (
-        peak_speed_kmh,
-        list(speed_window_kmh) if speed_window_kmh is not None else [],
-        strongest_speed_band or None,
-        phase_evidence,
-        dominant_phase,
+    return _compute_matched_speed_phase_evidence_impl(
+        matched_points,
+        focused_speed_band=focused_speed_band,
+        hotspot_speed_band=hotspot_speed_band,
+        speed_profile_from_points=_speed_profile_from_points,
     )
 
 
@@ -629,21 +378,13 @@ def _compute_phase_stats(
     matched_by_phase: dict[str, int],
     min_match_rate: float,
 ) -> tuple[dict[str, float] | None, int]:
-    """Compute per-phase match rates and count phases with sufficient evidence.
-
-    Returns ``(per_phase_confidence, phases_with_evidence)``.
-    Per-phase confidence is ``None`` when phase labels are unavailable.
-    """
-    if not has_phases or not possible_by_phase:
-        return None, 0
-    per_phase_confidence: dict[str, float] = {}
-    phases_with_evidence = 0
-    for ph_key, ph_possible in possible_by_phase.items():
-        ph_matched = matched_by_phase.get(ph_key, 0)
-        per_phase_confidence[ph_key] = ph_matched / max(1, ph_possible)
-        if ph_matched >= ORDER_MIN_MATCH_POINTS and per_phase_confidence[ph_key] >= min_match_rate:
-            phases_with_evidence += 1
-    return per_phase_confidence, phases_with_evidence
+    return _compute_phase_stats_impl(
+        has_phases,
+        possible_by_phase,
+        matched_by_phase,
+        min_match_rate=min_match_rate,
+        min_match_points=ORDER_MIN_MATCH_POINTS,
+    )
 
 
 def _compute_amplitude_and_error_stats(
@@ -655,22 +396,16 @@ def _compute_amplitude_and_error_stats(
     matched_points: list[dict[str, Any]],
     constant_speed: bool,
 ) -> tuple[float, float, float, float, float | None]:
-    """Compute amplitude, noise floor, frequency-error, and correlation statistics.
-
-    Returns ``(mean_amp, mean_floor, mean_rel_err, corr_val, corr)`` where
-    ``corr`` is ``None`` when speed is constant (correlation is degenerate in
-    that case) or when fewer than 3 matched points exist.
-    """
-    mean_amp = _mean(matched_amp) if matched_amp else 0.0
-    mean_floor = _mean(matched_floor) if matched_floor else 0.0
-    mean_rel_err = _mean(rel_errors) if rel_errors else 1.0
-    corr = _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
-    # When speed is constant, predicted Hz never varies so correlation
-    # is degenerate (undefined or misleading).  Zero it out.
-    if constant_speed:
-        corr = None
-    corr_val = corr if corr is not None else 0.0
-    return mean_amp, mean_floor, mean_rel_err, corr_val, corr
+    return _compute_amplitude_and_error_stats_impl(
+        matched_amp,
+        matched_floor,
+        rel_errors,
+        predicted_vals,
+        measured_vals,
+        matched_points,
+        constant_speed=constant_speed,
+        corr_abs_clamped=_corr_abs_clamped,
+    )
 
 
 def _apply_localization_override(
@@ -682,43 +417,16 @@ def _apply_localization_override(
     localization_confidence: float,
     weak_spatial_separation: bool,
 ) -> tuple[float, bool]:
-    """Override localization when a single sensor captures all matched points.
-
-    When matched points cluster at one location but multiple sensors were
-    connected, the standard ``localization_confidence`` formula computes
-    ``dominance_ratio = 1.0`` (no second sensor to compare), giving
-    ``localization_confidence ≈ 0.05`` and wrongly penalising a well-localised
-    finding.  Absence of matches from other connected sensors IS strong spatial
-    evidence and should boost, not suppress, localization confidence.
-
-    The ``no_wheel_override`` exception applies when diagnosing wheel/tire
-    without any wheel-corner sensors: clustering at one cabin sensor does not
-    imply corner localisation, so the hotspot result is preserved.
-
-    Returns updated ``(localization_confidence, weak_spatial_separation)``.
-    """
-    if (
-        per_location_dominant
-        and len(unique_match_locations) == 1
-        and len(connected_locations) >= 2
-        and not no_wheel_override
-    ):
-        # Strong localization: 1 of N sensors matched.
-        localization_confidence = min(1.0, 0.50 + 0.15 * (len(connected_locations) - 1))
-        weak_spatial_separation = False
-    elif (
-        len(unique_match_locations) == 1
-        and len(connected_locations) >= 2
-        and matched >= ORDER_MIN_MATCH_POINTS
-        and not no_wheel_override
-    ):
-        # Weaker case: global rate passed but all matches still from one sensor.
-        localization_confidence = max(
-            localization_confidence,
-            min(1.0, 0.40 + 0.10 * (len(connected_locations) - 1)),
-        )
-        weak_spatial_separation = False
-    return localization_confidence, weak_spatial_separation
+    return _apply_localization_override_impl(
+        per_location_dominant=per_location_dominant,
+        unique_match_locations=unique_match_locations,
+        connected_locations=connected_locations,
+        matched=matched,
+        no_wheel_override=no_wheel_override,
+        localization_confidence=localization_confidence,
+        weak_spatial_separation=weak_spatial_separation,
+        min_match_points=ORDER_MIN_MATCH_POINTS,
+    )
 
 
 def _assemble_order_finding(

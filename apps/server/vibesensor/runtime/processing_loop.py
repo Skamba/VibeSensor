@@ -13,9 +13,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..processing import SignalProcessor
-    from ..registry import ClientRegistry
-    from ..udp_control_tx import UDPControlPlane
+    from .dependencies import RuntimeIngressServices
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,9 +49,7 @@ class ProcessingLoop:
         "_fft_update_hz",
         "_sample_rate_hz",
         "_fft_n",
-        "_registry",
-        "_processor",
-        "_control_plane",
+        "_ingress",
     )
 
     def __init__(
@@ -63,17 +59,13 @@ class ProcessingLoop:
         fft_update_hz: int,
         sample_rate_hz: int,
         fft_n: int,
-        registry: ClientRegistry,
-        processor: SignalProcessor,
-        control_plane: UDPControlPlane,
+        ingress: RuntimeIngressServices,
     ) -> None:
         self.state = state
         self._fft_update_hz = fft_update_hz
         self._sample_rate_hz = sample_rate_hz
         self._fft_n = fft_n
-        self._registry = registry
-        self._processor = processor
-        self._control_plane = control_plane
+        self._ingress = ingress
 
     async def run(self) -> None:
         """~100 ms tick loop: evict stale clients, compute metrics, handle failures."""
@@ -86,17 +78,16 @@ class ProcessingLoop:
                 _sync_clock_tick += 1
                 if _sync_clock_tick >= _SYNC_CLOCK_EVERY_N_TICKS:
                     _sync_clock_tick = 0
-                    if self._control_plane is not None:
-                        self._control_plane.broadcast_sync_clock()
-                self._registry.evict_stale()
-                active_ids = self._registry.active_client_ids()
-                fresh_ids = self._processor.clients_with_recent_data(
+                    self._ingress.control_plane.broadcast_sync_clock()
+                self._ingress.registry.evict_stale()
+                active_ids = self._ingress.registry.active_client_ids()
+                fresh_ids = self._ingress.processor.clients_with_recent_data(
                     active_ids, max_age_s=STALE_DATA_AGE_S
                 )
                 sample_rates: dict[str, int] = {}
                 state = self.state
                 for client_id in fresh_ids:
-                    record = self._registry.get(client_id)
+                    record = self._ingress.registry.get(client_id)
                     if record is None:
                         continue
                     sample_rates[client_id] = record.sample_rate_hz
@@ -128,13 +119,13 @@ class ProcessingLoop:
                             self._fft_n,
                         )
                 metrics_by_client = await asyncio.to_thread(
-                    self._processor.compute_all,
+                    self._ingress.processor.compute_all,
                     fresh_ids,
                     sample_rates_hz=sample_rates,
                 )
                 for client_id, metrics in metrics_by_client.items():
-                    self._registry.set_latest_metrics(client_id, metrics)
-                self._processor.evict_clients(set(active_ids))
+                    self._ingress.registry.set_latest_metrics(client_id, metrics)
+                self._ingress.processor.evict_clients(set(active_ids))
                 consecutive_failures = 0
                 state.processing_state = "ok"
             except Exception:

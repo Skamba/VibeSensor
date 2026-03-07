@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from fastapi import HTTPException
 
 from ..domain_models import normalize_sensor_id
@@ -18,7 +20,7 @@ __all__ = [
 def normalize_client_id_or_400(client_id: str) -> str:
     """Normalize a client_id or raise HTTP 400."""
     try:
-        return normalize_sensor_id(client_id)
+        return cast(str, normalize_sensor_id(client_id))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid sensor identifier") from exc
 
@@ -32,6 +34,6 @@ def normalize_mac_or_400(mac: str) -> str:
     if not mac or len(mac) > 64:
         raise HTTPException(status_code=400, detail="Invalid MAC address: must be 1-64 characters")
     try:
-        return normalize_sensor_id(mac)
+        return cast(str, normalize_sensor_id(mac))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid MAC address format") from exc

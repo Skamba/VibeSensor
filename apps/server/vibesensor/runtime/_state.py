@@ -1,17 +1,13 @@
-"""RuntimeState – thin coordinator holding service references and subsystems.
+"""RuntimeState – thin coordinator over explicit runtime subsystem groups.
 
-``RuntimeState`` is the composition root: it holds service references that
-routes need and creates focused subsystem objects that own actual behavior.
-
-Subsystems (created automatically in ``__post_init__``):
-- ``processing_loop``: async tick loop + failure tracking
-- ``ws_broadcast``: WebSocket payload assembly + caching
-- ``lifecycle``: server start / graceful stop
+``RuntimeState`` no longer constructs subsystems in ``__post_init__``. Runtime
+composition lives in ``runtime/composition.py`` and passes in already-wired
+subsystems plus a small number of focused service groups.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from ..analysis_settings import AnalysisSettingsStore
 from ..config import AppConfig
@@ -27,6 +23,11 @@ from ..udp_control_tx import UDPControlPlane
 from ..update.manager import UpdateManager
 from ..worker_pool import WorkerPool
 from ..ws_hub import WebSocketHub
+from .dependencies import (
+    RuntimeIngressServices,
+    RuntimeOperationsServices,
+    RuntimePlatformServices,
+)
 from .lifecycle import LifecycleManager
 from .processing_loop import ProcessingLoop, ProcessingLoopState
 from .settings_sync import (
@@ -40,80 +41,121 @@ from .ws_broadcast import WsBroadcastCache, WsBroadcastService
 
 @dataclass(slots=True)
 class RuntimeState:
-    """Thin coordinator: holds service refs used by routes and subsystem objects.
-
-    Subsystems (created in ``__post_init__``):
-
-    - ``processing_loop``: async tick loop + failure tracking
-    - ``ws_broadcast``: WebSocket payload assembly + caching
-    - ``lifecycle``: server start / graceful stop
-    """
-
-    # -- Service references (used by routes) --------------------------------
+    """Thin coordinator over service groups and already-built subsystems."""
 
     config: AppConfig
-    registry: ClientRegistry
-    processor: SignalProcessor
-    control_plane: UDPControlPlane
-    ws_hub: WebSocketHub
-    gps_monitor: GPSSpeedMonitor
-    analysis_settings: AnalysisSettingsStore
-    metrics_logger: MetricsLogger
-    live_diagnostics: LiveDiagnosticsEngine
-    settings_store: SettingsStore
-    history_db: HistoryDB
-    update_manager: UpdateManager
-    esp_flash_manager: EspFlashManager
-    worker_pool: WorkerPool
+    ingress: RuntimeIngressServices
+    operations: RuntimeOperationsServices
+    platform: RuntimePlatformServices
+    loop_state: ProcessingLoopState
+    ws_cache: WsBroadcastCache
+    processing_loop: ProcessingLoop
+    ws_broadcast: WsBroadcastService
+    lifecycle: LifecycleManager
 
-    # -- Shared mutable state (routes + subsystems access these) ------------
+    @property
+    def registry(self) -> ClientRegistry:
+        return self.ingress.registry
 
-    loop_state: ProcessingLoopState = field(default_factory=ProcessingLoopState)
-    ws_cache: WsBroadcastCache = field(default_factory=WsBroadcastCache)
+    @registry.setter
+    def registry(self, value: ClientRegistry) -> None:
+        self.ingress.registry = value
 
-    # -- Subsystems (created in __post_init__) ------------------------------
+    @property
+    def processor(self) -> SignalProcessor:
+        return self.ingress.processor
 
-    processing_loop: ProcessingLoop = field(init=False)
-    ws_broadcast: WsBroadcastService = field(init=False)
-    lifecycle: LifecycleManager = field(init=False)
+    @processor.setter
+    def processor(self, value: SignalProcessor) -> None:
+        self.ingress.processor = value
 
-    def __post_init__(self) -> None:
-        self.processing_loop = ProcessingLoop(
-            state=self.loop_state,
-            fft_update_hz=self.config.processing.fft_update_hz,
-            sample_rate_hz=self.config.processing.sample_rate_hz,
-            fft_n=self.config.processing.fft_n,
-            registry=self.registry,
-            processor=self.processor,
-            control_plane=self.control_plane,
-        )
-        self.ws_broadcast = WsBroadcastService(
-            cache=self.ws_cache,
-            ui_push_hz=self.config.processing.ui_push_hz,
-            ui_heavy_push_hz=self.config.processing.ui_heavy_push_hz,
-            registry=self.registry,
-            processor=self.processor,
-            gps_monitor=self.gps_monitor,
-            analysis_settings=self.analysis_settings,
-            metrics_logger=self.metrics_logger,
-            live_diagnostics=self.live_diagnostics,
-            settings_store=self.settings_store,
-        )
-        self.lifecycle = LifecycleManager(
-            config=self.config,
-            registry=self.registry,
-            processor=self.processor,
-            control_plane=self.control_plane,
-            ws_hub=self.ws_hub,
-            gps_monitor=self.gps_monitor,
-            metrics_logger=self.metrics_logger,
-            update_manager=self.update_manager,
-            esp_flash_manager=self.esp_flash_manager,
-            history_db=self.history_db,
-            worker_pool=self.worker_pool,
-            processing_loop=self.processing_loop,
-            ws_broadcast=self.ws_broadcast,
-        )
+    @property
+    def control_plane(self) -> UDPControlPlane:
+        return self.ingress.control_plane
+
+    @control_plane.setter
+    def control_plane(self, value: UDPControlPlane) -> None:
+        self.ingress.control_plane = value
+
+    @property
+    def settings_store(self) -> SettingsStore:
+        return self.operations.settings_store
+
+    @settings_store.setter
+    def settings_store(self, value: SettingsStore) -> None:
+        self.operations.settings_store = value
+
+    @property
+    def analysis_settings(self) -> AnalysisSettingsStore:
+        return self.operations.analysis_settings
+
+    @analysis_settings.setter
+    def analysis_settings(self, value: AnalysisSettingsStore) -> None:
+        self.operations.analysis_settings = value
+
+    @property
+    def gps_monitor(self) -> GPSSpeedMonitor:
+        return self.operations.gps_monitor
+
+    @gps_monitor.setter
+    def gps_monitor(self, value: GPSSpeedMonitor) -> None:
+        self.operations.gps_monitor = value
+
+    @property
+    def metrics_logger(self) -> MetricsLogger:
+        return self.operations.metrics_logger
+
+    @metrics_logger.setter
+    def metrics_logger(self, value: MetricsLogger) -> None:
+        self.operations.metrics_logger = value
+
+    @property
+    def live_diagnostics(self) -> LiveDiagnosticsEngine:
+        return self.operations.live_diagnostics
+
+    @live_diagnostics.setter
+    def live_diagnostics(self, value: LiveDiagnosticsEngine) -> None:
+        self.operations.live_diagnostics = value
+
+    @property
+    def ws_hub(self) -> WebSocketHub:
+        return self.platform.ws_hub
+
+    @ws_hub.setter
+    def ws_hub(self, value: WebSocketHub) -> None:
+        self.platform.ws_hub = value
+
+    @property
+    def history_db(self) -> HistoryDB:
+        return self.platform.history_db
+
+    @history_db.setter
+    def history_db(self, value: HistoryDB) -> None:
+        self.platform.history_db = value
+
+    @property
+    def update_manager(self) -> UpdateManager:
+        return self.platform.update_manager
+
+    @update_manager.setter
+    def update_manager(self, value: UpdateManager) -> None:
+        self.platform.update_manager = value
+
+    @property
+    def esp_flash_manager(self) -> EspFlashManager:
+        return self.platform.esp_flash_manager
+
+    @esp_flash_manager.setter
+    def esp_flash_manager(self, value: EspFlashManager) -> None:
+        self.platform.esp_flash_manager = value
+
+    @property
+    def worker_pool(self) -> WorkerPool:
+        return self.platform.worker_pool
+
+    @worker_pool.setter
+    def worker_pool(self, value: WorkerPool) -> None:
+        self.platform.worker_pool = value
 
     # -- Settings sync (used by settings routes) ---------------------------
 

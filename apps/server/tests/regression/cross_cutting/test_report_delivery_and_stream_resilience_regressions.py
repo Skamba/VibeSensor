@@ -19,11 +19,11 @@ from _paths import REPO_ROOT
 from vibesensor.esp_flash_manager import EspFlashManager
 from vibesensor.history_exports import flatten_for_csv as _flatten_for_csv
 from vibesensor.processing import SignalProcessor
-from vibesensor.report import pdf_diagram
+from vibesensor.report import pdf_diagram_render
 from vibesensor.report_cli import main as report_cli_main
 from vibesensor.ws_hub import WebSocketHub
 
-_PDF_DIAGRAM_SRC = inspect.getsource(pdf_diagram)
+_PDF_DIAGRAM_SRC = inspect.getsource(pdf_diagram_render)
 _RUN_FLASH_JOB_SRC = inspect.getsource(EspFlashManager._run_flash_job)
 
 _I18N_ERROR_KEYS = [

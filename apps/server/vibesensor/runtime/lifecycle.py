@@ -17,16 +17,11 @@ from ..udp_data_rx import start_udp_data_receiver
 
 if TYPE_CHECKING:
     from ..config import AppConfig
-    from ..esp_flash_manager import EspFlashManager
-    from ..gps_speed import GPSSpeedMonitor
-    from ..history_db import HistoryDB
-    from ..metrics_log import MetricsLogger
-    from ..processing import SignalProcessor
-    from ..registry import ClientRegistry
-    from ..udp_control_tx import UDPControlPlane
-    from ..update.manager import UpdateManager
-    from ..worker_pool import WorkerPool
-    from ..ws_hub import WebSocketHub
+    from .dependencies import (
+        RuntimeIngressServices,
+        RuntimeOperationsServices,
+        RuntimePlatformServices,
+    )
     from .processing_loop import ProcessingLoop
     from .ws_broadcast import WsBroadcastService
 
@@ -38,16 +33,9 @@ class LifecycleManager:
 
     __slots__ = (
         "_config",
-        "_registry",
-        "_processor",
-        "_control_plane",
-        "_ws_hub",
-        "_gps_monitor",
-        "_metrics_logger",
-        "_update_manager",
-        "_esp_flash_manager",
-        "_history_db",
-        "_worker_pool",
+        "_ingress",
+        "_operations",
+        "_platform",
         "_processing_loop",
         "_ws_broadcast",
         "tasks",
@@ -59,30 +47,16 @@ class LifecycleManager:
         self,
         *,
         config: AppConfig,
-        registry: ClientRegistry,
-        processor: SignalProcessor,
-        control_plane: UDPControlPlane,
-        ws_hub: WebSocketHub,
-        gps_monitor: GPSSpeedMonitor,
-        metrics_logger: MetricsLogger,
-        update_manager: UpdateManager,
-        esp_flash_manager: EspFlashManager,
-        history_db: HistoryDB,
-        worker_pool: WorkerPool,
+        ingress: RuntimeIngressServices,
+        operations: RuntimeOperationsServices,
+        platform: RuntimePlatformServices,
         processing_loop: ProcessingLoop,
         ws_broadcast: WsBroadcastService,
     ) -> None:
         self._config = config
-        self._registry = registry
-        self._processor = processor
-        self._control_plane = control_plane
-        self._ws_hub = ws_hub
-        self._gps_monitor = gps_monitor
-        self._metrics_logger = metrics_logger
-        self._update_manager = update_manager
-        self._esp_flash_manager = esp_flash_manager
-        self._history_db = history_db
-        self._worker_pool = worker_pool
+        self._ingress = ingress
+        self._operations = operations
+        self._platform = platform
         self._processing_loop = processing_loop
         self._ws_broadcast = ws_broadcast
         self.tasks: list[asyncio.Task] = []
@@ -94,24 +68,24 @@ class LifecycleManager:
         self._data_transport, self._data_consumer_task = await start_udp_data_receiver(
             host=self._config.udp.data_host,
             port=self._config.udp.data_port,
-            registry=self._registry,
-            processor=self._processor,
+            registry=self._ingress.registry,
+            processor=self._ingress.processor,
             queue_maxsize=self._config.udp.data_queue_maxsize,
         )
-        await self._control_plane.start()
+        await self._ingress.control_plane.start()
         self.tasks = [
             asyncio.create_task(self._processing_loop.run(), name="processing-loop"),
             asyncio.create_task(
-                self._ws_hub.run(
+                self._platform.ws_hub.run(
                     self._config.processing.ui_push_hz,
                     self._ws_broadcast.build_payload,
                     on_tick=self._ws_broadcast.on_tick,
                 ),
                 name="ws-broadcast",
             ),
-            asyncio.create_task(self._metrics_logger.run(), name="metrics-log"),
+            asyncio.create_task(self._operations.metrics_logger.run(), name="metrics-log"),
             asyncio.create_task(
-                self._gps_monitor.run(
+                self._operations.gps_monitor.run(
                     host=self._config.gps.gpsd_host,
                     port=self._config.gps.gpsd_port,
                 ),
@@ -121,7 +95,7 @@ class LifecycleManager:
         # Recover interrupted update jobs (best-effort, must not crash server)
         self.tasks.append(
             asyncio.create_task(
-                self._update_manager.startup_recover(),
+                self._platform.update_manager.startup_recover(),
                 name="update-startup-recover",
             )
         )
@@ -145,8 +119,8 @@ class LifecycleManager:
         # Cancel any in-progress update or flash jobs so cleanup
         # (e.g. hotspot restore) can run before shutdown completes.
         managed = [
-            self._update_manager.job_task,
-            self._esp_flash_manager.job_task,
+            self._platform.update_manager.job_task,
+            self._platform.esp_flash_manager.job_task,
         ]
         for task in managed:
             if task is not None:
@@ -156,10 +130,11 @@ class LifecycleManager:
                 with contextlib.suppress(asyncio.CancelledError, Exception):
                     await asyncio.wait_for(asyncio.shield(task), timeout=10.0)
 
-        self._metrics_logger.stop_logging()
+        self._operations.metrics_logger.stop_logging()
         analysis_timeout_s = self._config.logging.shutdown_analysis_timeout_s
         finished = await asyncio.to_thread(
-            self._metrics_logger.wait_for_post_analysis, analysis_timeout_s
+            self._operations.metrics_logger.wait_for_post_analysis,
+            analysis_timeout_s,
         )
         if not finished:
             LOGGER.warning(
@@ -169,7 +144,7 @@ class LifecycleManager:
             )
 
         try:
-            self._control_plane.close()
+            self._ingress.control_plane.close()
         except Exception:
             LOGGER.warning("Error closing control plane", exc_info=True)
         try:
@@ -183,11 +158,11 @@ class LifecycleManager:
             await asyncio.gather(self._data_consumer_task, return_exceptions=True)
             self._data_consumer_task = None
         try:
-            await asyncio.to_thread(self._worker_pool.shutdown, True)
+            await asyncio.to_thread(self._platform.worker_pool.shutdown, True)
         except Exception:
             LOGGER.warning("Error shutting down worker pool", exc_info=True)
         try:
-            self._history_db.close()
+            self._platform.history_db.close()
         except Exception:
             LOGGER.warning("Error closing history DB", exc_info=True)
         LOGGER.info("RuntimeState stopped cleanly.")

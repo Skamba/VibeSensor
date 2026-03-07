@@ -7,8 +7,8 @@ permissions:
   contents: read
 
 jobs:
-  preflight:
-    name: Preflight (config + optional lint)
+  backend-quality:
+    name: Backend quality (lint + preflight)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -28,10 +28,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e "./apps/server[dev]"
 
-      - name: Lint
-        continue-on-error: true
+      - name: Ruff check
         run: |
           ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
+
+      - name: Ruff format check
+        run: |
           ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
 
       - name: Line endings
@@ -52,10 +54,10 @@ jobs:
         run: |
           python -m vibesensor.ws_schema_export --check
 
-  tests-ui:
-    name: Tests (UI smoke)
+  backend-typecheck:
+    name: Backend type check
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
@@ -68,26 +70,64 @@ jobs:
           cache: "pip"
           cache-dependency-path: apps/server/pyproject.toml
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "./apps/server[dev]"
+
+      - name: Mypy backend runtime/api boundary
+        working-directory: apps/server
+        env:
+          MYPYPATH: .:../../libs/core/python:../../libs/shared/python
+        run: |
+          python -m mypy --config-file pyproject.toml
+
+  frontend-typecheck:
+    name: Frontend type check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e "./apps/server[dev]"
-
       - name: Install UI dependencies
         run: |
           cd apps/ui && npm ci
 
-      - name: UI sync + typecheck
+      - name: UI typecheck
         run: |
-          python tools/sync_ui_to_pi_public.py
           cd apps/ui
           npm run typecheck
+
+  ui-smoke:
+    name: UI smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs:
+      - frontend-typecheck
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/ui/package-lock.json
+
+      - name: Install UI dependencies
+        run: |
+          cd apps/ui && npm ci
 
       - name: UI smoke tests
         run: |
@@ -95,10 +135,13 @@ jobs:
           npx playwright install chromium
           npm run test:smoke
 
-  unit-tests:
-    name: Unit tests (shard ${{ matrix.shard }}/4)
+  backend-tests:
+    name: Backend tests (shard ${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs:
+      - backend-quality
+      - backend-typecheck
     strategy:
       fail-fast: false
       matrix:
@@ -128,6 +171,10 @@ jobs:
     name: E2E (docker)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs:
+      - backend-quality
+      - backend-typecheck
+      - frontend-typecheck
 
     steps:
       - uses: actions/checkout@v4
