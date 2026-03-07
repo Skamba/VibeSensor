@@ -53,5 +53,5 @@ Validation (always required)
   5. confirm `http://127.0.0.1` updates live while the simulator runs (`:80` default; if `:80` is not serving in the current config, try `http://127.0.0.1:8000` as the backup/dev port),
   6. verify updates stop after the simulator stops (no stale-data artifacts),
   7. check `docker compose logs --tail 50` if needed.
-- Breaking changes are generally allowed when intentional.
-- Compatibility exception: preserve parsing compatibility for old recorded runs/report data unless the task explicitly waives it.
+- Breaking changes are allowed when intentional.
+- No-backward-compatibility policy: we own the full codebase end to end. Do not add or preserve backward-compatibility layers (deprecated paths, adapters, fallbacks, shims, version-bridging logic, or legacy schema support) unless explicitly asked. Remove them when encountered. Standardize on the current contract, schema, config, and runtime path. Do not add new compatibility code "just in case". If compatibility seems necessary, flag it explicitly rather than implementing it silently.
