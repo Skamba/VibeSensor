@@ -72,7 +72,9 @@ async def cancel_task(mgr: UpdateManager) -> None:
 
 def assert_hotspot_restored(runner: FakeRunner) -> None:
     restore_calls = [
-        call for call in runner.calls if "VibeSensor-AP" in " ".join(call[0]) and "up" in " ".join(call[0])
+        call
+        for call in runner.calls
+        if "VibeSensor-AP" in " ".join(call[0]) and "up" in " ".join(call[0])
     ]
     assert len(restore_calls) > 0
 

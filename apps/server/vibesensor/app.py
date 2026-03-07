@@ -50,7 +50,10 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         try:
             await runtime.lifecycle.start()
         except Exception:
-            LOGGER.error("Runtime lifecycle start failed; cleaning up before re-raise", exc_info=True)
+            LOGGER.error(
+                "Runtime lifecycle start failed; cleaning up before re-raise",
+                exc_info=True,
+            )
             await runtime.lifecycle.stop()
             raise
         try:

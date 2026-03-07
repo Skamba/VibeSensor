@@ -34,7 +34,12 @@ if TYPE_CHECKING:
 def create_router(services: RuntimeRouteServices) -> APIRouter:
     """Assemble all domain-specific route groups into one router."""
     router = APIRouter()
-    router.include_router(create_health_routes(services.processing.state, services.ingress.processor))
+    router.include_router(
+        create_health_routes(
+            services.processing.state,
+            services.ingress.processor,
+        )
+    )
     router.include_router(
         create_settings_routes(
             services.settings.settings_store,
