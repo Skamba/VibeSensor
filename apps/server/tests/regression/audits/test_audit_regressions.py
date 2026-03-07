@@ -512,7 +512,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from vibesensor.api import _flatten_for_csv, _safe_filename
 from vibesensor.gps_speed import (
     _GPS_RECONNECT_DELAY_S,
     _GPS_RECONNECT_MAX_DELAY_S,
@@ -522,6 +521,8 @@ from vibesensor.gps_speed import (
     GPSSpeedMonitor,
 )
 from vibesensor.history_db import HistoryDB
+from vibesensor.routes._helpers import safe_filename as _safe_filename
+from vibesensor.routes.history import flatten_for_csv as _flatten_for_csv
 from vibesensor.worker_pool import WorkerPool
 from vibesensor.ws_hub import WebSocketHub
 
@@ -1063,6 +1064,7 @@ from vibesensor.analysis.summary import (
     summarize_run_data,
 )
 from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
+from vibesensor.metrics_log.sample_builder import extract_strength_data, resolve_speed_context
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -1088,7 +1090,6 @@ class _FakeSeg:
 
 
 _SUITABILITY_DEFAULTS: dict[str, Any] = {
-    "language": "en",
     "steady_speed": False,
     "speed_sufficient": True,
     "sensor_ids": {"s1", "s2", "s3"},
@@ -1619,7 +1620,7 @@ class TestExtractStrengthData:
     """Direct unit tests for MetricsLogger._extract_strength_data."""
 
     def test_empty_metrics(self) -> None:
-        strength, db, bucket, peak, floor, peaks = MetricsLogger._extract_strength_data({})
+        strength, db, bucket, peak, floor, peaks = extract_strength_data({})
         assert strength == {}
         assert db is None
         assert bucket is None
@@ -1635,7 +1636,7 @@ class TestExtractStrengthData:
                 "top_peaks": [{"hz": 45.0, "amp": 0.015}],
             }
         }
-        strength, db, bucket, peak, floor, peaks = MetricsLogger._extract_strength_data(metrics)
+        strength, db, bucket, peak, floor, peaks = extract_strength_data(metrics)
         assert db == pytest.approx(18.5)
         assert bucket == "l3"
         assert len(peaks) == 1
@@ -1651,7 +1652,7 @@ class TestExtractStrengthData:
                 }
             }
         }
-        strength, db, bucket, _, _, _ = MetricsLogger._extract_strength_data(metrics)
+        strength, db, bucket, _, _, _ = extract_strength_data(metrics)
         assert db == pytest.approx(12.0)
         assert bucket == "l2"
 
@@ -1668,7 +1669,7 @@ class TestExtractStrengthData:
                 ],
             }
         }
-        _, _, _, _, _, peaks = MetricsLogger._extract_strength_data(metrics)
+        _, _, _, _, _, peaks = extract_strength_data(metrics)
         assert len(peaks) == 1
         assert peaks[0]["hz"] == pytest.approx(50.0)
 
@@ -1680,7 +1681,7 @@ class TestExtractStrengthData:
                 "top_peaks": [],
             }
         }
-        _, _, bucket, _, _, _ = MetricsLogger._extract_strength_data(metrics)
+        _, _, bucket, _, _, _ = extract_strength_data(metrics)
         assert bucket is None
 
 
@@ -1698,7 +1699,9 @@ class TestResolveSpeedContext:
 
     def test_no_speed_available(self) -> None:
         logger, _ = _make_metrics_logger()
-        speed_kmh, gps_speed, source, rpm, fdr, gr = logger._resolve_speed_context()
+        speed_kmh, gps_speed, source, rpm, fdr, gr = resolve_speed_context(
+            logger.gps_monitor, logger.analysis_settings.snapshot()
+        )
         assert speed_kmh is None
         assert rpm is None
 
@@ -1706,7 +1709,9 @@ class TestResolveSpeedContext:
         logger, gps_mock = _make_metrics_logger()
         gps_mock.speed_mps = 10.0  # 36 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
-        speed_kmh, gps_speed, source, rpm, _, _ = logger._resolve_speed_context()
+        speed_kmh, gps_speed, source, rpm, _, _ = resolve_speed_context(
+            logger.gps_monitor, logger.analysis_settings.snapshot()
+        )
         assert speed_kmh == pytest.approx(36.0, rel=0.01)
         assert gps_speed == pytest.approx(36.0, rel=0.01)
         assert source == "gps"
@@ -1716,7 +1721,9 @@ class TestResolveSpeedContext:
         logger, gps_mock = _make_metrics_logger()
         gps_mock.override_speed_mps = 20.0  # 72 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="manual", speed_mps=20.0)
-        speed_kmh, _, source, _, _, _ = logger._resolve_speed_context()
+        speed_kmh, _, source, _, _, _ = resolve_speed_context(
+            logger.gps_monitor, logger.analysis_settings.snapshot()
+        )
         assert speed_kmh == pytest.approx(72.0, rel=0.01)
         assert source == "manual"
 
@@ -1732,7 +1739,9 @@ class TestResolveSpeedContext:
             "current_gear_ratio": None,  # missing
             "tire_deflection_factor": None,
         }
-        _, _, _, rpm, _, _ = logger._resolve_speed_context()
+        _, _, _, rpm, _, _ = resolve_speed_context(
+            logger.gps_monitor, logger.analysis_settings.snapshot()
+        )
         assert rpm is None, "Without gear_ratio, RPM should not be estimated"
 
 
@@ -1822,7 +1831,6 @@ from vibesensor.analysis.report_data_builder import (
     _top_strength_values,
     map_summary,
 )
-from vibesensor.report import pdf_builder
 from vibesensor.report.pdf_builder import (
     _draw_next_steps_table,
     _draw_peaks_table,
@@ -1998,7 +2006,6 @@ class TestNextStepFieldsNotRendered:
         assert ns.confirm == "Noise disappears at low speed"
         assert ns.falsify == "Noise persists with new bearing"
         assert ns.eta == "30 min"
-        assert ns.speed_band == "60-90 km/h"
 
     def test_pdf_renderer_renders_confirm_falsify_eta(self) -> None:
         """After fix: renderer now accesses .action, .why, and optional fields."""
@@ -2158,54 +2165,6 @@ class TestSystemFindingCardToneUnused:
 
 # ===================================================================
 # Finding 7 (NEW):
-#   ObservedSignature.phase and ReportTemplateData.phase_info are
-#   computed and stored but never rendered in the PDF.
-# ===================================================================
-
-
-class TestPhaseFieldsNeverRendered:
-    """ObservedSignature.phase is populated from _dominant_phase() and
-    phase_info is passed through to ReportTemplateData, but the PDF
-    renderer never accesses either field.
-
-    Evidence: grep -n 'phase' pdf_builder.py → 0 results.
-    Impact: driving-phase context (acceleration/deceleration/coast-down)
-            is invisible in the PDF report despite being computed.
-    """
-
-    def test_observed_phase_populated(self) -> None:
-        summary = _make_minimal_summary(
-            overrides={
-                "phase_info": {
-                    "phase_counts": {
-                        "idle": 5,
-                        "acceleration": 50,
-                        "cruise": 100,
-                        "deceleration": 20,
-                    }
-                }
-            }
-        )
-        data = map_summary(summary)
-        # phase is populated
-        assert data.observed.phase is not None
-        assert data.observed.phase == "cruise"
-        # phase_info is passed through
-        assert data.phase_info is not None
-        assert "phase_counts" in data.phase_info
-
-    def test_phase_not_in_pdf_renderer_source(self) -> None:
-        source = inspect.getsource(pdf_builder)
-        # The word 'phase' appears nowhere in the PDF builder
-        # (except possibly in comment strings or variable names like
-        # phase_segments for transient findings)
-        # But observed.phase and data.phase_info are never accessed
-        assert "observed.phase" not in source
-        assert "data.phase_info" not in source
-
-
-# ===================================================================
-# Finding 8 (NEW):
 #   Data trust panel has no boundary check — long detail strings can
 #   draw below the panel rectangle.
 # ===================================================================
@@ -2289,19 +2248,6 @@ class TestFindingStrengthValuesWastedComputation:
         result = _finding_strength_values(finding)
         # Returns 25.0 immediately without using peak_amp
         assert result == 25.0
-
-    def test_fallback_uses_peak_amp_and_noise_floor(self) -> None:
-        finding = {
-            "amplitude_metric": {"value": 0.05},
-            "evidence_metrics": {
-                # No vibration_strength_db → falls through to canonical calc
-                "mean_noise_floor": 0.01,
-            },
-        }
-        result = _finding_strength_values(finding)
-        # Should compute canonical_vibration_db(0.05, 0.01)
-        assert result is not None
-        assert result > 0
 
     def test_returns_none_when_no_metrics(self) -> None:
         result = _finding_strength_values({})

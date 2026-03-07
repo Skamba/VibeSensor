@@ -1100,7 +1100,7 @@ class TestOrderLabel:
             (3, "engine", "3x engine"),
             (2, "driveline", "2x driveline"),
         ],
-        ids=["basic", "higher-order", "legacy-two-arg"],
+        ids=["basic", "higher-order", "driveline"],
     )
     def test_two_arg(self, order: int, base: str, expected: str) -> None:
         assert _order_label(order, base) == expected

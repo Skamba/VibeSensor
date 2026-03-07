@@ -2,9 +2,8 @@
 
 These tests verify:
 1. The routes package assembles all domain sub-routers correctly
-2. Backward-compatible imports from vibesensor.api still work
-3. Each route module is self-contained (imports resolve)
-4. The assembled router exposes all expected endpoints
+2. Each route module is self-contained (imports resolve)
+3. The assembled router exposes all expected endpoints
 """
 
 from __future__ import annotations
@@ -27,24 +26,6 @@ _EXPECTED_MODULES = (
     "websocket",
 )
 
-# Symbols that must remain importable from vibesensor.api (backward compat)
-_CALLABLE_COMPAT_SYMBOLS = (
-    "create_router",
-    "_safe_filename",
-    "_bounded_sample",
-    "build_report_pdf",
-)
-
-_MODEL_COMPAT_SYMBOLS = (
-    "ActiveCarRequest",
-    "AnalysisSettingsRequest",
-    "AnalysisSettingsResponse",
-    "CarLibraryModelsResponse",
-    "CarUpsertRequest",
-    "SetLocationRequest",
-    "UpdateStartRequest",
-)
-
 
 class TestRoutesPackageStructure:
     """Verify the routes package has the expected modules."""
@@ -64,35 +45,6 @@ class TestRoutesPackageStructure:
     def test_each_module_importable(self, mod_name: str) -> None:
         mod = importlib.import_module(f"vibesensor.routes.{mod_name}")
         assert mod is not None
-
-
-class TestBackwardCompatImports:
-    """Verify that all symbols previously imported from vibesensor.api still work."""
-
-    @pytest.mark.parametrize("symbol", _CALLABLE_COMPAT_SYMBOLS)
-    def test_callable_symbol(self, symbol: str) -> None:
-        from vibesensor import api
-
-        obj = getattr(api, symbol)
-        assert callable(obj)
-
-    def test_flatten_for_csv(self) -> None:
-        from vibesensor.api import _flatten_for_csv
-
-        result = _flatten_for_csv({"record_type": "sample", "t_s": 1.0})
-        assert result["record_type"] == "sample"
-
-    def test_export_csv_columns(self) -> None:
-        from vibesensor.api import _EXPORT_CSV_COLUMNS
-
-        assert isinstance(_EXPORT_CSV_COLUMNS, tuple)
-        assert "t_s" in _EXPORT_CSV_COLUMNS
-
-    @pytest.mark.parametrize("symbol", _MODEL_COMPAT_SYMBOLS)
-    def test_api_model_reexport(self, symbol: str) -> None:
-        from vibesensor import api
-
-        assert getattr(api, symbol) is not None
 
 
 _EXPECTED_PATHS = (

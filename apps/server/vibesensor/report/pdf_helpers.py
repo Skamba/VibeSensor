@@ -1,22 +1,10 @@
-"""PDF report helper functions – color utilities and location hotspot analysis."""
+"""PDF report helper functions – color utilities."""
 
 from __future__ import annotations
 
-from collections import defaultdict
-from typing import TYPE_CHECKING, Any
-
-from ..runlog import as_float_or_none as _as_float
 from .theme import (
     FINDING_SOURCE_COLORS,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-_PEAK_RATIO_LOCALIZATION_THRESHOLD = 1.15
-"""When the strongest sensor reads ≥1.15× the second-strongest, the report
-attributes the vibration source to the wheel at that location."""
-
 
 # ── Module-level constants ────────────────────────────────────────────────
 
@@ -54,91 +42,3 @@ def _canonical_location(raw: object) -> str:
 def _source_color(source: object) -> str:
     src = str(source or "unknown").strip().lower()
     return FINDING_SOURCE_COLORS.get(src, FINDING_SOURCE_COLORS["unknown"])
-
-
-# ── Location hotspot analysis ─────────────────────────────────────────
-
-
-def location_hotspots(
-    samples_obj: object,
-    findings_obj: object,
-    *,
-    tr: Callable[..., str],
-    text_fn: Callable[..., str],
-) -> tuple[list[dict[str, Any]], str, int, int]:
-    """Analyse samples and findings to produce per-location vibration hotspots.
-
-    Returns a tuple of ``(hotspot_rows, summary_text, total_samples, loc_count)``.
-    """
-    if not isinstance(samples_obj, list):
-        return [], tr("LOCATION_ANALYSIS_UNAVAILABLE"), 0, 0
-    all_locations: set[str] = set()
-    amp_by_location: dict[str, list[float]] = defaultdict(list)
-
-    _float = _as_float  # local bind for hot loop
-    for sample in samples_obj:
-        if not isinstance(sample, dict):
-            continue
-        client_name = str(sample.get("client_name") or "").strip()
-        client_id = str(sample.get("client_id") or "").strip()
-        location = client_name or (
-            tr("SENSOR_ID_SUFFIX", sensor_id=client_id[-4:])
-            if client_id
-            else tr("UNLABELED_SENSOR")
-        )
-        all_locations.add(location)
-        amp = _float(sample.get("vibration_strength_db"))
-        if amp is not None and amp > 0:
-            amp_by_location[location].append(amp)
-
-    amp_unit = "db"
-    hotspot_rows: list[dict[str, Any]] = []
-    for location, amps in amp_by_location.items():
-        peak_val = max(amps)
-        mean_val = sum(amps) / len(amps)
-        row: dict[str, Any] = {
-            "location": location,
-            "count": len(amps),
-            "unit": amp_unit,
-            "peak_value": peak_val,
-            "mean_value": mean_val,
-            "peak_db": peak_val,
-            "mean_db": mean_val,
-        }
-        hotspot_rows.append(row)
-    hotspot_rows.sort(
-        key=lambda row: (float(row["peak_value"]), float(row["mean_value"])), reverse=True
-    )
-    if not hotspot_rows:
-        return (
-            [],
-            tr("NO_USABLE_AMPLITUDE_BY_LOCATION_DATA_WAS_FOUND"),
-            0,
-            len(all_locations),
-        )
-
-    active_count = len(hotspot_rows)
-    monitored_count = len(all_locations)
-    strongest = hotspot_rows[0]
-    strongest_loc = str(strongest["location"])
-    strongest_peak = float(strongest["peak_value"])
-    summary_text = tr(
-        "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB",
-        active_count=active_count,
-        monitored_count=monitored_count,
-        strongest_loc=strongest_loc,
-        strongest_peak=strongest_peak,
-    )
-    if (
-        monitored_count >= 3
-        and active_count == monitored_count
-        and "wheel" in strongest_loc.lower()
-        and len(hotspot_rows) >= 2
-    ):
-        second_peak = float(hotspot_rows[1]["peak_value"])
-        if second_peak > 0 and (strongest_peak / second_peak) >= _PEAK_RATIO_LOCALIZATION_THRESHOLD:
-            summary_text += tr(
-                "SINCE_ALL_SENSORS_SAW_THE_SIGNATURE_BUT_STRONGEST",
-                strongest_loc=strongest_loc,
-            )
-    return hotspot_rows, summary_text, active_count, monitored_count

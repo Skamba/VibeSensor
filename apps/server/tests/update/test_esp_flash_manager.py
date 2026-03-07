@@ -9,7 +9,6 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 
-from vibesensor.api import create_router
 from vibesensor.esp_flash_manager import (
     EspFlashManager,
     FlashCommandRunner,
@@ -21,6 +20,7 @@ from vibesensor.firmware_cache import (
     FirmwareCacheConfig,
     validate_bundle,
 )
+from vibesensor.routes import create_router
 
 # ── Constants ──
 

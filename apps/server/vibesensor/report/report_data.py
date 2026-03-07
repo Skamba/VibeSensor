@@ -76,7 +76,6 @@ class ObservedSignature(_FromDictMixin):
     primary_system: str | None = None
     strongest_sensor_location: str | None = None
     speed_band: str | None = None
-    phase: str | None = None
     strength_label: str | None = None
     strength_peak_db: float | None = None
     certainty_label: str | None = None
@@ -89,7 +88,6 @@ class PartSuggestion:
     """A suggested replacement part associated with a diagnostic finding."""
 
     name: str = ""
-    why_shown: str | None = None
 
     @classmethod
     def from_dict(cls, d: Any) -> Self:
@@ -125,8 +123,6 @@ class NextStep(_FromDictMixin):
 
     action: str = ""
     why: str | None = None
-    rank: int = 999
-    speed_band: str | None = None
     confirm: str | None = None
     falsify: str | None = None
     eta: str | None = None
@@ -217,7 +213,6 @@ class ReportTemplateData:
     data_trust: list[DataTrustItem] = field(default_factory=list)
     pattern_evidence: PatternEvidence = field(default_factory=PatternEvidence)
     peak_rows: list[PeakRow] = field(default_factory=list)
-    phase_info: dict[str, Any] | None = None
     version_marker: str = ""
     lang: str = "en"
     certainty_tier_key: str = "C"

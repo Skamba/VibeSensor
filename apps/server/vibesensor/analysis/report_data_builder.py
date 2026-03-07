@@ -14,12 +14,7 @@ from collections.abc import Callable
 from statistics import mean as _mean
 from typing import Any
 
-from vibesensor_core.vibration_strength import (
-    vibration_strength_db_scalar as canonical_vibration_db,
-)
-
 from .. import __version__
-from ..constants import NUMERIC_TYPES
 from ..report.report_data import (
     CarMeta,
     DataTrustItem,
@@ -137,27 +132,13 @@ def _human_source(source: object, *, tr: Callable[[str], str]) -> str:
 
 
 def _finding_strength_values(finding: dict[str, Any]) -> float | None:
-    amp_metric = finding.get("amplitude_metric")
-    peak_amp = _as_float(amp_metric.get("value")) if isinstance(amp_metric, dict) else None
-
     evidence_metrics = finding.get("evidence_metrics")
     db_value = (
         _as_float(evidence_metrics.get("vibration_strength_db"))
         if isinstance(evidence_metrics, dict)
         else None
     )
-    if db_value is not None:
-        return db_value
-
-    if isinstance(evidence_metrics, dict):
-        noise_floor = _as_float(evidence_metrics.get("mean_noise_floor"))
-        if peak_amp is not None and noise_floor is not None and noise_floor > 0:
-            return canonical_vibration_db(
-                peak_band_rms_amp_g=peak_amp,
-                floor_amp_g=noise_floor,
-            )
-
-    return None
+    return db_value
 
 
 def _top_strength_values(
@@ -192,26 +173,6 @@ def _top_strength_values(
         if isinstance(row, dict)
     ]
     return max((value for value in sensor_rows if value is not None), default=None)
-
-
-def _dominant_phase(phase_info: dict | None) -> str | None:
-    """Return the dominant non-idle driving phase from a phase_info summary dict."""
-    if not isinstance(phase_info, dict):
-        return None
-    counts = phase_info.get("phase_counts")
-    if not isinstance(counts, dict) or not counts:
-        return None
-    # Prefer the non-idle phase with the highest sample count.
-    _IDLE_KEY = "idle"
-    best_phase: str | None = None
-    best_count = 0
-    for phase_key, count in counts.items():
-        if phase_key == _IDLE_KEY:
-            continue
-        if isinstance(count, NUMERIC_TYPES) and count > best_count:
-            best_count = int(count)
-            best_phase = phase_key
-    return best_phase
 
 
 def _peak_classification_text(value: object, tr: Callable[..., str]) -> str:
@@ -277,8 +238,6 @@ def _compute_location_hotspot_rows(
                 "unit": "db",
                 "peak_value": peak_val,
                 "mean_value": mean_val,
-                "peak_db": peak_val,
-                "mean_db": mean_val,
             }
         )
     hotspot_rows.sort(
@@ -350,8 +309,8 @@ def _extract_run_context(
     )
 
 
-def _extract_sensor_locations(summary: dict) -> tuple[list[str], list[str]]:
-    """Return ``(sensor_locations_active, sensor_locations_all)`` from a run summary."""
+def _extract_sensor_locations(summary: dict) -> list[str]:
+    """Return ``sensor_locations_active`` from a run summary."""
     sensor_locations_all = summary.get("sensor_locations", [])
     if not isinstance(sensor_locations_all, list):
         sensor_locations_all = []
@@ -361,7 +320,7 @@ def _extract_sensor_locations(summary: dict) -> tuple[list[str], list[str]]:
     sensor_locations_active = [str(loc) for loc in connected_locations if str(loc).strip()]
     if not sensor_locations_active:
         sensor_locations_active = [str(loc) for loc in sensor_locations_all if str(loc).strip()]
-    return sensor_locations_active, sensor_locations_all
+    return sensor_locations_active
 
 
 def _build_next_steps_from_summary(
@@ -380,11 +339,11 @@ def _build_next_steps_from_summary(
             (tr("TIER_A_CAPTURE_MORE_SENSORS"), cert_reason),
             (tr("TIER_A_CAPTURE_REFERENCE_DATA"), cert_reason),
         ]
-        for idx, (action, why) in enumerate(_guidance, start=1):
-            next_steps.append(NextStep(action=action, why=why, rank=idx))
+        for action, why in _guidance:
+            next_steps.append(NextStep(action=action, why=why))
     else:
         test_plan = [s for s in summary.get("test_plan", []) if isinstance(s, dict)]
-        for idx, step in enumerate(test_plan, start=1):
+        for step in test_plan:
             what_raw = step.get("what") or ""
             why_raw = step.get("why") or ""
             what = _resolve_i18n(lang, what_raw) if _is_i18n_ref(what_raw) else str(what_raw)
@@ -401,8 +360,6 @@ def _build_next_steps_from_summary(
                 NextStep(
                     action=what,
                     why=why or None,
-                    rank=idx,
-                    speed_band=str(step.get("speed_band") or "") or None,
                     confirm=confirm or None,
                     falsify=falsify or None,
                     eta=str(step.get("eta") or "") or None,
@@ -550,7 +507,7 @@ def _build_system_cards(
         tone = cause.get("confidence_tone", "neutral")
 
         card_system_name = src_human
-        card_parts = [PartSuggestion(name=p, why_shown=c_reason) for p in parts_list]
+        card_parts = [PartSuggestion(name=p) for p in parts_list]
         if tier == "B":
             # Tier B: label as hypothesis, suppress repair-oriented parts.
             card_system_name = f"{src_human} — {tr('TIER_B_HYPOTHESIS_LABEL')}"
@@ -656,12 +613,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
     if origin_location.lower() == "unknown":
         origin_location = ""
 
-    sensor_locations_active, _sensor_locations_all = _extract_sensor_locations(summary)
-
-    # -- Phase info --
-    raw_phase_info = summary.get("phase_info")
-    phase_info = dict(raw_phase_info) if isinstance(raw_phase_info, dict) else None
-    dom_phase = _dominant_phase(phase_info)
+    sensor_locations_active = _extract_sensor_locations(summary)
 
     # -- Observed signature --
     primary_candidates = top_causes or findings_non_ref
@@ -677,7 +629,6 @@ def map_summary(summary: dict) -> ReportTemplateData:
         primary_speed = str(
             primary_candidate.get("strongest_speed_band")
             or primary_candidate.get("speed_band")
-            or primary_candidate.get("dominant_speed_band")
             or tr("UNKNOWN")
         )
         conf = _extract_confidence(primary_candidate)
@@ -717,7 +668,6 @@ def map_summary(summary: dict) -> ReportTemplateData:
         primary_system=primary_system,
         strongest_sensor_location=primary_location,
         speed_band=primary_speed,
-        phase=dom_phase,
         strength_label=str_text,
         strength_peak_db=db_val,
         certainty_label=cert_label_text,
@@ -836,7 +786,6 @@ def map_summary(summary: dict) -> ReportTemplateData:
         data_trust=data_trust,
         pattern_evidence=pattern_evidence,
         peak_rows=peak_rows,
-        phase_info=phase_info,
         version_marker=version_marker,
         lang=lang,
         certainty_tier_key=tier,

@@ -44,8 +44,6 @@ def _combine_amplitude_strength_db(values_db: list[float]) -> float:
     if count == 0:
         return SILENCE_DB
     mean_linear = total / count
-    if mean_linear <= 0.0:
-        return SILENCE_DB
     return vibration_strength_db_scalar(
         peak_band_rms_amp_g=mean_linear,
         floor_amp_g=1.0,
@@ -55,7 +53,6 @@ def _combine_amplitude_strength_db(values_db: list[float]) -> float:
 
 @dataclass(slots=True)
 class _RecentEvent:
-    ts_ms: int
     sensor_id: str
     sensor_label: str
     sensor_location: str

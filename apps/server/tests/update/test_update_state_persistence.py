@@ -11,15 +11,10 @@ from unittest.mock import patch
 
 import pytest
 
-from vibesensor.update_manager import (
-    CommandRunner,
-    UpdateIssue,
-    UpdateJobStatus,
-    UpdateManager,
-    UpdatePhase,
-    UpdateState,
-    UpdateStateStore,
-)
+from vibesensor.update.manager import UpdateManager
+from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
+from vibesensor.update.runner import CommandRunner
+from vibesensor.update.state_store import UpdateStateStore
 
 # ---------------------------------------------------------------------------
 # Fake runner (minimal; only records calls)

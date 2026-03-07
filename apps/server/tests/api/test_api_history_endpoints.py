@@ -13,7 +13,7 @@ import pytest
 from fastapi import FastAPI, HTTPException, WebSocketDisconnect
 
 from vibesensor.analysis import summarize_run_data
-from vibesensor.api import create_router
+from vibesensor.routes import create_router
 
 
 def _make_metadata(**overrides: Any) -> dict[str, Any]:
@@ -532,7 +532,7 @@ async def test_history_export_uses_streaming_response() -> None:
 @pytest.mark.asyncio
 async def test_history_export_csv_has_fixed_columns() -> None:
     """CSV header uses the fixed column schema regardless of sample keys."""
-    from vibesensor.api import _EXPORT_CSV_COLUMNS
+    from vibesensor.routes.history import EXPORT_CSV_COLUMNS as _EXPORT_CSV_COLUMNS
 
     router, _ = _make_router_and_state(language="en", sample_count=5)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
