@@ -35,18 +35,13 @@ from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import utc_now_iso
+from .helpers import PHASE_I18N_KEYS
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 
 # ---------------------------------------------------------------------------
 # Module-level constant mappings (hoisted out of per-call functions)
 # ---------------------------------------------------------------------------
-
-_PHASE_I18N_KEYS: dict[str, str] = {
-    "acceleration": "DRIVING_PHASE_ACCELERATION",
-    "deceleration": "DRIVING_PHASE_DECELERATION",
-    "coast_down": "DRIVING_PHASE_COAST_DOWN",
-}
 
 _ORDER_LABEL_NAMES_NL: dict[str, str] = {
     "wheel": "wielorde",
@@ -100,7 +95,7 @@ def _resolve_i18n(lang: str, value: object) -> str:
             resolved_params[pk] = _human_source(pv, tr=lambda k, **kw: _tr(lang, k, **kw))
         elif pk == "phase" and isinstance(pv, str):
             # Translate phase codes to human-readable form
-            i18n_key = _PHASE_I18N_KEYS.get(pv)
+            i18n_key = PHASE_I18N_KEYS.get(pv)
             resolved_params[pk] = _tr(lang, i18n_key) if i18n_key else pv
         else:
             resolved_params[pk] = pv

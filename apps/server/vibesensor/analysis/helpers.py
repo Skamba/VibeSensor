@@ -34,6 +34,15 @@ CONSTANT_SPEED_STDDEV_KMH = 0.5
 STEADY_SPEED_STDDEV_KMH = 2.0
 STEADY_SPEED_RANGE_KMH = 8.0
 
+# Maps driving-phase keys to their canonical i18n label keys.
+# Shared by summary.py (phase-onset notes) and report_data_builder.py
+# (phase param resolution in _resolve_i18n) to prevent drift between the two.
+PHASE_I18N_KEYS: dict[str, str] = {
+    "acceleration": "DRIVING_PHASE_ACCELERATION",
+    "deceleration": "DRIVING_PHASE_DECELERATION",
+    "coast_down": "DRIVING_PHASE_COAST_DOWN",
+}
+
 
 def weak_spatial_dominance_threshold(location_count: int | None) -> float:
     """Return adaptive dominance threshold for weak spatial separation.

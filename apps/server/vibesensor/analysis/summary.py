@@ -33,6 +33,7 @@ from .findings import (
 from .helpers import (
     MEMS_NOISE_FLOOR_G,
     ORDER_MIN_CONFIDENCE,
+    PHASE_I18N_KEYS,
     SPEED_COVERAGE_MIN_PCT,
     SPEED_MIN_POINTS,
     _format_duration,
@@ -75,14 +76,6 @@ from .test_plan import _merge_test_plan
 # Fraction of sensor ADC limit above which a sample is considered clipping.
 # 2% headroom accounts for quantization effects near the ADC rail.
 _SATURATION_FRACTION = 0.98
-
-# Maps driving-phase keys to their i18n label keys (used by
-# _most_likely_origin_summary for phase-onset notes in the explanation).
-_PHASE_I18N_MAP: dict[str, str] = {
-    "acceleration": "DRIVING_PHASE_ACCELERATION",
-    "deceleration": "DRIVING_PHASE_DECELERATION",
-    "coast_down": "DRIVING_PHASE_COAST_DOWN",
-}
 
 
 def _normalize_lang(lang: object) -> str:
@@ -413,7 +406,7 @@ def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> di
     if weak:
         explanation_parts.append(_i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
     dominant_phase = str(top.get("dominant_phase") or "").strip()
-    if dominant_phase and dominant_phase in _PHASE_I18N_MAP:
+    if dominant_phase and dominant_phase in PHASE_I18N_KEYS:
         explanation_parts.append(_i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
     # Store explanation as structured i18n parts for render-time resolution.
     explanation = explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts
@@ -727,6 +720,80 @@ def _build_run_suitability_checks(
     return run_suitability
 
 
+def _compute_reference_completeness(metadata: dict[str, Any]) -> bool:
+    """Return True when enough reference metadata is present for order analysis.
+
+    Requires all three groups:
+    1. A ``raw_sample_rate_hz`` value (FFT reference).
+    2. Tire circumference — either explicit or computable from width/aspect/rim.
+    3. Engine reference — either a direct RPM value or a gear+final-drive ratio pair.
+    """
+    return bool(
+        _as_float(metadata.get("raw_sample_rate_hz"))
+        and (
+            _as_float(metadata.get("tire_circumference_m"))
+            or tire_circumference_m_from_spec(
+                _as_float(metadata.get("tire_width_mm")),
+                _as_float(metadata.get("tire_aspect_pct")),
+                _as_float(metadata.get("rim_in")),
+            )
+        )
+        and (
+            _as_float(metadata.get("engine_rpm"))
+            or (
+                _as_float(metadata.get("final_drive_ratio"))
+                and _as_float(metadata.get("current_gear_ratio"))
+            )
+        )
+    )
+
+
+def _build_data_quality_dict(
+    samples: list[dict[str, Any]],
+    speed_values: list[float],
+    speed_stats: dict[str, Any],
+    speed_non_null_pct: float,
+    accel_stats: dict[str, Any],
+    amp_metric_values: list[float],
+) -> dict[str, Any]:
+    """Build the ``data_quality`` sub-dict for the run summary.
+
+    Groups required-field missing-rate, speed coverage stats, acceleration
+    sanity checks, and outlier summaries into one structured block.
+    """
+    return {
+        "required_missing_pct": {
+            "t_s": _percent_missing(samples, "t_s"),
+            "speed_kmh": _percent_missing(samples, "speed_kmh"),
+            "accel_x": _percent_missing(samples, "accel_x_g"),
+            "accel_y": _percent_missing(samples, "accel_y_g"),
+            "accel_z": _percent_missing(samples, "accel_z_g"),
+        },
+        "speed_coverage": {
+            "non_null_pct": speed_non_null_pct,
+            "min_kmh": min(speed_values) if speed_values else None,
+            "max_kmh": max(speed_values) if speed_values else None,
+            "mean_kmh": speed_stats.get("mean_kmh"),
+            "stddev_kmh": speed_stats.get("stddev_kmh"),
+            "count_non_null": len(speed_values),
+        },
+        "accel_sanity": {
+            "x_mean": accel_stats["x_mean"],
+            "x_variance": accel_stats["x_var"],
+            "y_mean": accel_stats["y_mean"],
+            "y_variance": accel_stats["y_var"],
+            "z_mean": accel_stats["z_mean"],
+            "z_variance": accel_stats["z_var"],
+            "sensor_limit": accel_stats["sensor_limit"],
+            "saturation_count": accel_stats["sat_count"],
+        },
+        "outliers": {
+            "accel_magnitude": _outlier_summary(accel_stats["accel_mag_vals"]),
+            "amplitude_metric": _outlier_summary(amp_metric_values),
+        },
+    }
+
+
 def summarize_run_data(
     metadata: dict[str, Any],
     samples: list[dict[str, Any]],
@@ -797,24 +864,7 @@ def summarize_run_data(
     phase_timeline = _build_phase_timeline(phase_segments, findings)
 
     # --- Reference completeness ---
-    reference_complete = bool(
-        _as_float(metadata.get("raw_sample_rate_hz"))
-        and (
-            _as_float(metadata.get("tire_circumference_m"))
-            or tire_circumference_m_from_spec(
-                _as_float(metadata.get("tire_width_mm")),
-                _as_float(metadata.get("tire_aspect_pct")),
-                _as_float(metadata.get("rim_in")),
-            )
-        )
-        and (
-            _as_float(metadata.get("engine_rpm"))
-            or (
-                _as_float(metadata.get("final_drive_ratio"))
-                and _as_float(metadata.get("current_gear_ratio"))
-            )
-        )
-    )
+    reference_complete = _compute_reference_completeness(metadata)
 
     # --- Run suitability checks ---
     steady_speed = bool(speed_stats.get("steady_speed"))
@@ -924,37 +974,14 @@ def summarize_run_data(
         "sensor_intensity_by_location": sensor_intensity_by_location,
         "run_suitability": run_suitability,
         "samples": samples,
-        "data_quality": {
-            "required_missing_pct": {
-                "t_s": _percent_missing(samples, "t_s"),
-                "speed_kmh": _percent_missing(samples, "speed_kmh"),
-                "accel_x": _percent_missing(samples, "accel_x_g"),
-                "accel_y": _percent_missing(samples, "accel_y_g"),
-                "accel_z": _percent_missing(samples, "accel_z_g"),
-            },
-            "speed_coverage": {
-                "non_null_pct": speed_non_null_pct,
-                "min_kmh": min(speed_values) if speed_values else None,
-                "max_kmh": max(speed_values) if speed_values else None,
-                "mean_kmh": speed_stats.get("mean_kmh"),
-                "stddev_kmh": speed_stats.get("stddev_kmh"),
-                "count_non_null": len(speed_values),
-            },
-            "accel_sanity": {
-                "x_mean": accel_stats["x_mean"],
-                "x_variance": accel_stats["x_var"],
-                "y_mean": accel_stats["y_mean"],
-                "y_variance": accel_stats["y_var"],
-                "z_mean": accel_stats["z_mean"],
-                "z_variance": accel_stats["z_var"],
-                "sensor_limit": accel_stats["sensor_limit"],
-                "saturation_count": accel_stats["sat_count"],
-            },
-            "outliers": {
-                "accel_magnitude": _outlier_summary(accel_stats["accel_mag_vals"]),
-                "amplitude_metric": _outlier_summary(amp_metric_values),
-            },
-        },
+        "data_quality": _build_data_quality_dict(
+            samples,
+            speed_values,
+            speed_stats,
+            speed_non_null_pct,
+            accel_stats,
+            amp_metric_values,
+        ),
     }
     # --- Plot generation & peak annotation ---
     summary["plots"] = _plot_data(
