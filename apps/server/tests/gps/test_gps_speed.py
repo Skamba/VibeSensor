@@ -64,9 +64,9 @@ def test_manual_selected_no_override_no_gps_returns_none() -> None:
     assert monitor.effective_speed_mps is None
 
 
-def test_resolve_speed_legacy_override_has_priority() -> None:
+def test_resolve_speed_default_override_has_priority() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor.manual_source_selected = None
+    assert monitor.manual_source_selected is True
     monitor.override_speed_mps = 12.0
     monitor.speed_mps = 20.0
     monitor.last_update_ts = time.monotonic()

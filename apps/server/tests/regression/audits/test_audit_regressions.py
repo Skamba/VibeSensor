@@ -804,7 +804,7 @@ class TestGPSFallbackSettings:
 
     def test_set_manual_source_selected(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
-        assert m.manual_source_selected is None
+        assert m.manual_source_selected is True
         m.set_manual_source_selected(True)
         assert m.manual_source_selected is True
         m.set_manual_source_selected(False)

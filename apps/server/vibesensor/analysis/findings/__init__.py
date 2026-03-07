@@ -1,6 +1,6 @@
 """vibesensor.analysis.findings – post-stop vibration findings engine.
 
-Previously a single 1,600-line module, now split into focused sub-modules:
+Split into focused sub-modules:
 
 - ``builder``            – main ``_build_findings()`` orchestrator
 - ``order_findings``     – order-tracking hypothesis matching
@@ -10,8 +10,7 @@ Previously a single 1,600-line module, now split into focused sub-modules:
 - ``reference_checks``   – reference-missing finding generation
 - ``_constants``         – shared constants
 
-All public symbols are re-exported here so that existing imports of the form
-``from vibesensor.analysis.findings import X`` continue to work unchanged.
+All public symbols are re-exported here for convenient package-level imports.
 """
 
 from ..helpers import _speed_bin_label, _weighted_percentile  # noqa: F401 – re-exports

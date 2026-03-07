@@ -1,7 +1,6 @@
 """Live diagnostics package — real-time severity tracking and event emission.
 
-Backward-compatible re-exports: all symbols that were public in the old
-single-file ``live_diagnostics.py`` module are available at package level.
+Public symbols are re-exported at package level for convenient imports.
 """
 
 from ._types import (  # noqa: F401

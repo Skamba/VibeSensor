@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased — Legacy Compatibility Removal
+
+### Breaking changes
+
+- **Removed v4→v5 database migration** — Opening a v4 schema database now
+  raises ``RuntimeError`` instead of auto-migrating. Recreate the database
+  if needed.
+- **Removed legacy JSON-blob sample reader** — ``_iter_legacy_samples()`` and
+  the ``samples`` table fallback path are deleted. Only the ``samples_v2``
+  typed-column format is supported.
+- **Simplified GPS `manual_source_selected`** — Changed from three-state
+  (``None | True | False``) to two-state (``bool``). Default is ``True``
+  (manual override has priority), matching the previous ``None`` behavior.
+- **Removed unused `lang` query parameter** from
+  ``GET /api/history/{run_id}/insights`` — was kept only for backward
+  compatibility and never used.
+- **Removed backward-compat import tests** — ``test_backward_compat_imports_via_analysis_findings``
+  and ``TestBackwardCompatReExports`` deleted; these imports are now the
+  standard API path.
+
 ## Unreleased — Canonical Vibration Strength Metric
 
 ### Breaking changes

@@ -227,7 +227,6 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
     @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
     async def get_history_insights(
         run_id: str,
-        lang: str | None = Query(default=None),  # noqa: ARG001 — kept for backward compat
     ) -> HistoryInsightsResponse:
         run = await async_require_run(state.history_db, run_id)
         if run["status"] == RunStatus.ANALYZING:
