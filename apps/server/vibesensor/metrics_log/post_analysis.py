@@ -55,6 +55,7 @@ class PostAnalysisWorker:
         self._analysis_queue: deque[str] = deque(maxlen=100)
         self._analysis_enqueued_run_ids: set[str] = set()
         self._analysis_active_run_id: str | None = None
+        self._analysis_active_started_at: float | None = None
 
     # -- public API -----------------------------------------------------------
 
@@ -73,6 +74,15 @@ class PostAnalysisWorker:
         """Return the run ID currently being analysed, or ``None``."""
         with self._lock:
             return self._analysis_active_run_id
+
+    def snapshot(self) -> tuple[int, str | None, float | None]:
+        """Return queue depth and active-run timing for health reporting."""
+        with self._lock:
+            return (
+                len(self._analysis_queue),
+                self._analysis_active_run_id,
+                self._analysis_active_started_at,
+            )
 
     def schedule(self, run_id: str) -> None:
         """Enqueue *run_id* for background analysis."""
@@ -149,10 +159,12 @@ class PostAnalysisWorker:
             with self._lock:
                 if not self._analysis_queue:
                     self._analysis_active_run_id = None
+                    self._analysis_active_started_at = None
                     self._analysis_thread = None
                     return
                 run_id = self._analysis_queue.popleft()
                 self._analysis_active_run_id = run_id
+                self._analysis_active_started_at = time.time()
             try:
                 self._run_post_analysis(run_id)
             except Exception:
@@ -161,6 +173,7 @@ class PostAnalysisWorker:
                 with self._lock:
                     self._analysis_enqueued_run_ids.discard(run_id)
                     self._analysis_active_run_id = None
+                    self._analysis_active_started_at = None
 
     def _run_post_analysis(self, run_id: str) -> None:
         """Run thorough post-run analysis and store results in history DB."""

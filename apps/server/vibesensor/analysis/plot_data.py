@@ -11,8 +11,10 @@ from .phase_segmentation import segment_run_phases as _segment_run_phases
 from .plot_peak_table import top_peaks_table_rows
 from .plot_series import build_plot_series
 from .plot_spectrum import (
+    PeakSampleScan,
     aggregate_fft_spectrum,
     aggregate_fft_spectrum_raw,
+    scan_peak_samples,
     spectrogram_from_peaks,
     spectrogram_from_peaks_raw,
 )
@@ -24,12 +26,14 @@ def _aggregate_fft_spectrum(
     freq_bin_hz: float = 2.0,
     aggregation: str = "persistence",
     run_noise_baseline_g: float | None = None,
+    peak_scan: PeakSampleScan | None = None,
 ) -> list[tuple[float, float]]:
     return aggregate_fft_spectrum(
         samples,
         freq_bin_hz=freq_bin_hz,
         aggregation=aggregation,
         run_noise_baseline_g=run_noise_baseline_g,
+        peak_scan=peak_scan,
     )
 
 
@@ -38,11 +42,13 @@ def _aggregate_fft_spectrum_raw(
     *,
     freq_bin_hz: float = 2.0,
     run_noise_baseline_g: float | None = None,
+    peak_scan: PeakSampleScan | None = None,
 ) -> list[tuple[float, float]]:
     return aggregate_fft_spectrum_raw(
         samples,
         freq_bin_hz=freq_bin_hz,
         run_noise_baseline_g=run_noise_baseline_g,
+        peak_scan=peak_scan,
     )
 
 
@@ -51,11 +57,13 @@ def _spectrogram_from_peaks(
     *,
     aggregation: Literal["persistence", "max"] = "persistence",
     run_noise_baseline_g: float | None = None,
+    peak_scan: PeakSampleScan | None = None,
 ) -> dict[str, Any]:
     return spectrogram_from_peaks(
         samples,
         aggregation=aggregation,
         run_noise_baseline_g=run_noise_baseline_g,
+        peak_scan=peak_scan,
     )
 
 
@@ -63,10 +71,12 @@ def _spectrogram_from_peaks_raw(
     samples: list[dict[str, Any]],
     *,
     run_noise_baseline_g: float | None = None,
+    peak_scan: PeakSampleScan | None = None,
 ) -> dict[str, Any]:
     return spectrogram_from_peaks_raw(
         samples,
         run_noise_baseline_g=run_noise_baseline_g,
+        peak_scan=peak_scan,
     )
 
 
@@ -76,12 +86,14 @@ def _top_peaks_table_rows(
     top_n: int = 12,
     freq_bin_hz: float = 1.0,
     run_noise_baseline_g: float | None = None,
+    peak_scan: PeakSampleScan | None = None,
 ) -> list[dict[str, Any]]:
     return top_peaks_table_rows(
         samples,
         top_n=top_n,
         freq_bin_hz=freq_bin_hz,
         run_noise_baseline_g=run_noise_baseline_g,
+        peak_scan=peak_scan,
     )
 
 
@@ -103,6 +115,8 @@ def _plot_data(
     else:
         resolved_phases, resolved_phase_segments = _segment_run_phases(samples)
 
+    peak_scan = scan_peak_samples(samples)
+
     series = build_plot_series(
         summary,
         per_sample_phases=resolved_phases,
@@ -117,22 +131,30 @@ def _plot_data(
         "matched_amp_vs_speed": series.matched_amp_vs_speed,
         "freq_vs_speed_by_finding": series.freq_vs_speed_by_finding,
         "steady_speed_distribution": series.steady_speed_distribution,
-        "fft_spectrum": _aggregate_fft_spectrum(samples, run_noise_baseline_g=run_noise_baseline_g),
+        "fft_spectrum": _aggregate_fft_spectrum(
+            samples,
+            run_noise_baseline_g=run_noise_baseline_g,
+            peak_scan=peak_scan,
+        ),
         "fft_spectrum_raw": _aggregate_fft_spectrum_raw(
             samples,
             run_noise_baseline_g=run_noise_baseline_g,
+            peak_scan=peak_scan,
         ),
         "peaks_spectrogram": _spectrogram_from_peaks(
             samples,
             run_noise_baseline_g=run_noise_baseline_g,
+            peak_scan=peak_scan,
         ),
         "peaks_spectrogram_raw": _spectrogram_from_peaks_raw(
             samples,
             run_noise_baseline_g=run_noise_baseline_g,
+            peak_scan=peak_scan,
         ),
         "peaks_table": _top_peaks_table_rows(
             samples,
             run_noise_baseline_g=run_noise_baseline_g,
+            peak_scan=peak_scan,
         ),
         "phase_segments": series.phase_segments_out,
         "phase_boundaries": series.phase_boundaries,

@@ -114,6 +114,7 @@ class MetricsLogger:
         self._no_data_timeout_s = max(1.0, float(config.no_data_timeout_s))
         self._last_data_progress_mono_s: float | None = None
         self._session_generation: int = 0
+        self._shutdown_requested = False
         self._session_start_frames_total = 0
         self._last_active_frames_total = 0
         self._live_start_mono_s = time.monotonic()
@@ -208,16 +209,29 @@ class MetricsLogger:
             }
 
     def health_snapshot(self) -> HealthPersistencePayload:
+        queue_depth, active_run_id, active_started_at = self._post_analysis.snapshot()
+        analysis_elapsed_s = None
+        if active_started_at is not None:
+            analysis_elapsed_s = max(0.0, time.time() - active_started_at)
         with self._lock:
             return {
                 "write_error": self._last_write_error,
                 "analysis_in_progress": self._post_analysis.is_active,
+                "analysis_queue_depth": queue_depth,
+                "analysis_active_run_id": active_run_id,
+                "analysis_started_at": active_started_at,
+                "analysis_elapsed_s": analysis_elapsed_s,
             }
 
     def start_logging(self) -> dict[str, str | bool | None]:
         completed_run_id: str | None = None
         flush_snapshot: tuple[str, str, float, int] | None = None
         with self._lock:
+            if self._shutdown_requested:
+                LOGGER.info(
+                    "Ignoring start_logging() while metrics logger shutdown is in progress."
+                )
+                return self.status()
             if self.enabled and self._run_id:
                 flush_snapshot = self._pending_flush_snapshot_locked()
         if flush_snapshot is not None:
@@ -527,8 +541,14 @@ class MetricsLogger:
 
     def shutdown(self, timeout_s: float = 30.0) -> bool:
         """Stop recording and wait for any queued post-analysis to complete."""
-        self.stop_logging()
-        return self.wait_for_post_analysis(timeout_s)
+        with self._lock:
+            self._shutdown_requested = True
+        try:
+            self.stop_logging()
+            return self.wait_for_post_analysis(timeout_s)
+        finally:
+            with self._lock:
+                self._shutdown_requested = False
 
     # -- main async loop ------------------------------------------------------
 

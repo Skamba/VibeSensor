@@ -46,6 +46,8 @@ async def test_health_endpoint_response_shape(_health_router):
     assert result["data_loss"]["tracked_clients"] == 0
     assert result["persistence"]["write_error"] is None
     assert result["persistence"]["analysis_in_progress"] is False
+    assert result["persistence"]["analysis_queue_depth"] == 0
+    assert result["persistence"]["analysis_active_run_id"] is None
 
 
 @pytest.mark.asyncio
@@ -65,6 +67,10 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
     state.metrics_logger.health_snapshot.return_value = {
         "write_error": "history append_samples failed",
         "analysis_in_progress": True,
+        "analysis_queue_depth": 2,
+        "analysis_active_run_id": "run-42",
+        "analysis_started_at": 1700000000.0,
+        "analysis_elapsed_s": 5.0,
     }
     state.loop_state.processing_state = "degraded"
     state.loop_state.processing_failure_count = 2
@@ -82,6 +88,8 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
     assert result["data_loss"]["affected_clients"] == 1
     assert result["persistence"]["write_error"] == "history append_samples failed"
     assert result["persistence"]["analysis_in_progress"] is True
+    assert result["persistence"]["analysis_queue_depth"] == 2
+    assert result["persistence"]["analysis_active_run_id"] == "run-42"
 
 
 @pytest.mark.asyncio

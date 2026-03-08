@@ -28,10 +28,10 @@ test-fast:
 test-all: test-ci
 
 test-ci:
-	python3 tools/tests/run_ci_parallel.py
+	python3 tools/tests/run_verification.py --suite ci-parity
 
 test-full-suite:
-	python3 tools/tests/run_full_suite.py
+	python3 tools/tests/run_verification.py --suite full-stack
 
 coverage:
 	python3 tools/tests/run_coverage.py

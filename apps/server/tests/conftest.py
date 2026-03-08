@@ -90,6 +90,10 @@ def fake_state() -> FakeState:
     state.metrics_logger.health_snapshot.return_value = {
         "write_error": None,
         "analysis_in_progress": False,
+        "analysis_queue_depth": 0,
+        "analysis_active_run_id": None,
+        "analysis_started_at": None,
+        "analysis_elapsed_s": None,
     }
     return state
 

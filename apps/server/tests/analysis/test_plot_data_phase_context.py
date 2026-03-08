@@ -10,6 +10,8 @@ from __future__ import annotations
 import pytest
 
 import vibesensor.analysis.plot_data as plot_data_module
+import vibesensor.analysis.plot_peak_table as plot_peak_table_module
+import vibesensor.analysis.plot_spectrum as plot_spectrum_module
 from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.analysis.plot_data import _plot_data
 
@@ -146,6 +148,31 @@ def test_plot_data_reuses_precomputed_phase_and_noise(monkeypatch: pytest.Monkey
 
     assert segment_calls == 0
     assert noise_calls == 0
+
+
+def test_plot_data_scans_peak_samples_once_for_peak_driven_views(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(4)]
+    top_peak_calls = 0
+
+    def _count_top_peaks(sample: dict) -> list[tuple[float, float]]:
+        nonlocal top_peak_calls
+        top_peak_calls += 1
+        return [(float(peak["hz"]), float(peak["amp"])) for peak in sample.get("top_peaks", [])]
+
+    def _fail_if_direct_peak_scan(_sample: dict) -> list[tuple[float, float]]:
+        raise AssertionError("top_peaks should be read from the shared peak scan")
+
+    def _fail_if_table_rescans(_samples: list[dict]) -> object:
+        raise AssertionError("plot_peak_table should receive the shared peak scan")
+
+    monkeypatch.setattr(plot_spectrum_module, "_sample_top_peaks", _count_top_peaks)
+    monkeypatch.setattr(plot_peak_table_module, "scan_peak_samples", _fail_if_table_rescans)
+
+    _plot_data(_make_summary(samples))
+
+    assert top_peak_calls == len(samples)
 
 
 # ---------------------------------------------------------------------------

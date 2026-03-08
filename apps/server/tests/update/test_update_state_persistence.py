@@ -95,6 +95,8 @@ class TestUpdateJobStatusRoundTrip:
         assert restored.phase == UpdatePhase.idle
         assert restored.issues == []
         assert restored.log_tail == []
+        assert restored.phase_started_at is None
+        assert restored.updated_at is None
 
     def test_full_status_round_trip(self) -> None:
         status = UpdateJobStatus(
@@ -103,6 +105,8 @@ class TestUpdateJobStatusRoundTrip:
             started_at=1700000000.0,
             finished_at=1700000120.0,
             last_success_at=1699999000.0,
+            phase_started_at=1700000005.0,
+            updated_at=1700000060.0,
             ssid="MyNetwork",
             issues=[
                 UpdateIssue(phase="installing", message="Wheel failed", detail="rc=1"),
@@ -118,6 +122,8 @@ class TestUpdateJobStatusRoundTrip:
         assert restored.started_at == 1700000000.0
         assert restored.finished_at == 1700000120.0
         assert restored.last_success_at == 1699999000.0
+        assert restored.phase_started_at == 1700000005.0
+        assert restored.updated_at == 1700000060.0
         assert restored.ssid == "MyNetwork"
         assert len(restored.issues) == 2
         assert restored.issues[0].phase == "installing"
@@ -155,6 +161,7 @@ class TestUpdateStateStore:
         assert loaded.state == UpdateState.running
         assert loaded.phase == UpdatePhase.downloading
         assert loaded.ssid == "TestWifi"
+        assert loaded.phase_started_at is None
         assert len(loaded.issues) == 1
         assert loaded.issues[0].message == "ok"
         assert loaded.log_tail == ["log entry 1"]
@@ -327,6 +334,26 @@ class TestStartupRecovery:
 
 
 class TestPersistenceDuringLifecycle:
+    def test_phase_transition_updates_phase_started_and_updated_at(self, tmp_path: Path) -> None:
+        state_path = tmp_path / "state.json"
+        store = UpdateStateStore(path=state_path)
+        tracker = UpdateStatusTracker(state_store=store)
+
+        tracker.start_job("TestNet")
+        started_phase_at = tracker.status.phase_started_at
+        started_updated_at = tracker.status.updated_at
+        assert started_phase_at is not None
+        assert started_updated_at is not None
+
+        time.sleep(0.01)
+        tracker.transition(UpdatePhase.downloading)
+
+        assert tracker.status.phase == UpdatePhase.downloading
+        assert tracker.status.phase_started_at is not None
+        assert tracker.status.updated_at is not None
+        assert tracker.status.phase_started_at > started_phase_at
+        assert tracker.status.updated_at >= tracker.status.phase_started_at
+
     def test_tracker_persists_runtime_logs_and_bulk_issues_immediately(
         self,
         tmp_path: Path,
@@ -351,6 +378,7 @@ class TestPersistenceDuringLifecycle:
         loaded = store.load()
         assert loaded is not None
         assert loaded.runtime == {"version": "1.2.3"}
+        assert loaded.updated_at is not None
         assert loaded.log_tail[-1] == "runtime collected"
         assert loaded.issues[-1].message == "Wi-Fi warning"
 

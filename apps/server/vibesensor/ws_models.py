@@ -127,6 +127,7 @@ class AlignmentInfo(BaseModel):
     """Multi-sensor clock-alignment quality metrics for a frequency window."""
 
     model_config = ConfigDict(frozen=True)
+    overlap_ratio: float
     aligned: bool
     shared_window_s: float
     sensor_count: int
@@ -137,6 +138,7 @@ class FrequencyWarning(BaseModel):
     """Warning about frequency data quality issues in a spectra payload."""
 
     model_config = ConfigDict(frozen=True)
+    code: str
     message: str
     client_ids: list[str]
 
@@ -156,6 +158,7 @@ class RotationalSpeedValue(BaseModel):
     """Current rotational speed estimate with source and confidence metadata."""
 
     model_config = ConfigDict(frozen=True)
+    rpm: float | None = None
     mode: str | None = None
     reason: str | None = None
 
@@ -164,6 +167,7 @@ class OrderBand(BaseModel):
     """Frequency band for a specific rotation-order harmonic."""
 
     model_config = ConfigDict(frozen=True)
+    key: str
     center_hz: float
     tolerance: float
 

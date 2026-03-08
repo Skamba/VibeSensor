@@ -665,8 +665,19 @@ export interface components {
      * @description Response body for persistence health details.
      */
     HealthPersistenceResponse: {
+      /** Analysis Active Run Id */
+      analysis_active_run_id?: string | null;
+      /** Analysis Elapsed S */
+      analysis_elapsed_s?: number | null;
       /** Analysis In Progress */
       analysis_in_progress: boolean;
+      /**
+       * Analysis Queue Depth
+       * @default 0
+       */
+      analysis_queue_depth?: number;
+      /** Analysis Started At */
+      analysis_started_at?: number | null;
       /** Write Error */
       write_error: string | null;
     };
@@ -1078,6 +1089,10 @@ export interface components {
       log_tail: string[];
       /** Phase */
       phase: string;
+      /** Phase Elapsed S */
+      phase_elapsed_s?: number | null;
+      /** Phase Started At */
+      phase_started_at?: number | null;
       runtime: components["schemas"]["UpdateRuntimeResponse"];
       /** Ssid */
       ssid: string;
@@ -1085,6 +1100,8 @@ export interface components {
       started_at?: number | null;
       /** State */
       state: string;
+      /** Updated At */
+      updated_at?: number | null;
     };
     /** ValidationError */
     ValidationError: {

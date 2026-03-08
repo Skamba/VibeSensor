@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import enum
+import time
 from dataclasses import dataclass, field
 from typing import TypedDict, TypeGuard
 
@@ -21,6 +22,9 @@ class UpdateJobStatusPayload(TypedDict):
     started_at: float | None
     finished_at: float | None
     last_success_at: float | None
+    phase_started_at: float | None
+    phase_elapsed_s: float | None
+    updated_at: float | None
     ssid: str
     issues: list[UpdateIssuePayload]
     log_tail: list[str]
@@ -109,6 +113,8 @@ class UpdateJobStatus:
     started_at: float | None = None
     finished_at: float | None = None
     last_success_at: float | None = None
+    phase_started_at: float | None = None
+    updated_at: float | None = None
     ssid: str = ""
     issues: list[UpdateIssue] = field(default_factory=list)
     log_tail: list[str] = field(default_factory=list)
@@ -116,12 +122,18 @@ class UpdateJobStatus:
     runtime: JsonObject = field(default_factory=dict)
 
     def to_dict(self) -> UpdateJobStatusPayload:
+        phase_elapsed_s = None
+        if self.state == UpdateState.running and self.phase_started_at is not None:
+            phase_elapsed_s = max(0.0, time.time() - self.phase_started_at)
         return {
             "state": self.state.value,
             "phase": self.phase.value,
             "started_at": self.started_at,
             "finished_at": self.finished_at,
             "last_success_at": self.last_success_at,
+            "phase_started_at": self.phase_started_at,
+            "phase_elapsed_s": phase_elapsed_s,
+            "updated_at": self.updated_at,
             "ssid": self.ssid,
             "issues": [
                 {"phase": i.phase, "message": i.message, "detail": i.detail} for i in self.issues
@@ -160,6 +172,8 @@ class UpdateJobStatus:
             started_at=_to_float_or_none(data.get("started_at")),
             finished_at=_to_float_or_none(data.get("finished_at")),
             last_success_at=_to_float_or_none(data.get("last_success_at")),
+            phase_started_at=_to_float_or_none(data.get("phase_started_at")),
+            updated_at=_to_float_or_none(data.get("updated_at")),
             ssid=str(data.get("ssid") or ""),
             issues=issues,
             log_tail=log_tail,

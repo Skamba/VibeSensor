@@ -86,6 +86,8 @@ def test_openapi_component_shapes_are_not_generic_dict_for_typed_responses(
     assert update_status_properties["runtime"] == {
         "$ref": "#/components/schemas/UpdateRuntimeResponse"
     }
+    assert update_status_properties["phase_started_at"]["anyOf"][1] == {"type": "null"}
+    assert update_status_properties["updated_at"]["anyOf"][1] == {"type": "null"}
 
 
 # ---------------------------------------------------------------------------

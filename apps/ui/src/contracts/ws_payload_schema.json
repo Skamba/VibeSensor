@@ -11,6 +11,10 @@
           "title": "Clock Synced",
           "type": "boolean"
         },
+        "overlap_ratio": {
+          "title": "Overlap Ratio",
+          "type": "number"
+        },
         "sensor_count": {
           "title": "Sensor Count",
           "type": "integer"
@@ -21,6 +25,7 @@
         }
       },
       "required": [
+        "overlap_ratio",
         "aligned",
         "shared_window_s",
         "sensor_count",
@@ -441,12 +446,17 @@
           "title": "Client Ids",
           "type": "array"
         },
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
         "message": {
           "title": "Message",
           "type": "string"
         }
       },
       "required": [
+        "code",
         "message",
         "client_ids"
       ],
@@ -487,12 +497,17 @@
           "title": "Center Hz",
           "type": "number"
         },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
         "tolerance": {
           "title": "Tolerance",
           "type": "number"
         }
       },
       "required": [
+        "key",
         "center_hz",
         "tolerance"
       ],
@@ -525,6 +540,18 @@
           ],
           "default": null,
           "title": "Reason"
+        },
+        "rpm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rpm"
         }
       },
       "title": "RotationalSpeedValue",
@@ -549,14 +576,16 @@
           "$ref": "#/$defs/RotationalSpeedValue",
           "default": {
             "mode": null,
-            "reason": null
+            "reason": null,
+            "rpm": null
           }
         },
         "engine": {
           "$ref": "#/$defs/RotationalSpeedValue",
           "default": {
             "mode": null,
-            "reason": null
+            "reason": null,
+            "rpm": null
           }
         },
         "order_bands": {
@@ -578,7 +607,8 @@
           "$ref": "#/$defs/RotationalSpeedValue",
           "default": {
             "mode": null,
-            "reason": null
+            "reason": null,
+            "rpm": null
           }
         }
       },

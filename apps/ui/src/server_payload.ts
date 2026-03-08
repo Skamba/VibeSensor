@@ -30,10 +30,10 @@ export type AdaptedClient = {
   firmware_version: string;
 };
 
-export type MatrixCell = WsDiagnosticsPayload["matrix"][string][string];
+export type MatrixCell = NonNullable<NonNullable<WsDiagnosticsPayload["matrix"]>[string][string]>;
 export type DiagnosticEvent = WsDiagnosticEvent;
 export type DiagnosticLevel = WsDiagnosticLevel;
-export type DiagnosticLevels = WsDiagnosticsPayload["levels"];
+export type DiagnosticLevels = NonNullable<WsDiagnosticsPayload["levels"]>;
 
 export type RotationalSpeedValue = {
   rpm: number | null;
