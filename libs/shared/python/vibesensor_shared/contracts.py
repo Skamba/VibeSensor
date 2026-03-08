@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any
 
 __all__ = [
     "METRIC_FIELDS",
@@ -31,13 +30,26 @@ def _contracts_dir() -> Path:
 _CONTRACTS_DIR: Path = _contracts_dir()
 
 
-def _load_json(name: str) -> dict[str, Any]:
-    return json.loads((_CONTRACTS_DIR / name).read_text(encoding="utf-8"))
+def _load_json_object(name: str) -> dict[str, object]:
+    payload = json.loads((_CONTRACTS_DIR / name).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{name} must contain a top-level JSON object")
+    return payload
 
 
-METRIC_FIELDS: dict[str, str] = _load_json("metrics_fields.json")
-REPORT_FIELDS: dict[str, str] = _load_json("report_fields.json")
-NETWORK_PORTS: dict[str, int] = _load_json("network_ports.json")
+def _load_string_map(name: str) -> dict[str, str]:
+    payload = _load_json_object(name)
+    return {str(key): str(value) for key, value in payload.items()}
+
+
+def _load_int_map(name: str) -> dict[str, int]:
+    payload = _load_json_object(name)
+    return {str(key): int(value) for key, value in payload.items()}
+
+
+METRIC_FIELDS: dict[str, str] = _load_string_map("metrics_fields.json")
+REPORT_FIELDS: dict[str, str] = _load_string_map("report_fields.json")
+NETWORK_PORTS: dict[str, int] = _load_int_map("network_ports.json")
 
 # Validate that required contract keys exist at import time so misconfigurations
 # surface immediately with a descriptive error rather than a cryptic KeyError later.

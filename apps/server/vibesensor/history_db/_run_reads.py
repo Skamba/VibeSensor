@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterator
-from typing import Any
 
+from ..json_types import JsonObject, is_json_object
 from ..json_utils import safe_json_loads
 from ._run_common import ANALYSIS_SCHEMA_VERSION
 from ._samples import ALLOWED_SAMPLE_TABLES, V2_SELECT_SQL_COLS, v2_row_to_dict
@@ -39,7 +39,7 @@ class HistoryRunReadMixin:
             )
             return False
 
-    def list_runs(self: HistoryCursorProvider, limit: int = 500) -> list[dict[str, Any]]:
+    def list_runs(self: HistoryCursorProvider, limit: int = 500) -> list[JsonObject]:
         with self._cursor(commit=False) as cur:
             if limit < 0:
                 limit = 0
@@ -57,10 +57,10 @@ class HistoryRunReadMixin:
                     "FROM runs r ORDER BY r.created_at DESC"
                 )
             rows = cur.fetchall()
-        result: list[dict[str, Any]] = []
+        result: list[JsonObject] = []
         for row in rows:
             run_id, status, start, end, created, error, sample_count, analysis_ver = row
-            entry: dict[str, Any] = {
+            entry: JsonObject = {
                 "run_id": run_id,
                 "status": status,
                 "start_time_utc": start,
@@ -75,7 +75,7 @@ class HistoryRunReadMixin:
             result.append(entry)
         return result
 
-    def get_run(self: HistoryCursorProvider, run_id: str) -> dict[str, Any] | None:
+    def get_run(self: HistoryCursorProvider, run_id: str) -> JsonObject | None:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT run_id, status, start_time_utc, end_time_utc, "
@@ -101,7 +101,7 @@ class HistoryRunReadMixin:
             analysis_started,
             analysis_completed,
         ) = row
-        entry: dict[str, Any] = {
+        entry: JsonObject = {
             "run_id": rid,
             "status": status,
             "start_time_utc": start,
@@ -112,7 +112,7 @@ class HistoryRunReadMixin:
         }
         if analysis_json:
             parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
-            if isinstance(parsed_analysis, dict):
+            if is_json_object(parsed_analysis):
                 entry["analysis"] = parsed_analysis
             else:
                 entry["analysis_corrupt"] = True
@@ -126,15 +126,15 @@ class HistoryRunReadMixin:
             entry["analysis_completed_at"] = analysis_completed
         return entry
 
-    def get_run_samples(self: HistoryCursorProvider, run_id: str) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
+    def get_run_samples(self: HistoryCursorProvider, run_id: str) -> list[JsonObject]:
+        rows: list[JsonObject] = []
         for batch in self.iter_run_samples(run_id):
             rows.extend(batch)
         return rows
 
     def iter_run_samples(
         self: HistoryCursorProvider, run_id: str, batch_size: int = 1000, offset: int = 0
-    ) -> Iterator[list[dict[str, Any]]]:
+    ) -> Iterator[list[JsonObject]]:
         if offset < 0:
             raise ValueError(f"iter_run_samples: offset must be >= 0, got {offset}")
         yield from self._iter_v2_samples(run_id, batch_size, offset)
@@ -160,7 +160,7 @@ class HistoryRunReadMixin:
 
     def _iter_v2_samples(
         self: HistoryCursorProvider, run_id: str, batch_size: int = 1000, offset: int = 0
-    ) -> Iterator[list[dict[str, Any]]]:
+    ) -> Iterator[list[JsonObject]]:
         size = max(1, batch_size)
         last_id: int | None = None
         if offset > 0:
@@ -192,7 +192,7 @@ class HistoryRunReadMixin:
                     )
                 return
             last_id = batch_rows[-1][0]
-            parsed_batch: list[dict[str, Any]] = []
+            parsed_batch: list[JsonObject] = []
             for row in batch_rows:
                 try:
                     parsed_batch.append(v2_row_to_dict(row))
@@ -202,14 +202,14 @@ class HistoryRunReadMixin:
             if parsed_batch:
                 yield parsed_batch
 
-    def get_run_metadata(self: HistoryCursorProvider, run_id: str) -> dict[str, Any] | None:
+    def get_run_metadata(self: HistoryCursorProvider, run_id: str) -> JsonObject | None:
         with self._cursor(commit=False) as cur:
             cur.execute("SELECT metadata_json FROM runs WHERE run_id = ?", (run_id,))
             row = cur.fetchone()
         if row is None:
             return None
         parsed = safe_json_loads(row[0], context=f"run {run_id} metadata")
-        if not isinstance(parsed, dict):
+        if not is_json_object(parsed):
             if parsed is not None:
                 LOGGER.warning(
                     "get_run_metadata: run %s metadata_json parsed to %s, expected dict; "
@@ -220,7 +220,7 @@ class HistoryRunReadMixin:
             return None
         return parsed
 
-    def get_run_analysis(self: HistoryCursorProvider, run_id: str) -> dict[str, Any] | None:
+    def get_run_analysis(self: HistoryCursorProvider, run_id: str) -> JsonObject | None:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT analysis_json FROM runs WHERE run_id = ? AND status = 'complete'",
@@ -230,7 +230,7 @@ class HistoryRunReadMixin:
         if row is None:
             return None
         parsed = safe_json_loads(row[0], context=f"run {run_id} analysis")
-        if parsed is not None and not isinstance(parsed, dict):
+        if parsed is not None and not is_json_object(parsed):
             LOGGER.warning(
                 "get_run_analysis: run %s analysis_json parsed to %s, expected dict; "
                 "treating as missing",

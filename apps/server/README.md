@@ -123,3 +123,5 @@ make test-all
 ```
 
 `make typecheck-backend` is the enforced backend static-typing gate for app/bootstrap, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages. Use `docs/testing.md` for the full test map. Start with the matching feature directory under `apps/server/tests/`, then add `integration/` or `regression/` coverage when the behavior crosses package boundaries.
+
+When tightening Python types, treat `Any` as a smell rather than a shortcut: prefer shared `JsonValue`/`JsonObject` aliases for persisted JSON, `TypedDict`/dataclass contracts for nested payloads, and `ParamSpec` for generic callable wrappers so mypy reflects the real runtime contract instead of a permissive fallback.

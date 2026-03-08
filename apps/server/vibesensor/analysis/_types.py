@@ -5,11 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import Protocol, TypeAlias, TypedDict, TypeGuard
 
+from ..json_types import JsonObject, JsonValue
 from .phase_segmentation import DrivingPhase
-
-JsonScalar: TypeAlias = None | bool | int | float | str
-JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
-JsonObject: TypeAlias = dict[str, JsonValue]
 
 Sample: TypeAlias = JsonObject
 MetadataDict: TypeAlias = JsonObject

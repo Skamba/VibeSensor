@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from ..domain_models import SensorFrame
+from ..json_types import JsonObject
 from ..json_utils import safe_json_dumps
 from ..runlog import utc_now_iso
 from ._run_common import ANALYSIS_SCHEMA_VERSION, RunStatus
@@ -24,7 +24,7 @@ class HistoryRunWriteMixin:
         self: HistoryCursorProvider,
         run_id: str,
         start_time_utc: str,
-        metadata: dict[str, Any],
+        metadata: JsonObject,
     ) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:
@@ -41,7 +41,7 @@ class HistoryRunWriteMixin:
     def append_samples(
         self: HistoryCursorProvider,
         run_id: str,
-        samples: list[dict[str, Any]] | list[SensorFrame],
+        samples: list[JsonObject] | list[SensorFrame],
     ) -> None:
         if not samples:
             return
@@ -79,7 +79,7 @@ class HistoryRunWriteMixin:
     def update_run_metadata(
         self: HistoryCursorProvider,
         run_id: str,
-        metadata: dict[str, Any],
+        metadata: JsonObject,
     ) -> bool:
         with self._cursor() as cur:
             cur.execute(
@@ -92,7 +92,7 @@ class HistoryRunWriteMixin:
         self: HistoryCursorProvider,
         run_id: str,
         end_time_utc: str,
-        metadata: dict[str, Any],
+        metadata: JsonObject,
     ) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:
@@ -129,7 +129,7 @@ class HistoryRunWriteMixin:
     def store_analysis(
         self: HistoryCursorProvider,
         run_id: str,
-        analysis: dict[str, Any],
+        analysis: JsonObject,
     ) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:

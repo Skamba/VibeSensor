@@ -9,7 +9,8 @@ from __future__ import annotations
 import json
 import logging
 import math
-from typing import Any
+
+from .json_types import JsonValue
 
 __all__ = [
     "safe_json_dumps",
@@ -21,7 +22,7 @@ __all__ = [
 LOGGER = logging.getLogger(__name__)
 
 
-def sanitize_for_json(obj: Any, *, _max_depth: int = 128) -> tuple[Any, bool]:
+def sanitize_for_json(obj: object, *, _max_depth: int = 128) -> tuple[object, bool]:
     """Recursively replace non-finite floats (NaN, Inf, -Inf) with ``None``.
 
     Numpy arrays are converted to Python lists and numpy scalars to native
@@ -34,7 +35,7 @@ def sanitize_for_json(obj: Any, *, _max_depth: int = 128) -> tuple[Any, bool]:
     found_non_finite = False
     _isfinite = math.isfinite  # local binding avoids module lookup per call
 
-    def _walk(v: Any, depth: int = 0) -> Any:
+    def _walk(v: object, depth: int = 0) -> object:
         nonlocal found_non_finite
         if depth > _max_depth:
             LOGGER.warning(
@@ -73,7 +74,7 @@ def sanitize_for_json(obj: Any, *, _max_depth: int = 128) -> tuple[Any, bool]:
     return cleaned, found_non_finite
 
 
-def sanitize_value(value: Any) -> Any:
+def sanitize_value(value: object) -> object:
     """Sanitise *value* for JSON, discarding the non-finite flag.
 
     Convenience wrapper around :func:`sanitize_for_json` for callers that
@@ -83,7 +84,7 @@ def sanitize_value(value: Any) -> Any:
     return cleaned
 
 
-def safe_json_dumps(value: Any) -> str:
+def safe_json_dumps(value: object) -> str:
     """Sanitise *value* and serialise to a compact JSON string.
 
     Combines :func:`sanitize_value` with ``json.dumps`` using safe
@@ -92,7 +93,7 @@ def safe_json_dumps(value: Any) -> str:
     return json.dumps(sanitize_value(value), ensure_ascii=False, allow_nan=False)
 
 
-def safe_json_loads(value: str | None, *, context: str) -> Any | None:
+def safe_json_loads(value: str | None, *, context: str) -> JsonValue | None:
     """Deserialise a JSON string, returning ``None`` on empty/invalid input.
 
     Logs a warning (with traceback) instead of raising on malformed JSON,

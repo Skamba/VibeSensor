@@ -4,12 +4,35 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TypedDict
+
+from ..json_types import JsonObject, is_json_array, is_json_object
 
 
-def _to_float_or_none(value: Any) -> float | None:
+class UpdateIssuePayload(TypedDict):
+    phase: str
+    message: str
+    detail: str
+
+
+class UpdateJobStatusPayload(TypedDict):
+    state: str
+    phase: str
+    started_at: float | None
+    finished_at: float | None
+    last_success_at: float | None
+    ssid: str
+    issues: list[UpdateIssuePayload]
+    log_tail: list[str]
+    exit_code: int | None
+    runtime: JsonObject
+
+
+def _to_float_or_none(value: object) -> float | None:
     """Coerce *value* to float, returning None for null / unconvertible input."""
     if value is None:
+        return None
+    if not isinstance(value, (int, float, str)):
         return None
     try:
         return float(value)
@@ -17,9 +40,11 @@ def _to_float_or_none(value: Any) -> float | None:
         return None
 
 
-def _to_int_or_none(value: Any) -> int | None:
+def _to_int_or_none(value: object) -> int | None:
     """Coerce *value* to int, returning None for null / unconvertible input."""
     if value is None:
+        return None
+    if not isinstance(value, (int, float, str)):
         return None
     try:
         return int(value)
@@ -83,9 +108,9 @@ class UpdateJobStatus:
     issues: list[UpdateIssue] = field(default_factory=list)
     log_tail: list[str] = field(default_factory=list)
     exit_code: int | None = None
-    runtime: dict[str, Any] = field(default_factory=dict)
+    runtime: JsonObject = field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> UpdateJobStatusPayload:
         return {
             "state": self.state.value,
             "phase": self.phase.value,
@@ -102,16 +127,28 @@ class UpdateJobStatus:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> UpdateJobStatus:
+    def from_dict(cls, data: JsonObject) -> UpdateJobStatus:
         """Reconstruct from a serialised dict (e.g. loaded from disk)."""
-        issues = [
-            UpdateIssue(
-                phase=str(i.get("phase", "")),
-                message=str(i.get("message", "")),
-                detail=str(i.get("detail", "")),
-            )
-            for i in (data.get("issues") or [])
-        ]
+        issues_raw = data.get("issues")
+        issues = []
+        if is_json_array(issues_raw):
+            for issue_raw in issues_raw:
+                if not is_json_object(issue_raw):
+                    continue
+                issues.append(
+                    UpdateIssue(
+                        phase=str(issue_raw.get("phase", "")),
+                        message=str(issue_raw.get("message", "")),
+                        detail=str(issue_raw.get("detail", "")),
+                    )
+                )
+        log_tail_raw = data.get("log_tail")
+        log_tail = (
+            [str(line) for line in log_tail_raw][- _LOG_TAIL_LIMIT:]
+            if is_json_array(log_tail_raw)
+            else []
+        )
+        runtime_raw = data.get("runtime")
         return cls(
             state=UpdateState(data.get("state", "idle")),
             phase=UpdatePhase(data.get("phase", "idle")),
@@ -120,7 +157,7 @@ class UpdateJobStatus:
             last_success_at=_to_float_or_none(data.get("last_success_at")),
             ssid=str(data.get("ssid") or ""),
             issues=issues,
-            log_tail=list(data.get("log_tail") or [])[-_LOG_TAIL_LIMIT:],
+            log_tail=log_tail,
             exit_code=_to_int_or_none(data.get("exit_code")),
-            runtime=dict(data.get("runtime") or {}),
+            runtime=runtime_raw if is_json_object(runtime_raw) else {},
         )
