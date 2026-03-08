@@ -44,7 +44,9 @@ def _load_string_map(name: str) -> dict[str, str]:
     path = _CONTRACTS_DIR / name
     for key, value in payload.items():
         if value is None:
-            raise ValueError(f"{path} contains null for key {key!r}; expected a string value")
+            raise ValueError(
+                f"{path} contains null for key {key!r}; expected a string value"
+            )
         result[str(key)] = str(value)
     return result
 
