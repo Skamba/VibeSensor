@@ -56,9 +56,8 @@ class SignalMetricsComputer:
                 )
                 return _EMPTY_F32, np.empty(0, dtype=np.intp)
             freqs = np.fft.rfftfreq(self._config.fft_n, d=1.0 / sample_rate_hz)
-            valid = (
-                (freqs >= self._config.spectrum_min_hz)
-                & (freqs <= self._config.spectrum_max_hz)
+            valid = (freqs >= self._config.spectrum_min_hz) & (
+                freqs <= self._config.spectrum_max_hz
             )
             freq_slice = freqs[valid].astype(np.float32)
             valid_idx = np.flatnonzero(valid)

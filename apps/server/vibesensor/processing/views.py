@@ -63,7 +63,7 @@ class SignalProcessorViews:
             )
 
     def debug_spectrum(self, client_id: str) -> dict[str, Any]:
-        request = self._store.debug_request(client_id, fft_n=self._store.config.fft_n)
+        request = self._store.debug_request(client_id)
         if request.fft_block is None:
             return {
                 "error": "insufficient samples",
