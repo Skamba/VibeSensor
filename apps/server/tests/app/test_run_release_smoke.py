@@ -68,5 +68,7 @@ def test_run_release_smoke_can_reuse_existing_wheel_and_skip_ui_build(
 
     assert exit_code == 0
     assert all(command[0][1] != "tools/build_ui_static.py" for command in commands)
-    pip_install_command = next(command for command in commands if command[0][-1] == str(existing_wheel.resolve()))
+    pip_install_command = next(
+        command for command in commands if command[0][-1] == str(existing_wheel.resolve())
+    )
     assert pip_install_command[0][-1] == str(existing_wheel.resolve())

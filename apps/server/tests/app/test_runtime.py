@@ -15,10 +15,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from vibesensor.history_exports import HistoryExportService
-from vibesensor.history_reports import HistoryReportService
-from vibesensor.history_runs import HistoryRunDeleteService, HistoryRunQueryService
-
 os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
 
 
@@ -126,39 +122,34 @@ class _StubProcessor:
 
 def _make_runtime(**overrides: Any):
     """Build a RuntimeState with stubs for lifecycle testing."""
-    from vibesensor.runtime import (
-        RuntimeDiagnosticsSubsystem,
-        RuntimeIngressSubsystem,
-        RuntimePersistenceSubsystem,
-        RuntimeProcessingSubsystem,
-        RuntimeHealthState,
-        RuntimeRouteServices,
-        RuntimeSettingsSubsystem,
-        RuntimeUpdateSubsystem,
-        RuntimeWebsocketSubsystem,
-        build_runtime_state,
+    import vibesensor.runtime as runtime_module
+    from vibesensor.runtime.processing_loop import (
+        ProcessingLoop,
+        ProcessingLoopState,
     )
-    from vibesensor.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
-    from vibesensor.runtime.ws_broadcast import WsBroadcastCache, WsBroadcastService
+    from vibesensor.runtime.ws_broadcast import (
+        WsBroadcastCache,
+        WsBroadcastService,
+    )
 
     config = overrides.pop("config", _StubConfig(processing=_StubProcessingConfig()))
-    ingress = RuntimeIngressSubsystem(
+    ingress = runtime_module.RuntimeIngressSubsystem(
         registry=overrides.pop("registry", _StubRegistry()),
         processor=overrides.pop("processor", _StubProcessor()),
         control_plane=overrides.pop("control_plane", MagicMock()),
         worker_pool=overrides.pop("worker_pool", MagicMock()),
     )
-    settings = RuntimeSettingsSubsystem(
+    settings = runtime_module.RuntimeSettingsSubsystem(
         settings_store=overrides.pop("settings_store", MagicMock()),
         analysis_settings=overrides.pop("analysis_settings", MagicMock()),
         gps_monitor=overrides.pop("gps_monitor", MagicMock()),
     )
-    diagnostics = RuntimeDiagnosticsSubsystem(
+    diagnostics = runtime_module.RuntimeDiagnosticsSubsystem(
         metrics_logger=overrides.pop("metrics_logger", MagicMock()),
         live_analysis=overrides.pop("live_analysis", MagicMock()),
         live_diagnostics=overrides.pop("live_diagnostics", MagicMock()),
     )
-    persistence = RuntimePersistenceSubsystem(
+    persistence = runtime_module.RuntimePersistenceSubsystem(
         history_db=overrides.pop("history_db", MagicMock()),
         query_service=overrides.pop("query_service", None),
         delete_service=overrides.pop("delete_service", None),
@@ -170,13 +161,13 @@ def _make_runtime(**overrides: Any):
         persistence.bind_history_services(
             settings_store_ref if not isinstance(settings_store_ref, MagicMock) else None
         )
-    updates = RuntimeUpdateSubsystem(
+    updates = runtime_module.RuntimeUpdateSubsystem(
         update_manager=overrides.pop("update_manager", MagicMock()),
         esp_flash_manager=overrides.pop("esp_flash_manager", MagicMock()),
     )
     processing_state = ProcessingLoopState()
-    health_state = RuntimeHealthState()
-    processing = RuntimeProcessingSubsystem(
+    health_state = runtime_module.RuntimeHealthState()
+    processing = runtime_module.RuntimeProcessingSubsystem(
         state=processing_state,
         health_state=health_state,
         loop=ProcessingLoop(
@@ -188,7 +179,7 @@ def _make_runtime(**overrides: Any):
         ),
     )
     ws_cache = WsBroadcastCache()
-    websocket = RuntimeWebsocketSubsystem(
+    websocket = runtime_module.RuntimeWebsocketSubsystem(
         hub=overrides.pop("ws_hub", MagicMock()),
         cache=ws_cache,
         broadcast=WsBroadcastService(
@@ -200,7 +191,7 @@ def _make_runtime(**overrides: Any):
             diagnostics=diagnostics,
         ),
     )
-    rt = build_runtime_state(
+    rt = runtime_module.build_runtime_state(
         config=config,
         ingress=ingress,
         settings=settings,
@@ -209,7 +200,7 @@ def _make_runtime(**overrides: Any):
         updates=updates,
         processing=processing,
         websocket=websocket,
-        routes=RuntimeRouteServices(
+        routes=runtime_module.RuntimeRouteServices(
             ingress=ingress,
             settings=settings,
             diagnostics=diagnostics,

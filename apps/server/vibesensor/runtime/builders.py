@@ -19,8 +19,8 @@ from ..udp_control_tx import UDPControlPlane
 from ..update.manager import UpdateManager
 from ..worker_pool import WorkerPool
 from ..ws_hub import WebSocketHub
-from .lifecycle import LifecycleManager
 from .health_state import RuntimeHealthState
+from .lifecycle import LifecycleManager
 from .processing_loop import ProcessingLoop, ProcessingLoopState
 from .subsystems import (
     RuntimeDiagnosticsSubsystem,

@@ -11,10 +11,10 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+from collections.abc import Coroutine
 from typing import TYPE_CHECKING
 
 from ..udp_data_rx import start_udp_data_receiver
-from .health_state import RuntimeHealthState
 
 if TYPE_CHECKING:
     from ..config import AppConfig
@@ -70,19 +70,19 @@ class LifecycleManager:
         self._processing = processing
         self._websocket = websocket
         self._health_state = processing.health_state
-        self.tasks: list[asyncio.Task] = []
+        self.tasks: list[asyncio.Task[object]] = []
         self._data_transport: asyncio.DatagramTransport | None = None
-        self._data_consumer_task: asyncio.Task | None = None
+        self._data_consumer_task: asyncio.Task[object] | None = None
 
     @staticmethod
     def _task_failure_message(exc: BaseException) -> str:
         message = str(exc).strip() or exc.__class__.__name__
         return message[:240]
 
-    def _monitor_task(self, task: asyncio.Task) -> None:
+    def _monitor_task(self, task: asyncio.Task[object]) -> None:
         task_name = task.get_name()
 
-        def _record_failure(done_task: asyncio.Task) -> None:
+        def _record_failure(done_task: asyncio.Task[object]) -> None:
             if done_task.cancelled():
                 return
             try:
@@ -97,7 +97,12 @@ class LifecycleManager:
 
         task.add_done_callback(_record_failure)
 
-    def _start_task(self, coroutine: object, *, name: str) -> asyncio.Task:
+    def _start_task(
+        self,
+        coroutine: Coroutine[object, object, object],
+        *,
+        name: str,
+    ) -> asyncio.Task[object]:
         task = asyncio.create_task(coroutine, name=name)
         self._monitor_task(task)
         return task

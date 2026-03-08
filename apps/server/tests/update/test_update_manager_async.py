@@ -226,7 +226,10 @@ class TestUpdateManagerAsync:
 
         with (
             patch_release_fetcher(current_version="2025.6.14") as mock_fetcher,
-            patch("vibesensor.update.installer.UpdateInstaller.snapshot_for_rollback", new=AsyncMock(return_value=False)),
+            patch(
+                "vibesensor.update.installer.UpdateInstaller.snapshot_for_rollback",
+                new=AsyncMock(return_value=False),
+            ),
         ):
             fetcher = mock_fetcher.return_value
             fetcher.check_update_available.return_value = make_mock_release(sha256=wheel_sha256)
@@ -254,7 +257,10 @@ class TestUpdateManagerAsync:
             not ("pip" in " ".join(call[0]) and "install" in " ".join(call[0]))
             for call in runner.calls
         )
-        assert any("Could not verify free disk space" == issue.message for issue in manager.status.issues)
+        assert any(
+            "Could not verify free disk space" == issue.message
+            for issue in manager.status.issues
+        )
 
     async def test_sha256_mismatch_aborts_install(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)

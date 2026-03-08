@@ -43,4 +43,7 @@ async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_p
 
     assert result is False
     assert tracker.status.state.value == "failed"
-    assert any("Rollback directory is not writable" == issue.message for issue in tracker.status.issues)
+    assert any(
+        "Rollback directory is not writable" == issue.message
+        for issue in tracker.status.issues
+    )
