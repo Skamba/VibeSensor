@@ -6,7 +6,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from math import isfinite, sqrt
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 from vibesensor_core.vibration_strength import percentile
 
@@ -19,7 +19,7 @@ from ..constants import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ, WEAK_SPATIAL_D
 from ..locations import label_for_code as _label_for_code
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
-from ._types import PhaseLabel
+from ._types import PhaseLabel, PhaseSpeedStats, Sample, SpeedStats
 
 SPEED_BIN_WIDTH_KMH = 10
 SPEED_COVERAGE_MIN_PCT = 35.0
@@ -182,7 +182,7 @@ def _amplitude_weighted_speed_window(
     return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
 
 
-def _speed_stats(speed_values: list[float]) -> dict[str, float | bool | None]:
+def _speed_stats(speed_values: list[float]) -> SpeedStats:
     if not speed_values:
         return {
             "min_kmh": None,
@@ -208,9 +208,9 @@ def _speed_stats(speed_values: list[float]) -> dict[str, float | bool | None]:
 
 
 def _speed_stats_by_phase(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     per_sample_phases: Sequence[PhaseLabel],
-) -> dict[str, dict[str, Any]]:
+) -> dict[str, PhaseSpeedStats]:
     """Compute speed statistics broken down by driving phase.
 
     Returns a dict mapping each phase label (string) to the same structure as
@@ -225,11 +225,11 @@ def _speed_stats_by_phase(
         speed = _as_float(sample.get("speed_kmh"))
         if speed is not None and speed > 0:
             phase_speeds[phase_key].append(speed)
-    result: dict[str, dict[str, Any]] = {}
+    result: dict[str, PhaseSpeedStats] = {}
     for phase_key in phase_sample_counts:
-        stats: dict[str, Any] = dict(_speed_stats(phase_speeds.get(phase_key, [])))
+        stats = dict(_speed_stats(phase_speeds.get(phase_key, [])))
         stats["sample_count"] = phase_sample_counts[phase_key]
-        result[phase_key] = stats
+        result[phase_key] = cast(PhaseSpeedStats, stats)
     return result
 
 
