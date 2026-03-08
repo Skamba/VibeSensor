@@ -8,9 +8,12 @@ change-detection and payload caching.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 import numpy as np
+
+from ..payload_types import StrengthMetricsPayload
+from .models import MetricsPayload, SpectrumByAxis
+from .payload import SelectedClientPayload, SpectrumSeriesPayload
 
 
 @dataclass(slots=True, eq=False, repr=False)
@@ -22,9 +25,9 @@ class ClientBuffer:
     write_idx: int = 0
     count: int = 0
     sample_rate_hz: int = 0
-    latest_metrics: dict[str, Any] = field(default_factory=dict)
-    latest_spectrum: dict[str, dict[str, np.ndarray]] = field(default_factory=dict)
-    latest_strength_metrics: dict[str, Any] = field(default_factory=dict)
+    latest_metrics: MetricsPayload = field(default_factory=dict)
+    latest_spectrum: SpectrumByAxis = field(default_factory=dict)
+    latest_strength_metrics: StrengthMetricsPayload = field(default_factory=dict)
     last_ingest_mono_s: float = 0.0
     # Sensor-clock timestamp (µs) of the most recent ingested frame.
     # After CMD_SYNC_CLOCK this is server-relative and comparable across sensors.
@@ -39,9 +42,9 @@ class ClientBuffer:
     compute_generation: int = -1
     compute_sample_rate_hz: int = 0
     spectrum_generation: int = 0
-    cached_spectrum_payload: dict[str, Any] | None = None
+    cached_spectrum_payload: SpectrumSeriesPayload | None = None
     cached_spectrum_payload_generation: int = -1
-    cached_selected_payload: dict[str, Any] | None = None
+    cached_selected_payload: SelectedClientPayload | None = None
     cached_selected_payload_key: tuple[int, int, int] | None = None
 
     def __repr__(self) -> str:

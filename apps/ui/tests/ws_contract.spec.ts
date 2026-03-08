@@ -12,7 +12,7 @@ import { expect, test } from "@playwright/test";
 import { adaptServerPayload } from "../src/server_payload";
 import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
 
-const basePayload: Record<string, unknown> = {
+const basePayload = {
   schema_version: EXPECTED_SCHEMA_VERSION,
   clients: [],
   speed_mps: 10,
@@ -31,7 +31,7 @@ test.describe("schema_version handling", () => {
 
   test("accepts payload without schema_version (backwards compat)", () => {
     const { schema_version: _, ...noVersion } = basePayload;
-    const adapted = adaptServerPayload(noVersion as Record<string, unknown>);
+    const adapted = adaptServerPayload(noVersion);
     expect(adapted).toBeDefined();
   });
 

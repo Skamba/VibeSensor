@@ -2,6 +2,7 @@ import type uPlot from "uplot";
 import type { SpectrumChart } from "../../spectrum";
 import type { WsClient } from "../../ws";
 import type { StrengthBand } from "../../diagnostics";
+import type { StrengthMetricsPayload } from "../../contracts/ws_payload_types";
 import { createEmptyMatrix } from "../../diagnostics";
 import { defaultLocationCodes } from "../../constants";
 import type { CarRecord, HistoryEntry, LoggingStatusPayload } from "../../api/types";
@@ -70,7 +71,7 @@ export interface ClientRow {
 
 export interface SpectrumClientData {
   freq: number[];
-  strength_metrics: Record<string, unknown>;
+  strength_metrics: StrengthMetricsPayload;
   combined: number[];
 }
 
@@ -129,7 +130,7 @@ export interface AppState {
   vibrationMessages: VibrationMessage[];
   strengthBands: StrengthBand[];
   eventMatrix: Record<string, Record<string, { count: number; seconds: number; contributors: Record<string, number> }>>;
-  pendingPayload: Record<string, unknown> | null;
+  pendingPayload: unknown | null;
   renderQueued: boolean;
   lastRenderTsMs: number;
   minRenderIntervalMs: number;

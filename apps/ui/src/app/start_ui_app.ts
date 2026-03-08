@@ -414,7 +414,7 @@ export function startUiApp(): void {
 
   function applyPayload(payload: unknown): void {
     let adapted;
-    try { adapted = adaptServerPayload(payload as Record<string, unknown>); }
+    try { adapted = adaptServerPayload(payload); }
     catch (err) { state.payloadError = err instanceof Error ? err.message : t("ws.payload_error"); state.hasSpectrumData = false; renderWsState(); updateSpectrumOverlay(); return; }
     state.payloadError = null; renderWsState();
     const prevSelected = state.selectedClientId;

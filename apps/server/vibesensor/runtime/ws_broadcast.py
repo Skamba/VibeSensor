@@ -8,7 +8,7 @@ Owns:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 from .processing_loop import STALE_DATA_AGE_S
 from .rotational_speeds import (
@@ -25,6 +25,7 @@ if TYPE_CHECKING:
         RuntimeSettingsSubsystem,
     )
 
+from ..payload_types import ClientApiRow, LiveDiagnosticsPayload, LiveWsPayload, SpectraPayload
 from ..runlog import utc_now_iso
 from ..ws_models import SCHEMA_VERSION
 
@@ -38,7 +39,7 @@ class WsBroadcastCache:
     analysis_metadata: dict[str, object] | None = None
     analysis_samples: list[dict[str, object]] = field(default_factory=list)
     analysis_tick: int = -1
-    diagnostics: dict[str, object] | None = None
+    diagnostics: LiveDiagnosticsPayload | None = None
     diagnostics_tick: int = -1
     diagnostics_heavy: bool = True
 
@@ -70,13 +71,13 @@ class WsBroadcastCache:
         live_diagnostics: LiveDiagnosticsEngine,
         *,
         speed_mps: float | None,
-        clients: list[dict[str, Any]],
-        spectra: dict[str, Any] | None,
-        settings: dict[str, Any],
+        clients: list[ClientApiRow],
+        spectra: SpectraPayload | None,
+        settings: dict[str, float],
         analysis_metadata: dict[str, object],
         analysis_samples: list[dict[str, object]],
         language: str,
-    ) -> dict[str, object]:
+    ) -> LiveDiagnosticsPayload:
         """Return diagnostics payload, refreshing only when the cache is stale."""
         cache_valid = (
             self.diagnostics is not None
@@ -97,7 +98,7 @@ class WsBroadcastCache:
             finding_samples=analysis_samples,
             language=language,
         )
-        self.diagnostics = cast(dict[str, object], diagnostics)
+        self.diagnostics = diagnostics
         self.diagnostics_tick = self.tick
         self.diagnostics_heavy = self.include_heavy
         return self.diagnostics
@@ -140,7 +141,7 @@ class WsBroadcastService:
         )
         self.cache.advance(heavy_every)
 
-    def build_payload(self, selected_client: str | None) -> dict[str, Any]:
+    def build_payload(self, selected_client: str | None) -> LiveWsPayload:
         """Assemble a full WebSocket broadcast payload."""
         clients = self._ingress.registry.snapshot_for_api()
         active = selected_client
@@ -154,7 +155,7 @@ class WsBroadcastService:
 
         resolution = self._settings.gps_monitor.resolve_speed()
         speed_mps = resolution.speed_mps
-        payload: dict[str, Any] = {
+        payload: LiveWsPayload = {
             "schema_version": SCHEMA_VERSION,
             "server_time": utc_now_iso(),
             "speed_mps": speed_mps,
