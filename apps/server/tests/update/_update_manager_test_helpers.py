@@ -51,7 +51,9 @@ def seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True
     (repo / "apps" / "ui" / "src" / "main.ts").write_text("console.log('ui')\n")
     (repo / "apps" / "ui" / "package.json").write_text('{"name":"ui"}\n')
     (repo / "apps" / "ui" / "package-lock.json").write_text('{"name":"ui","lockfileVersion":3}\n')
-    (repo / "apps" / "server" / "vibesensor" / "static" / "index.html").write_text("<html>ok</html>\n")
+    (repo / "apps" / "server" / "vibesensor" / "static" / "index.html").write_text(
+        "<html>ok</html>\n"
+    )
     details = mgr._collect_runtime_details()
     metadata = {
         "ui_source_hash": details["ui_source_hash"] if valid else "stale-source-hash",

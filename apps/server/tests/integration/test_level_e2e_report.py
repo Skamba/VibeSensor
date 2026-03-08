@@ -23,7 +23,8 @@ from copy import deepcopy
 from typing import Any
 
 import pytest
-from builders import (
+from pypdf import PdfReader
+from test_support import (
     ALL_WHEEL_SENSORS,
     SENSOR_FL,
     SENSOR_FR,
@@ -39,7 +40,6 @@ from builders import (
     standard_metadata,
     top_confidence,
 )
-from pypdf import PdfReader
 
 from vibesensor.analysis import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from io import BytesIO
 import logging
+from io import BytesIO
 
 from reportlab.pdfgen.canvas import Canvas
 

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Any
 
-from builders import (
+from test_support import (
     SENSOR_FL,
     make_fault_samples,
     make_noise_samples,

@@ -15,7 +15,7 @@ from _scenario_ground_truth_helpers import (
     scenario_metadata,
     wheel_hz,
 )
-from builders import make_sample as _make_sample
+from test_support import make_sample as _make_sample
 
 from vibesensor.analysis import summarize_run_data
 

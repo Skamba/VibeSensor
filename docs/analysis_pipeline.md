@@ -113,50 +113,12 @@ acceleration fields may still be expressed in g.
 
 ## Module Map
 
-```
-vibesensor/analysis/
-├── __init__.py            Public API re-exports
-├── summary_builder.py     Structured summary orchestration and final plot annotation
-├── summary_models.py      Explicit intermediate models for summary generation
-├── summary_phases.py      Phase/timing/speed preparation helpers
-├── summary_suitability.py Acceleration stats, reference completeness, and run-suitability helpers
-├── summary_payload.py     Origin, sensor analysis, and final payload assembly
-├── ranking.py             Shared finding-sort and phase-aware ranking helpers
-├── top_cause_selection.py Top-cause grouping and confidence-label presentation
-├── findings/              Core findings engine (package)
-│   ├── __init__.py        Package overview and ownership notes
-│   ├── builder.py         Main _build_findings() orchestrator facade
-│   ├── builder_support.py Reference checks, phase filtering, suppression inputs, and final ordering helpers
-│   ├── order_findings.py  Order-tracking orchestration facade
-│   ├── order_matching.py  Sample ↔ hypothesis matching and evidence accumulation
-│   ├── order_assembly.py  Order-finding assembly and localization/context shaping
-│   ├── order_models.py    Typed order-matching and assembly context models
-│   ├── order_scoring.py   Confidence and suppression helpers for order findings
-│   ├── order_support.py   Shared pure helpers used by order assembly
-│   ├── intensity.py       Per-location intensity statistics
-│   ├── persistent_findings.py  Non-order persistent/transient peak findings
-│   ├── reference_checks.py    Reference-missing finding generation
-│   ├── speed_profile.py   Speed-profile extraction and phase-string helpers
-│   └── _constants.py      Shared constants across the findings sub-package
-├── order_analysis.py      Wheel/engine/driveshaft Hz helpers
-├── phase_segmentation.py  Driving-phase classification
-├── helpers.py             Constants, statistics, strength utils
-├── strength_labels.py     dB → strength-band classification
-├── test_plan.py           Action-plan generation
-├── diagnosis_candidates.py Cause/finding filtering helpers for report mapping
-├── report_mapping_common.py Shared i18n and value-resolution helpers for report mapping
-├── report_mapping_context.py Context extraction for report mapping
-├── report_mapping_models.py Explicit report-mapping context models
-├── report_mapping_pipeline.py Summary dict → ReportTemplateData mapping entrypoint
-├── report_mapping_actions.py Next-step and data-trust builders
-├── report_mapping_peaks.py Peak-row and hotspot shaping helpers
-├── report_mapping_systems.py System-card, metadata, and strength/report context helpers
-├── plot_data.py           Plot payload orchestration facade
-├── plot_series.py         Time/speed/finding plot series shaping
-├── plot_spectrum.py       FFT and spectrogram aggregation helpers
-├── plot_peak_table.py     Peak-table ranking and persistence shaping
-└── pattern_parts.py       Pattern → likely-parts mapping
-```
+- `__init__.py`: package-level public API re-exports.
+- Summary orchestration: `summary_builder.py`, `summary_models.py`, `summary_phases.py`, `summary_suitability.py`, `summary_payload.py`.
+- Finding selection and ranking: `findings/`, `ranking.py`, `top_cause_selection.py`.
+- Domain helpers: `order_analysis.py`, `phase_segmentation.py`, `helpers.py`, `strength_labels.py`, `test_plan.py`, `pattern_parts.py`.
+- Report mapping: `diagnosis_candidates.py`, `report_mapping_common.py`, `report_mapping_context.py`, `report_mapping_models.py`, `report_mapping_pipeline.py`, `report_mapping_actions.py`, `report_mapping_peaks.py`, `report_mapping_systems.py`.
+- Plot shaping: `plot_data.py`, `plot_series.py`, `plot_spectrum.py`, `plot_peak_table.py`.
 
 ## Adding a New Analysis Step
 

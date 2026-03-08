@@ -10,42 +10,19 @@ The report generation pipeline has two distinct phases:
    `ReportTemplateData` and renders a PDF.  This phase performs **zero
    analysis** — it only formats and lays out pre-computed data.
 
-```
+```text
 Recording stops
-  │
-  ▼
-_run_post_analysis()          [vibesensor.metrics_log.post_analysis]
-  ├─ summarize_run_data()     [vibesensor.analysis.summary_builder]
-  │    ├─ summary_builder.py   → explicit run-preparation / findings / suitability stages
-  │    ├─ summary_phases.py    → timing / phase / speed-prep helpers
-  │    ├─ summary_suitability.py → accel stats / reference completeness / suitability
-  │    ├─ summary_payload.py   → origin / sensor analysis / final summary payload
-  │    ├─ phase segmentation   [vibesensor.analysis.phase_segmentation]
-  │    ├─ findings builder     [vibesensor.analysis.findings]
-  │    ├─ ranking + top causes [vibesensor.analysis.ranking, top_cause_selection]
-  │    ├─ plot data facade     [vibesensor.analysis.plot_data]
-  │    │    ├─ series shaping  [vibesensor.analysis.plot_series]
-  │    │    ├─ FFT/spectrogram [vibesensor.analysis.plot_spectrum]
-  │    │    └─ peak table      [vibesensor.analysis.plot_peak_table]
-  │    └─ strength labels      [vibesensor.analysis.strength_labels]
-  ├─ map_summary()            [vibesensor.analysis.report_mapping_pipeline]
-  │    ├─ report_mapping_pipeline.py → context prep + primary candidate resolution
-  │    ├─ report_mapping_actions.py  → next steps + data trust shaping
-  │    ├─ report_mapping_peaks.py    → peak rows + hotspot rows
-  │    ├─ report_mapping_systems.py  → system cards + metadata + strength helpers
-  │    ├─ certainty_tier()          → tier A/B/C
-  │    ├─ parts_for_pattern()       → suggested parts
-  │    └─ location hotspots         → pre-computed rows
-  └─ store_analysis()          [vibesensor.history_db]
-       └─ Persists summary dict + embedded _report_template_data
-  │
-  ▼
-GET /api/history/{run_id}/report.pdf   [vibesensor.routes.history]
-  └─ HistoryReportService.build_pdf()  [vibesensor.history_reports]
-     ├─ load persisted analysis + _report_template_data
-     ├─ reconstruct ReportTemplateData from dict
-     └─ build_report_pdf(data)       [vibesensor.report.pdf_engine]
-         └─ delegate to focused page, layout, drawing, and diagram modules in `vibesensor.report`
+  → _run_post_analysis() [vibesensor.metrics_log.post_analysis]
+    → summarize_run_data() [vibesensor.analysis.summary_builder]
+      → summary_phases.py / summary_suitability.py / summary_payload.py
+      → findings/, ranking.py, top_cause_selection.py, plot_data.py
+    → map_summary() [vibesensor.analysis.report_mapping_pipeline]
+      → report_mapping_actions.py / report_mapping_peaks.py / report_mapping_systems.py
+    → store_analysis() [vibesensor.history_db]
+
+GET /api/history/{run_id}/report.pdf [vibesensor.routes.history]
+  → HistoryReportService.build_pdf() [vibesensor.history_reports]
+    → build_report_pdf(data) [vibesensor.report.pdf_engine]
 ```
 
 ## Key Architectural Rules

@@ -3,9 +3,9 @@ from __future__ import annotations
 from _report_helpers import analysis_metadata as make_metadata
 from _report_helpers import analysis_sample_with_peaks as sample
 
+from vibesensor.analysis import summarize_run_data
 from vibesensor.analysis.findings.persistent_findings import _build_persistent_peak_findings
 from vibesensor.analysis.phase_segmentation import DrivingPhase
-from vibesensor.analysis import summarize_run_data
 
 
 def uniform_samples(

@@ -10,6 +10,8 @@ from ..report.report_data import (
     ObservedSignature,
     ReportTemplateData,
 )
+from ..report_i18n import normalize_lang
+from ..report_i18n import tr as _tr
 from .report_mapping_actions import build_data_trust_from_summary, build_next_steps_from_summary
 from .report_mapping_context import (
     extract_run_context,
@@ -18,10 +20,8 @@ from .report_mapping_context import (
     resolve_primary_candidate,
     resolve_sensor_count,
 )
-from ..report_i18n import normalize_lang
-from ..report_i18n import tr as _tr
-from .report_mapping_peaks import build_peak_rows_from_plots, compute_location_hotspot_rows
 from .report_mapping_models import PrimaryCandidateContext, ReportMappingContext
+from .report_mapping_peaks import build_peak_rows_from_plots, compute_location_hotspot_rows
 from .report_mapping_systems import (
     build_pattern_evidence,
     build_run_metadata_fields,

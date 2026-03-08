@@ -9,7 +9,6 @@ from reportlab.pdfgen.canvas import Canvas
 
 from ..report_i18n import tr as _tr
 from .pdf_drawing import _draw_panel, _hex, _safe
-from .pdf_text import _draw_text, _wrap_lines
 from .pdf_page1_sections import (
     build_header_rows as _build_header_rows_impl,
 )
@@ -46,7 +45,7 @@ from .pdf_style import (
     SUB_CLR,
     TEXT_CLR,
 )
-from .pdf_text import _draw_kv, _draw_text
+from .pdf_text import _draw_kv, _draw_text, _wrap_lines
 from .report_data import NextStep, ReportTemplateData, SystemFindingCard
 from .theme import REPORT_COLORS
 

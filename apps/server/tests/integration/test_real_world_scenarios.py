@@ -18,7 +18,7 @@ from typing import Any
 
 import pytest
 from _test_helpers import assert_summary_sections
-from builders import make_sample
+from test_support import make_sample
 
 from vibesensor.analysis import summarize_run_data
 from vibesensor.analysis_settings import (

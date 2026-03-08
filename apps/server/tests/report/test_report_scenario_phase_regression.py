@@ -11,7 +11,7 @@ from _scenario_regression_helpers import (
     standard_metadata,
 )
 
-from vibesensor.analysis import build_findings_for_samples
+from vibesensor.analysis import build_findings_for_samples, summarize_run_data
 from vibesensor.analysis.findings.intensity import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
@@ -22,7 +22,6 @@ from vibesensor.analysis.phase_segmentation import (
     phase_summary,
     segment_run_phases,
 )
-from vibesensor.analysis import summarize_run_data
 
 
 class TestPhaseSegmentation:

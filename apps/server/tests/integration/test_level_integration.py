@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from builders import (
+from test_support import (
     ALL_WHEEL_SENSORS,
     SENSOR_FL,
     SENSOR_FR,
