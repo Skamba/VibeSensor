@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from math import floor
 from typing import Any
 
@@ -16,13 +15,14 @@ from .findings.persistent_findings import _classify_peak_type
 from .helpers import (
     _amplitude_weighted_speed_window,
     _effective_baseline_floor,
-    _estimate_strength_floor_amp_g,
-    _location_label,
     _run_noise_baseline_g,
-    _sample_top_peaks,
-    _speed_bin_label,
 )
-from .plot_spectrum import safe_percentile, vibration_db_or_none
+from .plot_spectrum import (
+    PeakSampleScan,
+    safe_percentile,
+    scan_peak_samples,
+    vibration_db_or_none,
+)
 
 
 def top_peaks_table_rows(
@@ -31,11 +31,13 @@ def top_peaks_table_rows(
     top_n: int = 12,
     freq_bin_hz: float = 1.0,
     run_noise_baseline_g: float | None = None,
+    peak_scan: PeakSampleScan | None = None,
 ) -> list[dict[str, Any]]:
     """Build ranked peak-table rows using persistence-weighted scoring."""
+    resolved_scan = peak_scan or scan_peak_samples(samples)
     grouped: dict[float, dict[str, Any]] = {}
-    total_locations: set[str] = set()
-    total_speed_bin_counts: dict[str, int] = defaultdict(int)
+    total_locations = resolved_scan.total_locations
+    total_speed_bin_counts = resolved_scan.total_speed_bin_counts
     if freq_bin_hz <= 0:
         freq_bin_hz = 1.0
 
@@ -43,21 +45,12 @@ def top_peaks_table_rows(
         run_noise_baseline_g = _run_noise_baseline_g(samples)
     baseline_floor = _effective_baseline_floor(run_noise_baseline_g)
 
-    n_samples = 0
-    for sample in samples:
-        if not isinstance(sample, dict):
-            continue
-        n_samples += 1
-        speed = _as_float(sample.get("speed_kmh"))
-        sample_speed_bin = _speed_bin_label(speed) if speed is not None and speed > 0 else None
-        if sample_speed_bin is not None:
-            total_speed_bin_counts[sample_speed_bin] += 1
-        location = _location_label(sample)
-        if location:
-            total_locations.add(location)
-        for hz, amp in _sample_top_peaks(sample):
-            if hz <= 0 or amp <= 0:
-                continue
+    n_samples = resolved_scan.sample_count
+    for row in resolved_scan.rows:
+        speed = row.speed_kmh
+        sample_speed_bin = row.speed_bin
+        location = row.location
+        for hz, amp in row.peaks:
             freq_key = floor(hz / freq_bin_hz) * freq_bin_hz
             bucket = grouped.setdefault(
                 freq_key,
@@ -72,7 +65,7 @@ def top_peaks_table_rows(
                 },
             )
             bucket["amps"].append(amp)
-            floor_amp = _estimate_strength_floor_amp_g(sample)
+            floor_amp = row.floor_amp_g
             if floor_amp is not None:
                 bucket["floor_amps"].append(floor_amp)
             if speed is not None and speed > 0:

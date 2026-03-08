@@ -23,6 +23,10 @@ class HealthDataLossPayload(TypedDict):
 class HealthPersistencePayload(TypedDict):
     write_error: str | None
     analysis_in_progress: bool
+    analysis_queue_depth: int
+    analysis_active_run_id: str | None
+    analysis_started_at: float | None
+    analysis_elapsed_s: float | None
 
 
 class AxisPeak(TypedDict, total=False):
