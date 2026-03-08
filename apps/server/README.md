@@ -23,7 +23,7 @@ Backend ownership boundaries:
 - `routes/`: HTTP and WebSocket route groups.
 - `runtime/`: explicit subsystem builders and owners for ingress, settings, diagnostics, persistence, updates, processing, websocket delivery, route services, and lifecycle.
 - `processing/`, `analysis/`, `live_diagnostics/`: signal processing and findings logic.
-- `metrics_log/`, `history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`: recording, persistence, and exports.
+- `metrics_log/`, `history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`: recording, persistence, and exports. The runtime persistence subsystem owns the history query/delete/report/export services built on top of `HistoryDB`.
 - `report/`: PDF rendering pipeline.
 - `update/`: wheel-based update flow.
 

@@ -37,6 +37,7 @@ def build_services(config: AppConfig) -> RuntimeState:
         persistence=persistence,
         gps_enabled=config.gps.gps_enabled,
     )
+    persistence.bind_history_services(settings.settings_store)
     diagnostics = build_diagnostics_subsystem(
         config=config,
         ingress=ingress,

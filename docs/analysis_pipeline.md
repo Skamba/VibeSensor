@@ -55,7 +55,10 @@ live preview and definitive post-stop analysis.
    recent samples.  Results are ephemeral (not persisted). The
    WebSocket broadcaster only refreshes live finding inputs on heavy
    UI ticks; lighter ticks reuse the previous preview so dashboard
-   updates do not re-run finding generation unnecessarily.
+   updates do not re-run finding generation unnecessarily. The same
+   broadcaster now also reuses a shared per-tick payload shell so only
+   the `selected_client_id` field varies across recipient-specific
+   sends within the same tick.
 - **Definitive analysis**: called once after stop via
   `summarize_run_data()`.  Results are persisted and used for reports.
 

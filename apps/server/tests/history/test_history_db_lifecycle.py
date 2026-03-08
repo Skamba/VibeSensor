@@ -15,11 +15,11 @@ def test_append_samples_in_chunks(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-1", "2026-01-01T00:00:00Z", {"source": "test"})
     calls: list[int] = []
-    original_cursor = db._cursor
+    original_write_tx = db.write_transaction_cursor
 
     @contextmanager
-    def _wrapped_cursor():
-        with original_cursor() as cur:
+    def _wrapped_write_transaction():
+        with original_write_tx() as cur:
 
             class _CursorProxy:
                 def __init__(self, base_cursor):
@@ -35,7 +35,7 @@ def test_append_samples_in_chunks(tmp_path: Path) -> None:
 
             yield _CursorProxy(cur)
 
-    db._cursor = _wrapped_cursor  # type: ignore[method-assign]
+    db.write_transaction_cursor = _wrapped_write_transaction  # type: ignore[method-assign]
     samples = [{"i": i, "x": 0.1} for i in range(700)]
     db.append_samples("run-1", samples)
     assert sum(calls) == 700
@@ -159,12 +159,47 @@ def test_store_analysis_allows_direct_recording_to_complete(tmp_path: Path) -> N
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-recording", "2026-01-01T00:00:00Z", {"source": "test"})
 
-    db.store_analysis("run-recording", {"score": 42})
+    stored = db.store_analysis("run-recording", {"score": 42})
 
+    assert stored is True
     run = db.get_run("run-recording")
     assert run is not None
     assert run["status"] == "complete"
-    assert run["analysis"] == {"score": 42}
+    assert run.get("analysis") == {"score": 42}
+
+
+def test_append_samples_rolls_back_when_metadata_update_fails(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-rollback", "2026-01-01T00:00:00Z", {"source": "test"})
+    original_write_tx = db.write_transaction_cursor
+
+    @contextmanager
+    def _wrapped_write_transaction():
+        with original_write_tx() as cur:
+
+            class _CursorProxy:
+                def __init__(self, base_cursor):
+                    self._base_cursor = base_cursor
+
+                def __getattr__(self, name: str):
+                    return getattr(self._base_cursor, name)
+
+                def execute(self, sql: str, params=()):
+                    if "UPDATE runs SET sample_count = sample_count + ?" in sql:
+                        raise sqlite3.OperationalError("simulated sample_count failure")
+                    return self._base_cursor.execute(sql, params)
+
+            yield _CursorProxy(cur)
+
+    db.write_transaction_cursor = _wrapped_write_transaction  # type: ignore[method-assign]
+
+    with pytest.raises(sqlite3.OperationalError, match="simulated sample_count failure"):
+        db.append_samples("run-rollback", [{"i": 1}, {"i": 2}])
+
+    run = db.get_run("run-rollback")
+    assert run is not None
+    assert run["sample_count"] == 0
+    assert db.get_run_samples("run-rollback") == []
 
 
 def test_finalize_run_with_metadata_returns_false_when_already_analyzing(tmp_path: Path) -> None:

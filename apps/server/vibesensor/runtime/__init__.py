@@ -15,6 +15,7 @@ Submodules
 
 from ._state import RuntimeState
 from .composition import build_runtime_state
+from .health_state import RuntimeHealthState
 from .processing_loop import ProcessingLoopState
 from .rotational_speeds import (
     build_rotational_speeds_payload as _build_rotational_speeds_payload,
@@ -46,6 +47,7 @@ __all__ = [
     "RuntimeWebsocketSubsystem",
     "RuntimeRouteServices",
     "ProcessingLoopState",
+    "RuntimeHealthState",
     "WsBroadcastCache",
     "_build_rotational_speeds_payload",
     "_rotational_basis_speed_source",

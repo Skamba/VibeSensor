@@ -116,7 +116,11 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
         return config_path
 
     responses = [
-        (200, "application/json", '{"status":"ok"}'),
+        (
+            200,
+            "application/json",
+            '{"status":"ok","startup_state":"ready","background_task_failures":{}}',
+        ),
         (200, "text/html; charset=utf-8", "<html><title>VibeSensor</title></html>"),
     ]
 

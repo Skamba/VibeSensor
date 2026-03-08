@@ -47,13 +47,19 @@ def _build_openapi_app() -> FastAPI:
             metrics_logger=placeholder,
             live_diagnostics=placeholder,
         ),
-        persistence=SimpleNamespace(history_db=placeholder),
+        persistence=SimpleNamespace(
+            history_db=placeholder,
+            query_service=placeholder,
+            delete_service=placeholder,
+            report_service=placeholder,
+            export_service=placeholder,
+        ),
         websocket=SimpleNamespace(hub=placeholder),
         updates=SimpleNamespace(
             update_manager=placeholder,
             esp_flash_manager=placeholder,
         ),
-        processing=SimpleNamespace(state=placeholder),
+        processing=SimpleNamespace(state=placeholder, health_state=placeholder),
     )
     app = FastAPI(title="VibeSensor HTTP API")
     app.include_router(create_router(services))

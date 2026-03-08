@@ -75,7 +75,7 @@ class HistoryRunWriteMixin:
             raise ValueError("append_samples: run_id must be a non-empty string")
 
         chunk_size = 256
-        with self._cursor() as cur:
+        with self.write_transaction_cursor() as cur:
             for start in range(0, len(samples), chunk_size):
                 batch = samples[start : start + chunk_size]
                 cur.executemany(
@@ -172,12 +172,13 @@ class HistoryRunWriteMixin:
             cur.execute(
                 "UPDATE runs SET status = 'complete', analysis_json = ?, "
                 "analysis_version = ?, analysis_completed_at = ? "
-                "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
+                "WHERE run_id = ? AND status = ?",
                 (
                     safe_json_dumps(wrap_analysis_for_storage(analysis)),
                     ANALYSIS_SCHEMA_VERSION,
                     now,
                     run_id,
+                    current_status,
                 ),
             )
             return bool(int(cur.rowcount) > 0)
@@ -198,8 +199,8 @@ class HistoryRunWriteMixin:
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ?, "
                 "analysis_completed_at = ? "
-                "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
-                (error, now, run_id),
+                "WHERE run_id = ? AND status = ?",
+                (error, now, run_id, current_status),
             )
             return bool(int(cur.rowcount) > 0)
 

@@ -18,6 +18,11 @@ curl -sf http://10.4.0.1/api/health || curl -sf http://10.4.0.1:8000/api/health
 curl -sf http://10.4.0.1/api/clients || curl -sf http://10.4.0.1:8000/api/clients
 ```
 
+When interpreting `/api/health`, check `startup_state`, `startup_phase`, and
+`background_task_failures` before chasing downstream symptoms. A healthy boot
+should reach `startup_state: ready` with an empty `background_task_failures`
+map.
+
 ## Diagnose high dropped frames
 
 1. Confirm the health endpoint responds and inspect connected clients.
@@ -53,9 +58,10 @@ vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
 1. Confirm current runtime and update status from the UI or update endpoints.
 2. Before shipping a release, ensure the release workflow builds the wheel and passes the smoke validation step.
 3. If an update fails on-device, do not assume rollback succeeded silently. Confirm service health after the attempt and check updater issues for rollback wheel validation failures.
-4. If rollback metadata is missing, the updater will only trust the newest rollback wheel after structural archive validation; if checksum metadata exists, a mismatch should be treated as a broken rollback snapshot, not a transient install failure.
-5. The Update panel now shows operational health from `/api/health`; use its degradation reasons, data-loss counts, and persistence status as the first operator-facing signal before digging through logs.
-6. If emergency patching was used to restore service, follow up with the repo fix, validation, and a successful updater rerun so the device returns to wheel-managed state.
+4. The updater now aborts before touching the live environment if it cannot write a fresh rollback snapshot or cannot verify free disk space for the rollback area. Treat either condition as an infrastructure problem to fix first, not a retry-until-it-works event.
+5. If rollback metadata is missing, the updater will only trust the newest rollback wheel after structural archive validation; if checksum metadata exists, a mismatch should be treated as a broken rollback snapshot, not a transient install failure.
+6. The Update panel now shows operational health from `/api/health`; use its degradation reasons, data-loss counts, and persistence status as the first operator-facing signal before digging through logs.
+7. If emergency patching was used to restore service, follow up with the repo fix, validation, and a successful updater rerun so the device returns to wheel-managed state.
 
 ## Local release readiness
 

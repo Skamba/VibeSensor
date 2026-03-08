@@ -101,6 +101,10 @@ python3 tools/tests/run_ci_parallel.py --job release-smoke
 python3 tools/tests/run_e2e_parallel.py --shards 3 --fast-e2e
 ```
 
+Use `release-smoke` when you need confidence in the packaged wheel and bundled
+static assets. Use `e2e` when you need confidence in the Docker/runtime path.
+They cover different delivery contracts and neither replaces the other.
+
 When a single shard fails in CI, run the corresponding focused suite locally first instead of rerunning everything.
 
 ## Pull requests and merge expectations

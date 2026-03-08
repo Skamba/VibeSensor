@@ -122,47 +122,54 @@ class _StubProcessor:
 
 def _make_runtime(**overrides: Any):
     """Build a RuntimeState with stubs for lifecycle testing."""
-    from vibesensor.runtime import (
-        RuntimeDiagnosticsSubsystem,
-        RuntimeIngressSubsystem,
-        RuntimePersistenceSubsystem,
-        RuntimeProcessingSubsystem,
-        RuntimeRouteServices,
-        RuntimeSettingsSubsystem,
-        RuntimeUpdateSubsystem,
-        RuntimeWebsocketSubsystem,
-        build_runtime_state,
+    import vibesensor.runtime as runtime_module
+    from vibesensor.runtime.processing_loop import (
+        ProcessingLoop,
+        ProcessingLoopState,
     )
-    from vibesensor.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
-    from vibesensor.runtime.ws_broadcast import WsBroadcastCache, WsBroadcastService
+    from vibesensor.runtime.ws_broadcast import (
+        WsBroadcastCache,
+        WsBroadcastService,
+    )
 
     config = overrides.pop("config", _StubConfig(processing=_StubProcessingConfig()))
-    ingress = RuntimeIngressSubsystem(
+    ingress = runtime_module.RuntimeIngressSubsystem(
         registry=overrides.pop("registry", _StubRegistry()),
         processor=overrides.pop("processor", _StubProcessor()),
         control_plane=overrides.pop("control_plane", MagicMock()),
         worker_pool=overrides.pop("worker_pool", MagicMock()),
     )
-    settings = RuntimeSettingsSubsystem(
+    settings = runtime_module.RuntimeSettingsSubsystem(
         settings_store=overrides.pop("settings_store", MagicMock()),
         analysis_settings=overrides.pop("analysis_settings", MagicMock()),
         gps_monitor=overrides.pop("gps_monitor", MagicMock()),
     )
-    diagnostics = RuntimeDiagnosticsSubsystem(
+    diagnostics = runtime_module.RuntimeDiagnosticsSubsystem(
         metrics_logger=overrides.pop("metrics_logger", MagicMock()),
         live_analysis=overrides.pop("live_analysis", MagicMock()),
         live_diagnostics=overrides.pop("live_diagnostics", MagicMock()),
     )
-    persistence = RuntimePersistenceSubsystem(
+    persistence = runtime_module.RuntimePersistenceSubsystem(
         history_db=overrides.pop("history_db", MagicMock()),
+        query_service=overrides.pop("query_service", None),
+        delete_service=overrides.pop("delete_service", None),
+        report_service=overrides.pop("report_service", None),
+        export_service=overrides.pop("export_service", None),
     )
-    updates = RuntimeUpdateSubsystem(
+    if persistence.query_service is None:
+        settings_store_ref = settings.settings_store
+        persistence.bind_history_services(
+            settings_store_ref if not isinstance(settings_store_ref, MagicMock) else None
+        )
+    updates = runtime_module.RuntimeUpdateSubsystem(
         update_manager=overrides.pop("update_manager", MagicMock()),
         esp_flash_manager=overrides.pop("esp_flash_manager", MagicMock()),
     )
     processing_state = ProcessingLoopState()
-    processing = RuntimeProcessingSubsystem(
+    health_state = runtime_module.RuntimeHealthState()
+    processing = runtime_module.RuntimeProcessingSubsystem(
         state=processing_state,
+        health_state=health_state,
         loop=ProcessingLoop(
             state=processing_state,
             fft_update_hz=config.processing.fft_update_hz,
@@ -172,7 +179,7 @@ def _make_runtime(**overrides: Any):
         ),
     )
     ws_cache = WsBroadcastCache()
-    websocket = RuntimeWebsocketSubsystem(
+    websocket = runtime_module.RuntimeWebsocketSubsystem(
         hub=overrides.pop("ws_hub", MagicMock()),
         cache=ws_cache,
         broadcast=WsBroadcastService(
@@ -184,7 +191,7 @@ def _make_runtime(**overrides: Any):
             diagnostics=diagnostics,
         ),
     )
-    rt = build_runtime_state(
+    rt = runtime_module.build_runtime_state(
         config=config,
         ingress=ingress,
         settings=settings,
@@ -193,7 +200,7 @@ def _make_runtime(**overrides: Any):
         updates=updates,
         processing=processing,
         websocket=websocket,
-        routes=RuntimeRouteServices(
+        routes=runtime_module.RuntimeRouteServices(
             ingress=ingress,
             settings=settings,
             diagnostics=diagnostics,
@@ -321,11 +328,52 @@ async def test_start_creates_tasks(monkeypatch) -> None:
     await rt.lifecycle.start()
     assert len(rt.lifecycle.tasks) == 5
     assert control_plane.start.called
+    assert rt.processing.health_state.startup_state == "ready"
+    assert rt.processing.health_state.startup_phase == "ready"
 
-    # Cleanup
-    for task in rt.lifecycle.tasks:
-        task.cancel()
-    await asyncio.gather(*rt.lifecycle.tasks, return_exceptions=True)
+    await rt.lifecycle.stop()
+
+
+@pytest.mark.asyncio
+async def test_start_records_background_task_failure(monkeypatch) -> None:
+    from vibesensor.runtime import lifecycle as lifecycle_mod
+
+    async def _fake_udp(*args, **kwargs):
+        return None, None
+
+    monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp)
+
+    control_plane = MagicMock()
+    control_plane.start = AsyncMock()
+    ws_hub = MagicMock()
+
+    async def _failing_ws(*args, **kwargs):
+        raise RuntimeError("ws boom")
+
+    ws_hub.run = AsyncMock(side_effect=_failing_ws)
+    metrics_logger = MagicMock()
+    metrics_logger.run = AsyncMock(side_effect=asyncio.CancelledError)
+    gps_monitor = MagicMock()
+    gps_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
+    update_manager = MagicMock()
+    update_manager.startup_recover = AsyncMock()
+    update_manager.job_task = None
+
+    rt = _make_runtime(
+        control_plane=control_plane,
+        ws_hub=ws_hub,
+        metrics_logger=metrics_logger,
+        gps_monitor=gps_monitor,
+        update_manager=update_manager,
+    )
+
+    await rt.lifecycle.start()
+    failed_task = next(task for task in rt.lifecycle.tasks if task.get_name() == "ws-broadcast")
+    await asyncio.gather(failed_task, return_exceptions=True)
+
+    assert rt.processing.health_state.background_task_failures["ws-broadcast"] == "ws boom"
+
+    await rt.lifecycle.stop()
 
 
 @pytest.mark.asyncio

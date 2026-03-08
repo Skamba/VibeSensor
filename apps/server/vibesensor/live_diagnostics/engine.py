@@ -238,10 +238,10 @@ class LiveDiagnosticsEngine:
             dt_seconds = max(0.0, min(1.0, (now_ms - self._last_update_ts_ms) / 1000.0))
         self._last_update_ts_ms = now_ms
         self._matrix.accumulate_seconds(now_ms, dt_seconds, self._active_levels_by_source)
-        self._matrix.rebuild(now_ms)
 
         if spectra is None:
             self._last_error = None
+            self._matrix.rebuild(now_ms)
             return self.snapshot()
 
         try:

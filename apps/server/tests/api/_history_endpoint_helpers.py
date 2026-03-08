@@ -14,7 +14,11 @@ from fastapi import FastAPI, WebSocketDisconnect
 
 from vibesensor.analysis import summarize_run_data
 from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION
+from vibesensor.history_exports import HistoryExportService
+from vibesensor.history_reports import HistoryReportService
+from vibesensor.history_runs import HistoryRunDeleteService, HistoryRunQueryService
 from vibesensor.routes import create_router
+from vibesensor.runtime import RuntimeHealthState
 
 
 def make_metadata(**overrides: Any) -> dict[str, Any]:
@@ -234,6 +238,8 @@ class FakeState:
         from vibesensor.runtime import ProcessingLoopState
 
         self.loop_state = ProcessingLoopState()
+        self.health_state = RuntimeHealthState()
+        self.health_state.mark_ready()
         self.apply_car_settings = lambda: None
         self.apply_speed_source_settings = lambda: None
         self.update_manager = MagicMock()
@@ -254,13 +260,19 @@ class FakeState:
             metrics_logger=self.metrics_logger,
             live_diagnostics=self.live_diagnostics,
         )
-        self.persistence = SimpleNamespace(history_db=self.history_db)
+        self.persistence = SimpleNamespace(
+            history_db=self.history_db,
+            query_service=HistoryRunQueryService(self.history_db, self.settings_store),
+            delete_service=HistoryRunDeleteService(self.history_db, self.settings_store),
+            report_service=HistoryReportService(self.history_db, self.settings_store),
+            export_service=HistoryExportService(self.history_db),
+        )
         self.websocket = SimpleNamespace(hub=self.ws_hub)
         self.updates = SimpleNamespace(
             update_manager=self.update_manager,
             esp_flash_manager=self.esp_flash_manager,
         )
-        self.processing = SimpleNamespace(state=self.loop_state)
+        self.processing = SimpleNamespace(state=self.loop_state, health_state=self.health_state)
 
 
 def make_router_and_state(

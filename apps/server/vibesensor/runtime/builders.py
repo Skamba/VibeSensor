@@ -19,6 +19,7 @@ from ..udp_control_tx import UDPControlPlane
 from ..update.manager import UpdateManager
 from ..worker_pool import WorkerPool
 from ..ws_hub import WebSocketHub
+from .health_state import RuntimeHealthState
 from .lifecycle import LifecycleManager
 from .processing_loop import ProcessingLoop, ProcessingLoopState
 from .subsystems import (
@@ -166,6 +167,7 @@ def build_processing_subsystem(
     ingress: RuntimeIngressSubsystem,
 ) -> RuntimeProcessingSubsystem:
     state = ProcessingLoopState()
+    health_state = RuntimeHealthState()
     loop = ProcessingLoop(
         state=state,
         fft_update_hz=config.processing.fft_update_hz,
@@ -173,7 +175,7 @@ def build_processing_subsystem(
         fft_n=config.processing.fft_n,
         ingress=ingress,
     )
-    return RuntimeProcessingSubsystem(state=state, loop=loop)
+    return RuntimeProcessingSubsystem(state=state, health_state=health_state, loop=loop)
 
 
 def build_websocket_subsystem(

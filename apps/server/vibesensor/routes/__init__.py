@@ -37,6 +37,7 @@ def create_router(services: RuntimeRouteServices) -> APIRouter:
     router.include_router(
         create_health_routes(
             services.processing.state,
+            services.processing.health_state,
             services.ingress.processor,
             services.ingress.registry,
             services.diagnostics.metrics_logger,
@@ -66,8 +67,7 @@ def create_router(services: RuntimeRouteServices) -> APIRouter:
     )
     router.include_router(
         create_history_routes(
-            services.persistence.history_db,
-            services.settings.settings_store,
+            services.persistence,
         )
     )
     router.include_router(create_websocket_routes(services.websocket.hub))

@@ -6,6 +6,9 @@ from ..analysis_settings import AnalysisSettingsStore
 from ..esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
+from ..history_exports import HistoryExportService
+from ..history_reports import HistoryReportService
+from ..history_runs import HistoryRunDeleteService, HistoryRunQueryService
 from ..live_diagnostics.engine import LiveDiagnosticsEngine
 from ..metrics_log import LiveAnalysisWindow, MetricsLogger
 from ..processing import SignalProcessor
@@ -15,6 +18,7 @@ from ..udp_control_tx import UDPControlPlane
 from ..update.manager import UpdateManager
 from ..worker_pool import WorkerPool
 from ..ws_hub import WebSocketHub
+from .health_state import RuntimeHealthState
 from .processing_loop import ProcessingLoop, ProcessingLoopState
 from .settings_sync import apply_car_settings, apply_speed_source_settings
 from .ws_broadcast import WsBroadcastCache, WsBroadcastService
@@ -51,6 +55,16 @@ class RuntimeDiagnosticsSubsystem:
 @dataclass(slots=True)
 class RuntimePersistenceSubsystem:
     history_db: HistoryDB
+    query_service: HistoryRunQueryService | None = None
+    delete_service: HistoryRunDeleteService | None = None
+    report_service: HistoryReportService | None = None
+    export_service: HistoryExportService | None = None
+
+    def bind_history_services(self, settings_store: SettingsStore | None = None) -> None:
+        self.query_service = HistoryRunQueryService(self.history_db, settings_store)
+        self.delete_service = HistoryRunDeleteService(self.history_db, settings_store)
+        self.report_service = HistoryReportService(self.history_db, settings_store)
+        self.export_service = HistoryExportService(self.history_db)
 
 
 @dataclass(slots=True)
@@ -62,6 +76,7 @@ class RuntimeUpdateSubsystem:
 @dataclass(slots=True)
 class RuntimeProcessingSubsystem:
     state: ProcessingLoopState
+    health_state: RuntimeHealthState
     loop: ProcessingLoop
 
 

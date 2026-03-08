@@ -234,6 +234,10 @@ class HealthResponse(BaseModel):
     """Response body for the server health check endpoint."""
 
     status: Literal["ok", "degraded"]
+    startup_state: str
+    startup_phase: str
+    startup_error: str | None
+    background_task_failures: dict[str, str]
     processing_state: str
     processing_failures: int
     processing_failure_categories: dict[str, int]

@@ -16,6 +16,7 @@ os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
 from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
+from vibesensor.live_diagnostics.severity_matrix import SeverityMatrix
 
 
 def _make_spectra(peak_idx: int = 320, peak_amp: float = 150.0) -> dict:
@@ -91,6 +92,24 @@ def test_diagnostics_sequence_stable_on_light_ticks(monkeypatch) -> None:
     seq_light = snap_light["diagnostics_sequence"]
 
     assert seq_light == seq_heavy, "Sequence should not change on light tick"
+
+
+def test_heavy_ticks_rebuild_matrix_once(monkeypatch) -> None:
+    engine, spectra, clients, advance = _make_timed_engine(monkeypatch)
+    calls = {"count": 0}
+    original_rebuild = SeverityMatrix.rebuild
+
+    def _counted_rebuild(self, now_ms: int) -> None:
+        if self is engine._matrix:
+            calls["count"] += 1
+        original_rebuild(self, now_ms)
+
+    monkeypatch.setattr(SeverityMatrix, "rebuild", _counted_rebuild)
+
+    advance()
+    engine.update(speed_mps=27.8, clients=clients, spectra=spectra, settings={})
+
+    assert calls["count"] == 1
 
 
 def test_light_ticks_preserve_findings_without_rebuilding(monkeypatch) -> None:

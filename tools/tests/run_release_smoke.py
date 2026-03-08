@@ -20,6 +20,11 @@ def _venv_python(venv_dir: Path) -> Path:
     return venv_dir / "bin" / "python"
 
 
+def _resolve_repo_path(repo_root: Path, raw_path: str) -> Path:
+    path = Path(raw_path)
+    return path if path.is_absolute() else (repo_root / path)
+
+
 def _build_server_wheel(repo_root: Path) -> Path:
     dist_dir = repo_root / "apps" / "server" / "dist"
     shutil.rmtree(dist_dir, ignore_errors=True)
@@ -35,7 +40,7 @@ def _build_server_wheel(repo_root: Path) -> Path:
     return wheels[-1]
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Build packaged UI + server wheel and run the release smoke validator."
     )
@@ -52,22 +57,38 @@ def main() -> int:
         help="Skip npm ci inside tools/build_ui_static.py.",
     )
     parser.add_argument(
+        "--skip-ui-build",
+        action="store_true",
+        help="Reuse already-built static assets instead of rebuilding the UI.",
+    )
+    parser.add_argument(
+        "--wheel-path",
+        default=None,
+        help="Use an existing wheel instead of building apps/server/dist/*.whl.",
+    )
+    parser.add_argument(
         "--contracts-dir",
         default="libs/shared/contracts",
         help="Shared contracts directory to expose as VIBESENSOR_CONTRACTS_DIR during smoke validation.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     repo_root = Path(__file__).resolve().parents[2]
     python_cmd = sys.executable
     contracts_dir = (repo_root / args.contracts_dir).resolve()
 
-    build_ui_cmd = [python_cmd, "tools/build_ui_static.py"]
-    if args.skip_npm_ci:
-        build_ui_cmd.append("--skip-npm-ci")
-    _run(build_ui_cmd, cwd=repo_root)
+    if not args.skip_ui_build:
+        build_ui_cmd = [python_cmd, "tools/build_ui_static.py"]
+        if args.skip_npm_ci:
+            build_ui_cmd.append("--skip-npm-ci")
+        _run(build_ui_cmd, cwd=repo_root)
 
-    wheel_path = _build_server_wheel(repo_root)
+    if args.wheel_path:
+        wheel_path = _resolve_repo_path(repo_root, args.wheel_path).resolve()
+        if wheel_path.suffix != ".whl" or not wheel_path.is_file():
+            raise RuntimeError(f"Wheel path does not exist or is not a .whl file: {wheel_path}")
+    else:
+        wheel_path = _build_server_wheel(repo_root)
 
     with tempfile.TemporaryDirectory(prefix="vibesensor-release-smoke-venv-") as venv_text:
         venv_dir = Path(venv_text)

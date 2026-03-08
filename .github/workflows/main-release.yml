@@ -95,12 +95,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m venv .release-smoke-venv
-          . .release-smoke-venv/bin/activate
-          python -m pip install --upgrade pip
-          python -m pip install apps/server/dist/*.whl
-          export VIBESENSOR_CONTRACTS_DIR="${GITHUB_WORKSPACE}/libs/shared/contracts"
-          python -m vibesensor.release_validation smoke-server \
+          wheel_path="$(echo apps/server/dist/*.whl)"
+          python3 tools/tests/run_release_smoke.py \
+            --skip-ui-build \
+            --wheel-path "${wheel_path}" \
             --config apps/server/config.dev.yaml \
             --host 127.0.0.1 \
             --port 18080

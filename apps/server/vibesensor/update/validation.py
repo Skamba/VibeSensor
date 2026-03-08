@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -33,6 +34,22 @@ class UpdatePrerequisiteValidator:
         self._tracker = tracker
         self._config = config
 
+    def _probe_rollback_dir(self) -> None:
+        self._config.rollback_dir.mkdir(parents=True, exist_ok=True)
+        probe_dir = self._config.rollback_dir
+        probe_handle = tempfile.NamedTemporaryFile(
+            prefix=".rollback-write-probe-",
+            dir=probe_dir,
+            delete=False,
+        )
+        probe_path = Path(probe_handle.name)
+        try:
+            probe_handle.write(b"ok")
+            probe_handle.flush()
+        finally:
+            probe_handle.close()
+        probe_path.unlink(missing_ok=True)
+
     async def validate(self, ssid: str) -> bool:
         self._tracker.log(f"Starting update with SSID: {ssid}")
         for tool in ("nmcli", "python3"):
@@ -57,6 +74,16 @@ class UpdatePrerequisiteValidator:
                 return False
 
         try:
+            self._probe_rollback_dir()
+        except OSError as exc:
+            self._tracker.fail(
+                "validating",
+                "Rollback directory is not writable",
+                f"{self._config.rollback_dir}: {exc}",
+            )
+            return False
+
+        try:
             disk_check_path = self._config.rollback_dir.parent
             if not disk_check_path.exists():
                 disk_check_path = Path("/var/lib") if Path("/var/lib").exists() else Path("/")
@@ -70,6 +97,11 @@ class UpdatePrerequisiteValidator:
                 )
                 return False
         except OSError as exc:
-            self._tracker.log(f"Could not check disk space: {exc}; proceeding anyway")
+            self._tracker.fail(
+                "validating",
+                "Could not verify free disk space",
+                str(exc),
+            )
+            return False
 
         return True

@@ -76,6 +76,23 @@ class HistoryDB(
                 cur.close()
 
     @contextmanager
+    def write_transaction_cursor(self) -> Iterator[sqlite3.Cursor]:
+        """Run a multi-step write sequence as one explicit transaction."""
+        with self._lock:
+            if self._conn is None:
+                raise RuntimeError("HistoryDB is closed")
+            cur = self._conn.cursor()
+            try:
+                cur.execute("BEGIN IMMEDIATE")
+                yield cur
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
+            finally:
+                cur.close()
+
+    @contextmanager
     def read_transaction(self) -> Iterator[None]:
         """Hold a single read transaction across multi-step read operations."""
         with self._lock:

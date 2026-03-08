@@ -48,6 +48,9 @@ class WsBroadcastCache:
     diagnostics: LiveDiagnosticsPayload | None = None
     diagnostics_tick: int = -1
     diagnostics_heavy: bool = True
+    shared_payload: LiveWsPayload | None = None
+    shared_payload_tick: int = -1
+    shared_payload_heavy: bool = True
 
     def advance(self, heavy_every: int) -> None:
         """Advance the tick counter and update ``include_heavy``."""
@@ -149,12 +152,8 @@ class WsBroadcastService:
         )
         self.cache.advance(heavy_every)
 
-    def build_payload(self, selected_client: str | None) -> LiveWsPayload:
-        """Assemble a full WebSocket broadcast payload."""
+    def _build_shared_payload(self) -> LiveWsPayload:
         clients = self._ingress.registry.snapshot_for_api()
-        active = selected_client
-        if active is None and clients:
-            active = clients[0]["id"]
         client_ids = [c["id"] for c in clients]
         fresh_ids = self._ingress.processor.clients_with_recent_data(
             client_ids,
@@ -168,7 +167,6 @@ class WsBroadcastService:
             "server_time": utc_now_iso(),
             "speed_mps": speed_mps,
             "clients": clients,
-            "selected_client_id": active,
         }
         analysis_settings_snapshot = self._settings.analysis_settings.snapshot()
         basis = rotational_basis_speed_source(
@@ -184,16 +182,47 @@ class WsBroadcastService:
         analysis_metadata, analysis_samples = self.cache.refresh_analysis(
             self._diagnostics.live_analysis
         )
+        spectra: SpectraPayload | None = None
         if self.cache.include_heavy:
-            payload["spectra"] = self._ingress.processor.multi_spectrum_payload(fresh_ids)
+            spectra = self._ingress.processor.multi_spectrum_payload(fresh_ids)
+            payload["spectra"] = spectra
         payload["diagnostics"] = self.cache.refresh_diagnostics(
             self._diagnostics.live_diagnostics,
             speed_mps=speed_mps,
             clients=clients,
-            spectra=payload.get("spectra") if self.cache.include_heavy else None,
+            spectra=spectra,
             settings=analysis_settings_snapshot,
             analysis_metadata=analysis_metadata,
             analysis_samples=analysis_samples,
             language=self._settings.settings_store.language,
         )
         return payload
+
+    def _refresh_shared_payload(self) -> LiveWsPayload:
+        cache_valid = (
+            self.cache.shared_payload is not None
+            and self.cache.shared_payload_tick == self.cache.tick
+            and self.cache.shared_payload_heavy == self.cache.include_heavy
+        )
+        if cache_valid:
+            assert self.cache.shared_payload is not None, (
+                "shared payload cache must be populated when cache_valid is True"
+            )
+            return self.cache.shared_payload
+        payload = self._build_shared_payload()
+        self.cache.shared_payload = payload
+        self.cache.shared_payload_tick = self.cache.tick
+        self.cache.shared_payload_heavy = self.cache.include_heavy
+        return payload
+
+    def build_payload(self, selected_client: str | None) -> LiveWsPayload:
+        """Assemble a full WebSocket broadcast payload."""
+        payload = self._refresh_shared_payload()
+        clients = payload["clients"]
+        active = selected_client
+        if active is None and clients:
+            active = clients[0]["id"]
+        return {
+            **payload,
+            "selected_client_id": active,
+        }

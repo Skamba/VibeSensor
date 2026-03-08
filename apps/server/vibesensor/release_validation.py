@@ -264,6 +264,10 @@ def run_server_smoke(
                     payload = json.loads(body)
                     if payload.get("status") not in {"ok", "degraded"}:
                         raise RuntimeError(f"Unexpected health payload: {payload}")
+                    if payload.get("startup_state") != "ready":
+                        raise RuntimeError(f"Server not ready yet: {payload}")
+                    if payload.get("background_task_failures"):
+                        raise RuntimeError(f"Managed startup task failed: {payload}")
                     index_status, index_type, index_body = _read_http(index_url)
                     if index_status != 200:
                         raise RuntimeError(f"Static index returned HTTP {index_status}")
