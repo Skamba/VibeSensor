@@ -11,12 +11,28 @@
 /** Current schema version the frontend expects. */
 export const EXPECTED_SCHEMA_VERSION = "1";
 
+export interface StrengthMetricPeak {
+  hz: number;
+  amp: number;
+  vibration_strength_db: number;
+  strength_bucket: string | null;
+}
+
+export interface StrengthMetricsPayload {
+  combined_spectrum_amp_g: number[];
+  vibration_strength_db: number;
+  peak_amp_g: number;
+  noise_floor_amp_g: number;
+  strength_bucket: string | null;
+  top_peaks: StrengthMetricPeak[];
+}
+
 export interface WsSpectrumSeries {
   x: number[];
   y: number[];
   z: number[];
   combined_spectrum_amp_g: number[];
-  strength_metrics: Record<string, unknown>;
+  strength_metrics: StrengthMetricsPayload;
   /** Per-client freq axis; present only when axes differ across clients. */
   freq?: number[] | null;
 }
@@ -65,12 +81,89 @@ export interface WsRotationalSpeeds {
 
 export interface WsClientInfo {
   id: string;
+  mac_address: string;
   name: string;
-  last_seen_age_ms: number;
-  sample_rate_hz: number;
+  connected: boolean;
   location: string;
   firmware_version: string;
-  [key: string]: unknown;
+  sample_rate_hz: number;
+  frame_samples: number;
+  last_seen_age_ms: number | null;
+  data_addr: [string, number] | null;
+  control_addr: [string, number] | null;
+  frames_total: number;
+  dropped_frames: number;
+  duplicates_received: number;
+  queue_overflow_drops: number;
+  parse_errors: number;
+  server_queue_drops: number;
+  latest_metrics: unknown;
+  last_ack_cmd_seq: number | null;
+  last_ack_status: number | null;
+  reset_count: number;
+  last_reset_time: number | null;
+  timing_health: {
+    jitter_us_ema: number;
+    drift_us_total: number;
+  };
+}
+
+export interface WsMatrixCell {
+  count: number;
+  seconds: number;
+  contributors: Record<string, number>;
+}
+
+export interface WsDiagnosticLevel {
+  bucket_key?: string;
+  strength_db?: number;
+  sensor_label?: string;
+  sensor_location?: string;
+  class_key?: string;
+  peak_hz?: number;
+  confidence?: number;
+  agreement_count?: number;
+  sensor_count?: number;
+}
+
+export interface WsDiagnosticsLevels {
+  by_source: Record<string, WsDiagnosticLevel>;
+  by_sensor: Record<string, WsDiagnosticLevel>;
+  by_location: Record<string, WsDiagnosticLevel>;
+}
+
+export interface WsDiagnosticEvent {
+  event_id?: number;
+  kind: string;
+  class_key: string;
+  severity_key?: string | null;
+  sensor_id: string;
+  sensor_label: string;
+  sensor_labels: string[];
+  sensor_count: number;
+  peak_hz: number;
+  peak_amp: number;
+  peak_amp_g: number;
+  vibration_strength_db: number;
+}
+
+export interface WsStrengthBand {
+  key: string;
+  min_db: number;
+  max_db: number | null;
+  labelKey: string;
+}
+
+export interface WsDiagnosticsPayload {
+  diagnostics_sequence: number;
+  matrix: Record<string, Record<string, WsMatrixCell>>;
+  events: WsDiagnosticEvent[];
+  strength_bands: WsStrengthBand[];
+  levels: WsDiagnosticsLevels;
+  findings: unknown[];
+  top_finding: unknown | null;
+  driving_phase: string;
+  error: string | null;
 }
 
 export interface LiveWsPayload {
@@ -81,6 +174,5 @@ export interface LiveWsPayload {
   selected_client_id: string | null;
   rotational_speeds: WsRotationalSpeeds | null;
   spectra: WsSpectraPayload | null;
-  diagnostics: Record<string, unknown>;
-  [key: string]: unknown;
+  diagnostics: WsDiagnosticsPayload;
 }

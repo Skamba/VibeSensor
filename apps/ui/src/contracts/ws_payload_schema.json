@@ -29,6 +29,408 @@
       "title": "AlignmentInfo",
       "type": "object"
     },
+    "ClientInfoModel": {
+      "additionalProperties": false,
+      "description": "Structured client row with explicit defaults for optional construction.",
+      "properties": {
+        "connected": {
+          "default": false,
+          "title": "Connected",
+          "type": "boolean"
+        },
+        "control_addr": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Control Addr"
+        },
+        "data_addr": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Data Addr"
+        },
+        "dropped_frames": {
+          "default": 0,
+          "title": "Dropped Frames",
+          "type": "integer"
+        },
+        "duplicates_received": {
+          "default": 0,
+          "title": "Duplicates Received",
+          "type": "integer"
+        },
+        "firmware_version": {
+          "default": "",
+          "title": "Firmware Version",
+          "type": "string"
+        },
+        "frame_samples": {
+          "default": 0,
+          "title": "Frame Samples",
+          "type": "integer"
+        },
+        "frames_total": {
+          "default": 0,
+          "title": "Frames Total",
+          "type": "integer"
+        },
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "last_ack_cmd_seq": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Ack Cmd Seq"
+        },
+        "last_ack_status": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Ack Status"
+        },
+        "last_reset_time": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Reset Time"
+        },
+        "last_seen_age_ms": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Seen Age Ms"
+        },
+        "latest_metrics": {
+          "additionalProperties": true,
+          "title": "Latest Metrics",
+          "type": "object"
+        },
+        "location": {
+          "default": "",
+          "title": "Location",
+          "type": "string"
+        },
+        "mac_address": {
+          "default": "",
+          "title": "Mac Address",
+          "type": "string"
+        },
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "parse_errors": {
+          "default": 0,
+          "title": "Parse Errors",
+          "type": "integer"
+        },
+        "queue_overflow_drops": {
+          "default": 0,
+          "title": "Queue Overflow Drops",
+          "type": "integer"
+        },
+        "reset_count": {
+          "default": 0,
+          "title": "Reset Count",
+          "type": "integer"
+        },
+        "sample_rate_hz": {
+          "default": 0,
+          "title": "Sample Rate Hz",
+          "type": "integer"
+        },
+        "server_queue_drops": {
+          "default": 0,
+          "title": "Server Queue Drops",
+          "type": "integer"
+        },
+        "timing_health": {
+          "$ref": "#/$defs/TimingHealthPayload"
+        }
+      },
+      "title": "ClientInfoModel",
+      "type": "object"
+    },
+    "DiagnosticEventPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "class_key": {
+          "title": "Class Key",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "integer"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "peak_amp": {
+          "title": "Peak Amp",
+          "type": "number"
+        },
+        "peak_amp_g": {
+          "title": "Peak Amp G",
+          "type": "number"
+        },
+        "peak_hz": {
+          "title": "Peak Hz",
+          "type": "number"
+        },
+        "sensor_count": {
+          "title": "Sensor Count",
+          "type": "integer"
+        },
+        "sensor_id": {
+          "title": "Sensor Id",
+          "type": "string"
+        },
+        "sensor_label": {
+          "title": "Sensor Label",
+          "type": "string"
+        },
+        "sensor_labels": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sensor Labels",
+          "type": "array"
+        },
+        "severity_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Severity Key"
+        },
+        "vibration_strength_db": {
+          "title": "Vibration Strength Db",
+          "type": "number"
+        }
+      },
+      "title": "DiagnosticEventPayload",
+      "type": "object"
+    },
+    "DiagnosticLevelPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "agreement_count": {
+          "title": "Agreement Count",
+          "type": "integer"
+        },
+        "bucket_key": {
+          "title": "Bucket Key",
+          "type": "string"
+        },
+        "class_key": {
+          "title": "Class Key",
+          "type": "string"
+        },
+        "confidence": {
+          "title": "Confidence",
+          "type": "number"
+        },
+        "peak_hz": {
+          "title": "Peak Hz",
+          "type": "number"
+        },
+        "sensor_count": {
+          "title": "Sensor Count",
+          "type": "integer"
+        },
+        "sensor_label": {
+          "title": "Sensor Label",
+          "type": "string"
+        },
+        "sensor_location": {
+          "title": "Sensor Location",
+          "type": "string"
+        },
+        "strength_db": {
+          "title": "Strength Db",
+          "type": "number"
+        }
+      },
+      "title": "DiagnosticLevelPayload",
+      "type": "object"
+    },
+    "DiagnosticsLevelsPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "by_location": {
+          "additionalProperties": {
+            "$ref": "#/$defs/DiagnosticLevelPayload"
+          },
+          "title": "By Location",
+          "type": "object"
+        },
+        "by_sensor": {
+          "additionalProperties": {
+            "$ref": "#/$defs/DiagnosticLevelPayload"
+          },
+          "title": "By Sensor",
+          "type": "object"
+        },
+        "by_source": {
+          "additionalProperties": {
+            "$ref": "#/$defs/DiagnosticLevelPayload"
+          },
+          "title": "By Source",
+          "type": "object"
+        }
+      },
+      "required": [
+        "by_source",
+        "by_sensor",
+        "by_location"
+      ],
+      "title": "DiagnosticsLevelsPayload",
+      "type": "object"
+    },
+    "DiagnosticsModel": {
+      "additionalProperties": false,
+      "description": "Structured live diagnostics payload with explicit defaults.",
+      "properties": {
+        "diagnostics_sequence": {
+          "default": 0,
+          "title": "Diagnostics Sequence",
+          "type": "integer"
+        },
+        "driving_phase": {
+          "default": "unknown",
+          "title": "Driving Phase",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/$defs/DiagnosticEventPayload"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "findings": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Findings",
+          "type": "array"
+        },
+        "levels": {
+          "$ref": "#/$defs/DiagnosticsLevelsPayload"
+        },
+        "matrix": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "$ref": "#/$defs/MatrixCellPayload"
+            },
+            "type": "object"
+          },
+          "title": "Matrix",
+          "type": "object"
+        },
+        "strength_bands": {
+          "items": {
+            "$ref": "#/$defs/StrengthBandPayload"
+          },
+          "title": "Strength Bands",
+          "type": "array"
+        },
+        "top_finding": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Top Finding"
+        }
+      },
+      "title": "DiagnosticsModel",
+      "type": "object"
+    },
     "FrequencyWarning": {
       "description": "Warning about frequency data quality issues in a spectra payload.",
       "properties": {
@@ -49,6 +451,33 @@
         "client_ids"
       ],
       "title": "FrequencyWarning",
+      "type": "object"
+    },
+    "MatrixCellPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "contributors": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Contributors",
+          "type": "object"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "seconds": {
+          "title": "Seconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "count",
+        "seconds",
+        "contributors"
+      ],
+      "title": "MatrixCellPayload",
       "type": "object"
     },
     "OrderBand": {
@@ -230,10 +659,7 @@
           "title": "Freq"
         },
         "strength_metrics": {
-          "additionalProperties": true,
-          "default": {},
-          "title": "Strength Metrics",
-          "type": "object"
+          "$ref": "#/$defs/StrengthMetricsModel"
         },
         "x": {
           "default": [],
@@ -262,6 +688,146 @@
       },
       "title": "SpectrumSeries",
       "type": "object"
+    },
+    "StrengthBandPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "labelKey": {
+          "title": "Labelkey",
+          "type": "string"
+        },
+        "max_db": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Max Db"
+        },
+        "min_db": {
+          "title": "Min Db",
+          "type": "number"
+        }
+      },
+      "required": [
+        "key",
+        "min_db",
+        "max_db",
+        "labelKey"
+      ],
+      "title": "StrengthBandPayload",
+      "type": "object"
+    },
+    "StrengthMetricsModel": {
+      "additionalProperties": false,
+      "description": "Structured vibration-strength metrics with explicit defaults.",
+      "properties": {
+        "combined_spectrum_amp_g": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Combined Spectrum Amp G",
+          "type": "array"
+        },
+        "noise_floor_amp_g": {
+          "default": 0.0,
+          "title": "Noise Floor Amp G",
+          "type": "number"
+        },
+        "peak_amp_g": {
+          "default": 0.0,
+          "title": "Peak Amp G",
+          "type": "number"
+        },
+        "strength_bucket": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Strength Bucket"
+        },
+        "top_peaks": {
+          "items": {
+            "$ref": "#/$defs/StrengthPeak"
+          },
+          "title": "Top Peaks",
+          "type": "array"
+        },
+        "vibration_strength_db": {
+          "default": 0.0,
+          "title": "Vibration Strength Db",
+          "type": "number"
+        }
+      },
+      "title": "StrengthMetricsModel",
+      "type": "object"
+    },
+    "StrengthPeak": {
+      "additionalProperties": false,
+      "properties": {
+        "amp": {
+          "title": "Amp",
+          "type": "number"
+        },
+        "hz": {
+          "title": "Hz",
+          "type": "number"
+        },
+        "strength_bucket": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Strength Bucket"
+        },
+        "vibration_strength_db": {
+          "title": "Vibration Strength Db",
+          "type": "number"
+        }
+      },
+      "required": [
+        "hz",
+        "amp",
+        "vibration_strength_db",
+        "strength_bucket"
+      ],
+      "title": "StrengthPeak",
+      "type": "object"
+    },
+    "TimingHealthPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "drift_us_total": {
+          "title": "Drift Us Total",
+          "type": "number"
+        },
+        "jitter_us_ema": {
+          "title": "Jitter Us Ema",
+          "type": "number"
+        }
+      },
+      "required": [
+        "jitter_us_ema",
+        "drift_us_total"
+      ],
+      "title": "TimingHealthPayload",
+      "type": "object"
     }
   },
   "additionalProperties": true,
@@ -270,17 +836,13 @@
     "clients": {
       "default": [],
       "items": {
-        "additionalProperties": true,
-        "type": "object"
+        "$ref": "#/$defs/ClientInfoModel"
       },
       "title": "Clients",
       "type": "array"
     },
     "diagnostics": {
-      "additionalProperties": true,
-      "default": {},
-      "title": "Diagnostics",
-      "type": "object"
+      "$ref": "#/$defs/DiagnosticsModel"
     },
     "rotational_speeds": {
       "anyOf": [

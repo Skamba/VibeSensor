@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Query
 
+from ..payload_types import (
+    DebugSpectrumErrorPayload,
+    DebugSpectrumPayload,
+    RawSamplesErrorPayload,
+    RawSamplesPayload,
+)
 from ._helpers import normalize_client_id_or_400
 
 if TYPE_CHECKING:
@@ -19,7 +25,9 @@ def create_debug_routes(processor: SignalProcessor) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/debug/spectrum/{client_id}")
-    async def debug_spectrum(client_id: str) -> dict[str, Any]:
+    async def debug_spectrum(
+        client_id: str,
+    ) -> DebugSpectrumPayload | DebugSpectrumErrorPayload:
         """Detailed spectrum debug info for independent verification."""
         normalized = normalize_client_id_or_400(client_id)
         result = processor.debug_spectrum(normalized)
@@ -31,7 +39,7 @@ def create_debug_routes(processor: SignalProcessor) -> APIRouter:
     async def debug_raw_samples(
         client_id: str,
         n: int = Query(default=2048, ge=1, le=6400),
-    ) -> dict[str, Any]:
+    ) -> RawSamplesPayload | RawSamplesErrorPayload:
         """Raw time-domain samples in g for offline analysis."""
         normalized = normalize_client_id_or_400(client_id)
         result = processor.raw_samples(normalized, n_samples=n)

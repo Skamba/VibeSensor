@@ -10,8 +10,10 @@ import logging
 import time
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
+from .payload_types import ClientApiRow, TimingHealthPayload
+from .processing.models import MetricsPayload
 from .protocol import (
     AckMessage,
     DataMessage,
@@ -108,12 +110,12 @@ class ClientSnapshot:
     queue_overflow_drops: int = 0
     parse_errors: int = 0
     server_queue_drops: int = 0
-    latest_metrics: dict[str, Any] | None = None
+    latest_metrics: MetricsPayload | None = None
     last_ack_cmd_seq: int | None = None
     last_ack_status: int | None = None
     reset_count: int = 0
     last_reset_time: float | None = None
-    timing_health: dict[str, Any] | None = None
+    timing_health: TimingHealthPayload | None = None
 
 
 @dataclass(slots=True)
@@ -143,7 +145,7 @@ class ClientRecord:
     last_t0_us: int | None = None
     timing_jitter_us_ema: float = 0.0
     timing_drift_us_total: float = 0.0
-    latest_metrics: dict[str, Any] = field(default_factory=dict)
+    latest_metrics: MetricsPayload = field(default_factory=dict)
     duplicates_received: int = 0
     _seen_seqs: set[int] = field(default_factory=set)
     _seen_seqs_max: int = -1
@@ -457,7 +459,7 @@ class ClientRegistry:
                 self._delete_persisted_name(normalized)
             return existed
 
-    def set_latest_metrics(self, client_id: str, metrics: dict[str, Any]) -> None:
+    def set_latest_metrics(self, client_id: str, metrics: MetricsPayload) -> None:
         with self._lock:
             record = self._get_or_create(client_id)
             record.latest_metrics = metrics
@@ -502,7 +504,7 @@ class ClientRegistry:
             record.last_ack_status = None
 
     @staticmethod
-    def _client_api_row(client_id: str, snapshot: ClientSnapshot) -> dict[str, Any]:
+    def _client_api_row(client_id: str, snapshot: ClientSnapshot) -> ClientApiRow:
         """Build a single client row for the API snapshot.
 
         Centralises the dict shape so both connected and disconnected
@@ -538,11 +540,11 @@ class ClientRegistry:
 
     def snapshot_for_api(
         self, now: float | None = None, *, now_mono: float | None = None
-    ) -> list[dict[str, Any]]:
+    ) -> list[ClientApiRow]:
         with self._lock:
             now_ts = self._resolve_now_wall(now)
             mono_now = self._resolve_now_mono(now_mono)
-            rows: list[dict[str, Any]] = []
+            rows: list[ClientApiRow] = []
             all_client_ids = sorted(set(self._clients) | set(self._user_names))
             for client_id in all_client_ids:
                 record = self._clients.get(client_id)

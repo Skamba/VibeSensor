@@ -4,10 +4,12 @@ import logging
 import math
 import time
 from threading import RLock
-from typing import Any, cast
+from typing import cast
 
 import numpy as np
+from vibesensor_core.vibration_strength import empty_vibration_strength_metrics
 
+from ..payload_types import AxisMetrics, AxisPeak, CombinedMetrics
 from .fft import (
     AXES,
     compute_fft_spectrum,
@@ -17,11 +19,14 @@ from .fft import (
     top_peaks,
 )
 from .models import (
+    FftSpectrumResult,
     FloatArray,
     IntIndexArray,
     MetricsComputationResult,
+    MetricsPayload,
     MetricsSnapshot,
     ProcessorConfig,
+    SpectrumByAxis,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -67,7 +72,7 @@ class SignalMetricsComputer:
                 del self.fft_cache[oldest]
             return freq_slice, valid_idx
 
-    def compute_fft_spectrum(self, fft_block: FloatArray, sample_rate_hz: int) -> dict[str, Any]:
+    def compute_fft_spectrum(self, fft_block: FloatArray, sample_rate_hz: int) -> FftSpectrumResult:
         freq_slice, valid_idx = self.fft_params(sample_rate_hz)
         return compute_fft_spectrum(
             fft_block,
@@ -84,7 +89,7 @@ class SignalMetricsComputer:
         time_window = medfilt3(snapshot.time_window)
         time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
 
-        metrics: dict[str, Any] = {}
+        metrics: MetricsPayload = {}
         if time_window_detrended.shape[1] > 0:
             rms_vals = np.sqrt(np.mean(np.square(time_window_detrended, dtype=np.float64), axis=1))
             p2p_vals = np.max(time_window_detrended, axis=1) - np.min(time_window_detrended, axis=1)
@@ -111,8 +116,8 @@ class SignalMetricsComputer:
             "peaks": [],
         }
 
-        spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
-        strength_metrics_dict: dict[str, Any] = {}
+        spectrum_by_axis: SpectrumByAxis = {}
+        strength_metrics_dict = empty_vibration_strength_metrics()
         has_fft_data = snapshot.fft_block is not None
         if has_fft_data and snapshot.fft_block is not None:
             fft_result = self.compute_fft_spectrum(snapshot.fft_block, snapshot.sample_rate_hz)
@@ -120,20 +125,25 @@ class SignalMetricsComputer:
             spectrum_by_axis = fft_result["spectrum_by_axis"]
 
             for axis in fft_result["axis_peaks"]:
-                metrics.setdefault(axis, {"rms": 0.0, "p2p": 0.0, "peaks": []})
-                metrics[axis]["peaks"] = fft_result["axis_peaks"][axis]
+                default_axis_metrics: AxisMetrics = {"rms": 0.0, "p2p": 0.0, "peaks": []}
+                axis_metrics = cast(
+                    AxisMetrics,
+                    metrics.setdefault(axis, default_axis_metrics),
+                )
+                axis_metrics["peaks"] = fft_result["axis_peaks"][axis]
 
             if fft_result["axis_amp_slices"]:
                 combined_amp = fft_result["combined_amp"]
                 strength_metrics = fft_result["strength_metrics"]
-                metrics["combined"]["peaks"] = list(strength_metrics["top_peaks"])
-                metrics["combined"]["strength_metrics"] = dict(strength_metrics)
-                metrics["strength_metrics"] = dict(strength_metrics)
+                combined_metrics = cast(CombinedMetrics, metrics["combined"])
+                combined_metrics["peaks"] = list(strength_metrics["top_peaks"])
+                combined_metrics["strength_metrics"] = strength_metrics
+                metrics["strength_metrics"] = strength_metrics
                 spectrum_by_axis["combined"] = {
                     "freq": freq_slice,
                     "amp": combined_amp,
                 }
-                strength_metrics_dict = dict(strength_metrics)
+                strength_metrics_dict = strength_metrics
 
         return MetricsComputationResult(
             client_id=snapshot.client_id,
@@ -163,7 +173,7 @@ class SignalMetricsComputer:
         top_n: int = 5,
         floor_ratio: float | None = None,
         smoothing_bins: int = 5,
-    ) -> list[dict[str, float]]:
+    ) -> list[AxisPeak]:
         if floor_ratio is not None:
             return top_peaks(
                 freqs,
