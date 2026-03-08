@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
 
@@ -25,8 +26,8 @@ class MetricsPersistenceCoordinator:
         *,
         history_db: object | None,
         persist_history_db: bool,
-        metadata_builder,
-        generation_matches,
+        metadata_builder: Callable[[str, str], dict[str, object]],
+        generation_matches: Callable[[int], bool],
     ) -> None:
         self._history_db = history_db
         self._persist_history_db = bool(persist_history_db)
