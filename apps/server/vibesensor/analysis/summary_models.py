@@ -8,8 +8,8 @@ from datetime import datetime
 from ._types import (
     AccelStatistics,
     Finding,
-    IntensityRow,
     I18nRef,
+    IntensityRow,
     OriginSummary,
     PhaseSpeedBreakdownRow,
     PhaseSpeedStats,

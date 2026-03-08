@@ -8,9 +8,8 @@ place.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import cast
 
-from ._types import Finding
+from ._types import Finding, is_json_object
 
 _UNKNOWN_LOCATION_VALUES = {"", "unknown", "not available", "n/a"}
 _PLACEHOLDER_SOURCES = {"unknown_resonance", "unknown"}
@@ -18,7 +17,7 @@ _PLACEHOLDER_SOURCES = {"unknown_resonance", "unknown"}
 
 def non_reference_findings(items: Sequence[object]) -> list[Finding]:
     """Return well-formed finding dicts excluding ``REF_*`` entries."""
-    findings = [cast(Finding, item) for item in items if isinstance(item, dict)]
+    findings = [item for item in items if is_json_object(item)]
     return [
         finding
         for finding in findings
@@ -55,10 +54,9 @@ def select_effective_top_causes(
     actionable non-reference top-causes, then non-reference findings, then
     non-reference top-causes, then all top-causes.
     """
-    all_findings = [item for item in findings if isinstance(item, dict)]
-    all_findings = [cast(Finding, item) for item in all_findings]
+    all_findings = [item for item in findings if is_json_object(item)]
     findings_non_ref = non_reference_findings(all_findings)
-    top_causes_all = [cast(Finding, item) for item in top_causes if isinstance(item, dict)]
+    top_causes_all = [item for item in top_causes if is_json_object(item)]
     top_causes_non_ref = non_reference_top_causes(top_causes_all)
     top_causes_actionable = [cause for cause in top_causes_non_ref if is_actionable_cause(cause)]
     effective_top_causes = (

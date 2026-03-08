@@ -208,7 +208,7 @@ def build_origin_explanation(
     dominance: float | None,
     weak: bool,
     dominant_phase: str,
-    ) -> JsonValue:
+) -> JsonValue:
     """Build the language-neutral origin explanation block."""
     explanation_parts: list[JsonValue] = [
         _i18n_ref(
