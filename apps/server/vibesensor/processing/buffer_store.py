@@ -21,6 +21,8 @@ from .models import (
 
 LOGGER = logging.getLogger(__name__)
 MAX_CLIENT_SAMPLE_RATE_HZ = 4096
+_MAX_SAMPLES_SINCE_T0 = 2**28
+"""Cap `samples_since_t0` so long sessions cannot grow the accumulator without bound."""
 
 
 class SignalBufferStore:
@@ -100,10 +102,10 @@ class SignalBufferStore:
 
             end = buf.write_idx + n
             if end <= capacity:
-                buf.data[:, buf.write_idx:end] = chunk.T
+                buf.data[:, buf.write_idx : end] = chunk.T
             else:
                 first = capacity - buf.write_idx
-                buf.data[:, buf.write_idx:] = chunk[:first].T
+                buf.data[:, buf.write_idx :] = chunk[:first].T
                 buf.data[:, : end % capacity] = chunk[first:].T
 
             buf.write_idx = end % capacity
@@ -112,8 +114,7 @@ class SignalBufferStore:
                 buf.last_t0_us = int(t0_us)
                 buf.samples_since_t0 = n
             else:
-                max_samples_since_t0 = 2**28
-                buf.samples_since_t0 = min(buf.samples_since_t0 + n, max_samples_since_t0)
+                buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
             buf.ingest_generation += 1
             buf.invalidate_caches()
             self.stats.total_ingested_samples += n
@@ -197,7 +198,7 @@ class SignalBufferStore:
             rate = int(buf.sample_rate_hz or 0)
             return rate if rate > 0 else None
 
-    def debug_request(self, client_id: str, *, fft_n: int) -> DebugSpectrumRequest:
+    def debug_request(self, client_id: str) -> DebugSpectrumRequest:
         with self.lock:
             buf = self.buffers.get(client_id)
             if buf is None:
@@ -208,7 +209,7 @@ class SignalBufferStore:
                     fft_block=None,
                 )
             sr = buf.sample_rate_hz or self.config.sample_rate_hz
-            if buf.count < fft_n:
+            if buf.count < self.config.fft_n:
                 return DebugSpectrumRequest(
                     client_id=client_id,
                     sample_rate_hz=sr,
@@ -219,7 +220,7 @@ class SignalBufferStore:
                 client_id=client_id,
                 sample_rate_hz=sr,
                 count=buf.count,
-                fft_block=self.copy_latest(buf, fft_n),
+                fft_block=self.copy_latest(buf, self.config.fft_n),
             )
 
     def raw_samples(self, client_id: str, *, n_samples: int) -> dict[str, Any]:

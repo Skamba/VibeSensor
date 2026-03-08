@@ -22,8 +22,9 @@ import numpy as np
 from ..worker_pool import WorkerPool
 from .buffer_store import MAX_CLIENT_SAMPLE_RATE_HZ as _MAX_CLIENT_SAMPLE_RATE_HZ
 from .buffer_store import SignalBufferStore
+from .buffers import ClientBuffer
 from .compute import SignalMetricsComputer
-from .models import CachedMetricsHit, ProcessorConfig
+from .models import CachedMetricsHit, FloatArray, IntIndexArray, ProcessorConfig
 from .views import SignalProcessorViews
 
 LOGGER = logging.getLogger(__name__)
@@ -123,7 +124,19 @@ class SignalProcessor:
             clock=time.monotonic,
         )
 
-    def _fft_params(self, sample_rate_hz: int):
+    def _get_or_create(self, client_id: str) -> ClientBuffer:
+        with self._lock:
+            return self._store._get_or_create_unlocked(client_id)
+
+    def _resize_buffer(self, buf: ClientBuffer, new_capacity: int) -> None:
+        with self._lock:
+            self._store._resize_buffer_unlocked(buf, new_capacity)
+
+    def _latest(self, buf: ClientBuffer, n: int) -> FloatArray:
+        with self._lock:
+            return self._store.copy_latest(buf, n)
+
+    def _fft_params(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray]:
         return self._metrics.fft_params(sample_rate_hz)
 
     def _compute_fft_spectrum(self, fft_block: np.ndarray, sample_rate_hz: int) -> dict[str, Any]:
@@ -201,7 +214,7 @@ class SignalProcessor:
             stats["worker_pool"] = self._worker_pool.stats()
         return stats
 
-    def _analysis_time_range(self, buf) -> tuple[float, float, bool] | None:
+    def _analysis_time_range(self, buf: ClientBuffer) -> tuple[float, float, bool] | None:
         return self._views.analysis_time_range(buf)
 
     def time_alignment_info(self, client_ids: list[str]) -> dict[str, Any]:
@@ -222,10 +235,16 @@ class SignalProcessor:
                     sample_rate_hz=rates.get(client_id),
                 )
             except Exception:
-                message = (
-                    "compute_metrics failed for %s (serial fallback); skipping."
-                    if serial_fallback
-                    else "compute_metrics failed for %s; skipping."
-                )
-                LOGGER.warning(message, client_id, exc_info=True)
+                if serial_fallback:
+                    LOGGER.warning(
+                        "compute_metrics failed for %s (serial fallback); skipping.",
+                        client_id,
+                        exc_info=True,
+                    )
+                else:
+                    LOGGER.warning(
+                        "compute_metrics failed for %s; skipping.",
+                        client_id,
+                        exc_info=True,
+                    )
         return result
