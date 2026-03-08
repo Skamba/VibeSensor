@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Any
 
+from ..payload_types import DiagnosticLevelPayload, MatrixPayload
 from ._types import (
     _MATRIX_WINDOW_MS,
     SEVERITY_KEYS,
@@ -18,7 +18,7 @@ _SOURCE_SET: frozenset[str] = frozenset(SOURCE_KEYS)
 _SEVERITY_SET: frozenset[str] = frozenset(SEVERITY_KEYS)
 
 
-def _new_matrix() -> dict[str, dict[str, dict[str, Any]]]:
+def _new_matrix() -> MatrixPayload:
     return {
         source: {
             severity: {"count": 0, "seconds": 0.0, "contributors": {}} for severity in SEVERITY_KEYS
@@ -28,8 +28,8 @@ def _new_matrix() -> dict[str, dict[str, dict[str, Any]]]:
 
 
 def _copy_matrix(
-    matrix: dict[str, dict[str, dict[str, Any]]],
-) -> dict[str, dict[str, dict[str, Any]]]:
+    matrix: MatrixPayload,
+) -> MatrixPayload:
     # Direct key access — keys are always present from _new_matrix().
     return {
         source: {
@@ -61,11 +61,11 @@ class SeverityMatrix:
         self._seconds_events.clear()
 
     @property
-    def data(self) -> dict[str, dict[str, dict[str, Any]]]:
+    def data(self) -> MatrixPayload:
         """Return a direct reference to the live matrix (not a copy)."""
         return self._matrix
 
-    def copy(self) -> dict[str, dict[str, dict[str, Any]]]:
+    def copy(self) -> MatrixPayload:
         """Return a deep copy of the current matrix state."""
         return _copy_matrix(self._matrix)
 
@@ -116,7 +116,7 @@ class SeverityMatrix:
         self,
         now_ms: int,
         dt_seconds: float,
-        active_levels_by_source: dict[str, dict[str, Any]],
+        active_levels_by_source: dict[str, DiagnosticLevelPayload],
     ) -> None:
         if dt_seconds <= 0:
             return
