@@ -5,8 +5,8 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
+from ..release_fetcher import ReleaseInfo
 from .runtime_details import _sha256_file
 from .status import UpdateStatusTracker
 
@@ -19,7 +19,7 @@ class UpdateReleaseConfig:
 
 @dataclass(frozen=True, slots=True)
 class UpdateReleaseCheck:
-    release: Any | None
+    release: ReleaseInfo | None
     latest_tag: str = ""
     failed: bool = False
 
@@ -60,7 +60,7 @@ class UpdateReleaseService:
             )
         return UpdateReleaseCheck(release=None, latest_tag=latest_tag)
 
-    async def download(self, release: Any, staging_dir: Path) -> Path | None:
+    async def download(self, release: ReleaseInfo, staging_dir: Path) -> Path | None:
         from vibesensor.release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
 
         fetcher = ServerReleaseFetcher(
@@ -75,11 +75,11 @@ class UpdateReleaseService:
             self._tracker.fail("downloading", f"Failed to download release: {exc}")
             return None
 
-    async def verify_download(self, release: Any, wheel_path: Path) -> bool:
-        if not getattr(release, "sha256", ""):
+    async def verify_download(self, release: ReleaseInfo, wheel_path: Path) -> bool:
+        if not release.sha256:
             return True
         actual_sha256 = await asyncio.to_thread(_sha256_file, wheel_path)
-        expected_sha256 = str(release.sha256).lower()
+        expected_sha256 = release.sha256.lower()
         if actual_sha256 == expected_sha256:
             self._tracker.log(f"SHA-256 verified: {actual_sha256}")
             return True

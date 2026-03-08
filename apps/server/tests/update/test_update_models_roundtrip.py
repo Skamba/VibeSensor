@@ -71,3 +71,17 @@ class TestUpdateJobStatusRoundTrip:
         assert len(status.log_tail) == 50
         assert status.log_tail[-1] == "log-line-199"
         assert status.log_tail[0] == "log-line-150"
+
+    def test_from_dict_ignores_malformed_nested_runtime_payloads(self) -> None:
+        """Malformed nested fields must fall back to explicit typed defaults."""
+        status = UpdateJobStatus.from_dict(
+            {
+                "issues": ["bad", {"phase": "downloading", "message": "warn", "detail": 99}],
+                "log_tail": ["ok", 7, None],
+                "runtime": ["not-a-dict"],
+            }
+        )
+
+        assert status.runtime == {}
+        assert status.log_tail == ["ok", "7", "None"]
+        assert status.issues == [UpdateIssue(phase="downloading", message="warn", detail="99")]

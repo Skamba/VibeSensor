@@ -120,6 +120,11 @@ class TestSystemFindingCardFromDict:
         result = SystemFindingCard.from_dict(None)
         assert result.system_name == ""
 
+    def test_ignores_non_list_parts_payload(self) -> None:
+        result = SystemFindingCard.from_dict({"system_name": "Engine", "parts": "not-a-list"})
+        assert result.system_name == "Engine"
+        assert result.parts == []
+
 
 class TestReportTemplateDataFromDict:
     def test_full_roundtrip(self) -> None:
@@ -178,3 +183,20 @@ class TestReportTemplateDataFromDict:
     def test_ignores_extra_keys(self) -> None:
         result = ReportTemplateData.from_dict({"title": "Test", "unknown": 42})
         assert result.title == "Test"
+
+    def test_malformed_nested_collections_fall_back_to_defaults(self) -> None:
+        result = ReportTemplateData.from_dict(
+            {
+                "system_cards": "bad",
+                "next_steps": {"action": "inspect"},
+                "data_trust": None,
+                "peak_rows": 42,
+                "pattern_evidence": [],
+            }
+        )
+
+        assert result.system_cards == []
+        assert result.next_steps == []
+        assert result.data_trust == []
+        assert result.peak_rows == []
+        assert result.pattern_evidence == PatternEvidence()

@@ -2,19 +2,32 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Protocol
 
 from ..constants import SECONDS_PER_MINUTE
 from ..diagnostics_shared import build_order_bands, vehicle_orders_hz
+from ..payload_types import (
+    RotationalSpeedsPayload,
+    RotationalSpeedValuePayload,
+)
 
 if TYPE_CHECKING:
     from ..gps_speed import GPSSpeedMonitor
     from ..settings_store import SettingsStore
 
 
+class _SpeedSourceSettingsStore(Protocol):
+    def get_speed_source(self) -> dict[str, object]: ...
+
+
+class _GpsMonitorState(Protocol):
+    gps_enabled: bool
+    fallback_active: bool
+
+
 def rotational_basis_speed_source(
-    settings_store: SettingsStore,
-    gps_monitor: GPSSpeedMonitor,
+    settings_store: SettingsStore | _SpeedSourceSettingsStore,
+    gps_monitor: GPSSpeedMonitor | _GpsMonitorState,
     *,
     resolution_source: str | None = None,
 ) -> str:
@@ -44,21 +57,22 @@ def build_rotational_speeds_payload(
     *,
     basis_speed_source: str,
     speed_mps: float | None,
-    analysis_settings: dict[str, Any],
-) -> dict[str, Any]:
+    analysis_settings: dict[str, float],
+) -> RotationalSpeedsPayload:
     """Assemble the ``rotational_speeds`` sub-dict for the WS payload."""
     if speed_mps is None or speed_mps <= 0:
         reason: str | None = "speed_unavailable"
         orders_hz = None
     else:
-        orders_hz = cast(
-            dict[str, float] | None,
-            vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings),
-        )
+        orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
         reason = "invalid_vehicle_settings" if orders_hz is None else None
 
     if reason is not None:
-        _component: dict[str, Any] = {"rpm": None, "mode": "calculated", "reason": reason}
+        _component: RotationalSpeedValuePayload = {
+            "rpm": None,
+            "mode": "calculated",
+            "reason": reason,
+        }
         return {
             "basis_speed_source": basis_speed_source,
             "wheel": {**_component},

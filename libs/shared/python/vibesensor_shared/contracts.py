@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any
 
 __all__ = [
     "METRIC_FIELDS",
@@ -31,13 +30,44 @@ def _contracts_dir() -> Path:
 _CONTRACTS_DIR: Path = _contracts_dir()
 
 
-def _load_json(name: str) -> dict[str, Any]:
-    return json.loads((_CONTRACTS_DIR / name).read_text(encoding="utf-8"))
+def _load_json_object(name: str) -> dict[str, object]:
+    path = _CONTRACTS_DIR / name
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path} must contain a top-level JSON object")
+    return payload
 
 
-METRIC_FIELDS: dict[str, str] = _load_json("metrics_fields.json")
-REPORT_FIELDS: dict[str, str] = _load_json("report_fields.json")
-NETWORK_PORTS: dict[str, int] = _load_json("network_ports.json")
+def _load_string_map(name: str) -> dict[str, str]:
+    payload = _load_json_object(name)
+    result: dict[str, str] = {}
+    path = _CONTRACTS_DIR / name
+    for key, value in payload.items():
+        if value is None:
+            raise ValueError(
+                f"{path} contains null for key {key!r}; expected a string value"
+            )
+        result[str(key)] = str(value)
+    return result
+
+
+def _load_int_map(name: str) -> dict[str, int]:
+    payload = _load_json_object(name)
+    result: dict[str, int] = {}
+    path = _CONTRACTS_DIR / name
+    for key, value in payload.items():
+        try:
+            result[str(key)] = int(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"{path} contains non-integer value for key {key!r}: {value!r}"
+            ) from exc
+    return result
+
+
+METRIC_FIELDS: dict[str, str] = _load_string_map("metrics_fields.json")
+REPORT_FIELDS: dict[str, str] = _load_string_map("report_fields.json")
+NETWORK_PORTS: dict[str, int] = _load_int_map("network_ports.json")
 
 # Validate that required contract keys exist at import time so misconfigurations
 # surface immediately with a descriptive error rather than a cryptic KeyError later.

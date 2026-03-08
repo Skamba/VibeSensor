@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import time
-from typing import Any
 
+from ..json_types import JsonObject
 from .models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
 from .runner import sanitize_log_line
 from .state_store import UpdateStateStore
@@ -55,7 +55,7 @@ class UpdateStatusTracker:
         self._status.phase = phase
         self.persist()
 
-    def set_runtime(self, runtime: dict[str, Any]) -> None:
+    def set_runtime(self, runtime: JsonObject) -> None:
         self._status.runtime = runtime
 
     def track_secret(self, secret: str) -> None:
