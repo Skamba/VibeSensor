@@ -53,7 +53,7 @@ _COMBINED_TRACKER_PRUNE_MS: int = 30_000
 def _has_precomputed_strength_metrics(samples: list[dict[str, Any]]) -> bool:
     for sample in samples:
         value = sample.get("vibration_strength_db")
-        if isinstance(value, (int, float)) and math.isfinite(float(value)):
+        if isinstance(value, (int, float)) and math.isfinite(value):
             return True
     return False
 
