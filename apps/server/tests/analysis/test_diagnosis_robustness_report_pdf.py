@@ -39,7 +39,7 @@ class TestPdfContentForDiagnosedScenario:
                     )
                 )
 
-        from vibesensor.report.pdf_builder import build_report_pdf
+        from vibesensor.report.pdf_engine import build_report_pdf
 
         summary = summarize_run_data(
             standard_metadata(language="en"), samples, lang="en", file_name="pdf_diag_test"
@@ -75,7 +75,7 @@ class TestPdfContentForDiagnosedScenario:
                     )
                 )
 
-        from vibesensor.report.pdf_builder import build_report_pdf
+        from vibesensor.report.pdf_engine import build_report_pdf
 
         summary = summarize_run_data(
             standard_metadata(language="nl"), samples, lang="nl", file_name="pdf_nl_diag"

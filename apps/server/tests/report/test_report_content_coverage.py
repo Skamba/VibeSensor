@@ -19,7 +19,7 @@ from _test_helpers import extract_pdf_text
 
 from vibesensor.analysis import confidence_label, map_summary, select_top_causes, summarize_log
 from vibesensor.constants import KMH_TO_MPS
-from vibesensor.report.pdf_builder import build_report_pdf
+from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
 
 _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"

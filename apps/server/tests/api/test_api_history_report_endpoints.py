@@ -51,7 +51,7 @@ async def test_report_pdf_respects_lang_query() -> None:
 async def test_report_pdf_respects_lang_query_with_persisted_report_template_data() -> None:
     from dataclasses import asdict
 
-    from vibesensor.analysis.report_data_builder import map_summary
+    from vibesensor.analysis import map_summary
 
     router, state = make_router_and_state(language="nl")
     state.history_db.analysis["_report_template_data"] = asdict(
@@ -78,7 +78,7 @@ async def test_report_pdf_respects_lang_query_with_persisted_report_template_dat
 async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     from dataclasses import asdict
 
-    from vibesensor.analysis.report_data_builder import map_summary
+    from vibesensor.analysis import map_summary
 
     metadata = make_metadata(language="nl")
     samples = [sample(i) for i in range(20)]
@@ -135,7 +135,7 @@ async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis_versi
 async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persisted() -> None:
     from dataclasses import asdict
 
-    from vibesensor.analysis.report_data_builder import map_summary
+    from vibesensor.analysis import map_summary
 
     router, state = make_router_and_state(language="nl")
     state.history_db.analysis["_report_template_data"] = asdict(
@@ -161,7 +161,7 @@ async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persist
 async def test_report_pdf_cache_invalidates_when_analysis_version_changes() -> None:
     from dataclasses import asdict
 
-    from vibesensor.analysis.report_data_builder import map_summary
+    from vibesensor.analysis import map_summary
 
     metadata = make_metadata()
     samples = [sample(i) for i in range(20)]

@@ -15,7 +15,7 @@ import pytest
 from vibesensor.analysis import build_findings_for_samples, map_summary, summarize_run_data
 from vibesensor.history_db import HistoryDB
 from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
-from vibesensor.report.pdf_builder import build_report_pdf
+from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.runlog import bounded_sample, normalize_sample_record
 
 # ---------------------------------------------------------------------------

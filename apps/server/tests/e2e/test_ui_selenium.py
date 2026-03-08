@@ -84,8 +84,8 @@ def _wait_selector_min(wait: WebDriverWait, css: str, minimum: int = 1) -> None:
 @pytest.fixture(scope="module")
 def live_server(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     pi_dir = SERVER_ROOT
-    if not (pi_dir / "public" / "index.html").exists():
-        pytest.skip("Selenium UI tests require built apps/server/public assets")
+    if not (pi_dir / "vibesensor" / "static" / "index.html").exists():
+        pytest.skip("Selenium UI tests require built apps/server/vibesensor/static assets")
     tmp_dir = tmp_path_factory.mktemp("selenium-ui")
     port = _free_port()
     data_port = _free_port()

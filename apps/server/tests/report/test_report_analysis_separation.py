@@ -16,7 +16,7 @@ import pytest
 from _paths import SERVER_ROOT
 from pypdf import PdfReader
 
-from vibesensor.report.pdf_builder import build_report_pdf
+from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.report_data import (
     ObservedSignature,
     PatternEvidence,
@@ -169,7 +169,7 @@ def test_report_output_matches_template_data() -> None:
 def test_report_folder_contains_only_renderer_files() -> None:
     """The report/ folder must not contain analysis-related files."""
     analysis_file_names = {
-        "summary.py",
+        "summary_builder.py",
         "findings.py",
         "order_analysis.py",
         "phase_segmentation.py",

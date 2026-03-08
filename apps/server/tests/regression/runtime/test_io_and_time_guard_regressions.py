@@ -9,7 +9,7 @@ Covers:
   3. gps_speed.resolve_speed() – TOCTOU snapshot of speed_mps
   4. gps_speed._is_gps_stale() – TOCTOU snapshot of last_update_ts
   5. report_cli.main() – PDF generation errors return 1 instead of traceback
-  6. report_data_builder date_str – includes UTC suffix
+  6. report_mapping_pipeline date_str – includes UTC suffix
 """
 
 
@@ -20,7 +20,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.analysis.report_data_builder import map_summary
+from vibesensor.analysis import map_summary
 from vibesensor.firmware_cache import FirmwareCache, FirmwareCacheConfig, GitHubReleaseFetcher
 from vibesensor.gps_speed import GPSSpeedMonitor
 from vibesensor.report_cli import main as report_cli_main
@@ -210,7 +210,7 @@ class TestReportCliErrorHandling:
 
 
 # ------------------------------------------------------------------
-# 6. report_data_builder – UTC suffix on date_str
+# 6. report_mapping_pipeline – UTC suffix on date_str
 # ------------------------------------------------------------------
 
 

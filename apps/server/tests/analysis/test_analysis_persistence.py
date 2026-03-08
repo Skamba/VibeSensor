@@ -361,7 +361,7 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     from dataclasses import asdict
 
-    from vibesensor.analysis.report_data_builder import map_summary
+    from vibesensor.analysis import map_summary
 
     analysis["_report_template_data"] = asdict(map_summary(analysis))
 

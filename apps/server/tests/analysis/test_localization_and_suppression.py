@@ -12,12 +12,12 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from builders import make_sample as _make_sample
-from builders import make_speed_sweep_fault_samples as _make_speed_sweep_fault_samples
-from builders import standard_metadata as _standard_metadata
-from builders import wheel_hz as _wheel_hz
+from test_support import make_sample as _make_sample
+from test_support import make_speed_sweep_fault_samples as _make_speed_sweep_fault_samples
+from test_support import standard_metadata as _standard_metadata
+from test_support import wheel_hz as _wheel_hz
 
-from vibesensor.analysis.summary import build_findings_for_samples, summarize_run_data
+from vibesensor.analysis import build_findings_for_samples, summarize_run_data
 from vibesensor.analysis.test_plan import _location_speedbin_summary
 from vibesensor.locations import WHEEL_LOCATION_CODES, is_wheel_location
 

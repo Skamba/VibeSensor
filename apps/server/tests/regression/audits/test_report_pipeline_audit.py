@@ -11,18 +11,16 @@ PDF pipeline.  Each test class corresponds to one audit finding.
 
 import inspect
 
-from vibesensor.analysis.report_data_builder import (
-    _finding_strength_values,
-    _peak_classification_text,
-    _top_strength_values,
-    map_summary,
+from vibesensor.analysis import map_summary
+from vibesensor.analysis.report_mapping_common import (
+    finding_strength_db as _finding_strength_values,
 )
-from vibesensor.report.pdf_builder import (
-    _draw_next_steps_table,
-    _draw_peaks_table,
-    _draw_system_card,
-    _page1,
+from vibesensor.analysis.report_mapping_common import (
+    peak_classification_text as _peak_classification_text,
 )
+from vibesensor.analysis.report_mapping_systems import top_strength_values as _top_strength_values
+from vibesensor.report.pdf_page1 import _draw_next_steps_table, _draw_system_card, _page1
+from vibesensor.report.pdf_page2 import _draw_peaks_table
 from vibesensor.report_i18n import tr
 
 # ---------------------------------------------------------------------------
@@ -144,7 +142,7 @@ class TestNextStepFieldsNotRendered:
     that are populated by the builder but the PDF renderer only reads
     step.action and step.why.
 
-    Evidence: pdf_builder.py lines 673-675 — only action and why are used.
+    Evidence: pdf_page1.py — only action and why are used.
     Impact: actionable diagnostic guidance is lost in PDF output.
     """
 
@@ -216,7 +214,7 @@ class TestTopCausesFallbackBypassesPersistenceRanking:
     select_top_causes.  This bypasses the persistence-aware
     phase-adjusted ranking.
 
-    Evidence: report_data_builder.py line ~312:
+    Evidence: report_mapping_pipeline.py:
       top_causes = top_causes_actionable or findings_non_ref or top_causes_non_ref or top_causes_all
     """
 
@@ -267,7 +265,7 @@ class TestPeakClassificationFallback:
     """Unrecognized peak_classification values silently map to
     CLASSIFICATION_PERSISTENT instead of UNKNOWN.
 
-    Evidence: report_data_builder.py lines 199-212.
+    Evidence: report_mapping_common.py.
     """
 
     def test_unrecognized_maps_to_title_case(self) -> None:
@@ -308,9 +306,9 @@ class TestSystemFindingCardToneUnused:
     """SystemFindingCard.tone is set by the builder but the PDF renderer
     never reads it — cards are always drawn with SOFT_BG background.
 
-    Evidence: pdf_builder.py _draw_system_card uses fixed SOFT_BG;
+    Evidence: pdf_page1.py _draw_system_card uses fixed SOFT_BG;
               theme.py defines card_success_bg/card_warn_bg/card_error_bg
-              which are never referenced by pdf_builder.py.
+              which are never referenced by pdf_page1.py.
     """
 
     def test_tone_referenced_in_renderer(self) -> None:
@@ -362,7 +360,7 @@ class TestDataTrustPanelOverflow:
     (next_y).  With 5+ items having multi-line detail text, content
     can overflow.
 
-    Evidence: pdf_builder.py lines 552-569 — no `ty < bottom` guard.
+    Evidence: pdf_page1.py — no `ty < bottom` guard.
     Impact: text drawn outside the panel boundary overlapping the footer.
     """
 
@@ -387,7 +385,7 @@ class TestPeaksTableFixedHeight:
     how many rows it contains.  _draw_peaks_table uses a y_bottom guard
     to limit visible rows to what fits in the panel height.
 
-    Evidence: pdf_builder.py: y - row_h < y_bottom: break
+    Evidence: pdf_page2.py: y - row_h < y_bottom: break
     """
 
     def test_peaks_table_rows_cap_at_six(self) -> None:
@@ -422,7 +420,7 @@ class TestFindingStrengthValuesWastedComputation:
     is present, it returns immediately without using peak_amp.
     peak_amp is only used in the second fallback path.
 
-    Evidence: report_data_builder.py lines 118-138.
+    Evidence: report_mapping_common.py.
     Impact: minor inefficiency; peak_amp is computed even when not needed.
     """
 

@@ -45,7 +45,7 @@ from .pdf_style import (
     SUB_CLR,
     TEXT_CLR,
 )
-from .pdf_text import _draw_kv, _draw_text
+from .pdf_text import _draw_kv, _draw_text, _wrap_lines
 from .report_data import NextStep, ReportTemplateData, SystemFindingCard
 from .theme import REPORT_COLORS
 
@@ -288,8 +288,6 @@ def _draw_next_steps_table(
     start_number: int = 1,
 ) -> int:
     """Draw ordered next-step rows with multi-line wrapping."""
-    from . import pdf_builder as pdf_builder_module
-
     col1_w = 12 * mm
     text_w = w - col1_w - 4
     min_row_h = 6.6 * mm
@@ -316,7 +314,7 @@ def _draw_next_steps_table(
         if step.eta:
             action_text += f"  \u23f1 {step.eta}"
 
-        lines = pdf_builder_module._wrap_lines(action_text, text_w, fs)
+        lines = _wrap_lines(action_text, text_w, fs)
         row_h = max(min_row_h, max(len(lines), 1) * leading + row_pad)
         if y - row_h < y_bottom:
             break
@@ -329,7 +327,7 @@ def _draw_next_steps_table(
         c.setFont(FONT_B, fs)
         c.drawString(x + 2, y - number_y_off, f"{idx}.")
 
-        pdf_builder_module._draw_text(
+        _draw_text(
             c,
             x + col1_w,
             y - 2 * mm,

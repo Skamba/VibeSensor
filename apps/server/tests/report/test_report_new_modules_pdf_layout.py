@@ -11,9 +11,8 @@ from _report_helpers import report_run_metadata as _run_metadata
 from _report_helpers import report_sample as _base_sample
 from pypdf import PdfReader
 
-from vibesensor.analysis import summarize_log
-from vibesensor.analysis.report_data_builder import map_summary
-from vibesensor.report.pdf_builder import build_report_pdf
+from vibesensor.analysis import map_summary, summarize_log
+from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.pdf_layout import assert_aspect_preserved, fit_rect_preserve_aspect
 
 

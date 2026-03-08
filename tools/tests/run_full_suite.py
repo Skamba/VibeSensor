@@ -77,7 +77,7 @@ def main() -> int:
     parser.add_argument(
         "--skip-ui-sync",
         action="store_true",
-        help="Skip UI sync/build into apps/server/public.",
+        help="Skip UI build/sync into apps/server/vibesensor/static.",
     )
     parser.add_argument(
         "--skip-ui-smoke",
@@ -175,7 +175,7 @@ def main() -> int:
     container_started = False
     try:
         if not args.skip_ui_sync:
-            _run(["python3", "tools/sync_ui_to_pi_public.py"])
+            _run(["python3", "tools/build_ui_static.py"])
         if not args.skip_ui_smoke:
             playwright_marker = ROOT / "apps" / "ui" / ".playwright-chromium-installed"
             if (

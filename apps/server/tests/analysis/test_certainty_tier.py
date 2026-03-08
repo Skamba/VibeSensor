@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis.report_data_builder import map_summary
+from vibesensor.analysis import map_summary
 from vibesensor.analysis.strength_labels import (
     TIER_A_CEILING,
     TIER_B_CEILING,

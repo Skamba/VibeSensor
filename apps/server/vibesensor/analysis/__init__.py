@@ -5,22 +5,14 @@ derivation, order-tracking, test-plan generation, strength classification)
 lives here.  The sibling ``vibesensor.report`` package is renderer-only and
 must **not** import from this package.
 
-Public API re-exported here so that ``from vibesensor.analysis import …``
-works the same as importing from the individual sub-modules.
-
-External code (outside this package) must import exclusively through this
-module-level API — never from sub-modules directly.
+High-level analysis entry points are re-exported here so callers can use
+``from vibesensor.analysis import …`` without depending on file layout.
 """
 
 from .phase_segmentation import DrivingPhase, classify_sample_phase
-from .report_data_builder import map_summary
-from .summary import (
-    build_findings_for_samples,
-    confidence_label,
-    select_top_causes,
-    summarize_log,
-    summarize_run_data,
-)
+from .report_mapping_pipeline import map_summary
+from .summary_builder import build_findings_for_samples, summarize_log, summarize_run_data
+from .top_cause_selection import confidence_label, select_top_causes
 
 __all__ = [
     "DrivingPhase",

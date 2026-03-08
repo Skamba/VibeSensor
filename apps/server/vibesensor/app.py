@@ -20,7 +20,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from .bootstrap import build_services
-from .config import SERVER_DIR, load_config
+from .config import load_config
 from .routes import create_router
 from .runtime import RuntimeState
 
@@ -65,25 +65,16 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     app.state.runtime = runtime
     app.include_router(create_router(runtime.routes))
     if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
-        # Prefer packaged static assets (baked into the wheel by CI), then
-        # fall back to the legacy ``apps/server/public/`` directory used by
-        # Docker builds and local development.
-        packaged_static = _PACKAGE_DIR / "static"
-        legacy_public = SERVER_DIR / "public"
-        if (packaged_static / "index.html").exists():
-            static_dir = packaged_static
-        elif (legacy_public / "index.html").exists():
-            static_dir = legacy_public
-        else:
+        static_dir = _PACKAGE_DIR / "static"
+        if not (static_dir / "index.html").exists():
             message = (
-                "UI not built. Run tools/sync_ui_to_pi_public.py, "
-                "build the Docker image, or install a release wheel."
+                "UI not built. Run tools/build_ui_static.py, build the Docker image, "
+                "or install a release wheel."
             )
             LOGGER.error(
-                "%s Missing index.html in %s and %s",
+                "%s Missing index.html in %s",
                 message,
-                packaged_static,
-                legacy_public,
+                static_dir,
             )
             raise RuntimeError(message)
         app.mount("/", StaticFiles(directory=static_dir, html=True), name="public")
