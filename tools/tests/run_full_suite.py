@@ -169,13 +169,13 @@ def main() -> int:
         if cleanup_data_dir
         else Path(args.data_dir).resolve()
     )
-        data_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(ROOT / "apps" / "server" / "data", data_dir, dirs_exist_ok=True)
-        sim_log = data_dir / "sim_sender.log"
-        container_started = False
-        try:
-            if not args.skip_ui_sync:
-                _run(["python3", "tools/build_ui_static.py"])
+    data_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(ROOT / "apps" / "server" / "data", data_dir, dirs_exist_ok=True)
+    sim_log = data_dir / "sim_sender.log"
+    container_started = False
+    try:
+        if not args.skip_ui_sync:
+            _run(["python3", "tools/build_ui_static.py"])
         if not args.skip_ui_smoke:
             playwright_marker = ROOT / "apps" / "ui" / ".playwright-chromium-installed"
             if (
