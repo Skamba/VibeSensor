@@ -75,25 +75,24 @@ stop_recording()                       # metrics_log/
 
 ## Pipeline Steps
 
-`summarize_run_data()` in `analysis/summary.py` executes these steps
+`summarize_run_data()` in `analysis/summary.py` delegates to the structured
+pipeline in `analysis/summary_builder.py`, which executes these steps
 in order.  Each step runs exactly once per analysis invocation.
 
 | # | Step | Key Function(s) | Purpose |
 |---|------|-----------------|---------|
 | 1 | Initialisation | `normalize_lang`, `_validate_required_strength_metrics` | Normalise language, validate that samples contain required strength metrics |
-| 2 | Timing | `_compute_run_timing` | Extract run ID, start/end timestamps, duration |
-| 3 | Speed statistics | `_speed_stats`, `_run_noise_baseline_g` | Compute speed distribution, noise baseline |
+| 2 | Run preparation | `prepare_run_data`, `_compute_run_timing`, `_run_noise_baseline_g` | Extract timing, speed statistics, phase segmentation, and speed-breakdown context once |
 | 4 | Phase segmentation | `_segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / COAST_DOWN / SPEED_UNKNOWN) |
 | 5 | Acceleration statistics | `_compute_accel_statistics` | Per-axis and magnitude accel stats, saturation detection |
 | 6 | Speed breakdown | `_speed_breakdown`, `_phase_speed_breakdown` | Frequency binning by speed range and driving phase |
-| 7 | Findings | `_build_findings` | Core diagnostic engine: order tracking, pattern matching, scoring, localisation |
-| 8 | Origin & test plan | `_most_likely_origin_summary`, `_merge_test_plan`, `_build_phase_timeline` | Determine most likely vibration source, generate action plan, timeline |
-| 9 | Reference completeness | (inline) | Check if tyre, engine, and sample-rate reference data are available |
-| 10 | Top-cause selection | `select_top_causes` | Rank findings by phase-adjusted score, apply drop-off threshold |
-| 11 | Run suitability | `_build_run_suitability_checks` | Data-quality and run-condition checks (steady speed, GPS, duration, etc.) |
-| 12 | Sensor analysis | `_locations_connected_throughout_run`, `_sensor_intensity_by_location` | Per-location vibration intensity and connection stability |
+| 7 | Findings | `build_findings_bundle`, `_build_findings` | Core diagnostic engine: order tracking, pattern matching, scoring, localisation |
+| 8 | Origin & test plan | `summarize_origin`, `_merge_test_plan`, `_build_phase_timeline` | Determine most likely vibration source, generate action plan, timeline |
+| 9 | Run suitability | `build_run_suitability_bundle`, `_build_run_suitability_checks`, `compute_reference_completeness` | Check reference completeness plus data-quality and run-condition checks |
+| 10 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
+| 11 | Sensor analysis | `build_sensor_bundle`, `_sensor_intensity_by_location` | Per-location vibration intensity and connection stability |
 | 13 | Summary construction | `build_summary_payload` | Assemble the final summary dict |
-| 14 | Plot generation | `_plot_data` | FFT aggregation, spectrogram, peak table |
+| 14 | Plot generation | `_plot_data`, `plot_series.py`, `plot_spectrum.py`, `plot_peak_table.py` | Build time/speed series, FFT aggregation, spectrograms, and peak table |
 | 15 | Peak annotation | `_annotate_peaks_with_order_labels` | Label peaks with human-readable order names |
 
 ## Persisted Outputs
@@ -118,12 +117,23 @@ acceleration fields may still be expressed in g.
 ```
 vibesensor/analysis/
 ├── __init__.py            Public API re-exports
-├── summary.py             Public summary entrypoints and orchestration helpers
-├── summary_pipeline.py    Focused pipeline helpers used by summary.py
+├── summary.py             Public summary/report-analysis facade
+├── summary_builder.py     Structured summary orchestration and final plot annotation
+├── summary_models.py      Explicit intermediate models for summary generation
+├── summary_pipeline.py    Compatibility facade over focused summary helper modules
+├── summary_phases.py      Phase/timing/speed preparation helpers
+├── summary_suitability.py Acceleration stats, reference completeness, and run-suitability helpers
+├── summary_payload.py     Origin, sensor analysis, and final payload assembly
+├── ranking.py             Shared finding-sort and phase-aware ranking helpers
+├── top_cause_selection.py Top-cause grouping and confidence-label presentation
 ├── findings/              Core findings engine (package)
 │   ├── __init__.py        Package overview and ownership notes
-│   ├── builder.py         Main _build_findings() orchestrator
-│   ├── order_findings.py  Order-tracking hypothesis matching engine
+│   ├── builder.py         Main _build_findings() orchestrator facade
+│   ├── builder_support.py Reference checks, phase filtering, suppression inputs, and final ordering helpers
+│   ├── order_findings.py  Order-tracking orchestration facade
+│   ├── order_matching.py  Sample ↔ hypothesis matching and evidence accumulation
+│   ├── order_assembly.py  Order-finding assembly and localization/context shaping
+│   ├── order_models.py    Typed order-matching and assembly context models
 │   ├── order_scoring.py   Confidence and suppression helpers for order findings
 │   ├── order_support.py   Shared pure helpers used by order assembly
 │   ├── intensity.py       Per-location intensity statistics
@@ -139,9 +149,17 @@ vibesensor/analysis/
 ├── report_data_builder.py Summary dict → ReportTemplateData mapping entrypoint
 ├── diagnosis_candidates.py Cause/finding filtering helpers for report mapping
 ├── report_mapping_common.py Shared i18n and value-resolution helpers for report mapping
-├── report_mapping_components.py Component builders used by map_summary()
+├── report_mapping_components.py Compatibility facade over focused report component builders
 ├── report_mapping_context.py Context extraction for report mapping
-├── plot_data.py           FFT/spectrogram/peak-table payloads
+├── report_mapping_models.py Explicit report-mapping context models
+├── report_mapping_pipeline.py Structured summary → report orchestration
+├── report_mapping_actions.py Next-step and data-trust builders
+├── report_mapping_peaks.py Peak-row and hotspot shaping helpers
+├── report_mapping_systems.py System-card, metadata, and strength/report context helpers
+├── plot_data.py           Plot payload orchestration facade
+├── plot_series.py         Time/speed/finding plot series shaping
+├── plot_spectrum.py       FFT and spectrogram aggregation helpers
+├── plot_peak_table.py     Peak-table ranking and persistence shaping
 └── pattern_parts.py       Pattern → likely-parts mapping
 ```
 
@@ -153,7 +171,8 @@ vibesensor/analysis/
    pipeline.  Each step should have clear inputs (prior step outputs
    or raw samples) and outputs (added to the summary dict).
 3. If the new output is needed by the renderer, update
-   `report_data_builder.py:map_summary()` and the
+   `report_mapping_pipeline.py:map_summary_to_report()` (via the
+   `report_data_builder.py` facade) and the
    `ReportTemplateData` dataclass.
 4. Export any new public symbol from `analysis/__init__.py`.
 5. Run `pytest apps/server/tests/analysis/test_analysis_architecture.py` to

@@ -16,16 +16,26 @@ Recording stops
   ▼
 _run_post_analysis()          [vibesensor.metrics_log.post_analysis]
   ├─ summarize_run_data()     [vibesensor.analysis.summary]
-  │    ├─ phase segmentation  [vibesensor.analysis.phase_segmentation]
-  │    ├─ findings builder    [vibesensor.analysis.findings]
-  │    ├─ order analysis      [vibesensor.analysis.order_analysis]
-  │    ├─ test plan            [vibesensor.analysis.test_plan]
-  │    ├─ plot data            [vibesensor.analysis.plot_data]
+  │    ├─ summary_builder.py   → explicit run-preparation / findings / suitability stages
+  │    ├─ summary_phases.py    → timing / phase / speed-prep helpers
+  │    ├─ summary_suitability.py → accel stats / reference completeness / suitability
+  │    ├─ summary_payload.py   → origin / sensor analysis / final summary payload
+  │    ├─ phase segmentation   [vibesensor.analysis.phase_segmentation]
+  │    ├─ findings builder     [vibesensor.analysis.findings]
+  │    ├─ ranking + top causes [vibesensor.analysis.ranking, top_cause_selection]
+  │    ├─ plot data facade     [vibesensor.analysis.plot_data]
+  │    │    ├─ series shaping  [vibesensor.analysis.plot_series]
+  │    │    ├─ FFT/spectrogram [vibesensor.analysis.plot_spectrum]
+  │    │    └─ peak table      [vibesensor.analysis.plot_peak_table]
   │    └─ strength labels      [vibesensor.analysis.strength_labels]
   ├─ map_summary()            [vibesensor.analysis.report_data_builder]
-  │    ├─ certainty_tier()     → tier A/B/C
-  │    ├─ parts_for_pattern()  → suggested parts
-  │    └─ location hotspots    → pre-computed rows
+  │    ├─ report_mapping_pipeline.py → context prep + primary candidate resolution
+  │    ├─ report_mapping_actions.py  → next steps + data trust shaping
+  │    ├─ report_mapping_peaks.py    → peak rows + hotspot rows
+  │    ├─ report_mapping_systems.py  → system cards + metadata + strength helpers
+  │    ├─ certainty_tier()          → tier A/B/C
+  │    ├─ parts_for_pattern()       → suggested parts
+  │    └─ location hotspots         → pre-computed rows
   └─ store_analysis()          [vibesensor.history_db]
        └─ Persists summary dict + embedded _report_template_data
   │
