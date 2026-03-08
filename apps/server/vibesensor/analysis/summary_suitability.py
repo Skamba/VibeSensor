@@ -4,10 +4,17 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from typing import Any
 
 from ..analysis_settings import tire_circumference_m_from_spec
 from ..runlog import as_float_or_none as _as_float
+from ._types import (
+    AccelStatistics,
+    JsonObject,
+    MetadataDict,
+    RunSuitabilityCheck,
+    Sample,
+    SpeedStats,
+)
 from .helpers import (
     _mean_variance,
     _outlier_summary,
@@ -23,10 +30,22 @@ from .order_analysis import _i18n_ref
 _SATURATION_FRACTION = 0.98
 
 
+def _json_outlier_summary(values: list[float]) -> JsonObject:
+    """Convert the local outlier summary helper output into the shared JSON shape."""
+    summary = _outlier_summary(values)
+    return {
+        "count": summary["count"],
+        "outlier_count": summary["outlier_count"],
+        "outlier_pct": summary["outlier_pct"],
+        "lower_bound": summary["lower_bound"],
+        "upper_bound": summary["upper_bound"],
+    }
+
+
 def compute_accel_statistics(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     sensor_model: object,
-) -> dict[str, Any]:
+) -> AccelStatistics:
     """Compute per-axis values, aggregate amplitude metrics, and saturation counts."""
     sensor_limit = _sensor_limit_g(sensor_model)
     sat_threshold = sensor_limit * _SATURATION_FRACTION if sensor_limit is not None else None
@@ -78,7 +97,7 @@ def compute_accel_statistics(
     }
 
 
-def compute_frame_integrity_counts(samples: list[dict[str, Any]]) -> tuple[int, int]:
+def compute_frame_integrity_counts(samples: list[Sample]) -> tuple[int, int]:
     """Compute ``(total_dropped, total_overflow)`` across all client sensors."""
     per_client_dropped: dict[str, list[float]] = defaultdict(list)
     per_client_overflow: dict[str, list[float]] = defaultdict(list)
@@ -104,12 +123,12 @@ def build_run_suitability_checks(
     sensor_ids: set[str],
     reference_complete: bool,
     sat_count: int,
-    samples: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
+    samples: list[Sample],
+) -> list[RunSuitabilityCheck]:
     """Construct the language-neutral run-suitability checklist."""
     sensor_count_sufficient = len(sensor_ids) >= 3
     speed_variation_ok = speed_sufficient and not steady_speed
-    run_suitability: list[dict[str, Any]] = [
+    run_suitability: list[RunSuitabilityCheck] = [
         {
             "check": "SUITABILITY_CHECK_SPEED_VARIATION",
             "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
@@ -172,7 +191,7 @@ def build_run_suitability_checks(
     return run_suitability
 
 
-def compute_reference_completeness(metadata: dict[str, Any]) -> bool:
+def compute_reference_completeness(metadata: MetadataDict) -> bool:
     """Return True when enough reference metadata is present for order analysis."""
     return bool(
         _as_float(metadata.get("raw_sample_rate_hz"))
@@ -195,13 +214,13 @@ def compute_reference_completeness(metadata: dict[str, Any]) -> bool:
 
 
 def build_data_quality_dict(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     speed_values: list[float],
-    speed_stats: dict[str, Any],
+    speed_stats: SpeedStats,
     speed_non_null_pct: float,
-    accel_stats: dict[str, Any],
+    accel_stats: AccelStatistics,
     amp_metric_values: list[float],
-) -> dict[str, Any]:
+) -> JsonObject:
     """Build the ``data_quality`` sub-dict for the run summary."""
     return {
         "required_missing_pct": {
@@ -230,7 +249,7 @@ def build_data_quality_dict(
             "saturation_count": accel_stats["sat_count"],
         },
         "outliers": {
-            "accel_magnitude": _outlier_summary(accel_stats["accel_mag_vals"]),
-            "amplitude_metric": _outlier_summary(amp_metric_values),
+            "accel_magnitude": _json_outlier_summary(accel_stats["accel_mag_vals"]),
+            "amplitude_metric": _json_outlier_summary(amp_metric_values),
         },
     }

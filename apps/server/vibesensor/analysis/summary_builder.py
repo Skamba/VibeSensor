@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
 from statistics import median as _median
-from typing import Any
+from typing import cast
 
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import utc_now_iso
+from ._types import (
+    AccelStatistics,
+    Finding,
+    FindingsBuilder,
+    I18nRef,
+    MetadataDict,
+    PhaseSummary,
+    Sample,
+    SummaryData,
+    is_json_object,
+)
 from .diagnosis_candidates import non_reference_findings
 from .findings.builder import _build_findings
 from .findings.intensity import (
@@ -22,6 +32,7 @@ from .helpers import (
     _validate_required_strength_metrics,
 )
 from .order_analysis import _i18n_ref
+from .phase_segmentation import DrivingPhase, PhaseSegment
 from .plot_data import _plot_data
 from .strength_labels import strength_label as _strength_label
 from .summary_models import (
@@ -48,13 +59,23 @@ def normalize_lang(lang: object) -> str:
     return "nl" if raw.startswith("nl") else "en"
 
 
-def annotate_peaks_with_order_labels(summary: dict[str, Any]) -> None:
+def annotate_peaks_with_order_labels(summary: SummaryData) -> None:
     """Back-fill peak-table order labels by matching order findings to peak rows."""
     plots = summary.get("plots")
-    if not isinstance(plots, dict):
+    if not is_json_object(plots):
         return
-    peaks_table: list[dict[str, Any]] = plots.get("peaks_table", [])
-    findings: list[dict[str, Any]] = summary.get("findings", [])
+    raw_peaks_table = plots.get("peaks_table", [])
+    peaks_table = (
+        [row for row in raw_peaks_table if is_json_object(row)]
+        if isinstance(raw_peaks_table, list)
+        else []
+    )
+    raw_findings = summary.get("findings", [])
+    findings = (
+        [finding for finding in raw_findings if is_json_object(finding)]
+        if isinstance(raw_findings, list)
+        else []
+    )
     if not peaks_table or not findings:
         return
 
@@ -85,9 +106,8 @@ def annotate_peaks_with_order_labels(summary: dict[str, Any]) -> None:
         for idx, row in enumerate(peaks_table):
             if idx in used_rows:
                 continue
-            try:
-                freq = float(row.get("frequency_hz") or 0.0)
-            except (TypeError, ValueError):
+            freq = _as_float(row.get("frequency_hz"))
+            if freq is None:
                 continue
             dist = abs(freq - median_hz)
             if dist < best_dist:
@@ -99,8 +119,8 @@ def annotate_peaks_with_order_labels(summary: dict[str, Any]) -> None:
 
 
 def prepare_run_data(
-    metadata: dict[str, Any],
-    samples: list[dict[str, Any]],
+    metadata: MetadataDict,
+    samples: list[Sample],
     *,
     file_name: str,
 ) -> PreparedRunData:
@@ -116,7 +136,7 @@ def prepare_run_data(
     ) = prepare_speed_and_phases(samples)
     run_noise_baseline_g = _run_noise_baseline_g(samples)
     speed_breakdown = _speed_breakdown(samples) if speed_sufficient else []
-    speed_breakdown_skipped_reason: object = None
+    speed_breakdown_skipped_reason: I18nRef | None = None
     if not speed_sufficient:
         speed_breakdown_skipped_reason = _i18n_ref(
             "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
@@ -143,24 +163,25 @@ def prepare_run_data(
     )
 
 
-def build_phase_summary(phase_segments: list[Any]) -> dict[str, Any]:
+def build_phase_summary(phase_segments: list[PhaseSegment]) -> PhaseSummary:
     """Small wrapper to keep summary-building imports localized."""
     from .phase_segmentation import phase_summary
 
-    return phase_summary(phase_segments)
+    return cast(PhaseSummary, phase_summary(phase_segments))
 
 
 def build_findings_bundle(
-    metadata: dict[str, Any],
-    samples: list[dict[str, Any]],
+    metadata: MetadataDict,
+    samples: list[Sample],
     *,
     language: str,
     prepared: PreparedRunData,
     overall_strength_band_key: str | None,
-    findings_builder: Callable[..., list[dict[str, Any]]] = _build_findings,
+    findings_builder: FindingsBuilder | None = None,
 ) -> FindingsBundle:
     """Build findings plus derived diagnosis narrative fields."""
-    findings = findings_builder(
+    builder = findings_builder or _build_findings
+    findings = builder(
         metadata=metadata,
         samples=samples,
         speed_sufficient=prepared.speed_sufficient,
@@ -191,10 +212,10 @@ def build_findings_bundle(
 
 
 def build_sensor_bundle(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     *,
     language: str,
-    per_sample_phases: list[Any],
+    per_sample_phases: list[DrivingPhase],
 ) -> SensorAnalysisBundle:
     """Build location-scoped sensor summaries used by analysis and reports."""
     sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_analysis(
@@ -210,11 +231,11 @@ def build_sensor_bundle(
 
 
 def build_run_suitability_bundle(
-    metadata: dict[str, Any],
-    samples: list[dict[str, Any]],
+    metadata: MetadataDict,
+    samples: list[Sample],
     *,
     prepared: PreparedRunData,
-    accel_stats: dict[str, Any],
+    accel_stats: AccelStatistics,
 ) -> RunSuitabilityBundle:
     """Build run-suitability checks and related confidence context."""
     reference_complete = compute_reference_completeness(metadata)
@@ -243,19 +264,19 @@ def build_run_suitability_bundle(
 
 
 def summarize_run_data(
-    metadata: dict[str, Any],
-    samples: list[dict[str, Any]],
+    metadata: MetadataDict,
+    samples: list[Sample],
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,
-    findings_builder: Callable[..., list[dict[str, Any]]] = _build_findings,
-) -> dict[str, Any]:
+    findings_builder: FindingsBuilder | None = None,
+) -> SummaryData:
     """Analyze pre-loaded run data and return the full summary dict."""
     language = normalize_lang(lang)
     _validate_required_strength_metrics(samples)
 
     prepared = prepare_run_data(metadata, samples, file_name=file_name)
-    accel_stats = compute_accel_statistics(samples, metadata.get("sensor_model"))
+    accel_stats: AccelStatistics = compute_accel_statistics(samples, metadata.get("sensor_model"))
     suitability = build_run_suitability_bundle(
         metadata,
         samples,
@@ -328,17 +349,18 @@ def summarize_run_data(
 
 def build_findings_for_samples(
     *,
-    metadata: dict[str, Any],
-    samples: list[dict[str, Any]],
+    metadata: MetadataDict,
+    samples: list[Sample],
     lang: str | None = None,
-    findings_builder: Callable[..., list[dict[str, Any]]] = _build_findings,
-) -> list[dict[str, Any]]:
+    findings_builder: FindingsBuilder | None = None,
+) -> list[Finding]:
     """Build the findings list from *samples* using the full analysis pipeline."""
     language = normalize_lang(lang)
     rows = list(samples)
     _validate_required_strength_metrics(rows)
     prepared = prepare_run_data(metadata, rows, file_name="run")
-    return findings_builder(
+    builder = findings_builder or _build_findings
+    return builder(
         metadata=dict(metadata),
         samples=rows,
         speed_sufficient=prepared.speed_sufficient,
@@ -355,8 +377,8 @@ def summarize_log(
     log_path: Path,
     lang: str | None = None,
     include_samples: bool = True,
-    findings_builder: Callable[..., list[dict[str, Any]]] = _build_findings,
-) -> dict[str, Any]:
+    findings_builder: FindingsBuilder | None = None,
+) -> SummaryData:
     """Read a JSONL run file and analyse it."""
     metadata, samples, _warnings = _load_run(log_path)
     return summarize_run_data(

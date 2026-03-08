@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 from datetime import datetime, timedelta
-from typing import Any
 
 from vibesensor_core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
@@ -12,6 +11,14 @@ from vibesensor_core.vibration_strength import (
 
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601
+from ._types import (
+    Finding,
+    MetadataDict,
+    PhaseSegmentSummary,
+    PhaseTimelineEntry,
+    Sample,
+    SpeedStats,
+)
 from .helpers import (
     MEMS_NOISE_FLOOR_G,
     SPEED_COVERAGE_MIN_PCT,
@@ -23,10 +30,10 @@ from .phase_segmentation import DrivingPhase, PhaseSegment, segment_run_phases
 
 def build_phase_timeline(
     phase_segments: list[PhaseSegment],
-    findings: list[dict[str, Any]],
+    findings: list[Finding],
     *,
     min_confidence: float,
-) -> list[dict[str, Any]]:
+) -> list[PhaseTimelineEntry]:
     """Build a simple phase timeline annotated with finding evidence."""
     if not phase_segments:
         return []
@@ -37,12 +44,15 @@ def build_phase_timeline(
             continue
         if str(finding.get("finding_id", "")).startswith("REF_"):
             continue
-        conf = float(finding.get("confidence_0_to_1") or 0)
+        conf = _as_float(finding.get("confidence_0_to_1")) or 0.0
         if conf < min_confidence:
             continue
         phase_ev = finding.get("phase_evidence")
         if isinstance(phase_ev, dict):
-            for phase in phase_ev.get("phases_detected", []):
+            detected_phases = phase_ev.get("phases_detected", [])
+            if not isinstance(detected_phases, list):
+                continue
+            for phase in detected_phases:
                 finding_phases.add(str(phase))
 
     return [
@@ -58,7 +68,7 @@ def build_phase_timeline(
     ]
 
 
-def serialize_phase_segments(phase_segments: list[PhaseSegment]) -> list[dict[str, Any]]:
+def serialize_phase_segments(phase_segments: list[PhaseSegment]) -> list[PhaseSegmentSummary]:
     """Serialize phase segments to JSON-safe dicts."""
     return [
         {
@@ -94,8 +104,8 @@ def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
 
 
 def prepare_speed_and_phases(
-    samples: list[dict[str, Any]],
-) -> tuple[list[float], dict[str, Any], float, bool, list[DrivingPhase], list[PhaseSegment]]:
+    samples: list[Sample],
+) -> tuple[list[float], SpeedStats, float, bool, list[DrivingPhase], list[PhaseSegment]]:
     """Compute speed stats and phase segmentation shared by multiple entry points."""
     speed_values = [
         speed
@@ -119,8 +129,8 @@ def prepare_speed_and_phases(
 
 
 def compute_run_timing(
-    metadata: dict[str, Any],
-    samples: list[dict[str, Any]],
+    metadata: MetadataDict,
+    samples: list[Sample],
     file_name: str,
 ) -> tuple[str, datetime | None, datetime | None, float]:
     """Extract run_id, start/end timestamps and duration from metadata+samples."""

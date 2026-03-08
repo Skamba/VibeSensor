@@ -4,8 +4,23 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
 
+from ._types import (
+    AccelStatistics,
+    Finding,
+    I18nRef,
+    IntensityRow,
+    OriginSummary,
+    PhaseSpeedBreakdownRow,
+    PhaseSpeedStats,
+    PhaseSummary,
+    PhaseTimelineEntry,
+    RunSuitabilityCheck,
+    SpeedBreakdownRow,
+    SpeedStats,
+    TestStep,
+    TopCause,
+)
 from .phase_segmentation import DrivingPhase, PhaseSegment
 
 
@@ -19,28 +34,28 @@ class PreparedRunData:
     duration_s: float
     raw_sample_rate_hz: float | None
     speed_values: list[float]
-    speed_stats: dict[str, Any]
+    speed_stats: SpeedStats
     speed_non_null_pct: float
     speed_sufficient: bool
     per_sample_phases: list[DrivingPhase]
     phase_segments: list[PhaseSegment]
     run_noise_baseline_g: float | None
-    phase_info: dict[str, Any]
-    speed_stats_by_phase: dict[str, Any]
-    speed_breakdown: list[dict[str, Any]]
-    speed_breakdown_skipped_reason: object
-    phase_speed_breakdown: list[dict[str, Any]]
+    phase_info: PhaseSummary
+    speed_stats_by_phase: dict[str, PhaseSpeedStats]
+    speed_breakdown: list[SpeedBreakdownRow]
+    speed_breakdown_skipped_reason: I18nRef | None
+    phase_speed_breakdown: list[PhaseSpeedBreakdownRow]
 
 
 @dataclass(frozen=True)
 class FindingsBundle:
     """Diagnosis outputs assembled after building findings."""
 
-    findings: list[dict[str, Any]]
-    most_likely_origin: dict[str, Any]
-    test_plan: list[dict[str, Any]]
-    phase_timeline: list[dict[str, Any]]
-    top_causes: list[dict[str, Any]]
+    findings: list[Finding]
+    most_likely_origin: OriginSummary
+    test_plan: list[TestStep]
+    phase_timeline: list[PhaseTimelineEntry]
+    top_causes: list[TopCause]
 
 
 @dataclass(frozen=True)
@@ -49,7 +64,7 @@ class SensorAnalysisBundle:
 
     sensor_locations: list[str]
     connected_locations: set[str]
-    sensor_intensity_by_location: list[dict[str, Any]]
+    sensor_intensity_by_location: list[IntensityRow]
 
 
 @dataclass(frozen=True)
@@ -57,7 +72,7 @@ class RunSuitabilityBundle:
     """Run-suitability evaluation and confidence context."""
 
     reference_complete: bool
-    run_suitability: list[dict[str, Any]]
+    run_suitability: list[RunSuitabilityCheck]
     overall_strength_band_key: str | None
 
 
@@ -66,7 +81,7 @@ class SummaryComputation:
     """Aggregated intermediate state used to build the final summary payload."""
 
     prepared: PreparedRunData
-    accel_stats: dict[str, Any]
+    accel_stats: AccelStatistics
     findings: FindingsBundle
     sensors: SensorAnalysisBundle
     suitability: RunSuitabilityBundle

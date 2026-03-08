@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import math
-from typing import Any
 
 from ..runlog import as_float_or_none as _as_float
+from ._types import Finding, TopCause
 from .helpers import ORDER_MIN_CONFIDENCE
 from .ranking import group_findings_by_source
 from .strength_labels import (
@@ -37,12 +37,12 @@ def confidence_label(
 
 
 def select_top_causes(
-    findings: list[dict[str, Any]],
+    findings: list[Finding],
     *,
     drop_off_points: float = 15.0,
     max_causes: int = 3,
     strength_band_key: str | None = None,
-) -> list[dict[str, Any]]:
+) -> list[TopCause]:
     """Group findings by source, rank the strongest group per source, and trim by drop-off."""
     diagnostic_findings = [
         finding
@@ -59,14 +59,14 @@ def select_top_causes(
     best_score_pct = grouped[0][0] * 100.0
     threshold_pct = best_score_pct - drop_off_points
 
-    selected: list[dict[str, Any]] = []
+    selected: list[Finding] = []
     for score, representative in grouped:
         if (score * 100.0) >= threshold_pct or not selected:
             selected.append(representative)
         if len(selected) >= max_causes:
             break
 
-    result: list[dict[str, Any]] = []
+    result: list[TopCause] = []
     for representative in selected:
         label_key, tone, pct_text = confidence_label(
             _as_float(representative.get("confidence_0_to_1")) or 0,
@@ -74,19 +74,19 @@ def select_top_causes(
         )
         result.append(
             {
-                "finding_id": representative.get("finding_id"),
-                "source": representative.get("suspected_source"),
+                "finding_id": str(representative.get("finding_id") or ""),
+                "source": str(representative.get("suspected_source") or ""),
                 "confidence": representative.get("confidence_0_to_1"),
                 "confidence_label_key": label_key,
                 "confidence_tone": tone,
                 "confidence_pct": pct_text,
-                "order": representative.get("frequency_hz_or_order"),
+                "order": str(representative.get("frequency_hz_or_order") or ""),
                 "signatures_observed": representative.get("signatures_observed", []),
                 "grouped_count": representative.get("grouped_count", 1),
                 "strongest_location": representative.get("strongest_location"),
                 "dominance_ratio": representative.get("dominance_ratio"),
                 "strongest_speed_band": representative.get("strongest_speed_band"),
-                "weak_spatial_separation": representative.get("weak_spatial_separation"),
+                "weak_spatial_separation": bool(representative.get("weak_spatial_separation")),
                 "diffuse_excitation": representative.get("diffuse_excitation", False),
                 "diagnostic_caveat": representative.get("diagnostic_caveat"),
                 "phase_evidence": representative.get("phase_evidence"),

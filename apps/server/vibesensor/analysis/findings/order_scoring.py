@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from ...runlog import as_float_or_none as _as_float
+from .._types import Finding, MatchedPoint
 from ..helpers import ORDER_MIN_CONFIDENCE
 from ._constants import (
     _CONFIDENCE_CEILING,
@@ -60,7 +59,7 @@ def _mean(values: list[float]) -> float:
     return sum(values) / len(values)
 
 
-def _normalized_source(finding: dict[str, Any]) -> str:
+def _normalized_source(finding: Finding) -> str:
     return str(finding.get("suspected_source") or "").strip().lower()
 
 
@@ -68,7 +67,7 @@ def detect_diffuse_excitation(
     connected_locations: set[str],
     possible_by_location: dict[str, int],
     matched_by_location: dict[str, int],
-    matched_points: list[dict[str, Any]],
+    matched_points: list[MatchedPoint],
     *,
     min_match_points: int,
 ) -> tuple[bool, float]:
@@ -195,14 +194,14 @@ def compute_order_confidence(
 
 
 def suppress_engine_aliases(
-    findings: list[tuple[float, dict[str, Any]]],
+    findings: list[tuple[float, Finding]],
     *,
     min_confidence: float = ORDER_MIN_CONFIDENCE,
-) -> list[dict[str, Any]]:
+) -> list[Finding]:
     """Suppress engine findings likely to be aliases of stronger wheel findings."""
     best_wheel_conf = max(
         (
-            float(finding.get("confidence_0_to_1", 0))
+            _as_float(finding.get("confidence_0_to_1")) or 0.0
             for _, finding in findings
             if _normalized_source(finding) == "wheel/tire"
         ),
@@ -212,7 +211,7 @@ def suppress_engine_aliases(
         for index, (ranking_score, finding) in enumerate(findings):
             if _normalized_source(finding) != "engine":
                 continue
-            eng_conf = float(finding.get("confidence_0_to_1", 0))
+            eng_conf = _as_float(finding.get("confidence_0_to_1")) or 0.0
             if eng_conf <= best_wheel_conf * _HARMONIC_ALIAS_RATIO:
                 suppressed = eng_conf * _ENGINE_ALIAS_SUPPRESSION
                 finding["confidence_0_to_1"] = suppressed
@@ -221,6 +220,8 @@ def suppress_engine_aliases(
                 findings[index] = (new_ranking_score, finding)
     findings.sort(key=lambda item: item[0], reverse=True)
     valid = [
-        item[1] for item in findings if float(item[1].get("confidence_0_to_1", 0)) >= min_confidence
+        item[1]
+        for item in findings
+        if (_as_float(item[1].get("confidence_0_to_1")) or 0.0) >= min_confidence
     ]
     return valid[:5]

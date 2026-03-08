@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any
 
 from ...runlog import as_float_or_none as _as_float
-from .._types import PhaseLabels
+from .._types import MatchedPoint, MetadataDict, PhaseLabels, Sample
 from ..helpers import (
     ORDER_TOLERANCE_MIN_HZ,
     ORDER_TOLERANCE_REL,
@@ -14,15 +13,15 @@ from ..helpers import (
     _location_label,
     _speed_bin_label,
 )
-from .order_models import OrderMatchAccumulator
+from .order_models import OrderHypothesisLike, OrderMatchAccumulator
 from .speed_profile import _phase_to_str
 
 
 def match_samples_for_hypothesis(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     cached_peaks: list[list[tuple[float, float]]],
-    hypothesis: Any,
-    metadata: dict[str, Any],
+    hypothesis: OrderHypothesisLike,
+    metadata: MetadataDict,
     tire_circumference_m: float | None,
     per_sample_phases: PhaseLabels | None,
     lang: str,
@@ -35,7 +34,7 @@ def match_samples_for_hypothesis(
     rel_errors: list[float] = []
     predicted_vals: list[float] = []
     measured_vals: list[float] = []
-    matched_points: list[dict[str, Any]] = []
+    matched_points: list[MatchedPoint] = []
     ref_sources: set[str] = set()
     possible_by_speed_bin: dict[str, int] = defaultdict(int)
     matched_by_speed_bin: dict[str, int] = defaultdict(int)

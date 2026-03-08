@@ -8,6 +8,7 @@ from collections.abc import Callable
 from .. import __version__
 from ..report.report_data import PartSuggestion, PatternEvidence, SystemFindingCard
 from ..runlog import as_float_or_none as _as_float
+from ._types import CandidateFinding, Finding, OriginSummary, is_finding
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .report_mapping_common import (
     finding_strength_db,
@@ -21,7 +22,7 @@ from .report_mapping_common import (
 def top_strength_values(
     summary: dict,
     *,
-    effective_causes: list[dict] | None = None,
+    effective_causes: list[CandidateFinding] | None = None,
 ) -> float | None:
     """Return the best available vibration strength in dB for report text."""
     causes = effective_causes if effective_causes is not None else summary.get("top_causes", [])
@@ -30,7 +31,7 @@ def top_strength_values(
         if not isinstance(cause, dict):
             continue
         for finding in all_findings:
-            if not isinstance(finding, dict):
+            if not is_finding(finding):
                 continue
             if finding.get("finding_id") != cause.get("finding_id"):
                 continue
@@ -45,7 +46,7 @@ def top_strength_values(
     return max((value for value in sensor_rows if value is not None), default=None)
 
 
-def has_relevant_reference_gap(findings: list[dict], primary_source: object) -> bool:
+def has_relevant_reference_gap(findings: list[Finding], primary_source: object) -> bool:
     """Whether the report certainty should mention missing reference inputs."""
     source = str(primary_source or "").strip().lower()
     for finding in findings:
@@ -60,9 +61,9 @@ def has_relevant_reference_gap(findings: list[dict], primary_source: object) -> 
 
 
 def build_system_cards(
-    top_causes: list[dict],
-    findings_non_ref: list[dict],
-    findings: list[dict],
+    top_causes: list[CandidateFinding],
+    findings_non_ref: list[Finding],
+    findings: list[Finding],
     tier: str,
     lang: str,
     tr: Callable,
@@ -107,9 +108,9 @@ def humanize_signatures(signatures: object, *, lang: str) -> list[str]:
 
 
 def build_pattern_evidence(
-    top_causes: list[dict],
-    primary_candidate: dict | None,
-    origin: dict,
+    top_causes: list[CandidateFinding],
+    primary_candidate: CandidateFinding | None,
+    origin: OriginSummary,
     primary_location: str,
     primary_speed: str,
     strength_text: str,
@@ -144,7 +145,7 @@ def build_pattern_evidence(
     )
 
 
-def resolve_interpretation(origin: dict, *, lang: str, tr: Callable) -> str:
+def resolve_interpretation(origin: OriginSummary, *, lang: str, tr: Callable) -> str:
     """Resolve the origin explanation into localized report text."""
     interpretation_raw = origin.get("explanation", "") if isinstance(origin, dict) else ""
     if is_i18n_ref(interpretation_raw) or isinstance(interpretation_raw, list):
@@ -153,7 +154,7 @@ def resolve_interpretation(origin: dict, *, lang: str, tr: Callable) -> str:
 
 
 def resolve_parts_context(
-    primary_candidate: dict | None,
+    primary_candidate: CandidateFinding | None,
     *,
     lang: str,
 ) -> tuple[str, str | None]:

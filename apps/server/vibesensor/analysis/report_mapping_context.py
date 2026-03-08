@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import utc_now_iso
-from ._types import Finding, SummaryData
+from ._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SpeedStats, SummaryData
 from .diagnosis_candidates import normalize_origin_location, select_effective_top_causes
 from .report_mapping_common import extract_confidence, human_source
 
@@ -14,15 +15,15 @@ from .report_mapping_common import extract_confidence, human_source
 def extract_run_context(
     summary: SummaryData,
 ) -> tuple[
-    SummaryData,
+    MetadataDict,
     str | None,
     str | None,
     str,
+    list[CandidateFinding],
     list[Finding],
     list[Finding],
-    list[Finding],
-    SummaryData,
-    SummaryData,
+    SpeedStats,
+    OriginSummary,
 ]:
     """Extract and normalize the structural context fields from a run summary."""
     meta = summary.get("metadata")
@@ -33,9 +34,15 @@ def extract_run_context(
     report_date = summary.get("report_date") or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
+    raw_top_causes = summary.get("top_causes", [])
+    if not isinstance(raw_top_causes, list):
+        raw_top_causes = []
+    raw_findings = summary.get("findings", [])
+    if not isinstance(raw_findings, list):
+        raw_findings = []
     findings, findings_non_ref, _top_causes_all, top_causes = select_effective_top_causes(
-        summary.get("top_causes", []),
-        summary.get("findings", []),
+        raw_top_causes,
+        raw_findings,
     )
 
     speed_stats = summary.get("speed_stats")
@@ -54,8 +61,8 @@ def extract_run_context(
         top_causes,
         findings_non_ref,
         findings,
-        speed_stats,
-        origin,
+        cast(SpeedStats, speed_stats),
+        cast(OriginSummary, origin),
     )
 
 
@@ -74,11 +81,11 @@ def extract_sensor_locations(summary: SummaryData) -> list[str]:
 
 
 def resolve_primary_candidate(
-    top_causes: list[Finding],
+    top_causes: list[CandidateFinding],
     findings_non_ref: list[Finding],
     origin_location: str,
     tr: Callable[[str], str],
-) -> tuple[Finding | None, object, str, str, str, float]:
+) -> tuple[CandidateFinding | None, object, str, str, str, float]:
     """Resolve the primary diagnosis candidate used by the report."""
     primary_candidates = top_causes or findings_non_ref
     primary_candidate = primary_candidates[0] if primary_candidates else None
@@ -105,7 +112,7 @@ def resolve_primary_candidate(
     return primary_candidate, primary_source, primary_system, primary_location, primary_speed, conf
 
 
-def normalized_origin_location(origin: SummaryData) -> str:
+def normalized_origin_location(origin: OriginSummary) -> str:
     """Return the report-ready origin location string."""
     return normalize_origin_location(origin.get("location"))
 
