@@ -8,7 +8,7 @@ from collections import defaultdict
 from vibesensor_core.vibration_strength import percentile
 
 from ...runlog import as_float_or_none as _as_float
-from .._types import IntensityRow, JsonObject, Sample, PhaseSpeedBreakdownRow, SpeedBreakdownRow
+from .._types import IntensityRow, JsonObject, PhaseSpeedBreakdownRow, Sample, SpeedBreakdownRow
 from ..helpers import (
     _location_label,
     _primary_vibration_strength_db,

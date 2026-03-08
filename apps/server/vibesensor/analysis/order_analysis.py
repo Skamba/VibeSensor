@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import cast
 
 from ..analysis_settings import wheel_hz_from_speed_kmh
 from ..constants import SECONDS_PER_MINUTE
@@ -130,11 +129,11 @@ def _wheel_focus_from_location(location: str) -> I18nRef:
     return {"_i18n_key": "WHEEL_FOCUS_ALL"}
 
 
-def _i18n_ref(key: str, **params: object) -> I18nRef:
+def _i18n_ref(key: str, **params: JsonValue) -> I18nRef:
     """Build a language-neutral i18n reference dict."""
     ref: I18nRef = {"_i18n_key": key}
     if params:
-        ref.update(cast(dict[str, JsonValue], params))
+        ref.update(params)
     return ref
 
 

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
 from statistics import median as _median
 from typing import cast
@@ -12,11 +11,13 @@ from ..runlog import utc_now_iso
 from ._types import (
     AccelStatistics,
     Finding,
+    FindingsBuilder,
     I18nRef,
     MetadataDict,
     PhaseSummary,
     Sample,
     SummaryData,
+    is_json_object,
 )
 from .diagnosis_candidates import non_reference_findings
 from .findings.builder import _build_findings
@@ -31,6 +32,7 @@ from .helpers import (
     _validate_required_strength_metrics,
 )
 from .order_analysis import _i18n_ref
+from .phase_segmentation import DrivingPhase, PhaseSegment
 from .plot_data import _plot_data
 from .strength_labels import strength_label as _strength_label
 from .summary_models import (
@@ -41,7 +43,6 @@ from .summary_models import (
     SummaryComputation,
 )
 from .summary_payload import build_sensor_analysis, build_summary_payload, summarize_origin
-from .phase_segmentation import DrivingPhase, PhaseSegment
 from .summary_phases import build_phase_timeline, compute_run_timing, prepare_speed_and_phases
 from .summary_suitability import (
     build_run_suitability_checks,
@@ -61,17 +62,17 @@ def normalize_lang(lang: object) -> str:
 def annotate_peaks_with_order_labels(summary: SummaryData) -> None:
     """Back-fill peak-table order labels by matching order findings to peak rows."""
     plots = summary.get("plots")
-    if not isinstance(plots, dict):
+    if not is_json_object(plots):
         return
     raw_peaks_table = plots.get("peaks_table", [])
     peaks_table = (
-        [row for row in raw_peaks_table if isinstance(row, dict)]
+        [row for row in raw_peaks_table if is_json_object(row)]
         if isinstance(raw_peaks_table, list)
         else []
     )
     raw_findings = summary.get("findings", [])
     findings = (
-        [finding for finding in raw_findings if isinstance(finding, dict)]
+        [finding for finding in raw_findings if is_json_object(finding)]
         if isinstance(raw_findings, list)
         else []
     )
@@ -176,7 +177,7 @@ def build_findings_bundle(
     language: str,
     prepared: PreparedRunData,
     overall_strength_band_key: str | None,
-    findings_builder: Callable[..., list[Finding]] | None = None,
+    findings_builder: FindingsBuilder | None = None,
 ) -> FindingsBundle:
     """Build findings plus derived diagnosis narrative fields."""
     builder = findings_builder or _build_findings
@@ -268,7 +269,7 @@ def summarize_run_data(
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,
-    findings_builder: Callable[..., list[Finding]] | None = None,
+    findings_builder: FindingsBuilder | None = None,
 ) -> SummaryData:
     """Analyze pre-loaded run data and return the full summary dict."""
     language = normalize_lang(lang)
@@ -351,7 +352,7 @@ def build_findings_for_samples(
     metadata: MetadataDict,
     samples: list[Sample],
     lang: str | None = None,
-    findings_builder: Callable[..., list[Finding]] | None = None,
+    findings_builder: FindingsBuilder | None = None,
 ) -> list[Finding]:
     """Build the findings list from *samples* using the full analysis pipeline."""
     language = normalize_lang(lang)
@@ -376,7 +377,7 @@ def summarize_log(
     log_path: Path,
     lang: str | None = None,
     include_samples: bool = True,
-    findings_builder: Callable[..., list[Finding]] | None = None,
+    findings_builder: FindingsBuilder | None = None,
 ) -> SummaryData:
     """Read a JSONL run file and analyse it."""
     metadata, samples, _warnings = _load_run(log_path)

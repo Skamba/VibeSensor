@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
 
 from ..report.report_data import (
     CarMeta,
@@ -180,7 +179,7 @@ def _build_report_template_data(
     pattern_evidence = build_pattern_evidence(
         context.top_causes,
         primary.primary_candidate,
-        cast(dict[object, object], context.origin),
+        context.origin,
         primary.primary_location,
         primary.primary_speed,
         primary.strength_text,

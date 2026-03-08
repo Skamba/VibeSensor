@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from typing import cast
 
 from ..analysis_settings import tire_circumference_m_from_spec
 from ..runlog import as_float_or_none as _as_float
@@ -29,6 +28,18 @@ from .order_analysis import _i18n_ref
 # Fraction of sensor ADC limit above which a sample is considered clipping.
 # 2% headroom accounts for quantization effects near the ADC rail.
 _SATURATION_FRACTION = 0.98
+
+
+def _json_outlier_summary(values: list[float]) -> JsonObject:
+    """Convert the local outlier summary helper output into the shared JSON shape."""
+    summary = _outlier_summary(values)
+    return {
+        "count": summary["count"],
+        "outlier_count": summary["outlier_count"],
+        "outlier_pct": summary["outlier_pct"],
+        "lower_bound": summary["lower_bound"],
+        "upper_bound": summary["upper_bound"],
+    }
 
 
 def compute_accel_statistics(
@@ -238,7 +249,7 @@ def build_data_quality_dict(
             "saturation_count": accel_stats["sat_count"],
         },
         "outliers": {
-            "accel_magnitude": cast(JsonObject, dict(_outlier_summary(accel_stats["accel_mag_vals"]))),
-            "amplitude_metric": cast(JsonObject, dict(_outlier_summary(amp_metric_values))),
+            "accel_magnitude": _json_outlier_summary(accel_stats["accel_mag_vals"]),
+            "amplitude_metric": _json_outlier_summary(amp_metric_values),
         },
     }

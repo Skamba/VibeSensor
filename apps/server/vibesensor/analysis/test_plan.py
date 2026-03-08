@@ -8,7 +8,7 @@ from math import ceil, floor, log1p, pow
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
 from ..locations import has_any_wheel_location, is_wheel_location
 from ..runlog import as_float_or_none as _as_float
-from ._types import Finding, IntensityRow, JsonObject, TestStep
+from ._types import Finding, JsonObject, TestStep
 from .helpers import _speed_bin_label, _weighted_percentile, weak_spatial_dominance_threshold
 from .order_analysis import _finding_actions_for_source, _i18n_ref
 

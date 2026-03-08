@@ -8,6 +8,7 @@ from collections.abc import Callable
 from .. import __version__
 from ..report.report_data import PartSuggestion, PatternEvidence, SystemFindingCard
 from ..runlog import as_float_or_none as _as_float
+from ._types import Finding, OriginSummary
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .report_mapping_common import (
     finding_strength_db,
@@ -107,9 +108,9 @@ def humanize_signatures(signatures: object, *, lang: str) -> list[str]:
 
 
 def build_pattern_evidence(
-    top_causes: list[dict],
-    primary_candidate: dict | None,
-    origin: dict,
+    top_causes: list[Finding],
+    primary_candidate: Finding | None,
+    origin: OriginSummary,
     primary_location: str,
     primary_speed: str,
     strength_text: str,
@@ -144,7 +145,7 @@ def build_pattern_evidence(
     )
 
 
-def resolve_interpretation(origin: dict, *, lang: str, tr: Callable) -> str:
+def resolve_interpretation(origin: OriginSummary, *, lang: str, tr: Callable) -> str:
     """Resolve the origin explanation into localized report text."""
     interpretation_raw = origin.get("explanation", "") if isinstance(origin, dict) else ""
     if is_i18n_ref(interpretation_raw) or isinstance(interpretation_raw, list):
