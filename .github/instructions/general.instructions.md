@@ -8,6 +8,7 @@ Canonical agent workflow (shared source of truth)
 - Verify existing behavior before rewriting code; investigate root cause before patching symptoms.
 - Scan the blast radius for similar in-scope issues and fix them in the same run.
 - Prefer extending and hardening existing logic over adding parallel implementations.
+- When a larger refactor or other major in-scope change is the clearest path to better long-term maintainability, prefer that over a narrowly local patch that preserves poor structure.
 - Analysis-first default: examine the issue from multiple angles, choose the strongest approach, and deliver the smallest validated **complete** in-scope fix that addresses root cause and nearby in-scope blast radius.
 - Avoid symptom-only patches. Prefer fixes that make sense to a human maintainer and reduce future maintenance burden in the touched area.
 - Avoid over-conservative blocking behavior: do not hold a clear fix for exhaustive hypothetical analysis.
@@ -50,6 +51,7 @@ Validation (always required)
 - Optional focused backend pytest: `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`.
 - Run a single feature area: `pytest -q apps/server/tests/<module>/` (e.g., `tests/analysis/`, `tests/report/`).
 - Test layout: feature-based subdirectories mirror source modules; see `docs/testing.md`.
+- If an intentional refactor changes function-level seams or helper boundaries, refactor the affected tests in the same change set so they validate current behavior instead of pinning obsolete internals.
 - Run lint (`ruff check`) and backend type checks (`make typecheck-backend`) before pushing changes.
 - After any backend or frontend change, rebuild and test via Docker before considering the work done:
   1. `docker compose build --pull`
