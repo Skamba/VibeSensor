@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import math
-from typing import Any
 
 from ..runlog import as_float_or_none as _as_float
+from ._types import Finding
 from .helpers import ORDER_MIN_CONFIDENCE
 from .ranking import group_findings_by_source
 from .strength_labels import (
@@ -37,12 +37,12 @@ def confidence_label(
 
 
 def select_top_causes(
-    findings: list[dict[str, Any]],
+    findings: list[Finding],
     *,
     drop_off_points: float = 15.0,
     max_causes: int = 3,
     strength_band_key: str | None = None,
-) -> list[dict[str, Any]]:
+) -> list[Finding]:
     """Group findings by source, rank the strongest group per source, and trim by drop-off."""
     diagnostic_findings = [
         finding
@@ -59,14 +59,14 @@ def select_top_causes(
     best_score_pct = grouped[0][0] * 100.0
     threshold_pct = best_score_pct - drop_off_points
 
-    selected: list[dict[str, Any]] = []
+    selected: list[Finding] = []
     for score, representative in grouped:
         if (score * 100.0) >= threshold_pct or not selected:
             selected.append(representative)
         if len(selected) >= max_causes:
             break
 
-    result: list[dict[str, Any]] = []
+    result: list[Finding] = []
     for representative in selected:
         label_key, tone, pct_text = confidence_label(
             _as_float(representative.get("confidence_0_to_1")) or 0,

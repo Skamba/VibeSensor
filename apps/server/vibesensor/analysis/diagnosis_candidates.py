@@ -8,7 +8,7 @@ place.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any
+from typing import cast
 
 from ._types import Finding
 
@@ -18,7 +18,7 @@ _PLACEHOLDER_SOURCES = {"unknown_resonance", "unknown"}
 
 def non_reference_findings(items: Sequence[object]) -> list[Finding]:
     """Return well-formed finding dicts excluding ``REF_*`` entries."""
-    findings = [item for item in items if isinstance(item, dict)]
+    findings = [cast(Finding, item) for item in items if isinstance(item, dict)]
     return [
         finding
         for finding in findings
@@ -36,7 +36,7 @@ def is_actionable_location(location: object) -> bool:
     return str(location or "").strip().lower() not in _UNKNOWN_LOCATION_VALUES
 
 
-def is_actionable_cause(cause: dict[str, Any]) -> bool:
+def is_actionable_cause(cause: Finding) -> bool:
     """Whether a cause is actionable enough to prefer in report rendering."""
     source = str(cause.get("source") or cause.get("suspected_source") or "").strip().lower()
     return source not in _PLACEHOLDER_SOURCES or is_actionable_location(
@@ -56,8 +56,9 @@ def select_effective_top_causes(
     non-reference top-causes, then all top-causes.
     """
     all_findings = [item for item in findings if isinstance(item, dict)]
+    all_findings = [cast(Finding, item) for item in all_findings]
     findings_non_ref = non_reference_findings(all_findings)
-    top_causes_all = [item for item in top_causes if isinstance(item, dict)]
+    top_causes_all = [cast(Finding, item) for item in top_causes if isinstance(item, dict)]
     top_causes_non_ref = non_reference_top_causes(top_causes_all)
     top_causes_actionable = [cause for cause in top_causes_non_ref if is_actionable_cause(cause)]
     effective_top_causes = (

@@ -13,6 +13,7 @@ Backend (python `apps/server/`)
 	- `apps/server/vibesensor/update/`: wheel-based updater package; `manager.py` is the public facade over focused modules for workflow, Wi-Fi, releases, install and rollback, service control, and status.
 - Install: `python -m pip install -e "./apps/server[dev]"` (used by CI).
 - Backend type gate: `make typecheck-backend` runs the enforced mypy slice for app/bootstrap, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages.
+- Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject` aliases) over broad `Any` when shaping analysis, report, and persistence data.
 - Tests: add tests in the matching `tests/<module>/` subdirectory (see `docs/testing.md`); use `tests/integration/` for cross-cutting scenarios and `tests/regression/{analysis,audits,cross_cutting,report,runtime}/` for bug-fix regressions grouped by intent. Prefer `-m "not selenium"` for fast runs. Run a single area with `pytest -q apps/server/tests/<module>/`.
 - i18n: Add/modify keys in `apps/server/data/report_i18n.json` when changing user-facing strings.
 - Styling/lint: `ruff` is enforced in CI; follow existing `ruff` conventions.

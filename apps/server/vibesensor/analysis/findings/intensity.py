@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from typing import Any
 
 from vibesensor_core.vibration_strength import percentile
 
 from ...runlog import as_float_or_none as _as_float
+from .._types import IntensityRow, JsonObject, Sample, PhaseSpeedBreakdownRow, SpeedBreakdownRow
 from ..helpers import (
     _location_label,
     _primary_vibration_strength_db,
@@ -52,9 +52,9 @@ _EMPTY_BUCKET_COUNTS: dict[str, int] = {f"l{idx}": 0 for idx in range(6)}
 
 
 def _phase_speed_breakdown(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     per_sample_phases: list[DrivingPhase],
-) -> list[dict[str, Any]]:
+) -> list[PhaseSpeedBreakdownRow]:
     """Group vibration statistics by driving phase (temporal context).
 
     Unlike ``_speed_breakdown`` which bins by speed magnitude, this function
@@ -84,7 +84,7 @@ def _phase_speed_breakdown(
     # Output in a canonical phase order
     phase_order = [p.value for p in DrivingPhase]
     phase_order_set = set(phase_order)
-    rows: list[dict[str, Any]] = []
+    rows: list[PhaseSpeedBreakdownRow] = []
     for phase_key in [*phase_order, *sorted(k for k in counts if k not in phase_order_set)]:
         if phase_key not in counts:
             continue
@@ -103,7 +103,7 @@ def _phase_speed_breakdown(
     return rows
 
 
-def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _speed_breakdown(samples: list[Sample]) -> list[SpeedBreakdownRow]:
     grouped: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)
     _as_float_local = _as_float
@@ -119,7 +119,7 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if amp is not None:
             grouped[label].append(amp)
 
-    rows: list[dict[str, Any]] = []
+    rows: list[SpeedBreakdownRow] = []
     for label in sorted(counts, key=_speed_bin_sort_key):
         values = grouped.get(label, [])
         rows.append(
@@ -134,13 +134,13 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _sensor_intensity_by_location(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     include_locations: set[str] | None = None,
     *,
     lang: str = "en",
     connected_locations: set[str] | None = None,
     per_sample_phases: list[DrivingPhase] | None = None,
-) -> list[dict[str, Any]]:
+) -> list[IntensityRow]:
     """Compute per-location vibration intensity statistics.
 
     When ``per_sample_phases`` is provided, also computes per-phase intensity
@@ -195,7 +195,7 @@ def _sensor_intensity_by_location(
             )
             strength_bucket_totals[location] += 1
 
-    rows: list[dict[str, Any]] = []
+    rows: list[IntensityRow] = []
     target_locations = set(sample_counts.keys())
     if include_locations is not None:
         target_locations |= set(include_locations)
@@ -212,7 +212,7 @@ def _sensor_intensity_by_location(
         overflow_delta = _counter_delta(overflow_vals)
         bucket_counts = strength_bucket_counts.get(location, _EMPTY_BUCKET_COUNTS)
         bucket_total = max(0, strength_bucket_totals.get(location, 0))
-        bucket_distribution: dict[str, object] = {
+        bucket_distribution: JsonObject = {
             "total": bucket_total,
             "counts": dict(bucket_counts),
         }
@@ -228,7 +228,7 @@ def _sensor_intensity_by_location(
             connected_locations is not None and location not in connected_locations
         )
         # Per-phase intensity summary for this location (issue #192)
-        location_phase_intensity: dict[str, Any] | None = None
+        location_phase_intensity: JsonObject | None = None
         if has_phases:
             loc_phases = phase_amp.get(location, {})
             location_phase_intensity = {
