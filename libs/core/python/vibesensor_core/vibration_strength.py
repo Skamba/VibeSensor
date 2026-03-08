@@ -18,14 +18,18 @@ combined_spectrum_amp_g
 from __future__ import annotations
 
 from math import isfinite, log10, sqrt
-from typing import Any, Final
+from typing import Final
+
+from typing_extensions import TypedDict
 
 from .strength_bands import bucket_for_strength
 
 __all__ = [
+    "empty_vibration_strength_metrics",
     "PEAK_BANDWIDTH_HZ",
     "PEAK_SEPARATION_HZ",
     "PEAK_THRESHOLD_FLOOR_RATIO",
+    "StrengthPeak",
     "STRENGTH_EPSILON_FLOOR_RATIO",
     "STRENGTH_EPSILON_MIN_G",
     "combined_spectrum_amp_g",
@@ -35,6 +39,7 @@ __all__ = [
     "peak_band_rms_amp_g",
     "percentile",
     "strength_floor_amp_g",
+    "VibrationStrengthMetrics",
     "vibration_strength_db_scalar",
 ]
 
@@ -44,6 +49,33 @@ PEAK_SEPARATION_HZ: Final[float] = 1.2
 STRENGTH_EPSILON_MIN_G: Final[float] = 1e-9
 STRENGTH_EPSILON_FLOOR_RATIO: Final[float] = 0.05
 PEAK_THRESHOLD_FLOOR_RATIO: Final[float] = 2.6
+
+
+class StrengthPeak(TypedDict):
+    hz: float
+    amp: float
+    vibration_strength_db: float
+    strength_bucket: str | None
+
+
+class VibrationStrengthMetrics(TypedDict):
+    combined_spectrum_amp_g: list[float]
+    vibration_strength_db: float
+    peak_amp_g: float
+    noise_floor_amp_g: float
+    strength_bucket: str | None
+    top_peaks: list[StrengthPeak]
+
+
+def empty_vibration_strength_metrics() -> VibrationStrengthMetrics:
+    return {
+        "combined_spectrum_amp_g": [],
+        "vibration_strength_db": 0.0,
+        "peak_amp_g": 0.0,
+        "noise_floor_amp_g": 0.0,
+        "strength_bucket": None,
+        "top_peaks": [],
+    }
 
 
 def median(values: list[float]) -> float:
@@ -237,7 +269,7 @@ def compute_vibration_strength_db(
     peak_bandwidth_hz: float = PEAK_BANDWIDTH_HZ,
     peak_separation_hz: float = PEAK_SEPARATION_HZ,
     top_n: int = 5,
-) -> dict[str, Any]:
+) -> VibrationStrengthMetrics:
     """Run the full vibration-strength pipeline on a combined spectrum.
 
     Detects up to *top_n* local-maxima peaks, estimates the noise floor,
@@ -250,14 +282,7 @@ def compute_vibration_strength_db(
     """
     n = min(len(freq_hz), len(combined_spectrum_amp_g_values))
     if n <= 0:
-        return {
-            "combined_spectrum_amp_g": [],
-            "vibration_strength_db": 0.0,
-            "peak_amp_g": 0.0,
-            "noise_floor_amp_g": 0.0,
-            "strength_bucket": None,
-            "top_peaks": [],
-        }
+        return empty_vibration_strength_metrics()
 
     freq = [float(v) for v in freq_hz[:n]]
     combined = [
@@ -299,7 +324,7 @@ def compute_vibration_strength_db(
         max_hz=freq[-1] if freq else 0.0,
     )
 
-    candidates: list[dict[str, float | str | None]] = []
+    candidates: list[StrengthPeak] = []
     for idx in local_maxima:
         band_rms = peak_band_rms_amp_g(
             freq_hz=freq,
@@ -326,7 +351,7 @@ def compute_vibration_strength_db(
         reverse=True,
     )
 
-    chosen: list[dict[str, float | str | None]] = []
+    chosen: list[StrengthPeak] = []
     for candidate in candidates:
         if len(chosen) >= top_n:
             break

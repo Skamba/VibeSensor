@@ -8,11 +8,21 @@ that handle locking and buffer lookup.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
+from ..payload_types import (
+    AlignmentInfoPayload,
+    FrequencyWarningPayload,
+    SelectedClientPayload,
+    SelectedSpectrumPayload,
+    SpectraPayload,
+    SpectrumSeriesPayload,
+    WaveformPayload,
+)
 from .fft import AXES, float_list
+from .models import SpectrumAxisData
 from .time_align import compute_overlap
 
 if TYPE_CHECKING:
@@ -22,7 +32,7 @@ if TYPE_CHECKING:
 
 _EMPTY_F32: np.ndarray = np.array([], dtype=np.float32)
 
-EMPTY_SPECTRUM_PAYLOAD: dict[str, Any] = {
+EMPTY_SPECTRUM_PAYLOAD: SpectrumSeriesPayload = {
     "x": [],
     "y": [],
     "z": [],
@@ -31,7 +41,14 @@ EMPTY_SPECTRUM_PAYLOAD: dict[str, Any] = {
 }
 
 
-def build_spectrum_payload(buf: ClientBuffer) -> dict[str, Any]:
+def _axis_data_or_empty(
+    latest_spectrum: dict[str, SpectrumAxisData],
+    axis: str,
+) -> SpectrumAxisData:
+    return latest_spectrum.get(axis, {"freq": _EMPTY_F32, "amp": _EMPTY_F32})
+
+
+def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
     """Build a per-client spectrum payload from the buffer's cached spectrum.
 
     Manages the ``cached_spectrum_payload`` / ``cached_spectrum_payload_generation``
@@ -44,14 +61,16 @@ def build_spectrum_payload(buf: ClientBuffer) -> dict[str, Any]:
         and buf.cached_spectrum_payload_generation == buf.spectrum_generation
     ):
         return buf.cached_spectrum_payload
-    payload = {
-        "x": float_list(buf.latest_spectrum.get("x", {}).get("amp", _EMPTY_F32)),
-        "y": float_list(buf.latest_spectrum.get("y", {}).get("amp", _EMPTY_F32)),
-        "z": float_list(buf.latest_spectrum.get("z", {}).get("amp", _EMPTY_F32)),
-        "combined_spectrum_amp_g": (
-            float_list(buf.latest_spectrum.get("combined", {}).get("amp", _EMPTY_F32))
-        ),
-        "strength_metrics": dict(buf.latest_strength_metrics),
+    x_axis = _axis_data_or_empty(buf.latest_spectrum, "x")
+    y_axis = _axis_data_or_empty(buf.latest_spectrum, "y")
+    z_axis = _axis_data_or_empty(buf.latest_spectrum, "z")
+    combined_axis = _axis_data_or_empty(buf.latest_spectrum, "combined")
+    payload: SpectrumSeriesPayload = {
+        "x": float_list(x_axis["amp"]),
+        "y": float_list(y_axis["amp"]),
+        "z": float_list(z_axis["amp"]),
+        "combined_spectrum_amp_g": float_list(combined_axis["amp"]),
+        "strength_metrics": buf.latest_strength_metrics,
     }
     buf.cached_spectrum_payload = payload
     buf.cached_spectrum_payload_generation = buf.spectrum_generation
@@ -61,9 +80,9 @@ def build_spectrum_payload(buf: ClientBuffer) -> dict[str, Any]:
 def build_multi_spectrum_payload(
     buffers: dict[str, ClientBuffer],
     client_ids: list[str],
-    spectrum_fn: Callable[[str], dict[str, Any]],
+    spectrum_fn: Callable[[str], SpectrumSeriesPayload],
     analysis_time_range_fn: Callable[[ClientBuffer], tuple[float, float, bool] | None],
-) -> dict[str, Any]:
+) -> SpectraPayload:
     """Build a combined multi-client spectrum payload with alignment metadata.
 
     Parameters
@@ -78,7 +97,7 @@ def build_multi_spectrum_payload(
         Callable to derive (start_s, end_s, synced) for a buffer.
     """
     shared_freq: np.ndarray | None = None
-    clients: dict[str, dict[str, Any]] = {}
+    clients: dict[str, SpectrumSeriesPayload] = {}
     mismatch_ids: list[str] = []
     per_client_freq: dict[str, np.ndarray] = {}
 
@@ -121,29 +140,31 @@ def build_multi_spectrum_payload(
     else:
         shared_freq_list = float_list(shared_freq) if shared_freq is not None else []
 
-    payload: dict[str, Any] = {
+    payload: SpectraPayload = {
         "freq": shared_freq_list,
         "clients": clients,
     }
     if mismatch_ids:
-        payload["warning"] = {
+        warning: FrequencyWarningPayload = {
             "code": "frequency_bin_mismatch",
             "message": "Per-client frequency axes returned due to sample-rate mismatch.",
             "client_ids": sorted(mismatch_ids),
         }
+        payload["warning"] = warning
 
     if len(ranges) >= 2:
         ov = compute_overlap(
             [s for _, s, _ in ranges],
             [e for _, _, e in ranges],
         )
-        payload["alignment"] = {
+        alignment: AlignmentInfoPayload = {
             "overlap_ratio": round(ov.overlap_ratio, 4),
             "aligned": ov.aligned,
             "shared_window_s": round(ov.overlap_s, 4),
             "sensor_count": len(ranges),
             "clock_synced": all_synced and any_synced,
         }
+        payload["alignment"] = alignment
     return payload
 
 
@@ -155,7 +176,7 @@ def build_selected_payload(
     waveform_seconds: int,
     waveform_display_hz: int,
     latest_fn: Callable[[ClientBuffer, int], np.ndarray],
-) -> dict[str, Any]:
+) -> SelectedClientPayload:
     """Build the selected-client detailed payload (waveform + spectrum + metrics).
 
     Parameters
@@ -200,23 +221,27 @@ def build_selected_payload(
     points = decimated.shape[1]
     x = (np.arange(points, dtype=np.float32) - (points - 1)) * (waveform_step / sr)
 
-    waveform: dict[str, Any] = {"t": float_list(x)}
+    waveform: WaveformPayload = {"t": float_list(x)}
     for axis_idx, axis in enumerate(AXES):
         waveform[axis] = float_list(decimated[axis_idx])
 
-    spectrum: dict[str, Any] = {}
+    spectrum: SelectedSpectrumPayload
     if buf.latest_spectrum:
-        x_axis = buf.latest_spectrum.get("x", {})
-        freq = x_axis.get("freq", _EMPTY_F32)
-        spectrum["freq"] = float_list(freq)
+        x_axis: SpectrumAxisData = _axis_data_or_empty(buf.latest_spectrum, "x")
+        freq = x_axis["freq"]
+        spectrum = {
+            "freq": float_list(freq),
+            "x": [],
+            "y": [],
+            "z": [],
+            "combined_spectrum_amp_g": [],
+            "strength_metrics": buf.latest_strength_metrics,
+        }
         for axis in AXES:
-            axis_data = buf.latest_spectrum.get(axis, {})
-            spectrum[axis] = float_list(axis_data.get("amp", _EMPTY_F32))
-        combined = buf.latest_spectrum.get("combined")
-        spectrum["combined_spectrum_amp_g"] = (
-            float_list(combined["amp"]) if isinstance(combined, dict) and "amp" in combined else []
-        )
-        spectrum["strength_metrics"] = dict(buf.latest_strength_metrics)
+            axis_data: SpectrumAxisData = _axis_data_or_empty(buf.latest_spectrum, axis)
+            spectrum[axis] = float_list(axis_data["amp"])
+        combined = _axis_data_or_empty(buf.latest_spectrum, "combined")
+        spectrum["combined_spectrum_amp_g"] = float_list(combined["amp"])
     else:
         spectrum = {
             "freq": [],
@@ -227,7 +252,7 @@ def build_selected_payload(
             "strength_metrics": {},
         }
 
-    payload = {
+    payload: SelectedClientPayload = {
         "client_id": client_id,
         "sample_rate_hz": sr,
         "waveform": waveform,

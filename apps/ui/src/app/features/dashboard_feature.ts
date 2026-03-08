@@ -1,7 +1,7 @@
 import uPlot from "uplot";
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { AppState, ClientRow } from "../state/ui_app_state";
-import type { AdaptedPayload } from "../../server_payload";
+import type { AdaptedPayload, DiagnosticLevel, DiagnosticLevels } from "../../server_payload";
 import { createEmptyMatrix, normalizeStrengthBands } from "../../diagnostics";
 import { sourceColumns } from "../../constants";
 import { normalizeUnit, heatColor } from "./heat_utils";
@@ -38,7 +38,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
   const STRENGTH_KEYS = ["wheel", "driveshaft", "engine", "other"] as const;
   const CAR_MAP_PULSE_DURATION_MS = 750;
 
-  let latestByLocation: Record<string, Record<string, unknown>> = {};
+  let latestByLocation: Record<string, DiagnosticLevel> = {};
   let _strengthResizeHandler: (() => void) | null = null;
   let _strengthVisibilityHandler: (() => void) | null = null;
 
@@ -104,8 +104,12 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
       if (!code) continue;
       const spec = state.spectra.clients[client.id];
       if (!spec?.strength_metrics) continue;
-      const amp = Number(spec.strength_metrics[metricField]);
-      if (Number.isFinite(amp) && amp >= 0) byLocation[code] = Math.max(byLocation[code] ?? 0, amp);
+      const amp = metricField === "vibration_strength_db"
+        ? spec.strength_metrics.vibration_strength_db
+        : null;
+      if (amp !== null && Number.isFinite(amp) && amp >= 0) {
+        byLocation[code] = Math.max(byLocation[code] ?? 0, amp);
+      }
     }
     return byLocation;
   }
@@ -283,13 +287,13 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     document.addEventListener("visibilitychange", visibilityHandler);
   }
 
-  function pushStrengthSample(bySource: Record<string, Record<string, unknown>>): void {
+  function pushStrengthSample(bySource: DiagnosticLevels["by_source"]): void {
     ensureStrengthChart();
     if (!state.strengthPlot) return;
     const now = Date.now() / 1000;
     state.strengthHistory.t.push(now);
     for (const key of STRENGTH_KEYS) {
-      const val = bySource?.[key]?.strength_db;
+      const val = bySource[key]?.strength_db;
       state.strengthHistory[key].push(typeof val === "number" && Number.isFinite(val) && val > 0 ? val : null);
     }
     while (state.strengthHistory.t.length && now - state.strengthHistory.t[0] > 60) {
@@ -321,7 +325,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
 
     // Track confirmed by_location for car map
     if (diagnostics.levels?.by_location) {
-      latestByLocation = diagnostics.levels.by_location as Record<string, Record<string, unknown>>;
+      latestByLocation = diagnostics.levels.by_location;
     }
 
     if (!hasFreshFrames) return;

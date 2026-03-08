@@ -1,13 +1,34 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, TypeAlias
+from typing import TypeAlias, TypedDict
 
 import numpy as np
 import numpy.typing as npt
+from vibesensor_core.vibration_strength import VibrationStrengthMetrics
+
+from ..payload_types import AxisPeak, MetricsPayload
 
 FloatArray: TypeAlias = npt.NDArray[np.float32]
 IntIndexArray: TypeAlias = npt.NDArray[np.intp]
+
+
+class SpectrumAxisData(TypedDict):
+    freq: FloatArray
+    amp: FloatArray
+
+
+SpectrumByAxis: TypeAlias = dict[str, SpectrumAxisData]
+
+
+class FftSpectrumResult(TypedDict):
+    freq_slice: FloatArray
+    spectrum_by_axis: SpectrumByAxis
+    axis_amp_slices: list[FloatArray]
+    axis_amps: dict[str, FloatArray]
+    combined_amp: FloatArray
+    strength_metrics: VibrationStrengthMetrics
+    axis_peaks: dict[str, list[AxisPeak]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,7 +63,7 @@ class ProcessorStats:
 class CachedMetricsHit:
     """Fast-path result when the latest metrics already match current input."""
 
-    metrics: dict[str, Any]
+    metrics: MetricsPayload
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,9 +84,9 @@ class MetricsComputationResult:
     client_id: str
     sample_rate_hz: int
     ingest_generation: int
-    metrics: dict[str, Any]
-    spectrum_by_axis: dict[str, dict[str, FloatArray]]
-    strength_metrics: dict[str, Any]
+    metrics: MetricsPayload
+    spectrum_by_axis: SpectrumByAxis
+    strength_metrics: VibrationStrengthMetrics
     has_fft_data: bool
     duration_s: float
 

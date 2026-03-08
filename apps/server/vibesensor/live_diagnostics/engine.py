@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from collections import deque
 from time import monotonic
 from typing import Any
@@ -12,6 +13,12 @@ from vibesensor_core.strength_bands import BANDS
 from ..analysis import build_findings_for_samples
 from ..constants import SILENCE_DB
 from ..diagnostics_shared import source_keys_from_class_key
+from ..payload_types import (
+    DiagnosticEventPayload,
+    DiagnosticLevelPayload,
+    LiveDiagnosticsPayload,
+    StrengthBandPayload,
+)
 from ._types import (
     _HEARTBEAT_EMIT_INTERVAL_MS,
     _MULTI_FREQ_BIN_HZ,
@@ -37,10 +44,18 @@ from .tracker import (
 
 LOGGER = logging.getLogger(__name__)
 
-_BANDS_LIST: list[dict[str, Any]] = list(BANDS)
+_BANDS_LIST: list[StrengthBandPayload] = list(BANDS)
 _PRUNE_SILENCE_TICKS: int = 60
 _COMBINED_TRACKER_PRUNE_MS: int = 30_000
 """Remove combined trackers that have been absent for this many milliseconds."""
+
+
+def _has_precomputed_strength_metrics(samples: list[dict[str, Any]]) -> bool:
+    for sample in samples:
+        value = sample.get("vibration_strength_db")
+        if isinstance(value, (int, float)) and math.isfinite(value):
+            return True
+    return False
 
 
 class LiveDiagnosticsEngine:
@@ -54,11 +69,11 @@ class LiveDiagnosticsEngine:
         self._multi_sync_window_ms = _MULTI_SYNC_WINDOW_MS
         self._multi_freq_bin_hz = _MULTI_FREQ_BIN_HZ
         self._heartbeat_emit_ms = _HEARTBEAT_EMIT_INTERVAL_MS
-        self._latest_events: list[dict[str, Any]] = []
-        self._latest_findings: list[dict[str, Any]] = []
-        self._active_levels_by_source: dict[str, dict[str, Any]] = {}
-        self._active_levels_by_sensor: dict[str, dict[str, Any]] = {}
-        self._active_levels_by_location: dict[str, dict[str, Any]] = {}
+        self._latest_events: list[DiagnosticEventPayload] = []
+        self._latest_findings: list[dict[str, object]] = []
+        self._active_levels_by_source: dict[str, DiagnosticLevelPayload] = {}
+        self._active_levels_by_sensor: dict[str, DiagnosticLevelPayload] = {}
+        self._active_levels_by_location: dict[str, DiagnosticLevelPayload] = {}
         self._last_update_ts_ms: int | None = None
         self._last_error: str | None = None
         self._phase = PhaseClassifier()
@@ -147,8 +162,8 @@ class LiveDiagnosticsEngine:
     # Snapshot
     # ------------------------------------------------------------------
 
-    def snapshot(self) -> dict[str, Any]:
-        top_finding: dict[str, Any] | None = None
+    def snapshot(self) -> LiveDiagnosticsPayload:
+        top_finding: dict[str, object] | None = None
         for finding in self._latest_findings:
             finding_id = str(finding.get("finding_id") or "")
             if finding_id.startswith("REF") or finding_id.startswith("INFO_"):
@@ -193,17 +208,20 @@ class LiveDiagnosticsEngine:
         finding_metadata: dict[str, Any] | None = None,
         finding_samples: list[dict[str, Any]] | None = None,
         language: str = "en",
-    ) -> dict[str, Any]:
+    ) -> LiveDiagnosticsPayload:
         if finding_metadata is not None and finding_samples is not None:
-            try:
-                self._latest_findings = build_findings_for_samples(
-                    metadata=finding_metadata,
-                    samples=finding_samples,
-                    lang=language,
-                )
-            except Exception as exc:
-                LOGGER.warning("Live diagnostics findings unavailable: %s", exc, exc_info=True)
+            if finding_samples and not _has_precomputed_strength_metrics(finding_samples):
                 self._latest_findings = []
+            else:
+                try:
+                    self._latest_findings = build_findings_for_samples(
+                        metadata=finding_metadata,
+                        samples=finding_samples,
+                        lang=language,
+                    )
+                except Exception as exc:
+                    LOGGER.warning("Live diagnostics findings unavailable: %s", exc, exc_info=True)
+                    self._latest_findings = []
 
         now_ms = int(monotonic() * 1000.0)
         self._phase.update(speed_mps, now_ms / 1000.0)
@@ -237,9 +255,9 @@ class LiveDiagnosticsEngine:
             self._last_error = str(exc)
             sensor_events = []
 
-        emitted_events: list[dict[str, Any]] = []
-        active_by_source: dict[str, dict[str, Any]] = {}
-        active_by_sensor: dict[str, dict[str, Any]] = {}
+        emitted_events: list[DiagnosticEventPayload] = []
+        active_by_source: dict[str, DiagnosticLevelPayload] = {}
+        active_by_sensor: dict[str, DiagnosticLevelPayload] = {}
         location_candidates: dict[str, list[dict[str, Any]]] = {}
 
         latest_by_tracker: dict[str, _RecentEvent] = {}
