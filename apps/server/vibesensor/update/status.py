@@ -39,12 +39,22 @@ class UpdateStatusTracker:
     def persist(self) -> None:
         self._state_store.save(self._status)
 
+    def _touch(self, *, phase_changed: bool = False) -> float:
+        now = time.time()
+        self._status.updated_at = now
+        if phase_changed:
+            self._status.phase_started_at = now
+        return now
+
     def start_job(self, ssid: str) -> None:
         previous_runtime = dict(self._status.runtime)
+        now = time.time()
         self._status = UpdateJobStatus(
             state=UpdateState.running,
             phase=UpdatePhase.validating,
-            started_at=time.time(),
+            started_at=now,
+            phase_started_at=now,
+            updated_at=now,
             ssid=ssid,
             last_success_at=self._status.last_success_at,
             runtime=previous_runtime,
@@ -53,10 +63,12 @@ class UpdateStatusTracker:
 
     def transition(self, phase: UpdatePhase) -> None:
         self._status.phase = phase
+        self._touch(phase_changed=True)
         self.persist()
 
     def set_runtime(self, runtime: JsonObject) -> None:
         self._status.runtime = runtime
+        self._touch()
         self.persist()
 
     def track_secret(self, secret: str) -> None:
@@ -97,6 +109,7 @@ class UpdateStatusTracker:
         log_tail.append(sanitized)
         if len(log_tail) > _LOG_TAIL_MAX:
             del log_tail[:-_LOG_TAIL_TRIM_TO]
+        self._touch()
         self.persist()
 
     def add_issue(self, phase: UpdatePhase | str, message: str, detail: str = "") -> None:
@@ -107,6 +120,7 @@ class UpdateStatusTracker:
                 detail=self.redact(sanitize_log_line(detail)),
             )
         )
+        self._touch()
         self.persist()
 
     def extend_issues(self, issues: list[UpdateIssue]) -> None:
@@ -119,32 +133,41 @@ class UpdateStatusTracker:
                 )
             )
         if issues:
+            self._touch()
             self.persist()
 
     def fail(self, phase: UpdatePhase | str, message: str, detail: str = "") -> None:
         self.add_issue(phase, message, detail)
         self._status.state = UpdateState.failed
+        self._touch()
         self.persist()
 
     def mark_interrupted(self, message: str) -> None:
         self._status.state = UpdateState.failed
         self._status.finished_at = time.time()
         self._status.issues.append(UpdateIssue(phase="startup", message=message))
+        self._touch()
         self.persist()
 
     def mark_success(self, message: str | None = None) -> None:
+        now = time.time()
         self._status.state = UpdateState.success
         self._status.phase = UpdatePhase.done
-        self._status.last_success_at = time.time()
+        self._status.last_success_at = now
         self._status.exit_code = 0
+        self._status.phase_started_at = now
+        self._status.updated_at = now
         if message:
             self.log(message)
         self.persist()
 
     def finish_cleanup(self) -> None:
-        self._status.finished_at = self._status.finished_at or time.time()
+        now = time.time()
+        self._status.finished_at = self._status.finished_at or now
         if self._status.state == UpdateState.running:
             self._status.state = UpdateState.failed
         if self._status.state != UpdateState.failed:
             self._status.phase = UpdatePhase.done
+            self._status.phase_started_at = now
+        self._status.updated_at = now
         self.persist()

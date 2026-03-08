@@ -1295,9 +1295,47 @@
       "HealthPersistenceResponse": {
         "description": "Response body for persistence health details.",
         "properties": {
+          "analysis_active_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Active Run Id"
+          },
+          "analysis_elapsed_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Elapsed S"
+          },
           "analysis_in_progress": {
             "title": "Analysis In Progress",
             "type": "boolean"
+          },
+          "analysis_queue_depth": {
+            "default": 0,
+            "title": "Analysis Queue Depth",
+            "type": "integer"
+          },
+          "analysis_started_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Started At"
           },
           "write_error": {
             "anyOf": [
@@ -2382,6 +2420,28 @@
             "title": "Phase",
             "type": "string"
           },
+          "phase_elapsed_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase Elapsed S"
+          },
+          "phase_started_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase Started At"
+          },
           "runtime": {
             "$ref": "#/components/schemas/UpdateRuntimeResponse"
           },
@@ -2403,6 +2463,17 @@
           "state": {
             "title": "State",
             "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
           }
         },
         "required": [

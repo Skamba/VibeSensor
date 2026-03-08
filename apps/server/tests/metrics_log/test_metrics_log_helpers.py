@@ -440,6 +440,34 @@ def test_post_analysis_burst_uses_single_daemon_worker(
     assert worker is None
 
 
+def test_shutdown_blocks_new_start_logging_until_wait_completes(
+    make_logger, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    logger = make_logger(history_db=object())
+    logger.start_logging()
+    initial_generation = logger._session_generation
+
+    allow_wait = threading.Event()
+
+    def _wait(timeout_s: float = 30.0) -> bool:
+        assert timeout_s == 30.0
+        start_result = logger.start_logging()
+        assert start_result["enabled"] is False
+        assert start_result["run_id"] is None
+        assert logger._session_generation == initial_generation + 1
+        allow_wait.set()
+        return True
+
+    monkeypatch.setattr(logger._post_analysis, "wait", _wait)
+
+    assert logger.shutdown() is True
+    assert allow_wait.is_set()
+    restarted = logger.start_logging()
+    assert restarted["enabled"] is True
+    assert logger._session_generation == initial_generation + 2
+    assert restarted["run_id"] is not None
+
+
 def test_analysis_snapshot_isolated_per_logging_run(make_logger) -> None:
     logger = make_logger()
 

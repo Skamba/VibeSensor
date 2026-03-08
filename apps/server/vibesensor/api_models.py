@@ -209,6 +209,10 @@ class HealthPersistenceResponse(BaseModel):
 
     write_error: str | None
     analysis_in_progress: bool
+    analysis_queue_depth: int = 0
+    analysis_active_run_id: str | None = None
+    analysis_started_at: float | None = None
+    analysis_elapsed_s: float | None = None
 
 
 class HealthIntakeStatsResponse(BaseModel):
@@ -437,6 +441,9 @@ class UpdateStatusResponse(BaseModel):
     started_at: float | None = None
     finished_at: float | None = None
     last_success_at: float | None = None
+    phase_started_at: float | None = None
+    phase_elapsed_s: float | None = None
+    updated_at: float | None = None
     ssid: str
     issues: list[UpdateIssueResponse]
     log_tail: list[str]

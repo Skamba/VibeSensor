@@ -45,6 +45,17 @@ function formatTimestamp(epoch: number | null): string {
   return new Date(epoch * 1000).toLocaleString();
 }
 
+function formatDuration(seconds: number | null | undefined): string {
+  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return "—";
+  const rounded = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(rounded / 3600);
+  const minutes = Math.floor((rounded % 3600) / 60);
+  const secs = rounded % 60;
+  if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
+  if (minutes > 0) return `${minutes}m ${secs}s`;
+  return `${secs}s`;
+}
+
 export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const { els, t, escapeHtml } = ctx;
 
@@ -66,6 +77,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
 
     const isRunning = status.state === "running";
     const isIdle = status.state === "idle";
+    const analysisQueueDepth = health.persistence.analysis_queue_depth ?? 0;
     const hasAssetRelatedIssue = status.issues.some((issue) =>
       ASSET_ISSUE_RE.test(`${issue.message} ${issue.detail}`),
     );
@@ -115,6 +127,18 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       html += `<div class="update-status-row">`;
       html += `<span class="update-label">${escapeHtml(t("settings.update.started_at"))}</span>`;
       html += `<span>${escapeHtml(formatTimestamp(status.started_at))}</span>`;
+      html += `</div>`;
+    }
+    if (status.phase_started_at && !isIdle) {
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.phase_started_at"))}</span>`;
+      html += `<span>${escapeHtml(formatTimestamp(status.phase_started_at))}</span>`;
+      html += `</div>`;
+    }
+    if (!isIdle && status.phase_elapsed_s !== null && status.phase_elapsed_s !== undefined) {
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.phase_elapsed"))}</span>`;
+      html += `<span>${escapeHtml(formatDuration(status.phase_elapsed_s))}</span>`;
       html += `</div>`;
     }
     if (status.finished_at) {
@@ -199,7 +223,11 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       html += `</div>`;
     }
 
-    if (health.persistence.analysis_in_progress || health.persistence.write_error) {
+    if (
+      health.persistence.analysis_in_progress ||
+      health.persistence.write_error ||
+      analysisQueueDepth > 0
+    ) {
       html += `<div class="update-status-row">`;
       html += `<span class="update-label">${escapeHtml(t("settings.update.health.persistence"))}</span>`;
       html += `<span>${escapeHtml(
@@ -212,6 +240,30 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
         html += `<div class="update-status-row">`;
         html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis"))}</span>`;
         html += `<span>${escapeHtml(t("settings.update.health.analysis_in_progress"))}</span>`;
+        html += `</div>`;
+        if (health.persistence.analysis_active_run_id) {
+          html += `<div class="update-status-row">`;
+          html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis_run"))}</span>`;
+          html += `<span>${escapeHtml(health.persistence.analysis_active_run_id)}</span>`;
+          html += `</div>`;
+        }
+        if (health.persistence.analysis_started_at) {
+          html += `<div class="update-status-row">`;
+          html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis_started_at"))}</span>`;
+          html += `<span>${escapeHtml(formatTimestamp(health.persistence.analysis_started_at))}</span>`;
+          html += `</div>`;
+        }
+        if (health.persistence.analysis_elapsed_s !== null && health.persistence.analysis_elapsed_s !== undefined) {
+          html += `<div class="update-status-row">`;
+          html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis_elapsed"))}</span>`;
+          html += `<span>${escapeHtml(formatDuration(health.persistence.analysis_elapsed_s))}</span>`;
+          html += `</div>`;
+        }
+      }
+      if (analysisQueueDepth > 0) {
+        html += `<div class="update-status-row">`;
+        html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis_queue_depth"))}</span>`;
+        html += `<span>${escapeHtml(String(analysisQueueDepth))}</span>`;
         html += `</div>`;
       }
     }

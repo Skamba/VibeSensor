@@ -108,7 +108,7 @@ async def test_remove_nonexistent_is_noop() -> None:
 @pytest.mark.asyncio
 async def test_ws_connection_dataclass() -> None:
     ws = _make_ws()
-    conn = WSConnection(websocket=ws, selected_client_id="test_id")
+    conn = WSConnection(connection_id=1, websocket=ws, selected_client_id="test_id")
     assert conn.websocket is ws
     assert conn.selected_client_id == "test_id"
 
@@ -493,3 +493,22 @@ async def test_send_failure_log_includes_client_id(caplog) -> None:
     warn_logs = [r for r in caplog.records if "broadcast send failed" in r.message]
     assert len(warn_logs) == 1
     assert "sensor_42" in warn_logs[0].message
+
+
+@pytest.mark.asyncio
+async def test_broadcast_skips_cleanup_for_connection_removed_during_send() -> None:
+    hub = WebSocketHub()
+    ws = _make_ws()
+    ws.close = AsyncMock()
+
+    async def _remove_then_fail(_payload: str) -> None:
+        await hub.remove(ws)
+        raise ConnectionError("gone")
+
+    ws.send_text = AsyncMock(side_effect=_remove_then_fail)
+    await hub.add(ws, "client-racy")
+
+    await hub.broadcast(lambda _: {"ok": True})
+
+    ws.close.assert_not_awaited()
+    assert await hub._snapshot() == []

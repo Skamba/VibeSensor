@@ -105,9 +105,9 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
       const spec = state.spectra.clients[client.id];
       if (!spec?.strength_metrics) continue;
       const amp = metricField === "vibration_strength_db"
-        ? spec.strength_metrics.vibration_strength_db
+        ? (spec.strength_metrics.vibration_strength_db ?? null)
         : null;
-      if (amp !== null && Number.isFinite(amp) && amp >= 0) {
+      if (typeof amp === "number" && Number.isFinite(amp) && amp >= 0) {
         byLocation[code] = Math.max(byLocation[code] ?? 0, amp);
       }
     }

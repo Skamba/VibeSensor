@@ -3,7 +3,9 @@
 ## Source of truth
 
 - Server tests live under `apps/server/tests/`.
-- The default CI-parity runner is `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
+- The canonical local verification entry point is `python3 tools/tests/run_verification.py`.
+- The default CI-parity runner is `make test-all` (`python3 tools/tests/run_verification.py --suite ci-parity`).
+- The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_verification.py --suite full-stack`).
 - Python test configuration lives in `apps/server/pyproject.toml`.
 
 ## Layout
@@ -81,6 +83,10 @@ Prefer focused files grouped by behavior or maintenance boundary. Recent high-ch
 ## Running tests
 
 ```bash
+# Canonical verification entry points
+python3 tools/tests/run_verification.py --suite ci-parity
+python3 tools/tests/run_verification.py --suite full-stack
+
 # Full backend suite (excludes selenium)
 pytest -q -m "not selenium" apps/server/tests
 
@@ -98,9 +104,9 @@ python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" ap
 
 # CI-parity job groups
 make test-all
-python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests
-python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
-python3 tools/tests/run_ci_parallel.py --job release-smoke
+python3 tools/tests/run_verification.py --suite ci-parity --job backend-quality --job backend-typecheck --job backend-tests
+python3 tools/tests/run_verification.py --suite ci-parity --job frontend-typecheck --job ui-smoke
+python3 tools/tests/run_verification.py --suite ci-parity --job release-smoke
 ```
 
 ## Coverage reporting
