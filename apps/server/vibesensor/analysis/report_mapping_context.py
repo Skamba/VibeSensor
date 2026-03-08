@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from ..runlog import as_float_or_none as _as_float
 from ..runlog import utc_now_iso
 from ._types import Finding, SummaryData
 from .diagnosis_candidates import normalize_origin_location, select_effective_top_causes
@@ -107,3 +108,11 @@ def resolve_primary_candidate(
 def normalized_origin_location(origin: SummaryData) -> str:
     """Return the report-ready origin location string."""
     return normalize_origin_location(origin.get("location"))
+
+
+def resolve_sensor_count(summary: SummaryData, sensor_locations_active: list[str]) -> int:
+    """Resolve the effective sensor count used by report certainty logic."""
+    sensor_count = len(sensor_locations_active)
+    if sensor_count <= 0:
+        sensor_count = int(_as_float(summary.get("sensor_count_used")) or 0)
+    return sensor_count

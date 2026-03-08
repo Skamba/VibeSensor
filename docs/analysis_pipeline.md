@@ -87,8 +87,8 @@ in order.  Each step runs exactly once per analysis invocation.
 | 5 | Acceleration statistics | `_compute_accel_statistics` | Per-axis and magnitude accel stats, saturation detection |
 | 6 | Speed breakdown | `_speed_breakdown`, `_phase_speed_breakdown` | Frequency binning by speed range and driving phase |
 | 7 | Findings | `build_findings_bundle`, `_build_findings` | Core diagnostic engine: order tracking, pattern matching, scoring, localisation |
-| 8 | Origin & test plan | `_most_likely_origin_summary`, `_merge_test_plan`, `_build_phase_timeline` | Determine most likely vibration source, generate action plan, timeline |
-| 9 | Run suitability | `build_run_suitability_bundle`, `_build_run_suitability_checks` | Check reference completeness plus data-quality and run-condition checks |
+| 8 | Origin & test plan | `summarize_origin`, `_merge_test_plan`, `_build_phase_timeline` | Determine most likely vibration source, generate action plan, timeline |
+| 9 | Run suitability | `build_run_suitability_bundle`, `_build_run_suitability_checks`, `compute_reference_completeness` | Check reference completeness plus data-quality and run-condition checks |
 | 10 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
 | 11 | Sensor analysis | `build_sensor_bundle`, `_sensor_intensity_by_location` | Per-location vibration intensity and connection stability |
 | 13 | Summary construction | `build_summary_payload` | Assemble the final summary dict |
@@ -120,12 +120,16 @@ vibesensor/analysis/
 ├── summary.py             Public summary/report-analysis facade
 ├── summary_builder.py     Structured summary orchestration and final plot annotation
 ├── summary_models.py      Explicit intermediate models for summary generation
-├── summary_pipeline.py    Pure timing, suitability, sensor, and payload helpers
+├── summary_pipeline.py    Compatibility facade over focused summary helper modules
+├── summary_phases.py      Phase/timing/speed preparation helpers
+├── summary_suitability.py Acceleration stats, reference completeness, and run-suitability helpers
+├── summary_payload.py     Origin, sensor analysis, and final payload assembly
 ├── ranking.py             Shared finding-sort and phase-aware ranking helpers
 ├── top_cause_selection.py Top-cause grouping and confidence-label presentation
 ├── findings/              Core findings engine (package)
 │   ├── __init__.py        Package overview and ownership notes
-│   ├── builder.py         Main _build_findings() orchestrator
+│   ├── builder.py         Main _build_findings() orchestrator facade
+│   ├── builder_support.py Reference checks, phase filtering, suppression inputs, and final ordering helpers
 │   ├── order_findings.py  Order-tracking orchestration facade
 │   ├── order_matching.py  Sample ↔ hypothesis matching and evidence accumulation
 │   ├── order_assembly.py  Order-finding assembly and localization/context shaping
@@ -145,10 +149,13 @@ vibesensor/analysis/
 ├── report_data_builder.py Summary dict → ReportTemplateData mapping entrypoint
 ├── diagnosis_candidates.py Cause/finding filtering helpers for report mapping
 ├── report_mapping_common.py Shared i18n and value-resolution helpers for report mapping
-├── report_mapping_components.py Component builders used by map_summary()
+├── report_mapping_components.py Compatibility facade over focused report component builders
 ├── report_mapping_context.py Context extraction for report mapping
 ├── report_mapping_models.py Explicit report-mapping context models
 ├── report_mapping_pipeline.py Structured summary → report orchestration
+├── report_mapping_actions.py Next-step and data-trust builders
+├── report_mapping_peaks.py Peak-row and hotspot shaping helpers
+├── report_mapping_systems.py System-card, metadata, and strength/report context helpers
 ├── plot_data.py           Plot payload orchestration facade
 ├── plot_series.py         Time/speed/finding plot series shaping
 ├── plot_spectrum.py       FFT and spectrogram aggregation helpers

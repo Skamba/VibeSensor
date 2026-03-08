@@ -10,7 +10,6 @@ from ..report.report_data import (
     ObservedSignature,
     ReportTemplateData,
 )
-from ..runlog import as_float_or_none as _as_float
 from .report_mapping_components import (
     build_data_trust_from_summary,
     build_next_steps_from_summary,
@@ -29,6 +28,7 @@ from .report_mapping_context import (
     extract_sensor_locations,
     normalized_origin_location,
     resolve_primary_candidate,
+    resolve_sensor_count,
 )
 from .report_mapping_models import PrimaryCandidateContext, ReportMappingContext
 from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
@@ -92,9 +92,7 @@ def resolve_primary_report_candidate(
     weak_spatial = bool(
         primary_candidate.get("weak_spatial_separation") if primary_candidate else False
     )
-    sensor_count = len(context.sensor_locations_active)
-    if sensor_count <= 0:
-        sensor_count = int(_as_float(summary.get("sensor_count_used")) or 0)
+    sensor_count = resolve_sensor_count(summary, context.sensor_locations_active)
     has_ref_gaps = has_relevant_reference_gap(context.findings, primary_source)
     strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
     certainty_key, certainty_label_text, certainty_pct, certainty_reason = certainty_label(

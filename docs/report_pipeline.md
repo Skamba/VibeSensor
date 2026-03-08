@@ -17,6 +17,9 @@ Recording stops
 _run_post_analysis()          [vibesensor.metrics_log.post_analysis]
   ├─ summarize_run_data()     [vibesensor.analysis.summary]
   │    ├─ summary_builder.py   → explicit run-preparation / findings / suitability stages
+  │    ├─ summary_phases.py    → timing / phase / speed-prep helpers
+  │    ├─ summary_suitability.py → accel stats / reference completeness / suitability
+  │    ├─ summary_payload.py   → origin / sensor analysis / final summary payload
   │    ├─ phase segmentation   [vibesensor.analysis.phase_segmentation]
   │    ├─ findings builder     [vibesensor.analysis.findings]
   │    ├─ ranking + top causes [vibesensor.analysis.ranking, top_cause_selection]
@@ -27,6 +30,9 @@ _run_post_analysis()          [vibesensor.metrics_log.post_analysis]
   │    └─ strength labels      [vibesensor.analysis.strength_labels]
   ├─ map_summary()            [vibesensor.analysis.report_data_builder]
   │    ├─ report_mapping_pipeline.py → context prep + primary candidate resolution
+  │    ├─ report_mapping_actions.py  → next steps + data trust shaping
+  │    ├─ report_mapping_peaks.py    → peak rows + hotspot rows
+  │    ├─ report_mapping_systems.py  → system cards + metadata + strength helpers
   │    ├─ certainty_tier()          → tier A/B/C
   │    ├─ parts_for_pattern()       → suggested parts
   │    └─ location hotspots         → pre-computed rows
