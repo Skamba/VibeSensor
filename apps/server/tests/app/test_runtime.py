@@ -387,7 +387,16 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp)
 
     metrics_logger = MagicMock()
-    metrics_logger.shutdown = MagicMock(return_value=True)
+    metrics_logger.shutdown_report = MagicMock(
+        return_value=MagicMock(
+            completed=True,
+            analysis_queue_depth=0,
+            analysis_active_run_id=None,
+            analysis_queue_oldest_age_s=None,
+            active_run_id_before_stop=None,
+            write_error=None,
+        )
+    )
 
     history_db = MagicMock()
     worker_pool = MagicMock()
@@ -422,7 +431,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
 
     await rt.lifecycle.stop()
     assert rt.lifecycle.tasks == []
-    assert metrics_logger.shutdown.called
+    assert metrics_logger.shutdown_report.called
     assert worker_pool.shutdown.called
     assert history_db.close.called
 

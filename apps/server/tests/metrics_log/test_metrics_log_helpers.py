@@ -9,6 +9,7 @@ import pytest
 from _test_helpers import wait_until
 
 from vibesensor.history_db import HistoryDB
+from vibesensor.metrics_log.post_analysis import PostAnalysisHealthSnapshot
 from vibesensor.metrics_log.sample_builder import safe_metric
 
 # -- MetricsLogger._safe_metric ------------------------------------------------
@@ -466,6 +467,34 @@ def test_shutdown_blocks_new_start_logging_until_wait_completes(
     assert restarted["enabled"] is True
     assert logger._session_generation == initial_generation + 2
     assert restarted["run_id"] is not None
+
+
+def test_shutdown_report_exposes_timeout_state(
+    make_logger, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    logger = make_logger()
+    logger.start_logging()
+
+    monkeypatch.setattr(logger._post_analysis, "wait", lambda timeout_s=30.0: False)
+    monkeypatch.setattr(
+        logger._post_analysis,
+        "snapshot",
+        lambda: PostAnalysisHealthSnapshot(
+            queue_depth=2,
+            active_run_id="run-slow",
+            active_started_at=None,
+            oldest_queued_at=time.time() - 5.0,
+            max_queue_depth=2,
+        ),
+    )
+
+    report = logger.shutdown_report(timeout_s=0.1)
+
+    assert report.completed is False
+    assert report.active_run_id_before_stop is not None
+    assert report.analysis_queue_depth == 2
+    assert report.analysis_active_run_id == "run-slow"
+    assert report.final_status["enabled"] is False
 
 
 def test_analysis_snapshot_isolated_per_logging_run(make_logger) -> None:
