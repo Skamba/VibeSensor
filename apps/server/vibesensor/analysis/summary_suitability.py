@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 
-from ..analysis_settings import tire_circumference_m_from_spec
+from ..run_context import order_reference_context_complete
 from ..runlog import as_float_or_none as _as_float
 from ._types import (
     AccelStatistics,
@@ -193,24 +193,7 @@ def build_run_suitability_checks(
 
 def compute_reference_completeness(metadata: MetadataDict) -> bool:
     """Return True when enough reference metadata is present for order analysis."""
-    return bool(
-        _as_float(metadata.get("raw_sample_rate_hz"))
-        and (
-            _as_float(metadata.get("tire_circumference_m"))
-            or tire_circumference_m_from_spec(
-                _as_float(metadata.get("tire_width_mm")),
-                _as_float(metadata.get("tire_aspect_pct")),
-                _as_float(metadata.get("rim_in")),
-            )
-        )
-        and (
-            _as_float(metadata.get("engine_rpm"))
-            or (
-                _as_float(metadata.get("final_drive_ratio"))
-                and _as_float(metadata.get("current_gear_ratio"))
-            )
-        )
-    )
+    return bool(order_reference_context_complete(metadata))
 
 
 def build_data_quality_dict(

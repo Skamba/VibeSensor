@@ -154,6 +154,12 @@ class SettingsStore:
             car = self._find_car(self._active_car_id)
             return dict(car.aspects) if car else None
 
+    def active_car_snapshot(self) -> dict[str, Any] | None:
+        """Return the active car profile as a plain dict snapshot."""
+        with self._lock:
+            car = self._find_car(self._active_car_id)
+            return car.to_dict() if car else None
+
     def _find_car(self, car_id: str | None) -> CarConfig | None:
         if not car_id:
             return None

@@ -25,6 +25,7 @@ export type HealthDataLossPayload = Schema<"HealthDataLossResponse">;
 export type HealthPersistencePayload = Schema<"HealthPersistenceResponse">;
 export type HealthStatusPayload = Schema<"HealthResponse">;
 export type HistoryEntry = Schema<"HistoryListEntryResponse">;
+export type HistoryInsightWarningPayload = Schema<"HistoryInsightWarningResponse">;
 export type HistoryInsightsPayload = Schema<"HistoryInsightsResponse">;
 export type HistoryListPayload = Schema<"HistoryListResponse">;
 export type HistoryRunPayload = Schema<"HistoryRunResponse">;

@@ -42,11 +42,16 @@ async def test_health_endpoint_response_shape(_health_router):
     assert result["status"] == "ok"
     assert result["processing_state"] == "ok"
     assert result["processing_failures"] == 0
+    assert result["processing_failure_categories"] == {}
+    assert result["processing_last_failure"] is None
+    assert result["sample_rate_mismatch_count"] == 0
+    assert result["frame_size_mismatch_count"] == 0
     assert result["degradation_reasons"] == []
     assert result["data_loss"]["tracked_clients"] == 0
     assert result["persistence"]["write_error"] is None
     assert result["persistence"]["analysis_in_progress"] is False
     assert result["persistence"]["analysis_queue_depth"] == 0
+    assert result["persistence"]["analysis_queue_max_depth"] == 0
     assert result["persistence"]["analysis_active_run_id"] is None
 
 
@@ -68,12 +73,19 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
         "write_error": "history append_samples failed",
         "analysis_in_progress": True,
         "analysis_queue_depth": 2,
+        "analysis_queue_max_depth": 5,
         "analysis_active_run_id": "run-42",
         "analysis_started_at": 1700000000.0,
         "analysis_elapsed_s": 5.0,
+        "analysis_queue_oldest_age_s": 8.0,
+        "analyzing_run_count": 1,
+        "analyzing_oldest_age_s": 12.0,
     }
     state.loop_state.processing_state = "degraded"
     state.loop_state.processing_failure_count = 2
+    state.loop_state.processing_failure_categories = {"compute_all": 2}
+    state.loop_state.last_failure_category = "compute_all"
+    state.loop_state.last_failure_message = "worker pool failed"
 
     result = await endpoint()
 
@@ -81,14 +93,19 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
     assert result["degradation_reasons"] == [
         "processing_state:degraded",
         "processing_failures",
+        "processing_failure:compute_all",
         "frames_dropped",
         "server_queue_drops",
         "persistence_write_error",
+        "analyzing_runs_present",
     ]
+    assert result["processing_failure_categories"] == {"compute_all": 2}
+    assert result["processing_last_failure"] == "worker pool failed"
     assert result["data_loss"]["affected_clients"] == 1
     assert result["persistence"]["write_error"] == "history append_samples failed"
     assert result["persistence"]["analysis_in_progress"] is True
     assert result["persistence"]["analysis_queue_depth"] == 2
+    assert result["persistence"]["analysis_queue_max_depth"] == 5
     assert result["persistence"]["analysis_active_run_id"] == "run-42"
 
 

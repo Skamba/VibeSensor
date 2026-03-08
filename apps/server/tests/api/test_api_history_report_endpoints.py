@@ -49,14 +49,8 @@ async def test_report_pdf_respects_lang_query() -> None:
 
 @pytest.mark.asyncio
 async def test_report_pdf_respects_lang_query_with_persisted_report_template_data() -> None:
-    from dataclasses import asdict
-
-    from vibesensor.analysis import map_summary
-
     router, state = make_router_and_state(language="nl")
-    state.history_db.analysis["_report_template_data"] = asdict(
-        map_summary(state.history_db.analysis)
-    )
+    state.history_db.analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
     endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
 
     nl = await endpoint("run-1", "nl")
@@ -76,14 +70,10 @@ async def test_report_pdf_respects_lang_query_with_persisted_report_template_dat
 
 @pytest.mark.asyncio
 async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
-    from dataclasses import asdict
-
-    from vibesensor.analysis import map_summary
-
     metadata = make_metadata(language="nl")
     samples = [sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="nl", include_samples=False)
-    analysis["_report_template_data"] = asdict(map_summary(analysis))
+    analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
 
     db = FakeHistoryDB(metadata, samples, analysis)
     state = FakeState(db, FakeWsHub())
@@ -92,12 +82,14 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     app.include_router(router)
     endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
 
-    with patch(
-        "vibesensor.analysis.map_summary",
-        side_effect=AssertionError("map_summary should not run when template data exists"),
-    ):
+    with patch("vibesensor.history_reports.map_summary") as patched_map_summary:
+        patched_map_summary.side_effect = lambda summary: __import__(
+            "vibesensor.analysis", fromlist=["map_summary"]
+        ).map_summary(summary)
         nl = await endpoint("run-1", "nl")
         en = await endpoint("run-1", "en")
+
+    assert patched_map_summary.call_count == 1
 
     assert nl.body.startswith(b"%PDF")
     assert en.body.startswith(b"%PDF")
@@ -133,14 +125,8 @@ async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis_versi
 
 @pytest.mark.asyncio
 async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persisted() -> None:
-    from dataclasses import asdict
-
-    from vibesensor.analysis import map_summary
-
     router, state = make_router_and_state(language="nl")
-    state.history_db.analysis["_report_template_data"] = asdict(
-        map_summary(state.history_db.analysis)
-    )
+    state.history_db.analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
     endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
     call_count = 0
 
@@ -159,14 +145,10 @@ async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persist
 
 @pytest.mark.asyncio
 async def test_report_pdf_cache_invalidates_when_analysis_version_changes() -> None:
-    from dataclasses import asdict
-
-    from vibesensor.analysis import map_summary
-
     metadata = make_metadata()
     samples = [sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    analysis["_report_template_data"] = asdict(map_summary(analysis))
+    analysis["_report_template_data"] = {"lang": "en", "title": "legacy"}
 
     @dataclass
     class VersionFlipDB(FakeHistoryDB):

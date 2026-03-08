@@ -75,6 +75,16 @@ class TestPostAnalysisWorkerSchedule:
         assert worker.wait(timeout_s=3.0)
         assert seen == ["run-dup"]
 
+    def test_queue_does_not_evict_when_many_runs_are_scheduled(self, make_worker) -> None:
+        seen: list[str] = []
+        worker = make_worker(run_fn=lambda rid: seen.append(rid))
+
+        for index in range(105):
+            worker.schedule(f"run-{index}")
+
+        assert worker.wait(timeout_s=5.0)
+        assert seen == [f"run-{index}" for index in range(105)]
+
 
 class TestPostAnalysisWorkerIsActive:
     def test_inactive_when_idle(self) -> None:
@@ -98,6 +108,31 @@ class TestPostAnalysisWorkerIsActive:
         release.set()
         assert worker.wait(timeout_s=2.0)
         assert not worker.is_active
+
+
+class TestPostAnalysisWorkerSnapshot:
+    def test_snapshot_tracks_queue_depth_and_max_depth(self, make_worker) -> None:
+        started = threading.Event()
+        release = threading.Event()
+
+        def _block(_rid: str) -> None:
+            started.set()
+            release.wait(timeout=5.0)
+
+        worker = make_worker(run_fn=_block)
+
+        worker.schedule("run-1")
+        started.wait(timeout=2.0)
+        worker.schedule("run-2")
+
+        snapshot = worker.snapshot()
+
+        assert snapshot.queue_depth == 1
+        assert snapshot.active_run_id == "run-1"
+        assert snapshot.max_queue_depth >= 1
+        assert snapshot.oldest_queued_at is not None
+        release.set()
+        assert worker.wait(timeout_s=2.0)
 
 
 class TestPostAnalysisWorkerWait:

@@ -13,6 +13,7 @@ from unittest.mock import MagicMock
 from fastapi import FastAPI, WebSocketDisconnect
 
 from vibesensor.analysis import summarize_run_data
+from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION
 from vibesensor.routes import create_router
 
 
@@ -62,7 +63,7 @@ class FakeHistoryDB:
     metadata: dict[str, Any]
     samples: list[dict[str, Any]]
     analysis: dict[str, Any]
-    analysis_version: int | None = 1
+    analysis_version: int | None = ANALYSIS_SCHEMA_VERSION
     analysis_completed_at: str | None = "2026-01-01T00:01:00Z"
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:
@@ -80,6 +81,9 @@ class FakeHistoryDB:
             result["analysis_completed_at"] = self.analysis_completed_at
         result["sample_count"] = len(self.samples)
         return result
+
+    def analysis_is_current(self, run_id: str) -> bool:
+        return run_id == "run-1" and self.analysis_version == ANALYSIS_SCHEMA_VERSION
 
     def iter_run_samples(self, run_id: str, batch_size: int = 1000):
         if run_id != "run-1":
@@ -150,7 +154,15 @@ class FakeState:
     def __init__(self, history_db: FakeHistoryDB, ws_hub: FakeWsHub) -> None:
         self.history_db = history_db
         self.ws_hub = ws_hub
-        self.settings_store = type("S", (), {"language": "en", "set_language": lambda self, v: v})()
+        self.settings_store = type(
+            "S",
+            (),
+            {
+                "language": "en",
+                "set_language": lambda self, v: v,
+                "active_car_snapshot": lambda self: None,
+            },
+        )()
         self.live_diagnostics = type("D", (), {"reset": lambda self: None})()
         self.metrics_logger = type(
             "M",
@@ -160,6 +172,14 @@ class FakeState:
                 "health_snapshot": lambda self: {
                     "write_error": None,
                     "analysis_in_progress": False,
+                    "analysis_queue_depth": 0,
+                    "analysis_queue_max_depth": 0,
+                    "analysis_active_run_id": None,
+                    "analysis_started_at": None,
+                    "analysis_elapsed_s": None,
+                    "analysis_queue_oldest_age_s": None,
+                    "analyzing_run_count": 0,
+                    "analyzing_oldest_age_s": None,
                 },
                 "start_logging": lambda self: {},
                 "stop_logging": lambda self: {},
@@ -243,15 +263,22 @@ class FakeState:
         self.processing = SimpleNamespace(state=self.loop_state)
 
 
-def make_router_and_state(language: str = "en", sample_count: int = 20):
-    from dataclasses import asdict
-
-    from vibesensor.analysis import map_summary
-
-    metadata = make_metadata(language=language)
-    samples = [sample(i) for i in range(sample_count)]
-    analysis = summarize_run_data(metadata, samples, lang=language, include_samples=False)
-    analysis["_report_template_data"] = asdict(map_summary(analysis))
+def make_router_and_state(
+    language: str = "en",
+    sample_count: int = 20,
+    *,
+    metadata: dict[str, Any] | None = None,
+    samples: list[dict[str, Any]] | None = None,
+    analysis: dict[str, Any] | None = None,
+):
+    metadata = metadata or make_metadata(language=language)
+    samples = samples or [sample(i) for i in range(sample_count)]
+    analysis = analysis or summarize_run_data(
+        metadata,
+        samples,
+        lang=language,
+        include_samples=False,
+    )
     state = FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub())
     app = FastAPI()
     router = create_router(state)

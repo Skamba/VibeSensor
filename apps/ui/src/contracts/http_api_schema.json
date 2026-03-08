@@ -1326,6 +1326,22 @@
             "title": "Analysis Queue Depth",
             "type": "integer"
           },
+          "analysis_queue_max_depth": {
+            "default": 0,
+            "title": "Analysis Queue Max Depth",
+            "type": "integer"
+          },
+          "analysis_queue_oldest_age_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Queue Oldest Age S"
+          },
           "analysis_started_at": {
             "anyOf": [
               {
@@ -1336,6 +1352,22 @@
               }
             ],
             "title": "Analysis Started At"
+          },
+          "analyzing_oldest_age_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyzing Oldest Age S"
+          },
+          "analyzing_run_count": {
+            "default": 0,
+            "title": "Analyzing Run Count",
+            "type": "integer"
           },
           "write_error": {
             "anyOf": [
@@ -1369,19 +1401,45 @@
             "title": "Degradation Reasons",
             "type": "array"
           },
+          "frame_size_mismatch_count": {
+            "title": "Frame Size Mismatch Count",
+            "type": "integer"
+          },
           "intake_stats": {
             "$ref": "#/components/schemas/HealthIntakeStatsResponse"
           },
           "persistence": {
             "$ref": "#/components/schemas/HealthPersistenceResponse"
           },
+          "processing_failure_categories": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Processing Failure Categories",
+            "type": "object"
+          },
           "processing_failures": {
             "title": "Processing Failures",
             "type": "integer"
           },
+          "processing_last_failure": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processing Last Failure"
+          },
           "processing_state": {
             "title": "Processing State",
             "type": "string"
+          },
+          "sample_rate_mismatch_count": {
+            "title": "Sample Rate Mismatch Count",
+            "type": "integer"
           },
           "status": {
             "enum": [
@@ -1396,6 +1454,10 @@
           "status",
           "processing_state",
           "processing_failures",
+          "processing_failure_categories",
+          "processing_last_failure",
+          "sample_rate_mismatch_count",
+          "frame_size_mismatch_count",
           "degradation_reasons",
           "data_loss",
           "persistence",
@@ -1404,10 +1466,65 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HistoryInsightWarningResponse": {
+        "description": "Response body for a localized history/run trust warning.",
+        "properties": {
+          "applies_to": {
+            "title": "Applies To",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "severity": {
+            "enum": [
+              "warn",
+              "error"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "applies_to",
+          "title"
+        ],
+        "title": "HistoryInsightWarningResponse",
+        "type": "object"
+      },
       "HistoryInsightsResponse": {
         "additionalProperties": true,
         "description": "Response body with aggregated diagnostic insights for a run.",
         "properties": {
+          "analysis_is_current": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Is Current"
+          },
           "run_id": {
             "anyOf": [
               {
@@ -1429,6 +1546,13 @@
               }
             ],
             "title": "Status"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryInsightWarningResponse"
+            },
+            "title": "Warnings",
+            "type": "array"
           }
         },
         "title": "HistoryInsightsResponse",
@@ -3136,6 +3260,22 @@
             "schema": {
               "title": "Run Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lang",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lang"
             }
           }
         ],

@@ -33,8 +33,9 @@ No other module may re-implement this formula. Use `bucket_for_strength()` for s
 classification — never compare raw dB values against band thresholds inline.
 
 For post-stop persisted analysis/report artifacts (`summarize_run_data()` output,
-`_report_template_data`, report-facing strength/intensity fields), expose dB-only
-strength values. Raw ingest/sample fields may still carry g-based units.
+persisted analysis envelopes, localized report-facing strength/intensity fields),
+expose dB-only strength values. Raw ingest/sample fields may still carry g-based
+units.
 
 ## Severity Bands (l1–l5)
 

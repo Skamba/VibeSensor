@@ -19,14 +19,18 @@ from ..history_runs import HistoryRunDeleteService, HistoryRunQueryService
 
 if TYPE_CHECKING:
     from ..history_db import HistoryDB
+    from ..settings_store import SettingsStore
 
 
-def create_history_routes(history_db: HistoryDB) -> APIRouter:
+def create_history_routes(
+    history_db: HistoryDB,
+    settings_store: SettingsStore | None = None,
+) -> APIRouter:
     """Create and return the run-history / report API routes."""
     router = APIRouter()
-    query_service = HistoryRunQueryService(history_db)
-    delete_service = HistoryRunDeleteService(history_db)
-    report_service = HistoryReportService(history_db)
+    query_service = HistoryRunQueryService(history_db, settings_store)
+    delete_service = HistoryRunDeleteService(history_db, settings_store)
+    report_service = HistoryReportService(history_db, settings_store)
     export_service = HistoryExportService(history_db)
 
     # -- history CRUD ----------------------------------------------------------
@@ -42,8 +46,9 @@ def create_history_routes(history_db: HistoryDB) -> APIRouter:
     @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
     async def get_history_insights(
         run_id: str,
+        lang: str | None = Query(default=None),
     ) -> HistoryInsightsResponse:
-        result = await query_service.get_insights(run_id)
+        result = await query_service.get_insights(run_id, requested_lang=lang)
         if result.status_code != 200:
             return JSONResponse(status_code=result.status_code, content=result.payload)
         return result.payload

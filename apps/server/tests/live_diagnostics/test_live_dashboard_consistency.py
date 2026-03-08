@@ -93,6 +93,47 @@ def test_diagnostics_sequence_stable_on_light_ticks(monkeypatch) -> None:
     assert seq_light == seq_heavy, "Sequence should not change on light tick"
 
 
+def test_light_ticks_preserve_findings_without_rebuilding(monkeypatch) -> None:
+    engine, spectra, clients, advance = _make_timed_engine(monkeypatch)
+    calls: list[str] = []
+
+    def _fake_build_findings_for_samples(**kwargs):
+        calls.append(str(kwargs.get("lang") or ""))
+        return [{"finding_id": "FAULT_1"}]
+
+    monkeypatch.setattr(
+        "vibesensor.live_diagnostics.engine.build_findings_for_samples",
+        _fake_build_findings_for_samples,
+    )
+
+    advance()
+    heavy = engine.update(
+        speed_mps=27.8,
+        clients=clients,
+        spectra=spectra,
+        settings={},
+        finding_metadata={"run_id": "live-1"},
+        finding_samples=[{"vibration_strength_db": 18.0}],
+        language="en",
+    )
+    assert heavy["findings"] == [{"finding_id": "FAULT_1"}]
+    assert calls == ["en"]
+
+    advance()
+    light = engine.update(
+        speed_mps=27.8,
+        clients=clients,
+        spectra=None,
+        settings={},
+        finding_metadata=None,
+        finding_samples=None,
+        language="nl",
+    )
+
+    assert light["findings"] == [{"finding_id": "FAULT_1"}]
+    assert calls == ["en"]
+
+
 def test_diagnostics_sequence_resets_on_engine_reset() -> None:
     engine = LiveDiagnosticsEngine()
     assert engine.snapshot()["diagnostics_sequence"] == 0

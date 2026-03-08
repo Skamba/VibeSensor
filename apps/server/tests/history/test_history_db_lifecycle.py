@@ -167,6 +167,39 @@ def test_store_analysis_allows_direct_recording_to_complete(tmp_path: Path) -> N
     assert run["analysis"] == {"score": 42}
 
 
+def test_finalize_run_with_metadata_returns_false_when_already_analyzing(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-finalize", "2026-01-01T00:00:00Z", {"source": "test"})
+
+    assert (
+        db.finalize_run_with_metadata(
+            "run-finalize",
+            "2026-01-01T00:05:00Z",
+            {"source": "test", "step": 1},
+        )
+        is True
+    )
+    assert (
+        db.finalize_run_with_metadata(
+            "run-finalize",
+            "2026-01-01T00:06:00Z",
+            {"source": "test", "step": 2},
+        )
+        is False
+    )
+
+
+def test_analyzing_run_health_reports_oldest_age(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-an", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.finalize_run("run-an", "2026-01-01T00:01:00Z")
+
+    health = db.analyzing_run_health()
+
+    assert health["analyzing_run_count"] == 1
+    assert isinstance(health.get("analyzing_oldest_age_s"), float)
+
+
 def test_update_run_metadata_overwrites_stored_metadata(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-meta", "2026-01-01T00:00:00Z", {"tire_width_mm": 245.0})

@@ -52,7 +52,10 @@ reuse — the same analysis functions serve as a library for both
 live preview and definitive post-stop analysis.
 
 - **Live preview**: called every few seconds on a sliding window of
-  recent samples.  Results are ephemeral (not persisted).
+   recent samples.  Results are ephemeral (not persisted). The
+   WebSocket broadcaster only refreshes live finding inputs on heavy
+   UI ticks; lighter ticks reuse the previous preview so dashboard
+   updates do not re-run finding generation unnecessarily.
 - **Definitive analysis**: called once after stop via
   `summarize_run_data()`.  Results are persisted and used for reports.
 
@@ -100,13 +103,16 @@ After `summarize_run_data()` returns, the orchestrator in
 `metrics_log/post_analysis.py`:
 
 1. Adds `analysis_metadata` (sample count, stride info).
-2. Calls `map_summary()` to convert the summary dict into a
-   `ReportTemplateData` dataclass and embeds it as
-   `_report_template_data`.
-3. Stores the complete dict via `history_db.store_analysis()`.
+2. Adds language-neutral trust warnings in `summary["warnings"]`
+   when the captured run context was incomplete for confident
+   order analysis.
+3. Stores the summary via `history_db.store_analysis()` as a
+   versioned persistence envelope.
 
-Report endpoints read the persisted analysis and use
-`_report_template_data` for PDF rendering without re-running analysis.
+History readers unwrap the envelope back to the canonical summary shape.
+Report endpoints rebuild `ReportTemplateData` from that summary on demand,
+then add presentation-time warnings if the current active vehicle profile no
+longer matches the one captured with the run.
 
 Persisted post-stop analysis strength/intensity outputs are dB-only. Raw ingest/sample
 acceleration fields may still be expressed in g.

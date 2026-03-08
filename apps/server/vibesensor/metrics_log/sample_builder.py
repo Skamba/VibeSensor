@@ -16,6 +16,11 @@ from ..analysis_settings import (
 )
 from ..constants import MPS_TO_KMH, NUMERIC_TYPES
 from ..domain_models import SensorFrame
+from ..run_context import (
+    ANALYSIS_SETTINGS_SNAPSHOT_KEYS,
+    apply_run_context_snapshot,
+    order_reference_context_complete,
+)
 
 if TYPE_CHECKING:
     from ..gps_speed import GPSSpeedMonitor
@@ -49,23 +54,7 @@ _SPEED_SOURCE_MAP = {
     "none": "none",
 }
 
-_SETTINGS_PASSTHROUGH_KEYS = (
-    "tire_width_mm",
-    "tire_aspect_pct",
-    "rim_in",
-    "final_drive_ratio",
-    "current_gear_ratio",
-    "wheel_bandwidth_pct",
-    "driveshaft_bandwidth_pct",
-    "engine_bandwidth_pct",
-    "speed_uncertainty_pct",
-    "tire_diameter_uncertainty_pct",
-    "final_drive_uncertainty_pct",
-    "gear_uncertainty_pct",
-    "min_abs_band_hz",
-    "max_band_half_width_pct",
-    "tire_deflection_factor",
-)
+_SETTINGS_PASSTHROUGH_KEYS = ANALYSIS_SETTINGS_SNAPSHOT_KEYS
 
 
 def _safe_float(d: dict[str, object], key: str) -> float | None:
@@ -360,6 +349,7 @@ def build_run_metadata(
     fft_window_type: str,
     peak_picker_method: str,
     accel_scale_g_per_lsb: float | None,
+    active_car_snapshot: dict[str, object] | None = None,
     language_provider: object | None = None,
 ) -> dict[str, object]:
     """Assemble comprehensive run metadata."""
@@ -390,6 +380,12 @@ def build_run_metadata(
         settings.get("rim_in"),
         deflection_factor=settings.get("tire_deflection_factor"),
     )
+    apply_run_context_snapshot(
+        metadata,
+        analysis_settings_snapshot=settings,
+        active_car_snapshot=active_car_snapshot,
+    )
+    metadata["incomplete_for_order_analysis"] = not order_reference_context_complete(metadata)
     if language_provider is not None:
         metadata["language"] = str(language_provider()).strip().lower() or "en"
     return metadata
