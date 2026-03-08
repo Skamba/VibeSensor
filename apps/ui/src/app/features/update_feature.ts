@@ -1,6 +1,6 @@
 import type { UiDomElements } from "../dom/ui_dom_registry";
-import type { UpdateStatusPayload } from "../../api/types";
-import { getUpdateStatus, startUpdate, cancelUpdate } from "../../api/settings";
+import type { HealthStatusPayload, UpdateStatusPayload } from "../../api/types";
+import { getHealthStatus, getUpdateStatus, startUpdate, cancelUpdate } from "../../api/settings";
 
 export interface UpdateFeatureDeps {
   els: UiDomElements;
@@ -24,6 +24,20 @@ const STATE_VARIANT: Readonly<Record<string, string>> = {
   failed: "bad",
 };
 
+const HEALTH_VARIANT: Readonly<Record<HealthStatusPayload["status"], string>> = {
+  ok: "ok",
+  degraded: "warn",
+};
+
+const HEALTH_REASON_KEYS: Readonly<Record<string, string>> = {
+  processing_failures: "settings.update.health.reason.processing_failures",
+  frames_dropped: "settings.update.health.reason.frames_dropped",
+  queue_overflow_drops: "settings.update.health.reason.queue_overflow_drops",
+  server_queue_drops: "settings.update.health.reason.server_queue_drops",
+  parse_errors: "settings.update.health.reason.parse_errors",
+  persistence_write_error: "settings.update.health.reason.persistence_write_error",
+};
+
 const ASSET_ISSUE_RE = /asset|artifacts|stale|hash|missing/i;
 
 function formatTimestamp(epoch: number | null): string {
@@ -37,7 +51,16 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   let pollTimer: ReturnType<typeof setTimeout> | null = null;
   let passwordVisible = false;
 
-  function renderStatus(status: UpdateStatusPayload): void {
+  function formatHealthReason(reason: string): string {
+    if (reason.startsWith("processing_state:")) {
+      const state = reason.slice("processing_state:".length);
+      return `${t("settings.update.health.reason.processing_state")} ${state}`;
+    }
+    const key = HEALTH_REASON_KEYS[reason];
+    return key ? t(key) : reason;
+  }
+
+  function renderStatus(status: UpdateStatusPayload, health: HealthStatusPayload): void {
     const panel = els.updateStatusPanel;
     if (!panel) return;
 
@@ -60,7 +83,7 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     if (els.updateSsidInput) els.updateSsidInput.disabled = isRunning;
     if (els.updatePasswordInput) els.updatePasswordInput.disabled = isRunning;
 
-    if (isIdle && !status.last_success_at && !status.issues.length) {
+    if (isIdle && !status.last_success_at && !status.issues.length && health.status === "ok") {
       panel.innerHTML = "";
       return;
     }
@@ -133,6 +156,67 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
 
     html += `</div>`;
 
+    html += `<div class="update-status-grid" style="margin-top:1rem;">`;
+    html += `<div class="update-status-row">`;
+    html += `<span class="update-label">${escapeHtml(t("settings.update.health.label"))}</span>`;
+    html += `<span class="pill pill--${HEALTH_VARIANT[health.status]}${health.persistence.write_error ? " pill--bad" : ""}">${escapeHtml(t(`settings.update.health.state.${health.status}`))}</span>`;
+    html += `</div>`;
+
+    html += `<div class="update-status-row">`;
+    html += `<span class="update-label">${escapeHtml(t("settings.update.health.processing_state"))}</span>`;
+    html += `<span>${escapeHtml(health.processing_state)}</span>`;
+    html += `</div>`;
+
+    if (health.processing_failures > 0) {
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.health.processing_failures"))}</span>`;
+      html += `<span>${escapeHtml(health.processing_failures)}</span>`;
+      html += `</div>`;
+    }
+
+    if (health.degradation_reasons.length) {
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.health.reasons"))}</span>`;
+      html += `<span>${escapeHtml(health.degradation_reasons.map(formatHealthReason).join(", "))}</span>`;
+      html += `</div>`;
+    }
+
+    if (health.data_loss.affected_clients > 0) {
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.health.affected_clients"))}</span>`;
+      html += `<span>${escapeHtml(`${health.data_loss.affected_clients}/${health.data_loss.tracked_clients}`)}</span>`;
+      html += `</div>`;
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.health.data_loss"))}</span>`;
+      html += `<span>${escapeHtml(
+        [
+          `frames=${health.data_loss.frames_dropped}`,
+          `queue=${health.data_loss.queue_overflow_drops}`,
+          `server=${health.data_loss.server_queue_drops}`,
+          `parse=${health.data_loss.parse_errors}`,
+        ].join(", "),
+      )}</span>`;
+      html += `</div>`;
+    }
+
+    if (health.persistence.analysis_in_progress || health.persistence.write_error) {
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.health.persistence"))}</span>`;
+      html += `<span>${escapeHtml(
+        health.persistence.write_error
+          ? health.persistence.write_error
+          : t("settings.update.health.persistence_ok"),
+      )}</span>`;
+      html += `</div>`;
+      if (health.persistence.analysis_in_progress) {
+        html += `<div class="update-status-row">`;
+        html += `<span class="update-label">${escapeHtml(t("settings.update.health.analysis"))}</span>`;
+        html += `<span>${escapeHtml(t("settings.update.health.analysis_in_progress"))}</span>`;
+        html += `</div>`;
+      }
+    }
+    html += `</div>`;
+
     // Issues
     if (status.issues.length) {
       html += `<div class="update-issues" style="margin-top:1rem;">`;
@@ -166,8 +250,8 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
 
   async function pollStatus(): Promise<void> {
     try {
-      const status = await getUpdateStatus();
-      renderStatus(status);
+      const [status, health] = await Promise.all([getUpdateStatus(), getHealthStatus()]);
+      renderStatus(status, health);
       const interval = status.state === "running" ? POLL_INTERVAL_RUNNING : POLL_INTERVAL_IDLE;
       pollTimer = setTimeout(() => void pollStatus(), interval);
     } catch {

@@ -29,7 +29,7 @@
 - `routes/`: health, clients, settings, recording, history, websocket, updates, car library, and debug route groups.
 - `runtime/`: subsystem builders, explicit runtime owners, lifecycle, processing loop, websocket broadcast, settings sync, and route-service assembly.
 - `processing/`, `analysis/`, `live_diagnostics/`: signal processing and findings logic.
-- `metrics_log/`: recording and post-analysis hooks.
+- `metrics_log/`: recording, post-analysis hooks, and the focused live-analysis snapshot window used by runtime websocket diagnostics.
 - `history_db/`: SQLite-backed history and settings persistence.
 - `history_runs.py`, `history_reports.py`, `history_exports.py`, `history_helpers.py`, `runlog.py`: read and export helpers around persisted runs.
 - `report/`: PDF renderer and report-template builders.

@@ -42,6 +42,7 @@
 
 # Python
 .venv/
+.venv-cto/
 __pycache__/
 *.py[cod]
 *.egg-info/

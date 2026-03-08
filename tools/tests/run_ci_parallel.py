@@ -177,6 +177,10 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 "ws payload schema sync check",
                 [python_cmd, "-m", "vibesensor.ws_schema_export", "--check"],
             ),
+            Step(
+                "http api schema sync check",
+                [python_cmd, "-m", "vibesensor.http_api_schema_export", "--check"],
+            ),
         ],
         "backend-typecheck": [
             Step(
@@ -189,6 +193,7 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
             ),
         ],
         "frontend-typecheck": [
+            Step("ui contract sync check", ["npm", "run", "check:contracts"], cwd=ROOT / "apps" / "ui"),
             Step("ui typecheck", ["npm", "run", "typecheck"], cwd=ROOT / "apps" / "ui"),
         ],
         "ui-smoke": [
@@ -198,6 +203,12 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 cwd=ROOT / "apps" / "ui",
             ),
             Step("ui smoke", ["npm", "run", "test:smoke"], cwd=ROOT / "apps" / "ui"),
+        ],
+        "release-smoke": [
+            Step(
+                "release smoke",
+                [python_cmd, "tools/tests/run_release_smoke.py", "--skip-npm-ci"],
+            ),
         ],
         "backend-tests": [
             Step(
@@ -312,6 +323,7 @@ def main() -> int:
             "backend-typecheck",
             "frontend-typecheck",
             "ui-smoke",
+            "release-smoke",
             "backend-tests",
             "e2e",
         ],
@@ -351,6 +363,7 @@ def main() -> int:
             "backend-typecheck",
             "frontend-typecheck",
             "ui-smoke",
+            "release-smoke",
             "backend-tests",
             "e2e",
         ]

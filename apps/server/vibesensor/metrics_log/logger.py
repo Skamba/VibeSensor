@@ -14,10 +14,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
-from itertools import islice
 from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING
@@ -25,6 +23,7 @@ from uuid import uuid4
 
 from ..constants import NUMERIC_TYPES
 from ..runlog import utc_now_iso
+from .live_analysis import LiveAnalysisWindow
 from .post_analysis import PostAnalysisWorker
 from .sample_builder import (
     _LIVE_SAMPLE_WINDOW_S,
@@ -37,6 +36,7 @@ if TYPE_CHECKING:
     from ..analysis_settings import AnalysisSettingsStore
     from ..gps_speed import GPSSpeedMonitor
     from ..history_db import HistoryDB
+    from ..payload_types import HealthPersistencePayload
     from ..processing import SignalProcessor
     from ..registry import ClientRegistry
 
@@ -114,11 +114,13 @@ class MetricsLogger:
         self._no_data_timeout_s = max(1.0, float(config.no_data_timeout_s))
         self._last_data_progress_mono_s: float | None = None
         self._session_generation: int = 0
+        self._session_start_frames_total = 0
         self._last_active_frames_total = 0
-        self._live_start_utc = utc_now_iso()
         self._live_start_mono_s = time.monotonic()
-        self._live_samples: deque[dict[str, object]] = deque(maxlen=20_000)
-        self._live_sample_window_s = float(_LIVE_SAMPLE_WINDOW_S)
+        self.live_analysis = LiveAnalysisWindow(
+            metadata_builder=self._run_metadata_record,
+            live_sample_window_s=_LIVE_SAMPLE_WINDOW_S,
+        )
 
         # Delegate analysis to PostAnalysisWorker
         self._post_analysis = PostAnalysisWorker(
@@ -142,7 +144,14 @@ class MetricsLogger:
         self._history_create_fail_count = 0
         self._written_sample_count = 0
         self._last_data_progress_mono_s = self._run_start_mono_s
-        self._last_active_frames_total = self._active_frames_total()
+        self._session_start_frames_total = self._active_frames_total()
+        self._last_active_frames_total = self._session_start_frames_total
+        assert self._run_id is not None
+        assert self._run_start_utc is not None
+        self.live_analysis.start_session(
+            run_id=self._run_id,
+            start_time_utc=self._run_start_utc,
+        )
 
     def _set_last_write_error(self, message: str) -> None:
         with self._lock:
@@ -198,8 +207,27 @@ class MetricsLogger:
                 "analysis_in_progress": self._post_analysis.is_active,
             }
 
+    def health_snapshot(self) -> HealthPersistencePayload:
+        with self._lock:
+            return {
+                "write_error": self._last_write_error,
+                "analysis_in_progress": self._post_analysis.is_active,
+            }
+
     def start_logging(self) -> dict[str, str | bool | None]:
         completed_run_id: str | None = None
+        flush_snapshot: tuple[str, str, float, int] | None = None
+        with self._lock:
+            if self.enabled and self._run_id:
+                flush_snapshot = self._pending_flush_snapshot_locked()
+        if flush_snapshot is not None:
+            run_id, start_time_utc, start_mono_s, generation = flush_snapshot
+            self._append_records(
+                run_id,
+                start_time_utc,
+                start_mono_s,
+                session_generation=generation,
+            )
         with self._lock:
             if self.enabled and self._run_id:
                 if self._history_run_created and self._written_sample_count > 0:
@@ -208,8 +236,6 @@ class MetricsLogger:
                     completed_run_id = None
             self.enabled = True
             self._start_new_session_locked()
-            self._live_samples.clear()
-            self._live_start_utc = self._run_start_utc or utc_now_iso()
             self._live_start_mono_s = self._run_start_mono_s or time.monotonic()
             result = self.status()
         if completed_run_id and self._history_db is not None:
@@ -219,6 +245,19 @@ class MetricsLogger:
     def stop_logging(
         self, *, _only_if_generation: int | None = None
     ) -> dict[str, str | bool | None]:
+        flush_snapshot: tuple[str, str, float, int] | None = None
+        with self._lock:
+            if _only_if_generation is not None and self._session_generation != _only_if_generation:
+                return self.status()
+            flush_snapshot = self._pending_flush_snapshot_locked()
+        if flush_snapshot is not None:
+            run_id, start_time_utc, start_mono_s, generation = flush_snapshot
+            self._append_records(
+                run_id,
+                start_time_utc,
+                start_mono_s,
+                session_generation=generation,
+            )
         with self._lock:
             if _only_if_generation is not None and self._session_generation != _only_if_generation:
                 return self.status()
@@ -239,7 +278,9 @@ class MetricsLogger:
             self._history_create_fail_count = 0
             self._written_sample_count = 0
             self._last_data_progress_mono_s = None
+            self._session_start_frames_total = 0
             self._last_active_frames_total = 0
+            self.live_analysis.stop_session()
             result = self.status()
         if run_id_to_analyze and self._history_db is not None:
             self.schedule_post_analysis(run_id_to_analyze)
@@ -249,17 +290,7 @@ class MetricsLogger:
         self,
         max_rows: int = 4000,
     ) -> tuple[dict[str, object], list[dict[str, object]]]:
-        with self._lock:
-            run_id = self._run_id or "live"
-            start_time_utc = self._run_start_utc or self._live_start_utc
-            metadata = self._run_metadata_record(run_id=run_id, start_time_utc=start_time_utc)
-            metadata["end_time_utc"] = utc_now_iso()
-            if max_rows <= 0:
-                samples = list(self._live_samples)
-            else:
-                samples = list(islice(reversed(self._live_samples), max_rows))
-                samples.reverse()
-            return metadata, samples
+        return self.live_analysis.snapshot(max_rows=max_rows)
 
     # -- metadata & sample building -------------------------------------------
 
@@ -291,6 +322,27 @@ class MetricsLogger:
             gps_monitor=self.gps_monitor,
             analysis_settings_snapshot=self.analysis_settings.snapshot(),
             default_sample_rate_hz=self.default_sample_rate_hz,
+        )
+
+    def _pending_flush_snapshot_locked(self) -> tuple[str, str, float, int] | None:
+        if (
+            not self.enabled
+            or not self._run_id
+            or not self._run_start_utc
+            or self._run_start_mono_s is None
+        ):
+            return None
+        current_total = self._active_frames_total()
+        if self._history_run_created:
+            if current_total <= self._last_active_frames_total:
+                return None
+        elif current_total <= self._session_start_frames_total:
+            return None
+        return (
+            self._run_id,
+            self._run_start_utc,
+            self._run_start_mono_s,
+            self._session_generation,
         )
 
     # -- persistence ----------------------------------------------------------
@@ -355,13 +407,26 @@ class MetricsLogger:
         with self._lock:
             if self._session_generation != session_generation:
                 return False
-            self._refresh_data_progress_marker(now_mono_s)
+            previous_total = self._last_active_frames_total
+            current_total = self._active_frames_total()
+            if current_total != previous_total:
+                self._last_active_frames_total = current_total
+                self._last_data_progress_mono_s = now_mono_s
+            history_created = self._history_run_created
+            session_start_total = self._session_start_frames_total
         t_s = max(0.0, now_mono_s - run_start_mono_s)
         timestamp_utc = utc_now_iso()
         if prebuilt_rows is not None:
             rows = [{**row, "t_s": t_s, "timestamp_utc": timestamp_utc} for row in prebuilt_rows]
         else:
             rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
+        if (
+            prebuilt_rows is not None
+            and rows
+            and not history_created
+            and current_total <= session_start_total
+        ):
+            rows = []
         if rows:
             with self._lock:
                 if self._session_generation != session_generation:
@@ -460,6 +525,11 @@ class MetricsLogger:
     def wait_for_post_analysis(self, timeout_s: float = 30.0) -> bool:
         return self._post_analysis.wait(timeout_s)
 
+    def shutdown(self, timeout_s: float = 30.0) -> bool:
+        """Stop recording and wait for any queued post-analysis to complete."""
+        self.stop_logging()
+        return self.wait_for_post_analysis(timeout_s)
+
     # -- main async loop ------------------------------------------------------
 
     async def run(self) -> None:
@@ -480,10 +550,13 @@ class MetricsLogger:
                     ),
                     timeout=_DB_THREAD_TIMEOUT_S,
                 )
-                with self._lock:
-                    if live_rows:
-                        self._live_samples.extend(live_rows)
-                    self._prune_live_samples_locked(live_t_s)
+                if not isinstance(live_rows, list):
+                    LOGGER.warning(
+                        "Metrics logger sample builder returned %s instead of list; dropping tick.",
+                        type(live_rows).__name__,
+                    )
+                    live_rows = []
+                self.live_analysis.extend_rows(live_rows, live_t_s=live_t_s)
                 snapshot = self._session_snapshot()
                 if snapshot is not None:
                     run_id, start_time_utc, start_mono_s, generation = snapshot

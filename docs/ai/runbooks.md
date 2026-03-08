@@ -72,9 +72,10 @@ pytest -q apps/server/tests/regression/runtime/
 make test-all
 python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests
 python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
+python3 tools/tests/run_ci_parallel.py --job release-smoke
 ```
 
-Required merge gates are now explicit: backend quality, backend type check, frontend type check, backend tests, UI smoke, and e2e.
+Required merge gates are now explicit: backend quality, backend type check, frontend type check, release smoke, backend tests, UI smoke, and e2e.
 
 ## Documentation drift check
 

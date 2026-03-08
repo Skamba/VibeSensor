@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+guard_script="tools/privacy/privacy_guard.py"
+
+if [[ ! -f "${guard_script}" ]]; then
+  echo "[vibesensor hooks] Skipping privacy guard: ${guard_script} is not present in this checkout." >&2
+  echo "[vibesensor hooks] See CONTRIBUTING.md for supported local validation commands." >&2
+  exit 0
+fi
+
 while read -r local_ref local_sha remote_ref remote_sha; do
   if [[ -z "${local_sha:-}" || "${local_sha}" == "0000000000000000000000000000000000000000" ]]; then
     continue
@@ -17,5 +25,5 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     commit_range="${remote_sha}..${local_sha}"
   fi
 
-  python tools/privacy/privacy_guard.py check-range "${commit_range}"
+  python "${guard_script}" check-range "${commit_range}"
 done

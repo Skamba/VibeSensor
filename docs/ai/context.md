@@ -20,7 +20,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 	- `routes/`: HTTP and WebSocket route groups.
 	- `runtime/`: explicit runtime subsystem ownership, route-service assembly, lifecycle coordination, and websocket broadcast state.
 	- `processing/`, `analysis/`, `live_diagnostics/`: signal and findings logic.
-	- `metrics_log/`, `history_db/`, `history_*.py`, `runlog.py`: recording and persistence.
+	- `metrics_log/`, `history_db/`, `history_*.py`, `runlog.py`: recording, live snapshot state, and persistence.
 	- `report/`, `report_i18n.py`: report rendering and report strings.
 	- `update/`: updater facade, workflow orchestration, and focused subsystems for Wi-Fi, releases, install and rollback, service control, status, and runtime reporting.
 - Frontend: `apps/ui/src/` provides the dashboard, settings, and history UI.
@@ -32,7 +32,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 1. `udp_data_rx.py` parses sensor frames and feeds the registry and processing buffers.
 2. `processing/` and `analysis/` compute spectra, vibration strength, and findings inputs.
 3. `runtime/` assembles explicit ingress, settings, diagnostics, persistence, update, processing, websocket, and route-service subsystems, then coordinates their background work through lifecycle ownership.
-4. `metrics_log/` and `history_db/` persist run data, analysis results, and settings.
+4. `metrics_log/` owns recording orchestration plus the live-analysis snapshot window, while `history_db/` persists run data, analysis results, and settings.
 5. `routes/` exposes the HTTP and WebSocket surface consumed by `apps/ui/src/`.
 6. `report/` builds PDFs from saved run and analysis data.
 
@@ -54,7 +54,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 - When an intentional in-scope refactor changes function-level seams or helper boundaries, refactor the affected tests so they validate current behavior instead of preserving obsolete internals.
 - The updater is wheel-first. Normal delivery must go through the `apps/server/vibesensor/update/` package, with `manager.py` as the public facade, not in-place edits on devices.
 - Hotspot startup must remain offline-safe.
-- `make test-all` is the local CI-parity verification path.
+- `make test-all` is the local CI-parity verification path, including the packaged-wheel `release-smoke` gate.
 
 ## Documentation rule
 

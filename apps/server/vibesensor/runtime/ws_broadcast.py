@@ -8,7 +8,7 @@ Owns:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from .processing_loop import STALE_DATA_AGE_S
 from .rotational_speeds import (
@@ -18,7 +18,6 @@ from .rotational_speeds import (
 
 if TYPE_CHECKING:
     from ..live_diagnostics.engine import LiveDiagnosticsEngine
-    from ..metrics_log import MetricsLogger
     from .subsystems import (
         RuntimeDiagnosticsSubsystem,
         RuntimeIngressSubsystem,
@@ -28,6 +27,13 @@ if TYPE_CHECKING:
 from ..payload_types import ClientApiRow, LiveDiagnosticsPayload, LiveWsPayload, SpectraPayload
 from ..runlog import utc_now_iso
 from ..ws_models import SCHEMA_VERSION
+
+
+class LiveAnalysisSnapshotSource(Protocol):
+    def snapshot(
+        self,
+        max_rows: int = 4000,
+    ) -> tuple[dict[str, object], list[dict[str, object]]]: ...
 
 
 @dataclass(slots=True)
@@ -50,14 +56,14 @@ class WsBroadcastCache:
 
     def refresh_analysis(
         self,
-        metrics_logger: MetricsLogger,
+        live_analysis: LiveAnalysisSnapshotSource,
     ) -> tuple[dict[str, object], list[dict[str, object]]]:
         """Return (metadata, samples), refreshing only when the cache is stale."""
         need_refresh = self.analysis_metadata is None or (
             self.include_heavy and self.analysis_tick != self.tick
         )
         if need_refresh:
-            metadata, samples = metrics_logger.analysis_snapshot()
+            metadata, samples = live_analysis.snapshot()
             self.analysis_metadata = metadata
             self.analysis_samples = samples
             self.analysis_tick = self.tick
@@ -174,7 +180,7 @@ class WsBroadcastService:
             analysis_settings=analysis_settings_snapshot,
         )
         analysis_metadata, analysis_samples = self.cache.refresh_analysis(
-            self._diagnostics.metrics_logger
+            self._diagnostics.live_analysis
         )
         if self.cache.include_heavy:
             payload["spectra"] = self._ingress.processor.multi_spectrum_payload(fresh_ids)

@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -14,6 +15,7 @@ from urllib.request import urlopen
 ROOT = Path(__file__).resolve().parents[2]
 IMAGE = "vibesensor-full-suite"
 CONTAINER_PREFIX = "vibesensor-full-suite"
+PYTHON = sys.executable
 
 
 def _run(
@@ -175,7 +177,7 @@ def main() -> int:
     container_started = False
     try:
         if not args.skip_ui_sync:
-            _run(["python3", "tools/build_ui_static.py"])
+            _run([PYTHON, "tools/build_ui_static.py"])
         if not args.skip_ui_smoke:
             playwright_marker = ROOT / "apps" / "ui" / ".playwright-chromium-installed"
             if (
@@ -192,7 +194,7 @@ def main() -> int:
         if not args.skip_unit_tests:
             _run(
                 [
-                    "python3",
+                    PYTHON,
                     "-m",
                     "pytest",
                     "-q",
@@ -250,7 +252,7 @@ def main() -> int:
         )
         _run(
             [
-                "python3",
+                PYTHON,
                 "-m",
                 "pytest",
                 "-q",

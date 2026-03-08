@@ -138,10 +138,9 @@ class LifecycleManager:
                 with contextlib.suppress(asyncio.CancelledError, Exception):
                     await asyncio.wait_for(asyncio.shield(task), timeout=10.0)
 
-        self._diagnostics.metrics_logger.stop_logging()
         analysis_timeout_s = self._config.logging.shutdown_analysis_timeout_s
         finished = await asyncio.to_thread(
-            self._diagnostics.metrics_logger.wait_for_post_analysis,
+            self._diagnostics.metrics_logger.shutdown,
             analysis_timeout_s,
         )
         if not finished:

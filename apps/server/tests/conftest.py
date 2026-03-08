@@ -71,7 +71,27 @@ class FakeState:
 @pytest.fixture
 def fake_state() -> FakeState:
     """Return a fresh ``FakeState`` for each test."""
-    return FakeState()
+    state = FakeState()
+    state.processor.intake_stats.return_value = {
+        "total_ingested_samples": 0,
+        "total_compute_calls": 0,
+        "last_compute_duration_s": 0.0,
+        "last_compute_all_duration_s": 0.0,
+        "last_ingest_duration_s": 0.0,
+    }
+    state.registry.data_loss_snapshot.return_value = {
+        "tracked_clients": 0,
+        "affected_clients": 0,
+        "frames_dropped": 0,
+        "queue_overflow_drops": 0,
+        "server_queue_drops": 0,
+        "parse_errors": 0,
+    }
+    state.metrics_logger.health_snapshot.return_value = {
+        "write_error": None,
+        "analysis_in_progress": False,
+    }
+    return state
 
 
 @pytest.fixture

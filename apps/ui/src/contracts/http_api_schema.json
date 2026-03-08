@@ -1,0 +1,3924 @@
+{
+  "components": {
+    "schemas": {
+      "ActiveCarRequest": {
+        "description": "Request body for selecting the active car profile.",
+        "properties": {
+          "carId": {
+            "minLength": 1,
+            "title": "Carid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "carId"
+        ],
+        "title": "ActiveCarRequest",
+        "type": "object"
+      },
+      "AnalysisSettingsRequest": {
+        "description": "Request body for updating vehicle analysis settings (tire geometry, gear ratios, etc.).",
+        "properties": {
+          "current_gear_ratio": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Gear Ratio"
+          },
+          "driveshaft_bandwidth_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driveshaft Bandwidth Pct"
+          },
+          "engine_bandwidth_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine Bandwidth Pct"
+          },
+          "final_drive_ratio": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Drive Ratio"
+          },
+          "final_drive_uncertainty_pct": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Drive Uncertainty Pct"
+          },
+          "gear_uncertainty_pct": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gear Uncertainty Pct"
+          },
+          "max_band_half_width_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Band Half Width Pct"
+          },
+          "min_abs_band_hz": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Abs Band Hz"
+          },
+          "rim_in": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rim In"
+          },
+          "speed_uncertainty_pct": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Uncertainty Pct"
+          },
+          "tire_aspect_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Aspect Pct"
+          },
+          "tire_deflection_factor": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.85,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Deflection Factor"
+          },
+          "tire_diameter_uncertainty_pct": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Diameter Uncertainty Pct"
+          },
+          "tire_width_mm": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Width Mm"
+          },
+          "wheel_bandwidth_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wheel Bandwidth Pct"
+          }
+        },
+        "title": "AnalysisSettingsRequest",
+        "type": "object"
+      },
+      "AnalysisSettingsResponse": {
+        "additionalProperties": true,
+        "description": "Response body reflecting the current analysis settings (all fields pass-through).",
+        "properties": {},
+        "title": "AnalysisSettingsResponse",
+        "type": "object"
+      },
+      "CarLibraryBrandsResponse": {
+        "description": "Response body listing available car manufacturer brands.",
+        "properties": {
+          "brands": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Brands",
+            "type": "array"
+          }
+        },
+        "required": [
+          "brands"
+        ],
+        "title": "CarLibraryBrandsResponse",
+        "type": "object"
+      },
+      "CarLibraryGearboxEntry": {
+        "additionalProperties": true,
+        "description": "A gearbox option from the car library (gear ratios).",
+        "properties": {
+          "final_drive_ratio": {
+            "exclusiveMinimum": 0.0,
+            "title": "Final Drive Ratio",
+            "type": "number"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "top_gear_ratio": {
+            "exclusiveMinimum": 0.0,
+            "title": "Top Gear Ratio",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "final_drive_ratio",
+          "top_gear_ratio"
+        ],
+        "title": "CarLibraryGearboxEntry",
+        "type": "object"
+      },
+      "CarLibraryModelEntry": {
+        "additionalProperties": true,
+        "description": "A full car library entry with brand, model, tire options, and variants.",
+        "properties": {
+          "brand": {
+            "title": "Brand",
+            "type": "string"
+          },
+          "gearboxes": {
+            "items": {
+              "$ref": "#/components/schemas/CarLibraryGearboxEntry"
+            },
+            "minItems": 1,
+            "title": "Gearboxes",
+            "type": "array"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "rim_in": {
+            "exclusiveMinimum": 0.0,
+            "title": "Rim In",
+            "type": "number"
+          },
+          "tire_aspect_pct": {
+            "exclusiveMinimum": 0.0,
+            "title": "Tire Aspect Pct",
+            "type": "number"
+          },
+          "tire_options": {
+            "items": {
+              "$ref": "#/components/schemas/CarLibraryTireOptionEntry"
+            },
+            "minItems": 1,
+            "title": "Tire Options",
+            "type": "array"
+          },
+          "tire_width_mm": {
+            "exclusiveMinimum": 0.0,
+            "title": "Tire Width Mm",
+            "type": "number"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/CarLibraryVariantEntry"
+            },
+            "title": "Variants",
+            "type": "array"
+          }
+        },
+        "required": [
+          "brand",
+          "type",
+          "model",
+          "gearboxes",
+          "tire_options",
+          "tire_width_mm",
+          "tire_aspect_pct",
+          "rim_in"
+        ],
+        "title": "CarLibraryModelEntry",
+        "type": "object"
+      },
+      "CarLibraryModelsResponse": {
+        "description": "Response body listing car library model entries.",
+        "properties": {
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/CarLibraryModelEntry"
+            },
+            "title": "Models",
+            "type": "array"
+          }
+        },
+        "required": [
+          "models"
+        ],
+        "title": "CarLibraryModelsResponse",
+        "type": "object"
+      },
+      "CarLibraryTireOptionEntry": {
+        "additionalProperties": true,
+        "description": "A tire size option from the car library.",
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "rim_in": {
+            "exclusiveMinimum": 0.0,
+            "title": "Rim In",
+            "type": "number"
+          },
+          "tire_aspect_pct": {
+            "exclusiveMinimum": 0.0,
+            "title": "Tire Aspect Pct",
+            "type": "number"
+          },
+          "tire_width_mm": {
+            "exclusiveMinimum": 0.0,
+            "title": "Tire Width Mm",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "tire_width_mm",
+          "tire_aspect_pct",
+          "rim_in"
+        ],
+        "title": "CarLibraryTireOptionEntry",
+        "type": "object"
+      },
+      "CarLibraryTypesResponse": {
+        "description": "Response body listing available car body types.",
+        "properties": {
+          "types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Types",
+            "type": "array"
+          }
+        },
+        "required": [
+          "types"
+        ],
+        "title": "CarLibraryTypesResponse",
+        "type": "object"
+      },
+      "CarLibraryVariantEntry": {
+        "additionalProperties": true,
+        "description": "A specific variant/trim of a car library model entry.",
+        "properties": {
+          "drivetrain": {
+            "enum": [
+              "FWD",
+              "RWD",
+              "AWD"
+            ],
+            "title": "Drivetrain",
+            "type": "string"
+          },
+          "engine": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine"
+          },
+          "gearboxes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/CarLibraryGearboxEntry"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gearboxes"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "rim_in": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rim In"
+          },
+          "tire_aspect_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Aspect Pct"
+          },
+          "tire_options": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/CarLibraryTireOptionEntry"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Options"
+          },
+          "tire_width_mm": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Width Mm"
+          }
+        },
+        "required": [
+          "name",
+          "drivetrain"
+        ],
+        "title": "CarLibraryVariantEntry",
+        "type": "object"
+      },
+      "CarResponse": {
+        "description": "Response body representing a single car profile.",
+        "properties": {
+          "aspects": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Aspects",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "aspects"
+        ],
+        "title": "CarResponse",
+        "type": "object"
+      },
+      "CarUpsertRequest": {
+        "description": "Request body for creating or updating a car profile.",
+        "properties": {
+          "aspects": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aspects"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant"
+          }
+        },
+        "title": "CarUpsertRequest",
+        "type": "object"
+      },
+      "CarsResponse": {
+        "description": "Response body for the list of all car profiles with the active car ID.",
+        "properties": {
+          "activeCarId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activecarid"
+          },
+          "cars": {
+            "items": {
+              "$ref": "#/components/schemas/CarResponse"
+            },
+            "title": "Cars",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cars",
+          "activeCarId"
+        ],
+        "title": "CarsResponse",
+        "type": "object"
+      },
+      "ClientLocationsResponse": {
+        "description": "Response body with available sensor-location options.",
+        "properties": {
+          "locations": {
+            "items": {
+              "$ref": "#/components/schemas/LocationOptionResponse"
+            },
+            "title": "Locations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "locations"
+        ],
+        "title": "ClientLocationsResponse",
+        "type": "object"
+      },
+      "ClientsResponse": {
+        "description": "Response body listing all currently-connected sensor clients.",
+        "properties": {
+          "clients": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Clients",
+            "type": "array"
+          }
+        },
+        "required": [
+          "clients"
+        ],
+        "title": "ClientsResponse",
+        "type": "object"
+      },
+      "DebugSpectrumErrorPayload": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "fft_n": {
+            "title": "Fft N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "error",
+          "count",
+          "fft_n"
+        ],
+        "title": "DebugSpectrumErrorPayload",
+        "type": "object"
+      },
+      "DebugSpectrumPayload": {
+        "properties": {
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "detrended_std_g": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Detrended Std G",
+            "type": "array"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "fft_n": {
+            "title": "Fft N",
+            "type": "integer"
+          },
+          "fft_scale": {
+            "title": "Fft Scale",
+            "type": "number"
+          },
+          "freq_bins": {
+            "title": "Freq Bins",
+            "type": "integer"
+          },
+          "freq_resolution_hz": {
+            "title": "Freq Resolution Hz",
+            "type": "number"
+          },
+          "raw_stats": {
+            "$ref": "#/components/schemas/DebugSpectrumStatsPayload"
+          },
+          "sample_rate_hz": {
+            "title": "Sample Rate Hz",
+            "type": "integer"
+          },
+          "spectrum_max_hz": {
+            "title": "Spectrum Max Hz",
+            "type": "number"
+          },
+          "spectrum_min_hz": {
+            "title": "Spectrum Min Hz",
+            "type": "number"
+          },
+          "strength_peaks": {
+            "items": {
+              "$ref": "#/components/schemas/StrengthPeak"
+            },
+            "title": "Strength Peaks",
+            "type": "array"
+          },
+          "top_bins_by_amplitude": {
+            "items": {
+              "$ref": "#/components/schemas/DebugSpectrumTopBinPayload"
+            },
+            "title": "Top Bins By Amplitude",
+            "type": "array"
+          },
+          "vibration_strength_db": {
+            "title": "Vibration Strength Db",
+            "type": "number"
+          },
+          "window": {
+            "title": "Window",
+            "type": "string"
+          }
+        },
+        "title": "DebugSpectrumPayload",
+        "type": "object"
+      },
+      "DebugSpectrumStatsPayload": {
+        "properties": {
+          "max_g": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Max G",
+            "type": "array"
+          },
+          "mean_g": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Mean G",
+            "type": "array"
+          },
+          "min_g": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Min G",
+            "type": "array"
+          },
+          "std_g": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Std G",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mean_g",
+          "std_g",
+          "min_g",
+          "max_g"
+        ],
+        "title": "DebugSpectrumStatsPayload",
+        "type": "object"
+      },
+      "DebugSpectrumTopBinPayload": {
+        "properties": {
+          "bin": {
+            "title": "Bin",
+            "type": "integer"
+          },
+          "combined_amp_g": {
+            "title": "Combined Amp G",
+            "type": "number"
+          },
+          "freq_hz": {
+            "title": "Freq Hz",
+            "type": "number"
+          },
+          "x_amp_g": {
+            "title": "X Amp G",
+            "type": "number"
+          },
+          "y_amp_g": {
+            "title": "Y Amp G",
+            "type": "number"
+          },
+          "z_amp_g": {
+            "title": "Z Amp G",
+            "type": "number"
+          }
+        },
+        "required": [
+          "bin",
+          "freq_hz",
+          "combined_amp_g",
+          "x_amp_g",
+          "y_amp_g",
+          "z_amp_g"
+        ],
+        "title": "DebugSpectrumTopBinPayload",
+        "type": "object"
+      },
+      "DeleteHistoryRunResponse": {
+        "description": "Response body confirming deletion of a history run.",
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "status"
+        ],
+        "title": "DeleteHistoryRunResponse",
+        "type": "object"
+      },
+      "EspFlashCancelResponse": {
+        "description": "Response body confirming whether an ESP32 flash job was cancelled.",
+        "properties": {
+          "cancelled": {
+            "title": "Cancelled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cancelled"
+        ],
+        "title": "EspFlashCancelResponse",
+        "type": "object"
+      },
+      "EspFlashHistoryEntryResponse": {
+        "description": "Response body for a single historical ESP32 flash job.",
+        "properties": {
+          "auto_detect": {
+            "title": "Auto Detect",
+            "type": "boolean"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "exit_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Code"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "integer"
+          },
+          "selected_port": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Port"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "number"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "state",
+          "auto_detect",
+          "started_at"
+        ],
+        "title": "EspFlashHistoryEntryResponse",
+        "type": "object"
+      },
+      "EspFlashHistoryResponse": {
+        "description": "Response body listing all past ESP32 flash job attempts.",
+        "properties": {
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/EspFlashHistoryEntryResponse"
+            },
+            "title": "Attempts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "attempts"
+        ],
+        "title": "EspFlashHistoryResponse",
+        "type": "object"
+      },
+      "EspFlashLogsResponse": {
+        "description": "Response body with a page of ESP32 flash log lines.",
+        "properties": {
+          "from_index": {
+            "title": "From Index",
+            "type": "integer"
+          },
+          "lines": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "next_index": {
+            "title": "Next Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "from_index",
+          "next_index",
+          "lines"
+        ],
+        "title": "EspFlashLogsResponse",
+        "type": "object"
+      },
+      "EspFlashPortsResponse": {
+        "description": "Response body listing detected serial ports for ESP32 flashing.",
+        "properties": {
+          "ports": {
+            "items": {
+              "$ref": "#/components/schemas/EspSerialPortResponse"
+            },
+            "title": "Ports",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ports"
+        ],
+        "title": "EspFlashPortsResponse",
+        "type": "object"
+      },
+      "EspFlashStartRequest": {
+        "description": "Request body to start an ESP32 firmware flash job.",
+        "properties": {
+          "auto_detect": {
+            "default": true,
+            "title": "Auto Detect",
+            "type": "boolean"
+          },
+          "port": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Port"
+          }
+        },
+        "title": "EspFlashStartRequest",
+        "type": "object"
+      },
+      "EspFlashStartResponse": {
+        "description": "Response body confirming that an ESP32 flash job has been queued.",
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "job_id"
+        ],
+        "title": "EspFlashStartResponse",
+        "type": "object"
+      },
+      "EspFlashStatusResponse": {
+        "description": "Response body for the current ESP32 flash job status.",
+        "properties": {
+          "auto_detect": {
+            "title": "Auto Detect",
+            "type": "boolean"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "exit_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Code"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "log_count": {
+            "title": "Log Count",
+            "type": "integer"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "selected_port": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Port"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "phase",
+          "auto_detect",
+          "log_count"
+        ],
+        "title": "EspFlashStatusResponse",
+        "type": "object"
+      },
+      "EspSerialPortResponse": {
+        "description": "Response body describing a single detected serial port.",
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "pid": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pid"
+          },
+          "port": {
+            "title": "Port",
+            "type": "string"
+          },
+          "serial_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serial Number"
+          },
+          "vid": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vid"
+          }
+        },
+        "required": [
+          "port",
+          "description"
+        ],
+        "title": "EspSerialPortResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthDataLossResponse": {
+        "description": "Response body for aggregated client data-loss counters.",
+        "properties": {
+          "affected_clients": {
+            "title": "Affected Clients",
+            "type": "integer"
+          },
+          "frames_dropped": {
+            "title": "Frames Dropped",
+            "type": "integer"
+          },
+          "parse_errors": {
+            "title": "Parse Errors",
+            "type": "integer"
+          },
+          "queue_overflow_drops": {
+            "title": "Queue Overflow Drops",
+            "type": "integer"
+          },
+          "server_queue_drops": {
+            "title": "Server Queue Drops",
+            "type": "integer"
+          },
+          "tracked_clients": {
+            "title": "Tracked Clients",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tracked_clients",
+          "affected_clients",
+          "frames_dropped",
+          "queue_overflow_drops",
+          "server_queue_drops",
+          "parse_errors"
+        ],
+        "title": "HealthDataLossResponse",
+        "type": "object"
+      },
+      "HealthIntakeStatsResponse": {
+        "description": "Response body for processing intake timing and throughput counters.",
+        "properties": {
+          "last_compute_all_duration_s": {
+            "title": "Last Compute All Duration S",
+            "type": "number"
+          },
+          "last_compute_duration_s": {
+            "title": "Last Compute Duration S",
+            "type": "number"
+          },
+          "last_ingest_duration_s": {
+            "title": "Last Ingest Duration S",
+            "type": "number"
+          },
+          "total_compute_calls": {
+            "title": "Total Compute Calls",
+            "type": "integer"
+          },
+          "total_ingested_samples": {
+            "title": "Total Ingested Samples",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_ingested_samples",
+          "total_compute_calls",
+          "last_compute_duration_s",
+          "last_compute_all_duration_s",
+          "last_ingest_duration_s"
+        ],
+        "title": "HealthIntakeStatsResponse",
+        "type": "object"
+      },
+      "HealthPersistenceResponse": {
+        "description": "Response body for persistence health details.",
+        "properties": {
+          "analysis_in_progress": {
+            "title": "Analysis In Progress",
+            "type": "boolean"
+          },
+          "write_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Write Error"
+          }
+        },
+        "required": [
+          "write_error",
+          "analysis_in_progress"
+        ],
+        "title": "HealthPersistenceResponse",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "description": "Response body for the server health check endpoint.",
+        "properties": {
+          "data_loss": {
+            "$ref": "#/components/schemas/HealthDataLossResponse"
+          },
+          "degradation_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Degradation Reasons",
+            "type": "array"
+          },
+          "intake_stats": {
+            "$ref": "#/components/schemas/HealthIntakeStatsResponse"
+          },
+          "persistence": {
+            "$ref": "#/components/schemas/HealthPersistenceResponse"
+          },
+          "processing_failures": {
+            "title": "Processing Failures",
+            "type": "integer"
+          },
+          "processing_state": {
+            "title": "Processing State",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "processing_state",
+          "processing_failures",
+          "degradation_reasons",
+          "data_loss",
+          "persistence",
+          "intake_stats"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "HistoryInsightsResponse": {
+        "additionalProperties": true,
+        "description": "Response body with aggregated diagnostic insights for a run.",
+        "properties": {
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "HistoryInsightsResponse",
+        "type": "object"
+      },
+      "HistoryListEntryResponse": {
+        "description": "Response body for a single history-run list row.",
+        "properties": {
+          "analysis_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Version"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "end_time_utc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time Utc"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "start_time_utc": {
+            "title": "Start Time Utc",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "status",
+          "start_time_utc",
+          "created_at",
+          "sample_count"
+        ],
+        "title": "HistoryListEntryResponse",
+        "type": "object"
+      },
+      "HistoryListResponse": {
+        "description": "Response body listing recorded run summaries.",
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryListEntryResponse"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "runs"
+        ],
+        "title": "HistoryListResponse",
+        "type": "object"
+      },
+      "HistoryRunResponse": {
+        "additionalProperties": true,
+        "description": "Response body for a single history run with metadata and optional analysis.",
+        "properties": {
+          "analysis": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "status"
+        ],
+        "title": "HistoryRunResponse",
+        "type": "object"
+      },
+      "IdentifyRequest": {
+        "description": "Request body for the ``/api/clients/{id}/identify`` endpoint.",
+        "properties": {
+          "duration_ms": {
+            "default": 1500,
+            "maximum": 60000.0,
+            "minimum": 100.0,
+            "title": "Duration Ms",
+            "type": "integer"
+          }
+        },
+        "title": "IdentifyRequest",
+        "type": "object"
+      },
+      "IdentifyResponse": {
+        "description": "Response body for a sensor identify (blink) command.",
+        "properties": {
+          "cmd_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cmd Seq"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "IdentifyResponse",
+        "type": "object"
+      },
+      "LanguageRequest": {
+        "description": "Request body for changing the UI language.",
+        "properties": {
+          "language": {
+            "pattern": "^(en|nl)$",
+            "title": "Language",
+            "type": "string"
+          }
+        },
+        "required": [
+          "language"
+        ],
+        "title": "LanguageRequest",
+        "type": "object"
+      },
+      "LanguageResponse": {
+        "description": "Response body confirming the active UI language.",
+        "properties": {
+          "language": {
+            "title": "Language",
+            "type": "string"
+          }
+        },
+        "required": [
+          "language"
+        ],
+        "title": "LanguageResponse",
+        "type": "object"
+      },
+      "LocationOptionResponse": {
+        "description": "A single sensor-location option (code + human-readable label).",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label"
+        ],
+        "title": "LocationOptionResponse",
+        "type": "object"
+      },
+      "LoggingStatusResponse": {
+        "description": "Response body with the current recording (run-logging) status.",
+        "properties": {
+          "analysis_in_progress": {
+            "title": "Analysis In Progress",
+            "type": "boolean"
+          },
+          "current_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current File"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "write_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Write Error"
+          }
+        },
+        "required": [
+          "enabled",
+          "current_file",
+          "run_id",
+          "write_error",
+          "analysis_in_progress"
+        ],
+        "title": "LoggingStatusResponse",
+        "type": "object"
+      },
+      "RawSamplesErrorPayload": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "count"
+        ],
+        "title": "RawSamplesErrorPayload",
+        "type": "object"
+      },
+      "RawSamplesPayload": {
+        "properties": {
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "n_samples": {
+            "title": "N Samples",
+            "type": "integer"
+          },
+          "sample_rate_hz": {
+            "title": "Sample Rate Hz",
+            "type": "integer"
+          },
+          "x": {
+            "items": {
+              "type": "number"
+            },
+            "title": "X",
+            "type": "array"
+          },
+          "y": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Y",
+            "type": "array"
+          },
+          "z": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Z",
+            "type": "array"
+          }
+        },
+        "required": [
+          "client_id",
+          "sample_rate_hz",
+          "n_samples",
+          "x",
+          "y",
+          "z"
+        ],
+        "title": "RawSamplesPayload",
+        "type": "object"
+      },
+      "RemoveClientResponse": {
+        "description": "Response body confirming removal of a disconnected client.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "title": "RemoveClientResponse",
+        "type": "object"
+      },
+      "SensorConfigResponse": {
+        "description": "Response body with persisted config for a single sensor (name, location).",
+        "properties": {
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "location"
+        ],
+        "title": "SensorConfigResponse",
+        "type": "object"
+      },
+      "SensorRequest": {
+        "description": "Request body for updating sensor name and location.",
+        "properties": {
+          "location": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "SensorRequest",
+        "type": "object"
+      },
+      "SensorsResponse": {
+        "description": "Response body mapping MAC addresses to sensor config responses.",
+        "properties": {
+          "sensorsByMac": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SensorConfigResponse"
+            },
+            "title": "Sensorsbymac",
+            "type": "object"
+          }
+        },
+        "required": [
+          "sensorsByMac"
+        ],
+        "title": "SensorsResponse",
+        "type": "object"
+      },
+      "SetClientLocationResponse": {
+        "description": "Response body confirming the new location assignment for a client.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "location_code": {
+            "title": "Location Code",
+            "type": "string"
+          },
+          "mac_address": {
+            "title": "Mac Address",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mac_address",
+          "location_code",
+          "name"
+        ],
+        "title": "SetClientLocationResponse",
+        "type": "object"
+      },
+      "SetLocationRequest": {
+        "description": "Request body for setting the sensor location code.",
+        "properties": {
+          "location_code": {
+            "maxLength": 64,
+            "minLength": 0,
+            "title": "Location Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "location_code"
+        ],
+        "title": "SetLocationRequest",
+        "type": "object"
+      },
+      "SpeedSourceRequest": {
+        "description": "Request body for configuring the speed source (GPS, manual, OBD2, etc.).",
+        "properties": {
+          "fallbackMode": {
+            "anyOf": [
+              {
+                "const": "manual",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallbackmode"
+          },
+          "manualSpeedKph": {
+            "anyOf": [
+              {
+                "maximum": 500.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manualspeedkph"
+          },
+          "speedSource": {
+            "anyOf": [
+              {
+                "enum": [
+                  "gps",
+                  "obd2",
+                  "manual"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speedsource"
+          },
+          "staleTimeoutS": {
+            "anyOf": [
+              {
+                "maximum": 120.0,
+                "minimum": 3.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staletimeouts"
+          }
+        },
+        "title": "SpeedSourceRequest",
+        "type": "object"
+      },
+      "SpeedSourceResponse": {
+        "description": "Response body for the current speed-source configuration.",
+        "properties": {
+          "fallbackMode": {
+            "title": "Fallbackmode",
+            "type": "string"
+          },
+          "manualSpeedKph": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manualspeedkph"
+          },
+          "obd2Config": {
+            "additionalProperties": true,
+            "title": "Obd2Config",
+            "type": "object"
+          },
+          "speedSource": {
+            "title": "Speedsource",
+            "type": "string"
+          },
+          "staleTimeoutS": {
+            "title": "Staletimeouts",
+            "type": "number"
+          }
+        },
+        "required": [
+          "speedSource",
+          "manualSpeedKph",
+          "staleTimeoutS",
+          "fallbackMode"
+        ],
+        "title": "SpeedSourceResponse",
+        "type": "object"
+      },
+      "SpeedSourceStatusResponse": {
+        "description": "Response body for the live GPS/speed-source connection status.",
+        "properties": {
+          "connection_state": {
+            "title": "Connection State",
+            "type": "string"
+          },
+          "device": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device"
+          },
+          "effective_speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Speed Kmh"
+          },
+          "epv_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epv M"
+          },
+          "epx_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epx M"
+          },
+          "epy_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epy M"
+          },
+          "fallback_active": {
+            "title": "Fallback Active",
+            "type": "boolean"
+          },
+          "fallback_mode": {
+            "title": "Fallback Mode",
+            "type": "string"
+          },
+          "fix_dimension": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fix Dimension"
+          },
+          "fix_mode": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fix Mode"
+          },
+          "gps_enabled": {
+            "title": "Gps Enabled",
+            "type": "boolean"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_update_age_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Update Age S"
+          },
+          "raw_speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Speed Kmh"
+          },
+          "reconnect_delay_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reconnect Delay S"
+          },
+          "speed_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Confidence"
+          },
+          "stale_timeout_s": {
+            "title": "Stale Timeout S",
+            "type": "number"
+          }
+        },
+        "required": [
+          "gps_enabled",
+          "connection_state",
+          "device",
+          "fix_mode",
+          "fix_dimension",
+          "speed_confidence",
+          "epx_m",
+          "epy_m",
+          "epv_m",
+          "last_update_age_s",
+          "raw_speed_kmh",
+          "effective_speed_kmh",
+          "last_error",
+          "reconnect_delay_s",
+          "fallback_active",
+          "stale_timeout_s",
+          "fallback_mode"
+        ],
+        "title": "SpeedSourceStatusResponse",
+        "type": "object"
+      },
+      "SpeedUnitRequest": {
+        "description": "Request body for changing the displayed speed unit.",
+        "properties": {
+          "speedUnit": {
+            "pattern": "^(kmh|mps)$",
+            "title": "Speedunit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "speedUnit"
+        ],
+        "title": "SpeedUnitRequest",
+        "type": "object"
+      },
+      "SpeedUnitResponse": {
+        "description": "Response body confirming the active speed unit.",
+        "properties": {
+          "speedUnit": {
+            "title": "Speedunit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "speedUnit"
+        ],
+        "title": "SpeedUnitResponse",
+        "type": "object"
+      },
+      "StrengthPeak": {
+        "properties": {
+          "amp": {
+            "title": "Amp",
+            "type": "number"
+          },
+          "hz": {
+            "title": "Hz",
+            "type": "number"
+          },
+          "strength_bucket": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strength Bucket"
+          },
+          "vibration_strength_db": {
+            "title": "Vibration Strength Db",
+            "type": "number"
+          }
+        },
+        "required": [
+          "hz",
+          "amp",
+          "vibration_strength_db",
+          "strength_bucket"
+        ],
+        "title": "StrengthPeak",
+        "type": "object"
+      },
+      "UpdateCancelResponse": {
+        "description": "Response body confirming whether an OTA update job was cancelled.",
+        "properties": {
+          "cancelled": {
+            "title": "Cancelled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cancelled"
+        ],
+        "title": "UpdateCancelResponse",
+        "type": "object"
+      },
+      "UpdateIssueResponse": {
+        "description": "Response body for a single issue raised during an OTA update phase.",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phase",
+          "message",
+          "detail"
+        ],
+        "title": "UpdateIssueResponse",
+        "type": "object"
+      },
+      "UpdateRuntimeResponse": {
+        "description": "Response body for updater runtime/build verification details.",
+        "properties": {
+          "assets_verified": {
+            "title": "Assets Verified",
+            "type": "boolean"
+          },
+          "commit": {
+            "title": "Commit",
+            "type": "string"
+          },
+          "has_packaged_static": {
+            "title": "Has Packaged Static",
+            "type": "boolean"
+          },
+          "static_assets_hash": {
+            "title": "Static Assets Hash",
+            "type": "string"
+          },
+          "static_build_commit": {
+            "title": "Static Build Commit",
+            "type": "string"
+          },
+          "static_build_source_hash": {
+            "title": "Static Build Source Hash",
+            "type": "string"
+          },
+          "ui_source_hash": {
+            "title": "Ui Source Hash",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "commit",
+          "ui_source_hash",
+          "static_assets_hash",
+          "static_build_source_hash",
+          "static_build_commit",
+          "assets_verified",
+          "has_packaged_static"
+        ],
+        "title": "UpdateRuntimeResponse",
+        "type": "object"
+      },
+      "UpdateStartRequest": {
+        "description": "Request body to start an OTA software update (provides Wi-Fi credentials).",
+        "properties": {
+          "password": {
+            "default": "",
+            "maxLength": 128,
+            "title": "Password",
+            "type": "string"
+          },
+          "ssid": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Ssid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ssid"
+        ],
+        "title": "UpdateStartRequest",
+        "type": "object"
+      },
+      "UpdateStartResponse": {
+        "description": "Response body confirming that an OTA update job has started.",
+        "properties": {
+          "ssid": {
+            "title": "Ssid",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "ssid"
+        ],
+        "title": "UpdateStartResponse",
+        "type": "object"
+      },
+      "UpdateStatusResponse": {
+        "description": "Response body for the full OTA update job status.",
+        "properties": {
+          "exit_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Code"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/UpdateIssueResponse"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "log_tail": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Log Tail",
+            "type": "array"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/UpdateRuntimeResponse"
+          },
+          "ssid": {
+            "title": "Ssid",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "phase",
+          "ssid",
+          "issues",
+          "log_tail",
+          "runtime"
+        ],
+        "title": "UpdateStatusResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "VibeSensor HTTP API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/analysis-settings": {
+      "get": {
+        "operationId": "get_analysis_settings_api_analysis_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Analysis Settings"
+      },
+      "post": {
+        "operationId": "set_analysis_settings_api_analysis_settings_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Analysis Settings"
+      }
+    },
+    "/api/car-library/brands": {
+      "get": {
+        "description": "Return all available car manufacturer brands from the library.",
+        "operationId": "get_car_library_brands_api_car_library_brands_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarLibraryBrandsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Car Library Brands"
+      }
+    },
+    "/api/car-library/models": {
+      "get": {
+        "description": "Return library entries for *brand* + *type*; 404 if the combination is unknown.",
+        "operationId": "get_car_library_models_api_car_library_models_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "brand",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Brand",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Type",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarLibraryModelsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Car Library Models"
+      }
+    },
+    "/api/car-library/types": {
+      "get": {
+        "description": "Return body types available for *brand*; 404 if the brand is unknown.",
+        "operationId": "get_car_library_types_api_car_library_types_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "brand",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Brand",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarLibraryTypesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Car Library Types"
+      }
+    },
+    "/api/client-locations": {
+      "get": {
+        "operationId": "get_client_locations_api_client_locations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientLocationsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Client Locations"
+      }
+    },
+    "/api/clients": {
+      "get": {
+        "operationId": "get_clients_api_clients_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Clients"
+      }
+    },
+    "/api/clients/{client_id}": {
+      "delete": {
+        "operationId": "remove_client_api_clients__client_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoveClientResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Client"
+      }
+    },
+    "/api/clients/{client_id}/identify": {
+      "post": {
+        "operationId": "identify_client_api_clients__client_id__identify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentifyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Identify Client"
+      }
+    },
+    "/api/clients/{client_id}/location": {
+      "post": {
+        "operationId": "set_client_location_api_clients__client_id__location_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetLocationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetClientLocationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Client Location"
+      }
+    },
+    "/api/debug/raw-samples/{client_id}": {
+      "get": {
+        "description": "Raw time-domain samples in g for offline analysis.",
+        "operationId": "debug_raw_samples_api_debug_raw_samples__client_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "title": "Client Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "n",
+            "required": false,
+            "schema": {
+              "default": 2048,
+              "maximum": 6400,
+              "minimum": 1,
+              "title": "N",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/RawSamplesPayload"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RawSamplesErrorPayload"
+                    }
+                  ],
+                  "title": "Response Debug Raw Samples Api Debug Raw Samples  Client Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Debug Raw Samples"
+      }
+    },
+    "/api/debug/spectrum/{client_id}": {
+      "get": {
+        "description": "Detailed spectrum debug info for independent verification.",
+        "operationId": "debug_spectrum_api_debug_spectrum__client_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "client_id",
+            "required": true,
+            "schema": {
+              "title": "Client Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DebugSpectrumPayload"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DebugSpectrumErrorPayload"
+                    }
+                  ],
+                  "title": "Response Debug Spectrum Api Debug Spectrum  Client Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Debug Spectrum"
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/history": {
+      "get": {
+        "operationId": "get_history_api_history_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get History"
+      }
+    },
+    "/api/history/{run_id}": {
+      "delete": {
+        "operationId": "delete_history_run_api_history__run_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteHistoryRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete History Run"
+      },
+      "get": {
+        "operationId": "get_history_run_api_history__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get History Run"
+      }
+    },
+    "/api/history/{run_id}/export": {
+      "get": {
+        "operationId": "export_history_run_api_history__run_id__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export History Run"
+      }
+    },
+    "/api/history/{run_id}/insights": {
+      "get": {
+        "operationId": "get_history_insights_api_history__run_id__insights_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryInsightsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get History Insights"
+      }
+    },
+    "/api/history/{run_id}/report.pdf": {
+      "get": {
+        "operationId": "download_history_report_pdf_api_history__run_id__report_pdf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lang",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lang"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download History Report Pdf"
+      }
+    },
+    "/api/logging/start": {
+      "post": {
+        "operationId": "start_logging_api_logging_start_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoggingStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Start Logging"
+      }
+    },
+    "/api/logging/status": {
+      "get": {
+        "operationId": "get_logging_status_api_logging_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoggingStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Logging Status"
+      }
+    },
+    "/api/logging/stop": {
+      "post": {
+        "operationId": "stop_logging_api_logging_stop_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoggingStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Stop Logging"
+      }
+    },
+    "/api/settings/cars": {
+      "get": {
+        "operationId": "get_cars_api_settings_cars_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Cars"
+      },
+      "post": {
+        "operationId": "add_car_api_settings_cars_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarUpsertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Car"
+      }
+    },
+    "/api/settings/cars/active": {
+      "post": {
+        "operationId": "set_active_car_api_settings_cars_active_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActiveCarRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Active Car"
+      }
+    },
+    "/api/settings/cars/{car_id}": {
+      "delete": {
+        "operationId": "delete_car_api_settings_cars__car_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "car_id",
+            "required": true,
+            "schema": {
+              "title": "Car Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Car"
+      },
+      "put": {
+        "operationId": "update_car_api_settings_cars__car_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "car_id",
+            "required": true,
+            "schema": {
+              "title": "Car Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarUpsertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Car"
+      }
+    },
+    "/api/settings/esp-flash/cancel": {
+      "post": {
+        "operationId": "cancel_esp_flash_api_settings_esp_flash_cancel_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspFlashCancelResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Cancel Esp Flash"
+      }
+    },
+    "/api/settings/esp-flash/history": {
+      "get": {
+        "operationId": "get_esp_flash_history_api_settings_esp_flash_history_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspFlashHistoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Esp Flash History"
+      }
+    },
+    "/api/settings/esp-flash/logs": {
+      "get": {
+        "operationId": "get_esp_flash_logs_api_settings_esp_flash_logs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "After",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspFlashLogsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Esp Flash Logs"
+      }
+    },
+    "/api/settings/esp-flash/ports": {
+      "get": {
+        "operationId": "list_esp_flash_ports_api_settings_esp_flash_ports_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspFlashPortsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Esp Flash Ports"
+      }
+    },
+    "/api/settings/esp-flash/start": {
+      "post": {
+        "operationId": "start_esp_flash_api_settings_esp_flash_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EspFlashStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspFlashStartResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Esp Flash"
+      }
+    },
+    "/api/settings/esp-flash/status": {
+      "get": {
+        "operationId": "get_esp_flash_status_api_settings_esp_flash_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspFlashStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Esp Flash Status"
+      }
+    },
+    "/api/settings/language": {
+      "get": {
+        "operationId": "get_language_api_settings_language_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LanguageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Language"
+      },
+      "post": {
+        "operationId": "set_language_api_settings_language_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LanguageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LanguageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Language"
+      }
+    },
+    "/api/settings/sensors": {
+      "get": {
+        "operationId": "get_sensors_api_settings_sensors_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Sensors"
+      }
+    },
+    "/api/settings/sensors/{mac}": {
+      "delete": {
+        "operationId": "delete_sensor_api_settings_sensors__mac__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mac",
+            "required": true,
+            "schema": {
+              "title": "Mac",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Sensor"
+      },
+      "post": {
+        "operationId": "update_sensor_api_settings_sensors__mac__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mac",
+            "required": true,
+            "schema": {
+              "title": "Mac",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SensorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Sensor"
+      }
+    },
+    "/api/settings/speed-source": {
+      "get": {
+        "operationId": "get_speed_source_api_settings_speed_source_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpeedSourceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Speed Source"
+      },
+      "post": {
+        "operationId": "update_speed_source_api_settings_speed_source_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeedSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpeedSourceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Speed Source"
+      }
+    },
+    "/api/settings/speed-source/status": {
+      "get": {
+        "operationId": "get_speed_source_status_api_settings_speed_source_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpeedSourceStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Speed Source Status"
+      }
+    },
+    "/api/settings/speed-unit": {
+      "get": {
+        "operationId": "get_speed_unit_api_settings_speed_unit_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpeedUnitResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Speed Unit"
+      },
+      "post": {
+        "operationId": "set_speed_unit_api_settings_speed_unit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeedUnitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpeedUnitResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Speed Unit"
+      }
+    },
+    "/api/settings/update/cancel": {
+      "post": {
+        "operationId": "cancel_update_api_settings_update_cancel_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateCancelResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Cancel Update"
+      }
+    },
+    "/api/settings/update/start": {
+      "post": {
+        "operationId": "start_update_api_settings_update_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStartResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Update"
+      }
+    },
+    "/api/settings/update/status": {
+      "get": {
+        "operationId": "get_update_status_api_settings_update_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Update Status"
+      }
+    },
+    "/api/simulator/speed-override": {
+      "post": {
+        "operationId": "set_simulator_speed_override_api_simulator_speed_override_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeedSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpeedSourceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Simulator Speed Override"
+      }
+    }
+  }
+}

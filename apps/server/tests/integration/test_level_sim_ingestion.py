@@ -31,8 +31,8 @@ ROOT = SERVER_ROOT.parent
 # Default server settings (can be overridden via env vars for Docker)
 BASE_URL = os.environ.get("VIBESENSOR_TEST_BASE_URL", "http://127.0.0.1:8000")
 SIM_HOST = os.environ.get("VIBESENSOR_TEST_SIM_HOST", "127.0.0.1")
-SIM_DATA_PORT = os.environ.get("VIBESENSOR_TEST_SIM_DATA_PORT", "5005")
-SIM_CONTROL_PORT = os.environ.get("VIBESENSOR_TEST_SIM_CONTROL_PORT", "5006")
+SIM_DATA_PORT = os.environ.get("VIBESENSOR_TEST_SIM_DATA_PORT", "9000")
+SIM_CONTROL_PORT = os.environ.get("VIBESENSOR_TEST_SIM_CONTROL_PORT", "9001")
 
 
 def _api_json(path: str, *, timeout: int = 30) -> dict:
@@ -65,24 +65,24 @@ def _history_run_ids() -> set[str]:
     return {str(r["run_id"]) for r in data.get("runs", [])}
 
 
-def _wait_for_run_persisted(run_id: str, *, timeout_s: float = 15.0) -> None:
-    """Poll history every 0.25s until run ID appears or raise AssertionError."""
+def _wait_for_run_persisted(run_id: str, *, timeout_s: float = 15.0) -> bool:
+    """Poll history every 0.25s until run ID appears or timeout expires."""
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
         if run_id in _history_run_ids():
-            return
+            return True
         time.sleep(0.25)
-    raise AssertionError(f"Run {run_id} not persisted within {timeout_s}s")
+    return False
 
 
 def _wait_for_analysis(run_id: str, *, timeout_s: float = 120.0) -> dict:
-    """Poll until run reaches 'complete' status."""
+    """Poll until the insights payload reflects completed current analysis."""
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
         try:
             data = _api_json(f"/api/history/{run_id}/insights")
             status = data.get("status", "")
-            if status == "complete":
+            if status == "complete" or data.get("analysis_is_current") is True:
                 return data
         except Exception:
             pass
@@ -154,11 +154,11 @@ class TestSimulatorIngestion:
         _api_post_json("/api/logging/stop")
 
         # Wait for server to persist the run ID before continuing.
-        _wait_for_run_persisted(started_run_id)
+        persisted = _wait_for_run_persisted(started_run_id)
 
         # Prefer the explicit started run id; fallback to history diff if needed.
         post_runs = _history_run_ids()
-        if started_run_id in post_runs:
+        if persisted and started_run_id in post_runs:
             self.run_id = started_run_id
         else:
             new_runs = post_runs - pre_runs
@@ -175,9 +175,15 @@ class TestSimulatorIngestion:
 
     def test_insights_has_required_fields(self) -> None:
         """Insights response has all required top-level fields."""
-        for key in ("status", "top_causes", "findings", "speed_breakdown", "most_likely_origin"):
+        for key in (
+            "top_causes",
+            "findings",
+            "speed_breakdown",
+            "most_likely_origin",
+            "analysis_is_current",
+        ):
             assert key in self.insights, f"Missing '{key}' in insights"
-        assert self.insights["status"] == "complete"
+        assert self.insights["analysis_is_current"] is True
 
     def test_top_cause_exists(self) -> None:
         """At least one top cause should be present."""
