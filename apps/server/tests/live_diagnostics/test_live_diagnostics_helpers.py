@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from vibesensor.analysis._types import MetadataDict, Sample
 from vibesensor.live_diagnostics._types import SEVERITY_KEYS, SOURCE_KEYS, _TrackerLevelState
 from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
 from vibesensor.live_diagnostics.severity_matrix import _copy_matrix, _new_matrix
@@ -160,7 +161,12 @@ def test_findings_language_is_forwarded(monkeypatch) -> None:
 def test_live_findings_skip_incomplete_live_samples_without_warning(monkeypatch, caplog) -> None:
     engine = LiveDiagnosticsEngine()
 
-    def _unexpected_build_findings_for_samples(*, metadata, samples, lang):  # type: ignore[no-untyped-def]
+    def _unexpected_build_findings_for_samples(
+        *,
+        metadata: MetadataDict,
+        samples: list[Sample],
+        lang: str | None,
+    ) -> list[object]:
         raise AssertionError(
             "build_findings_for_samples should not run without live strength metrics"
         )
