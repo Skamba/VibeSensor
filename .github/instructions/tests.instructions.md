@@ -8,6 +8,7 @@ Tests
 - Cross-cutting directories: `integration/` (scenarios), `regression/` (bug fixes), `hygiene/` (guards), `e2e/` (browser).
 - Shared helpers: `conftest.py` (fixtures, available to all subdirs), `builders.py` (synthetic data generators), `_paths.py` (use `SERVER_ROOT`/`REPO_ROOT` instead of `Path(__file__).parents[N]`).
 - New tests: place in the matching `tests/<module>/` subdirectory; use `tests/integration/` for cross-cutting scenarios, `tests/regression/` for bug-fix regressions.
+- When an intentional refactor changes function-level seams or helper boundaries, update or replace tightly coupled tests so they validate current behavior and contracts instead of preserving obsolete internals.
 - Default CI-aligned test suite: `make test-all` (runs `python3 tools/tests/run_ci_parallel.py` to mirror CI `backend-quality`, `backend-typecheck`, `frontend-typecheck`, `ui-smoke`, `backend-tests`, and `e2e` job groups in parallel).
 - Optional CI job subset for faster local iteration: `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests`.
 - Run a single feature area: `pytest -q apps/server/tests/analysis/` (or any subdirectory).
