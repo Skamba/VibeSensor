@@ -105,9 +105,10 @@ def engine_reference_coverage_pct(
     tire_circumference_m: float | None,
 ) -> float:
     """Compute engine reference coverage percentage from samples and metadata."""
-    eff_rpm = _effective_engine_rpm
     engine_ref_count = sum(
-        1 for sample in samples if ((eff_rpm(sample, metadata, tire_circumference_m))[0] or 0) > 0
+        1
+        for sample in samples
+        if ((_effective_engine_rpm(sample, metadata, tire_circumference_m))[0] or 0) > 0
     )
     return (engine_ref_count / len(samples) * 100.0) if samples else 0.0
 

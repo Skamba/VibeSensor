@@ -39,10 +39,9 @@ def compute_accel_statistics(
     sat_count = 0
 
     for sample in samples:
-        get_value = sample.get
-        x = _as_float(get_value("accel_x_g"))
-        y = _as_float(get_value("accel_y_g"))
-        z = _as_float(get_value("accel_z_g"))
+        x = _as_float(sample.get("accel_x_g"))
+        y = _as_float(sample.get("accel_y_g"))
+        z = _as_float(sample.get("accel_z_g"))
         if x is not None:
             accel_x_vals.append(x)
         if y is not None:
