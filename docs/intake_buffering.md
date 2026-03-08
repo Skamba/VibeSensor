@@ -27,9 +27,16 @@ The async processing loop in `runtime/processing_loop.py` runs on a timer,
 filters to active clients with fresh data, and calls `SignalProcessor.compute_all()`
 via `asyncio.to_thread()` so the event loop never performs FFT work directly.
 
+`SignalProcessor` is now a facade over three explicit subsystems:
+
+- `processing/buffer_store.py`: buffer lifecycle, locking, ingest, and immutable snapshots
+- `processing/compute.py`: FFT cache ownership plus metric computation from snapshots
+- `processing/views.py`: payload shaping, debug output, and time-alignment views
+
 Inside `SignalProcessor.compute_all()`, per-client FFT work is dispatched through
-the shared `WorkerPool` when multiple clients are active. `compute_metrics()` uses
-snapshot-based locking:
+the shared `WorkerPool` when multiple clients are active. `compute_metrics()` now
+reads top-to-bottom as “snapshot → compute → commit”, and still uses snapshot-based
+locking:
 
 - **Phase 1 (lock):** copy the ring buffer data (~20–100 μs).
 - **Phase 2 (no lock):** heavy FFT / peak-finding / strength-db
