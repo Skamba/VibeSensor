@@ -1,6 +1,6 @@
 # Operational Runbooks
 
-This file is the human-facing operational guide for common VibeSensor incidents and release checks. It complements the developer-focused quick commands in [docs/ai/runbooks.md](docs/ai/runbooks.md).
+This file is the human-facing operational guide for common VibeSensor incidents and release checks. It complements the developer-focused quick commands in [docs/ai/runbooks.md](ai/runbooks.md).
 
 ## Quick health checks
 
