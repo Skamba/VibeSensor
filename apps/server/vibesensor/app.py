@@ -20,7 +20,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from .bootstrap import build_services
-from .config import SERVER_DIR, load_config
+from .config import load_config
 from .routes import create_router
 from .runtime import RuntimeState
 

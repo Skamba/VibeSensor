@@ -22,13 +22,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from vibesensor.analysis import summarize_run_data
 from vibesensor.analysis.findings.order_findings import (
     _compute_order_confidence,
     _detect_diffuse_excitation,
     _suppress_engine_aliases,
 )
 from vibesensor.analysis.phase_segmentation import DrivingPhase
-from vibesensor.analysis import summarize_run_data
 from vibesensor.analysis.ranking import phase_adjusted_ranking_score as _phase_ranking_score
 from vibesensor.analysis.summary_phases import build_phase_timeline as _build_phase_timeline
 from vibesensor.analysis.summary_suitability import (

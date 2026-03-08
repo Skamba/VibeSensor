@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import pytest
 from _test_helpers import assert_summary_sections
-
 from test_support.analysis import extract_top, run_analysis
 from test_support.assertions import (
     assert_confidence_between,
