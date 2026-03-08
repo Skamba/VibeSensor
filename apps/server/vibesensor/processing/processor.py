@@ -1,79 +1,34 @@
-"""Signal processor — buffer management, metric computation, and payload formatting.
+"""Signal processor facade with explicit state, compute, and view subsystems.
 
-``SignalProcessor`` is the stateful coordinator that manages per-client
-circular buffers, dispatches FFT computation to the pure functions in
-:mod:`~vibesensor.processing.fft`, and assembles API/WebSocket payloads.
+``SignalProcessor`` preserves the external API used by runtime, routes, and
+metrics logging while delegating to focused collaborators:
 
-Thread-safety is maintained through an internal :class:`threading.RLock`;
-the ``@_synchronized`` decorator is applied to methods that read or
-mutate shared buffer state.
+- :mod:`vibesensor.processing.buffer_store` owns buffer lifecycle, shared state,
+  locking, and state snapshots.
+- :mod:`vibesensor.processing.compute` owns FFT cache/window state and metric
+  computation from immutable snapshots.
+- :mod:`vibesensor.processing.views` owns payload shaping, debug output, and
+  time-alignment views.
 """
 
 from __future__ import annotations
 
 import logging
-import math
 import time
-from collections.abc import Callable
-from functools import wraps
-from threading import RLock
-from typing import Any, Concatenate, ParamSpec, TypeAlias, TypeVar, cast
+from typing import Any
 
 import numpy as np
-import numpy.typing as npt
 
 from ..worker_pool import WorkerPool
+from .buffer_store import MAX_CLIENT_SAMPLE_RATE_HZ as _MAX_CLIENT_SAMPLE_RATE_HZ
+from .buffer_store import SignalBufferStore
 from .buffers import ClientBuffer
-from .fft import (
-    AXES,
-    compute_fft_spectrum,
-    float_list,
-    medfilt3,
-    noise_floor,
-    smooth_spectrum,
-    top_peaks,
-)
-from .payload import (
-    EMPTY_SPECTRUM_PAYLOAD,
-    build_multi_spectrum_payload,
-    build_selected_payload,
-    build_spectrum_payload,
-)
-from .time_align import (
-    analysis_time_range,
-    compute_overlap,
-)
+from .compute import SignalMetricsComputer
+from .models import CachedMetricsHit, FloatArray, IntIndexArray, ProcessorConfig
+from .views import SignalProcessorViews
 
 LOGGER = logging.getLogger(__name__)
-MAX_CLIENT_SAMPLE_RATE_HZ = 4096
-
-_P = ParamSpec("_P")
-_R = TypeVar("_R")
-FloatArray: TypeAlias = npt.NDArray[np.float32]
-IntIndexArray: TypeAlias = npt.NDArray[np.intp]
-
-
-def _finite_or_zero(v: float) -> float:
-    """Return *v* if finite, else ``0.0``."""
-    return v if math.isfinite(v) else 0.0
-
-
-_EMPTY_F32: FloatArray = np.array([], dtype=np.float32)
-"""Immutable-by-convention empty float32 array used as `.get()` default."""
-_FFT_CACHE_MAXSIZE = 64
-"""Maximum number of cached FFT plans.  Bounds memory while avoiding
-repeated plan recomputation for common (sample_rate, fft_size) pairs."""
-
-
-def _synchronized(
-    method: Callable[Concatenate[SignalProcessor, _P], _R],
-) -> Callable[Concatenate[SignalProcessor, _P], _R]:
-    @wraps(method)
-    def _wrapped(self: SignalProcessor, *args: _P.args, **kwargs: _P.kwargs) -> _R:
-        with self._lock:
-            return method(self, *args, **kwargs)
-
-    return _wrapped
+MAX_CLIENT_SAMPLE_RATE_HZ = _MAX_CLIENT_SAMPLE_RATE_HZ
 
 
 class SignalProcessor:
@@ -90,44 +45,48 @@ class SignalProcessor:
         accel_scale_g_per_lsb: float | None = None,
         worker_pool: WorkerPool | None = None,
     ) -> None:
-        """Initialise the signal processor with buffer and FFT parameters."""
-        self.sample_rate_hz = sample_rate_hz
-        self.waveform_seconds = waveform_seconds
-        self.waveform_display_hz = waveform_display_hz
-        self.fft_n = fft_n
-        self.spectrum_min_hz = max(0.0, float(spectrum_min_hz))
-        self.spectrum_max_hz = spectrum_max_hz
-        self.accel_scale_g_per_lsb = (
-            float(accel_scale_g_per_lsb)
-            if isinstance(accel_scale_g_per_lsb, (int, float)) and accel_scale_g_per_lsb > 0
-            else None
+        self._config = ProcessorConfig(
+            sample_rate_hz=sample_rate_hz,
+            waveform_seconds=waveform_seconds,
+            waveform_display_hz=waveform_display_hz,
+            fft_n=fft_n,
+            spectrum_min_hz=max(0.0, float(spectrum_min_hz)),
+            spectrum_max_hz=spectrum_max_hz,
+            accel_scale_g_per_lsb=(
+                float(accel_scale_g_per_lsb)
+                if isinstance(accel_scale_g_per_lsb, (int, float)) and accel_scale_g_per_lsb > 0
+                else None
+            ),
         )
-        self.max_samples = sample_rate_hz * waveform_seconds
-        self._buffers: dict[str, ClientBuffer] = {}
-        self._fft_window: FloatArray = np.hanning(self.fft_n).astype(np.float32)
-        self._fft_scale = float(2.0 / max(1.0, float(np.sum(self._fft_window))))
-        self._fft_cache: dict[int, tuple[FloatArray, IntIndexArray]] = {}
-        self._fft_cache_lock = RLock()
-        self._lock = RLock()
-        # Worker pool for parallel per-client FFT.  Owned externally when
-        # injected, otherwise a private pool is created.
-        self._worker_pool = worker_pool
-        # Lightweight intake/analysis metrics for observability.
-        self._total_ingested_samples: int = 0
-        self._total_compute_calls: int = 0
-        self._last_compute_duration_s: float = 0.0
-        self._last_compute_all_duration_s: float = 0.0
-        self._last_ingest_duration_s: float = 0.0
+        self.sample_rate_hz = self._config.sample_rate_hz
+        self.waveform_seconds = self._config.waveform_seconds
+        self.waveform_display_hz = self._config.waveform_display_hz
+        self.fft_n = self._config.fft_n
+        self.spectrum_min_hz = self._config.spectrum_min_hz
+        self.spectrum_max_hz = self._config.spectrum_max_hz
+        self.accel_scale_g_per_lsb = self._config.accel_scale_g_per_lsb
+        self.max_samples = self._config.max_samples
 
-    # -- static / pure helpers (delegate to fft module) -----------------------
+        self._store = SignalBufferStore(self._config)
+        self._metrics = SignalMetricsComputer(self._config)
+        self._views = SignalProcessorViews(store=self._store, metrics=self._metrics)
+        self._worker_pool = worker_pool
+
+        # Preserve the established internal surface used by tests/regressions.
+        self._buffers = self._store.buffers
+        self._lock = self._store.lock
+        self._fft_window = self._metrics.fft_window
+        self._fft_scale = self._metrics.fft_scale
+        self._fft_cache = self._metrics.fft_cache
+        self._fft_cache_lock = self._metrics.fft_cache_lock
 
     @staticmethod
     def _smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
-        return cast(np.ndarray, smooth_spectrum(np.asarray(amps, dtype=np.float32), bins=bins))
+        return SignalMetricsComputer.smooth_spectrum(amps, bins=bins)
 
     @staticmethod
     def _noise_floor(amps: np.ndarray) -> float:
-        return noise_floor(amps)
+        return SignalMetricsComputer.noise_floor(amps)
 
     @classmethod
     def _top_peaks(
@@ -139,292 +98,58 @@ class SignalProcessor:
         floor_ratio: float | None = None,
         smoothing_bins: int = 5,
     ) -> list[dict[str, float]]:
-        if floor_ratio is not None:
-            return top_peaks(
-                freqs,
-                amps,
-                top_n=top_n,
-                floor_ratio=floor_ratio,
-                smoothing_bins=smoothing_bins,
-            )
-        return top_peaks(freqs, amps, top_n=top_n, smoothing_bins=smoothing_bins)
+        return SignalMetricsComputer.top_peaks(
+            freqs,
+            amps,
+            top_n=top_n,
+            floor_ratio=floor_ratio,
+            smoothing_bins=smoothing_bins,
+        )
 
-    # -- Buffer management ----------------------------------------------------
-
-    @_synchronized
     def flush_client_buffer(self, client_id: str) -> None:
-        """Reset the buffer for *client_id*, discarding all stored samples.
+        self._store.flush_client_buffer(client_id)
 
-        After a sensor reset (sequence-number wraparound, new HELLO with
-        different firmware, etc.) the circular buffer likely contains samples
-        from a different time-base.  Flushing ensures the next FFT window
-        is built entirely from post-reset data.
-        """
-        buf = self._buffers.get(client_id)
-        if buf is None:
-            return
-        buf.data[:] = 0.0
-        buf.write_idx = 0
-        buf.count = 0
-        buf.last_t0_us = 0
-        buf.samples_since_t0 = 0
-        buf.latest_metrics = {}
-        buf.latest_spectrum = {}
-        buf.latest_strength_metrics = {}
-        buf.invalidate_caches()
-        buf.ingest_generation += 1
-        LOGGER.info("Flushed signal buffer for client %s after sensor reset", client_id)
-
-    def _get_or_create(self, client_id: str) -> ClientBuffer:
-        buf = self._buffers.get(client_id)
-        if buf is None:
-            data: FloatArray = np.zeros((3, self.max_samples), dtype=np.float32)
-            buf = ClientBuffer(data=data, capacity=self.max_samples)
-            self._buffers[client_id] = buf
-        return buf
-
-    def _resize_buffer(self, buf: ClientBuffer, new_capacity: int) -> None:
-        new_capacity = max(1, int(new_capacity))
-        if new_capacity == buf.capacity:
-            return
-        latest = self._latest(buf, min(buf.count, new_capacity))
-        resized: FloatArray = np.zeros((3, new_capacity), dtype=np.float32)
-        if latest.size:
-            resized[:, : latest.shape[1]] = latest
-        buf.data = resized
-        buf.capacity = new_capacity
-        buf.write_idx = latest.shape[1] % new_capacity
-        buf.count = min(latest.shape[1], new_capacity)
-
-    @_synchronized
     def ingest(
         self,
         client_id: str,
-        samples: FloatArray,
+        samples: np.ndarray,
         sample_rate_hz: int | None = None,
         t0_us: int | None = None,
     ) -> None:
-        t_start = time.monotonic()
-        if samples.size == 0:
-            return
-        buf = self._get_or_create(client_id)
-        chunk: FloatArray = np.asarray(samples, dtype=np.float32)
-        if self.accel_scale_g_per_lsb is not None:
-            chunk = chunk * np.float32(self.accel_scale_g_per_lsb)
-        if chunk.ndim != 2 or chunk.shape[1] != 3:
-            LOGGER.warning(
-                "Dropping malformed sample chunk for %s with shape %s",
-                client_id,
-                chunk.shape,
-            )
-            return
-        if sample_rate_hz is not None and sample_rate_hz > 0:
-            requested_rate = int(sample_rate_hz)
-            clamped_rate = max(1, min(MAX_CLIENT_SAMPLE_RATE_HZ, requested_rate))
-            if clamped_rate != requested_rate:
-                LOGGER.warning(
-                    "Clamped client sample_rate_hz from %d to %d to bound buffer growth",
-                    requested_rate,
-                    clamped_rate,
-                )
-            buf.sample_rate_hz = clamped_rate
-            self._resize_buffer(buf, buf.sample_rate_hz * self.waveform_seconds)
-        now_mono = time.monotonic()
-        buf.last_ingest_mono_s = now_mono
-
-        n = int(chunk.shape[0])
-        capacity = buf.capacity
-        if n >= capacity:
-            chunk = chunk[-capacity:]
-            n = capacity
-
-        end = buf.write_idx + n
-        if end <= capacity:
-            buf.data[:, buf.write_idx : end] = chunk.T
-        else:
-            first = capacity - buf.write_idx
-            buf.data[:, buf.write_idx :] = chunk[:first].T
-            buf.data[:, : end % capacity] = chunk[first:].T
-
-        buf.write_idx = end % capacity
-        buf.count = min(capacity, buf.count + n)
-        # Track sensor-clock timestamp for cross-sensor alignment.
-        if t0_us is not None and t0_us > 0:
-            buf.last_t0_us = int(t0_us)
-            buf.samples_since_t0 = n
-        else:
-            # Cap accumulator to prevent unbounded growth during long runs
-            # where the sensor never emits a fresh t0_us.  At 2^28 samples
-            # (~18 hours at 4096 Hz) the derived end_us estimate already
-            # far exceeds any realistic session length.
-            _MAX_SAMPLES_SINCE_T0 = 2**28
-            buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
-        buf.ingest_generation += 1
-        buf.invalidate_caches()
-        self._total_ingested_samples += n
-        self._last_ingest_duration_s = time.monotonic() - t_start
-
-    def _latest(self, buf: ClientBuffer, n: int) -> FloatArray:
-        if n <= 0 or buf.count == 0:
-            return np.empty((3, 0), dtype=np.float32)
-        n = min(n, buf.count)
-        start = (buf.write_idx - n) % buf.capacity
-        if start + n <= buf.capacity:
-            return buf.data[:, start : start + n].copy()
-        first = buf.capacity - start
-        return np.concatenate((buf.data[:, start:], buf.data[:, : n - first]), axis=1)
-
-    # -- FFT / metric computation ---------------------------------------------
-
-    def _fft_params(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray]:
-        with self._fft_cache_lock:
-            cached = self._fft_cache.get(sample_rate_hz)
-            if cached is not None:
-                return cached
-            if sample_rate_hz <= 0:
-                LOGGER.warning(
-                    "_fft_params called with invalid sample_rate_hz=%d; "
-                    "returning empty frequency slice.",
-                    sample_rate_hz,
-                )
-                return _EMPTY_F32, np.empty(0, dtype=np.intp)
-            freqs = np.fft.rfftfreq(self.fft_n, d=1.0 / sample_rate_hz)
-            valid = (freqs >= self.spectrum_min_hz) & (freqs <= self.spectrum_max_hz)
-            freq_slice = freqs[valid].astype(np.float32)
-            valid_idx = np.flatnonzero(valid)
-            self._fft_cache[sample_rate_hz] = (freq_slice, valid_idx)
-            if len(self._fft_cache) > _FFT_CACHE_MAXSIZE:
-                oldest = next(iter(self._fft_cache))
-                del self._fft_cache[oldest]
-            return freq_slice, valid_idx
-
-    def _compute_fft_spectrum(
-        self,
-        fft_block: FloatArray,
-        sample_rate_hz: int,
-    ) -> dict[str, Any]:
-        """Shared FFT spectrum computation used by both compute_metrics and debug_spectrum.
-
-        Delegates to the pure :func:`~vibesensor.processing.fft.compute_fft_spectrum`
-        function, passing processor configuration as parameters.
-        """
-        freq_slice, valid_idx = self._fft_params(sample_rate_hz)
-        return compute_fft_spectrum(
-            fft_block,
-            sample_rate_hz,
-            fft_window=self._fft_window,
-            fft_scale=self._fft_scale,
-            freq_slice=freq_slice,
-            valid_idx=valid_idx,
-            spike_filter_enabled=True,
+        self._store.ingest(
+            client_id,
+            samples,
+            sample_rate_hz=sample_rate_hz,
+            t0_us=t0_us,
+            clock=time.monotonic,
         )
 
+    def _get_or_create(self, client_id: str) -> ClientBuffer:
+        with self._lock:
+            return self._store._get_or_create_unlocked(client_id)
+
+    def _resize_buffer(self, buf: ClientBuffer, new_capacity: int) -> None:
+        with self._lock:
+            self._store._resize_buffer_unlocked(buf, new_capacity)
+
+    def _latest(self, buf: ClientBuffer, n: int) -> FloatArray:
+        with self._lock:
+            return self._store.copy_latest(buf, n)
+
+    def _fft_params(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray]:
+        return self._metrics.fft_params(sample_rate_hz)
+
+    def _compute_fft_spectrum(self, fft_block: np.ndarray, sample_rate_hz: int) -> dict[str, Any]:
+        return self._metrics.compute_fft_spectrum(fft_block, sample_rate_hz)
+
     def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> dict[str, Any]:
-        t0 = time.monotonic()
-        # --- Phase 1: snapshot buffer state under a brief lock ---------------
-        with self._lock:
-            buf = self._buffers.get(client_id)
-            if buf is None or buf.count == 0:
-                return {}
-            if sample_rate_hz is not None and sample_rate_hz > 0:
-                buf.sample_rate_hz = int(sample_rate_hz)
-            sr = buf.sample_rate_hz or self.sample_rate_hz
-            # Fast-path: no new ingested samples at this sample-rate, so keep
-            # the previously computed metrics/spectrum snapshot for payload reuse.
-            if buf.compute_generation == buf.ingest_generation and buf.compute_sample_rate_hz == sr:
-                return buf.latest_metrics
-
-            desired_samples = int(max(1.0, float(sr) * float(self.waveform_seconds)))
-            n_time = min(buf.count, buf.capacity, max(1, desired_samples))
-            time_window = self._latest(buf, n_time)  # returns a copy
-            has_fft_data = buf.count >= self.fft_n
-            if has_fft_data:
-                if n_time >= self.fft_n:
-                    # Slice from the already-copied time_window to avoid a
-                    # second circular-buffer read + allocation.
-                    fft_block = time_window[:, -self.fft_n :]
-                else:
-                    fft_block = self._latest(buf, self.fft_n)
-            else:
-                fft_block = None
-            snap_ingest_gen = buf.ingest_generation
-
-        # --- Phase 2: heavy computation (no lock held) -----------------------
-        time_window = medfilt3(time_window)
-        time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
-
-        metrics: dict[str, Any] = {}
-        if time_window_detrended.shape[1] > 0:
-            # Vectorised RMS and peak-to-peak across all three axes at once,
-            # replacing three individual per-axis NumPy reduction calls.
-            rms_vals = np.sqrt(np.mean(np.square(time_window_detrended, dtype=np.float64), axis=1))
-            p2p_vals = np.max(time_window_detrended, axis=1) - np.min(time_window_detrended, axis=1)
-            for axis_idx, axis in enumerate(AXES):
-                metrics[axis] = {
-                    "rms": _finite_or_zero(float(rms_vals[axis_idx])),
-                    "p2p": _finite_or_zero(float(p2p_vals[axis_idx])),
-                    "peaks": [],
-                }
-
-        if time_window_detrended.size > 0:
-            vib_mag = np.sqrt(np.sum(np.square(time_window_detrended, dtype=np.float64), axis=0))
-            vib_mag_rms = _finite_or_zero(
-                float(np.sqrt(np.mean(np.square(vib_mag), dtype=np.float64)))
-            )
-            vib_mag_p2p = _finite_or_zero(float(np.max(vib_mag) - np.min(vib_mag)))
-        else:
-            vib_mag_rms = 0.0
-            vib_mag_p2p = 0.0
-
-        metrics["combined"] = {
-            "vib_mag_rms": vib_mag_rms,
-            "vib_mag_p2p": vib_mag_p2p,
-            "peaks": [],
-        }
-
-        spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
-        strength_metrics_dict: dict[str, Any] = {}
-        if has_fft_data and fft_block is not None:
-            fft_result = self._compute_fft_spectrum(fft_block, sr)
-            freq_slice = fft_result["freq_slice"]
-            spectrum_by_axis = fft_result["spectrum_by_axis"]
-
-            for axis in fft_result["axis_peaks"]:
-                metrics.setdefault(axis, {"rms": 0.0, "p2p": 0.0, "peaks": []})
-                metrics[axis]["peaks"] = fft_result["axis_peaks"][axis]
-
-            if fft_result["axis_amp_slices"]:
-                combined_amp = fft_result["combined_amp"]
-                strength_metrics = fft_result["strength_metrics"]
-                metrics["combined"]["peaks"] = list(strength_metrics["top_peaks"])
-                metrics["combined"]["strength_metrics"] = dict(strength_metrics)
-                metrics["strength_metrics"] = dict(strength_metrics)
-                spectrum_by_axis["combined"] = {
-                    "freq": freq_slice,
-                    "amp": combined_amp,
-                }
-                strength_metrics_dict = dict(strength_metrics)
-
-        # --- Phase 3: store results under a brief lock -----------------------
-        with self._lock:
-            buf = self._buffers.get(client_id)
-            if buf is not None and snap_ingest_gen >= buf.compute_generation:
-                buf.latest_metrics = metrics
-                buf.compute_generation = snap_ingest_gen
-                buf.compute_sample_rate_hz = sr
-                if has_fft_data:
-                    buf.latest_spectrum = spectrum_by_axis
-                    buf.latest_strength_metrics = strength_metrics_dict
-                else:
-                    buf.latest_spectrum = {}
-                    buf.latest_strength_metrics = {}
-                buf.spectrum_generation += 1
-                buf.invalidate_caches()
-            # Update observability counters inside lock to avoid lost-update
-            # race when multiple worker-pool threads finish concurrently.
-            self._last_compute_duration_s = time.monotonic() - t0
-            self._total_compute_calls += 1
-        return metrics
+        plan = self._store.snapshot_for_compute(client_id, sample_rate_hz=sample_rate_hz)
+        if plan is None:
+            return {}
+        if isinstance(plan, CachedMetricsHit):
+            return plan.metrics
+        result = self._metrics.compute(plan)
+        return self._store.store_metrics_result(result)
 
     def compute_all(
         self,
@@ -432,329 +157,94 @@ class SignalProcessor:
         sample_rates_hz: dict[str, int] | None = None,
     ) -> dict[str, dict[str, Any]]:
         rates = sample_rates_hz or {}
-        if len(client_ids) <= 1 or self._worker_pool is None:
-            # Fast path: single client or no pool – avoid thread overhead.
-            t0 = time.monotonic()
-            result: dict[str, dict[str, Any]] = {}
-            for client_id in client_ids:
-                try:
-                    result[client_id] = self.compute_metrics(
-                        client_id,
-                        sample_rate_hz=rates.get(client_id),
-                    )
-                except Exception:
-                    LOGGER.warning(
-                        "compute_metrics failed for %s; skipping.",
-                        client_id,
-                        exc_info=True,
-                    )
-            self._last_compute_all_duration_s = time.monotonic() - t0
-            return result
-
-        # Parallel path: submit per-client FFT work to the pool.
         t0 = time.monotonic()
 
-        def _compute_one(client_id: str) -> dict[str, Any]:
-            return self.compute_metrics(client_id, sample_rate_hz=rates.get(client_id))
+        if len(client_ids) <= 1 or self._worker_pool is None:
+            result = self._compute_all_serial(client_ids, rates)
+            self._store.record_compute_all_duration(time.monotonic() - t0)
+            return result
 
         try:
-            result = self._worker_pool.map_unordered(_compute_one, client_ids)
+            result = self._worker_pool.map_unordered(
+                lambda client_id: self.compute_metrics(
+                    client_id,
+                    sample_rate_hz=rates.get(client_id),
+                ),
+                client_ids,
+            )
         except Exception:
             LOGGER.warning(
                 "compute_all: worker pool raised; falling back to serial execution.",
                 exc_info=True,
             )
-            result = {}
-            for cid in client_ids:
-                try:
-                    result[cid] = self.compute_metrics(cid, sample_rate_hz=rates.get(cid))
-                except Exception:
-                    LOGGER.warning(
-                        "compute_metrics failed for %s (serial fallback); skipping.",
-                        cid,
-                        exc_info=True,
-                    )
-        self._last_compute_all_duration_s = time.monotonic() - t0
+            result = self._compute_all_serial(client_ids, rates, serial_fallback=True)
+        self._store.record_compute_all_duration(time.monotonic() - t0)
         return result
 
-    # -- Payload formatting ---------------------------------------------------
-
-    @_synchronized
     def spectrum_payload(self, client_id: str) -> dict[str, Any]:
-        buf = self._buffers.get(client_id)
-        if buf is None:
-            return dict(EMPTY_SPECTRUM_PAYLOAD)
-        return build_spectrum_payload(buf)
+        return self._views.spectrum_payload(client_id)
 
-    @_synchronized
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
-        return build_multi_spectrum_payload(
-            self._buffers,
-            client_ids,
-            spectrum_fn=self.spectrum_payload,
-            analysis_time_range_fn=self._analysis_time_range,
-        )
+        return self._views.multi_spectrum_payload(client_ids)
 
-    @_synchronized
     def selected_payload(self, client_id: str) -> dict[str, Any]:
-        buf = self._buffers.get(client_id)
-        if buf is None or buf.count == 0:
-            sr = self.sample_rate_hz
-            return {
-                "client_id": client_id,
-                "sample_rate_hz": sr,
-                "waveform": {},
-                "spectrum": {},
-                "metrics": {},
-            }
-        return build_selected_payload(
-            buf,
-            client_id,
-            sample_rate_hz=self.sample_rate_hz,
-            waveform_seconds=self.waveform_seconds,
-            waveform_display_hz=self.waveform_display_hz,
-            latest_fn=self._latest,
-        )
+        return self._views.selected_payload(client_id)
 
-    # -- Accessors & debug ----------------------------------------------------
-
-    @_synchronized
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:
-        buf = self._buffers.get(client_id)
-        if buf is None or buf.count == 0:
-            return None
-        idx = (buf.write_idx - 1) % buf.capacity
-        return (
-            float(buf.data[0, idx]),
-            float(buf.data[1, idx]),
-            float(buf.data[2, idx]),
-        )
+        return self._store.latest_sample_xyz(client_id)
 
-    @_synchronized
     def latest_sample_rate_hz(self, client_id: str) -> int | None:
-        buf = self._buffers.get(client_id)
-        if buf is None:
-            return None
-        rate = int(buf.sample_rate_hz or 0)
-        return rate if rate > 0 else None
+        return self._store.latest_sample_rate_hz(client_id)
 
     def debug_spectrum(self, client_id: str) -> dict[str, Any]:
-        """Return detailed spectrum debug info for independent verification.
+        return self._views.debug_spectrum(client_id)
 
-        The buffer snapshot is taken under a brief lock; the heavy FFT
-        computation runs *outside* the lock so that concurrent ``ingest()``
-        calls are not serialised behind the debug endpoint.
-        """
-        with self._lock:
-            buf = self._buffers.get(client_id)
-            if buf is None or buf.count < self.fft_n:
-                return {
-                    "error": "insufficient samples",
-                    "count": buf.count if buf else 0,
-                    "fft_n": self.fft_n,
-                }
-            sr = buf.sample_rate_hz or self.sample_rate_hz
-            snap_fft_n = self.fft_n
-            snap_fft_scale = self._fft_scale
-            snap_min_hz = self.spectrum_min_hz
-            snap_max_hz = self.spectrum_max_hz
-            fft_block = self._latest(buf, self.fft_n)  # returns a copy
-
-        # --- Heavy computation outside the lock to avoid blocking ingest ----
-        raw_mean = fft_block.mean(axis=1).tolist()
-        raw_std = fft_block.std(axis=1).tolist()
-        raw_min = fft_block.min(axis=1).tolist()
-        raw_max = fft_block.max(axis=1).tolist()
-
-        fft_result = self._compute_fft_spectrum(fft_block, sr)
-        freq_slice = fft_result["freq_slice"]
-        axis_amps = fft_result["axis_amps"]
-        combined_amp = fft_result["combined_amp"]
-        sm = fft_result["strength_metrics"]
-
-        detrended_std = (fft_block - fft_block.mean(axis=1, keepdims=True)).std(axis=1).tolist()
-
-        sorted_idx = np.argsort(combined_amp)[::-1]
-        top_bins = []
-        for i in sorted_idx[:10]:
-            top_bins.append(
-                {
-                    "bin": int(i),
-                    "freq_hz": float(freq_slice[i]),
-                    "combined_amp_g": float(combined_amp[i]),
-                    "x_amp_g": float(axis_amps["x"][i]),
-                    "y_amp_g": float(axis_amps["y"][i]),
-                    "z_amp_g": float(axis_amps["z"][i]),
-                }
-            )
-
-        return {
-            "client_id": client_id,
-            "sample_rate_hz": sr,
-            "fft_n": snap_fft_n,
-            "fft_scale": snap_fft_scale,
-            "window": "hann",
-            "spectrum_min_hz": snap_min_hz,
-            "spectrum_max_hz": snap_max_hz,
-            "freq_bins": len(freq_slice),
-            "freq_resolution_hz": float(sr) / snap_fft_n,
-            "raw_stats": {
-                "mean_g": raw_mean,
-                "std_g": raw_std,
-                "min_g": raw_min,
-                "max_g": raw_max,
-            },
-            "detrended_std_g": detrended_std,
-            "vibration_strength_db": float(sm.get("vibration_strength_db", 0)),
-            "top_bins_by_amplitude": top_bins,
-            "strength_peaks": list(sm.get("top_peaks", [])),
-        }
-
-    @_synchronized
     def raw_samples(self, client_id: str, n_samples: int = 2048) -> dict[str, Any]:
-        """Return raw time-domain samples (in g) for independent analysis."""
-        buf = self._buffers.get(client_id)
-        if buf is None or buf.count == 0:
-            return {"error": "no data", "count": 0}
-        sr = buf.sample_rate_hz or self.sample_rate_hz
-        n = min(n_samples, buf.count)
-        block = self._latest(buf, n)
-        return {
-            "client_id": client_id,
-            "sample_rate_hz": sr,
-            "n_samples": n,
-            "x": float_list(block[0]),
-            "y": float_list(block[1]),
-            "z": float_list(block[2]),
-        }
+        return self._views.raw_samples(client_id, n_samples=n_samples)
 
-    @_synchronized
     def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
-        """Return subset of *client_ids* that received data within *max_age_s*."""
-        now = time.monotonic()
-        result: list[str] = []
-        for cid in client_ids:
-            buf = self._buffers.get(cid)
-            if buf is None or buf.last_ingest_mono_s <= 0:
-                continue
-            if (now - buf.last_ingest_mono_s) <= max_age_s:
-                result.append(cid)
-        return result
+        return self._store.clients_with_recent_data(client_ids, max_age_s=max_age_s)
 
-    @_synchronized
     def evict_clients(self, keep_client_ids: set[str]) -> None:
-        stale_ids = [client_id for client_id in self._buffers if client_id not in keep_client_ids]
-        for client_id in stale_ids:
-            self._buffers.pop(client_id, None)
+        self._store.evict_clients(keep_client_ids)
 
     def intake_stats(self) -> dict[str, Any]:
-        """Return lightweight intake/analysis metrics for observability.
-
-        All counter reads are taken under ``_lock`` to avoid returning a
-        torn snapshot (e.g. ``total_compute_calls`` incremented while
-        ``last_compute_duration_s`` hasn't been updated yet).
-        """
-        with self._lock:
-            stats: dict[str, Any] = {
-                "total_ingested_samples": self._total_ingested_samples,
-                "total_compute_calls": self._total_compute_calls,
-                "last_compute_duration_s": self._last_compute_duration_s,
-                "last_compute_all_duration_s": self._last_compute_all_duration_s,
-                "last_ingest_duration_s": self._last_ingest_duration_s,
-            }
+        stats = self._store.intake_stats()
         if self._worker_pool is not None:
             stats["worker_pool"] = self._worker_pool.stats()
         return stats
 
-    # -- Time-alignment helpers ------------------------------------------------
-
     def _analysis_time_range(self, buf: ClientBuffer) -> tuple[float, float, bool] | None:
-        """Return ``(start_s, end_s, synced)`` for the current analysis window.
+        return self._views.analysis_time_range(buf)
 
-        Delegates to the pure :func:`~vibesensor.processing.time_align.analysis_time_range`
-        function.
-        """
-        sr = buf.sample_rate_hz or self.sample_rate_hz
-        return analysis_time_range(
-            count=buf.count,
-            last_ingest_mono_s=buf.last_ingest_mono_s,
-            sample_rate_hz=sr,
-            waveform_seconds=self.waveform_seconds,
-            capacity=buf.capacity,
-            last_t0_us=buf.last_t0_us,
-            samples_since_t0=buf.samples_since_t0,
-        )
-
-    @_synchronized
     def time_alignment_info(self, client_ids: list[str]) -> dict[str, Any]:
-        """Compute time-alignment metadata across multiple sensors.
+        return self._views.time_alignment_info(client_ids)
 
-        Returns a dict with:
-
-        * ``per_sensor``  – per-client time-range info (includes ``synced`` flag)
-        * ``shared_window`` – intersection of all time ranges (``None`` if disjoint)
-        * ``overlap_ratio`` – fraction of the union covered by the intersection
-        * ``aligned`` – ``True`` when the overlap ratio meets the minimum threshold
-        * ``clock_synced`` – ``True`` when *all* included sensors use synced timestamps
-        * ``sensors_included`` / ``sensors_excluded`` – partition of *client_ids*
-        """
-        per_sensor: dict[str, dict[str, Any]] = {}
-        ranges: list[tuple[float, float]] = []
-        included: list[str] = []
-        excluded: list[str] = []
-        all_synced = True
-
-        for cid in client_ids:
-            buf = self._buffers.get(cid)
-            if buf is None:
-                excluded.append(cid)
-                continue
-            tr = self._analysis_time_range(buf)
-            if tr is None:
-                excluded.append(cid)
-                continue
-            start, end, synced = tr
-            if not synced:
-                all_synced = False
-            per_sensor[cid] = {
-                "start_s": start,
-                "end_s": end,
-                "duration_s": end - start,
-                "synced": synced,
-            }
-            ranges.append((start, end))
-            included.append(cid)
-
-        if len(ranges) < 2:
-            return {
-                "per_sensor": per_sensor,
-                "shared_window": None,
-                "overlap_ratio": 1.0 if len(ranges) == 1 else 0.0,
-                "aligned": True,
-                "clock_synced": all_synced and bool(included),
-                "sensors_included": included,
-                "sensors_excluded": excluded,
-            }
-
-        ov = compute_overlap(
-            [s for s, _ in ranges],
-            [e for _, e in ranges],
-        )
-
-        shared: dict[str, float] | None = None
-        if ov.overlap_s > 0:
-            shared = {
-                "start_s": ov.shared_start,
-                "end_s": ov.shared_end,
-                "duration_s": ov.overlap_s,
-            }
-
-        return {
-            "per_sensor": per_sensor,
-            "shared_window": shared,
-            "overlap_ratio": round(ov.overlap_ratio, 4),
-            "aligned": ov.aligned,
-            "clock_synced": all_synced,
-            "sensors_included": included,
-            "sensors_excluded": excluded,
-        }
+    def _compute_all_serial(
+        self,
+        client_ids: list[str],
+        rates: dict[str, int],
+        *,
+        serial_fallback: bool = False,
+    ) -> dict[str, dict[str, Any]]:
+        result: dict[str, dict[str, Any]] = {}
+        for client_id in client_ids:
+            try:
+                result[client_id] = self.compute_metrics(
+                    client_id,
+                    sample_rate_hz=rates.get(client_id),
+                )
+            except Exception:
+                if serial_fallback:
+                    LOGGER.warning(
+                        "compute_metrics failed for %s (serial fallback); skipping.",
+                        client_id,
+                        exc_info=True,
+                    )
+                else:
+                    LOGGER.warning(
+                        "compute_metrics failed for %s; skipping.",
+                        client_id,
+                        exc_info=True,
+                    )
+        return result
