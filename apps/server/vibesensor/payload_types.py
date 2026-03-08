@@ -5,9 +5,9 @@ from typing import TypeAlias
 from typing_extensions import TypedDict
 from vibesensor_core.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 
-JsonScalar: TypeAlias = None | bool | int | float | str
-JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
-JsonObject: TypeAlias = dict[str, JsonValue]
+from .analysis._types import Finding
+from .json_types import JsonObject
+
 IntakeStatsPayload: TypeAlias = JsonObject
 
 
@@ -261,8 +261,8 @@ class LiveDiagnosticsPayload(TypedDict):
     events: list[DiagnosticEventPayload]
     strength_bands: list[StrengthBandPayload]
     levels: DiagnosticsLevelsPayload
-    findings: list[dict[str, object]]
-    top_finding: dict[str, object] | None
+    findings: list[Finding]
+    top_finding: Finding | None
     driving_phase: str
     error: str | None
 
