@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from collections import deque
 from time import monotonic
 from typing import Any
@@ -47,6 +48,14 @@ _BANDS_LIST: list[StrengthBandPayload] = list(BANDS)
 _PRUNE_SILENCE_TICKS: int = 60
 _COMBINED_TRACKER_PRUNE_MS: int = 30_000
 """Remove combined trackers that have been absent for this many milliseconds."""
+
+
+def _has_precomputed_strength_metrics(samples: list[dict[str, Any]]) -> bool:
+    for sample in samples:
+        value = sample.get("vibration_strength_db")
+        if isinstance(value, (int, float)) and math.isfinite(float(value)):
+            return True
+    return False
 
 
 class LiveDiagnosticsEngine:
@@ -201,15 +210,18 @@ class LiveDiagnosticsEngine:
         language: str = "en",
     ) -> LiveDiagnosticsPayload:
         if finding_metadata is not None and finding_samples is not None:
-            try:
-                self._latest_findings = build_findings_for_samples(
-                    metadata=finding_metadata,
-                    samples=finding_samples,
-                    lang=language,
-                )
-            except Exception as exc:
-                LOGGER.warning("Live diagnostics findings unavailable: %s", exc, exc_info=True)
+            if finding_samples and not _has_precomputed_strength_metrics(finding_samples):
                 self._latest_findings = []
+            else:
+                try:
+                    self._latest_findings = build_findings_for_samples(
+                        metadata=finding_metadata,
+                        samples=finding_samples,
+                        lang=language,
+                    )
+                except Exception as exc:
+                    LOGGER.warning("Live diagnostics findings unavailable: %s", exc, exc_info=True)
+                    self._latest_findings = []
 
         now_ms = int(monotonic() * 1000.0)
         self._phase.update(speed_mps, now_ms / 1000.0)

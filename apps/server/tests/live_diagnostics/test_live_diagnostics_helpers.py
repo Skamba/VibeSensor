@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from vibesensor.live_diagnostics._types import SEVERITY_KEYS, SOURCE_KEYS, _TrackerLevelState
 from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
 from vibesensor.live_diagnostics.severity_matrix import _copy_matrix, _new_matrix
@@ -153,6 +155,34 @@ def test_findings_language_is_forwarded(monkeypatch) -> None:
         language="nl",
     )
     assert seen["lang"] == "nl"
+
+
+def test_live_findings_skip_incomplete_live_samples_without_warning(monkeypatch, caplog) -> None:
+    engine = LiveDiagnosticsEngine()
+
+    def _unexpected_build_findings_for_samples(*, metadata, samples, lang):  # type: ignore[no-untyped-def]
+        raise AssertionError(
+            "build_findings_for_samples should not run without live strength metrics"
+        )
+
+    monkeypatch.setattr(
+        "vibesensor.live_diagnostics.engine.build_findings_for_samples",
+        _unexpected_build_findings_for_samples,
+    )
+
+    caplog.set_level(logging.WARNING)
+    snap = engine.update(
+        speed_mps=0.0,
+        clients=[],
+        spectra=None,
+        settings={},
+        finding_metadata={},
+        finding_samples=[{"client_id": "c1", "top_peaks": []}],
+        language="en",
+    )
+
+    assert snap["findings"] == []
+    assert "Live diagnostics findings unavailable" not in caplog.text
 
 
 # -- LiveDiagnosticsEngine driving phase tracking --------------------------------
