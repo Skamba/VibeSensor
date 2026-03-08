@@ -3,7 +3,8 @@
 Owns:
 - Background task creation and cancellation
 - UDP transport management
-- Graceful shutdown sequencing (analysis wait → resource cleanup)
+- Graceful shutdown sequencing (ingress stop → task cancellation →
+  metrics/analysis drain → resource cleanup)
 """
 
 from __future__ import annotations
@@ -175,7 +176,22 @@ class LifecycleManager:
             raise
 
     async def stop(self) -> None:
-        """Graceful shutdown: cancel tasks, close DB/transport, wait for post-analysis."""
+        """Graceful shutdown with explicit ingress-stop and metrics-drain phases."""
+        try:
+            self._ingress.control_plane.close()
+        except Exception:
+            LOGGER.warning("Error closing control plane", exc_info=True)
+        try:
+            if self._data_transport is not None:
+                self._data_transport.close()
+                self._data_transport = None
+        except Exception:
+            LOGGER.warning("Error closing data transport", exc_info=True)
+        if self._data_consumer_task is not None:
+            self._data_consumer_task.cancel()
+            await asyncio.gather(self._data_consumer_task, return_exceptions=True)
+            self._data_consumer_task = None
+
         for task in self.tasks:
             task.cancel()
         # Wait up to 15 s for tasks to respond to cancellation.
@@ -205,36 +221,22 @@ class LifecycleManager:
                     await asyncio.wait_for(asyncio.shield(task), timeout=10.0)
 
         analysis_timeout_s = self._config.logging.shutdown_analysis_timeout_s
-        finished = await asyncio.to_thread(
-            self._diagnostics.metrics_logger.shutdown,
+        shutdown_report = await asyncio.to_thread(
+            self._diagnostics.metrics_logger.shutdown_report,
             analysis_timeout_s,
         )
-        if not finished:
-            health = self._diagnostics.metrics_logger.health_snapshot()
+        if not shutdown_report.completed:
             LOGGER.warning(
                 "Post-analysis did not finish within %.1fs on shutdown; "
-                "results for the last run may be lost. queue_depth=%d "
-                "active_run=%s oldest_queue_age_s=%s",
+                "results for the last run may be lost. active_run_before_stop=%s "
+                "queue_depth=%d active_run=%s oldest_queue_age_s=%s write_error=%s",
                 analysis_timeout_s,
-                health["analysis_queue_depth"],
-                health["analysis_active_run_id"],
-                health["analysis_queue_oldest_age_s"],
+                shutdown_report.active_run_id_before_stop,
+                shutdown_report.analysis_queue_depth,
+                shutdown_report.analysis_active_run_id,
+                shutdown_report.analysis_queue_oldest_age_s,
+                shutdown_report.write_error,
             )
-
-        try:
-            self._ingress.control_plane.close()
-        except Exception:
-            LOGGER.warning("Error closing control plane", exc_info=True)
-        try:
-            if self._data_transport is not None:
-                self._data_transport.close()
-                self._data_transport = None
-        except Exception:
-            LOGGER.warning("Error closing data transport", exc_info=True)
-        if self._data_consumer_task is not None:
-            self._data_consumer_task.cancel()
-            await asyncio.gather(self._data_consumer_task, return_exceptions=True)
-            self._data_consumer_task = None
         try:
             await asyncio.to_thread(self._ingress.worker_pool.shutdown, True)
         except Exception:
