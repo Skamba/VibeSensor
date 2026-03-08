@@ -260,6 +260,8 @@ class ReportTemplateData:
         )
         filtered["pattern_evidence"] = PatternEvidence.from_dict(d.get("pattern_evidence"))
         filtered["peak_rows"] = (
-            [PeakRow.from_dict(row) for row in peak_rows_raw] if is_json_array(peak_rows_raw) else []
+            [PeakRow.from_dict(row) for row in peak_rows_raw]
+            if is_json_array(peak_rows_raw)
+            else []
         )
         return cls(**filtered)

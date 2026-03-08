@@ -31,20 +31,36 @@ _CONTRACTS_DIR: Path = _contracts_dir()
 
 
 def _load_json_object(name: str) -> dict[str, object]:
-    payload = json.loads((_CONTRACTS_DIR / name).read_text(encoding="utf-8"))
+    path = _CONTRACTS_DIR / name
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f"{name} must contain a top-level JSON object")
+        raise ValueError(f"{path} must contain a top-level JSON object")
     return payload
 
 
 def _load_string_map(name: str) -> dict[str, str]:
     payload = _load_json_object(name)
-    return {str(key): str(value) for key, value in payload.items()}
+    result: dict[str, str] = {}
+    path = _CONTRACTS_DIR / name
+    for key, value in payload.items():
+        if value is None:
+            raise ValueError(f"{path} contains null for key {key!r}; expected a string value")
+        result[str(key)] = str(value)
+    return result
 
 
 def _load_int_map(name: str) -> dict[str, int]:
     payload = _load_json_object(name)
-    return {str(key): int(value) for key, value in payload.items()}
+    result: dict[str, int] = {}
+    path = _CONTRACTS_DIR / name
+    for key, value in payload.items():
+        try:
+            result[str(key)] = int(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"{path} contains non-integer value for key {key!r}: {value!r}"
+            ) from exc
+    return result
 
 
 METRIC_FIELDS: dict[str, str] = _load_string_map("metrics_fields.json")
