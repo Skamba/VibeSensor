@@ -9,12 +9,10 @@ from _report_persistence_helpers import (
     uniform_samples,
 )
 
+from vibesensor.analysis import build_findings_for_samples
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.analysis.plot_data import _top_peaks_table_rows
-from vibesensor.analysis.summary import (
-    _annotate_peaks_with_order_labels,
-    build_findings_for_samples,
-)
+from vibesensor.analysis.summary_builder import annotate_peaks_with_order_labels
 
 
 class TestBuildPersistentPeakFindings:
@@ -290,7 +288,7 @@ class TestAnnotatePeaksWithOrderLabels:
                 ]
             },
         }
-        _annotate_peaks_with_order_labels(summary)
+        annotate_peaks_with_order_labels(summary)
         assert summary["plots"]["peaks_table"][0]["order_label"] == "1x wheel order"
         assert summary["plots"]["peaks_table"][1]["order_label"] == ""
 
@@ -305,7 +303,7 @@ class TestAnnotatePeaksWithOrderLabels:
             ],
             "plots": {"peaks_table": [{"frequency_hz": 11.0, "order_label": ""}]},
         }
-        _annotate_peaks_with_order_labels(summary)
+        annotate_peaks_with_order_labels(summary)
         assert summary["plots"]["peaks_table"][0]["order_label"] == ""
 
     def test_no_crash_when_no_findings(self) -> None:
@@ -313,11 +311,11 @@ class TestAnnotatePeaksWithOrderLabels:
             "findings": [],
             "plots": {"peaks_table": [{"frequency_hz": 11.0, "order_label": ""}]},
         }
-        _annotate_peaks_with_order_labels(summary)
+        annotate_peaks_with_order_labels(summary)
         assert summary["plots"]["peaks_table"][0]["order_label"] == ""
 
     def test_no_crash_when_no_plots(self) -> None:
-        _annotate_peaks_with_order_labels({"findings": []})
+        annotate_peaks_with_order_labels({"findings": []})
 
     def test_f_peak_findings_ignored(self) -> None:
         summary = {
@@ -330,7 +328,7 @@ class TestAnnotatePeaksWithOrderLabels:
             ],
             "plots": {"peaks_table": [{"frequency_hz": 41.0, "order_label": ""}]},
         }
-        _annotate_peaks_with_order_labels(summary)
+        annotate_peaks_with_order_labels(summary)
         assert summary["plots"]["peaks_table"][0]["order_label"] == ""
 
     def test_multiple_order_findings_annotate_different_peaks(self) -> None:
@@ -355,7 +353,7 @@ class TestAnnotatePeaksWithOrderLabels:
                 ]
             },
         }
-        _annotate_peaks_with_order_labels(summary)
+        annotate_peaks_with_order_labels(summary)
         assert summary["plots"]["peaks_table"][0]["order_label"] == "1x wheel order"
         assert summary["plots"]["peaks_table"][1]["order_label"] == "2x engine order"
         assert summary["plots"]["peaks_table"][2]["order_label"] == ""
@@ -369,5 +367,5 @@ class TestAnnotatePeaksWithOrderLabels:
                 ]
             },
         }
-        _annotate_peaks_with_order_labels(summary)
+        annotate_peaks_with_order_labels(summary)
         assert str(summary["plots"]["peaks_table"][0].get("order_label") or "").strip() == ""

@@ -4,8 +4,8 @@ from __future__ import annotations
 """Order analysis and numeric input guard regressions.
 
 Covers:
-  1. pdf_builder.py — guarded float() on confidence_0_to_1
-  2. summary.py — guarded float() on frequency_hz
+  1. pdf_engine.py — guarded float() on confidence_0_to_1
+  2. summary_builder.py — guarded float() on frequency_hz
   3. order_analysis._order_label — edge cases (zero test coverage)
   4. order_analysis._driveshaft_hz — edge cases (zero test coverage)
   5. domain_models._as_float_or_none — NaN handling
@@ -18,7 +18,7 @@ from vibesensor.analysis.order_analysis import _driveshaft_hz, _order_label
 from vibesensor.runlog import as_float_or_none
 
 # ------------------------------------------------------------------
-# 1. pdf_builder confidence guard (integration-level)
+# 1. pdf_engine confidence guard (integration-level)
 # ------------------------------------------------------------------
 
 
@@ -43,7 +43,7 @@ class TestPdfBuilderConfidenceGuard:
 
 
 # ------------------------------------------------------------------
-# 2. summary.py frequency guard
+# 2. summary_builder.py frequency guard
 # ------------------------------------------------------------------
 
 

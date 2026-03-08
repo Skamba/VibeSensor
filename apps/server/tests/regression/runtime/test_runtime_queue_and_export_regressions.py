@@ -94,9 +94,9 @@ class TestSensorTrackersPruning:
 # Fix 5 – Dead functions removed
 # ---------------------------------------------------------------------------
 _DEAD_FUNCTION_CASES = [
-    ("vibesensor/report/pdf_builder.py", "_measure_text_height"),
-    ("vibesensor/report/pdf_diagram.py", "_amp_heat_color"),
-    ("vibesensor/report/pdf_diagram.py", "def _format_db"),
+    ("vibesensor/report/pdf_page1.py", "_measure_text_height"),
+    ("vibesensor/report/pdf_diagram_render.py", "_amp_heat_color"),
+    ("vibesensor/report/pdf_diagram_render.py", "def _format_db"),
     ("vibesensor/firmware_cache.py", "def install_baseline"),
 ]
 
@@ -111,18 +111,18 @@ class TestDeadFunctionsRemoved:
 
 
 # ---------------------------------------------------------------------------
-# Fix 6 – _normalize_lang: kept inline per architectural boundary
+# Fix 6 – normalize_lang stays analysis-local (no report_i18n dependency)
 # ---------------------------------------------------------------------------
 class TestNormalizeLangArchitecturalBoundary:
-    _SUMMARY_SRC = SERVER_ROOT / "vibesensor" / "analysis" / "summary.py"
+    _SUMMARY_SRC = SERVER_ROOT / "vibesensor" / "analysis" / "summary_builder.py"
 
     def test_summary_does_not_import_report_i18n(self) -> None:
-        """summary.py must NOT import from report_i18n (i18n separation constraint)."""
+        """summary_builder.py must NOT import from report_i18n."""
         assert "from ..report_i18n import" not in self._SUMMARY_SRC.read_text()
 
-    def test_summary_has_inline_normalize_lang(self) -> None:
-        """summary.py must define its own _normalize_lang (avoiding report_i18n dep)."""
-        assert "def _normalize_lang" in self._SUMMARY_SRC.read_text()
+    def test_summary_has_normalize_lang(self) -> None:
+        """summary_builder.py must define normalize_lang without report_i18n."""
+        assert "def normalize_lang" in self._SUMMARY_SRC.read_text()
 
 
 # ---------------------------------------------------------------------------

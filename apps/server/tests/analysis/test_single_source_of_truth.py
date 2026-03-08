@@ -205,7 +205,7 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
         root / "vibesensor" / "metrics_log" / "sample_builder.py",
         root / "vibesensor" / "metrics_log" / "logger.py",
         root / "vibesensor" / "analysis" / "helpers.py",
-        root / "vibesensor" / "analysis" / "summary.py",
+        root / "vibesensor" / "analysis" / "summary_builder.py",
     ]
     for fpath in files_to_check:
         source = fpath.read_text(encoding="utf-8")

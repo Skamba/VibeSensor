@@ -37,7 +37,6 @@ apps/server/
 ├── config.docker.yaml
 ├── config.example.yaml
 ├── data/
-├── public/
 ├── scripts/
 ├── systemd/
 ├── tests/
@@ -45,7 +44,7 @@ apps/server/
 ```
 
 - `data/`: runtime state, history database, and report i18n JSON.
-- `public/`: built UI assets served by FastAPI.
+- `vibesensor/static/`: built UI assets served by FastAPI.
 - `scripts/` and `systemd/`: Pi deployment and hotspot support.
 - `tests/`: pytest suite, organized by backend ownership boundary.
 
@@ -103,7 +102,7 @@ Generate a PDF from a saved run:
 vibesensor-report path/to/run.jsonl --output report.pdf --summary-json summary.json
 ```
 
-The public renderer facade is `apps/server/vibesensor/report/pdf_builder.py`. Page composition now lives in focused modules under `report/` rather than one oversized renderer file.
+The public PDF entrypoint is `apps/server/vibesensor/report/pdf_engine.py`. Page composition lives in focused modules under `report/`.
 
 ## Updates
 

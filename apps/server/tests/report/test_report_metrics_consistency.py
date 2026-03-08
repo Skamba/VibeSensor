@@ -19,25 +19,27 @@ from __future__ import annotations
 from dataclasses import asdict
 
 import pytest
-from builders import (
+from test_support.analysis import run_analysis
+from test_support.core import (
     ALL_WHEEL_SENSORS,
     SENSOR_ENGINE,
     SENSOR_FL,
     SENSOR_FR,
     SENSOR_RL,
     SENSOR_RR,
-    make_fault_samples,
+    standard_metadata,
+)
+from test_support.fault_scenarios import make_fault_samples
+from test_support.sample_scenarios import (
     make_idle_samples,
     make_noise_samples,
     make_ramp_samples,
     make_transient_samples,
-    run_analysis,
-    standard_metadata,
 )
 
 from vibesensor.analysis import map_summary
 from vibesensor.analysis.strength_labels import certainty_tier
-from vibesensor.report.pdf_builder import build_report_pdf
+from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.report_data import ReportTemplateData
 
 # ---------------------------------------------------------------------------

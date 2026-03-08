@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from builders import make_fault_samples as make_fault_samples
-from builders import make_sample as make_sample
-from builders import make_speed_sweep_fault_samples as make_speed_sweep_fault_samples
-from builders import standard_metadata as standard_metadata
-from builders import wheel_hz as wheel_hz
+from test_support import make_fault_samples as make_fault_samples
+from test_support import make_sample as make_sample
+from test_support import make_speed_sweep_fault_samples as make_speed_sweep_fault_samples
+from test_support import standard_metadata as standard_metadata
+from test_support import wheel_hz as wheel_hz
 
+from vibesensor.analysis import summarize_run_data
 from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
-from vibesensor.analysis.summary import summarize_run_data
 
 __all__ = [
     "_classify_peak_type",

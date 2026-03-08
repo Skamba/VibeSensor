@@ -31,16 +31,12 @@ from .summary_models import (
     SensorAnalysisBundle,
     SummaryComputation,
 )
-from .summary_pipeline import (
-    build_phase_timeline,
+from .summary_payload import build_sensor_analysis, build_summary_payload, summarize_origin
+from .summary_phases import build_phase_timeline, compute_run_timing, prepare_speed_and_phases
+from .summary_suitability import (
     build_run_suitability_checks,
-    build_sensor_analysis,
-    build_summary_payload,
     compute_accel_statistics,
     compute_reference_completeness,
-    compute_run_timing,
-    prepare_speed_and_phases,
-    summarize_origin,
 )
 from .test_plan import _merge_test_plan
 from .top_cause_selection import select_top_causes

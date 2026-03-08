@@ -1,4 +1,4 @@
-from builders import CAR_PROFILES, profile_metadata
+from test_support import CAR_PROFILES, profile_metadata
 
 
 def test_profile_metadata_returns_fresh_dict_each_call() -> None:

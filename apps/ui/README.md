@@ -22,8 +22,8 @@ npm run build        # Production build to dist/
 npm run typecheck    # Type check without emitting
 ```
 
-The built output in `dist/` is copied to `apps/server/public/` for serving by FastAPI.
-Use `python tools/sync_ui_to_pi_public.py` from the repo root to build and sync
+The built output in `dist/` is copied to `apps/server/vibesensor/static/` for serving by FastAPI.
+Use `python tools/build_ui_static.py` from the repo root to build and sync
 in one step.
 
 ## Source Modules

@@ -60,7 +60,7 @@ Test layout
 - Mapping rule: if you change `vibesensor/<module>/`, tests live in `tests/<module>/`.
 - Cross-cutting tests live in `tests/integration/` for scenario and multi-module coverage, `tests/regression/` for intent-grouped bug-fix regressions, `tests/hygiene/` for architecture guards, and `tests/e2e/` for browser coverage.
 - `tests/regression/` is split by intent: `analysis/`, `audits/`, `cross_cutting/`, `report/`, and `runtime/`.
-- Shared helpers include `conftest.py`, `builders.py`, `_paths.py`, and focused helper modules such as `_report_helpers.py` and scenario helper files when reuse justifies them.
+- Shared helpers include `conftest.py`, `_paths.py`, the `test_support/` package, and focused helper modules such as `_report_helpers.py` and scenario helper files when reuse justifies them.
 - If an intentional refactor changes function-level seams or helper boundaries, refactor the affected tests too; do not preserve brittle function-level tests that only lock in the old structure.
 
 Pi access defaults (prebuilt image)

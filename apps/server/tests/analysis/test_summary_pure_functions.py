@@ -1,8 +1,8 @@
-"""Unit tests for pure functions in vibesensor.analysis.summary.
+"""Unit tests for pure analysis entry helpers.
 
 Covers:
 - confidence_label: label/tone/pct_text for 0-1 confidence value
-- _normalize_lang: minimal lang normalisation inside summary module
+- normalize_lang: minimal language normalisation for summary building
 - select_top_causes: grouping, drop-off, max_causes
 
 These functions are exercised indirectly by the full pipeline but were
@@ -17,11 +17,8 @@ from vibesensor.analysis.strength_labels import (
     CONFIDENCE_HIGH_THRESHOLD,
     CONFIDENCE_MEDIUM_THRESHOLD,
 )
-from vibesensor.analysis.summary import (
-    _normalize_lang,
-    confidence_label,
-    select_top_causes,
-)
+from vibesensor.analysis.summary_builder import normalize_lang
+from vibesensor.analysis.top_cause_selection import confidence_label, select_top_causes
 
 # ---------------------------------------------------------------------------
 # confidence_label
@@ -95,12 +92,12 @@ class TestConfidenceLabel:
 
 
 # ---------------------------------------------------------------------------
-# _normalize_lang (summary module's private copy)
+# normalize_lang
 # ---------------------------------------------------------------------------
 
 
 class TestNormalizeLangInSummary:
-    """Tests for the _normalize_lang helper inside summary.py.
+    """Tests for the normalize_lang helper used by summary building.
 
     This is a separate implementation from vibesensor.report_i18n.normalize_lang
     and must behave consistently.
@@ -112,7 +109,7 @@ class TestNormalizeLangInSummary:
         ids=["en", "EN_upper", "long_en", "empty", "none", "fr_defaults", "int"],
     )
     def test_non_nl_returns_en(self, input_lang: object) -> None:
-        assert _normalize_lang(input_lang) == "en"
+        assert normalize_lang(input_lang) == "en"
 
     @pytest.mark.parametrize(
         "input_lang",
@@ -120,7 +117,7 @@ class TestNormalizeLangInSummary:
         ids=["nl_lower", "NL_upper", "nl-NL", "nl_BE"],
     )
     def test_nl_prefix_returns_nl(self, input_lang: str) -> None:
-        assert _normalize_lang(input_lang) == "nl"
+        assert normalize_lang(input_lang) == "nl"
 
 
 # ---------------------------------------------------------------------------

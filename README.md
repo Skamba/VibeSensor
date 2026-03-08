@@ -122,7 +122,7 @@ Open http://localhost:8000.
 
 ```bash
 pip install -e "./apps/server[dev]"
-python tools/sync_ui_to_pi_public.py
+python tools/build_ui_static.py
 vibesensor-server --config apps/server/config.dev.yaml
 ```
 

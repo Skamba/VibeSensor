@@ -12,6 +12,7 @@ from _phased_scenario_helpers import (
     summarize_run_data,
     wheel_hz,
 )
+from test_support import make_sample
 
 
 class TestSpeedBandAttribution:
@@ -112,7 +113,7 @@ class TestConfidenceWithSpatialAmbiguity:
             whz = wheel_hz(speed)
             for sensor in ["front-left", "front-right", "rear-left", "rear-right"]:
                 samples.append(
-                    __import__("builders").make_sample(
+                    make_sample(
                         t_s=float(i),
                         speed_kmh=speed,
                         client_name=sensor,

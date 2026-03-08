@@ -9,9 +9,8 @@ from _report_helpers import RUN_END, minimal_summary, write_jsonl
 from _report_helpers import report_run_metadata as _run_metadata
 from _report_helpers import report_sample as _base_sample
 
-from vibesensor.analysis import summarize_log
-from vibesensor.analysis.report_data_builder import map_summary
-from vibesensor.analysis.summary import _most_likely_origin_summary
+from vibesensor.analysis import map_summary, summarize_log
+from vibesensor.analysis.summary_payload import summarize_origin
 from vibesensor.report.report_data import ReportTemplateData
 
 
@@ -109,7 +108,7 @@ def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> Non
         },
     ]
 
-    origin = _most_likely_origin_summary(findings)
+    origin = summarize_origin(findings)
     assert origin["location"] == "Rear Left / Front Right"
     assert origin["alternative_locations"] == ["Front Right"]
 
@@ -137,7 +136,7 @@ def test_most_likely_origin_summary_phase_onset(
         }
     ]
 
-    origin = _most_likely_origin_summary(findings)
+    origin = summarize_origin(findings)
 
     assert origin["dominant_phase"] == phase
     explanation = origin["explanation"]
@@ -163,7 +162,7 @@ def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
         }
     ]
 
-    origin = _most_likely_origin_summary(findings)
+    origin = summarize_origin(findings)
     _assert_no_phase_onset(origin["explanation"])
 
 
@@ -179,7 +178,7 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
         }
     ]
 
-    origin = _most_likely_origin_summary(findings)
+    origin = summarize_origin(findings)
 
     assert origin["dominant_phase"] is None
     _assert_no_phase_onset(origin["explanation"])

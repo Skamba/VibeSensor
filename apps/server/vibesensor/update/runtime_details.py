@@ -57,8 +57,8 @@ class UpdateRuntimeDetailsCollector:
     def collect(self) -> dict[str, Any]:
         repo = self._repo
         ui_root = repo / "apps" / "ui"
-        public_root = repo / "apps" / "server" / "public"
-        metadata_path = public_root / UI_BUILD_METADATA_FILE
+        static_root = repo / "apps" / "server" / "vibesensor" / "static"
+        metadata_path = static_root / UI_BUILD_METADATA_FILE
 
         try:
             from vibesensor import __version__
@@ -87,7 +87,7 @@ class UpdateRuntimeDetailsCollector:
             ui_root,
             ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
         )
-        public_assets_hash = _hash_tree(public_root, ignore_names={UI_BUILD_METADATA_FILE})
+        static_assets_hash = _hash_tree(static_root, ignore_names={UI_BUILD_METADATA_FILE})
 
         metadata: dict[str, Any] = {}
         if metadata_path.is_file():
@@ -96,24 +96,24 @@ class UpdateRuntimeDetailsCollector:
             except (OSError, json.JSONDecodeError):
                 metadata = {}
 
-        public_build_source_hash = str(metadata.get("ui_source_hash") or "")
-        public_build_assets_hash = str(metadata.get("public_assets_hash") or "")
-        public_build_commit = str(metadata.get("git_commit") or "")
+        static_build_source_hash = str(metadata.get("ui_source_hash") or "")
+        static_build_assets_hash = str(metadata.get("static_assets_hash") or "")
+        static_build_commit = str(metadata.get("git_commit") or "")
         assets_verified = has_packaged_static or (
             bool(ui_source_hash)
-            and bool(public_assets_hash)
-            and bool(public_build_source_hash)
-            and bool(public_build_assets_hash)
-            and ui_source_hash == public_build_source_hash
-            and public_assets_hash == public_build_assets_hash
+            and bool(static_assets_hash)
+            and bool(static_build_source_hash)
+            and bool(static_build_assets_hash)
+            and ui_source_hash == static_build_source_hash
+            and static_assets_hash == static_build_assets_hash
         )
         return {
             "version": version,
             "commit": commit,
             "ui_source_hash": ui_source_hash,
-            "public_assets_hash": public_assets_hash,
-            "public_build_source_hash": public_build_source_hash,
-            "public_build_commit": public_build_commit,
+            "static_assets_hash": static_assets_hash,
+            "static_build_source_hash": static_build_source_hash,
+            "static_build_commit": static_build_commit,
             "assets_verified": assets_verified,
             "has_packaged_static": has_packaged_static,
         }
