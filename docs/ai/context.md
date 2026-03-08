@@ -51,6 +51,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 
 - Canonical vibration severity metric is `vibration_strength_db`; do not replace it with raw g-value proxies in persisted analysis outputs.
 - Server, UI, and tests must move together when the API or websocket contract changes.
+- When an intentional in-scope refactor changes function-level seams or helper boundaries, refactor the affected tests so they validate current behavior instead of preserving obsolete internals.
 - The updater is wheel-first. Normal delivery must go through the `apps/server/vibesensor/update/` package, with `manager.py` as the public facade, not in-place edits on devices.
 - Hotspot startup must remain offline-safe.
 - `make test-all` is the local CI-parity verification path.
