@@ -16,7 +16,7 @@ class RunStatus:
 
 RUN_TRANSITIONS: Final[dict[str | None, frozenset[str]]] = {
     None: frozenset({RunStatus.RECORDING}),
-    RunStatus.RECORDING: frozenset({RunStatus.ANALYZING, RunStatus.COMPLETE, RunStatus.ERROR}),
+    RunStatus.RECORDING: frozenset({RunStatus.ANALYZING, RunStatus.ERROR}),
     RunStatus.ANALYZING: frozenset({RunStatus.COMPLETE, RunStatus.ERROR}),
     RunStatus.COMPLETE: frozenset(),
     RunStatus.ERROR: frozenset(),

@@ -15,6 +15,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from vibesensor.history_exports import HistoryExportService
+from vibesensor.history_reports import HistoryReportService
+from vibesensor.history_runs import HistoryRunDeleteService, HistoryRunQueryService
+
 os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
 
 
@@ -127,6 +131,7 @@ def _make_runtime(**overrides: Any):
         RuntimeIngressSubsystem,
         RuntimePersistenceSubsystem,
         RuntimeProcessingSubsystem,
+        RuntimeHealthState,
         RuntimeRouteServices,
         RuntimeSettingsSubsystem,
         RuntimeUpdateSubsystem,
@@ -155,14 +160,25 @@ def _make_runtime(**overrides: Any):
     )
     persistence = RuntimePersistenceSubsystem(
         history_db=overrides.pop("history_db", MagicMock()),
+        query_service=overrides.pop("query_service", None),
+        delete_service=overrides.pop("delete_service", None),
+        report_service=overrides.pop("report_service", None),
+        export_service=overrides.pop("export_service", None),
     )
+    if persistence.query_service is None:
+        settings_store_ref = settings.settings_store
+        persistence.bind_history_services(
+            settings_store_ref if not isinstance(settings_store_ref, MagicMock) else None
+        )
     updates = RuntimeUpdateSubsystem(
         update_manager=overrides.pop("update_manager", MagicMock()),
         esp_flash_manager=overrides.pop("esp_flash_manager", MagicMock()),
     )
     processing_state = ProcessingLoopState()
+    health_state = RuntimeHealthState()
     processing = RuntimeProcessingSubsystem(
         state=processing_state,
+        health_state=health_state,
         loop=ProcessingLoop(
             state=processing_state,
             fft_update_hz=config.processing.fft_update_hz,
@@ -321,11 +337,52 @@ async def test_start_creates_tasks(monkeypatch) -> None:
     await rt.lifecycle.start()
     assert len(rt.lifecycle.tasks) == 5
     assert control_plane.start.called
+    assert rt.processing.health_state.startup_state == "ready"
+    assert rt.processing.health_state.startup_phase == "ready"
 
-    # Cleanup
-    for task in rt.lifecycle.tasks:
-        task.cancel()
-    await asyncio.gather(*rt.lifecycle.tasks, return_exceptions=True)
+    await rt.lifecycle.stop()
+
+
+@pytest.mark.asyncio
+async def test_start_records_background_task_failure(monkeypatch) -> None:
+    from vibesensor.runtime import lifecycle as lifecycle_mod
+
+    async def _fake_udp(*args, **kwargs):
+        return None, None
+
+    monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp)
+
+    control_plane = MagicMock()
+    control_plane.start = AsyncMock()
+    ws_hub = MagicMock()
+
+    async def _failing_ws(*args, **kwargs):
+        raise RuntimeError("ws boom")
+
+    ws_hub.run = AsyncMock(side_effect=_failing_ws)
+    metrics_logger = MagicMock()
+    metrics_logger.run = AsyncMock(side_effect=asyncio.CancelledError)
+    gps_monitor = MagicMock()
+    gps_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
+    update_manager = MagicMock()
+    update_manager.startup_recover = AsyncMock()
+    update_manager.job_task = None
+
+    rt = _make_runtime(
+        control_plane=control_plane,
+        ws_hub=ws_hub,
+        metrics_logger=metrics_logger,
+        gps_monitor=gps_monitor,
+        update_manager=update_manager,
+    )
+
+    await rt.lifecycle.start()
+    failed_task = next(task for task in rt.lifecycle.tasks if task.get_name() == "ws-broadcast")
+    await asyncio.gather(failed_task, return_exceptions=True)
+
+    assert rt.processing.health_state.background_task_failures["ws-broadcast"] == "ws boom"
+
+    await rt.lifecycle.stop()
 
 
 @pytest.mark.asyncio

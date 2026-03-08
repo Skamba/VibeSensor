@@ -12,6 +12,9 @@ from typing import Any
 import pytest
 
 from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION, HistoryDB
+from vibesensor.history_exports import HistoryExportService
+from vibesensor.history_reports import HistoryReportService
+from vibesensor.history_runs import HistoryRunDeleteService, HistoryRunQueryService
 
 # -- Schema v4 tests ----------------------------------------------------------
 
@@ -281,7 +284,13 @@ def _make_fake_state(history_db: Any) -> Any:
         metrics_logger=state.metrics_logger,
         live_diagnostics=state.live_diagnostics,
     )
-    state.persistence = SimpleNamespace(history_db=state.history_db)
+    state.persistence = SimpleNamespace(
+        history_db=state.history_db,
+        query_service=HistoryRunQueryService(state.history_db, state.settings_store),
+        delete_service=HistoryRunDeleteService(state.history_db, state.settings_store),
+        report_service=HistoryReportService(state.history_db, state.settings_store),
+        export_service=HistoryExportService(state.history_db),
+    )
     state.websocket = SimpleNamespace(hub=state.ws_hub)
     state.updates = SimpleNamespace(
         update_manager=state.update_manager,

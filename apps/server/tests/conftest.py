@@ -14,7 +14,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.runtime import ProcessingLoopState
+from vibesensor.history_exports import HistoryExportService
+from vibesensor.history_reports import HistoryReportService
+from vibesensor.history_runs import HistoryRunDeleteService, HistoryRunQueryService
+from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers
@@ -39,10 +42,12 @@ class FakeState:
     update_manager: object = field(default_factory=MagicMock)
     esp_flash_manager: object = field(default_factory=MagicMock)
     loop_state: ProcessingLoopState = field(default_factory=ProcessingLoopState)
+    health_state: RuntimeHealthState = field(default_factory=RuntimeHealthState)
     apply_car_settings: object = field(default_factory=MagicMock)
     apply_speed_source_settings: object = field(default_factory=MagicMock)
 
     def __post_init__(self) -> None:
+        self.health_state.mark_ready()
         self.ingress = SimpleNamespace(
             registry=self.registry,
             processor=self.processor,
@@ -59,13 +64,19 @@ class FakeState:
             metrics_logger=self.metrics_logger,
             live_diagnostics=self.live_diagnostics,
         )
-        self.persistence = SimpleNamespace(history_db=self.history_db)
+        self.persistence = SimpleNamespace(
+            history_db=self.history_db,
+            query_service=HistoryRunQueryService(self.history_db, self.settings_store),
+            delete_service=HistoryRunDeleteService(self.history_db, self.settings_store),
+            report_service=HistoryReportService(self.history_db, self.settings_store),
+            export_service=HistoryExportService(self.history_db),
+        )
         self.websocket = SimpleNamespace(hub=self.ws_hub)
         self.updates = SimpleNamespace(
             update_manager=self.update_manager,
             esp_flash_manager=self.esp_flash_manager,
         )
-        self.processing = SimpleNamespace(state=self.loop_state)
+        self.processing = SimpleNamespace(state=self.loop_state, health_state=self.health_state)
 
 
 @pytest.fixture

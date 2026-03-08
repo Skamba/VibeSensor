@@ -36,6 +36,17 @@ class RecordingCommands:
         for match_substr, response in self.responses:
             if match_substr in joined:
                 return response
+        if "pip" in args and "download" in args and "-d" in args:
+            download_dir = Path(args[args.index("-d") + 1])
+            version = next(
+                (arg.split("==", 1)[1] for arg in args if arg.startswith("vibesensor==")),
+                "",
+            )
+            if version:
+                _build_fake_wheel(
+                    download_dir / f"vibesensor-{version}-py3-none-any.whl",
+                    version=version,
+                )
         return self.default_response
 
 
@@ -90,6 +101,24 @@ async def test_snapshot_for_rollback_writes_checksum_metadata(tmp_path: Path) ->
     assert metadata["wheel_name"] == wheel_path.name
     assert len(metadata["sha256"]) == 64
     assert any("pip download" in " ".join(call[0]) for call in commands.calls)
+
+
+@pytest.mark.asyncio
+async def test_snapshot_for_rollback_fails_when_metadata_write_fails(tmp_path: Path) -> None:
+    installer, _commands, tracker = _make_installer(tmp_path)
+    rollback_dir = tmp_path / "rollback"
+    rollback_dir.mkdir()
+    wheel_path = rollback_dir / "vibesensor-2025.6.14-py3-none-any.whl"
+    _build_fake_wheel(wheel_path, version="2025.6.14")
+
+    with (
+        patch("vibesensor.__version__", "2025.6.14"),
+        patch.object(UpdateInstaller, "_write_rollback_metadata", side_effect=OSError("disk full")),
+    ):
+        assert await installer.snapshot_for_rollback() is False
+
+    assert not (rollback_dir / "rollback_snapshot.json").exists()
+    assert any("Rollback metadata could not be written" == issue.message for issue in tracker.status.issues)
 
 
 @pytest.mark.asyncio

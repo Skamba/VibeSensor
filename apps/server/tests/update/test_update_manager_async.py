@@ -218,6 +218,44 @@ class TestUpdateManagerAsync:
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
 
+    async def test_snapshot_failure_aborts_before_install(self, tmp_path) -> None:
+        manager, runner, _ = setup_update_env(tmp_path, seed_artifacts=True)
+        fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+        wheel_content = _build_fake_wheel(fake_wheel, version="2025.6.15")
+        wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
+
+        with (
+            patch_release_fetcher(current_version="2025.6.14") as mock_fetcher,
+            patch("vibesensor.update.installer.UpdateInstaller.snapshot_for_rollback", new=AsyncMock(return_value=False)),
+        ):
+            fetcher = mock_fetcher.return_value
+            fetcher.check_update_available.return_value = make_mock_release(sha256=wheel_sha256)
+            fetcher.download_wheel.return_value = fake_wheel
+            await run_update(manager, "TestNet", "pass")
+
+        assert manager.status.state == UpdateState.failed
+        pip_install_calls = [
+            call[0]
+            for call in runner.calls
+            if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])
+        ]
+        assert not pip_install_calls
+
+    async def test_disk_check_failure_aborts_update(self, tmp_path) -> None:
+        manager, runner, _ = setup_update_env(tmp_path)
+        with (
+            patch("shutil.which", mock_which),
+            patch("shutil.disk_usage", side_effect=OSError("statfs failed")),
+        ):
+            await run_update(manager, "TestNet", "pass")
+
+        assert manager.status.state == UpdateState.failed
+        assert all(
+            not ("pip" in " ".join(call[0]) and "install" in " ".join(call[0]))
+            for call in runner.calls
+        )
+        assert any("Could not verify free disk space" == issue.message for issue in manager.status.issues)
+
     async def test_sha256_mismatch_aborts_install(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)
         fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"

@@ -18,16 +18,24 @@ if TYPE_CHECKING:
 class _StubRegistry:
     def __init__(self, clients: list[dict[str, Any]] | None = None) -> None:
         self._clients = clients or []
+        self.snapshot_calls = 0
 
     def snapshot_for_api(self, now: float | None = None) -> list[dict[str, Any]]:
+        self.snapshot_calls += 1
         return list(self._clients)
 
 
 class _StubProcessor:
+    def __init__(self) -> None:
+        self.recent_data_calls = 0
+        self.multi_spectrum_calls = 0
+
     def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
+        self.recent_data_calls += 1
         return list(client_ids)
 
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
+        self.multi_spectrum_calls += 1
         return {"freq": [], "clients": {cid: {} for cid in client_ids}}
 
     def selected_payload(self, client_id: str) -> dict[str, Any]:
@@ -53,7 +61,11 @@ class _StubGPS:
     gps_enabled: bool = True
     fallback_active: bool = False
 
+    def __init__(self) -> None:
+        self.resolve_calls = 0
+
     def resolve_speed(self) -> _SpeedResolution:
+        self.resolve_calls += 1
         return _SpeedResolution(self.effective_speed_mps, self.fallback_active, "gps")
 
     def update_speed_state(self) -> None:
@@ -61,7 +73,11 @@ class _StubGPS:
 
 
 class _StubAnalysisSettings:
+    def __init__(self) -> None:
+        self.snapshot_calls = 0
+
     def snapshot(self) -> dict[str, float]:
+        self.snapshot_calls += 1
         return {
             "tire_width_mm": 285.0,
             "tire_aspect_pct": 30.0,
@@ -364,6 +380,32 @@ def test_build_ws_payload_reuses_diagnostics_per_tick() -> None:
 
     assert diagnostics.update_calls == 1
     assert live_analysis.snapshot_calls == 1
+
+
+def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
+    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
+    registry = state.ingress.registry
+    processor = state.ingress.processor
+    gps = state.settings.gps_monitor
+    analysis_settings = state.settings.analysis_settings
+    assert isinstance(registry, _StubRegistry)
+    assert isinstance(processor, _StubProcessor)
+    assert isinstance(gps, _StubGPS)
+    assert isinstance(analysis_settings, _StubAnalysisSettings)
+
+    state.websocket.cache.tick = 77
+    payload_aaa = state.websocket.broadcast.build_payload(selected_client="aaa")
+    payload_bbb = state.websocket.broadcast.build_payload(selected_client="bbb")
+
+    assert payload_aaa["selected_client_id"] == "aaa"
+    assert payload_bbb["selected_client_id"] == "bbb"
+    assert payload_aaa["server_time"] == payload_bbb["server_time"]
+    assert payload_aaa["clients"] == payload_bbb["clients"]
+    assert registry.snapshot_calls == 1
+    assert processor.recent_data_calls == 1
+    assert processor.multi_spectrum_calls == 1
+    assert gps.resolve_calls == 1
+    assert analysis_settings.snapshot_calls == 1
 
 
 def test_on_ws_broadcast_tick_toggles_heavy() -> None:

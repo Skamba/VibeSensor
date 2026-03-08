@@ -26,14 +26,14 @@
 
 - `app.py`: app factory and CLI-facing startup.
 - `bootstrap.py`: orchestrates focused runtime subsystem builders.
-- `routes/`: health, clients, settings, recording, history, websocket, updates, car library, and debug route groups.
-- `runtime/`: subsystem builders, explicit runtime owners, lifecycle, processing loop, websocket broadcast, settings sync, and route-service assembly.
+- `routes/`: health, clients, settings, recording, history, websocket, updates, car library, and debug route groups; `/api/health` now surfaces startup readiness and managed-task failures in addition to processing degradation.
+- `runtime/`: subsystem builders, explicit runtime owners, lifecycle, processing loop, websocket broadcast, settings sync, and route-service assembly; the websocket broadcaster reuses shared per-tick payload state and only layers in recipient-specific selection at the end.
 - `processing/`, `analysis/`, `live_diagnostics/`: signal processing and findings logic.
 - `metrics_log/`: recording, post-analysis hooks, and the focused live-analysis snapshot window used by runtime websocket diagnostics.
-- `history_db/`: SQLite-backed history and settings persistence.
-- `history_runs.py`, `history_reports.py`, `history_exports.py`, `history_helpers.py`, `runlog.py`: read and export helpers around persisted runs.
+- `history_db/`: SQLite-backed history and settings persistence, including explicit read/write transaction helpers for run lifecycle updates.
+- `history_runs.py`, `history_reports.py`, `history_exports.py`, `history_helpers.py`, `runlog.py`: focused history services and helpers now owned by the runtime persistence subsystem instead of being composed inside routes.
 - `report/`: PDF renderer and report-template builders.
-- `update/`: public update manager facade plus focused modules for status tracking, Wi-Fi control, release discovery, install and rollback, service control, command execution, and state storage.
+- `update/`: public update manager facade plus focused modules for status tracking, Wi-Fi control, release discovery, install and rollback, service control, command execution, and state storage; workflow validation and rollback snapshot creation must both succeed before a live install begins.
 
 ## Test layout
 

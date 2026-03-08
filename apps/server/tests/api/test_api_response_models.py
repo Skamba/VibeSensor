@@ -58,6 +58,10 @@ def test_openapi_component_shapes_are_not_generic_dict_for_typed_responses(
 
     assert components["HealthResponse"]["required"] == [
         "status",
+        "startup_state",
+        "startup_phase",
+        "startup_error",
+        "background_task_failures",
         "processing_state",
         "processing_failures",
         "processing_failure_categories",

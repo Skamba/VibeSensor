@@ -9,6 +9,9 @@ from fastapi import FastAPI
 
 from vibesensor.analysis_settings import AnalysisSettingsStore
 from vibesensor.api_models import ActiveCarRequest, AnalysisSettingsRequest, CarUpsertRequest
+from vibesensor.history_exports import HistoryExportService
+from vibesensor.history_reports import HistoryReportService
+from vibesensor.history_runs import HistoryRunDeleteService, HistoryRunQueryService
 from vibesensor.routes import create_router
 from vibesensor.settings_store import SettingsStore
 
@@ -102,7 +105,13 @@ class _State:
             metrics_logger=self.metrics_logger,
             live_diagnostics=self.live_diagnostics,
         )
-        self.persistence = SimpleNamespace(history_db=self.history_db)
+        self.persistence = SimpleNamespace(
+            history_db=self.history_db,
+            query_service=HistoryRunQueryService(self.history_db, self.settings_store),
+            delete_service=HistoryRunDeleteService(self.history_db, self.settings_store),
+            report_service=HistoryReportService(self.history_db, self.settings_store),
+            export_service=HistoryExportService(self.history_db),
+        )
         self.websocket = SimpleNamespace(hub=self.ws_hub)
         self.updates = SimpleNamespace(
             update_manager=self.update_manager,
