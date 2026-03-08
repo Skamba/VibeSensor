@@ -6,6 +6,7 @@ from pathlib import Path
 from statistics import median as _median
 from typing import cast
 
+from ..run_context import build_summary_warnings
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import utc_now_iso
 from ._types import (
@@ -333,6 +334,10 @@ def summarize_run_data(
         speed_non_null_pct=computation.prepared.speed_non_null_pct,
         accel_stats=computation.accel_stats,
         amp_metric_values=computation.accel_stats["amp_metric_values"],
+    )
+    summary["warnings"] = build_summary_warnings(
+        metadata,
+        reference_complete=computation.suitability.reference_complete,
     )
     summary["report_date"] = metadata.get("end_time_utc") or utc_now_iso()
     summary["plots"] = _plot_data(

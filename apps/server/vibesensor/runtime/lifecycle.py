@@ -144,10 +144,15 @@ class LifecycleManager:
             analysis_timeout_s,
         )
         if not finished:
+            health = self._diagnostics.metrics_logger.health_snapshot()
             LOGGER.warning(
                 "Post-analysis did not finish within %.1fs on shutdown; "
-                "results for the last run may be lost.",
+                "results for the last run may be lost. queue_depth=%d "
+                "active_run=%s oldest_queue_age_s=%s",
                 analysis_timeout_s,
+                health["analysis_queue_depth"],
+                health["analysis_active_run_id"],
+                health["analysis_queue_oldest_age_s"],
             )
 
         try:

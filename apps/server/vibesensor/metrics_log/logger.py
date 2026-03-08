@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from ..payload_types import HealthPersistencePayload
     from ..processing import SignalProcessor
     from ..registry import ClientRegistry
+    from ..settings_store import SettingsStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -80,6 +81,7 @@ class MetricsLogger:
         processor: SignalProcessor,
         analysis_settings: AnalysisSettingsStore,
         history_db: HistoryDB | None = None,
+        settings_store: SettingsStore | None = None,
         language_provider: Callable[[], str] | None = None,
     ):
         self.enabled = bool(config.enabled)
@@ -89,6 +91,7 @@ class MetricsLogger:
         self.gps_monitor = gps_monitor
         self.processor = processor
         self.analysis_settings = analysis_settings
+        self._settings_store = settings_store
         self.sensor_model = config.sensor_model.strip() or "unknown"
         self.default_sample_rate_hz = int(config.default_sample_rate_hz)
         self.fft_window_size_samples = int(config.fft_window_size_samples)
@@ -209,18 +212,37 @@ class MetricsLogger:
             }
 
     def health_snapshot(self) -> HealthPersistencePayload:
-        queue_depth, active_run_id, active_started_at = self._post_analysis.snapshot()
+        snapshot = self._post_analysis.snapshot()
         analysis_elapsed_s = None
-        if active_started_at is not None:
-            analysis_elapsed_s = max(0.0, time.time() - active_started_at)
+        if snapshot.active_started_at is not None:
+            analysis_elapsed_s = max(0.0, time.time() - snapshot.active_started_at)
+        queue_oldest_age_s = None
+        if snapshot.oldest_queued_at is not None:
+            queue_oldest_age_s = max(0.0, time.time() - snapshot.oldest_queued_at)
+        analyzing_run_count = 0
+        analyzing_oldest_age_s = None
+        if self._history_db is not None:
+            try:
+                analyzing_health = self._history_db.analyzing_run_health()
+                raw_count = analyzing_health.get("analyzing_run_count")
+                analyzing_run_count = int(raw_count) if isinstance(raw_count, int | float) else 0
+                raw_oldest_age = analyzing_health.get("analyzing_oldest_age_s")
+                if isinstance(raw_oldest_age, (int, float)):
+                    analyzing_oldest_age_s = max(0.0, float(raw_oldest_age))
+            except Exception:
+                LOGGER.warning("Failed to read analyzing-run health snapshot", exc_info=True)
         with self._lock:
             return {
                 "write_error": self._last_write_error,
                 "analysis_in_progress": self._post_analysis.is_active,
-                "analysis_queue_depth": queue_depth,
-                "analysis_active_run_id": active_run_id,
-                "analysis_started_at": active_started_at,
+                "analysis_queue_depth": snapshot.queue_depth,
+                "analysis_queue_max_depth": snapshot.max_queue_depth,
+                "analysis_active_run_id": snapshot.active_run_id,
+                "analysis_started_at": snapshot.active_started_at,
                 "analysis_elapsed_s": analysis_elapsed_s,
+                "analysis_queue_oldest_age_s": queue_oldest_age_s,
+                "analyzing_run_count": analyzing_run_count,
+                "analyzing_oldest_age_s": analyzing_oldest_age_s,
             }
 
     def start_logging(self) -> dict[str, str | bool | None]:
@@ -321,6 +343,11 @@ class MetricsLogger:
             fft_window_type=self.fft_window_type,
             peak_picker_method=self.peak_picker_method,
             accel_scale_g_per_lsb=self.accel_scale_g_per_lsb,
+            active_car_snapshot=(
+                self._settings_store.active_car_snapshot()
+                if self._settings_store is not None
+                else None
+            ),
             language_provider=self._language_provider,
         )
 
@@ -522,7 +549,18 @@ class MetricsLogger:
                 start_time_utc = self._run_start_utc or end_utc
                 latest_metadata = self._run_metadata_record(self._run_id, start_time_utc)
                 latest_metadata["end_time_utc"] = end_utc
-                self._history_db.finalize_run_with_metadata(self._run_id, end_utc, latest_metadata)
+                finalized = self._history_db.finalize_run_with_metadata(
+                    self._run_id,
+                    end_utc,
+                    latest_metadata,
+                )
+                if finalized is False:
+                    self._set_last_write_error("history finalize_run skipped due to invalid state")
+                    LOGGER.warning(
+                        "History DB finalize_run_with_metadata skipped for run %s",
+                        self._run_id,
+                    )
+                    return False
                 self._clear_last_write_error()
             except Exception as exc:
                 self._set_last_write_error(f"history finalize_run failed: {exc}")

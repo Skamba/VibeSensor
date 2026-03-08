@@ -676,8 +676,22 @@ export interface components {
        * @default 0
        */
       analysis_queue_depth?: number;
+      /**
+       * Analysis Queue Max Depth
+       * @default 0
+       */
+      analysis_queue_max_depth?: number;
+      /** Analysis Queue Oldest Age S */
+      analysis_queue_oldest_age_s?: number | null;
       /** Analysis Started At */
       analysis_started_at?: number | null;
+      /** Analyzing Oldest Age S */
+      analyzing_oldest_age_s?: number | null;
+      /**
+       * Analyzing Run Count
+       * @default 0
+       */
+      analyzing_run_count?: number;
       /** Write Error */
       write_error: string | null;
     };
@@ -689,12 +703,22 @@ export interface components {
       data_loss: components["schemas"]["HealthDataLossResponse"];
       /** Degradation Reasons */
       degradation_reasons: string[];
+      /** Frame Size Mismatch Count */
+      frame_size_mismatch_count: number;
       intake_stats: components["schemas"]["HealthIntakeStatsResponse"];
       persistence: components["schemas"]["HealthPersistenceResponse"];
+      /** Processing Failure Categories */
+      processing_failure_categories: {
+        [key: string]: number;
+      };
       /** Processing Failures */
       processing_failures: number;
+      /** Processing Last Failure */
+      processing_last_failure: string | null;
       /** Processing State */
       processing_state: string;
+      /** Sample Rate Mismatch Count */
+      sample_rate_mismatch_count: number;
       /**
        * Status
        * @enum {string}
@@ -702,14 +726,37 @@ export interface components {
       status: "ok" | "degraded";
     };
     /**
+     * HistoryInsightWarningResponse
+     * @description Response body for a localized history/run trust warning.
+     */
+    HistoryInsightWarningResponse: {
+      /** Applies To */
+      applies_to: string;
+      /** Code */
+      code: string;
+      /** Detail */
+      detail?: string | null;
+      /**
+       * Severity
+       * @enum {string}
+       */
+      severity: "warn" | "error";
+      /** Title */
+      title: string;
+    };
+    /**
      * HistoryInsightsResponse
      * @description Response body with aggregated diagnostic insights for a run.
      */
     HistoryInsightsResponse: {
+      /** Analysis Is Current */
+      analysis_is_current?: boolean | null;
       /** Run Id */
       run_id?: string | null;
       /** Status */
       status?: string | null;
+      /** Warnings */
+      warnings?: components["schemas"]["HistoryInsightWarningResponse"][];
       [key: string]: unknown;
     };
     /**
@@ -1468,6 +1515,9 @@ export interface operations {
   /** Get History Insights */
   get_history_insights_api_history__run_id__insights_get: {
     parameters: {
+      query?: {
+        lang?: string | null;
+      };
       path: {
         run_id: string;
       };

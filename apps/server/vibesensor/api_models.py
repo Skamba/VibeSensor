@@ -46,6 +46,7 @@ __all__ = [
     "HistoryListEntryResponse",
     "HistoryListResponse",
     "HistoryRunResponse",
+    "HistoryInsightWarningResponse",
     "HistoryInsightsResponse",
     "DeleteHistoryRunResponse",
     "UpdateRuntimeResponse",
@@ -210,9 +211,13 @@ class HealthPersistenceResponse(BaseModel):
     write_error: str | None
     analysis_in_progress: bool
     analysis_queue_depth: int = 0
+    analysis_queue_max_depth: int = 0
     analysis_active_run_id: str | None = None
     analysis_started_at: float | None = None
     analysis_elapsed_s: float | None = None
+    analysis_queue_oldest_age_s: float | None = None
+    analyzing_run_count: int = 0
+    analyzing_oldest_age_s: float | None = None
 
 
 class HealthIntakeStatsResponse(BaseModel):
@@ -231,6 +236,10 @@ class HealthResponse(BaseModel):
     status: Literal["ok", "degraded"]
     processing_state: str
     processing_failures: int
+    processing_failure_categories: dict[str, int]
+    processing_last_failure: str | None
+    sample_rate_mismatch_count: int
+    frame_size_mismatch_count: int
 
     degradation_reasons: list[str]
     data_loss: HealthDataLossResponse
@@ -398,11 +407,23 @@ class HistoryRunResponse(_ExtraAllowBase):
     analysis: dict[str, Any] | None = None
 
 
+class HistoryInsightWarningResponse(BaseModel):
+    """Response body for a localized history/run trust warning."""
+
+    code: str
+    severity: Literal["warn", "error"]
+    applies_to: str
+    title: str
+    detail: str | None = None
+
+
 class HistoryInsightsResponse(_ExtraAllowBase):
     """Response body with aggregated diagnostic insights for a run."""
 
     run_id: str | None = None
     status: str | None = None
+    analysis_is_current: bool | None = None
+    warnings: list[HistoryInsightWarningResponse] = Field(default_factory=list)
 
 
 class DeleteHistoryRunResponse(BaseModel):

@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 
+from ..analysis_persistence import wrap_analysis_for_storage
 from ..domain_models import SensorFrame
 from ..json_types import JsonObject
 from ..json_utils import safe_json_dumps
@@ -86,18 +87,20 @@ class HistoryRunWriteMixin:
                 (len(samples), run_id),
             )
 
-    def finalize_run(self: HistoryCursorProvider, run_id: str, end_time_utc: str) -> None:
+    def finalize_run(self: HistoryCursorProvider, run_id: str, end_time_utc: str) -> bool:
         now = utc_now_iso()
         with self._cursor() as cur:
-            current_status = self._run_status(cur, run_id)
-            if not can_transition_run(current_status, RunStatus.ANALYZING):
-                self._log_transition_skip(run_id, current_status, RunStatus.ANALYZING)
-                return
             cur.execute(
                 "UPDATE runs SET status = 'analyzing', end_time_utc = ?, "
                 "analysis_started_at = ? WHERE run_id = ? AND status = 'recording'",
                 (end_time_utc, now, run_id),
             )
+            if int(cur.rowcount) > 0:
+                return True
+            current_status = self._run_status(cur, run_id)
+            if not can_transition_run(current_status, RunStatus.ANALYZING):
+                self._log_transition_skip(run_id, current_status, RunStatus.ANALYZING)
+            return False
 
     def update_run_metadata(
         self: HistoryCursorProvider,
@@ -116,19 +119,21 @@ class HistoryRunWriteMixin:
         run_id: str,
         end_time_utc: str,
         metadata: JsonObject,
-    ) -> None:
+    ) -> bool:
         now = utc_now_iso()
         with self._cursor() as cur:
-            current_status = self._run_status(cur, run_id)
-            if not can_transition_run(current_status, RunStatus.ANALYZING):
-                self._log_transition_skip(run_id, current_status, RunStatus.ANALYZING)
-                return
             cur.execute(
                 "UPDATE runs SET metadata_json = ?, status = 'analyzing', "
                 "end_time_utc = ?, analysis_started_at = ? "
                 "WHERE run_id = ? AND status = 'recording'",
                 (safe_json_dumps(metadata), end_time_utc, now, run_id),
             )
+            if int(cur.rowcount) > 0:
+                return True
+            current_status = self._run_status(cur, run_id)
+            if not can_transition_run(current_status, RunStatus.ANALYZING):
+                self._log_transition_skip(run_id, current_status, RunStatus.ANALYZING)
+            return False
 
     def delete_run_if_safe(
         self: HistoryCursorProvider,
@@ -151,7 +156,7 @@ class HistoryRunWriteMixin:
         self: HistoryCursorProvider,
         run_id: str,
         analysis: JsonObject,
-    ) -> None:
+    ) -> bool:
         now = utc_now_iso()
         with self._cursor() as cur:
             current_status = self._run_status(cur, run_id)
@@ -160,23 +165,24 @@ class HistoryRunWriteMixin:
                     "store_analysis for run %s: skipped — already complete",
                     run_id,
                 )
-                return
+                return False
             if not can_transition_run(current_status, RunStatus.COMPLETE):
                 self._log_transition_skip(run_id, current_status, RunStatus.COMPLETE)
-                return
+                return False
             cur.execute(
                 "UPDATE runs SET status = 'complete', analysis_json = ?, "
                 "analysis_version = ?, analysis_completed_at = ? "
                 "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
                 (
-                    safe_json_dumps(analysis),
+                    safe_json_dumps(wrap_analysis_for_storage(analysis)),
                     ANALYSIS_SCHEMA_VERSION,
                     now,
                     run_id,
                 ),
             )
+            return bool(int(cur.rowcount) > 0)
 
-    def store_analysis_error(self: HistoryCursorProvider, run_id: str, error: str) -> None:
+    def store_analysis_error(self: HistoryCursorProvider, run_id: str, error: str) -> bool:
         now = utc_now_iso()
         with self._cursor() as cur:
             current_status = self._run_status(cur, run_id)
@@ -185,16 +191,17 @@ class HistoryRunWriteMixin:
                     "store_analysis_error for run %s: skipped — already complete",
                     run_id,
                 )
-                return
+                return False
             if not can_transition_run(current_status, RunStatus.ERROR):
                 self._log_transition_skip(run_id, current_status, RunStatus.ERROR)
-                return
+                return False
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ?, "
                 "analysis_completed_at = ? "
                 "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
                 (error, now, run_id),
             )
+            return bool(int(cur.rowcount) > 0)
 
     def delete_run(self: HistoryCursorProvider, run_id: str) -> bool:
         with self._cursor() as cur:

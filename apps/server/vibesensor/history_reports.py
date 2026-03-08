@@ -11,12 +11,14 @@ from typing import TYPE_CHECKING, Any
 
 from fastapi import HTTPException
 
+from .analysis import map_summary
 from .history_helpers import async_require_run, require_analysis_ready, safe_filename
 from .report.pdf_engine import build_report_pdf
+from .run_context import add_current_context_warnings, current_car_snapshot_token
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB
-    from .report.report_data import ReportTemplateData
+    from .settings_store import SettingsStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,24 +39,18 @@ class HistoryReportRequest:
 
     cache_key: tuple[object, ...]
     filename: str
-    report_data_dict: dict[str, Any]
-
-
-def reconstruct_report_template_data(data: dict[str, Any]) -> ReportTemplateData:
-    """Reconstruct a ReportTemplateData object from a persisted dict."""
-    from .report.report_data import ReportTemplateData
-
-    return ReportTemplateData.from_dict(data)
+    analysis_summary: dict[str, Any]
 
 
 class HistoryReportService:
     """Load persisted report data and coordinate cached PDF generation."""
 
-    __slots__ = ("_history_db", "_pdf_cache")
+    __slots__ = ("_history_db", "_pdf_cache", "_settings_store")
 
-    def __init__(self, history_db: HistoryDB) -> None:
+    def __init__(self, history_db: HistoryDB, settings_store: SettingsStore | None = None) -> None:
         self._history_db = history_db
         self._pdf_cache = HistoryReportPdfCache()
+        self._settings_store = settings_store
 
     async def build_pdf(self, run_id: str, requested_lang: str | None) -> HistoryReportPdf:
         request = await self.load_report_request(run_id, requested_lang)
@@ -64,7 +60,7 @@ class HistoryReportService:
 
         pdf = await self._pdf_cache.get_or_build(
             request.cache_key,
-            lambda: self._build_pdf_bytes(request.report_data_dict),
+            lambda: self._build_pdf_bytes(request.analysis_summary),
             run_id=run_id,
         )
         return HistoryReportPdf(content=pdf, filename=request.filename)
@@ -76,31 +72,40 @@ class HistoryReportService:
     ) -> HistoryReportRequest:
         run = await async_require_run(self._history_db, run_id)
         analysis = require_analysis_ready(run)
-        report_data_dict = (
-            analysis.get("_report_template_data") if isinstance(analysis, dict) else None
-        )
-        if not isinstance(report_data_dict, dict):
+        if not isinstance(analysis, dict) or not isinstance(analysis.get("findings"), list):
             raise HTTPException(
                 status_code=422,
                 detail="Report data unavailable for this run. Re-analyze to regenerate the PDF.",
             )
 
         requested_lang = self._analysis_language(run, requested_lang)
+        active_car_snapshot = (
+            getattr(self._settings_store, "active_car_snapshot", None)
+            if self._settings_store is not None
+            else None
+        )
+        current_active_car_snapshot = (
+            active_car_snapshot() if callable(active_car_snapshot) else None
+        )
+        analysis_summary = add_current_context_warnings(
+            analysis,
+            current_active_car_snapshot=current_active_car_snapshot,
+        )
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
             self._report_pdf_cache_lang(run, requested_lang),
+            current_active_car_snapshot=current_active_car_snapshot,
         )
         return HistoryReportRequest(
             cache_key=cache_key,
             filename=f"{safe_filename(run_id)}_report.pdf",
-            report_data_dict=report_data_dict,
+            analysis_summary=analysis_summary,
         )
 
     @staticmethod
-    def _build_pdf_bytes(report_data_dict: dict[str, Any]) -> bytes:
-        data = reconstruct_report_template_data(report_data_dict)
-        return build_report_pdf(data)
+    def _build_pdf_bytes(analysis_summary: dict[str, Any]) -> bytes:
+        return build_report_pdf(map_summary(analysis_summary))
 
     @staticmethod
     def _metadata_cache_token(metadata: object) -> str:
@@ -113,6 +118,8 @@ class HistoryReportService:
         run: dict[str, Any],
         run_id: str,
         requested_lang: str,
+        *,
+        current_active_car_snapshot: dict[str, Any] | None,
     ) -> tuple[object, ...]:
         return (
             run_id,
@@ -121,17 +128,16 @@ class HistoryReportService:
             run.get("analysis_completed_at"),
             run.get("sample_count"),
             self._metadata_cache_token(run.get("metadata", {})),
+            current_car_snapshot_token(current_active_car_snapshot),
         )
 
     @staticmethod
     def _report_pdf_cache_lang(run: dict[str, Any], requested_lang: str) -> str:
         analysis = run.get("analysis")
         if isinstance(analysis, dict):
-            report_data_dict = analysis.get("_report_template_data")
-            if isinstance(report_data_dict, dict):
-                persisted_lang = str(report_data_dict.get("lang") or "").strip().lower()
-                if persisted_lang:
-                    return persisted_lang
+            persisted_lang = str(analysis.get("lang") or "").strip().lower()
+            if persisted_lang:
+                return persisted_lang
         return requested_lang
 
     @staticmethod

@@ -1,7 +1,7 @@
 """Background post-analysis worker for completed recording runs.
 
-``PostAnalysisWorker`` manages a bounded queue of run IDs and a single
-daemon thread that processes them sequentially.  It is entirely decoupled
+``PostAnalysisWorker`` manages a non-evicting queue of run IDs and a single
+daemon thread that processes them sequentially. It is entirely decoupled
 from the data-collection path and can be tested independently.
 """
 
@@ -12,7 +12,7 @@ import time
 from collections import deque
 from collections.abc import Callable
 from contextlib import nullcontext
-from dataclasses import asdict
+from dataclasses import dataclass
 from threading import RLock, Thread
 from typing import TYPE_CHECKING
 
@@ -24,6 +24,21 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 _MAX_POST_ANALYSIS_SAMPLES = 12_000
+
+
+@dataclass(frozen=True, slots=True)
+class _QueuedRun:
+    run_id: str
+    enqueued_at: float
+
+
+@dataclass(frozen=True, slots=True)
+class PostAnalysisHealthSnapshot:
+    queue_depth: int
+    active_run_id: str | None
+    active_started_at: float | None
+    oldest_queued_at: float | None
+    max_queue_depth: int
 
 
 class PostAnalysisWorker:
@@ -52,10 +67,11 @@ class PostAnalysisWorker:
         self._clear_error_cb = clear_error_callback or (lambda: None)
         self._lock = RLock()
         self._analysis_thread: Thread | None = None
-        self._analysis_queue: deque[str] = deque(maxlen=100)
+        self._analysis_queue: deque[_QueuedRun] = deque()
         self._analysis_enqueued_run_ids: set[str] = set()
         self._analysis_active_run_id: str | None = None
         self._analysis_active_started_at: float | None = None
+        self._analysis_max_queue_depth: int = 0
 
     # -- public API -----------------------------------------------------------
 
@@ -75,13 +91,16 @@ class PostAnalysisWorker:
         with self._lock:
             return self._analysis_active_run_id
 
-    def snapshot(self) -> tuple[int, str | None, float | None]:
+    def snapshot(self) -> PostAnalysisHealthSnapshot:
         """Return queue depth and active-run timing for health reporting."""
         with self._lock:
-            return (
-                len(self._analysis_queue),
-                self._analysis_active_run_id,
-                self._analysis_active_started_at,
+            oldest_queued_at = self._analysis_queue[0].enqueued_at if self._analysis_queue else None
+            return PostAnalysisHealthSnapshot(
+                queue_depth=len(self._analysis_queue),
+                active_run_id=self._analysis_active_run_id,
+                active_started_at=self._analysis_active_started_at,
+                oldest_queued_at=oldest_queued_at,
+                max_queue_depth=self._analysis_max_queue_depth,
             )
 
     def schedule(self, run_id: str) -> None:
@@ -90,19 +109,12 @@ class PostAnalysisWorker:
         with self._lock:
             if run_id in self._analysis_enqueued_run_ids or run_id == self._analysis_active_run_id:
                 return
-            if (
-                self._analysis_queue.maxlen is not None
-                and len(self._analysis_queue) >= self._analysis_queue.maxlen
-            ):
-                evicted_id = self._analysis_queue[0]
-                self._analysis_enqueued_run_ids.discard(evicted_id)
-                LOGGER.warning(
-                    "Analysis queue full; evicting run %s to make room for %s",
-                    evicted_id,
-                    run_id,
-                )
-            self._analysis_queue.append(run_id)
+            self._analysis_queue.append(_QueuedRun(run_id=run_id, enqueued_at=time.time()))
             self._analysis_enqueued_run_ids.add(run_id)
+            self._analysis_max_queue_depth = max(
+                self._analysis_max_queue_depth,
+                len(self._analysis_queue),
+            )
             self._ensure_worker_running()
 
     def wait(self, timeout_s: float = 30.0) -> bool:
@@ -162,7 +174,8 @@ class PostAnalysisWorker:
                     self._analysis_active_started_at = None
                     self._analysis_thread = None
                     return
-                run_id = self._analysis_queue.popleft()
+                queued = self._analysis_queue.popleft()
+                run_id = queued.run_id
                 self._analysis_active_run_id = run_id
                 self._analysis_active_started_at = time.time()
             try:
@@ -238,19 +251,6 @@ class PostAnalysisWorker:
                         "explanation": explanation,
                     }
                 )
-            try:
-                from ..analysis import map_summary
-
-                report_data = map_summary(summary)
-                summary["_report_template_data"] = asdict(report_data)
-            except Exception:
-                LOGGER.error(
-                    "Failed to build ReportTemplateData for run %s; "
-                    "PDF will be unavailable for this run",
-                    run_id,
-                    exc_info=True,
-                )
-
             db.store_analysis(run_id, summary)
 
             duration_s = time.monotonic() - analysis_start

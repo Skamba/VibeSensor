@@ -57,9 +57,13 @@ export type AdaptedPayload = {
   rotational_speeds: RotationalSpeeds | null;
   diagnostics: {
     diagnostics_sequence: number;
+    driving_phase: string | null;
+    error: string | null;
     strength_bands: StrengthBand[];
     matrix: Record<string, Record<string, MatrixCell>> | null;
     events: DiagnosticEvent[];
+    findings: UnknownRecord[];
+    top_finding: UnknownRecord | null;
     levels: DiagnosticLevels;
   };
   spectra: {
@@ -272,6 +276,13 @@ function parseStrengthBands(value: unknown): StrengthBand[] {
     .filter((band): band is StrengthBand => band !== null);
 }
 
+function parseUnknownObjectArray(value: unknown): UnknownRecord[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => asRecord(entry))
+    .filter((entry): entry is UnknownRecord => entry !== null);
+}
+
 function parseClient(value: unknown): AdaptedClient | null {
   const record = asRecord(value);
   if (!record) return null;
@@ -375,6 +386,8 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
     rotational_speeds: rotationalSpeeds,
     diagnostics: {
       diagnostics_sequence: getNumber(diagnosticsRecord, "diagnostics_sequence") ?? -1,
+      driving_phase: getString(diagnosticsRecord, "driving_phase"),
+      error: getString(diagnosticsRecord, "error"),
       strength_bands: parseStrengthBands(diagnosticsRecord.strength_bands),
       matrix: parseMatrix(diagnosticsRecord.matrix),
       events: Array.isArray(diagnosticsRecord.events)
@@ -382,6 +395,8 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
             .map((event) => parseDiagnosticEvent(event))
             .filter((event): event is DiagnosticEvent => event !== null)
         : [],
+      findings: parseUnknownObjectArray(diagnosticsRecord.findings),
+      top_finding: asRecord(diagnosticsRecord.top_finding),
       levels: {
         by_source: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_source),
         by_sensor: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_sensor),

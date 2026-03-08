@@ -133,6 +133,7 @@ def build_diagnostics_subsystem(
         processor=ingress.processor,
         analysis_settings=settings.analysis_settings,
         history_db=persistence.history_db,
+        settings_store=settings.settings_store,
         language_provider=lambda: settings.settings_store.language,
     )
     diagnostics = RuntimeDiagnosticsSubsystem(

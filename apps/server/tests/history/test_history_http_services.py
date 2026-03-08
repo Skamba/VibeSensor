@@ -64,7 +64,7 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
                 "metadata": {"language": "en"},
                 "analysis_version": 3,
                 "sample_count": 12,
-                "analysis": {"_report_template_data": {"lang": "nl", "title": "X"}},
+                "analysis": {"lang": "nl", "findings": [], "title": "X"},
             }
         )
     )
@@ -73,7 +73,7 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
 
     assert request.filename == "run-1_report.pdf"
     assert request.cache_key[1] == "nl"
-    assert request.report_data_dict["lang"] == "nl"
+    assert request.analysis_summary["lang"] == "nl"
 
 
 @pytest.mark.asyncio

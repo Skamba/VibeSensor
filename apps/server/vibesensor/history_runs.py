@@ -8,11 +8,13 @@ from typing import TYPE_CHECKING, Any
 
 from fastapi import HTTPException
 
-from .history_db import ANALYSIS_SCHEMA_VERSION, RunStatus
+from .history_db import RunStatus
 from .history_helpers import async_require_run, require_analysis_ready, strip_internal_fields
+from .run_context import add_current_context_warnings, localize_warning_list
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB
+    from .settings_store import SettingsStore
 
 
 @dataclass(frozen=True)
@@ -26,10 +28,11 @@ class HistoryJsonResult:
 class HistoryRunService:
     """Load, sanitise, and mutate history-run resources for HTTP endpoints."""
 
-    __slots__ = ("_history_db",)
+    __slots__ = ("_history_db", "_settings_store")
 
-    def __init__(self, history_db: HistoryDB) -> None:
+    def __init__(self, history_db: HistoryDB, settings_store: SettingsStore | None = None) -> None:
         self._history_db = history_db
+        self._settings_store = settings_store
 
 
 class HistoryRunQueryService(HistoryRunService):
@@ -46,7 +49,11 @@ class HistoryRunQueryService(HistoryRunService):
             run["analysis"] = strip_internal_fields(analysis)
         return run
 
-    async def get_insights(self, run_id: str) -> HistoryJsonResult:
+    async def get_insights(
+        self,
+        run_id: str,
+        requested_lang: str | None = None,
+    ) -> HistoryJsonResult:
         run = await async_require_run(self._history_db, run_id)
         if run["status"] == RunStatus.ANALYZING:
             return HistoryJsonResult(
@@ -56,22 +63,39 @@ class HistoryRunQueryService(HistoryRunService):
 
         analysis = require_analysis_ready(run)
         if isinstance(analysis, dict):
-            analysis = dict(analysis)
-            analysis["analysis_is_current"] = self._analysis_is_current(run.get("analysis_version"))
+            active_car_snapshot = (
+                getattr(self._settings_store, "active_car_snapshot", None)
+                if self._settings_store is not None
+                else None
+            )
+            current_active_car_snapshot = (
+                active_car_snapshot() if callable(active_car_snapshot) else None
+            )
+            analysis = add_current_context_warnings(
+                analysis,
+                current_active_car_snapshot=current_active_car_snapshot,
+            )
+            analysis_is_current = getattr(self._history_db, "analysis_is_current", None)
+            if callable(analysis_is_current):
+                analysis["analysis_is_current"] = await asyncio.to_thread(
+                    analysis_is_current,
+                    run_id,
+                )
+            else:
+                analysis["analysis_is_current"] = False
+            metadata = run.get("metadata")
+            response_lang = requested_lang if isinstance(requested_lang, str) else None
+            if response_lang is None and isinstance(metadata, dict):
+                raw_lang = metadata.get("language")
+                if isinstance(raw_lang, str) and raw_lang.strip():
+                    response_lang = raw_lang.strip().lower()
+            analysis["warnings"] = localize_warning_list(
+                analysis.get("warnings"),
+                lang=response_lang or "en",
+            )
             analysis = strip_internal_fields(analysis)
 
         return HistoryJsonResult(status_code=200, payload=analysis)
-
-    @staticmethod
-    def _analysis_is_current(analysis_version: object) -> bool:
-        try:
-            return (
-                int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
-                if analysis_version is not None
-                else False
-            )
-        except (TypeError, ValueError):
-            return False
 
 
 class HistoryRunDeleteService(HistoryRunService):

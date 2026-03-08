@@ -24,9 +24,13 @@ class HealthPersistencePayload(TypedDict):
     write_error: str | None
     analysis_in_progress: bool
     analysis_queue_depth: int
+    analysis_queue_max_depth: int
     analysis_active_run_id: str | None
     analysis_started_at: float | None
     analysis_elapsed_s: float | None
+    analysis_queue_oldest_age_s: float | None
+    analyzing_run_count: int
+    analyzing_oldest_age_s: float | None
 
 
 class AxisPeak(TypedDict, total=False):

@@ -5,7 +5,12 @@ import type { StrengthBand } from "../../diagnostics";
 import type { StrengthMetricsPayload } from "../../contracts/ws_payload_types";
 import { createEmptyMatrix } from "../../diagnostics";
 import { defaultLocationCodes } from "../../constants";
-import type { CarRecord, HistoryEntry, LoggingStatusPayload } from "../../api/types";
+import type {
+  CarRecord,
+  HistoryEntry,
+  HistoryInsightsPayload,
+  LoggingStatusPayload,
+} from "../../api/types";
 
 export interface LocationOption {
   code: string;
@@ -31,10 +36,10 @@ export interface VehicleSettings {
 }
 
 export interface RunDetail {
-  preview: Record<string, unknown> | null;
+  preview: HistoryInsightsPayload | null;
   previewLoading: boolean;
   previewError: string;
-  insights: Record<string, unknown> | null;
+  insights: HistoryInsightsPayload | null;
   insightsLoading: boolean;
   insightsError: string;
   pdfLoading: boolean;

@@ -166,6 +166,9 @@ async def test_history_insights_always_emits_analysis_is_current() -> None:
                 "analysis": self.analysis,
             }
 
+        def analysis_is_current(self, run_id: str) -> bool:
+            return False
+
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
@@ -176,6 +179,61 @@ async def test_history_insights_always_emits_analysis_is_current() -> None:
     payload = await endpoint("run-1")
     assert "analysis_is_current" in payload
     assert payload["analysis_is_current"] is False
+
+
+@pytest.mark.asyncio
+async def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
+    metadata = make_metadata(
+        active_car_snapshot={
+            "id": "car-a",
+            "name": "Track Car",
+            "type": "coupe",
+            "aspects": {
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+                "final_drive_ratio": 3.23,
+                "current_gear_ratio": 0.82,
+            },
+        },
+        car_name="Track Car",
+        tire_width_mm=245.0,
+        tire_aspect_pct=35.0,
+        rim_in=19.0,
+        final_drive_ratio=3.23,
+        current_gear_ratio=0.82,
+        incomplete_for_order_analysis=True,
+    )
+    samples = [sample(i) for i in range(5)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+
+    router, state = make_router_and_state(
+        language="en",
+        metadata=metadata,
+        analysis=analysis,
+        samples=samples,
+    )
+    state.settings_store.active_car_snapshot = lambda: {
+        "id": "car-b",
+        "name": "Daily Car",
+        "type": "wagon",
+        "aspects": {
+            "tire_width_mm": 225.0,
+            "tire_aspect_pct": 45.0,
+            "rim_in": 18.0,
+            "final_drive_ratio": 2.91,
+            "current_gear_ratio": 0.72,
+        },
+    }
+    endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
+
+    payload = await endpoint("run-1", "nl")
+    warnings = payload.get("warnings")
+    assert isinstance(warnings, list)
+    assert len(warnings) == 2
+    titles = {str(item.get("title")) for item in warnings if isinstance(item, dict)}
+    assert "De referentiecontext voor ordeanalyse was onvolledig voor deze run" in titles
+    assert "Voertuigprofielinstellingen zijn na deze run gewijzigd" in titles
 
 
 @pytest.mark.asyncio
