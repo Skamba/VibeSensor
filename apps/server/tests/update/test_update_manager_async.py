@@ -258,8 +258,7 @@ class TestUpdateManagerAsync:
             for call in runner.calls
         )
         assert any(
-            "Could not verify free disk space" == issue.message
-            for issue in manager.status.issues
+            "Could not verify free disk space" == issue.message for issue in manager.status.issues
         )
 
     async def test_sha256_mismatch_aborts_install(self, tmp_path) -> None:

@@ -119,8 +119,7 @@ async def test_snapshot_for_rollback_fails_when_metadata_write_fails(tmp_path: P
 
     assert not (rollback_dir / "rollback_snapshot.json").exists()
     assert any(
-        "Rollback metadata could not be written" == issue.message
-        for issue in tracker.status.issues
+        "Rollback metadata could not be written" == issue.message for issue in tracker.status.issues
     )
 
 
