@@ -19,6 +19,7 @@ Execution model
 - Prefer extending or hardening existing logic over parallel implementations.
 - Analysis-first default: evaluate the problem from multiple angles, compare viable options, then choose the best path to deliver a complete root-cause fix with thorough in-scope coverage.
 - Do not stop at symptom-only patches; when touching an issue, resolve the underlying cause and tightly coupled maintainability gaps in the same area.
+- If a larger refactor or other major in-scope change is the best way to improve long-term maintainability, do it rather than forcing a narrowly local patch.
 - Avoid over-conservative blocking behavior: do not delay a clear in-scope fix for exhaustive hypotheticals or speculative edge cases.
 - Use bounded risk, not risk avoidance: keep changes reversible, test quickly, and correct fast when validation fails.
 - Continue autonomously on clearly adjacent in-scope issues.
@@ -60,6 +61,7 @@ Test layout
 - Cross-cutting tests live in `tests/integration/` for scenario and multi-module coverage, `tests/regression/` for intent-grouped bug-fix regressions, `tests/hygiene/` for architecture guards, and `tests/e2e/` for browser coverage.
 - `tests/regression/` is split by intent: `analysis/`, `audits/`, `cross_cutting/`, `report/`, and `runtime/`.
 - Shared helpers include `conftest.py`, `builders.py`, `_paths.py`, and focused helper modules such as `_report_helpers.py` and scenario helper files when reuse justifies them.
+- If an intentional refactor changes function-level seams or helper boundaries, refactor the affected tests too; do not preserve brittle function-level tests that only lock in the old structure.
 
 Pi access defaults (prebuilt image)
 - Hotspot address: `10.4.0.1`
