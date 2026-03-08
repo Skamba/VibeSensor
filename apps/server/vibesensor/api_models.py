@@ -23,6 +23,9 @@ __all__ = [
     "EspFlashStartRequest",
     "SensorRequest",
     # Response models
+    "HealthDataLossResponse",
+    "HealthIntakeStatsResponse",
+    "HealthPersistenceResponse",
     "HealthResponse",
     "CarResponse",
     "CarsResponse",
@@ -40,10 +43,12 @@ __all__ = [
     "SetClientLocationResponse",
     "RemoveClientResponse",
     "LoggingStatusResponse",
+    "HistoryListEntryResponse",
     "HistoryListResponse",
     "HistoryRunResponse",
     "HistoryInsightsResponse",
     "DeleteHistoryRunResponse",
+    "UpdateRuntimeResponse",
     "UpdateIssueResponse",
     "UpdateStatusResponse",
     "UpdateStartResponse",
@@ -188,13 +193,45 @@ class SensorRequest(_FrozenBase):
 # ---------------------------------------------------------------------------
 
 
+class HealthDataLossResponse(BaseModel):
+    """Response body for aggregated client data-loss counters."""
+
+    tracked_clients: int
+    affected_clients: int
+    frames_dropped: int
+    queue_overflow_drops: int
+    server_queue_drops: int
+    parse_errors: int
+
+
+class HealthPersistenceResponse(BaseModel):
+    """Response body for persistence health details."""
+
+    write_error: str | None
+    analysis_in_progress: bool
+
+
+class HealthIntakeStatsResponse(BaseModel):
+    """Response body for processing intake timing and throughput counters."""
+
+    total_ingested_samples: int
+    total_compute_calls: int
+    last_compute_duration_s: float
+    last_compute_all_duration_s: float
+    last_ingest_duration_s: float
+
+
 class HealthResponse(BaseModel):
     """Response body for the server health check endpoint."""
 
-    status: str
+    status: Literal["ok", "degraded"]
     processing_state: str
     processing_failures: int
-    intake_stats: dict[str, Any] = Field(default_factory=dict)
+
+    degradation_reasons: list[str]
+    data_loss: HealthDataLossResponse
+    persistence: HealthPersistenceResponse
+    intake_stats: HealthIntakeStatsResponse
 
 
 class CarResponse(BaseModel):
@@ -218,7 +255,7 @@ class SpeedSourceResponse(BaseModel):
     """Response body for the current speed-source configuration."""
 
     speedSource: str
-    manualSpeedKph: float | None = None
+    manualSpeedKph: float | None
     obd2Config: dict[str, Any] = Field(default_factory=dict)
     staleTimeoutS: float
     fallbackMode: str
@@ -229,18 +266,18 @@ class SpeedSourceStatusResponse(BaseModel):
 
     gps_enabled: bool
     connection_state: str
-    device: str | None = None
-    fix_mode: int | None = None
-    fix_dimension: str | None = None
-    speed_confidence: str | None = None
-    epx_m: float | None = None
-    epy_m: float | None = None
-    epv_m: float | None = None
-    last_update_age_s: float | None = None
-    raw_speed_kmh: float | None = None
-    effective_speed_kmh: float | None = None
-    last_error: str | None = None
-    reconnect_delay_s: float | None = None
+    device: str | None
+    fix_mode: int | None
+    fix_dimension: str | None
+    speed_confidence: str | None
+    epx_m: float | None
+    epy_m: float | None
+    epv_m: float | None
+    last_update_age_s: float | None
+    raw_speed_kmh: float | None
+    effective_speed_kmh: float | None
+    last_error: str | None
+    reconnect_delay_s: float | None
     fallback_active: bool
     stale_timeout_s: float
     fallback_mode: str
@@ -323,16 +360,29 @@ class LoggingStatusResponse(BaseModel):
     """Response body with the current recording (run-logging) status."""
 
     enabled: bool
-    current_file: str | None = None
-    run_id: str | None = None
-    write_error: str | None = None
+    current_file: str | None
+    run_id: str | None
+    write_error: str | None
     analysis_in_progress: bool
+
+
+class HistoryListEntryResponse(BaseModel):
+    """Response body for a single history-run list row."""
+
+    run_id: str
+    status: str
+    start_time_utc: str
+    end_time_utc: str | None = None
+    created_at: str
+    sample_count: int
+    error_message: str | None = None
+    analysis_version: int | None = None
 
 
 class HistoryListResponse(BaseModel):
     """Response body listing recorded run summaries."""
 
-    runs: list[dict[str, Any]]
+    runs: list[HistoryListEntryResponse]
 
 
 class HistoryRunResponse(_ExtraAllowBase):
@@ -366,6 +416,19 @@ class UpdateIssueResponse(BaseModel):
     detail: str
 
 
+class UpdateRuntimeResponse(BaseModel):
+    """Response body for updater runtime/build verification details."""
+
+    version: str
+    commit: str
+    ui_source_hash: str
+    static_assets_hash: str
+    static_build_source_hash: str
+    static_build_commit: str
+    assets_verified: bool
+    has_packaged_static: bool
+
+
 class UpdateStatusResponse(BaseModel):
     """Response body for the full OTA update job status."""
 
@@ -378,7 +441,7 @@ class UpdateStatusResponse(BaseModel):
     issues: list[UpdateIssueResponse]
     log_tail: list[str]
     exit_code: int | None = None
-    runtime: dict[str, Any] = Field(default_factory=dict)
+    runtime: UpdateRuntimeResponse
 
 
 class UpdateStartResponse(BaseModel):

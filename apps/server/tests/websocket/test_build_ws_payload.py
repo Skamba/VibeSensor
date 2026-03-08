@@ -71,15 +71,22 @@ class _StubAnalysisSettings:
         }
 
 
+class _StubLiveAnalysis:
+    def __init__(self) -> None:
+        self.snapshot_calls = 0
+
+    def snapshot(self) -> tuple[dict[str, object], list[dict[str, object]]]:
+        self.snapshot_calls += 1
+        return {"run_id": f"live-{self.snapshot_calls}"}, [{"call": self.snapshot_calls}]
+
+
 class _StubMetricsLogger:
     def __init__(self) -> None:
-        self.analysis_snapshot_calls = 0
+        self.shutdown_calls = 0
 
-    def analysis_snapshot(self) -> tuple[dict[str, object], list[dict[str, object]]]:
-        self.analysis_snapshot_calls += 1
-        return {"run_id": f"live-{self.analysis_snapshot_calls}"}, [
-            {"call": self.analysis_snapshot_calls}
-        ]
+    def shutdown(self, timeout_s: float = 30.0) -> bool:
+        self.shutdown_calls += 1
+        return True
 
 
 class _StubDiagnostics:
@@ -157,6 +164,7 @@ def _make_state(
     )
     diagnostics = RuntimeDiagnosticsSubsystem(
         metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
+        live_analysis=_StubLiveAnalysis(),  # type: ignore[arg-type]
         live_diagnostics=_StubDiagnostics(),  # type: ignore[arg-type]
     )
     persistence = RuntimePersistenceSubsystem(history_db=_SENTINEL)  # type: ignore[arg-type]
@@ -295,39 +303,39 @@ def test_build_ws_payload_light_tick_reuses_cached_analysis_snapshot() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
 
     state.websocket.broadcast.build_payload(selected_client="aaa")
-    metrics_logger = state.diagnostics.metrics_logger
-    assert isinstance(metrics_logger, _StubMetricsLogger)
-    assert metrics_logger.analysis_snapshot_calls == 1
+    live_analysis = state.diagnostics.live_analysis
+    assert isinstance(live_analysis, _StubLiveAnalysis)
+    assert live_analysis.snapshot_calls == 1
 
     state.websocket.cache.include_heavy = False
     state.websocket.broadcast.build_payload(selected_client="aaa")
 
-    assert metrics_logger.analysis_snapshot_calls == 1
+    assert live_analysis.snapshot_calls == 1
 
 
 def test_build_ws_payload_light_tick_without_cache_still_collects_snapshot() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
 
     state.websocket.broadcast.build_payload(selected_client="aaa")
-    metrics_logger = state.diagnostics.metrics_logger
+    live_analysis = state.diagnostics.live_analysis
 
-    assert isinstance(metrics_logger, _StubMetricsLogger)
-    assert metrics_logger.analysis_snapshot_calls == 1
+    assert isinstance(live_analysis, _StubLiveAnalysis)
+    assert live_analysis.snapshot_calls == 1
 
 
 def test_build_ws_payload_reuses_diagnostics_per_tick() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
     diagnostics = state.diagnostics.live_diagnostics
-    metrics_logger = state.diagnostics.metrics_logger
+    live_analysis = state.diagnostics.live_analysis
     assert isinstance(diagnostics, _StubDiagnostics)
-    assert isinstance(metrics_logger, _StubMetricsLogger)
+    assert isinstance(live_analysis, _StubLiveAnalysis)
 
     state.websocket.cache.tick = 77
     state.websocket.broadcast.build_payload(selected_client="aaa")
     state.websocket.broadcast.build_payload(selected_client="bbb")
 
     assert diagnostics.update_calls == 1
-    assert metrics_logger.analysis_snapshot_calls == 1
+    assert live_analysis.snapshot_calls == 1
 
 
 def test_on_ws_broadcast_tick_toggles_heavy() -> None:

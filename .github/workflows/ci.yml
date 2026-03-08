@@ -2,6 +2,9 @@ name: CI
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -50,9 +53,17 @@ jobs:
         run: |
           python tools/dev/verify_no_path_indirections.py
 
+      - name: Docs lint
+        run: |
+          python tools/dev/docs_lint.py
+
       - name: WS payload schema sync check
         run: |
           python -m vibesensor.ws_schema_export --check
+
+      - name: HTTP API schema sync check
+        run: |
+          python -m vibesensor.http_api_schema_export --check
 
   backend-typecheck:
     name: Backend type check
@@ -102,6 +113,11 @@ jobs:
         run: |
           cd apps/ui && npm ci
 
+      - name: UI contract sync check
+        run: |
+          cd apps/ui
+          npm run check:contracts
+
       - name: UI typecheck
         run: |
           cd apps/ui
@@ -135,6 +151,36 @@ jobs:
           npx playwright install chromium
           npm run test:smoke
 
+  release-smoke:
+    name: Release smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - backend-quality
+      - backend-typecheck
+      - frontend-typecheck
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/ui/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: apps/server/pyproject.toml
+
+      - name: Release smoke validation
+        run: |
+          python3 tools/tests/run_release_smoke.py
+
   backend-tests:
     name: Backend tests (shard ${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
@@ -142,6 +188,7 @@ jobs:
     needs:
       - backend-quality
       - backend-typecheck
+      - release-smoke
     strategy:
       fail-fast: false
       matrix:
@@ -175,6 +222,7 @@ jobs:
       - backend-quality
       - backend-typecheck
       - frontend-typecheck
+      - release-smoke
 
     steps:
       - uses: actions/checkout@v4

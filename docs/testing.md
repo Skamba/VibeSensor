@@ -100,13 +100,38 @@ python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" ap
 make test-all
 python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests
 python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
+python3 tools/tests/run_ci_parallel.py --job release-smoke
 ```
+
+## Coverage reporting
+
+Use coverage runs to expose untested paths before they become release risk.
+
+```bash
+make coverage
+make coverage-html
+make coverage-strict
+```
+
+For direct control over thresholds and output:
+
+```bash
+python3 tools/tests/run_coverage.py --min-coverage 75
+python3 tools/tests/run_coverage.py --html --fail-under --min-coverage 85
+```
+
+Coverage guidance:
+
+- Treat coverage as a risk-finding tool, not the only quality signal.
+- Default coverage runs exclude `selenium` tests to match the fast local path.
+- High-risk backend areas such as `analysis/`, `processing/`, `history_db/`, and `update/` should stay above the repo-wide baseline whenever practical.
 
 The default CI-parity suite now mirrors these blocking GitHub checks:
 
-- `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, WS schema sync.
+- `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, docs lint, WS schema sync, and HTTP API schema sync.
 - `backend-typecheck`: mypy on the enforced backend slice covering app/bootstrap, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages.
 - `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
+- `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
 - `ui-smoke`, `backend-tests`, `e2e`: required test jobs.
 
 ## Adding or moving tests

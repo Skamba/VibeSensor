@@ -1,9 +1,12 @@
 name: Main Release
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
     branches:
       - main
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
@@ -15,12 +18,14 @@ concurrency:
 
 jobs:
   release:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - name: Compute version
         id: version
@@ -85,6 +90,20 @@ jobs:
           sed -i 's/^          //' apps/server/vibesensor/_version.py
           python -m pip install --upgrade pip build
           python -m build --wheel apps/server/
+
+      - name: Smoke-validate built server wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv .release-smoke-venv
+          . .release-smoke-venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install apps/server/dist/*.whl
+          export VIBESENSOR_CONTRACTS_DIR="${GITHUB_WORKSPACE}/libs/shared/contracts"
+          python -m vibesensor.release_validation smoke-server \
+            --config apps/server/config.dev.yaml \
+            --host 127.0.0.1 \
+            --port 18080
 
       - name: Install PlatformIO
         shell: bash
@@ -212,6 +231,13 @@ jobs:
 
           (dist / "flash.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
           PY
+
+      - name: Validate firmware manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=apps/server python -m vibesensor.release_validation validate-firmware-manifest \
+            --dist-dir "${{ steps.firmware_dir.outputs.path }}/dist"
 
       - name: Create firmware bundle
         id: bundle

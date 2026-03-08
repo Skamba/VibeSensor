@@ -57,6 +57,7 @@ class UpdateStatusTracker:
 
     def set_runtime(self, runtime: JsonObject) -> None:
         self._status.runtime = runtime
+        self.persist()
 
     def track_secret(self, secret: str) -> None:
         self._redact_secrets = {secret} if secret else set()
@@ -96,6 +97,7 @@ class UpdateStatusTracker:
         log_tail.append(sanitized)
         if len(log_tail) > _LOG_TAIL_MAX:
             del log_tail[:-_LOG_TAIL_TRIM_TO]
+        self.persist()
 
     def add_issue(self, phase: UpdatePhase | str, message: str, detail: str = "") -> None:
         self._status.issues.append(
@@ -116,6 +118,8 @@ class UpdateStatusTracker:
                     detail=self.redact(issue.detail),
                 )
             )
+        if issues:
+            self.persist()
 
     def fail(self, phase: UpdatePhase | str, message: str, detail: str = "") -> None:
         self.add_issue(phase, message, detail)

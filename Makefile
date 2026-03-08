@@ -1,4 +1,4 @@
-.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-fast test-all test-ci test-full-suite smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
+.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-fast test-all test-ci test-full-suite coverage coverage-html coverage-strict smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
 
 setup:
 	python3 -m pip install --upgrade pip
@@ -32,6 +32,15 @@ test-ci:
 
 test-full-suite:
 	python3 tools/tests/run_full_suite.py
+
+coverage:
+	python3 tools/tests/run_coverage.py
+
+coverage-html:
+	python3 tools/tests/run_coverage.py --html
+
+coverage-strict:
+	python3 tools/tests/run_coverage.py --fail-under --min-coverage 80
 
 smoke:
 	vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server

@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import TYPE_CHECKING
 
-from .payload_types import ClientApiRow, TimingHealthPayload
+from .payload_types import ClientApiRow, HealthDataLossPayload, TimingHealthPayload
 from .processing.models import MetricsPayload
 from .protocol import (
     AckMessage,
@@ -483,6 +483,30 @@ class ClientRegistry:
                 if record.last_seen_mono
                 and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds
             ]
+
+    def data_loss_snapshot(self) -> HealthDataLossPayload:
+        with self._lock:
+            snapshot: HealthDataLossPayload = {
+                "tracked_clients": len(self._clients),
+                "affected_clients": 0,
+                "frames_dropped": 0,
+                "queue_overflow_drops": 0,
+                "server_queue_drops": 0,
+                "parse_errors": 0,
+            }
+            for record in self._clients.values():
+                snapshot["frames_dropped"] += int(record.frames_dropped)
+                snapshot["queue_overflow_drops"] += int(record.queue_overflow_drops)
+                snapshot["server_queue_drops"] += int(record.server_queue_drops)
+                snapshot["parse_errors"] += int(record.parse_errors)
+                if (
+                    record.frames_dropped > 0
+                    or record.queue_overflow_drops > 0
+                    or record.server_queue_drops > 0
+                    or record.parse_errors > 0
+                ):
+                    snapshot["affected_clients"] += 1
+            return snapshot
 
     def evict_stale(self, now: float | None = None, *, now_mono: float | None = None) -> list[str]:
         with self._lock:

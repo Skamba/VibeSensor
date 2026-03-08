@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-python tools/privacy/privacy_guard.py check-staged
+guard_script="tools/privacy/privacy_guard.py"
+
+if [[ ! -f "${guard_script}" ]]; then
+	echo "[vibesensor hooks] Skipping privacy guard: ${guard_script} is not present in this checkout." >&2
+	echo "[vibesensor hooks] See CONTRIBUTING.md for supported local validation commands." >&2
+	exit 0
+fi
+
+python "${guard_script}" check-staged

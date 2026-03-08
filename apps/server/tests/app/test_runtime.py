@@ -150,6 +150,7 @@ def _make_runtime(**overrides: Any):
     )
     diagnostics = RuntimeDiagnosticsSubsystem(
         metrics_logger=overrides.pop("metrics_logger", MagicMock()),
+        live_analysis=overrides.pop("live_analysis", MagicMock()),
         live_diagnostics=overrides.pop("live_diagnostics", MagicMock()),
     )
     persistence = RuntimePersistenceSubsystem(
@@ -338,8 +339,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp)
 
     metrics_logger = MagicMock()
-    metrics_logger.stop_logging = MagicMock()
-    metrics_logger.wait_for_post_analysis = MagicMock(return_value=True)
+    metrics_logger.shutdown = MagicMock(return_value=True)
 
     history_db = MagicMock()
     worker_pool = MagicMock()
@@ -374,7 +374,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
 
     await rt.lifecycle.stop()
     assert rt.lifecycle.tasks == []
-    assert metrics_logger.stop_logging.called
+    assert metrics_logger.shutdown.called
     assert worker_pool.shutdown.called
     assert history_db.close.called
 

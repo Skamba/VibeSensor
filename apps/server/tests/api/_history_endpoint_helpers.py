@@ -157,6 +157,10 @@ class FakeState:
             (),
             {
                 "status": lambda self: {},
+                "health_snapshot": lambda self: {
+                    "write_error": None,
+                    "analysis_in_progress": False,
+                },
                 "start_logging": lambda self: {},
                 "stop_logging": lambda self: {},
             },
@@ -166,6 +170,14 @@ class FakeState:
             (),
             {
                 "snapshot_for_api": lambda self: [],
+                "data_loss_snapshot": lambda self: {
+                    "tracked_clients": 0,
+                    "affected_clients": 0,
+                    "frames_dropped": 0,
+                    "queue_overflow_drops": 0,
+                    "server_queue_drops": 0,
+                    "parse_errors": 0,
+                },
                 "get": lambda self, _cid: None,
                 "set_name": lambda self, cid, name: type(
                     "U", (), {"client_id": cid, "name": name}

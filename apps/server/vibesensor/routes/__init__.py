@@ -38,6 +38,8 @@ def create_router(services: RuntimeRouteServices) -> APIRouter:
         create_health_routes(
             services.processing.state,
             services.ingress.processor,
+            services.ingress.registry,
+            services.diagnostics.metrics_logger,
         )
     )
     router.include_router(

@@ -15,6 +15,7 @@ from vibesensor.update.manager import UpdateManager
 from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
 from vibesensor.update.runner import CommandRunner
 from vibesensor.update.state_store import UpdateStateStore
+from vibesensor.update.status import UpdateStatusTracker
 
 # ---------------------------------------------------------------------------
 # Fake runner (minimal; only records calls)
@@ -326,6 +327,33 @@ class TestStartupRecovery:
 
 
 class TestPersistenceDuringLifecycle:
+    def test_tracker_persists_runtime_logs_and_bulk_issues_immediately(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        state_path = tmp_path / "state.json"
+        store = UpdateStateStore(path=state_path)
+        tracker = UpdateStatusTracker(state_store=store)
+
+        tracker.start_job("TestNet")
+        tracker.set_runtime({"version": "1.2.3"})
+        tracker.log("runtime collected")
+        tracker.extend_issues(
+            [
+                UpdateIssue(
+                    phase="diagnostics",
+                    message="Wi-Fi warning",
+                    detail="dns probe failed once",
+                )
+            ]
+        )
+
+        loaded = store.load()
+        assert loaded is not None
+        assert loaded.runtime == {"version": "1.2.3"}
+        assert loaded.log_tail[-1] == "runtime collected"
+        assert loaded.issues[-1].message == "Wi-Fi warning"
+
     @pytest.mark.asyncio
     async def test_state_persisted_on_start(self, update_env) -> None:
         """Calling start() persists the initial running status."""

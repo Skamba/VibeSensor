@@ -23,6 +23,7 @@ dev = [
   "mypy>=1.19,<2",
   "pytest>=8,<9",
   "pytest-asyncio>=0.23,<1",
+  "pytest-cov>=6,<7",
   "pytest-timeout>=2,<3",
   "pytest-xdist>=3.6,<4",
   "pypdf>=5,<6",
@@ -36,6 +37,7 @@ dev = [
 [project.scripts]
 vibesensor-server = "vibesensor.server_cli:main"
 vibesensor-report = "vibesensor.report_cli:main"
+vibesensor-http-api-schema-export = "vibesensor.http_api_schema_export:main"
 vibesensor-hotspot-self-heal = "vibesensor.hotspot_self_heal:main"
 vibesensor-sim = "vibesensor_simulator.sim_sender:main"
 vibesensor-ws-smoke = "vibesensor_simulator.ws_smoke:main"

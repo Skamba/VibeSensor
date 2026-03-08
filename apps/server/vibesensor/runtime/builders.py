@@ -137,6 +137,7 @@ def build_diagnostics_subsystem(
     )
     diagnostics = RuntimeDiagnosticsSubsystem(
         metrics_logger=metrics_logger,
+        live_analysis=metrics_logger.live_analysis,
         live_diagnostics=LiveDiagnosticsEngine(),
     )
     requeue_stale_analysis_runs(

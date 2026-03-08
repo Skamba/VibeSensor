@@ -149,6 +149,35 @@ def test_stop_without_samples_does_not_persist_history_run(make_logger, fake_his
     assert fake_history_db.finalize_calls == []
 
 
+def test_append_records_ignores_stale_recent_metrics_without_new_frames(
+    make_logger, fake_history_db
+) -> None:
+    logger = make_logger(history_db=fake_history_db)
+
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    run_id, start_time_utc, start_mono, generation = snapshot
+    stale_rows = logger._build_sample_records(
+        run_id=run_id,
+        t_s=0.25,
+        timestamp_utc="2026-02-16T12:00:00+00:00",
+    )
+
+    timed_out = logger._append_records(
+        run_id,
+        start_time_utc,
+        start_mono,
+        session_generation=generation,
+        prebuilt_rows=stale_rows,
+    )
+
+    assert timed_out is False
+    assert fake_history_db.create_calls == []
+    assert fake_history_db.append_calls == []
+    assert fake_history_db.finalize_calls == []
+
+
 def test_history_run_created_on_first_sample_append(make_logger, fake_history_db) -> None:
     logger = make_logger(history_db=fake_history_db)
 
@@ -167,6 +196,49 @@ def test_history_run_created_on_first_sample_append(make_logger, fake_history_db
     assert timed_out is False
     assert fake_history_db.create_calls == [(run_id, start_time_utc)]
     assert fake_history_db.append_calls == [(run_id, 1)]
+
+
+def test_stop_logging_flushes_first_pending_sample_batch(
+    make_logger, fake_history_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    logger = make_logger(history_db=fake_history_db)
+    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+
+    logger.start_logging()
+    active = logger.registry.get("active")
+    assert active is not None
+    active.frames_total = 1
+
+    logger.stop_logging()
+
+    run_id, start_time_utc = fake_history_db.create_calls[-1]
+    assert fake_history_db.create_calls == [(run_id, start_time_utc)]
+    assert fake_history_db.append_calls == [(run_id, 1)]
+    assert fake_history_db.finalize_calls == [run_id]
+
+
+def test_start_logging_rollover_flushes_first_pending_sample_batch(
+    make_logger, fake_history_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scheduled: list[str] = []
+    logger = make_logger(history_db=fake_history_db)
+    monkeypatch.setattr(logger, "schedule_post_analysis", scheduled.append)
+
+    initial_status = logger.start_logging()
+    initial_run_id = str(initial_status["run_id"])
+    active = logger.registry.get("active")
+    assert active is not None
+    active.frames_total = 1
+
+    next_status = logger.start_logging()
+
+    created_run_id, start_time_utc = fake_history_db.create_calls[-1]
+    assert created_run_id == initial_run_id
+    assert fake_history_db.create_calls == [(created_run_id, start_time_utc)]
+    assert fake_history_db.append_calls == [(created_run_id, 1)]
+    assert fake_history_db.finalize_calls == [created_run_id]
+    assert scheduled == [created_run_id]
+    assert next_status["run_id"] != created_run_id
 
 
 def test_finalize_refreshes_run_metadata_from_latest_settings(
@@ -372,7 +444,7 @@ def test_analysis_snapshot_isolated_per_logging_run(make_logger) -> None:
     logger = make_logger()
 
     logger.start_logging()
-    logger._live_samples.append({"run_marker": "run1"})
+    logger.live_analysis.extend_rows([{"run_marker": "run1"}], live_t_s=0.0)
     logger.stop_logging()
 
     logger.start_logging()
@@ -385,7 +457,7 @@ def test_analysis_snapshot_isolated_per_logging_run(make_logger) -> None:
 def test_analysis_snapshot_reads_tail_without_full_iteration(make_logger) -> None:
     logger = make_logger()
 
-    logger._live_samples = _ReverseOnlySamples([{"idx": idx} for idx in range(10)])  # type: ignore[assignment]
+    logger.live_analysis._samples = _ReverseOnlySamples([{"idx": idx} for idx in range(10)])  # type: ignore[assignment]
 
     _, samples = logger.analysis_snapshot(max_rows=3)
 
@@ -395,8 +467,8 @@ def test_analysis_snapshot_reads_tail_without_full_iteration(make_logger) -> Non
 def test_live_samples_are_pruned_to_recent_window(make_logger) -> None:
     logger = make_logger()
 
-    with logger._lock:
-        logger._live_samples.extend(
+    with logger.live_analysis._lock:
+        logger.live_analysis._samples.extend(
             [
                 {"t_s": 0.1, "sample_id": "old"},
                 {"t_s": 1.0, "sample_id": "edge"},
@@ -404,9 +476,9 @@ def test_live_samples_are_pruned_to_recent_window(make_logger) -> None:
                 {"t_s": 2.9, "sample_id": "recent-b"},
             ]
         )
-        logger._prune_live_samples_locked(3.0)
+        logger.live_analysis._prune_locked(3.0)
 
-    assert [row["sample_id"] for row in logger._live_samples] == [
+    assert [row["sample_id"] for row in logger.live_analysis._samples] == [
         "edge",
         "recent-a",
         "recent-b",
@@ -416,16 +488,16 @@ def test_live_samples_are_pruned_to_recent_window(make_logger) -> None:
 def test_live_samples_prune_drops_malformed_rows(make_logger) -> None:
     logger = make_logger()
 
-    with logger._lock:
-        logger._live_samples.extend(
+    with logger.live_analysis._lock:
+        logger.live_analysis._samples.extend(
             [
                 {"sample_id": "broken"},
                 {"t_s": 2.2, "sample_id": "valid"},
             ]
         )
-        logger._prune_live_samples_locked(2.2)
+        logger.live_analysis._prune_locked(2.2)
 
-    assert [row["sample_id"] for row in logger._live_samples] == ["valid"]
+    assert [row["sample_id"] for row in logger.live_analysis._samples] == ["valid"]
 
 
 def test_post_analysis_uses_run_language_from_metadata(

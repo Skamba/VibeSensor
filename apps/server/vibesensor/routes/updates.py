@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Query
@@ -27,6 +29,16 @@ if TYPE_CHECKING:
 __all__ = ["create_update_routes"]
 
 
+@contextmanager
+def _update_errors_to_http() -> Iterator[None]:
+    try:
+        yield
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
 def create_update_routes(
     update_manager: UpdateManager,
     esp_flash_manager: EspFlashManager,
@@ -42,12 +54,8 @@ def create_update_routes(
 
     @router.post("/api/settings/update/start", response_model=UpdateStartResponse)
     async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
-        try:
+        with _update_errors_to_http():
             update_manager.start(req.ssid, req.password)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        except RuntimeError as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
         return {"status": "started", "ssid": req.ssid}
 
     @router.post("/api/settings/update/cancel", response_model=UpdateCancelResponse)
@@ -63,12 +71,8 @@ def create_update_routes(
 
     @router.post("/api/settings/esp-flash/start", response_model=EspFlashStartResponse)
     async def start_esp_flash(req: EspFlashStartRequest) -> EspFlashStartResponse:
-        try:
+        with _update_errors_to_http():
             job_id = esp_flash_manager.start(port=req.port, auto_detect=req.auto_detect)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        except RuntimeError as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
         return {"status": "started", "job_id": job_id}
 
     @router.get("/api/settings/esp-flash/status", response_model=EspFlashStatusResponse)

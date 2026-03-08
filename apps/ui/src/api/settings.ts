@@ -1,21 +1,30 @@
 import { apiJson } from "./http";
 import type {
+  AnalysisSettingsPayload,
   CarsPayload,
-  EspFlashHistoryAttemptPayload,
+  EspFlashCancelPayload,
+  EspFlashHistoryPayload,
+  EspFlashLogsPayload,
+  EspFlashPortsPayload,
+  EspFlashStartPayload,
   EspFlashStatusPayload,
-  EspSerialPortPayload,
+  HealthStatusPayload,
+  LanguagePayload,
   SpeedSourcePayload,
   SpeedSourceStatusPayload,
+  SpeedUnitPayload,
+  UpdateCancelPayload,
+  UpdateStartPayload,
   UpdateStatusPayload,
 } from "./types";
 
 const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
 
-export async function getSettingsLanguage(): Promise<{ language: string }> {
+export async function getSettingsLanguage(): Promise<LanguagePayload> {
   return apiJson("/api/settings/language");
 }
 
-export async function setSettingsLanguage(language: string): Promise<{ language: string }> {
+export async function setSettingsLanguage(language: string): Promise<LanguagePayload> {
   return apiJson("/api/settings/language", {
     method: "POST",
     headers: JSON_HEADERS,
@@ -23,11 +32,11 @@ export async function setSettingsLanguage(language: string): Promise<{ language:
   });
 }
 
-export async function getSettingsSpeedUnit(): Promise<{ speedUnit: string }> {
+export async function getSettingsSpeedUnit(): Promise<SpeedUnitPayload> {
   return apiJson("/api/settings/speed-unit");
 }
 
-export async function setSettingsSpeedUnit(speedUnit: string): Promise<{ speedUnit: string }> {
+export async function setSettingsSpeedUnit(speedUnit: string): Promise<SpeedUnitPayload> {
   return apiJson("/api/settings/speed-unit", {
     method: "POST",
     headers: JSON_HEADERS,
@@ -35,11 +44,11 @@ export async function setSettingsSpeedUnit(speedUnit: string): Promise<{ speedUn
   });
 }
 
-export async function getAnalysisSettings(): Promise<Record<string, number>> {
+export async function getAnalysisSettings(): Promise<AnalysisSettingsPayload> {
   return apiJson("/api/analysis-settings");
 }
 
-export async function setAnalysisSettings(payload: Record<string, number>): Promise<Record<string, number>> {
+export async function setAnalysisSettings(payload: Record<string, number>): Promise<AnalysisSettingsPayload> {
   return apiJson("/api/analysis-settings", {
     method: "POST",
     headers: JSON_HEADERS,
@@ -101,7 +110,11 @@ export async function getUpdateStatus(): Promise<UpdateStatusPayload> {
   return apiJson("/api/settings/update/status");
 }
 
-export async function startUpdate(ssid: string, password: string): Promise<{ status: string; ssid: string }> {
+export async function getHealthStatus(): Promise<HealthStatusPayload> {
+  return apiJson("/api/health");
+}
+
+export async function startUpdate(ssid: string, password: string): Promise<UpdateStartPayload> {
   return apiJson("/api/settings/update/start", {
     method: "POST",
     headers: JSON_HEADERS,
@@ -109,17 +122,17 @@ export async function startUpdate(ssid: string, password: string): Promise<{ sta
   });
 }
 
-export async function cancelUpdate(): Promise<{ cancelled: boolean }> {
+export async function cancelUpdate(): Promise<UpdateCancelPayload> {
   return apiJson("/api/settings/update/cancel", {
     method: "POST",
   });
 }
 
-export async function getEspFlashPorts(): Promise<{ ports: EspSerialPortPayload[] }> {
+export async function getEspFlashPorts(): Promise<EspFlashPortsPayload> {
   return apiJson("/api/settings/esp-flash/ports");
 }
 
-export async function startEspFlash(port: string | null, auto_detect: boolean): Promise<{ status: string; job_id: number }> {
+export async function startEspFlash(port: string | null, auto_detect: boolean): Promise<EspFlashStartPayload> {
   return apiJson("/api/settings/esp-flash/start", {
     method: "POST",
     headers: JSON_HEADERS,
@@ -131,16 +144,16 @@ export async function getEspFlashStatus(): Promise<EspFlashStatusPayload> {
   return apiJson("/api/settings/esp-flash/status");
 }
 
-export async function getEspFlashLogs(after: number): Promise<{ from_index: number; next_index: number; lines: string[] }> {
+export async function getEspFlashLogs(after: number): Promise<EspFlashLogsPayload> {
   return apiJson(`/api/settings/esp-flash/logs?after=${encodeURIComponent(String(after))}`);
 }
 
-export async function cancelEspFlash(): Promise<{ cancelled: boolean }> {
+export async function cancelEspFlash(): Promise<EspFlashCancelPayload> {
   return apiJson("/api/settings/esp-flash/cancel", {
     method: "POST",
   });
 }
 
-export async function getEspFlashHistory(): Promise<{ attempts: EspFlashHistoryAttemptPayload[] }> {
+export async function getEspFlashHistory(): Promise<EspFlashHistoryPayload> {
   return apiJson("/api/settings/esp-flash/history");
 }

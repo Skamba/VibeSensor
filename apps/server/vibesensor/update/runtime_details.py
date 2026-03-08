@@ -101,7 +101,8 @@ class UpdateRuntimeDetailsCollector:
         static_build_source_hash = str(metadata.get("ui_source_hash") or "")
         static_build_assets_hash = str(metadata.get("static_assets_hash") or "")
         static_build_commit = str(metadata.get("git_commit") or "")
-        assets_verified = has_packaged_static or (
+        has_repo_static = static_root.exists()
+        assets_verified = (
             bool(ui_source_hash)
             and bool(static_assets_hash)
             and bool(static_build_source_hash)
@@ -109,6 +110,8 @@ class UpdateRuntimeDetailsCollector:
             and ui_source_hash == static_build_source_hash
             and static_assets_hash == static_build_assets_hash
         )
+        if not has_repo_static:
+            assets_verified = has_packaged_static
         return {
             "version": version,
             "commit": commit,
