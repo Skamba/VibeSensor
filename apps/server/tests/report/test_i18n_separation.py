@@ -2,7 +2,7 @@
 """Tests enforcing the multilingual architecture: language-neutral analysis + render-time translation.
 
 These tests verify:
-1. Analysis modules (except report_data_builder.py) do not import i18n resources.
+1. Analysis modules (except report_mapping_pipeline.py) do not import i18n resources.
 2. Analysis output contains no localized text — only codes, i18n refs, and parameters.
 3. The same analysis output renders correctly in both EN and NL.
 4. Rendered reports for different languages contain the same structural facts.
@@ -18,16 +18,22 @@ import pytest
 from _paths import SERVER_ROOT
 
 from vibesensor.analysis import map_summary, summarize_run_data
-from vibesensor.analysis.report_data_builder import _is_i18n_ref, _resolve_i18n
+from vibesensor.analysis.report_mapping_common import is_i18n_ref
+from vibesensor.analysis.report_mapping_common import resolve_i18n as resolve_i18n_impl
+from vibesensor.report_i18n import tr
 
 _SERVER_PKG = SERVER_ROOT / "vibesensor"
 _ANALYSIS_PKG = _SERVER_PKG / "analysis"
 
 # Analysis modules that must NOT import from report_i18n.
-# report_data_builder.py is the sole i18n bridge and is allowed.
+# report_mapping_pipeline.py is the sole i18n bridge and is allowed.
 _ANALYSIS_MODULES_NO_I18N = [
-    p for p in _ANALYSIS_PKG.glob("*.py") if p.name not in ("__init__.py", "report_data_builder.py")
+    p for p in _ANALYSIS_PKG.glob("*.py") if p.name not in ("__init__.py", "report_mapping_pipeline.py")
 ]
+
+
+def _resolve_i18n(lang: str, value: object) -> str:
+    return resolve_i18n_impl(lang, value, tr=lambda key, **kw: tr(lang, key, **kw))
 
 
 # ---------------------------------------------------------------------------
@@ -43,7 +49,7 @@ _ANALYSIS_MODULES_NO_I18N = [
 def test_analysis_module_does_not_import_i18n(module_path: Path) -> None:
     """Analysis modules must not import from report_i18n (language resources).
 
-    Only report_data_builder.py is allowed to access translation functions.
+    Only report_mapping_pipeline.py is allowed to access translation functions.
     This ensures analysis output remains language-neutral.
     """
     source = module_path.read_text(encoding="utf-8")
@@ -348,4 +354,4 @@ def test_resolve_i18n_source_translation() -> None:
 )
 def test_is_i18n_ref(value: object, expected: bool) -> None:
     """_is_i18n_ref correctly identifies i18n reference dicts."""
-    assert _is_i18n_ref(value) is expected
+    assert is_i18n_ref(value) is expected

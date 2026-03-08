@@ -153,7 +153,7 @@ compute_ui_hash() {
 
 build_ui_bundle() {
   local ui_dir="${REPO_ROOT}/apps/ui"
-  local server_public_dir="${REPO_ROOT}/apps/server/public"
+  local server_static_dir="${REPO_ROOT}/apps/server/vibesensor/static"
   local should_build="1"
   local current_hash=""
   local previous_hash=""
@@ -185,9 +185,9 @@ build_ui_bundle() {
     fi
   fi
 
-  echo "Syncing UI bundle into apps/server/public"
-  mkdir -p "${server_public_dir}"
-  rsync -a --delete "${ui_dir}/dist/" "${server_public_dir}/"
+  echo "Syncing UI bundle into apps/server/vibesensor/static"
+  mkdir -p "${server_static_dir}"
+  rsync -a --delete "${ui_dir}/dist/" "${server_static_dir}/"
 }
 
 build_app_artifacts() {
@@ -199,7 +199,7 @@ build_app_artifacts() {
 
   rm -rf "${APP_ARTIFACT_DIR}"
   mkdir -p "${APP_WHEEL_DIR}" "${APP_PUBLIC_DIR}"
-  rsync -a --delete "${REPO_ROOT}/apps/server/public/" "${APP_PUBLIC_DIR}/"
+  rsync -a --delete "${REPO_ROOT}/apps/server/vibesensor/static/" "${APP_PUBLIC_DIR}/"
 
   build_root="$(mktemp -d -p "${CACHE_DIR}" app-build-XXXXXX)"
   mkdir -p \
@@ -344,8 +344,8 @@ rsync -a --delete \
   --exclude "infra/pi-image/pi-gen/out/" \
   "${REPO_ROOT}/" "${STAGE_REPO_DIR}/"
 
-mkdir -p "${STAGE_REPO_DIR}/apps/server/public"
-rsync -a --delete "${APP_PUBLIC_DIR}/" "${STAGE_REPO_DIR}/apps/server/public/"
+mkdir -p "${STAGE_REPO_DIR}/apps/server/vibesensor/static"
+rsync -a --delete "${APP_PUBLIC_DIR}/" "${STAGE_REPO_DIR}/apps/server/vibesensor/static/"
 
 mkdir -p "${STAGE_STEP_DIR}/files/opt/vibesensor-artifacts/wheels"
 cp -f "${APP_WHEEL_PATH}" "${STAGE_STEP_DIR}/files/opt/vibesensor-artifacts/wheels/${APP_WHEEL_FILE}"
@@ -469,9 +469,8 @@ import site
 print(site.getsitepackages()[0])
 PY
 )"
-rm -rf "${SITE_PACKAGES}/data" "${SITE_PACKAGES}/public"
+rm -rf "${SITE_PACKAGES}/data" "${SITE_PACKAGES}/public" "${SITE_PACKAGES}/static"
 cp -a /opt/VibeSensor/apps/server/data "${SITE_PACKAGES}/data"
-cp -a /opt/VibeSensor/apps/server/public "${SITE_PACKAGES}/public"
 # Keep runtime assets/scripts/config while ensuring Python code comes from wheels.
 rm -rf \
   /opt/VibeSensor/apps/server/vibesensor \

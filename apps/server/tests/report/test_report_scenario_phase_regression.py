@@ -22,7 +22,7 @@ from vibesensor.analysis.phase_segmentation import (
     phase_summary,
     segment_run_phases,
 )
-from vibesensor.analysis.summary import summarize_run_data
+from vibesensor.analysis import summarize_run_data
 
 
 class TestPhaseSegmentation:

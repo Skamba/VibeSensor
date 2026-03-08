@@ -7,7 +7,7 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from .pdf_diagram import car_location_diagram
+from .pdf_diagram_render import car_location_diagram
 from .pdf_drawing import _draw_panel, _hex
 from .pdf_layout import assert_aspect_preserved, fit_rect_preserve_aspect
 from .pdf_page_layouts import build_page2_layout

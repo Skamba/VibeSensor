@@ -16,8 +16,10 @@ import pytest
 from vibesensor.analysis.findings.intensity import _sensor_intensity_by_location
 from vibesensor.analysis.helpers import _format_duration, _speed_bin_label
 from vibesensor.analysis.phase_segmentation import segment_run_phases
-from vibesensor.analysis.report_data_builder import _order_label_human, _resolve_i18n
-from vibesensor.analysis.summary import _compute_run_timing, confidence_label
+from vibesensor.analysis.report_mapping_common import order_label_human
+from vibesensor.analysis.report_mapping_common import resolve_i18n as resolve_i18n_impl
+from vibesensor.analysis.summary_phases import compute_run_timing
+from vibesensor.analysis.top_cause_selection import confidence_label
 from vibesensor.analysis.test_plan import _weighted_speed_window_label
 from vibesensor.config import _split_host_port
 from vibesensor.domain_models import VALID_SPEED_SOURCES
@@ -47,7 +49,7 @@ class TestBug01ComputeRunTimingTimedelta:
     def test_end_ts_from_samples_uses_timedelta(self) -> None:
         meta = {"start_time_utc": "2024-01-01T12:00:00Z"}
         samples = [{"t_s": 0.0}, {"t_s": 300.0}]
-        _, start, end, duration = _compute_run_timing(meta, samples, "test")
+        _, start, end, duration = compute_run_timing(meta, samples, "test")
         assert start is not None
         assert end is not None
         assert (end - start).total_seconds() == pytest.approx(300.0)
@@ -246,7 +248,7 @@ class TestBug10ConfidenceLabelNone:
 class TestBug11OrderLabelCaseInsensitive:
     @pytest.mark.parametrize("label", ["1x Wheel", "2x ENGINE"])
     def test_case_insensitive_match(self, label: str) -> None:
-        result = _order_label_human("en", label)
+        result = order_label_human("en", label)
         assert "order" in result.lower()
 
 
@@ -331,7 +333,7 @@ class TestBug16DataTrustListResolve:
             {"_i18n_key": "SOURCE_WHEEL_TIRE"},
             {"_i18n_key": "SOURCE_ENGINE"},
         ]
-        result = _resolve_i18n("en", value)
+        result = resolve_i18n_impl("en", value, tr=lambda key, **kw: tr("en", key, **kw))
         assert "[" not in result  # Should not contain raw list representation
         assert isinstance(result, str)
 

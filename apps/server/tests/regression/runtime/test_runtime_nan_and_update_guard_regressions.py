@@ -16,9 +16,9 @@ import pytest
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from vibesensor.analysis.helpers import _corr_abs_clamped, _weighted_percentile
-from vibesensor.analysis.summary import _normalize_lang
+from vibesensor.analysis.summary_builder import normalize_lang
 from vibesensor.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher, _dir_sha256
-from vibesensor.report.pdf_builder import _strength_with_peak
+from vibesensor.report.pdf_drawing import _strength_with_peak
 from vibesensor.report.pdf_helpers import _canonical_location
 from vibesensor.report_i18n import tr
 from vibesensor.settings_store import PersistenceError, SettingsStore
@@ -236,7 +236,7 @@ class TestNormalizeLangDedup:
         ],
     )
     def test_normalize_lang(self, raw: str | None, expected: str) -> None:
-        assert _normalize_lang(raw) == expected
+        assert normalize_lang(raw) == expected
 
 
 # ── 7. _weighted_percentile direct import ─────────────────────────────────

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import HTTPException
 
 from .history_helpers import async_require_run, require_analysis_ready, safe_filename
-from .report.pdf_builder import build_report_pdf
+from .report.pdf_engine import build_report_pdf
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB

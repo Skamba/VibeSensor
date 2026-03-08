@@ -102,9 +102,9 @@ export type UpdateStatusPayload = {
     version: string;
     commit: string;
     ui_source_hash: string;
-    public_assets_hash: string;
-    public_build_source_hash: string;
-    public_build_commit: string;
+    static_assets_hash: string;
+    static_build_source_hash: string;
+    static_build_commit: string;
     assets_verified: boolean;
     has_packaged_static: boolean;
   };

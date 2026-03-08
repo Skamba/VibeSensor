@@ -7,7 +7,7 @@
 - `apps/server/vibesensor/routes/__init__.py`: assembles the HTTP and WebSocket route groups.
 - `apps/server/vibesensor/runtime/`: runtime subsystem builders and owners, processing loop, websocket broadcast state, route-service assembly, and lifecycle services.
 - `apps/server/vibesensor/history_db/`: SQLite-backed history and settings persistence.
-- `apps/server/vibesensor/report/pdf_builder.py`: public PDF renderer facade.
+- `apps/server/vibesensor/report/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
 - `apps/server/vibesensor/update/manager.py`: public wheel-based updater facade that composes the focused update modules.
 - `apps/ui/src/main.ts`: top-level UI orchestration.
 - `apps/ui/src/api.ts` and `apps/ui/src/ws.ts`: HTTP and WebSocket client surfaces.
@@ -28,7 +28,7 @@
 - `apps/server/vibesensor/runtime/composition.py`: runtime subsystem assembly and ownership boundaries.
 - `apps/server/vibesensor/routes/__init__.py`: shared route assembly point.
 - `apps/server/vibesensor/update/workflow.py`: long-running update flow with explicit validation, Wi-Fi, release, install, rollback, and restart orchestration.
-- `apps/server/vibesensor/report/`: public report rendering surface. Start at `pdf_builder.py`, then follow `pdf_engine.py`, page modules, and shared drawing/layout helpers.
+- `apps/server/vibesensor/report/`: public report rendering surface. Start at `pdf_engine.py`, then follow the page modules plus shared drawing/layout helpers.
 - `apps/ui/src/main.ts`: large UI coordinator.
 
 ## Safe starting points

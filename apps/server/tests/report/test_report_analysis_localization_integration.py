@@ -6,7 +6,7 @@ from _report_helpers import analysis_sample as _make_sample
 
 from vibesensor.analysis import build_findings_for_samples
 from vibesensor.analysis.findings import order_findings as order_findings_module
-from vibesensor.analysis.summary import _most_likely_origin_summary
+from vibesensor.analysis.summary_payload import summarize_origin
 from vibesensor.analysis.test_plan import _location_speedbin_summary
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
@@ -61,7 +61,7 @@ def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_cou
 
 
 def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> None:
-    origin = _most_likely_origin_summary(
+    origin = summarize_origin(
         [
             {
                 "suspected_source": "wheel/tire",

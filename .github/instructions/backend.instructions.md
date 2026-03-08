@@ -9,7 +9,7 @@ Backend (python `apps/server/`)
 	- `apps/server/vibesensor/routes/`: HTTP and WebSocket route groups, assembled by `routes/__init__.py`.
 	- `apps/server/vibesensor/runtime/`: subsystem ownership, route-service assembly, lifecycle coordination, processing loop, and websocket broadcast state.
 	- `apps/server/vibesensor/history_db/`: SQLite-backed history and settings persistence.
-	- `apps/server/vibesensor/report/pdf_builder.py`: public PDF renderer facade.
+	- `apps/server/vibesensor/report/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
 	- `apps/server/vibesensor/update/`: wheel-based updater package; `manager.py` is the public facade over focused modules for workflow, Wi-Fi, releases, install and rollback, service control, and status.
 - Install: `python -m pip install -e "./apps/server[dev]"` (used by CI).
 - Backend type gate: `make typecheck-backend` runs the enforced mypy slice for app/bootstrap, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages.

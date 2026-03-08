@@ -5,8 +5,8 @@ from __future__ import annotations
 
 Covers:
   1. _corr_abs — NaN propagation guard (helpers.py)
-  2. pdf_diagram.py — next() with default for marker lookup
-  3. pdf_builder.py — confidence NaN/Inf guard
+  2. pdf_diagram_render.py — next() with default for marker lookup
+  3. pdf_engine.py — confidence NaN/Inf guard
   4. persistent_findings.py — type hint list[str] (compile-time only)
   5. api_models.py — input validation bounds on request models
   6. history_db.py — corrupted schema version recovery
@@ -65,7 +65,7 @@ class TestPdfDiagramMarkerLookup:
     """Marker lookup must not raise StopIteration for missing markers.
 
     The fix changed ``next(item for ...)`` to ``next((...), None)``
-    with a ``continue`` guard in pdf_diagram.py.  We verify the
+    with a ``continue`` guard in pdf_diagram_render.py.  We verify the
     pattern at a unit level (the inline logic is inside
     car_location_diagram and not separately testable).
     """
@@ -84,7 +84,7 @@ class TestPdfDiagramMarkerLookup:
 
 
 # ------------------------------------------------------------------
-# 3. pdf_builder — confidence NaN/Inf guard
+# 3. pdf_engine — confidence NaN/Inf guard
 # ------------------------------------------------------------------
 
 

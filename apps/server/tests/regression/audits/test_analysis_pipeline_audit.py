@@ -412,7 +412,7 @@ class TestFinding9_SteadySpeedSinglePoint:
 # FINDING 10 (NEW) — summarize_run_data has no error isolation between
 #   pipeline stages
 # Severity: HIGH
-# Evidence: summary.py lines 730-950 (summarize_run_data)
+# Evidence: summary_builder.py (summarize_run_data)
 # Root cause: summarize_run_data calls multiple sub-functions in
 #   sequence (_compute_run_timing, _prepare_speed_and_phases,
 #   _compute_accel_statistics, _build_findings, _plot_data, etc.).
@@ -442,7 +442,7 @@ class TestFinding10_NoPipelineErrorIsolation:
     """Demonstrate that a failure in one stage kills the entire summary."""
 
     def test_findings_failure_kills_entire_summary(self):
-        from vibesensor.analysis.summary import summarize_run_data
+        from vibesensor.analysis import summarize_run_data
 
         metadata: dict[str, Any] = {
             "run_id": "test-run",
@@ -465,13 +465,15 @@ class TestFinding10_NoPipelineErrorIsolation:
             for i in range(20)
         ]
 
-        # Patch _build_findings to raise an exception
-        with (
-            patch(
-                "vibesensor.analysis.summary._build_findings",
-                side_effect=RuntimeError("simulated findings failure"),
-            ),
-            pytest.raises(RuntimeError, match="simulated findings failure"),
-        ):
-            summarize_run_data(metadata, samples, lang="en", file_name="test")
+        def _failing_findings_builder(**_kwargs: object) -> list[dict[str, object]]:
+            raise RuntimeError("simulated findings failure")
+
+        with pytest.raises(RuntimeError, match="simulated findings failure"):
+            summarize_run_data(
+                metadata,
+                samples,
+                lang="en",
+                file_name="test",
+                findings_builder=_failing_findings_builder,
+            )
         # Bug: the entire summary is lost; no partial results are available

@@ -44,21 +44,21 @@ def mock_which(name: str) -> str | None:
 
 def seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True) -> None:
     (repo / "apps" / "ui" / "src").mkdir(parents=True, exist_ok=True)
-    (repo / "apps" / "server" / "public").mkdir(parents=True, exist_ok=True)
+    (repo / "apps" / "server" / "vibesensor" / "static").mkdir(parents=True, exist_ok=True)
     (repo / "tools").mkdir(parents=True, exist_ok=True)
-    (repo / "tools" / "sync_ui_to_pi_public.py").write_text("#!/usr/bin/env python3\n")
+    (repo / "tools" / "build_ui_static.py").write_text("#!/usr/bin/env python3\n")
     (repo / "apps" / "server" / "pyproject.toml").write_text("[project]\nname='vibesensor'\n")
     (repo / "apps" / "ui" / "src" / "main.ts").write_text("console.log('ui')\n")
     (repo / "apps" / "ui" / "package.json").write_text('{"name":"ui"}\n')
     (repo / "apps" / "ui" / "package-lock.json").write_text('{"name":"ui","lockfileVersion":3}\n')
-    (repo / "apps" / "server" / "public" / "index.html").write_text("<html>ok</html>\n")
+    (repo / "apps" / "server" / "vibesensor" / "static" / "index.html").write_text("<html>ok</html>\n")
     details = mgr._collect_runtime_details()
     metadata = {
         "ui_source_hash": details["ui_source_hash"] if valid else "stale-source-hash",
-        "public_assets_hash": details["public_assets_hash"],
+        "static_assets_hash": details["static_assets_hash"],
         "git_commit": "deadbeef",
     }
-    (repo / "apps" / "server" / "public" / ".vibesensor-ui-build.json").write_text(
+    (repo / "apps" / "server" / "vibesensor" / "static" / ".vibesensor-ui-build.json").write_text(
         json.dumps(metadata), encoding="utf-8"
     )
 

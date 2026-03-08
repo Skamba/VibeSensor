@@ -17,7 +17,7 @@ from _scenario_ground_truth_helpers import (
 )
 from builders import make_sample as _make_sample
 
-from vibesensor.analysis.summary import summarize_run_data
+from vibesensor.analysis import summarize_run_data
 
 
 class _FakeSimClient:

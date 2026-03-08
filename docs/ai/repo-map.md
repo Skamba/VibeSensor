@@ -40,7 +40,7 @@
 - `apps/server/tests/` is feature-based and mirrors backend ownership boundaries.
 - Cross-cutting coverage lives in `integration/`, `regression/`, `hygiene/`, and `e2e/`.
 - `regression/` is further split by intent: `analysis/`, `audits/`, `cross_cutting/`, `report/`, `runtime/`.
-- Shared test support lives at the test root (`conftest.py`, `builders.py`, `_paths.py`, and focused helper modules).
+- Shared test support lives at the test root (`conftest.py`, `_paths.py`, focused helper modules, and the `test_support/` package).
 - Full map: `docs/testing.md`.
 
 ## Source-of-truth rule

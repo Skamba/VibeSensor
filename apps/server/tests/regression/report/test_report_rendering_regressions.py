@@ -10,12 +10,9 @@ import pytest
 from _paths import SERVER_ROOT
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.report import pdf_builder
-from vibesensor.report.pdf_builder import (
-    _draw_next_steps_table,
-    _draw_system_card,
-    _page2,
-)
+from vibesensor.report import pdf_page1
+from vibesensor.report.pdf_page1 import _draw_next_steps_table, _draw_system_card
+from vibesensor.report.pdf_page2 import _page2
 from vibesensor.report.report_data import NextStep
 
 
@@ -80,7 +77,7 @@ class TestNextStepFieldsRendered:
         def capture_text(*args, **kwargs) -> None:
             captured.append(args[4])
 
-        monkeypatch.setattr(pdf_builder, "_draw_text", capture_text)
+        monkeypatch.setattr(pdf_page1, "_draw_text", capture_text)
         _draw_next_steps_table(
             _make_canvas(),
             0,

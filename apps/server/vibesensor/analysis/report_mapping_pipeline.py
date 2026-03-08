@@ -10,19 +10,7 @@ from ..report.report_data import (
     ObservedSignature,
     ReportTemplateData,
 )
-from .report_mapping_components import (
-    build_data_trust_from_summary,
-    build_next_steps_from_summary,
-    build_pattern_evidence,
-    build_peak_rows_from_plots,
-    build_run_metadata_fields,
-    build_system_cards,
-    build_version_marker,
-    compute_location_hotspot_rows,
-    filter_active_sensor_intensity,
-    has_relevant_reference_gap,
-    top_strength_values,
-)
+from .report_mapping_actions import build_data_trust_from_summary, build_next_steps_from_summary
 from .report_mapping_context import (
     extract_run_context,
     extract_sensor_locations,
@@ -30,7 +18,19 @@ from .report_mapping_context import (
     resolve_primary_candidate,
     resolve_sensor_count,
 )
+from ..report_i18n import normalize_lang
+from ..report_i18n import tr as _tr
+from .report_mapping_peaks import build_peak_rows_from_plots, compute_location_hotspot_rows
 from .report_mapping_models import PrimaryCandidateContext, ReportMappingContext
+from .report_mapping_systems import (
+    build_pattern_evidence,
+    build_run_metadata_fields,
+    build_system_cards,
+    build_version_marker,
+    filter_active_sensor_intensity,
+    has_relevant_reference_gap,
+    top_strength_values,
+)
 from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 
 
@@ -140,7 +140,17 @@ def build_observed_signature(primary: PrimaryCandidateContext) -> ObservedSignat
     )
 
 
-def build_report_template_data(
+def map_summary(summary: dict[str, Any]) -> ReportTemplateData:
+    """Map a run summary dict into the final report template data model."""
+    lang = str(normalize_lang(summary.get("lang")))
+
+    def tr(key: str, **kw: object) -> str:
+        return str(_tr(lang, key, **kw))
+
+    return _build_report_template_data(summary, lang=lang, tr=tr)
+
+
+def _build_report_template_data(
     summary: dict[str, Any],
     *,
     lang: str,

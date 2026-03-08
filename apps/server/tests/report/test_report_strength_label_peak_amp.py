@@ -4,9 +4,9 @@ from typing import Any
 
 from _report_helpers import minimal_summary
 
-from vibesensor.analysis.report_data_builder import map_summary
+from vibesensor.analysis import map_summary
 from vibesensor.analysis.strength_labels import strength_text
-from vibesensor.report.pdf_builder import _strength_with_peak
+from vibesensor.report.pdf_drawing import _strength_with_peak
 
 # ---------------------------------------------------------------------------
 # Shared top-cause / finding templates

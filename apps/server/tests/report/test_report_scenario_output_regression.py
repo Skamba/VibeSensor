@@ -7,8 +7,8 @@ from typing import Any
 from _scenario_regression_helpers import build_speed_sweep_samples, make_sample, standard_metadata
 
 from vibesensor.analysis.findings.reference_checks import _reference_missing_finding
-from vibesensor.analysis.report_data_builder import map_summary
-from vibesensor.analysis.summary import select_top_causes, summarize_run_data
+from vibesensor.analysis import map_summary
+from vibesensor.analysis import select_top_causes, summarize_run_data
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
 

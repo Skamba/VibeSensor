@@ -1,7 +1,7 @@
 """Aspect-ratio and geometry helpers for PDF report layout.
 
-Pure-maths utilities that keep the drawing code in ``pdf_builder.py``
-focused on content rather than layout arithmetic.
+Pure-maths utilities that keep the report rendering code focused on
+content rather than layout arithmetic.
 """
 
 from __future__ import annotations

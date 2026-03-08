@@ -10,8 +10,7 @@ __all__ = [
 ]
 
 # BMW reference body proportions used for aspect-ratio preservation in
-# the car location diagram.  Both pdf_builder.py and pdf_diagram.py
-# share these values so they can never diverge.
+# the report PDF and car location diagram so they can never diverge.
 BMW_LENGTH_MM = 5007.0
 BMW_WIDTH_MM = 1894.0
 

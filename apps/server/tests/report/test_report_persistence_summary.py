@@ -8,7 +8,7 @@ from vibesensor.analysis.plot_data import (
     _spectrogram_from_peaks_raw,
     _top_peaks_table_rows,
 )
-from vibesensor.analysis.summary import build_findings_for_samples
+from vibesensor.analysis import build_findings_for_samples
 
 
 class TestSummarizeRunDataPersistence:
