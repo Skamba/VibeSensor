@@ -125,7 +125,7 @@ def _start_and_snapshot(logger: MetricsLogger):
     logger.start_logging()
     snap = logger._session_snapshot()
     assert snap is not None
-    return snap
+    return snap.run_id, snap.start_time_utc, snap.start_mono_s, snap.generation
 
 
 # -- Tests -------------------------------------------------------------------

@@ -448,7 +448,8 @@ class MetricsLogger:
         return self._post_analysis.wait(timeout_s)
 
     def shutdown_report(self, timeout_s: float = 30.0) -> MetricsShutdownReport:
-        active_run_id_before_stop = self._run_id
+        with self._lock:
+            active_run_id_before_stop = self._run_id
         self._session.set_shutdown_requested(True)
         try:
             final_status = self.stop_logging()

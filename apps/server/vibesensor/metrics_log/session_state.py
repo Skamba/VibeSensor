@@ -18,12 +18,6 @@ class MetricsSessionSnapshot:
     start_mono_s: float
     generation: int
 
-    def __iter__(self):
-        yield self.run_id
-        yield self.start_time_utc
-        yield self.start_mono_s
-        yield self.generation
-
 
 class MetricsSessionState:
     """Owns the active recording session lifecycle and progress markers."""
