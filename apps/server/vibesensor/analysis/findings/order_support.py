@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable
-from typing import Any
 
 from ...runlog import as_float_or_none as _as_float
+from .._types import MatchedPoint, PhaseEvidence
 from ..phase_segmentation import DrivingPhase
 
 _PHASE_ONSET_RELEVANT: frozenset[str] = frozenset(
@@ -19,7 +19,7 @@ _PHASE_ONSET_RELEVANT: frozenset[str] = frozenset(
 
 
 def compute_matched_speed_phase_evidence(
-    matched_points: list[dict[str, Any]],
+    matched_points: list[MatchedPoint],
     *,
     focused_speed_band: str | None,
     hotspot_speed_band: str,
@@ -27,7 +27,7 @@ def compute_matched_speed_phase_evidence(
         ...,
         tuple[float | None, tuple[float, float] | None, str | None],
     ],
-) -> tuple[float | None, list[float], str | None, dict[str, Any], str | None]:
+) -> tuple[float | None, list[float], str | None, PhaseEvidence, str | None]:
     """Derive speed-profile and phase-evidence from matched points."""
     cruise_value = DrivingPhase.CRUISE.value
     speed_points: list[tuple[float, float]] = []
@@ -60,7 +60,7 @@ def compute_matched_speed_phase_evidence(
         str(point.get("phase") or "") for point in matched_points if point.get("phase")
     ]
     cruise_matched = sum(1 for phase in matched_phase_strs if phase == cruise_value)
-    phase_evidence: dict[str, Any] = {
+    phase_evidence: PhaseEvidence = {
         "cruise_fraction": cruise_matched / len(matched_phase_strs) if matched_phase_strs else 0.0,
         "phases_detected": sorted(set(matched_phase_strs)),
     }
@@ -107,7 +107,7 @@ def compute_amplitude_and_error_stats(
     rel_errors: list[float],
     predicted_vals: list[float],
     measured_vals: list[float],
-    matched_points: list[dict[str, Any]],
+    matched_points: list[MatchedPoint],
     *,
     constant_speed: bool,
     corr_abs_clamped: Callable[[list[float], list[float]], float | None],

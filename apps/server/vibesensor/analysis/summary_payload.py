@@ -2,9 +2,27 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from ..runlog import as_float_or_none as _as_float
+from ._types import (
+    AccelStatistics,
+    Finding,
+    I18nRef,
+    IntensityRow,
+    JsonValue,
+    MetadataDict,
+    OriginSummary,
+    PhaseSpeedBreakdownRow,
+    PhaseSpeedStats,
+    PhaseSummary,
+    PhaseTimelineEntry,
+    RunSuitabilityCheck,
+    Sample,
+    SpeedBreakdownRow,
+    SpeedStats,
+    SummaryData,
+    TestStep,
+    TopCause,
+)
 from .findings.intensity import _sensor_intensity_by_location
 from .helpers import (
     PHASE_I18N_KEYS,
@@ -21,10 +39,10 @@ from .summary_suitability import build_data_quality_dict
 
 def build_sensor_analysis(
     *,
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     language: str,
     per_sample_phases: list[DrivingPhase],
-) -> tuple[list[str], set[str], list[dict[str, Any]]]:
+) -> tuple[list[str], set[str], list[IntensityRow]]:
     """Build sensor location lists and intensity rows from analysed samples."""
     sensor_locations = sorted(
         {
@@ -44,7 +62,7 @@ def build_sensor_analysis(
     return sensor_locations, connected_locations, sensor_intensity_by_location
 
 
-def summarize_origin(findings: list[dict[str, Any]]) -> dict[str, Any]:
+def summarize_origin(findings: list[Finding]) -> OriginSummary:
     """Build the most-likely-origin summary from ranked diagnostic findings."""
     if not findings:
         return {
@@ -102,7 +120,7 @@ def summarize_origin(findings: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def collect_alternative_locations(
-    top_finding: dict[str, Any],
+    top_finding: Finding,
     *,
     primary_location: str,
 ) -> list[str]:
@@ -111,7 +129,10 @@ def collect_alternative_locations(
     hotspot = top_finding.get("location_hotspot")
     if not isinstance(hotspot, dict):
         return alternative_locations
-    for candidate in hotspot.get("ambiguous_locations", []):
+    ambiguous_locations = hotspot.get("ambiguous_locations", [])
+    if not isinstance(ambiguous_locations, list):
+        ambiguous_locations = []
+    for candidate in ambiguous_locations:
         loc = str(candidate or "").strip()
         if loc and loc != primary_location and loc not in alternative_locations:
             alternative_locations.append(loc)
@@ -125,7 +146,7 @@ def collect_alternative_locations(
     return alternative_locations
 
 
-def weak_spatial_threshold(top_finding: dict[str, Any], *, hotspot: object) -> float:
+def weak_spatial_threshold(top_finding: Finding, *, hotspot: object) -> float:
     """Resolve the adaptive weak-spatial threshold for the strongest finding."""
     location_count = _as_float(top_finding.get("location_count"))
     if location_count is None and isinstance(hotspot, dict):
@@ -134,7 +155,7 @@ def weak_spatial_threshold(top_finding: dict[str, Any], *, hotspot: object) -> f
 
 
 def enrich_with_second_finding(
-    findings: list[dict[str, Any]],
+    findings: list[Finding],
     *,
     weak: bool,
     primary_location: str,
@@ -189,9 +210,9 @@ def build_origin_explanation(
     dominance: float | None,
     weak: bool,
     dominant_phase: str,
-) -> object:
+) -> JsonValue:
     """Build the language-neutral origin explanation block."""
-    explanation_parts: list[object] = [
+    explanation_parts: list[JsonValue] = [
         _i18n_ref(
             "ORIGIN_EXPLANATION_FINDING_1",
             source=source,
@@ -211,33 +232,33 @@ def build_summary_payload(
     *,
     file_name: str,
     run_id: str,
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     duration_s: float,
     language: str,
-    metadata: dict[str, Any],
+    metadata: MetadataDict,
     raw_sample_rate_hz: float | None,
-    speed_breakdown: list[dict[str, Any]],
-    phase_speed_breakdown: list[dict[str, Any]],
+    speed_breakdown: list[SpeedBreakdownRow],
+    phase_speed_breakdown: list[PhaseSpeedBreakdownRow],
     phase_segments: list[PhaseSegment],
     run_noise_baseline_g: float | None,
-    speed_breakdown_skipped_reason: object,
-    findings: list[dict[str, Any]],
-    top_causes: list[dict[str, Any]],
-    most_likely_origin: dict[str, Any],
-    test_plan: list[dict[str, Any]],
-    phase_timeline: list[dict[str, Any]],
-    speed_stats: dict[str, Any],
-    speed_stats_by_phase: dict[str, Any],
-    phase_info: dict[str, Any],
+    speed_breakdown_skipped_reason: I18nRef | None,
+    findings: list[Finding],
+    top_causes: list[TopCause],
+    most_likely_origin: OriginSummary,
+    test_plan: list[TestStep],
+    phase_timeline: list[PhaseTimelineEntry],
+    speed_stats: SpeedStats,
+    speed_stats_by_phase: dict[str, PhaseSpeedStats],
+    phase_info: PhaseSummary,
     sensor_locations: list[str],
     connected_locations: set[str],
-    sensor_intensity_by_location: list[dict[str, Any]],
-    run_suitability: list[dict[str, Any]],
+    sensor_intensity_by_location: list[IntensityRow],
+    run_suitability: list[RunSuitabilityCheck],
     speed_values: list[float],
     speed_non_null_pct: float,
-    accel_stats: dict[str, Any],
+    accel_stats: AccelStatistics,
     amp_metric_values: list[float],
-) -> dict[str, Any]:
+) -> SummaryData:
     """Assemble the final summary payload from already-computed artifacts."""
     return {
         "file_name": file_name,

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from math import log1p
-from typing import Any
 
 from vibesensor_core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
@@ -11,28 +11,35 @@ from vibesensor_core.vibration_strength import (
 
 from ...constants import MEMS_NOISE_FLOOR_G
 from ...runlog import as_float_or_none as _as_float
+from .._types import Finding, JsonValue, LocationHotspot, PhaseEvidence
 from ..order_analysis import (
     _finding_actions_for_source,
     _i18n_ref,
     _order_label,
 )
 from ._constants import _SNR_LOG_DIVISOR
-from .order_models import OrderFindingBuildContext, OrderMatchAccumulator
+from .order_models import OrderFindingBuildContext, OrderHypothesisLike, OrderMatchAccumulator
 
 
 def assemble_order_finding(
-    hypothesis: Any,
+    hypothesis: OrderHypothesisLike,
     match: OrderMatchAccumulator,
     *,
     context: OrderFindingBuildContext,
-    location_speedbin_summary: Any,
-    compute_phase_stats: Any,
-    compute_amplitude_and_error_stats: Any,
-    apply_localization_override: Any,
-    detect_diffuse_excitation: Any,
-    compute_order_confidence: Any,
-    compute_matched_speed_phase_evidence: Any,
-) -> tuple[float, dict[str, Any]]:
+    location_speedbin_summary: Callable[..., tuple[object, LocationHotspot | None]],
+    compute_phase_stats: Callable[..., tuple[dict[str, float] | None, int]],
+    compute_amplitude_and_error_stats: Callable[
+        ...,
+        tuple[float, float, float, float, float | None],
+    ],
+    apply_localization_override: Callable[..., tuple[float, bool]],
+    detect_diffuse_excitation: Callable[..., tuple[bool, float]],
+    compute_order_confidence: Callable[..., float],
+    compute_matched_speed_phase_evidence: Callable[
+        ...,
+        tuple[float | None, list[float], str | None, PhaseEvidence, str | None],
+    ],
+) -> tuple[float, Finding]:
     """Build a single order finding from a successful match result."""
     per_phase_confidence, phases_with_evidence = compute_phase_stats(
         match.has_phases,
@@ -164,8 +171,8 @@ def assemble_order_finding(
         strongest_speed_band=strongest_speed_band or "",
         weak_spatial_separation=weak_spatial_separation,
     )
-    quick_checks = [action["what"] for action in actions if action.get("what")][:3]
-    finding = {
+    quick_checks: list[JsonValue] = [action["what"] for action in actions if action.get("what")][:3]
+    finding: Finding = {
         "finding_id": "F_ORDER",
         "finding_key": hypothesis.key,
         "suspected_source": hypothesis.suspected_source,

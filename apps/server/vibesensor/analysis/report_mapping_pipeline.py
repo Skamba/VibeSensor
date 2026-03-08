@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
 
 from ..report.report_data import (
     CarMeta,
@@ -12,6 +11,7 @@ from ..report.report_data import (
 )
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
+from ._types import SummaryData
 from .report_mapping_actions import build_data_trust_from_summary, build_next_steps_from_summary
 from .report_mapping_context import (
     extract_run_context,
@@ -35,7 +35,7 @@ from .strength_labels import certainty_label, certainty_tier, strength_label, st
 
 
 def prepare_report_mapping_context(
-    summary: dict[str, Any],
+    summary: SummaryData,
 ) -> ReportMappingContext:
     """Extract structural summary context for report mapping."""
     (
@@ -67,7 +67,7 @@ def prepare_report_mapping_context(
 
 
 def resolve_primary_report_candidate(
-    summary: dict[str, Any],
+    summary: SummaryData,
     *,
     context: ReportMappingContext,
     tr: Callable[..., str],
@@ -140,7 +140,7 @@ def build_observed_signature(primary: PrimaryCandidateContext) -> ObservedSignat
     )
 
 
-def map_summary(summary: dict[str, Any]) -> ReportTemplateData:
+def map_summary(summary: SummaryData) -> ReportTemplateData:
     """Map a run summary dict into the final report template data model."""
     lang = str(normalize_lang(summary.get("lang")))
 
@@ -151,7 +151,7 @@ def map_summary(summary: dict[str, Any]) -> ReportTemplateData:
 
 
 def _build_report_template_data(
-    summary: dict[str, Any],
+    summary: SummaryData,
     *,
     lang: str,
     tr: Callable[..., str],

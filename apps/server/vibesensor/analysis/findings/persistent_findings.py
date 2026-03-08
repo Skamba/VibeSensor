@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import defaultdict
 from math import floor as _math_floor
 from math import log1p
-from typing import Any
 
 from vibesensor_core.vibration_strength import percentile
 from vibesensor_core.vibration_strength import (
@@ -14,7 +13,7 @@ from vibesensor_core.vibration_strength import (
 
 from ...constants import MEMS_NOISE_FLOOR_G
 from ...runlog import as_float_or_none as _as_float
-from .._types import PhaseLabels
+from .._types import Finding, FindingEvidenceMetrics, PhaseEvidence, PhaseLabels, Sample
 from ..helpers import (
     _effective_baseline_floor,
     _estimate_strength_floor_amp_g,
@@ -113,7 +112,7 @@ class _PeakBinStats:
 
 
 def _accumulate_peak_bin_stats(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     *,
     freq_bin_hz: float,
     freq_bin_hz_half: float,
@@ -239,13 +238,13 @@ def _classify_peak_type(
 
 def _build_persistent_peak_findings(
     *,
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     order_finding_freqs: set[float],
     lang: str,
     freq_bin_hz: float = 2.0,
     per_sample_phases: PhaseLabels | None = None,
     run_noise_baseline_g: float | None = None,
-) -> list[dict[str, Any]]:
+) -> list[Finding]:
     """Build findings for non-order persistent frequency peaks.
 
     Uses the same confidence-style scoring as order findings (presence_ratio,
@@ -287,8 +286,8 @@ def _build_persistent_peak_findings(
     if run_noise_baseline_g is None:
         run_noise_baseline_g = _run_noise_baseline_g(samples)
 
-    persistent_findings: list[tuple[float, dict[str, Any]]] = []
-    transient_findings: list[tuple[float, dict[str, Any]]] = []
+    persistent_findings: list[tuple[float, Finding]] = []
+    transient_findings: list[tuple[float, Finding]] = []
 
     for bin_center, amps in bin_amps.items():
         # Skip bins already claimed by order findings.
@@ -416,7 +415,7 @@ def _build_persistent_peak_findings(
         # Compute phase evidence for this frequency bin.
         _total_phase_hits = sum(phases_for_bin.values())
         _cruise_hits = phases_for_bin.get(_CRUISE_PHASE_VAL, 0)
-        peak_phase_evidence: dict[str, Any] = {
+        peak_phase_evidence: PhaseEvidence = {
             "cruise_fraction": _cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0,
             "phases_detected": sorted(k for k, v in phases_for_bin.items() if v > 0),
         }
@@ -428,7 +427,39 @@ def _build_persistent_peak_findings(
                 if phase_hits > 0
             }
 
-        finding: dict[str, Any] = {
+        evidence_metrics: FindingEvidenceMetrics = {
+            "presence_ratio": presence_ratio,
+            "median_intensity_db": canonical_vibration_db(
+                peak_band_rms_amp_g=median_amp,
+                floor_amp_g=effective_floor,
+            ),
+            "p95_intensity_db": peak_strength_db,
+            "max_intensity_db": canonical_vibration_db(
+                peak_band_rms_amp_g=max_amp,
+                floor_amp_g=effective_floor,
+            ),
+            "burstiness": burstiness,
+            "mean_noise_floor_db": canonical_vibration_db(
+                peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
+                floor_amp_g=MEMS_NOISE_FLOOR_G,
+            ),
+            "run_noise_baseline_db": (
+                canonical_vibration_db(
+                    peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
+                    floor_amp_g=MEMS_NOISE_FLOOR_G,
+                )
+                if run_noise_baseline_g is not None
+                else None
+            ),
+            "median_relative_to_run_noise": median_amp / effective_floor,
+            "p95_relative_to_run_noise": p95_amp / effective_floor,
+            "sample_count": count,
+            "total_samples": n_samples,
+            "spatial_concentration": spatial_concentration,
+            "spatial_uniformity": spatial_uniformity,
+            "speed_uniformity": speed_uniformity,
+        }
+        finding: Finding = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{bin_center:.0f}hz",
             "severity": "info" if peak_type == "transient" else "diagnostic",
@@ -451,38 +482,7 @@ def _build_persistent_peak_findings(
             "quick_checks": [],
             "peak_classification": peak_type,
             "phase_evidence": peak_phase_evidence,
-            "evidence_metrics": {
-                "presence_ratio": presence_ratio,
-                "median_intensity_db": canonical_vibration_db(
-                    peak_band_rms_amp_g=median_amp,
-                    floor_amp_g=effective_floor,
-                ),
-                "p95_intensity_db": peak_strength_db,
-                "max_intensity_db": canonical_vibration_db(
-                    peak_band_rms_amp_g=max_amp,
-                    floor_amp_g=effective_floor,
-                ),
-                "burstiness": burstiness,
-                "mean_noise_floor_db": canonical_vibration_db(
-                    peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
-                    floor_amp_g=MEMS_NOISE_FLOOR_G,
-                ),
-                "run_noise_baseline_db": (
-                    canonical_vibration_db(
-                        peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
-                        floor_amp_g=MEMS_NOISE_FLOOR_G,
-                    )
-                    if run_noise_baseline_g is not None
-                    else None
-                ),
-                "median_relative_to_run_noise": median_amp / effective_floor,
-                "p95_relative_to_run_noise": p95_amp / effective_floor,
-                "sample_count": count,
-                "total_samples": n_samples,
-                "spatial_concentration": spatial_concentration,
-                "spatial_uniformity": spatial_uniformity,
-                "speed_uniformity": speed_uniformity,
-            },
+            "evidence_metrics": evidence_metrics,
             "peak_speed_kmh": peak_speed_kmh,
             "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "strongest_speed_band": speed_band if speed_band != "-" else None,
@@ -500,7 +500,7 @@ def _build_persistent_peak_findings(
     persistent_findings.sort(key=lambda item: item[0], reverse=True)
     transient_findings.sort(key=lambda item: item[0], reverse=True)
 
-    results: list[dict[str, Any]] = []
+    results: list[Finding] = []
     for _score, finding in persistent_findings[:PERSISTENT_PEAK_MAX_FINDINGS]:
         results.append(finding)
     for _score, finding in transient_findings[:PERSISTENT_PEAK_MAX_FINDINGS]:

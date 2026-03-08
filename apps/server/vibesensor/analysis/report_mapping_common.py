@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
 
 from ..runlog import as_float_or_none as _as_float
+from ._types import Finding, JsonValue, TopCause
 from .helpers import PHASE_I18N_KEYS
 
 _ORDER_LABEL_NAMES_NL: dict[str, str] = {
@@ -62,7 +62,7 @@ def resolve_i18n(
     key = str(value["_i18n_key"])
     suffix = str(value.get("_suffix", ""))
     params = {k: v for k, v in value.items() if k not in ("_i18n_key", "_suffix")}
-    resolved_params: dict[str, Any] = {}
+    resolved_params: dict[str, JsonValue] = {}
     for param_key, param_value in params.items():
         if is_i18n_ref(param_value):
             resolved_params[param_key] = resolve_i18n(lang, param_value, tr=tr)
@@ -99,7 +99,7 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
     return str(value).replace("_", " ").title()
 
 
-def extract_confidence(item: dict) -> float:
+def extract_confidence(item: Finding | TopCause) -> float:
     """Return the confidence value from a cause/finding dict."""
     value = _as_float(item.get("confidence"))
     if value is None:
@@ -107,7 +107,7 @@ def extract_confidence(item: dict) -> float:
     return value if value is not None else 0.0
 
 
-def finding_strength_db(finding: dict[str, Any]) -> float | None:
+def finding_strength_db(finding: Finding) -> float | None:
     """Extract a finding's vibration-strength dB value if present."""
     evidence_metrics = finding.get("evidence_metrics")
     return (

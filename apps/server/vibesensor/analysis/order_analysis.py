@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from ..analysis_settings import wheel_hz_from_speed_kmh
 from ..constants import SECONDS_PER_MINUTE
 from ..runlog import as_float_or_none as _as_float
+from ._types import I18nRef, JsonValue, MetadataDict, Sample, TestStep
 from .helpers import _effective_engine_rpm
 
 
-def _wheel_hz(sample: dict[str, Any], tire_circumference_m: float | None) -> float | None:
+def _wheel_hz(sample: Sample, tire_circumference_m: float | None) -> float | None:
     speed_kmh = _as_float(sample.get("speed_kmh"))
     if speed_kmh is None or speed_kmh <= 0:
         return None
@@ -22,8 +22,8 @@ def _wheel_hz(sample: dict[str, Any], tire_circumference_m: float | None) -> flo
 
 
 def _driveshaft_hz(
-    sample: dict[str, Any],
-    metadata: dict[str, Any],
+    sample: Sample,
+    metadata: MetadataDict,
     tire_circumference_m: float | None,
 ) -> float | None:
     whz = _wheel_hz(sample, tire_circumference_m)
@@ -34,8 +34,8 @@ def _driveshaft_hz(
 
 
 def _engine_hz(
-    sample: dict[str, Any],
-    metadata: dict[str, Any],
+    sample: Sample,
+    metadata: MetadataDict,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     rpm, src = _effective_engine_rpm(sample, metadata, tire_circumference_m)
@@ -64,8 +64,8 @@ class _OrderHypothesis:
 
     def predicted_hz(
         self,
-        sample: dict[str, Any],
-        metadata: dict[str, Any],
+        sample: Sample,
+        metadata: MetadataDict,
         tire_circumference_m: float | None,
     ) -> tuple[float | None, str]:
         if self.key.startswith("wheel_"):
@@ -114,7 +114,7 @@ _WHEEL_FOCUS_RULES: tuple[tuple[str, str], ...] = (
 )
 
 
-def _wheel_focus_from_location(location: str) -> dict[str, str]:
+def _wheel_focus_from_location(location: str) -> I18nRef:
     """Return an i18n reference for the wheel focus label."""
     # Normalize hyphens/underscores to spaces for robust matching against
     # label_for_code() output which uses spaces (e.g. "Front Left Wheel").
@@ -129,9 +129,9 @@ def _wheel_focus_from_location(location: str) -> dict[str, str]:
     return {"_i18n_key": "WHEEL_FOCUS_ALL"}
 
 
-def _i18n_ref(key: str, **params: object) -> dict[str, Any]:
+def _i18n_ref(key: str, **params: JsonValue) -> I18nRef:
     """Build a language-neutral i18n reference dict."""
-    ref: dict[str, Any] = {"_i18n_key": key}
+    ref: I18nRef = {"_i18n_key": key}
     if params:
         ref.update(params)
     return ref
@@ -143,7 +143,7 @@ def _finding_actions_for_source(
     strongest_location: str = "",
     strongest_speed_band: str = "",
     weak_spatial_separation: bool = False,
-) -> list[dict[str, Any]]:
+) -> list[TestStep]:
     """Return language-neutral action plan dicts with i18n references.
 
     Each ``what``, ``why``, ``confirm``, ``falsify`` field is an i18n reference
@@ -174,7 +174,7 @@ def _finding_actions_for_source(
     # empty string (the previous behaviour) included speed_hint="" in the i18n
     # ref dict, which is semantically different from the key being absent and
     # could confuse template renderers that check for key presence vs truthiness.
-    _speed_hint_param: dict[str, Any] = (
+    _speed_hint_param: I18nRef = (
         {"speed_hint": _i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band)} if speed_band else {}
     )
     if source == "wheel/tire":

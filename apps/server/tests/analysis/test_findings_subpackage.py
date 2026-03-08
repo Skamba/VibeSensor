@@ -6,24 +6,30 @@ importable and testable, and that each submodule exposes expected symbols.
 
 from __future__ import annotations
 
+from typing import get_type_hints
+
 import pytest
 
+from vibesensor.analysis._types import AmplitudeMetric, Finding, MatchedPoint
 from vibesensor.analysis.findings._constants import (
     _CONFIDENCE_CEILING,
     _CONFIDENCE_FLOOR,
     _NEGLIGIBLE_STRENGTH_MAX_DB,
 )
+from vibesensor.analysis.findings.builder import _build_findings
 from vibesensor.analysis.findings.intensity import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
     _speed_breakdown,
 )
+from vibesensor.analysis.findings.order_assembly import assemble_order_finding
 from vibesensor.analysis.findings.order_findings import (
     _compute_effective_match_rate,
     _compute_order_confidence,
     _detect_diffuse_excitation,
     _suppress_engine_aliases,
 )
+from vibesensor.analysis.findings.order_models import OrderMatchAccumulator
 from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
 from vibesensor.analysis.findings.reference_checks import _reference_missing_finding
 from vibesensor.analysis.findings.speed_profile import (
@@ -57,6 +63,31 @@ class TestFindingsSubpackageStructure:
         assert hasattr(speed_profile, "_speed_profile_from_points")
         assert hasattr(reference_checks, "_reference_missing_finding")
         assert hasattr(persistent_findings, "_build_persistent_peak_findings")
+
+
+class TestCanonicalFindingModel:
+    """Guard the canonical finding model and its main builder return types."""
+
+    def test_finding_typed_dict_exposes_core_contract(self) -> None:
+        hints = get_type_hints(Finding)
+        assert {
+            "finding_id",
+            "suspected_source",
+            "evidence_summary",
+            "frequency_hz_or_order",
+            "amplitude_metric",
+            "confidence_0_to_1",
+            "quick_checks",
+            "evidence_metrics",
+            "phase_evidence",
+        }.issubset(hints)
+        assert hints["amplitude_metric"] == AmplitudeMetric
+        assert hints["matched_points"] == list[MatchedPoint]
+
+    def test_main_finding_builders_return_canonical_model(self) -> None:
+        assert _build_findings.__annotations__["return"] == "list[Finding]"
+        assert assemble_order_finding.__annotations__["return"] == "tuple[float, Finding]"
+        assert get_type_hints(OrderMatchAccumulator)["matched_points"] == list[MatchedPoint]
 
 
 # -- speed_profile tests ------------------------------------------------------
