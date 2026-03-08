@@ -13,7 +13,7 @@
 ## D3: Default CI validation mode
 - Decision: use the GitHub CI verification suite (`make test-all`) for change verification; local execution must mirror CI job groups.
 - Rationale: keeps local/AI validation aligned with required CI gates and avoids mismatch-driven regressions.
-- Implication: optional focused pytest/smoke loops may be used during iteration, but final verification should use `make test-all` (`tools/tests/run_ci_parallel.py`) which runs CI-equivalent `backend-quality`, `backend-typecheck`, `frontend-typecheck`, `ui-smoke`, `backend-tests`, and `e2e` groups in parallel.
+- Implication: optional focused pytest/smoke loops may be used during iteration, but final verification should use `make test-all` (`tools/tests/run_ci_parallel.py`) which runs CI-equivalent `backend-quality`, `backend-typecheck`, `frontend-typecheck`, `release-smoke`, `ui-smoke`, `backend-tests`, and `e2e` groups in parallel.
 
 ## D4: Deterministic image outputs
 - Decision: custom pi-gen stage must export uniquely suffixed artifact and self-validate rootfs contents.

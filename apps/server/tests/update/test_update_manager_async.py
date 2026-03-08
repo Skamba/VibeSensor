@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import zipfile
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -18,18 +19,28 @@ from _update_manager_test_helpers import (
 from vibesensor.update.models import UpdateState
 
 
+def _build_fake_wheel(path, *, version: str) -> bytes:
+    dist_info = f"vibesensor-{version}.dist-info"
+    with zipfile.ZipFile(path, "w") as wheel_zip:
+        wheel_zip.writestr("vibesensor/__init__.py", f"__version__ = '{version}'\n")
+        wheel_zip.writestr(
+            f"{dist_info}/METADATA",
+            f"Metadata-Version: 2.1\nName: vibesensor\nVersion: {version}\n",
+        )
+        wheel_zip.writestr(f"{dist_info}/WHEEL", "Wheel-Version: 1.0\nTag: py3-none-any\n")
+    return path.read_bytes()
+
+
 @pytest.mark.asyncio
 class TestUpdateManagerAsync:
     async def test_happy_path(self, tmp_path) -> None:
         manager, runner, _repo = setup_update_env(tmp_path, seed_artifacts=True)
         (tmp_path / "rollback").mkdir()
 
-        wheel_content = b"fake-wheel"
+        mock_wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+        wheel_content = _build_fake_wheel(mock_wheel_path, version="2025.6.15")
         wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
         mock_release = make_mock_release(sha256=wheel_sha256)
-
-        mock_wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-        mock_wheel_path.write_bytes(wheel_content)
 
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
             fetcher = mock_fetcher.return_value
@@ -196,10 +207,9 @@ class TestUpdateManagerAsync:
         manager, runner, _ = setup_update_env(tmp_path)
         runner.set_response("pip", 1, "", "ERROR: Could not install")
         (tmp_path / "rollback").mkdir()
-        wheel_content = b"fake-wheel"
-        wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
         fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-        fake_wheel.write_bytes(wheel_content)
+        wheel_content = _build_fake_wheel(fake_wheel, version="2025.6.15")
+        wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
 
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
             fetcher = mock_fetcher.return_value

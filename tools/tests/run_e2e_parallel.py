@@ -191,19 +191,19 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--http-port-base",
         type=int,
-        default=18000,
+        default=18020,
         help="Base host HTTP port; shard N uses base + (N-1).",
     )
     parser.add_argument(
         "--sim-data-port-base",
         type=int,
-        default=19000,
+        default=19020,
         help="Base host simulator UDP data port; shard N uses base + (N-1).",
     )
     parser.add_argument(
         "--sim-control-port-base",
         type=int,
-        default=19100,
+        default=19120,
         help="Base host simulator UDP control port; shard N uses base + (N-1).",
     )
     args = parser.parse_args()

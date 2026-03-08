@@ -7,7 +7,7 @@ from ..esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
 from ..live_diagnostics.engine import LiveDiagnosticsEngine
-from ..metrics_log import MetricsLogger
+from ..metrics_log import LiveAnalysisWindow, MetricsLogger
 from ..processing import SignalProcessor
 from ..registry import ClientRegistry
 from ..settings_store import SettingsStore
@@ -44,6 +44,7 @@ class RuntimeSettingsSubsystem:
 @dataclass(slots=True)
 class RuntimeDiagnosticsSubsystem:
     metrics_logger: MetricsLogger
+    live_analysis: LiveAnalysisWindow
     live_diagnostics: LiveDiagnosticsEngine
 
 

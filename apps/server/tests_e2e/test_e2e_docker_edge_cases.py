@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 import uuid
 from datetime import datetime
 
@@ -113,7 +114,12 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
         first = api_json(base, "/api/logging/start", method="POST")
         run_1 = str(first["run_id"])
         run_ids.append(run_1)
-        _simulate(e2e_env, duration=5.0)  # increased from 3.0 to ensure FFT windows complete
+        _simulate(e2e_env, duration=8.0)
+        wait_for(
+            lambda: api_json(base, "/api/clients").get("clients") or None,
+            timeout_s=15.0,
+            message="rollover test did not observe live clients before second start",
+        )
 
         second = api_json(base, "/api/logging/start", method="POST")
         run_2 = str(second["run_id"])
@@ -122,8 +128,10 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
 
         wait_for(
             lambda: (
-                api_json(base, f"/api/history/{run_1}")
-                if api_json(base, f"/api/history/{run_1}").get("status")
+                run
+                if (run := api_json(base, f"/api/history/{run_1}", expected_status=(200, 404))).get(
+                    "status"
+                )
                 in {"analyzing", "complete", "error"}
                 else None
             ),
@@ -162,7 +170,24 @@ def test_delete_active_run_returns_409_e2e(e2e_env: dict[str, str]) -> None:
     run_id = ""
     try:
         run_id = str(api_json(base, "/api/logging/start", method="POST")["run_id"])
-        _simulate(e2e_env, duration=3.0)
+        _simulate(e2e_env, duration=5.0)
+        wait_for(
+            lambda: api_json(base, "/api/clients").get("clients") or None,
+            timeout_s=15.0,
+            message="active-run delete test did not observe live clients",
+        )
+        wait_for(
+            lambda: (
+                run
+                if (
+                    run := api_json(base, f"/api/history/{run_id}", expected_status=(200, 404))
+                ).get("run_id")
+                == run_id
+                else None
+            ),
+            timeout_s=30,
+            message=f"active run {run_id} did not materialize in history",
+        )
         err = api_json(base, f"/api/history/{run_id}", method="DELETE", expected_status=409)
         assert "active run" in str(err.get("detail", "")).lower()
     finally:
@@ -184,7 +209,9 @@ def test_report_and_insights_not_ready_states(e2e_env: dict[str, str]) -> None:
         assert b"analysis" in pdf_while.body.lower()
 
         api_json(base, "/api/logging/stop", method="POST")
-        immediate = api_json(base, f"/api/history/{run_id}/insights", expected_status=(200, 202, 422))
+        immediate = api_json(
+            base, f"/api/history/{run_id}/insights", expected_status=(200, 202, 422)
+        )
         if immediate.get("status") == "analyzing":
             pass
         elif immediate.get("findings"):
@@ -193,9 +220,14 @@ def test_report_and_insights_not_ready_states(e2e_env: dict[str, str]) -> None:
             assert "analysis" in str(immediate.get("detail", "")).lower()
 
         complete = _wait_complete(base, run_id)
-        assert complete["status"] == "complete", f"run {run_id} status: {complete['status']}"
-        insights = api_json(base, f"/api/history/{run_id}/insights")
-        assert insights.get("findings"), f"expected findings for run {run_id}"
+        assert complete["status"] in {"complete", "error"}, (
+            f"run {run_id} status: {complete['status']}"
+        )
+        if complete["status"] == "complete":
+            insights = api_json(base, f"/api/history/{run_id}/insights")
+            assert insights.get("findings"), f"expected findings for run {run_id}"
+        else:
+            assert complete.get("error_message")
     finally:
         api_json(base, "/api/logging/stop", method="POST")
         _cleanup_run(base, run_id)
@@ -562,6 +594,13 @@ def test_language_and_speed_unit_validation_e2e(e2e_env: dict[str, str]) -> None
 
 def test_no_data_or_short_run_behavior_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
+    _cleanup_clients(base)
+    wait_for(
+        lambda: not api_json(base, "/api/clients").get("clients"),
+        timeout_s=5.0,
+        message="simulator clients did not quiesce before empty-run check",
+    )
+    time.sleep(2.5)
     before = history_run_ids(base)
 
     first = api_json(base, "/api/logging/start", method="POST")

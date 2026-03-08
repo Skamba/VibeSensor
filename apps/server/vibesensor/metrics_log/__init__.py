@@ -16,6 +16,7 @@ All public symbols are re-exported here so that existing
 imports continue to work without changes.
 """
 
+from .live_analysis import LiveAnalysisWindow  # noqa: F401
 from .logger import (
     MetricsLogger,  # noqa: F401
     MetricsLoggerConfig,  # noqa: F401
@@ -37,6 +38,7 @@ from .sample_builder import (  # noqa: F401
 __all__ = [
     "MetricsLogger",
     "MetricsLoggerConfig",
+    "LiveAnalysisWindow",
     "PostAnalysisWorker",
     "build_run_metadata",
     "build_sample_records",

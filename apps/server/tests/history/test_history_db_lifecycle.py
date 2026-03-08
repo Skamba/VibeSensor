@@ -110,6 +110,7 @@ def test_recover_stale_recording_runs_marks_error(tmp_path: Path) -> None:
     run = db.get_run("run-5")
     assert run is not None
     assert run["status"] == "error"
+    assert "Recovered stale recording during startup at" in str(run["error_message"])
 
 
 def test_create_run_recovers_previous_recording(tmp_path: Path) -> None:
@@ -119,6 +120,7 @@ def test_create_run_recovers_previous_recording(tmp_path: Path) -> None:
     old_run = db.get_run("run-old")
     new_run = db.get_run("run-new")
     assert old_run is not None and old_run["status"] == "error"
+    assert "starting run run-new" in str(old_run["error_message"])
     assert new_run is not None and new_run["status"] == "recording"
 
 
@@ -151,6 +153,18 @@ def test_run_status_transitions(tmp_path: Path) -> None:
     db.finalize_run("run-err", "2026-01-01T00:10:00Z")
     db.store_analysis_error("run-err", "something went wrong")
     assert db.get_run_status("run-err") == "error"
+
+
+def test_store_analysis_allows_direct_recording_to_complete(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-recording", "2026-01-01T00:00:00Z", {"source": "test"})
+
+    db.store_analysis("run-recording", {"score": 42})
+
+    run = db.get_run("run-recording")
+    assert run is not None
+    assert run["status"] == "complete"
+    assert run["analysis"] == {"score": 42}
 
 
 def test_update_run_metadata_overwrites_stored_metadata(tmp_path: Path) -> None:

@@ -11,6 +11,20 @@ from .json_types import JsonObject
 IntakeStatsPayload: TypeAlias = JsonObject
 
 
+class HealthDataLossPayload(TypedDict):
+    tracked_clients: int
+    affected_clients: int
+    frames_dropped: int
+    queue_overflow_drops: int
+    server_queue_drops: int
+    parse_errors: int
+
+
+class HealthPersistencePayload(TypedDict):
+    write_error: str | None
+    analysis_in_progress: bool
+
+
 class AxisPeak(TypedDict, total=False):
     hz: float
     amp: float

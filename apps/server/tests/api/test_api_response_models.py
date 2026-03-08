@@ -60,6 +60,10 @@ def test_openapi_component_shapes_are_not_generic_dict_for_typed_responses(
         "status",
         "processing_state",
         "processing_failures",
+        "degradation_reasons",
+        "data_loss",
+        "persistence",
+        "intake_stats",
     ]
     assert components["LanguageResponse"]["required"] == ["language"]
 
@@ -70,9 +74,17 @@ def test_openapi_component_shapes_are_not_generic_dict_for_typed_responses(
         "title": "Activecarid",
     }
 
+    history_list_properties = components["HistoryListResponse"]["properties"]
+    assert history_list_properties["runs"]["items"] == {
+        "$ref": "#/components/schemas/HistoryListEntryResponse"
+    }
+
     update_status_properties = components["UpdateStatusResponse"]["properties"]
     assert update_status_properties["issues"]["items"] == {
         "$ref": "#/components/schemas/UpdateIssueResponse"
+    }
+    assert update_status_properties["runtime"] == {
+        "$ref": "#/components/schemas/UpdateRuntimeResponse"
     }
 
 

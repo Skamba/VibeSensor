@@ -170,7 +170,13 @@ export function createAppState(): AppState {
     deleteAllRunsInFlight: false,
     expandedRunId: null,
     runDetailsById: {},
-    loggingStatus: { enabled: false, current_file: null, write_error: null },
+    loggingStatus: {
+      enabled: false,
+      current_file: null,
+      run_id: null,
+      write_error: null,
+      analysis_in_progress: false,
+    },
     locationOptions: [],
     vehicleSettings: {
       tire_width_mm: 285,

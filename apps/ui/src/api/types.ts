@@ -1,144 +1,39 @@
-export type CarRecord = {
-  id: string;
-  name: string;
-  type: string;
-  aspects: Record<string, number>;
-  variant?: string | null;
-  [key: string]: unknown;
-};
+import type { components } from "../generated/http_api_contracts";
 
-export type LoggingStatusPayload = {
-  enabled: boolean;
-  current_file: string | null;
-  write_error: string | null;
-};
+type Schema<Name extends keyof components["schemas"]> = components["schemas"][Name];
 
-export type CarsPayload = {
-  cars: CarRecord[];
-  activeCarId: string | null;
-};
-
-export type SpeedSourcePayload = {
-  speedSource: string;
-  manualSpeedKph: number | null;
-  staleTimeoutS: number;
-  fallbackMode: string;
-};
-
-export type SpeedSourceStatusPayload = {
-  gps_enabled: boolean;
-  connection_state: "disabled" | "disconnected" | "connected" | "stale";
-  device: string | null;
-  last_update_age_s: number | null;
-  raw_speed_kmh: number | null;
-  effective_speed_kmh: number | null;
-  last_error: string | null;
-  reconnect_delay_s: number | null;
-  fallback_active: boolean;
-};
-
-export type HistoryEntry = {
-  run_id: string;
-  status: string;
-  start_time_utc: string;
-  end_time_utc?: string;
-  sample_count: number;
-};
-
-export type CarLibraryVariant = {
-  name: string;
-  engine?: string | null;
-  drivetrain: string;
-  gearboxes?: CarLibraryGearbox[] | null;
-  tire_options?: CarLibraryTireOption[] | null;
-  tire_width_mm?: number | null;
-  tire_aspect_pct?: number | null;
-  rim_in?: number | null;
-};
-
-export type CarLibraryModel = {
-  model: string;
-  brand: string;
-  type: string;
-  tire_width_mm: number;
-  tire_aspect_pct: number;
-  rim_in: number;
-  gearboxes: CarLibraryGearbox[];
-  tire_options: CarLibraryTireOption[];
-  variants: CarLibraryVariant[];
-  [key: string]: unknown;
-};
-
-export type CarLibraryGearbox = {
-  name: string;
-  final_drive_ratio: number;
-  top_gear_ratio: number;
-};
-
-export type CarLibraryTireOption = {
-  name: string;
-  tire_width_mm: number;
-  tire_aspect_pct: number;
-  rim_in: number;
-};
-
-export type UpdateIssue = {
-  phase: string;
-  message: string;
-  detail: string;
-};
-
-export type UpdateStatusPayload = {
-  state: "idle" | "running" | "success" | "failed";
-  phase: string;
-  started_at: number | null;
-  finished_at: number | null;
-  last_success_at: number | null;
-  ssid: string;
-  issues: UpdateIssue[];
-  log_tail: string[];
-  exit_code: number | null;
-  runtime: {
-    version: string;
-    commit: string;
-    ui_source_hash: string;
-    static_assets_hash: string;
-    static_build_source_hash: string;
-    static_build_commit: string;
-    assets_verified: boolean;
-    has_packaged_static: boolean;
-  };
-};
-
-export type EspSerialPortPayload = {
-  port: string;
-  description: string;
-  vid: number | null;
-  pid: number | null;
-  serial_number: string | null;
-};
-
-export type EspFlashStatusPayload = {
-  state: "idle" | "running" | "success" | "failed" | "cancelled";
-  phase: string;
-  job_id: number | null;
-  selected_port: string | null;
-  auto_detect: boolean;
-  started_at: number | null;
-  finished_at: number | null;
-  last_success_at: number | null;
-  exit_code: number | null;
-  error: string | null;
-  log_count: number;
-};
-
-export type EspFlashHistoryAttemptPayload = {
-  job_id: number;
-  state: "idle" | "running" | "success" | "failed" | "cancelled";
-  selected_port: string | null;
-  auto_detect: boolean;
-  started_at: number;
-  finished_at: number | null;
-  exit_code: number | null;
-  error: string | null;
-};
+export type AnalysisSettingsPayload = Schema<"AnalysisSettingsResponse">;
+export type CarLibraryBrandsPayload = Schema<"CarLibraryBrandsResponse">;
+export type CarLibraryGearbox = Schema<"CarLibraryGearboxEntry">;
+export type CarLibraryModel = Schema<"CarLibraryModelEntry">;
+export type CarLibraryModelsPayload = Schema<"CarLibraryModelsResponse">;
+export type CarLibraryTireOption = Schema<"CarLibraryTireOptionEntry">;
+export type CarLibraryTypesPayload = Schema<"CarLibraryTypesResponse">;
+export type CarLibraryVariant = Schema<"CarLibraryVariantEntry">;
+export type CarRecord = Schema<"CarResponse">;
+export type CarsPayload = Schema<"CarsResponse">;
+export type DeleteHistoryRunPayload = Schema<"DeleteHistoryRunResponse">;
+export type EspFlashCancelPayload = Schema<"EspFlashCancelResponse">;
+export type EspFlashHistoryAttemptPayload = Schema<"EspFlashHistoryEntryResponse">;
+export type EspFlashHistoryPayload = Schema<"EspFlashHistoryResponse">;
+export type EspFlashLogsPayload = Schema<"EspFlashLogsResponse">;
+export type EspFlashPortsPayload = Schema<"EspFlashPortsResponse">;
+export type EspFlashStartPayload = Schema<"EspFlashStartResponse">;
+export type EspFlashStatusPayload = Schema<"EspFlashStatusResponse">;
+export type EspSerialPortPayload = Schema<"EspSerialPortResponse">;
+export type HealthDataLossPayload = Schema<"HealthDataLossResponse">;
+export type HealthPersistencePayload = Schema<"HealthPersistenceResponse">;
+export type HealthStatusPayload = Schema<"HealthResponse">;
+export type HistoryEntry = Schema<"HistoryListEntryResponse">;
+export type HistoryInsightsPayload = Schema<"HistoryInsightsResponse">;
+export type HistoryListPayload = Schema<"HistoryListResponse">;
+export type HistoryRunPayload = Schema<"HistoryRunResponse">;
+export type LanguagePayload = Schema<"LanguageResponse">;
+export type LoggingStatusPayload = Schema<"LoggingStatusResponse">;
+export type SpeedSourcePayload = Schema<"SpeedSourceResponse">;
+export type SpeedSourceStatusPayload = Schema<"SpeedSourceStatusResponse">;
+export type SpeedUnitPayload = Schema<"SpeedUnitResponse">;
+export type UpdateCancelPayload = Schema<"UpdateCancelResponse">;
+export type UpdateIssue = Schema<"UpdateIssueResponse">;
+export type UpdateStartPayload = Schema<"UpdateStartResponse">;
+export type UpdateStatusPayload = Schema<"UpdateStatusResponse">;

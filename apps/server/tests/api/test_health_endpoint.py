@@ -33,7 +33,7 @@ def test_health_route_registered(_health_router):
 
 @pytest.mark.asyncio
 async def test_health_endpoint_response_shape(_health_router):
-    """Verify GET /api/health returns status, processing_state, processing_failures."""
+    """Verify GET /api/health returns typed degradation, data-loss, and persistence state."""
     router, _ = _health_router
     endpoint = _find_endpoint(router, "/api/health")
     assert endpoint is not None
@@ -42,3 +42,58 @@ async def test_health_endpoint_response_shape(_health_router):
     assert result["status"] == "ok"
     assert result["processing_state"] == "ok"
     assert result["processing_failures"] == 0
+    assert result["degradation_reasons"] == []
+    assert result["data_loss"]["tracked_clients"] == 0
+    assert result["persistence"]["write_error"] is None
+    assert result["persistence"]["analysis_in_progress"] is False
+
+
+@pytest.mark.asyncio
+async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_health_router):
+    router, state = _health_router
+    endpoint = _find_endpoint(router, "/api/health")
+    assert endpoint is not None
+
+    state.registry.data_loss_snapshot.return_value = {
+        "tracked_clients": 2,
+        "affected_clients": 1,
+        "frames_dropped": 3,
+        "queue_overflow_drops": 0,
+        "server_queue_drops": 1,
+        "parse_errors": 0,
+    }
+    state.metrics_logger.health_snapshot.return_value = {
+        "write_error": "history append_samples failed",
+        "analysis_in_progress": True,
+    }
+    state.loop_state.processing_state = "degraded"
+    state.loop_state.processing_failure_count = 2
+
+    result = await endpoint()
+
+    assert result["status"] == "degraded"
+    assert result["degradation_reasons"] == [
+        "processing_state:degraded",
+        "processing_failures",
+        "frames_dropped",
+        "server_queue_drops",
+        "persistence_write_error",
+    ]
+    assert result["data_loss"]["affected_clients"] == 1
+    assert result["persistence"]["write_error"] == "history append_samples failed"
+    assert result["persistence"]["analysis_in_progress"] is True
+
+
+@pytest.mark.asyncio
+async def test_health_endpoint_validates_through_fastapi_response_field(_health_router):
+    """Verify FastAPI can validate the declared /api/health response model."""
+    router, _ = _health_router
+    route = next(r for r in router.routes if getattr(r, "path", "") == "/api/health")
+    payload = await route.endpoint()
+    validated, errors = route.response_field.validate(payload, {}, loc=("response",))
+
+    assert errors == []
+    assert payload["status"] == "ok"
+    assert payload["data_loss"]["tracked_clients"] == 0
+    assert payload["persistence"]["analysis_in_progress"] is False
+    assert validated.status == "ok"
