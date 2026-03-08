@@ -3,7 +3,33 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Protocol
+
+from .._types import MatchedPoint, MetadataDict, Sample
+
+
+class OrderHypothesisLike(Protocol):
+    @property
+    def key(self) -> str: ...
+
+    @property
+    def suspected_source(self) -> str: ...
+
+    @property
+    def order_label_base(self) -> str: ...
+
+    @property
+    def order(self) -> int: ...
+
+    @property
+    def path_compliance(self) -> float: ...
+
+    def predicted_hz(
+        self,
+        sample: Sample,
+        metadata: MetadataDict,
+        tire_circumference_m: float | None,
+    ) -> tuple[float | None, str]: ...
 
 
 @dataclass(frozen=True)
@@ -17,7 +43,7 @@ class OrderMatchAccumulator:
     rel_errors: list[float]
     predicted_vals: list[float]
     measured_vals: list[float]
-    matched_points: list[dict[str, Any]]
+    matched_points: list[MatchedPoint]
     ref_sources: set[str]
     possible_by_speed_bin: dict[str, int]
     matched_by_speed_bin: dict[str, int]

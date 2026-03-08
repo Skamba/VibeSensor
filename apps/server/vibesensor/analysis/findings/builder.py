@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import cast
 
-from .._types import PhaseLabels
+from .._types import Finding, MetadataDict, PhaseLabels, Sample
 from ..helpers import (
     _locations_connected_throughout_run,
     _tire_reference_from_metadata,
 )
 from ..phase_segmentation import segment_run_phases
 from .builder_support import (
+    PhaseSegmenter,
     build_reference_findings,
     collect_order_frequencies,
     finalize_findings,
@@ -22,8 +23,8 @@ from .persistent_findings import _build_persistent_peak_findings
 
 def _build_findings(
     *,
-    metadata: dict[str, Any],
-    samples: list[dict[str, Any]],
+    metadata: MetadataDict,
+    samples: list[Sample],
     speed_sufficient: bool,
     steady_speed: bool,
     speed_stddev_kmh: float | None,
@@ -32,7 +33,7 @@ def _build_findings(
     lang: str = "en",
     per_sample_phases: PhaseLabels | None = None,
     run_noise_baseline_g: float | None = None,
-) -> list[dict[str, Any]]:
+) -> list[Finding]:
     """Build and rank all findings for a completed run.
 
     Coordinates reference checks (speed, wheel, engine, sample-rate), order
@@ -71,7 +72,7 @@ def _build_findings(
         prepare_analysis_samples(
             samples,
             per_sample_phases=per_sample_phases,
-            phase_segmenter=segment_run_phases,
+            phase_segmenter=cast(PhaseSegmenter, segment_run_phases),
         )
     )
 

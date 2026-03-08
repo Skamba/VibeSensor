@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ._types import Finding, MetadataDict, OriginSummary, SpeedStats
+from ._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SpeedStats
 
 
 @dataclass(frozen=True)
@@ -15,7 +15,7 @@ class ReportMappingContext:
     car_name: str | None
     car_type: str | None
     date_str: str
-    top_causes: list[Finding]
+    top_causes: list[CandidateFinding]
     findings_non_ref: list[Finding]
     findings: list[Finding]
     speed_stats: SpeedStats
@@ -28,7 +28,7 @@ class ReportMappingContext:
 class PrimaryCandidateContext:
     """Primary report candidate resolved from top causes or findings."""
 
-    primary_candidate: Finding | None
+    primary_candidate: CandidateFinding | None
     primary_source: object
     primary_system: str
     primary_location: str

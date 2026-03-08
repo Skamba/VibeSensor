@@ -3,31 +3,38 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Any
+from typing import cast
 
 from ...runlog import as_float_or_none as _as_float
-from .._types import PhaseLabels
+from .._types import Finding, MetadataDict, PhaseLabels, Sample
 from ..helpers import SPEED_COVERAGE_MIN_PCT, _effective_engine_rpm
 from ..order_analysis import _i18n_ref
-from ..phase_segmentation import DrivingPhase, diagnostic_sample_mask, segment_run_phases
+from ..phase_segmentation import (
+    DrivingPhase,
+    PhaseSegment,
+    diagnostic_sample_mask,
+    segment_run_phases,
+)
 from ..ranking import finding_sort_key
 from ._constants import _ORDER_SUPPRESS_PERSISTENT_MIN_CONF
 from .reference_checks import _reference_missing_finding
 
 _MIN_DIAGNOSTIC_SAMPLES = 5
+PhaseSegmenter = Callable[[list[Sample]], tuple[list[DrivingPhase], list[PhaseSegment]]]
+_DEFAULT_PHASE_SEGMENTER = cast(PhaseSegmenter, segment_run_phases)
 
 
 def build_reference_findings(
     *,
-    metadata: dict[str, Any],
-    samples: list[dict[str, Any]],
+    metadata: MetadataDict,
+    samples: list[Sample],
     speed_sufficient: bool,
     speed_non_null_pct: float,
     tire_circumference_m: float | None,
     raw_sample_rate_hz: float | None,
-) -> tuple[list[dict[str, Any]], bool]:
+) -> tuple[list[Finding], bool]:
     """Build reference-missing findings and return engine reference sufficiency."""
-    findings: list[dict[str, Any]] = []
+    findings: list[Finding] = []
     if not speed_sufficient:
         findings.append(
             _reference_missing_finding(
@@ -99,9 +106,9 @@ def build_reference_findings(
 
 
 def engine_reference_coverage_pct(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     *,
-    metadata: dict[str, Any],
+    metadata: MetadataDict,
     tire_circumference_m: float | None,
 ) -> float:
     """Compute engine reference coverage percentage from samples and metadata."""
@@ -114,9 +121,9 @@ def engine_reference_coverage_pct(
 
 
 def has_engine_reference(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     *,
-    metadata: dict[str, Any],
+    metadata: MetadataDict,
     tire_circumference_m: float | None,
 ) -> bool:
     """Return whether the engine reference coverage is sufficient."""
@@ -131,14 +138,11 @@ def has_engine_reference(
 
 
 def prepare_analysis_samples(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     *,
     per_sample_phases: PhaseLabels | None,
-    phase_segmenter: Callable[
-        [list[dict[str, Any]]],
-        tuple[list[DrivingPhase], list[Any]],
-    ] = segment_run_phases,
-) -> tuple[list[dict[str, Any]], Sequence[DrivingPhase], list[DrivingPhase], bool]:
+    phase_segmenter: PhaseSegmenter = _DEFAULT_PHASE_SEGMENTER,
+) -> tuple[list[Sample], Sequence[DrivingPhase], list[DrivingPhase], bool]:
     """Prepare filtered samples and aligned phase labels for findings analysis."""
     if per_sample_phases is not None and len(per_sample_phases) == len(samples):
         resolved_phases: list[DrivingPhase] = [
@@ -163,11 +167,13 @@ def prepare_analysis_samples(
     return analysis_samples, analysis_phases, resolved_phases, use_filtered_samples
 
 
-def collect_order_frequencies(order_findings: list[dict[str, Any]]) -> set[float]:
+def collect_order_frequencies(order_findings: list[Finding]) -> set[float]:
     """Collect matched order frequencies used to suppress duplicate persistent findings."""
     order_freqs: set[float] = set()
     for order_finding in order_findings:
-        if float(order_finding.get("confidence_0_to_1", 0)) < _ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
+        if (
+            _as_float(order_finding.get("confidence_0_to_1")) or 0.0
+        ) < _ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
             continue
         points = order_finding.get("matched_points")
         if not isinstance(points, list):
@@ -181,11 +187,11 @@ def collect_order_frequencies(order_findings: list[dict[str, Any]]) -> set[float
     return order_freqs
 
 
-def finalize_findings(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def finalize_findings(findings: list[Finding]) -> list[Finding]:
     """Partition, rank, and assign stable public finding IDs."""
-    reference_findings: list[dict[str, Any]] = []
-    diagnostic_findings: list[dict[str, Any]] = []
-    informational_findings: list[dict[str, Any]] = []
+    reference_findings: list[Finding] = []
+    diagnostic_findings: list[Finding] = []
+    informational_findings: list[Finding] = []
     for item in findings:
         finding_id = str(item.get("finding_id", ""))
         if finding_id.startswith("REF_"):

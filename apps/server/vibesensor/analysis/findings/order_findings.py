@@ -6,9 +6,7 @@ and engine orders; computes confidence scores; suppresses engine aliases.
 
 from __future__ import annotations
 
-from typing import Any
-
-from .._types import PhaseLabels
+from .._types import Finding, MatchedPoint, MetadataDict, PhaseEvidence, PhaseLabels, Sample
 from ..helpers import (
     CONSTANT_SPEED_STDDEV_KMH,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
@@ -26,7 +24,7 @@ from ..order_analysis import _order_label as _order_label_impl
 from ..test_plan import _location_speedbin_summary
 from .order_assembly import assemble_order_finding
 from .order_matching import match_samples_for_hypothesis
-from .order_models import OrderFindingBuildContext, OrderMatchAccumulator
+from .order_models import OrderFindingBuildContext, OrderHypothesisLike, OrderMatchAccumulator
 from .order_scoring import (
     _NEGLIGIBLE_STRENGTH_CONF_CAP as _NEGLIGIBLE_STRENGTH_CONF_CAP_IMPORTED,
 )
@@ -114,7 +112,7 @@ def _detect_diffuse_excitation(
     connected_locations: set[str],
     possible_by_location: dict[str, int],
     matched_by_location: dict[str, int],
-    matched_points: list[dict[str, Any]],
+    matched_points: list[MatchedPoint],
 ) -> tuple[bool, float]:
     return _detect_diffuse_excitation_impl(
         connected_locations,
@@ -168,18 +166,16 @@ def _compute_order_confidence(
     )
 
 
-def _suppress_engine_aliases(
-    findings: list[tuple[float, dict[str, Any]]],
-) -> list[dict[str, Any]]:
+def _suppress_engine_aliases(findings: list[tuple[float, Finding]]) -> list[Finding]:
     return _suppress_engine_aliases_impl(findings, min_confidence=ORDER_MIN_CONFIDENCE)
 
 
 def _compute_matched_speed_phase_evidence(
-    matched_points: list[dict[str, Any]],
+    matched_points: list[MatchedPoint],
     *,
     focused_speed_band: str | None,
     hotspot_speed_band: str,
-) -> tuple[float | None, list[float], str | None, dict[str, Any], str | None]:
+) -> tuple[float | None, list[float], str | None, PhaseEvidence, str | None]:
     return _compute_matched_speed_phase_evidence_impl(
         matched_points,
         focused_speed_band=focused_speed_band,
@@ -189,10 +185,10 @@ def _compute_matched_speed_phase_evidence(
 
 
 def _match_samples_for_hypothesis(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     cached_peaks: list[list[tuple[float, float]]],
-    hypothesis: Any,
-    metadata: dict[str, Any],
+    hypothesis: OrderHypothesisLike,
+    metadata: MetadataDict,
     tire_circumference_m: float | None,
     per_sample_phases: PhaseLabels | None,
     lang: str,
@@ -232,7 +228,7 @@ def _compute_amplitude_and_error_stats(
     rel_errors: list[float],
     predicted_vals: list[float],
     measured_vals: list[float],
-    matched_points: list[dict[str, Any]],
+    matched_points: list[MatchedPoint],
     constant_speed: bool,
 ) -> tuple[float, float, float, float, float | None]:
     return _compute_amplitude_and_error_stats_impl(
@@ -269,11 +265,11 @@ def _apply_localization_override(
 
 
 def _assemble_order_finding(
-    hypothesis: Any,
+    hypothesis: OrderHypothesisLike,
     m: OrderMatchAccumulator,
     *,
     context: OrderFindingBuildContext,
-) -> tuple[float, dict[str, Any]]:
+) -> tuple[float, Finding]:
     # Delegated implementation keeps the compliance-aware ranking formula:
     # ranking_error_denom = 0.25 * compliance
     return assemble_order_finding(
@@ -292,8 +288,8 @@ def _assemble_order_finding(
 
 def _build_order_findings(
     *,
-    metadata: dict[str, Any],
-    samples: list[dict[str, Any]],
+    metadata: MetadataDict,
+    samples: list[Sample],
     speed_sufficient: bool,
     steady_speed: bool,
     speed_stddev_kmh: float | None,
@@ -303,7 +299,7 @@ def _build_order_findings(
     connected_locations: set[str],
     lang: str,
     per_sample_phases: PhaseLabels | None = None,
-) -> list[dict[str, Any]]:
+) -> list[Finding]:
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
         return []
 
@@ -311,7 +307,7 @@ def _build_order_findings(
     # loop does not redundantly call _sample_top_peaks() for each hypothesis.
     cached_peaks: list[list[tuple[float, float]]] = [_sample_top_peaks(s) for s in samples]
 
-    findings: list[tuple[float, dict[str, Any]]] = []
+    findings: list[tuple[float, Finding]] = []
     for hypothesis in _order_hypotheses():
         if hypothesis.key.startswith(("wheel_", "driveshaft_")) and (
             not speed_sufficient or tire_circumference_m is None or tire_circumference_m <= 0
