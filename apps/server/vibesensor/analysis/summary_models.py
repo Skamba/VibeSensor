@@ -19,6 +19,7 @@ from ._types import (
     SpeedBreakdownRow,
     SpeedStats,
     TestStep,
+    TopCause,
 )
 from .phase_segmentation import DrivingPhase, PhaseSegment
 
@@ -54,7 +55,7 @@ class FindingsBundle:
     most_likely_origin: OriginSummary
     test_plan: list[TestStep]
     phase_timeline: list[PhaseTimelineEntry]
-    top_causes: list[Finding]
+    top_causes: list[TopCause]
 
 
 @dataclass(frozen=True)

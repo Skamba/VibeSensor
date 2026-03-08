@@ -8,7 +8,7 @@ from math import ceil, floor, log1p, pow
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
 from ..locations import has_any_wheel_location, is_wheel_location
 from ..runlog import as_float_or_none as _as_float
-from ._types import Finding, JsonObject, TestStep
+from ._types import Finding, JsonObject, LocationHotspot, MatchedPoint, TestStep
 from .helpers import _speed_bin_label, _weighted_percentile, weak_spatial_dominance_threshold
 from .order_analysis import _finding_actions_for_source, _i18n_ref
 
@@ -168,7 +168,7 @@ def _score_locations_in_bin(
     corroboration_amp_multiplier: float,
     connected_locations: set[str] | None,
     suspected_source: str | None,
-) -> JsonObject | None:
+) -> LocationHotspot | None:
     """Score and rank sensor locations within a single speed-bin.
 
     Returns a candidate dict summarising the strongest location in this bin,
@@ -280,12 +280,12 @@ def _score_locations_in_bin(
 
 
 def _location_speedbin_summary(
-    matches: list[JsonObject],
+    matches: list[MatchedPoint],
     lang: str,
     relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
     connected_locations: set[str] | None = None,
     suspected_source: str | None = None,
-) -> tuple[object, JsonObject | None]:
+) -> tuple[object, LocationHotspot | None]:
     """Return strongest location summary, optionally restricted to specific speed bins.
 
     When ``relevant_speed_bins`` is provided, location ranking is computed only
@@ -326,8 +326,8 @@ def _location_speedbin_summary(
     if not grouped:
         return "", None
 
-    per_bin_results: list[JsonObject] = []
-    best: JsonObject | None = None
+    per_bin_results: list[LocationHotspot] = []
+    best: LocationHotspot | None = None
     corroboration_amp_multiplier = pow(10.0, MULTI_SENSOR_CORROBORATION_DB / 20.0)
     for bin_label, rows in grouped.items():
         if not rows:
@@ -393,8 +393,8 @@ def _location_speedbin_summary(
     # rankings instead of only getting the global winner.
     # Use detached copies to avoid self-referential structures when `best`
     # points to one of the dicts in `per_bin_results`.
-    best_out = dict(best)
-    best_out["per_bin_results"] = [dict(item) for item in per_bin_results]
+    best_out: LocationHotspot = {**best}
+    best_out["per_bin_results"] = [{**item} for item in per_bin_results]
 
     sentence = _i18n_ref(
         "STRONGEST_AT_LOCATION_IN_SPEED_RANGE",

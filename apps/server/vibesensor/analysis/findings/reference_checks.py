@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from .._types import Finding, JsonValue
 
 # ---------------------------------------------------------------------------
 # Module-level i18n reference constants (hoisted; avoids per-call dict
@@ -19,9 +19,9 @@ def _reference_missing_finding(
     *,
     finding_id: str,
     suspected_source: str,
-    evidence_summary: object,
-    quick_checks: list[object],
-) -> dict[str, Any]:
+    evidence_summary: JsonValue,
+    quick_checks: list[JsonValue],
+) -> Finding:
     # All output fields are language-neutral i18n reference dicts; the
     # language is resolved at report-render time, not here.
     return {

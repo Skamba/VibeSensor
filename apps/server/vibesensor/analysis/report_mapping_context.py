@@ -7,7 +7,7 @@ from typing import cast
 
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import utc_now_iso
-from ._types import Finding, MetadataDict, OriginSummary, SpeedStats, SummaryData
+from ._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SpeedStats, SummaryData
 from .diagnosis_candidates import normalize_origin_location, select_effective_top_causes
 from .report_mapping_common import extract_confidence, human_source
 
@@ -19,7 +19,7 @@ def extract_run_context(
     str | None,
     str | None,
     str,
-    list[Finding],
+    list[CandidateFinding],
     list[Finding],
     list[Finding],
     SpeedStats,
@@ -81,11 +81,11 @@ def extract_sensor_locations(summary: SummaryData) -> list[str]:
 
 
 def resolve_primary_candidate(
-    top_causes: list[Finding],
+    top_causes: list[CandidateFinding],
     findings_non_ref: list[Finding],
     origin_location: str,
     tr: Callable[[str], str],
-) -> tuple[Finding | None, object, str, str, str, float]:
+) -> tuple[CandidateFinding | None, object, str, str, str, float]:
     """Resolve the primary diagnosis candidate used by the report."""
     primary_candidates = top_causes or findings_non_ref
     primary_candidate = primary_candidates[0] if primary_candidates else None

@@ -19,7 +19,9 @@ from ._types import (
     Sample,
     SpeedBreakdownRow,
     SpeedStats,
+    SummaryData,
     TestStep,
+    TopCause,
 )
 from .findings.intensity import _sensor_intensity_by_location
 from .helpers import (
@@ -241,7 +243,7 @@ def build_summary_payload(
     run_noise_baseline_g: float | None,
     speed_breakdown_skipped_reason: I18nRef | None,
     findings: list[Finding],
-    top_causes: list[Finding],
+    top_causes: list[TopCause],
     most_likely_origin: OriginSummary,
     test_plan: list[TestStep],
     phase_timeline: list[PhaseTimelineEntry],
@@ -256,7 +258,7 @@ def build_summary_payload(
     speed_non_null_pct: float,
     accel_stats: AccelStatistics,
     amp_metric_values: list[float],
-) -> dict[str, JsonValue]:
+) -> SummaryData:
     """Assemble the final summary payload from already-computed artifacts."""
     return {
         "file_name": file_name,

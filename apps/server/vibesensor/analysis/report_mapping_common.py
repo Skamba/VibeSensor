@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from ..runlog import as_float_or_none as _as_float
-from ._types import Finding, JsonValue
+from ._types import Finding, JsonValue, TopCause
 from .helpers import PHASE_I18N_KEYS
 
 _ORDER_LABEL_NAMES_NL: dict[str, str] = {
@@ -99,7 +99,7 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
     return str(value).replace("_", " ").title()
 
 
-def extract_confidence(item: Finding) -> float:
+def extract_confidence(item: Finding | TopCause) -> float:
     """Return the confidence value from a cause/finding dict."""
     value = _as_float(item.get("confidence"))
     if value is None:
