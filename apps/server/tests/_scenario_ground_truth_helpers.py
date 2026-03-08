@@ -10,7 +10,7 @@ from builders import make_sample as _make_sample
 from builders import standard_metadata as _standard_metadata
 from builders import wheel_hz as wheel_hz
 
-from vibesensor.analysis.summary import summarize_run_data
+from vibesensor.analysis import summarize_run_data
 
 ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 

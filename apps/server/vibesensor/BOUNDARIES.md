@@ -4,8 +4,7 @@ Use this when changing backend code without scanning the whole package.
 
 ## Analysis Pipeline
 - All post-stop analysis lives in `analysis/`. See [docs/analysis_pipeline.md](../../../docs/analysis_pipeline.md).
-- Single entrypoint: `summarize_run_data()` in `analysis/summary.py` (facade over
-  `summary_builder.py` and focused helper modules behind `summary_pipeline.py`).
+- Single entrypoint: `summarize_run_data()` in `analysis/summary_builder.py`.
 - External code should prefer the public `vibesensor.analysis` package API.
 - `report/` is renderer-only and must not import from `analysis/`.
 - Rule: no analysis helpers outside the analysis folder.
@@ -37,12 +36,12 @@ Use this when changing backend code without scanning the whole package.
   `datetime.now(UTC).isoformat()` everywhere.
 - `report/report_data.py`: all report dataclasses expose `from_dict()`
   for dict→dataclass reconstruction; avoid manual field-by-field unpacking.
-- `report/pdf_builder.py`: public PDF renderer facade.
-- `report/pdf_engine.py`, `pdf_page1.py`, `pdf_page2.py`, `pdf_page*_sections.py`,
+- `report/pdf_engine.py`: public PDF renderer entrypoint and pagination.
+- `report/pdf_page1.py`, `pdf_page2.py`, `pdf_page*_sections.py`,
   `pdf_drawing.py`, `pdf_text.py`, and `pdf_page_layouts.py`: focused PDF page composition,
-  drawing, layout, and text helpers behind the facade.
-- `report/pdf_diagram.py` is a compatibility facade; diagram planning and drawing now live in
-  `pdf_diagram_layout.py`, `pdf_diagram_models.py`, and `pdf_diagram_render.py`.
+  drawing, layout, and text helpers.
+- Diagram planning and drawing live in `pdf_diagram_layout.py`, `pdf_diagram_models.py`,
+  and `pdf_diagram_render.py`.
 
 ## API Surface
 - `routes/` is the HTTP and WebSocket boundary, assembled by `routes/__init__.py`.

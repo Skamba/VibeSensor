@@ -30,7 +30,7 @@ def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Build apps/ui and sync dist output into apps/server/public."
+        description="Build apps/ui and sync dist output into apps/server/vibesensor/static."
     )
     parser.add_argument(
         "--skip-npm-ci",
@@ -47,7 +47,7 @@ def main() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     ui_dir = repo_root / "apps" / "ui"
     dist_dir = ui_dir / "dist"
-    public_dir = repo_root / "apps" / "server" / "public"
+    static_dir = repo_root / "apps" / "server" / "vibesensor" / "static"
     lock_file = ui_dir / "package-lock.json"
     lock_hash_file = ui_dir / ".npm-ci-lock.sha256"
 
@@ -69,14 +69,14 @@ def main() -> None:
         lock_hash_file.write_text(lock_hash, encoding="utf-8")
     _run(["npm", "run", "build"], cwd=ui_dir)
 
-    shutil.rmtree(public_dir, ignore_errors=True)
-    public_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(dist_dir, public_dir, dirs_exist_ok=True)
+    shutil.rmtree(static_dir, ignore_errors=True)
+    static_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(dist_dir, static_dir, dirs_exist_ok=True)
     ui_source_hash = _hash_tree(
         ui_dir,
         ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
     )
-    public_assets_hash = _hash_tree(public_dir, ignore_names={UI_BUILD_METADATA_FILE})
+    static_assets_hash = _hash_tree(static_dir, ignore_names={UI_BUILD_METADATA_FILE})
     git_commit = (
         subprocess.run(
             ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
@@ -87,11 +87,11 @@ def main() -> None:
         if (repo_root / ".git").exists()
         else ""
     )
-    (public_dir / UI_BUILD_METADATA_FILE).write_text(
+    (static_dir / UI_BUILD_METADATA_FILE).write_text(
         json.dumps(
             {
                 "ui_source_hash": ui_source_hash,
-                "public_assets_hash": public_assets_hash,
+                "static_assets_hash": static_assets_hash,
                 "git_commit": git_commit,
             },
             sort_keys=True,
@@ -99,7 +99,7 @@ def main() -> None:
         + "\n",
         encoding="utf-8",
     )
-    print(f"Synced {dist_dir} -> {public_dir}")
+    print(f"Synced {dist_dir} -> {static_dir}")
 
 
 if __name__ == "__main__":

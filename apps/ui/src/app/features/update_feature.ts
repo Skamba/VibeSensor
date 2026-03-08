@@ -118,10 +118,10 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       html += `<span>${escapeHtml(status.runtime.commit.slice(0, 12))}</span>`;
       html += `</div>`;
     }
-    if (status.runtime?.public_assets_hash) {
+    if (status.runtime?.static_assets_hash) {
       html += `<div class="update-status-row">`;
       html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_assets"))}</span>`;
-      html += `<span>${escapeHtml(status.runtime.public_assets_hash.slice(0, 12))}</span>`;
+      html += `<span>${escapeHtml(status.runtime.static_assets_hash.slice(0, 12))}</span>`;
       html += `</div>`;
       if (showRuntimeAssetsCheck) {
         html += `<div class="update-status-row">`;

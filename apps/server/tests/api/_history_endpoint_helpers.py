@@ -234,7 +234,7 @@ class FakeState:
 def make_router_and_state(language: str = "en", sample_count: int = 20):
     from dataclasses import asdict
 
-    from vibesensor.analysis.report_data_builder import map_summary
+    from vibesensor.analysis import map_summary
 
     metadata = make_metadata(language=language)
     samples = [sample(i) for i in range(sample_count)]

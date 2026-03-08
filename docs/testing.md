@@ -13,9 +13,9 @@ The test tree is feature-based. Most directories mirror the backend package or m
 ```text
 apps/server/tests/
 ├── conftest.py
-├── builders.py
 ├── _paths.py
 ├── _*.py helper modules
+├── test_support/
 ├── analysis/
 ├── api/
 ├── app/

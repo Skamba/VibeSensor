@@ -13,7 +13,7 @@ from _scenario_regression_helpers import (
 
 from vibesensor.analysis.helpers import MEMS_NOISE_FLOOR_G
 from vibesensor.analysis.strength_labels import certainty_label
-from vibesensor.analysis.summary import confidence_label, summarize_run_data
+from vibesensor.analysis import confidence_label, summarize_run_data
 
 
 class TestConfidenceCalibration:

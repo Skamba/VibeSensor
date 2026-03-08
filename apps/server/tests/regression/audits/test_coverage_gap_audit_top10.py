@@ -6,7 +6,7 @@ from __future__ import annotations
 This file addresses the top 10 coverage gaps identified by systematic
 cross-referencing of public/private functions in:
   - apps/server/vibesensor/analysis/findings.py
-  - apps/server/vibesensor/analysis/summary.py
+  - apps/server/vibesensor/analysis/summary_builder.py
   - apps/server/vibesensor/metrics_log.py
   - apps/server/vibesensor/processing.py
 against all test files in apps/server/tests/.
@@ -28,12 +28,14 @@ from vibesensor.analysis.findings.order_findings import (
     _suppress_engine_aliases,
 )
 from vibesensor.analysis.phase_segmentation import DrivingPhase
-from vibesensor.analysis.summary import (
-    _build_phase_timeline,
-    _build_run_suitability_checks,
-    _compute_accel_statistics,
-    _phase_ranking_score,
-    summarize_run_data,
+from vibesensor.analysis import summarize_run_data
+from vibesensor.analysis.ranking import phase_adjusted_ranking_score as _phase_ranking_score
+from vibesensor.analysis.summary_phases import build_phase_timeline as _build_phase_timeline
+from vibesensor.analysis.summary_suitability import (
+    build_run_suitability_checks as _build_run_suitability_checks,
+)
+from vibesensor.analysis.summary_suitability import (
+    compute_accel_statistics as _compute_accel_statistics,
 )
 from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 from vibesensor.metrics_log.sample_builder import extract_strength_data, resolve_speed_context
@@ -357,7 +359,7 @@ class TestSuppressEngineAliases:
 
 
 # ---------------------------------------------------------------------------
-# Finding 4: _build_run_suitability_checks  (summary.py:600)
+# Finding 4: build_run_suitability_checks  (summary_suitability.py)
 # SEVERITY: HIGH
 # WHY: Constructs the data-quality checklist visible in every PDF report.
 #      Logic for speed variation, sensor coverage, reference completeness,
@@ -416,7 +418,7 @@ class TestBuildRunSuitabilityChecks:
 
 
 # ---------------------------------------------------------------------------
-# Finding 5: _build_phase_timeline  (summary.py:396)
+# Finding 5: build_phase_timeline  (summary_phases.py)
 # SEVERITY: MEDIUM-HIGH
 # WHY: Constructs the per-phase timeline shown in UI and PDF.  Bug here
 #      misrepresents which driving phases had fault evidence.  Zero tests.
@@ -427,7 +429,7 @@ class TestBuildPhaseTimeline:
     """Direct unit tests for _build_phase_timeline."""
 
     def test_empty_segments_returns_empty(self) -> None:
-        assert _build_phase_timeline([], []) == []
+        assert _build_phase_timeline([], [], min_confidence=0.25) == []
 
     def test_basic_segment_output(self) -> None:
         segs = [
@@ -441,7 +443,7 @@ class TestBuildPhaseTimeline:
                 "phase_evidence": {"phases_detected": ["cruise"]},
             }
         ]
-        entries = _build_phase_timeline(segs, findings)
+        entries = _build_phase_timeline(segs, findings, min_confidence=0.25)
         assert len(entries) == 2
         assert entries[0]["phase"] == "cruise"
         assert entries[0]["has_fault_evidence"] is True
@@ -470,12 +472,12 @@ class TestBuildPhaseTimeline:
     )
     def test_finding_does_not_mark_phase(self, finding: dict[str, object]) -> None:
         """REF_ findings and below-threshold findings should not contribute."""
-        entries = _build_phase_timeline([_FakeSeg()], [finding])
+        entries = _build_phase_timeline([_FakeSeg()], [finding], min_confidence=0.25)
         assert entries[0]["has_fault_evidence"] is False
 
 
 # ---------------------------------------------------------------------------
-# Finding 6: _compute_accel_statistics  (summary.py:524)
+# Finding 6: compute_accel_statistics  (summary_suitability.py)
 # SEVERITY: MEDIUM-HIGH
 # WHY: Computes saturation detection, per-axis mean/variance, and magnitude.
 #      Saturation miscounting silently breaks the suitability checklist.
@@ -535,7 +537,7 @@ class TestComputeAccelStatistics:
 
 
 # ---------------------------------------------------------------------------
-# Finding 7: _phase_ranking_score  (summary.py:177)
+# Finding 7: phase_adjusted_ranking_score  (ranking.py)
 # SEVERITY: MEDIUM
 # WHY: Multiplier used inside select_top_causes to rank findings by phase
 #      evidence.  Incorrect weighting silently re-orders top causes in
@@ -718,7 +720,7 @@ class TestResolveSpeedContext:
 
 
 # ---------------------------------------------------------------------------
-# Finding 10: summarize_run_data — edge cases (summary.py:710)
+# Finding 10: summarize_run_data — edge cases (summary_builder.py)
 # SEVERITY: MEDIUM
 # WHY: The main orchestrator function.  While it has integration tests,
 #      boundary inputs (empty samples, all-None axes, zero duration) are

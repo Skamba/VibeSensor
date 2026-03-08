@@ -62,7 +62,7 @@ class TestPdfDiagramDeadFallback:
     """Verify the dead English fallback for SOURCE_LEGEND_TITLE was removed."""
 
     def test_no_inline_english_fallback(self):
-        """pdf_diagram.py should not contain 'Finding source:' as a fallback."""
+        """pdf_diagram_render.py should not contain 'Finding source:' as a fallback."""
         assert 'else "Finding source:"' not in _PDF_DIAGRAM_SRC, (
             "Dead English fallback 'Finding source:' should be removed"
         )
@@ -85,7 +85,7 @@ class TestPdfDiagramAssertReplacement:
     """Verify bare assert replaced with ValueError for label placement."""
 
     def test_no_bare_assert_best(self):
-        """pdf_diagram.py should not use bare assert for best placement."""
+        """pdf_diagram_render.py should not use bare assert for best placement."""
         assert "assert best is not None" not in _PDF_DIAGRAM_SRC, (
             "Bare 'assert best is not None' should be replaced with ValueError"
         )

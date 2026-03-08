@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from builders import make_sample as _base_make_sample
-from builders import standard_metadata as _base_standard_metadata
+from test_support.core import standard_metadata as _base_standard_metadata
+from test_support.sample_scenarios import make_sample as _base_make_sample
 
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 

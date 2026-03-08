@@ -79,8 +79,7 @@ apps/ui/node_modules/
 apps/ui/dist/
 apps/ui/.npm-ci-lock.sha256
 apps/ui/.playwright-chromium-installed
-apps/server/public/*
-!apps/server/public/.gitkeep
+apps/server/vibesensor/static/
 
 # Playwright test artifacts
 apps/ui/tests/test-results/

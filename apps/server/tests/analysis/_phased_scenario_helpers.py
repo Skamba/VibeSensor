@@ -9,7 +9,7 @@ from builders import standard_metadata as standard_metadata
 from builders import wheel_hz as wheel_hz
 
 from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
-from vibesensor.analysis.summary import summarize_run_data
+from vibesensor.analysis import summarize_run_data
 
 __all__ = [
     "_classify_peak_type",

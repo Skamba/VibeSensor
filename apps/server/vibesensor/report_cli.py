@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from .analysis import map_summary, summarize_log
-from .report.pdf_builder import build_report_pdf
+from .report.pdf_engine import build_report_pdf
 
 
 def parse_args() -> argparse.Namespace:

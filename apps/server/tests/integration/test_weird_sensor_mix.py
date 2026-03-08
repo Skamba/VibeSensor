@@ -10,7 +10,15 @@ from __future__ import annotations
 import pytest
 from _test_helpers import assert_summary_sections
 
-from tests.builders import (
+from test_support.analysis import extract_top, run_analysis
+from test_support.assertions import (
+    assert_confidence_between,
+    assert_has_warnings,
+    assert_max_wheel_confidence,
+    assert_no_exact_corner_claim,
+    assert_wheel_weak_spatial,
+)
+from test_support.core import (
     SENSOR_DRIVER_SEAT,
     SENSOR_ENGINE,
     SENSOR_FL,
@@ -21,17 +29,9 @@ from tests.builders import (
     SENSOR_RL,
     SENSOR_RR,
     SENSOR_TRUNK,
-    assert_confidence_between,
-    assert_has_warnings,
-    assert_max_wheel_confidence,
-    assert_no_exact_corner_claim,
-    assert_wheel_weak_spatial,
-    extract_top,
-    make_diffuse_samples,
-    make_fault_samples,
-    make_noise_samples,
-    run_analysis,
 )
+from test_support.fault_scenarios import make_fault_samples
+from test_support.sample_scenarios import make_diffuse_samples, make_noise_samples
 
 # ---------------------------------------------------------------------------
 # Constants for parameterization

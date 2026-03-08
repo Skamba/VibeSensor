@@ -22,7 +22,7 @@ from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 from vibesensor.processing import SignalProcessor
 from vibesensor.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.registry import ClientRegistry
-from vibesensor.report.pdf_builder import build_report_pdf
+from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.udp_data_rx import DataDatagramProtocol
 
 _FRAME_N = 256
