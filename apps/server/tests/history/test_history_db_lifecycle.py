@@ -155,17 +155,17 @@ def test_run_status_transitions(tmp_path: Path) -> None:
     assert db.get_run_status("run-err") == "error"
 
 
-def test_store_analysis_requires_analyzing_state(tmp_path: Path) -> None:
+def test_store_analysis_allows_direct_recording_to_complete(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-recording", "2026-01-01T00:00:00Z", {"source": "test"})
 
     stored = db.store_analysis("run-recording", {"score": 42})
 
-    assert stored is False
+    assert stored is True
     run = db.get_run("run-recording")
     assert run is not None
-    assert run["status"] == "recording"
-    assert run.get("analysis") is None
+    assert run["status"] == "complete"
+    assert run.get("analysis") == {"score": 42}
 
 
 def test_append_samples_rolls_back_when_metadata_update_fails(tmp_path: Path) -> None:

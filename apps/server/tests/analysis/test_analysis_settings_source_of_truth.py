@@ -46,9 +46,11 @@ class _State:
         pass
 
     def __post_init__(self) -> None:
-        from vibesensor.runtime import ProcessingLoopState
+        from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
 
         self.loop_state = ProcessingLoopState()
+        self.health_state = RuntimeHealthState()
+        self.health_state.mark_ready()
         self.update_manager = None
         self.esp_flash_manager = None
         self.live_diagnostics = SimpleNamespace(reset=_noop)
@@ -117,7 +119,10 @@ class _State:
             update_manager=self.update_manager,
             esp_flash_manager=self.esp_flash_manager,
         )
-        self.processing = SimpleNamespace(state=self.loop_state)
+        self.processing = SimpleNamespace(
+            state=self.loop_state,
+            health_state=self.health_state,
+        )
 
 
 def _route(router, path: str, method: str = "GET"):

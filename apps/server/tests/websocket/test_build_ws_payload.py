@@ -155,44 +155,38 @@ def _make_state(
     ui_push_hz: int = 10,
     ui_heavy_push_hz: int = 4,
 ) -> RuntimeState:
-    from vibesensor.runtime import (
-        RuntimeDiagnosticsSubsystem,
-        RuntimeIngressSubsystem,
-        RuntimePersistenceSubsystem,
-        RuntimeProcessingSubsystem,
-        RuntimeRouteServices,
-        RuntimeSettingsSubsystem,
-        RuntimeUpdateSubsystem,
-        RuntimeWebsocketSubsystem,
-        build_runtime_state,
-    )
+    import vibesensor.runtime as runtime_module
     from vibesensor.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
     from vibesensor.runtime.ws_broadcast import WsBroadcastCache, WsBroadcastService
 
-    ingress = RuntimeIngressSubsystem(
+    ingress = runtime_module.RuntimeIngressSubsystem(
         registry=_StubRegistry(clients),  # type: ignore[arg-type]
         processor=_StubProcessor(),  # type: ignore[arg-type]
         control_plane=_SENTINEL,  # type: ignore[arg-type]
         worker_pool=_SENTINEL,  # type: ignore[arg-type]
     )
-    settings = RuntimeSettingsSubsystem(
+    settings = runtime_module.RuntimeSettingsSubsystem(
         settings_store=_StubSettingsStore(),  # type: ignore[arg-type]
         analysis_settings=_StubAnalysisSettings(),  # type: ignore[arg-type]
         gps_monitor=_StubGPS(),  # type: ignore[arg-type]
     )
-    diagnostics = RuntimeDiagnosticsSubsystem(
+    diagnostics = runtime_module.RuntimeDiagnosticsSubsystem(
         metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
         live_analysis=_StubLiveAnalysis(),  # type: ignore[arg-type]
         live_diagnostics=_StubDiagnostics(),  # type: ignore[arg-type]
     )
-    persistence = RuntimePersistenceSubsystem(history_db=_SENTINEL)  # type: ignore[arg-type]
-    updates = RuntimeUpdateSubsystem(
+    persistence = runtime_module.RuntimePersistenceSubsystem(  # type: ignore[arg-type]
+        history_db=_SENTINEL
+    )
+    updates = runtime_module.RuntimeUpdateSubsystem(
         update_manager=_SENTINEL,  # type: ignore[arg-type]
         esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
     )
     processing_state = ProcessingLoopState()
-    processing = RuntimeProcessingSubsystem(
+    health_state = runtime_module.RuntimeHealthState()
+    processing = runtime_module.RuntimeProcessingSubsystem(
         state=processing_state,
+        health_state=health_state,
         loop=ProcessingLoop(
             state=processing_state,
             fft_update_hz=4,
@@ -202,7 +196,7 @@ def _make_state(
         ),
     )
     cache = WsBroadcastCache()
-    websocket = RuntimeWebsocketSubsystem(
+    websocket = runtime_module.RuntimeWebsocketSubsystem(
         hub=_SENTINEL,  # type: ignore[arg-type]
         cache=cache,
         broadcast=WsBroadcastService(
@@ -215,7 +209,7 @@ def _make_state(
         ),
     )
 
-    state = build_runtime_state(
+    state = runtime_module.build_runtime_state(
         config=_StubConfig(
             processing=_StubProcessingConfig(
                 ui_push_hz=ui_push_hz,
@@ -229,7 +223,7 @@ def _make_state(
         updates=updates,
         processing=processing,
         websocket=websocket,
-        routes=RuntimeRouteServices(
+        routes=runtime_module.RuntimeRouteServices(
             ingress=ingress,
             settings=settings,
             diagnostics=diagnostics,
