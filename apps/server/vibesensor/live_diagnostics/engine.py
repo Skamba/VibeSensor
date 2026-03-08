@@ -6,23 +6,29 @@ import logging
 import math
 from collections import deque
 from time import monotonic
-from typing import Any
 
 from vibesensor_core.strength_bands import BANDS
 
-from ..analysis import build_findings_for_samples
+from ..analysis import Finding, build_findings_for_samples
 from ..constants import SILENCE_DB
 from ..diagnostics_shared import source_keys_from_class_key
+from ..json_types import JsonObject
 from ..payload_types import (
+    ClientApiRow,
     DiagnosticEventPayload,
     DiagnosticLevelPayload,
     LiveDiagnosticsPayload,
+    SpectraPayload,
     StrengthBandPayload,
 )
 from ._types import (
     _HEARTBEAT_EMIT_INTERVAL_MS,
     _MULTI_FREQ_BIN_HZ,
     _MULTI_SYNC_WINDOW_MS,
+    ActiveLevelsByKey,
+    LiveClientsSnapshot,
+    LiveSpectraSnapshot,
+    LocationCandidatesByKey,
     _combine_amplitude_strength_db,
     _RecentEvent,
     _TrackerLevelState,
@@ -50,7 +56,7 @@ _COMBINED_TRACKER_PRUNE_MS: int = 30_000
 """Remove combined trackers that have been absent for this many milliseconds."""
 
 
-def _has_precomputed_strength_metrics(samples: list[dict[str, Any]]) -> bool:
+def _has_precomputed_strength_metrics(samples: list[JsonObject]) -> bool:
     for sample in samples:
         value = sample.get("vibration_strength_db")
         if isinstance(value, (int, float)) and math.isfinite(value):
@@ -70,7 +76,7 @@ class LiveDiagnosticsEngine:
         self._multi_freq_bin_hz = _MULTI_FREQ_BIN_HZ
         self._heartbeat_emit_ms = _HEARTBEAT_EMIT_INTERVAL_MS
         self._latest_events: list[DiagnosticEventPayload] = []
-        self._latest_findings: list[dict[str, object]] = []
+        self._latest_findings: list[Finding] = []
         self._active_levels_by_source: dict[str, DiagnosticLevelPayload] = {}
         self._active_levels_by_sensor: dict[str, DiagnosticLevelPayload] = {}
         self._active_levels_by_location: dict[str, DiagnosticLevelPayload] = {}
@@ -122,8 +128,8 @@ class LiveDiagnosticsEngine:
         self,
         *,
         speed_mps: float | None,
-        clients: list[dict[str, Any]],
-        spectra: dict[str, Any],
+        clients: LiveClientsSnapshot,
+        spectra: LiveSpectraSnapshot,
         settings: dict[str, float],
     ) -> list[_RecentEvent]:
         return detect_sensor_events(
@@ -163,7 +169,7 @@ class LiveDiagnosticsEngine:
     # ------------------------------------------------------------------
 
     def snapshot(self) -> LiveDiagnosticsPayload:
-        top_finding: dict[str, object] | None = None
+        top_finding: Finding | None = None
         for finding in self._latest_findings:
             finding_id = str(finding.get("finding_id") or "")
             if finding_id.startswith("REF") or finding_id.startswith("INFO_"):
@@ -202,11 +208,11 @@ class LiveDiagnosticsEngine:
         self,
         *,
         speed_mps: float | None,
-        clients: list[dict[str, Any]],
-        spectra: dict[str, Any] | None,
+        clients: list[ClientApiRow],
+        spectra: SpectraPayload | None,
         settings: dict[str, float] | None,
-        finding_metadata: dict[str, Any] | None = None,
-        finding_samples: list[dict[str, Any]] | None = None,
+        finding_metadata: JsonObject | None = None,
+        finding_samples: list[JsonObject] | None = None,
         language: str = "en",
     ) -> LiveDiagnosticsPayload:
         if finding_metadata is not None and finding_samples is not None:
@@ -256,9 +262,9 @@ class LiveDiagnosticsEngine:
             sensor_events = []
 
         emitted_events: list[DiagnosticEventPayload] = []
-        active_by_source: dict[str, DiagnosticLevelPayload] = {}
-        active_by_sensor: dict[str, DiagnosticLevelPayload] = {}
-        location_candidates: dict[str, list[dict[str, Any]]] = {}
+        active_by_source: ActiveLevelsByKey = {}
+        active_by_sensor: ActiveLevelsByKey = {}
+        location_candidates: LocationCandidatesByKey = {}
 
         latest_by_tracker: dict[str, _RecentEvent] = {}
         for event in sensor_events:
@@ -404,8 +410,8 @@ class LiveDiagnosticsEngine:
         self,
         *,
         now_ms: int,
-        active_by_source: dict[str, dict[str, Any]],
-        emitted_events: list[dict[str, Any]],
+        active_by_source: ActiveLevelsByKey,
+        emitted_events: list[DiagnosticEventPayload],
     ) -> set[str]:
         """Build and process multi-sensor combined groups.
 

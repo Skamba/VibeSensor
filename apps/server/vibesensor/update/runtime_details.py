@@ -7,7 +7,8 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Any
+
+from ..json_types import JsonObject, is_json_object
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class UpdateRuntimeDetailsCollector:
     def __init__(self, *, repo: Path) -> None:
         self._repo = repo
 
-    def collect(self) -> dict[str, Any]:
+    def collect(self) -> JsonObject:
         repo = self._repo
         ui_root = repo / "apps" / "ui"
         static_root = repo / "apps" / "server" / "vibesensor" / "static"
@@ -89,10 +90,11 @@ class UpdateRuntimeDetailsCollector:
         )
         static_assets_hash = _hash_tree(static_root, ignore_names={UI_BUILD_METADATA_FILE})
 
-        metadata: dict[str, Any] = {}
+        metadata: JsonObject = {}
         if metadata_path.is_file():
             try:
-                metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+                loaded = json.loads(metadata_path.read_text(encoding="utf-8"))
+                metadata = loaded if is_json_object(loaded) else {}
             except (OSError, json.JSONDecodeError):
                 metadata = {}
 

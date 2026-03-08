@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Any
 
 from ..domain_models import SensorFrame
+from ..json_types import JsonObject, is_json_array, is_json_object
 from ..json_utils import safe_json_dumps, safe_json_loads
 
 LOGGER = logging.getLogger(__name__)
@@ -82,13 +82,19 @@ _isfinite = math.isfinite
 # -- Row conversion -----------------------------------------------------------
 
 
-def sample_to_v2_row(run_id: str, item: dict[str, Any] | SensorFrame) -> tuple[Any, ...]:
+def sample_to_v2_row(run_id: str, item: JsonObject | SensorFrame) -> tuple[object, ...]:
     """Convert a sample dict or SensorFrame to a row tuple for ``samples_v2``."""
-    d: dict[str, Any] = item.to_dict() if isinstance(item, SensorFrame) else item
+    if isinstance(item, SensorFrame):
+        raw_item = item.to_dict()
+        if not is_json_object(raw_item):
+            raise TypeError("SensorFrame.to_dict() must return a JSON object")
+        d = raw_item
+    else:
+        d = item
     isfinite = _isfinite
     _get = d.get
 
-    vals: list[Any] = []
+    vals: list[object] = []
 
     vals.append(run_id)
     for col in _V2_TYPED_COLS[1:]:
@@ -107,12 +113,12 @@ def sample_to_v2_row(run_id: str, item: dict[str, Any] | SensorFrame) -> tuple[A
     return tuple(vals)
 
 
-def v2_row_to_dict(row: tuple[Any, ...]) -> dict[str, Any]:
+def v2_row_to_dict(row: tuple[object, ...]) -> JsonObject:
     """Reconstruct a sample dict from a ``samples_v2`` row.
 
     *row* layout: ``(id, <typed cols>, <peak cols>, extra_json)``.
     """
-    d: dict[str, Any] = {}
+    d: JsonObject = {}
 
     for i, col in enumerate(_V2_TYPED_COLS):
         val = row[_V2_TYPED_OFFSET + i]
@@ -123,7 +129,7 @@ def v2_row_to_dict(row: tuple[Any, ...]) -> dict[str, Any]:
         raw = row[_V2_PEAK_OFFSET + i]
         if raw:
             parsed = safe_json_loads(raw, context=f"peak column {col}")
-            if isinstance(parsed, list):
+            if is_json_array(parsed):
                 d[col] = parsed
             else:
                 if parsed is not None:
@@ -141,7 +147,7 @@ def v2_row_to_dict(row: tuple[Any, ...]) -> dict[str, Any]:
     extra_json = row[_V2_EXTRA_OFFSET]
     if extra_json:
         extra = safe_json_loads(extra_json, context="extra_json")
-        if isinstance(extra, dict):
+        if is_json_object(extra):
             d.update(extra)
 
     return d

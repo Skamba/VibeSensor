@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any
+from typing import TypeAlias, TypedDict
 
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from ..constants import SILENCE_DB
+from ..diagnostics_shared import SeverityTrackerState
+from ..payload_types import ClientApiRow, DiagnosticLevelPayload, SpectraPayload
 
 SOURCE_KEYS = ("engine", "driveshaft", "wheel", "other")
 SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")
@@ -27,6 +29,22 @@ _MATRIX_WINDOW_MS = 5 * 60 * 1000
 
 
 _isfinite = math.isfinite
+
+ActiveLevelsByKey: TypeAlias = dict[str, DiagnosticLevelPayload]
+LiveClientsSnapshot: TypeAlias = list[ClientApiRow]
+LiveSpectraSnapshot: TypeAlias = SpectraPayload
+
+
+class LocationCandidatePayload(TypedDict):
+    sensor_id: str
+    sensor_label: str
+    bucket_key: str
+    strength_db: float
+    class_key: str
+    peak_hz: float
+
+
+LocationCandidatesByKey: TypeAlias = dict[str, list[LocationCandidatePayload]]
 
 
 def _combine_amplitude_strength_db(values_db: list[float]) -> float:
@@ -73,7 +91,7 @@ class _TrackerLevelState:
     last_sensor_label: str = ""
     last_sensor_location: str = ""
     last_emitted_ms: int = 0
-    severity_state: dict[str, Any] | None = None
+    severity_state: SeverityTrackerState | None = None
     silence_ticks: int = 0
     """Number of consecutive ticks the tracker has been absent from incoming events."""
 

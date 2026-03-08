@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from ..constants import SILENCE_DB
 from ..diagnostics_shared import source_keys_from_class_key
-from ._types import _TrackerLevelState
+from ._types import (
+    ActiveLevelsByKey,
+    LocationCandidatePayload,
+    LocationCandidatesByKey,
+    _TrackerLevelState,
+)
 
 # Sentinel used for "no existing strength" comparisons — avoids repeated
 # dict.get default-value allocation on every call.
@@ -15,7 +18,7 @@ _NEG_INF = float("-inf")
 
 def upsert_active_level(
     *,
-    active_by_source: dict[str, dict[str, Any]],
+    active_by_source: ActiveLevelsByKey,
     source_keys: tuple[str, ...],
     bucket_key: str,
     strength_db: float,
@@ -44,7 +47,7 @@ def upsert_active_level(
 
 
 def update_sensor_active_level(
-    active_by_sensor: dict[str, dict[str, Any]],
+    active_by_sensor: ActiveLevelsByKey,
     sensor_id: str,
     *,
     bucket_key: str,
@@ -69,7 +72,7 @@ def location_key(sensor_location: str) -> str | None:
     return key or None
 
 
-def _row_bin(row: dict[str, Any], inv_bin: float) -> tuple[str, str, int]:
+def _row_bin(row: LocationCandidatePayload, inv_bin: float) -> tuple[str, str, int]:
     """Compute the (class_key, bucket_key, freq_bin_index) tuple for *row*."""
     return (
         str(row.get("class_key") or ""),
@@ -80,11 +83,11 @@ def _row_bin(row: dict[str, Any], inv_bin: float) -> tuple[str, str, int]:
 
 def build_active_levels_by_location(
     *,
-    candidates_by_location: dict[str, list[dict[str, Any]]],
+    candidates_by_location: LocationCandidatesByKey,
     freq_bin_hz: float,
-) -> dict[str, dict[str, Any]]:
+) -> ActiveLevelsByKey:
     """Aggregate candidate rows per location, keeping the strongest per frequency bin."""
-    by_location: dict[str, dict[str, Any]] = {}
+    by_location: ActiveLevelsByKey = {}
     # Pre-compute reciprocal once; multiplication is cheaper than division
     # inside the per-candidate inner loop.
     inv_bin = 1.0 / max(0.01, freq_bin_hz)
@@ -123,9 +126,9 @@ def build_active_levels_by_location(
 
 def collect_active_levels_from_trackers(
     sensor_trackers: dict[str, _TrackerLevelState],
-    active_by_source: dict[str, dict[str, Any]],
-    active_by_sensor: dict[str, dict[str, Any]],
-    location_candidates: dict[str, list[dict[str, Any]]],
+    active_by_source: ActiveLevelsByKey,
+    active_by_sensor: ActiveLevelsByKey,
+    location_candidates: LocationCandidatesByKey,
 ) -> None:
     """Rebuild source/sensor/location active levels from all tracker state."""
     for tracker_key, tracker in sensor_trackers.items():

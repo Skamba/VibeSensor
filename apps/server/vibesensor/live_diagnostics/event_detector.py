@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from ..diagnostics_shared import build_diagnostic_settings, classify_peak_hz
+from ..payload_types import ClientApiRow, SpectraPayload
 from ._types import _RecentEvent
 
 LOGGER = logging.getLogger(__name__)
@@ -14,8 +14,8 @@ LOGGER = logging.getLogger(__name__)
 def detect_sensor_events(
     *,
     speed_mps: float | None,
-    clients: list[dict[str, Any]],
-    spectra: dict[str, Any],
+    clients: list[ClientApiRow],
+    spectra: SpectraPayload,
     settings: dict[str, float],
 ) -> list[_RecentEvent]:
     """Extract per-sensor vibration events from a WebSocket spectra payload."""
@@ -23,8 +23,6 @@ def detect_sensor_events(
     client_map: dict[str, str] = {}
     client_location_map: dict[str, str] = {}
     for client in clients:
-        if not isinstance(client, dict):
-            continue
         cid = str(client.get("id"))
         client_map[cid] = str(client.get("name") or client.get("id") or "")
         client_location_map[cid] = str(client.get("location") or "")

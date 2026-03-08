@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
+from ..json_types import JsonObject, JsonValue, is_json_object
 from ..json_utils import safe_json_dumps, safe_json_loads
 from ..runlog import utc_now_iso
 from ._typing import HistoryCursorProvider
@@ -14,7 +13,7 @@ class HistorySettingsStoreMixin:
 
     __slots__ = ()
 
-    def get_setting(self: HistoryCursorProvider, key: str) -> Any | None:
+    def get_setting(self: HistoryCursorProvider, key: str) -> JsonValue | None:
         with self._cursor(commit=False) as cur:
             cur.execute("SELECT value_json FROM settings_kv WHERE key = ?", (key,))
             row = cur.fetchone()
@@ -22,7 +21,7 @@ class HistorySettingsStoreMixin:
             return None
         return safe_json_loads(row[0], context=f"setting {key}")
 
-    def set_setting(self: HistoryCursorProvider, key: str, value: Any) -> None:
+    def set_setting(self: HistoryCursorProvider, key: str, value: JsonValue) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
@@ -32,9 +31,9 @@ class HistorySettingsStoreMixin:
                 (key, safe_json_dumps(value), now),
             )
 
-    def get_settings_snapshot(self: HistoryCursorProvider) -> dict[str, Any] | None:
+    def get_settings_snapshot(self: HistoryCursorProvider) -> JsonObject | None:
         snapshot = self.get_setting("settings_snapshot")
-        return snapshot if isinstance(snapshot, dict) else None
+        return snapshot if is_json_object(snapshot) else None
 
-    def set_settings_snapshot(self: HistoryCursorProvider, snapshot: dict[str, Any]) -> None:
+    def set_settings_snapshot(self: HistoryCursorProvider, snapshot: JsonObject) -> None:
         self.set_setting("settings_snapshot", snapshot)

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from math import isfinite, sqrt
-from typing import Any
+from typing import TypedDict
 
 from vibesensor_core.strength_bands import (
     DECAY_TICKS,
@@ -33,13 +33,29 @@ from .constants import (
     ROAD_RESONANCE_MAX_HZ,
     ROAD_RESONANCE_MIN_HZ,
 )
+from .payload_types import OrderBandPayload
 from .runlog import as_float_or_none
 
 DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
 
 _INF = float("inf")
 
-_DEFAULT_SEVERITY_STATE: dict[str, Any] = {
+
+class SeverityTrackerState(TypedDict):
+    current_bucket: str | None
+    pending_bucket: str | None
+    consecutive_up: int
+    consecutive_down: int
+    last_confirmed_hz: float | None
+
+
+class SeverityResult(TypedDict):
+    key: str | None
+    db: float
+    state: SeverityTrackerState
+
+
+_DEFAULT_SEVERITY_STATE: SeverityTrackerState = {
     "current_bucket": None,
     "pending_bucket": None,
     "consecutive_up": 0,
@@ -48,7 +64,7 @@ _DEFAULT_SEVERITY_STATE: dict[str, Any] = {
 }
 
 
-def build_diagnostic_settings(overrides: Mapping[str, Any] | None = None) -> dict[str, float]:
+def build_diagnostic_settings(overrides: Mapping[str, object] | None = None) -> dict[str, float]:
     """Return analysis settings merged with validated *overrides*."""
     out = dict(DEFAULT_ANALYSIS_SETTINGS)
     if not overrides:
@@ -123,9 +139,9 @@ def order_tolerances(
 
 
 def build_order_bands(
-    orders_hz: dict[str, Any],
-    analysis_settings: dict[str, Any],
-) -> list[dict[str, Any]]:
+    orders_hz: dict[str, float],
+    analysis_settings: Mapping[str, object],
+) -> list[OrderBandPayload]:
     """Pre-compute order tolerance bands so the frontend doesn't duplicate this math.
 
     This is a pure function that depends only on the order frequencies and
@@ -136,7 +152,7 @@ def build_order_bands(
     drive_hz = float(orders_hz["drive_hz"])
     engine_hz = float(orders_hz["engine_hz"])
     wheel_tol, drive_tol, engine_tol = order_tolerances(orders_hz, resolved)
-    bands: list[dict[str, Any]] = [
+    bands: list[OrderBandPayload] = [
         {"key": "wheel_1x", "center_hz": wheel_hz, "tolerance": wheel_tol},
         {"key": "wheel_2x", "center_hz": wheel_hz * HARMONIC_2X, "tolerance": wheel_tol},
     ]
@@ -164,7 +180,7 @@ def build_order_bands(
 def vehicle_orders_hz(
     *,
     speed_mps: float | None,
-    settings: Mapping[str, Any],
+    settings: Mapping[str, object],
 ) -> dict[str, float] | None:
     """Return per-order frequencies in Hz for the given speed and settings.
 
@@ -273,7 +289,7 @@ def classify_peak_hz(
     *,
     peak_hz: float,
     speed_mps: float | None,
-    settings: Mapping[str, Any],
+    settings: Mapping[str, object],
 ) -> dict[str, object]:
     """Classify *peak_hz* against known vehicle order frequencies.
 
@@ -372,10 +388,10 @@ def severity_from_peak(
     *,
     vibration_strength_db: float,
     sensor_count: int,
-    prior_state: dict[str, Any] | None = None,
+    prior_state: SeverityTrackerState | None = None,
     peak_hz: float | None = None,
     persistence_freq_bin_hz: float | None = None,
-) -> dict[str, float | str | dict[str, Any]]:
+) -> SeverityResult:
     """Compute the severity bucket and updated state for a peak measurement.
 
     Applies hysteresis, persistence, and multi-sensor corroboration before

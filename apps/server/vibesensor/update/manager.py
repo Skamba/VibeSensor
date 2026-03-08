@@ -7,6 +7,7 @@ import logging
 import os
 from pathlib import Path
 
+from ..json_types import JsonObject
 from .commands import UpdateCommandExecutor
 from .installer import UpdateInstaller, UpdateInstallerConfig
 from .models import UpdateJobStatus, UpdateRequest, UpdateState
@@ -370,7 +371,7 @@ class UpdateManager:
     def _reinstall_python_executable(repo: Path) -> str:
         return UpdateInstaller.reinstall_python_executable(repo)
 
-    def _collect_runtime_details(self) -> dict[str, object]:
+    def _collect_runtime_details(self) -> JsonObject:
         return self._runtime_details.collect()
 
 

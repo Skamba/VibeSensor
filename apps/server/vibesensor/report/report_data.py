@@ -23,7 +23,9 @@ __all__ = [
 import dataclasses
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Any, Self
+from typing import Self
+
+from ..json_types import JsonObject, is_json_array, is_json_object
 
 
 @lru_cache(maxsize=16)
@@ -32,7 +34,7 @@ def _valid_field_names(cls: type) -> frozenset[str]:
     return frozenset(f.name for f in dataclasses.fields(cls))
 
 
-def _filter_fields(cls: type, raw: dict[str, Any]) -> dict[str, Any]:
+def _filter_fields(cls: type, raw: JsonObject) -> dict[str, object]:
     """Keep only keys that match declared dataclass fields.
 
     All dataclass fields in this module use defaults so that ``from_dict()``
@@ -50,8 +52,8 @@ class _FromDictMixin:
     """
 
     @classmethod
-    def from_dict(cls, d: Any) -> Self:
-        if not isinstance(d, dict):
+    def from_dict(cls, d: object) -> Self:
+        if not is_json_object(d):
             return cls()
         return cls(**_filter_fields(cls, d))
 
@@ -90,10 +92,10 @@ class PartSuggestion:
     name: str = ""
 
     @classmethod
-    def from_dict(cls, d: Any) -> Self:
+    def from_dict(cls, d: object) -> Self:
         if isinstance(d, str):
             return cls(name=d)
-        if not isinstance(d, dict):
+        if not is_json_object(d):
             return cls(name=str(d))
         return cls(**_filter_fields(cls, d))
 
@@ -109,11 +111,16 @@ class SystemFindingCard:
     tone: str = "neutral"
 
     @classmethod
-    def from_dict(cls, d: Any) -> Self:
-        if not isinstance(d, dict):
+    def from_dict(cls, d: object) -> Self:
+        if not is_json_object(d):
             return cls()
         filtered = _filter_fields(cls, d)
-        filtered["parts"] = [PartSuggestion.from_dict(p) for p in (d.get("parts") or [])]
+        parts_raw = d.get("parts")
+        filtered["parts"] = (
+            [PartSuggestion.from_dict(part) for part in parts_raw]
+            if is_json_array(parts_raw)
+            else []
+        )
         return cls(**filtered)
 
 
@@ -159,7 +166,7 @@ class PatternEvidence(_FromDictMixin):
     why_parts_text: str | None = None
 
     @classmethod
-    def from_dict(cls, d: Any) -> Self:
+    def from_dict(cls, d: object) -> Self:
         """Reconstruct from a persisted dict, guarding ``matched_systems`` against ``None``.
 
         Older persisted records may omit ``matched_systems`` or store ``null``,
@@ -167,10 +174,10 @@ class PatternEvidence(_FromDictMixin):
         This override coerces any non-list value back to an empty list so the
         renderer can safely call ``', '.join(ev.matched_systems)``.
         """
-        if not isinstance(d, dict):
+        if not is_json_object(d):
             return cls()
         filtered = _filter_fields(cls, d)
-        if not isinstance(filtered.get("matched_systems"), list):
+        if not is_json_array(filtered.get("matched_systems")):
             filtered["matched_systems"] = []
         return cls(**filtered)
 
@@ -219,24 +226,42 @@ class ReportTemplateData:
 
     # Rendering context — pre-computed during analysis so the report
     # renderer never needs to read raw samples or call analysis code.
-    findings: list[dict[str, Any]] = field(default_factory=list)
-    top_causes: list[dict[str, Any]] = field(default_factory=list)
-    sensor_intensity_by_location: list[dict[str, Any]] = field(default_factory=list)
-    location_hotspot_rows: list[dict[str, Any]] = field(default_factory=list)
+    findings: list[JsonObject] = field(default_factory=list)
+    top_causes: list[JsonObject] = field(default_factory=list)
+    sensor_intensity_by_location: list[JsonObject] = field(default_factory=list)
+    location_hotspot_rows: list[JsonObject] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, d: Any) -> ReportTemplateData:
+    def from_dict(cls, d: object) -> ReportTemplateData:
         """Reconstruct a :class:`ReportTemplateData` from a persisted dict."""
-        if not isinstance(d, dict):
+        if not is_json_object(d):
             return cls()
         filtered = _filter_fields(cls, d)
         filtered["car"] = CarMeta.from_dict(d.get("car"))
         filtered["observed"] = ObservedSignature.from_dict(d.get("observed"))
-        filtered["system_cards"] = [
-            SystemFindingCard.from_dict(c) for c in d.get("system_cards", [])
-        ]
-        filtered["next_steps"] = [NextStep.from_dict(s) for s in d.get("next_steps", [])]
-        filtered["data_trust"] = [DataTrustItem.from_dict(t) for t in d.get("data_trust", [])]
+        system_cards_raw = d.get("system_cards")
+        next_steps_raw = d.get("next_steps")
+        data_trust_raw = d.get("data_trust")
+        peak_rows_raw = d.get("peak_rows")
+        filtered["system_cards"] = (
+            [SystemFindingCard.from_dict(card) for card in system_cards_raw]
+            if is_json_array(system_cards_raw)
+            else []
+        )
+        filtered["next_steps"] = (
+            [NextStep.from_dict(step) for step in next_steps_raw]
+            if is_json_array(next_steps_raw)
+            else []
+        )
+        filtered["data_trust"] = (
+            [DataTrustItem.from_dict(item) for item in data_trust_raw]
+            if is_json_array(data_trust_raw)
+            else []
+        )
         filtered["pattern_evidence"] = PatternEvidence.from_dict(d.get("pattern_evidence"))
-        filtered["peak_rows"] = [PeakRow.from_dict(r) for r in d.get("peak_rows", [])]
+        filtered["peak_rows"] = (
+            [PeakRow.from_dict(row) for row in peak_rows_raw]
+            if is_json_array(peak_rows_raw)
+            else []
+        )
         return cls(**filtered)
