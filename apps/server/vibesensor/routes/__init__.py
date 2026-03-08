@@ -64,7 +64,12 @@ def create_router(services: RuntimeRouteServices) -> APIRouter:
             services.diagnostics.live_diagnostics,
         )
     )
-    router.include_router(create_history_routes(services.persistence.history_db))
+    router.include_router(
+        create_history_routes(
+            services.persistence.history_db,
+            services.settings.settings_store,
+        )
+    )
     router.include_router(create_websocket_routes(services.websocket.hub))
     router.include_router(
         create_update_routes(

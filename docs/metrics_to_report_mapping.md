@@ -10,12 +10,16 @@ values; it reads exclusively from `ReportTemplateData` (built by
 
 ```
 analysis.summarize_run_data(meta, samples)
-  → summary dict (persisted in history_db)
+  → summary dict (persisted in history_db as a versioned analysis envelope)
     → analysis.map_summary(summary)
-      → ReportTemplateData (embedded as summary["_report_template_data"])
+      → ReportTemplateData (rebuilt on demand)
         → history_reports.HistoryReportService + report.pdf_engine.build_report_pdf(ReportTemplateData)
           → PDF bytes
 ```
+
+`summary["warnings"]` is part of the persisted canonical analysis contract.
+These entries are stored as language-neutral i18n references so history APIs and
+report rendering can localize them at read time.
 
 ## Page 1 — Diagnostic Worksheet
 

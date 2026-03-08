@@ -156,10 +156,11 @@ class TestWeightedPercentileDedup:
 
 
 # ---------------------------------------------------------------------------
-# Fix 9 – _analysis_queue has maxlen
+# Fix 9 – _analysis_queue is non-evicting
 # ---------------------------------------------------------------------------
-class TestAnalysisQueueMaxlen:
-    def test_analysis_queue_has_maxlen(self) -> None:
-        """PostAnalysisWorker._analysis_queue must have a bounded maxlen."""
+class TestAnalysisQueueContract:
+    def test_analysis_queue_is_not_bounded_or_evicted(self) -> None:
+        """PostAnalysisWorker._analysis_queue must not silently evict queued runs."""
         text = (SERVER_ROOT / "vibesensor" / "metrics_log" / "post_analysis.py").read_text()
-        assert "_analysis_queue: deque[str] = deque(maxlen=" in text
+        assert "self._analysis_queue: deque[_QueuedRun] = deque()" in text
+        assert "evicting run" not in text

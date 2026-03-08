@@ -78,6 +78,16 @@ def build_data_trust_from_summary(
                 detail=detail,
             )
         )
+    for warning in summary.get("warnings", []):
+        if not isinstance(warning, dict):
+            continue
+        data_trust.append(
+            DataTrustItem(
+                check=_resolve_detail_text(warning.get("title"), lang=lang, tr=tr) or "",
+                state=str(warning.get("severity") or "warn"),
+                detail=_resolve_detail_text(warning.get("detail"), lang=lang, tr=tr),
+            )
+        )
     return data_trust
 
 

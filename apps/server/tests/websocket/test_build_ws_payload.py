@@ -92,9 +92,11 @@ class _StubMetricsLogger:
 class _StubDiagnostics:
     def __init__(self) -> None:
         self.update_calls = 0
+        self.last_kwargs: dict[str, Any] | None = None
 
     def update(self, **kwargs: Any) -> dict[str, Any]:
         self.update_calls += 1
+        self.last_kwargs = kwargs
         return {"matrix": {}, "findings": []}
 
 
@@ -321,6 +323,32 @@ def test_build_ws_payload_light_tick_without_cache_still_collects_snapshot() -> 
 
     assert isinstance(live_analysis, _StubLiveAnalysis)
     assert live_analysis.snapshot_calls == 1
+
+
+def test_build_ws_payload_light_tick_skips_finding_inputs() -> None:
+    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
+    diagnostics = state.diagnostics.live_diagnostics
+
+    state.websocket.broadcast.build_payload(selected_client="aaa")
+
+    assert isinstance(diagnostics, _StubDiagnostics)
+    assert diagnostics.last_kwargs is not None
+    assert diagnostics.last_kwargs["spectra"] is None
+    assert diagnostics.last_kwargs["finding_metadata"] is None
+    assert diagnostics.last_kwargs["finding_samples"] is None
+
+
+def test_build_ws_payload_heavy_tick_includes_finding_inputs() -> None:
+    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
+    diagnostics = state.diagnostics.live_diagnostics
+
+    state.websocket.broadcast.build_payload(selected_client="aaa")
+
+    assert isinstance(diagnostics, _StubDiagnostics)
+    assert diagnostics.last_kwargs is not None
+    assert diagnostics.last_kwargs["spectra"] is not None
+    assert diagnostics.last_kwargs["finding_metadata"] is not None
+    assert diagnostics.last_kwargs["finding_samples"] is not None
 
 
 def test_build_ws_payload_reuses_diagnostics_per_tick() -> None:

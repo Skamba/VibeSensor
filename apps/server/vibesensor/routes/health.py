@@ -29,11 +29,20 @@ def create_health_routes(
         failures = loop_state.processing_failure_count
         data_loss = registry.data_loss_snapshot()
         persistence = metrics_logger.health_snapshot()
+        failure_categories = dict(loop_state.processing_failure_categories)
+        sample_rate_mismatch_count = len(loop_state.sample_rate_mismatch_logged)
+        frame_size_mismatch_count = len(loop_state.frame_size_mismatch_logged)
         degradation_reasons: list[str] = []
         if loop_state.processing_state != "ok":
             degradation_reasons.append(f"processing_state:{loop_state.processing_state}")
         if failures > 0:
             degradation_reasons.append("processing_failures")
+        if loop_state.last_failure_category:
+            degradation_reasons.append(f"processing_failure:{loop_state.last_failure_category}")
+        if sample_rate_mismatch_count > 0:
+            degradation_reasons.append("sample_rate_mismatch")
+        if frame_size_mismatch_count > 0:
+            degradation_reasons.append("frame_size_mismatch")
         for key in (
             "frames_dropped",
             "queue_overflow_drops",
@@ -44,10 +53,16 @@ def create_health_routes(
                 degradation_reasons.append(key)
         if persistence["write_error"]:
             degradation_reasons.append("persistence_write_error")
+        if persistence["analyzing_run_count"] > 0:
+            degradation_reasons.append("analyzing_runs_present")
         return {
             "status": "ok" if not degradation_reasons else "degraded",
             "processing_state": loop_state.processing_state,
             "processing_failures": failures,
+            "processing_failure_categories": failure_categories,
+            "processing_last_failure": loop_state.last_failure_message,
+            "sample_rate_mismatch_count": sample_rate_mismatch_count,
+            "frame_size_mismatch_count": frame_size_mismatch_count,
             "degradation_reasons": degradation_reasons,
             "data_loss": data_loss,
             "persistence": persistence,

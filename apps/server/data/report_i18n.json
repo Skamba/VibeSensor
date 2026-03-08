@@ -1491,6 +1491,22 @@
     "en": "Why We Think This",
     "nl": "Waarom we dit denken"
   },
+  "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_DETAIL": {
+    "en": "This run was analyzed with {run_car}, but the current active vehicle profile is {current_car}. Order-based findings and suggested components should be checked against the captured run profile before acting on them.",
+    "nl": "Deze run is geanalyseerd met {run_car}, maar het momenteel actieve voertuigprofiel is {current_car}. Controleer ordegebaseerde bevindingen en voorgestelde onderdelen eerst tegen het vastgelegde runprofiel voordat je erop handelt."
+  },
+  "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_TITLE": {
+    "en": "Vehicle profile settings changed after this run",
+    "nl": "Voertuigprofielinstellingen zijn na deze run gewijzigd"
+  },
+  "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL": {
+    "en": "This run is missing part of the wheel/engine reference context needed for confident order analysis. Order-based findings may still be shown, but they should be treated as provisional until the run is repeated with complete vehicle reference data.",
+    "nl": "Voor deze run ontbreekt een deel van de wiel-/motorreferentie die nodig is voor betrouwbare ordeanalyse. Ordegebaseerde bevindingen kunnen nog steeds worden getoond, maar behandel ze als voorlopig totdat de run met volledige voertuigreferentiegegevens wordt herhaald."
+  },
+  "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE": {
+    "en": "Order-analysis reference context was incomplete for this run",
+    "nl": "De referentiecontext voor ordeanalyse was onvolledig voor deze run"
+  },
   "WORKSHOP_SUMMARY": {
     "en": "Workshop Summary",
     "nl": "Werkplaatsoverzicht"

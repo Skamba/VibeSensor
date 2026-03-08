@@ -95,13 +95,15 @@ class WsBroadcastCache:
                 "diagnostics cache must be populated when cache_valid is True"
             )
             return self.diagnostics
+        finding_metadata = analysis_metadata if self.include_heavy else None
+        finding_samples = analysis_samples if self.include_heavy else None
         diagnostics = live_diagnostics.update(
             speed_mps=speed_mps,
             clients=clients,
             spectra=spectra,
             settings=settings,
-            finding_metadata=analysis_metadata,
-            finding_samples=analysis_samples,
+            finding_metadata=finding_metadata,
+            finding_samples=finding_samples,
             language=language,
         )
         self.diagnostics = diagnostics

@@ -1,6 +1,10 @@
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { AppState, RunDetail } from "../state/ui_app_state";
-import type { HistoryEntry } from "../../api/types";
+import type {
+  HistoryEntry,
+  HistoryInsightWarningPayload,
+  HistoryInsightsPayload,
+} from "../../api/types";
 import {
   deleteHistoryRun as deleteHistoryRunApi,
   getHistory,
@@ -68,9 +72,18 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     }
   }
 
-  function summarizeFindings(summary: Record<string, unknown> | null): Record<string, unknown>[] {
+  function summarizeFindings(summary: HistoryInsightsPayload | null): Record<string, unknown>[] {
     const findings = summary !== null && Array.isArray(summary.findings) ? summary.findings : [];
     return findings.slice(0, 3);
+  }
+
+  function summarizeWarnings(payload: HistoryInsightsPayload | null): HistoryInsightWarningPayload[] {
+    const warnings = Array.isArray(payload?.warnings) ? payload.warnings : [];
+    return warnings.filter((warning): warning is HistoryInsightWarningPayload => {
+      return typeof warning?.code === "string"
+        && typeof warning?.severity === "string"
+        && typeof warning?.title === "string";
+    });
   }
 
   function normalizeLogLocationKey(location: unknown): string {
@@ -97,7 +110,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     return Number.isFinite(value) ? value : null;
   }
 
-  function renderPreviewHeatmap(summary: Record<string, unknown>): string {
+  function renderPreviewHeatmap(summary: HistoryInsightsPayload): string {
     const statsRows = Array.isArray(summary?.sensor_intensity_by_location)
       ? (summary.sensor_intensity_by_location as Record<string, unknown>[])
       : [];
@@ -131,7 +144,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     return `\n      <div class="mini-car-wrap">\n        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>\n        <div class="mini-car">${dots}</div>\n        ${unmappedSummary}\n      </div>\n    `;
   }
 
-  function renderPreviewStats(summary: Record<string, unknown>): string {
+  function renderPreviewStats(summary: HistoryInsightsPayload): string {
     const rows = Array.isArray(summary?.sensor_intensity_by_location)
       ? (summary.sensor_intensity_by_location as Record<string, unknown>[])
       : [];
@@ -162,6 +175,22 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
           .join("")
       : `<li>${escapeHtml(t("report.no_findings_for_run"))}</li>`;
     return `\n      <div class="history-insights-block">\n        <div class="history-insights-actions">\n          <button class="btn btn--primary" data-run-action="load-insights" ${loading ? "disabled" : ""}>${escapeHtml(loading ? t("history.loading_insights") : ctaLabel)}</button>\n          ${detail.insightsError ? `<span class="history-inline-error">${escapeHtml(detail.insightsError)}</span>` : ""}\n        </div>\n        ${detail.insights ? `<ul class="history-findings-list">${findingsMarkup}</ul>` : ""}\n      </div>\n    `;
+  }
+
+  function renderWarningBanners(detail: RunDetail): string {
+    const warnings = summarizeWarnings(detail.preview).concat(summarizeWarnings(detail.insights));
+    const uniqueWarnings = warnings.filter(
+      (warning, index) => warnings.findIndex((candidate) => candidate.code === warning.code) === index,
+    );
+    if (!uniqueWarnings.length) return "";
+    return `\n      <div class="history-warning-list">\n        ${uniqueWarnings
+          .map((warning) => {
+            const detailText = warning.detail
+              ? `<div class="history-warning-banner__detail">${escapeHtml(warning.detail)}</div>`
+              : "";
+            return `<div class="history-warning-banner history-warning-banner--${escapeHtml(warning.severity)}"><strong>${escapeHtml(warning.title)}</strong>${detailText}</div>`;
+          })
+          .join("")}\n      </div>\n    `;
   }
 
   function renderRunDetailsRow(run: HistoryEntry, detail: RunDetail): string {

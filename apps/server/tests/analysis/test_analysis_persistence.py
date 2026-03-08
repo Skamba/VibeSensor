@@ -87,6 +87,47 @@ def test_store_analysis_sets_version_and_timestamps(tmp_path: Path) -> None:
     assert run["status"] == "complete"
     assert run["analysis_version"] == ANALYSIS_SCHEMA_VERSION
     assert run.get("analysis_completed_at") is not None
+    assert run["analysis"] == {"lang": "en", "findings": []}
+    db.close()
+
+
+def test_store_analysis_persists_versioned_envelope_but_public_reads_return_summary(
+    tmp_path: Path,
+) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.finalize_run("r1", "2026-01-01T00:01:00Z")
+
+    db.store_analysis("r1", {"lang": "en", "findings": [], "_report_template_data": {"x": 1}})
+
+    with db._cursor(commit=False) as cur:
+        cur.execute("SELECT analysis_json FROM runs WHERE run_id = ?", ("r1",))
+        row = cur.fetchone()
+    assert row is not None
+    raw = row[0]
+    assert '"schema_version": 1' in raw
+    assert '"summary"' in raw
+    assert "_report_template_data" not in raw
+    assert db.get_run_analysis("r1") == {"lang": "en", "findings": []}
+    db.close()
+
+
+def test_analysis_is_current_requires_versioned_envelope(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.finalize_run("r1", "2026-01-01T00:01:00Z")
+
+    with db._cursor() as cur:
+        cur.execute(
+            "UPDATE runs SET status = 'complete', analysis_json = ?, analysis_version = ? WHERE run_id = ?",
+            (
+                '{"lang": "en", "findings": []}',
+                ANALYSIS_SCHEMA_VERSION,
+                "r1",
+            ),
+        )
+
+    assert db.analysis_is_current("r1") is False
     db.close()
 
 
@@ -359,11 +400,7 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
     }
     samples = [_sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    from dataclasses import asdict
-
-    from vibesensor.analysis import map_summary
-
-    analysis["_report_template_data"] = asdict(map_summary(analysis))
+    analysis["_report_template_data"] = {"lang": "en", "title": "legacy"}
 
     @dataclass
     class _FakeDB:

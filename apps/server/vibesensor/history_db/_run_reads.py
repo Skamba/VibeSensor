@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterator
+from datetime import UTC, datetime
 
+from ..analysis_persistence import persisted_analysis_is_current, unwrap_persisted_analysis
 from ..json_types import JsonObject, is_json_object
 from ..json_utils import safe_json_loads
 from ._run_common import ANALYSIS_SCHEMA_VERSION
@@ -22,19 +24,31 @@ class HistoryRunReadMixin:
     def analysis_is_current(self: HistoryCursorProvider, run_id: str) -> bool:
         with self._cursor(commit=False) as cur:
             cur.execute(
-                "SELECT analysis_version FROM runs WHERE run_id = ?",
+                "SELECT analysis_version, analysis_json FROM runs WHERE run_id = ?",
                 (run_id,),
             )
             row = cur.fetchone()
-        if row is None or row[0] is None:
+        if row is None:
             return False
+        analysis_version, analysis_json = row
+        parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
+        if parsed_analysis is not None and not is_json_object(parsed_analysis):
+            LOGGER.warning(
+                "analysis_is_current: run %s analysis_json parsed to %s, expected dict; "
+                "treating as outdated",
+                run_id,
+                type(parsed_analysis).__name__,
+            )
+            return False
+        if is_json_object(parsed_analysis):
+            return bool(persisted_analysis_is_current(analysis_version, parsed_analysis))
         try:
-            return int(row[0]) >= ANALYSIS_SCHEMA_VERSION
+            return int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
         except (ValueError, TypeError):
             LOGGER.warning(
                 "analysis_is_current: invalid analysis_version value %r for run %s; "
                 "treating as outdated",
-                row[0],
+                analysis_version,
                 run_id,
             )
             return False
@@ -113,7 +127,7 @@ class HistoryRunReadMixin:
         if analysis_json:
             parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
             if is_json_object(parsed_analysis):
-                entry["analysis"] = parsed_analysis
+                entry["analysis"] = unwrap_persisted_analysis(parsed_analysis).summary
             else:
                 entry["analysis_corrupt"] = True
         if error:
@@ -238,7 +252,9 @@ class HistoryRunReadMixin:
                 type(parsed).__name__,
             )
             return None
-        return parsed
+        if parsed is None:
+            return None
+        return unwrap_persisted_analysis(parsed).summary
 
     def get_run_status(self: HistoryCursorProvider, run_id: str) -> str | None:
         with self._cursor(commit=False) as cur:
@@ -262,3 +278,32 @@ class HistoryRunReadMixin:
                 "ORDER BY created_at ASC LIMIT 1000"
             )
             return [str(row[0]) for row in cur.fetchall()]
+
+    def analyzing_run_health(self: HistoryCursorProvider) -> JsonObject:
+        with self._cursor(commit=False) as cur:
+            cur.execute(
+                "SELECT COUNT(*), MIN(analysis_started_at) FROM runs WHERE status = 'analyzing'"
+            )
+            row = cur.fetchone()
+        count = int(row[0]) if row and row[0] is not None else 0
+        oldest_started_at = str(row[1]) if row and row[1] else None
+        oldest_age_s: float | None = None
+        if oldest_started_at:
+            try:
+                started = datetime.fromisoformat(oldest_started_at.replace("Z", "+00:00"))
+                oldest_age_s = max(
+                    0.0,
+                    (datetime.now(UTC) - started).total_seconds(),
+                )
+            except ValueError:
+                LOGGER.warning(
+                    "analyzing_run_health: invalid timestamp %r; ignoring",
+                    oldest_started_at,
+                )
+        result: JsonObject = {
+            "analyzing_run_count": count,
+            "analyzing_oldest_age_s": oldest_age_s,
+        }
+        if oldest_started_at is not None:
+            result["analyzing_oldest_started_at"] = oldest_started_at
+        return result

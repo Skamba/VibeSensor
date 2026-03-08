@@ -551,6 +551,38 @@ def test_post_analysis_uses_run_language_from_metadata(
     assert stored["lang"] == "nl"
 
 
+def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
+    settings_store = type(
+        "SettingsStoreStub",
+        (),
+        {
+            "active_car_snapshot": lambda self: {
+                "id": "car-1",
+                "name": "Primary",
+                "type": "sedan",
+                "aspects": {
+                    "tire_width_mm": 255.0,
+                    "tire_aspect_pct": 40.0,
+                    "rim_in": 19.0,
+                    "final_drive_ratio": 3.15,
+                    "current_gear_ratio": 0.81,
+                },
+            }
+        },
+    )()
+    logger = make_logger(settings_store=settings_store)
+
+    metadata = logger._run_metadata_record("run-1", "2026-01-01T00:00:00Z")
+
+    assert metadata["car_name"] == "Primary"
+    assert metadata["car_type"] == "sedan"
+    assert metadata["active_car_id"] == "car-1"
+    assert metadata["incomplete_for_order_analysis"] is False
+    active_car_snapshot = metadata.get("active_car_snapshot")
+    assert isinstance(active_car_snapshot, dict)
+    assert active_car_snapshot["name"] == "Primary"
+
+
 def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db, persist_history_db=True)

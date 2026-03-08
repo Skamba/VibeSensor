@@ -91,9 +91,13 @@ def fake_state() -> FakeState:
         "write_error": None,
         "analysis_in_progress": False,
         "analysis_queue_depth": 0,
+        "analysis_queue_max_depth": 0,
         "analysis_active_run_id": None,
         "analysis_started_at": None,
         "analysis_elapsed_s": None,
+        "analysis_queue_oldest_age_s": None,
+        "analyzing_run_count": 0,
+        "analyzing_oldest_age_s": None,
     }
     return state
 

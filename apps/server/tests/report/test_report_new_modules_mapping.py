@@ -294,6 +294,25 @@ def test_map_summary_data_trust_literal_check_labels() -> None:
     assert data.data_trust[0].check == "Frame integrity"
 
 
+def test_map_summary_data_trust_includes_run_context_warnings() -> None:
+    summary = minimal_summary(
+        lang="en",
+        warnings=[
+            {
+                "code": "reference_context_incomplete",
+                "severity": "warn",
+                "title": {"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"},
+                "detail": {"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"},
+            }
+        ],
+    )
+    data = map_summary(summary)
+    assert any(
+        item.check == "Order-analysis reference context was incomplete for this run"
+        for item in data.data_trust
+    )
+
+
 def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data() -> None:
     base_summary = minimal_summary(
         run_suitability=[
