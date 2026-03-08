@@ -86,7 +86,12 @@ class UpdateWorkflow:
             self.tracker.log("Installing update...")
             rollback_ok = await self.installer.snapshot_for_rollback()
             if not rollback_ok:
-                self.tracker.log("WARNING: Could not create rollback snapshot; proceeding anyway")
+                self.tracker.fail(
+                    UpdatePhase.installing,
+                    "Rollback snapshot could not be created",
+                    "Install aborted before mutating the live environment",
+                )
+                return
             if not await self.installer.install_release(
                 wheel_path,
                 str(release_check.release.version),

@@ -17,14 +17,15 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 - Backend: `apps/server/vibesensor/`.
 	- `app.py`: FastAPI app factory.
 	- `bootstrap.py`: focused subsystem-builder orchestration.
-	- `routes/`: HTTP and WebSocket route groups.
-	- `runtime/`: explicit runtime subsystem ownership, route-service assembly, lifecycle coordination, and websocket broadcast state.
+	- `routes/`: HTTP and WebSocket route groups; `/api/health` is the operator-facing readiness summary and now includes startup phase/error plus managed background-task failures.
+	- `runtime/`: explicit runtime subsystem ownership, route-service assembly, lifecycle coordination, and websocket broadcast state; the broadcast path reuses shared per-tick payload state before applying per-recipient selected-client ids.
 	- `processing/`, `analysis/`, `live_diagnostics/`: signal and findings logic.
-	- `metrics_log/`, `history_db/`, `history_*.py`, `runlog.py`: recording, live snapshot state, and persistence.
+	- `metrics_log/`, `history_db/`, `history_*.py`, `runlog.py`: recording, live snapshot state, and persistence; the runtime persistence subsystem owns the history query/delete/report/export services built around `HistoryDB`.
 	- `report/`, `report_i18n.py`: report rendering and report strings.
-	- `update/`: updater facade, workflow orchestration, and focused subsystems for Wi-Fi, releases, install and rollback, service control, status, and runtime reporting.
+	- `update/`: updater facade, workflow orchestration, and focused subsystems for Wi-Fi, releases, install and rollback, service control, status, and runtime reporting; validation and rollback snapshot creation are hard gates before live mutation.
 - Frontend: `apps/ui/src/` provides the dashboard, settings, and history UI.
 - Tooling: `apps/simulator/`, `tools/tests/`, `tools/ci/`, `scripts/ai/`.
+- Verification boundary: `tools/tests/run_release_smoke.py` is the canonical packaged-wheel smoke runner; Docker/e2e validation covers a different runtime path and should not be treated as a substitute for release-smoke.
 - Pi image and infra: `infra/pi-image/pi-gen/`, `apps/server/systemd/`, `apps/server/scripts/`.
 
 ## Data flow boundaries
@@ -32,7 +33,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 1. `udp_data_rx.py` parses sensor frames and feeds the registry and processing buffers.
 2. `processing/` and `analysis/` compute spectra, vibration strength, and findings inputs.
 3. `runtime/` assembles explicit ingress, settings, diagnostics, persistence, update, processing, websocket, and route-service subsystems, then coordinates their background work through lifecycle ownership.
-4. `metrics_log/` owns recording orchestration plus the live-analysis snapshot window, while `history_db/` persists run data, analysis results, and settings.
+4. `metrics_log/` owns recording orchestration plus the live-analysis snapshot window, while `history_db/` persists run data, analysis results, and settings through explicit read/write transactions and the runtime-owned history services.
 5. `routes/` exposes the HTTP and WebSocket surface consumed by `apps/ui/src/`.
 6. `report/` builds PDFs from saved run and analysis data.
 
@@ -42,7 +43,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 - HTTP or WebSocket surface: `apps/server/vibesensor/routes/` and `apps/ui/src/api.ts` or `apps/ui/src/ws.ts`.
 - Runtime orchestration: `apps/server/vibesensor/runtime/`, `app.py`, `bootstrap.py`.
 - Signal math and vibration logic: `apps/server/vibesensor/processing/`, `apps/server/vibesensor/analysis/`, `libs/core/python/vibesensor_core/`.
-- History storage and exports: `apps/server/vibesensor/history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`.
+- History storage and exports: `apps/server/vibesensor/history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`; route-facing history behavior is composed by the runtime persistence subsystem.
 - Report rendering: `apps/server/vibesensor/report/`, `apps/server/data/report_i18n.json`.
 - Updates and deployment: `apps/server/vibesensor/update/`, `apps/server/systemd/`, `apps/server/scripts/`, `infra/pi-image/pi-gen/`.
 - Test ownership: `apps/server/tests/` by feature area, plus `integration/` and `regression/` for broader coverage.

@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+from collections.abc import Coroutine
 from typing import TYPE_CHECKING
 
 from ..udp_data_rx import start_udp_data_receiver
@@ -42,6 +43,7 @@ class LifecycleManager:
         "_updates",
         "_processing",
         "_websocket",
+        "_health_state",
         "tasks",
         "_data_transport",
         "_data_consumer_task",
@@ -67,46 +69,110 @@ class LifecycleManager:
         self._updates = updates
         self._processing = processing
         self._websocket = websocket
-        self.tasks: list[asyncio.Task] = []
+        self._health_state = processing.health_state
+        self.tasks: list[asyncio.Task[object]] = []
         self._data_transport: asyncio.DatagramTransport | None = None
-        self._data_consumer_task: asyncio.Task | None = None
+        self._data_consumer_task: asyncio.Task[object] | None = None
+
+    @staticmethod
+    def _task_failure_message(exc: BaseException) -> str:
+        message = str(exc).strip() or exc.__class__.__name__
+        return message[:240]
+
+    def _monitor_task(self, task: asyncio.Task[object]) -> None:
+        task_name = task.get_name()
+
+        def _record_failure(done_task: asyncio.Task[object]) -> None:
+            if done_task.cancelled():
+                return
+            try:
+                exc = done_task.exception()
+            except asyncio.CancelledError:
+                return
+            if exc is None:
+                return
+            message = self._task_failure_message(exc)
+            self._health_state.record_task_failure(task_name, message)
+            LOGGER.error("Managed task %s failed: %s", task_name, message, exc_info=exc)
+
+        task.add_done_callback(_record_failure)
+
+    def _start_task(
+        self,
+        coroutine: Coroutine[object, object, object],
+        *,
+        name: str,
+    ) -> asyncio.Task[object]:
+        task = asyncio.create_task(coroutine, name=name)
+        self._monitor_task(task)
+        return task
 
     async def start(self) -> None:
         """Launch UDP receiver, control plane, and background async tasks."""
-        self._data_transport, self._data_consumer_task = await start_udp_data_receiver(
-            host=self._config.udp.data_host,
-            port=self._config.udp.data_port,
-            registry=self._ingress.registry,
-            processor=self._ingress.processor,
-            queue_maxsize=self._config.udp.data_queue_maxsize,
-        )
-        await self._ingress.control_plane.start()
-        self.tasks = [
-            asyncio.create_task(self._processing.loop.run(), name="processing-loop"),
-            asyncio.create_task(
-                self._websocket.hub.run(
-                    self._config.processing.ui_push_hz,
-                    self._websocket.broadcast.build_payload,
-                    on_tick=self._websocket.broadcast.on_tick,
-                ),
-                name="ws-broadcast",
-            ),
-            asyncio.create_task(self._diagnostics.metrics_logger.run(), name="metrics-log"),
-            asyncio.create_task(
-                self._settings.gps_monitor.run(
-                    host=self._config.gps.gpsd_host,
-                    port=self._config.gps.gpsd_port,
-                ),
-                name="gps-speed",
-            ),
-        ]
-        # Recover interrupted update jobs (best-effort, must not crash server)
-        self.tasks.append(
-            asyncio.create_task(
-                self._updates.update_manager.startup_recover(),
-                name="update-startup-recover",
+        phase = "starting"
+        self._health_state.set_phase(phase)
+        try:
+            phase = "udp_receiver"
+            self._health_state.set_phase(phase)
+            self._data_transport, self._data_consumer_task = await start_udp_data_receiver(
+                host=self._config.udp.data_host,
+                port=self._config.udp.data_port,
+                registry=self._ingress.registry,
+                processor=self._ingress.processor,
+                queue_maxsize=self._config.udp.data_queue_maxsize,
             )
-        )
+
+            phase = "control_plane"
+            self._health_state.set_phase(phase)
+            await self._ingress.control_plane.start()
+
+            self.tasks = []
+
+            phase = "processing-loop"
+            self._health_state.set_phase(phase)
+            self.tasks.append(self._start_task(self._processing.loop.run(), name=phase))
+
+            phase = "ws-broadcast"
+            self._health_state.set_phase(phase)
+            self.tasks.append(
+                self._start_task(
+                    self._websocket.hub.run(
+                        self._config.processing.ui_push_hz,
+                        self._websocket.broadcast.build_payload,
+                        on_tick=self._websocket.broadcast.on_tick,
+                    ),
+                    name=phase,
+                )
+            )
+
+            phase = "metrics-log"
+            self._health_state.set_phase(phase)
+            self.tasks.append(self._start_task(self._diagnostics.metrics_logger.run(), name=phase))
+
+            phase = "gps-speed"
+            self._health_state.set_phase(phase)
+            self.tasks.append(
+                self._start_task(
+                    self._settings.gps_monitor.run(
+                        host=self._config.gps.gpsd_host,
+                        port=self._config.gps.gpsd_port,
+                    ),
+                    name=phase,
+                )
+            )
+
+            phase = "update-startup-recover"
+            self._health_state.set_phase(phase)
+            self.tasks.append(
+                self._start_task(
+                    self._updates.update_manager.startup_recover(),
+                    name=phase,
+                )
+            )
+            self._health_state.mark_ready()
+        except Exception as exc:
+            self._health_state.mark_failed(phase, self._task_failure_message(exc))
+            raise
 
     async def stop(self) -> None:
         """Graceful shutdown: cancel tasks, close DB/transport, wait for post-analysis."""

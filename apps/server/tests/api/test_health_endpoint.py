@@ -40,6 +40,10 @@ async def test_health_endpoint_response_shape(_health_router):
 
     result = await endpoint()
     assert result["status"] == "ok"
+    assert result["startup_state"] == "ready"
+    assert result["startup_phase"] == "ready"
+    assert result["startup_error"] is None
+    assert result["background_task_failures"] == {}
     assert result["processing_state"] == "ok"
     assert result["processing_failures"] == 0
     assert result["processing_failure_categories"] == {}
@@ -86,11 +90,16 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
     state.loop_state.processing_failure_categories = {"compute_all": 2}
     state.loop_state.last_failure_category = "compute_all"
     state.loop_state.last_failure_message = "worker pool failed"
+    state.health_state.mark_failed("gps-speed", "gpsd unavailable")
+    state.health_state.record_task_failure("metrics-log", "disk write failed")
 
     result = await endpoint()
 
     assert result["status"] == "degraded"
     assert result["degradation_reasons"] == [
+        "startup_state:failed",
+        "startup_error",
+        "background_task_failures",
         "processing_state:degraded",
         "processing_failures",
         "processing_failure:compute_all",
@@ -99,6 +108,9 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
         "persistence_write_error",
         "analyzing_runs_present",
     ]
+    assert result["startup_phase"] == "gps-speed"
+    assert result["startup_error"] == "gpsd unavailable"
+    assert result["background_task_failures"] == {"metrics-log": "disk write failed"}
     assert result["processing_failure_categories"] == {"compute_all": 2}
     assert result["processing_last_failure"] == "worker pool failed"
     assert result["data_loss"]["affected_clients"] == 1
@@ -119,6 +131,7 @@ async def test_health_endpoint_validates_through_fastapi_response_field(_health_
 
     assert errors == []
     assert payload["status"] == "ok"
+    assert payload["startup_state"] == "ready"
     assert payload["data_loss"]["tracked_clients"] == 0
     assert payload["persistence"]["analysis_in_progress"] is False
     assert validated.status == "ok"

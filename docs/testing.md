@@ -109,6 +109,11 @@ python3 tools/tests/run_verification.py --suite ci-parity --job frontend-typeche
 python3 tools/tests/run_verification.py --suite ci-parity --job release-smoke
 ```
 
+`release-smoke` is the packaged-artifact gate. It builds or reuses the server
+wheel, validates packaged static assets, boots the packaged server, and checks
+that `/api/health` reaches readiness. It is complementary to Docker/e2e
+validation, not a duplicate of it.
+
 ## Coverage reporting
 
 Use coverage runs to expose untested paths before they become release risk.

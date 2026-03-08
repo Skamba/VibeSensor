@@ -700,6 +700,10 @@ export interface components {
      * @description Response body for the server health check endpoint.
      */
     HealthResponse: {
+      /** Background Task Failures */
+      background_task_failures: {
+        [key: string]: string;
+      };
       data_loss: components["schemas"]["HealthDataLossResponse"];
       /** Degradation Reasons */
       degradation_reasons: string[];
@@ -719,6 +723,12 @@ export interface components {
       processing_state: string;
       /** Sample Rate Mismatch Count */
       sample_rate_mismatch_count: number;
+      /** Startup Error */
+      startup_error: string | null;
+      /** Startup Phase */
+      startup_phase: string;
+      /** Startup State */
+      startup_state: string;
       /**
        * Status
        * @enum {string}

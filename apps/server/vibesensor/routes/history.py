@@ -13,25 +13,24 @@ from ..api_models import (
     HistoryListResponse,
     HistoryRunResponse,
 )
-from ..history_exports import HistoryExportService
-from ..history_reports import HistoryReportService
-from ..history_runs import HistoryRunDeleteService, HistoryRunQueryService
 
 if TYPE_CHECKING:
-    from ..history_db import HistoryDB
-    from ..settings_store import SettingsStore
+    from ..runtime.subsystems import RuntimePersistenceSubsystem
 
 
 def create_history_routes(
-    history_db: HistoryDB,
-    settings_store: SettingsStore | None = None,
+    persistence: RuntimePersistenceSubsystem,
 ) -> APIRouter:
     """Create and return the run-history / report API routes."""
     router = APIRouter()
-    query_service = HistoryRunQueryService(history_db, settings_store)
-    delete_service = HistoryRunDeleteService(history_db, settings_store)
-    report_service = HistoryReportService(history_db, settings_store)
-    export_service = HistoryExportService(history_db)
+    query_service = persistence.query_service
+    delete_service = persistence.delete_service
+    report_service = persistence.report_service
+    export_service = persistence.export_service
+    assert query_service is not None
+    assert delete_service is not None
+    assert report_service is not None
+    assert export_service is not None
 
     # -- history CRUD ----------------------------------------------------------
 

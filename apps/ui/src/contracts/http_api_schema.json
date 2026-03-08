@@ -1391,6 +1391,13 @@
       "HealthResponse": {
         "description": "Response body for the server health check endpoint.",
         "properties": {
+          "background_task_failures": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Background Task Failures",
+            "type": "object"
+          },
           "data_loss": {
             "$ref": "#/components/schemas/HealthDataLossResponse"
           },
@@ -1441,6 +1448,25 @@
             "title": "Sample Rate Mismatch Count",
             "type": "integer"
           },
+          "startup_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Startup Error"
+          },
+          "startup_phase": {
+            "title": "Startup Phase",
+            "type": "string"
+          },
+          "startup_state": {
+            "title": "Startup State",
+            "type": "string"
+          },
           "status": {
             "enum": [
               "ok",
@@ -1452,6 +1478,10 @@
         },
         "required": [
           "status",
+          "startup_state",
+          "startup_phase",
+          "startup_error",
+          "background_task_failures",
           "processing_state",
           "processing_failures",
           "processing_failure_categories",

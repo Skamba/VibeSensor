@@ -9,6 +9,9 @@ from fastapi import FastAPI
 
 from vibesensor.analysis_settings import AnalysisSettingsStore
 from vibesensor.api_models import ActiveCarRequest, AnalysisSettingsRequest, CarUpsertRequest
+from vibesensor.history_exports import HistoryExportService
+from vibesensor.history_reports import HistoryReportService
+from vibesensor.history_runs import HistoryRunDeleteService, HistoryRunQueryService
 from vibesensor.routes import create_router
 from vibesensor.settings_store import SettingsStore
 
@@ -43,9 +46,11 @@ class _State:
         pass
 
     def __post_init__(self) -> None:
-        from vibesensor.runtime import ProcessingLoopState
+        from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
 
         self.loop_state = ProcessingLoopState()
+        self.health_state = RuntimeHealthState()
+        self.health_state.mark_ready()
         self.update_manager = None
         self.esp_flash_manager = None
         self.live_diagnostics = SimpleNamespace(reset=_noop)
@@ -102,13 +107,22 @@ class _State:
             metrics_logger=self.metrics_logger,
             live_diagnostics=self.live_diagnostics,
         )
-        self.persistence = SimpleNamespace(history_db=self.history_db)
+        self.persistence = SimpleNamespace(
+            history_db=self.history_db,
+            query_service=HistoryRunQueryService(self.history_db, self.settings_store),
+            delete_service=HistoryRunDeleteService(self.history_db, self.settings_store),
+            report_service=HistoryReportService(self.history_db, self.settings_store),
+            export_service=HistoryExportService(self.history_db),
+        )
         self.websocket = SimpleNamespace(hub=self.ws_hub)
         self.updates = SimpleNamespace(
             update_manager=self.update_manager,
             esp_flash_manager=self.esp_flash_manager,
         )
-        self.processing = SimpleNamespace(state=self.loop_state)
+        self.processing = SimpleNamespace(
+            state=self.loop_state,
+            health_state=self.health_state,
+        )
 
 
 def _route(router, path: str, method: str = "GET"):

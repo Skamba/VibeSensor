@@ -12,6 +12,19 @@ from vibesensor.update.manager import UpdateManager
 from vibesensor.update.runner import CommandRunner
 
 
+def _build_fake_downloaded_wheel(path: Path, *, version: str) -> None:
+    import zipfile
+
+    dist_info = f"vibesensor-{version}.dist-info"
+    with zipfile.ZipFile(path, "w") as wheel_zip:
+        wheel_zip.writestr("vibesensor/__init__.py", f"__version__ = '{version}'\n")
+        wheel_zip.writestr(
+            f"{dist_info}/METADATA",
+            f"Metadata-Version: 2.1\nName: vibesensor\nVersion: {version}\n",
+        )
+        wheel_zip.writestr(f"{dist_info}/WHEEL", "Wheel-Version: 1.0\nTag: py3-none-any\n")
+
+
 class FakeRunner(CommandRunner):
     def __init__(self) -> None:
         self.calls: list[tuple[list[str], dict]] = []
@@ -33,6 +46,17 @@ class FakeRunner(CommandRunner):
         for match_substr, response in self.responses:
             if match_substr in joined:
                 return response
+        if "pip" in args and "download" in args and "-d" in args:
+            download_dir = Path(args[args.index("-d") + 1])
+            version = next(
+                (arg.split("==", 1)[1] for arg in args if arg.startswith("vibesensor==")),
+                "",
+            )
+            if version:
+                _build_fake_downloaded_wheel(
+                    download_dir / f"vibesensor-{version}-py3-none-any.whl",
+                    version=version,
+                )
         return self.default_response
 
 
