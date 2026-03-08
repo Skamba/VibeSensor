@@ -4,16 +4,17 @@ import logging
 import time
 from collections.abc import Callable
 from threading import RLock
-from typing import Any
 
 import numpy as np
 
+from ..payload_types import IntakeStatsPayload, RawSamplesErrorPayload, RawSamplesPayload
 from .buffers import ClientBuffer
 from .models import (
     CachedMetricsHit,
     DebugSpectrumRequest,
     FloatArray,
     MetricsComputationResult,
+    MetricsPayload,
     MetricsSnapshot,
     ProcessorConfig,
     ProcessorStats,
@@ -154,7 +155,7 @@ class SignalBufferStore:
                 fft_block=fft_block,
             )
 
-    def store_metrics_result(self, result: MetricsComputationResult) -> dict[str, Any]:
+    def store_metrics_result(self, result: MetricsComputationResult) -> MetricsPayload:
         """Commit a compute result back into shared state and update stats."""
         with self.lock:
             buf = self.buffers.get(result.client_id)
@@ -223,7 +224,12 @@ class SignalBufferStore:
                 fft_block=self.copy_latest(buf, self.config.fft_n),
             )
 
-    def raw_samples(self, client_id: str, *, n_samples: int) -> dict[str, Any]:
+    def raw_samples(
+        self,
+        client_id: str,
+        *,
+        n_samples: int,
+    ) -> RawSamplesPayload | RawSamplesErrorPayload:
         with self.lock:
             buf = self.buffers.get(client_id)
             if buf is None or buf.count == 0:
@@ -266,7 +272,7 @@ class SignalBufferStore:
             for client_id in stale_ids:
                 self.buffers.pop(client_id, None)
 
-    def intake_stats(self) -> dict[str, Any]:
+    def intake_stats(self) -> IntakeStatsPayload:
         with self.lock:
             return {
                 "total_ingested_samples": self.stats.total_ingested_samples,

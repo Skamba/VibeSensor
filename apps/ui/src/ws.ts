@@ -1,17 +1,27 @@
+import type { LiveWsPayload } from "./contracts/ws_payload_types";
+
 export type WsUiState = "connecting" | "connected" | "reconnecting" | "stale" | "no_data";
 
 export interface WsClientOptions {
   url: string;
   staleAfterMs?: number;
   reconnectDelayMs?: number;
-  hasData?: (payload: Record<string, unknown>) => boolean;
-  onPayload: (payload: Record<string, unknown>) => void;
+  hasData?: (payload: unknown) => boolean;
+  onPayload: (payload: unknown) => void;
   onStateChange: (state: WsUiState) => void;
+}
+
+function hasSpectraClients(payload: unknown): boolean {
+  const record = payload && typeof payload === "object"
+    ? (payload as Partial<LiveWsPayload>)
+    : null;
+  const clients = record?.spectra?.clients;
+  return Boolean(clients && Object.keys(clients).length > 0);
 }
 
 export class WsClient {
   private readonly options: Required<Omit<WsClientOptions, "onPayload" | "onStateChange">> & {
-    onPayload: (payload: Record<string, unknown>) => void;
+    onPayload: (payload: unknown) => void;
     onStateChange: (state: WsUiState) => void;
   };
 
@@ -29,13 +39,7 @@ export class WsClient {
       // 3s is too aggressive on weaker Pi + hotspot links and causes false stale flicker.
       staleAfterMs: 10000,
       reconnectDelayMs: 1200,
-      hasData: (payload: Record<string, unknown>) => {
-        const spectra = payload?.spectra;
-        if (!spectra || typeof spectra !== "object") return false;
-        const clients = (spectra as Record<string, unknown>).clients;
-        if (!clients || typeof clients !== "object") return false;
-        return Object.keys(clients as Record<string, unknown>).length > 0;
-      },
+      hasData: hasSpectraClients,
       ...options,
     };
   }
@@ -64,7 +68,7 @@ export class WsClient {
     }
   }
 
-  send(payload: Record<string, unknown>): void {
+  send(payload: { client_id: string | null }): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(payload));
     }
@@ -81,7 +85,7 @@ export class WsClient {
     };
 
     this.ws.onmessage = (event) => {
-      let payload: Record<string, unknown>;
+      let payload: unknown;
       try {
         payload = JSON.parse(event.data);
       } catch {

@@ -1,9 +1,21 @@
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 
+from ..payload_types import (
+    DebugSpectrumErrorPayload,
+    DebugSpectrumPayload,
+    DebugSpectrumStatsPayload,
+    DebugSpectrumTopBinPayload,
+    RawSamplesErrorPayload,
+    RawSamplesPayload,
+    SelectedClientPayload,
+    SharedWindowPayload,
+    SpectraPayload,
+    SpectrumSeriesPayload,
+    TimeAlignmentPayload,
+    TimeAlignmentSensorPayload,
+)
 from .buffer_store import SignalBufferStore
 from .buffers import ClientBuffer
 from .compute import SignalMetricsComputer
@@ -28,11 +40,11 @@ class SignalProcessorViews:
         self._store = store
         self._metrics = metrics
 
-    def spectrum_payload(self, client_id: str) -> dict[str, Any]:
+    def spectrum_payload(self, client_id: str) -> SpectrumSeriesPayload:
         with self._store.lock:
             return self._spectrum_payload_unlocked(client_id)
 
-    def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
+    def multi_spectrum_payload(self, client_ids: list[str]) -> SpectraPayload:
         with self._store.lock:
             return build_multi_spectrum_payload(
                 self._store.buffers,
@@ -41,7 +53,7 @@ class SignalProcessorViews:
                 analysis_time_range_fn=self._analysis_time_range_unlocked,
             )
 
-    def selected_payload(self, client_id: str) -> dict[str, Any]:
+    def selected_payload(self, client_id: str) -> SelectedClientPayload:
         with self._store.lock:
             buf = self._store.buffers.get(client_id)
             if buf is None or buf.count == 0:
@@ -62,7 +74,7 @@ class SignalProcessorViews:
                 latest_fn=self._store.copy_latest,
             )
 
-    def debug_spectrum(self, client_id: str) -> dict[str, Any]:
+    def debug_spectrum(self, client_id: str) -> DebugSpectrumPayload | DebugSpectrumErrorPayload:
         request = self._store.debug_request(client_id)
         if request.fft_block is None:
             return {
@@ -85,7 +97,7 @@ class SignalProcessorViews:
         detrended_std = (fft_block - fft_block.mean(axis=1, keepdims=True)).std(axis=1).tolist()
 
         sorted_idx = np.argsort(combined_amp)[::-1]
-        top_bins = []
+        top_bins: list[DebugSpectrumTopBinPayload] = []
         for index in sorted_idx[:10]:
             top_bins.append(
                 {
@@ -98,6 +110,12 @@ class SignalProcessorViews:
                 }
             )
 
+        raw_stats: DebugSpectrumStatsPayload = {
+            "mean_g": raw_mean,
+            "std_g": raw_std,
+            "min_g": raw_min,
+            "max_g": raw_max,
+        }
         return {
             "client_id": client_id,
             "sample_rate_hz": request.sample_rate_hz,
@@ -108,24 +126,24 @@ class SignalProcessorViews:
             "spectrum_max_hz": self._store.config.spectrum_max_hz,
             "freq_bins": len(freq_slice),
             "freq_resolution_hz": float(request.sample_rate_hz) / self._store.config.fft_n,
-            "raw_stats": {
-                "mean_g": raw_mean,
-                "std_g": raw_std,
-                "min_g": raw_min,
-                "max_g": raw_max,
-            },
+            "raw_stats": raw_stats,
             "detrended_std_g": detrended_std,
             "vibration_strength_db": float(strength_metrics.get("vibration_strength_db", 0)),
             "top_bins_by_amplitude": top_bins,
             "strength_peaks": list(strength_metrics.get("top_peaks", [])),
         }
 
-    def raw_samples(self, client_id: str, *, n_samples: int = 2048) -> dict[str, Any]:
+    def raw_samples(
+        self,
+        client_id: str,
+        *,
+        n_samples: int = 2048,
+    ) -> RawSamplesPayload | RawSamplesErrorPayload:
         return self._store.raw_samples(client_id, n_samples=n_samples)
 
-    def time_alignment_info(self, client_ids: list[str]) -> dict[str, Any]:
+    def time_alignment_info(self, client_ids: list[str]) -> TimeAlignmentPayload:
         with self._store.lock:
-            per_sensor: dict[str, dict[str, Any]] = {}
+            per_sensor: dict[str, TimeAlignmentSensorPayload] = {}
             ranges: list[tuple[float, float]] = []
             included: list[str] = []
             excluded: list[str] = []
@@ -164,7 +182,7 @@ class SignalProcessorViews:
                 }
 
             overlap = compute_overlap([start for start, _ in ranges], [end for _, end in ranges])
-            shared: dict[str, float] | None = None
+            shared: SharedWindowPayload | None = None
             if overlap.overlap_s > 0:
                 shared = {
                     "start_s": overlap.shared_start,
@@ -186,7 +204,7 @@ class SignalProcessorViews:
         with self._store.lock:
             return self._analysis_time_range_unlocked(buf)
 
-    def _spectrum_payload_unlocked(self, client_id: str) -> dict[str, Any]:
+    def _spectrum_payload_unlocked(self, client_id: str) -> SpectrumSeriesPayload:
         buf = self._store.buffers.get(client_id)
         if buf is None:
             return dict(EMPTY_SPECTRUM_PAYLOAD)

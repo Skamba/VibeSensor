@@ -15,16 +15,34 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any
 
 import numpy as np
 
+from ..payload_types import (
+    AxisPeak,
+    DebugSpectrumErrorPayload,
+    DebugSpectrumPayload,
+    IntakeStatsPayload,
+    RawSamplesErrorPayload,
+    RawSamplesPayload,
+    SelectedClientPayload,
+    SpectraPayload,
+    TimeAlignmentPayload,
+)
 from ..worker_pool import WorkerPool
 from .buffer_store import MAX_CLIENT_SAMPLE_RATE_HZ as _MAX_CLIENT_SAMPLE_RATE_HZ
 from .buffer_store import SignalBufferStore
 from .buffers import ClientBuffer
 from .compute import SignalMetricsComputer
-from .models import CachedMetricsHit, FloatArray, IntIndexArray, ProcessorConfig
+from .models import (
+    CachedMetricsHit,
+    FftSpectrumResult,
+    FloatArray,
+    IntIndexArray,
+    MetricsPayload,
+    ProcessorConfig,
+)
+from .payload import SpectrumSeriesPayload
 from .views import SignalProcessorViews
 
 LOGGER = logging.getLogger(__name__)
@@ -97,7 +115,7 @@ class SignalProcessor:
         top_n: int = 5,
         floor_ratio: float | None = None,
         smoothing_bins: int = 5,
-    ) -> list[dict[str, float]]:
+    ) -> list[AxisPeak]:
         return SignalMetricsComputer.top_peaks(
             freqs,
             amps,
@@ -139,10 +157,14 @@ class SignalProcessor:
     def _fft_params(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray]:
         return self._metrics.fft_params(sample_rate_hz)
 
-    def _compute_fft_spectrum(self, fft_block: np.ndarray, sample_rate_hz: int) -> dict[str, Any]:
+    def _compute_fft_spectrum(
+        self,
+        fft_block: np.ndarray,
+        sample_rate_hz: int,
+    ) -> FftSpectrumResult:
         return self._metrics.compute_fft_spectrum(fft_block, sample_rate_hz)
 
-    def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> dict[str, Any]:
+    def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> MetricsPayload:
         plan = self._store.snapshot_for_compute(client_id, sample_rate_hz=sample_rate_hz)
         if plan is None:
             return {}
@@ -155,7 +177,7 @@ class SignalProcessor:
         self,
         client_ids: list[str],
         sample_rates_hz: dict[str, int] | None = None,
-    ) -> dict[str, dict[str, Any]]:
+    ) -> dict[str, MetricsPayload]:
         rates = sample_rates_hz or {}
         t0 = time.monotonic()
 
@@ -181,13 +203,13 @@ class SignalProcessor:
         self._store.record_compute_all_duration(time.monotonic() - t0)
         return result
 
-    def spectrum_payload(self, client_id: str) -> dict[str, Any]:
+    def spectrum_payload(self, client_id: str) -> SpectrumSeriesPayload:
         return self._views.spectrum_payload(client_id)
 
-    def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
+    def multi_spectrum_payload(self, client_ids: list[str]) -> SpectraPayload:
         return self._views.multi_spectrum_payload(client_ids)
 
-    def selected_payload(self, client_id: str) -> dict[str, Any]:
+    def selected_payload(self, client_id: str) -> SelectedClientPayload:
         return self._views.selected_payload(client_id)
 
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:
@@ -196,10 +218,14 @@ class SignalProcessor:
     def latest_sample_rate_hz(self, client_id: str) -> int | None:
         return self._store.latest_sample_rate_hz(client_id)
 
-    def debug_spectrum(self, client_id: str) -> dict[str, Any]:
+    def debug_spectrum(self, client_id: str) -> DebugSpectrumPayload | DebugSpectrumErrorPayload:
         return self._views.debug_spectrum(client_id)
 
-    def raw_samples(self, client_id: str, n_samples: int = 2048) -> dict[str, Any]:
+    def raw_samples(
+        self,
+        client_id: str,
+        n_samples: int = 2048,
+    ) -> RawSamplesPayload | RawSamplesErrorPayload:
         return self._views.raw_samples(client_id, n_samples=n_samples)
 
     def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
@@ -208,7 +234,7 @@ class SignalProcessor:
     def evict_clients(self, keep_client_ids: set[str]) -> None:
         self._store.evict_clients(keep_client_ids)
 
-    def intake_stats(self) -> dict[str, Any]:
+    def intake_stats(self) -> IntakeStatsPayload:
         stats = self._store.intake_stats()
         if self._worker_pool is not None:
             stats["worker_pool"] = self._worker_pool.stats()
@@ -217,7 +243,7 @@ class SignalProcessor:
     def _analysis_time_range(self, buf: ClientBuffer) -> tuple[float, float, bool] | None:
         return self._views.analysis_time_range(buf)
 
-    def time_alignment_info(self, client_ids: list[str]) -> dict[str, Any]:
+    def time_alignment_info(self, client_ids: list[str]) -> TimeAlignmentPayload:
         return self._views.time_alignment_info(client_ids)
 
     def _compute_all_serial(
@@ -226,8 +252,8 @@ class SignalProcessor:
         rates: dict[str, int],
         *,
         serial_fallback: bool = False,
-    ) -> dict[str, dict[str, Any]]:
-        result: dict[str, dict[str, Any]] = {}
+    ) -> dict[str, MetricsPayload]:
+        result: dict[str, MetricsPayload] = {}
         for client_id in client_ids:
             try:
                 result[client_id] = self.compute_metrics(

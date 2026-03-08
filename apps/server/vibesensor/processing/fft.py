@@ -10,19 +10,22 @@ from __future__ import annotations
 
 import math
 import warnings
-from typing import Any, TypeAlias
+from typing import TypeAlias
 
 import numpy as np
 import numpy.typing as npt
 from vibesensor_core.vibration_strength import (
     PEAK_THRESHOLD_FLOOR_RATIO,
     STRENGTH_EPSILON_MIN_G,
+    VibrationStrengthMetrics,
     combined_spectrum_amp_g,
     compute_vibration_strength_db,
+    empty_vibration_strength_metrics,
     noise_floor_amp_p20_g,
 )
 
 from ..constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
+from .models import AxisPeak, FftSpectrumResult, SpectrumByAxis
 
 AXES = ("x", "y", "z")
 
@@ -117,7 +120,7 @@ def top_peaks(
     top_n: int = 5,
     floor_ratio: float = PEAK_THRESHOLD_FLOOR_RATIO,
     smoothing_bins: int = 5,
-) -> list[dict[str, float]]:
+) -> list[AxisPeak]:
     """Extract the *top_n* spectral peaks above the noise floor."""
     if freqs.size == 0 or amps.size == 0:
         return []
@@ -150,7 +153,7 @@ def top_peaks(
             peak_idx = [candidate]
 
     peak_idx.sort(key=lambda idx: float(smoothed[idx]), reverse=True)
-    peaks: list[dict[str, float]] = []
+    peaks: list[AxisPeak] = []
     for idx in peak_idx[:top_n]:
         raw_amp = float(amps[idx])
         peaks.append(
@@ -174,7 +177,7 @@ def compute_fft_spectrum(
     freq_slice: FloatArray,
     valid_idx: IntIndexArray,
     spike_filter_enabled: bool = True,
-) -> dict[str, Any]:
+) -> FftSpectrumResult:
     """Compute per-axis and combined FFT spectra from a sample block.
 
     This is the core spectral computation used by both
@@ -226,10 +229,10 @@ def compute_fft_spectrum(
     if (fft_n % 2) == 0 and specs_all.shape[1] > 1:
         specs_all[:, -1] *= 0.5
 
-    spectrum_by_axis: dict[str, dict[str, FloatArray]] = {}
+    spectrum_by_axis: SpectrumByAxis = {}
     axis_amp_slices: list[FloatArray] = []
     axis_amps: dict[str, FloatArray] = {}
-    axis_peaks: dict[str, list[dict[str, float]]] = {}
+    axis_peaks: dict[str, list[AxisPeak]] = {}
 
     for axis_idx, axis in enumerate(AXES):
         amp_slice = specs_all[axis_idx, valid_idx]
@@ -250,7 +253,7 @@ def compute_fft_spectrum(
         axis_amp_slices.append(amp_slice)
 
     combined_amp: FloatArray = np.empty(0, dtype=np.float32)
-    strength_metrics: dict[str, Any] = {}
+    strength_metrics: VibrationStrengthMetrics = empty_vibration_strength_metrics()
     if axis_amp_slices:
         combined_amp = np.asarray(
             combined_spectrum_amp_g(
