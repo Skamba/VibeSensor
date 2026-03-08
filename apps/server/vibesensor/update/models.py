@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass, field
-from typing import TypedDict
+from typing import TypedDict, TypeGuard
 
 from ..json_types import JsonObject, is_json_array, is_json_object
 
@@ -28,15 +28,20 @@ class UpdateJobStatusPayload(TypedDict):
     runtime: JsonObject
 
 
+def _is_number_like(value: object) -> TypeGuard[int | float | str]:
+    """Return True for scalar shapes worth attempting numeric coercion on."""
+    return isinstance(value, (int, float, str))
+
+
 def _to_float_or_none(value: object) -> float | None:
     """Coerce *value* to float, returning None for null / unconvertible input."""
     if value is None:
         return None
-    if not isinstance(value, (int, float, str)):
+    if not _is_number_like(value):
         return None
     try:
         return float(value)
-    except (TypeError, ValueError):
+    except ValueError:
         return None
 
 
@@ -44,11 +49,11 @@ def _to_int_or_none(value: object) -> int | None:
     """Coerce *value* to int, returning None for null / unconvertible input."""
     if value is None:
         return None
-    if not isinstance(value, (int, float, str)):
+    if not _is_number_like(value):
         return None
     try:
         return int(value)
-    except (TypeError, ValueError):
+    except ValueError:
         return None
 
 
@@ -144,7 +149,7 @@ class UpdateJobStatus:
                 )
         log_tail_raw = data.get("log_tail")
         log_tail = (
-            [str(line) for line in log_tail_raw][- _LOG_TAIL_LIMIT:]
+            [str(line) for line in log_tail_raw[-_LOG_TAIL_LIMIT:]]
             if is_json_array(log_tail_raw)
             else []
         )

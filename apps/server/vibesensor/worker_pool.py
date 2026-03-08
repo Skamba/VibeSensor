@@ -55,6 +55,7 @@ class WorkerPoolStats(TypedDict):
     default_submit_timeout_s: float | None
     alive: bool
 
+
 # Sensible default for a 4-core Raspberry Pi.
 DEFAULT_MAX_WORKERS = 4
 
@@ -298,12 +299,11 @@ class WorkerPool:
 
     def __exit__(
         self,
-        exc_type: type[BaseException] | None,
-        exc: BaseException | None,
-        traceback: TracebackType | None,
+        _exc_type: type[BaseException] | None,
+        _exc: BaseException | None,
+        _traceback: TracebackType | None,
     ) -> None:
         """Shut down the pool when the context manager exits."""
-        del exc_type, exc, traceback
         self.shutdown(wait=True)
 
     # -- Observability --------------------------------------------------------

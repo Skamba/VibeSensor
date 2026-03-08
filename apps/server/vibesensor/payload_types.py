@@ -5,7 +5,7 @@ from typing import TypeAlias
 from typing_extensions import TypedDict
 from vibesensor_core.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 
-from .analysis._types import Finding
+from .analysis import Finding
 from .json_types import JsonObject
 
 IntakeStatsPayload: TypeAlias = JsonObject
