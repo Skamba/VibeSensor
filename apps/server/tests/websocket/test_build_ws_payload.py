@@ -87,15 +87,6 @@ class _StubAnalysisSettings:
         }
 
 
-class _StubLiveAnalysis:
-    def __init__(self) -> None:
-        self.snapshot_calls = 0
-
-    def snapshot(self) -> tuple[dict[str, object], list[dict[str, object]]]:
-        self.snapshot_calls += 1
-        return {"run_id": f"live-{self.snapshot_calls}"}, [{"call": self.snapshot_calls}]
-
-
 class _StubMetricsLogger:
     def __init__(self) -> None:
         self.shutdown_calls = 0
@@ -161,7 +152,6 @@ def _make_state(
     )
     diagnostics = runtime_module.RuntimeDiagnosticsSubsystem(
         metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
-        live_analysis=_StubLiveAnalysis(),  # type: ignore[arg-type]
     )
     persistence = runtime_module.RuntimePersistenceSubsystem(  # type: ignore[arg-type]
         history_db=_SENTINEL
@@ -193,7 +183,6 @@ def _make_state(
             ui_heavy_push_hz=ui_heavy_push_hz,
             ingress=ingress,
             settings=settings,
-            diagnostics=diagnostics,
         ),
     )
 

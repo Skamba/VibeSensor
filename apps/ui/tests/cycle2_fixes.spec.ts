@@ -23,7 +23,6 @@ test.describe("adaptServerPayload spectra handling", () => {
   const basePayload: Record<string, unknown> = {
     clients: [],
     speed_mps: 10,
-    diagnostics: { strength_bands: [], events: [], levels: {} },
   };
 
   test("returns null spectra when payload has no spectra field", () => {

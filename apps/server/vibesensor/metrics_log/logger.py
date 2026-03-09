@@ -4,7 +4,6 @@
 
 - :mod:`vibesensor.metrics_log.sample_builder` — pure sample record
   construction.
-- :mod:`vibesensor.metrics_log.live_analysis` — rolling live snapshot storage.
 - :mod:`vibesensor.metrics_log.persistence` — history DB create/append/finalize
   coordination.
 - :mod:`vibesensor.metrics_log.post_analysis` — background analysis
@@ -27,11 +26,9 @@ from uuid import uuid4
 
 from ..constants import NUMERIC_TYPES
 from ..runlog import utc_now_iso
-from .live_analysis import LiveAnalysisWindow
 from .persistence import MetricsPersistenceCoordinator
 from .post_analysis import PostAnalysisWorker
 from .sample_builder import (
-    _LIVE_SAMPLE_WINDOW_S,
     build_run_metadata,
     build_sample_records,
     firmware_version_for_run,
@@ -130,10 +127,6 @@ class MetricsLogger:
             metadata_builder=self._run_metadata_record,
             generation_matches=self._session.matches_generation,
         )
-        self.live_analysis = LiveAnalysisWindow(
-            metadata_builder=self._run_metadata_record,
-            live_sample_window_s=_LIVE_SAMPLE_WINDOW_S,
-        )
         self._post_analysis = PostAnalysisWorker(
             history_db=history_db,
             error_callback=self._set_last_write_error,
@@ -205,16 +198,11 @@ class MetricsLogger:
             current_total=self._active_frames_total(),
         )
         self._persistence.reset_for_new_session()
-        self.live_analysis.start_session(
-            run_id=snapshot.run_id,
-            start_time_utc=snapshot.start_time_utc,
-        )
         return snapshot
 
     def _stop_session_locked(self) -> None:
         self._session.stop_session()
         self._persistence.reset_for_new_session()
-        self.live_analysis.stop_session()
 
     def _set_last_write_error(self, message: str) -> None:
         self._persistence.set_last_write_error(message)
@@ -332,12 +320,6 @@ class MetricsLogger:
         if run_id_to_analyze and self._history_db is not None:
             self.schedule_post_analysis(run_id_to_analyze)
         return result
-
-    def analysis_snapshot(
-        self,
-        max_rows: int = 4000,
-    ) -> tuple[dict[str, object], list[dict[str, object]]]:
-        return self.live_analysis.snapshot(max_rows=max_rows)
 
     def _run_metadata_record(self, run_id: str, start_time_utc: str) -> dict[str, object]:
         return build_run_metadata(
@@ -495,7 +477,6 @@ class MetricsLogger:
                         type(live_rows).__name__,
                     )
                     live_rows = []
-                self.live_analysis.extend_rows(live_rows, live_t_s=live_t_s)
                 snapshot = self._session_snapshot()
                 if snapshot is not None:
                     no_data_timeout = await asyncio.wait_for(

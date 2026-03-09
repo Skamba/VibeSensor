@@ -14,7 +14,7 @@ test("gps status uses selected speed unit in settings panel", async ({ page }) =
 
 test("gps status polling does not override websocket speed readout", async ({ page }) => {
   await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "/api/settings/language": { language: "en" }, "/api/settings/speed-unit": { speedUnit: "kmh" }, "/api/settings/speed-source/status": gpsStatus({}) }) });
-  await installFakeWebSocket(page, { payload: { server_time: new Date().toISOString(), speed_mps: 20, clients: [], diagnostics: { strength_bands: [{ key: "wheel", label: "Wheel", color: "#2f80ed" }], events: [] }, spectra: { clients: {} } } });
+  await installFakeWebSocket(page, { payload: { server_time: new Date().toISOString(), speed_mps: 20, clients: [], spectra: { clients: {} } } });
   await page.goto("/");
   await expect(page.locator("#speed")).toContainText("72.0 km/h");
   await page.waitForTimeout(500);
@@ -23,7 +23,7 @@ test("gps status polling does not override websocket speed readout", async ({ pa
 
 test("spectrum title updates when switching language", async ({ page }) => {
   await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/language": { language: "en" }, "POST /api/settings/language": { language: "nl" }, "/api/settings/speed-unit": { speedUnit: "kmh" }, "/api/settings/speed-source/status": gpsStatus({ raw_speed_kmh: 72, effective_speed_kmh: 72 }) }) });
-  await installFakeWebSocket(page, { payload: { server_time: new Date().toISOString(), speed_mps: 20, clients: [{ id: "c1", name: "Front Left", connected: true, frames_total: 100, dropped_frames: 0 }], diagnostics: { strength_bands: [{ key: "l1", min_db: 8 }], events: [], levels: { by_source: { wheel: { strength_db: 12 }, driveshaft: { strength_db: 9 }, engine: { strength_db: 6 }, other: { strength_db: 3 } } } }, spectra: { clients: {} } } });
+  await installFakeWebSocket(page, { payload: { server_time: new Date().toISOString(), speed_mps: 20, clients: [{ id: "c1", name: "Front Left", connected: true, frames_total: 100, dropped_frames: 0 }], spectra: { clients: {} } } });
   await page.goto("/");
   await expect(page.locator("#dashboardView [data-i18n='chart.spectrum_title']")).toHaveText("Multi-Sensor Blended Spectrum");
   await page.locator("#languageSelect").selectOption("nl");

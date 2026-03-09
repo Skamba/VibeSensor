@@ -57,7 +57,6 @@ class _State:
             status=dict,
             start_logging=_noop,
             stop_logging=_noop,
-            analysis_snapshot=lambda: ({}, []),
         )
         self.history_db = SimpleNamespace(
             list_runs=list,

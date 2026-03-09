@@ -40,7 +40,6 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
     payload: {
       server_time: new Date().toISOString(),
       clients: [{ id: "001122334455", name: "Front Left", connected: true, sample_rate_hz: 1000, last_seen_age_ms: 10, dropped_frames: 0, frames_total: 100 }],
-      diagnostics: { strength_bands: [{ key: "wheel", label: "Wheel", color: "#2f80ed" }], events: [] },
       spectra: { clients: { "001122334455": { freq: [1, 2, 3], combined_spectrum_amp_g: [0.1, 0.2, 0.15], strength_metrics: { vibration_strength_db: 12 } } } },
     },
   });
