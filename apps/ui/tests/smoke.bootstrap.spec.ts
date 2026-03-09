@@ -48,6 +48,9 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "VibeSensor" })).toBeVisible();
   await expect(page.locator("#linkState")).not.toHaveText(/Connecting/i);
+  await page.locator("#tab-dashboard").focus();
+  await page.locator("#tab-dashboard").press("ArrowRight");
+  await expect(page.locator("#historyView")).toHaveClass(/active/);
   await page.locator("#tab-history").click();
   await expect(page.locator("#historyView")).toHaveClass(/active/);
   await expect(page.locator("#historyTableBody")).toContainText("run-001");
