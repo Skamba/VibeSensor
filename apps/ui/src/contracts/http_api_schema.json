@@ -205,10 +205,131 @@
         "type": "object"
       },
       "AnalysisSettingsResponse": {
-        "additionalProperties": true,
-        "description": "Response body reflecting the current analysis settings (all fields pass-through).",
-        "properties": {},
+        "description": "Response body reflecting the current validated analysis settings.",
+        "properties": {
+          "current_gear_ratio": {
+            "title": "Current Gear Ratio",
+            "type": "number"
+          },
+          "driveshaft_bandwidth_pct": {
+            "title": "Driveshaft Bandwidth Pct",
+            "type": "number"
+          },
+          "engine_bandwidth_pct": {
+            "title": "Engine Bandwidth Pct",
+            "type": "number"
+          },
+          "final_drive_ratio": {
+            "title": "Final Drive Ratio",
+            "type": "number"
+          },
+          "final_drive_uncertainty_pct": {
+            "title": "Final Drive Uncertainty Pct",
+            "type": "number"
+          },
+          "gear_uncertainty_pct": {
+            "title": "Gear Uncertainty Pct",
+            "type": "number"
+          },
+          "max_band_half_width_pct": {
+            "title": "Max Band Half Width Pct",
+            "type": "number"
+          },
+          "min_abs_band_hz": {
+            "title": "Min Abs Band Hz",
+            "type": "number"
+          },
+          "rim_in": {
+            "title": "Rim In",
+            "type": "number"
+          },
+          "speed_uncertainty_pct": {
+            "title": "Speed Uncertainty Pct",
+            "type": "number"
+          },
+          "tire_aspect_pct": {
+            "title": "Tire Aspect Pct",
+            "type": "number"
+          },
+          "tire_deflection_factor": {
+            "title": "Tire Deflection Factor",
+            "type": "number"
+          },
+          "tire_diameter_uncertainty_pct": {
+            "title": "Tire Diameter Uncertainty Pct",
+            "type": "number"
+          },
+          "tire_width_mm": {
+            "title": "Tire Width Mm",
+            "type": "number"
+          },
+          "wheel_bandwidth_pct": {
+            "title": "Wheel Bandwidth Pct",
+            "type": "number"
+          }
+        },
+        "required": [
+          "tire_width_mm",
+          "tire_aspect_pct",
+          "rim_in",
+          "final_drive_ratio",
+          "current_gear_ratio",
+          "wheel_bandwidth_pct",
+          "driveshaft_bandwidth_pct",
+          "engine_bandwidth_pct",
+          "speed_uncertainty_pct",
+          "tire_diameter_uncertainty_pct",
+          "final_drive_uncertainty_pct",
+          "gear_uncertainty_pct",
+          "min_abs_band_hz",
+          "max_band_half_width_pct",
+          "tire_deflection_factor"
+        ],
         "title": "AnalysisSettingsResponse",
+        "type": "object"
+      },
+      "AxisMetrics": {
+        "properties": {
+          "p2p": {
+            "title": "P2P",
+            "type": "number"
+          },
+          "peaks": {
+            "items": {
+              "$ref": "#/components/schemas/AxisPeak"
+            },
+            "title": "Peaks",
+            "type": "array"
+          },
+          "rms": {
+            "title": "Rms",
+            "type": "number"
+          }
+        },
+        "required": [
+          "rms",
+          "p2p",
+          "peaks"
+        ],
+        "title": "AxisMetrics",
+        "type": "object"
+      },
+      "AxisPeak": {
+        "properties": {
+          "amp": {
+            "title": "Amp",
+            "type": "number"
+          },
+          "hz": {
+            "title": "Hz",
+            "type": "number"
+          },
+          "snr_ratio": {
+            "title": "Snr Ratio",
+            "type": "number"
+          }
+        },
+        "title": "AxisPeak",
         "type": "object"
       },
       "CarLibraryBrandsResponse": {
@@ -625,6 +746,203 @@
         "title": "CarsResponse",
         "type": "object"
       },
+      "ClientApiRow": {
+        "properties": {
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "control_addr": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Control Addr"
+          },
+          "data_addr": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Addr"
+          },
+          "dropped_frames": {
+            "title": "Dropped Frames",
+            "type": "integer"
+          },
+          "duplicates_received": {
+            "title": "Duplicates Received",
+            "type": "integer"
+          },
+          "firmware_version": {
+            "title": "Firmware Version",
+            "type": "string"
+          },
+          "frame_samples": {
+            "title": "Frame Samples",
+            "type": "integer"
+          },
+          "frames_total": {
+            "title": "Frames Total",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_ack_cmd_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Ack Cmd Seq"
+          },
+          "last_ack_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Ack Status"
+          },
+          "last_reset_time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Reset Time"
+          },
+          "last_seen_age_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen Age Ms"
+          },
+          "latest_metrics": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AxisMetrics"
+                },
+                {
+                  "$ref": "#/components/schemas/CombinedMetrics"
+                },
+                {
+                  "$ref": "#/components/schemas/VibrationStrengthMetrics"
+                }
+              ]
+            },
+            "title": "Latest Metrics",
+            "type": "object"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "mac_address": {
+            "title": "Mac Address",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "parse_errors": {
+            "title": "Parse Errors",
+            "type": "integer"
+          },
+          "queue_overflow_drops": {
+            "title": "Queue Overflow Drops",
+            "type": "integer"
+          },
+          "reset_count": {
+            "title": "Reset Count",
+            "type": "integer"
+          },
+          "sample_rate_hz": {
+            "title": "Sample Rate Hz",
+            "type": "integer"
+          },
+          "server_queue_drops": {
+            "title": "Server Queue Drops",
+            "type": "integer"
+          },
+          "timing_health": {
+            "$ref": "#/components/schemas/TimingHealthPayload"
+          }
+        },
+        "required": [
+          "id",
+          "mac_address",
+          "name",
+          "connected",
+          "location",
+          "firmware_version",
+          "sample_rate_hz",
+          "frame_samples",
+          "last_seen_age_ms",
+          "data_addr",
+          "control_addr",
+          "frames_total",
+          "dropped_frames",
+          "duplicates_received",
+          "queue_overflow_drops",
+          "parse_errors",
+          "server_queue_drops",
+          "latest_metrics",
+          "last_ack_cmd_seq",
+          "last_ack_status",
+          "reset_count",
+          "last_reset_time",
+          "timing_health"
+        ],
+        "title": "ClientApiRow",
+        "type": "object"
+      },
       "ClientLocationsResponse": {
         "description": "Response body with available sensor-location options.",
         "properties": {
@@ -647,8 +965,7 @@
         "properties": {
           "clients": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/ClientApiRow"
             },
             "title": "Clients",
             "type": "array"
@@ -658,6 +975,30 @@
           "clients"
         ],
         "title": "ClientsResponse",
+        "type": "object"
+      },
+      "CombinedMetrics": {
+        "properties": {
+          "peaks": {
+            "items": {
+              "$ref": "#/components/schemas/StrengthPeak"
+            },
+            "title": "Peaks",
+            "type": "array"
+          },
+          "strength_metrics": {
+            "$ref": "#/components/schemas/VibrationStrengthMetrics"
+          },
+          "vib_mag_p2p": {
+            "title": "Vib Mag P2P",
+            "type": "number"
+          },
+          "vib_mag_rms": {
+            "title": "Vib Mag Rms",
+            "type": "number"
+          }
+        },
+        "title": "CombinedMetrics",
         "type": "object"
       },
       "DebugSpectrumErrorPayload": {
@@ -1752,7 +2093,10 @@
         "description": "Request body for changing the UI language.",
         "properties": {
           "language": {
-            "pattern": "^(en|nl)$",
+            "enum": [
+              "en",
+              "nl"
+            ],
             "title": "Language",
             "type": "string"
           }
@@ -2113,6 +2457,7 @@
         "description": "Response body for the current speed-source configuration.",
         "properties": {
           "fallbackMode": {
+            "const": "manual",
             "title": "Fallbackmode",
             "type": "string"
           },
@@ -2133,6 +2478,11 @@
             "type": "object"
           },
           "speedSource": {
+            "enum": [
+              "gps",
+              "obd2",
+              "manual"
+            ],
             "title": "Speedsource",
             "type": "string"
           },
@@ -2217,19 +2567,18 @@
             "type": "boolean"
           },
           "fallback_mode": {
+            "const": "manual",
             "title": "Fallback Mode",
             "type": "string"
           },
           "fix_dimension": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "enum": [
+              "3d",
+              "2d",
+              "none"
             ],
-            "title": "Fix Dimension"
+            "title": "Fix Dimension",
+            "type": "string"
           },
           "fix_mode": {
             "anyOf": [
@@ -2291,15 +2640,23 @@
             "title": "Reconnect Delay S"
           },
           "speed_confidence": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "enum": [
+              "low",
+              "medium",
+              "high"
             ],
-            "title": "Speed Confidence"
+            "title": "Speed Confidence",
+            "type": "string"
+          },
+          "speed_source": {
+            "enum": [
+              "gps",
+              "manual",
+              "fallback_manual",
+              "none"
+            ],
+            "title": "Speed Source",
+            "type": "string"
           },
           "stale_timeout_s": {
             "title": "Stale Timeout S",
@@ -2322,6 +2679,7 @@
           "last_error",
           "reconnect_delay_s",
           "fallback_active",
+          "speed_source",
           "stale_timeout_s",
           "fallback_mode"
         ],
@@ -2332,7 +2690,10 @@
         "description": "Request body for changing the displayed speed unit.",
         "properties": {
           "speedUnit": {
-            "pattern": "^(kmh|mps)$",
+            "enum": [
+              "kmh",
+              "mps"
+            ],
             "title": "Speedunit",
             "type": "string"
           }
@@ -2390,6 +2751,24 @@
           "strength_bucket"
         ],
         "title": "StrengthPeak",
+        "type": "object"
+      },
+      "TimingHealthPayload": {
+        "properties": {
+          "drift_us_total": {
+            "title": "Drift Us Total",
+            "type": "number"
+          },
+          "jitter_us_ema": {
+            "title": "Jitter Us Ema",
+            "type": "number"
+          },
+          "last_t0_us": {
+            "title": "Last T0 Us",
+            "type": "integer"
+          }
+        },
+        "title": "TimingHealthPayload",
         "type": "object"
       },
       "UpdateCancelResponse": {
@@ -2679,6 +3058,57 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VibrationStrengthMetrics": {
+        "properties": {
+          "combined_spectrum_amp_g": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Combined Spectrum Amp G",
+            "type": "array"
+          },
+          "noise_floor_amp_g": {
+            "title": "Noise Floor Amp G",
+            "type": "number"
+          },
+          "peak_amp_g": {
+            "title": "Peak Amp G",
+            "type": "number"
+          },
+          "strength_bucket": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strength Bucket"
+          },
+          "top_peaks": {
+            "items": {
+              "$ref": "#/components/schemas/StrengthPeak"
+            },
+            "title": "Top Peaks",
+            "type": "array"
+          },
+          "vibration_strength_db": {
+            "title": "Vibration Strength Db",
+            "type": "number"
+          }
+        },
+        "required": [
+          "combined_spectrum_amp_g",
+          "vibration_strength_db",
+          "peak_amp_g",
+          "noise_floor_amp_g",
+          "strength_bucket",
+          "top_peaks"
+        ],
+        "title": "VibrationStrengthMetrics",
         "type": "object"
       }
     }
