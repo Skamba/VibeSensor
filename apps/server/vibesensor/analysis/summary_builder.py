@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from statistics import median as _median
-from typing import cast
 
 from ..run_context import build_summary_warnings
 from ..runlog import as_float_or_none as _as_float
@@ -168,7 +167,7 @@ def build_phase_summary(phase_segments: list[PhaseSegment]) -> PhaseSummary:
     """Small wrapper to keep summary-building imports localized."""
     from .phase_segmentation import phase_summary
 
-    return cast(PhaseSummary, phase_summary(phase_segments))
+    return phase_summary(phase_segments)
 
 
 def build_findings_bundle(
