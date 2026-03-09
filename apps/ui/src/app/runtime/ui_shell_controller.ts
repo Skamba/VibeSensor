@@ -37,9 +37,6 @@ const WS_BANNER_CFG: Record<string, { key: string; cls: string }> = {
 type UiShellControllerDeps = {
   state: AppState;
   els: UiDomElements;
-  getFeatures: () => AppFeatureBundle;
-  renderSpectrum: () => void;
-  updateSpectrumOverlay: () => void;
 };
 
 export class UiShellController {
@@ -47,16 +44,25 @@ export class UiShellController {
 
   private readonly els: UiDomElements;
 
-  private readonly getFeatures: () => AppFeatureBundle;
+  private features: AppFeatureBundle | null = null;
 
-  private readonly renderSpectrumChart: () => void;
+  private renderSpectrumChart: (() => void) | null = null;
 
-  private readonly updateSpectrumOverlayState: () => void;
+  private updateSpectrumOverlayState: (() => void) | null = null;
 
   constructor(deps: UiShellControllerDeps) {
     this.state = deps.state;
     this.els = deps.els;
-    this.getFeatures = deps.getFeatures;
+  }
+
+  attachFeatures(features: AppFeatureBundle): void {
+    this.features = features;
+  }
+
+  attachSpectrumHooks(deps: {
+    renderSpectrum: () => void;
+    updateSpectrumOverlay: () => void;
+  }): void {
     this.renderSpectrumChart = deps.renderSpectrum;
     this.updateSpectrumOverlayState = deps.updateSpectrumOverlay;
   }
@@ -173,7 +179,7 @@ export class UiShellController {
   }
 
   applyLanguage(forceReloadInsights = false): void {
-    const features = this.getFeatures();
+    const features = this.requireFeatures();
     document.documentElement.lang = this.state.lang;
     document.querySelectorAll("[data-i18n]").forEach((element) => {
       const key = element.getAttribute("data-i18n");
@@ -192,13 +198,13 @@ export class UiShellController {
     if (this.state.spectrumPlot) {
       this.state.spectrumPlot.destroy();
       this.state.spectrumPlot = null;
-      this.renderSpectrumChart();
+      this.renderSpectrumChart?.();
     }
     features.dashboard.recreateStrengthChart();
     if (forceReloadInsights) {
       features.history.reloadExpandedRunOnLanguageChange();
     }
-    this.updateSpectrumOverlayState();
+    this.updateSpectrumOverlayState?.();
   }
 
   bindUiEvents(): void {
@@ -303,7 +309,7 @@ export class UiShellController {
   }
 
   private bindFeatureEvents(): void {
-    const features = this.getFeatures();
+    const features = this.requireFeatures();
     features.settings.bindSettingsTabs();
     features.cars.bindWizardHandlers();
     features.update.bindUpdateHandlers();
@@ -335,7 +341,7 @@ export class UiShellController {
   }
 
   private bindHistoryTableEvents(): void {
-    const features = this.getFeatures();
+    const features = this.requireFeatures();
     this.els.historyTableBody?.addEventListener("click", (event) => {
       const target = event.target as HTMLElement;
       const actionElement = target?.closest?.("[data-run-action]") as HTMLElement | null;
@@ -369,5 +375,12 @@ export class UiShellController {
         this.renderSpeedReadout();
       });
     }
+  }
+
+  private requireFeatures(): AppFeatureBundle {
+    if (this.features === null) {
+      throw new Error("UiShellController features used before initialization");
+    }
+    return this.features;
   }
 }
