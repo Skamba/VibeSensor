@@ -194,4 +194,4 @@ class LiveWsPayload(BaseModel):
     selected_client_id: str | None = None
     rotational_speeds: RotationalSpeeds | None = None
     spectra: SpectraPayload | None = None
-    diagnostics: DiagnosticsModel = Field(default_factory=DiagnosticsModel)
+    diagnostics: DiagnosticsModel | None = None

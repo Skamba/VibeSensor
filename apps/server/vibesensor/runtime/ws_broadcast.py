@@ -7,8 +7,8 @@ Owns:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Protocol
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from .processing_loop import STALE_DATA_AGE_S
 from .rotational_speeds import (
@@ -17,23 +17,15 @@ from .rotational_speeds import (
 )
 
 if TYPE_CHECKING:
-    from ..live_diagnostics.engine import LiveDiagnosticsEngine
     from .subsystems import (
         RuntimeDiagnosticsSubsystem,
         RuntimeIngressSubsystem,
         RuntimeSettingsSubsystem,
     )
 
-from ..payload_types import ClientApiRow, LiveDiagnosticsPayload, LiveWsPayload, SpectraPayload
+from ..payload_types import LiveWsPayload
 from ..runlog import utc_now_iso
 from ..ws_models import SCHEMA_VERSION
-
-
-class LiveAnalysisSnapshotSource(Protocol):
-    def snapshot(
-        self,
-        max_rows: int = 4000,
-    ) -> tuple[dict[str, object], list[dict[str, object]]]: ...
 
 
 @dataclass(slots=True)
@@ -42,12 +34,6 @@ class WsBroadcastCache:
 
     tick: int = 0
     include_heavy: bool = True
-    analysis_metadata: dict[str, object] | None = None
-    analysis_samples: list[dict[str, object]] = field(default_factory=list)
-    analysis_tick: int = -1
-    diagnostics: LiveDiagnosticsPayload | None = None
-    diagnostics_tick: int = -1
-    diagnostics_heavy: bool = True
     shared_payload: LiveWsPayload | None = None
     shared_payload_tick: int = -1
     shared_payload_heavy: bool = True
@@ -56,63 +42,6 @@ class WsBroadcastCache:
         """Advance the tick counter and update ``include_heavy``."""
         self.tick += 1
         self.include_heavy = (self.tick % heavy_every) == 0
-
-    def refresh_analysis(
-        self,
-        live_analysis: LiveAnalysisSnapshotSource,
-    ) -> tuple[dict[str, object], list[dict[str, object]]]:
-        """Return (metadata, samples), refreshing only when the cache is stale."""
-        need_refresh = self.analysis_metadata is None or (
-            self.include_heavy and self.analysis_tick != self.tick
-        )
-        if need_refresh:
-            metadata, samples = live_analysis.snapshot()
-            self.analysis_metadata = metadata
-            self.analysis_samples = samples
-            self.analysis_tick = self.tick
-        assert self.analysis_metadata is not None, (
-            "analysis cache must be populated: need_refresh was True or cache was valid"
-        )
-        return self.analysis_metadata, self.analysis_samples
-
-    def refresh_diagnostics(
-        self,
-        live_diagnostics: LiveDiagnosticsEngine,
-        *,
-        speed_mps: float | None,
-        clients: list[ClientApiRow],
-        spectra: SpectraPayload | None,
-        settings: dict[str, float],
-        analysis_metadata: dict[str, object],
-        analysis_samples: list[dict[str, object]],
-        language: str,
-    ) -> LiveDiagnosticsPayload:
-        """Return diagnostics payload, refreshing only when the cache is stale."""
-        cache_valid = (
-            self.diagnostics is not None
-            and self.diagnostics_tick == self.tick
-            and self.diagnostics_heavy == self.include_heavy
-        )
-        if cache_valid:
-            assert self.diagnostics is not None, (
-                "diagnostics cache must be populated when cache_valid is True"
-            )
-            return self.diagnostics
-        finding_metadata = analysis_metadata if self.include_heavy else None
-        finding_samples = analysis_samples if self.include_heavy else None
-        diagnostics = live_diagnostics.update(
-            speed_mps=speed_mps,
-            clients=clients,
-            spectra=spectra,
-            settings=settings,
-            finding_metadata=finding_metadata,
-            finding_samples=finding_samples,
-            language=language,
-        )
-        self.diagnostics = diagnostics
-        self.diagnostics_tick = self.tick
-        self.diagnostics_heavy = self.include_heavy
-        return self.diagnostics
 
 
 class WsBroadcastService:
@@ -179,23 +108,8 @@ class WsBroadcastService:
             speed_mps=speed_mps,
             analysis_settings=analysis_settings_snapshot,
         )
-        analysis_metadata, analysis_samples = self.cache.refresh_analysis(
-            self._diagnostics.live_analysis
-        )
-        spectra: SpectraPayload | None = None
         if self.cache.include_heavy:
-            spectra = self._ingress.processor.multi_spectrum_payload(fresh_ids)
-            payload["spectra"] = spectra
-        payload["diagnostics"] = self.cache.refresh_diagnostics(
-            self._diagnostics.live_diagnostics,
-            speed_mps=speed_mps,
-            clients=clients,
-            spectra=spectra,
-            settings=analysis_settings_snapshot,
-            analysis_metadata=analysis_metadata,
-            analysis_samples=analysis_samples,
-            language=self._settings.settings_store.language,
-        )
+            payload["spectra"] = self._ingress.processor.multi_spectrum_payload(fresh_ids)
         return payload
 
     def _refresh_shared_payload(self) -> LiveWsPayload:

@@ -16,7 +16,6 @@ const basePayload = {
   schema_version: EXPECTED_SCHEMA_VERSION,
   clients: [],
   speed_mps: 10,
-  diagnostics: { strength_bands: [], events: [], levels: {} },
 };
 
 // ---------------------------------------------------------------------------
@@ -41,6 +40,12 @@ test.describe("schema_version handling", () => {
       schema_version: "999",
     });
     expect(adapted).toBeDefined();
+  });
+
+  test("accepts payload without diagnostics", () => {
+    const adapted = adaptServerPayload({ ...basePayload });
+    expect(adapted).toBeDefined();
+    expect(adapted.diagnostics.events).toEqual([]);
   });
 
   test("EXPECTED_SCHEMA_VERSION is string '1'", () => {

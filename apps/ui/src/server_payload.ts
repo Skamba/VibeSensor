@@ -105,6 +105,24 @@ function emptyStrengthMetrics(): StrengthMetricsPayload {
   };
 }
 
+function emptyDiagnostics(): AdaptedPayload["diagnostics"] {
+  return {
+    diagnostics_sequence: -1,
+    driving_phase: null,
+    error: null,
+    strength_bands: [],
+    matrix: null,
+    events: [],
+    findings: [],
+    top_finding: null,
+    levels: {
+      by_source: {},
+      by_sensor: {},
+      by_location: {},
+    },
+  };
+}
+
 function parseStrengthMetricPeak(value: unknown): StrengthMetricPeak | null {
   const record = asRecord(value);
   if (!record) return null;
@@ -355,9 +373,6 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
   }
 
   const diagnosticsRecord = asRecord(payloadRecord.diagnostics);
-  if (!diagnosticsRecord) {
-    throw new Error("Missing diagnostics payload from server.");
-  }
 
   const clients = Array.isArray(payloadRecord.clients)
     ? payloadRecord.clients
@@ -384,25 +399,27 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
     clients,
     speed_mps: getNumber(payloadRecord, "speed_mps"),
     rotational_speeds: rotationalSpeeds,
-    diagnostics: {
-      diagnostics_sequence: getNumber(diagnosticsRecord, "diagnostics_sequence") ?? -1,
-      driving_phase: getString(diagnosticsRecord, "driving_phase"),
-      error: getString(diagnosticsRecord, "error"),
-      strength_bands: parseStrengthBands(diagnosticsRecord.strength_bands),
-      matrix: parseMatrix(diagnosticsRecord.matrix),
-      events: Array.isArray(diagnosticsRecord.events)
-        ? diagnosticsRecord.events
-            .map((event) => parseDiagnosticEvent(event))
-            .filter((event): event is DiagnosticEvent => event !== null)
-        : [],
-      findings: parseUnknownObjectArray(diagnosticsRecord.findings),
-      top_finding: asRecord(diagnosticsRecord.top_finding),
-      levels: {
-        by_source: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_source),
-        by_sensor: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_sensor),
-        by_location: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_location),
-      },
-    },
+    diagnostics: diagnosticsRecord
+      ? {
+          diagnostics_sequence: getNumber(diagnosticsRecord, "diagnostics_sequence") ?? -1,
+          driving_phase: getString(diagnosticsRecord, "driving_phase"),
+          error: getString(diagnosticsRecord, "error"),
+          strength_bands: parseStrengthBands(diagnosticsRecord.strength_bands),
+          matrix: parseMatrix(diagnosticsRecord.matrix),
+          events: Array.isArray(diagnosticsRecord.events)
+            ? diagnosticsRecord.events
+                .map((event) => parseDiagnosticEvent(event))
+                .filter((event): event is DiagnosticEvent => event !== null)
+            : [],
+          findings: parseUnknownObjectArray(diagnosticsRecord.findings),
+          top_finding: asRecord(diagnosticsRecord.top_finding),
+          levels: {
+            by_source: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_source),
+            by_sensor: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_sensor),
+            by_location: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_location),
+          },
+        }
+      : emptyDiagnostics(),
     spectra: parseSpectra(payloadRecord.spectra),
   };
 }
