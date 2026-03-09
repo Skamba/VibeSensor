@@ -16,7 +16,11 @@ if TYPE_CHECKING:
 
 
 def _location_points(
-    *, car_x: float, car_y: float, car_w: float, car_h: float
+    *,
+    car_x: float,
+    car_y: float,
+    car_w: float,
+    car_h: float,
 ) -> dict[str, tuple[float, float]]:
     center_x = car_x + (car_w / 2)
     center_y = car_y + (car_h / 2)
@@ -37,7 +41,8 @@ def _location_points(
 
 
 def _extract_amp_by_location(
-    summary: dict[str, object], location_rows: list[dict[str, object]]
+    summary: dict[str, object],
+    location_rows: list[dict[str, object]],
 ) -> tuple[set[str], dict[str, float]]:
     connected_locations = {
         _canonical_location(loc) for loc in summary.get("sensor_locations", []) if str(loc).strip()
@@ -102,7 +107,7 @@ def _draw_vehicle_shell(
             fillColor=color_surface,
             strokeColor=color_border,
             strokeWidth=1.4,
-        )
+        ),
     )
     drawing.add(
         Rect(
@@ -115,7 +120,7 @@ def _draw_vehicle_shell(
             fillColor=hex_color("#ffffff"),
             strokeColor=color_row_border,
             strokeWidth=0.7,
-        )
+        ),
     )
     drawing.add(
         Line(
@@ -125,7 +130,7 @@ def _draw_vehicle_shell(
             y0 + car_h - 18,
             strokeColor=color_row_border,
             strokeWidth=0.8,
-        )
+        ),
     )
     front_axle_y = y0 + (car_h * 0.84)
     rear_axle_y = y0 + (car_h * 0.16)
@@ -140,7 +145,7 @@ def _draw_vehicle_shell(
                 axle_y,
                 strokeColor=color_row_border,
                 strokeWidth=0.6,
-            )
+            ),
         )
     wheel_fill = hex_color("#f8fbff")
     wheel_stroke = hex_color(REPORT_COLORS["axis"])
@@ -151,7 +156,7 @@ def _draw_vehicle_shell(
         (wheel_x_right, rear_axle_y),
     ):
         drawing.add(
-            Circle(wx, wy, 11, fillColor=wheel_fill, strokeColor=wheel_stroke, strokeWidth=1.0)
+            Circle(wx, wy, 11, fillColor=wheel_fill, strokeColor=wheel_stroke, strokeWidth=1.0),
         )
     drawing.add(
         String(
@@ -161,7 +166,7 @@ def _draw_vehicle_shell(
             fontName="Helvetica-Bold",
             fontSize=8,
             fillColor=color_text_primary,
-        )
+        ),
     )
     drawing.add(
         String(
@@ -171,7 +176,7 @@ def _draw_vehicle_shell(
             fontName="Helvetica-Bold",
             fontSize=8,
             fillColor=color_text_primary,
-        )
+        ),
     )
 
 
@@ -187,7 +192,7 @@ def _draw_markers_and_labels(drawing: Any, *, markers: list, labels: list, hex_c
                 fillColor=hex_color(marker.fill),
                 strokeColor=hex_color(marker.stroke),
                 strokeWidth=marker.stroke_width,
-            )
+            ),
         )
     for label in labels:
         drawing.add(
@@ -198,7 +203,7 @@ def _draw_markers_and_labels(drawing: Any, *, markers: list, labels: list, hex_c
                 fontSize=label.font_size,
                 textAnchor=label.anchor,
                 fillColor=hex_color(label.color),
-            )
+            ),
         )
 
 
@@ -229,7 +234,7 @@ def _draw_source_legend(
             fontName="Helvetica-Bold",
             fontSize=6,
             fillColor=color_text_primary,
-        )
+        ),
     )
     if single_sensor:
         drawing.add(
@@ -240,7 +245,7 @@ def _draw_source_legend(
                 fontName="Helvetica",
                 fontSize=6,
                 fillColor=hex_color(REPORT_COLORS["text_muted"]),
-            )
+            ),
         )
     max_x = diagram_width - 8.0
     item_gap = 5.0
@@ -256,7 +261,9 @@ def _draw_source_legend(
         ly = swatch_y - (row * row_gap)
         swatch_color = hex_color(color_hex)
         drawing.add(
-            Circle(lx + 4, ly, 3, fillColor=swatch_color, strokeColor=swatch_color, strokeWidth=0.8)
+            Circle(
+                lx + 4, ly, 3, fillColor=swatch_color, strokeColor=swatch_color, strokeWidth=0.8
+            ),
         )
         drawing.add(
             String(
@@ -266,7 +273,7 @@ def _draw_source_legend(
                 fontName="Helvetica",
                 fontSize=5.5,
                 fillColor=hex_color(REPORT_COLORS["text_secondary"]),
-            )
+            ),
         )
         cursor_x += item_w
 
@@ -299,7 +306,7 @@ def car_location_diagram(
     rendered_ratio = car_h / car_w if car_w > 0 else 0.0
     if abs(rendered_ratio - length_width_ratio) / length_width_ratio >= 0.02:
         raise ValueError(
-            f"Car visual aspect ratio violated: rendered {rendered_ratio:.4f} vs source {length_width_ratio:.4f}"
+            f"Car visual aspect ratio violated: rendered {rendered_ratio:.4f} vs source {length_width_ratio:.4f}",
         )
 
     color_surface = hex_color(REPORT_COLORS["surface"])

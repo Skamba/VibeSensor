@@ -145,7 +145,7 @@ def _safe_extractall(zf: zipfile.ZipFile, dest: Path) -> None:
         target = (dest / member.filename).resolve()
         if not target.is_relative_to(dest_resolved):
             raise ValueError(
-                f"Zip entry '{member.filename}' would extract outside the target directory"
+                f"Zip entry '{member.filename}' would extract outside the target directory",
             )
     zf.extractall(dest)
 
@@ -242,7 +242,7 @@ def parse_manifest(data: JsonObject) -> FlashManifest:
                             file=file_name,
                             offset=offset,
                             sha256=str(sha256) if isinstance(sha256, str) else "",
-                        )
+                        ),
                     )
             name = env_data.get("name")
             if isinstance(name, str) and name:
@@ -263,7 +263,7 @@ def validate_bundle(bundle_dir: Path) -> FlashManifest:
     if not manifest_path.is_file():
         raise ValueError(
             f"Firmware bundle is missing manifest ({_MANIFEST_FILE}) in {bundle_dir}. "
-            "Run the updater while online or reinstall the Pi image."
+            "Run the updater while online or reinstall the Pi image.",
         )
     try:
         manifest_data = _read_json_file(manifest_path)
@@ -273,7 +273,7 @@ def validate_bundle(bundle_dir: Path) -> FlashManifest:
     manifest = parse_manifest(manifest_data)
     if not manifest.environments:
         raise ValueError(
-            f"Firmware manifest in {bundle_dir} has no environments. The bundle may be incomplete."
+            f"Firmware manifest in {bundle_dir} has no environments. The bundle may be incomplete.",
         )
 
     for env in manifest.environments:
@@ -282,14 +282,14 @@ def validate_bundle(bundle_dir: Path) -> FlashManifest:
             if not seg_path.is_file():
                 raise ValueError(
                     f"Firmware bundle is missing referenced binary '{seg.file}' in {bundle_dir}. "
-                    "The bundle is incomplete."
+                    "The bundle is incomplete.",
                 )
             if seg.sha256:
                 actual = hashlib.sha256(seg_path.read_bytes()).hexdigest()
                 if actual != seg.sha256:
                     raise ValueError(
                         f"Checksum mismatch for '{seg.file}': expected {seg.sha256}, "
-                        f"got {actual}. The bundle may be corrupt."
+                        f"got {actual}. The bundle may be corrupt.",
                     )
     return manifest
 
@@ -363,7 +363,7 @@ class GitHubReleaseFetcher(GitHubAPIClient):
                         if total > _MAX_DOWNLOAD_BYTES:
                             raise ValueError(
                                 f"Firmware asset exceeds {_MAX_DOWNLOAD_BYTES // (1024 * 1024)} MB "
-                                f"size limit; aborting download to prevent OOM."
+                                f"size limit; aborting download to prevent OOM.",
                             )
                         tmp_f.write(chunk)
                 Path(tmp_path).replace(dest)
@@ -424,7 +424,7 @@ class GitHubReleaseFetcher(GitHubAPIClient):
 
         raise ValueError(
             f"No eligible firmware release found for channel '{self._config.channel}' "
-            f"in {self._config.firmware_repo}"
+            f"in {self._config.firmware_repo}",
         )
 
     @staticmethod
@@ -440,7 +440,7 @@ class GitHubReleaseFetcher(GitHubAPIClient):
                 return asset
         raise ValueError(
             f"No firmware bundle asset found in release '{release.get('tag_name', '?')}'. "
-            "Expected an asset named vibesensor-fw-*.zip"
+            "Expected an asset named vibesensor-fw-*.zip",
         )
 
     def download_bundle(self, asset: GitHubReleaseAssetPayload, dest_dir: Path) -> Path:

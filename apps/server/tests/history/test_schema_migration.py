@@ -44,7 +44,7 @@ CREATE TABLE settings_kv (
 CREATE TABLE client_names (
     client_id TEXT PRIMARY KEY, name TEXT NOT NULL, updated_at TEXT NOT NULL
 );
-"""
+""",
     )
     conn.commit()
     conn.close()

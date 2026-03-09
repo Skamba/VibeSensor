@@ -12,10 +12,10 @@ from .runtime import (
     build_runtime_state,
 )
 from .runtime.builders import (
-    build_diagnostics_subsystem,
     build_ingress_subsystem,
     build_persistence_subsystem,
     build_processing_subsystem,
+    build_recording_subsystem,
     build_route_services,
     build_settings_subsystem,
     build_update_subsystem,
@@ -38,7 +38,7 @@ def build_services(config: AppConfig) -> RuntimeState:
         gps_enabled=config.gps.gps_enabled,
     )
     persistence.bind_history_services(settings.settings_store)
-    diagnostics = build_diagnostics_subsystem(
+    recording = build_recording_subsystem(
         config=config,
         ingress=ingress,
         settings=settings,
@@ -56,7 +56,7 @@ def build_services(config: AppConfig) -> RuntimeState:
         config=config,
         ingress=ingress,
         settings=settings,
-        diagnostics=diagnostics,
+        recording=recording,
         persistence=persistence,
         updates=updates,
         processing=processing,
@@ -64,7 +64,7 @@ def build_services(config: AppConfig) -> RuntimeState:
         routes=build_route_services(
             ingress=ingress,
             settings=settings,
-            diagnostics=diagnostics,
+            recording=recording,
             persistence=persistence,
             updates=updates,
             processing=processing,

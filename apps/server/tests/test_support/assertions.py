@@ -53,7 +53,8 @@ def _top_cause_or_fail(summary: dict[str, Any], msg: str = "") -> dict[str, Any]
 
 
 def _iter_causes_at_or_above(
-    summary: dict[str, Any], confidence_threshold: float
+    summary: dict[str, Any],
+    confidence_threshold: float,
 ) -> Iterator[tuple[dict[str, Any], float]]:
     for cause in _top_causes(summary):
         confidence = _cause_confidence(cause)
@@ -133,7 +134,7 @@ def assert_tolerant_no_fault(summary: dict[str, Any], msg: str = "") -> None:
         if "wheel" in src:
             loc = c.get("strongest_location") or ""
             raise AssertionError(
-                f"Tolerant no-fault violated: {src} @ {loc} conf={conf:.2f}. {msg}"
+                f"Tolerant no-fault violated: {src} @ {loc} conf={conf:.2f}. {msg}",
             )
 
 
@@ -264,7 +265,7 @@ def assert_forbidden_systems(
                 loc = c.get("strongest_location") or ""
                 raise AssertionError(
                     f"Forbidden system '{keyword}' found: {src} @ {loc} "
-                    f"conf={conf:.3f} (threshold={confidence_threshold}). {msg}"
+                    f"conf={conf:.3f} (threshold={confidence_threshold}). {msg}",
                 )
 
 
@@ -286,7 +287,7 @@ def assert_only_allowed_systems(
             loc = c.get("strongest_location") or ""
             raise AssertionError(
                 f"Unexpected system '{src}' @ {loc} conf={conf:.3f} "
-                f"(allowed={allowed}, threshold={confidence_threshold}). {msg}"
+                f"(allowed={allowed}, threshold={confidence_threshold}). {msg}",
             )
 
 
@@ -305,7 +306,7 @@ def assert_no_persistent_fault(
         loc = c.get("strongest_location") or ""
         raise AssertionError(
             f"Unexpected persistent fault: {src} @ {loc} "
-            f"conf={conf:.3f} (threshold={confidence_threshold}). {msg}"
+            f"conf={conf:.3f} (threshold={confidence_threshold}). {msg}",
         )
 
 
@@ -326,7 +327,7 @@ def assert_no_localized_wheel(
             loc = c.get("strongest_location") or ""
             if loc:  # has a location → localized → false positive
                 raise AssertionError(
-                    f"Wheel/tire falsely localized to '{loc}' conf={conf:.3f}. {msg}"
+                    f"Wheel/tire falsely localized to '{loc}' conf={conf:.3f}. {msg}",
                 )
 
 
@@ -369,7 +370,7 @@ def assert_no_exact_corner_claim(
                 src = _cause_source(c)
                 raise AssertionError(
                     f"Exact corner claim '{loc}' from {src} conf={conf:.3f} "
-                    f"(threshold={confidence_threshold}). {msg}"
+                    f"(threshold={confidence_threshold}). {msg}",
                 )
 
 
@@ -420,5 +421,5 @@ def assert_max_wheel_confidence(
             loc = c.get("strongest_location") or ""
             raise AssertionError(
                 f"Wheel/tire confidence {conf:.3f} exceeds max {max_confidence:.2f} "
-                f"at '{loc}'. {msg}"
+                f"at '{loc}'. {msg}",
             )

@@ -85,15 +85,15 @@ class _PeakBinStats:
     __slots__ = (
         "bin_amps",
         "bin_floors",
-        "bin_speeds",
-        "bin_speed_amp_pairs",
         "bin_location_counts",
-        "bin_speed_bin_counts",
         "bin_phase_counts",
-        "total_speed_bin_counts",
-        "total_locations",
-        "total_location_sample_counts",
+        "bin_speed_amp_pairs",
+        "bin_speed_bin_counts",
+        "bin_speeds",
         "n_samples",
+        "total_location_sample_counts",
+        "total_locations",
+        "total_speed_bin_counts",
     )
 
     def __init__(self) -> None:
@@ -313,8 +313,7 @@ def _build_persistent_peak_findings(
                 loc_total = total_location_sample_counts.get(loc, 0)
                 if loc_total >= 3:
                     loc_presence = loc_hits / loc_total
-                    if loc_presence > presence_ratio:
-                        presence_ratio = loc_presence
+                    presence_ratio = max(presence_ratio, loc_presence)
 
         median_amp = percentile(sorted_amps, 0.50) if count >= 2 else sorted_amps[0]
         p95_amp = percentile(sorted_amps, 0.95) if count >= 2 else sorted_amps[-1]
@@ -398,7 +397,7 @@ def _build_persistent_peak_findings(
                 confidence = min(confidence, 0.40)
 
         peak_speed_kmh, speed_window_kmh, derived_speed_band = _speed_profile_from_points(
-            bin_speed_amp_pairs.get(bin_center, [])
+            bin_speed_amp_pairs.get(bin_center, []),
         )
         speed_band = derived_speed_band or "-"
 

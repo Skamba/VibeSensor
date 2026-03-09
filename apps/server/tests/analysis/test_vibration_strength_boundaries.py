@@ -62,7 +62,10 @@ class TestComputeVibrationStrengthBoundaries:
         ],
     )
     def test_degenerate_input_yields_finite_db(
-        self, label: str, freq_hz: list[float], amp: list[float]
+        self,
+        label: str,
+        freq_hz: list[float],
+        amp: list[float],
     ) -> None:
         """Degenerate / edge-case inputs must produce a finite dB value."""
         result = compute_vibration_strength_db(

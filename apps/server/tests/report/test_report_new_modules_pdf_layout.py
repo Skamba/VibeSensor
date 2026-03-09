@@ -48,7 +48,7 @@ def test_report_pdf_two_pages(tmp_path: Path) -> None:
         speed = 40 + idx
         wheel_hz = (speed * (1000.0 / 3600.0)) / 2.2
         records.append(
-            _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09)
+            _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)

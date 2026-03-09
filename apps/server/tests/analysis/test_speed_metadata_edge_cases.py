@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Speed metadata edge-case tests (≥50 direct-injection cases).
 
 Tests robustness of the analysis pipeline under various speed metadata
@@ -66,7 +65,7 @@ def _make_speed_scenario_samples(
                         top_peaks=peaks,
                         vibration_strength_db=fault_vib_db,
                         strength_floor_amp_g=noise_amp,
-                    )
+                    ),
                 )
             else:
                 samples.append(
@@ -80,7 +79,7 @@ def _make_speed_scenario_samples(
                         ],
                         vibration_strength_db=noise_vib_db,
                         strength_floor_amp_g=noise_amp,
-                    )
+                    ),
                 )
     return samples
 
@@ -234,7 +233,9 @@ _CORRUPTION_TYPES = [
 
 
 @pytest.mark.parametrize(
-    ("name", "speed_fn"), _CORRUPTION_TYPES, ids=[c[0] for c in _CORRUPTION_TYPES]
+    ("name", "speed_fn"),
+    _CORRUPTION_TYPES,
+    ids=[c[0] for c in _CORRUPTION_TYPES],
 )
 @pytest.mark.parametrize("fault_sensor", [SENSOR_FL, SENSOR_RR], ids=["FL", "RR"])
 def test_mixed_valid_invalid_speed(name: str, speed_fn: Any, fault_sensor: str) -> None:
@@ -299,7 +300,9 @@ _STEP_CONFIGS = [
 
 
 @pytest.mark.parametrize(
-    ("name", "before", "after"), _STEP_CONFIGS, ids=[c[0] for c in _STEP_CONFIGS]
+    ("name", "before", "after"),
+    _STEP_CONFIGS,
+    ids=[c[0] for c in _STEP_CONFIGS],
 )
 def test_speed_step_change(name: str, before: float, after: float) -> None:
     """Sudden speed step change should not crash or produce NaN."""

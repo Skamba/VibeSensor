@@ -134,7 +134,7 @@ def prepare_run_data(
     speed_breakdown_skipped_reason: I18nRef | None = None
     if not speed_sufficient:
         speed_breakdown_skipped_reason = _i18n_ref(
-            "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
+            "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND",
         )
 
     return PreparedRunData(

@@ -339,7 +339,7 @@ def test_sample_top_peaks_filters_sub_min_analysis_freq() -> None:
             {"hz": 4.9, "amp": 0.08},  # below MIN_ANALYSIS_FREQ_HZ
             {"hz": 5.0, "amp": 0.07},  # at boundary — should pass
             {"hz": 15.0, "amp": 0.05},  # well above — should pass
-        ]
+        ],
     }
     peaks = _sample_top_peaks(sample)
     assert len(peaks) == 2
@@ -377,7 +377,7 @@ def test_locations_connected_throughout_requires_mid_run_continuity() -> None:
     samples = []
     for t_s in (0.0, 1.0, 2.0, 8.0, 9.0, 10.0):
         samples.append({"t_s": t_s, "client_name": "Front Left"})
-    for t_s in range(0, 11):
+    for t_s in range(11):
         samples.append({"t_s": float(t_s), "client_name": "Rear Right"})
     connected = _locations_connected_throughout_run(samples)
     assert connected == {"Rear Right"}
@@ -397,7 +397,7 @@ def test_locations_connected_throughout_deduplicates_timestamps() -> None:
     for _ in range(10):
         samples.append({"t_s": 0.0, "client_name": "Front Left"})
         samples.append({"t_s": 10.0, "client_name": "Front Left"})
-    for t_s in range(0, 11):
+    for t_s in range(11):
         samples.append({"t_s": float(t_s), "client_name": "Rear Right"})
     connected = _locations_connected_throughout_run(samples)
     assert connected == {"Rear Right"}

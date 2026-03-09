@@ -67,7 +67,7 @@ def test_build_findings_orders_informational_transients_after_diagnostics(
                 "severity": "diagnostic",
                 "suspected_source": "wheel/tire",
                 "confidence_0_to_1": 0.30,
-            }
+            },
         ]
 
     def _fake_persistent_peaks(**_kwargs) -> list[dict[str, object]]:
@@ -78,7 +78,7 @@ def test_build_findings_orders_informational_transients_after_diagnostics(
                 "suspected_source": "transient_impact",
                 "peak_classification": "transient",
                 "confidence_0_to_1": 0.22,
-            }
+            },
         ]
 
     monkeypatch.setattr(findings_builder_module, "_build_order_findings", _fake_order_findings)
@@ -120,9 +120,9 @@ def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
                 **_make_sample(float(idx), speed_kmh, 0.03 if high_speed_band else 0.01),
                 "strength_floor_amp_g": 0.003,
                 "top_peaks": [
-                    {"hz": wh, "amp": 0.03} if high_speed_band else {"hz": wh + 7.0, "amp": 0.01}
+                    {"hz": wh, "amp": 0.03} if high_speed_band else {"hz": wh + 7.0, "amp": 0.01},
                 ],
-            }
+            },
         )
 
     findings = build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
@@ -154,7 +154,7 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
                 "strength_floor_amp_g": 1000.0,
                 "top_peaks": [{"hz": 5.5 if matched else 20.0, "amp": 0.001}],
                 "location": "front_left",
-            }
+            },
         )
 
     findings = call_build_order_findings(samples)
@@ -177,7 +177,7 @@ def test_build_findings_order_exposes_structured_speed_profile() -> None:
                 **_make_sample(float(idx), speed_kmh, amp),
                 "strength_floor_amp_g": 0.002,
                 "top_peaks": [{"hz": wh, "amp": amp}],
-            }
+            },
         )
 
     findings = build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
@@ -211,7 +211,7 @@ def test_build_findings_detects_driveline_2x_order() -> None:
                 **_make_sample(float(idx), speed_kmh, 0.04),
                 "strength_floor_amp_g": 0.002,
                 "top_peaks": [{"hz": wh * 3.08 * 2.0, "amp": 0.04}],
-            }
+            },
         )
 
     findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
@@ -244,7 +244,7 @@ def test_build_findings_persistent_peak_exposes_structured_speed_profile() -> No
                 **_make_sample(float(idx), speed_kmh, amp),
                 "strength_floor_amp_g": 0.002,
                 "top_peaks": [{"hz": 73.0, "amp": max(0.004, amp)}],
-            }
+            },
         )
 
     findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
@@ -280,7 +280,7 @@ def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> No
                 **_make_sample(float(idx), speed_val, amp),
                 "strength_floor_amp_g": 0.003,
                 "top_peaks": [{"hz": wh, "amp": amp}, {"hz": 43.0, "amp": amp}],
-            }
+            },
         )
 
     findings = build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
@@ -358,9 +358,9 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
                 **_make_sample(float(idx), speed_kmh, 0.03 if high_speed_band else 0.01),
                 "strength_floor_amp_g": 0.003,
                 "top_peaks": [
-                    {"hz": wh, "amp": 0.03} if high_speed_band else {"hz": wh + 7.0, "amp": 0.01}
+                    {"hz": wh, "amp": 0.03} if high_speed_band else {"hz": wh + 7.0, "amp": 0.01},
                 ],
-            }
+            },
         )
 
     findings = build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")

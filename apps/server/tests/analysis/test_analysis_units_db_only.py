@@ -9,7 +9,7 @@ from _paths import SERVER_ROOT
 from vibesensor.analysis import summarize_run_data
 
 _GUARDED_RAW_ROOTS = frozenset(
-    {"samples", "metadata", "analysis_metadata", "_report_template_data"}
+    {"samples", "metadata", "analysis_metadata", "_report_template_data"},
 )
 
 
@@ -98,7 +98,8 @@ def test_post_analysis_summary_has_no_g_unit_strings(_summary: dict[str, Any]) -
 
 def test_analysis_modules_use_canonical_db_helper() -> None:
     """Analysis modules must import vibration_strength_db_scalar as canonical_vibration_db
-    and call it via the alias, not directly as vibration_strength_db_scalar()."""
+    and call it via the alias, not directly as vibration_strength_db_scalar().
+    """
     analysis_root = SERVER_ROOT / "vibesensor" / "analysis"
 
     direct_users = [

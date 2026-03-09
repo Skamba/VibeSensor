@@ -43,7 +43,7 @@ def is_actionable_cause(cause: TopCause) -> bool:
     """Whether a cause is actionable enough to prefer in report rendering."""
     source = str(cause.get("source") or cause.get("suspected_source") or "").strip().lower()
     return source not in _PLACEHOLDER_SOURCES or is_actionable_location(
-        cause.get("strongest_location")
+        cause.get("strongest_location"),
     )
 
 

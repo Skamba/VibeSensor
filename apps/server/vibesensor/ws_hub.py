@@ -22,7 +22,7 @@ from .payload_types import LiveWsPayload
 
 LOGGER = logging.getLogger(__name__)
 
-__all__ = ["WebSocketHub", "WSConnection"]
+__all__ = ["WSConnection", "WebSocketHub"]
 
 
 def _ws_debug_enabled() -> bool:
@@ -135,7 +135,7 @@ class WebSocketHub:
             return bool(
                 current is not None
                 and not current.closing
-                and current.connection_id == conn.connection_id
+                and current.connection_id == conn.connection_id,
             )
 
     async def _mark_snapshot_closing(self, conn: _WSConnectionSnapshot) -> bool:
@@ -278,7 +278,7 @@ class WebSocketHub:
                     debug_info=debug_info,
                 )
                 for conn in conns
-            )
+            ),
         )
         for conn in dead_ws:
             if conn is not None:

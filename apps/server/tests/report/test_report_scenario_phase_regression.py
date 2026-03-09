@@ -45,7 +45,7 @@ class TestPhaseSegmentation:
                 (5, 30.0, 50.0),
                 (3, 0.0, 0.0),
                 (5, 30.0, 50.0),
-            ]
+            ],
         )
         per_sample, _segments = segment_run_phases(samples)
         idle_count = sum(1 for phase in per_sample if phase == DrivingPhase.IDLE)
@@ -156,7 +156,7 @@ class TestSensorIntensityPhaseContext:
                     "speed_kmh": 0.0,
                     "vibration_strength_db": 4.0,
                     "location_key": "front-left",
-                }
+                },
             )
         for idx in range(5, 15):
             samples.append(
@@ -165,7 +165,7 @@ class TestSensorIntensityPhaseContext:
                     "speed_kmh": 60.0,
                     "vibration_strength_db": 22.0,
                     "location_key": "front-left",
-                }
+                },
             )
 
         per_sample_phases, _ = segment_run_phases(samples)
@@ -181,7 +181,7 @@ class TestSensorIntensityPhaseContext:
 
     def test_phase_intensity_absent_without_phases(self) -> None:
         rows = _sensor_intensity_by_location(
-            [{"t_s": 0.0, "speed_kmh": 60.0, "vibration_strength_db": 22.0, "location_key": "fl"}]
+            [{"t_s": 0.0, "speed_kmh": 60.0, "vibration_strength_db": 22.0, "location_key": "fl"}],
         )
         for row in rows:
             assert row.get("phase_intensity") is None

@@ -352,7 +352,7 @@ def test_store_invalid_persisted_active_car_id_clears_selection(tmp_path: Path) 
         {
             "cars": [{"id": "car-1", "name": "Only", "type": "sedan", "aspects": {}}],
             "activeCarId": "missing-car",
-        }
+        },
     )
     store = SettingsStore(db=db)
     snap = store.snapshot()

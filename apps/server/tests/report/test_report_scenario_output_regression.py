@@ -42,7 +42,7 @@ class TestMultiSensorLocalization:
                     client_id="sensor-A",
                     top_peaks=[{"hz": wheel_hz, "amp": 0.06}],
                     strength_floor_amp_g=0.003,
-                )
+                ),
             )
             samples.append(
                 make_sample(
@@ -53,7 +53,7 @@ class TestMultiSensorLocalization:
                     client_id="sensor-B",
                     top_peaks=[{"hz": wheel_hz, "amp": 0.02}],
                     strength_floor_amp_g=0.003,
-                )
+                ),
             )
 
         summary = summarize_run_data(standard_metadata(), samples, include_samples=False)

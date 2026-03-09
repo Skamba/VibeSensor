@@ -175,7 +175,7 @@ class UpdateJobStatus:
                         phase=str(issue_raw.get("phase", "")),
                         message=str(issue_raw.get("message", "")),
                         detail=str(issue_raw.get("detail", "")),
-                    )
+                    ),
                 )
         log_tail_raw = data.get("log_tail")
         log_tail = (

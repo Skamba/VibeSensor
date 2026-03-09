@@ -274,7 +274,9 @@ async def test_history_insights_analyzing_returns_202_json_response() -> None:
     from fastapi.responses import JSONResponse
 
     router = make_status_router(
-        status="analyzing", analysis={"status": "analyzing"}, include_error_message=False
+        status="analyzing",
+        analysis={"status": "analyzing"},
+        include_error_message=False,
     )
     endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
     result = await endpoint("run-1")

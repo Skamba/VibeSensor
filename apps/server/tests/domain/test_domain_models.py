@@ -1,5 +1,6 @@
 """Tests for domain_models module: CarConfig, SensorConfig, SpeedSourceConfig,
-RunMetadata, and SensorFrame parsing/serialization."""
+RunMetadata, and SensorFrame parsing/serialization.
+"""
 
 from __future__ import annotations
 
@@ -162,7 +163,7 @@ class TestSpeedSourceConfig:
                 "manualSpeedKph": 80.0,
                 "staleTimeoutS": 5.0,
                 "fallbackMode": "manual",
-            }
+            },
         )
         assert ssc.speed_source == "manual"
         assert ssc.manual_speed_kph == 80.0
@@ -248,7 +249,7 @@ class TestRunMetadata:
                 "run_id": "r3",
                 "raw_sample_rate_hz": float("nan"),
                 "feature_interval_s": float("inf"),
-            }
+            },
         )
         assert rm.raw_sample_rate_hz is None
         assert rm.feature_interval_s is None
@@ -318,7 +319,7 @@ class TestSensorFrame:
             self._minimal_record(
                 speed_kmh=float("nan"),
                 accel_x_g=float("inf"),
-            )
+            ),
         )
         assert sf.speed_kmh is None
         assert sf.accel_x_g is None
@@ -343,7 +344,7 @@ class TestSensorFrame:
                 {"hz": -1.0, "amp": 0.03},  # negative hz
                 {"hz": 30.0, "amp": None},  # None amp
                 {"hz": 0.0, "amp": 0.01},  # zero hz
-            ]
+            ],
         )
         sf = SensorFrame.from_dict(record)
         assert len(sf.top_peaks) == 1
@@ -361,7 +362,7 @@ class TestSensorFrame:
                 top_peaks_x=axis_peaks,
                 top_peaks_y=[{"hz": 0.0, "amp": 0.01}, {"hz": 5.0, "amp": 0.02}],
                 top_peaks_z=[{"hz": 7.0, "amp": None}, {"hz": 6.0, "amp": 0.03}],
-            )
+            ),
         )
         assert len(sf.top_peaks_x) == 3
         assert sf.top_peaks_y == [{"hz": 5.0, "amp": 0.02}]
@@ -373,7 +374,7 @@ class TestSensorFrame:
                 top_peaks_x=[{"hz": 24.0, "amp": 0.04}],
                 top_peaks_y=[{"hz": 25.0, "amp": 0.03}],
                 top_peaks_z=[{"hz": 26.0, "amp": 0.02}],
-            )
+            ),
         )
         d = sf.to_dict()
         sf2 = SensorFrame.from_dict(d)

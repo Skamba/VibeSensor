@@ -118,7 +118,7 @@ def test_build_findings_per_phase_confidence_flows_through_pipeline() -> None:
                 "strength_floor_amp_g": 0.002,
                 "top_peaks": [{"hz": wh, "amp": 0.05}],
                 "location": "front_left",
-            }
+            },
         )
 
     findings = (

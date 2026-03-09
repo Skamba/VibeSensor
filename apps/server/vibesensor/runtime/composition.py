@@ -11,10 +11,10 @@ from ._state import RuntimeState
 from .builders import build_lifecycle_manager
 from .lifecycle import LifecycleManager
 from .subsystems import (
-    RuntimeDiagnosticsSubsystem,
     RuntimeIngressSubsystem,
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
+    RuntimeRecordingSubsystem,
     RuntimeRouteServices,
     RuntimeSettingsSubsystem,
     RuntimeUpdateSubsystem,
@@ -27,7 +27,7 @@ def build_runtime_state(
     config: AppConfig,
     ingress: RuntimeIngressSubsystem,
     settings: RuntimeSettingsSubsystem,
-    diagnostics: RuntimeDiagnosticsSubsystem,
+    recording: RuntimeRecordingSubsystem,
     persistence: RuntimePersistenceSubsystem,
     updates: RuntimeUpdateSubsystem,
     processing: RuntimeProcessingSubsystem,
@@ -39,7 +39,7 @@ def build_runtime_state(
         config=config,
         ingress=ingress,
         settings=settings,
-        diagnostics=diagnostics,
+        recording=recording,
         persistence=persistence,
         updates=updates,
         processing=processing,
@@ -49,7 +49,7 @@ def build_runtime_state(
         config=config,
         ingress=ingress,
         settings=settings,
-        diagnostics=diagnostics,
+        recording=recording,
         persistence=persistence,
         updates=updates,
         processing=processing,

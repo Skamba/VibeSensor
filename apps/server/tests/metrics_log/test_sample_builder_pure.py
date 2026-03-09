@@ -66,8 +66,8 @@ class TestExtractStrengthData:
                     {"hz": 100.0, "amp": 0.0},  # should be filtered
                     {"hz": 200.0, "amp": -1.0},  # should be filtered
                     {"hz": 300.0, "amp": 0.5},  # should be kept
-                ]
-            }
+                ],
+            },
         }
         _, _, _, _, _, peaks = extract_strength_data(metrics)
 
@@ -80,8 +80,8 @@ class TestExtractStrengthData:
             "combined": {
                 "strength_metrics": {
                     "peak_amp_g": 0.88,
-                }
-            }
+                },
+            },
         }
         sm, _, _, peak_g, _, _ = extract_strength_data(metrics)
 

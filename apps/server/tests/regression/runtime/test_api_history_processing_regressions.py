@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Runtime regressions spanning API, history, and processing boundaries."""
@@ -117,7 +117,9 @@ class TestProcessingZeroSampleRate:
         assert result.get("waveform") == {} or result.get("metrics") == {}
 
     @pytest.mark.parametrize(
-        ("sr", "expect_empty"), [(0, True), (800, False)], ids=["zero", "normal"]
+        ("sr", "expect_empty"),
+        [(0, True), (800, False)],
+        ids=["zero", "normal"],
     )
     def test_fft_params(self, sr: int, *, expect_empty: bool) -> None:
         proc = self._make_processor(800)

@@ -54,5 +54,5 @@ def test_export_schema_matches_committed_schema(schema_text: str) -> None:
 def test_export_schema_contains_typed_history_list_entry(schema_dict: dict[str, Any]) -> None:
     history_response = schema_dict["components"]["schemas"]["HistoryListResponse"]
     assert history_response["properties"]["runs"]["items"] == {
-        "$ref": "#/components/schemas/HistoryListEntryResponse"
+        "$ref": "#/components/schemas/HistoryListEntryResponse",
     }

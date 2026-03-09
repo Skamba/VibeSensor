@@ -168,7 +168,7 @@ def top_peaks(
                 "snr_ratio": (
                     (raw_amp + STRENGTH_EPSILON_MIN_G) / (floor_amp + STRENGTH_EPSILON_MIN_G)
                 ),
-            }
+            },
         )
     return peaks
 
@@ -219,7 +219,7 @@ def compute_fft_spectrum(
     fft_n = fft_window.shape[0]
     if fft_block.shape[1] != fft_n:
         raise ValueError(
-            f"fft_block column count {fft_block.shape[1]} does not match fft_window length {fft_n}"
+            f"fft_block column count {fft_block.shape[1]} does not match fft_window length {fft_n}",
         )
     if spike_filter_enabled:
         fft_block = medfilt3(fft_block)

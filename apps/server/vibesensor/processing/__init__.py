@@ -18,14 +18,14 @@ All public symbols are re-exported here so that existing
 continue to work without changes.
 """
 
-from .buffers import ClientBuffer  # noqa: F401
+from .buffers import ClientBuffer
 from .processor import (
-    MAX_CLIENT_SAMPLE_RATE_HZ,  # noqa: F401
-    SignalProcessor,  # noqa: F401
+    MAX_CLIENT_SAMPLE_RATE_HZ,
+    SignalProcessor,
 )
 
 __all__ = [
-    "ClientBuffer",
     "MAX_CLIENT_SAMPLE_RATE_HZ",
+    "ClientBuffer",
     "SignalProcessor",
 ]

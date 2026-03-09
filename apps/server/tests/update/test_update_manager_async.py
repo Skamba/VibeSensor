@@ -258,7 +258,7 @@ class TestUpdateManagerAsync:
             for call in runner.calls
         )
         assert any(
-            "Could not verify free disk space" == issue.message for issue in manager.status.issues
+            issue.message == "Could not verify free disk space" for issue in manager.status.issues
         )
 
     async def test_sha256_mismatch_aborts_install(self, tmp_path) -> None:
@@ -324,7 +324,7 @@ class TestUpdateManagerAsync:
         manager, _runner, _ = setup_update_env(tmp_path)
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
             mock_fetcher.return_value.check_update_available.side_effect = RuntimeError(
-                "API rate limit exceeded"
+                "API rate limit exceeded",
             )
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed

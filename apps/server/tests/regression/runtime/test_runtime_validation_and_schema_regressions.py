@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Runtime validation and schema-recovery regressions.
@@ -112,7 +112,7 @@ class TestConfidenceNanGuard:
         confidence = _safe_confidence(raw)
         assert abs(confidence - expected) < 1e-6
         # Verify formatting doesn't crash
-        f"({confidence * 100.0:.0f}%)"  # noqa: B018
+        f"({confidence * 100.0:.0f}%)"
 
 
 # ------------------------------------------------------------------
@@ -185,7 +185,8 @@ class TestSettingsStoreRollbackSafety:
 
     def test_rollback_preserves_dict_identity(self) -> None:
         """After a failed persist, the car.aspects dict object
-        should still be the same object (not replaced)."""
+        should still be the same object (not replaced).
+        """
         store = SettingsStore(db=None)
         car_data = store.add_car({"name": "TestCar", "type": "sedan"})
         car_id = car_data["cars"][0]["id"]

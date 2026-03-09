@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Runtime quality-pass regressions (issues 20–24).
@@ -32,7 +32,11 @@ def _make_history_db(tmp_path: Path, name: str = "history.db") -> HistoryDB:
 
 
 def _seeded_history_db(
-    tmp_path: Path, run_id: str, n_samples: int, *, name: str = "history.db"
+    tmp_path: Path,
+    run_id: str,
+    n_samples: int,
+    *,
+    name: str = "history.db",
 ) -> HistoryDB:
     """Create a HistoryDB with one run containing *n_samples* rows."""
     db = _make_history_db(tmp_path, name)
@@ -56,7 +60,8 @@ def _make_tone_chunk(freq_hz: float, n_samples: int, sample_rate_hz: int) -> np.
 
 def test_ring_buffer_wraparound_returns_correct_latest_data() -> None:
     """Ingest more samples than the buffer capacity and verify the
-    latest window returns the *most recent* data, not early data."""
+    latest window returns the *most recent* data, not early data.
+    """
     sample_rate_hz = 800
     processor = SignalProcessor(
         sample_rate_hz=sample_rate_hz,
@@ -218,7 +223,7 @@ CREATE TABLE samples (
     sample_json TEXT NOT NULL,
     FOREIGN KEY (run_id) REFERENCES runs(run_id)
 );
-"""
+""",
     )
     conn.commit()
     conn.close()

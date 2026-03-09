@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Confidence and scoring regressions:
@@ -26,7 +26,8 @@ from vibesensor.analysis.findings.order_findings import (
 
 class TestRankingScoreErrorDenominator:
     """The ranking_score error term must use the same compliance-adjusted
-    denominator as the confidence formula (0.25 * compliance)."""
+    denominator as the confidence formula (0.25 * compliance).
+    """
 
     def test_no_hardcoded_denominator_in_ranking(self) -> None:
         """Source must not hardcode 0.5 denominator for ranking error.
@@ -53,7 +54,8 @@ class TestRankingScoreErrorDenominator:
 
 class TestSuppressEngineAliasesFilterBeforeSlice:
     """Suppressed engine findings must not consume top-5 slots, preventing
-    valid findings at position 6+ from being returned."""
+    valid findings at position 6+ from being returned.
+    """
 
     def test_valid_finding_not_lost_after_suppression(self) -> None:
         # Build 7 findings: 2 wheel, 3 engine (will be suppressed below
@@ -156,7 +158,8 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
 
 class TestSingleSensorNotTriplePenalised:
     """Single-sensor findings must not be triple-penalised by stacking
-    localization_confidence + weak_spatial + sensor_count penalties."""
+    localization_confidence + weak_spatial + sensor_count penalties.
+    """
 
     def test_single_sensor_reasonable_confidence(self) -> None:
         # Good evidence on single sensor: high match rate, low error,
@@ -188,7 +191,8 @@ class TestSingleSensorNotTriplePenalised:
 
     def test_sensor_scale_not_applied_when_localization_low(self) -> None:
         """When localization_confidence is very low (already heavily penalised),
-        the explicit sensor-count scale should NOT stack on top."""
+        the explicit sensor-count scale should NOT stack on top.
+        """
         # Call twice: once with n_connected=1, once with n_connected=3
         # (n_connected=3 avoids sensor scale entirely).
         kwargs = {
@@ -227,7 +231,8 @@ class TestPersistentPeakNegligibleCapAligned:
     """The negligible-strength cap for persistent peaks must be 0.40,
     matching the order-finding cap, so that a weak order finding at
     ~0.37 confidence always suppresses persistent peaks at the same
-    frequency."""
+    frequency.
+    """
 
     def test_persistent_peak_cap_value_in_source(self) -> None:
         src = inspect.getsource(fmod_persistent._build_persistent_peak_findings)

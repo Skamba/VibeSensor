@@ -119,6 +119,7 @@ def analysis_time_range(
     samples_since_t0:
         Number of samples ingested since ``last_t0_us`` was recorded; used to
         advance the end-of-window pointer to the newest sample.
+
     """
     if count == 0 or last_ingest_mono_s <= 0:
         return None

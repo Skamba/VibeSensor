@@ -37,7 +37,7 @@ def test_valid_fallback_modes_is_frozenset() -> None:
 
 
 def test_resolve_speed_ignores_bool_override() -> None:
-    """bool True/False must not be treated as a valid speed override."""
+    """Bool True/False must not be treated as a valid speed override."""
     monitor = GPSSpeedMonitor(gps_enabled=False)
     monitor.manual_source_selected = True
     # Bypass the typed setter to test the guard directly

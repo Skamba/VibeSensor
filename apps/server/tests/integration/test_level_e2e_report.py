@@ -89,7 +89,7 @@ def _build_full_ingestion_scenario() -> tuple[dict[str, Any], list[dict[str, Any
             start_t_s=10,
             noise_amp=0.004,
             vib_db=10.0,
-        )
+        ),
     )
 
     # Phase 3: Cruise at 80 km/h with FL fault (25-70s)
@@ -103,7 +103,7 @@ def _build_full_ingestion_scenario() -> tuple[dict[str, Any], list[dict[str, Any
             fault_amp=0.07,
             fault_vib_db=28.0,
             noise_vib_db=8.0,
-        )
+        ),
     )
 
     # Phase 3b: Transient on FR at 45-47s
@@ -115,7 +115,7 @@ def _build_full_ingestion_scenario() -> tuple[dict[str, Any], list[dict[str, Any
             start_t_s=45,
             spike_amp=0.20,
             spike_vib_db=38.0,
-        )
+        ),
     )
 
     # Phase 4: Deceleration (70-85s)
@@ -128,7 +128,7 @@ def _build_full_ingestion_scenario() -> tuple[dict[str, Any], list[dict[str, Any
             start_t_s=70,
             noise_amp=0.004,
             vib_db=10.0,
-        )
+        ),
     )
 
     # Phase 5: Low-speed cruise with FL fault (85-100s)
@@ -142,7 +142,7 @@ def _build_full_ingestion_scenario() -> tuple[dict[str, Any], list[dict[str, Any
             fault_amp=0.05,
             fault_vib_db=22.0,
             noise_vib_db=8.0,
-        )
+        ),
     )
 
     # Phase 5b: Transient on RR at 95-97s
@@ -154,7 +154,7 @@ def _build_full_ingestion_scenario() -> tuple[dict[str, Any], list[dict[str, Any
             start_t_s=95,
             spike_amp=0.15,
             spike_vib_db=35.0,
-        )
+        ),
     )
 
     # Phase 6: Final idle (100-120s)
@@ -289,7 +289,7 @@ def _build_20s_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
             speed_end=80,
             n_samples=2,
             start_t_s=3,
-        )
+        ),
     )
     samples.extend(
         make_fault_samples(
@@ -301,7 +301,7 @@ def _build_20s_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
             fault_amp=0.07,
             fault_vib_db=28.0,
             noise_vib_db=8.0,
-        )
+        ),
     )
     samples.extend(
         make_transient_samples(
@@ -311,7 +311,7 @@ def _build_20s_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
             start_t_s=10,
             spike_amp=0.18,
             spike_vib_db=36.0,
-        )
+        ),
     )
     samples.extend(make_idle_samples(sensors=sensors, n_samples=3, start_t_s=17))
 

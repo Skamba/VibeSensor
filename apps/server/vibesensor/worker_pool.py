@@ -92,9 +92,9 @@ class WorkerPool:
         "_queued_tasks",
         "_rejected_tasks",
         "_running_tasks",
-        "_total_tasks",
         "_total_run_s",
         "_total_submit_wait_s",
+        "_total_tasks",
     )
 
     def __init__(
@@ -182,6 +182,7 @@ class WorkerPool:
             Optional per-call capacity wait timeout. ``None`` uses the pool
             default from ``submit_timeout_s``. If the timeout expires before a
             slot becomes available, :class:`TimeoutError` is raised.
+
         """
         effective_timeout = self._default_submit_timeout_s
         if timeout_s is not None:
@@ -214,7 +215,7 @@ class WorkerPool:
             raise RuntimeError("WorkerPool is shut down") from exc
 
         future.add_done_callback(
-            lambda _: self._release_completed_task(started=bool(state["started"]))
+            lambda _: self._release_completed_task(started=bool(state["started"])),
         )
         return future
 
@@ -240,6 +241,7 @@ class WorkerPool:
             If the pool has already been shut down.
         TimeoutError
             If waiting for capacity exceeds the effective timeout.
+
         """
         if not items:
             return {}
@@ -287,6 +289,7 @@ class WorkerPool:
 
         Blocked submitters are woken immediately and will raise
         :class:`RuntimeError` instead of waiting for capacity.
+
         """
         with self._condition:
             self._alive = False

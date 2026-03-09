@@ -166,7 +166,7 @@ _ANALYSIS_ONLY_NAMES: frozenset[str] = frozenset(
         "test_plan.py",
         "pattern_parts.py",
         "report_mapping_pipeline.py",
-    }
+    },
 )
 
 

@@ -101,9 +101,9 @@ def live_server(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
                     {
                         "id": "d05a00000099",
                         "name": "offline-node",
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         ),
         encoding="utf-8",
     )
@@ -201,7 +201,7 @@ def _activate_settings_subtab(driver: webdriver.Remote, tab_id: str) -> None:
                 "const el=document.getElementById(arguments[0]); return el ? el.hidden : true;",
                 tab_id,
             )
-        )
+        ),
     )
 
 
@@ -281,31 +281,32 @@ def test_all_tabs_render_localized_texts(
 
     nav_texts = driver.execute_script(
         "const nodes = Array.from(document.querySelectorAll('.menu-btn span'));"
-        "return nodes.map((el) => el.textContent.trim());"
+        "return nodes.map((el) => el.textContent.trim());",
     )
     assert nav_texts == labels["nav"]
 
     _activate_tab(driver, "tab-dashboard", "dashboardView")
+    expected = labels["start_recording"]
     wait.until(
-        lambda d: d.find_element(By.ID, "startLoggingBtn").text.strip() == labels["start_recording"]
+        lambda d: d.find_element(By.ID, "startLoggingBtn").text.strip() == expected,
     )
 
     _activate_tab(driver, "tab-history", "historyView")
     wait.until(
         lambda d: (
             d.find_element(By.ID, "refreshHistoryBtn").text.strip() == labels["refresh_history"]
-        )
+        ),
     )
 
     _activate_tab(driver, "tab-settings", "settingsView")
     _activate_settings_subtab(driver, "analysisTab")
     wait.until(
-        lambda d: d.find_element(By.ID, "saveAnalysisBtn").text.strip() == labels["save_analysis"]
+        lambda d: d.find_element(By.ID, "saveAnalysisBtn").text.strip() == labels["save_analysis"],
     )
     _activate_settings_subtab(driver, "sensorsTab")
     headers = driver.execute_script(
         "const headers = Array.from(document.querySelectorAll('.clients-table thead th'));"
-        "return headers.map((el) => el.textContent.trim());"
+        "return headers.map((el) => el.textContent.trim());",
     )
     # The location column label must localize correctly in both languages.
     assert labels["settings_location_header"] in headers
@@ -371,7 +372,7 @@ def test_dutch_logs_uses_domain_terms_not_literal_calque(
     headers = driver.execute_script(
         "const ths = Array.from("
         "document.querySelectorAll('.history-table thead th'));"
-        "return ths.map((th) => th.textContent.trim());"
+        "return ths.map((th) => th.textContent.trim());",
     )
     assert "Meetrun" in headers
 
@@ -400,7 +401,7 @@ def test_offline_client_mac_set_location_and_remove(
         lambda d: d.execute_script(
             "return !!document.querySelector(arguments[0]);",
             row_selector,
-        )
+        ),
     )
 
     mac_text = driver.execute_script(
@@ -423,7 +424,7 @@ def test_offline_client_mac_set_location_and_remove(
                 row_selector,
             )
             == "Trunk"
-        )
+        ),
     )
 
     driver.execute_script("window.confirm = () => true;")
@@ -435,11 +436,11 @@ def test_offline_client_mac_set_location_and_remove(
             "btn.click();"
             "return true;",
             remove_selector,
-        )
+        ),
     )
     wait.until(
         lambda d: d.execute_script(
             "return document.querySelector(arguments[0]) === null;",
             row_selector,
-        )
+        ),
     )

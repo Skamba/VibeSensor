@@ -85,7 +85,7 @@ class TestLiveWsPayloadModel:
                     "aaa": SpectrumSeries(
                         combined_spectrum_amp_g=[0.01, 0.02, 0.03],
                         strength_metrics={"vibration_strength_db": 5.0},
-                    )
+                    ),
                 },
             ),
         )
@@ -182,7 +182,7 @@ class TestMultiSpectrumFreqDedup:
             {
                 "aaa": {"freq": freq, "amp": amp},
                 "bbb": {"freq": freq, "amp": amp},
-            }
+            },
         )
         result = proc.multi_spectrum_payload(["aaa", "bbb"])
         assert result["freq"] == pytest.approx(freq, abs=1e-4)
@@ -198,7 +198,7 @@ class TestMultiSpectrumFreqDedup:
             {
                 "aaa": {"freq": [10.0, 20.0, 30.0], "amp": [0.01, 0.02, 0.03]},
                 "bbb": {"freq": [15.0, 25.0, 35.0], "amp": [0.01, 0.02, 0.03]},
-            }
+            },
         )
         result = proc.multi_spectrum_payload(["aaa", "bbb"])
         # Shared freq should be empty on mismatch
@@ -216,7 +216,7 @@ class TestMultiSpectrumFreqDedup:
         proc = self._make_processor_with_clients(
             {
                 "aaa": {"freq": [10.0, 20.0], "amp": [0.01, 0.02]},
-            }
+            },
         )
         result = proc.multi_spectrum_payload(["aaa"])
         assert result["freq"] == pytest.approx([10.0, 20.0], abs=1e-4)
@@ -238,7 +238,7 @@ class TestMultiSpectrumFreqDedup:
                 "aaa": {"freq": freq, "amp": amp},
                 "bbb": {"freq": freq, "amp": amp},
                 "ccc": {"freq": freq, "amp": amp},
-            }
+            },
         )
         result = proc.multi_spectrum_payload(["aaa", "bbb", "ccc"])
         serialized = json.dumps(result)

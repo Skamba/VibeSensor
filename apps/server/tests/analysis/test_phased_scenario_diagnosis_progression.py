@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 from __future__ import annotations
 
 from typing import Any
@@ -30,7 +29,7 @@ class TestScenario1IdleToSpeedUp:
                         client_name=sensor,
                         top_peaks=[{"hz": 13.0, "amp": 0.003}],
                         vibration_strength_db=5.0,
-                    )
+                    ),
                 )
         ramp_samples = build_speed_sweep_fault_samples(
             speed_start_kmh=20.0,
@@ -54,7 +53,9 @@ class TestScenario1IdleToSpeedUp:
             fault_vib_db=24.0,
         )
         summary = summarize_run_data(
-            meta, idle_samples + ramp_samples + fault_samples, include_samples=False
+            meta,
+            idle_samples + ramp_samples + fault_samples,
+            include_samples=False,
         )
         assert_finding_location(summary, "front-right", "Scenario 1")
 
@@ -105,7 +106,7 @@ class TestScenario2StopGoIntermittent:
                         client_name=sensor,
                         top_peaks=[{"hz": 13.0, "amp": 0.003}],
                         vibration_strength_db=5.0,
-                    )
+                    ),
                 )
             t += 1.0
         for _ in range(10):
@@ -117,7 +118,7 @@ class TestScenario2StopGoIntermittent:
                         client_name=sensor,
                         top_peaks=[{"hz": 87.3, "amp": 0.004}],
                         vibration_strength_db=8.0,
-                    )
+                    ),
                 )
             t += 1.0
         samples.extend(
@@ -129,7 +130,7 @@ class TestScenario2StopGoIntermittent:
                 start_t_s=t,
                 fault_amp=0.05,
                 fault_vib_db=22.0,
-            )
+            ),
         )
         t += 15.0
         for _ in range(8):
@@ -141,7 +142,7 @@ class TestScenario2StopGoIntermittent:
                         client_name=sensor,
                         top_peaks=[{"hz": 87.3, "amp": 0.003}],
                         vibration_strength_db=6.0,
-                    )
+                    ),
                 )
             t += 1.0
         samples.extend(
@@ -153,10 +154,12 @@ class TestScenario2StopGoIntermittent:
                 start_t_s=t,
                 fault_amp=0.055,
                 fault_vib_db=23.0,
-            )
+            ),
         )
         assert_finding_location(
-            summarize_run_data(meta, samples, include_samples=False), "rear-left", "Scenario 2"
+            summarize_run_data(meta, samples, include_samples=False),
+            "rear-left",
+            "Scenario 2",
         )
 
     def test_system_is_wheel_not_engine(self) -> None:
@@ -196,10 +199,12 @@ class TestScenario2StopGoIntermittent:
         speed_band = str(
             extract_top_finding(
                 summarize_run_data(
-                    standard_metadata(), samples_50 + samples_60, include_samples=False
-                )
+                    standard_metadata(),
+                    samples_50 + samples_60,
+                    include_samples=False,
+                ),
             ).get("strongest_speed_band")
-            or ""
+            or "",
         )
         band_low = 0
         for part in speed_band.replace("km/h", "").split("-"):
@@ -301,7 +306,7 @@ class TestScenario4CoastDownMidRange:
                     top_peaks=fault_peaks,
                     vibration_strength_db=fault_vib_db,
                     strength_floor_amp_g=0.003,
-                )
+                ),
             )
             for other in ["front-right", "rear-left", "rear-right"]:
                 samples.append(
@@ -312,7 +317,7 @@ class TestScenario4CoastDownMidRange:
                         top_peaks=[{"hz": 142.5, "amp": 0.003}, {"hz": 87.3, "amp": 0.003}],
                         vibration_strength_db=8.0,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
             t += 1.0
         return samples
@@ -335,9 +340,9 @@ class TestScenario4CoastDownMidRange:
                     standard_metadata(),
                     self.build_coast_down_samples(add_harmonic=False),
                     include_samples=False,
-                )
+                ),
             ).get("strongest_speed_band")
-            or ""
+            or "",
         )
         assert any(str(speed) in speed_band for speed in [70, 80, 90])
 
@@ -356,7 +361,7 @@ class TestScenario5MixedNoiseThenFault:
                         top_peaks=[{"hz": 87.3, "amp": 0.005}, {"hz": 142.5, "amp": 0.004}],
                         vibration_strength_db=10.0,
                         strength_floor_amp_g=0.004,
-                    )
+                    ),
                 )
         fault = build_fault_samples_at_speed(
             speed_kmh=100.0,

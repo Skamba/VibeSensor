@@ -98,7 +98,7 @@ def build_speed_sweep_samples(
                 client_name=client_name,
                 top_peaks=peaks,
                 strength_floor_amp_g=0.003,
-            )
+            ),
         )
     return samples
 

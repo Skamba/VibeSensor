@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Level SIM – True simulator-ingestion test (slow, needs running server).
 
 This is the one true end-to-end test that exercises the full path:
@@ -166,7 +165,7 @@ class TestSimulatorIngestion:
                 pytest.skip(
                     "Server is reachable but did not persist a new history run after logging "
                     "start/stop; skip simulator-ingestion e2e in this environment "
-                    f"(started={started_run_id})"
+                    f"(started={started_run_id})",
                 )
             self.run_id = sorted(new_runs)[-1]
 

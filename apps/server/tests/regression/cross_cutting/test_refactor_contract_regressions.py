@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Cross-module refactor-contract regressions.
@@ -88,17 +88,26 @@ class TestRegistryNamedConstants:
 
     def test_restart_detection_uses_named_constant(self, registry: ClientRegistry) -> None:
         """Sending a seq far below last_seq should trigger reset detection,
-        proving _RESTART_SEQ_GAP is wired into the logic."""
+        proving _RESTART_SEQ_GAP is wired into the logic.
+        """
         registry.update_from_hello(_hello(), ("10.4.0.2", 9010), now=1.0)
 
         high_seq = _RESTART_SEQ_GAP + 100
         msg_high = DataMessage(
-            client_id=_CLIENT_ID, seq=high_seq, t0_us=10, sample_count=200, samples=_SAMPLES_200X3
+            client_id=_CLIENT_ID,
+            seq=high_seq,
+            t0_us=10,
+            sample_count=200,
+            samples=_SAMPLES_200X3,
         )
         registry.update_from_data(msg_high, ("10.4.0.2", 50000), now=2.0)
 
         msg_low = DataMessage(
-            client_id=_CLIENT_ID, seq=0, t0_us=20, sample_count=200, samples=_SAMPLES_200X3
+            client_id=_CLIENT_ID,
+            seq=0,
+            t0_us=20,
+            sample_count=200,
+            samples=_SAMPLES_200X3,
         )
         result = registry.update_from_data(msg_low, ("10.4.0.2", 50000), now=3.0)
         assert result.reset_detected
@@ -108,18 +117,28 @@ class TestRegistryNamedConstants:
         client_id = bytes.fromhex("112233445566")
 
         registry.update_from_hello(
-            _hello(client_id, frame_samples=200), ("10.4.0.2", 9010), now=1.0
+            _hello(client_id, frame_samples=200),
+            ("10.4.0.2", 9010),
+            now=1.0,
         )
 
         msg0 = DataMessage(
-            client_id=client_id, seq=0, t0_us=0, sample_count=200, samples=_SAMPLES_200X3
+            client_id=client_id,
+            seq=0,
+            t0_us=0,
+            sample_count=200,
+            samples=_SAMPLES_200X3,
         )
         registry.update_from_data(msg0, ("10.4.0.2", 50000), now=2.0)
 
         # Expected delta = 200/800 * 1e6 = 250000 µs
         # Actual delta = 300000 µs → jitter = 50000 µs
         msg1 = DataMessage(
-            client_id=client_id, seq=1, t0_us=300_000, sample_count=200, samples=_SAMPLES_200X3
+            client_id=client_id,
+            seq=1,
+            t0_us=300_000,
+            sample_count=200,
+            samples=_SAMPLES_200X3,
         )
         registry.update_from_data(msg1, ("10.4.0.2", 50000), now=3.0)
 
@@ -303,7 +322,8 @@ def test_download_chunk_constant() -> None:
 class TestVersionComparisonWarning:
     def test_logs_warning_on_unparseable_version(self) -> None:
         """When packaging cannot parse versions, a warning should be logged
-        instead of silently swallowing the exception."""
+        instead of silently swallowing the exception.
+        """
         config = ReleaseFetcherConfig(server_repo="owner/repo")
         fetcher = ServerReleaseFetcher(config)
 

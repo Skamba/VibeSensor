@@ -62,7 +62,9 @@ _DEAD_FUNCTION_CASES = [
 
 class TestDeadFunctionsRemoved:
     @pytest.mark.parametrize(
-        ("rel_path", "forbidden"), _DEAD_FUNCTION_CASES, ids=[c[1] for c in _DEAD_FUNCTION_CASES]
+        ("rel_path", "forbidden"),
+        _DEAD_FUNCTION_CASES,
+        ids=[c[1] for c in _DEAD_FUNCTION_CASES],
     )
     def test_dead_function_absent(self, rel_path: str, forbidden: str) -> None:
         text = (SERVER_ROOT / rel_path).read_text()

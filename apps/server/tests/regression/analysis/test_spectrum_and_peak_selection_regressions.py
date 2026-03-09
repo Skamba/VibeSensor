@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Spectrum smoothing and peak-selection regressions:
@@ -19,7 +19,8 @@ from vibesensor.processing import SignalProcessor
 class TestSmoothSpectrumEdgePadding:
     """Regression: _smooth_spectrum must not attenuate edge bins via
     zero-padding.  Using edge-replication prevents artificial reduction
-    of boundary amplitudes."""
+    of boundary amplitudes.
+    """
 
     def test_constant_signal_unchanged(self) -> None:
         """A constant-amplitude spectrum must be unchanged after smoothing."""
@@ -29,7 +30,8 @@ class TestSmoothSpectrumEdgePadding:
 
     def test_edge_not_attenuated(self) -> None:
         """First and last bins must not be reduced compared to the raw value
-        when the signal is constant near the boundary."""
+        when the signal is constant near the boundary.
+        """
         amps = np.full(20, 1.0, dtype=np.float32)
         smoothed = SignalProcessor._smooth_spectrum(amps, bins=5)
         # With zero-padding the first bin would be ~0.6; with edge-pad it stays 1.0.
@@ -60,7 +62,8 @@ class TestSmoothSpectrumEdgePadding:
 
 class TestTopPeaksLastBin:
     """Regression: _top_peaks must consider the final spectrum bin as a
-    valid peak candidate, not silently skip it."""
+    valid peak candidate, not silently skip it.
+    """
 
     def test_peak_at_last_bin_detected(self) -> None:
         """A clear peak at the last frequency bin must appear in results."""
@@ -92,7 +95,8 @@ class TestTopPeaksLastBin:
 
 class TestCoreStrengthLastBin:
     """Regression: compute_vibration_strength_db must consider the last
-    spectrum bin as a peak candidate."""
+    spectrum bin as a peak candidate.
+    """
 
     def test_peak_at_last_bin_detected_in_core(self) -> None:
         n = 50

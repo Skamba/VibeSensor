@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Weird-sensor-mix direct-injection tests.
 
 100 parameterized cases covering ambiguity-aware localization with

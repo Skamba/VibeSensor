@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Exception discipline: narrowed catches let code bugs propagate.
 
 After Chunk 3 exception narrowing, catches that previously used bare
@@ -43,19 +42,17 @@ class TestHistoryDBExceptionDiscipline:
     def test_type_error_in_write_tx_propagates(self, tmp_path: Path) -> None:
         """TypeError inside a write transaction must not be silently caught."""
         db = HistoryDB(tmp_path / "test.db")
-        with pytest.raises(TypeError):
-            with db.write_transaction_cursor() as cur:
-                cur.execute("SELECT 1")
-                raise TypeError("simulated code bug")
+        with pytest.raises(TypeError), db.write_transaction_cursor() as cur:
+            cur.execute("SELECT 1")
+            raise TypeError("simulated code bug")
         db.close()
 
     def test_attribute_error_in_cursor_propagates(self, tmp_path: Path) -> None:
         """AttributeError must not be silently caught."""
         db = HistoryDB(tmp_path / "test.db")
-        with pytest.raises(AttributeError):
-            with db._cursor() as cur:
-                cur.execute("SELECT 1")
-                raise AttributeError("simulated code bug")
+        with pytest.raises(AttributeError), db._cursor() as cur:
+            cur.execute("SELECT 1")
+            raise AttributeError("simulated code bug")
         db.close()
 
 

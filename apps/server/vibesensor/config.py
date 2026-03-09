@@ -19,21 +19,21 @@ from .constants import NUMERIC_TYPES
 from .json_types import JsonObject, is_json_object
 
 __all__ = [
-    "AppConfig",
-    "APConfig",
-    "APSelfHealConfig",
     "DEFAULT_CONFIG",
     "DEFAULT_UDP_CONTROL_PORT",
     "DEFAULT_UDP_DATA_PORT",
+    "REPO_DIR",
+    "SERVER_DIR",
+    "VALID_24GHZ_CHANNELS",
+    "APConfig",
+    "APSelfHealConfig",
+    "AppConfig",
     "GPSConfig",
     "LoggingConfig",
     "ProcessingConfig",
-    "REPO_DIR",
-    "SERVER_DIR",
     "ServerConfig",
     "UDPConfig",
     "UpdateConfig",
-    "VALID_24GHZ_CHANNELS",
     "documented_default_config",
     "load_config",
 ]
@@ -201,13 +201,13 @@ class APSelfHealConfig:
             val = getattr(self, field_name)
             if not isinstance(val, int) or val < 1:
                 raise ValueError(
-                    f"ap.self_heal.{field_name} must be a positive integer, got {val!r}"
+                    f"ap.self_heal.{field_name} must be a positive integer, got {val!r}",
                 )
         mri = self.min_restart_interval_seconds
         if not isinstance(mri, int) or mri < 0:
             raise ValueError(
                 "ap.self_heal.min_restart_interval_seconds must be a non-negative integer,"
-                f" got {mri!r}"
+                f" got {mri!r}",
             )
 
 
@@ -253,7 +253,7 @@ class UDPConfig:
                 raise ValueError(f"UDPConfig.{name} must be 1–65535, got {val!r}")
         if not isinstance(self.data_queue_maxsize, int) or self.data_queue_maxsize < 1:
             raise ValueError(
-                f"UDPConfig.data_queue_maxsize must be ≥1, got {self.data_queue_maxsize!r}"
+                f"UDPConfig.data_queue_maxsize must be ≥1, got {self.data_queue_maxsize!r}",
             )
 
 
@@ -483,7 +483,8 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     storage_cfg = _require_config_section(merged.get("storage", {}), "storage")
     update_cfg = _require_config_section(merged.get("update", {}), "update")
     default_logging_cfg = _require_config_section(
-        DEFAULT_CONFIG.get("logging", {}), "default logging"
+        DEFAULT_CONFIG.get("logging", {}),
+        "default logging",
     )
     default_gps_cfg = _require_config_section(DEFAULT_CONFIG.get("gps", {}), "default gps")
     default_update_cfg = _require_config_section(
@@ -491,14 +492,15 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         "default update",
     )
     default_storage_cfg = _require_config_section(
-        DEFAULT_CONFIG.get("storage", {}), "default storage"
+        DEFAULT_CONFIG.get("storage", {}),
+        "default storage",
     )
     metrics_log_path_raw = logging_cfg.get("metrics_log_path")
     log_metrics = bool(logging_cfg.get("log_metrics", True))
     if not isinstance(metrics_log_path_raw, str) or not metrics_log_path_raw.strip():
         if log_metrics:
             raise ValueError(
-                "logging.metrics_log_path must be configured when log_metrics is true."
+                "logging.metrics_log_path must be configured when log_metrics is true.",
             )
         metrics_log_path_raw = str(default_logging_cfg["metrics_log_path"])
     metrics_log_path = _resolve_config_path(metrics_log_path_raw, path)
@@ -558,7 +560,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                     "ap.self_heal.min_restart_interval_seconds",
                 ),
                 allow_disable_resolved_stub_listener=bool(
-                    self_heal_cfg.get("allow_disable_resolved_stub_listener", False)
+                    self_heal_cfg.get("allow_disable_resolved_stub_listener", False),
                 ),
                 state_file=_resolve_config_path(
                     str(self_heal_cfg.get("state_file", str(self_heal_defaults["state_file"]))),
@@ -582,28 +584,35 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         ),
         processing=ProcessingConfig(
             sample_rate_hz=_coerce_int(
-                processing_cfg["sample_rate_hz"], "processing.sample_rate_hz"
+                processing_cfg["sample_rate_hz"],
+                "processing.sample_rate_hz",
             ),
             waveform_seconds=_coerce_int(
-                processing_cfg["waveform_seconds"], "processing.waveform_seconds"
+                processing_cfg["waveform_seconds"],
+                "processing.waveform_seconds",
             ),
             waveform_display_hz=_coerce_int(
-                processing_cfg["waveform_display_hz"], "processing.waveform_display_hz"
+                processing_cfg["waveform_display_hz"],
+                "processing.waveform_display_hz",
             ),
             ui_push_hz=_coerce_int(processing_cfg["ui_push_hz"], "processing.ui_push_hz"),
             ui_heavy_push_hz=_coerce_int(
-                processing_cfg.get("ui_heavy_push_hz", 4), "processing.ui_heavy_push_hz"
+                processing_cfg.get("ui_heavy_push_hz", 4),
+                "processing.ui_heavy_push_hz",
             ),
             fft_update_hz=_coerce_int(processing_cfg["fft_update_hz"], "processing.fft_update_hz"),
             fft_n=_coerce_int(processing_cfg["fft_n"], "processing.fft_n"),
             spectrum_min_hz=_coerce_float(
-                processing_cfg.get("spectrum_min_hz", 5.0), "processing.spectrum_min_hz"
+                processing_cfg.get("spectrum_min_hz", 5.0),
+                "processing.spectrum_min_hz",
             ),
             spectrum_max_hz=_coerce_float(
-                processing_cfg["spectrum_max_hz"], "processing.spectrum_max_hz"
+                processing_cfg["spectrum_max_hz"],
+                "processing.spectrum_max_hz",
             ),
             client_ttl_seconds=_coerce_int(
-                processing_cfg.get("client_ttl_seconds", 120), "processing.client_ttl_seconds"
+                processing_cfg.get("client_ttl_seconds", 120),
+                "processing.client_ttl_seconds",
             ),
             accel_scale_g_per_lsb=accel_scale,
         ),  # NOTE: ProcessingConfig.__post_init__ validates & clamps all fields
@@ -624,12 +633,12 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                     logging_cfg.get(
                         "history_db_path",
                         str(metrics_log_path.parent / "history.db"),
-                    )
+                    ),
                 ),
                 path,
             ),
             persist_history_db=bool(
-                logging_cfg.get("persist_history_db", default_logging_cfg["persist_history_db"])
+                logging_cfg.get("persist_history_db", default_logging_cfg["persist_history_db"]),
             ),
             shutdown_analysis_timeout_s=_coerce_float(
                 logging_cfg.get(
@@ -654,12 +663,12 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         update=UpdateConfig(
             server_repo=str(update_cfg.get("server_repo", default_update_cfg["server_repo"])),
             rollback_dir=Path(
-                str(update_cfg.get("rollback_dir", default_update_cfg["rollback_dir"]))
+                str(update_cfg.get("rollback_dir", default_update_cfg["rollback_dir"])),
             ),
         ),
         clients_json_path=_resolve_config_path(
             str(
-                storage_cfg.get("clients_json_path", str(default_storage_cfg["clients_json_path"]))
+                storage_cfg.get("clients_json_path", str(default_storage_cfg["clients_json_path"])),
             ),
             path,
         ),

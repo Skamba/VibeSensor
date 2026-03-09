@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 from __future__ import annotations
 
 import math
@@ -44,11 +43,14 @@ class TestDualFaultTwoCorners:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
 
         summary = summarize_run_data(
-            standard_metadata(), samples, lang="en", file_name="dual_fault_test"
+            standard_metadata(),
+            samples,
+            lang="en",
+            file_name="dual_fault_test",
         )
         assert_summary_sections(summary, min_findings=1, min_top_causes=1)
         findings = [
@@ -72,11 +74,13 @@ class TestDualFaultTwoCorners:
             str(row.get("location", "")).lower()
             for row in summary.get("sensor_intensity_by_location", [])[:4]
         }
-        for corner in {"front-right", "rear-left"}:
+        for corner in ("front-right", "rear-left"):
             assert any(corner in loc for loc in intensity_locs)
         if summary.get("top_causes"):
             assert_top_cause_contract(
-                summary["top_causes"][0], expected_source="wheel", confidence_range=(0.15, 1.0)
+                summary["top_causes"][0],
+                expected_source="wheel",
+                confidence_range=(0.15, 1.0),
             )
 
     def test_dual_fault_both_corners_in_intensity_ranking(self) -> None:
@@ -102,11 +106,14 @@ class TestDualFaultTwoCorners:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
 
         intensities = summarize_run_data(
-            standard_metadata(), samples, lang="en", file_name="dual_fault_intensity"
+            standard_metadata(),
+            samples,
+            lang="en",
+            file_name="dual_fault_intensity",
         ).get("sensor_intensity_by_location", [])
         intensity_locs = {str(row.get("location", "")).lower() for row in intensities[:4]}
         assert any("front-left" in loc for loc in intensity_locs)
@@ -133,10 +140,13 @@ class TestClippedSaturatedData:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
         summary = summarize_run_data(
-            standard_metadata(), samples, lang="en", file_name="saturated_test"
+            standard_metadata(),
+            samples,
+            lang="en",
+            file_name="saturated_test",
         )
         for top_cause in summary.get("top_causes", []):
             assert not math.isnan(top_cause.get("confidence", 0))
@@ -170,10 +180,13 @@ class TestClippedSaturatedData:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
         top_causes = summarize_run_data(
-            standard_metadata(), samples, lang="en", file_name="clipped_location"
+            standard_metadata(),
+            samples,
+            lang="en",
+            file_name="clipped_location",
         ).get("top_causes", [])
         assert_top_cause_contract(
             top_causes[0],

@@ -55,5 +55,5 @@ def assert_aspect_preserved(
         delta = abs(drawn_ratio - src_ratio) / src_ratio
         raise AssertionError(
             f"Car visual aspect ratio distorted. src={src_ratio:.4f}, "
-            f"drawn={drawn_ratio:.4f}, delta={delta:.2%}"
+            f"drawn={drawn_ratio:.4f}, delta={delta:.2%}",
         )

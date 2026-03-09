@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 from __future__ import annotations
 
 import math
@@ -29,10 +28,13 @@ class TestMissingStaleSpeed:
                         top_peaks=[{"hz": 25.0, "amp": 0.005}, {"hz": 50.0, "amp": 0.004}],
                         vibration_strength_db=10.0,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
         summary = summarize_run_data(
-            standard_metadata(), samples, lang="en", file_name="zero_speed"
+            standard_metadata(),
+            samples,
+            lang="en",
+            file_name="zero_speed",
         )
         assert "findings" in summary
 
@@ -56,7 +58,7 @@ class TestMissingStaleSpeed:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
         summary = summarize_run_data(standard_metadata(), samples, lang="en", file_name="nan_speed")
         for top_cause in summary.get("top_causes", []):
@@ -82,10 +84,13 @@ class TestMissingStaleSpeed:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
         summary = summarize_run_data(
-            standard_metadata(), samples, lang="en", file_name="stale_speed"
+            standard_metadata(),
+            samples,
+            lang="en",
+            file_name="stale_speed",
         )
         assert_summary_sections(summary, min_findings=0)
 
@@ -112,10 +117,13 @@ class TestSensorDropoutRejoin:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
         top_causes = summarize_run_data(
-            standard_metadata(), samples, lang="en", file_name="dropout_test"
+            standard_metadata(),
+            samples,
+            lang="en",
+            file_name="dropout_test",
         ).get("top_causes", [])
         assert_top_cause_contract(
             top_causes[0],
@@ -145,14 +153,19 @@ class TestSensorDropoutRejoin:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
         summary = summarize_run_data(
-            standard_metadata(), samples, lang="en", file_name="rejoin_test"
+            standard_metadata(),
+            samples,
+            lang="en",
+            file_name="rejoin_test",
         )
         assert_summary_sections(summary, min_top_causes=1)
         assert_top_cause_contract(
-            summary["top_causes"][0], expected_source="wheel", expected_location="front-right"
+            summary["top_causes"][0],
+            expected_source="wheel",
+            expected_location="front-right",
         )
 
 
@@ -202,10 +215,13 @@ class TestSensorNameNormalization:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
         summary = summarize_run_data(
-            standard_metadata(), samples, lang="en", file_name="case_mix_test"
+            standard_metadata(),
+            samples,
+            lang="en",
+            file_name="case_mix_test",
         )
         assert_summary_sections(summary, min_top_causes=1)
         assert "wheel" in str(summary["top_causes"][0].get("source", "")).lower()
@@ -226,7 +242,7 @@ class TestGpsSpeedValidation:
                     "lat": 54.6872,
                     "lon": 25.2797,
                     "speed": speed_value,
-                }
+                },
             ).encode()
             + b"\n"
         )
@@ -245,7 +261,7 @@ class TestGpsSpeedValidation:
                     "lat": 54.6872,
                     "lon": 25.2797,
                     "speed": speed,
-                }
+                },
             ).encode()
             + b"\n"
         )

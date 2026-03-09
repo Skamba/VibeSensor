@@ -193,7 +193,7 @@ class TestWebSocketHubCircuitBreaker:
                 await asyncio.sleep(0.005)
 
         task = asyncio.create_task(
-            hub.run(hz=200, payload_builder=dummy_builder, on_tick=failing_tick)
+            hub.run(hz=200, payload_builder=dummy_builder, on_tick=failing_tick),
         )
         with contextlib.suppress(TimeoutError):
             await asyncio.wait_for(stop_after_4(), timeout=5.0)

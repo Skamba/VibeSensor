@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Real-world scenario tests for the diagnosis pipeline.
 
 Covers:
@@ -97,7 +96,7 @@ def _build_samples(
                     top_peaks=peaks,
                     vibration_strength_db=vib_db,
                     strength_floor_amp_g=0.003,
-                )
+                ),
             )
     return samples
 
@@ -109,11 +108,13 @@ def _build_samples(
 
 class TestHealthyVehicleNoFalsePositive:
     """Clean car data (road noise only) must produce zero non-REF findings
-    with confidence above a minimum threshold."""
+    with confidence above a minimum threshold.
+    """
 
     def _road_noise_samples(self, speed_kmh: float, duration_s: int = 40) -> list[dict[str, Any]]:
         """Generate road-noise-only samples: low broadband vibration, no peaks
-        near wheel/engine orders."""
+        near wheel/engine orders.
+        """
         return _build_samples(
             duration_s=duration_s,
             speed_fn=lambda _i: speed_kmh,
@@ -170,7 +171,8 @@ class TestHealthyVehicleNoFalsePositive:
 
 class TestEngineOrderFaultScenario:
     """Engine-order (1x) peaks appearing on all four sensors should be
-    classified as engine-sourced, not wheel-sourced."""
+    classified as engine-sourced, not wheel-sourced.
+    """
 
     def test_engine_1x_all_sensors_classified_as_engine(self) -> None:
         """Engine 1x peaks at RPM-derived frequency on all 4 sensors → engine source."""
@@ -305,7 +307,8 @@ class TestGradualFaultOnset:
 
 class TestBorderlineTwoSourceOverlap:
     """Wheel and engine frequencies happen to be similar at a particular speed/RPM.
-    The pipeline must not crash and should produce a coherent classification."""
+    The pipeline must not crash and should produce a coherent classification.
+    """
 
     def test_overlapping_wheel_and_engine_freq(self) -> None:
         """Wheel_hz ≈ engine_hz: should produce findings without NaN or crash."""

@@ -267,7 +267,8 @@ class TestCmdSyncClockProtocol:
 
 class TestSyncedClockAlignment:
     """When sensors report CMD_SYNC_CLOCK-corrected t0_us, alignment uses
-    the sensor-clock timestamps (more precise than arrival time)."""
+    the sensor-clock timestamps (more precise than arrival time).
+    """
 
     @pytest.mark.parametrize(
         ("t0_us", "expected"),
@@ -292,7 +293,11 @@ class TestSyncedClockAlignment:
         ],
     )
     def test_synced_pair_alignment(
-        self, s1_t0: int, s2_mono: float, s2_t0: int, expected_aligned: bool
+        self,
+        s1_t0: int,
+        s2_mono: float,
+        s2_t0: int,
+        expected_aligned: bool,
     ) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0, t0_us=s1_t0)
@@ -337,7 +342,8 @@ class TestSyncedClockAlignment:
 
     def test_samples_since_t0_accumulates_without_new_t0(self) -> None:
         """When successive ingests don't provide t0_us, samples_since_t0
-        accumulates so the time range remains accurate."""
+        accumulates so the time range remains accurate.
+        """
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=100, mono_time=100.0, t0_us=50_000_000)
         _fill_sensor(proc, "s1", n_samples=100, mono_time=100.5)  # no t0_us
@@ -353,7 +359,8 @@ class TestSyncedClockAlignment:
 
 class TestAnalysisTimeRangeEdgeCases:
     """Tests for Fix 9 (negative samples_since_t0 guard) and Fix 10
-    (waveform_seconds <= 0 early return) in analysis_time_range."""
+    (waveform_seconds <= 0 early return) in analysis_time_range.
+    """
 
     def test_negative_samples_since_t0_clamped_to_zero(self) -> None:
         """Fix 9: samples_since_t0 < 0 must not produce end_us < last_t0_us.

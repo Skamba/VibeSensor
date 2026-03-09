@@ -12,7 +12,9 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import shutil
 from collections.abc import Coroutine
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..udp_data_rx import start_udp_data_receiver
@@ -20,10 +22,10 @@ from ..udp_data_rx import start_udp_data_receiver
 if TYPE_CHECKING:
     from ..config import AppConfig
     from .subsystems import (
-        RuntimeDiagnosticsSubsystem,
         RuntimeIngressSubsystem,
         RuntimePersistenceSubsystem,
         RuntimeProcessingSubsystem,
+        RuntimeRecordingSubsystem,
         RuntimeSettingsSubsystem,
         RuntimeUpdateSubsystem,
         RuntimeWebsocketSubsystem,
@@ -37,17 +39,17 @@ class LifecycleManager:
 
     __slots__ = (
         "_config",
-        "_ingress",
-        "_settings",
-        "_diagnostics",
-        "_persistence",
-        "_updates",
-        "_processing",
-        "_websocket",
-        "_health_state",
-        "tasks",
-        "_data_transport",
         "_data_consumer_task",
+        "_data_transport",
+        "_health_state",
+        "_ingress",
+        "_persistence",
+        "_processing",
+        "_recording",
+        "_settings",
+        "_updates",
+        "_websocket",
+        "tasks",
     )
 
     def __init__(
@@ -56,7 +58,7 @@ class LifecycleManager:
         config: AppConfig,
         ingress: RuntimeIngressSubsystem,
         settings: RuntimeSettingsSubsystem,
-        diagnostics: RuntimeDiagnosticsSubsystem,
+        recording: RuntimeRecordingSubsystem,
         persistence: RuntimePersistenceSubsystem,
         updates: RuntimeUpdateSubsystem,
         processing: RuntimeProcessingSubsystem,
@@ -65,7 +67,7 @@ class LifecycleManager:
         self._config = config
         self._ingress = ingress
         self._settings = settings
-        self._diagnostics = diagnostics
+        self._recording = recording
         self._persistence = persistence
         self._updates = updates
         self._processing = processing
@@ -108,10 +110,34 @@ class LifecycleManager:
         self._monitor_task(task)
         return task
 
+    _LOW_DISK_THRESHOLD_MB = 100
+
+    def _validate_startup(self) -> None:
+        """Run lightweight startup precondition checks (warnings only)."""
+        try:
+            db_path = self._config.logging.history_db_path
+            data_dir = Path(db_path).parent if db_path else None
+        except (AttributeError, TypeError):
+            return
+        if data_dir is None or str(db_path) == ":memory:":
+            return
+        try:
+            free_mb = shutil.disk_usage(data_dir).free // (1024 * 1024)
+            if free_mb < self._LOW_DISK_THRESHOLD_MB:
+                msg = f"low disk space: {free_mb}MB free on {data_dir}"
+                self._health_state.startup_warnings.append(msg)
+                LOGGER.warning("Startup check: %s", msg)
+        except OSError:
+            LOGGER.debug(
+                "Startup check: unable to query disk usage for %s",
+                data_dir,
+            )
+
     async def start(self) -> None:
         """Launch UDP receiver, control plane, and background async tasks."""
         phase = "starting"
         self._health_state.set_phase(phase)
+        self._validate_startup()
         try:
             phase = "udp_receiver"
             self._health_state.set_phase(phase)
@@ -143,12 +169,12 @@ class LifecycleManager:
                         on_tick=self._websocket.broadcast.on_tick,
                     ),
                     name=phase,
-                )
+                ),
             )
 
             phase = "metrics-log"
             self._health_state.set_phase(phase)
-            self.tasks.append(self._start_task(self._diagnostics.metrics_logger.run(), name=phase))
+            self.tasks.append(self._start_task(self._recording.metrics_logger.run(), name=phase))
 
             phase = "gps-speed"
             self._health_state.set_phase(phase)
@@ -159,7 +185,7 @@ class LifecycleManager:
                         port=self._config.gps.gpsd_port,
                     ),
                     name=phase,
-                )
+                ),
             )
 
             phase = "update-startup-recover"
@@ -168,7 +194,7 @@ class LifecycleManager:
                 self._start_task(
                     self._updates.update_manager.startup_recover(),
                     name=phase,
-                )
+                ),
             )
             self._health_state.mark_ready()
         except Exception as exc:
@@ -222,7 +248,7 @@ class LifecycleManager:
 
         analysis_timeout_s = self._config.logging.shutdown_analysis_timeout_s
         shutdown_report = await asyncio.to_thread(
-            self._diagnostics.metrics_logger.shutdown_report,
+            self._recording.metrics_logger.shutdown_report,
             analysis_timeout_s,
         )
         if not shutdown_report.completed:

@@ -119,7 +119,7 @@ async def test_snapshot_for_rollback_fails_when_metadata_write_fails(tmp_path: P
 
     assert not (rollback_dir / "rollback_snapshot.json").exists()
     assert any(
-        "Rollback metadata could not be written" == issue.message for issue in tracker.status.issues
+        issue.message == "Rollback metadata could not be written" for issue in tracker.status.issues
     )
 
 
@@ -132,7 +132,7 @@ async def test_install_release_rejects_corrupt_downloaded_wheel(tmp_path: Path) 
     assert await installer.install_release(broken_wheel, "2025.6.15") is False
     assert tracker.status.state.value == "failed"
     assert not commands.calls
-    assert any("Downloaded wheel is corrupt" == issue.message for issue in tracker.status.issues)
+    assert any(issue.message == "Downloaded wheel is corrupt" for issue in tracker.status.issues)
 
 
 @pytest.mark.asyncio
@@ -148,7 +148,7 @@ async def test_rollback_rejects_checksum_mismatch(tmp_path: Path) -> None:
                 "version": "2025.6.14",
                 "wheel_name": wheel_path.name,
                 "sha256": "0" * 64,
-            }
+            },
         )
         + "\n",
         encoding="utf-8",
@@ -157,7 +157,7 @@ async def test_rollback_rejects_checksum_mismatch(tmp_path: Path) -> None:
     assert await installer.rollback() is False
     assert not commands.calls
     assert any(
-        "Rollback wheel checksum mismatch" == issue.message for issue in tracker.status.issues
+        issue.message == "Rollback wheel checksum mismatch" for issue in tracker.status.issues
     )
 
 

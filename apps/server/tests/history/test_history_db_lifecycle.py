@@ -360,7 +360,8 @@ def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
 
 
 def test_get_run_metadata_non_dict_json_returns_none_and_warns(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-bad-meta", "2026-01-01T00:00:00Z", {"source": "test"})

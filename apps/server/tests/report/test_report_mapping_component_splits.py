@@ -20,7 +20,7 @@ def test_collect_location_intensity_prefers_p95_then_mean() -> None:
         [
             {"location": "Front Left", "p95_intensity_db": 20.0},
             {"location": "Front Left", "mean_intensity_db": 18.0},
-        ]
+        ],
     ) == {"Front Left": [20.0, 18.0]}
 
 

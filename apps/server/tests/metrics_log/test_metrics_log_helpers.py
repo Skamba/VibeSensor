@@ -145,7 +145,8 @@ def test_stop_without_samples_does_not_persist_history_run(make_logger, fake_his
 
 
 def test_append_records_ignores_stale_recent_metrics_without_new_frames(
-    make_logger, fake_history_db
+    make_logger,
+    fake_history_db,
 ) -> None:
     logger = make_logger(history_db=fake_history_db)
 
@@ -200,7 +201,9 @@ def test_history_run_created_on_first_sample_append(make_logger, fake_history_db
 
 
 def test_stop_logging_flushes_first_pending_sample_batch(
-    make_logger, fake_history_db, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    fake_history_db,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logger = make_logger(history_db=fake_history_db)
     monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
@@ -219,7 +222,9 @@ def test_stop_logging_flushes_first_pending_sample_batch(
 
 
 def test_start_logging_rollover_flushes_first_pending_sample_batch(
-    make_logger, fake_history_db, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    fake_history_db,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     scheduled: list[str] = []
     logger = make_logger(history_db=fake_history_db)
@@ -243,7 +248,9 @@ def test_start_logging_rollover_flushes_first_pending_sample_batch(
 
 
 def test_finalize_refreshes_run_metadata_from_latest_settings(
-    make_logger, fake_history_db, mutable_fake_settings
+    make_logger,
+    fake_history_db,
+    mutable_fake_settings,
 ) -> None:
     logger = make_logger(analysis_settings=mutable_fake_settings, history_db=fake_history_db)
 
@@ -266,7 +273,8 @@ def test_finalize_refreshes_run_metadata_from_latest_settings(
 
 
 def test_append_records_surfaces_create_run_failure_in_status(
-    make_logger, failing_create_run_db
+    make_logger,
+    failing_create_run_db,
 ) -> None:
     logger = make_logger(history_db=failing_create_run_db)
 
@@ -287,7 +295,8 @@ def test_append_records_surfaces_create_run_failure_in_status(
 
 
 def test_append_records_clears_write_error_after_successful_retry(
-    make_logger, failing_append_once_db
+    make_logger,
+    failing_append_once_db,
 ) -> None:
     logger = make_logger(history_db=failing_append_once_db)
 
@@ -310,7 +319,8 @@ def test_append_records_clears_write_error_after_successful_retry(
 
 
 def test_append_records_reports_timeout_when_no_data_for_threshold(
-    make_logger, no_active_registry
+    make_logger,
+    no_active_registry,
 ) -> None:
     logger = make_logger(registry=no_active_registry)
 
@@ -334,7 +344,9 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(
 
 
 def test_append_records_does_not_timeout_on_brief_gap(
-    make_logger, no_active_registry, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    no_active_registry,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logger = make_logger(registry=no_active_registry)
 
@@ -359,7 +371,9 @@ def test_append_records_does_not_timeout_on_brief_gap(
 
 
 def test_stop_logging_does_not_block_on_post_analysis(
-    make_logger, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Stopping capture should be fast even when analysis is slow.
 
@@ -400,7 +414,9 @@ def test_stop_logging_does_not_block_on_post_analysis(
 
 
 def test_post_analysis_failure_sets_persistent_error_status(
-    make_logger, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db)
@@ -427,7 +443,8 @@ def test_post_analysis_failure_sets_persistent_error_status(
 
 
 def test_post_analysis_burst_uses_single_daemon_worker(
-    make_logger, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logger = make_logger(history_db=_NullDB())
 
@@ -463,7 +480,8 @@ def test_post_analysis_burst_uses_single_daemon_worker(
 
 
 def test_shutdown_blocks_new_start_logging_until_wait_completes(
-    make_logger, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logger = make_logger(history_db=_NullDB())
     logger.start_logging()
@@ -491,7 +509,8 @@ def test_shutdown_blocks_new_start_logging_until_wait_completes(
 
 
 def test_shutdown_report_exposes_timeout_state(
-    make_logger, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logger = make_logger()
     logger.start_logging()
@@ -521,7 +540,9 @@ def test_shutdown_report_exposes_timeout_state(
 
 
 def test_post_analysis_uses_run_language_from_metadata(
-    make_logger, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db, language_provider=lambda: "nl")
@@ -562,7 +583,7 @@ def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
                     "final_drive_ratio": 3.15,
                     "current_gear_ratio": 0.81,
                 },
-            }
+            },
         },
     )()
     logger = make_logger(settings_store=settings_store)
@@ -597,7 +618,9 @@ def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
 
 
 def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
-    make_logger, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Reduce the cap so we only need ~250 iterations instead of 13 000 (28 s -> <1 s).
     cap = 200
@@ -633,7 +656,9 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
 
 @pytest.mark.asyncio
 async def test_run_offloads_append_records_with_to_thread(
-    make_logger, fake_history_db, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    fake_history_db,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logger = make_logger(history_db=fake_history_db)
 

@@ -55,7 +55,10 @@ def _label_width(c: Canvas, label: str, *, default_w: float, col_w: float) -> fl
 
 
 def _column_height(
-    rows: list[tuple[str, str, float]], *, available_w: float, row_gap: float
+    rows: list[tuple[str, str, float]],
+    *,
+    available_w: float,
+    row_gap: float,
 ) -> float:
     return _column_height_impl(rows, available_w=available_w, row_gap=row_gap)
 
@@ -181,7 +184,10 @@ def _draw_bottom_row_panels(
 
 
 def _page1(
-    c: Canvas, data: ReportTemplateData, *, ctx: PdfRenderContext | None = None
+    c: Canvas,
+    data: ReportTemplateData,
+    *,
+    ctx: PdfRenderContext | None = None,
 ) -> list[NextStep]:
     """Render the full page-1 worksheet layout."""
     render_ctx = ctx or PdfRenderContext.from_data(data)
@@ -214,7 +220,8 @@ def _draw_system_card(
 
     tone_bg = REPORT_COLORS.get(f"card_{card.tone}_bg", REPORT_COLORS["card_neutral_bg"])
     tone_border = REPORT_COLORS.get(
-        f"card_{card.tone}_border", REPORT_COLORS["card_neutral_border"]
+        f"card_{card.tone}_border",
+        REPORT_COLORS["card_neutral_border"],
     )
     c.setFillColor(_hex(tone_bg))
     c.setStrokeColor(_hex(tone_border))

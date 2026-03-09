@@ -150,7 +150,7 @@ def top_peaks_table_rows(
                 if total_count <= 0:
                     continue
                 hit_rates.append(
-                    float(bucket.speed_bin_counts.get(speed_bin, 0)) / float(total_count)
+                    float(bucket.speed_bin_counts.get(speed_bin, 0)) / float(total_count),
                 )
             if hit_rates:
                 hit_rate_mean = sum(hit_rates) / len(hit_rates)
@@ -211,6 +211,6 @@ def top_peaks_table_rows(
                     speed_uniformity=item.speed_uniformity,
                 ),
                 typical_speed_band=speed_band,
-            )
+            ),
         )
     return rows

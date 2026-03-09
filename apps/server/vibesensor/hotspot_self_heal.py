@@ -29,7 +29,7 @@ from .hotspot_parsers import (
 LOGGER = logging.getLogger("vibesensor.hotspot.selfheal")
 
 _DHCP_BAD_SIGNALS: frozenset[str] = frozenset(
-    {"dhcp_no_range", "dhcp_dnsmasq_start_failed", "port53_conflict"}
+    {"dhcp_no_range", "dhcp_dnsmasq_start_failed", "port53_conflict"},
 )
 
 _FALLBACK_CHANNELS: tuple[int, ...] = (1, 6, 11)
@@ -245,7 +245,7 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
 def _ensure_ap_connection(ap: APConfig, runner: CommandRunner, channel: int | None = None) -> bool:
     configured_channel = channel if channel is not None else ap.channel
     con_names = parse_active_connection_names(
-        runner.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], timeout_s=8).stdout
+        runner.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], timeout_s=8).stdout,
     )
     if not ap.psk and ap.con_name in con_names:
         # Recreate open AP profiles to guarantee no stale security fields remain.
@@ -294,7 +294,12 @@ def _ensure_ap_connection(ap: APConfig, runner: CommandRunner, channel: int | No
     ]
     if ap.psk:
         modify_args.extend(
-            ["802-11-wireless-security.key-mgmt", "wpa-psk", "802-11-wireless-security.psk", ap.psk]
+            [
+                "802-11-wireless-security.key-mgmt",
+                "wpa-psk",
+                "802-11-wireless-security.psk",
+                ap.psk,
+            ]
         )
 
     modified = runner.run(modify_args, timeout_s=10)
@@ -422,7 +427,7 @@ def run_self_heal_once(
                     detected="NetworkManager inactive",
                     action="systemctl restart NetworkManager",
                     helped=False,
-                )
+                ),
             )
         else:
             actions.append(
@@ -431,7 +436,7 @@ def run_self_heal_once(
                     detected="NetworkManager inactive",
                     action="restart skipped by backoff",
                     helped=False,
-                )
+                ),
             )
 
     if not health.wifi_radio_on:
@@ -442,7 +447,7 @@ def run_self_heal_once(
                 detected="Wi-Fi radio disabled",
                 action="nmcli radio wifi on",
                 helped=False,
-            )
+            ),
         )
 
     if health.rfkill_blocked:
@@ -453,7 +458,7 @@ def run_self_heal_once(
                 detected="rfkill blocked",
                 action="rfkill unblock wifi",
                 helped=False,
-            )
+            ),
         )
 
     if not health.iface_up and health.iface_exists:
@@ -464,7 +469,7 @@ def run_self_heal_once(
                 detected="interface down",
                 action=f"ip link set {ap.ifname} up",
                 helped=False,
-            )
+            ),
         )
 
     if not health.ap_conn_exists or not health.ap_conn_active:
@@ -482,7 +487,7 @@ def run_self_heal_once(
                             detected="configured AP channel failed",
                             action=f"ap recreated on fallback channel {fallback_channel}",
                             helped=False,
-                        )
+                        ),
                     )
                     ensured = True
                     break
@@ -492,7 +497,7 @@ def run_self_heal_once(
                 detected="AP connection missing/inactive",
                 action="ensure AP connection and bring it up",
                 helped=False,
-            )
+            ),
         )
 
     if health.ap_conn_active and (not health.iface_up or not health.ap_mode):
@@ -503,7 +508,7 @@ def run_self_heal_once(
                 detected="AP active but interface down or not in AP mode",
                 action="nmcli connection down/up and ip link up",
                 helped=False,
-            )
+            ),
         )
 
     if not health.dhcp_ok:
@@ -515,7 +520,7 @@ def run_self_heal_once(
                     detected=f"port 53 conflict ({health.port53_conflict})",
                     action=message,
                     helped=False,
-                )
+                ),
             )
         _ensure_ap_connection(ap, runner)
         if state_store.allow("restart_networkmanager", self_heal.min_restart_interval_seconds):
@@ -527,7 +532,7 @@ def run_self_heal_once(
                     detected="DHCP path unhealthy",
                     action="re-applied AP connection and restarted NetworkManager",
                     helped=False,
-                )
+                ),
             )
         else:
             actions.append(
@@ -536,7 +541,7 @@ def run_self_heal_once(
                     detected="DHCP path unhealthy",
                     action="restart skipped by backoff; AP re-applied",
                     helped=False,
-                )
+                ),
             )
 
     healed = collect_health(ap, self_heal, runner)

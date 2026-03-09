@@ -115,7 +115,7 @@ def _make_analysis_summary() -> dict:
                     {"hz": 12.5 + rng.gauss(0, 0.2), "amp": 0.05},
                 ],
                 "strength_floor_amp_g": 0.005,
-            }
+            },
         )
     return summarize_run_data(metadata, samples, lang="en", include_samples=False)
 
@@ -201,7 +201,7 @@ def test_analysis_output_contains_no_translated_strings() -> None:
 
     violations = _check_no_translated_strings(summary, "summary")
     assert not violations, "Analysis output contains translated strings:\n" + "\n".join(
-        violations[:10]
+        violations[:10],
     )
 
 

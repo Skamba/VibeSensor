@@ -97,3 +97,107 @@ def test_sanitize_value_handles_numpy_arrays() -> None:
     result2d = sanitize_value(arr2d)
     assert result2d == [[1.0, 2.0], [3.0, 4.0]]
     json.dumps(result2d)
+
+
+# -- verify_run_integrity tests -----------------------------------------------
+
+
+def test_verify_run_integrity_clean_run(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-ok", "2026-01-01T00:00:00Z", {"sensor_model": "a", "sample_rate_hz": 100})
+    db.append_samples("run-ok", [{"i": i} for i in range(5)])
+    db.finalize_run("run-ok", "2026-01-01T00:10:00Z")
+    db.store_analysis("run-ok", {"findings": [], "top_causes": [], "warnings": []})
+    assert db.verify_run_integrity("run-ok") == []
+
+
+def test_verify_run_integrity_sample_count_mismatch(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-m", "2026-01-01T00:00:00Z", {"sensor_model": "a", "sample_rate_hz": 100})
+    db.append_samples("run-m", [{"i": i} for i in range(5)])
+    db.finalize_run("run-m", "2026-01-01T00:10:00Z")
+    db.store_analysis("run-m", {"findings": [], "top_causes": [], "warnings": []})
+    # Manually corrupt sample_count
+    with db._cursor() as cur:
+        cur.execute("UPDATE runs SET sample_count = 99 WHERE run_id = 'run-m'")
+    problems = db.verify_run_integrity("run-m")
+    assert any("sample_count mismatch" in p for p in problems)
+
+
+def test_verify_run_integrity_complete_without_analysis(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-na", "2026-01-01T00:00:00Z", {"sensor_model": "a", "sample_rate_hz": 100})
+    db.finalize_run("run-na", "2026-01-01T00:10:00Z")
+    # Force status to complete without analysis
+    with db._cursor() as cur:
+        cur.execute("UPDATE runs SET status = 'complete' WHERE run_id = 'run-na'")
+    problems = db.verify_run_integrity("run-na")
+    assert any("missing analysis_json" in p for p in problems)
+
+
+def test_verify_run_integrity_run_not_found(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    assert db.verify_run_integrity("no-such-run") == ["run not found"]
+
+
+# -- metadata validation warning tests ----------------------------------------
+
+
+def test_create_run_warns_on_missing_metadata_keys(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    with caplog.at_level("WARNING"):
+        db.create_run("run-w", "2026-01-01T00:00:00Z", {"source": "test"})
+    assert "missing recommended keys" in caplog.text
+    assert "sensor_model" in caplog.text
+    assert "sample_rate_hz" in caplog.text
+
+
+def test_create_run_no_warning_when_metadata_complete(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    meta = {"sensor_model": "a", "sample_rate_hz": 100}
+    with caplog.at_level("WARNING"):
+        db.create_run("run-ok", "2026-01-01T00:00:00Z", meta)
+    assert "missing recommended keys" not in caplog.text
+
+
+# -- analysis summary validation warning tests --------------------------------
+
+
+def test_store_analysis_warns_on_missing_summary_keys(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    meta = {"sensor_model": "a", "sample_rate_hz": 100}
+    db.create_run("run-w2", "2026-01-01T00:00:00Z", meta)
+    db.finalize_run("run-w2", "2026-01-01T00:10:00Z")
+    with caplog.at_level("WARNING"):
+        db.store_analysis("run-w2", {"score": 42})
+    assert "missing expected keys" in caplog.text
+
+
+# -- atomic state transition tests ---------------------------------------------
+
+
+def test_store_analysis_rejects_terminal_status(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-t", "2026-01-01T00:00:00Z", {"sensor_model": "a", "sample_rate_hz": 100})
+    db.finalize_run("run-t", "2026-01-01T00:10:00Z")
+    db.store_analysis("run-t", {"findings": [], "top_causes": [], "warnings": []})
+    # Second store_analysis should return False (already complete)
+    assert db.store_analysis("run-t", {"findings": []}) is False
+
+
+def test_store_analysis_error_rejects_terminal_status(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-te", "2026-01-01T00:00:00Z", {"sensor_model": "a", "sample_rate_hz": 100})
+    db.finalize_run("run-te", "2026-01-01T00:10:00Z")
+    db.store_analysis("run-te", {"findings": [], "top_causes": [], "warnings": []})
+    # Error after complete should return False
+    assert db.store_analysis_error("run-te", "late failure") is False

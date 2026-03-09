@@ -30,7 +30,8 @@ def _label_bbox(
 
 
 def _boxes_overlap(
-    a: tuple[float, float, float, float], b: tuple[float, float, float, float]
+    a: tuple[float, float, float, float],
+    b: tuple[float, float, float, float],
 ) -> bool:
     return min(a[2], b[2]) > max(a[0], b[0]) and min(a[3], b[3]) > max(a[1], b[1])
 
@@ -168,7 +169,7 @@ def _build_sensor_render_plan(
         )
         markers.append(marker)
         occupied_boxes.append(
-            (px - radius - 1.0, py - radius - 1.0, px + radius + 1.0, py + radius + 1.0)
+            (px - radius - 1.0, py - radius - 1.0, px + radius + 1.0, py + radius + 1.0),
         )
 
     marker_by_name = {marker.name: marker for marker in markers}
@@ -180,7 +181,8 @@ def _build_sensor_render_plan(
         if marker.state in label_states or marker.name in highlight
     }
     for name in sorted(
-        labeled_names, key=lambda value: (location_points[value][1], location_points[value][0])
+        labeled_names,
+        key=lambda value: (location_points[value][1], location_points[value][0]),
     ):
         px, py = location_points[name]
         marker = marker_by_name.get(name)

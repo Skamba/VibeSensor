@@ -64,10 +64,10 @@ def _write_sparse_fixture(run_path: Path) -> None:
                     "statistic": "Peak band RMS vs noise floor",
                     "units": "dB",
                     "definition": "20*log10((peak_band_rms + eps) / (floor + eps))",
-                }
+                },
             },
             "incomplete_for_order_analysis": False,
-        }
+        },
     ]
 
     for idx in range(18):
@@ -107,11 +107,11 @@ def _write_sparse_fixture(run_path: Path) -> None:
                         "amp": peak_amp,
                         "vibration_strength_db": db_value,
                         "strength_bucket": "l2" if db_value > 20 else "l1",
-                    }
+                    },
                 ],
                 "vibration_strength_db": db_value,
                 "strength_bucket": "l2" if db_value > 20 else "l1",
-            }
+            },
         )
 
     records.append(
@@ -119,7 +119,7 @@ def _write_sparse_fixture(run_path: Path) -> None:
             "record_type": "run_end",
             "schema_version": "v2-jsonl",
             "run_id": "run-ocr-hotspots",
-        }
+        },
     )
 
     write_jsonl(run_path, records)

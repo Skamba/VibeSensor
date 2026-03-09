@@ -242,7 +242,10 @@ class TestDetectDiffuseExcitation:
 
     def test_single_location_not_diffuse(self) -> None:
         is_diffuse, penalty = _detect_diffuse_excitation(
-            {"front_left"}, {"front_left": 10}, {"front_left": 5}, []
+            {"front_left"},
+            {"front_left": 10},
+            {"front_left": 5},
+            [],
         )
         assert not is_diffuse
         assert penalty == 1.0
