@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Protocol
 
 from ..backend_types import SpeedSourcePayload
 from ..constants import SECONDS_PER_MINUTE
-from ..diagnostics_shared import build_order_bands, vehicle_orders_hz
+from ..order_bands import build_order_bands, vehicle_orders_hz
 from ..payload_types import (
     RotationalSpeedsPayload,
     RotationalSpeedValuePayload,

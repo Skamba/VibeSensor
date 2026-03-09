@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.diagnostics_shared import ClassificationResult, classify_peak_hz
+from vibesensor.peak_classification import ClassificationResult, classify_peak_hz
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.settings_store import _coerce_language
 
@@ -124,7 +124,9 @@ class TestMypyEnforcement:
     @pytest.mark.parametrize(
         "module",
         [
-            "vibesensor/diagnostics_shared.py",
+            "vibesensor/order_bands.py",
+            "vibesensor/peak_classification.py",
+            "vibesensor/severity.py",
             "vibesensor/ws_models.py",
             "vibesensor/report_i18n.py",
             "vibesensor/analysis_persistence.py",

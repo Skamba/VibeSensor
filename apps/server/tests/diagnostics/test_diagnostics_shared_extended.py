@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from vibesensor.diagnostics_shared import (
-    _order_label_for_class_key,
-    as_float_or_none,
+from vibesensor.order_bands import (
     build_diagnostic_settings,
-    classify_peak_hz,
     combined_relative_uncertainty,
-    severity_from_peak,
-    source_keys_from_class_key,
-    suspected_source_from_class_key,
     tolerance_for_order,
     vehicle_orders_hz,
 )
+from vibesensor.peak_classification import (
+    _order_label_for_class_key,
+    classify_peak_hz,
+    source_keys_from_class_key,
+    suspected_source_from_class_key,
+)
+from vibesensor.runlog import as_float_or_none
+from vibesensor.severity import severity_from_peak
 
 # -- _as_float NaN/edge cases -------------------------------------------------
 
