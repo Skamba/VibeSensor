@@ -208,7 +208,6 @@ def _make_fake_state(history_db: Any) -> Any:
             },
         )()
         settings_store = type("S", (), {"language": "en", "set_language": lambda self, v: v})()
-        live_diagnostics = type("D", (), {"reset": lambda self: None})()
         metrics_logger = type(
             "M",
             (),
@@ -285,7 +284,6 @@ def _make_fake_state(history_db: Any) -> Any:
     )
     state.diagnostics = SimpleNamespace(
         metrics_logger=state.metrics_logger,
-        live_diagnostics=state.live_diagnostics,
     )
     state.persistence = SimpleNamespace(
         history_db=state.history_db,
