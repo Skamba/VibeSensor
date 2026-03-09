@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 from fastapi import HTTPException
+from test_support.response_models import response_payload
 
 
 def _get_endpoint(router, path: str):
@@ -39,7 +40,7 @@ def car_library_router(fake_state):
 async def test_brands_returns_list(car_library_router) -> None:
     """GET /api/car-library/brands returns a non-empty list including BMW and Audi."""
     endpoint = _get_endpoint(car_library_router, "/api/car-library/brands")
-    result = await endpoint()
+    result = response_payload(await endpoint())
     assert "brands" in result
     brands = result["brands"]
     assert isinstance(brands, list)
@@ -52,7 +53,7 @@ async def test_brands_returns_list(car_library_router) -> None:
 async def test_brands_are_sorted(car_library_router) -> None:
     """Brands list must be sorted alphabetically."""
     endpoint = _get_endpoint(car_library_router, "/api/car-library/brands")
-    result = await endpoint()
+    result = response_payload(await endpoint())
     brands = result["brands"]
     assert brands == sorted(brands)
 
@@ -66,7 +67,7 @@ async def test_brands_are_sorted(car_library_router) -> None:
 async def test_types_known_brand_returns_types(car_library_router) -> None:
     """GET /api/car-library/types?brand=BMW returns body types."""
     endpoint = _get_endpoint(car_library_router, "/api/car-library/types")
-    result = await endpoint(brand="BMW")
+    result = response_payload(await endpoint(brand="BMW"))
     assert "types" in result
     types = result["types"]
     assert isinstance(types, list)
@@ -90,7 +91,7 @@ async def test_types_both_brands_have_sedan_and_suv(car_library_router) -> None:
     """BMW and Audi must both expose Sedan and SUV body types."""
     endpoint = _get_endpoint(car_library_router, "/api/car-library/types")
     for brand in ("BMW", "Audi"):
-        result = await endpoint(brand=brand)
+        result = response_payload(await endpoint(brand=brand))
         types = result["types"]
         assert "Sedan" in types, f"{brand} missing Sedan"
         assert "SUV" in types, f"{brand} missing SUV"
@@ -105,7 +106,7 @@ async def test_types_both_brands_have_sedan_and_suv(car_library_router) -> None:
 async def test_models_known_brand_type_returns_entries(car_library_router) -> None:
     """GET /api/car-library/models?brand=BMW&type=Sedan returns model entries."""
     endpoint = _get_endpoint(car_library_router, "/api/car-library/models")
-    result = await endpoint(brand="BMW", car_type="Sedan")
+    result = response_payload(await endpoint(brand="BMW", car_type="Sedan"))
     assert "models" in result
     models = result["models"]
     assert isinstance(models, list)
@@ -142,7 +143,7 @@ async def test_models_unknown_type_for_known_brand_raises_404(car_library_router
 async def test_models_entries_have_positive_tire_specs(car_library_router) -> None:
     """All returned model entries must have positive tire dimensions."""
     endpoint = _get_endpoint(car_library_router, "/api/car-library/models")
-    result = await endpoint(brand="BMW", car_type="Sedan")
+    result = response_payload(await endpoint(brand="BMW", car_type="Sedan"))
     for m in result["models"]:
         assert m["tire_width_mm"] > 0, f"{m['model']} tire_width_mm not positive"
         assert m["tire_aspect_pct"] > 0, f"{m['model']} tire_aspect_pct not positive"
@@ -156,11 +157,11 @@ async def test_models_all_brands_and_types_serve_results(car_library_router) -> 
     types_ep = _get_endpoint(car_library_router, "/api/car-library/types")
     models_ep = _get_endpoint(car_library_router, "/api/car-library/models")
 
-    brands_result = await brands_ep()
+    brands_result = response_payload(await brands_ep())
     for brand in brands_result["brands"]:
-        types_result = await types_ep(brand=brand)
+        types_result = response_payload(await types_ep(brand=brand))
         for car_type in types_result["types"]:
-            models_result = await models_ep(brand=brand, car_type=car_type)
+            models_result = response_payload(await models_ep(brand=brand, car_type=car_type))
             assert len(models_result["models"]) > 0, (
                 f"Empty models for brand={brand!r} type={car_type!r}"
             )
