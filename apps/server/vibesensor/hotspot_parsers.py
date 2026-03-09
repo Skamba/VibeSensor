@@ -48,7 +48,7 @@ def parse_active_conn_device(con_name: str, stdout: str) -> tuple[bool, str | No
             continue
         name, device = parts
         if name == con_name:
-            return True, device if device else None
+            return True, device or None
     return False, None
 
 
@@ -143,7 +143,9 @@ class HealStateStore:
             return {str(k): float(v) for k, v in data.items() if isinstance(v, (int, float))}
         except (json.JSONDecodeError, OSError, ValueError):
             LOGGER.warning(
-                "HealStateStore: ignoring corrupt state file %s", self._path, exc_info=True
+                "HealStateStore: ignoring corrupt state file %s",
+                self._path,
+                exc_info=True,
             )
             return {}
 

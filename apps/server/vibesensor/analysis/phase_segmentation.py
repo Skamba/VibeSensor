@@ -84,10 +84,14 @@ def _estimate_speed_derivative(
         return None
     # Look backward and forward for valid speed+time pairs
     prev_speed, prev_time = _find_nearest_valid(
-        speeds, times, range(idx - 1, max(-1, idx - window - 1), -1)
+        speeds,
+        times,
+        range(idx - 1, max(-1, idx - window - 1), -1),
     )
     next_speed, next_time = _find_nearest_valid(
-        speeds, times, range(idx + 1, min(n, idx + window + 1))
+        speeds,
+        times,
+        range(idx + 1, min(n, idx + window + 1)),
     )
 
     if (
@@ -147,7 +151,7 @@ _MOVING_PHASES = frozenset(
         DrivingPhase.CRUISE,
         DrivingPhase.DECELERATION,
         DrivingPhase.COAST_DOWN,
-    }
+    },
 )
 
 
@@ -271,7 +275,7 @@ def segment_run_phases(
                 speed_min_kmh=min(seg_speeds) if seg_speeds else None,
                 speed_max_kmh=max(seg_speeds) if seg_speeds else None,
                 sample_count=seg_end - seg_start + 1,
-            )
+            ),
         )
         seg_start = i
 

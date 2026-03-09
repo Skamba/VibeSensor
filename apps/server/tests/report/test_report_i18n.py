@@ -49,7 +49,8 @@ def test_missing_translation_file_is_deterministic(monkeypatch: pytest.MonkeyPat
 
 
 def test_corrupt_translation_file_is_deterministic(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     broken = tmp_path / "report_i18n.json"
     broken.write_text("{broken", encoding="utf-8")
@@ -113,7 +114,8 @@ def test_dutch_translation_audit_round_2() -> None:
     assert report_i18n.tr("nl", "CONFIDENCE_LABEL") == "Betrouwbaarheid"
     assert report_i18n.tr("nl", "FINAL_DRIVE_RATIO_LABEL") == "Eindoverbrenging"
     assert "hogere orden" in report_i18n.tr(
-        "nl", "CHECK_DRIVESHAFT_RUNOUT_AND_JOINT_CONDITION_FOR_HIGHER"
+        "nl",
+        "CHECK_DRIVESHAFT_RUNOUT_AND_JOINT_CONDITION_FOR_HIGHER",
     )
     assert "ordereferenties" in report_i18n.tr("nl", "SUITABILITY_REFERENCE_COMPLETENESS_PASS")
     assert "ordereferenties" in report_i18n.tr("nl", "SUITABILITY_REFERENCE_COMPLETENESS_WARN")
@@ -121,7 +123,8 @@ def test_dutch_translation_audit_round_2() -> None:
     assert "aanvullende data" in report_i18n.tr("nl", "NO_NEXT_STEPS")
     assert report_i18n.tr("nl", "METRIC_LABEL") == "Meetwaarde"
     assert "Snelheidsdata" in report_i18n.tr(
-        "nl", "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
+        "nl",
+        "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND",
     )
 
 
@@ -207,7 +210,7 @@ def test_dutch_translation_audit_round_4() -> None:
 
     # Natural Dutch: "bedrijfsconditie" -> "bedrijfsomstandigheid"
     assert "bedrijfsomstandigheid" in _nl(
-        "PEAK_FREQUENCY_SHIFTS_RANDOMLY_WITH_NO_REPEATABLE_OPERATING"
+        "PEAK_FREQUENCY_SHIFTS_RANDOMLY_WITH_NO_REPEATABLE_OPERATING",
     )
 
     # Anglicism removal: "motororde-matching" -> "motororde-vergelijking"
@@ -246,7 +249,7 @@ def test_dutch_translation_audit_round_4() -> None:
 
     # Interfixed s: "snelheid-" -> "snelheids-"
     assert "snelheids- en versnellingsstromen" in _nl(
-        "VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM"
+        "VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM",
     )
 
     # Passive construction: "komen door" -> "worden veroorzaakt door"

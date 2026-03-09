@@ -20,7 +20,7 @@ class UpdateServiceControlConfig:
 class UpdateServiceController:
     """Owns systemd drop-in management and restart scheduling."""
 
-    __slots__ = ("_commands", "_tracker", "_config")
+    __slots__ = ("_commands", "_config", "_tracker")
 
     def __init__(
         self,

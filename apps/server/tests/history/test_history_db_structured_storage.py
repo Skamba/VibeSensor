@@ -257,7 +257,8 @@ def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> No
 
 
 def test_v2_row_to_dict_non_list_peak_column_warns_and_uses_empty(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-peak-warn", "2026-01-01T00:00:00Z", {"source": "test"})

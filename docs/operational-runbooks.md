@@ -21,7 +21,11 @@ curl -sf http://10.4.0.1/api/clients || curl -sf http://10.4.0.1:8000/api/client
 When interpreting `/api/health`, check `startup_state`, `startup_phase`, and
 `background_task_failures` before chasing downstream symptoms. A healthy boot
 should reach `startup_state: ready` with an empty `background_task_failures`
-map.
+map. The response also includes operational metrics:
+
+- `startup_warnings` — precondition issues detected at boot (e.g. low disk space)
+- `tick_duration_s` / `max_tick_duration_s` / `tick_count` — processing loop timing
+- `db_last_write_duration_s` / `db_max_write_duration_s` — DB write latency
 
 ## Diagnose high dropped frames
 

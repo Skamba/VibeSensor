@@ -8,7 +8,7 @@ from collections.abc import Callable
 from .. import __version__
 from ..report.report_data import PartSuggestion, PatternEvidence, SystemFindingCard
 from ..runlog import as_float_or_none as _as_float
-from ._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SummaryData, is_finding
+from ._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SummaryData
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .report_mapping_common import (
     finding_strength_db,
@@ -17,6 +17,7 @@ from .report_mapping_common import (
     order_label_human,
     resolve_i18n,
 )
+from .report_mapping_models import PrimaryCandidateContext, ReportMappingContext
 
 
 def top_strength_values(
@@ -30,14 +31,15 @@ def top_strength_values(
     for cause in causes:
         if not isinstance(cause, dict):
             continue
+        finding_id = cause.get("finding_id")
         for finding in all_findings:
-            if not is_finding(finding):
+            if not isinstance(finding, dict):
                 continue
-            if finding.get("finding_id") != cause.get("finding_id"):
+            if finding.get("finding_id") != finding_id:
                 continue
-            finding_db = finding_strength_db(finding)
-            if finding_db is not None:
-                return finding_db
+            db = finding_strength_db(finding)
+            if db is not None:
+                return db
     sensor_rows = [
         _as_float(row.get("p95_intensity_db"))
         for row in summary.get("sensor_intensity_by_location", [])
@@ -61,17 +63,16 @@ def has_relevant_reference_gap(findings: list[Finding], primary_source: object) 
 
 
 def build_system_cards(
-    top_causes: list[CandidateFinding],
-    findings_non_ref: list[Finding],
-    findings: list[Finding],
-    tier: str,
+    context: ReportMappingContext,
+    primary: PrimaryCandidateContext,
     lang: str,
     tr: Callable,
 ) -> list[SystemFindingCard]:
     """Build system finding cards for the report template."""
+    tier = primary.tier
     if tier == "A":
         return []
-    card_sources = top_causes or findings_non_ref or findings
+    card_sources = context.top_causes or context.findings_non_ref or context.findings
     cards: list[SystemFindingCard] = []
     for cause in card_sources[:2]:
         source = cause.get("source") or cause.get("suspected_source") or "unknown"
@@ -95,7 +96,7 @@ def build_system_cards(
                 pattern_summary=pattern_text,
                 parts=card_parts,
                 tone=cause.get("confidence_tone", "neutral"),
-            )
+            ),
         )
     return cards
 
@@ -108,38 +109,32 @@ def humanize_signatures(signatures: object, *, lang: str) -> list[str]:
 
 
 def build_pattern_evidence(
-    top_causes: list[CandidateFinding],
-    primary_candidate: CandidateFinding | None,
-    origin: OriginSummary,
-    primary_location: str,
-    primary_speed: str,
-    strength_text: str,
-    db_val: float | None,
-    cert_label_text: str,
-    cert_pct: str,
-    cert_reason: str,
-    weak_spatial: bool,
+    context: ReportMappingContext,
+    primary: PrimaryCandidateContext,
     lang: str,
     tr: Callable,
 ) -> PatternEvidence:
     """Build the pattern-evidence block for the report template."""
     systems_raw = [
         human_source(cause.get("source") or cause.get("suspected_source"), tr=tr)
-        for cause in top_causes[:3]
+        for cause in context.top_causes[:3]
     ]
     systems = list(dict.fromkeys(systems_raw))
-    interpretation = resolve_interpretation(origin, lang=lang, tr=tr)
-    source_for_why, order_label_for_why = resolve_parts_context(primary_candidate, lang=lang)
+    interpretation = resolve_interpretation(context.origin, lang=lang, tr=tr)
+    source_for_why, order_label_for_why = resolve_parts_context(
+        primary.primary_candidate,
+        lang=lang,
+    )
     return PatternEvidence(
         matched_systems=systems,
-        strongest_location=primary_location,
-        speed_band=primary_speed,
-        strength_label=strength_text,
-        strength_peak_db=db_val,
-        certainty_label=cert_label_text,
-        certainty_pct=cert_pct,
-        certainty_reason=cert_reason,
-        warning=cert_reason if weak_spatial else None,
+        strongest_location=primary.primary_location,
+        speed_band=primary.primary_speed,
+        strength_label=primary.strength_text,
+        strength_peak_db=primary.strength_db,
+        certainty_label=primary.certainty_label_text,
+        certainty_pct=primary.certainty_pct,
+        certainty_reason=primary.certainty_reason,
+        warning=primary.certainty_reason if primary.weak_spatial else None,
         interpretation=interpretation or None,
         why_parts_text=why_parts_listed(source_for_why, order_label_for_why, lang=lang),
     )
@@ -162,7 +157,7 @@ def resolve_parts_context(
     source_for_why = str(
         (primary_candidate.get("source") or primary_candidate.get("suspected_source"))
         if primary_candidate
-        else ""
+        else "",
     )
     signatures = primary_candidate.get("signatures_observed", []) if primary_candidate else []
     order_label = order_label_human(lang, str(signatures[0])) if signatures else None

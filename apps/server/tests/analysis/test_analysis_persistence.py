@@ -62,7 +62,7 @@ CREATE TABLE settings_kv (
 CREATE TABLE client_names (
     client_id TEXT PRIMARY KEY, name TEXT NOT NULL, updated_at TEXT NOT NULL
 );
-"""
+""",
     )
     conn.commit()
     conn.close()
@@ -184,7 +184,7 @@ def _sample(i: int) -> dict[str, Any]:
                 "amp": 0.1,
                 "vibration_strength_db": 12.0,
                 "strength_bucket": "l2",
-            }
+            },
         ],
         "vibration_strength_db": 12.0,
         "strength_bucket": "l2",
@@ -224,7 +224,9 @@ def _make_fake_state(history_db: Any) -> Any:
                 "snapshot_for_api": lambda self: [],
                 "get": lambda self, _: None,
                 "set_name": lambda self, cid, name: type(
-                    "U", (), {"client_id": cid, "name": name}
+                    "U",
+                    (),
+                    {"client_id": cid, "name": name},
                 )(),
                 "remove_client": lambda self, _: True,
             },
@@ -282,7 +284,7 @@ def _make_fake_state(history_db: Any) -> Any:
         apply_car_settings=state.apply_car_settings,
         apply_speed_source_settings=state.apply_speed_source_settings,
     )
-    state.diagnostics = SimpleNamespace(
+    state.recording = SimpleNamespace(
         metrics_logger=state.metrics_logger,
     )
     state.persistence = SimpleNamespace(

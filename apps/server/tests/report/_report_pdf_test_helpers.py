@@ -18,12 +18,12 @@ from vibesensor.report.pdf_page1 import _draw_system_card
 from vibesensor.report.report_data import PartSuggestion, SystemFindingCard
 
 __all__ = [
+    "KMH_TO_MPS",
+    "RUN_END",
     "BytesIO",
     "Canvas",
-    "KMH_TO_MPS",
     "PartSuggestion",
     "PdfReader",
-    "RUN_END",
     "SystemFindingCard",
     "__version__",
     "_draw_system_card",
@@ -34,8 +34,8 @@ __all__ = [
     "map_summary",
     "run_metadata",
     "sample",
-    "summarize_log",
     "suitability_by_key",
+    "summarize_log",
     "write_jsonl",
 ]
 

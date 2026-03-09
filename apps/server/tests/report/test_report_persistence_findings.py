@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 from __future__ import annotations
 
 from _report_persistence_helpers import (
@@ -43,7 +42,7 @@ class TestBuildPersistentPeakFindings:
         for i in range(20):
             peaks = [{"hz": 40.0, "amp": 0.06}] if i < 16 else []
             samples.append(
-                sample(float(i) * 0.5, 80.0, peaks, client_name=locations[i % len(locations)])
+                sample(float(i) * 0.5, 80.0, peaks, client_name=locations[i % len(locations)]),
             )
 
         findings = build_findings(samples)
@@ -143,7 +142,7 @@ class TestBuildPersistentPeakFindings:
                         amp = 0.20 if (speed, location) == (35.0, "Front Left") else 0.05
                         peaks.append({"hz": 25.0, "amp": amp})
                     samples.append(
-                        sample(float(len(samples)) * 0.5, speed, peaks, client_name=location)
+                        sample(float(len(samples)) * 0.5, speed, peaks, client_name=location),
                     )
 
         findings = build_findings(samples)
@@ -152,7 +151,8 @@ class TestBuildPersistentPeakFindings:
 
         rows = _top_peaks_table_rows(samples, top_n=12, freq_bin_hz=1.0)
         row_25 = next(
-            (row for row in rows if abs(float(row.get("frequency_hz", 0.0)) - 25.0) <= 0.5), None
+            (row for row in rows if abs(float(row.get("frequency_hz", 0.0)) - 25.0) <= 0.5),
+            None,
         )
         assert row_25 is not None
         assert row_25["peak_classification"] == "baseline_noise"
@@ -169,7 +169,7 @@ class TestBuildPersistentPeakFindings:
                         amp = 0.20 if (speed, rep) == (35.0, 0) else 0.05
                         peaks.append({"hz": 25.0, "amp": amp})
                     samples.append(
-                        sample(float(len(samples)) * 0.5, speed, peaks, client_name=location)
+                        sample(float(len(samples)) * 0.5, speed, peaks, client_name=location),
                     )
 
         findings = build_findings(samples)
@@ -231,7 +231,8 @@ class TestPersistentPeakFindingsPhaseAwareness:
             phases.append(DrivingPhase.DECELERATION)
 
         phase_presence = next(
-            iter(findings_at_freq(build_findings(samples, per_sample_phases=phases), "35.0")), None
+            iter(findings_at_freq(build_findings(samples, per_sample_phases=phases), "35.0")),
+            None,
         ).get("phase_presence")
         assert "cruise" in phase_presence
         assert "acceleration" in phase_presence
@@ -253,7 +254,9 @@ class TestPersistentPeakFindingsPhaseAwareness:
 
     def test_phase_presence_via_build_findings_integration(self) -> None:
         findings = build_findings_for_samples(
-            metadata=make_metadata(), samples=uniform_samples(25, 40.0, 0.06), lang="en"
+            metadata=make_metadata(),
+            samples=uniform_samples(25, 40.0, 0.06),
+            lang="en",
         )
         phase_presence = findings_at_freq(findings, "41")[0].get("phase_presence")
         assert isinstance(phase_presence, dict)
@@ -261,7 +264,8 @@ class TestPersistentPeakFindingsPhaseAwareness:
 
     def test_phase_presence_ignored_when_length_mismatch(self) -> None:
         findings = build_findings(
-            uniform_samples(10, 40.0, 0.06), per_sample_phases=[DrivingPhase.CRUISE] * 5
+            uniform_samples(10, 40.0, 0.06),
+            per_sample_phases=[DrivingPhase.CRUISE] * 5,
         )
         for finding in findings:
             assert finding.get("phase_presence") is None
@@ -279,13 +283,13 @@ class TestAnnotatePeaksWithOrderLabels:
                         {"matched_hz": 11.0},
                         {"matched_hz": 11.2},
                     ],
-                }
+                },
             ],
             "plots": {
                 "peaks_table": [
                     {"frequency_hz": 11.0, "order_label": ""},
                     {"frequency_hz": 25.0, "order_label": ""},
-                ]
+                ],
             },
         }
         annotate_peaks_with_order_labels(summary)
@@ -299,7 +303,7 @@ class TestAnnotatePeaksWithOrderLabels:
                     "finding_id": "F_ORDER",
                     "frequency_hz_or_order": "1x wheel order",
                     "matched_points": [{"matched_hz": 50.0}],
-                }
+                },
             ],
             "plots": {"peaks_table": [{"frequency_hz": 11.0, "order_label": ""}]},
         }
@@ -324,7 +328,7 @@ class TestAnnotatePeaksWithOrderLabels:
                     "finding_id": "F_PEAK",
                     "frequency_hz_or_order": "41.0 Hz",
                     "matched_points": [{"matched_hz": 41.0}],
-                }
+                },
             ],
             "plots": {"peaks_table": [{"frequency_hz": 41.0, "order_label": ""}]},
         }
@@ -350,7 +354,7 @@ class TestAnnotatePeaksWithOrderLabels:
                     {"frequency_hz": 11.0, "order_label": ""},
                     {"frequency_hz": 25.0, "order_label": ""},
                     {"frequency_hz": 60.0, "order_label": ""},
-                ]
+                ],
             },
         }
         annotate_peaks_with_order_labels(summary)
@@ -363,8 +367,8 @@ class TestAnnotatePeaksWithOrderLabels:
             "findings": [],
             "plots": {
                 "peaks_table": [
-                    {"frequency_hz": 11.0, "order_label": "", "peak_classification": "patterned"}
-                ]
+                    {"frequency_hz": 11.0, "order_label": "", "peak_classification": "patterned"},
+                ],
             },
         }
         annotate_peaks_with_order_labels(summary)

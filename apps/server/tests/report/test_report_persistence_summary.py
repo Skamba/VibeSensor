@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 from __future__ import annotations
 
 from _report_persistence_helpers import make_metadata, sample, summarize, uniform_samples
@@ -53,7 +52,7 @@ class TestSummarizeRunDataPersistence:
     def test_summary_includes_run_noise_baseline(self) -> None:
         assert (
             summarize(uniform_samples(10, 20.0, 0.04, strength_floor_amp_g=0.02)).get(
-                "run_noise_baseline_db"
+                "run_noise_baseline_db",
             )
             is not None
         )
@@ -147,6 +146,8 @@ class TestRobustness:
 
     def test_build_findings_for_samples_works(self) -> None:
         findings = build_findings_for_samples(
-            metadata=make_metadata(), samples=uniform_samples(15, 15.0, 0.02), lang="en"
+            metadata=make_metadata(),
+            samples=uniform_samples(15, 15.0, 0.02),
+            lang="en",
         )
         assert isinstance(findings, list)

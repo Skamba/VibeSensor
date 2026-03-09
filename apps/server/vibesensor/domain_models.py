@@ -32,13 +32,13 @@ _isfinite = math.isfinite
 _LOGGER = logging.getLogger(__name__)
 
 __all__ = [
+    "DEFAULT_CAR_ASPECTS",
     "RUN_END_TYPE",
     "RUN_METADATA_TYPE",
     "RUN_SAMPLE_TYPE",
     "RUN_SCHEMA_VERSION",
     "VALID_FALLBACK_MODES",
     "VALID_SPEED_SOURCES",
-    "DEFAULT_CAR_ASPECTS",
     "CarConfig",
     "RunMetadata",
     "SensorConfig",
@@ -64,7 +64,7 @@ VALID_SPEED_SOURCES: tuple[str, ...] = ("gps", "obd2", "manual")
 VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
 
 DEFAULT_CAR_ASPECTS: Final[MappingProxyType[str, float]] = MappingProxyType(
-    DEFAULT_ANALYSIS_SETTINGS
+    DEFAULT_ANALYSIS_SETTINGS,
 )
 
 

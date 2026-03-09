@@ -14,7 +14,7 @@ _PHASE_ONSET_RELEVANT: frozenset[str] = frozenset(
         DrivingPhase.ACCELERATION.value,
         DrivingPhase.DECELERATION.value,
         DrivingPhase.COAST_DOWN.value,
-    }
+    },
 )
 
 
@@ -49,7 +49,7 @@ def compute_matched_speed_phase_evidence(
     peak_speed_kmh, speed_window_kmh, strongest_speed_band = speed_profile_from_points(
         speed_points,
         allowed_speed_bins=[focused_speed_band] if focused_speed_band else None,
-        phase_weights=speed_phase_weights if speed_phase_weights else None,
+        phase_weights=speed_phase_weights or None,
     )
     if not strongest_speed_band:
         strongest_speed_band = hotspot_speed_band

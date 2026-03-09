@@ -15,7 +15,7 @@ class TestUpdateApiEndpoints:
         state = MagicMock()
         state.ingress = MagicMock()
         state.settings = MagicMock()
-        state.diagnostics = MagicMock()
+        state.recording = MagicMock()
         state.persistence = MagicMock()
         state.websocket = MagicMock()
         state.processing = MagicMock()

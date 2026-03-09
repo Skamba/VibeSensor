@@ -21,7 +21,7 @@ class UpdateValidationConfig:
 class UpdatePrerequisiteValidator:
     """Validates tool availability, privilege access, and disk space."""
 
-    __slots__ = ("_commands", "_tracker", "_config")
+    __slots__ = ("_commands", "_config", "_tracker")
 
     def __init__(
         self,

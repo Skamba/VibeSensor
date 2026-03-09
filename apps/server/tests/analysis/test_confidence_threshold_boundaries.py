@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Confidence threshold boundary tests — multi-profile (≥50 cases per profile).
 
 Tests the analysis pipeline's behaviour at and near critical confidence
@@ -80,7 +79,9 @@ def test_strong_single_sensor_reaches_high_confidence(profile: dict[str, Any], c
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
 def test_strong_4sensor_fault_reaches_medium_confidence(
-    profile: dict[str, Any], corner: str, speed: float
+    profile: dict[str, Any],
+    corner: str,
+    speed: float,
 ) -> None:
     """A strong 4-sensor fault produces ≥0.40 confidence (spatial penalty)."""
     sensor = CORNER_SENSORS[corner]
@@ -141,7 +142,9 @@ def test_negligible_strength_caps_to_medium(profile: dict[str, Any], corner: str
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_HIGH], ids=["low", "high"])
 def test_very_weak_fault_below_nofault_threshold(
-    profile: dict[str, Any], corner: str, speed: float
+    profile: dict[str, Any],
+    corner: str,
+    speed: float,
 ) -> None:
     """A very weak fault should not cross the 0.40 no-fault boundary."""
     sensor = CORNER_SENSORS[corner]
@@ -300,7 +303,10 @@ _SENSOR_CONFIGS = [
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
 @pytest.mark.parametrize(("cfg_name", "sensors"), _SENSOR_CONFIGS, ids=["single", "quad"])
 def test_noise_only_no_spurious_fault(
-    profile: dict[str, Any], cfg_name: str, sensors: list[str], speed: float
+    profile: dict[str, Any],
+    cfg_name: str,
+    sensors: list[str],
+    speed: float,
 ) -> None:
     """Pure noise should never produce a wheel fault at ≥0.40 confidence."""
     samples = make_noise_samples(sensors=sensors, speed_kmh=speed, n_samples=40)

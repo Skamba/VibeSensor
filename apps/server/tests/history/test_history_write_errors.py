@@ -40,7 +40,7 @@ _FAKE_LATEST_METRICS: dict = {
                 "amp": 0.12,
                 "vibration_strength_db": 22.0,
                 "strength_bucket": "l2",
-            }
+            },
         ],
         "combined_spectrum_amp_g": [],
     },

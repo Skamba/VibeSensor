@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 from __future__ import annotations
 
 from io import BytesIO
@@ -36,13 +35,16 @@ class TestPdfContentForDiagnosedScenario:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
 
         from vibesensor.report.pdf_engine import build_report_pdf
 
         summary = summarize_run_data(
-            standard_metadata(language="en"), samples, lang="en", file_name="pdf_diag_test"
+            standard_metadata(language="en"),
+            samples,
+            lang="en",
+            file_name="pdf_diag_test",
         )
         pdf_bytes = build_report_pdf(map_summary(summary))
         text_lower = extract_pdf_text(pdf_bytes).lower()
@@ -72,13 +74,16 @@ class TestPdfContentForDiagnosedScenario:
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
 
         from vibesensor.report.pdf_engine import build_report_pdf
 
         summary = summarize_run_data(
-            standard_metadata(language="nl"), samples, lang="nl", file_name="pdf_nl_diag"
+            standard_metadata(language="nl"),
+            samples,
+            lang="nl",
+            file_name="pdf_nl_diag",
         )
         text_lower = extract_pdf_text(build_report_pdf(map_summary(summary))).lower()
         assert "diagnostisch werkformulier" in text_lower

@@ -56,7 +56,7 @@ def test_report_module_does_not_import_analysis(module_path: Path) -> None:
             if node.level and node.level > 0:
                 if full.startswith("analysis"):
                     violations.append(
-                        f"line {node.lineno}: from {'.' * node.level}{full} import ..."
+                        f"line {node.lineno}: from {'.' * node.level}{full} import ...",
                     )
             elif "analysis" in full.split("."):
                 violations.append(f"line {node.lineno}: from {full} import ...")

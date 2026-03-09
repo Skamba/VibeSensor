@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Baseline sample and non-fault scenario builders for tests."""
 
 from __future__ import annotations
@@ -83,7 +82,7 @@ def make_noise_samples(
                     top_peaks=peaks,
                     vibration_strength_db=vib_db,
                     strength_floor_amp_g=noise_amp,
-                )
+                ),
             )
     return samples
 
@@ -115,7 +114,7 @@ def make_transient_samples(
                 top_peaks=peaks,
                 vibration_strength_db=spike_vib_db,
                 strength_floor_amp_g=0.003,
-            )
+            ),
         )
     return samples
 
@@ -149,7 +148,7 @@ def make_diffuse_samples(
                     top_peaks=peaks,
                     vibration_strength_db=vib_db,
                     strength_floor_amp_g=0.003,
-                )
+                ),
             )
     return samples
 
@@ -179,7 +178,7 @@ def make_idle_samples(
                     top_peaks=peaks,
                     vibration_strength_db=6.0,
                     strength_floor_amp_g=noise_amp,
-                )
+                ),
             )
     return samples
 
@@ -214,7 +213,7 @@ def make_ramp_samples(
                     top_peaks=peaks,
                     vibration_strength_db=vib_db,
                     strength_floor_amp_g=noise_amp,
-                )
+                ),
             )
     return samples
 
@@ -250,7 +249,7 @@ def make_road_phase_samples(
                     top_peaks=peaks,
                     vibration_strength_db=8.0,
                     strength_floor_amp_g=smooth_amp,
-                )
+                ),
             )
         t += dt_s
 
@@ -270,7 +269,7 @@ def make_road_phase_samples(
                     top_peaks=peaks,
                     vibration_strength_db=18.0,
                     strength_floor_amp_g=rough_amp,
-                )
+                ),
             )
         t += dt_s
 
@@ -289,7 +288,7 @@ def make_road_phase_samples(
                     top_peaks=peaks,
                     vibration_strength_db=35.0,
                     strength_floor_amp_g=0.003,
-                )
+                ),
             )
         t += dt_s
 

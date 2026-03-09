@@ -55,20 +55,21 @@ Current hook behavior:
 - The optional privacy guard only runs when `tools/privacy/privacy_guard.py` exists.
 - If a hook blocks you unexpectedly, use the commands below directly and then investigate instead of guessing.
 
-## Fast validation workflow
+## Validation workflow
 
-Run the smallest relevant checks first, then expand to CI parity before opening or merging a PR.
+Two tiers: use `make test` during iteration, `make test-all` before pushing.
 
 | Goal | Command |
 |---|---|
 | Backend lint | `make lint` |
 | Backend typing | `make typecheck-backend` |
 | Frontend typing | `make ui-typecheck` |
-| Fast backend test loop | `make test-fast` |
+| Fast backend tests | `make test` |
 | Focused backend tests | `pytest -q apps/server/tests/<area>/` |
 | Coverage view | `make coverage` |
 | Full CI-parity suite | `make test-all` |
 | Docs lint | `make docs-lint` |
+| Sync frontend contracts | `make sync-contracts` |
 
 Useful focused examples:
 

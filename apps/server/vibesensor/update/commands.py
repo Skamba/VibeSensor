@@ -12,7 +12,7 @@ _SENSITIVE_KEYS: frozenset[str] = frozenset(
         "secret",
         "key",
         "802-11-wireless-security.psk",
-    }
+    },
 )
 
 

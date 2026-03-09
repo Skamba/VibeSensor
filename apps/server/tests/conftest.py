@@ -59,7 +59,7 @@ class FakeState:
             apply_car_settings=self.apply_car_settings,
             apply_speed_source_settings=self.apply_speed_source_settings,
         )
-        self.diagnostics = SimpleNamespace(
+        self.recording = SimpleNamespace(
             metrics_logger=self.metrics_logger,
         )
         self.persistence = SimpleNamespace(

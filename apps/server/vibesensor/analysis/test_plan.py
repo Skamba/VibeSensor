@@ -109,7 +109,7 @@ def _merge_test_plan(
                         finding_confidence=finding_confidence,
                         finding_speed_band=finding_speed_band,
                         finding_frequency=finding_frequency,
-                    )
+                    ),
                 )
             continue
         source = _normalized_lower_text(finding.get("suspected_source"))
@@ -126,7 +126,7 @@ def _merge_test_plan(
                     finding_confidence=finding_confidence,
                     finding_speed_band=finding_speed_band,
                     finding_frequency=finding_frequency,
-                )
+                ),
             )
 
     dedup: dict[str, TestStep] = {}
@@ -157,7 +157,7 @@ def _merge_test_plan(
                 "FALSIFY_NO_ABNORMAL_PLAY_WEAR_OR_LOOSENESS",
             ),
             "eta": "20-35 min",
-        }
+        },
     ]
 
 
@@ -320,7 +320,7 @@ def _location_speedbin_summary(
                 "speed_kmh": speed,
                 "matched_hz": _as_float(row.get("matched_hz")),
                 "rel_error": _as_float(row.get("rel_error")),
-            }
+            },
         )
 
     if not grouped:

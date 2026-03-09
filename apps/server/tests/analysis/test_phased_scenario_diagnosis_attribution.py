@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 from __future__ import annotations
 
 import pytest
@@ -51,10 +50,12 @@ class TestSpeedBandAttribution:
         speed_band = str(
             extract_top_finding(
                 summarize_run_data(
-                    standard_metadata(), baseline + fault + cool, include_samples=False
-                )
+                    standard_metadata(),
+                    baseline + fault + cool,
+                    include_samples=False,
+                ),
             ).get("strongest_speed_band")
-            or ""
+            or "",
         )
         assert "120" in speed_band or "110" in speed_band
 
@@ -74,7 +75,7 @@ class TestWheelVsEngineDrivelineGating:
                     fault_vib_db=24.0,
                 ),
                 include_samples=False,
-            )
+            ),
         )
         assert "engine" not in str(top.get("suspected_source") or "").lower()
 
@@ -98,9 +99,9 @@ class TestWheelVsEngineDrivelineGating:
         if findings:
             source = str(
                 max(findings, key=lambda f: float(f.get("confidence_0_to_1") or 0)).get(
-                    "suspected_source"
+                    "suspected_source",
                 )
-                or ""
+                or "",
             ).lower()
             assert "wheel" in source or "tire" in source or "unknown" in source
 
@@ -124,13 +125,13 @@ class TestConfidenceWithSpatialAmbiguity:
                         ],
                         vibration_strength_db=22.0,
                         strength_floor_amp_g=0.003,
-                    )
+                    ),
                 )
         conf = float(
             extract_top_finding(
-                summarize_run_data(standard_metadata(), samples, include_samples=False)
+                summarize_run_data(standard_metadata(), samples, include_samples=False),
             ).get("confidence_0_to_1")
-            or 0
+            or 0,
         )
         assert conf < 0.70
 
@@ -151,9 +152,9 @@ class TestConfidenceWithSpatialAmbiguity:
                         noise_vib_db=6.0,
                     ),
                     include_samples=False,
-                )
+                ),
             ).get("confidence_0_to_1")
-            or 0
+            or 0,
         )
         assert conf >= 0.40
 

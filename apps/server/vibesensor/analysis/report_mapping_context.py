@@ -91,16 +91,16 @@ def resolve_primary_candidate(
     primary_candidate = primary_candidates[0] if primary_candidates else None
     if primary_candidate:
         primary_source = primary_candidate.get("source") or primary_candidate.get(
-            "suspected_source"
+            "suspected_source",
         )
         primary_system = human_source(primary_source, tr=tr)
         primary_location = origin_location or str(
-            primary_candidate.get("strongest_location") or tr("UNKNOWN")
+            primary_candidate.get("strongest_location") or tr("UNKNOWN"),
         )
         primary_speed = str(
             primary_candidate.get("strongest_speed_band")
             or primary_candidate.get("speed_band")
-            or tr("UNKNOWN")
+            or tr("UNKNOWN"),
         )
         conf = extract_confidence(primary_candidate)
     else:

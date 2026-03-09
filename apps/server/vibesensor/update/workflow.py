@@ -74,7 +74,7 @@ class UpdateWorkflow:
             self.tracker.log(
                 "Downloaded "
                 f"{wheel_path.name} "
-                f"(sha256={getattr(release_check.release, 'sha256', '')})"
+                f"(sha256={getattr(release_check.release, 'sha256', '')})",
             )
             if not await self.releases.verify_download(release_check.release, wheel_path):
                 return

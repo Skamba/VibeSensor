@@ -72,7 +72,8 @@ class TestConfidenceLabel:
     def test_negligible_band_caps_high_to_medium(self) -> None:
         """strength_band_key='negligible' must reduce HIGH → MEDIUM."""
         label, tone, _ = confidence_label(
-            CONFIDENCE_HIGH_THRESHOLD + 0.05, strength_band_key="negligible"
+            CONFIDENCE_HIGH_THRESHOLD + 0.05,
+            strength_band_key="negligible",
         )
         assert label == "CONFIDENCE_MEDIUM"
         assert tone == "warn"
@@ -86,7 +87,8 @@ class TestConfidenceLabel:
     def test_non_negligible_band_leaves_high_intact(self) -> None:
         """An unrelated band key must not suppress a HIGH label."""
         label, tone, _ = confidence_label(
-            CONFIDENCE_HIGH_THRESHOLD + 0.05, strength_band_key="strong"
+            CONFIDENCE_HIGH_THRESHOLD + 0.05,
+            strength_band_key="strong",
         )
         assert label == "CONFIDENCE_HIGH"
 

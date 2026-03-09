@@ -11,9 +11,9 @@ def _runtime_app(port: int):
     return SimpleNamespace(
         state=SimpleNamespace(
             runtime=SimpleNamespace(
-                config=SimpleNamespace(server=SimpleNamespace(host="0.0.0.0", port=port))
-            )
-        )
+                config=SimpleNamespace(server=SimpleNamespace(host="0.0.0.0", port=port)),
+            ),
+        ),
     )
 
 
@@ -23,7 +23,9 @@ def _run_main(monkeypatch, *, port: int, fail_port: int | None = None) -> list[i
     from vibesensor import app as app_module
 
     monkeypatch.setattr(
-        app_module.argparse.ArgumentParser, "parse_args", lambda self: Namespace(config=None)
+        app_module.argparse.ArgumentParser,
+        "parse_args",
+        lambda self: Namespace(config=None),
     )
     monkeypatch.setattr(app_module, "create_app", lambda config_path=None: _runtime_app(port))
     calls: list[int] = []

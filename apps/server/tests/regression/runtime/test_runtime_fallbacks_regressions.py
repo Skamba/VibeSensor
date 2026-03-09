@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Runtime fallback and error-guard regressions.
@@ -24,7 +24,8 @@ from vibesensor.history_db import HistoryDB
 
 class TestStrengthFloorFallback:
     """Regression: strength_floor_amp_g must not return 0.0 when all bins
-    are within peak exclusion zones, since 0.0 floor produces ~140 dB."""
+    are within peak exclusion zones, since 0.0 floor produces ~140 dB.
+    """
 
     def test_all_bins_excluded_falls_back_to_p20(self) -> None:
         """When every bin is excluded by peaks, fall back to P20 noise floor."""
@@ -75,7 +76,8 @@ class TestStrengthFloorFallback:
 
 class TestWheelFocusFromLocation:
     """Regression: _wheel_focus_from_location must match label_for_code() outputs
-    which use spaces (e.g. 'Front Left Wheel'), not hyphens."""
+    which use spaces (e.g. 'Front Left Wheel'), not hyphens.
+    """
 
     @pytest.mark.parametrize(
         ("label", "expected_key"),

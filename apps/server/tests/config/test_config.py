@@ -27,7 +27,8 @@ def cfg_path(tmp_path: Path) -> Path:
 def test_metrics_log_path_required_when_metrics_enabled(cfg_path: Path) -> None:
     _write_config(cfg_path, {"logging": {"log_metrics": True, "metrics_log_path": ""}})
     with pytest.raises(
-        ValueError, match="metrics_log_path must be configured when log_metrics is true"
+        ValueError,
+        match="metrics_log_path must be configured when log_metrics is true",
     ):
         load_config(cfg_path)
 
@@ -59,7 +60,8 @@ def test_dev_and_docker_configs_equivalent() -> None:
     """config.dev.yaml and config.docker.yaml share core settings but Docker
     intentionally overrides environment-specific options (GPS disabled because
     Docker containers have no gpsd, AP self-heal disabled because nmcli/hostapd
-    are absent, rollback_dir uses a container-local path)."""
+    are absent, rollback_dir uses a container-local path).
+    """
     dev_cfg = load_config(SERVER_DIR / "config.dev.yaml")
     docker_cfg = load_config(SERVER_DIR / "config.docker.yaml")
     # Core transport and processing settings must still agree

@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Analysis pipeline integration regressions.
@@ -379,7 +379,11 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     read_samples = db.get_run_samples(run_id)
     normalized = [normalize_sample_record(s) for s in read_samples]
     summary = summarize_run_data(
-        metadata, normalized, lang="en", file_name=run_id, include_samples=False
+        metadata,
+        normalized,
+        lang="en",
+        file_name=run_id,
+        include_samples=False,
     )
     assert isinstance(summary, dict)
     assert "findings" in summary

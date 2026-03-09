@@ -45,6 +45,8 @@ def create_health_routes(
         if health_state.background_task_failures:
             degradation_reasons.append("background_task_failures")
             has_error = True
+        if health_state.startup_warnings:
+            degradation_reasons.append("startup_warnings")
         if loop_state.processing_state != "ok":
             degradation_reasons.append(f"processing_state:{loop_state.processing_state}")
             has_error = True
@@ -82,6 +84,7 @@ def create_health_routes(
             startup_state=health_state.startup_state,
             startup_phase=health_state.startup_phase,
             startup_error=health_state.startup_error,
+            startup_warnings=list(health_state.startup_warnings),
             background_task_failures=dict(health_state.background_task_failures),
             processing_state=loop_state.processing_state,
             processing_failures=failures,
@@ -93,6 +96,11 @@ def create_health_routes(
             data_loss=data_loss,
             persistence=persistence,
             intake_stats=processor.intake_stats(),
+            tick_duration_s=loop_state.last_tick_duration_s,
+            max_tick_duration_s=loop_state.max_tick_duration_s,
+            tick_count=loop_state.tick_count,
+            db_last_write_duration_s=metrics_logger.persistence.last_write_duration_s,
+            db_max_write_duration_s=metrics_logger.persistence.max_write_duration_s,
         )
 
     return router

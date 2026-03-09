@@ -48,7 +48,7 @@ def idle_phase(
                     top_peaks=peaks,
                     vibration_strength_db=6.0,
                     strength_floor_amp_g=noise_amp,
-                )
+                ),
             )
     return samples
 
@@ -82,7 +82,7 @@ def road_noise_phase(
                     top_peaks=peaks,
                     vibration_strength_db=road_vib_db,
                     strength_floor_amp_g=noise_amp,
-                )
+                ),
             )
     return samples
 
@@ -120,7 +120,7 @@ def ramp_phase(
                         top_peaks=peaks,
                         vibration_strength_db=road_vib_db,
                         strength_floor_amp_g=noise_amp,
-                    )
+                    ),
                 )
             t += dt_s
     return samples
@@ -161,7 +161,7 @@ def fault_phase(
                         top_peaks=peaks,
                         vibration_strength_db=fault_vib_db,
                         strength_floor_amp_g=noise_amp,
-                    )
+                    ),
                 )
                 continue
 
@@ -178,7 +178,7 @@ def fault_phase(
                     top_peaks=peaks,
                     vibration_strength_db=noise_vib_db,
                     strength_floor_amp_g=noise_amp,
-                )
+                ),
             )
     return samples
 

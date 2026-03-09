@@ -57,7 +57,7 @@ def run_migrations(
     if from_version >= to_version:
         raise ValueError(
             f"Cannot migrate from v{from_version} to v{to_version} "
-            "(source must be older than target)"
+            "(source must be older than target)",
         )
 
     cur = conn.cursor()
@@ -68,7 +68,7 @@ def run_migrations(
             if fn is None:
                 raise RuntimeError(
                     f"No migration registered for v{step} → v{step + 1}. "
-                    f"Cannot upgrade from schema v{from_version} to v{to_version}."
+                    f"Cannot upgrade from schema v{from_version} to v{to_version}.",
                 )
             fn(cur)
         cur.execute(

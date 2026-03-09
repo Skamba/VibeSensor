@@ -39,12 +39,13 @@ def test_run_release_smoke_builds_ui_and_wheel_then_runs_smoke(monkeypatch, tmp_
     smoke_command = commands[-1]
     assert smoke_command[0][1:4] == ["-m", "vibesensor.release_validation", "smoke-server"]
     assert smoke_command[2] == {
-        "VIBESENSOR_CONTRACTS_DIR": str((repo_root / "libs/shared/contracts").resolve())
+        "VIBESENSOR_CONTRACTS_DIR": str((repo_root / "libs/shared/contracts").resolve()),
     }
 
 
 def test_run_release_smoke_can_reuse_existing_wheel_and_skip_ui_build(
-    monkeypatch, tmp_path: Path
+    monkeypatch,
+    tmp_path: Path,
 ) -> None:
     module, repo_root = _load_release_smoke_runner()
     commands: list[tuple[list[str], Path, dict[str, str] | None]] = []

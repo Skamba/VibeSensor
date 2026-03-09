@@ -21,7 +21,7 @@ import pytest
 
 from vibesensor.metrics_log.persistence import (
     _MAX_HISTORY_CREATE_RETRIES,
-    _RETRY_COOLDOWN_S,
+    _RETRY_COOLDOWN_BASE_S,
     MetricsPersistenceCoordinator,
 )
 from vibesensor.metrics_log.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysisWorker
@@ -243,7 +243,7 @@ class TestRetryCooldown:
         # Fast-forward past cooldown
         with patch("vibesensor.metrics_log.persistence.time") as mock_time:
             # First call: check if past cooldown (return time after cooldown)
-            mock_time.monotonic.return_value = time.monotonic() + _RETRY_COOLDOWN_S + 1
+            mock_time.monotonic.return_value = time.monotonic() + _RETRY_COOLDOWN_BASE_S + 1
             coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
 
         assert coord.history_run_created
@@ -308,7 +308,6 @@ class TestPostAnalysisOutcomeTracking:
         # Note: _run_post_analysis was mocked so the worker loop tracks it
         # but the actual _run_post_analysis doesn't set the outcome.
         # Let's test with a real-ish DB instead.
-        pass
 
     def test_outcome_after_real_analysis_success(self) -> None:
         """Last completed outcome is set after successful analysis."""
@@ -328,7 +327,7 @@ class TestPostAnalysisOutcomeTracking:
                         "strength_bucket": "l1",
                         "peak_amp_g": 0.05,
                         "noise_floor_amp_g": 0.001,
-                    }
+                    },
                 ]
 
             def store_analysis(self, run_id, analysis):

@@ -33,7 +33,7 @@ def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
                 speed_kmh=55.0 + idx,
                 dominant_freq_hz=14.0 + (idx * 0.2),
                 peak_amp_g=0.07 + (idx * 0.0006),
-            )
+            ),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
@@ -74,7 +74,7 @@ def test_report_pdf_footer_contains_version_marker(tmp_path: Path, monkeypatch) 
                 speed_kmh=48.0 + idx,
                 dominant_freq_hz=16.0,
                 peak_amp_g=0.05 + (idx * 0.001),
-            )
+            ),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
@@ -105,7 +105,7 @@ def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> N
                 speed_kmh=speed,
                 dominant_freq_hz=wheel_hz,
                 peak_amp_g=0.08 + (idx * 0.0005),
-            )
+            ),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
@@ -133,7 +133,7 @@ def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
     text_blob = "\n".join(
         (page.extract_text() or "")
         for page in PdfReader(
-            BytesIO(build_report_pdf(map_summary(summarize_log(run_path, lang="nl"))))
+            BytesIO(build_report_pdf(map_summary(summarize_log(run_path, lang="nl")))),
         ).pages
     )
     assert "Duur:" in text_blob
@@ -149,7 +149,7 @@ def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
             run_id="run-01",
             raw_sample_rate_hz=800,
             firmware_version="esp-fw-1.2.3",
-        )
+        ),
     ]
     for idx in range(10):
         records.append(
@@ -158,7 +158,7 @@ def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
                 speed_kmh=50.0 + idx,
                 dominant_freq_hz=15.0,
                 peak_amp_g=0.06 + (idx * 0.0007),
-            )
+            ),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
@@ -200,7 +200,7 @@ def test_car_diagram_wheel_labels_stay_within_bounds_without_overlap() -> None:
                 "front-right wheel",
                 "rear-left wheel",
                 "rear-right wheel",
-            ]
+            ],
         },
         [],
         content_width=300.0,

@@ -21,7 +21,7 @@ from .reference_checks import _reference_missing_finding
 
 _MIN_DIAGNOSTIC_SAMPLES = 5
 PhaseSegmenter = Callable[[list[Sample]], tuple[list[DrivingPhase], list[PhaseSegment]]]
-_DEFAULT_PHASE_SEGMENTER = cast(PhaseSegmenter, segment_run_phases)
+_DEFAULT_PHASE_SEGMENTER = cast("PhaseSegmenter", segment_run_phases)
 
 
 def build_reference_findings(
@@ -49,7 +49,7 @@ def build_reference_findings(
                     _i18n_ref("RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR"),
                     _i18n_ref("VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM"),
                 ],
-            )
+            ),
         )
 
     if speed_sufficient and not (tire_circumference_m and tire_circumference_m > 0):
@@ -64,7 +64,7 @@ def build_reference_findings(
                     _i18n_ref("PROVIDE_TIRE_CIRCUMFERENCE_OR_TIRE_SIZE_WIDTH_ASPECT"),
                     _i18n_ref("RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE"),
                 ],
-            )
+            ),
         )
 
     engine_ref_sufficient = has_engine_reference(
@@ -90,7 +90,7 @@ def build_reference_findings(
                     _i18n_ref("LOG_ENGINE_RPM_FROM_CAN_OBD_FOR_THE"),
                     _i18n_ref("KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED"),
                 ],
-            )
+            ),
         )
 
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
@@ -100,7 +100,7 @@ def build_reference_findings(
                 suspected_source="unknown",
                 evidence_summary=_i18n_ref("RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT"),
                 quick_checks=[_i18n_ref("RECORD_THE_TRUE_ACCELEROMETER_SAMPLE_RATE_IN_RUN")],
-            )
+            ),
         )
     return findings, engine_ref_sufficient
 

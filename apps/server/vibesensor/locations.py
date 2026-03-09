@@ -43,7 +43,7 @@ WHEEL_LOCATION_CODES: frozenset[str] = frozenset(
         "front_right_wheel",
         "rear_left_wheel",
         "rear_right_wheel",
-    }
+    },
 )
 
 # Human-readable label substrings that identify a wheel/corner sensor.

@@ -104,7 +104,7 @@ def scan_peak_samples(samples: list[Sample]) -> PeakSampleScan:
                 floor_amp_g=floor_amp,
                 location=location,
                 speed_bin=speed_bin,
-            )
+            ),
         )
 
     return PeakSampleScan(
@@ -243,7 +243,7 @@ def spectrogram_from_peaks(
     freq_bin_hz = max(2.0, freq_cap_hz / 45.0)
 
     cell_by_bin: defaultdict[tuple[float, float], list[tuple[float, float | None]]] = defaultdict(
-        list
+        list,
     )
     x_sample_counts: defaultdict[float, int] = defaultdict(int)
     if aggregation == "persistence":
@@ -297,8 +297,7 @@ def spectrogram_from_peaks(
         else:
             val = max(amp for amp, _floor in amp_floor_pairs)
         cells[yi][xi] = val
-        if val > max_amp:
-            max_amp = val
+        max_amp = max(max_amp, val)
 
     return SpectrogramResult(
         x_axis=x_axis,

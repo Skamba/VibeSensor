@@ -56,7 +56,7 @@ def sample(i: int) -> dict[str, Any]:
                 "amp": 0.1,
                 "vibration_strength_db": 12.0,
                 "strength_bucket": "l2",
-            }
+            },
         ],
         "vibration_strength_db": 12.0,
         "strength_bucket": "l2",
@@ -189,6 +189,14 @@ class FakeState:
                     "last_completed_run_id": None,
                     "last_completed_run_error": None,
                 },
+                "persistence": type(
+                    "P",
+                    (),
+                    {
+                        "last_write_duration_s": 0.0,
+                        "max_write_duration_s": 0.0,
+                    },
+                )(),
                 "start_logging": lambda self: {},
                 "stop_logging": lambda self: {},
             },
@@ -208,13 +216,17 @@ class FakeState:
                 },
                 "get": lambda self, _cid: None,
                 "set_name": lambda self, cid, name: type(
-                    "U", (), {"client_id": cid, "name": name}
+                    "U",
+                    (),
+                    {"client_id": cid, "name": name},
                 )(),
                 "remove_client": lambda self, _cid: True,
             },
         )()
         self.control_plane = type(
-            "C", (), {"send_identify": lambda self, _id, _dur: (False, None)}
+            "C",
+            (),
+            {"send_identify": lambda self, _id, _dur: (False, None)},
         )()
         self.gps_monitor = type(
             "G",
@@ -266,7 +278,7 @@ class FakeState:
             apply_car_settings=self.apply_car_settings,
             apply_speed_source_settings=self.apply_speed_source_settings,
         )
-        self.diagnostics = SimpleNamespace(
+        self.recording = SimpleNamespace(
             metrics_logger=self.metrics_logger,
         )
         self.persistence = SimpleNamespace(

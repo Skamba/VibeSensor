@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Coverage-gap audit: top 10 untested critical code paths.
@@ -225,7 +225,9 @@ class TestComputeOrderConfidence:
         ],
     )
     def test_penalty_reduces_confidence(
-        self, normal_kw: dict[str, Any], penalty_kw: dict[str, Any]
+        self,
+        normal_kw: dict[str, Any],
+        penalty_kw: dict[str, Any],
     ) -> None:
         assert self._call(**penalty_kw) < self._call(**normal_kw)
 
@@ -277,7 +279,7 @@ class TestDetectDiffuseExcitation:
         possible = {"front_left": 20, "rear": 20}
         matched = {"front_left": 15, "rear": 14}
         pts = [{"location": "front_left", "amp": 0.30}] * 15 + [
-            {"location": "rear", "amp": 0.05}
+            {"location": "rear", "amp": 0.05},
         ] * 14
         is_diff, penalty = _detect_diffuse_excitation(locs, possible, matched, pts)
         assert not is_diff, "Strong amplitude dominance should NOT be diffuse"
@@ -293,7 +295,10 @@ class TestDetectDiffuseExcitation:
     def test_empty_matched_points(self) -> None:
         locs = {"a", "b"}
         is_diff, penalty = _detect_diffuse_excitation(
-            locs, {"a": 20, "b": 20}, {"a": 15, "b": 15}, []
+            locs,
+            {"a": 20, "b": 20},
+            {"a": 15, "b": 15},
+            [],
         )
         # With no amplitude data, amplitude check defaults to uniform
         assert isinstance(is_diff, bool)
@@ -399,7 +404,7 @@ class TestBuildRunSuitabilityChecks:
                     "samples": [
                         {"client_id": "c1", "frames_dropped_total": 0},
                         {"client_id": "c1", "frames_dropped_total": 10},
-                    ]
+                    ],
                 },
                 "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 id="frame_integrity_dropped",
@@ -441,7 +446,7 @@ class TestBuildPhaseTimeline:
                 "finding_id": "F001",
                 "confidence_0_to_1": 0.60,
                 "phase_evidence": {"phases_detected": ["cruise"]},
-            }
+            },
         ]
         entries = _build_phase_timeline(segs, findings, min_confidence=0.25)
         assert len(entries) == 2
@@ -501,7 +506,7 @@ class TestComputeAccelStatistics:
                 "accel_y_g": 0.2,
                 "accel_z_g": 1.0,
                 "vibration_strength_db": 12.0,
-            }
+            },
         ]
         result = _compute_accel_statistics(samples, "ADXL345")
         assert len(result["accel_x_vals"]) == 1
@@ -608,7 +613,7 @@ class TestExtractStrengthData:
                 "peak_amp_g": 0.02,
                 "noise_floor_amp_g": 0.001,
                 "top_peaks": [{"hz": 45.0, "amp": 0.015}],
-            }
+            },
         }
         strength, db, bucket, peak, floor, peaks = extract_strength_data(metrics)
         assert db == pytest.approx(18.5)
@@ -623,8 +628,8 @@ class TestExtractStrengthData:
                     "vibration_strength_db": 12.0,
                     "strength_bucket": "l2",
                     "top_peaks": [],
-                }
-            }
+                },
+            },
         }
         strength, db, bucket, _, _, _ = extract_strength_data(metrics)
         assert db == pytest.approx(12.0)
@@ -641,7 +646,7 @@ class TestExtractStrengthData:
                     {"hz": 50.0, "amp": 0.01},  # valid
                     "not_a_dict",  # invalid type
                 ],
-            }
+            },
         }
         _, _, _, _, _, peaks = extract_strength_data(metrics)
         assert len(peaks) == 1
@@ -653,7 +658,7 @@ class TestExtractStrengthData:
                 "vibration_strength_db": 5.0,
                 "strength_bucket": "",
                 "top_peaks": [],
-            }
+            },
         }
         _, _, bucket, _, _, _ = extract_strength_data(metrics)
         assert bucket is None
@@ -674,7 +679,8 @@ class TestResolveSpeedContext:
     def test_no_speed_available(self) -> None:
         logger, _ = _make_metrics_logger()
         speed_kmh, gps_speed, source, rpm, fdr, gr = resolve_speed_context(
-            logger.gps_monitor, logger.analysis_settings.snapshot()
+            logger.gps_monitor,
+            logger.analysis_settings.snapshot(),
         )
         assert speed_kmh is None
         assert rpm is None
@@ -684,7 +690,8 @@ class TestResolveSpeedContext:
         gps_mock.speed_mps = 10.0  # 36 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
         speed_kmh, gps_speed, source, rpm, _, _ = resolve_speed_context(
-            logger.gps_monitor, logger.analysis_settings.snapshot()
+            logger.gps_monitor,
+            logger.analysis_settings.snapshot(),
         )
         assert speed_kmh == pytest.approx(36.0, rel=0.01)
         assert gps_speed == pytest.approx(36.0, rel=0.01)
@@ -696,7 +703,8 @@ class TestResolveSpeedContext:
         gps_mock.override_speed_mps = 20.0  # 72 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="manual", speed_mps=20.0)
         speed_kmh, _, source, _, _, _ = resolve_speed_context(
-            logger.gps_monitor, logger.analysis_settings.snapshot()
+            logger.gps_monitor,
+            logger.analysis_settings.snapshot(),
         )
         assert speed_kmh == pytest.approx(72.0, rel=0.01)
         assert source == "manual"
@@ -714,7 +722,8 @@ class TestResolveSpeedContext:
             "tire_deflection_factor": None,
         }
         _, _, _, rpm, _, _ = resolve_speed_context(
-            logger.gps_monitor, logger.analysis_settings.snapshot()
+            logger.gps_monitor,
+            logger.analysis_settings.snapshot(),
         )
         assert rpm is None, "Without gear_ratio, RPM should not be estimated"
 
@@ -771,7 +780,7 @@ class TestSummarizeRunDataEdgeCases:
                 "accel_z_g": 1.0,
                 "vibration_strength_db": 5.0,
                 "strength_bucket": "l1",
-            }
+            },
         ]
         summary = summarize_run_data(self._MINIMAL_META, samples, lang="en")
         assert summary["rows"] == 1

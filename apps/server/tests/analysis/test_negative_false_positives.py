@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Negative testing suite – False-positive prevention (50+ injected scenarios).
 
 Validates that the analysis pipeline does NOT over-report:
@@ -99,7 +98,10 @@ _param_sensor_config = pytest.mark.parametrize(
 @_param_sensor_config
 @_param_speed
 def test_no_fault_noise_baseline(
-    profile: dict[str, Any], config_name: str, sensors: list[str], speed: float
+    profile: dict[str, Any],
+    config_name: str,
+    sensors: list[str],
+    speed: float,
 ) -> None:
     """Pure road noise across sensor counts → no persistent fault.
 
@@ -114,7 +116,9 @@ def test_no_fault_noise_baseline(
 @_param_profile
 @_param_sensor_config
 def test_no_fault_idle_baseline(
-    profile: dict[str, Any], config_name: str, sensors: list[str]
+    profile: dict[str, Any],
+    config_name: str,
+    sensors: list[str],
 ) -> None:
     """Idle (speed=0) across sensor counts → strict no fault.
 
@@ -128,7 +132,9 @@ def test_no_fault_idle_baseline(
 @_param_profile
 @_param_sensor_config
 def test_no_fault_ramp_baseline(
-    profile: dict[str, Any], config_name: str, sensors: list[str]
+    profile: dict[str, Any],
+    config_name: str,
+    sensors: list[str],
 ) -> None:
     """Speed ramp (20→100 km/h) with no fault → no persistent fault.
 
@@ -204,7 +210,7 @@ def test_transient_only_single_sensor(profile: dict[str, Any], speed: float) -> 
             start_t_s=20,
             spike_amp=0.20,
             spike_vib_db=38.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"transient-1s@{speed}")
@@ -227,7 +233,7 @@ def test_transient_only_four_sensors(profile: dict[str, Any], speed: float) -> N
                 start_t_s=20,
                 spike_amp=0.18,
                 spike_vib_db=36.0,
-            )
+            ),
         )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"transient-4s@{speed}")
@@ -249,7 +255,7 @@ def test_transient_on_one_corner_no_localization(profile: dict[str, Any], corner
             start_t_s=20,
             spike_amp=0.25,
             spike_vib_db=40.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"transient-corner-{corner}")
@@ -291,7 +297,9 @@ def test_diffuse_excitation_not_localized(profile: dict[str, Any], speed: float)
     ids=["8-sensor", "12-sensor"],
 )
 def test_diffuse_excitation_many_sensors(
-    profile: dict[str, Any], config_name: str, sensors: list[str]
+    profile: dict[str, Any],
+    config_name: str,
+    sensors: list[str],
 ) -> None:
     """Uniform vibration on 8/12 sensors → must not localize to a single wheel.
 
@@ -393,7 +401,10 @@ def test_fault_late_onset_clean_early_phase(profile: dict[str, Any], corner: str
     ids=["barely-above-noise", "weak", "marginal"],
 )
 def test_weak_fault_stays_guarded(
-    profile: dict[str, Any], amp: float, vib_db: float, label: str
+    profile: dict[str, Any],
+    amp: float,
+    vib_db: float,
+    label: str,
 ) -> None:
     """Very weak wheel-order signal on noise → confidence must stay below 0.50.
 
@@ -441,7 +452,7 @@ def test_ambiguous_dual_frequency_low_confidence(profile: dict[str, Any]) -> Non
                     top_peaks=peaks,
                     vibration_strength_db=20.0,
                     strength_floor_amp_g=0.004,
-                )
+                ),
             )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     conf = top_confidence(summary)
@@ -533,7 +544,8 @@ def test_engine_vibration_not_reported_as_wheel(profile: dict[str, Any]) -> None
 @_param_profile
 @_param_corner
 def test_wheel_fault_with_engine_noise_no_engine_overreport(
-    profile: dict[str, Any], corner: str
+    profile: dict[str, Any],
+    corner: str,
 ) -> None:
     """Wheel fault + low-level engine noise → engine must not appear above 0.55 confidence.
 
@@ -625,7 +637,7 @@ def test_engine_order_with_transient_no_wheel(profile: dict[str, Any]) -> None:
             start_t_s=20,
             spike_amp=0.15,
             spike_vib_db=35.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_forbidden_systems(

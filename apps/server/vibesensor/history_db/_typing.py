@@ -22,7 +22,9 @@ class HistoryCursorProvider(Protocol):
 
     @staticmethod
     def _log_transition_skip(
-        run_id: str, current_status: str | None, target_status: str
+        run_id: str,
+        current_status: str | None,
+        target_status: str,
     ) -> None: ...
 
     def get_setting(self, key: str) -> JsonValue | None: ...

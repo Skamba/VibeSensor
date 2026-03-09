@@ -30,7 +30,7 @@ One row per recording session.
 | Column | Type | Description |
 |--------|------|-------------|
 | `run_id` | TEXT PK | UUID for the run |
-| `status` | TEXT | `recording` → `analyzing` → `complete` (or `error`) |
+| `status` | TEXT | `recording` → `analyzing` → `complete` (or `error`). CHECK constraint enforces valid values on new databases. Transitions are enforced atomically via WHERE guards. |
 | `start_time_utc` | TEXT | ISO-8601 start time |
 | `end_time_utc` | TEXT | ISO-8601 end time (set on finalize) |
 | `metadata_json` | TEXT | Run-level metadata (car config, language, sensor model, etc.) |

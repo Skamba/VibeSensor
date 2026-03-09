@@ -111,7 +111,9 @@ class _StubProcessor:
         return list(client_ids)
 
     def compute_all(
-        self, client_ids: list[str], sample_rates_hz: dict[str, int] | None = None
+        self,
+        client_ids: list[str],
+        sample_rates_hz: dict[str, int] | None = None,
     ) -> dict[str, Any]:
         self.compute_all_calls += 1
         return {}
@@ -144,7 +146,7 @@ def _make_runtime(**overrides: Any):
         analysis_settings=overrides.pop("analysis_settings", MagicMock()),
         gps_monitor=overrides.pop("gps_monitor", MagicMock()),
     )
-    diagnostics = runtime_module.RuntimeDiagnosticsSubsystem(
+    diagnostics = runtime_module.RuntimeRecordingSubsystem(
         metrics_logger=overrides.pop("metrics_logger", MagicMock()),
     )
     persistence = runtime_module.RuntimePersistenceSubsystem(
@@ -157,7 +159,7 @@ def _make_runtime(**overrides: Any):
     if persistence.query_service is None:
         settings_store_ref = settings.settings_store
         persistence.bind_history_services(
-            settings_store_ref if not isinstance(settings_store_ref, MagicMock) else None
+            settings_store_ref if not isinstance(settings_store_ref, MagicMock) else None,
         )
     updates = runtime_module.RuntimeUpdateSubsystem(
         update_manager=overrides.pop("update_manager", MagicMock()),
@@ -192,7 +194,7 @@ def _make_runtime(**overrides: Any):
         config=config,
         ingress=ingress,
         settings=settings,
-        diagnostics=diagnostics,
+        recording=diagnostics,
         persistence=persistence,
         updates=updates,
         processing=processing,
@@ -200,7 +202,7 @@ def _make_runtime(**overrides: Any):
         routes=runtime_module.RuntimeRouteServices(
             ingress=ingress,
             settings=settings,
-            diagnostics=diagnostics,
+            recording=diagnostics,
             persistence=persistence,
             updates=updates,
             processing=processing,
@@ -392,7 +394,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
             analysis_queue_oldest_age_s=None,
             active_run_id_before_stop=None,
             write_error=None,
-        )
+        ),
     )
 
     history_db = MagicMock()

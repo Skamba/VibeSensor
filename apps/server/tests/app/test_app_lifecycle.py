@@ -20,7 +20,7 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
                     "metrics_log_path": str(tmp_path / "metrics.jsonl"),
                     "history_db_path": str(tmp_path / "history.db"),
                 },
-            }
+            },
         ),
         encoding="utf-8",
     )

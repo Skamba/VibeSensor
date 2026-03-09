@@ -37,7 +37,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         self.processor = processor
         self.transport: asyncio.DatagramTransport | None = None
         self._queue: asyncio.Queue[tuple[bytes, tuple[str, int]]] = asyncio.Queue(
-            maxsize=max(1, queue_maxsize)
+            maxsize=max(1, queue_maxsize),
         )
         self._queue_drop_log_interval_s = max(0.0, float(queue_drop_log_interval_s))
         self._last_queue_drop_log_ts = 0.0
@@ -45,7 +45,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
         """Store the transport reference when the datagram endpoint is established."""
-        self.transport = cast(asyncio.DatagramTransport, transport)
+        self.transport = cast("asyncio.DatagramTransport", transport)
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
         """Enqueue an incoming datagram for background processing."""
@@ -122,7 +122,10 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                 record = registry.get(client_id)
                 sample_rate_hz = record.sample_rate_hz if record is not None else None
                 processor.ingest(
-                    client_id, msg.samples, sample_rate_hz=sample_rate_hz, t0_us=msg.t0_us
+                    client_id,
+                    msg.samples,
+                    sample_rate_hz=sample_rate_hz,
+                    t0_us=msg.t0_us,
                 )
             transport = self.transport
             if transport is not None:

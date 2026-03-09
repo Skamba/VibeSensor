@@ -56,8 +56,7 @@ class HistoryRunReadMixin:
 
     def list_runs(self: HistoryCursorProvider, limit: int = 500) -> list[JsonObject]:
         with self._cursor(commit=False) as cur:
-            if limit < 0:
-                limit = 0
+            limit = max(limit, 0)
             if limit > 0:
                 cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
@@ -69,7 +68,7 @@ class HistoryRunReadMixin:
                 cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
                     "r.created_at, r.error_message, r.sample_count, r.analysis_version "
-                    "FROM runs r ORDER BY r.created_at DESC"
+                    "FROM runs r ORDER BY r.created_at DESC",
                 )
             rows = cur.fetchall()
         result: list[JsonObject] = []
@@ -148,7 +147,10 @@ class HistoryRunReadMixin:
         return rows
 
     def iter_run_samples(
-        self: HistoryCursorProvider, run_id: str, batch_size: int = 1000, offset: int = 0
+        self: HistoryCursorProvider,
+        run_id: str,
+        batch_size: int = 1000,
+        offset: int = 0,
     ) -> Iterator[list[JsonObject]]:
         if offset < 0:
             raise ValueError(f"iter_run_samples: offset must be >= 0, got {offset}")
@@ -163,7 +165,7 @@ class HistoryRunReadMixin:
         if table not in ALLOWED_SAMPLE_TABLES:
             raise ValueError(
                 f"_resolve_keyset_offset: invalid table name {table!r}; "
-                f"must be one of {sorted(ALLOWED_SAMPLE_TABLES)}"
+                f"must be one of {sorted(ALLOWED_SAMPLE_TABLES)}",
             )
         with self._cursor(commit=False) as cur:
             cur.execute(
@@ -174,7 +176,10 @@ class HistoryRunReadMixin:
         return int(row[0]) if row else None
 
     def _iter_v2_samples(
-        self: HistoryCursorProvider, run_id: str, batch_size: int = 1000, offset: int = 0
+        self: HistoryCursorProvider,
+        run_id: str,
+        batch_size: int = 1000,
+        offset: int = 0,
     ) -> Iterator[list[JsonObject]]:
         size = max(1, batch_size)
         last_id: int | None = None
@@ -267,7 +272,7 @@ class HistoryRunReadMixin:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT run_id FROM runs WHERE status = 'recording' "
-                "ORDER BY created_at DESC LIMIT 1"
+                "ORDER BY created_at DESC LIMIT 1",
             )
             row = cur.fetchone()
         return str(row[0]) if row else None
@@ -276,14 +281,14 @@ class HistoryRunReadMixin:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT run_id FROM runs WHERE status = 'analyzing' "
-                "ORDER BY created_at ASC LIMIT 1000"
+                "ORDER BY created_at ASC LIMIT 1000",
             )
             return [str(row[0]) for row in cur.fetchall()]
 
     def analyzing_run_health(self: HistoryCursorProvider) -> JsonObject:
         with self._cursor(commit=False) as cur:
             cur.execute(
-                "SELECT COUNT(*), MIN(analysis_started_at) FROM runs WHERE status = 'analyzing'"
+                "SELECT COUNT(*), MIN(analysis_started_at) FROM runs WHERE status = 'analyzing'",
             )
             row = cur.fetchone()
         count = int(row[0]) if row and row[0] is not None else 0
@@ -308,3 +313,30 @@ class HistoryRunReadMixin:
         if oldest_started_at is not None:
             result["analyzing_oldest_started_at"] = oldest_started_at
         return result
+
+    def verify_run_integrity(self: HistoryCursorProvider, run_id: str) -> list[str]:
+        """Check a completed run for consistency issues. Returns a list of problem descriptions."""
+        problems: list[str] = []
+        with self._cursor(commit=False) as cur:
+            cur.execute(
+                "SELECT status, sample_count, analysis_json FROM runs WHERE run_id = ?",
+                (run_id,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                return ["run not found"]
+            status, stored_count, analysis_raw = row[0], row[1], row[2]
+            if status == "complete" and not analysis_raw:
+                problems.append("complete run missing analysis_json")
+            if stored_count is not None:
+                cur.execute(
+                    "SELECT COUNT(*) FROM samples_v2 WHERE run_id = ?",
+                    (run_id,),
+                )
+                actual_count = int(cur.fetchone()[0])
+                stored_int = int(stored_count)
+                if actual_count != stored_int:
+                    problems.append(
+                        f"sample_count mismatch: stored={stored_int}, actual={actual_count}",
+                    )
+        return problems

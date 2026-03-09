@@ -145,7 +145,10 @@ class MetricsSessionState:
             )
 
     def pending_flush_snapshot(
-        self, *, current_total: int, history_run_created: bool
+        self,
+        *,
+        current_total: int,
+        history_run_created: bool,
     ) -> MetricsSessionSnapshot | None:
         with self._lock:
             if (

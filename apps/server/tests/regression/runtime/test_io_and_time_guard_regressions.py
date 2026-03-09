@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """I/O cleanup, time-source, and report-cli guard regressions.
@@ -53,7 +53,8 @@ def _make_summary(report_date: str, **overrides: Any) -> dict[str, Any]:
 
 class TestFirmwareCacheRefreshUnboundGuard:
     """target/old_current must be defined before the try block so the
-    except handler never raises UnboundLocalError."""
+    except handler never raises UnboundLocalError.
+    """
 
     def test_exception_before_activation_does_not_raise_unbound(self, tmp_path: Path) -> None:
         """If download_bundle raises, the except block should not crash."""
@@ -200,7 +201,9 @@ class TestReportCliErrorHandling:
             patch(
                 "vibesensor.report_cli.parse_args",
                 return_value=MagicMock(
-                    input=run_file, output=tmp_path / "out.pdf", summary_json=None
+                    input=run_file,
+                    output=tmp_path / "out.pdf",
+                    summary_json=None,
                 ),
             ),
         ):

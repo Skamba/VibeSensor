@@ -137,7 +137,7 @@ class SettingsStore:
                     "obd2Config": raw.get("obd2Config"),
                     "staleTimeoutS": raw.get("staleTimeoutS"),
                     "fallbackMode": raw.get("fallbackMode"),
-                }
+                },
             )
             self._language = _coerce_language(raw.get("language"))
             self._speed_unit = _coerce_speed_unit(raw.get("speedUnit"))
@@ -161,7 +161,7 @@ class SettingsStore:
             return
         payload = self.snapshot()
         try:
-            self._db.set_settings_snapshot(cast(JsonObject, payload))
+            self._db.set_settings_snapshot(cast("JsonObject", payload))
         except (sqlite3.Error, OSError) as exc:
             LOGGER.error("Failed to persist settings to SQLite", exc_info=True)
             raise PersistenceError("Failed to persist settings to SQLite") from exc
@@ -269,7 +269,8 @@ class SettingsStore:
             return self.get_cars()
 
     def update_active_car_aspects(
-        self, aspects: AnalysisSettingsPayload
+        self,
+        aspects: AnalysisSettingsPayload,
     ) -> AnalysisSettingsPayload:
         with self._lock:
             car = self._find_car(self._active_car_id)
@@ -338,7 +339,7 @@ class SettingsStore:
             old_name, old_location = existing.name, existing.location
             if "name" in data:
                 name = _clamp_str(data["name"], 64)
-                existing.name = name if name else sensor_id
+                existing.name = name or sensor_id
             if "location" in data:
                 existing.location = _clamp_str(data["location"], 64)
             self._sensors[sensor_id] = existing

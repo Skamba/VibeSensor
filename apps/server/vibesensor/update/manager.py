@@ -68,7 +68,7 @@ class UpdateManager:
         self._ap_con_name = ap_con_name
         self._wifi_ifname = wifi_ifname
         self._rollback_dir = Path(
-            rollback_dir or os.environ.get("VIBESENSOR_ROLLBACK_DIR", DEFAULT_ROLLBACK_DIR)
+            rollback_dir or os.environ.get("VIBESENSOR_ROLLBACK_DIR", DEFAULT_ROLLBACK_DIR),
         )
         self._server_repo = server_repo or os.environ.get("VIBESENSOR_SERVER_REPO", "")
         self._state_store = state_store or UpdateStateStore()

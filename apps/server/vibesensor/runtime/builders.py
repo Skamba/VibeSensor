@@ -22,10 +22,10 @@ from .health_state import RuntimeHealthState
 from .lifecycle import LifecycleManager
 from .processing_loop import ProcessingLoop, ProcessingLoopState
 from .subsystems import (
-    RuntimeDiagnosticsSubsystem,
     RuntimeIngressSubsystem,
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
+    RuntimeRecordingSubsystem,
     RuntimeRouteServices,
     RuntimeSettingsSubsystem,
     RuntimeUpdateSubsystem,
@@ -38,7 +38,7 @@ LOGGER = logging.getLogger(__name__)
 
 def resolve_accel_scale_g_per_lsb(config: AppConfig) -> float:
     return cast(
-        float,
+        "float",
         (
             config.processing.accel_scale_g_per_lsb
             if config.processing.accel_scale_g_per_lsb is not None
@@ -106,14 +106,14 @@ def build_settings_subsystem(
     )
 
 
-def build_diagnostics_subsystem(
+def build_recording_subsystem(
     *,
     config: AppConfig,
     ingress: RuntimeIngressSubsystem,
     settings: RuntimeSettingsSubsystem,
     persistence: RuntimePersistenceSubsystem,
     accel_scale_g_per_lsb: float,
-) -> RuntimeDiagnosticsSubsystem:
+) -> RuntimeRecordingSubsystem:
     metrics_logger = MetricsLogger(
         MetricsLoggerConfig(
             enabled=config.logging.log_metrics,
@@ -136,14 +136,14 @@ def build_diagnostics_subsystem(
         settings_store=settings.settings_store,
         language_provider=lambda: settings.settings_store.language,
     )
-    diagnostics = RuntimeDiagnosticsSubsystem(
+    recording = RuntimeRecordingSubsystem(
         metrics_logger=metrics_logger,
     )
     requeue_stale_analysis_runs(
         persistence=persistence,
-        diagnostics=diagnostics,
+        recording=recording,
     )
-    return diagnostics
+    return recording
 
 
 def build_update_subsystem(*, config: AppConfig) -> RuntimeUpdateSubsystem:
@@ -197,7 +197,7 @@ def build_route_services(
     *,
     ingress: RuntimeIngressSubsystem,
     settings: RuntimeSettingsSubsystem,
-    diagnostics: RuntimeDiagnosticsSubsystem,
+    recording: RuntimeRecordingSubsystem,
     persistence: RuntimePersistenceSubsystem,
     updates: RuntimeUpdateSubsystem,
     processing: RuntimeProcessingSubsystem,
@@ -206,7 +206,7 @@ def build_route_services(
     return RuntimeRouteServices(
         ingress=ingress,
         settings=settings,
-        diagnostics=diagnostics,
+        recording=recording,
         persistence=persistence,
         updates=updates,
         processing=processing,
@@ -219,7 +219,7 @@ def build_lifecycle_manager(
     config: AppConfig,
     ingress: RuntimeIngressSubsystem,
     settings: RuntimeSettingsSubsystem,
-    diagnostics: RuntimeDiagnosticsSubsystem,
+    recording: RuntimeRecordingSubsystem,
     persistence: RuntimePersistenceSubsystem,
     updates: RuntimeUpdateSubsystem,
     processing: RuntimeProcessingSubsystem,
@@ -229,7 +229,7 @@ def build_lifecycle_manager(
         config=config,
         ingress=ingress,
         settings=settings,
-        diagnostics=diagnostics,
+        recording=recording,
         persistence=persistence,
         updates=updates,
         processing=processing,
@@ -240,11 +240,11 @@ def build_lifecycle_manager(
 def requeue_stale_analysis_runs(
     *,
     persistence: RuntimePersistenceSubsystem,
-    diagnostics: RuntimeDiagnosticsSubsystem,
+    recording: RuntimeRecordingSubsystem,
 ) -> None:
     stale_analyzing = persistence.history_db.stale_analyzing_run_ids()
     for stale_run_id in stale_analyzing:
         LOGGER.info("Re-queuing stuck analyzing run %s for re-analysis", stale_run_id)
-        diagnostics.metrics_logger.schedule_post_analysis(stale_run_id)
+        recording.metrics_logger.schedule_post_analysis(stale_run_id)
     if stale_analyzing:
         LOGGER.info("Re-queued %d stuck analyzing run(s)", len(stale_analyzing))

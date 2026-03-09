@@ -192,7 +192,7 @@ class TestReportTemplateDataFromDict:
                 "data_trust": None,
                 "peak_rows": 42,
                 "pattern_evidence": [],
-            }
+            },
         )
 
         assert result.system_cards == []

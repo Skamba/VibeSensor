@@ -199,14 +199,14 @@ def test_aggregate_fft_spectrum_presence_ratio_clamped_to_one() -> None:
                 {"hz": 42.0, "amp": 0.1},
                 {"hz": 47.0, "amp": 0.12},
             ],
-        }
+        },
     ]
     # Baseline: single peak at same p95 amplitude from one sample.
     one_peak_sample = [
         {
             "vibration_strength_db": 20.0,
             "top_peaks": [{"hz": 45.0, "amp": 0.12}],
-        }
+        },
     ]
 
     two_result = dict(_aggregate_fft_spectrum(two_peaks_sample, freq_bin_hz=10.0))
