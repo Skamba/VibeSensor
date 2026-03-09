@@ -52,6 +52,8 @@ def test_analysis_module_does_not_import_i18n(module_path: Path) -> None:
     """Analysis modules must not import from report_i18n (language resources).
 
     Only report_mapping_pipeline.py is allowed to access translation functions.
+    ``normalize_lang`` is allowed because it is a pure string normalizer
+    (no translation data access).
     This ensures analysis output remains language-neutral.
     """
     source = module_path.read_text(encoding="utf-8")
@@ -64,6 +66,9 @@ def test_analysis_module_does_not_import_i18n(module_path: Path) -> None:
         level = node.level or 0
         full = ("." * level) + mod
         if "report_i18n" in mod:
+            imported_names = {alias.name for alias in (node.names or [])}
+            if imported_names == {"normalize_lang"}:
+                continue
             violations.append(f"line {node.lineno}: from {full} import ...")
     assert not violations, (
         f"{module_path.name} imports from report_i18n. "

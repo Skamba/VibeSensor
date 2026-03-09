@@ -30,6 +30,10 @@ class HealthPersistencePayload(TypedDict):
     analysis_queue_oldest_age_s: float | None
     analyzing_run_count: int
     analyzing_oldest_age_s: float | None
+    samples_written: int
+    samples_dropped: int
+    last_completed_run_id: str | None
+    last_completed_run_error: str | None
 
 
 class AxisPeak(TypedDict, total=False):

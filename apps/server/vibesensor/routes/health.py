@@ -61,8 +61,12 @@ def create_health_routes(
                 degradation_reasons.append(key)
         if persistence["write_error"]:
             degradation_reasons.append("persistence_write_error")
+        if persistence["samples_dropped"] > 0:
+            degradation_reasons.append("persistence_samples_dropped")
         if persistence["analyzing_run_count"] > 0:
             degradation_reasons.append("analyzing_runs_present")
+        if persistence["last_completed_run_error"]:
+            degradation_reasons.append("last_analysis_failed")
         return HealthResponse(
             status="ok" if not degradation_reasons else "degraded",
             startup_state=health_state.startup_state,

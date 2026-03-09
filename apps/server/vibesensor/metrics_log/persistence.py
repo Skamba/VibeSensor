@@ -3,13 +3,21 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
 
 _MAX_HISTORY_CREATE_RETRIES = 5
+_RETRY_COOLDOWN_S = 30.0
+"""Seconds to wait before retrying DB run creation after exhausting max retries."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,7 +32,7 @@ class MetricsPersistenceCoordinator:
     def __init__(
         self,
         *,
-        history_db: object | None,
+        history_db: HistoryDB | None,
         persist_history_db: bool,
         metadata_builder: Callable[[str, str], dict[str, object]],
         generation_matches: Callable[[int], bool],
@@ -37,7 +45,9 @@ class MetricsPersistenceCoordinator:
         self._history_run_created = False
         self._history_create_fail_count = 0
         self._written_sample_count = 0
+        self._dropped_sample_count = 0
         self._last_write_error: str | None = None
+        self._retry_after_mono_s: float = 0.0
 
     @property
     def write_error(self) -> str | None:
@@ -69,12 +79,19 @@ class MetricsPersistenceCoordinator:
         with self._lock:
             self._written_sample_count = max(0, int(value))
 
+    @property
+    def dropped_sample_count(self) -> int:
+        with self._lock:
+            return self._dropped_sample_count
+
     def reset_for_new_session(self) -> None:
         with self._lock:
             self._history_run_created = False
             self._history_create_fail_count = 0
             self._written_sample_count = 0
+            self._dropped_sample_count = 0
             self._last_write_error = None
+            self._retry_after_mono_s = 0.0
 
     def set_last_write_error(self, message: str) -> None:
         with self._lock:
@@ -99,22 +116,32 @@ class MetricsPersistenceCoordinator:
             if self._history_db is None or self._history_run_created:
                 return
             if self._history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
-                return
+                # Retry after cooldown instead of giving up forever
+                if time.monotonic() < self._retry_after_mono_s:
+                    return
+                LOGGER.info(
+                    "Retry cooldown expired for run %s; resetting failure counter and retrying",
+                    run_id,
+                )
+                self._history_create_fail_count = 0
         metadata = self._metadata_builder(run_id, start_time_utc)
         try:
-            self._history_db.create_run(run_id, start_time_utc, metadata)
+            self._history_db.create_run(run_id, start_time_utc, metadata)  # type: ignore[arg-type]
             with self._lock:
                 if not self._generation_matches(session_generation):
                     return
                 self._history_run_created = True
                 self._history_create_fail_count = 0
+                self._retry_after_mono_s = 0.0
             self.clear_last_write_error()
-        except Exception as exc:
+        except (sqlite3.Error, OSError) as exc:
             with self._lock:
                 if not self._generation_matches(session_generation):
                     return
                 self._history_create_fail_count += 1
                 fail_count = self._history_create_fail_count
+                if fail_count >= _MAX_HISTORY_CREATE_RETRIES:
+                    self._retry_after_mono_s = time.monotonic() + _RETRY_COOLDOWN_S
             msg = (
                 f"history create_run failed"
                 f" (attempt {fail_count}"
@@ -123,10 +150,11 @@ class MetricsPersistenceCoordinator:
             self.set_last_write_error(msg)
             if fail_count >= _MAX_HISTORY_CREATE_RETRIES:
                 LOGGER.error(
-                    "Persistent DB failure: giving up after %d attempts for run %s — "
-                    "all subsequent samples will be dropped. Error: %s",
+                    "Persistent DB failure after %d attempts for run %s — "
+                    "samples will be dropped until retry in %.0fs. Error: %s",
                     fail_count,
                     run_id,
+                    _RETRY_COOLDOWN_S,
                     exc,
                     exc_info=True,
                 )
@@ -157,18 +185,21 @@ class MetricsPersistenceCoordinator:
                 history_created = self._history_run_created
             if history_created:
                 try:
-                    self._history_db.append_samples(run_id, rows)
+                    self._history_db.append_samples(run_id, rows)  # type: ignore[arg-type]
                     with self._lock:
                         if not self._generation_matches(session_generation):
                             return AppendRowsResult(history_created=True, rows_written=0)
                         self._written_sample_count += len(rows)
                     self.clear_last_write_error()
                     return AppendRowsResult(history_created=True, rows_written=len(rows))
-                except Exception as exc:
+                except (sqlite3.Error, OSError) as exc:
+                    with self._lock:
+                        self._dropped_sample_count += len(rows)
                     self.set_last_write_error(f"history append_samples failed: {exc}")
                     LOGGER.warning("Failed to append samples to history DB", exc_info=True)
                     return AppendRowsResult(history_created=True, rows_written=0)
             with self._lock:
+                self._dropped_sample_count += len(rows)
                 fail_count = self._history_create_fail_count
             LOGGER.warning(
                 "Dropping %d sample(s) for run %s: history run not created (fail count %d/%d)",
@@ -196,7 +227,7 @@ class MetricsPersistenceCoordinator:
             finalized = self._history_db.finalize_run_with_metadata(
                 run_id,
                 end_utc,
-                latest_metadata,
+                latest_metadata,  # type: ignore[arg-type]
             )
             if finalized is False:
                 self.set_last_write_error("history finalize_run skipped due to invalid state")
@@ -207,7 +238,7 @@ class MetricsPersistenceCoordinator:
                 return False
             self.clear_last_write_error()
             return True
-        except Exception as exc:
+        except (sqlite3.Error, OSError) as exc:
             self.set_last_write_error(f"history finalize_run failed: {exc}")
             LOGGER.warning("Failed to finalize run in history DB", exc_info=True)
             return False

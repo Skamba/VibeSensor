@@ -11,6 +11,7 @@ Tests covering:
 """
 
 
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -226,7 +227,7 @@ class TestFinalizeReturnGatesAnalysis:
         monkeypatch.setattr(
             db,
             "finalize_run_with_metadata",
-            lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("disk gone")),
+            lambda *a, **kw: (_ for _ in ()).throw(sqlite3.OperationalError("disk gone")),
         )
 
         schedule_calls: list[str] = []

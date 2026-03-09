@@ -246,7 +246,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
                     current_version,
                 )
                 return None
-        except Exception:
+        except (ImportError, ValueError):
             # If packaging is unavailable or versions are unparseable,
             # fall through and treat any difference as an update.
             LOGGER.warning(

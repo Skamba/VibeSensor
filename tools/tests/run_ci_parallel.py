@@ -193,7 +193,11 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
             ),
         ],
         "frontend-typecheck": [
-            Step("ui contract sync check", ["npm", "run", "check:contracts"], cwd=ROOT / "apps" / "ui"),
+            Step(
+                "ui contract sync check",
+                ["npm", "run", "check:contracts"],
+                cwd=ROOT / "apps" / "ui",
+            ),
             Step("ui typecheck", ["npm", "run", "typecheck"], cwd=ROOT / "apps" / "ui"),
         ],
         "ui-smoke": [

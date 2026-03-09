@@ -797,6 +797,20 @@ export interface components {
        * @default 0
        */
       analyzing_run_count?: number;
+      /** Last Completed Run Error */
+      last_completed_run_error?: string | null;
+      /** Last Completed Run Id */
+      last_completed_run_id?: string | null;
+      /**
+       * Samples Dropped
+       * @default 0
+       */
+      samples_dropped?: number;
+      /**
+       * Samples Written
+       * @default 0
+       */
+      samples_written?: number;
       /** Write Error */
       write_error: string | null;
     };
@@ -984,8 +998,22 @@ export interface components {
       current_file: string | null;
       /** Enabled */
       enabled: boolean;
+      /** Last Completed Run Error */
+      last_completed_run_error?: string | null;
+      /** Last Completed Run Id */
+      last_completed_run_id?: string | null;
       /** Run Id */
       run_id: string | null;
+      /**
+       * Samples Dropped
+       * @default 0
+       */
+      samples_dropped?: number;
+      /**
+       * Samples Written
+       * @default 0
+       */
+      samples_written?: number;
       /** Write Error */
       write_error: string | null;
     };

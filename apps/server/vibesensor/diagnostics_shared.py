@@ -55,6 +55,17 @@ class SeverityResult(TypedDict):
     state: SeverityTrackerState
 
 
+class ClassificationResult(TypedDict):
+    """Return type of :func:`classify_peak_hz`."""
+
+    key: str
+    matched_hz: float | None
+    rel_err: float | None
+    tol: float | None
+    order_label: str | None
+    suspected_source: str
+
+
 _DEFAULT_SEVERITY_STATE: SeverityTrackerState = {
     "current_bucket": None,
     "pending_bucket": None,
@@ -290,7 +301,7 @@ def classify_peak_hz(
     peak_hz: float,
     speed_mps: float | None,
     settings: Mapping[str, object],
-) -> dict[str, object]:
+) -> ClassificationResult:
     """Classify *peak_hz* against known vehicle order frequencies.
 
     Returns a dict with ``class_key``, ``suspected_source``, ``order_label``,
@@ -372,7 +383,7 @@ def classify_peak_hz(
     return _unmatched_classification("other")
 
 
-def _unmatched_classification(key: str) -> dict[str, object]:
+def _unmatched_classification(key: str) -> ClassificationResult:
     """Return a classification result for a peak that did not match any order band."""
     return {
         "key": key,
@@ -397,7 +408,7 @@ def severity_from_peak(
     Applies hysteresis, persistence, and multi-sensor corroboration before
     returning the new bucket and a ``"state"`` dict for subsequent calls.
     """
-    state = {**_DEFAULT_SEVERITY_STATE, **(prior_state or {})}
+    state: SeverityTrackerState = {**_DEFAULT_SEVERITY_STATE, **(prior_state or {})}  # type: ignore[typeddict-item]
     corroboration = MULTI_SENSOR_CORROBORATION_DB if sensor_count >= 2 else 0.0
     adjusted_db = float(vibration_strength_db) + corroboration
     candidate_bucket_raw = bucket_for_strength(adjusted_db)
@@ -412,6 +423,7 @@ def severity_from_peak(
         if pending == candidate:
             if freq_guard_enabled:
                 last_confirmed_hz = as_float_or_none(state.get("last_confirmed_hz"))
+                assert peak_hz_value is not None and freq_bin_hz is not None
                 if last_confirmed_hz is not None and abs(
                     float(peak_hz_value) - last_confirmed_hz
                 ) > float(freq_bin_hz):

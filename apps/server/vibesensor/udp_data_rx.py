@@ -87,7 +87,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             data, addr = await self._queue.get()
             try:
                 self._process_datagram(data, addr)
-            except Exception:
+            except (ValueError, KeyError, OSError):
                 LOGGER.warning(
                     "Unexpected error processing UDP datagram from %s; "
                     "dropping packet to keep consumer alive.",
@@ -128,7 +128,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             if transport is not None:
                 ack_payload = pack_data_ack(msg.client_id, msg.seq)
                 transport.sendto(ack_payload, addr)
-        except Exception:
+        except (ValueError, KeyError, OSError):
             LOGGER.warning(
                 "Error processing datagram from %s (client=%s)",
                 addr,

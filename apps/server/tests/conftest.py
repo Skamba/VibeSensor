@@ -107,6 +107,10 @@ def fake_state() -> FakeState:
         "analysis_queue_oldest_age_s": None,
         "analyzing_run_count": 0,
         "analyzing_oldest_age_s": None,
+        "samples_written": 0,
+        "samples_dropped": 0,
+        "last_completed_run_id": None,
+        "last_completed_run_error": None,
     }
     return state
 

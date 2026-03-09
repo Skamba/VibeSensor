@@ -292,9 +292,10 @@ def _effective_engine_rpm(
     whz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
     if whz is None:
         return None, "missing"
-    return float(engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)), (
-        "estimated_from_speed_and_ratios"
-    )
+    rpm = engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)
+    if rpm is None:
+        return None, "missing"
+    return float(rpm), "estimated_from_speed_and_ratios"
 
 
 def _load_run(path: Path) -> tuple[JsonObject, list[JsonObject], list[str]]:

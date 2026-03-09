@@ -7,6 +7,7 @@ of ``MetricsLogger`` or any async / threading machinery.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING
 
 from ..analysis_settings import (
@@ -35,8 +36,8 @@ def _parse_peak(raw: object) -> tuple[float, float] | None:
     if not isinstance(raw, dict):
         return None
     try:
-        hz = float(raw.get("hz"))
-        amp = float(raw.get("amp"))
+        hz = float(raw.get("hz"))  # type: ignore[arg-type]
+        amp = float(raw.get("amp"))  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return None
     if _isfinite(hz) and _isfinite(amp) and hz > 0:
@@ -57,13 +58,13 @@ _SPEED_SOURCE_MAP = {
 _SETTINGS_PASSTHROUGH_KEYS = ANALYSIS_SETTINGS_SNAPSHOT_KEYS
 
 
-def _safe_float(d: dict[str, object], key: str) -> float | None:
+def _safe_float(d: Mapping[str, object], key: str) -> float | None:
     """Extract a finite float from *d[key]*, or ``None``."""
     raw = d.get(key)
     if raw is None:
         return None
     try:
-        out = float(raw)
+        out = float(raw)  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return None
     return out if _isfinite(out) else None
@@ -163,7 +164,7 @@ def dominant_hz_from_strength(
 
 def resolve_speed_context(
     gps_monitor: GPSSpeedMonitor,
-    analysis_settings_snapshot: dict[str, object],
+    analysis_settings_snapshot: Mapping[str, object],
 ) -> tuple[float | None, float | None, str, float | None, float | None, float | None]:
     """Resolve current speed/vehicle state into sample-record values.
 
@@ -172,13 +173,13 @@ def resolve_speed_context(
     """
     settings = analysis_settings_snapshot
     tire_circumference_m = tire_circumference_m_from_spec(
-        settings.get("tire_width_mm"),
-        settings.get("tire_aspect_pct"),
-        settings.get("rim_in"),
-        deflection_factor=settings.get("tire_deflection_factor"),
+        _safe_float(settings, "tire_width_mm"),
+        _safe_float(settings, "tire_aspect_pct"),
+        _safe_float(settings, "rim_in"),
+        deflection_factor=_safe_float(settings, "tire_deflection_factor"),
     )
-    final_drive_ratio = settings.get("final_drive_ratio")
-    gear_ratio = settings.get("current_gear_ratio")
+    final_drive_ratio = _safe_float(settings, "final_drive_ratio")
+    gear_ratio = _safe_float(settings, "current_gear_ratio")
     gps_speed_mps = gps_monitor.speed_mps
     resolution = gps_monitor.resolve_speed()
     effective_speed_mps = resolution.speed_mps
@@ -243,7 +244,7 @@ def build_sample_records(
     registry: ClientRegistry,
     processor: SignalProcessor,
     gps_monitor: GPSSpeedMonitor,
-    analysis_settings_snapshot: dict[str, object],
+    analysis_settings_snapshot: Mapping[str, object],
     default_sample_rate_hz: int,
 ) -> list[dict[str, object]]:
     """Build one batch of sample records from all active clients."""
@@ -340,7 +341,7 @@ def build_run_metadata(
     *,
     run_id: str,
     start_time_utc: str,
-    analysis_settings_snapshot: dict[str, object],
+    analysis_settings_snapshot: Mapping[str, object],
     sensor_model: str,
     firmware_version: str | None,
     default_sample_rate_hz: int,
@@ -349,8 +350,8 @@ def build_run_metadata(
     fft_window_type: str,
     peak_picker_method: str,
     accel_scale_g_per_lsb: float | None,
-    active_car_snapshot: dict[str, object] | None = None,
-    language_provider: object | None = None,
+    active_car_snapshot: Mapping[str, object] | None = None,
+    language_provider: Callable[[], str] | None = None,
 ) -> dict[str, object]:
     """Assemble comprehensive run metadata."""
     from ..runlog import create_run_metadata
@@ -375,13 +376,13 @@ def build_run_metadata(
     for _key in _SETTINGS_PASSTHROUGH_KEYS:
         metadata[_key] = settings.get(_key)
     metadata["tire_circumference_m"] = tire_circumference_m_from_spec(
-        settings.get("tire_width_mm"),
-        settings.get("tire_aspect_pct"),
-        settings.get("rim_in"),
-        deflection_factor=settings.get("tire_deflection_factor"),
+        _safe_float(settings, "tire_width_mm"),
+        _safe_float(settings, "tire_aspect_pct"),
+        _safe_float(settings, "rim_in"),
+        deflection_factor=_safe_float(settings, "tire_deflection_factor"),
     )
     apply_run_context_snapshot(
-        metadata,
+        metadata,  # type: ignore[arg-type]
         analysis_settings_snapshot=settings,
         active_car_snapshot=active_car_snapshot,
     )

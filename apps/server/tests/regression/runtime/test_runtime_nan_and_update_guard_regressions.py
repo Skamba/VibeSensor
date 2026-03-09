@@ -10,17 +10,17 @@ _canonical_location edge cases, PDF peak suffix i18n."""
 
 import asyncio
 import math
+import sqlite3
 from unittest.mock import MagicMock, patch
 
 import pytest
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from vibesensor.analysis.helpers import _corr_abs_clamped, _weighted_percentile
-from vibesensor.analysis.summary_builder import normalize_lang
 from vibesensor.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher, _dir_sha256
 from vibesensor.report.pdf_drawing import _strength_with_peak
 from vibesensor.report.pdf_helpers import _canonical_location
-from vibesensor.report_i18n import tr
+from vibesensor.report_i18n import normalize_lang, tr
 from vibesensor.settings_store import PersistenceError, SettingsStore
 from vibesensor.update.manager import UpdateManager, UpdateState
 
@@ -88,7 +88,7 @@ class TestSettingsStoreRollback:
         """Return a SettingsStore whose _persist() will raise."""
         store = SettingsStore(db=None)
         store._db = MagicMock()
-        store._db.set_settings_snapshot.side_effect = Exception("DB fail")
+        store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
         return store
 
     def test_add_car_rollback_on_persist_failure(self):
@@ -97,7 +97,7 @@ class TestSettingsStoreRollback:
 
         # Make persist fail
         store._db = MagicMock()
-        store._db.set_settings_snapshot.side_effect = Exception("DB write fail")
+        store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB write fail")
 
         with pytest.raises(PersistenceError):
             store.add_car({"name": "New Car", "type": "suv"})
@@ -114,7 +114,7 @@ class TestSettingsStoreRollback:
         target_id = cars["cars"][-1]["id"]
 
         store._db = MagicMock()
-        store._db.set_settings_snapshot.side_effect = Exception("DB fail")
+        store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
 
         with pytest.raises(PersistenceError):
             store.delete_car(target_id)
@@ -129,7 +129,7 @@ class TestSettingsStoreRollback:
         new_id = [c["id"] for c in cars["cars"] if c["id"] != original_active][0]
 
         store._db = MagicMock()
-        store._db.set_settings_snapshot.side_effect = Exception("DB fail")
+        store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
 
         with pytest.raises(PersistenceError):
             store.set_active_car(new_id)
@@ -144,7 +144,7 @@ class TestSettingsStoreRollback:
         original_name = cars["cars"][0]["name"]
 
         store._db = MagicMock()
-        store._db.set_settings_snapshot.side_effect = Exception("DB fail")
+        store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
 
         with pytest.raises(PersistenceError):
             store.update_car(car_id, {"name": "New Name"})
