@@ -6,8 +6,13 @@ Use this when changing backend code without scanning the whole package.
 - All post-stop analysis lives in `analysis/`. See [docs/analysis_pipeline.md](../../../docs/analysis_pipeline.md).
 - Single entrypoint: `summarize_run_data()` in `analysis/summary_builder.py`.
 - External code should prefer the public `vibesensor.analysis` package API.
-- `report/` is renderer-only and must not import from `analysis/`.
+- `report/` is renderer-only and must not import from `analysis/` (not even via the public API).
 - Rule: no analysis helpers outside the analysis folder.
+- **Approved narrow cross-dependency**: `analysis/report_mapping_*.py` intentionally imports
+  data-structure types (dataclasses) from `report/report_data.py`. This keeps the mapping
+  work in `analysis/` while letting `report/pdf_*.py` stay import-free of analysis logic.
+  Analysis modules must only import from `report/report_data.py` — never from other
+  `report/` modules (`pdf_engine`, `theme`, `pdf_page*.py`, etc.).
 
 ## Orchestration vs Computation
 - `app.py`: thin FastAPI wiring layer; delegates service construction to `bootstrap.py`.

@@ -233,3 +233,99 @@ def test_live_processing_does_not_import_analysis(filename: str) -> None:
         f"{filename} imports from the analysis package. "
         "Live signal processing must not depend on post-stop analysis:\n" + "\n".join(violations)
     )
+
+
+# ---------------------------------------------------------------------------
+# 6. report/ must not import from analysis/ (renderer-only rule)
+# ---------------------------------------------------------------------------
+
+_REPORT_PKG = _SERVER_PKG / "report"
+_REPORT_MODULES = sorted(_REPORT_PKG.rglob("*.py")) if _REPORT_PKG.is_dir() else []
+
+
+def _report_imports_analysis(source: str, filename: str) -> list[str]:
+    """Return a list of analysis-import violations in a report/ module."""
+    tree = ast.parse(source, filename=filename)
+    violations: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ImportFrom) or not node.module:
+            continue
+        mod = node.module
+        level = node.level or 0
+        # Absolute: from vibesensor.analysis... import ...
+        if level == 0 and "analysis" in mod.split("."):
+            violations.append(f"line {node.lineno}: from {mod} import ...")
+        # Relative: from ..analysis import ... (or from .analysis.xyz import ...)
+        elif level > 0 and (mod == "analysis" or mod.startswith("analysis.")):
+            violations.append(f"line {node.lineno}: from {'.' * level}{mod} import ...")
+    return violations
+
+
+@pytest.mark.parametrize("module_path", _REPORT_MODULES, ids=lambda p: p.name)
+def test_report_does_not_import_analysis(module_path: Path) -> None:
+    """report/ is renderer-only — it must not import from analysis/ (BOUNDARIES.md).
+
+    The mapping from analysis summaries to report data-structures lives in
+    ``analysis/report_mapping_*.py``, keeping ``report/`` free of any
+    dependency on analysis logic.
+    """
+    source = module_path.read_text(encoding="utf-8")
+    violations = _report_imports_analysis(source, str(module_path))
+    assert not violations, (
+        f"{module_path.name} imports from the analysis package. "
+        "report/ must be renderer-only (see BOUNDARIES.md):\n" + "\n".join(violations)
+    )
+
+
+# ---------------------------------------------------------------------------
+# 7. analysis/ only imports report/report_data.py (approved narrow boundary)
+# ---------------------------------------------------------------------------
+
+_APPROVED_REPORT_IMPORT = "report_data"
+"""The only report/ module that analysis/ is allowed to import from."""
+
+
+def _analysis_non_report_data_imports(source: str, filename: str) -> list[str]:
+    """Return violations where analysis/ imports from report/ beyond report_data."""
+    tree = ast.parse(source, filename=filename)
+    violations: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ImportFrom) or not node.module:
+            continue
+        mod = node.module
+        level = node.level or 0
+        # Relative: from ..report.xyz import ... (level=2, mod="report.xyz")
+        if level > 0 and mod.startswith("report."):
+            sub = mod[len("report."):]  # e.g. "report_data", "pdf_engine", "theme"
+            if sub != _APPROVED_REPORT_IMPORT:
+                violations.append(f"line {node.lineno}: from {'.' * level}{mod} import ...")
+        # Absolute: from vibesensor.report.xyz import ...
+        elif level == 0:
+            parts = mod.split(".")
+            if "report" in parts:
+                idx = parts.index("report")
+                sub_parts = parts[idx + 1 :]
+                if sub_parts and ".".join(sub_parts) != _APPROVED_REPORT_IMPORT:
+                    violations.append(f"line {node.lineno}: from {mod} import ...")
+    return violations
+
+
+_ANALYSIS_MODULES = sorted(_ANALYSIS_PKG.rglob("*.py"))
+
+
+@pytest.mark.parametrize("module_path", _ANALYSIS_MODULES, ids=lambda p: p.name)
+def test_analysis_only_imports_report_data_from_report(module_path: Path) -> None:
+    """analysis/ may only import from report/report_data.py — never from other report/ modules.
+
+    ``analysis/report_mapping_*.py`` legitimately imports data-structure types from
+    ``report/report_data.py`` (the approved narrow cross-boundary).  Any import of
+    ``report/pdf_engine.py``, ``report/theme.py``, or other rendering modules from
+    within ``analysis/`` is forbidden.
+    """
+    source = module_path.read_text(encoding="utf-8")
+    violations = _analysis_non_report_data_imports(source, str(module_path))
+    assert not violations, (
+        f"{module_path.name} imports from report/ beyond the approved report_data module. "
+        "analysis/ must only import report/report_data.py (see BOUNDARIES.md):\n"
+        + "\n".join(violations)
+    )
