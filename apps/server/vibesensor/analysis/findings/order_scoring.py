@@ -12,6 +12,10 @@ from ._constants import (
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
 
+# Local type bindings so mypy resolves correct types under follow_imports=skip.
+_CONF_FLOOR: float = CONFIDENCE_FLOOR
+_CONF_CEIL: float = CONFIDENCE_CEILING
+
 # ── Diffuse excitation detection constants ──────────────────────────────
 _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO = 2.0
 _DIFFUSE_MATCH_RATE_RANGE_THRESHOLD = 0.15
@@ -190,7 +194,7 @@ def compute_order_confidence(
         n_connected_locations == 2 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD
     ):
         confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
-    return max(CONFIDENCE_FLOOR, min(CONFIDENCE_CEILING, confidence))  # type: ignore[no-any-return]
+    return max(_CONF_FLOOR, min(_CONF_CEIL, confidence))
 
 
 def suppress_engine_aliases(
