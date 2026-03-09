@@ -2,6 +2,16 @@
 
 Loads the YAML config file, deep-merges with defaults, and validates
 all sections into typed ``AppConfig`` dataclass hierarchy.
+
+Module structure
+----------------
+1. **Config dataclasses** — ``ServerConfig``, ``UDPConfig``,
+   ``ProcessingConfig``, ``LoggingConfig``, ``GPSConfig``, ``APConfig``,
+   ``APSelfHealConfig``, ``UpdateConfig``, ``AppConfig``.
+2. **Defaults** — ``DEFAULT_CONFIG`` dict and ``documented_default_config()``.
+3. **Loading** — ``load_config()`` reads YAML, deep-merges with defaults,
+   and validates into the ``AppConfig`` hierarchy.
+4. **Path resolution** — ``SERVER_DIR``, ``REPO_DIR`` for deployment paths.
 """
 
 from __future__ import annotations

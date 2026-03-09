@@ -141,26 +141,22 @@ def _make_runtime(**overrides: Any):
         control_plane=overrides.pop("control_plane", MagicMock()),
         worker_pool=overrides.pop("worker_pool", MagicMock()),
     )
+    settings_store_mock = overrides.pop("settings_store", MagicMock())
+    persistence = runtime_module.RuntimePersistenceSubsystem(
+        history_db=overrides.pop("history_db", MagicMock()),
+        query_service=overrides.pop("query_service", MagicMock()),
+        delete_service=overrides.pop("delete_service", MagicMock()),
+        report_service=overrides.pop("report_service", MagicMock()),
+        export_service=overrides.pop("export_service", MagicMock()),
+    )
     settings = runtime_module.RuntimeSettingsSubsystem(
-        settings_store=overrides.pop("settings_store", MagicMock()),
+        settings_store=settings_store_mock,
         analysis_settings=overrides.pop("analysis_settings", MagicMock()),
         gps_monitor=overrides.pop("gps_monitor", MagicMock()),
     )
     diagnostics = runtime_module.RuntimeRecordingSubsystem(
         metrics_logger=overrides.pop("metrics_logger", MagicMock()),
     )
-    persistence = runtime_module.RuntimePersistenceSubsystem(
-        history_db=overrides.pop("history_db", MagicMock()),
-        query_service=overrides.pop("query_service", None),
-        delete_service=overrides.pop("delete_service", None),
-        report_service=overrides.pop("report_service", None),
-        export_service=overrides.pop("export_service", None),
-    )
-    if persistence.query_service is None:
-        settings_store_ref = settings.settings_store
-        persistence.bind_history_services(
-            settings_store_ref if not isinstance(settings_store_ref, MagicMock) else None,
-        )
     updates = runtime_module.RuntimeUpdateSubsystem(
         update_manager=overrides.pop("update_manager", MagicMock()),
         esp_flash_manager=overrides.pop("esp_flash_manager", MagicMock()),
