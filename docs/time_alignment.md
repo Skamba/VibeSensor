@@ -3,7 +3,7 @@
 ## Problem
 
 When the system compares data from multiple sensors (spectrum overlay,
-strongest-location ranking, live-diagnostics combined groups), each
+strongest-location ranking), each
 sensor's analysis window must cover the **same real-world time interval**.
 Without alignment, a sensor that received data 5 seconds ago could be
 compared against one that received data now, producing misleading

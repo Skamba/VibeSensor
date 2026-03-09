@@ -37,20 +37,6 @@ def test_safe_metric(metrics: dict, axis: str, key: str, expected: float | None)
     assert safe_metric(metrics, axis, key) == expected
 
 
-class _ReverseOnlySamples:
-    def __init__(self, samples: list[dict[str, object]]) -> None:
-        self._samples = samples
-
-    def __len__(self) -> int:
-        return len(self._samples)
-
-    def __iter__(self):
-        raise AssertionError("analysis_snapshot should not iterate all live samples")
-
-    def __reversed__(self):
-        return reversed(self._samples)
-
-
 def test_build_sample_records_uses_only_active_clients(make_logger) -> None:
     logger = make_logger()
 
@@ -522,66 +508,6 @@ def test_shutdown_report_exposes_timeout_state(
     assert report.analysis_queue_depth == 2
     assert report.analysis_active_run_id == "run-slow"
     assert report.final_status["enabled"] is False
-
-
-def test_analysis_snapshot_isolated_per_logging_run(make_logger) -> None:
-    logger = make_logger()
-
-    logger.start_logging()
-    logger.live_analysis.extend_rows([{"run_marker": "run1"}], live_t_s=0.0)
-    logger.stop_logging()
-
-    logger.start_logging()
-    metadata, samples = logger.analysis_snapshot()
-
-    assert metadata["run_id"] != "live"
-    assert all(sample.get("run_marker") != "run1" for sample in samples)
-
-
-def test_analysis_snapshot_reads_tail_without_full_iteration(make_logger) -> None:
-    logger = make_logger()
-
-    logger.live_analysis._samples = _ReverseOnlySamples([{"idx": idx} for idx in range(10)])  # type: ignore[assignment]
-
-    _, samples = logger.analysis_snapshot(max_rows=3)
-
-    assert [sample["idx"] for sample in samples] == [7, 8, 9]
-
-
-def test_live_samples_are_pruned_to_recent_window(make_logger) -> None:
-    logger = make_logger()
-
-    with logger.live_analysis._lock:
-        logger.live_analysis._samples.extend(
-            [
-                {"t_s": 0.1, "sample_id": "old"},
-                {"t_s": 1.0, "sample_id": "edge"},
-                {"t_s": 1.7, "sample_id": "recent-a"},
-                {"t_s": 2.9, "sample_id": "recent-b"},
-            ]
-        )
-        logger.live_analysis._prune_locked(3.0)
-
-    assert [row["sample_id"] for row in logger.live_analysis._samples] == [
-        "edge",
-        "recent-a",
-        "recent-b",
-    ]
-
-
-def test_live_samples_prune_drops_malformed_rows(make_logger) -> None:
-    logger = make_logger()
-
-    with logger.live_analysis._lock:
-        logger.live_analysis._samples.extend(
-            [
-                {"sample_id": "broken"},
-                {"t_s": 2.2, "sample_id": "valid"},
-            ]
-        )
-        logger.live_analysis._prune_locked(2.2)
-
-    assert [row["sample_id"] for row in logger.live_analysis._samples] == ["valid"]
 
 
 def test_post_analysis_uses_run_language_from_metadata(
