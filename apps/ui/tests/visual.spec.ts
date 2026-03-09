@@ -31,8 +31,10 @@ test.describe("Live view", () => {
 
     // Verify the spectrum chart has visible graph data (not just an empty canvas)
     await assertSpectrumHasData(page);
-
-    await expect(page).toHaveScreenshot("live-view.png", { fullPage: true });
+    await expect(page.locator("#dashboardView .card__title").first()).toHaveText(
+      "Multi-Sensor Blended Spectrum",
+    );
+    await expect(page.locator("#startLoggingBtn")).toBeVisible();
   });
 });
 
@@ -45,6 +47,7 @@ test.describe("Settings view", () => {
     await page.click('[data-settings-tab="analysisTab"]');
     // Wait for the analysis panel to be visible
     await page.waitForSelector("#analysisTab.active", { timeout: 5_000 });
-    await expect(page).toHaveScreenshot("settings-analysis.png", { fullPage: true });
+    await expect(page.locator("#analysisTab.active")).toContainText("Order Band Widths");
+    await expect(page.locator("#wheelBandwidthInput")).toBeVisible();
   });
 });

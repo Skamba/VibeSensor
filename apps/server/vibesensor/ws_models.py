@@ -11,10 +11,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from vibesensor_core.vibration_strength import StrengthPeak
 
 from .payload_types import (
-    DiagnosticEventPayload,
-    DiagnosticsLevelsPayload,
-    MatrixPayload,
-    StrengthBandPayload,
     TimingHealthPayload,
 )
 
@@ -30,7 +26,6 @@ __all__ = [
     "RotationalSpeedValue",
     "RotationalSpeeds",
     "ClientInfoModel",
-    "DiagnosticsModel",
     "StrengthMetricsModel",
     "SpectraPayload",
     "SpectrumPeak",
@@ -105,24 +100,6 @@ class ClientInfoModel(BaseModel):
     )
 
 
-class DiagnosticsModel(BaseModel):
-    """Structured live diagnostics payload with explicit defaults."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    diagnostics_sequence: int = 0
-    matrix: MatrixPayload = Field(default_factory=dict)
-    events: list[DiagnosticEventPayload] = Field(default_factory=list)
-    strength_bands: list[StrengthBandPayload] = Field(default_factory=list)
-    levels: DiagnosticsLevelsPayload = Field(
-        default_factory=lambda: {"by_source": {}, "by_sensor": {}, "by_location": {}}
-    )
-    findings: list[dict[str, object]] = Field(default_factory=list)
-    top_finding: dict[str, object] | None = None
-    driving_phase: str = "unknown"
-    error: str | None = None
-
-
 class AlignmentInfo(BaseModel):
     """Multi-sensor clock-alignment quality metrics for a frequency window."""
 
@@ -194,4 +171,3 @@ class LiveWsPayload(BaseModel):
     selected_client_id: str | None = None
     rotational_speeds: RotationalSpeeds | None = None
     spectra: SpectraPayload | None = None
-    diagnostics: DiagnosticsModel | None = None

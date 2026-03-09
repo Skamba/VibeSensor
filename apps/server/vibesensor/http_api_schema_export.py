@@ -45,7 +45,6 @@ def _build_openapi_app() -> FastAPI:
         ),
         diagnostics=SimpleNamespace(
             metrics_logger=placeholder,
-            live_diagnostics=placeholder,
         ),
         persistence=SimpleNamespace(
             history_db=placeholder,

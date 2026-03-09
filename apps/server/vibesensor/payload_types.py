@@ -317,4 +317,3 @@ class LiveWsPayload(TypedDict, total=False):
     selected_client_id: str | None
     rotational_speeds: RotationalSpeedsPayload | None
     spectra: SpectraPayload
-    diagnostics: LiveDiagnosticsPayload

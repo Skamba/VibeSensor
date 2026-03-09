@@ -96,17 +96,6 @@ class _StubMetricsLogger:
         return True
 
 
-class _StubDiagnostics:
-    def __init__(self) -> None:
-        self.update_calls = 0
-        self.last_kwargs: dict[str, Any] | None = None
-
-    def update(self, **kwargs: Any) -> dict[str, Any]:
-        self.update_calls += 1
-        self.last_kwargs = kwargs
-        return {"matrix": {}, "findings": []}
-
-
 class _StubSettingsStore:
     language: str = "en"
 
@@ -163,7 +152,6 @@ def _make_state(
     )
     diagnostics = runtime_module.RuntimeDiagnosticsSubsystem(
         metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
-        live_diagnostics=_StubDiagnostics(),  # type: ignore[arg-type]
     )
     persistence = runtime_module.RuntimePersistenceSubsystem(  # type: ignore[arg-type]
         history_db=_SENTINEL
@@ -195,7 +183,6 @@ def _make_state(
             ui_heavy_push_hz=ui_heavy_push_hz,
             ingress=ingress,
             settings=settings,
-            diagnostics=diagnostics,
         ),
     )
 
@@ -304,12 +291,10 @@ def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
     processor = state.ingress.processor
     gps = state.settings.gps_monitor
     analysis_settings = state.settings.analysis_settings
-    diagnostics = state.diagnostics.live_diagnostics
     assert isinstance(registry, _StubRegistry)
     assert isinstance(processor, _StubProcessor)
     assert isinstance(gps, _StubGPS)
     assert isinstance(analysis_settings, _StubAnalysisSettings)
-    assert isinstance(diagnostics, _StubDiagnostics)
 
     state.websocket.cache.tick = 77
     payload_aaa = state.websocket.broadcast.build_payload(selected_client="aaa")
@@ -324,7 +309,6 @@ def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
     assert processor.multi_spectrum_calls == 1
     assert gps.resolve_calls == 1
     assert analysis_settings.snapshot_calls == 1
-    assert diagnostics.update_calls == 0
 
 
 def test_on_ws_broadcast_tick_toggles_heavy() -> None:

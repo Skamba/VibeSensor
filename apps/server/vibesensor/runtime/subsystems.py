@@ -9,7 +9,6 @@ from ..history_db import HistoryDB
 from ..history_exports import HistoryExportService
 from ..history_reports import HistoryReportService
 from ..history_runs import HistoryRunDeleteService, HistoryRunQueryService
-from ..live_diagnostics.engine import LiveDiagnosticsEngine
 from ..metrics_log import MetricsLogger
 from ..processing import SignalProcessor
 from ..registry import ClientRegistry
@@ -48,7 +47,6 @@ class RuntimeSettingsSubsystem:
 @dataclass(slots=True)
 class RuntimeDiagnosticsSubsystem:
     metrics_logger: MetricsLogger
-    live_diagnostics: LiveDiagnosticsEngine
 
 
 @dataclass(slots=True)

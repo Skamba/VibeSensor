@@ -1,11 +1,7 @@
-import type { StrengthBand } from "./diagnostics";
 import {
   EXPECTED_SCHEMA_VERSION,
   type StrengthMetricPeak,
   type StrengthMetricsPayload,
-  type WsDiagnosticEvent,
-  type WsDiagnosticLevel,
-  type WsDiagnosticsPayload,
   type WsOrderBand,
 } from "./contracts/ws_payload_types";
 
@@ -30,11 +26,6 @@ export type AdaptedClient = {
   firmware_version: string;
 };
 
-export type MatrixCell = NonNullable<NonNullable<WsDiagnosticsPayload["matrix"]>[string][string]>;
-export type DiagnosticEvent = WsDiagnosticEvent;
-export type DiagnosticLevel = WsDiagnosticLevel;
-export type DiagnosticLevels = NonNullable<WsDiagnosticsPayload["levels"]>;
-
 export type RotationalSpeedValue = {
   rpm: number | null;
   mode: string | null;
@@ -55,17 +46,6 @@ export type AdaptedPayload = {
   clients: AdaptedClient[];
   speed_mps: number | null;
   rotational_speeds: RotationalSpeeds | null;
-  diagnostics: {
-    diagnostics_sequence: number;
-    driving_phase: string | null;
-    error: string | null;
-    strength_bands: StrengthBand[];
-    matrix: Record<string, Record<string, MatrixCell>> | null;
-    events: DiagnosticEvent[];
-    findings: UnknownRecord[];
-    top_finding: UnknownRecord | null;
-    levels: DiagnosticLevels;
-  };
   spectra: {
     clients: Record<string, AdaptedSpectrum>;
   } | null;
@@ -102,24 +82,6 @@ function emptyStrengthMetrics(): StrengthMetricsPayload {
     noise_floor_amp_g: 0,
     strength_bucket: null,
     top_peaks: [],
-  };
-}
-
-function emptyDiagnostics(): AdaptedPayload["diagnostics"] {
-  return {
-    diagnostics_sequence: -1,
-    driving_phase: null,
-    error: null,
-    strength_bands: [],
-    matrix: null,
-    events: [],
-    findings: [],
-    top_finding: null,
-    levels: {
-      by_source: {},
-      by_sensor: {},
-      by_location: {},
-    },
   };
 }
 
@@ -177,128 +139,6 @@ function parseOrderBand(value: unknown): OrderBand | null {
   const tolerance = getNumber(record, "tolerance");
   if (key === null || centerHz === null || tolerance === null) return null;
   return { key, center_hz: centerHz, tolerance };
-}
-
-function parseDiagnosticEvent(value: unknown): DiagnosticEvent | null {
-  const record = asRecord(value);
-  if (!record) return null;
-  const kind = getString(record, "kind");
-  const classKey = getString(record, "class_key");
-  const sensorId = getString(record, "sensor_id");
-  const sensorLabel = getString(record, "sensor_label");
-  const peakHz = getNumber(record, "peak_hz");
-  const peakAmp = getNumber(record, "peak_amp");
-  const peakAmpG = getNumber(record, "peak_amp_g");
-  const vibrationStrengthDb = getNumber(record, "vibration_strength_db");
-  if (
-    kind === null ||
-    classKey === null ||
-    sensorId === null ||
-    sensorLabel === null ||
-    peakHz === null ||
-    peakAmp === null ||
-    peakAmpG === null ||
-    vibrationStrengthDb === null
-  ) {
-    return null;
-  }
-  return {
-    event_id: getNumber(record, "event_id") ?? undefined,
-    kind,
-    class_key: classKey,
-    severity_key: getString(record, "severity_key"),
-    sensor_id: sensorId,
-    sensor_label: sensorLabel,
-    sensor_labels: Array.isArray(record.sensor_labels)
-      ? record.sensor_labels.filter((label): label is string => typeof label === "string")
-      : [],
-    sensor_count: getNumber(record, "sensor_count") ?? 0,
-    peak_hz: peakHz,
-    peak_amp: peakAmp,
-    peak_amp_g: peakAmpG,
-    vibration_strength_db: vibrationStrengthDb,
-  };
-}
-
-function parseDiagnosticLevel(value: unknown): DiagnosticLevel | null {
-  const record = asRecord(value);
-  if (!record) return null;
-  return {
-    bucket_key: getString(record, "bucket_key") ?? undefined,
-    strength_db: getNumber(record, "strength_db") ?? undefined,
-    sensor_label: getString(record, "sensor_label") ?? undefined,
-    sensor_location: getString(record, "sensor_location") ?? undefined,
-    class_key: getString(record, "class_key") ?? undefined,
-    peak_hz: getNumber(record, "peak_hz") ?? undefined,
-    confidence: getNumber(record, "confidence") ?? undefined,
-    agreement_count: getNumber(record, "agreement_count") ?? undefined,
-    sensor_count: getNumber(record, "sensor_count") ?? undefined,
-  };
-}
-
-function parseDiagnosticLevelMap(value: unknown): Record<string, DiagnosticLevel> {
-  const record = asRecord(value);
-  if (!record) return {};
-  const parsed: Record<string, DiagnosticLevel> = {};
-  for (const [key, entry] of Object.entries(record)) {
-    const level = parseDiagnosticLevel(entry);
-    if (level) parsed[key] = level;
-  }
-  return parsed;
-}
-
-function parseMatrix(value: unknown): AdaptedPayload["diagnostics"]["matrix"] | null {
-  const record = asRecord(value);
-  if (!record) return null;
-  const matrix: Record<string, Record<string, MatrixCell>> = {};
-  for (const [sourceKey, columns] of Object.entries(record)) {
-    const columnRecord = asRecord(columns);
-    if (!columnRecord) continue;
-    const cells: Record<string, MatrixCell> = {};
-    for (const [severityKey, cellValue] of Object.entries(columnRecord)) {
-      const cellRecord = asRecord(cellValue);
-      if (!cellRecord) continue;
-      cells[severityKey] = {
-        count: getNumber(cellRecord, "count") ?? 0,
-        seconds: getNumber(cellRecord, "seconds") ?? 0,
-        contributors: asRecord(cellRecord.contributors)
-          ? Object.fromEntries(
-              Object.entries(asRecord(cellRecord.contributors)!)
-                .map(([name, count]) => [name, Number(count)])
-                .filter(([, count]) => Number.isFinite(count)),
-            )
-          : {},
-      };
-    }
-    matrix[sourceKey] = cells;
-  }
-  return matrix;
-}
-
-function parseStrengthBands(value: unknown): StrengthBand[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((band) => {
-      const record = asRecord(band);
-      if (!record) return null;
-      const key = getString(record, "key");
-      const minDb = getNumber(record, "min_db");
-      if (key === null || minDb === null) return null;
-      const parsed: StrengthBand = { key, min_db: minDb };
-      const maxDb = getNumber(record, "max_db");
-      const labelKey = getString(record, "labelKey");
-      if (maxDb !== null) parsed.max_db = maxDb;
-      if (labelKey !== null) parsed.labelKey = labelKey;
-      return parsed;
-    })
-    .filter((band): band is StrengthBand => band !== null);
-}
-
-function parseUnknownObjectArray(value: unknown): UnknownRecord[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((entry) => asRecord(entry))
-    .filter((entry): entry is UnknownRecord => entry !== null);
 }
 
 function parseClient(value: unknown): AdaptedClient | null {
@@ -372,8 +212,6 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
     );
   }
 
-  const diagnosticsRecord = asRecord(payloadRecord.diagnostics);
-
   const clients = Array.isArray(payloadRecord.clients)
     ? payloadRecord.clients
         .map((client) => parseClient(client))
@@ -399,27 +237,6 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
     clients,
     speed_mps: getNumber(payloadRecord, "speed_mps"),
     rotational_speeds: rotationalSpeeds,
-    diagnostics: diagnosticsRecord
-      ? {
-          diagnostics_sequence: getNumber(diagnosticsRecord, "diagnostics_sequence") ?? -1,
-          driving_phase: getString(diagnosticsRecord, "driving_phase"),
-          error: getString(diagnosticsRecord, "error"),
-          strength_bands: parseStrengthBands(diagnosticsRecord.strength_bands),
-          matrix: parseMatrix(diagnosticsRecord.matrix),
-          events: Array.isArray(diagnosticsRecord.events)
-            ? diagnosticsRecord.events
-                .map((event) => parseDiagnosticEvent(event))
-                .filter((event): event is DiagnosticEvent => event !== null)
-            : [],
-          findings: parseUnknownObjectArray(diagnosticsRecord.findings),
-          top_finding: asRecord(diagnosticsRecord.top_finding),
-          levels: {
-            by_source: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_source),
-            by_sensor: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_sensor),
-            by_location: parseDiagnosticLevelMap(asRecord(diagnosticsRecord.levels)?.by_location),
-          },
-        }
-      : emptyDiagnostics(),
     spectra: parseSpectra(payloadRecord.spectra),
   };
 }

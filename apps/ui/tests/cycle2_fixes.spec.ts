@@ -1,14 +1,12 @@
 /**
  * Cycle 2 UI audit regression tests.
  *
- * Validates fixes for 6 bugs found during state-management / rendering audit:
+ * Validates focused fixes that still apply to the spectrum-only live view:
  *
  *  1. Stale spectra not cleared when server payload has no spectra
- *  2. strengthFrameTotalsByClient not reset on reconnect (stuck strength chart)
- *  3. start/stop logging errors silently swallowed
- *  4. Silent validation failure in analysis settings save
- *  5. No upper-bound on manual speed input
- *  6. carMapSamples not cleared on reconnect
+ *  2. start/stop logging errors silently swallowed
+ *  3. Silent validation failure in analysis settings save
+ *  4. No upper-bound on manual speed input
  */
 
 import { expect, test } from "@playwright/test";
@@ -23,7 +21,6 @@ test.describe("adaptServerPayload spectra handling", () => {
   const basePayload: Record<string, unknown> = {
     clients: [],
     speed_mps: 10,
-    diagnostics: { strength_bands: [], events: [], levels: {} },
   };
 
   test("returns null spectra when payload has no spectra field", () => {
@@ -141,7 +138,7 @@ test.describe("spectrum heavy-frame animation compatibility", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. Manual speed upper-bound (≤ 500 kph)
+// 4. Manual speed upper-bound (≤ 500 kph)
 //    We test the validation logic inline since the save functions are inside
 //    the feature closure.  The bug is that Number.isFinite(v) && v > 0 was
 //    the only check — values like 9999 kph were accepted.

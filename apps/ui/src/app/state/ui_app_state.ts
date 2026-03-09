@@ -1,9 +1,6 @@
-import type uPlot from "uplot";
 import type { SpectrumChart } from "../../spectrum";
 import type { WsClient } from "../../ws";
-import type { StrengthBand } from "../../diagnostics";
 import type { StrengthMetricsPayload } from "../../contracts/ws_payload_types";
-import { createEmptyMatrix } from "../../diagnostics";
 import { defaultLocationCodes } from "../../constants";
 import type {
   CarRecord,
@@ -51,16 +48,6 @@ export interface ChartBand {
   min_hz: number;
   max_hz: number;
   color: string;
-}
-
-export interface VibrationMessage {
-  ts: string;
-  text: string;
-}
-
-export interface CarMapSample {
-  ts: number;
-  byLocation: Record<string, number>;
 }
 
 export interface ClientRow {
@@ -132,9 +119,6 @@ export interface AppState {
   manualSpeedKph: number | null;
   gpsFallbackActive: boolean;
   chartBands: ChartBand[];
-  vibrationMessages: VibrationMessage[];
-  strengthBands: StrengthBand[];
-  eventMatrix: Record<string, Record<string, { count: number; seconds: number; contributors: Record<string, number> }>>;
   pendingPayload: unknown | null;
   renderQueued: boolean;
   lastRenderTsMs: number;
@@ -144,19 +128,6 @@ export interface AppState {
   hasSpectrumData: boolean;
   hasReceivedPayload: boolean;
   payloadError: string | null;
-  strengthPlot: uPlot | null;
-  strengthFrameTotalsByClient: Record<string, number>;
-  strengthHistory: {
-    t: number[];
-    wheel: (number | null)[];
-    driveshaft: (number | null)[];
-    engine: (number | null)[];
-    other: (number | null)[];
-  };
-  carMapSamples: CarMapSample[];
-  carMapPulseLocations: Set<string>;
-  lastDiagnosticsSequence: number;
-  strengthChartAutoScale: boolean;
 }
 
 export function createAppState(): AppState {
@@ -205,9 +176,6 @@ export function createAppState(): AppState {
     manualSpeedKph: null,
     gpsFallbackActive: false,
     chartBands: [],
-    vibrationMessages: [],
-    strengthBands: [],
-    eventMatrix: createEmptyMatrix(),
     pendingPayload: null,
     renderQueued: false,
     lastRenderTsMs: 0,
@@ -217,12 +185,5 @@ export function createAppState(): AppState {
     hasSpectrumData: false,
     hasReceivedPayload: false,
     payloadError: null,
-    strengthPlot: null,
-    strengthFrameTotalsByClient: {},
-    strengthHistory: { t: [], wheel: [], driveshaft: [], engine: [], other: [] },
-    carMapSamples: [],
-    carMapPulseLocations: new Set(),
-    lastDiagnosticsSequence: -1,
-    strengthChartAutoScale: false,
   };
 }

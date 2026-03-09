@@ -10,7 +10,6 @@ from ..config import AppConfig
 from ..esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
-from ..live_diagnostics.engine import LiveDiagnosticsEngine
 from ..metrics_log import MetricsLogger, MetricsLoggerConfig
 from ..processing import SignalProcessor
 from ..registry import ClientRegistry
@@ -139,7 +138,6 @@ def build_diagnostics_subsystem(
     )
     diagnostics = RuntimeDiagnosticsSubsystem(
         metrics_logger=metrics_logger,
-        live_diagnostics=LiveDiagnosticsEngine(),
     )
     requeue_stale_analysis_runs(
         persistence=persistence,
@@ -192,7 +190,6 @@ def build_websocket_subsystem(
         ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
         ingress=ingress,
         settings=settings,
-        diagnostics=diagnostics,
     )
     return RuntimeWebsocketSubsystem(hub=hub, cache=cache, broadcast=broadcast)
 

@@ -1,14 +1,11 @@
-import { METRIC_FIELDS } from "../generated/shared_contracts";
-import { createEmptyMatrix } from "../diagnostics";
 import type { UiDomElements } from "./dom/ui_dom_registry";
 import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
-import { createDashboardFeature, type DashboardFeature } from "./features/dashboard_feature";
 import { createEspFlashFeature, type EspFlashFeature } from "./features/esp_flash_feature";
 import { createHistoryFeature, type HistoryFeature } from "./features/history_feature";
 import { createRealtimeFeature, type RealtimeFeature } from "./features/realtime_feature";
 import { createSettingsFeature, type SettingsFeature } from "./features/settings_feature";
 import { createUpdateFeature, type UpdateFeature } from "./features/update_feature";
-import type { AppState, ClientRow } from "./state/ui_app_state";
+import type { AppState } from "./state/ui_app_state";
 
 export interface AppFeatureBundle {
   history: HistoryFeature;
@@ -17,7 +14,6 @@ export interface AppFeatureBundle {
   cars: CarsFeature;
   update: UpdateFeature;
   espFlash: EspFlashFeature;
-  dashboard: DashboardFeature;
 }
 
 export interface AppFeatureBundleDeps {
@@ -34,9 +30,6 @@ export interface AppFeatureBundleDeps {
   renderSpeedReadout: () => void;
   renderCarSelectionWarning: () => void;
   sendSelection: () => void;
-  carMapPositions: Record<string, { top: number; left: number }>;
-  carMapWindowMs: number;
-  locationCodeForClient?: (client: ClientRow) => string;
 }
 
 export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBundle {
@@ -52,8 +45,6 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     formatInt,
   });
 
-  let dashboard: DashboardFeature | undefined;
-
   const realtime = createRealtimeFeature({
     state,
     els,
@@ -62,10 +53,6 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     formatInt,
     setPillState: deps.setPillState,
     setStatValue: deps.setStatValue,
-    createEmptyMatrix: () => createEmptyMatrix(state.strengthBands),
-    renderMatrix: () => {
-      dashboard?.renderMatrix();
-    },
     sendSelection: deps.sendSelection,
     refreshHistory: () => history.refreshHistory(),
   });
@@ -92,22 +79,6 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
   const update = createUpdateFeature({ els, t, escapeHtml });
   const espFlash = createEspFlashFeature({ els, t, escapeHtml });
 
-  dashboard = createDashboardFeature({
-    state,
-    els,
-    t,
-    fmt,
-    escapeHtml,
-    locationCodeForClient: (client) => realtime.locationCodeForClient(client),
-    carMapPositions: deps.carMapPositions,
-    carMapWindowMs: deps.carMapWindowMs,
-    metricField: METRIC_FIELDS.vibration_strength_db,
-  });
-
-  if (!dashboard) {
-    throw new Error("Dashboard feature failed to initialize");
-  }
-
   return {
     history,
     realtime,
@@ -115,6 +86,5 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     cars,
     update,
     espFlash,
-    dashboard,
   };
 }

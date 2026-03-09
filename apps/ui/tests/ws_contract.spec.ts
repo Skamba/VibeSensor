@@ -45,7 +45,7 @@ test.describe("schema_version handling", () => {
   test("accepts payload without diagnostics", () => {
     const adapted = adaptServerPayload({ ...basePayload });
     expect(adapted).toBeDefined();
-    expect(adapted.diagnostics.events).toEqual([]);
+    expect(adapted.spectra).toBeNull();
   });
 
   test("EXPECTED_SCHEMA_VERSION is string '1'", () => {

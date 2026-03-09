@@ -1,7 +1,6 @@
 import uPlot from "uplot";
 import * as I18N from "../i18n";
 import { defaultLocationCodes } from "../constants";
-import { createEmptyMatrix } from "../diagnostics";
 import { adaptServerPayload } from "../server_payload";
 import type { RotationalSpeeds } from "../server_payload";
 import { escapeHtml, fmt, fmtTs, formatIntLocale } from "../format";
@@ -23,26 +22,7 @@ import { areHeavyFramesCompatible, interpolateHeavyFrame, type SpectrumHeavyFram
 import type { AppState, ChartBand } from "./state/ui_app_state";
 import { applySpectrumTick, createAppState } from "./state/ui_app_state";
 
-const CAR_MAP_WINDOW_MS = 10_000;
 const DEFAULT_VIEW_ID = "dashboardView";
-
-const CAR_MAP_POSITIONS: Record<string, { top: number; left: number }> = {
-  front_left_wheel: { top: 22, left: 18 },
-  front_right_wheel: { top: 22, left: 82 },
-  rear_left_wheel: { top: 78, left: 18 },
-  rear_right_wheel: { top: 78, left: 82 },
-  engine_bay: { top: 28, left: 50 },
-  front_subframe: { top: 14, left: 50 },
-  rear_subframe: { top: 88, left: 50 },
-  driveshaft_tunnel: { top: 52, left: 50 },
-  transmission: { top: 40, left: 48 },
-  driver_seat: { top: 44, left: 38 },
-  front_passenger_seat: { top: 44, left: 62 },
-  rear_left_seat: { top: 66, left: 30 },
-  rear_center_seat: { top: 66, left: 50 },
-  rear_right_seat: { top: 66, left: 70 },
-  trunk: { top: 88, left: 50 },
-};
 
 const SPECTRUM_DB_MIN = 0;
 const SPECTRUM_DB_MAX = 100;
@@ -131,8 +111,6 @@ export class UiAppRuntime {
       renderSpeedReadout: () => this.renderSpeedReadout(),
       renderCarSelectionWarning: () => this.renderCarSelectionWarning(),
       sendSelection: () => this.sendSelection(),
-      carMapPositions: CAR_MAP_POSITIONS,
-      carMapWindowMs: CAR_MAP_WINDOW_MS,
     });
   }
 
@@ -366,7 +344,6 @@ export class UiAppRuntime {
       this.state.spectrumPlot = null;
       this.renderSpectrum();
     }
-    this.features.dashboard.recreateStrengthChart();
     if (forceReloadInsights) {
       this.features.history.reloadExpandedRunOnLanguageChange();
     }
@@ -704,7 +681,6 @@ export class UiAppRuntime {
 
     const prevSelected = this.state.selectedClientId;
     this.state.clients = adapted.clients;
-    const hasFresh = this.features.dashboard.hasFreshSensorFrames(this.state.clients);
     const incomingSpectra = adapted.spectra
       ? {
         clients: Object.fromEntries(
@@ -731,24 +707,12 @@ export class UiAppRuntime {
     this.latestRotationalSpeeds = adapted.rotational_speeds;
     this.state.hasSpectrumData = spectrumTick.hasSpectrumData;
     this.renderSpeedReadout();
-    this.features.dashboard.applyServerDiagnostics(adapted.diagnostics, hasFresh);
-    const liveIntensity = this.features.dashboard.extractLiveLocationIntensity();
-    const intensityToPlot = Object.keys(liveIntensity).length > 0
-      ? liveIntensity
-      : this.features.dashboard.extractConfirmedLocationIntensity();
-    this.features.dashboard.pushCarMapSample(intensityToPlot);
-    this.features.dashboard.renderCarMap();
     if (spectrumTick.hasNewSpectrumFrame) {
       this.renderSpectrum();
     } else {
       this.updateSpectrumOverlay();
     }
     this.features.realtime.renderStatus(this.state.clients.find((client) => client.id === this.state.selectedClientId));
-  }
-
-  private resetLiveSessionCounters(): void {
-    this.state.strengthFrameTotalsByClient = {};
-    this.state.carMapSamples = [];
   }
 
   private connectWs(): void {
@@ -765,7 +729,6 @@ export class UiAppRuntime {
         this.renderWsState();
         this.updateSpectrumOverlay();
         if (nextState === "connected" || nextState === "no_data") {
-          this.resetLiveSessionCounters();
           this.sendSelection();
         }
       },
@@ -834,12 +797,6 @@ export class UiAppRuntime {
     });
     this.els.startLoggingBtn?.addEventListener("click", this.features.realtime.startLogging);
     this.els.stopLoggingBtn?.addEventListener("click", this.features.realtime.stopLogging);
-    if (this.els.strengthAutoScaleToggle) {
-      this.els.strengthAutoScaleToggle.checked = this.state.strengthChartAutoScale;
-      this.els.strengthAutoScaleToggle.addEventListener("change", () => {
-        this.state.strengthChartAutoScale = this.els.strengthAutoScaleToggle!.checked;
-      });
-    }
     this.els.refreshHistoryBtn?.addEventListener("click", this.features.history.refreshHistory);
     this.els.deleteAllRunsBtn?.addEventListener("click", () => void this.features.history.deleteAllRuns());
   }

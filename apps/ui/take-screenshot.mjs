@@ -61,15 +61,6 @@ async function main() {
 
     await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, { timeout: PAGE_TIMEOUT_MS });
 
-    // Wait for car map dots (confirms demo data applied)
-    await page.waitForSelector(".car-map-dot--visible", { timeout: PAGE_TIMEOUT_MS });
-
-    // Wait for vibration event log entry (confirms event payload applied)
-    await page.waitForFunction(
-      () => document.querySelector(".log-row .log-time") !== null,
-      { timeout: PAGE_TIMEOUT_MS },
-    );
-
     // Verify spectrum canvas has rendered data (uPlot creates a canvas element)
     const hasCanvas = await page.evaluate(() => {
       const canvas = document.querySelector("#specChart canvas");

@@ -14,9 +14,7 @@
     "typecheck": "tsc --noEmit",
     "test:smoke": "npx playwright test --config=playwright.smoke.config.ts tests/smoke.spec.ts tests/api_http.spec.ts --project=laptop-light --workers=1",
     "test:visual": "npx playwright test",
-    "test:visual:update": "npx playwright test --update-snapshots",
-    "screenshot": "node take-screenshot.mjs",
-    "snapshot:update": "node update-snapshots.mjs"
+    "screenshot": "node take-screenshot.mjs"
   },
   "dependencies": {
     "uplot": "^1.6.31"

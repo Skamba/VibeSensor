@@ -146,7 +146,6 @@ def _make_runtime(**overrides: Any):
     )
     diagnostics = runtime_module.RuntimeDiagnosticsSubsystem(
         metrics_logger=overrides.pop("metrics_logger", MagicMock()),
-        live_diagnostics=overrides.pop("live_diagnostics", MagicMock()),
     )
     persistence = runtime_module.RuntimePersistenceSubsystem(
         history_db=overrides.pop("history_db", MagicMock()),
@@ -187,7 +186,6 @@ def _make_runtime(**overrides: Any):
             ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
             ingress=ingress,
             settings=settings,
-            diagnostics=diagnostics,
         ),
     )
     rt = runtime_module.build_runtime_state(

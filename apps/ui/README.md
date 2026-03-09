@@ -35,11 +35,10 @@ in one step.
 | `ws.ts` | WebSocket client with auto-reconnect and stale detection |
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
 | `spectrum.ts` | uPlot chart wrapper for interactive spectrum visualization |
-| `server_payload.ts` | TypeScript type definitions for server messages |
-| `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
+| `server_payload.ts` | WebSocket payload adaptation for the live spectrum dashboard |
 | `vehicle_math.ts` | Tire diameter, order tolerance, and uncertainty calculations |
 | `format.ts` | Number, byte, and timestamp formatting utilities |
-| `constants.ts` | Sensor location codes and vibration source columns |
+| `constants.ts` | Sensor location codes |
 | `theme.ts` | Chart color palette and order band fill colors |
 | `styles/app.css` | Full CSS with light/dark theme tokens |
 
