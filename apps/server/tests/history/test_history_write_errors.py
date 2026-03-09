@@ -146,7 +146,7 @@ class TestCreateRunFailureExposesWriteError:
         status = logger.status()
         assert status["write_error"] is not None
         assert "disk full" in status["write_error"]
-        assert not logger._history_run_created
+        assert not logger._persistence.history_run_created
 
     def test_create_run_success_clears_write_error(self, tmp_path: Path) -> None:
         db = MagicMock()
@@ -161,7 +161,7 @@ class TestCreateRunFailureExposesWriteError:
 
         # Second call succeeds
         logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
-        assert logger._history_run_created
+        assert logger._persistence.history_run_created
         assert logger.status()["write_error"] is None
 
 
@@ -180,8 +180,8 @@ class TestPersistentCreateRunFailureStopsRetrying:
 
         # Should have been called exactly _MAX_HISTORY_CREATE_RETRIES times
         assert db.create_run.call_count == _MAX_HISTORY_CREATE_RETRIES
-        assert logger._history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
-        assert not logger._history_run_created
+        assert logger._persistence.history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
+        assert not logger._persistence.history_run_created
         assert logger.status()["write_error"] is not None
 
     def test_retry_counter_resets_on_new_session(self, tmp_path: Path) -> None:
@@ -194,12 +194,12 @@ class TestPersistentCreateRunFailureStopsRetrying:
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
             logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
 
-        assert logger._history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
+        assert logger._persistence.history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
 
         # Starting a new session resets the counter
         db.create_run.side_effect = None  # Next call succeeds
         logger.start_logging()
-        assert logger._history_create_fail_count == 0
+        assert logger._persistence.history_create_fail_count == 0
 
 
 class TestAppendSamplesFailureExposesError:
@@ -219,7 +219,7 @@ class TestAppendSamplesFailureExposesError:
         assert status["write_error"] is not None
         assert "write error" in status["write_error"]
         # Sample count should NOT increment on failure
-        assert logger._written_sample_count == 0
+        assert logger._persistence.written_sample_count == 0
 
 
 class TestDroppedSamplesLogged:

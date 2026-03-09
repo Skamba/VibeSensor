@@ -151,46 +151,6 @@ class MetricsLogger:
     def _run_id(self) -> str | None:
         return self._session.run_id
 
-    @property
-    def _session_generation(self) -> int:
-        return self._session.session_generation
-
-    @property
-    def _run_start_utc(self) -> str | None:
-        return self._session.run_start_utc
-
-    @property
-    def _run_start_mono_s(self) -> float | None:
-        return self._session.run_start_mono_s
-
-    @property
-    def _history_run_created(self) -> bool:
-        return self._persistence.history_run_created
-
-    @_history_run_created.setter
-    def _history_run_created(self, value: bool) -> None:
-        self._persistence.history_run_created = value
-
-    @property
-    def _history_create_fail_count(self) -> int:
-        return self._persistence.history_create_fail_count
-
-    @property
-    def _last_data_progress_mono_s(self) -> float | None:
-        return self._session.last_data_progress_mono_s
-
-    @_last_data_progress_mono_s.setter
-    def _last_data_progress_mono_s(self, value: float | None) -> None:
-        self._session.last_data_progress_mono_s = value
-
-    @property
-    def _written_sample_count(self) -> int:
-        return self._persistence.written_sample_count
-
-    @_written_sample_count.setter
-    def _written_sample_count(self, value: int) -> None:
-        self._persistence.written_sample_count = value
-
     def _start_new_session_locked(self) -> MetricsSessionSnapshot:
         snapshot = self._session.start_new_session(
             run_id=uuid4().hex,

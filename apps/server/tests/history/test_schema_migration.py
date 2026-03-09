@@ -66,63 +66,14 @@ def _insert_v4_run(db_path: Path, run_id: str) -> None:
 # -- migration runner tests --------------------------------------------------
 
 
-def test_v4_to_v5_migration_adds_columns(tmp_path: Path) -> None:
-    """v4→v5 migration should add analysis tracking columns to runs table."""
+def test_v4_database_raises_runtime_error(tmp_path: Path) -> None:
+    """Opening a v4 database should raise RuntimeError (no migration registered)."""
     db_path = tmp_path / "history.db"
     _create_v4_database(db_path)
 
     conn = sqlite3.connect(str(db_path))
-    run_migrations(conn, 4, 5)
-
-    columns = {row[1] for row in conn.execute("PRAGMA table_info(runs)").fetchall()}
-    assert "analysis_version" in columns
-    assert "analysis_started_at" in columns
-    assert "analysis_completed_at" in columns
-    conn.close()
-
-
-def test_v4_to_v5_migration_creates_samples_v2(tmp_path: Path) -> None:
-    """v4→v5 migration should create the samples_v2 table."""
-    db_path = tmp_path / "history.db"
-    _create_v4_database(db_path)
-
-    conn = sqlite3.connect(str(db_path))
-    run_migrations(conn, 4, 5)
-
-    tables = {
-        row[0]
-        for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
-    }
-    assert "samples_v2" in tables
-    conn.close()
-
-
-def test_v4_to_v5_migration_preserves_existing_runs(tmp_path: Path) -> None:
-    """v4→v5 migration should not lose existing run data."""
-    db_path = tmp_path / "history.db"
-    _create_v4_database(db_path)
-    _insert_v4_run(db_path, "test-run-1")
-    _insert_v4_run(db_path, "test-run-2")
-
-    conn = sqlite3.connect(str(db_path))
-    run_migrations(conn, 4, 5)
-
-    rows = conn.execute("SELECT run_id FROM runs ORDER BY run_id").fetchall()
-    assert [r[0] for r in rows] == ["test-run-1", "test-run-2"]
-    conn.close()
-
-
-def test_v4_to_v5_migration_updates_version(tmp_path: Path) -> None:
-    """v4→v5 migration should update schema_meta version to '5'."""
-    db_path = tmp_path / "history.db"
-    _create_v4_database(db_path)
-
-    conn = sqlite3.connect(str(db_path))
-    run_migrations(conn, 4, 5)
-
-    row = conn.execute("SELECT value FROM schema_meta WHERE key = 'version'").fetchone()
-    assert row is not None
-    assert row[0] == "5"
+    with pytest.raises(RuntimeError, match="No migration registered"):
+        run_migrations(conn, 4, 5)
     conn.close()
 
 
@@ -164,36 +115,22 @@ def test_missing_migration_step_raises(tmp_path: Path) -> None:
 # -- HistoryDB integration tests ---------------------------------------------
 
 
-def test_historydb_opens_v4_database_after_migration(tmp_path: Path) -> None:
-    """HistoryDB should successfully open an older database by migrating it."""
-    db_path = tmp_path / "history.db"
-    _create_v4_database(db_path)
-    _insert_v4_run(db_path, "preserved-run")
-
-    db = HistoryDB(db_path)
-
-    # Verify migration happened: version is now current
-    with db._cursor(commit=False) as cur:
-        cur.execute("SELECT value FROM schema_meta WHERE key = 'version'")
-        row = cur.fetchone()
-    assert row is not None
-    assert int(row[0]) == SCHEMA_VERSION
-
-    # Verify existing data survived
-    run = db.get_run("preserved-run")
-    assert run is not None
-    assert run["run_id"] == "preserved-run"
-
-    db.close()
-
-
-def test_historydb_creates_backup_before_migration(tmp_path: Path) -> None:
-    """HistoryDB should back up the database file before migrating."""
+def test_historydb_rejects_v4_database(tmp_path: Path) -> None:
+    """HistoryDB should refuse to open a v4 database (no migration registered)."""
     db_path = tmp_path / "history.db"
     _create_v4_database(db_path)
 
-    db = HistoryDB(db_path)
-    db.close()
+    with pytest.raises(RuntimeError, match="No migration registered"):
+        HistoryDB(db_path)
+
+
+def test_historydb_creates_backup_before_rejecting_v4(tmp_path: Path) -> None:
+    """HistoryDB should back up the database file before attempting migration."""
+    db_path = tmp_path / "history.db"
+    _create_v4_database(db_path)
+
+    with pytest.raises(RuntimeError):
+        HistoryDB(db_path)
 
     backup_path = db_path.with_suffix(".bak-v4")
     assert backup_path.exists()

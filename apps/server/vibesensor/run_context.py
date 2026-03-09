@@ -6,6 +6,7 @@ import json
 from collections.abc import Mapping
 
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, tire_circumference_m_from_spec
+from .domain_models import as_float_or_none as _as_float
 from .json_types import JsonObject, JsonValue, is_json_object
 from .report_i18n import tr as _tr
 
@@ -237,14 +238,3 @@ def _resolve_i18n(lang: str, value: object) -> str:
         else:
             params[param_key] = param_value
     return str(_tr(lang, key, **params))
-
-
-def _as_float(value: object) -> float | None:
-    if value in (None, "") or isinstance(value, bool):
-        return None
-    if not isinstance(value, (int, float, str)):
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None

@@ -35,14 +35,19 @@ def create_health_routes(
         sample_rate_mismatch_count = len(loop_state.sample_rate_mismatch_logged)
         frame_size_mismatch_count = len(loop_state.frame_size_mismatch_logged)
         degradation_reasons: list[str] = []
+        has_error = False
         if health_state.startup_state != "ready":
             degradation_reasons.append(f"startup_state:{health_state.startup_state}")
+            has_error = True
         if health_state.startup_error:
             degradation_reasons.append("startup_error")
+            has_error = True
         if health_state.background_task_failures:
             degradation_reasons.append("background_task_failures")
+            has_error = True
         if loop_state.processing_state != "ok":
             degradation_reasons.append(f"processing_state:{loop_state.processing_state}")
+            has_error = True
         if failures > 0:
             degradation_reasons.append("processing_failures")
         if loop_state.last_failure_category:
@@ -61,14 +66,19 @@ def create_health_routes(
                 degradation_reasons.append(key)
         if persistence["write_error"]:
             degradation_reasons.append("persistence_write_error")
+            has_error = True
         if persistence["samples_dropped"] > 0:
             degradation_reasons.append("persistence_samples_dropped")
         if persistence["analyzing_run_count"] > 0:
             degradation_reasons.append("analyzing_runs_present")
         if persistence["last_completed_run_error"]:
             degradation_reasons.append("last_analysis_failed")
+        if degradation_reasons:
+            status = "degraded" if has_error else "warn"
+        else:
+            status = "ok"
         return HealthResponse(
-            status="ok" if not degradation_reasons else "degraded",
+            status=status,
             startup_state=health_state.startup_state,
             startup_phase=health_state.startup_phase,
             startup_error=health_state.startup_error,

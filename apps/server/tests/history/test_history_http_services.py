@@ -109,6 +109,30 @@ def test_build_run_details_json_strips_internal_analysis_fields() -> None:
     assert payload["analysis"] == {"visible": 1}
 
 
+def test_build_run_details_json_sanitizes_non_finite_floats() -> None:
+    """Non-finite floats in analysis are replaced with null, producing valid JSON."""
+    result = build_run_details_json(
+        {
+            "run_id": "run-nan",
+            "analysis": {
+                "score": float("nan"),
+                "maximum": float("inf"),
+                "minimum": float("-inf"),
+                "valid": 42.5,
+            },
+        },
+        sample_count=3,
+        run_id="run-nan",
+    )
+
+    # Must be parseable by json.loads (no NaN/Infinity)
+    payload = json.loads(result)
+    assert payload["analysis"]["score"] is None
+    assert payload["analysis"]["maximum"] is None
+    assert payload["analysis"]["minimum"] is None
+    assert payload["analysis"]["valid"] == 42.5
+
+
 def test_export_archive_builder_creates_csv_and_json_entries() -> None:
     builder = HistoryExportArchiveBuilder(
         _HistoryDbStub(

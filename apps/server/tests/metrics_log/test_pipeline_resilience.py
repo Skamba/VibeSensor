@@ -62,6 +62,23 @@ class _FailingAppendDB:
         raise sqlite3.OperationalError("disk full")
 
 
+class _FailNAppendThenSucceedDB:
+    """History DB that fails append_samples N times then succeeds."""
+
+    def __init__(self, fail_count: int) -> None:
+        self._remaining = fail_count
+        self.appended: list[tuple[str, int]] = []
+
+    def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
+        pass
+
+    def append_samples(self, run_id: str, samples: list[dict]) -> None:
+        if self._remaining > 0:
+            self._remaining -= 1
+            raise sqlite3.OperationalError("db locked")
+        self.appended.append((run_id, len(samples)))
+
+
 class _SucceedingDB:
     """History DB that always succeeds."""
 
@@ -124,7 +141,7 @@ class TestDropCounting:
         assert coord.dropped_sample_count == 3
 
     def test_drops_counted_on_append_failure(self) -> None:
-        """When append_samples throws, dropped count is incremented."""
+        """When append_samples throws on all retries, dropped count is incremented."""
         coord = _make_coordinator(history_db=_FailingAppendDB())
 
         coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
@@ -138,6 +155,24 @@ class TestDropCounting:
         )
         assert result.rows_written == 0
         assert coord.dropped_sample_count == 2
+
+    def test_append_retries_on_transient_failure(self) -> None:
+        """Append retries on transient SQLite errors and succeeds."""
+        db = _FailNAppendThenSucceedDB(fail_count=1)
+        coord = _make_coordinator(history_db=db)
+
+        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+        assert coord.history_run_created
+
+        result = coord.append_rows(
+            run_id="run-1",
+            start_time_utc="2025-01-01T00:00:00Z",
+            rows=[{"s": 1}, {"s": 2}],
+            session_generation=1,
+        )
+        assert result.rows_written == 2
+        assert coord.dropped_sample_count == 0
+        assert db.appended == [("run-1", 2)]
 
     def test_drops_accumulate_across_calls(self) -> None:
         """Drop count accumulates across multiple append calls."""
