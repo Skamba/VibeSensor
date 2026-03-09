@@ -43,25 +43,6 @@ The mathematical primitives (e.g. `compute_vibration_strength_db`,
 and are used by both layers — this is intentional code reuse, not
 duplication.
 
-### Live Diagnostics Preview
-
-The `live_diagnostics/` package calls `build_findings_for_samples()`
-and `classify_sample_phase()` *during* recording to generate
-real-time diagnostic feedback for the UI.  This is intentional code
-reuse — the same analysis functions serve as a library for both
-live preview and definitive post-stop analysis.
-
-- **Live preview**: called every few seconds on a sliding window of
-   recent samples.  Results are ephemeral (not persisted). The
-   WebSocket broadcaster only refreshes live finding inputs on heavy
-   UI ticks; lighter ticks reuse the previous preview so dashboard
-   updates do not re-run finding generation unnecessarily. The same
-   broadcaster now also reuses a shared per-tick payload shell so only
-   the `selected_client_id` field varies across recipient-specific
-   sends within the same tick.
-- **Definitive analysis**: called once after stop via
-  `summarize_run_data()`.  Results are persisted and used for reports.
-
 Only the definitive post-stop run produces the persisted analysis.
 The live preview is a convenience feature that reuses analysis
 functions but does not replace or duplicate the post-stop pipeline.

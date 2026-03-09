@@ -36,7 +36,6 @@ class FakeState:
     gps_monitor: object = field(default_factory=MagicMock)
     analysis_settings: object = field(default_factory=MagicMock)
     metrics_logger: object = field(default_factory=MagicMock)
-    live_diagnostics: object = field(default_factory=MagicMock)
     settings_store: object = field(default_factory=MagicMock)
     history_db: object = field(default_factory=MagicMock)
     update_manager: object = field(default_factory=MagicMock)
@@ -62,7 +61,6 @@ class FakeState:
         )
         self.diagnostics = SimpleNamespace(
             metrics_logger=self.metrics_logger,
-            live_diagnostics=self.live_diagnostics,
         )
         self.persistence = SimpleNamespace(
             history_db=self.history_db,

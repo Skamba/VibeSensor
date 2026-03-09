@@ -168,7 +168,6 @@ class FakeState:
                 "active_car_snapshot": lambda self: None,
             },
         )()
-        self.live_diagnostics = type("D", (), {"reset": lambda self: None})()
         self.metrics_logger = type(
             "M",
             (),
@@ -265,7 +264,6 @@ class FakeState:
         )
         self.diagnostics = SimpleNamespace(
             metrics_logger=self.metrics_logger,
-            live_diagnostics=self.live_diagnostics,
         )
         self.persistence = SimpleNamespace(
             history_db=self.history_db,
