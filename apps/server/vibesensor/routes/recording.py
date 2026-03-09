@@ -24,15 +24,15 @@ def create_recording_routes(
 
     @router.get("/api/logging/status", response_model=LoggingStatusResponse)
     async def get_logging_status() -> LoggingStatusResponse:
-        return metrics_logger.status()
+        return LoggingStatusResponse(**metrics_logger.status())
 
     @router.post("/api/logging/start", response_model=LoggingStatusResponse)
     async def start_logging() -> LoggingStatusResponse:
         live_diagnostics.reset()
-        return metrics_logger.start_logging()
+        return LoggingStatusResponse(**metrics_logger.start_logging())
 
     @router.post("/api/logging/stop", response_model=LoggingStatusResponse)
     async def stop_logging() -> LoggingStatusResponse:
-        return metrics_logger.stop_logging()
+        return LoggingStatusResponse(**metrics_logger.stop_logging())
 
     return router

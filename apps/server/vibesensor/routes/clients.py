@@ -36,11 +36,11 @@ def create_client_routes(
 
     @router.get("/api/clients", response_model=ClientsResponse)
     async def get_clients() -> ClientsResponse:
-        return {"clients": registry.snapshot_for_api()}
+        return ClientsResponse(clients=registry.snapshot_for_api())
 
     @router.get("/api/client-locations", response_model=ClientLocationsResponse)
     async def get_client_locations() -> ClientLocationsResponse:
-        return {"locations": all_locations()}
+        return ClientLocationsResponse(locations=all_locations())
 
     @router.post("/api/clients/{client_id}/identify", response_model=IdentifyResponse)
     async def identify_client(client_id: str, req: IdentifyRequest) -> IdentifyResponse:
@@ -52,7 +52,7 @@ def create_client_routes(
         ok, cmd_seq = control_plane.send_identify(normalized, req.duration_ms)
         if not ok:
             raise HTTPException(status_code=503, detail="Sensor is not currently reachable")
-        return {"status": "sent", "cmd_seq": cmd_seq}
+        return IdentifyResponse(status="sent", cmd_seq=cmd_seq)
 
     @router.post(
         "/api/clients/{client_id}/location",
@@ -96,12 +96,12 @@ def create_client_routes(
         registry.set_location(normalized_client_id, code)
         mac = client_id_mac(updated.client_id)
         await asyncio.to_thread(settings_store.set_sensor, mac, {"location": code})
-        return {
-            "id": updated.client_id,
-            "mac_address": mac,
-            "location_code": code,
-            "name": updated.name,
-        }
+        return SetClientLocationResponse(
+            id=updated.client_id,
+            mac_address=mac,
+            location_code=code,
+            name=updated.name,
+        )
 
     @router.delete("/api/clients/{client_id}", response_model=RemoveClientResponse)
     async def remove_client(client_id: str) -> RemoveClientResponse:
@@ -109,6 +109,6 @@ def create_client_routes(
         removed = registry.remove_client(normalized_client_id)
         if not removed:
             raise HTTPException(status_code=404, detail="Sensor not found")
-        return {"id": normalized_client_id, "status": "removed"}
+        return RemoveClientResponse(id=normalized_client_id, status="removed")
 
     return router

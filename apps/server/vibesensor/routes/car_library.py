@@ -20,7 +20,7 @@ def create_car_library_routes() -> APIRouter:
     @router.get("/api/car-library/brands", response_model=CarLibraryBrandsResponse)
     async def get_car_library_brands() -> CarLibraryBrandsResponse:
         """Return all available car manufacturer brands from the library."""
-        return {"brands": get_brands()}
+        return CarLibraryBrandsResponse(brands=get_brands())
 
     @router.get("/api/car-library/types", response_model=CarLibraryTypesResponse)
     async def get_car_library_types(
@@ -29,7 +29,7 @@ def create_car_library_routes() -> APIRouter:
         """Return body types available for *brand*; 404 if the brand is unknown."""
         if brand not in get_brands():
             raise HTTPException(status_code=404, detail=f"Unknown brand: {brand!r}")
-        return {"types": get_types_for_brand(brand)}
+        return CarLibraryTypesResponse(types=get_types_for_brand(brand))
 
     @router.get("/api/car-library/models", response_model=CarLibraryModelsResponse)
     async def get_car_library_models(
@@ -44,6 +44,6 @@ def create_car_library_routes() -> APIRouter:
                 status_code=404,
                 detail=f"Unknown type {car_type!r} for brand {brand!r}",
             )
-        return {"models": get_models_for_brand_type(brand, car_type)}
+        return CarLibraryModelsResponse(models=get_models_for_brand_type(brand, car_type))
 
     return router

@@ -63,22 +63,22 @@ def create_health_routes(
             degradation_reasons.append("persistence_write_error")
         if persistence["analyzing_run_count"] > 0:
             degradation_reasons.append("analyzing_runs_present")
-        return {
-            "status": "ok" if not degradation_reasons else "degraded",
-            "startup_state": health_state.startup_state,
-            "startup_phase": health_state.startup_phase,
-            "startup_error": health_state.startup_error,
-            "background_task_failures": dict(health_state.background_task_failures),
-            "processing_state": loop_state.processing_state,
-            "processing_failures": failures,
-            "processing_failure_categories": failure_categories,
-            "processing_last_failure": loop_state.last_failure_message,
-            "sample_rate_mismatch_count": sample_rate_mismatch_count,
-            "frame_size_mismatch_count": frame_size_mismatch_count,
-            "degradation_reasons": degradation_reasons,
-            "data_loss": data_loss,
-            "persistence": persistence,
-            "intake_stats": processor.intake_stats(),
-        }
+        return HealthResponse(
+            status="ok" if not degradation_reasons else "degraded",
+            startup_state=health_state.startup_state,
+            startup_phase=health_state.startup_phase,
+            startup_error=health_state.startup_error,
+            background_task_failures=dict(health_state.background_task_failures),
+            processing_state=loop_state.processing_state,
+            processing_failures=failures,
+            processing_failure_categories=failure_categories,
+            processing_last_failure=loop_state.last_failure_message,
+            sample_rate_mismatch_count=sample_rate_mismatch_count,
+            frame_size_mismatch_count=frame_size_mismatch_count,
+            degradation_reasons=degradation_reasons,
+            data_loss=data_loss,
+            persistence=persistence,
+            intake_stats=processor.intake_stats(),
+        )
 
     return router

@@ -65,9 +65,10 @@ class StrengthMetricsPayload(TypedDict, total=False):
     top_peaks: list[StrengthPeak]
 
 
-class TimingHealthPayload(TypedDict):
+class TimingHealthPayload(TypedDict, total=False):
     jitter_us_ema: float
     drift_us_total: float
+    last_t0_us: int
 
 
 class ClientApiRow(TypedDict):

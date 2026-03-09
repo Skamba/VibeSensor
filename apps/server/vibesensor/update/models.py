@@ -53,6 +53,24 @@ def _to_int_or_none(value: object) -> int | None:
     """Coerce *value* to int, returning None for null / unconvertible input."""
     if value is None:
         return None
+
+
+def _coerce_update_state(value: object) -> "UpdateState":
+    if not isinstance(value, str):
+        return UpdateState.idle
+    try:
+        return UpdateState(value)
+    except ValueError:
+        return UpdateState.idle
+
+
+def _coerce_update_phase(value: object) -> "UpdatePhase":
+    if not isinstance(value, str):
+        return UpdatePhase.idle
+    try:
+        return UpdatePhase(value)
+    except ValueError:
+        return UpdatePhase.idle
     if not _is_number_like(value):
         return None
     try:
@@ -167,8 +185,8 @@ class UpdateJobStatus:
         )
         runtime_raw = data.get("runtime")
         return cls(
-            state=UpdateState(data.get("state", "idle")),
-            phase=UpdatePhase(data.get("phase", "idle")),
+            state=_coerce_update_state(data.get("state", "idle")),
+            phase=_coerce_update_phase(data.get("phase", "idle")),
             started_at=_to_float_or_none(data.get("started_at")),
             finished_at=_to_float_or_none(data.get("finished_at")),
             last_success_at=_to_float_or_none(data.get("last_success_at")),
