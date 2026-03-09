@@ -850,12 +850,12 @@
         "jitter_us_ema": {
           "title": "Jitter Us Ema",
           "type": "number"
+        },
+        "last_t0_us": {
+          "title": "Last T0 Us",
+          "type": "integer"
         }
       },
-      "required": [
-        "jitter_us_ema",
-        "drift_us_total"
-      ],
       "title": "TimingHealthPayload",
       "type": "object"
     }
