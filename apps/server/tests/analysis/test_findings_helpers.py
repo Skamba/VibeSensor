@@ -100,14 +100,16 @@ class TestSpeedProfileFromPoints:
     def test_phase_weights_longer_than_points_ignores_extras(self) -> None:
         points = [(80.0, 0.02), (90.0, 0.09)]
         peak_speed, _band, _label = _speed_profile_from_points(
-            points, phase_weights=[1.0, 1.0, 0.1, 0.1]
+            points,
+            phase_weights=[1.0, 1.0, 0.1, 0.1],
         )
         assert peak_speed == 90.0
 
     def test_non_positive_or_invalid_phase_weights_fall_back_to_neutral(self) -> None:
         points = [(80.0, 0.04), (90.0, 0.09)]
         peak_speed, _band, _label = _speed_profile_from_points(
-            points, phase_weights=[0.0, float("nan")]
+            points,
+            phase_weights=[0.0, float("nan")],
         )
         assert peak_speed == 90.0
 

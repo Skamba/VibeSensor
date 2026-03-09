@@ -200,7 +200,7 @@ class SerialPortProvider:
                         vid=getattr(row, "vid", None),
                         pid=getattr(row, "pid", None),
                         serial_number=str(getattr(row, "serial_number", "") or "") or None,
-                    )
+                    ),
                 )
             return pyserial_ports
         except (ImportError, OSError):
@@ -342,7 +342,7 @@ class EspFlashManager:
             if any(p.port == configured for p in ports):
                 return configured
             raise ValueError(
-                f"Selected serial port {configured} not found. Check cable/permissions and retry."
+                f"Selected serial port {configured} not found. Check cable/permissions and retry.",
             )
         if not ports:
             raise ValueError("No serial ports detected. Connect your ESP board and retry.")
@@ -425,7 +425,7 @@ class EspFlashManager:
             self._append_log(
                 "No valid firmware bundle found in cache. "
                 "Run the updater while online (vibesensor-fw-refresh) "
-                "or reinstall Pi image with embedded baseline."
+                "or reinstall Pi image with embedded baseline.",
             )
             self._finalize(
                 state=EspFlashState.failed,
@@ -441,7 +441,7 @@ class EspFlashManager:
             source_label = meta.source if meta else "unknown"
             tag_label = meta.tag if meta else "unknown"
             self._append_log(
-                f"Using {source_label} firmware bundle (tag={tag_label}) from {bundle_dir}"
+                f"Using {source_label} firmware bundle (tag={tag_label}) from {bundle_dir}",
             )
 
             # Load and validate manifest
@@ -490,7 +490,10 @@ class EspFlashManager:
 
             erase_cmd = [*port_prefix, "erase_flash"]
             erase_rc = await self._run_flash_step(
-                "erasing", erase_cmd, cwd=bundle_dir, timeout_s=45
+                "erasing",
+                erase_cmd,
+                cwd=bundle_dir,
+                timeout_s=45,
             )
             if self._check_cancelled():
                 return

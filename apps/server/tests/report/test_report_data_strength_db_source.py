@@ -71,7 +71,7 @@ def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeho
             "suspected_source": "wheel/tire",
             "strongest_location": "rear-left",
             "strongest_speed_band": "40-60 km/h",
-        }
+        },
     )
     summary["top_causes"] = [
         {
@@ -79,7 +79,7 @@ def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeho
             "strongest_location": "unknown",
             "strongest_speed_band": "100-110 km/h",
             "confidence_0_to_1": 0.95,
-        }
+        },
     ]
 
     data = map_summary(summary)
@@ -95,7 +95,7 @@ def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() 
             "strongest_location": "rear-left",
             "strongest_speed_band": "40-60 km/h",
             "signatures_observed": ["1x wheel order"],
-        }
+        },
     )
     summary["top_causes"] = [
         {
@@ -105,7 +105,7 @@ def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() 
             "confidence_0_to_1": 0.95,
             "weak_spatial_separation": False,
             "signatures_observed": ["reference gap"],
-        }
+        },
     ]
 
     data = map_summary(summary)
@@ -126,8 +126,8 @@ def test_map_summary_peak_rows_render_missing_values_as_dashes() -> None:
                     "order_label": "",
                     "peak_classification": "persistent",
                     "typical_speed_band": "any",
-                }
-            ]
+                },
+            ],
         },
     )
 
@@ -156,8 +156,8 @@ def test_map_summary_peak_rows_use_source_hint_for_system_label() -> None:
                     "peak_classification": "patterned",
                     "source": "wheel/tire",
                     "typical_speed_band": "60-80 km/h",
-                }
-            ]
+                },
+            ],
         },
     )
 

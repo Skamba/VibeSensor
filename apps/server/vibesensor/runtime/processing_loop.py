@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -20,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 MAX_CONSECUTIVE_FAILURES = 25
 """After this many consecutive processing failures, enter fatal backoff."""
 
-FAILURE_BACKOFF_S = 30
+FAILURE_BACKOFF_S = 5
 """Seconds to sleep on fatal failure threshold before resetting."""
 
 STALE_DATA_AGE_S = 2.0
@@ -53,17 +54,20 @@ class ProcessingLoopState:
     last_failure_message: str | None = None
     sample_rate_mismatch_logged: set[str] = field(default_factory=set)
     frame_size_mismatch_logged: set[str] = field(default_factory=set)
+    last_tick_duration_s: float = 0.0
+    max_tick_duration_s: float = 0.0
+    tick_count: int = 0
 
 
 class ProcessingLoop:
     """Async processing tick loop: evict stale clients, compute metrics, handle failures."""
 
     __slots__ = (
-        "state",
-        "_fft_update_hz",
-        "_sample_rate_hz",
         "_fft_n",
+        "_fft_update_hz",
         "_ingress",
+        "_sample_rate_hz",
+        "state",
     )
 
     def __init__(
@@ -108,7 +112,8 @@ class ProcessingLoop:
             self._ingress.registry.evict_stale()
             active_ids = self._ingress.registry.active_client_ids()
             fresh_ids = self._ingress.processor.clients_with_recent_data(
-                active_ids, max_age_s=STALE_DATA_AGE_S
+                active_ids,
+                max_age_s=STALE_DATA_AGE_S,
             )
         except Exception as exc:
             raise ProcessingLoopError("ingress_state", exc) from exc
@@ -180,7 +185,13 @@ class ProcessingLoop:
                 if _sync_clock_tick >= _SYNC_CLOCK_EVERY_N_TICKS:
                     _sync_clock_tick = 0
                     sync_clock = True
+                tick_start = time.monotonic()
                 await self._run_tick(sync_clock=sync_clock)
+                tick_dur = time.monotonic() - tick_start
+                self.state.last_tick_duration_s = tick_dur
+                if tick_dur > self.state.max_tick_duration_s:
+                    self.state.max_tick_duration_s = tick_dur
+                self.state.tick_count += 1
                 consecutive_failures = 0
                 self.state.processing_state = "ok"
             except ProcessingLoopError as exc:

@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Clipping / ADC saturation edge-case tests (≥50 direct-injection cases).
 
 Tests the analysis pipeline's robustness when peak amplitudes are clipped
@@ -151,7 +150,9 @@ _DIFFUSE_CLIP_LEVELS = [0.08, 0.05, 0.03, 0.01]
 
 
 @pytest.mark.parametrize(
-    "clip_amp", _DIFFUSE_CLIP_LEVELS, ids=["clip08", "clip05", "clip03", "clip01"]
+    "clip_amp",
+    _DIFFUSE_CLIP_LEVELS,
+    ids=["clip08", "clip05", "clip03", "clip01"],
 )
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
 def test_diffuse_clipping_no_localized_fault(clip_amp: float, speed: float) -> None:
@@ -249,7 +250,7 @@ def test_clipping_with_speed_variants(speed_name: str, speed_fn: Any, clip_amp: 
                         top_peaks=peaks,
                         vibration_strength_db=26.0,
                         strength_floor_amp_g=0.004,
-                    )
+                    ),
                 )
             else:
                 samples.append(
@@ -260,7 +261,7 @@ def test_clipping_with_speed_variants(speed_name: str, speed_fn: Any, clip_amp: 
                         top_peaks=[{"hz": 142.5, "amp": 0.004}],
                         vibration_strength_db=8.0,
                         strength_floor_amp_g=0.004,
-                    )
+                    ),
                 )
 
     clipped = make_clipped_samples(
@@ -280,7 +281,9 @@ def test_clipping_with_speed_variants(speed_name: str, speed_fn: Any, clip_amp: 
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("clip_amp", [0.04, 0.02], ids=["clip04", "clip02"])
 def test_profile_clipped_fault_no_crash(
-    profile: dict[str, Any], corner: str, clip_amp: float
+    profile: dict[str, Any],
+    corner: str,
+    clip_amp: float,
 ) -> None:
     """Profile-aware clipped fault should not crash and should produce valid output."""
     sensor = CORNER_SENSORS[corner]
@@ -306,5 +309,6 @@ def test_profile_clipped_fault_no_crash(
     top = extract_top(summary)
     if top and float(top.get("confidence", 0)) > 0.25:
         assert_confidence_label_valid(
-            summary, msg=f"profile={profile['name']} {corner} clip={clip_amp}"
+            summary,
+            msg=f"profile={profile['name']} {corner} clip={clip_amp}",
         )

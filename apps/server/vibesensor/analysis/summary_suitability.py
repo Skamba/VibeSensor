@@ -186,7 +186,7 @@ def build_run_suitability_checks(
                     total_overflow=total_overflow,
                 )
             ),
-        }
+        },
     )
     return run_suitability
 

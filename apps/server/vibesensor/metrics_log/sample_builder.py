@@ -261,9 +261,10 @@ def build_sample_records(
     active_client_ids = sorted(
         set(
             processor.clients_with_recent_data(
-                registry.active_client_ids(), max_age_s=_LIVE_SAMPLE_WINDOW_S
-            )
-        )
+                registry.active_client_ids(),
+                max_age_s=_LIVE_SAMPLE_WINDOW_S,
+            ),
+        ),
     )
     for client_id in active_client_ids:
         record = registry.get(client_id)

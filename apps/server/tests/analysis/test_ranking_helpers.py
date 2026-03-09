@@ -25,7 +25,7 @@ def test_group_findings_by_source_preserves_ranked_signatures() -> None:
                 "confidence_0_to_1": 0.50,
                 "frequency_hz_or_order": "2x engine order",
             },
-        ]
+        ],
     )
 
     assert [rep["suspected_source"] for _score, rep in grouped] == ["wheel/tire", "engine"]

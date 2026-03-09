@@ -20,14 +20,14 @@ imports continue to work without changes.
 """
 
 from .logger import (
-    MetricsLogger,  # noqa: F401
-    MetricsLoggerConfig,  # noqa: F401
-    MetricsShutdownReport,  # noqa: F401
+    MetricsLogger,
+    MetricsLoggerConfig,
+    MetricsShutdownReport,
 )
 from .post_analysis import (
-    PostAnalysisWorker,  # noqa: F401
+    PostAnalysisWorker,
 )
-from .sample_builder import (  # noqa: F401
+from .sample_builder import (
     build_run_metadata,
     build_sample_records,
     dominant_hz_from_strength,

@@ -36,7 +36,9 @@ def test_compute_strength_returns_absolute_amplitude_fields() -> None:
     ids=["near-zero-db"],
 )
 def test_near_zero_db_with_meaningful_peak_is_still_labeled_in_db(
-    db_upper: float, peak_lower: float, floor_lower: float
+    db_upper: float,
+    peak_lower: float,
+    floor_lower: float,
 ) -> None:
     freq_hz = [float(i) for i in range(21)]
     combined = [0.03] * 6 + [0.18] * 15

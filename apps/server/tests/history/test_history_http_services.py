@@ -65,8 +65,8 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
                 "analysis_version": 3,
                 "sample_count": 12,
                 "analysis": {"lang": "nl", "findings": [], "title": "X"},
-            }
-        )
+            },
+        ),
     )
 
     request = await service.load_report_request("run-1", "en")
@@ -102,7 +102,7 @@ def test_build_run_details_json_strips_internal_analysis_fields() -> None:
             },
             sample_count=5,
             run_id="run-1",
-        )
+        ),
     )
 
     assert payload["sample_count"] == 5
@@ -137,7 +137,7 @@ def test_export_archive_builder_creates_csv_and_json_entries() -> None:
     builder = HistoryExportArchiveBuilder(
         _HistoryDbStub(
             samples=[{"run_id": "run-1", "t_s": 1.0, "custom": "x"}],
-        )
+        ),
     )
 
     spool = builder.build_zip_file(

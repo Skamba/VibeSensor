@@ -112,7 +112,7 @@ def match_samples_for_hypothesis(
                     if has_phases and per_sample_phases is not None
                     else None
                 ),
-            }
+            },
         )
 
     return OrderMatchAccumulator(

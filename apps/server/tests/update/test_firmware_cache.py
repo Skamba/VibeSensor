@@ -53,7 +53,7 @@ def _make_zip(entries: dict[str, str | bytes]) -> io.BytesIO:
                     "draft": False,
                     "prerelease": False,
                     "assets": [
-                        {"name": "vibesensor-fw-v2026.2.27.zip", "url": "https://api.github.com/b"}
+                        {"name": "vibesensor-fw-v2026.2.27.zip", "url": "https://api.github.com/b"},
                     ],
                 },
             ],
@@ -86,7 +86,7 @@ def _make_zip(entries: dict[str, str | bytes]) -> io.BytesIO:
                         {
                             "name": "vibesensor-fw-v2026.2.28-rc1.zip",
                             "url": "https://api.github.com/c",
-                        }
+                        },
                     ],
                 },
             ],
@@ -114,9 +114,12 @@ def test_find_release_raises_when_no_firmware_assets() -> None:
             "draft": False,
             "prerelease": False,
             "assets": [
-                {"name": "vibesensor-2026.2.27-py3-none-any.whl", "url": "https://api.github.com/a"}
+                {
+                    "name": "vibesensor-2026.2.27-py3-none-any.whl",
+                    "url": "https://api.github.com/a",
+                },
             ],
-        }
+        },
     ]
 
     fetcher._api_get = lambda _url: releases  # type: ignore[method-assign]

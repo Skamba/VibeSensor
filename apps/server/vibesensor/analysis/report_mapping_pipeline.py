@@ -90,7 +90,7 @@ def resolve_primary_report_candidate(
     strength_db = top_strength_values(summary, effective_causes=context.top_causes)
     strength_text_value = strength_text(strength_db, lang=lang)
     weak_spatial = bool(
-        primary_candidate.get("weak_spatial_separation") if primary_candidate else False
+        primary_candidate.get("weak_spatial_separation") if primary_candidate else False,
     )
     sensor_count = resolve_sensor_count(summary, context.sensor_locations_active)
     has_ref_gaps = has_relevant_reference_gap(context.findings, primary_source)
@@ -161,10 +161,8 @@ def _build_report_template_data(
     primary = resolve_primary_report_candidate(summary, context=context, tr=tr, lang=lang)
     observed = build_observed_signature(primary)
     system_cards = build_system_cards(
-        context.top_causes,
-        context.findings_non_ref,
-        context.findings,
-        primary.tier,
+        context,
+        primary,
         lang,
         tr,
     )
@@ -177,17 +175,8 @@ def _build_report_template_data(
     )
     data_trust = build_data_trust_from_summary(summary, lang=lang, tr=tr)
     pattern_evidence = build_pattern_evidence(
-        context.top_causes,
-        primary.primary_candidate,
-        context.origin,
-        primary.primary_location,
-        primary.primary_speed,
-        primary.strength_text,
-        primary.strength_db,
-        primary.certainty_label_text,
-        primary.certainty_pct,
-        primary.certainty_reason,
-        primary.weak_spatial,
+        context,
+        primary,
         lang,
         tr,
     )

@@ -108,7 +108,10 @@ class TestExpectedIpMatch:
         ],
     )
     def test_compares_ip_part_only(
-        self, expected_cidr: str, actual_cidr: str | None, is_match: bool
+        self,
+        expected_cidr: str,
+        actual_cidr: str | None,
+        is_match: bool,
     ) -> None:
         assert expected_ip_match(expected_cidr, actual_cidr) is is_match
 

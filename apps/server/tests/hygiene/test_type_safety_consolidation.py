@@ -114,7 +114,7 @@ class TestClassificationResult:
 class TestMypyEnforcement:
     """pyproject.toml [tool.mypy] files list includes expanded modules."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def mypy_files(self) -> list[str]:
         import tomllib
 

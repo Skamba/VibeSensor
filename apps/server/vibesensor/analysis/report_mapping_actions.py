@@ -38,7 +38,7 @@ def build_next_steps_from_summary(
                 confirm=_resolve_optional_step_value(step.get("confirm"), lang=lang, tr=tr),
                 falsify=_resolve_optional_step_value(step.get("falsify"), lang=lang, tr=tr),
                 eta=str(step.get("eta") or "") or None,
-            )
+            ),
         )
     return next_steps
 
@@ -77,7 +77,7 @@ def build_data_trust_from_summary(
                 check=check_text,
                 state=str(item.get("state") or "warn"),
                 detail=detail,
-            )
+            ),
         )
     for warning in summary.get("warnings", []):
         if not isinstance(warning, dict):
@@ -87,7 +87,7 @@ def build_data_trust_from_summary(
                 check=_resolve_detail_text(warning.get("title"), lang=lang, tr=tr) or "",
                 state=str(warning.get("severity") or "warn"),
                 detail=_resolve_detail_text(warning.get("detail"), lang=lang, tr=tr),
-            )
+            ),
         )
     return data_trust
 

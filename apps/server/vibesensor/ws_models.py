@@ -20,16 +20,16 @@ SCHEMA_VERSION: str = "1"
 __all__ = [
     "SCHEMA_VERSION",
     "AlignmentInfo",
+    "ClientInfoModel",
     "FrequencyWarning",
     "LiveWsPayload",
     "OrderBand",
     "RotationalSpeedValue",
     "RotationalSpeeds",
-    "ClientInfoModel",
-    "StrengthMetricsModel",
     "SpectraPayload",
     "SpectrumPeak",
     "SpectrumSeries",
+    "StrengthMetricsModel",
 ]
 
 
@@ -96,7 +96,7 @@ class ClientInfoModel(BaseModel):
     reset_count: int = 0
     last_reset_time: float | None = None
     timing_health: TimingHealthPayload = Field(
-        default_factory=lambda: {"jitter_us_ema": 0.0, "drift_us_total": 0.0}
+        default_factory=lambda: {"jitter_us_ema": 0.0, "drift_us_total": 0.0},
     )
 
 

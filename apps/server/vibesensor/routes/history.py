@@ -60,7 +60,8 @@ def create_history_routes(
 
     @router.get("/api/history/{run_id}/report.pdf", response_class=Response)
     async def download_history_report_pdf(
-        run_id: str, lang: str | None = Query(default=None)
+        run_id: str,
+        lang: str | None = Query(default=None),
     ) -> Response:
         pdf = await report_service.build_pdf(run_id, lang)
         pdf_headers = {

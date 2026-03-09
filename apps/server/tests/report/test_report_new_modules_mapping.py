@@ -40,7 +40,7 @@ def test_map_summary_basic(tmp_path: Path) -> None:
         speed = 50 + idx
         wheel_hz = (speed * (1000.0 / 3600.0)) / 2.2
         records.append(
-            _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09)
+            _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
@@ -122,7 +122,10 @@ def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> Non
     ids=["acceleration_en", "deceleration_nl"],
 )
 def test_most_likely_origin_summary_phase_onset(
-    phase: str, location: str, speed_band: str, confidence: float
+    phase: str,
+    location: str,
+    speed_band: str,
+    confidence: float,
 ) -> None:
     findings = [
         {
@@ -133,7 +136,7 @@ def test_most_likely_origin_summary_phase_onset(
             "strongest_speed_band": speed_band,
             "dominant_phase": phase,
             "confidence_0_to_1": confidence,
-        }
+        },
     ]
 
     origin = summarize_origin(findings)
@@ -159,7 +162,7 @@ def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
             "strongest_speed_band": "80-100 km/h",
             "dominant_phase": "cruise",
             "confidence_0_to_1": 0.80,
-        }
+        },
     ]
 
     origin = summarize_origin(findings)
@@ -175,7 +178,7 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
             "weak_spatial_separation": False,
             "strongest_speed_band": "80-100 km/h",
             "confidence_0_to_1": 0.80,
-        }
+        },
     ]
 
     origin = summarize_origin(findings)
@@ -194,7 +197,7 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
                 "weak_spatial_separation": True,
                 "signatures_observed": ["1x wheel order"],
                 "confidence_tone": "warn",
-            }
+            },
         ],
         most_likely_origin={
             "location": "Rear Left / Front Right",
@@ -222,8 +225,8 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
                     "persistence_score": 0.0867,
                     "peak_classification": "patterned",
                     "typical_speed_band": "60-80 km/h",
-                }
-            ]
+                },
+            ],
         },
     )
     data = map_summary(summary)
@@ -251,8 +254,8 @@ def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
                     "persistence_score": 0.001,
                     "peak_classification": "baseline_noise",
                     "typical_speed_band": "any",
-                }
-            ]
+                },
+            ],
         },
     )
     data = map_summary(summary)
@@ -268,7 +271,7 @@ def test_map_summary_data_trust_keeps_warning_detail() -> None:
                 "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "warn",
                 "explanation": "3 dropped frames, 2 queue overflows detected.",
-            }
+            },
         ],
     )
     data = map_summary(summary)
@@ -286,7 +289,7 @@ def test_map_summary_data_trust_literal_check_labels() -> None:
                 "check": "Frame integrity",
                 "state": "warn",
                 "explanation": "3 dropped frames, 2 queue overflows detected.",
-            }
+            },
         ],
     )
     data = map_summary(summary)
@@ -303,7 +306,7 @@ def test_map_summary_data_trust_includes_run_context_warnings() -> None:
                 "severity": "warn",
                 "title": {"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"},
                 "detail": {"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"},
-            }
+            },
         ],
     )
     data = map_summary(summary)
@@ -320,7 +323,7 @@ def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data()
                 "check": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "state": "pass",
                 "explanation": "Wide enough speed sweep for order tracking.",
-            }
+            },
         ],
     )
 
@@ -344,7 +347,7 @@ def test_map_summary_certainty_reason_ignores_unrelated_reference_gap() -> None:
                 "strongest_location": "Front Left",
                 "strongest_speed_band": "60-80 km/h",
                 "confidence": 0.82,
-            }
+            },
         ],
         findings=[{"finding_id": "REF_ENGINE"}],
     )
@@ -363,7 +366,7 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
                 "strongest_location": "Engine Bay",
                 "strongest_speed_band": "60-80 km/h",
                 "confidence": 0.82,
-            }
+            },
         ],
         findings=[{"finding_id": "REF_ENGINE"}],
     )

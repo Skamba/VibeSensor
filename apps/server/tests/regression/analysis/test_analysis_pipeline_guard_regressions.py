@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Analysis pipeline guard regressions.

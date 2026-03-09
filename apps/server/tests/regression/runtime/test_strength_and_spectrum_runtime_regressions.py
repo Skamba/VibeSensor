@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Strength bucketing and combined-spectrum runtime regressions:
@@ -25,7 +25,8 @@ from vibesensor.processing.fft import compute_fft_spectrum
 
 class TestBucketForStrengthNegativeDB:
     """Regression: bucket_for_strength must return 'l0' for negative dB,
-    not None."""
+    not None.
+    """
 
     @pytest.mark.parametrize(
         ("db_val", "expected"),
@@ -44,11 +45,13 @@ class TestBucketForStrengthNegativeDB:
 class TestCombinedSpectrumNotZeroed:
     """Regression: axis_amp_slices must use amp_slice (original), not
     amp_for_peaks (which has DC bin zeroed). Otherwise the combined
-    spectrum inherits the artificial zero."""
+    spectrum inherits the artificial zero.
+    """
 
     def test_amp_slice_used_not_amp_for_peaks(self) -> None:
         """Verify source code appends amp_slice (not amp_for_peaks)
-        to axis_amp_slices."""
+        to axis_amp_slices.
+        """
         src = inspect.getsource(compute_fft_spectrum)
         # Find the line that appends to axis_amp_slices
         match = re.search(r"axis_amp_slices\.append\((\w+)\)", src)
@@ -63,7 +66,8 @@ class TestCombinedSpectrumNotZeroed:
 class TestNoiseFloorNoDoubleRemoval:
     """Regression: _noise_floor must not skip amps[1:] before delegating
     to noise_floor_amp_p20_g, since the caller already provides the
-    analysis-band slice (DC already removed)."""
+    analysis-band slice (DC already removed).
+    """
 
     def test_all_bins_included(self) -> None:
         amps = np.array([0.010, 0.012, 0.009, 0.011, 0.013], dtype=np.float32)
@@ -83,7 +87,8 @@ class TestNoiseFloorNoDoubleRemoval:
 
 class TestOrderToleranceScalesWithCompliance:
     """Regression: order tolerance must scale with path_compliance so
-    wheel hypotheses (compliance=1.5) get a wider matching window."""
+    wheel hypotheses (compliance=1.5) get a wider matching window.
+    """
 
     def test_compliance_1_baseline(self) -> None:
         predicted_hz = 20.0
@@ -109,7 +114,8 @@ class TestOrderToleranceScalesWithCompliance:
 
 class TestDeadDbValueRemoved:
     """Regression: _top_strength_values should not contain unused db_value
-    variable."""
+    variable.
+    """
 
     def test_no_db_value_in_source(self) -> None:
         source = inspect.getsource(top_strength_values)

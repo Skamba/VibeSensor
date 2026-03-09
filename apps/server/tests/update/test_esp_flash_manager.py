@@ -111,7 +111,7 @@ def _make_bundle(bundle_dir: Path) -> None:
                         "sha256": bins["partitions.bin"],
                     },
                 ],
-            }
+            },
         ],
     }
     (bundle_dir / "flash.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -131,7 +131,8 @@ def _make_cache(tmp_path: Path, *, with_current: bool = False, with_baseline: bo
             "source": "downloaded",
         }
         (cache_dir / "current" / "_meta.json").write_text(
-            json.dumps(meta, indent=2), encoding="utf-8"
+            json.dumps(meta, indent=2),
+            encoding="utf-8",
         )
     if with_baseline:
         _make_bundle(cache_dir / "baseline")
@@ -143,7 +144,8 @@ def _make_cache(tmp_path: Path, *, with_current: bool = False, with_baseline: bo
             "source": "baseline",
         }
         (cache_dir / "baseline" / "_meta.json").write_text(
-            json.dumps(meta, indent=2), encoding="utf-8"
+            json.dumps(meta, indent=2),
+            encoding="utf-8",
         )
     return cache_dir
 
@@ -279,7 +281,7 @@ async def test_port_discovery_returns_metadata(tmp_path: Path) -> None:
             "vid": 6790,
             "pid": 29987,
             "serial_number": "abc",
-        }
+        },
     ]
 
 

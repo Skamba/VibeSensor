@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Contradictory / phase-inconsistent signal tests (≥50 direct-injection cases).
 
 Tests the analysis pipeline when signals contradict each other across
@@ -147,7 +146,7 @@ def test_engine_idle_then_wheel_cruise(corner: str, idle_name: str, idle_n: int)
                     top_peaks=peaks,
                     vibration_strength_db=18.0,
                     strength_floor_amp_g=0.003,
-                )
+                ),
             )
 
     # Phase 2: cruise with wheel fault
@@ -189,7 +188,10 @@ _TRANSIENT_POSITIONS = [
     ids=[p[0] for p in _TRANSIENT_POSITIONS],
 )
 def test_transient_plus_persistent(
-    corner: str, pos_name: str, trans_start: float, fault_start: float
+    corner: str,
+    pos_name: str,
+    trans_start: float,
+    fault_start: float,
 ) -> None:
     """Persistent fault should dominate over transient in combined scenario."""
     sensor = CORNER_SENSORS[corner]
@@ -306,7 +308,7 @@ def test_equal_strength_two_corners(corner_a: str, corner_b: str) -> None:
                     top_peaks=peaks,
                     vibration_strength_db=26.0 if is_fault else 8.0,
                     strength_floor_amp_g=0.004,
-                )
+                ),
             )
 
     summary = run_analysis(samples)
@@ -335,7 +337,10 @@ _CONTRADICTION_TYPES = [
     ids=[c[0] for c in _CONTRADICTION_TYPES],
 )
 def test_profile_phased_contradiction(
-    profile: dict[str, Any], contra_name: str, corner_a: str, corner_b: str
+    profile: dict[str, Any],
+    contra_name: str,
+    corner_a: str,
+    corner_b: str,
 ) -> None:
     """Profile-aware contradictory corners across phases should not crash."""
     sensor_a = CORNER_SENSORS[corner_a]
@@ -392,7 +397,10 @@ _SPEED_COMBOS = [
     ids=[c[0] for c in _SPEED_COMBOS],
 )
 def test_speed_change_between_phases(
-    corner: str, combo_name: str, speed_a: float, speed_b: float
+    corner: str,
+    combo_name: str,
+    speed_a: float,
+    speed_b: float,
 ) -> None:
     """Fault across phases with different speeds: tracking should still find the fault."""
     sensor = CORNER_SENSORS[corner]

@@ -88,7 +88,7 @@ class PostAnalysisWorker:
             return bool(
                 self._analysis_active_run_id
                 or self._analysis_queue
-                or (self._analysis_thread and self._analysis_thread.is_alive())
+                or (self._analysis_thread and self._analysis_thread.is_alive()),
             )
 
     @property
@@ -175,7 +175,7 @@ class PostAnalysisWorker:
             worker = Thread(
                 target=self._worker_loop,
                 name="metrics-post-analysis-worker",
-                daemon=True,
+                daemon=False,
             )
             self._analysis_thread = worker
             worker.start()
@@ -224,7 +224,9 @@ class PostAnalysisWorker:
                     db.store_analysis_error(run_id, error_msg)
                 except sqlite3.Error:
                     LOGGER.warning(
-                        "Failed to store analysis error for run %s", run_id, exc_info=True
+                        "Failed to store analysis error for run %s",
+                        run_id,
+                        exc_info=True,
                     )
                 return
             language = str(metadata.get("language") or "en")
@@ -238,7 +240,8 @@ class PostAnalysisWorker:
                     for sample in batch
                 )
                 samples, total_sample_count, stride = bounded_sample(
-                    normalized_iter, max_items=_MAX_POST_ANALYSIS_SAMPLES
+                    normalized_iter,
+                    max_items=_MAX_POST_ANALYSIS_SAMPLES,
                 )
             if not samples:
                 error_msg = "No samples collected during run"
@@ -249,7 +252,11 @@ class PostAnalysisWorker:
                 db.store_analysis_error(run_id, error_msg)
                 return
             summary = summarize_run_data(
-                metadata, samples, lang=language, file_name=run_id, include_samples=False
+                metadata,
+                samples,
+                lang=language,
+                file_name=run_id,
+                include_samples=False,
             )
             summary["analysis_metadata"] = {
                 "analyzed_sample_count": len(samples),
@@ -271,7 +278,7 @@ class PostAnalysisWorker:
                         "check_key": "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
                         "state": "warn",
                         "explanation": explanation,
-                    }
+                    },
                 )
             db.store_analysis(run_id, summary)  # type: ignore[arg-type]
 

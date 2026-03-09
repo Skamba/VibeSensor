@@ -148,6 +148,10 @@ class MetricsLogger:
         self._session.enabled = value
 
     @property
+    def persistence(self) -> MetricsPersistenceCoordinator:
+        return self._persistence
+
+    @property
     def _run_id(self) -> str | None:
         return self._session.run_id
 
@@ -236,7 +240,7 @@ class MetricsLogger:
         with self._lock:
             if self._session.shutdown_requested:
                 LOGGER.info(
-                    "Ignoring start_logging() while metrics logger shutdown is in progress."
+                    "Ignoring start_logging() while metrics logger shutdown is in progress.",
                 )
                 return self.status()
             if self.enabled and self._run_id:
@@ -261,12 +265,14 @@ class MetricsLogger:
         return result
 
     def stop_logging(
-        self, *, _only_if_generation: int | None = None
+        self,
+        *,
+        _only_if_generation: int | None = None,
     ) -> dict[str, str | bool | int | None]:
         flush_snapshot: MetricsSessionSnapshot | None = None
         with self._lock:
             if _only_if_generation is not None and not self._session.matches_generation(
-                _only_if_generation
+                _only_if_generation,
             ):
                 return self.status()
             flush_snapshot = self._pending_flush_snapshot_locked()
@@ -279,7 +285,7 @@ class MetricsLogger:
             )
         with self._lock:
             if _only_if_generation is not None and not self._session.matches_generation(
-                _only_if_generation
+                _only_if_generation,
             ):
                 return self.status()
             run_id_to_analyze = self._persistence.ready_for_analysis(self._run_id)
@@ -313,7 +319,11 @@ class MetricsLogger:
         )
 
     def _build_sample_records(
-        self, *, run_id: str, t_s: float, timestamp_utc: str
+        self,
+        *,
+        run_id: str,
+        t_s: float,
+        timestamp_utc: str,
     ) -> list[dict[str, object]]:
         return build_sample_records(
             run_id=run_id,
@@ -333,7 +343,11 @@ class MetricsLogger:
         )
 
     def _ensure_history_run_created(
-        self, run_id: str, start_time_utc: str, *, session_generation: int
+        self,
+        run_id: str,
+        start_time_utc: str,
+        *,
+        session_generation: int,
     ) -> None:
         self._persistence.ensure_history_run_created(
             run_id,
@@ -382,7 +396,7 @@ class MetricsLogger:
                 session_generation=session_generation,
             )
         return self._session.matches_generation(
-            session_generation
+            session_generation,
         ) and self._session.should_auto_stop(now_mono_s=now_mono_s)
 
     def _finalize_run_locked(self) -> bool:

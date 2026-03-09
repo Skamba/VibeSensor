@@ -75,7 +75,7 @@ def _validate_required_strength_metrics(samples: list[Sample]) -> None:
     # explicit None-check to make the intent clear.
     raise ValueError(
         f"Missing required precomputed strength metrics in sample index "
-        f"{first_bad_idx}: vibration_strength_db"
+        f"{first_bad_idx}: vibration_strength_db",
     )
 
 
@@ -230,7 +230,7 @@ def _speed_stats_by_phase(
     for phase_key in phase_sample_counts:
         stats = dict(_speed_stats(phase_speeds.get(phase_key, [])))
         stats["sample_count"] = phase_sample_counts[phase_key]
-        result[phase_key] = cast(PhaseSpeedStats, stats)
+        result[phase_key] = cast("PhaseSpeedStats", stats)
     return result
 
 
@@ -273,7 +273,7 @@ def _effective_engine_rpm(
 
     speed_kmh = _as_float(sample.get("speed_kmh"))
     final_drive_ratio = _as_float(sample.get("final_drive_ratio")) or _as_float(
-        metadata.get("final_drive_ratio")
+        metadata.get("final_drive_ratio"),
     )
     gear_val = _as_float(sample.get("gear"))
     gear_ratio = gear_val if gear_val is not None else _as_float(metadata.get("current_gear_ratio"))

@@ -105,6 +105,7 @@ def build_multi_spectrum_payload(
         Callable to produce per-client spectrum (already under the same lock).
     analysis_time_range_fn:
         Callable to derive (start_s, end_s, synced) for a buffer.
+
     """
     shared_freq: np.ndarray | None = None
     clients: dict[str, SpectrumSeriesPayload] = {}
@@ -203,6 +204,7 @@ def build_selected_payload(
         Target display refresh rate for waveform decimation.
     latest_fn:
         Callable ``(buf, n) -> ndarray`` to extract the latest *n* samples.
+
     """
     sr = buf.sample_rate_hz or sample_rate_hz
     no_data = buf.count == 0

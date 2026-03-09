@@ -11,6 +11,7 @@ class RuntimeHealthState:
     startup_phase: str = "bootstrap"
     startup_error: str | None = None
     background_task_failures: dict[str, str] = field(default_factory=dict)
+    startup_warnings: list[str] = field(default_factory=list)
 
     def set_phase(self, phase: str) -> None:
         self.startup_phase = phase

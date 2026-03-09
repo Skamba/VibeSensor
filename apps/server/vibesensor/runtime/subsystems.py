@@ -45,7 +45,7 @@ class RuntimeSettingsSubsystem:
 
 
 @dataclass(slots=True)
-class RuntimeDiagnosticsSubsystem:
+class RuntimeRecordingSubsystem:
     metrics_logger: MetricsLogger
 
 
@@ -88,7 +88,7 @@ class RuntimeWebsocketSubsystem:
 class RuntimeRouteServices:
     ingress: RuntimeIngressSubsystem
     settings: RuntimeSettingsSubsystem
-    diagnostics: RuntimeDiagnosticsSubsystem
+    recording: RuntimeRecordingSubsystem
     persistence: RuntimePersistenceSubsystem
     updates: RuntimeUpdateSubsystem
     processing: RuntimeProcessingSubsystem

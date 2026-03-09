@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Level E – Multiple sensors, transient (≥50 direct-injection cases).
 
 Tests the analysis pipeline with MULTIPLE sensors (2, 4, 8, 12) and
@@ -85,7 +84,7 @@ def test_4sensor_fault_with_transient(corner: str, speed: float, profile: dict[s
             start_t_s=0,
             fault_amp=0.07,
             fault_vib_db=28.0,
-        )
+        ),
     )
     # Transient on the same fault sensor
     samples.extend(
@@ -96,7 +95,7 @@ def test_4sensor_fault_with_transient(corner: str, speed: float, profile: dict[s
             start_t_s=12,
             spike_amp=0.18,
             spike_vib_db=36.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
@@ -130,7 +129,7 @@ def test_4sensor_transient_on_other_sensor(corner: str, profile: dict[str, Any])
             start_t_s=0,
             fault_amp=0.07,
             fault_vib_db=28.0,
-        )
+        ),
     )
     samples.extend(
         make_transient_samples(
@@ -140,7 +139,7 @@ def test_4sensor_transient_on_other_sensor(corner: str, profile: dict[str, Any])
             start_t_s=15,
             spike_amp=0.20,
             spike_vib_db=38.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"4s other-t {corner}")
@@ -163,7 +162,7 @@ def test_4sensor_transient_only_no_fault(speed: float, profile: dict[str, Any]) 
             start_t_s=35,
             spike_amp=0.15,
             spike_vib_db=35.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"4sensor transient-only@{speed}")
@@ -188,7 +187,7 @@ def test_8sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> N
             start_t_s=0,
             fault_amp=0.07,
             fault_vib_db=28.0,
-        )
+        ),
     )
     samples.extend(
         make_transient_samples(
@@ -198,7 +197,7 @@ def test_8sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> N
             start_t_s=12,
             spike_amp=0.20,
             spike_vib_db=38.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"8s+t {corner}")
@@ -224,7 +223,7 @@ def test_12sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> 
             start_t_s=0,
             fault_amp=0.07,
             fault_vib_db=28.0,
-        )
+        ),
     )
     samples.extend(
         make_transient_samples(
@@ -234,7 +233,7 @@ def test_12sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> 
             start_t_s=12,
             spike_amp=0.18,
             spike_vib_db=36.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"12s+t {corner}")
@@ -255,7 +254,9 @@ def test_12sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> 
     ids=["FL_2s", "RR_2s", "FR_2s", "RL_2s"],
 )
 def test_2sensor_fault_with_transient(
-    sensors: list[str], fault_corner: str, profile: dict[str, Any]
+    sensors: list[str],
+    fault_corner: str,
+    profile: dict[str, Any],
 ) -> None:
     """2-sensor pair, fault + transient → fault still detected."""
     fault_sensor = CORNER_SENSORS[fault_corner]
@@ -270,7 +271,7 @@ def test_2sensor_fault_with_transient(
             start_t_s=0,
             fault_amp=0.07,
             fault_vib_db=28.0,
-        )
+        ),
     )
     samples.extend(
         make_transient_samples(
@@ -280,7 +281,7 @@ def test_2sensor_fault_with_transient(
             start_t_s=15,
             spike_amp=0.18,
             spike_vib_db=36.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, fault_sensor, msg=f"2s+t {fault_corner}")
@@ -303,7 +304,7 @@ def test_4sensor_diffuse_transient_no_fault(speed: float, profile: dict[str, Any
             start_t_s=35,
             spike_amp=0.15,
             spike_vib_db=35.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"4s-diffuse+transient@{speed}")
@@ -329,7 +330,7 @@ def test_4sensor_multi_transient_preserves_fault(corner: str, profile: dict[str,
             start_t_s=0,
             fault_amp=0.07,
             fault_vib_db=28.0,
-        )
+        ),
     )
     # Transient on fault sensor
     samples.extend(
@@ -340,7 +341,7 @@ def test_4sensor_multi_transient_preserves_fault(corner: str, profile: dict[str,
             start_t_s=10,
             spike_amp=0.15,
             spike_vib_db=35.0,
-        )
+        ),
     )
     # Transient on another sensor
     samples.extend(
@@ -351,7 +352,7 @@ def test_4sensor_multi_transient_preserves_fault(corner: str, profile: dict[str,
             start_t_s=20,
             spike_amp=0.12,
             spike_vib_db=33.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"multi-t {corner}")
@@ -368,7 +369,7 @@ def test_4sensor_phased_onset_with_transient(corner: str, profile: dict[str, Any
     samples: list[dict] = []
     samples.extend(make_idle_samples(sensors=_4S, n_samples=6, start_t_s=0))
     samples.extend(
-        make_ramp_samples(sensors=_4S, speed_start=20, speed_end=80, n_samples=10, start_t_s=6)
+        make_ramp_samples(sensors=_4S, speed_start=20, speed_end=80, n_samples=10, start_t_s=6),
     )
     samples.extend(
         make_profile_fault_samples(
@@ -380,7 +381,7 @@ def test_4sensor_phased_onset_with_transient(corner: str, profile: dict[str, Any
             start_t_s=16,
             fault_amp=0.07,
             fault_vib_db=28.0,
-        )
+        ),
     )
     samples.extend(
         make_transient_samples(
@@ -390,7 +391,7 @@ def test_4sensor_phased_onset_with_transient(corner: str, profile: dict[str, Any
             start_t_s=28,
             spike_amp=0.18,
             spike_vib_db=36.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"phased+t {corner}")
@@ -416,7 +417,7 @@ def test_4sensor_transfer_with_transient(corner: str, profile: dict[str, Any]) -
             fault_amp=0.07,
             fault_vib_db=28.0,
             transfer_fraction=0.2,
-        )
+        ),
     )
     samples.extend(
         make_transient_samples(
@@ -426,7 +427,7 @@ def test_4sensor_transfer_with_transient(corner: str, profile: dict[str, Any]) -
             start_t_s=12,
             spike_amp=0.15,
             spike_vib_db=35.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"xfer+t {corner}")
@@ -451,7 +452,7 @@ def test_8sensor_vhigh_speed_transient(corner: str, profile: dict[str, Any]) -> 
             start_t_s=0,
             fault_amp=0.08,
             fault_vib_db=30.0,
-        )
+        ),
     )
     samples.extend(
         make_transient_samples(
@@ -461,7 +462,7 @@ def test_8sensor_vhigh_speed_transient(corner: str, profile: dict[str, Any]) -> 
             start_t_s=12,
             spike_amp=0.20,
             spike_vib_db=38.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"8s vhigh+t {corner}")
@@ -484,7 +485,7 @@ def test_12sensor_transient_only_no_fault(speed: float, profile: dict[str, Any])
             start_t_s=35,
             spike_amp=0.15,
             spike_vib_db=35.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"12sensor transient-only@{speed}")
@@ -515,7 +516,7 @@ def test_4sensor_speed_sweep_with_transient(corner: str, profile: dict[str, Any]
             start_t_s=20,
             spike_amp=0.18,
             spike_vib_db=36.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, CORNER_SENSORS[corner], msg=f"sweep+t {corner}")

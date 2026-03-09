@@ -37,7 +37,7 @@ def test_smoke_health_route_registered() -> None:
     state = MagicMock()
     state.ingress = MagicMock()
     state.settings = MagicMock()
-    state.diagnostics = MagicMock()
+    state.recording = MagicMock()
     state.persistence = MagicMock()
     state.websocket = MagicMock()
     state.updates = MagicMock()

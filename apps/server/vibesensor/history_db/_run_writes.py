@@ -16,6 +16,11 @@ from ._typing import HistoryCursorProvider
 
 LOGGER = logging.getLogger(__name__)
 
+_RECOMMENDED_METADATA_KEYS: frozenset[str] = frozenset({"sensor_model", "sample_rate_hz"})
+
+
+_EXPECTED_ANALYSIS_KEYS: frozenset[str] = frozenset({"findings", "top_causes", "warnings"})
+
 
 class HistoryRunWriteMixin:
     """Mixin providing run mutation and persistence methods."""
@@ -52,6 +57,13 @@ class HistoryRunWriteMixin:
         start_time_utc: str,
         metadata: JsonObject,
     ) -> None:
+        missing = _RECOMMENDED_METADATA_KEYS - metadata.keys()
+        if missing:
+            LOGGER.warning(
+                "create_run %s: metadata missing recommended keys: %s",
+                run_id,
+                ", ".join(sorted(missing)),
+            )
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
@@ -163,52 +175,58 @@ class HistoryRunWriteMixin:
         run_id: str,
         analysis: JsonObject,
     ) -> bool:
+        missing = _EXPECTED_ANALYSIS_KEYS - analysis.keys()
+        if missing:
+            LOGGER.warning(
+                "store_analysis %s: summary missing expected keys: %s",
+                run_id,
+                ", ".join(sorted(missing)),
+            )
         now = utc_now_iso()
         with self._cursor() as cur:
+            cur.execute(
+                "UPDATE runs SET status = 'complete', analysis_json = ?, "
+                "analysis_version = ?, analysis_completed_at = ? "
+                "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
+                (
+                    safe_json_dumps(wrap_analysis_for_storage(analysis)),
+                    ANALYSIS_SCHEMA_VERSION,
+                    now,
+                    run_id,
+                ),
+            )
+            if int(cur.rowcount) > 0:
+                return True
             current_status = self._run_status(cur, run_id)
             if current_status == RunStatus.COMPLETE:
                 LOGGER.warning(
                     "store_analysis for run %s: skipped — already complete",
                     run_id,
                 )
-                return False
-            if not can_transition_run(current_status, RunStatus.COMPLETE):
+            elif not can_transition_run(current_status, RunStatus.COMPLETE):
                 self._log_transition_skip(run_id, current_status, RunStatus.COMPLETE)
-                return False
-            cur.execute(
-                "UPDATE runs SET status = 'complete', analysis_json = ?, "
-                "analysis_version = ?, analysis_completed_at = ? "
-                "WHERE run_id = ? AND status = ?",
-                (
-                    safe_json_dumps(wrap_analysis_for_storage(analysis)),
-                    ANALYSIS_SCHEMA_VERSION,
-                    now,
-                    run_id,
-                    current_status,
-                ),
-            )
-            return bool(int(cur.rowcount) > 0)
+            return False
 
     def store_analysis_error(self: HistoryCursorProvider, run_id: str, error: str) -> bool:
         now = utc_now_iso()
         with self._cursor() as cur:
+            cur.execute(
+                "UPDATE runs SET status = 'error', error_message = ?, "
+                "analysis_completed_at = ? "
+                "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
+                (error, now, run_id),
+            )
+            if int(cur.rowcount) > 0:
+                return True
             current_status = self._run_status(cur, run_id)
             if current_status == RunStatus.COMPLETE:
                 LOGGER.warning(
                     "store_analysis_error for run %s: skipped — already complete",
                     run_id,
                 )
-                return False
-            if not can_transition_run(current_status, RunStatus.ERROR):
+            elif not can_transition_run(current_status, RunStatus.ERROR):
                 self._log_transition_skip(run_id, current_status, RunStatus.ERROR)
-                return False
-            cur.execute(
-                "UPDATE runs SET status = 'error', error_message = ?, "
-                "analysis_completed_at = ? "
-                "WHERE run_id = ? AND status = ?",
-                (error, now, run_id, current_status),
-            )
-            return bool(int(cur.rowcount) > 0)
+            return False
 
     def delete_run(self: HistoryCursorProvider, run_id: str) -> bool:
         with self._cursor() as cur:

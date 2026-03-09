@@ -1774,6 +1774,16 @@
           "data_loss": {
             "$ref": "#/components/schemas/HealthDataLossResponse"
           },
+          "db_last_write_duration_s": {
+            "default": 0.0,
+            "title": "Db Last Write Duration S",
+            "type": "number"
+          },
+          "db_max_write_duration_s": {
+            "default": 0.0,
+            "title": "Db Max Write Duration S",
+            "type": "number"
+          },
           "degradation_reasons": {
             "items": {
               "type": "string"
@@ -1787,6 +1797,11 @@
           },
           "intake_stats": {
             "$ref": "#/components/schemas/HealthIntakeStatsResponse"
+          },
+          "max_tick_duration_s": {
+            "default": 0.0,
+            "title": "Max Tick Duration S",
+            "type": "number"
           },
           "persistence": {
             "$ref": "#/components/schemas/HealthPersistenceResponse"
@@ -1840,6 +1855,14 @@
             "title": "Startup State",
             "type": "string"
           },
+          "startup_warnings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Startup Warnings",
+            "type": "array"
+          },
           "status": {
             "enum": [
               "ok",
@@ -1848,6 +1871,16 @@
             ],
             "title": "Status",
             "type": "string"
+          },
+          "tick_count": {
+            "default": 0,
+            "title": "Tick Count",
+            "type": "integer"
+          },
+          "tick_duration_s": {
+            "default": 0.0,
+            "title": "Tick Duration S",
+            "type": "number"
           }
         },
         "required": [

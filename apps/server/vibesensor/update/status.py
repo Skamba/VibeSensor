@@ -20,7 +20,7 @@ def _phase_name(phase: UpdatePhase | str) -> str:
 class UpdateStatusTracker:
     """Owns update job state, persistence, redaction, and issue reporting."""
 
-    __slots__ = ("_state_store", "_status", "_redact_secrets")
+    __slots__ = ("_redact_secrets", "_state_store", "_status")
 
     def __init__(
         self,
@@ -118,7 +118,7 @@ class UpdateStatusTracker:
                 phase=_phase_name(phase),
                 message=self.redact(message),
                 detail=self.redact(sanitize_log_line(detail)),
-            )
+            ),
         )
         self._touch()
         self.persist()
@@ -130,7 +130,7 @@ class UpdateStatusTracker:
                     phase=issue.phase,
                     message=self.redact(issue.message),
                     detail=self.redact(issue.detail),
-                )
+                ),
             )
         if issues:
             self._touch()

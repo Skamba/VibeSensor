@@ -35,7 +35,7 @@ class UpdateInstallerConfig:
 class UpdateInstaller:
     """Owns install, rollback snapshotting, rollback, and firmware cache refresh."""
 
-    __slots__ = ("_commands", "_tracker", "_config")
+    __slots__ = ("_commands", "_config", "_tracker")
 
     def __init__(
         self,
@@ -292,7 +292,7 @@ class UpdateInstaller:
                         version=current_version,
                         wheel_name=promoted_wheel.name,
                         sha256=rollback_sha256,
-                    )
+                    ),
                 )
             except OSError as exc:
                 self._tracker.add_issue(
@@ -304,7 +304,7 @@ class UpdateInstaller:
             self._prune_rollback_wheels(keep_name=promoted_wheel.name)
             self._tracker.log(
                 "Rollback snapshot created successfully "
-                f"(wheel={promoted_wheel.name}, sha256={rollback_sha256})"
+                f"(wheel={promoted_wheel.name}, sha256={rollback_sha256})",
             )
             return True
 
@@ -375,7 +375,7 @@ class UpdateInstaller:
             expected_version = wheel_parts[1] if len(wheel_parts) >= 2 else ""
             self._tracker.log(
                 "Rollback metadata missing; falling back to newest "
-                "rollback wheel without checksum pin"
+                "rollback wheel without checksum pin",
             )
 
         if not self._validate_wheel_file(
@@ -427,7 +427,7 @@ class UpdateInstaller:
             )
             self._tracker.log(
                 "WARNING: rolled-back version mismatch "
-                f"(wheel={expected_version}, import={rolled_back_version})"
+                f"(wheel={expected_version}, import={rolled_back_version})",
             )
         self._tracker.log(f"Rolled back to {wheel.name} (verified version={rolled_back_version})")
         return True

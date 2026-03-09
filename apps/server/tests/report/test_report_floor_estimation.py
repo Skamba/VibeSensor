@@ -29,7 +29,7 @@ def test_estimate_strength_floor_amp_g_uses_consistent_policy() -> None:
     amps = [0.1, 0.2, 0.3]
     expected = percentile(sorted(amps), 0.20)
     assert _estimate_strength_floor_amp_g(_sample([(10.0, a) for a in amps])) == pytest.approx(
-        expected
+        expected,
     )
 
 

@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Report pipeline audit — tests covering 10 findings from the report-generation
@@ -180,7 +180,7 @@ class TestNextStepFieldsNotRendered:
                 "test_plan": [step],
                 "findings": [finding],
                 "top_causes": [top_cause],
-            }
+            },
         )
         data = map_summary(summary)
         # Find the step that came from our test_plan (not Tier A guidance)
@@ -245,7 +245,7 @@ class TestTopCausesFallbackBypassesPersistenceRanking:
             overrides={
                 "findings": findings,
                 "top_causes": [],  # empty → forces fallback
-            }
+            },
         )
         data = map_summary(summary)
         # The observed primary system comes from findings_non_ref[0],
@@ -337,9 +337,9 @@ class TestSystemFindingCardToneUnused:
                         "confidence_tone": "success",
                         "signatures_observed": ["1x wheel"],
                         "strongest_location": "front-left wheel",
-                    }
+                    },
                 ],
-            }
+            },
         )
         data = map_summary(summary)
         assert len(data.system_cards) >= 1
@@ -366,7 +366,8 @@ class TestDataTrustPanelOverflow:
 
     def test_data_trust_panel_renders(self) -> None:
         """Verify that the data-trust section renders without crashing,
-        even with many items."""
+        even with many items.
+        """
         source = inspect.getsource(_page1)
         # The data-trust section exists in _page1.
         assert "Data Trust" in source
@@ -395,7 +396,8 @@ class TestPeaksTableFixedHeight:
 
     def test_fixed_height_with_many_rows(self) -> None:
         """Eight peaks in data; the builder forwards all of them and the
-        renderer trims via a y_bottom guard at render time."""
+        renderer trims via a y_bottom guard at render time.
+        """
         rows = [_make_peaks_table_row(rank=i, frequency_hz=20.0 + i * 5) for i in range(1, 9)]
         summary = _make_minimal_summary(overrides={"plots": {"peaks_table": rows}})
         data = map_summary(summary)

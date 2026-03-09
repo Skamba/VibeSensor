@@ -73,7 +73,7 @@ def _nmcli_modify_cmd(ap: APConfig) -> tuple[str, ...]:
                 "wpa-psk",
                 "802-11-wireless-security.psk",
                 ap.psk,
-            ]
+            ],
         )
     return tuple(base)
 
@@ -105,7 +105,8 @@ def _self_heal_cfg(
 
 def _ap_cfg(tmp_path: Path, *, allow_disable_resolved_stub_listener: bool = False) -> APConfig:
     self_heal = _self_heal_cfg(
-        tmp_path, allow_disable_resolved_stub_listener=allow_disable_resolved_stub_listener
+        tmp_path,
+        allow_disable_resolved_stub_listener=allow_disable_resolved_stub_listener,
     )
     return APConfig(
         ssid="VibeSensor",
@@ -129,12 +130,12 @@ def _healthy_responses(ap: APConfig) -> dict[tuple[str, ...], list[CommandResult
         ("nmcli", "general", "status"): [_ok("STATE connected")],
         ("nmcli", "connection", "show", ap.con_name): [_ok("connection.id:VibeSensor-AP")],
         ("nmcli", "connection", "show", "--active"): [
-            _ok(f"NAME  DEVICE\n{ap.con_name}  {ap.ifname}")
+            _ok(f"NAME  DEVICE\n{ap.con_name}  {ap.ifname}"),
         ],
         ("ip", "addr", "show", "dev", ap.ifname): [_ok("3: wlan0\n    inet 10.4.0.1/24")],
         ("rfkill", "list"): [_ok("0: phy0: Wireless LAN\n\tSoft blocked: no\n\tHard blocked: no")],
         ("ip", "link", "show", "dev", ap.ifname): [
-            _ok("2: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP")
+            _ok("2: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP"),
         ],
         ("nmcli", "-t", "-f", "NAME", "connection", "show"): [_ok(f"{ap.con_name}\n")],
         ("nmcli", "connection", "delete", ap.con_name): [_ok("")],
@@ -154,13 +155,13 @@ def _healthy_responses(ap: APConfig) -> dict[tuple[str, ...], list[CommandResult
             ap.ssid,
         ): [_ok("")],
         ("nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active"): [
-            _ok(f"{ap.con_name}:{ap.ifname}\n")
+            _ok(f"{ap.con_name}:{ap.ifname}\n"),
         ],
         ("iw", "dev", ap.ifname, "info"): [
-            _ok("Interface wlan0\n\ttype AP\n\tchannel 7 (2442 MHz)")
+            _ok("Interface wlan0\n\ttype AP\n\tchannel 7 (2442 MHz)"),
         ],
         ("ip", "-4", "addr", "show", "dev", ap.ifname): [
-            _ok("3: wlan0\n    inet 10.4.0.1/24 brd 10.4.0.255 scope global wlan0")
+            _ok("3: wlan0\n    inet 10.4.0.1/24 brd 10.4.0.255 scope global wlan0"),
         ],
         (
             "journalctl",
@@ -228,7 +229,7 @@ def _collect_health_for(
             {
                 ("ip", "link", "show", "dev", "wlan0"): [
                     _ok("2: wlan0: <BROADCAST,MULTICAST> mtu 1500 state DOWN"),
-                ]
+                ],
             },
             "iface_up",
             False,
@@ -326,7 +327,7 @@ def test_ensure_ap_connection_open_mode_recreates_without_security_keys(tmp_path
             ): [_ok("")],
             _nmcli_modify_cmd(ap): [_ok("")],
             ("nmcli", "--wait", "12", "connection", "up", ap.con_name): [_ok("")],
-        }
+        },
     )
 
     ok = _ensure_ap_connection(ap, runner)

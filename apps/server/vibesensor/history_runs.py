@@ -42,7 +42,7 @@ class HistoryRunQueryService(HistoryRunService):
 
     async def list_runs(self) -> list[HistoryRunListEntryPayload]:
         return cast(
-            list[HistoryRunListEntryPayload],
+            "list[HistoryRunListEntryPayload]",
             await asyncio.to_thread(self._history_db.list_runs),
         )
 

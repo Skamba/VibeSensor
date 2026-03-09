@@ -124,7 +124,7 @@ def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
                     "min_restart_interval_seconds": 240,
                     "allow_disable_resolved_stub_listener": True,
                     "state_file": "/tmp/hotspot-heal-state.json",
-                }
+                },
             },
         },
     )

@@ -1,4 +1,4 @@
-.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-fast test-all test-ci test-full-suite coverage coverage-html coverage-strict smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
+.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-fast test-all test-ci test-full-suite sync-contracts coverage coverage-html coverage-strict smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
 
 setup:
 	python3 -m pip install --upgrade pip
@@ -22,16 +22,18 @@ typecheck: typecheck-backend ui-typecheck
 test:
 	python3 -m pytest -q -m "not selenium" apps/server/tests
 
-test-fast:
-	python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
+test-fast: test  # alias — use 'make test'
 
-test-all: test-ci
+test-all:
+	python3 tools/tests/run_ci_parallel.py
 
-test-ci:
-	python3 tools/tests/run_verification.py --suite ci-parity
+test-ci: test-all  # alias — use 'make test-all'
 
 test-full-suite:
 	python3 tools/tests/run_verification.py --suite full-stack
+
+sync-contracts:
+	cd apps/ui && npm run sync:contracts
 
 coverage:
 	python3 tools/tests/run_coverage.py

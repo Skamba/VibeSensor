@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Cross-cutting review guardrail regressions (core set).
@@ -73,7 +73,7 @@ class TestDomainModelsPublicAPI:
 
 class TestCarLibraryImport:
     def test_copy_at_module_level(self) -> None:
-        """copy should be importable from car_library's module scope."""
+        """Copy should be importable from car_library's module scope."""
         import vibesensor.car_library as cl
 
         source = inspect.getsource(cl)
@@ -192,7 +192,9 @@ class TestSeverityFromPeakReturnType:
     )
     def test_returns_dict(self, db: float, sensor_count: int, prior_state) -> None:
         result = severity_from_peak(
-            vibration_strength_db=db, sensor_count=sensor_count, prior_state=prior_state
+            vibration_strength_db=db,
+            sensor_count=sensor_count,
+            prior_state=prior_state,
         )
         assert isinstance(result, dict)
         assert "key" in result

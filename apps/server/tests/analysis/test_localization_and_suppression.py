@@ -144,7 +144,8 @@ class TestSourceAwareLocalization:
 
     def test_wheel_diagnosis_prefers_wheel_sensor_over_cabin(self) -> None:
         """When cabin sensor has higher amplitude but wheel sensors are present,
-        wheel sensor should be selected as fault source for wheel/tire diagnoses."""
+        wheel sensor should be selected as fault source for wheel/tire diagnoses.
+        """
         matches = []
         for i in range(20):
             speed = 60.0 + i * 2
@@ -157,7 +158,7 @@ class TestSourceAwareLocalization:
                     "location": "Driver Seat",
                     "matched_hz": whz,
                     "rel_error": 0.02,
-                }
+                },
             )
             # Wheel sensor: slightly weaker but valid
             matches.append(
@@ -167,7 +168,7 @@ class TestSourceAwareLocalization:
                     "location": "Front Left",
                     "matched_hz": whz,
                     "rel_error": 0.01,
-                }
+                },
             )
 
         _, hotspot = _location_speedbin_summary(
@@ -193,7 +194,7 @@ class TestSourceAwareLocalization:
                     "location": "Engine Bay",
                     "matched_hz": 25.0,
                     "rel_error": 0.02,
-                }
+                },
             )
             matches.append(
                 {
@@ -202,7 +203,7 @@ class TestSourceAwareLocalization:
                     "location": "Front Left",
                     "matched_hz": 25.0,
                     "rel_error": 0.03,
-                }
+                },
             )
 
         _, hotspot = _location_speedbin_summary(
@@ -227,7 +228,7 @@ class TestSourceAwareLocalization:
                     "location": "Driver Seat",
                     "matched_hz": whz,
                     "rel_error": 0.02,
-                }
+                },
             )
             matches.append(
                 {
@@ -236,7 +237,7 @@ class TestSourceAwareLocalization:
                     "location": "Trunk",
                     "matched_hz": whz,
                     "rel_error": 0.03,
-                }
+                },
             )
 
         _, hotspot = _location_speedbin_summary(
@@ -260,7 +261,8 @@ class TestDiffuseExcitationDetection:
 
     def test_uniform_peaks_all_sensors_flags_diffuse(self) -> None:
         """When all sensors show identical peaks, the finding should be flagged
-        as diffuse excitation with reduced confidence."""
+        as diffuse excitation with reduced confidence.
+        """
         sensors = _ALL_WHEEL_SENSORS
         samples: list[dict[str, Any]] = []
         # Use varying speed to avoid constant-speed filter
@@ -276,7 +278,7 @@ class TestDiffuseExcitationDetection:
                         client_name=s,
                         top_peaks=peaks,
                         vibration_strength_db=24.0,
-                    )
+                    ),
                 )
         metadata = _standard_metadata()
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
@@ -321,7 +323,7 @@ class TestNoFaultSuppression:
                         client_name=s,
                         top_peaks=peaks,
                         vibration_strength_db=6.0,
-                    )
+                    ),
                 )
         metadata = _standard_metadata()
         summary = summarize_run_data(metadata, samples, lang="en", file_name="idle_only")
@@ -350,7 +352,7 @@ class TestNoFaultSuppression:
                         client_name=s,
                         top_peaks=peaks,
                         vibration_strength_db=14.0,
-                    )
+                    ),
                 )
         metadata = _standard_metadata()
         summary = summarize_run_data(metadata, samples, lang="en", file_name="road_noise")
@@ -432,7 +434,8 @@ class TestUnitConsistency:
                 )
 
     def test_evidence_metrics_include_strength_db(
-        self, fault_findings: list[dict[str, Any]]
+        self,
+        fault_findings: list[dict[str, Any]],
     ) -> None:
         """Evidence metrics should include vibration_strength_db."""
         for f in fault_findings:
@@ -466,7 +469,7 @@ class TestPhaseTimeline:
                         client_name=s,
                         top_peaks=peaks,
                         vibration_strength_db=10.0,
-                    )
+                    ),
                 )
         metadata = _standard_metadata()
         summary = summarize_run_data(metadata, samples, lang="en", file_name="timeline_test")
@@ -489,7 +492,7 @@ class TestPhaseTimeline:
                         client_name=s,
                         top_peaks=peaks,
                         vibration_strength_db=10.0,
-                    )
+                    ),
                 )
         metadata = _standard_metadata()
         summary = summarize_run_data(metadata, samples, lang="en", file_name="timeline_fields")
@@ -525,7 +528,7 @@ class TestPhasedScenarios:
                         client_name=s,
                         top_peaks=peaks,
                         vibration_strength_db=10.0,
-                    )
+                    ),
                 )
         # Phase 2: wheel fault at high speed (15-45s)
         for i in range(15, 45):
@@ -545,7 +548,7 @@ class TestPhasedScenarios:
                         client_name=s,
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
-                    )
+                    ),
                 )
         metadata = _standard_metadata()
         summary = summarize_run_data(metadata, samples, lang="en", file_name="high_speed_fault")
@@ -589,7 +592,7 @@ class TestPhasedScenarios:
                         client_name=s,
                         top_peaks=peaks,
                         vibration_strength_db=vib_db,
-                    )
+                    ),
                 )
         metadata = _standard_metadata()
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")

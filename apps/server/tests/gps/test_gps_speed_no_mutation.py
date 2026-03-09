@@ -113,7 +113,8 @@ class TestEffectiveSpeedNoMutation:
 class TestStatusDictNoMutation:
     def test_status_dict_does_not_mutate_connection_state(self) -> None:
         """Previously, status_dict() would change connection_state from
-        'connected' to 'stale' as a side effect.  It must no longer do so."""
+        'connected' to 'stale' as a side effect.  It must no longer do so.
+        """
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
         m.speed_mps = 5.0
@@ -255,7 +256,8 @@ class TestSpeedResolution:
 class TestGPSTransitions:
     def test_fresh_to_stale_to_fresh(self) -> None:
         """Transition GPS from fresh → stale → fresh.
-        Verify fallback_active and source are consistent at each stage."""
+        Verify fallback_active and source are consistent at each stage.
+        """
         m = GPSSpeedMonitor(gps_enabled=True)
         m.manual_source_selected = False  # GPS primary, override is fallback only
         m.override_speed_mps = 25.0  # manual override for fallback

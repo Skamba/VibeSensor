@@ -46,7 +46,7 @@ def test_buffer_store_returns_cached_hit_after_committed_generation() -> None:
             strength_metrics={},
             has_fft_data=False,
             duration_s=0.01,
-        )
+        ),
     )
 
     second_plan = store.snapshot_for_compute(client_id, sample_rate_hz=200)

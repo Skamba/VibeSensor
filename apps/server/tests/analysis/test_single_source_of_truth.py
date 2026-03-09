@@ -110,7 +110,8 @@ def test_metrics_log_no_old_field_names() -> None:
 
 def test_as_float_single_source_of_truth() -> None:
     """diagnostics_shared.as_float_or_none must be the canonical as_float_or_none
-    from runlog, not a local re-definition."""
+    from runlog, not a local re-definition.
+    """
     from vibesensor.diagnostics_shared import as_float_or_none as diag_as_float
     from vibesensor.runlog import as_float_or_none
 
@@ -121,7 +122,8 @@ def test_as_float_single_source_of_truth() -> None:
 
 def test_percentile_single_source_of_truth() -> None:
     """analysis.helpers.percentile must be imported from
-    vibesensor_core.vibration_strength, not re-defined locally."""
+    vibesensor_core.vibration_strength, not re-defined locally.
+    """
     from vibesensor_core.vibration_strength import percentile as canonical
 
     from vibesensor.analysis.helpers import percentile
@@ -188,7 +190,6 @@ def test_silence_db_constant() -> None:
 
 def test_config_preflight_no_removed_fields() -> None:
     """config_preflight.summarize must not reference removed config fields."""
-
     root = REPO_ROOT
     preflight_path = root / "tools" / "config" / "vibesensor_tools_config" / "config_preflight.py"
     source = preflight_path.read_text(encoding="utf-8")
@@ -199,7 +200,6 @@ def test_config_preflight_no_removed_fields() -> None:
 
 def test_wheel_hz_and_engine_rpm_single_source() -> None:
     """wheel_hz and engine_rpm formulas must not be inlined in consumers."""
-
     root = SERVER_ROOT
     files_to_check = [
         root / "vibesensor" / "metrics_log" / "sample_builder.py",
@@ -216,11 +216,10 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
 
 def test_simulator_defaults_match_analysis_settings() -> None:
     """Simulator vehicle defaults must be imported from the canonical source."""
-
     root = REPO_ROOT
     # Read the simulator source to verify it doesn't hardcode tire/vehicle constants
     sim_source = (root / "apps" / "simulator" / "vibesensor_simulator" / "sim_sender.py").read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
     # The simulator should NOT contain hardcoded tire/vehicle values as literal assignments
     for line in sim_source.splitlines():
@@ -237,10 +236,9 @@ def test_simulator_defaults_match_analysis_settings() -> None:
 
 def test_simulator_no_production_asserts() -> None:
     """Simulator module-level and standalone functions must not use bare assert."""
-
     root = REPO_ROOT
     sim_source = (root / "apps" / "simulator" / "vibesensor_simulator" / "sim_sender.py").read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
     lines = sim_source.splitlines()
     in_method = False
@@ -254,7 +252,7 @@ def test_simulator_no_production_asserts() -> None:
         # Only flag asserts in module-level or standalone functions
         if not in_method and stripped.startswith("assert "):
             raise AssertionError(
-                f"sim_sender.py:{i} uses bare assert in non-method context: {stripped!r}"
+                f"sim_sender.py:{i} uses bare assert in non-method context: {stripped!r}",
             )
 
 
@@ -402,7 +400,7 @@ def test_sanitize_settings_rejects_invalid() -> None:
             "rim_in": 21.0,  # valid
             "speed_uncertainty_pct": -0.5,  # non-negative, should be dropped
             "final_drive_ratio": "not_a_number",  # invalid type
-        }
+        },
     )
     assert "tire_width_mm" not in result
     assert "speed_uncertainty_pct" not in result
@@ -454,7 +452,7 @@ def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -
     assert sim_args.server_control_port == expected_control
 
     contracts_h = (root / "firmware" / "esp" / "include" / "vibesensor_contracts.h").read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
     def _macro(name: str) -> int:

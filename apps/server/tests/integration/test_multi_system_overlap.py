@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Multi-system overlap resolution tests (≥50 direct-injection cases).
 
 Tests how the analysis pipeline resolves overlapping system signatures
@@ -105,7 +104,7 @@ def _make_overlap_samples(
                     vibration_strength_db=vib_db,
                     strength_floor_amp_g=0.004,
                     **extra_kw,
-                )
+                ),
             )
     return samples
 
@@ -298,7 +297,10 @@ _ENGINE_ONLY_STRENGTHS = [
     ids=[e[0] for e in _ENGINE_ONLY_STRENGTHS],
 )
 def test_engine_only_no_localized_wheel(
-    speed: float, eng_name: str, engine_amp: float, engine_db: float
+    speed: float,
+    eng_name: str,
+    engine_amp: float,
+    engine_db: float,
 ) -> None:
     """Engine vibration on all sensors should not produce a localized wheel fault."""
     samples = make_engine_order_samples(
@@ -332,7 +334,10 @@ _RELATIVE_STRENGTHS = [
     ids=[s[0] for s in _RELATIVE_STRENGTHS],
 )
 def test_engine_plus_single_sensor_wheel(
-    corner: str, strength_name: str, wheel_amp: float, engine_amp: float
+    corner: str,
+    strength_name: str,
+    wheel_amp: float,
+    engine_amp: float,
 ) -> None:
     """Engine + localized wheel: pipeline should find the localized wheel signal."""
     sensor = CORNER_SENSORS[corner]

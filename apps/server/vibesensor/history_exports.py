@@ -114,7 +114,7 @@ class HistoryExportDownload:
 class HistoryExportService:
     """Build ZIP exports for history runs without route-local business logic."""
 
-    __slots__ = ("_history_db", "_archive_builder")
+    __slots__ = ("_archive_builder", "_history_db")
 
     def __init__(self, history_db: HistoryDB) -> None:
         self._history_db = history_db
@@ -148,7 +148,7 @@ class HistoryExportArchiveBuilder:
         sample_count = 0
         safe_name = safe_filename(run_id)
         spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
-            max_size=EXPORT_SPOOL_THRESHOLD
+            max_size=EXPORT_SPOOL_THRESHOLD,
         )
         try:
             with zipfile.ZipFile(spool, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:

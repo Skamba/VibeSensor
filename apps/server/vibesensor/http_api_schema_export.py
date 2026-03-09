@@ -43,7 +43,7 @@ def _build_openapi_app() -> FastAPI:
             apply_car_settings=placeholder,
             apply_speed_source_settings=placeholder,
         ),
-        diagnostics=SimpleNamespace(
+        recording=SimpleNamespace(
             metrics_logger=placeholder,
         ),
         persistence=SimpleNamespace(

@@ -24,7 +24,7 @@ def _write_config(path: Path, payload: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _make_processing(**overrides: int | float | None) -> ProcessingConfig:
+def _make_processing(**overrides: float | None) -> ProcessingConfig:
     """Return a ProcessingConfig with sensible defaults, applying *overrides*."""
     defaults = {
         "sample_rate_hz": 800,

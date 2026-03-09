@@ -184,7 +184,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
             )
 
         raise ValueError(
-            f"No server release found with tag 'server-v*' in {self._config.server_repo}"
+            f"No server release found with tag 'server-v*' in {self._config.server_repo}",
         )
 
     @staticmethod
@@ -271,7 +271,7 @@ def fetch_latest_wheel_cli() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     parser = argparse.ArgumentParser(
-        description="Fetch the latest VibeSensor server wheel from GitHub Releases"
+        description="Fetch the latest VibeSensor server wheel from GitHub Releases",
     )
     parser.add_argument("--repo", default="", help="GitHub owner/repo")
     parser.add_argument("--dest", default=".", help="Destination directory for the wheel")

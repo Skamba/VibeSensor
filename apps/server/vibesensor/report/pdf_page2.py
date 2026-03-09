@@ -101,11 +101,24 @@ def _draw_pattern_evidence(
 
     systems_text = ", ".join(ev.matched_systems) if ev.matched_systems else na
     ry = _draw_kv(
-        c, rx, ry, tr("MATCHED_SYSTEMS"), systems_text, label_w=label_w, fs=7, value_w=val_w
+        c,
+        rx,
+        ry,
+        tr("MATCHED_SYSTEMS"),
+        systems_text,
+        label_w=label_w,
+        fs=7,
+        value_w=val_w,
     )
     ry -= 1.0 * mm
     ry = _draw_kv(
-        c, rx, ry, tr("STRONGEST_SENSOR"), _safe(ev.strongest_location, na), label_w=label_w, fs=7
+        c,
+        rx,
+        ry,
+        tr("STRONGEST_SENSOR"),
+        _safe(ev.strongest_location, na),
+        label_w=label_w,
+        fs=7,
     )
     ry -= 1.0 * mm
     ry = _draw_kv(c, rx, ry, tr("SPEED_BAND"), _safe(ev.speed_band, na), label_w=label_w, fs=7)
@@ -149,12 +162,24 @@ def _draw_pattern_evidence(
         c.drawString(rx, ry, f"\u26a0 {tr('WARNING_LABEL')}")
         ry -= 3.0 * mm
         ry = _draw_text(
-            c, rx, ry, w - 8 * mm, ev.warning, size=FS_SMALL, color=WARN_CLR, max_lines=3
+            c,
+            rx,
+            ry,
+            w - 8 * mm,
+            ev.warning,
+            size=FS_SMALL,
+            color=WARN_CLR,
+            max_lines=3,
         )
         ry -= 1.5 * mm
 
     ry = _draw_section_block(
-        c, rx, ry, w - 8 * mm, tr("INTERPRETATION"), _safe(ev.interpretation, na)
+        c,
+        rx,
+        ry,
+        w - 8 * mm,
+        tr("INTERPRETATION"),
+        _safe(ev.interpretation, na),
     )
     _draw_section_block(
         c,

@@ -112,6 +112,6 @@ async def test_identify_client_200_when_sensor_reachable() -> None:
     endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
     resp = response_payload(
-        await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})())
+        await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})()),
     )
     assert resp == {"status": "sent", "cmd_seq": 7}

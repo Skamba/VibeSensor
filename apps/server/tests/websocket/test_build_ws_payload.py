@@ -150,11 +150,11 @@ def _make_state(
         analysis_settings=_StubAnalysisSettings(),  # type: ignore[arg-type]
         gps_monitor=_StubGPS(),  # type: ignore[arg-type]
     )
-    diagnostics = runtime_module.RuntimeDiagnosticsSubsystem(
+    diagnostics = runtime_module.RuntimeRecordingSubsystem(
         metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
     )
     persistence = runtime_module.RuntimePersistenceSubsystem(  # type: ignore[arg-type]
-        history_db=_SENTINEL
+        history_db=_SENTINEL,
     )
     updates = runtime_module.RuntimeUpdateSubsystem(
         update_manager=_SENTINEL,  # type: ignore[arg-type]
@@ -191,11 +191,11 @@ def _make_state(
             processing=_StubProcessingConfig(
                 ui_push_hz=ui_push_hz,
                 ui_heavy_push_hz=ui_heavy_push_hz,
-            )
+            ),
         ),  # type: ignore[arg-type]
         ingress=ingress,
         settings=settings,
-        diagnostics=diagnostics,
+        recording=diagnostics,
         persistence=persistence,
         updates=updates,
         processing=processing,
@@ -203,7 +203,7 @@ def _make_state(
         routes=runtime_module.RuntimeRouteServices(
             ingress=ingress,
             settings=settings,
-            diagnostics=diagnostics,
+            recording=diagnostics,
             persistence=persistence,
             updates=updates,
             processing=processing,

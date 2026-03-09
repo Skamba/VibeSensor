@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-__all__ = ["TESTS_DIR", "SERVER_ROOT", "REPO_ROOT"]
+__all__ = ["REPO_ROOT", "SERVER_ROOT", "TESTS_DIR"]
 
 # tests/ directory (this file's parent)
 TESTS_DIR = Path(__file__).resolve().parent

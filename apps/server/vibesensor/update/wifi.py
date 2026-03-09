@@ -53,7 +53,7 @@ class UpdateWifiConfig:
 class UpdateWifiController:
     """Owns hotspot shutdown, uplink connection, DNS readiness, and restore."""
 
-    __slots__ = ("_commands", "_tracker", "_config")
+    __slots__ = ("_commands", "_config", "_tracker")
 
     def __init__(
         self,
@@ -123,8 +123,9 @@ class UpdateWifiController:
             return False
         if not await self._bring_uplink_up(ssid):
             return False
+        fallback = self._config.uplink_fallback_dns
         self._tracker.log(
-            f"Wi-Fi connected successfully (client DNS fallback={self._config.uplink_fallback_dns})"
+            f"Wi-Fi connected successfully (client DNS fallback={fallback})",
         )
         return await self._wait_for_dns_ready()
 
@@ -289,7 +290,7 @@ class UpdateWifiController:
             if "No network with SSID" not in (stderr or ""):
                 break
             self._tracker.log(
-                f"SSID '{ssid}' not found on connect attempt {attempt}; rescanning and retrying"
+                f"SSID '{ssid}' not found on connect attempt {attempt}; rescanning and retrying",
             )
             await self._commands.run(
                 [
@@ -320,7 +321,7 @@ class UpdateWifiController:
     async def _wait_for_dns_ready(self) -> bool:
         self._tracker.log(
             "Validating uplink internet/DNS readiness for at least "
-            f"{int(self._config.dns_ready_min_wait_s)}s..."
+            f"{int(self._config.dns_ready_min_wait_s)}s...",
         )
         deadline = time.monotonic() + self._config.dns_ready_min_wait_s
         last_error = ""

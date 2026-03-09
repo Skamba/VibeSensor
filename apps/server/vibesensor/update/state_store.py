@@ -28,7 +28,7 @@ class UpdateStateStore:
 
     def __init__(self, path: str | Path | None = None) -> None:
         self._path = Path(
-            path or os.environ.get("VIBESENSOR_UPDATE_STATE_PATH", DEFAULT_STATE_PATH)
+            path or os.environ.get("VIBESENSOR_UPDATE_STATE_PATH", DEFAULT_STATE_PATH),
         )
 
     @property

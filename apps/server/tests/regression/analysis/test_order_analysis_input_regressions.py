@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Order analysis and numeric input guard regressions.
@@ -113,7 +113,10 @@ class TestDriveshaftHz:
         ids=["no-tire-circ", "zero-final-drive", "negative-final-drive"],
     )
     def test_driveshaft_hz_returns_none(
-        self, sample: dict, overrides: dict, tire_m: float | None
+        self,
+        sample: dict,
+        overrides: dict,
+        tire_m: float | None,
     ) -> None:
         assert _driveshaft_hz(sample, overrides, tire_circumference_m=tire_m) is None
 

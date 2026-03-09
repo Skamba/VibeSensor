@@ -152,7 +152,8 @@ async def test_broadcast_builds_payload_once_per_unique_selection() -> None:
 @pytest.mark.asyncio
 async def test_payload_error_does_not_block_other_clients() -> None:
     """A payload build failure for one client_id must not prevent other clients
-    from receiving their data."""
+    from receiving their data.
+    """
     hub = WebSocketHub()
     good_ws = _make_ws()
     bad_ws = _make_ws()
@@ -200,7 +201,8 @@ async def test_payload_error_logged_at_error_level(caplog) -> None:
 @pytest.mark.asyncio
 async def test_payload_error_affected_count_logged(caplog) -> None:
     """When multiple connections share a failing client_id the summary log
-    reports the total affected count."""
+    reports the total affected count.
+    """
     hub = WebSocketHub()
     ws1 = _make_ws()
     ws2 = _make_ws()
@@ -231,7 +233,8 @@ async def test_payload_error_affected_count_logged(caplog) -> None:
 @pytest.mark.asyncio
 async def test_error_payload_is_cached_per_client_id() -> None:
     """The error payload should be cached so payload_builder is called only
-    once per unique client_id, even on failure."""
+    once per unique client_id, even on failure.
+    """
     hub = WebSocketHub()
     ws1 = _make_ws()
     ws2 = _make_ws()

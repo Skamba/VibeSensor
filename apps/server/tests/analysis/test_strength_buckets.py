@@ -6,7 +6,9 @@ from vibesensor.diagnostics_shared import severity_from_peak
 
 
 def _run_severity_ticks(
-    db: float, ticks: int, state: dict[str, object] | None = None
+    db: float,
+    ticks: int,
+    state: dict[str, object] | None = None,
 ) -> tuple[dict[str, object], dict[str, object] | None]:
     """Run *ticks* iterations of ``severity_from_peak`` and return (last_out, state)."""
     out: dict[str, object] | None = None

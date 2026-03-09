@@ -54,7 +54,7 @@ from .speed_profile import _speed_profile_from_points
 _NEGLIGIBLE_STRENGTH_CONF_CAP = _NEGLIGIBLE_STRENGTH_CONF_CAP_IMPORTED
 
 
-def _order_label(order: int | float, order_label_base: str) -> str:
+def _order_label(order: float, order_label_base: str) -> str:
     return _order_label_impl(int(order), order_label_base)
 
 
@@ -100,8 +100,7 @@ def _compute_effective_match_rate(
             loc_matched = matched_by_location.get(loc, 0)
             if loc_possible >= ORDER_MIN_COVERAGE_POINTS and loc_matched >= ORDER_MIN_MATCH_POINTS:
                 loc_rate = loc_matched / max(1, loc_possible)
-                if loc_rate > best_loc_rate:
-                    best_loc_rate = loc_rate
+                best_loc_rate = max(best_loc_rate, loc_rate)
         if best_loc_rate >= min_match_rate:
             effective_match_rate = best_loc_rate
             per_location_dominant = True

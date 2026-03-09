@@ -33,7 +33,8 @@ def create_debug_routes(processor: SignalProcessor) -> APIRouter:
         result = processor.debug_spectrum(normalized)
         if isinstance(result, dict) and "error" in result:
             raise HTTPException(
-                status_code=404, detail=cast(DebugSpectrumErrorPayload, result)["error"]
+                status_code=404,
+                detail=cast("DebugSpectrumErrorPayload", result)["error"],
             )
         return result
 
@@ -47,7 +48,8 @@ def create_debug_routes(processor: SignalProcessor) -> APIRouter:
         result = processor.raw_samples(normalized, n_samples=n)
         if isinstance(result, dict) and "error" in result:
             raise HTTPException(
-                status_code=404, detail=cast(RawSamplesErrorPayload, result)["error"]
+                status_code=404,
+                detail=cast("RawSamplesErrorPayload", result)["error"],
             )
         return result
 

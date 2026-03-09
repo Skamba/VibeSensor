@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Fault-oriented synthetic scenario builders for tests."""
 
 from __future__ import annotations
@@ -53,7 +52,7 @@ def make_fault_samples(
                         top_peaks=peaks,
                         vibration_strength_db=fault_vib_db,
                         strength_floor_amp_g=noise_amp,
-                    )
+                    ),
                 )
             else:
                 transfer = _fault_transfer_fraction(
@@ -80,7 +79,7 @@ def make_fault_samples(
                         top_peaks=other_peaks,
                         vibration_strength_db=noise_vib_db,
                         strength_floor_amp_g=noise_amp,
-                    )
+                    ),
                 )
     return samples
 
@@ -192,7 +191,7 @@ def make_engine_order_samples(
                     vibration_strength_db=engine_vib_db,
                     strength_floor_amp_g=noise_amp,
                     engine_rpm=ehz * 60.0,
-                )
+                ),
             )
     return samples
 
@@ -242,7 +241,7 @@ def make_dual_fault_samples(
                         top_peaks=peaks,
                         vibration_strength_db=fault_vib_db_1,
                         strength_floor_amp_g=noise_amp,
-                    )
+                    ),
                 )
             elif sensor == fault_sensor_2:
                 transfer_1 = _fault_transfer_fraction(
@@ -265,7 +264,7 @@ def make_dual_fault_samples(
                         top_peaks=peaks,
                         vibration_strength_db=fault_vib_db_2,
                         strength_floor_amp_g=noise_amp,
-                    )
+                    ),
                 )
             else:
                 transfer_1 = _fault_transfer_fraction(
@@ -294,7 +293,7 @@ def make_dual_fault_samples(
                         top_peaks=peaks,
                         vibration_strength_db=noise_vib_db,
                         strength_floor_amp_g=noise_amp,
-                    )
+                    ),
                 )
     return samples
 
@@ -332,7 +331,7 @@ def make_speed_sweep_fault_samples(
                 noise_amp=noise_amp,
                 fault_vib_db=fault_vib_db,
                 noise_vib_db=noise_vib_db,
-            )
+            ),
         )
         t += samples_per_step * dt_s
     return samples
@@ -439,7 +438,7 @@ def make_profile_speed_sweep_fault_samples(
                 noise_amp=noise_amp,
                 fault_vib_db=fault_vib_db,
                 noise_vib_db=noise_vib_db,
-            )
+            ),
         )
         t += samples_per_step * dt_s
     return samples

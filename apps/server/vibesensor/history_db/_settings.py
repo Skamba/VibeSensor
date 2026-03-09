@@ -21,7 +21,7 @@ class HistorySettingsStoreMixin:
             row = cur.fetchone()
         if row is None:
             return None
-        return cast(JsonValue | None, safe_json_loads(row[0], context=f"setting {key}"))
+        return cast("JsonValue | None", safe_json_loads(row[0], context=f"setting {key}"))
 
     def set_setting(self: HistoryCursorProvider, key: str, value: JsonValue) -> None:
         now = utc_now_iso()

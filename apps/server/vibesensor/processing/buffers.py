@@ -18,7 +18,7 @@ from .payload import SelectedClientPayload, SpectrumSeriesPayload
 
 
 def _empty_strength_metrics() -> StrengthMetricsPayload:
-    return cast(StrengthMetricsPayload, {})
+    return cast("StrengthMetricsPayload", {})
 
 
 @dataclass(slots=True, eq=False, repr=False)

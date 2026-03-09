@@ -52,7 +52,8 @@ _SIZES = [2, 3, 5, 10, 20, 50, 100, 256, 512, 1024]
 @pytest.mark.parametrize("n", _SIZES, ids=[f"n={n}" for n in _SIZES])
 def test_live_matches_core_random(n: int) -> None:
     """SignalProcessor._noise_floor must return the same value as the core lib
-    noise_floor_amp_p20_g for random spectra of varying length."""
+    noise_floor_amp_p20_g for random spectra of varying length.
+    """
     rng = np.random.default_rng(seed=42 + n)
     amps = rng.random(n).astype(np.float32) * 0.05  # realistic g range
 

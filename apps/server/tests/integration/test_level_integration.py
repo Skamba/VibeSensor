@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Analysis-contract test – direct-injection validation of the full pipeline.
 
 This test exercises the full analysis pipeline end-to-end with a realistic
@@ -61,7 +60,7 @@ def _build_full_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
             start_t_s=10,
             noise_amp=0.004,
             vib_db=10.0,
-        )
+        ),
     )
 
     # Phase 3: Cruise at 80 km/h with FL fault (25-70s)
@@ -75,7 +74,7 @@ def _build_full_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
             fault_amp=0.07,
             fault_vib_db=28.0,
             noise_vib_db=8.0,
-        )
+        ),
     )
 
     # Phase 3b: Transient on FR at 45-47s (mid-cruise)
@@ -87,7 +86,7 @@ def _build_full_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
             start_t_s=45,
             spike_amp=0.20,
             spike_vib_db=38.0,
-        )
+        ),
     )
 
     # Phase 4: Deceleration (70-85s) - no fault peaks
@@ -100,7 +99,7 @@ def _build_full_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
             start_t_s=70,
             noise_amp=0.004,
             vib_db=10.0,
-        )
+        ),
     )
 
     # Phase 5: Low-speed cruise with FL fault (85-100s)
@@ -114,7 +113,7 @@ def _build_full_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
             fault_amp=0.05,
             fault_vib_db=22.0,
             noise_vib_db=8.0,
-        )
+        ),
     )
 
     # Phase 5b: Transient on RR at 95-97s
@@ -126,7 +125,7 @@ def _build_full_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
             start_t_s=95,
             spike_amp=0.15,
             spike_vib_db=35.0,
-        )
+        ),
     )
 
     # Phase 6: Final idle (100-120s)

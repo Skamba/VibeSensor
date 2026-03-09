@@ -168,7 +168,7 @@ class TestServerReleaseFetcher:
                         "draft": False,
                         "prerelease": False,
                         "assets": [{"name": "vibesensor-fw-v2025.6.15.zip", "url": "https://a"}],
-                    }
+                    },
                 ],
                 id="firmware-only-tags",
             ),

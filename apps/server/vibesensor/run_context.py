@@ -92,7 +92,7 @@ def build_summary_warnings(
                 "applies_to": "order_analysis",
                 "title": _i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"),
                 "detail": _i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"),
-            }
+            },
         )
     return warnings
 
@@ -132,7 +132,7 @@ def localize_warning_list(
                 "applies_to": str(warning.get("applies_to") or "order_analysis"),
                 "title": _resolve_i18n(lang, warning.get("title")),
                 "detail": _resolve_optional_i18n(lang, warning.get("detail")),
-            }
+            },
         )
     return localized
 

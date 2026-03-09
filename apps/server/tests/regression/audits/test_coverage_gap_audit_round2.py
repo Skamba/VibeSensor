@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Coverage-gap audit (round 2).
@@ -87,7 +87,8 @@ def history_db(tmp_path: Path) -> Iterator[HistoryDB]:
 
 class TestDebugSpectrumAndRawSamples:
     """debug_spectrum() and raw_samples() are only tested indirectly via API
-    mocks.  Direct unit tests ensure correctness of the returned data."""
+    mocks.  Direct unit tests ensure correctness of the returned data.
+    """
 
     def test_debug_spectrum_insufficient_samples(self) -> None:
         proc = _proc(fft_n=512)
@@ -156,7 +157,8 @@ class TestDebugSpectrumAndRawSamples:
 
 class TestMultiSpectrumAlignment:
     """multi_spectrum_payload with multiple sensors should include alignment
-    metadata only when ≥ 2 sensors have spectrum data."""
+    metadata only when ≥ 2 sensors have spectrum data.
+    """
 
     def test_single_sensor_no_alignment_key(self) -> None:
         proc = _proc()
@@ -249,7 +251,7 @@ class TestWSHubRunLoop:
             tick_count += 1
 
         task = asyncio.create_task(
-            hub.run(hz=100, payload_builder=lambda _: {"ok": True}, on_tick=on_tick)
+            hub.run(hz=100, payload_builder=lambda _: {"ok": True}, on_tick=on_tick),
         )
         await asyncio.sleep(0.15)
         task.cancel()

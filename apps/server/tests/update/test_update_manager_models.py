@@ -115,7 +115,7 @@ class TestParseWifiDiagnostics:
         log_dir = tmp_path / "wifi"
         log_dir.mkdir()
         (log_dir / "hotspot.log").write_text(
-            "2024-01-01 INFO normaline\n2024-01-01 ERROR something failed\n2024-01-01 INFO ok\n"
+            "2024-01-01 INFO normaline\n2024-01-01 ERROR something failed\n2024-01-01 INFO ok\n",
         )
         issues = parse_wifi_diagnostics(str(log_dir))
         assert any(

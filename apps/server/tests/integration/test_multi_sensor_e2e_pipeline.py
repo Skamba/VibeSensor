@@ -63,7 +63,7 @@ def _register_sensors(registry: ClientRegistry) -> None:
                 name=f"{location}-node",
                 frame_samples=_FRAME_N,
                 firmware_version="fw-test",
-            )
+            ),
         )
         registry.update_from_hello(hello, ("127.0.0.1", 9001))
         registry.set_location(client_id.hex(), location)
@@ -190,10 +190,10 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     assert all(float(r.get("vibration_strength_db", 0.0)) > 0.0 for r in rows[:8])
 
     front_left_mean_db = np.mean(
-        [float(r["vibration_strength_db"]) for r in rows if r["location"] == "front-left"]
+        [float(r["vibration_strength_db"]) for r in rows if r["location"] == "front-left"],
     )
     front_right_mean_db = np.mean(
-        [float(r["vibration_strength_db"]) for r in rows if r["location"] == "front-right"]
+        [float(r["vibration_strength_db"]) for r in rows if r["location"] == "front-right"],
     )
     assert front_left_mean_db > front_right_mean_db
 
@@ -214,6 +214,6 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     assert pdf_bytes.startswith(b"%PDF-")
     assert len(pdf_bytes) > 1000
     pdf_text = "\n".join(
-        filter(None, (page.extract_text() for page in PdfReader(io.BytesIO(pdf_bytes)).pages))
+        filter(None, (page.extract_text() for page in PdfReader(io.BytesIO(pdf_bytes)).pages)),
     ).lower()
     assert "front-left" in pdf_text

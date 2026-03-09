@@ -49,7 +49,7 @@ def build_sensor_analysis(
             label
             for sample in samples
             if isinstance(sample, dict) and (label := _location_label(sample, lang=language))
-        }
+        },
     )
     connected_locations = _locations_connected_throughout_run(samples, lang=language)
     sensor_intensity_by_location = _sensor_intensity_by_location(
@@ -198,7 +198,7 @@ def summarize_display_location(
             candidate
             for idx, candidate in enumerate(display_locations)
             if candidate and candidate not in display_locations[:idx]
-        ]
+        ],
     )
 
 

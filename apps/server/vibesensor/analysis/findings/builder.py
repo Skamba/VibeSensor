@@ -72,7 +72,7 @@ def _build_findings(
         prepare_analysis_samples(
             samples,
             per_sample_phases=per_sample_phases,
-            phase_segmenter=cast(PhaseSegmenter, segment_run_phases),
+            phase_segmenter=cast("PhaseSegmenter", segment_run_phases),
         )
     )
 
@@ -98,6 +98,6 @@ def _build_findings(
             lang=lang,
             per_sample_phases=analysis_phases,
             run_noise_baseline_g=(run_noise_baseline_g if not use_filtered_samples else None),
-        )
+        ),
     )
     return finalize_findings(findings)

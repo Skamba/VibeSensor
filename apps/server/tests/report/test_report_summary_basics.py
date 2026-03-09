@@ -24,7 +24,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
             run_id="run-01",
             raw_sample_rate_hz=800,
             tire_circumference_m=circumference_m,
-        )
+        ),
     ]
     for idx in range(30):
         speed = 40 + idx
@@ -35,7 +35,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
                 speed_kmh=float(speed),
                 dominant_freq_hz=wheel_hz,
                 peak_amp_g=0.09 + (idx * 0.001),
-            )
+            ),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
@@ -162,7 +162,7 @@ def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
                 speed_kmh=float(60 + idx),
                 dominant_freq_hz=20.0,
                 peak_amp_g=0.06 + (idx * 0.0005),
-            )
+            ),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
@@ -198,7 +198,7 @@ def test_derive_references_from_vehicle_parameters(tmp_path: Path) -> None:
             rim_in=21,
             final_drive_ratio=3.08,
             current_gear_ratio=0.64,
-        )
+        ),
     ]
     for idx in range(28):
         records.append(
@@ -207,7 +207,7 @@ def test_derive_references_from_vehicle_parameters(tmp_path: Path) -> None:
                 speed_kmh=float(45 + idx),
                 dominant_freq_hz=6.5 + (idx * 0.05),
                 peak_amp_g=0.08 + (idx * 0.0008),
-            )
+            ),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
@@ -224,7 +224,7 @@ def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
             raw_sample_rate_hz=800,
             tire_circumference_m=2.2,
             accel_scale_g_per_lsb=1.0 / 256.0,
-        )
+        ),
     ]
     for idx in range(10):
         speed = 50 + idx
@@ -235,7 +235,7 @@ def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
                 speed_kmh=float(speed),
                 dominant_freq_hz=wheel_hz,
                 peak_amp_g=0.08 + (idx * 0.0006),
-            )
+            ),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
@@ -255,7 +255,7 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
                 speed_kmh=100.0 + ((idx % 3) * 0.4),
                 dominant_freq_hz=22.0 + (idx * 0.02),
                 peak_amp_g=0.08 + (idx * 0.0003),
-            )
+            ),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)

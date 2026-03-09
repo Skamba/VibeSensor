@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Core metadata, vehicle-profile, and frequency helpers for tests."""
 
 from __future__ import annotations
@@ -219,7 +218,7 @@ def _profile_metadata_base(
             ),
             final_drive_ratio=final_drive_ratio,
             current_gear_ratio=current_gear_ratio,
-        ).items()
+        ).items(),
     )
 
 
@@ -233,7 +232,7 @@ def profile_metadata(profile: dict[str, Any], **overrides: Any) -> dict[str, Any
             profile.get("tire_deflection_factor"),
             profile["final_drive_ratio"],
             profile["current_gear_ratio"],
-        )
+        ),
     )
     meta.update(overrides)
     return meta
@@ -283,7 +282,9 @@ def wheel_hz(speed_kmh: float) -> float:
 
 
 def engine_hz(
-    speed_kmh: float, gear_ratio: float = GEAR_RATIO, final_drive: float = FINAL_DRIVE
+    speed_kmh: float,
+    gear_ratio: float = GEAR_RATIO,
+    final_drive: float = FINAL_DRIVE,
 ) -> float:
     """Rough engine-1x Hz from speed (2-stroke assumption for simplicity)."""
     whz = wheel_hz(speed_kmh)

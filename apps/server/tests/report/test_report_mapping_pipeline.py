@@ -17,7 +17,7 @@ def test_prepare_report_mapping_context_prefers_connected_sensor_locations() -> 
             "sensor_locations_connected_throughout": ["rear-right"],
             "speed_stats": {},
             "most_likely_origin": {},
-        }
+        },
     )
 
     assert context.sensor_locations_active == ["rear-right"]
@@ -41,7 +41,7 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
                     "strongest_speed_band": "50-80 km/h",
                     "confidence_0_to_1": 0.71,
                     "evidence_metrics": {"vibration_strength_db": 21.0},
-                }
+                },
             ],
             "top_causes": [
                 {
@@ -50,11 +50,11 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
                     "strongest_location": "front-left",
                     "strongest_speed_band": "50-80 km/h",
                     "confidence": 0.71,
-                }
+                },
             ],
             "speed_stats": {"steady_speed": False},
             "most_likely_origin": {},
-        }
+        },
     )
 
     def tr(key: str, **_kw: object) -> str:

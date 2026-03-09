@@ -261,7 +261,7 @@ class TestBuildRunMetadata:
                     "tire_aspect_pct": 55.0,
                     "rim_in": 16.0,
                 },
-            )
+            ),
         )
         assert meta["run_id"] == "test-run"
         assert meta["sensor_model"] == "ADXL345"
@@ -274,7 +274,7 @@ class TestBuildRunMetadata:
             **_default_run_metadata_kwargs(
                 run_id="run-lang",
                 language_provider=lambda: "fi",
-            )
+            ),
         )
         assert meta["language"] == "fi"
 
@@ -283,7 +283,7 @@ class TestBuildRunMetadata:
             **_default_run_metadata_kwargs(
                 run_id="run-lang-default",
                 language_provider=lambda: "   ",
-            )
+            ),
         )
         assert meta["language"] == "en"
 

@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Runtime NaN handling and update-manager guard regressions:
@@ -359,7 +359,6 @@ class TestFirmwareCacheRestore:
 
     def test_old_current_restored_on_rename_failure(self, tmp_path):
         """If extract_dir.rename(target) fails, old_current should be restored."""
-
         current = tmp_path / "current"
         current.mkdir()
         (current / "marker.txt").write_text("old_firmware")

@@ -78,15 +78,27 @@ Regression coverage is grouped by intent:
 
 Prefer focused files grouped by behavior or maintenance boundary. Recent high-churn suites in `api/`, `report/`, `update/`, `analysis/`, and `apps/ui/tests/` are intentionally split into smaller behavior-focused files plus local helper modules such as `_history_endpoint_helpers.py`, `_report_persistence_helpers.py`, `_report_pdf_test_helpers.py`, `_update_manager_test_helpers.py`, `_diagnosis_robustness_helpers.py`, `_phased_scenario_helpers.py`, and `smoke.helpers.ts` so failures stay easy to diagnose without centralizing unrelated assertions in one mega-file.
 
+## Contract bridge tests
+
+Contract bridge tests live in `apps/server/tests/integration/` and validate that data produced by one subsystem is accepted by the next. They catch schema drift at subsystem boundaries that unit tests miss.
+
+| File | Boundary |
+|---|---|
+| `test_contract_analysis_report.py` | `summarize_run_data()` → `map_summary()` |
+| `test_contract_persistence_analysis.py` | `HistoryDB` write → read → `summarize_run_data()` |
+
+These tests run in standard CI (no special markers). They use minimal synthetic data and complete in under 5 seconds.
+
 ## Running tests
 
-```bash
-# Canonical verification entry points
-python3 tools/tests/run_verification.py --suite ci-parity
-python3 tools/tests/run_verification.py --suite full-stack
+Two tiers: `make test` for iteration, `make test-all` before pushing.
 
-# Full backend suite (excludes selenium)
-pytest -q -m "not selenium" apps/server/tests
+```bash
+# Fast iteration — backend unit tests (excludes selenium)
+make test
+
+# Full CI-parity — all blocking CI jobs in parallel
+make test-all
 
 # Single feature area
 pytest -q apps/server/tests/report/
@@ -97,14 +109,13 @@ pytest -q apps/server/tests/update/
 pytest -q apps/server/tests/integration/
 pytest -q apps/server/tests/regression/report/
 
-# Progress output for a faster local loop
-python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
+# Focused CI job groups
+python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests
+python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
+python3 tools/tests/run_ci_parallel.py --job release-smoke
 
-# CI-parity job groups
-make test-all
-python3 tools/tests/run_verification.py --suite ci-parity --job backend-quality --job backend-typecheck --job backend-tests
-python3 tools/tests/run_verification.py --suite ci-parity --job frontend-typecheck --job ui-smoke
-python3 tools/tests/run_verification.py --suite ci-parity --job release-smoke
+# Full-stack (Docker-backed)
+make test-full-suite
 ```
 
 `release-smoke` is the packaged-artifact gate. It builds or reuses the server

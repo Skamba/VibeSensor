@@ -175,7 +175,9 @@ class TestUpdateStateStore:
         ],
     )
     def test_load_returns_none_for_bad_input(
-        self, tmp_path: Path, file_content: str | None
+        self,
+        tmp_path: Path,
+        file_content: str | None,
     ) -> None:
         path = tmp_path / "state.json"
         if file_content is not None:
@@ -252,7 +254,7 @@ class TestStartupRecovery:
                 started_at=time.time() - 60,
                 ssid="CrashNet",
                 log_tail=["some log"],
-            )
+            ),
         )
         mgr = make_mgr()
 
@@ -288,7 +290,7 @@ class TestStartupRecovery:
                 phase=UpdatePhase.done,
                 started_at=time.time() - 60,
                 finished_at=time.time() - 30,
-            )
+            ),
         )
         mgr = make_mgr()
 
@@ -304,7 +306,7 @@ class TestStartupRecovery:
                 state=UpdateState.running,
                 phase=UpdatePhase.connecting_wifi,
                 started_at=time.time() - 60,
-            )
+            ),
         )
         mgr = make_mgr()
 
@@ -323,7 +325,7 @@ class TestStartupRecovery:
                 state=UpdateState.running,
                 phase=UpdatePhase.downloading,
                 started_at=time.time() - 60,
-            )
+            ),
         )
         runner.default_response = (1, "", "nmcli not found")
         mgr = make_mgr()
@@ -381,8 +383,8 @@ class TestPersistenceDuringLifecycle:
                     phase="diagnostics",
                     message="Wi-Fi warning",
                     detail="dns probe failed once",
-                )
-            ]
+                ),
+            ],
         )
 
         loaded = store.load()
@@ -441,7 +443,7 @@ class TestPersistenceDuringLifecycle:
                 last_success_at=1700000120.0,
                 ssid="DoneNet",
                 exit_code=0,
-            )
+            ),
         )
         mgr = make_mgr()
 

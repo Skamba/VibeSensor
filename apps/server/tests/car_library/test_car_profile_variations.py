@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Car profile variation tests (≥50 direct-injection cases).
 
 Validates that the analysis pipeline correctly detects faults across

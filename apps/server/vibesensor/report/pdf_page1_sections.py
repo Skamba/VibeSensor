@@ -38,7 +38,10 @@ def label_width(c: Canvas, label: str, *, default_w: float, col_w: float) -> flo
 
 
 def column_height(
-    rows: list[tuple[str, str, float]], *, available_w: float, row_gap: float
+    rows: list[tuple[str, str, float]],
+    *,
+    available_w: float,
+    row_gap: float,
 ) -> float:
     if not rows:
         return 0.0
@@ -91,7 +94,7 @@ def build_header_rows(
                     default_w=left_lbl_default,
                     col_w=left_col_w,
                 ),
-            )
+            ),
         )
     if data.end_time_utc:
         left_rows.append(
@@ -99,7 +102,7 @@ def build_header_rows(
                 tr("END_TIME_UTC"),
                 data.end_time_utc,
                 label_width(c, tr("END_TIME_UTC"), default_w=left_lbl_default, col_w=left_col_w),
-            )
+            ),
         )
 
     right_pairs: list[tuple[str, str]] = []
@@ -233,7 +236,12 @@ def render_observed_signature_panel(
     )
     oy -= obs_step
     _draw_kv(
-        c, ox, oy, tr("SPEED_BAND"), _safe(data.observed.speed_band, na), label_w=OBSERVED_LABEL_W
+        c,
+        ox,
+        oy,
+        tr("SPEED_BAND"),
+        _safe(data.observed.speed_band, na),
+        label_w=OBSERVED_LABEL_W,
     )
     oy -= obs_step
     _draw_kv(

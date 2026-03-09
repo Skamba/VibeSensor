@@ -294,6 +294,7 @@ class HealthResponse(BaseModel):
     startup_state: str
     startup_phase: str
     startup_error: str | None
+    startup_warnings: list[str] = []
     background_task_failures: dict[str, str]
     processing_state: str
     processing_failures: int
@@ -306,6 +307,12 @@ class HealthResponse(BaseModel):
     data_loss: HealthDataLossResponse
     persistence: HealthPersistenceResponse
     intake_stats: HealthIntakeStatsResponse
+
+    tick_duration_s: float = 0.0
+    max_tick_duration_s: float = 0.0
+    tick_count: int = 0
+    db_last_write_duration_s: float = 0.0
+    db_max_write_duration_s: float = 0.0
 
 
 class CarResponse(BaseModel):

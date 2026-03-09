@@ -152,7 +152,7 @@ def test_normalize_sample_record_filters_invalid_peaks() -> None:
             {"hz": -1.0, "amp": 0.1},  # invalid hz
             {"hz": 20.0, "amp": None},  # invalid amp
             "not_a_dict",  # not a dict
-        ]
+        ],
     }
     result = normalize_sample_record(record)
     assert len(result["top_peaks"]) == 1
@@ -174,8 +174,8 @@ def test_normalize_sample_record_preserves_optional_peak_metadata() -> None:
                 "amp": 0.22,
                 "vibration_strength_db": 27.5,
                 "strength_bucket": "l4",
-            }
-        ]
+            },
+        ],
     }
     result = normalize_sample_record(record)
     assert result["top_peaks"][0]["vibration_strength_db"] == 27.5
@@ -282,7 +282,8 @@ def test_read_jsonl_run_truncated_last_line(tmp_path: Path) -> None:
 
 
 def test_read_jsonl_run_logs_warning_for_corrupt_lines(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Warnings are logged for each corrupt line, including line numbers."""
     path = tmp_path / "warn.jsonl"
@@ -338,7 +339,8 @@ def test_append_jsonl_records_preserves_unicode_text(tmp_path: Path) -> None:
 
 
 def test_append_jsonl_records_durable_fsync_cadence(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     path = tmp_path / "durable.jsonl"
     fsync_calls: list[int] = []
@@ -386,7 +388,8 @@ def test_bounded_sample_zero_max_items_with_hint_raises() -> None:
 
 
 def test_read_jsonl_run_warns_on_duplicate_metadata(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Second metadata record in the same file logs a warning; first is used."""
     path = tmp_path / "dup_meta.jsonl"
@@ -416,7 +419,8 @@ def test_read_jsonl_run_warns_on_duplicate_metadata(
 
 
 def test_read_jsonl_run_end_record_without_end_time_utc_leaves_metadata_unchanged(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """When the end record has no end_time_utc, metadata is not overwritten with None."""
     path = tmp_path / "no_end_time.jsonl"

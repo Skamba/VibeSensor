@@ -138,7 +138,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
                     "history_db_path": str(tmp_path / "history.db"),
                     "shutdown_analysis_timeout_s": 10,
                 },
-            }
+            },
         ),
         encoding="utf-8",
     )

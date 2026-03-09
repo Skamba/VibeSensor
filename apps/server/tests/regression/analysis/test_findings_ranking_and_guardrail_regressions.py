@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Findings ranking and analysis guardrail regressions:
@@ -26,7 +26,8 @@ from vibesensor.runlog import append_jsonl_records
 
 class TestRankingScoreSyncAfterSuppression:
     """Regression: _suppress_engine_aliases must update _ranking_score
-    in the finding dict when suppressing confidence."""
+    in the finding dict when suppressing confidence.
+    """
 
     def test_ranking_score_updated(self) -> None:
         findings = [
@@ -59,7 +60,8 @@ class TestRankingScoreSyncAfterSuppression:
 
 class TestNegligibleCapAligned:
     """Regression: negligible-strength confidence cap must not exceed
-    TIER_B_CEILING (0.40)."""
+    TIER_B_CEILING (0.40).
+    """
 
     def test_order_cap_value_in_source(self) -> None:
         # After refactoring the literal 0.40 to a named constant, verify
@@ -96,7 +98,7 @@ class TestHistoryDbCloseLocked:
             __import__(
                 "vibesensor.history_db",
                 fromlist=["HistoryDB"],
-            ).HistoryDB.close
+            ).HistoryDB.close,
         )
         assert "self._lock" in source, "close() must use self._lock"
 
@@ -163,7 +165,8 @@ class TestSuppressEngineAliasesCapRaised:
 
 class TestWorkerPoolDeterministic:
     """Regression: test_worker_pool should use np.random.default_rng,
-    not np.random.seed (global state mutation)."""
+    not np.random.seed (global state mutation).
+    """
 
     def test_no_global_seed_in_source(self) -> None:
         import tests.app.test_worker_pool as mod
@@ -180,7 +183,8 @@ _UNSEEDED_RANDOM_MODULES = [
 
 class TestNoUnseededRandomInTests:
     """Guardrail: test files must use np.random.default_rng(seed), never
-    the unseeded global PRNG functions like np.random.randn or np.random.rand."""
+    the unseeded global PRNG functions like np.random.randn or np.random.rand.
+    """
 
     @pytest.mark.parametrize("modpath", _UNSEEDED_RANDOM_MODULES)
     def test_no_unseeded_randn(self, modpath: str) -> None:

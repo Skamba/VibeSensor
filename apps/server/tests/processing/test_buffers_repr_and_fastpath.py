@@ -53,7 +53,8 @@ class TestInvalidateCachesFastPath:
 
     def test_no_op_when_caches_already_clear(self) -> None:
         """Called on a fresh buffer (caches are None) must not raise or mutate
-        the generation fields."""
+        the generation fields.
+        """
         buf = _make_buf()
         # Confirm caches are already None
         assert buf.cached_spectrum_payload is None

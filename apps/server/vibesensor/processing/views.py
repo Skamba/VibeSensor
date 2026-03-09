@@ -107,7 +107,7 @@ class SignalProcessorViews:
                     "x_amp_g": float(axis_amps["x"][index]),
                     "y_amp_g": float(axis_amps["y"][index]),
                     "z_amp_g": float(axis_amps["z"][index]),
-                }
+                },
             )
 
         raw_stats: DebugSpectrumStatsPayload = {

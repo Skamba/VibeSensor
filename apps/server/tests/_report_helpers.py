@@ -80,7 +80,7 @@ def report_run_metadata(
                 "statistic": "Peak band RMS vs noise floor",
                 "units": "dB",
                 "definition": "20*log10((peak_band_rms + eps) / (floor + eps))",
-            }
+            },
         },
         "incomplete_for_order_analysis": raw_sample_rate_hz is None,
     }
@@ -113,7 +113,7 @@ def report_sample(
             "amp": peak_amp_g,
             "vibration_strength_db": vibration_strength_db,
             "strength_bucket": strength_bucket,
-        }
+        },
     ]
     if include_secondary_peak:
         peaks.append(
@@ -122,7 +122,7 @@ def report_sample(
                 "amp": peak_amp_g * 0.45,
                 "vibration_strength_db": 14.0,
                 "strength_bucket": None,
-            }
+            },
         )
     return {
         "record_type": "sample",

@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS schema_meta (
 
 CREATE TABLE IF NOT EXISTS runs (
     run_id                  TEXT PRIMARY KEY,
-    status                  TEXT NOT NULL DEFAULT 'recording',
+    status                  TEXT NOT NULL DEFAULT 'recording'
+                            CHECK (status IN ('recording', 'analyzing', 'complete', 'error')),
     start_time_utc          TEXT NOT NULL,
     end_time_utc            TEXT,
     metadata_json           TEXT NOT NULL,
@@ -124,7 +125,7 @@ class HistorySchemaMixin:
             if version > SCHEMA_VERSION:
                 raise RuntimeError(
                     f"History DB schema version {version} is newer than "
-                    f"supported {SCHEMA_VERSION}. Cannot downgrade."
+                    f"supported {SCHEMA_VERSION}. Cannot downgrade.",
                 )
             # -- Migrate forward: older version → current -----------------
             db_path = getattr(self, "db_path", None)  # HistoryDB exposes this

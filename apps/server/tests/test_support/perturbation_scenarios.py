@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Perturbation and transport-noise scenario builders for tests."""
 
 from __future__ import annotations
@@ -89,7 +88,7 @@ def make_speed_jitter_samples(
                     top_peaks=peaks,
                     vibration_strength_db=vib_db,
                     strength_floor_amp_g=noise_amp,
-                )
+                ),
             )
     return samples
 

@@ -151,7 +151,7 @@ def test_sanitize_clamps_absurd_values(store: AnalysisSettingsStore) -> None:
             "wheel_bandwidth_pct": 99999,
             "speed_uncertainty_pct": 99999,
             "min_abs_band_hz": 99999,
-        }
+        },
     )
     assert out["wheel_bandwidth_pct"] == 100.0
     assert out["speed_uncertainty_pct"] == 100.0
@@ -187,7 +187,10 @@ def test_sanitize_keeps_normal_values_unchanged(store: AnalysisSettingsStore) ->
     ],
 )
 def test_sanitize_clamps_out_of_range(
-    store: AnalysisSettingsStore, field: str, raw_value: float, clamped_value: float
+    store: AnalysisSettingsStore,
+    field: str,
+    raw_value: float,
+    clamped_value: float,
 ) -> None:
     out = store._sanitize({field: raw_value})
     assert out[field] == clamped_value

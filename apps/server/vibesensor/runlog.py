@@ -47,24 +47,24 @@ def _sanitize_non_finite(obj: JsonValue) -> JsonValue:
 
 
 __all__ = [
-    "RUN_SCHEMA_VERSION",
+    "RUN_END_TYPE",
     "RUN_METADATA_TYPE",
     "RUN_SAMPLE_TYPE",
-    "RUN_END_TYPE",
+    "RUN_SCHEMA_VERSION",
     "RunData",
     "RunEndRecord",
-    "utc_now_iso",
-    "parse_iso8601",
+    "append_jsonl_records",
     "as_float_or_none",
     "as_int_or_none",
-    "default_units",
-    "default_amplitude_definitions",
-    "create_run_metadata",
-    "create_run_end_record",
-    "normalize_sample_record",
-    "append_jsonl_records",
-    "read_jsonl_run",
     "bounded_sample",
+    "create_run_end_record",
+    "create_run_metadata",
+    "default_amplitude_definitions",
+    "default_units",
+    "normalize_sample_record",
+    "parse_iso8601",
+    "read_jsonl_run",
+    "utc_now_iso",
 ]
 
 
@@ -188,6 +188,7 @@ def bounded_sample(
     ------
     ValueError
         If *max_items* is not a positive integer.
+
     """
     if max_items <= 0:
         raise ValueError(f"bounded_sample: max_items must be >= 1, got {max_items}")

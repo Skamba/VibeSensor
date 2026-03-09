@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """Concurrency and generation-guard regressions.
@@ -42,7 +42,7 @@ def _make_logger(tmp_path: Path, **overrides):
             "accel_scale_g_per_lsb",
             "persist_history_db",
             "no_data_timeout_s",
-        }
+        },
     )
     config_overrides = {k: overrides.pop(k) for k in list(overrides) if k in _CONFIG_FIELDS}
     config = MetricsLoggerConfig(
@@ -78,7 +78,8 @@ def _make_logger(tmp_path: Path, **overrides):
 
 class TestAutoStopGenerationGuard:
     """stop_logging(_only_if_generation=N) must be a no-op when session has
-    already advanced past generation N."""
+    already advanced past generation N.
+    """
 
     def test_stale_generation_does_not_stop_new_session(self, tmp_path: Path) -> None:
         logger, db = _make_logger(tmp_path)
@@ -206,7 +207,9 @@ class TestFinalizeReturnGatesAnalysis:
     """When _finalize_run_locked fails, stop_logging must NOT schedule analysis."""
 
     def test_analysis_not_scheduled_when_finalize_fails(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         logger, db = _make_logger(
             tmp_path,

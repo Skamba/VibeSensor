@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Five-scenario report consistency tests.
 
 Each scenario generates analysis output via the builders, builds
@@ -88,7 +87,10 @@ def _build_single_wheel_fault() -> ScenarioPair:
 
 def _build_high_speed_fault() -> ScenarioPair:
     samples = make_noise_samples(
-        sensors=ALL_WHEEL_SENSORS, speed_kmh=40.0, n_samples=15, start_t_s=0.0
+        sensors=ALL_WHEEL_SENSORS,
+        speed_kmh=40.0,
+        n_samples=15,
+        start_t_s=0.0,
     )
     samples += make_fault_samples(
         fault_sensor=SENSOR_FR,
@@ -106,7 +108,11 @@ def _build_mixed_noise_fault() -> ScenarioPair:
     sensors = ALL_WHEEL_SENSORS
     samples = make_idle_samples(sensors=sensors, n_samples=5, start_t_s=0.0)
     samples += make_ramp_samples(
-        sensors=sensors, speed_start=0.0, speed_end=80.0, n_samples=10, start_t_s=5.0
+        sensors=sensors,
+        speed_start=0.0,
+        speed_end=80.0,
+        n_samples=10,
+        start_t_s=5.0,
     )
     samples += make_fault_samples(
         fault_sensor=SENSOR_RL,
@@ -117,13 +123,25 @@ def _build_mixed_noise_fault() -> ScenarioPair:
         fault_amp=0.05,
     )
     samples += make_transient_samples(
-        sensor=SENSOR_FL, speed_kmh=80.0, n_samples=3, start_t_s=45.0, spike_amp=0.12
+        sensor=SENSOR_FL,
+        speed_kmh=80.0,
+        n_samples=3,
+        start_t_s=45.0,
+        spike_amp=0.12,
     )
     samples += make_transient_samples(
-        sensor=SENSOR_RR, speed_kmh=80.0, n_samples=2, start_t_s=48.0, spike_amp=0.10
+        sensor=SENSOR_RR,
+        speed_kmh=80.0,
+        n_samples=2,
+        start_t_s=48.0,
+        spike_amp=0.10,
     )
     samples += make_ramp_samples(
-        sensors=sensors, speed_start=80.0, speed_end=0.0, n_samples=10, start_t_s=50.0
+        sensors=sensors,
+        speed_start=80.0,
+        speed_end=0.0,
+        n_samples=10,
+        start_t_s=50.0,
     )
     summary = run_analysis(samples, standard_metadata())
     return summary, _build_report_data(summary)
@@ -442,7 +460,7 @@ class TestScenario5SparseSensors:
     def test_sensor_count_accurate(self, scenario: ScenarioPair) -> None:
         summary, rd = scenario
         connected = summary.get("sensor_locations_connected_throughout") or summary.get(
-            "sensor_locations"
+            "sensor_locations",
         )
         assert rd.sensor_count == len(connected or [])
 
@@ -469,7 +487,8 @@ class TestAllFiveScenariosPass:
 
     @pytest.fixture(params=sorted(_SCENARIO_BUILDERS), scope="class")
     def named_scenario(
-        self, request: pytest.FixtureRequest
+        self,
+        request: pytest.FixtureRequest,
     ) -> tuple[str, dict, ReportTemplateData]:
         name: str = request.param
         summary, rd = _SCENARIO_BUILDERS[name]()

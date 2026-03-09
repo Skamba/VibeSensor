@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import yaml
 from _paths import SERVER_ROOT
 
-import vibesensor.release_validation as release_validation
+from vibesensor import release_validation
 from vibesensor.release_validation import (
     build_release_smoke_config,
     run_server_smoke,
@@ -56,9 +56,9 @@ def test_validate_firmware_dist_accepts_generated_manifest(tmp_path: Path) -> No
                         "file": "esp32dev/firmware.bin",
                         "offset": "0x10000",
                         "sha256": hashlib.sha256(b"firmware").hexdigest(),
-                    }
+                    },
                 ],
-            }
+            },
         ],
     }
     (dist_dir / "flash.json").write_text(json.dumps(manifest), encoding="utf-8")

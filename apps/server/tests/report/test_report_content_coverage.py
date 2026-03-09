@@ -44,7 +44,7 @@ def _make_run_jsonl(tmp_path: Path, *, tire_circumference_m: float = 2.20) -> Pa
         speed = 40 + idx
         wheel_hz = (speed * KMH_TO_MPS) / tire_circumference_m
         records.append(
-            _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09)
+            _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09),
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
@@ -133,7 +133,7 @@ def test_select_top_causes_excludes_informational_transient_findings(
             "peak_classification": "transient",
             "confidence_0_to_1": confidence,
             "frequency_hz_or_order": freq_hz,
-        }
+        },
     ]
     causes = select_top_causes(findings)
     assert causes == []
@@ -164,7 +164,8 @@ def test_select_top_causes_prefers_diagnostic_over_info() -> None:
 
 def test_select_top_causes_prefers_cruise_phase_evidence() -> None:
     """A finding with strong cruise-phase evidence should rank above one with
-    equal raw confidence but no cruise evidence."""
+    equal raw confidence but no cruise evidence.
+    """
     findings = [
         {
             "finding_id": "F_A",
@@ -202,7 +203,7 @@ def test_select_top_causes_phase_evidence_in_output() -> None:
             "confidence_0_to_1": 0.75,
             "frequency_hz_or_order": "1x wheel order",
             "phase_evidence": phase_ev,
-        }
+        },
     ]
     causes = select_top_causes(findings)
     assert len(causes) == 1
@@ -218,7 +219,7 @@ def test_select_top_causes_no_phase_evidence_still_works() -> None:
             "suspected_source": "engine",
             "confidence_0_to_1": 0.55,
             "frequency_hz_or_order": "2x engine order",
-        }
+        },
     ]
     causes = select_top_causes(findings)
     assert len(causes) == 1

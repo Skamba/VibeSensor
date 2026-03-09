@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Level F – Messy real-world scenarios (direct injection, deterministic).
 
 Tests the analysis pipeline with realistic edge cases that simulate
@@ -114,7 +113,8 @@ def test_fault_with_speed_jitter(corner: str, profile: dict[str, Any]) -> None:
         {
             **s,
             "speed_kmh": max(
-                5.0, s["speed_kmh"] + 8.0 * ((_stable_hash(f"jitter-{i}") % 200) / 100.0 - 1.0)
+                5.0,
+                s["speed_kmh"] + 8.0 * ((_stable_hash(f"jitter-{i}") % 200) / 100.0 - 1.0),
             ),
         }
         for i, s in enumerate(fault)
@@ -139,7 +139,7 @@ def test_diffuse_noise_with_pothole_transients(speed: float, profile: dict[str, 
     """
     samples: list[dict] = []
     samples.extend(
-        make_road_phase_samples(sensors=_4S, speed_kmh=speed, smooth_n=25, rough_n=0, pothole_n=0)
+        make_road_phase_samples(sensors=_4S, speed_kmh=speed, smooth_n=25, rough_n=0, pothole_n=0),
     )
     # Add transient bursts on each sensor (simulating potholes)
     for i, sensor in enumerate(_4S):
@@ -152,7 +152,7 @@ def test_diffuse_noise_with_pothole_transients(speed: float, profile: dict[str, 
                 spike_amp=0.12,
                 spike_vib_db=33.0,
                 spike_freq_hz=20.0,
-            )
+            ),
         )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"diffuse+pothole@{speed}")
@@ -179,7 +179,7 @@ def test_overlapping_engine_wheel_harmonics(speed: float, profile: dict[str, Any
             n_samples=15,
             engine_amp=0.03,
             engine_vib_db=20.0,
-        )
+        ),
     )
     # Wheel fault on FL
     samples.extend(
@@ -192,7 +192,7 @@ def test_overlapping_engine_wheel_harmonics(speed: float, profile: dict[str, Any
             start_t_s=15,
             fault_amp=0.07,
             fault_vib_db=28.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)

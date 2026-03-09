@@ -177,13 +177,13 @@ def build_order_bands(
                 "key": "driveshaft_engine_1x",
                 "center_hz": drive_hz,
                 "tolerance": max(drive_tol, engine_tol),
-            }
+            },
         )
     else:
         bands.append({"key": "driveshaft_1x", "center_hz": drive_hz, "tolerance": drive_tol})
         bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
     bands.append(
-        {"key": "engine_2x", "center_hz": engine_hz * HARMONIC_2X, "tolerance": engine_tol}
+        {"key": "engine_2x", "center_hz": engine_hz * HARMONIC_2X, "tolerance": engine_tol},
     )
     return bands
 
@@ -233,10 +233,12 @@ def vehicle_orders_hz(
         tire_uncertainty_pct,
     )
     drive_uncertainty_pct = combined_relative_uncertainty(
-        wheel_uncertainty_pct, final_drive_uncertainty_pct
+        wheel_uncertainty_pct,
+        final_drive_uncertainty_pct,
     )
     engine_uncertainty_pct = combined_relative_uncertainty(
-        drive_uncertainty_pct, gear_uncertainty_pct
+        drive_uncertainty_pct,
+        gear_uncertainty_pct,
     )
     return {
         "wheel_hz": wheel_hz,
@@ -330,7 +332,7 @@ def classify_peak_hz(
                     "hz": wheel_2x_hz,
                     "tol": max(wheel_tol, engine_tol),
                     "key": "wheel2_eng1",
-                }
+                },
             )
         else:
             candidates.append({"hz": wheel_2x_hz, "tol": wheel_tol, "key": "wheel2"})
@@ -345,14 +347,14 @@ def classify_peak_hz(
                     "hz": drive_hz,
                     "tol": max(drive_tol, engine_tol),
                     "key": "shaft_eng1",
-                }
+                },
             )
         else:
             candidates.extend(
                 [
                     {"hz": drive_hz, "tol": drive_tol, "key": "shaft1"},
                     {"hz": engine_hz, "tol": engine_tol, "key": "eng1"},
-                ]
+                ],
             )
         candidates.append({"hz": engine_hz * HARMONIC_2X, "tol": engine_tol, "key": "eng2"})
 
@@ -425,7 +427,7 @@ def severity_from_peak(
                 last_confirmed_hz = as_float_or_none(state.get("last_confirmed_hz"))
                 assert peak_hz_value is not None and freq_bin_hz is not None
                 if last_confirmed_hz is not None and abs(
-                    float(peak_hz_value) - last_confirmed_hz
+                    float(peak_hz_value) - last_confirmed_hz,
                 ) > float(freq_bin_hz):
                     state["consecutive_up"] = 1
                     state["last_confirmed_hz"] = peak_hz_value

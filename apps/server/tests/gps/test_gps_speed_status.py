@@ -119,7 +119,8 @@ class TestFallback:
     def test_stale_gps_triggers_manual_fallback(self) -> None:
         """When GPS data is stale and an override_speed_mps is set,
         effective_speed_mps returns the override (since override always wins).
-        When no override is set, stale GPS triggers fallback → None."""
+        When no override is set, stale GPS triggers fallback → None.
+        """
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
         m.last_update_ts = time.monotonic() - 999
@@ -261,7 +262,7 @@ class TestSpeedSourceConfigFallback:
 
     def test_from_dict_camel_case(self) -> None:
         cfg = SpeedSourceConfig.from_dict(
-            {"speedSource": "gps", "staleTimeoutS": 30, "fallbackMode": "manual"}
+            {"speedSource": "gps", "staleTimeoutS": 30, "fallbackMode": "manual"},
         )
         assert cfg.stale_timeout_s == 30.0
         assert cfg.fallback_mode == "manual"

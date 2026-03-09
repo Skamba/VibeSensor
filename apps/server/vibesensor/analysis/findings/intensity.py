@@ -98,7 +98,7 @@ def _phase_speed_breakdown(
                 "max_speed_kmh": max(speed_vals) if speed_vals else None,
                 "mean_vibration_strength_db": _mean(amp_vals) if amp_vals else None,
                 "max_vibration_strength_db": max(amp_vals) if amp_vals else None,
-            }
+            },
         )
     return rows
 
@@ -128,7 +128,7 @@ def _speed_breakdown(samples: list[Sample]) -> list[SpeedBreakdownRow]:
                 "count": counts[label],
                 "mean_vibration_strength_db": _mean(values) if values else None,
                 "max_vibration_strength_db": max(values) if values else None,
-            }
+            },
         )
     return rows
 
@@ -200,7 +200,8 @@ def _sensor_intensity_by_location(
     if include_locations is not None:
         target_locations |= set(include_locations)
     max_sample_count = max(
-        (sample_counts.get(location, 0) for location in target_locations), default=0
+        (sample_counts.get(location, 0) for location in target_locations),
+        default=0,
     )
 
     for location in sorted(target_locations):
@@ -225,7 +226,7 @@ def _sensor_intensity_by_location(
         sample_coverage_ratio = (sample_count / max_sample_count) if max_sample_count > 0 else 1.0
         sample_coverage_warning = max_sample_count >= 5 and sample_coverage_ratio <= 0.20
         partial_coverage = bool(
-            connected_locations is not None and location not in connected_locations
+            connected_locations is not None and location not in connected_locations,
         )
         # Per-phase intensity summary for this location (issue #192)
         location_phase_intensity: JsonObject | None = None
@@ -256,7 +257,7 @@ def _sensor_intensity_by_location(
                 "queue_overflow_drops_delta": overflow_delta,
                 "strength_bucket_distribution": bucket_distribution,
                 "phase_intensity": location_phase_intensity,
-            }
+            },
         )
     rows.sort(
         key=lambda row: (

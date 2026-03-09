@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501
+# ruff: noqa: E402
 from __future__ import annotations
 
 """
@@ -76,7 +76,8 @@ class TestFinding1_FirstValidBinZeroed:
     def test_first_valid_bin_suppressed_in_combined_spectrum(self):
         """When spectrum_min_hz > 0, bin 0 of the sliced spectrum is a
         real analysis frequency, yet it is zeroed before being fed to
-        combined_spectrum_amp_g."""
+        combined_spectrum_amp_g.
+        """
         sp = _make_signal_processor(sample_rate_hz=512, fft_n=512)
         # Inject a 6 Hz sinusoid — should appear in the first few bins
         t = np.arange(512, dtype=np.float32) / 512
@@ -162,7 +163,8 @@ class TestFinding2_DoubleBinRemoval:
 
 class TestFinding3_BucketVsLabelInconsistency:
     """FIXED: bucket_for_strength now returns 'l0' for negative dB,
-    consistent with strength_label returning 'negligible'."""
+    consistent with strength_label returning 'negligible'.
+    """
 
     @pytest.mark.parametrize("db_value", [-5.0, -0.1, -20.0])
     def test_negative_db_inconsistency(self, db_value: float):
@@ -283,7 +285,8 @@ class TestFinding6_CombinedSpectrumInheritsZeroedBin:
 
     def test_combined_spectrum_preserves_bin0(self):
         """FIXED: combined spectrum bin 0 should NOT be zeroed for
-        broadband input because axis_amp_slices now uses amp_slice."""
+        broadband input because axis_amp_slices now uses amp_slice.
+        """
         sp = _make_signal_processor(sample_rate_hz=256, fft_n=256)
         rng = np.random.default_rng(42)
         block = rng.standard_normal((3, 256)).astype(np.float32) * 0.1

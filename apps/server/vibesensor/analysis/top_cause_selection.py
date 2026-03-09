@@ -90,6 +90,6 @@ def select_top_causes(
                 "diffuse_excitation": representative.get("diffuse_excitation", False),
                 "diagnostic_caveat": representative.get("diagnostic_caveat"),
                 "phase_evidence": representative.get("phase_evidence"),
-            }
+            },
         )
     return result

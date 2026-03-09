@@ -27,7 +27,7 @@ class UpdateReleaseCheck:
 class UpdateReleaseService:
     """Checks GitHub releases and downloads the selected wheel."""
 
-    __slots__ = ("_tracker", "_config")
+    __slots__ = ("_config", "_tracker")
 
     def __init__(self, *, tracker: UpdateStatusTracker, config: UpdateReleaseConfig) -> None:
         self._tracker = tracker
@@ -40,7 +40,7 @@ class UpdateReleaseService:
             ReleaseFetcherConfig(
                 server_repo=self._config.server_repo,
                 rollback_dir=str(self._config.rollback_dir),
-            )
+            ),
         )
         try:
             release = await asyncio.to_thread(fetcher.check_update_available, current_version)
@@ -56,7 +56,7 @@ class UpdateReleaseService:
                 latest_tag = latest_release.tag
         except Exception as exc:
             self._tracker.log(
-                f"Could not resolve the latest release tag for ESP firmware sync: {exc}"
+                f"Could not resolve the latest release tag for ESP firmware sync: {exc}",
             )
         return UpdateReleaseCheck(release=None, latest_tag=latest_tag)
 
@@ -67,7 +67,7 @@ class UpdateReleaseService:
             ReleaseFetcherConfig(
                 server_repo=self._config.server_repo,
                 rollback_dir=str(self._config.rollback_dir),
-            )
+            ),
         )
         try:
             return await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)

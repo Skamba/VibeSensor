@@ -24,10 +24,10 @@ from .rotational_speeds import (
     rotational_basis_speed_source as _rotational_basis_speed_source,
 )
 from .subsystems import (
-    RuntimeDiagnosticsSubsystem,
     RuntimeIngressSubsystem,
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
+    RuntimeRecordingSubsystem,
     RuntimeRouteServices,
     RuntimeSettingsSubsystem,
     RuntimeUpdateSubsystem,
@@ -36,19 +36,19 @@ from .subsystems import (
 from .ws_broadcast import WsBroadcastCache
 
 __all__ = [
-    "RuntimeState",
-    "build_runtime_state",
-    "RuntimeIngressSubsystem",
-    "RuntimeSettingsSubsystem",
-    "RuntimeDiagnosticsSubsystem",
-    "RuntimePersistenceSubsystem",
-    "RuntimeUpdateSubsystem",
-    "RuntimeProcessingSubsystem",
-    "RuntimeWebsocketSubsystem",
-    "RuntimeRouteServices",
     "ProcessingLoopState",
     "RuntimeHealthState",
+    "RuntimeIngressSubsystem",
+    "RuntimePersistenceSubsystem",
+    "RuntimeProcessingSubsystem",
+    "RuntimeRecordingSubsystem",
+    "RuntimeRouteServices",
+    "RuntimeSettingsSubsystem",
+    "RuntimeState",
+    "RuntimeUpdateSubsystem",
+    "RuntimeWebsocketSubsystem",
     "WsBroadcastCache",
     "_build_rotational_speeds_payload",
     "_rotational_basis_speed_source",
+    "build_runtime_state",
 ]

@@ -98,7 +98,8 @@ async def _await_speed(monitor: GPSSpeedMonitor, *, timeout_s: float = 2.5) -> N
     ],
 )
 async def test_run_accepts_valid_tpv_speed(
-    tpv_kwargs: dict[str, object], expected_speed: float
+    tpv_kwargs: dict[str, object],
+    expected_speed: float,
 ) -> None:
     """TPV messages with valid fix mode and speed update monitor.speed_mps."""
     async with _gps_server_scenario(_tpv_line(**tpv_kwargs)) as monitor:
@@ -116,7 +117,8 @@ async def test_run_ignores_non_tpv_messages() -> None:
 
 @pytest.mark.asyncio
 async def test_run_reconnects_on_connection_failure(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """run() retries after ConnectionRefusedError instead of crashing."""
     monitor = GPSSpeedMonitor(gps_enabled=True)

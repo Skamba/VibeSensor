@@ -239,7 +239,7 @@ class SignalProcessor:
     def intake_stats(self) -> IntakeStatsPayload:
         stats = self._store.intake_stats()
         if self._worker_pool is not None:
-            stats["worker_pool"] = cast(JsonObject, self._worker_pool.stats())
+            stats["worker_pool"] = cast("JsonObject", self._worker_pool.stats())
         return stats
 
     def _analysis_time_range(self, buf: ClientBuffer) -> tuple[float, float, bool] | None:

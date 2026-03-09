@@ -53,7 +53,7 @@ def parse_wifi_diagnostics(log_dir: str = _WIFI_DIAG_DIR) -> list[UpdateIssue]:
                             phase="diagnostics",
                             message="Hotspot summary reports failure",
                             detail=sanitized,
-                        )
+                        ),
                     )
         except OSError:
             LOGGER.debug("Unable to read wifi summary diagnostics from %s", summary, exc_info=True)
@@ -73,7 +73,7 @@ def parse_wifi_diagnostics(log_dir: str = _WIFI_DIAG_DIR) -> list[UpdateIssue]:
                             phase="diagnostics",
                             message="Hotspot log issue",
                             detail=sanitized,
-                        )
+                        ),
                     )
                     if len(hotspot_issues) >= _MAX_HOTSPOT_LOG_ISSUES:
                         break

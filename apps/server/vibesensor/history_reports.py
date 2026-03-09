@@ -111,8 +111,8 @@ class HistoryReportService:
     def _build_pdf_bytes(analysis_summary: JsonObject) -> bytes:
         from .analysis import SummaryData
 
-        mapped_summary = map_summary(cast(SummaryData, analysis_summary))
-        return cast(bytes, build_report_pdf(mapped_summary))
+        mapped_summary = map_summary(cast("SummaryData", analysis_summary))
+        return cast("bytes", build_report_pdf(mapped_summary))
 
     @staticmethod
     def _metadata_cache_token(metadata: object) -> str:

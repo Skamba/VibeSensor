@@ -7,10 +7,10 @@ from dataclasses import dataclass
 from ..config import AppConfig
 from .lifecycle import LifecycleManager
 from .subsystems import (
-    RuntimeDiagnosticsSubsystem,
     RuntimeIngressSubsystem,
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
+    RuntimeRecordingSubsystem,
     RuntimeRouteServices,
     RuntimeSettingsSubsystem,
     RuntimeUpdateSubsystem,
@@ -25,7 +25,7 @@ class RuntimeState:
     config: AppConfig
     ingress: RuntimeIngressSubsystem
     settings: RuntimeSettingsSubsystem
-    diagnostics: RuntimeDiagnosticsSubsystem
+    recording: RuntimeRecordingSubsystem
     persistence: RuntimePersistenceSubsystem
     updates: RuntimeUpdateSubsystem
     processing: RuntimeProcessingSubsystem

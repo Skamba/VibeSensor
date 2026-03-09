@@ -36,7 +36,7 @@ def test_map_summary_strength_label_includes_peak_amp_when_available() -> None:
             {
                 "finding_id": "F_ORDER",
                 "amplitude_metric": {"value": 0.032, "units": "g"},
-            }
+            },
         ],
         sensor_intensity_by_location=[{"p95_intensity_db": 22.0}],
     )
@@ -79,7 +79,7 @@ def test_map_summary_strength_label_uses_finding_db_when_sensor_rows_missing() -
                 "finding_id": "F_ORDER",
                 "amplitude_metric": {"value": 0.015, "units": "g"},
                 "evidence_metrics": {"vibration_strength_db": 23.4},
-            }
+            },
         ],
     )
     data = map_summary(summary)

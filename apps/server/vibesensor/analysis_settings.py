@@ -7,10 +7,10 @@ geometry helpers, and ``AnalysisSettingsStore`` for runtime settings management.
 from __future__ import annotations
 
 __all__ = [
-    "AnalysisSettingsStore",
     "DEFAULT_ANALYSIS_SETTINGS",
     "NON_NEGATIVE_KEYS",
     "POSITIVE_REQUIRED_KEYS",
+    "AnalysisSettingsStore",
     "engine_rpm_from_wheel_hz",
     "sanitize_settings",
     "tire_circumference_m_from_spec",
@@ -40,7 +40,7 @@ POSITIVE_REQUIRED_KEYS: frozenset[str] = frozenset(
         "engine_bandwidth_pct",
         "max_band_half_width_pct",
         "tire_deflection_factor",
-    }
+    },
 )
 NON_NEGATIVE_KEYS: frozenset[str] = frozenset(
     {
@@ -49,7 +49,7 @@ NON_NEGATIVE_KEYS: frozenset[str] = frozenset(
         "final_drive_uncertainty_pct",
         "gear_uncertainty_pct",
         "min_abs_band_hz",
-    }
+    },
 )
 
 _BOUNDS: dict[str, tuple[float, float]] = {
@@ -190,7 +190,9 @@ def wheel_hz_from_speed_mps(speed_mps: float, tire_circumference_m: float) -> fl
 
 
 def engine_rpm_from_wheel_hz(
-    wheel_hz: float, final_drive_ratio: float, gear_ratio: float
+    wheel_hz: float,
+    final_drive_ratio: float,
+    gear_ratio: float,
 ) -> float | None:
     """Engine RPM from wheel Hz, final-drive ratio, and current gear ratio.
 

@@ -47,11 +47,11 @@ class WsBroadcastService:
     """WebSocket payload assembly: tick management and cached payload building."""
 
     __slots__ = (
-        "cache",
-        "_ui_push_hz",
-        "_ui_heavy_push_hz",
         "_ingress",
         "_settings",
+        "_ui_heavy_push_hz",
+        "_ui_push_hz",
+        "cache",
     )
 
     def __init__(

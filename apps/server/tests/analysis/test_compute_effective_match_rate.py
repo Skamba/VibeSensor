@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Unit tests for _compute_effective_match_rate speed-band rescue logic.
 
 Covers the highest-speed-bin rescue path and per-location fallback.
@@ -62,7 +61,8 @@ def test_highest_bin_qualifies() -> None:
 
 def test_low_speed_fault_not_rescued_when_highest_bin_poor() -> None:
     """Only the highest speed bin is evaluated; a lower bin with strong
-    signal will not be rescued via speed-band path."""
+    signal will not be rescued via speed-band path.
+    """
     eff, band, loc_dom = _run_rescue(
         0.20,
         (
@@ -106,7 +106,8 @@ def test_second_highest_bin_not_considered() -> None:
 
 def test_highest_bin_wins_even_when_lower_bin_has_better_rate() -> None:
     """The highest speed bin is always the rescue candidate, even if a lower
-    bin has a better match rate."""
+    bin has a better match rate.
+    """
     eff, band, _ = _run_rescue(
         0.20,
         (

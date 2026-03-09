@@ -79,7 +79,7 @@ class TestUpdateJobStatusRoundTrip:
                 "issues": ["bad", {"phase": "downloading", "message": "warn", "detail": 99}],
                 "log_tail": ["ok", 7, None],
                 "runtime": ["not-a-dict"],
-            }
+            },
         )
 
         assert status.runtime == {}

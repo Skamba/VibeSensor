@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """UI mock test – lightweight deterministic validation.
 
 Mocks a stable analysis response and verifies that the API response
@@ -34,7 +33,7 @@ def _build_stable_analysis() -> dict[str, Any]:
             n_samples=40,
             fault_amp=0.08,
             fault_vib_db=30.0,
-        )
+        ),
     )
     return run_analysis(samples)
 

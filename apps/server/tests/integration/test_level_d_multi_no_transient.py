@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Level D – Multiple sensors, no transient (≥50 direct-injection cases).
 
 Tests the analysis pipeline with MULTIPLE sensors (2, 4, 8, or 12) and
@@ -125,7 +124,9 @@ def test_4sensor_no_fault(speed: float, profile: dict[str, Any]) -> None:
     ids=["FL_in_FL_RR", "RR_in_FL_RR", "FR_in_FR_RL", "RL_in_FR_RL"],
 )
 def test_2sensor_localization(
-    sensors: list[str], fault_corner: str, profile: dict[str, Any]
+    sensors: list[str],
+    fault_corner: str,
+    profile: dict[str, Any],
 ) -> None:
     """2-sensor pair, fault at one → correct localization."""
     fault_sensor = CORNER_SENSORS[fault_corner]
@@ -153,7 +154,10 @@ def test_2sensor_localization(
 )
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_multi_sensor_fault_localization(
-    corner: str, sensors: list[str], label: str, profile: dict[str, Any]
+    corner: str,
+    sensors: list[str],
+    label: str,
+    profile: dict[str, Any],
 ) -> None:
     """8 or 12 sensors, fault at one wheel corner → correct localization."""
     sensor = CORNER_SENSORS[corner]
@@ -192,7 +196,9 @@ def test_4sensor_diffuse_no_fault(speed: float, profile: dict[str, Any]) -> None
     ids=["2s", "4s", "8s"],
 )
 def test_confidence_scales_with_sensor_count(
-    sensors: list[str], label: str, profile: dict[str, Any]
+    sensors: list[str],
+    label: str,
+    profile: dict[str, Any],
 ) -> None:
     """More sensors → confidence should be reasonable (not inflated beyond reality)."""
     samples = make_profile_fault_samples(
@@ -299,8 +305,12 @@ def test_4sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
     samples.extend(make_idle_samples(sensors=_4_SENSORS, n_samples=8, start_t_s=0))
     samples.extend(
         make_ramp_samples(
-            sensors=_4_SENSORS, speed_start=20, speed_end=80, n_samples=12, start_t_s=8
-        )
+            sensors=_4_SENSORS,
+            speed_start=20,
+            speed_end=80,
+            n_samples=12,
+            start_t_s=8,
+        ),
     )
     samples.extend(
         make_profile_fault_samples(
@@ -312,7 +322,7 @@ def test_4sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
             start_t_s=20,
             fault_amp=0.07,
             fault_vib_db=28.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     _assert_fault_at(summary, sensor, msg=f"phased 4s {corner}")
@@ -328,7 +338,9 @@ def test_4sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
     ids=["8s", "12s"],
 )
 def test_multi_sensor_no_fault_baseline(
-    sensors: list[str], label: str, profile: dict[str, Any]
+    sensors: list[str],
+    label: str,
+    profile: dict[str, Any],
 ) -> None:
     """8 or 12 sensors, all noise → no wheel fault."""
     samples = make_noise_samples(sensors=sensors, speed_kmh=SPEED_MID, n_samples=40)
@@ -346,7 +358,9 @@ def test_multi_sensor_no_fault_baseline(
     ids=["8s_diffuse", "12s_diffuse"],
 )
 def test_multi_sensor_diffuse_no_fault(
-    sensors: list[str], label: str, profile: dict[str, Any]
+    sensors: list[str],
+    label: str,
+    profile: dict[str, Any],
 ) -> None:
     """Diffuse excitation across many sensors → no localized fault."""
     samples = make_diffuse_samples(sensors=sensors, speed_kmh=SPEED_HIGH, n_samples=35)

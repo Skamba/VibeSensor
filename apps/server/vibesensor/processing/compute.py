@@ -103,7 +103,7 @@ class SignalMetricsComputer:
         if time_window_detrended.size > 0:
             vib_mag = np.sqrt(np.sum(np.square(time_window_detrended, dtype=np.float64), axis=0))
             vib_mag_rms = _finite_or_zero(
-                float(np.sqrt(np.mean(np.square(vib_mag), dtype=np.float64)))
+                float(np.sqrt(np.mean(np.square(vib_mag), dtype=np.float64))),
             )
             vib_mag_p2p = _finite_or_zero(float(np.max(vib_mag) - np.min(vib_mag)))
         else:
@@ -127,7 +127,7 @@ class SignalMetricsComputer:
             for axis in fft_result["axis_peaks"]:
                 default_axis_metrics: AxisMetrics = {"rms": 0.0, "p2p": 0.0, "peaks": []}
                 axis_metrics = cast(
-                    AxisMetrics,
+                    "AxisMetrics",
                     metrics.setdefault(axis, default_axis_metrics),
                 )
                 axis_metrics["peaks"] = fft_result["axis_peaks"][axis]
@@ -135,7 +135,7 @@ class SignalMetricsComputer:
             if fft_result["axis_amp_slices"]:
                 combined_amp = fft_result["combined_amp"]
                 strength_metrics = fft_result["strength_metrics"]
-                combined_metrics = cast(CombinedMetrics, metrics["combined"])
+                combined_metrics = cast("CombinedMetrics", metrics["combined"])
                 combined_metrics["peaks"] = list(strength_metrics["top_peaks"])
                 combined_metrics["strength_metrics"] = strength_metrics
                 metrics["strength_metrics"] = strength_metrics
@@ -158,7 +158,7 @@ class SignalMetricsComputer:
 
     @staticmethod
     def smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
-        return cast(np.ndarray, smooth_spectrum(np.asarray(amps, dtype=np.float32), bins=bins))
+        return cast("np.ndarray", smooth_spectrum(np.asarray(amps, dtype=np.float32), bins=bins))
 
     @staticmethod
     def noise_floor(amps: np.ndarray) -> float:

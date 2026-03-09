@@ -204,7 +204,7 @@ class TestSpeedBandMixedPhase:
                 step_duration_s=2.0,
                 sensors=ALL_SENSORS,
                 start_t_s=t,
-            )
+            ),
         )
         t += 8.0
         samples.extend(
@@ -214,7 +214,7 @@ class TestSpeedBandMixedPhase:
                 fault_sensor="front-right",
                 sensors=ALL_SENSORS,
                 start_t_s=t,
-            )
+            ),
         )
 
         summary = summarize_run_data(
@@ -236,7 +236,7 @@ class TestSpeedBandMixedPhase:
                 fault_sensor="rear-left",
                 sensors=ALL_SENSORS,
                 start_t_s=t,
-            )
+            ),
         )
         t += 10.0
         samples.extend(
@@ -245,7 +245,7 @@ class TestSpeedBandMixedPhase:
                 duration_s=5.0,
                 sensors=ALL_SENSORS,
                 start_t_s=t,
-            )
+            ),
         )
         t += 5.0
         samples.extend(
@@ -257,7 +257,7 @@ class TestSpeedBandMixedPhase:
                 start_t_s=t,
                 fault_amp=0.07,
                 fault_vib_db=28.0,
-            )
+            ),
         )
 
         band = str(
@@ -267,9 +267,9 @@ class TestSpeedBandMixedPhase:
                     samples,
                     lang="en",
                     file_name="dominant_band_test",
-                )
+                ),
             ).get("strongest_speed_band")
-            or ""
+            or "",
         )
         assert band and "60" in band
 
@@ -295,7 +295,7 @@ class TestSpeedBandMixedPhase:
                             top_peaks=peaks,
                             vibration_strength_db=vib_db,
                             strength_floor_amp_g=0.003,
-                        )
+                        ),
                     )
                 t += 1.0
         samples.extend(
@@ -307,7 +307,7 @@ class TestSpeedBandMixedPhase:
                 start_t_s=t,
                 fault_amp=0.06,
                 fault_vib_db=26.0,
-            )
+            ),
         )
 
         band = str(
@@ -317,9 +317,9 @@ class TestSpeedBandMixedPhase:
                     samples,
                     lang="en",
                     file_name="accel_weight_test",
-                )
+                ),
             ).get("strongest_speed_band")
-            or ""
+            or "",
         )
         assert band and "100" in band
 
@@ -356,7 +356,7 @@ class TestConfidenceGuardrails:
                         top_peaks=[{"hz": whz, "amp": 0.06}, {"hz": whz * 2, "amp": 0.024}],
                         vibration_strength_db=26.0,
                         strength_floor_amp_g=0.004,
-                    )
+                    ),
                 )
         top_causes = summarize_run_data(
             scenario_metadata(),

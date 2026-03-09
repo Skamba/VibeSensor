@@ -31,7 +31,7 @@ async def async_require_run(history_db: HistoryDB, run_id: str) -> HistoryRunPay
         raise HTTPException(status_code=404, detail="Run not found")
     if not is_json_object(run):
         raise HTTPException(status_code=500, detail="Run data is corrupt")
-    return cast(HistoryRunPayload, run)
+    return cast("HistoryRunPayload", run)
 
 
 def strip_internal_fields(analysis: JsonObject) -> JsonObject:

@@ -13,7 +13,9 @@ from vibesensor.history_db import HistoryDB
 
 
 def test_start_append_stop_produces_complete_run_in_db(
-    make_logger, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    make_logger,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Full lifecycle: start -> append -> stop -> analyze -> complete with a real DB."""
     history_db = HistoryDB(tmp_path / "history.db")

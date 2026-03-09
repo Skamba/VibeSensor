@@ -87,7 +87,7 @@ class _State:
         self.processor = SimpleNamespace(
             debug_spectrum=lambda _id: {},
             raw_samples=lambda _id, n_samples=1: {},
-            intake_stats=lambda: {},
+            intake_stats=dict,
         )
         self.ingress = SimpleNamespace(
             registry=self.registry,
@@ -101,7 +101,7 @@ class _State:
             apply_car_settings=self.apply_car_settings,
             apply_speed_source_settings=self.apply_speed_source_settings,
         )
-        self.diagnostics = SimpleNamespace(
+        self.recording = SimpleNamespace(
             metrics_logger=self.metrics_logger,
         )
         self.persistence = SimpleNamespace(
@@ -125,7 +125,9 @@ class _State:
 def _route(router, path: str, method: str = "GET"):
     for candidate in router.routes:
         if getattr(candidate, "path", "") == path and method in getattr(
-            candidate, "methods", set()
+            candidate,
+            "methods",
+            set(),
         ):
             return candidate.endpoint
     raise AssertionError(path)
@@ -165,7 +167,7 @@ async def test_analysis_settings_endpoint_updates_active_car_aspects(_wiring) ->
     assert analysis_settings.snapshot()["tire_width_mm"] == 255.0
 
     cars = response_payload(
-        await add_car(CarUpsertRequest(name="Second", aspects={"tire_width_mm": 225.0}))
+        await add_car(CarUpsertRequest(name="Second", aspects={"tire_width_mm": 225.0})),
     )
     second_id = cars["cars"][1]["id"]
     await set_active(ActiveCarRequest(carId=second_id))

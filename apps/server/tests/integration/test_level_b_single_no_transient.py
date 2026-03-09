@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Level B – Single sensor, no transient (≥50 direct-injection cases).
 
 Tests the analysis pipeline with exactly ONE sensor and NO transient
@@ -90,7 +89,9 @@ def _run_single_fault(
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
 def test_single_sensor_fault_corner_speed(
-    corner: str, speed: float, profile: dict[str, Any]
+    corner: str,
+    speed: float,
+    profile: dict[str, Any],
 ) -> None:
     """Wheel fault on single sensor at each corner × speed band."""
     summary, top = _run_single_fault(profile, corner, speed_kmh=speed)
@@ -125,10 +126,16 @@ _AMPS = [
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 @pytest.mark.parametrize(
-    ("amp_label", "fault_amp", "vib_db"), _AMPS, ids=["amp_low", "amp_med", "amp_high"]
+    ("amp_label", "fault_amp", "vib_db"),
+    _AMPS,
+    ids=["amp_low", "amp_med", "amp_high"],
 )
 def test_single_sensor_amplitude_scaling(
-    corner: str, amp_label: str, fault_amp: float, vib_db: float, profile: dict[str, Any]
+    corner: str,
+    amp_label: str,
+    fault_amp: float,
+    vib_db: float,
+    profile: dict[str, Any],
 ) -> None:
     """Confidence should scale with fault amplitude."""
     summary, top = _run_single_fault(profile, corner, fault_amp=fault_amp, fault_vib_db=vib_db)
@@ -183,8 +190,12 @@ def test_single_sensor_phased_onset(corner: str, profile: dict[str, Any]) -> Non
     samples.extend(make_idle_samples(sensors=[sensor], n_samples=10, start_t_s=0))
     samples.extend(
         make_ramp_samples(
-            sensors=[sensor], speed_start=20, speed_end=80, n_samples=15, start_t_s=10
-        )
+            sensors=[sensor],
+            speed_start=20,
+            speed_end=80,
+            n_samples=15,
+            start_t_s=10,
+        ),
     )
     samples.extend(
         make_profile_fault_samples(
@@ -196,7 +207,7 @@ def test_single_sensor_phased_onset(corner: str, profile: dict[str, Any]) -> Non
             start_t_s=25,
             fault_amp=0.07,
             fault_vib_db=28.0,
-        )
+        ),
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
@@ -320,7 +331,8 @@ def test_single_sensor_weak_signal(corner: str, profile: dict[str, Any]) -> None
         assert conf < 0.90, f"Unexpectedly high confidence {conf} for weak {corner}"
     else:
         assert_tolerant_no_fault(
-            summary, msg=f"Weak {corner} should not produce high-confidence wheel fault"
+            summary,
+            msg=f"Weak {corner} should not produce high-confidence wheel fault",
         )
 
 
@@ -354,7 +366,9 @@ def test_single_sensor_speed_sweep_fault(corner: str, profile: dict[str, Any]) -
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 @pytest.mark.parametrize("noise_amp", [0.001, 0.008], ids=["low_noise", "high_noise"])
 def test_single_sensor_noise_floor_variation(
-    corner: str, noise_amp: float, profile: dict[str, Any]
+    corner: str,
+    noise_amp: float,
+    profile: dict[str, Any],
 ) -> None:
     """Fault detection at different noise floor levels."""
     summary, top = _run_single_fault(

@@ -90,7 +90,9 @@ def test_strength_db_explicit_epsilon_override() -> None:
     ],
 )
 def test_strength_db_edge_properties(
-    peak: float, floor: float, check: tuple[str, Any, Any]
+    peak: float,
+    floor: float,
+    check: tuple[str, Any, Any],
 ) -> None:
     """Verify dB edge-case properties: near-zero, large, and negative."""
     result = vibration_strength_db_scalar(peak_band_rms_amp_g=peak, floor_amp_g=floor)

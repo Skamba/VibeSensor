@@ -91,7 +91,7 @@ class TestNextStepFieldsRendered:
                     confirm="movement increases",
                     falsify="mount remains rigid",
                     eta="15 min",
-                )
+                ),
             ],
         )
 

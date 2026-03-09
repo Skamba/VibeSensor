@@ -71,8 +71,8 @@ def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> Non
                 "weak_spatial_separation": False,
                 "location_hotspot": {"location_count": 3},
                 "confidence_0_to_1": 0.8,
-            }
-        ]
+            },
+        ],
     )
     assert origin["weak_spatial_separation"] is True
 
@@ -206,7 +206,7 @@ def test_build_findings_penalizes_low_localization_confidence(
         speed = 70.0 + idx
         wh = wheel_hz_from_speed_kmh(speed, 2.036) or 10.0
         samples.append(
-            {**_make_sample(float(idx), speed, 0.03), "top_peaks": [{"hz": wh, "amp": 0.03}]}
+            {**_make_sample(float(idx), speed, 0.03), "top_peaks": [{"hz": wh, "amp": 0.03}]},
         )
 
     monkeypatch.setattr(
@@ -224,7 +224,7 @@ def test_build_findings_penalizes_low_localization_confidence(
         ),
     )
     high_conf = max_non_ref_confidence(
-        build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
+        build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en"),
     )
 
     monkeypatch.setattr(
@@ -242,7 +242,7 @@ def test_build_findings_penalizes_low_localization_confidence(
         ),
     )
     low_conf = max_non_ref_confidence(
-        build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
+        build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en"),
     )
 
     assert low_conf < high_conf
@@ -256,7 +256,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
         speed = 65.0 + idx
         wh = wheel_hz_from_speed_kmh(speed, 2.036) or 10.0
         samples.append(
-            {**_make_sample(float(idx), speed, 0.03), "top_peaks": [{"hz": wh, "amp": 0.03}]}
+            {**_make_sample(float(idx), speed, 0.03), "top_peaks": [{"hz": wh, "amp": 0.03}]},
         )
 
     monkeypatch.setattr(
@@ -274,7 +274,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
         ),
     )
     baseline_conf = max_non_ref_confidence(
-        build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
+        build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en"),
     )
 
     monkeypatch.setattr(
@@ -292,7 +292,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
         ),
     )
     weak_conf = max_non_ref_confidence(
-        build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
+        build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en"),
     )
 
     monkeypatch.setattr(
@@ -310,7 +310,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
         ),
     )
     near_tie_conf = max_non_ref_confidence(
-        build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
+        build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en"),
     )
 
     assert weak_conf <= (baseline_conf * 0.80) + 1e-9
@@ -329,7 +329,7 @@ def test_build_findings_excludes_partial_coverage_sensor_from_strongest_location
                 "client_name": "Front Left",
                 "strength_floor_amp_g": 0.002,
                 "top_peaks": [{"hz": wh, "amp": 0.02}],
-            }
+            },
         )
         if idx < 6:
             samples.append(
@@ -338,7 +338,7 @@ def test_build_findings_excludes_partial_coverage_sensor_from_strongest_location
                     "client_name": "Rear Right",
                     "strength_floor_amp_g": 0.002,
                     "top_peaks": [{"hz": wh, "amp": 0.05}],
-                }
+                },
             )
 
     findings = build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")

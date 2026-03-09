@@ -167,7 +167,6 @@ def _finding_actions_for_source(
         similar intensities, which weakens spatial localisation confidence.
 
     """
-
     location = strongest_location.strip()
     speed_band = strongest_speed_band.strip()
     # Only include speed_hint param when a speed band is available; passing an
@@ -216,7 +215,8 @@ def _finding_actions_for_source(
             {
                 "action_id": "driveline_inspection",
                 "what": _i18n_ref(
-                    "ACTION_DRIVELINE_INSPECTION_WHAT", driveline_focus=driveline_focus
+                    "ACTION_DRIVELINE_INSPECTION_WHAT",
+                    driveline_focus=driveline_focus,
                 ),
                 "why": _i18n_ref("ACTION_DRIVELINE_INSPECTION_WHY"),
                 "confirm": _i18n_ref("ACTION_DRIVELINE_INSPECTION_CONFIRM"),
@@ -262,5 +262,5 @@ def _finding_actions_for_source(
             "confirm": _i18n_ref("ACTION_GENERAL_INSPECTION_CONFIRM"),
             "falsify": _i18n_ref("ACTION_GENERAL_INSPECTION_FALSIFY"),
             "eta": "20-35 min",
-        }
+        },
     ]

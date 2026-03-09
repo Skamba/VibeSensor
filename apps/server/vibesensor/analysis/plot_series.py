@@ -138,7 +138,7 @@ def build_plot_series(
                 predicted_points.append((speed, predicted_hz))
         if matched_points:
             matched_by_finding.append(
-                MatchedAmpVsSpeedSeries(label=finding_label, points=matched_points)
+                MatchedAmpVsSpeedSeries(label=finding_label, points=matched_points),
             )
         if freq_points:
             freq_vs_speed_by_finding.append(
@@ -146,7 +146,7 @@ def build_plot_series(
                     label=finding_label,
                     matched=freq_points,
                     predicted=predicted_points,
-                )
+                ),
             )
 
     steady_speed_distribution = build_steady_speed_distribution(
@@ -203,7 +203,7 @@ def build_amp_vs_phase(summary: SummaryData) -> list[AmpVsPhaseRow]:
                 mean_vib_db=mean_vib,
                 max_vib_db=_as_float(row.get("max_vibration_strength_db")),
                 mean_speed_kmh=_as_float(row.get("mean_speed_kmh")),
-            )
+            ),
         )
     return amp_vs_phase
 
@@ -221,13 +221,13 @@ def serialize_phase_context(
                 phase=phase_value,
                 start_t_s=segment.start_t_s,
                 end_t_s=segment.end_t_s,
-            )
+            ),
         )
         phase_boundaries.append(
             PhaseBoundary(
                 phase=phase_value,
                 t_s=segment.start_t_s,
                 end_t_s=segment.end_t_s,
-            )
+            ),
         )
     return phase_segments_out, phase_boundaries

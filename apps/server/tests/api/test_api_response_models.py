@@ -12,7 +12,7 @@ def _openapi_state() -> MagicMock:
     state = MagicMock()
     state.ingress = MagicMock()
     state.settings = MagicMock()
-    state.diagnostics = MagicMock()
+    state.recording = MagicMock()
     state.persistence = MagicMock()
     state.websocket = MagicMock()
     state.updates = MagicMock()
@@ -84,15 +84,15 @@ def test_openapi_component_shapes_are_not_generic_dict_for_typed_responses(
 
     history_list_properties = components["HistoryListResponse"]["properties"]
     assert history_list_properties["runs"]["items"] == {
-        "$ref": "#/components/schemas/HistoryListEntryResponse"
+        "$ref": "#/components/schemas/HistoryListEntryResponse",
     }
 
     update_status_properties = components["UpdateStatusResponse"]["properties"]
     assert update_status_properties["issues"]["items"] == {
-        "$ref": "#/components/schemas/UpdateIssueResponse"
+        "$ref": "#/components/schemas/UpdateIssueResponse",
     }
     assert update_status_properties["runtime"] == {
-        "$ref": "#/components/schemas/UpdateRuntimeResponse"
+        "$ref": "#/components/schemas/UpdateRuntimeResponse",
     }
     assert update_status_properties["phase_started_at"]["anyOf"][1] == {"type": "null"}
     assert update_status_properties["updated_at"]["anyOf"][1] == {"type": "null"}

@@ -161,8 +161,7 @@ class ClientRecord:
     def record_seq(self, seq: int) -> None:
         """Add *seq* to the dedup window and update the running max."""
         self._seen_seqs.add(seq)
-        if seq > self._seen_seqs_max:
-            self._seen_seqs_max = seq
+        self._seen_seqs_max = max(self._seen_seqs_max, seq)
 
     def prune_seqs(self, window_size: int) -> None:
         """Discard old entries so the window stays bounded to *window_size*."""
@@ -470,7 +469,10 @@ class ClientRegistry:
             return self._clients.get(normalized)
 
     def active_client_ids(
-        self, now: float | None = None, *, now_mono: float | None = None
+        self,
+        now: float | None = None,
+        *,
+        now_mono: float | None = None,
     ) -> list[str]:
         with self._lock:
             mono_now = self._resolve_now_mono(now_mono)
@@ -560,7 +562,10 @@ class ClientRegistry:
         }
 
     def snapshot_for_api(
-        self, now: float | None = None, *, now_mono: float | None = None
+        self,
+        now: float | None = None,
+        *,
+        now_mono: float | None = None,
     ) -> list[ClientApiRow]:
         with self._lock:
             now_ts = self._resolve_now_wall(now)
@@ -577,7 +582,7 @@ class ClientRegistry:
                                 name=self._user_names.get(client_id, f"client-{client_id[-4:]}"),
                                 connected=False,
                             ),
-                        )
+                        ),
                     )
                     continue
                 age_ms = (
@@ -585,7 +590,7 @@ class ClientRegistry:
                 )
                 connected = bool(
                     record.last_seen_mono
-                    and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds
+                    and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds,
                 )
                 rows.append(
                     self._client_api_row(
@@ -624,6 +629,6 @@ class ClientRegistry:
                                 }
                             ),
                         ),
-                    )
+                    ),
                 )
             return rows

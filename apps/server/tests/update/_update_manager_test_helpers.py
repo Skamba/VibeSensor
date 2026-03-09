@@ -76,7 +76,7 @@ def seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True
     (repo / "apps" / "ui" / "package.json").write_text('{"name":"ui"}\n')
     (repo / "apps" / "ui" / "package-lock.json").write_text('{"name":"ui","lockfileVersion":3}\n')
     (repo / "apps" / "server" / "vibesensor" / "static" / "index.html").write_text(
-        "<html>ok</html>\n"
+        "<html>ok</html>\n",
     )
     details = mgr._collect_runtime_details()
     metadata = {
@@ -85,7 +85,8 @@ def seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True
         "git_commit": "deadbeef",
     }
     (repo / "apps" / "server" / "vibesensor" / "static" / ".vibesensor-ui-build.json").write_text(
-        json.dumps(metadata), encoding="utf-8"
+        json.dumps(metadata),
+        encoding="utf-8",
     )
 
 

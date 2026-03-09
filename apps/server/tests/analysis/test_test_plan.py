@@ -10,7 +10,7 @@ def test_merge_test_plan_deduplicates_action_ids_case_insensitively() -> None:
                 {"action_id": " WHEEL_BALANCE_AND_RUNOUT ", "what": "A"},
                 {"action_id": "wheel_balance_and_runout", "what": "B"},
             ],
-        }
+        },
     ]
 
     merged = _merge_test_plan(findings, "en")
@@ -26,7 +26,7 @@ def test_merge_test_plan_generated_steps_inherit_normalized_metadata() -> None:
             "strongest_speed_band": " 90-100 km/h ",
             "frequency_hz_or_order": " 12.4 Hz ",
             "confidence_0_to_1": 0.82,
-        }
+        },
     ]
 
     merged = _merge_test_plan(findings, "en")

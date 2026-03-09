@@ -824,11 +824,26 @@ export interface components {
         [key: string]: string;
       };
       data_loss: components["schemas"]["HealthDataLossResponse"];
+      /**
+       * Db Last Write Duration S
+       * @default 0
+       */
+      db_last_write_duration_s?: number;
+      /**
+       * Db Max Write Duration S
+       * @default 0
+       */
+      db_max_write_duration_s?: number;
       /** Degradation Reasons */
       degradation_reasons: string[];
       /** Frame Size Mismatch Count */
       frame_size_mismatch_count: number;
       intake_stats: components["schemas"]["HealthIntakeStatsResponse"];
+      /**
+       * Max Tick Duration S
+       * @default 0
+       */
+      max_tick_duration_s?: number;
       persistence: components["schemas"]["HealthPersistenceResponse"];
       /** Processing Failure Categories */
       processing_failure_categories: {
@@ -849,10 +864,25 @@ export interface components {
       /** Startup State */
       startup_state: string;
       /**
+       * Startup Warnings
+       * @default []
+       */
+      startup_warnings?: string[];
+      /**
        * Status
        * @enum {string}
        */
       status: "ok" | "warn" | "degraded";
+      /**
+       * Tick Count
+       * @default 0
+       */
+      tick_count?: number;
+      /**
+       * Tick Duration S
+       * @default 0
+       */
+      tick_duration_s?: number;
     };
     /**
      * HistoryInsightWarningResponse

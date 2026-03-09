@@ -51,7 +51,7 @@ def build_release_smoke_config(
     if udp_control_port > 65535:
         raise ValueError(
             f"Release smoke UDP ports exceed range for HTTP port {port}: "
-            f"{udp_data_port}, {udp_control_port}"
+            f"{udp_data_port}, {udp_control_port}",
         )
     data.setdefault("udp", {})
     data["udp"]["data_listen"] = f"{host}:{udp_data_port}"
@@ -148,7 +148,7 @@ def validate_firmware_dist(dist_dir: Path) -> list[str]:
             if sha256 != actual_sha:
                 errors.append(
                     f"{seg_prefix} sha256 mismatch for {file_name}: "
-                    f"expected {sha256}, got {actual_sha}"
+                    f"expected {sha256}, got {actual_sha}",
                 )
 
         if not firmware_seen:
@@ -191,7 +191,7 @@ _SMOKE_SERVER_BOOTSTRAP = "\n".join(
         "    port=runtime.config.server.port,",
         "    log_level='info',",
         ")",
-    ]
+    ],
 )
 
 
@@ -255,7 +255,7 @@ def run_server_smoke(
                 if process.poll() is not None:
                     output = process.stdout.read() if process.stdout is not None else ""
                     raise RuntimeError(
-                        f"Release smoke server exited before becoming healthy.\nOutput:\n{output}"
+                        f"Release smoke server exited before becoming healthy.\nOutput:\n{output}",
                     )
                 try:
                     status, content_type, body = _read_http(health_url)
@@ -284,7 +284,7 @@ def run_server_smoke(
             raise RuntimeError(
                 "Release smoke validation timed out waiting for server readiness.\n"
                 f"Last error: {last_error}\n"
-                f"Output:\n{output}"
+                f"Output:\n{output}",
             )
         finally:
             _terminate_process(process)
