@@ -23,7 +23,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 	- `metrics_log/`, `history_db/`, `history_*.py`, `runlog.py`: recording, live snapshot state, and persistence; within `metrics_log/`, `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping, `live_analysis.py` owns the rolling dashboard snapshot window, and `post_analysis.py` owns the background analysis queue while `logger.py` remains the façade. The runtime persistence subsystem owns the history query/delete/report/export services built around `HistoryDB`.
 	- `report/`, `report_i18n.py`: report rendering and report strings.
 	- `update/`: updater facade, workflow orchestration, and focused subsystems for Wi-Fi, releases, install and rollback, service control, status, and runtime reporting; validation and rollback snapshot creation are hard gates before live mutation.
-- Frontend: `apps/ui/src/` provides the dashboard, settings, and history UI.
+- Frontend: `apps/ui/src/` provides the dashboard, settings, and history UI; `app/ui_app_runtime.ts` is the composition root over `app/runtime/` shell, transport, and spectrum owners plus the feature bundle.
 - Tooling: `apps/simulator/`, `tools/tests/`, `tools/ci/`, `scripts/ai/`.
 - Verification boundary: `tools/tests/run_release_smoke.py` is the canonical packaged-wheel smoke runner; Docker/e2e validation covers a different runtime path and should not be treated as a substitute for release-smoke.
 - Pi image and infra: `infra/pi-image/pi-gen/`, `apps/server/systemd/`, `apps/server/scripts/`.
