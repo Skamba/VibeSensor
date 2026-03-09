@@ -9,10 +9,13 @@ import json
 import logging
 import tempfile
 import zipfile
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, TypeGuard
 
+from .backend_types import HistoryRunPayload
 from .history_helpers import async_require_run, safe_filename, strip_internal_fields
+from .json_types import JsonObject, JsonValue, is_json_object
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB
@@ -59,18 +62,24 @@ EXPORT_CSV_COLUMNS: tuple[str, ...] = (
 )
 
 EXPORT_CSV_COLUMN_SET: frozenset[str] = frozenset(EXPORT_CSV_COLUMNS) - {"extras"}
+CsvCell = str | int | float | None
+CsvRow = dict[str, CsvCell]
 
 
-def flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
+def _is_json_value(value: object) -> TypeGuard[JsonValue]:
+    return value is None or isinstance(value, (bool, int, float, str, list, dict))
+
+
+def flatten_for_csv(row: JsonObject) -> CsvRow:
     """Convert nested/complex values to JSON strings for CSV export."""
-    out: dict[str, Any] = {}
-    extras: dict[str, Any] = {}
+    out: CsvRow = {}
+    extras: JsonObject = {}
     for key, value in row.items():
         if key in EXPORT_CSV_COLUMN_SET:
             out[key] = (
                 json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else value
             )
-        elif key == "extras" and isinstance(value, dict):
+        elif key == "extras" and is_json_object(value):
             extras.update(value)
         else:
             extras[key] = value
@@ -90,7 +99,7 @@ class HistoryExportDownload:
     spool: tempfile.SpooledTemporaryFile[bytes]
     chunk_size: int = EXPORT_STREAM_CHUNK
 
-    def iter_bytes(self):
+    def iter_bytes(self) -> Iterator[bytes]:
         try:
             while True:
                 chunk = self.spool.read(self.chunk_size)
@@ -132,7 +141,7 @@ class HistoryExportArchiveBuilder:
 
     def build_zip_file(
         self,
-        run: dict[str, Any],
+        run: HistoryRunPayload,
         run_id: str,
     ) -> tempfile.SpooledTemporaryFile[bytes]:
         sample_count = 0
@@ -171,15 +180,18 @@ class HistoryExportArchiveBuilder:
 
 
 def build_run_details_json(
-    run: dict[str, Any],
+    run: HistoryRunPayload,
     sample_count: int,
     run_id: str,
 ) -> str:
     """Build the exported JSON metadata document for a history run."""
-    run_details = dict(run)
+    run_details: JsonObject = {}
+    for key, value in run.items():
+        if _is_json_value(value):
+            run_details[key] = value
     run_details["sample_count"] = sample_count
     analysis = run_details.get("analysis")
-    if isinstance(analysis, dict):
+    if is_json_object(analysis):
         run_details["analysis"] = strip_internal_fields(analysis)
     try:
         return json.dumps(

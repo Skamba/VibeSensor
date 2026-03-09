@@ -38,9 +38,10 @@ import tempfile
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, cast
+from typing import TypedDict
 from urllib.request import Request, urlopen
 
+from .json_types import JsonObject, is_json_array, is_json_object
 from .release_fetcher import (
     DOWNLOAD_CHUNK_BYTES,
     GitHubAPIClient,
@@ -59,14 +60,82 @@ _FW_ASSET_PREFIX = "vibesensor-fw-"
 _FW_ASSET_SUFFIX = ".zip"
 
 
+class ManifestSegmentPayload(TypedDict, total=False):
+    file: str
+    offset: str
+    sha256: str
+
+
+class ManifestEnvironmentPayload(TypedDict, total=False):
+    name: str
+    segments: list[ManifestSegmentPayload]
+
+
+class GitHubReleaseAssetPayload(TypedDict, total=False):
+    name: str
+    url: str
+
+
+class GitHubReleasePayload(TypedDict, total=False):
+    tag_name: str
+    draft: bool
+    prerelease: bool
+    assets: list[GitHubReleaseAssetPayload]
+
+
+class FirmwareCacheInfoPayload(TypedDict, total=False):
+    status: str
+    message: str
+    source: str
+    tag: str
+    asset: str
+    timestamp: str
+    sha256: str
+    cache_dir: str
+    bundle_path: str
+
+
+def _coerce_release_asset_payload(raw: JsonObject) -> GitHubReleaseAssetPayload:
+    payload: GitHubReleaseAssetPayload = {}
+    name = raw.get("name")
+    url = raw.get("url")
+    if isinstance(name, str):
+        payload["name"] = name
+    if isinstance(url, str):
+        payload["url"] = url
+    return payload
+
+
+def _coerce_release_payload(raw: JsonObject) -> GitHubReleasePayload:
+    payload: GitHubReleasePayload = {}
+    tag_name = raw.get("tag_name")
+    if isinstance(tag_name, str):
+        payload["tag_name"] = tag_name
+    draft = raw.get("draft")
+    if isinstance(draft, bool):
+        payload["draft"] = draft
+    prerelease = raw.get("prerelease")
+    if isinstance(prerelease, bool):
+        payload["prerelease"] = prerelease
+    assets = raw.get("assets")
+    if is_json_array(assets):
+        payload["assets"] = [
+            _coerce_release_asset_payload(asset) for asset in assets if is_json_object(asset)
+        ]
+    return payload
+
+
 def _is_firmware_asset_name(name: str) -> bool:
     """Return True if *name* matches the firmware bundle naming convention."""
     return name.startswith(_FW_ASSET_PREFIX) and name.endswith(_FW_ASSET_SUFFIX)
 
 
-def _read_json_file(path: Path) -> dict[str, Any]:
+def _read_json_file(path: Path) -> JsonObject:
     """Read and parse a JSON file. Raises JSONDecodeError or OSError on failure."""
-    return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not is_json_object(payload):
+        raise ValueError(f"Expected JSON object in {path}, got {type(payload).__name__}")
+    return payload
 
 
 def _safe_extractall(zf: zipfile.ZipFile, dest: Path) -> None:
@@ -149,21 +218,37 @@ class FlashManifest:
     environments: list[ManifestEnvironment] = field(default_factory=list)
 
 
-def parse_manifest(data: dict[str, Any]) -> FlashManifest:
+def parse_manifest(data: JsonObject) -> FlashManifest:
     """Parse a flash.json manifest dict into a FlashManifest."""
     envs: list[ManifestEnvironment] = []
-    for env_data in data.get("environments", []):
-        segs = [
-            ManifestSegment(
-                file=s["file"],
-                offset=s["offset"],
-                sha256=s.get("sha256", ""),
-            )
-            for s in env_data.get("segments", [])
-        ]
-        envs.append(ManifestEnvironment(name=env_data["name"], segments=segs))
+    environments = data.get("environments", [])
+    if is_json_array(environments):
+        for env_data in environments:
+            if not is_json_object(env_data):
+                continue
+            segments_raw = env_data.get("segments", [])
+            segs: list[ManifestSegment] = []
+            if is_json_array(segments_raw):
+                for segment in segments_raw:
+                    if not is_json_object(segment):
+                        continue
+                    file_name = segment.get("file")
+                    offset = segment.get("offset")
+                    if not isinstance(file_name, str) or not isinstance(offset, str):
+                        continue
+                    sha256 = segment.get("sha256", "")
+                    segs.append(
+                        ManifestSegment(
+                            file=file_name,
+                            offset=offset,
+                            sha256=str(sha256) if isinstance(sha256, str) else "",
+                        )
+                    )
+            name = env_data.get("name")
+            if isinstance(name, str) and name:
+                envs.append(ManifestEnvironment(name=name, segments=segs))
     return FlashManifest(
-        generated_from=data.get("generated_from", ""),
+        generated_from=str(data.get("generated_from", "")),
         environments=envs,
     )
 
@@ -219,11 +304,11 @@ def read_meta(bundle_dir: Path) -> BundleMeta | None:
     except (json.JSONDecodeError, OSError):
         return None
     return BundleMeta(
-        tag=data.get("tag", ""),
-        asset=data.get("asset", ""),
-        timestamp=data.get("timestamp", ""),
-        sha256=data.get("sha256", ""),
-        source=data.get("source", ""),
+        tag=str(data.get("tag", "")),
+        asset=str(data.get("asset", "")),
+        timestamp=str(data.get("timestamp", "")),
+        sha256=str(data.get("sha256", "")),
+        source=str(data.get("source", "")),
     )
 
 
@@ -293,7 +378,7 @@ class GitHubReleaseFetcher(GitHubAPIClient):
                     Path(tmp_path).unlink()
                 raise
 
-    def find_release(self) -> dict[str, Any]:
+    def find_release(self) -> GitHubReleasePayload:
         """Find the target release based on config (pinned tag, channel)."""
         owner, repo = self._config.firmware_repo.split("/", 1)
         base = f"https://api.github.com/repos/{owner}/{repo}/releases"
@@ -301,7 +386,10 @@ class GitHubReleaseFetcher(GitHubAPIClient):
         if self._config.pinned_tag:
             url = f"{base}/tags/{self._config.pinned_tag}"
             LOGGER.info("Fetching pinned release: %s", self._config.pinned_tag)
-            return self._api_get(url)
+            release = self._api_get(url)
+            if not is_json_object(release):
+                raise ValueError("Unexpected GitHub API response format")
+            return _coerce_release_payload(release)
 
         LOGGER.info("Fetching releases for channel '%s'", self._config.channel)
         releases = self._api_get(f"{base}?per_page=50")
@@ -309,24 +397,30 @@ class GitHubReleaseFetcher(GitHubAPIClient):
             raise ValueError("Unexpected GitHub API response format")
 
         for release in releases:
+            if not is_json_object(release):
+                continue
             is_prerelease = release.get("prerelease", False)
             is_draft = release.get("draft", False)
             if is_draft:
                 continue
-            if not self._release_has_firmware_asset(release):
+            release_payload = _coerce_release_payload(release)
+            if not self._release_has_firmware_asset(release_payload):
                 continue
             if self._config.channel == "stable" and not is_prerelease:
-                return release
+                return release_payload
             if self._config.channel in ("prerelease", "edge") and is_prerelease:
-                return release
+                return release_payload
 
         # Fallback: use the latest prerelease (firmware releases are typically prereleases)
         for release in releases:
+            if not is_json_object(release):
+                continue
             if release.get("draft", False):
                 continue
-            if not self._release_has_firmware_asset(release):
+            release_payload = _coerce_release_payload(release)
+            if not self._release_has_firmware_asset(release_payload):
                 continue
-            return release
+            return release_payload
 
         raise ValueError(
             f"No eligible firmware release found for channel '{self._config.channel}' "
@@ -334,12 +428,12 @@ class GitHubReleaseFetcher(GitHubAPIClient):
         )
 
     @staticmethod
-    def _release_has_firmware_asset(release: dict[str, Any]) -> bool:
+    def _release_has_firmware_asset(release: GitHubReleasePayload) -> bool:
         return any(
             _is_firmware_asset_name(str(a.get("name", ""))) for a in release.get("assets", [])
         )
 
-    def find_firmware_asset(self, release: dict[str, Any]) -> dict[str, Any]:
+    def find_firmware_asset(self, release: GitHubReleasePayload) -> GitHubReleaseAssetPayload:
         """Find the firmware bundle asset in a release."""
         for asset in release.get("assets", []):
             if _is_firmware_asset_name(str(asset.get("name", ""))):
@@ -349,7 +443,7 @@ class GitHubReleaseFetcher(GitHubAPIClient):
             "Expected an asset named vibesensor-fw-*.zip"
         )
 
-    def download_bundle(self, asset: dict[str, Any], dest_dir: Path) -> Path:
+    def download_bundle(self, asset: GitHubReleaseAssetPayload, dest_dir: Path) -> Path:
         """Download and extract a firmware bundle asset."""
         asset_url = asset.get("url", "")
         asset_name = asset.get("name", "bundle.zip")
@@ -487,7 +581,7 @@ class FirmwareCache:
             if staging_dir.exists():
                 shutil.rmtree(staging_dir, ignore_errors=True)
 
-    def info(self) -> dict[str, Any]:
+    def info(self) -> FirmwareCacheInfoPayload:
         """Return info about the active firmware cache."""
         bundle = self.active_bundle_dir()
         if bundle is None:

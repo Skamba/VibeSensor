@@ -492,9 +492,11 @@ export interface components {
     /** TimingHealthPayload */
     TimingHealthPayload: {
       /** Drift Us Total */
-      drift_us_total: number;
+      drift_us_total?: number;
       /** Jitter Us Ema */
-      jitter_us_ema: number;
+      jitter_us_ema?: number;
+      /** Last T0 Us */
+      last_t0_us?: number;
     };
   };
   responses: never;

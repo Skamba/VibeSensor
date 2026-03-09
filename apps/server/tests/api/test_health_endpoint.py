@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from test_support.response_models import response_payload
 
 
 @pytest.fixture
@@ -38,7 +39,7 @@ async def test_health_endpoint_response_shape(_health_router):
     endpoint = _find_endpoint(router, "/api/health")
     assert endpoint is not None
 
-    result = await endpoint()
+    result = response_payload(await endpoint())
     assert result["status"] == "ok"
     assert result["startup_state"] == "ready"
     assert result["startup_phase"] == "ready"
@@ -93,7 +94,7 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
     state.health_state.mark_failed("gps-speed", "gpsd unavailable")
     state.health_state.record_task_failure("metrics-log", "disk write failed")
 
-    result = await endpoint()
+    result = response_payload(await endpoint())
 
     assert result["status"] == "degraded"
     assert result["degradation_reasons"] == [
@@ -128,10 +129,11 @@ async def test_health_endpoint_validates_through_fastapi_response_field(_health_
     route = next(r for r in router.routes if getattr(r, "path", "") == "/api/health")
     payload = await route.endpoint()
     validated, errors = route.response_field.validate(payload, {}, loc=("response",))
+    payload_dict = response_payload(payload)
 
     assert errors == []
-    assert payload["status"] == "ok"
-    assert payload["startup_state"] == "ready"
-    assert payload["data_loss"]["tracked_clients"] == 0
-    assert payload["persistence"]["analysis_in_progress"] is False
+    assert payload_dict["status"] == "ok"
+    assert payload_dict["startup_state"] == "ready"
+    assert payload_dict["data_loss"]["tracked_clients"] == 0
+    assert payload_dict["persistence"]["analysis_in_progress"] is False
     assert validated.status == "ok"

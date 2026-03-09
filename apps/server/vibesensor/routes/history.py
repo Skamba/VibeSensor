@@ -36,25 +36,25 @@ def create_history_routes(
 
     @router.get("/api/history", response_model=HistoryListResponse)
     async def get_history() -> HistoryListResponse:
-        return {"runs": await query_service.list_runs()}
+        return HistoryListResponse(runs=await query_service.list_runs())
 
     @router.get("/api/history/{run_id}", response_model=HistoryRunResponse)
     async def get_history_run(run_id: str) -> HistoryRunResponse:
-        return await query_service.get_run(run_id)
+        return HistoryRunResponse(**await query_service.get_run(run_id))
 
     @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
     async def get_history_insights(
         run_id: str,
         lang: str | None = Query(default=None),
-    ) -> HistoryInsightsResponse:
+    ) -> HistoryInsightsResponse | JSONResponse:
         result = await query_service.get_insights(run_id, requested_lang=lang)
         if result.status_code != 200:
             return JSONResponse(status_code=result.status_code, content=result.payload)
-        return result.payload
+        return HistoryInsightsResponse(**result.payload)
 
     @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)
     async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:
-        return await delete_service.delete_run(run_id)
+        return DeleteHistoryRunResponse(**await delete_service.delete_run(run_id))
 
     # -- report PDF ------------------------------------------------------------
 

@@ -11,6 +11,7 @@ from _history_endpoint_helpers import (
     make_metadata,
     make_router_and_state,
     make_status_router,
+    response_payload,
     route_endpoint,
     route_endpoint_with_method,
     sample,
@@ -176,7 +177,7 @@ async def test_history_insights_always_emits_analysis_is_current() -> None:
     router = create_router(FakeState(db, FakeWsHub()))
     endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
 
-    payload = await endpoint("run-1")
+    payload = response_payload(await endpoint("run-1"))
     assert "analysis_is_current" in payload
     assert payload["analysis_is_current"] is False
 
@@ -227,7 +228,7 @@ async def test_history_insights_localizes_and_adds_run_context_warnings() -> Non
     }
     endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
 
-    payload = await endpoint("run-1", "nl")
+    payload = response_payload(await endpoint("run-1", "nl"))
     warnings = payload.get("warnings")
     assert isinstance(warnings, list)
     assert len(warnings) == 2
@@ -260,7 +261,7 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
     router = create_router(FakeState(db, FakeWsHub()))
     endpoint = route_endpoint(router, "/api/history/{run_id}")
 
-    result = await endpoint("run-1")
+    result = response_payload(await endpoint("run-1"))
     assert isinstance(result, dict)
     analysis = result.get("analysis", {})
     assert "_internal_secret" not in analysis

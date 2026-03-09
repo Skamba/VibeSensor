@@ -11,12 +11,12 @@ import logging
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from vibesensor_shared.contracts import NETWORK_PORTS
 
 from .constants import NUMERIC_TYPES
+from .json_types import JsonObject, is_json_object
 
 __all__ = [
     "AppConfig",
@@ -63,7 +63,7 @@ _MAX_BUFFER_SAMPLES: int = 524_288
 
 VALID_24GHZ_CHANNELS: frozenset[int] = frozenset(range(1, 15))  # 1-14
 
-DEFAULT_CONFIG: dict[str, Any] = {
+DEFAULT_CONFIG: JsonObject = {
     "ap": {
         "ssid": "VibeSensor",
         "psk": "",
@@ -119,21 +119,22 @@ DEFAULT_CONFIG: dict[str, Any] = {
 }
 
 
-def documented_default_config() -> dict[str, Any]:
+def documented_default_config() -> JsonObject:
     """Return runtime defaults in the shape documented by config.example.yaml."""
     defaults = deepcopy(DEFAULT_CONFIG)
-    metrics_log_path = Path(str(defaults["logging"]["metrics_log_path"]))
-    defaults["logging"]["history_db_path"] = str(metrics_log_path.parent / "history.db")
+    logging_defaults = _require_config_section(defaults.get("logging", {}), "default logging")
+    metrics_log_path = Path(str(logging_defaults["metrics_log_path"]))
+    logging_defaults["history_db_path"] = str(metrics_log_path.parent / "history.db")
     return defaults
 
 
-def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
-    merged = dict(base)
+def _deep_merge(base: JsonObject, override: JsonObject) -> JsonObject:
+    merged: JsonObject = dict(base)
     for key, value in override.items():
         existing = merged.get(key)
-        if isinstance(value, dict) and isinstance(existing, dict):
+        if is_json_object(value) and is_json_object(existing):
             merged[key] = _deep_merge(existing, value)
-        elif value is None and isinstance(existing, dict):
+        elif value is None and is_json_object(existing):
             # YAML `key:` with no value produces None — preserve defaults
             LOGGER.warning(
                 "Config key %r is null; keeping default section. "
@@ -163,6 +164,24 @@ def _resolve_config_path(path_text: str, config_path: Path) -> Path:
     if path.is_absolute():
         return path
     return config_path.resolve().parent / path
+
+
+def _require_config_section(raw: object, section_name: str) -> JsonObject:
+    if is_json_object(raw):
+        return raw
+    raise ValueError(f"config section {section_name!r} must be a YAML object")
+
+
+def _coerce_int(value: object, field_name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        raise ValueError(f"{field_name} must be an integer-like value, got {value!r}")
+    return int(value)
+
+
+def _coerce_float(value: object, field_name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        raise ValueError(f"{field_name} must be a numeric value, got {value!r}")
+    return float(value)
 
 
 @dataclass(slots=True)
@@ -425,7 +444,7 @@ class AppConfig:
     repo_dir: Path = REPO_DIR
 
 
-def _read_config_file(path: Path) -> dict[str, Any]:
+def _read_config_file(path: Path) -> JsonObject:
     if not path.exists():
         return {}
     try:
@@ -435,7 +454,7 @@ def _read_config_file(path: Path) -> dict[str, Any]:
         raise ValueError(f"Cannot read config file {path}: permission denied") from None
     except yaml.YAMLError as exc:
         raise ValueError(f"Config file {path} contains invalid YAML: {exc}") from None
-    if not isinstance(data, dict):
+    if not is_json_object(data):
         raise ValueError(f"{path} must contain a YAML object at the top level.")
     return data
 
@@ -453,7 +472,25 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         raise FileNotFoundError(f"Explicitly specified config file does not exist: {path}")
     override = _read_config_file(path)
     merged = _deep_merge(DEFAULT_CONFIG, override)
-    logging_cfg = merged.get("logging", {})
+    ap_cfg = _require_config_section(merged.get("ap", {}), "ap")
+    server_cfg = _require_config_section(merged.get("server", {}), "server")
+    udp_cfg = _require_config_section(merged.get("udp", {}), "udp")
+    processing_cfg = _require_config_section(merged.get("processing", {}), "processing")
+    logging_cfg = _require_config_section(merged.get("logging", {}), "logging")
+    gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
+    storage_cfg = _require_config_section(merged.get("storage", {}), "storage")
+    update_cfg = _require_config_section(merged.get("update", {}), "update")
+    default_logging_cfg = _require_config_section(
+        DEFAULT_CONFIG.get("logging", {}), "default logging"
+    )
+    default_gps_cfg = _require_config_section(DEFAULT_CONFIG.get("gps", {}), "default gps")
+    default_update_cfg = _require_config_section(
+        DEFAULT_CONFIG.get("update", {}),
+        "default update",
+    )
+    default_storage_cfg = _require_config_section(
+        DEFAULT_CONFIG.get("storage", {}), "default storage"
+    )
     metrics_log_path_raw = logging_cfg.get("metrics_log_path")
     log_metrics = bool(logging_cfg.get("log_metrics", True))
     if not isinstance(metrics_log_path_raw, str) or not metrics_log_path_raw.strip():
@@ -461,13 +498,13 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             raise ValueError(
                 "logging.metrics_log_path must be configured when log_metrics is true."
             )
-        metrics_log_path_raw = str(DEFAULT_CONFIG["logging"]["metrics_log_path"])
+        metrics_log_path_raw = str(default_logging_cfg["metrics_log_path"])
     metrics_log_path = _resolve_config_path(metrics_log_path_raw, path)
 
-    data_host, data_port = _split_host_port(str(merged["udp"]["data_listen"]))
-    control_host, control_port = _split_host_port(str(merged["udp"]["control_listen"]))
+    data_host, data_port = _split_host_port(str(udp_cfg["data_listen"]))
+    control_host, control_port = _split_host_port(str(udp_cfg["control_listen"]))
 
-    accel_scale_raw = merged["processing"].get("accel_scale_g_per_lsb")
+    accel_scale_raw = processing_cfg.get("accel_scale_g_per_lsb")
     accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, NUMERIC_TYPES) else None
     if accel_scale is not None and accel_scale <= 0:
         LOGGER.warning(
@@ -476,38 +513,47 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         )
         accel_scale = None
 
-    ap_channel = int(merged["ap"]["channel"])
+    ap_channel = _coerce_int(ap_cfg["channel"], "ap.channel")
     if ap_channel not in VALID_24GHZ_CHANNELS:
         raise ValueError(f"ap.channel must be 1-14 for 2.4 GHz, got {ap_channel}")
 
-    server_port = int(merged["server"]["port"])
+    server_port = _coerce_int(server_cfg["port"], "server.port")
     if not 1 <= server_port <= 65535:
         raise ValueError(f"server.port must be 1-65535, got {server_port}")
 
-    ap_ip_raw = str(merged["ap"]["ip"])
+    ap_ip_raw = str(ap_cfg["ip"])
     try:
         ipaddress.IPv4Interface(ap_ip_raw)
     except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
         raise ValueError(f"ap.ip must be a valid IPv4 address or CIDR, got {ap_ip_raw!r}") from None
 
-    self_heal_cfg = merged["ap"].get("self_heal", {})
-    self_heal_defaults = DEFAULT_CONFIG["ap"]["self_heal"]
+    self_heal_cfg = _require_config_section(ap_cfg.get("self_heal", {}), "ap.self_heal")
+    default_ap_cfg = _require_config_section(DEFAULT_CONFIG.get("ap", {}), "default ap")
+    self_heal_defaults = _require_config_section(
+        default_ap_cfg.get("self_heal", {}),
+        "default ap.self_heal",
+    )
     app_config = AppConfig(
         ap=APConfig(
-            ssid=str(merged["ap"]["ssid"]),
-            psk=str(merged["ap"]["psk"]),
-            ip=str(merged["ap"]["ip"]),
+            ssid=str(ap_cfg["ssid"]),
+            psk=str(ap_cfg["psk"]),
+            ip=str(ap_cfg["ip"]),
             channel=ap_channel,
-            ifname=str(merged["ap"]["ifname"]),
-            con_name=str(merged["ap"]["con_name"]),
+            ifname=str(ap_cfg["ifname"]),
+            con_name=str(ap_cfg["con_name"]),
             self_heal=APSelfHealConfig(
                 enabled=bool(self_heal_cfg.get("enabled", True)),
-                interval_seconds=int(self_heal_cfg.get("interval_seconds", 120)),
-                diagnostics_lookback_minutes=int(
-                    self_heal_cfg.get("diagnostics_lookback_minutes", 5)
+                interval_seconds=_coerce_int(
+                    self_heal_cfg.get("interval_seconds", 120),
+                    "ap.self_heal.interval_seconds",
                 ),
-                min_restart_interval_seconds=int(
-                    self_heal_cfg.get("min_restart_interval_seconds", 120)
+                diagnostics_lookback_minutes=_coerce_int(
+                    self_heal_cfg.get("diagnostics_lookback_minutes", 5),
+                    "ap.self_heal.diagnostics_lookback_minutes",
+                ),
+                min_restart_interval_seconds=_coerce_int(
+                    self_heal_cfg.get("min_restart_interval_seconds", 120),
+                    "ap.self_heal.min_restart_interval_seconds",
                 ),
                 allow_disable_resolved_stub_listener=bool(
                     self_heal_cfg.get("allow_disable_resolved_stub_listener", False)
@@ -519,7 +565,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             ),
         ),
         server=ServerConfig(
-            host=str(merged["server"]["host"]),
+            host=str(server_cfg["host"]),
             port=server_port,
         ),
         udp=UDPConfig(
@@ -527,30 +573,48 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             data_port=data_port,
             control_host=control_host,
             control_port=control_port,
-            data_queue_maxsize=max(1, int(merged["udp"].get("data_queue_maxsize", 1024))),
+            data_queue_maxsize=max(
+                1,
+                _coerce_int(udp_cfg.get("data_queue_maxsize", 1024), "udp.data_queue_maxsize"),
+            ),
         ),
         processing=ProcessingConfig(
-            sample_rate_hz=int(merged["processing"]["sample_rate_hz"]),
-            waveform_seconds=int(merged["processing"]["waveform_seconds"]),
-            waveform_display_hz=int(merged["processing"]["waveform_display_hz"]),
-            ui_push_hz=int(merged["processing"]["ui_push_hz"]),
-            ui_heavy_push_hz=int(merged["processing"].get("ui_heavy_push_hz", 4)),
-            fft_update_hz=int(merged["processing"]["fft_update_hz"]),
-            fft_n=int(merged["processing"]["fft_n"]),
-            spectrum_min_hz=float(merged["processing"].get("spectrum_min_hz", 5.0)),
-            spectrum_max_hz=float(merged["processing"]["spectrum_max_hz"]),
-            client_ttl_seconds=int(merged["processing"].get("client_ttl_seconds", 120)),
+            sample_rate_hz=_coerce_int(
+                processing_cfg["sample_rate_hz"], "processing.sample_rate_hz"
+            ),
+            waveform_seconds=_coerce_int(
+                processing_cfg["waveform_seconds"], "processing.waveform_seconds"
+            ),
+            waveform_display_hz=_coerce_int(
+                processing_cfg["waveform_display_hz"], "processing.waveform_display_hz"
+            ),
+            ui_push_hz=_coerce_int(processing_cfg["ui_push_hz"], "processing.ui_push_hz"),
+            ui_heavy_push_hz=_coerce_int(
+                processing_cfg.get("ui_heavy_push_hz", 4), "processing.ui_heavy_push_hz"
+            ),
+            fft_update_hz=_coerce_int(processing_cfg["fft_update_hz"], "processing.fft_update_hz"),
+            fft_n=_coerce_int(processing_cfg["fft_n"], "processing.fft_n"),
+            spectrum_min_hz=_coerce_float(
+                processing_cfg.get("spectrum_min_hz", 5.0), "processing.spectrum_min_hz"
+            ),
+            spectrum_max_hz=_coerce_float(
+                processing_cfg["spectrum_max_hz"], "processing.spectrum_max_hz"
+            ),
+            client_ttl_seconds=_coerce_int(
+                processing_cfg.get("client_ttl_seconds", 120), "processing.client_ttl_seconds"
+            ),
             accel_scale_g_per_lsb=accel_scale,
         ),  # NOTE: ProcessingConfig.__post_init__ validates & clamps all fields
         logging=LoggingConfig(
             log_metrics=log_metrics,
             metrics_log_path=metrics_log_path,
-            metrics_log_hz=int(logging_cfg["metrics_log_hz"]),
-            no_data_timeout_s=float(
+            metrics_log_hz=_coerce_int(logging_cfg["metrics_log_hz"], "logging.metrics_log_hz"),
+            no_data_timeout_s=_coerce_float(
                 logging_cfg.get(
                     "no_data_timeout_s",
-                    DEFAULT_CONFIG["logging"]["no_data_timeout_s"],
-                )
+                    default_logging_cfg["no_data_timeout_s"],
+                ),
+                "logging.no_data_timeout_s",
             ),
             sensor_model=str(logging_cfg.get("sensor_model", "ADXL345")),
             history_db_path=_resolve_config_path(
@@ -563,39 +627,33 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                 path,
             ),
             persist_history_db=bool(
-                logging_cfg.get(
-                    "persist_history_db", DEFAULT_CONFIG["logging"]["persist_history_db"]
-                )
+                logging_cfg.get("persist_history_db", default_logging_cfg["persist_history_db"])
             ),
-            shutdown_analysis_timeout_s=float(
+            shutdown_analysis_timeout_s=_coerce_float(
                 logging_cfg.get(
                     "shutdown_analysis_timeout_s",
-                    DEFAULT_CONFIG["logging"]["shutdown_analysis_timeout_s"],
-                )
+                    default_logging_cfg["shutdown_analysis_timeout_s"],
+                ),
+                "logging.shutdown_analysis_timeout_s",
             ),
         ),
         gps=GPSConfig(
-            gps_enabled=bool(merged["gps"]["gps_enabled"]),
-            gpsd_host=str(merged["gps"].get("gpsd_host", DEFAULT_CONFIG["gps"]["gpsd_host"])),
-            gpsd_port=int(merged["gps"].get("gpsd_port", DEFAULT_CONFIG["gps"]["gpsd_port"])),
+            gps_enabled=bool(gps_cfg["gps_enabled"]),
+            gpsd_host=str(gps_cfg.get("gpsd_host", default_gps_cfg["gpsd_host"])),
+            gpsd_port=_coerce_int(
+                gps_cfg.get("gpsd_port", default_gps_cfg["gpsd_port"]),
+                "gps.gpsd_port",
+            ),
         ),
         update=UpdateConfig(
-            server_repo=str(
-                merged.get("update", {}).get("server_repo", DEFAULT_CONFIG["update"]["server_repo"])
-            ),
+            server_repo=str(update_cfg.get("server_repo", default_update_cfg["server_repo"])),
             rollback_dir=Path(
-                str(
-                    merged.get("update", {}).get(
-                        "rollback_dir", DEFAULT_CONFIG["update"]["rollback_dir"]
-                    )
-                )
+                str(update_cfg.get("rollback_dir", default_update_cfg["rollback_dir"]))
             ),
         ),
         clients_json_path=_resolve_config_path(
             str(
-                merged.get("storage", {}).get(
-                    "clients_json_path", str(DEFAULT_CONFIG["storage"]["clients_json_path"])
-                )
+                storage_cfg.get("clients_json_path", str(default_storage_cfg["clients_json_path"]))
             ),
             path,
         ),

@@ -6,6 +6,7 @@ import json
 from collections.abc import Mapping
 
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, tire_circumference_m_from_spec
+from .json_types import JsonObject, JsonValue, is_json_object
 from .report_i18n import tr as _tr
 
 ANALYSIS_SETTINGS_SNAPSHOT_KEYS: tuple[str, ...] = tuple(DEFAULT_ANALYSIS_SETTINGS.keys())
@@ -14,8 +15,8 @@ WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE = "reference_context_incomplete"
 WARNING_CODE_CAR_SETTINGS_CHANGED = "car_settings_changed"
 
 
-def _i18n_ref(key: str, **params: object) -> dict[str, object]:
-    ref: dict[str, object] = {"_i18n_key": key}
+def _i18n_ref(key: str, **params: JsonValue) -> JsonObject:
+    ref: JsonObject = {"_i18n_key": key}
     ref.update(params)
     return ref
 
@@ -24,21 +25,21 @@ def build_run_context_snapshot(
     *,
     analysis_settings_snapshot: Mapping[str, object],
     active_car_snapshot: Mapping[str, object] | None,
-) -> dict[str, object]:
+) -> JsonObject:
     """Build a structured run-context snapshot for persisted metadata."""
-    settings_snapshot = {
-        key: analysis_settings_snapshot.get(key)
-        for key in ANALYSIS_SETTINGS_SNAPSHOT_KEYS
-        if analysis_settings_snapshot.get(key) is not None
-    }
-    snapshot: dict[str, object] = {"analysis_settings_snapshot": settings_snapshot}
+    settings_snapshot: JsonObject = {}
+    for key in ANALYSIS_SETTINGS_SNAPSHOT_KEYS:
+        value = _as_float(analysis_settings_snapshot.get(key))
+        if value is not None:
+            settings_snapshot[key] = value
+    snapshot: JsonObject = {"analysis_settings_snapshot": settings_snapshot}
     if active_car_snapshot is not None:
         snapshot["active_car_snapshot"] = _sanitize_car_snapshot(active_car_snapshot)
     return snapshot
 
 
 def apply_run_context_snapshot(
-    metadata: dict[str, object],
+    metadata: JsonObject,
     *,
     analysis_settings_snapshot: Mapping[str, object],
     active_car_snapshot: Mapping[str, object] | None,
@@ -79,9 +80,9 @@ def build_summary_warnings(
     metadata: Mapping[str, object],
     *,
     reference_complete: bool,
-) -> list[dict[str, object]]:
+) -> list[JsonObject]:
     """Build language-neutral trust warnings stored with the analysis summary."""
-    warnings: list[dict[str, object]] = []
+    warnings: list[JsonObject] = []
     if not reference_complete or bool(metadata.get("incomplete_for_order_analysis")):
         warnings.append(
             {
@@ -96,10 +97,10 @@ def build_summary_warnings(
 
 
 def add_current_context_warnings(
-    summary: Mapping[str, object],
+    summary: Mapping[str, JsonValue],
     *,
     current_active_car_snapshot: Mapping[str, object] | None,
-) -> dict[str, object]:
+) -> JsonObject:
     """Return a summary copy enriched with dynamic current-context warnings."""
     enriched = dict(summary)
     warnings = _normalized_warning_list(enriched.get("warnings"))
@@ -111,7 +112,7 @@ def add_current_context_warnings(
         str(item.get("code") or "") for item in warnings
     }:
         warnings.append(dynamic_warning)
-    enriched["warnings"] = warnings
+    enriched["warnings"] = list(warnings)
     return enriched
 
 
@@ -119,9 +120,9 @@ def localize_warning_list(
     warnings: object,
     *,
     lang: str,
-) -> list[dict[str, object]]:
+) -> list[JsonObject]:
     """Resolve language-neutral warning entries into response-ready text."""
-    localized: list[dict[str, object]] = []
+    localized: list[JsonObject] = []
     for warning in _normalized_warning_list(warnings):
         localized.append(
             {
@@ -149,11 +150,11 @@ def _build_car_settings_changed_warning(
     metadata: object,
     *,
     current_active_car_snapshot: Mapping[str, object] | None,
-) -> dict[str, object] | None:
-    if not isinstance(metadata, dict) or current_active_car_snapshot is None:
+) -> JsonObject | None:
+    if not is_json_object(metadata) or current_active_car_snapshot is None:
         return None
     recorded_snapshot = metadata.get("active_car_snapshot")
-    if not isinstance(recorded_snapshot, dict):
+    if not is_json_object(recorded_snapshot):
         return None
     if _normalized_aspects(recorded_snapshot) == _normalized_aspects(current_active_car_snapshot):
         return None
@@ -170,13 +171,13 @@ def _build_car_settings_changed_warning(
     }
 
 
-def _normalized_warning_list(warnings: object) -> list[dict[str, object]]:
+def _normalized_warning_list(warnings: object) -> list[JsonObject]:
     if not isinstance(warnings, list):
         return []
-    return [warning for warning in warnings if isinstance(warning, dict)]
+    return [warning for warning in warnings if is_json_object(warning)]
 
 
-def _sanitize_car_snapshot(snapshot: Mapping[str, object]) -> dict[str, object]:
+def _sanitize_car_snapshot(snapshot: Mapping[str, object]) -> JsonObject:
     aspects_raw = snapshot.get("aspects")
     aspects = aspects_raw if isinstance(aspects_raw, Mapping) else {}
     return {
@@ -235,11 +236,13 @@ def _resolve_i18n(lang: str, value: object) -> str:
             params[param_key] = _resolve_i18n(lang, param_value)
         else:
             params[param_key] = param_value
-    return _tr(lang, key, **params)
+    return str(_tr(lang, key, **params))
 
 
 def _as_float(value: object) -> float | None:
-    if value in (None, ""):
+    if value in (None, "") or isinstance(value, bool):
+        return None
+    if not isinstance(value, (int, float, str)):
         return None
     try:
         return float(value)

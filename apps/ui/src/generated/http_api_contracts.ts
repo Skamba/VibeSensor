@@ -247,10 +247,57 @@ export interface components {
     };
     /**
      * AnalysisSettingsResponse
-     * @description Response body reflecting the current analysis settings (all fields pass-through).
+     * @description Response body reflecting the current validated analysis settings.
      */
     AnalysisSettingsResponse: {
-      [key: string]: unknown;
+      /** Current Gear Ratio */
+      current_gear_ratio: number;
+      /** Driveshaft Bandwidth Pct */
+      driveshaft_bandwidth_pct: number;
+      /** Engine Bandwidth Pct */
+      engine_bandwidth_pct: number;
+      /** Final Drive Ratio */
+      final_drive_ratio: number;
+      /** Final Drive Uncertainty Pct */
+      final_drive_uncertainty_pct: number;
+      /** Gear Uncertainty Pct */
+      gear_uncertainty_pct: number;
+      /** Max Band Half Width Pct */
+      max_band_half_width_pct: number;
+      /** Min Abs Band Hz */
+      min_abs_band_hz: number;
+      /** Rim In */
+      rim_in: number;
+      /** Speed Uncertainty Pct */
+      speed_uncertainty_pct: number;
+      /** Tire Aspect Pct */
+      tire_aspect_pct: number;
+      /** Tire Deflection Factor */
+      tire_deflection_factor: number;
+      /** Tire Diameter Uncertainty Pct */
+      tire_diameter_uncertainty_pct: number;
+      /** Tire Width Mm */
+      tire_width_mm: number;
+      /** Wheel Bandwidth Pct */
+      wheel_bandwidth_pct: number;
+    };
+    /** AxisMetrics */
+    AxisMetrics: {
+      /** P2P */
+      p2p: number;
+      /** Peaks */
+      peaks: components["schemas"]["AxisPeak"][];
+      /** Rms */
+      rms: number;
+    };
+    /** AxisPeak */
+    AxisPeak: {
+      /** Amp */
+      amp?: number;
+      /** Hz */
+      hz?: number;
+      /** Snr Ratio */
+      snr_ratio?: number;
     };
     /**
      * CarLibraryBrandsResponse
@@ -399,6 +446,56 @@ export interface components {
       /** Cars */
       cars: components["schemas"]["CarResponse"][];
     };
+    /** ClientApiRow */
+    ClientApiRow: {
+      /** Connected */
+      connected: boolean;
+      /** Control Addr */
+      control_addr: [string, number] | null;
+      /** Data Addr */
+      data_addr: [string, number] | null;
+      /** Dropped Frames */
+      dropped_frames: number;
+      /** Duplicates Received */
+      duplicates_received: number;
+      /** Firmware Version */
+      firmware_version: string;
+      /** Frame Samples */
+      frame_samples: number;
+      /** Frames Total */
+      frames_total: number;
+      /** Id */
+      id: string;
+      /** Last Ack Cmd Seq */
+      last_ack_cmd_seq: number | null;
+      /** Last Ack Status */
+      last_ack_status: number | null;
+      /** Last Reset Time */
+      last_reset_time: number | null;
+      /** Last Seen Age Ms */
+      last_seen_age_ms: number | null;
+      /** Latest Metrics */
+      latest_metrics: {
+        [key: string]: components["schemas"]["AxisMetrics"] | components["schemas"]["CombinedMetrics"] | components["schemas"]["VibrationStrengthMetrics"];
+      };
+      /** Location */
+      location: string;
+      /** Mac Address */
+      mac_address: string;
+      /** Name */
+      name: string;
+      /** Parse Errors */
+      parse_errors: number;
+      /** Queue Overflow Drops */
+      queue_overflow_drops: number;
+      /** Reset Count */
+      reset_count: number;
+      /** Sample Rate Hz */
+      sample_rate_hz: number;
+      /** Server Queue Drops */
+      server_queue_drops: number;
+      timing_health: components["schemas"]["TimingHealthPayload"];
+    };
     /**
      * ClientLocationsResponse
      * @description Response body with available sensor-location options.
@@ -413,9 +510,17 @@ export interface components {
      */
     ClientsResponse: {
       /** Clients */
-      clients: {
-          [key: string]: unknown;
-        }[];
+      clients: components["schemas"]["ClientApiRow"][];
+    };
+    /** CombinedMetrics */
+    CombinedMetrics: {
+      /** Peaks */
+      peaks?: components["schemas"]["StrengthPeak"][];
+      strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
+      /** Vib Mag P2P */
+      vib_mag_p2p?: number;
+      /** Vib Mag Rms */
+      vib_mag_rms?: number;
     };
     /** DebugSpectrumErrorPayload */
     DebugSpectrumErrorPayload: {
@@ -844,8 +949,11 @@ export interface components {
      * @description Request body for changing the UI language.
      */
     LanguageRequest: {
-      /** Language */
-      language: string;
+      /**
+       * Language
+       * @enum {string}
+       */
+      language: "en" | "nl";
     };
     /**
      * LanguageResponse
@@ -984,16 +1092,22 @@ export interface components {
      * @description Response body for the current speed-source configuration.
      */
     SpeedSourceResponse: {
-      /** Fallbackmode */
-      fallbackMode: string;
+      /**
+       * Fallbackmode
+       * @constant
+       */
+      fallbackMode: "manual";
       /** Manualspeedkph */
       manualSpeedKph: number | null;
       /** Obd2Config */
       obd2Config?: {
         [key: string]: unknown;
       };
-      /** Speedsource */
-      speedSource: string;
+      /**
+       * Speedsource
+       * @enum {string}
+       */
+      speedSource: "gps" | "obd2" | "manual";
       /** Staletimeouts */
       staleTimeoutS: number;
     };
@@ -1016,10 +1130,16 @@ export interface components {
       epy_m: number | null;
       /** Fallback Active */
       fallback_active: boolean;
-      /** Fallback Mode */
-      fallback_mode: string;
-      /** Fix Dimension */
-      fix_dimension: string | null;
+      /**
+       * Fallback Mode
+       * @constant
+       */
+      fallback_mode: "manual";
+      /**
+       * Fix Dimension
+       * @enum {string}
+       */
+      fix_dimension: "3d" | "2d" | "none";
       /** Fix Mode */
       fix_mode: number | null;
       /** Gps Enabled */
@@ -1032,8 +1152,16 @@ export interface components {
       raw_speed_kmh: number | null;
       /** Reconnect Delay S */
       reconnect_delay_s: number | null;
-      /** Speed Confidence */
-      speed_confidence: string | null;
+      /**
+       * Speed Confidence
+       * @enum {string}
+       */
+      speed_confidence: "low" | "medium" | "high";
+      /**
+       * Speed Source
+       * @enum {string}
+       */
+      speed_source: "gps" | "manual" | "fallback_manual" | "none";
       /** Stale Timeout S */
       stale_timeout_s: number;
     };
@@ -1042,8 +1170,11 @@ export interface components {
      * @description Request body for changing the displayed speed unit.
      */
     SpeedUnitRequest: {
-      /** Speedunit */
-      speedUnit: string;
+      /**
+       * Speedunit
+       * @enum {string}
+       */
+      speedUnit: "kmh" | "mps";
     };
     /**
      * SpeedUnitResponse
@@ -1063,6 +1194,15 @@ export interface components {
       strength_bucket: string | null;
       /** Vibration Strength Db */
       vibration_strength_db: number;
+    };
+    /** TimingHealthPayload */
+    TimingHealthPayload: {
+      /** Drift Us Total */
+      drift_us_total?: number;
+      /** Jitter Us Ema */
+      jitter_us_ema?: number;
+      /** Last T0 Us */
+      last_t0_us?: number;
     };
     /**
      * UpdateCancelResponse
@@ -1172,6 +1312,21 @@ export interface components {
       msg: string;
       /** Error Type */
       type: string;
+    };
+    /** VibrationStrengthMetrics */
+    VibrationStrengthMetrics: {
+      /** Combined Spectrum Amp G */
+      combined_spectrum_amp_g: number[];
+      /** Noise Floor Amp G */
+      noise_floor_amp_g: number;
+      /** Peak Amp G */
+      peak_amp_g: number;
+      /** Strength Bucket */
+      strength_bucket: string | null;
+      /** Top Peaks */
+      top_peaks: components["schemas"]["StrengthPeak"][];
+      /** Vibration Strength Db */
+      vibration_strength_db: number;
     };
   };
   responses: never;

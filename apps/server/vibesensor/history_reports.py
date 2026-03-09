@@ -6,13 +6,16 @@ import asyncio
 import json
 import logging
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 
 from fastapi import HTTPException
 
 from .analysis import map_summary
+from .backend_types import CarConfigPayload, HistoryRunPayload
 from .history_helpers import async_require_run, require_analysis_ready, safe_filename
+from .json_types import JsonObject, is_json_object
 from .report.pdf_engine import build_report_pdf
 from .run_context import add_current_context_warnings, current_car_snapshot_token
 
@@ -23,6 +26,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 REPORT_PDF_CACHE_MAX_ENTRIES = 16
+ReportPdfCacheKey = tuple[str, str, int | None, str | None, int, str, str]
 
 
 @dataclass(frozen=True)
@@ -37,9 +41,9 @@ class HistoryReportPdf:
 class HistoryReportRequest:
     """Resolved persisted report context ready for PDF generation."""
 
-    cache_key: tuple[object, ...]
+    cache_key: ReportPdfCacheKey
     filename: str
-    analysis_summary: dict[str, Any]
+    analysis_summary: JsonObject
 
 
 class HistoryReportService:
@@ -104,48 +108,49 @@ class HistoryReportService:
         )
 
     @staticmethod
-    def _build_pdf_bytes(analysis_summary: dict[str, Any]) -> bytes:
-        return build_report_pdf(map_summary(analysis_summary))
+    def _build_pdf_bytes(analysis_summary: JsonObject) -> bytes:
+        mapped_summary = map_summary(cast(dict[str, object], analysis_summary))
+        return cast(bytes, build_report_pdf(mapped_summary))
 
     @staticmethod
     def _metadata_cache_token(metadata: object) -> str:
-        if not isinstance(metadata, dict):
+        if not is_json_object(metadata):
             return "{}"
         return json.dumps(metadata, sort_keys=True, default=str, ensure_ascii=False)
 
     def _report_pdf_cache_key(
         self,
-        run: dict[str, Any],
+        run: HistoryRunPayload,
         run_id: str,
         requested_lang: str,
         *,
-        current_active_car_snapshot: dict[str, Any] | None,
-    ) -> tuple[object, ...]:
+        current_active_car_snapshot: CarConfigPayload | None,
+    ) -> ReportPdfCacheKey:
         return (
             run_id,
             requested_lang,
-            run.get("analysis_version"),
-            run.get("analysis_completed_at"),
-            run.get("sample_count"),
+            int(run["analysis_version"]) if "analysis_version" in run else None,
+            str(run["analysis_completed_at"]) if "analysis_completed_at" in run else None,
+            int(run.get("sample_count", 0)),
             self._metadata_cache_token(run.get("metadata", {})),
             current_car_snapshot_token(current_active_car_snapshot),
         )
 
     @staticmethod
-    def _report_pdf_cache_lang(run: dict[str, Any], requested_lang: str) -> str:
+    def _report_pdf_cache_lang(run: HistoryRunPayload, requested_lang: str) -> str:
         analysis = run.get("analysis")
-        if isinstance(analysis, dict):
+        if is_json_object(analysis):
             persisted_lang = str(analysis.get("lang") or "").strip().lower()
             if persisted_lang:
                 return persisted_lang
         return requested_lang
 
     @staticmethod
-    def _analysis_language(run: dict[str, Any], requested: str | None) -> str:
+    def _analysis_language(run: HistoryRunPayload, requested: str | None) -> str:
         if isinstance(requested, str) and requested.strip():
             return requested.strip().lower()
-        metadata = run.get("metadata", {})
-        if isinstance(metadata, dict):
+        metadata: object = run.get("metadata", {})
+        if is_json_object(metadata):
             value = metadata.get("language")
             if isinstance(value, str) and value.strip():
                 return value.strip().lower()
@@ -158,10 +163,10 @@ class HistoryReportPdfCache:
     __slots__ = ("_entries", "_locks")
 
     def __init__(self) -> None:
-        self._entries: OrderedDict[tuple[object, ...], bytes] = OrderedDict()
-        self._locks: dict[tuple[object, ...], asyncio.Lock] = {}
+        self._entries: OrderedDict[ReportPdfCacheKey, bytes] = OrderedDict()
+        self._locks: dict[ReportPdfCacheKey, asyncio.Lock] = {}
 
-    def get(self, cache_key: tuple[object, ...]) -> bytes | None:
+    def get(self, cache_key: ReportPdfCacheKey) -> bytes | None:
         cached_pdf = self._entries.get(cache_key)
         if cached_pdf is None:
             return None
@@ -170,8 +175,8 @@ class HistoryReportPdfCache:
 
     async def get_or_build(
         self,
-        cache_key: tuple[object, ...],
-        build_pdf,
+        cache_key: ReportPdfCacheKey,
+        build_pdf: Callable[[], bytes],
         *,
         run_id: str,
     ) -> bytes:
@@ -195,7 +200,7 @@ class HistoryReportPdfCache:
             self._put(cache_key, pdf)
             return pdf
 
-    def _put(self, cache_key: tuple[object, ...], pdf: bytes) -> None:
+    def _put(self, cache_key: ReportPdfCacheKey, pdf: bytes) -> None:
         self._entries[cache_key] = pdf
         self._entries.move_to_end(cache_key)
         while len(self._entries) > REPORT_PDF_CACHE_MAX_ENTRIES:

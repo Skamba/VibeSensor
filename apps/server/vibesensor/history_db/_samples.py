@@ -10,12 +10,18 @@ from __future__ import annotations
 
 import logging
 import math
+from typing import TypeGuard
 
 from ..domain_models import SensorFrame
-from ..json_types import JsonObject, is_json_array, is_json_object
+from ..json_types import JsonObject, JsonValue, is_json_array, is_json_object
 from ..json_utils import safe_json_dumps, safe_json_loads
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _is_json_scalar(value: object) -> TypeGuard[JsonValue]:
+    return value is None or isinstance(value, (bool, int, float, str))
+
 
 # -- Schema column definitions ------------------------------------------------
 
@@ -122,7 +128,7 @@ def v2_row_to_dict(row: tuple[object, ...]) -> JsonObject:
 
     for i, col in enumerate(_V2_TYPED_COLS):
         val = row[_V2_TYPED_OFFSET + i]
-        if val is not None:
+        if _is_json_scalar(val):
             d[col] = val
 
     for i, col in enumerate(_V2_PEAK_COLS):
