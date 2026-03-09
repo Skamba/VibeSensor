@@ -20,7 +20,7 @@ from .buffer_store import SignalBufferStore
 from .buffers import ClientBuffer
 from .compute import SignalMetricsComputer
 from .payload import (
-    EMPTY_SPECTRUM_PAYLOAD,
+    _empty_spectrum_payload,
     build_multi_spectrum_payload,
     build_selected_payload,
     build_spectrum_payload,
@@ -207,7 +207,7 @@ class SignalProcessorViews:
     def _spectrum_payload_unlocked(self, client_id: str) -> SpectrumSeriesPayload:
         buf = self._store.buffers.get(client_id)
         if buf is None:
-            return dict(EMPTY_SPECTRUM_PAYLOAD)
+            return _empty_spectrum_payload()
         return build_spectrum_payload(buf)
 
     def _analysis_time_range_unlocked(self, buf: ClientBuffer) -> tuple[float, float, bool] | None:

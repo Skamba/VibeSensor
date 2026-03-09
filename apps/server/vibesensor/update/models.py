@@ -53,9 +53,15 @@ def _to_int_or_none(value: object) -> int | None:
     """Coerce *value* to int, returning None for null / unconvertible input."""
     if value is None:
         return None
+    if not _is_number_like(value):
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
 
 
-def _coerce_update_state(value: object) -> "UpdateState":
+def _coerce_update_state(value: object) -> UpdateState:
     if not isinstance(value, str):
         return UpdateState.idle
     try:
@@ -64,19 +70,13 @@ def _coerce_update_state(value: object) -> "UpdateState":
         return UpdateState.idle
 
 
-def _coerce_update_phase(value: object) -> "UpdatePhase":
+def _coerce_update_phase(value: object) -> UpdatePhase:
     if not isinstance(value, str):
         return UpdatePhase.idle
     try:
         return UpdatePhase(value)
     except ValueError:
         return UpdatePhase.idle
-    if not _is_number_like(value):
-        return None
-    try:
-        return int(value)
-    except ValueError:
-        return None
 
 
 class UpdateState(enum.StrEnum):

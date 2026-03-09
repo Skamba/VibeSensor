@@ -5,7 +5,7 @@ Separated from ``api.py`` to keep routing logic distinct from data contracts.
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Literal, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -20,7 +20,6 @@ from .backend_types import (
     SpeedSourceUpdatePayload,
     SpeedUnitCode,
 )
-from .json_types import JsonObject
 from .payload_types import ClientApiRow
 
 __all__ = [
@@ -141,6 +140,8 @@ class AnalysisSettingsRequest(_FrozenBase):
     def to_settings_payload(self) -> AnalysisSettingsPayload:
         payload: AnalysisSettingsPayload = {}
         for field_name, field_value in self.model_dump(exclude_none=True).items():
+            if not isinstance(field_value, (int, float)):
+                raise ValueError(f"analysis setting {field_name} must be numeric")
             payload[field_name] = float(field_value)
         return payload
 
@@ -325,7 +326,7 @@ class SpeedSourceResponse(BaseModel):
 
     speedSource: SpeedSourceKind
     manualSpeedKph: float | None
-    obd2Config: JsonObject = Field(default_factory=dict)
+    obd2Config: ApiPayloadObject = Field(default_factory=dict)
     staleTimeoutS: float
     fallbackMode: FallbackMode
 
@@ -474,8 +475,8 @@ class HistoryRunResponse(_ExtraAllowBase):
 
     run_id: str
     status: str
-    metadata: JsonObject = Field(default_factory=dict)
-    analysis: JsonObject | None = None
+    metadata: ApiPayloadObject = Field(default_factory=dict)
+    analysis: ApiPayloadObject | None = None
 
 
 class HistoryInsightWarningResponse(BaseModel):
@@ -688,3 +689,6 @@ class CarLibraryModelsResponse(BaseModel):
     """Response body listing car library model entries."""
 
     models: list[CarLibraryModelEntry]
+
+
+ApiPayloadObject: TypeAlias = dict[str, object]

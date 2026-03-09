@@ -21,7 +21,7 @@ from ..payload_types import (
     SpectrumSeriesPayload,
     WaveformPayload,
 )
-from .fft import AXES, float_list
+from .fft import float_list
 from .models import SpectrumAxisData
 from .time_align import compute_overlap
 
@@ -41,6 +41,16 @@ EMPTY_SPECTRUM_PAYLOAD: SpectrumSeriesPayload = {
 }
 
 
+def _empty_spectrum_payload() -> SpectrumSeriesPayload:
+    return {
+        "x": [],
+        "y": [],
+        "z": [],
+        "combined_spectrum_amp_g": [],
+        "strength_metrics": {},
+    }
+
+
 def _axis_data_or_empty(
     latest_spectrum: dict[str, SpectrumAxisData],
     axis: str,
@@ -55,7 +65,7 @@ def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
     fields on *buf* for fast subsequent lookups.
     """
     if not buf.latest_spectrum:
-        return dict(EMPTY_SPECTRUM_PAYLOAD)
+        return _empty_spectrum_payload()
     if (
         buf.cached_spectrum_payload is not None
         and buf.cached_spectrum_payload_generation == buf.spectrum_generation
@@ -222,8 +232,9 @@ def build_selected_payload(
     x = (np.arange(points, dtype=np.float32) - (points - 1)) * (waveform_step / sr)
 
     waveform: WaveformPayload = {"t": float_list(x)}
-    for axis_idx, axis in enumerate(AXES):
-        waveform[axis] = float_list(decimated[axis_idx])
+    waveform["x"] = float_list(decimated[0])
+    waveform["y"] = float_list(decimated[1])
+    waveform["z"] = float_list(decimated[2])
 
     spectrum: SelectedSpectrumPayload
     if buf.latest_spectrum:
@@ -237,9 +248,12 @@ def build_selected_payload(
             "combined_spectrum_amp_g": [],
             "strength_metrics": buf.latest_strength_metrics,
         }
-        for axis in AXES:
-            axis_data: SpectrumAxisData = _axis_data_or_empty(buf.latest_spectrum, axis)
-            spectrum[axis] = float_list(axis_data["amp"])
+        x_data = _axis_data_or_empty(buf.latest_spectrum, "x")
+        y_data = _axis_data_or_empty(buf.latest_spectrum, "y")
+        z_data = _axis_data_or_empty(buf.latest_spectrum, "z")
+        spectrum["x"] = float_list(x_data["amp"])
+        spectrum["y"] = float_list(y_data["amp"])
+        spectrum["z"] = float_list(z_data["amp"])
         combined = _axis_data_or_empty(buf.latest_spectrum, "combined")
         spectrum["combined_spectrum_amp_g"] = float_list(combined["amp"])
     else:
