@@ -1,6 +1,11 @@
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { AppState } from "../state/ui_app_state";
-import type { CarsPayload, SpeedSourcePayload, SpeedSourceStatusPayload } from "../../api/types";
+import type {
+  AnalysisSettingsPayload,
+  CarsPayload,
+  SpeedSourcePayload,
+  SpeedSourceStatusPayload,
+} from "../../api/types";
 import {
   addSettingsCar,
   deleteSettingsCar,
@@ -58,7 +63,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     "gear_uncertainty_pct",
     "min_abs_band_hz",
     "max_band_half_width_pct",
-  ] as const;
+  ] as const satisfies readonly (keyof AnalysisSettingsPayload)[];
 
   const GPS_POLL_FAST = 2_000;
   const GPS_POLL_SLOW = 10_000;

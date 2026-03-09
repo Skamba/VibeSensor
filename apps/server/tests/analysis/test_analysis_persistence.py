@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from test_support.response_models import response_payload
 
 from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION, HistoryDB
 from vibesensor.history_exports import HistoryExportService
@@ -493,7 +494,7 @@ async def test_insights_returns_persisted_analysis_no_lang() -> None:
     app.include_router(router)
 
     endpoint = _find_endpoint(router, "/api/history/{run_id}/insights")
-    result = await endpoint("run-ins")
+    result = response_payload(await endpoint("run-ins"))
     assert result["lang"] == "en"
     assert "findings" in result
 
