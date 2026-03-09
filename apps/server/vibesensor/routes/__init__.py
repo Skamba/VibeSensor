@@ -62,7 +62,6 @@ def create_router(services: RuntimeRouteServices) -> APIRouter:
     router.include_router(
         create_recording_routes(
             services.diagnostics.metrics_logger,
-            services.diagnostics.live_diagnostics,
         )
     )
     router.include_router(
