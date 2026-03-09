@@ -22,7 +22,7 @@ Backend ownership boundaries:
 - `bootstrap.py`: orchestrates focused subsystem builders and returns the assembled runtime.
 - `routes/`: HTTP and WebSocket route groups.
 - `runtime/`: explicit subsystem builders and owners for ingress, settings, diagnostics, persistence, updates, processing, websocket delivery, route services, and lifecycle.
-- `processing/`, `analysis/`, `live_diagnostics/`: signal processing and findings logic.
+- `processing/`, `analysis/`: signal processing and findings logic.
 - `metrics_log/`, `history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`: recording, persistence, and exports. Inside `metrics_log/`, `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping, `live_analysis.py` owns the rolling dashboard snapshot window, and `post_analysis.py` owns the background analysis queue; `logger.py` is the façade that coordinates those focused collaborators. The runtime persistence subsystem owns the history query/delete/report/export services built on top of `HistoryDB`.
 - `report/`: PDF rendering pipeline.
 - `update/`: wheel-based update flow.

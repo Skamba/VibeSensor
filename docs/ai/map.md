@@ -18,7 +18,7 @@
 ## Current backend boundaries
 
 - Acquisition: `udp_data_rx.py`, `udp_control_tx.py`, `registry.py`, `protocol.py`.
-- Analysis: `processing/`, `analysis/`, `live_diagnostics/`, `libs/core/python/vibesensor_core/`.
+- Analysis: `processing/`, `analysis/`, `libs/core/python/vibesensor_core/`.
 - Runtime coordination: `app.py`, `bootstrap.py`, `runtime/`.
 - API delivery: `routes/`, `ws_hub.py`, `ws_models.py`.
 - Persistence and exports: `metrics_log/`, `history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`.

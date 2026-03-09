@@ -88,7 +88,6 @@ class TestLiveWsPayloadModel:
                     )
                 },
             ),
-            diagnostics={"events": []},
         )
         text = json.dumps(payload.model_dump())
         parsed = json.loads(text)

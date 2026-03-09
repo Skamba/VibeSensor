@@ -8,26 +8,7 @@ import { UiLiveTransportController } from "./runtime/ui_live_transport_controlle
 import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 
-const CAR_MAP_WINDOW_MS = 10_000;
 const DEFAULT_VIEW_ID = "dashboardView";
-
-const CAR_MAP_POSITIONS: Record<string, { top: number; left: number }> = {
-  front_left_wheel: { top: 22, left: 18 },
-  front_right_wheel: { top: 22, left: 82 },
-  rear_left_wheel: { top: 78, left: 18 },
-  rear_right_wheel: { top: 78, left: 82 },
-  engine_bay: { top: 28, left: 50 },
-  front_subframe: { top: 14, left: 50 },
-  rear_subframe: { top: 88, left: 50 },
-  driveshaft_tunnel: { top: 52, left: 50 },
-  transmission: { top: 40, left: 48 },
-  driver_seat: { top: 44, left: 38 },
-  front_passenger_seat: { top: 44, left: 62 },
-  rear_left_seat: { top: 66, left: 30 },
-  rear_center_seat: { top: 66, left: 50 },
-  rear_right_seat: { top: 66, left: 70 },
-  trunk: { top: 88, left: 50 },
-};
 
 export class UiAppRuntime {
   private readonly els: UiDomElements;
@@ -83,8 +64,6 @@ export class UiAppRuntime {
       renderSpeedReadout: () => this.shell.renderSpeedReadout(),
       renderCarSelectionWarning: () => this.shell.renderCarSelectionWarning(),
       sendSelection: () => this.transport.sendSelection(),
-      carMapPositions: CAR_MAP_POSITIONS,
-      carMapWindowMs: CAR_MAP_WINDOW_MS,
     });
     this.shell.attachFeatures(this.features);
     this.transport.attachFeatures(this.features);

@@ -76,12 +76,6 @@ function wsAliasBlock(schemaVersion) {
 		+ 'export type WsOrderBand = WsSchema<"OrderBand">;\n'
 		+ 'export type WsRotationalSpeeds = WsSchema<"RotationalSpeeds">;\n'
 		+ 'export type WsClientInfo = WsSchema<"ClientInfoModel">;\n'
-		+ 'export type WsMatrixCell = WsSchema<"MatrixCellPayload">;\n'
-		+ 'export type WsDiagnosticLevel = WsSchema<"DiagnosticLevelPayload">;\n'
-		+ 'export type WsDiagnosticsLevels = WsSchema<"DiagnosticsLevelsPayload">;\n'
-		+ 'export type WsDiagnosticEvent = WsSchema<"DiagnosticEventPayload">;\n'
-		+ 'export type WsStrengthBand = WsSchema<"StrengthBandPayload">;\n'
-		+ 'export type WsDiagnosticsPayload = WsSchema<"DiagnosticsModel">;\n'
 		+ 'export type LiveWsPayload = WsSchema<"LiveWsPayload">;\n'
 	);
 }
