@@ -1,8 +1,8 @@
 """Shared diagnostic helpers used across analysis and report modules.
 
 Contains settings builders, order/frequency math, peak classification,
-and severity-state tracking shared between live diagnostics and the
-offline report pipeline.
+and severity-state tracking used by the post-run analysis and report
+pipeline.
 """
 
 from __future__ import annotations

@@ -51,7 +51,6 @@ def build_services(config: AppConfig) -> RuntimeState:
         config=config,
         ingress=ingress,
         settings=settings,
-        diagnostics=diagnostics,
     )
     runtime = build_runtime_state(
         config=config,

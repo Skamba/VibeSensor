@@ -49,9 +49,6 @@ Use this when changing backend code without scanning the whole package.
 
 ## Persistence Surface
 - `metrics_log/` owns recording-time persistence semantics.
-- `metrics_log/live_analysis.py` owns the rolling live sample window used by
-  dashboard diagnostics; runtime broadcast code should depend on that narrow
-  snapshot source instead of the full logger.
 - `history_db/` owns SQLite storage, schema, run/status lifecycle, settings, and client-name persistence.
 - `history_runs.py`, `history_reports.py`, and `history_exports.py` are the read/export coordination layer above the DB package.
 - Rule: logging flow should only ingest fresh client data.

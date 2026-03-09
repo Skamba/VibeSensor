@@ -16,7 +16,6 @@ const basePayload = {
   schema_version: EXPECTED_SCHEMA_VERSION,
   clients: [],
   speed_mps: 10,
-  diagnostics: { strength_bands: [], events: [], levels: {} },
 };
 
 // ---------------------------------------------------------------------------

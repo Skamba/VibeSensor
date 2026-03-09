@@ -8,7 +8,7 @@ Owns:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
 from .processing_loop import STALE_DATA_AGE_S
 from .rotational_speeds import (
@@ -18,7 +18,6 @@ from .rotational_speeds import (
 
 if TYPE_CHECKING:
     from .subsystems import (
-        RuntimeDiagnosticsSubsystem,
         RuntimeIngressSubsystem,
         RuntimeSettingsSubsystem,
     )
@@ -26,13 +25,6 @@ if TYPE_CHECKING:
 from ..payload_types import LiveWsPayload, SpectraPayload
 from ..runlog import utc_now_iso
 from ..ws_models import SCHEMA_VERSION
-
-
-class LiveAnalysisSnapshotSource(Protocol):
-    def snapshot(
-        self,
-        max_rows: int = 4000,
-    ) -> tuple[dict[str, object], list[dict[str, object]]]: ...
 
 
 @dataclass(slots=True)
@@ -60,7 +52,6 @@ class WsBroadcastService:
         "_ui_heavy_push_hz",
         "_ingress",
         "_settings",
-        "_diagnostics",
     )
 
     def __init__(
@@ -71,14 +62,12 @@ class WsBroadcastService:
         ui_heavy_push_hz: int,
         ingress: RuntimeIngressSubsystem,
         settings: RuntimeSettingsSubsystem,
-        diagnostics: RuntimeDiagnosticsSubsystem,
     ) -> None:
         self.cache = cache
         self._ui_push_hz = ui_push_hz
         self._ui_heavy_push_hz = ui_heavy_push_hz
         self._ingress = ingress
         self._settings = settings
-        self._diagnostics = diagnostics
 
     def on_tick(self) -> None:
         """Advance the broadcast tick counter and toggle heavy-tick flag."""

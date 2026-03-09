@@ -107,12 +107,3 @@ The `spectrum_payload` and `selected_payload` endpoints include:
 }
 ```
 
-Live diagnostic events include:
-
-```json
-{
-  "vibration_strength_db": 22.3,
-  "key": "l3",
-  "client_id": "001122334455"
-}
-```
