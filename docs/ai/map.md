@@ -9,7 +9,8 @@
 - `apps/server/vibesensor/history_db/`: SQLite-backed history and settings persistence.
 - `apps/server/vibesensor/report/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
 - `apps/server/vibesensor/update/manager.py`: public wheel-based updater facade that composes the focused update modules.
-- `apps/ui/src/main.ts`: top-level UI orchestration.
+- `apps/ui/src/main.ts`: thin UI entry point that boots the app runtime.
+- `apps/ui/src/app/ui_app_runtime.ts`: UI runtime orchestration for feature wiring, startup hydration, and live transport.
 - `apps/ui/src/api.ts` and `apps/ui/src/ws.ts`: HTTP and WebSocket client surfaces.
 - `apps/simulator/`: simulator CLI and websocket smoke tooling.
 
@@ -29,7 +30,7 @@
 - `apps/server/vibesensor/routes/__init__.py`: shared route assembly point.
 - `apps/server/vibesensor/update/workflow.py`: long-running update flow with explicit validation, Wi-Fi, release, install, rollback, and restart orchestration.
 - `apps/server/vibesensor/report/`: public report rendering surface. Start at `pdf_engine.py`, then follow the page modules plus shared drawing/layout helpers.
-- `apps/ui/src/main.ts`: large UI coordinator.
+- `apps/ui/src/app/ui_app_runtime.ts`: UI composition root and lifecycle coordinator.
 
 ## Safe starting points
 
