@@ -125,7 +125,7 @@ def _start_and_snapshot(logger: MetricsLogger):
     logger.start_logging()
     snap = logger._session_snapshot()
     assert snap is not None
-    return snap
+    return snap.run_id, snap.start_time_utc, snap.start_mono_s, snap.generation
 
 
 # -- Tests -------------------------------------------------------------------
@@ -237,7 +237,7 @@ class TestDroppedSamplesLogged:
             logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
 
         # Now append_records should log about dropped samples
-        with patch("vibesensor.metrics_log.logger.LOGGER") as mock_logger:
+        with patch("vibesensor.metrics_log.persistence.LOGGER") as mock_logger:
             logger._append_records(run_id, start_utc, start_mono, session_generation=generation)
             # Verify warning about dropped samples was logged
             warning_calls = [

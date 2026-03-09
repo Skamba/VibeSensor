@@ -22,7 +22,10 @@ def test_start_append_stop_produces_complete_run_in_db(
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono, generation = snapshot
+    run_id = snapshot.run_id
+    start_time_utc = snapshot.start_time_utc
+    start_mono = snapshot.start_mono_s
+    generation = snapshot.generation
     logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
 
     fake_analysis = {"score": 42, "details": "looks good"}
