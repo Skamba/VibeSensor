@@ -344,9 +344,7 @@ def is_top_cause(value: object) -> TypeGuard[TopCause]:
     characteristic of top-cause entries (``strongest_location`` or ``source``),
     which helps distinguish a TopCause from other dict-shaped objects.
     """
-    return isinstance(value, dict) and (
-        "strongest_location" in value or "source" in value
-    )
+    return isinstance(value, dict) and ("strongest_location" in value or "source" in value)
 
 
 class FindingsBuilder(Protocol):
