@@ -142,7 +142,9 @@ class TestCreateRunFailureExposesWriteError:
         run_id, start_utc, start_mono, generation = _start_and_snapshot(logger)
 
         logger._persistence.ensure_history_run_created(
-            run_id, start_utc, session_generation=generation,
+            run_id,
+            start_utc,
+            session_generation=generation,
         )
 
         status = logger.status()
@@ -159,13 +161,17 @@ class TestCreateRunFailureExposesWriteError:
 
         # First call fails
         logger._persistence.ensure_history_run_created(
-            run_id, start_utc, session_generation=generation,
+            run_id,
+            start_utc,
+            session_generation=generation,
         )
         assert logger.status()["write_error"] is not None
 
         # Second call succeeds
         logger._persistence.ensure_history_run_created(
-            run_id, start_utc, session_generation=generation,
+            run_id,
+            start_utc,
+            session_generation=generation,
         )
         assert logger._persistence.history_run_created
         assert logger.status()["write_error"] is None
@@ -183,8 +189,10 @@ class TestPersistentCreateRunFailureStopsRetrying:
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES + 3):
             logger._persistence.ensure_history_run_created(
-            run_id, start_utc, session_generation=generation,
-        )
+                run_id,
+                start_utc,
+                session_generation=generation,
+            )
 
         # Should have been called exactly _MAX_HISTORY_CREATE_RETRIES times
         assert db.create_run.call_count == _MAX_HISTORY_CREATE_RETRIES
@@ -201,8 +209,10 @@ class TestPersistentCreateRunFailureStopsRetrying:
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
             logger._persistence.ensure_history_run_created(
-            run_id, start_utc, session_generation=generation,
-        )
+                run_id,
+                start_utc,
+                session_generation=generation,
+            )
 
         assert logger._persistence.history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
 
@@ -245,8 +255,10 @@ class TestDroppedSamplesLogged:
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
             logger._persistence.ensure_history_run_created(
-            run_id, start_utc, session_generation=generation,
-        )
+                run_id,
+                start_utc,
+                session_generation=generation,
+            )
 
         # Now append_records should log about dropped samples
         with patch("vibesensor.metrics_log.persistence.LOGGER") as mock_logger:
@@ -276,7 +288,9 @@ class TestStatusAlwaysIncludesWriteError:
 
         run_id, start_utc, _, generation = _start_and_snapshot(logger)
         logger._persistence.ensure_history_run_created(
-            run_id, start_utc, session_generation=generation,
+            run_id,
+            start_utc,
+            session_generation=generation,
         )
 
         # Error persists across status calls
@@ -290,7 +304,9 @@ class TestStatusAlwaysIncludesWriteError:
 
         run_id, start_utc, _, generation = _start_and_snapshot(logger)
         logger._persistence.ensure_history_run_created(
-            run_id, start_utc, session_generation=generation,
+            run_id,
+            start_utc,
+            session_generation=generation,
         )
         assert logger.status()["write_error"] is not None
 
