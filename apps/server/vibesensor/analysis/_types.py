@@ -328,13 +328,25 @@ Translator: TypeAlias = Callable[[str], str]
 
 
 def is_finding(value: object) -> TypeGuard[Finding]:
-    """Narrow a runtime value to the canonical finding shape."""
-    return isinstance(value, dict)
+    """Narrow a runtime value to the canonical finding shape.
+
+    Checks for ``isinstance(value, dict)`` *and* the presence of the
+    required ``finding_id`` key, which distinguishes a Finding from
+    other dict-shaped objects.
+    """
+    return isinstance(value, dict) and "finding_id" in value
 
 
 def is_top_cause(value: object) -> TypeGuard[TopCause]:
-    """Narrow a runtime value to the top-cause summary shape."""
-    return isinstance(value, dict)
+    """Narrow a runtime value to the top-cause summary shape.
+
+    Checks for ``isinstance(value, dict)`` *and* the presence of a key
+    characteristic of top-cause entries (``strongest_location`` or ``source``),
+    which helps distinguish a TopCause from other dict-shaped objects.
+    """
+    return isinstance(value, dict) and (
+        "strongest_location" in value or "source" in value
+    )
 
 
 class FindingsBuilder(Protocol):
