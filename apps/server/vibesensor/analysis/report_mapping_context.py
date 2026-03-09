@@ -10,6 +10,23 @@ from ._types import CandidateFinding, Finding, MetadataDict, OriginSummary, Spee
 from .diagnosis_candidates import normalize_origin_location, select_effective_top_causes
 from .report_mapping_common import extract_confidence, human_source
 
+_EMPTY_SPEED_STATS: SpeedStats = {
+    "min_kmh": None,
+    "max_kmh": None,
+    "mean_kmh": None,
+    "stddev_kmh": None,
+    "range_kmh": None,
+    "steady_speed": False,
+}
+
+_EMPTY_ORIGIN: OriginSummary = {
+    "location": "unknown",
+    "alternative_locations": [],
+    "source": "unknown",
+    "dominance_ratio": None,
+    "weak_spatial_separation": True,
+}
+
 
 def extract_run_context(
     summary: SummaryData,
@@ -36,21 +53,8 @@ def extract_run_context(
         summary.get("findings", []),
     )
 
-    speed_stats: SpeedStats = summary.get("speed_stats") or {
-        "min_kmh": None,
-        "max_kmh": None,
-        "mean_kmh": None,
-        "stddev_kmh": None,
-        "range_kmh": None,
-        "steady_speed": False,
-    }
-    origin: OriginSummary = summary.get("most_likely_origin") or {
-        "location": "unknown",
-        "alternative_locations": [],
-        "source": "unknown",
-        "dominance_ratio": None,
-        "weak_spatial_separation": True,
-    }
+    speed_stats: SpeedStats = summary.get("speed_stats") or _EMPTY_SPEED_STATS
+    origin: OriginSummary = summary.get("most_likely_origin") or _EMPTY_ORIGIN
 
     return (
         meta,
