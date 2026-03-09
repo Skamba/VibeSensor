@@ -26,7 +26,6 @@ class _State:
     settings_store: SettingsStore
     analysis_settings: AnalysisSettingsStore
 
-    live_diagnostics: object = field(init=False)
     metrics_logger: object = field(init=False)
     history_db: object = field(init=False)
     registry: object = field(init=False)
@@ -54,7 +53,6 @@ class _State:
         self.health_state.mark_ready()
         self.update_manager = None
         self.esp_flash_manager = None
-        self.live_diagnostics = SimpleNamespace(reset=_noop)
         self.metrics_logger = SimpleNamespace(
             status=dict,
             start_logging=_noop,
@@ -106,7 +104,6 @@ class _State:
         )
         self.diagnostics = SimpleNamespace(
             metrics_logger=self.metrics_logger,
-            live_diagnostics=self.live_diagnostics,
         )
         self.persistence = SimpleNamespace(
             history_db=self.history_db,

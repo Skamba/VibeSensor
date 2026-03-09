@@ -29,7 +29,6 @@ apps/server/tests/
 ├── history/
 ├── hygiene/
 ├── integration/
-├── live_diagnostics/
 ├── metrics_log/
 ├── processing/
 ├── protocol/
@@ -52,7 +51,6 @@ apps/server/tests/
 | `vibesensor/history_db/*`, `history_*.py`, `runlog.py` | `apps/server/tests/history/` |
 | `vibesensor/update/*`, `firmware_cache.py`, `esp_flash_manager.py`, `release_fetcher.py` | `apps/server/tests/update/` |
 | `vibesensor/processing/*` | `apps/server/tests/processing/` |
-| `vibesensor/live_diagnostics/*` | `apps/server/tests/live_diagnostics/` |
 | `vibesensor/ws_hub.py`, `ws_models.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
 | `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
 | `vibesensor/domain_models.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |

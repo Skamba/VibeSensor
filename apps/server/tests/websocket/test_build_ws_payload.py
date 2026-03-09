@@ -105,17 +105,6 @@ class _StubMetricsLogger:
         return True
 
 
-class _StubDiagnostics:
-    def __init__(self) -> None:
-        self.update_calls = 0
-        self.last_kwargs: dict[str, Any] | None = None
-
-    def update(self, **kwargs: Any) -> dict[str, Any]:
-        self.update_calls += 1
-        self.last_kwargs = kwargs
-        return {"matrix": {}, "findings": []}
-
-
 class _StubSettingsStore:
     language: str = "en"
 
@@ -173,7 +162,6 @@ def _make_state(
     diagnostics = runtime_module.RuntimeDiagnosticsSubsystem(
         metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
         live_analysis=_StubLiveAnalysis(),  # type: ignore[arg-type]
-        live_diagnostics=_StubDiagnostics(),  # type: ignore[arg-type]
     )
     persistence = runtime_module.RuntimePersistenceSubsystem(  # type: ignore[arg-type]
         history_db=_SENTINEL
@@ -278,8 +266,7 @@ def test_build_ws_payload_returns_required_keys() -> None:
         assert key in payload, f"missing key: {key}"
 
     # Heavy-tick keys
-    for key in ("spectra", "diagnostics"):
-        assert key in payload, f"missing heavy key: {key}"
+    assert "spectra" in payload, "missing heavy key: spectra"
 
     assert payload["speed_mps"] == 12.5
     assert payload["selected_client_id"] == "aaa"
@@ -292,8 +279,6 @@ def test_build_ws_payload_light_tick_omits_spectra_and_selected() -> None:
     payload = state.websocket.broadcast.build_payload(selected_client="aaa")
 
     assert "spectra" not in payload
-    # diagnostics is always present
-    assert "diagnostics" in payload
 
 
 def test_build_ws_payload_auto_selects_first_client() -> None:
@@ -309,71 +294,6 @@ def test_build_ws_payload_no_clients() -> None:
 
     assert payload["clients"] == []
     assert payload["selected_client_id"] is None
-
-
-def test_build_ws_payload_light_tick_reuses_cached_analysis_snapshot() -> None:
-    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
-
-    state.websocket.broadcast.build_payload(selected_client="aaa")
-    live_analysis = state.diagnostics.live_analysis
-    assert isinstance(live_analysis, _StubLiveAnalysis)
-    assert live_analysis.snapshot_calls == 1
-
-    state.websocket.cache.include_heavy = False
-    state.websocket.broadcast.build_payload(selected_client="aaa")
-
-    assert live_analysis.snapshot_calls == 1
-
-
-def test_build_ws_payload_light_tick_without_cache_still_collects_snapshot() -> None:
-    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
-
-    state.websocket.broadcast.build_payload(selected_client="aaa")
-    live_analysis = state.diagnostics.live_analysis
-
-    assert isinstance(live_analysis, _StubLiveAnalysis)
-    assert live_analysis.snapshot_calls == 1
-
-
-def test_build_ws_payload_light_tick_skips_finding_inputs() -> None:
-    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
-    diagnostics = state.diagnostics.live_diagnostics
-
-    state.websocket.broadcast.build_payload(selected_client="aaa")
-
-    assert isinstance(diagnostics, _StubDiagnostics)
-    assert diagnostics.last_kwargs is not None
-    assert diagnostics.last_kwargs["spectra"] is None
-    assert diagnostics.last_kwargs["finding_metadata"] is None
-    assert diagnostics.last_kwargs["finding_samples"] is None
-
-
-def test_build_ws_payload_heavy_tick_includes_finding_inputs() -> None:
-    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
-    diagnostics = state.diagnostics.live_diagnostics
-
-    state.websocket.broadcast.build_payload(selected_client="aaa")
-
-    assert isinstance(diagnostics, _StubDiagnostics)
-    assert diagnostics.last_kwargs is not None
-    assert diagnostics.last_kwargs["spectra"] is not None
-    assert diagnostics.last_kwargs["finding_metadata"] is not None
-    assert diagnostics.last_kwargs["finding_samples"] is not None
-
-
-def test_build_ws_payload_reuses_diagnostics_per_tick() -> None:
-    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
-    diagnostics = state.diagnostics.live_diagnostics
-    live_analysis = state.diagnostics.live_analysis
-    assert isinstance(diagnostics, _StubDiagnostics)
-    assert isinstance(live_analysis, _StubLiveAnalysis)
-
-    state.websocket.cache.tick = 77
-    state.websocket.broadcast.build_payload(selected_client="aaa")
-    state.websocket.broadcast.build_payload(selected_client="bbb")
-
-    assert diagnostics.update_calls == 1
-    assert live_analysis.snapshot_calls == 1
 
 
 def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:

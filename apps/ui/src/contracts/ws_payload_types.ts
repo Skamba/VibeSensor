@@ -23,7 +23,6 @@ export interface components {
        * @default []
        */
       clients?: components["schemas"]["ClientInfoModel"][];
-      diagnostics?: components["schemas"]["DiagnosticsModel"];
       /** @default null */
       rotational_speeds?: components["schemas"]["RotationalSpeeds"] | null;
       /**
@@ -179,112 +178,6 @@ export interface components {
       server_queue_drops?: number;
       timing_health?: components["schemas"]["TimingHealthPayload"];
     };
-    /** DiagnosticEventPayload */
-    DiagnosticEventPayload: {
-      /** Class Key */
-      class_key?: string;
-      /** Event Id */
-      event_id?: number;
-      /** Kind */
-      kind?: string;
-      /** Peak Amp */
-      peak_amp?: number;
-      /** Peak Amp G */
-      peak_amp_g?: number;
-      /** Peak Hz */
-      peak_hz?: number;
-      /** Sensor Count */
-      sensor_count?: number;
-      /** Sensor Id */
-      sensor_id?: string;
-      /** Sensor Label */
-      sensor_label?: string;
-      /** Sensor Labels */
-      sensor_labels?: string[];
-      /** Severity Key */
-      severity_key?: string | null;
-      /** Vibration Strength Db */
-      vibration_strength_db?: number;
-    };
-    /** DiagnosticLevelPayload */
-    DiagnosticLevelPayload: {
-      /** Agreement Count */
-      agreement_count?: number;
-      /** Bucket Key */
-      bucket_key?: string;
-      /** Class Key */
-      class_key?: string;
-      /** Confidence */
-      confidence?: number;
-      /** Peak Hz */
-      peak_hz?: number;
-      /** Sensor Count */
-      sensor_count?: number;
-      /** Sensor Label */
-      sensor_label?: string;
-      /** Sensor Location */
-      sensor_location?: string;
-      /** Strength Db */
-      strength_db?: number;
-    };
-    /** DiagnosticsLevelsPayload */
-    DiagnosticsLevelsPayload: {
-      /** By Location */
-      by_location: {
-        [key: string]: components["schemas"]["DiagnosticLevelPayload"];
-      };
-      /** By Sensor */
-      by_sensor: {
-        [key: string]: components["schemas"]["DiagnosticLevelPayload"];
-      };
-      /** By Source */
-      by_source: {
-        [key: string]: components["schemas"]["DiagnosticLevelPayload"];
-      };
-    };
-    /**
-     * DiagnosticsModel
-     * @description Structured live diagnostics payload with explicit defaults.
-     */
-    DiagnosticsModel: {
-      /**
-       * Diagnostics Sequence
-       * @default 0
-       */
-      diagnostics_sequence?: number;
-      /**
-       * Driving Phase
-       * @default unknown
-       */
-      driving_phase?: string;
-      /**
-       * Error
-       * @default null
-       */
-      error?: string | null;
-      /** Events */
-      events?: components["schemas"]["DiagnosticEventPayload"][];
-      /** Findings */
-      findings?: {
-          [key: string]: unknown;
-        }[];
-      levels?: components["schemas"]["DiagnosticsLevelsPayload"];
-      /** Matrix */
-      matrix?: {
-        [key: string]: {
-          [key: string]: components["schemas"]["MatrixCellPayload"];
-        };
-      };
-      /** Strength Bands */
-      strength_bands?: components["schemas"]["StrengthBandPayload"][];
-      /**
-       * Top Finding
-       * @default null
-       */
-      top_finding?: {
-        [key: string]: unknown;
-      } | null;
-    };
     /**
      * FrequencyWarning
      * @description Warning about frequency data quality issues in a spectra payload.
@@ -296,17 +189,6 @@ export interface components {
       code: string;
       /** Message */
       message: string;
-    };
-    /** MatrixCellPayload */
-    MatrixCellPayload: {
-      /** Contributors */
-      contributors: {
-        [key: string]: number;
-      };
-      /** Count */
-      count: number;
-      /** Seconds */
-      seconds: number;
     };
     /**
      * OrderBand
@@ -437,17 +319,6 @@ export interface components {
       z?: number[];
       [key: string]: unknown;
     };
-    /** StrengthBandPayload */
-    StrengthBandPayload: {
-      /** Key */
-      key: string;
-      /** Labelkey */
-      labelKey: string;
-      /** Max Db */
-      max_db: number | null;
-      /** Min Db */
-      min_db: number;
-    };
     /**
      * StrengthMetricsModel
      * @description Structured vibration-strength metrics with explicit defaults.
@@ -526,10 +397,4 @@ export type WsRotationalSpeedValue = WsSchema<"RotationalSpeedValue">;
 export type WsOrderBand = WsSchema<"OrderBand">;
 export type WsRotationalSpeeds = WsSchema<"RotationalSpeeds">;
 export type WsClientInfo = WsSchema<"ClientInfoModel">;
-export type WsMatrixCell = WsSchema<"MatrixCellPayload">;
-export type WsDiagnosticLevel = WsSchema<"DiagnosticLevelPayload">;
-export type WsDiagnosticsLevels = WsSchema<"DiagnosticsLevelsPayload">;
-export type WsDiagnosticEvent = WsSchema<"DiagnosticEventPayload">;
-export type WsStrengthBand = WsSchema<"StrengthBandPayload">;
-export type WsDiagnosticsPayload = WsSchema<"DiagnosticsModel">;
 export type LiveWsPayload = WsSchema<"LiveWsPayload">;

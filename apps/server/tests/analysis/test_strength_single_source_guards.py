@@ -70,13 +70,6 @@ _ANY_PATTERN: re.Pattern[str] = re.compile(r"\bas\s+any\b|:\s*any\b")
 # ---------------------------------------------------------------------------
 
 
-def test_live_diagnostics_avoids_strength_formula_reimplementation() -> None:
-    _assert_no_forbidden_strings(
-        SERVER_ROOT / "vibesensor" / "live_diagnostics",
-        ["strength_db_above_floor(", "compute_floor_rms(", "compute_band_rms("],
-    )
-
-
 def test_report_modules_use_shared_strength_math() -> None:
     _assert_no_forbidden_strings(
         SERVER_ROOT / "vibesensor" / "report",

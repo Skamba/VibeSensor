@@ -130,16 +130,6 @@ class TestProcessingZeroSampleRate:
             assert len(valid_idx) > 0
 
 
-# --- Bug 5: live_diagnostics type annotation (compile-time) ---------------
-
-
-def test_live_diagnostics_entries_type_annotation() -> None:
-    """Verify event_detector properly extracts label and location per client."""
-    source = (SERVER_ROOT / "vibesensor" / "live_diagnostics" / "event_detector.py").read_text()
-    assert "client_map" in source, "client_map lookup must exist"
-    assert "client_location_map" in source, "client_location_map lookup must exist"
-
-
 # --- Bug 10: location_code stripped before registry -----------------------
 
 

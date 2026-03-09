@@ -5,7 +5,6 @@ from typing import TypeAlias
 from typing_extensions import TypedDict
 from vibesensor_core.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 
-from .analysis import Finding
 from .json_types import JsonObject
 
 IntakeStatsPayload: TypeAlias = JsonObject
@@ -229,67 +228,6 @@ class TimeAlignmentPayload(TypedDict):
     sensors_excluded: list[str]
 
 
-class MatrixCellPayload(TypedDict):
-    count: int
-    seconds: float
-    contributors: dict[str, int]
-
-
-MatrixPayload: TypeAlias = dict[str, dict[str, MatrixCellPayload]]
-
-
-class DiagnosticLevelPayload(TypedDict, total=False):
-    bucket_key: str
-    strength_db: float
-    sensor_label: str
-    sensor_location: str
-    class_key: str
-    peak_hz: float
-    confidence: float
-    agreement_count: int
-    sensor_count: int
-
-
-class DiagnosticsLevelsPayload(TypedDict):
-    by_source: dict[str, DiagnosticLevelPayload]
-    by_sensor: dict[str, DiagnosticLevelPayload]
-    by_location: dict[str, DiagnosticLevelPayload]
-
-
-class StrengthBandPayload(TypedDict):
-    key: str
-    min_db: float
-    max_db: float | None
-    labelKey: str
-
-
-class DiagnosticEventPayload(TypedDict, total=False):
-    event_id: int
-    kind: str
-    class_key: str
-    severity_key: str | None
-    sensor_id: str
-    sensor_label: str
-    sensor_labels: list[str]
-    sensor_count: int
-    peak_hz: float
-    peak_amp: float
-    peak_amp_g: float
-    vibration_strength_db: float
-
-
-class LiveDiagnosticsPayload(TypedDict):
-    diagnostics_sequence: int
-    matrix: MatrixPayload
-    events: list[DiagnosticEventPayload]
-    strength_bands: list[StrengthBandPayload]
-    levels: DiagnosticsLevelsPayload
-    findings: list[Finding]
-    top_finding: Finding | None
-    driving_phase: str
-    error: str | None
-
-
 class RotationalSpeedValuePayload(TypedDict):
     rpm: float | None
     mode: str | None
@@ -318,4 +256,3 @@ class LiveWsPayload(TypedDict, total=False):
     selected_client_id: str | None
     rotational_speeds: RotationalSpeedsPayload | None
     spectra: SpectraPayload
-    diagnostics: LiveDiagnosticsPayload

@@ -14,7 +14,6 @@ from ..analysis_settings import AnalysisSettingsStore
 from ..esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
-from ..live_diagnostics.engine import LiveDiagnosticsEngine
 from ..metrics_log import MetricsLogger
 from ..processing import SignalProcessor
 from ..registry import ClientRegistry
@@ -36,13 +35,12 @@ class RuntimeIngressServices:
 
 @dataclass(slots=True)
 class RuntimeOperationsServices:
-    """Settings, diagnostics, GPS, and metrics services used during runtime."""
+    """Settings, GPS, and metrics services used during runtime."""
 
     settings_store: SettingsStore
     analysis_settings: AnalysisSettingsStore
     gps_monitor: GPSSpeedMonitor
     metrics_logger: MetricsLogger
-    live_diagnostics: LiveDiagnosticsEngine
 
 
 @dataclass(slots=True)
