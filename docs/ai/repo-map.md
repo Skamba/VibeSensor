@@ -5,7 +5,8 @@
 - Backend app: `apps/server/vibesensor/app.py`
 - Backend service wiring: `apps/server/vibesensor/bootstrap.py`
 - Backend route assembly: `apps/server/vibesensor/routes/__init__.py`
-- UI app: `apps/ui/src/main.ts`
+- UI app entry: `apps/ui/src/main.ts`
+- UI runtime/composition root: `apps/ui/src/app/ui_app_runtime.ts`
 - Simulator CLI: `apps/simulator/vibesensor_simulator/sim_sender.py`
 - Firmware app: `firmware/esp/src/main.cpp`
 - Pi image build: `infra/pi-image/pi-gen/build.sh`
