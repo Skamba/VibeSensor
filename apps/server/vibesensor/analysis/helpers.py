@@ -443,9 +443,7 @@ def _location_label(sample: Sample, *, lang: str = "en") -> str:
     return "Unknown sensor"
 
 
-def _locations_connected_throughout_run(
-    samples: list[Sample], *, lang: str = "en"
-) -> set[str]:
+def _locations_connected_throughout_run(samples: list[Sample], *, lang: str = "en") -> set[str]:
     by_location_times: dict[str, set[float]] = defaultdict(set)
     all_times: list[float] = []
 
