@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
+from test_support.response_models import response_payload
 
 from vibesensor.esp_flash_manager import (
     EspFlashManager,
@@ -380,10 +381,10 @@ async def test_esp_flash_api_lifecycle(tmp_path: Path) -> None:
     await start_ep(type("Req", (), {"port": None, "auto_detect": True})())
     assert mgr._task is not None
     await mgr._task
-    assert (await status_ep())["state"] == "success"
-    assert (await logs_ep(after=0))["next_index"] >= 1
-    assert await cancel_ep() == {"cancelled": False}
-    assert len((await history_ep())["attempts"]) == 1
+    assert response_payload(await status_ep())["state"] == "success"
+    assert response_payload(await logs_ep(after=0))["next_index"] >= 1
+    assert response_payload(await cancel_ep()) == {"cancelled": False}
+    assert len(response_payload(await history_ep())["attempts"]) == 1
 
 
 @pytest.mark.asyncio
