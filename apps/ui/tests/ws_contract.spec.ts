@@ -42,7 +42,7 @@ test.describe("schema_version handling", () => {
     expect(adapted).toBeDefined();
   });
 
-  test("accepts payload without diagnostics", () => {
+  test("accepts payload without diagnostics and without spectra", () => {
     const adapted = adaptServerPayload({ ...basePayload });
     expect(adapted).toBeDefined();
     expect(adapted.spectra).toBeNull();

@@ -3,10 +3,9 @@
  *
  * Validates focused fixes that still apply to the spectrum-only live view:
  *
- *  1. Stale spectra not cleared when server payload has no spectra
- *  2. start/stop logging errors silently swallowed
- *  3. Silent validation failure in analysis settings save
- *  4. No upper-bound on manual speed input
+ *  - stale spectra are not retained when a tick omits spectra
+ *  - heavy-frame interpolation still protects the spectrum chart render path
+ *  - manual speed input still rejects out-of-range values
  */
 
 import { expect, test } from "@playwright/test";
@@ -138,7 +137,7 @@ test.describe("spectrum heavy-frame animation compatibility", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 4. Manual speed upper-bound (≤ 500 kph)
+// Manual speed upper-bound (≤ 500 kph)
 //    We test the validation logic inline since the save functions are inside
 //    the feature closure.  The bug is that Number.isFinite(v) && v > 0 was
 //    the only check — values like 9999 kph were accepted.
