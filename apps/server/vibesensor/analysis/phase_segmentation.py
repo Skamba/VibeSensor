@@ -17,7 +17,12 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
+from typing import TYPE_CHECKING
+
+from ..json_types import JsonObject
+
+if TYPE_CHECKING:
+    from ._types import PhaseSummary
 
 from ..runlog import as_float_or_none as _as_float
 
@@ -200,7 +205,7 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
 
 
 def segment_run_phases(
-    samples: list[dict[str, Any]],
+    samples: list[JsonObject],
 ) -> tuple[list[DrivingPhase], list[PhaseSegment]]:
     """Classify every sample into a driving phase and return contiguous segments.
 
@@ -273,7 +278,7 @@ def segment_run_phases(
     return per_sample, segments
 
 
-def phase_summary(segments: list[PhaseSegment]) -> dict[str, Any]:
+def phase_summary(segments: list[PhaseSegment]) -> PhaseSummary:
     """Return a summary dict suitable for embedding in the run summary."""
     phase_counts: dict[str, int] = {}
     total = 0

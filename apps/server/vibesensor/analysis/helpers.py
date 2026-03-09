@@ -6,7 +6,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from math import isfinite, sqrt
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import TypedDict, cast
 
 from vibesensor_core.vibration_strength import percentile
 
@@ -16,10 +16,11 @@ from ..analysis_settings import (
     wheel_hz_from_speed_kmh,
 )
 from ..constants import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ, WEAK_SPATIAL_DOMINANCE_THRESHOLD
+from ..json_types import JsonObject
 from ..locations import label_for_code as _label_for_code
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
-from ._types import PhaseLabel, PhaseSpeedStats, Sample, SpeedStats
+from ._types import MetadataDict, PhaseLabel, PhaseSpeedStats, Sample, SpeedStats
 
 SPEED_BIN_WIDTH_KMH = 10
 SPEED_COVERAGE_MIN_PCT = 35.0
@@ -59,7 +60,7 @@ def weak_spatial_dominance_threshold(location_count: int | None) -> float:
     return float(WEAK_SPATIAL_DOMINANCE_THRESHOLD) * (1.0 + (0.1 * (n_locations - 2)))
 
 
-def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
+def _validate_required_strength_metrics(samples: list[Sample]) -> None:
     if not samples:
         return
     first_bad_idx: int | None = None
@@ -85,7 +86,7 @@ def _format_duration(seconds: float) -> str:
     return f"{minutes:02d}:{rem:04.1f}"
 
 
-def _percent_missing(samples: list[dict[str, Any]], key: str) -> float:
+def _percent_missing(samples: list[Sample], key: str) -> float:
     if not samples:
         return 100.0
     missing = sum(1 for sample in samples if sample.get(key) in (None, ""))
@@ -241,7 +242,7 @@ def _sensor_limit_g(sensor_model: object) -> float | None:
     return None
 
 
-def _tire_reference_from_metadata(metadata: dict[str, Any]) -> tuple[float | None, str | None]:
+def _tire_reference_from_metadata(metadata: MetadataDict) -> tuple[float | None, str | None]:
     direct = _as_float(metadata.get("tire_circumference_m"))
     if direct is not None and direct > 0:
         return direct, "metadata.tire_circumference_m"
@@ -258,8 +259,8 @@ def _tire_reference_from_metadata(metadata: dict[str, Any]) -> tuple[float | Non
 
 
 def _effective_engine_rpm(
-    sample: dict[str, Any],
-    metadata: dict[str, Any],
+    sample: Sample,
+    metadata: MetadataDict,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     measured = _as_float(sample.get("engine_rpm"))
@@ -296,7 +297,7 @@ def _effective_engine_rpm(
     )
 
 
-def _load_run(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]], list[str]]:
+def _load_run(path: Path) -> tuple[JsonObject, list[JsonObject], list[str]]:
     if not path.exists():
         raise FileNotFoundError(path)
     if path.suffix.lower() != ".jsonl":
@@ -305,7 +306,7 @@ def _load_run(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]], list[st
     return dict(run_data.metadata), list(run_data.samples), []
 
 
-def _primary_vibration_strength_db(sample: dict[str, Any]) -> float | None:
+def _primary_vibration_strength_db(sample: Sample) -> float | None:
     value = _as_float(sample.get("vibration_strength_db"))
     return float(value) if value is not None else None
 
@@ -333,7 +334,7 @@ def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:
     return result if isfinite(result) else None
 
 
-def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
+def _sample_top_peaks(sample: Sample) -> list[tuple[float, float]]:
     top_peaks = sample.get("top_peaks")
     out: list[tuple[float, float]] = []
     if isinstance(top_peaks, list):
@@ -368,7 +369,7 @@ def _corr_abs_clamped(x: list[float], y: list[float]) -> float | None:
     return max(0.0, min(1.0, raw))
 
 
-def _estimate_strength_floor_amp_g(sample: dict[str, Any]) -> float | None:
+def _estimate_strength_floor_amp_g(sample: Sample) -> float | None:
     """Estimate per-sample floor amplitude.
 
     Policy: accept strictly positive ``strength_floor_amp_g``; otherwise
@@ -386,7 +387,7 @@ def _estimate_strength_floor_amp_g(sample: dict[str, Any]) -> float | None:
     return float(floor_from_peaks) if floor_from_peaks > 0 else None
 
 
-def _run_noise_baseline_g(samples: list[dict[str, Any]]) -> float | None:
+def _run_noise_baseline_g(samples: list[Sample]) -> float | None:
     """Estimate run-level noise baseline as median of per-sample floor estimates.
 
     Per-sample floor uses ``strength_floor_amp_g`` when available; otherwise it
@@ -420,7 +421,7 @@ def _effective_baseline_floor(
     return float(max(float(MEMS_NOISE_FLOOR_G), float(val)))
 
 
-def _location_label(sample: dict[str, Any], *, lang: str = "en") -> str:
+def _location_label(sample: Sample, *, lang: str = "en") -> str:
     """Return a stable language-neutral location label for the sample.
 
     NOTE: This is used as a **grouping key** across the data pipeline, so it
@@ -442,9 +443,7 @@ def _location_label(sample: dict[str, Any], *, lang: str = "en") -> str:
     return "Unknown sensor"
 
 
-def _locations_connected_throughout_run(
-    samples: list[dict[str, Any]], *, lang: str = "en"
-) -> set[str]:
+def _locations_connected_throughout_run(samples: list[Sample], *, lang: str = "en") -> set[str]:
     by_location_times: dict[str, set[float]] = defaultdict(set)
     all_times: list[float] = []
 

@@ -195,11 +195,8 @@ def _build_report_template_data(
     version_marker = build_version_marker()
     run_meta = build_run_metadata_fields(summary, context.meta)
 
-    raw_sensor_intensity_all = summary.get("sensor_intensity_by_location", [])
-    if not isinstance(raw_sensor_intensity_all, list):
-        raw_sensor_intensity_all = []
     raw_sensor_intensity = filter_active_sensor_intensity(
-        raw_sensor_intensity_all,
+        summary.get("sensor_intensity_by_location", []),
         context.sensor_locations_active,
     )
     hotspot_rows = compute_location_hotspot_rows(raw_sensor_intensity)

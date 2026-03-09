@@ -8,7 +8,7 @@ from collections.abc import Callable
 from .. import __version__
 from ..report.report_data import PartSuggestion, PatternEvidence, SystemFindingCard
 from ..runlog import as_float_or_none as _as_float
-from ._types import CandidateFinding, Finding, OriginSummary, is_finding
+from ._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SummaryData, is_finding
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .report_mapping_common import (
     finding_strength_db,
@@ -20,7 +20,7 @@ from .report_mapping_common import (
 
 
 def top_strength_values(
-    summary: dict,
+    summary: SummaryData,
     *,
     effective_causes: list[CandidateFinding] | None = None,
 ) -> float | None:
@@ -169,7 +169,7 @@ def resolve_parts_context(
     return source_for_why, order_label
 
 
-def build_run_metadata_fields(summary: dict, meta: dict) -> dict[str, object]:
+def build_run_metadata_fields(summary: SummaryData, meta: MetadataDict) -> dict[str, object]:
     """Extract and format run metadata text fields for the report template."""
     duration_text = str(summary.get("record_length") or "") or None
     start_time_utc = str(summary.get("start_time_utc") or "").strip() or None

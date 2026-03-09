@@ -14,7 +14,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TypedDict
 
 from .domain_models import (
     RUN_END_TYPE,
@@ -28,13 +28,14 @@ from .domain_models import (
 )
 from .domain_models import as_float_or_none as _as_float_or_none
 from .domain_models import as_int_or_none as _as_int_or_none
+from .json_types import JsonObject, JsonValue
 
 LOGGER = logging.getLogger(__name__)
 
 _JSONL_SEPARATORS = (",", ":")
 
 
-def _sanitize_non_finite(obj: Any) -> Any:
+def _sanitize_non_finite(obj: JsonValue) -> JsonValue:
     """Recursively replace NaN/Inf floats with ``None`` for valid JSON output."""
     if isinstance(obj, float) and not math.isfinite(obj):
         return None
@@ -51,6 +52,7 @@ __all__ = [
     "RUN_SAMPLE_TYPE",
     "RUN_END_TYPE",
     "RunData",
+    "RunEndRecord",
     "utc_now_iso",
     "parse_iso8601",
     "as_float_or_none",
@@ -70,9 +72,18 @@ __all__ = [
 class RunData:
     """Parsed contents of a JSONL run file: metadata, samples, and source path."""
 
-    metadata: dict[str, Any]
-    samples: list[dict[str, Any]]
+    metadata: JsonObject
+    samples: list[JsonObject]
     source_path: Path
+
+
+class RunEndRecord(TypedDict):
+    """Shape of a RUN_END record written to JSONL run logs."""
+
+    record_type: str
+    schema_version: str
+    run_id: str
+    end_time_utc: str
 
 
 def utc_now_iso() -> str:
@@ -114,7 +125,7 @@ def create_run_metadata(
     firmware_version: str | None = None,
     end_time_utc: str | None = None,
     incomplete_for_order_analysis: bool = False,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Build and return a run-metadata dict from the supplied fields."""
     return RunMetadata.create(
         run_id=run_id,
@@ -132,17 +143,17 @@ def create_run_metadata(
     ).to_dict()
 
 
-def create_run_end_record(run_id: str, end_time_utc: str | None = None) -> dict[str, Any]:
+def create_run_end_record(run_id: str, end_time_utc: str | None = None) -> RunEndRecord:
     """Build a RUN_END record dict to mark the end of a run in the log."""
-    return {
-        "record_type": RUN_END_TYPE,
-        "schema_version": RUN_SCHEMA_VERSION,
-        "run_id": run_id,
-        "end_time_utc": end_time_utc or utc_now_iso(),
-    }
+    return RunEndRecord(
+        record_type=RUN_END_TYPE,
+        schema_version=RUN_SCHEMA_VERSION,
+        run_id=run_id,
+        end_time_utc=end_time_utc or utc_now_iso(),
+    )
 
 
-def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
+def normalize_sample_record(record: JsonObject) -> JsonObject:
     """Normalize a raw sample dict into canonical form.
 
     Delegates to :class:`SensorFrame` for field parsing.  Extra keys present
@@ -150,16 +161,16 @@ def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     """
     frame = SensorFrame.from_dict(record)
     normalized = dict(record)
-    normalized.update(frame.to_dict())
+    normalized.update(frame.to_dict())  # type: ignore[arg-type]  # dict[str, object] → JsonObject
     return normalized
 
 
 def bounded_sample(
-    samples: Iterator[dict],
+    samples: Iterator[JsonObject],
     *,
     max_items: int,
     total_hint: int = 0,
-) -> tuple[list[dict], int, int]:
+) -> tuple[list[JsonObject], int, int]:
     """Down-sample *samples* to at most *max_items*.
 
     When *total_hint* is available the stride is computed upfront so
@@ -167,7 +178,7 @@ def bounded_sample(
 
     Returns
     -------
-    tuple[list[dict], int, int]
+    tuple[list[JsonObject], int, int]
         ``(kept_samples, total_count, final_stride)`` where
         *kept_samples* is the down-sampled list, *total_count* is the
         number of items consumed from the iterator, and *final_stride*
@@ -181,7 +192,7 @@ def bounded_sample(
     if max_items <= 0:
         raise ValueError(f"bounded_sample: max_items must be >= 1, got {max_items}")
     stride: int = max(1, -(-total_hint // max_items)) if total_hint > max_items else 1
-    kept: list[dict] = []
+    kept: list[JsonObject] = []
     total = 0
     for sample in samples:
         total += 1
@@ -200,7 +211,7 @@ def bounded_sample(
 
 def append_jsonl_records(
     path: Path,
-    records: Iterable[dict[str, Any]],
+    records: Iterable[JsonObject],
     *,
     durable: bool = False,
     durable_every_records: int = 100,
@@ -257,9 +268,9 @@ def read_jsonl_run(path: Path) -> RunData:
     if not path.exists():
         raise FileNotFoundError(path)
 
-    metadata: dict[str, Any] | None = None
-    end_record: dict[str, Any] | None = None
-    samples: list[dict[str, Any]] = []
+    metadata: JsonObject | None = None
+    end_record: JsonObject | None = None
+    samples: list[JsonObject] = []
     skipped = 0
     _loads = json.loads
     _meta_type = RUN_METADATA_TYPE
