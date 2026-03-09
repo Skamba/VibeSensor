@@ -169,9 +169,7 @@ def resolve_parts_context(
     return source_for_why, order_label
 
 
-def build_run_metadata_fields(
-    summary: SummaryData, meta: MetadataDict
-) -> dict[str, object]:
+def build_run_metadata_fields(summary: SummaryData, meta: MetadataDict) -> dict[str, object]:
     """Extract and format run metadata text fields for the report template."""
     duration_text = str(summary.get("record_length") or "") or None
     start_time_utc = str(summary.get("start_time_utc") or "").strip() or None

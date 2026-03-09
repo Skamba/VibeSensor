@@ -60,9 +60,7 @@ def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable) -> PeakRow:
     )
 
 
-def peak_row_system_label(
-    row: PeakTableRow, *, order: str, tr: Callable[..., str]
-) -> str:
+def peak_row_system_label(row: PeakTableRow, *, order: str, tr: Callable[..., str]) -> str:
     """Resolve the system label shown for one peak row."""
     order_lower = order.lower()
     source_hint = str(row.get("source") or row.get("suspected_source") or "").strip().lower()
