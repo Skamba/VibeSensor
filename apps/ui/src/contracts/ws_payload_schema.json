@@ -217,225 +217,6 @@
       "title": "ClientInfoModel",
       "type": "object"
     },
-    "DiagnosticEventPayload": {
-      "additionalProperties": false,
-      "properties": {
-        "class_key": {
-          "title": "Class Key",
-          "type": "string"
-        },
-        "event_id": {
-          "title": "Event Id",
-          "type": "integer"
-        },
-        "kind": {
-          "title": "Kind",
-          "type": "string"
-        },
-        "peak_amp": {
-          "title": "Peak Amp",
-          "type": "number"
-        },
-        "peak_amp_g": {
-          "title": "Peak Amp G",
-          "type": "number"
-        },
-        "peak_hz": {
-          "title": "Peak Hz",
-          "type": "number"
-        },
-        "sensor_count": {
-          "title": "Sensor Count",
-          "type": "integer"
-        },
-        "sensor_id": {
-          "title": "Sensor Id",
-          "type": "string"
-        },
-        "sensor_label": {
-          "title": "Sensor Label",
-          "type": "string"
-        },
-        "sensor_labels": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Sensor Labels",
-          "type": "array"
-        },
-        "severity_key": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Severity Key"
-        },
-        "vibration_strength_db": {
-          "title": "Vibration Strength Db",
-          "type": "number"
-        }
-      },
-      "title": "DiagnosticEventPayload",
-      "type": "object"
-    },
-    "DiagnosticLevelPayload": {
-      "additionalProperties": false,
-      "properties": {
-        "agreement_count": {
-          "title": "Agreement Count",
-          "type": "integer"
-        },
-        "bucket_key": {
-          "title": "Bucket Key",
-          "type": "string"
-        },
-        "class_key": {
-          "title": "Class Key",
-          "type": "string"
-        },
-        "confidence": {
-          "title": "Confidence",
-          "type": "number"
-        },
-        "peak_hz": {
-          "title": "Peak Hz",
-          "type": "number"
-        },
-        "sensor_count": {
-          "title": "Sensor Count",
-          "type": "integer"
-        },
-        "sensor_label": {
-          "title": "Sensor Label",
-          "type": "string"
-        },
-        "sensor_location": {
-          "title": "Sensor Location",
-          "type": "string"
-        },
-        "strength_db": {
-          "title": "Strength Db",
-          "type": "number"
-        }
-      },
-      "title": "DiagnosticLevelPayload",
-      "type": "object"
-    },
-    "DiagnosticsLevelsPayload": {
-      "additionalProperties": false,
-      "properties": {
-        "by_location": {
-          "additionalProperties": {
-            "$ref": "#/$defs/DiagnosticLevelPayload"
-          },
-          "title": "By Location",
-          "type": "object"
-        },
-        "by_sensor": {
-          "additionalProperties": {
-            "$ref": "#/$defs/DiagnosticLevelPayload"
-          },
-          "title": "By Sensor",
-          "type": "object"
-        },
-        "by_source": {
-          "additionalProperties": {
-            "$ref": "#/$defs/DiagnosticLevelPayload"
-          },
-          "title": "By Source",
-          "type": "object"
-        }
-      },
-      "required": [
-        "by_source",
-        "by_sensor",
-        "by_location"
-      ],
-      "title": "DiagnosticsLevelsPayload",
-      "type": "object"
-    },
-    "DiagnosticsModel": {
-      "additionalProperties": false,
-      "description": "Structured live diagnostics payload with explicit defaults.",
-      "properties": {
-        "diagnostics_sequence": {
-          "default": 0,
-          "title": "Diagnostics Sequence",
-          "type": "integer"
-        },
-        "driving_phase": {
-          "default": "unknown",
-          "title": "Driving Phase",
-          "type": "string"
-        },
-        "error": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Error"
-        },
-        "events": {
-          "items": {
-            "$ref": "#/$defs/DiagnosticEventPayload"
-          },
-          "title": "Events",
-          "type": "array"
-        },
-        "findings": {
-          "items": {
-            "additionalProperties": true,
-            "type": "object"
-          },
-          "title": "Findings",
-          "type": "array"
-        },
-        "levels": {
-          "$ref": "#/$defs/DiagnosticsLevelsPayload"
-        },
-        "matrix": {
-          "additionalProperties": {
-            "additionalProperties": {
-              "$ref": "#/$defs/MatrixCellPayload"
-            },
-            "type": "object"
-          },
-          "title": "Matrix",
-          "type": "object"
-        },
-        "strength_bands": {
-          "items": {
-            "$ref": "#/$defs/StrengthBandPayload"
-          },
-          "title": "Strength Bands",
-          "type": "array"
-        },
-        "top_finding": {
-          "anyOf": [
-            {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Top Finding"
-        }
-      },
-      "title": "DiagnosticsModel",
-      "type": "object"
-    },
     "FrequencyWarning": {
       "description": "Warning about frequency data quality issues in a spectra payload.",
       "properties": {
@@ -461,33 +242,6 @@
         "client_ids"
       ],
       "title": "FrequencyWarning",
-      "type": "object"
-    },
-    "MatrixCellPayload": {
-      "additionalProperties": false,
-      "properties": {
-        "contributors": {
-          "additionalProperties": {
-            "type": "integer"
-          },
-          "title": "Contributors",
-          "type": "object"
-        },
-        "count": {
-          "title": "Count",
-          "type": "integer"
-        },
-        "seconds": {
-          "title": "Seconds",
-          "type": "number"
-        }
-      },
-      "required": [
-        "count",
-        "seconds",
-        "contributors"
-      ],
-      "title": "MatrixCellPayload",
       "type": "object"
     },
     "OrderBand": {
@@ -719,42 +473,6 @@
       "title": "SpectrumSeries",
       "type": "object"
     },
-    "StrengthBandPayload": {
-      "additionalProperties": false,
-      "properties": {
-        "key": {
-          "title": "Key",
-          "type": "string"
-        },
-        "labelKey": {
-          "title": "Labelkey",
-          "type": "string"
-        },
-        "max_db": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Max Db"
-        },
-        "min_db": {
-          "title": "Min Db",
-          "type": "number"
-        }
-      },
-      "required": [
-        "key",
-        "min_db",
-        "max_db",
-        "labelKey"
-      ],
-      "title": "StrengthBandPayload",
-      "type": "object"
-    },
     "StrengthMetricsModel": {
       "additionalProperties": false,
       "description": "Structured vibration-strength metrics with explicit defaults.",
@@ -871,9 +589,6 @@
       "title": "Clients",
       "type": "array"
     },
-    "diagnostics": {
-      "$ref": "#/$defs/DiagnosticsModel"
-    },
     "rotational_speeds": {
       "anyOf": [
         {
@@ -936,3 +651,4 @@
   "title": "LiveWsPayload",
   "type": "object"
 }
+

@@ -7,7 +7,7 @@ Owns:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 from .processing_loop import STALE_DATA_AGE_S
