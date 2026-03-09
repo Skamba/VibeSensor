@@ -83,13 +83,13 @@ class TestAutoStopGenerationGuard:
     def test_stale_generation_does_not_stop_new_session(self, tmp_path: Path) -> None:
         logger, db = _make_logger(tmp_path)
         logger.start_logging()
-        old_gen = logger._session_generation
+        old_gen = logger._session.session_generation
         old_run_id = logger._run_id
         assert old_run_id is not None
 
         # Simulate: user starts a brand-new session
         logger.start_logging()
-        new_gen = logger._session_generation
+        new_gen = logger._session.session_generation
         new_run_id = logger._run_id
         assert new_run_id is not None
         assert new_gen > old_gen
@@ -105,7 +105,7 @@ class TestAutoStopGenerationGuard:
     def test_matching_generation_does_stop(self, tmp_path: Path) -> None:
         logger, db = _make_logger(tmp_path)
         logger.start_logging()
-        gen = logger._session_generation
+        gen = logger._session.session_generation
 
         logger.stop_logging(_only_if_generation=gen)
         assert logger.enabled is False
@@ -220,8 +220,8 @@ class TestFinalizeReturnGatesAnalysis:
 
         # Simulate a run that created history and wrote samples
         db.create_run(run_id, "2026-01-01T00:00:00Z", {"run_id": run_id})
-        logger._history_run_created = True
-        logger._written_sample_count = 5
+        logger._persistence.history_run_created = True
+        logger._persistence.written_sample_count = 5
 
         # Sabotage finalize_run_with_metadata to simulate a DB crash
         monkeypatch.setattr(

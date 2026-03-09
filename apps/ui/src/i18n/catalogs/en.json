@@ -291,6 +291,7 @@
   "settings.update.runtime_assets_bad": "Mismatch",
   "settings.update.health.label": "Operational health",
   "settings.update.health.state.ok": "Healthy",
+  "settings.update.health.state.warn": "Warning",
   "settings.update.health.state.degraded": "Degraded",
   "settings.update.health.processing_state": "Processing state",
   "settings.update.health.processing_failures": "Processing failures",

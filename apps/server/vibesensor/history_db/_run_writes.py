@@ -58,6 +58,12 @@ class HistoryRunWriteMixin:
                 "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
                 (f"Recovered stale recording when starting run {run_id} at {now}",),
             )
+            if cur.rowcount > 0:
+                LOGGER.warning(
+                    "Recovered %d stale recording run(s) while starting run %s",
+                    cur.rowcount,
+                    run_id,
+                )
             cur.execute(
                 "INSERT INTO runs (run_id, status, start_time_utc, metadata_json, created_at) "
                 "VALUES (?, 'recording', ?, ?, ?)",

@@ -19,6 +19,9 @@ _MAX_HISTORY_CREATE_RETRIES = 5
 _RETRY_COOLDOWN_S = 30.0
 """Seconds to wait before retrying DB run creation after exhausting max retries."""
 
+_MAX_APPEND_RETRIES = 3
+_APPEND_RETRY_DELAYS_S = (0.1, 0.3)
+
 
 @dataclass(frozen=True, slots=True)
 class AppendRowsResult:
@@ -184,20 +187,31 @@ class MetricsPersistenceCoordinator:
                     return AppendRowsResult(history_created=False, rows_written=0)
                 history_created = self._history_run_created
             if history_created:
-                try:
-                    self._history_db.append_samples(run_id, rows)  # type: ignore[arg-type]
-                    with self._lock:
-                        if not self._generation_matches(session_generation):
-                            return AppendRowsResult(history_created=True, rows_written=0)
-                        self._written_sample_count += len(rows)
-                    self.clear_last_write_error()
-                    return AppendRowsResult(history_created=True, rows_written=len(rows))
-                except (sqlite3.Error, OSError) as exc:
-                    with self._lock:
-                        self._dropped_sample_count += len(rows)
-                    self.set_last_write_error(f"history append_samples failed: {exc}")
-                    LOGGER.warning("Failed to append samples to history DB", exc_info=True)
-                    return AppendRowsResult(history_created=True, rows_written=0)
+                last_exc: Exception | None = None
+                for attempt in range(_MAX_APPEND_RETRIES):
+                    try:
+                        self._history_db.append_samples(run_id, rows)  # type: ignore[arg-type]
+                        with self._lock:
+                            if not self._generation_matches(session_generation):
+                                return AppendRowsResult(history_created=True, rows_written=0)
+                            self._written_sample_count += len(rows)
+                        self.clear_last_write_error()
+                        return AppendRowsResult(history_created=True, rows_written=len(rows))
+                    except (sqlite3.Error, OSError) as exc:
+                        last_exc = exc
+                        if attempt < _MAX_APPEND_RETRIES - 1:
+                            time.sleep(_APPEND_RETRY_DELAYS_S[attempt])
+                # All retries exhausted
+                with self._lock:
+                    self._dropped_sample_count += len(rows)
+                self.set_last_write_error(f"history append_samples failed: {last_exc}")
+                LOGGER.warning(
+                    "Failed to append %d samples to history DB after %d attempts",
+                    len(rows),
+                    _MAX_APPEND_RETRIES,
+                    exc_info=True,
+                )
+                return AppendRowsResult(history_created=True, rows_written=0)
             with self._lock:
                 self._dropped_sample_count += len(rows)
                 fail_count = self._history_create_fail_count

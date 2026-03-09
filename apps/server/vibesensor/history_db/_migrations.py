@@ -20,74 +20,13 @@ MigrationFn = Callable[[sqlite3.Cursor], None]
 
 
 # ---------------------------------------------------------------------------
-# Migration functions — one per (from_version → from_version + 1)
+# Migration registry
 # ---------------------------------------------------------------------------
+# All legacy migrations removed per no-backward-compat policy.
+# Schema must be at the current version or a fresh DB is created.
+# If a future schema change is needed, add the migration here.
 
-
-def _migrate_v4_to_v5(cur: sqlite3.Cursor) -> None:
-    """v4 → v5: add analysis tracking columns and structured samples table."""
-
-    # -- Add new columns to ``runs`` (ignore if they already exist) ----------
-    existing = {row[1] for row in cur.execute("PRAGMA table_info(runs)").fetchall()}
-    for col, typedef in (
-        ("analysis_version", "INTEGER"),
-        ("analysis_started_at", "TEXT"),
-        ("analysis_completed_at", "TEXT"),
-    ):
-        if col not in existing:
-            cur.execute(f"ALTER TABLE runs ADD COLUMN {col} {typedef}")  # noqa: S608
-
-    # -- Create samples_v2 table and indexes --------------------------------
-    cur.execute(
-        """\
-CREATE TABLE IF NOT EXISTS samples_v2 (
-    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-    run_id                TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
-    record_type           TEXT,
-    schema_version        TEXT,
-    timestamp_utc         TEXT,
-    t_s                   REAL,
-    client_id             TEXT,
-    client_name           TEXT,
-    location              TEXT,
-    sample_rate_hz        INTEGER,
-    speed_kmh             REAL,
-    gps_speed_kmh         REAL,
-    speed_source          TEXT,
-    engine_rpm            REAL,
-    engine_rpm_source     TEXT,
-    gear                  REAL,
-    final_drive_ratio     REAL,
-    accel_x_g             REAL,
-    accel_y_g             REAL,
-    accel_z_g             REAL,
-    dominant_freq_hz      REAL,
-    dominant_axis         TEXT,
-    vibration_strength_db REAL,
-    strength_bucket       TEXT,
-    strength_peak_amp_g   REAL,
-    strength_floor_amp_g  REAL,
-    frames_dropped_total  INTEGER DEFAULT 0,
-    queue_overflow_drops  INTEGER DEFAULT 0,
-    top_peaks             TEXT,
-    top_peaks_x           TEXT,
-    top_peaks_y           TEXT,
-    top_peaks_z           TEXT,
-    extra_json            TEXT
-)"""
-    )
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s)")
-
-    LOGGER.info("Migrated history DB schema v4 → v5")
-
-
-# -- registry ----------------------------------------------------------------
-
-# Ordered mapping from *source* version to the function that migrates one step.
-_MIGRATIONS: dict[int, MigrationFn] = {
-    4: _migrate_v4_to_v5,
-}
+_MIGRATIONS: dict[int, MigrationFn] = {}
 
 
 # -- public helpers ----------------------------------------------------------

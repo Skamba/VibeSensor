@@ -265,6 +265,7 @@ class TestLoggingConfigValidation:
             "history_db_path": Path("/tmp/history.db"),
             "persist_history_db": True,
             "shutdown_analysis_timeout_s": 30.0,
+            "app_log_path": Path("/tmp/app.log"),
         }
         defaults.update(overrides)
         return LoggingConfig(**defaults)

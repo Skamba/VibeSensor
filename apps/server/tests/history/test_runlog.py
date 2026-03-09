@@ -95,6 +95,8 @@ def test_parse_iso8601_returns_none_for_bad_input(value: object) -> None:
         (float("inf"), None),
         (float("-inf"), None),
         ("abc", None),
+        (True, None),
+        (False, None),
     ],
 )
 def test_as_float_or_none(value: object, expected: float | None) -> None:

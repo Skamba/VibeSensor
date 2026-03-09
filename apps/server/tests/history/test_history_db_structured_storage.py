@@ -150,15 +150,9 @@ def test_v4_db_rejected(tmp_path: Path) -> None:
     conn.commit()
     conn.close()
 
-    # v4→v5 migration is now supported — DB should open successfully.
-    db = HistoryDB(db_path)
-    # Verify it migrated to current version.
-    with db._cursor(commit=False) as cur:
-        cur.execute("SELECT value FROM schema_meta WHERE key = 'version'")
-        row = cur.fetchone()
-    assert row is not None
-    assert row[0] == "5"
-    db.close()
+    # No migrations are registered — opening a v4 database raises RuntimeError.
+    with pytest.raises(RuntimeError, match="No migration registered"):
+        HistoryDB(db_path)
 
 
 def test_v2_sensor_frame_objects(tmp_path: Path) -> None:

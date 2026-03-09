@@ -70,7 +70,7 @@ DEFAULT_CAR_ASPECTS: Final[MappingProxyType[str, float]] = MappingProxyType(
 
 def as_float_or_none(value: object) -> float | None:
     """Return *value* as a finite float, or ``None`` for non-numeric / non-finite input."""
-    if value in (None, ""):
+    if value in (None, "") or isinstance(value, bool):
         return None
     try:
         out = float(value)  # type: ignore[arg-type]
