@@ -3,13 +3,55 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TypedDict
 
 from vibesensor_core.vibration_strength import percentile
 
 from ..runlog import as_float_or_none as _as_float
+from ._types import Sample, SummaryData
 from .helpers import _primary_vibration_strength_db
 from .phase_segmentation import DrivingPhase, PhaseSegment
+
+
+class MatchedAmpVsSpeedSeries(TypedDict):
+    """Per-finding matched-point series for amp-vs-speed."""
+
+    label: str
+    points: list[tuple[float, float]]
+
+
+class FreqVsSpeedByFindingSeries(TypedDict):
+    """Per-finding frequency-vs-speed series with predicted overlay."""
+
+    label: str
+    matched: list[tuple[float, float]]
+    predicted: list[tuple[float, float]]
+
+
+class AmpVsPhaseRow(TypedDict):
+    """A single phase-grouped vibration row."""
+
+    phase: str
+    count: int
+    mean_vib_db: float
+    max_vib_db: float | None
+    mean_speed_kmh: float | None
+
+
+class PhaseSegmentOut(TypedDict):
+    """Serialised driving-phase segment for plot consumers."""
+
+    phase: str
+    start_t_s: float | None
+    end_t_s: float | None
+
+
+class PhaseBoundary(TypedDict):
+    """Phase boundary marker for plot overlay."""
+
+    phase: str
+    t_s: float | None
+    end_t_s: float | None
 
 
 @dataclass(frozen=True)
@@ -19,28 +61,28 @@ class PlotSeriesBundle:
     vib_magnitude: list[tuple[float, float, str]]
     dominant_freq: list[tuple[float, float]]
     amp_vs_speed: list[tuple[float, float]]
-    matched_amp_vs_speed: list[dict[str, Any]]
-    freq_vs_speed_by_finding: list[dict[str, Any]]
+    matched_amp_vs_speed: list[MatchedAmpVsSpeedSeries]
+    freq_vs_speed_by_finding: list[FreqVsSpeedByFindingSeries]
     steady_speed_distribution: dict[str, float] | None
-    amp_vs_phase: list[dict[str, Any]]
-    phase_segments_out: list[dict[str, Any]]
-    phase_boundaries: list[dict[str, Any]]
+    amp_vs_phase: list[AmpVsPhaseRow]
+    phase_segments_out: list[PhaseSegmentOut]
+    phase_boundaries: list[PhaseBoundary]
 
 
 def build_plot_series(
-    summary: dict[str, Any],
+    summary: SummaryData,
     *,
     per_sample_phases: list[DrivingPhase],
     phase_segments: list[PhaseSegment],
     raw_sample_rate_hz: float | None,
 ) -> PlotSeriesBundle:
     """Build reusable time/speed/finding series for the plot payload."""
-    samples: list[dict[str, Any]] = summary.get("samples", [])
+    samples: list[Sample] = summary.get("samples", [])
     vib_mag_points: list[tuple[float, float, str]] = []
     dominant_freq_points: list[tuple[float, float]] = []
     speed_amp_points: list[tuple[float, float]] = []
-    matched_by_finding: list[dict[str, Any]] = []
-    freq_vs_speed_by_finding: list[dict[str, Any]] = []
+    matched_by_finding: list[MatchedAmpVsSpeedSeries] = []
+    freq_vs_speed_by_finding: list[FreqVsSpeedByFindingSeries] = []
 
     for i, sample in enumerate(samples):
         t_s = _as_float(sample.get("t_s"))
@@ -56,8 +98,6 @@ def build_plot_series(
                 dominant_freq_points.append((t_s, dominant_hz))
 
     for row in summary.get("speed_breakdown", []):
-        if not isinstance(row, dict):
-            continue
         speed_range = str(row.get("speed_range", ""))
         if "-" not in speed_range:
             continue
@@ -74,8 +114,6 @@ def build_plot_series(
         speed_amp_points.append(((low + high) / 2.0, amp))
 
     for finding in summary.get("findings", []):
-        if not isinstance(finding, dict):
-            continue
         points_raw = finding.get("matched_points")
         if not isinstance(points_raw, list):
             continue
@@ -83,13 +121,13 @@ def build_plot_series(
         matched_points: list[tuple[float, float]] = []
         freq_points: list[tuple[float, float]] = []
         predicted_points: list[tuple[float, float]] = []
-        for row in points_raw:
-            if not isinstance(row, dict):
+        for pt in points_raw:
+            if not isinstance(pt, dict):
                 continue
-            speed = _as_float(row.get("speed_kmh"))
-            amp = _as_float(row.get("amp"))
-            matched_hz = _as_float(row.get("matched_hz"))
-            predicted_hz = _as_float(row.get("predicted_hz"))
+            speed = _as_float(pt.get("speed_kmh"))
+            amp = _as_float(pt.get("amp"))
+            matched_hz = _as_float(pt.get("matched_hz"))
+            predicted_hz = _as_float(pt.get("predicted_hz"))
             if speed is None or speed <= 0:
                 continue
             if amp is not None:
@@ -99,14 +137,16 @@ def build_plot_series(
             if predicted_hz is not None and predicted_hz > 0:
                 predicted_points.append((speed, predicted_hz))
         if matched_points:
-            matched_by_finding.append({"label": finding_label, "points": matched_points})
+            matched_by_finding.append(
+                MatchedAmpVsSpeedSeries(label=finding_label, points=matched_points)
+            )
         if freq_points:
             freq_vs_speed_by_finding.append(
-                {
-                    "label": finding_label,
-                    "matched": freq_points,
-                    "predicted": predicted_points,
-                }
+                FreqVsSpeedByFindingSeries(
+                    label=finding_label,
+                    matched=freq_points,
+                    predicted=predicted_points,
+                )
             )
 
     steady_speed_distribution = build_steady_speed_distribution(
@@ -129,15 +169,13 @@ def build_plot_series(
 
 
 def build_steady_speed_distribution(
-    summary: dict[str, Any],
+    summary: SummaryData,
     *,
     vib_mag_points: list[tuple[float, float, str]],
 ) -> dict[str, float] | None:
     """Build steady-speed percentile distribution when appropriate."""
-    speed_stats = summary.get("speed_stats", {})
-    if not (
-        isinstance(speed_stats, dict) and bool(speed_stats.get("steady_speed")) and vib_mag_points
-    ):
+    speed_stats = summary.get("speed_stats")
+    if not (speed_stats and bool(speed_stats.get("steady_speed")) and vib_mag_points):
         return None
     vals = sorted(v for _t, v, _phase in vib_mag_points if v >= 0)
     if not vals:
@@ -150,48 +188,46 @@ def build_steady_speed_distribution(
     }
 
 
-def build_amp_vs_phase(summary: dict[str, Any]) -> list[dict[str, Any]]:
+def build_amp_vs_phase(summary: SummaryData) -> list[AmpVsPhaseRow]:
     """Shape the phase-grouped vibration rows for plotting."""
-    amp_vs_phase: list[dict[str, Any]] = []
+    amp_vs_phase: list[AmpVsPhaseRow] = []
     for row in summary.get("phase_speed_breakdown", []):
-        if not isinstance(row, dict):
-            continue
         phase = str(row.get("phase", ""))
         mean_vib = _as_float(row.get("mean_vibration_strength_db"))
         if not phase or mean_vib is None:
             continue
         amp_vs_phase.append(
-            {
-                "phase": phase,
-                "count": int(row.get("count") or 0),
-                "mean_vib_db": mean_vib,
-                "max_vib_db": _as_float(row.get("max_vibration_strength_db")),
-                "mean_speed_kmh": _as_float(row.get("mean_speed_kmh")),
-            }
+            AmpVsPhaseRow(
+                phase=phase,
+                count=int(row.get("count") or 0),
+                mean_vib_db=mean_vib,
+                max_vib_db=_as_float(row.get("max_vibration_strength_db")),
+                mean_speed_kmh=_as_float(row.get("mean_speed_kmh")),
+            )
         )
     return amp_vs_phase
 
 
 def serialize_phase_context(
     phase_segments: list[PhaseSegment],
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+) -> tuple[list[PhaseSegmentOut], list[PhaseBoundary]]:
     """Serialize phase segments for plot consumers."""
-    phase_segments_out: list[dict[str, Any]] = []
-    phase_boundaries: list[dict[str, Any]] = []
+    phase_segments_out: list[PhaseSegmentOut] = []
+    phase_boundaries: list[PhaseBoundary] = []
     for segment in phase_segments:
         phase_value = segment.phase.value
         phase_segments_out.append(
-            {
-                "phase": phase_value,
-                "start_t_s": segment.start_t_s,
-                "end_t_s": segment.end_t_s,
-            }
+            PhaseSegmentOut(
+                phase=phase_value,
+                start_t_s=segment.start_t_s,
+                end_t_s=segment.end_t_s,
+            )
         )
         phase_boundaries.append(
-            {
-                "phase": phase_value,
-                "t_s": segment.start_t_s,
-                "end_t_s": segment.end_t_s,
-            }
+            PhaseBoundary(
+                phase=phase_value,
+                t_s=segment.start_t_s,
+                end_t_s=segment.end_t_s,
+            )
         )
     return phase_segments_out, phase_boundaries

@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Protocol, TypeAlias, TypedDict, TypeGuard
+from typing import TYPE_CHECKING, Protocol, TypeAlias, TypedDict, TypeGuard
 
 from ..json_types import JsonObject, JsonValue
 from .phase_segmentation import DrivingPhase
 
+if TYPE_CHECKING:
+    from .plot_data import PlotDataResult
+
 Sample: TypeAlias = JsonObject
 MetadataDict: TypeAlias = JsonObject
-SummaryData: TypeAlias = dict[str, object]
 IntensityRow: TypeAlias = JsonObject
 I18nRef: TypeAlias = JsonObject
 TestStep: TypeAlias = JsonObject
@@ -246,6 +248,66 @@ class RunSuitabilityCheck(TypedDict):
     check_key: str
     state: str
     explanation: JsonValue
+
+
+class _SummaryDataRequired(TypedDict):
+    """Fields always present in the analysis summary payload."""
+
+    file_name: str
+    run_id: str
+    rows: int
+    duration_s: float
+    record_length: str
+    lang: str
+    report_date: JsonValue
+    start_time_utc: JsonValue
+    end_time_utc: JsonValue
+    sensor_model: JsonValue
+    firmware_version: JsonValue
+    raw_sample_rate_hz: float | None
+    feature_interval_s: float | None
+    fft_window_size_samples: JsonValue
+    fft_window_type: JsonValue
+    peak_picker_method: JsonValue
+    accel_scale_g_per_lsb: float | None
+    incomplete_for_order_analysis: bool
+    metadata: MetadataDict
+    warnings: list[JsonObject]
+    speed_breakdown: list[SpeedBreakdownRow]
+    phase_speed_breakdown: list[PhaseSpeedBreakdownRow]
+    phase_segments: list[PhaseSegmentSummary]
+    run_noise_baseline_db: float | None
+    speed_breakdown_skipped_reason: I18nRef | None
+    findings: list[Finding]
+    top_causes: list[TopCause]
+    most_likely_origin: OriginSummary
+    test_plan: list[TestStep]
+    phase_timeline: list[PhaseTimelineEntry]
+    speed_stats: SpeedStats
+    speed_stats_by_phase: dict[str, PhaseSpeedStats]
+    phase_info: PhaseSummary
+    sensor_locations: list[str]
+    sensor_locations_connected_throughout: list[str]
+    sensor_count_used: int
+    sensor_intensity_by_location: list[IntensityRow]
+    run_suitability: list[RunSuitabilityCheck]
+    data_quality: JsonObject
+
+
+class SummaryData(_SummaryDataRequired, total=False):
+    """Full analysis summary payload.
+
+    Required fields are always set by :func:`build_summary_payload`.
+    Optional fields are set later in the pipeline or may be removed:
+
+    * ``samples`` – present unless ``include_samples=False`` removes it.
+    * ``plots`` – set by :func:`_plot_data` after initial assembly.
+    * ``analysis_metadata`` – set by post-analysis workers.
+    """
+
+    samples: list[Sample]
+    plots: PlotDataResult
+    analysis_metadata: JsonObject
 
 
 PhaseLabel: TypeAlias = DrivingPhase | str

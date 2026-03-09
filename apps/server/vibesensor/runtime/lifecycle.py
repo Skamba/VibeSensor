@@ -208,17 +208,17 @@ class LifecycleManager:
 
         # Cancel any in-progress update or flash jobs so cleanup
         # (e.g. hotspot restore) can run before shutdown completes.
-        managed = [
+        managed: list[asyncio.Task[None] | None] = [
             self._updates.update_manager.job_task,
             self._updates.esp_flash_manager.job_task,
         ]
-        for task in managed:
-            if task is not None:
-                task.cancel()
-        for task in managed:
-            if task is not None and not task.done():
+        for managed_task in managed:
+            if managed_task is not None:
+                managed_task.cancel()
+        for managed_task in managed:
+            if managed_task is not None and not managed_task.done():
                 with contextlib.suppress(asyncio.CancelledError, Exception):
-                    await asyncio.wait_for(asyncio.shield(task), timeout=10.0)
+                    await asyncio.wait_for(asyncio.shield(managed_task), timeout=10.0)
 
         analysis_timeout_s = self._config.logging.shutdown_analysis_timeout_s
         shutdown_report = await asyncio.to_thread(

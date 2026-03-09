@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from math import floor
-from typing import Any, Literal
+from typing import Literal, TypedDict
 
 from vibesensor_core.vibration_strength import percentile
 from vibesensor_core.vibration_strength import (
@@ -14,6 +14,7 @@ from vibesensor_core.vibration_strength import (
 
 from ..constants import MEMS_NOISE_FLOOR_G
 from ..runlog import as_float_or_none as _as_float
+from ._types import Sample
 from .helpers import (
     _effective_baseline_floor,
     _estimate_strength_floor_amp_g,
@@ -22,6 +23,28 @@ from .helpers import (
     _sample_top_peaks,
     _speed_bin_label,
 )
+
+
+class _SpectrogramResultRequired(TypedDict):
+    """Required fields present in every spectrogram result (including empty)."""
+
+    x_axis: str
+    x_label_key: str
+    x_bins: list[float]
+    y_bins: list[float]
+    cells: list[list[float]]
+    max_amp: float
+
+
+class SpectrogramResult(_SpectrogramResultRequired, total=False):
+    """Shape returned by spectrogram builders.
+
+    All :class:`_SpectrogramResultRequired` fields are always present.
+    ``x_bin_width`` and ``y_bin_width`` are only set in non-empty results.
+    """
+
+    x_bin_width: float
+    y_bin_width: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,7 +67,7 @@ class PeakSampleScan:
     total_speed_bin_counts: dict[str, int]
 
 
-def scan_peak_samples(samples: list[dict[str, Any]]) -> PeakSampleScan:
+def scan_peak_samples(samples: list[Sample]) -> PeakSampleScan:
     """Scan raw samples once and cache the peak-facing data needed by plot builders."""
     rows: list[PeakSampleScanRow] = []
     time_values: list[float] = []
@@ -109,7 +132,7 @@ def vibration_db_or_none(peak_amp: float | None, floor_amp: float | None) -> flo
 
 
 def aggregate_fft_spectrum(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     *,
     freq_bin_hz: float = 2.0,
     aggregation: str = "persistence",
@@ -147,7 +170,7 @@ def aggregate_fft_spectrum(
 
 
 def aggregate_fft_spectrum_raw(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     *,
     freq_bin_hz: float = 2.0,
     run_noise_baseline_g: float | None = None,
@@ -164,12 +187,12 @@ def aggregate_fft_spectrum_raw(
 
 
 def spectrogram_from_peaks(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     *,
     aggregation: Literal["persistence", "max"] = "persistence",
     run_noise_baseline_g: float | None = None,
     peak_scan: PeakSampleScan | None = None,
-) -> dict[str, Any]:
+) -> SpectrogramResult:
     """Build a 2-D spectrogram grid from per-sample peak lists."""
     resolved_scan = peak_scan or scan_peak_samples(samples)
     peak_rows: list[tuple[float, float, float, float | None]] = []
@@ -186,14 +209,14 @@ def spectrogram_from_peaks(
                 peak_rows.append((row.speed_kmh, hz, amp, row.floor_amp_g))
 
     use_time = bool(time_values)
-    empty_result: dict[str, Any] = {
-        "x_axis": "none",
-        "x_label_key": "TIME_S",
-        "x_bins": [],
-        "y_bins": [],
-        "cells": [],
-        "max_amp": 0.0,
-    }
+    empty_result = SpectrogramResult(
+        x_axis="none",
+        x_label_key="TIME_S",
+        x_bins=[],
+        y_bins=[],
+        cells=[],
+        max_amp=0.0,
+    )
     if not use_time and not speed_values:
         return empty_result
 
@@ -211,7 +234,8 @@ def spectrogram_from_peaks(
 
     peak_freqs = [hz for _x, hz, _amp, _floor in peak_rows]
     if not peak_freqs:
-        empty_result.update(x_axis=x_axis, x_label_key=x_label_key)
+        empty_result["x_axis"] = x_axis
+        empty_result["x_label_key"] = x_label_key
         return empty_result
 
     observed_max_hz = max(peak_freqs)
@@ -237,7 +261,8 @@ def spectrogram_from_peaks(
     x_bins = sorted({x for x, _y in cell_by_bin})
     y_bins = sorted({y for _x, y in cell_by_bin})
     if not x_bins or not y_bins:
-        empty_result.update(x_axis=x_axis, x_label_key=x_label_key)
+        empty_result["x_axis"] = x_axis
+        empty_result["x_label_key"] = x_label_key
         return empty_result
 
     x_index = {value: idx for idx, value in enumerate(x_bins)}
@@ -275,24 +300,24 @@ def spectrogram_from_peaks(
         if val > max_amp:
             max_amp = val
 
-    return {
-        "x_axis": x_axis,
-        "x_label_key": x_label_key,
-        "x_bin_width": x_bin_width,
-        "y_bin_width": freq_bin_hz,
-        "x_bins": [x + (x_bin_width / 2.0) for x in x_bins],
-        "y_bins": [y + (freq_bin_hz / 2.0) for y in y_bins],
-        "cells": cells,
-        "max_amp": max_amp,
-    }
+    return SpectrogramResult(
+        x_axis=x_axis,
+        x_label_key=x_label_key,
+        x_bin_width=x_bin_width,
+        y_bin_width=freq_bin_hz,
+        x_bins=[x + (x_bin_width / 2.0) for x in x_bins],
+        y_bins=[y + (freq_bin_hz / 2.0) for y in y_bins],
+        cells=cells,
+        max_amp=max_amp,
+    )
 
 
 def spectrogram_from_peaks_raw(
-    samples: list[dict[str, Any]],
+    samples: list[Sample],
     *,
     run_noise_baseline_g: float | None = None,
     peak_scan: PeakSampleScan | None = None,
-) -> dict[str, Any]:
+) -> SpectrogramResult:
     """Build the raw/max-amplitude spectrogram view."""
     return spectrogram_from_peaks(
         samples,

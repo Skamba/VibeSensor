@@ -17,7 +17,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TypedDict
 
 from vibesensor.firmware_cache import FirmwareCache, validate_bundle
 
@@ -53,6 +53,53 @@ class EspFlashState(enum.StrEnum):
     cancelled = "cancelled"
 
 
+class SerialPortInfoDict(TypedDict):
+    """Serialised shape of :class:`SerialPortInfo` for API responses."""
+
+    port: str
+    description: str
+    vid: int | None
+    pid: int | None
+    serial_number: str | None
+
+
+class EspFlashHistoryEntryDict(TypedDict):
+    """Serialised shape of :class:`EspFlashHistoryEntry` for API responses."""
+
+    job_id: int
+    state: str
+    selected_port: str | None
+    auto_detect: bool
+    started_at: float
+    finished_at: float | None
+    exit_code: int | None
+    error: str | None
+
+
+class EspFlashStatusDict(TypedDict):
+    """Serialised shape of :class:`EspFlashStatus` for API responses."""
+
+    state: str
+    phase: str
+    job_id: int | None
+    selected_port: str | None
+    auto_detect: bool
+    started_at: float | None
+    finished_at: float | None
+    last_success_at: float | None
+    exit_code: int | None
+    error: str | None
+    log_count: int
+
+
+class FlashLogResponse(TypedDict):
+    """Response shape for the flash log polling endpoint."""
+
+    from_index: int
+    next_index: int
+    lines: list[str]
+
+
 @dataclass
 class SerialPortInfo:
     """Metadata about a detected serial port (USB device)."""
@@ -63,15 +110,15 @@ class SerialPortInfo:
     pid: int | None = None
     serial_number: str | None = None
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> SerialPortInfoDict:
         """Serialise serial port info to a plain dict for API responses."""
-        return {
-            "port": self.port,
-            "description": self.description,
-            "vid": self.vid,
-            "pid": self.pid,
-            "serial_number": self.serial_number,
-        }
+        return SerialPortInfoDict(
+            port=self.port,
+            description=self.description,
+            vid=self.vid,
+            pid=self.pid,
+            serial_number=self.serial_number,
+        )
 
 
 @dataclass
@@ -87,18 +134,18 @@ class EspFlashHistoryEntry:
     exit_code: int | None
     error: str | None
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> EspFlashHistoryEntryDict:
         """Serialise flash history entry to a plain dict for API responses."""
-        return {
-            "job_id": self.job_id,
-            "state": self.state.value,
-            "selected_port": self.selected_port,
-            "auto_detect": self.auto_detect,
-            "started_at": self.started_at,
-            "finished_at": self.finished_at,
-            "exit_code": self.exit_code,
-            "error": self.error,
-        }
+        return EspFlashHistoryEntryDict(
+            job_id=self.job_id,
+            state=self.state.value,
+            selected_port=self.selected_port,
+            auto_detect=self.auto_detect,
+            started_at=self.started_at,
+            finished_at=self.finished_at,
+            exit_code=self.exit_code,
+            error=self.error,
+        )
 
 
 @dataclass
@@ -117,20 +164,20 @@ class EspFlashStatus:
     error: str | None = None
     log_count: int = 0
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "state": self.state.value,
-            "phase": self.phase,
-            "job_id": self.job_id,
-            "selected_port": self.selected_port,
-            "auto_detect": self.auto_detect,
-            "started_at": self.started_at,
-            "finished_at": self.finished_at,
-            "last_success_at": self.last_success_at,
-            "exit_code": self.exit_code,
-            "error": self.error,
-            "log_count": self.log_count,
-        }
+    def to_dict(self) -> EspFlashStatusDict:
+        return EspFlashStatusDict(
+            state=self.state.value,
+            phase=self.phase,
+            job_id=self.job_id,
+            selected_port=self.selected_port,
+            auto_detect=self.auto_detect,
+            started_at=self.started_at,
+            finished_at=self.finished_at,
+            last_success_at=self.last_success_at,
+            exit_code=self.exit_code,
+            error=self.error,
+            log_count=self.log_count,
+        )
 
 
 class SerialPortProvider:
@@ -139,7 +186,7 @@ class SerialPortProvider:
     async def list_ports(self) -> list[SerialPortInfo]:
         # Use pyserial (bundled with esptool) for port discovery.
         try:
-            from serial.tools import list_ports as serial_list_ports
+            from serial.tools import list_ports as serial_list_ports  # type: ignore[import-untyped]
 
             pyserial_ports: list[SerialPortInfo] = []
             for row in serial_list_ports.comports():
@@ -242,7 +289,7 @@ class EspFlashManager:
         """The background task for the currently running flash job, or None."""
         return self._task
 
-    async def list_ports(self) -> list[dict[str, Any]]:
+    async def list_ports(self) -> list[SerialPortInfoDict]:
         ports = await self._ports.list_ports()
         return [p.to_dict() for p in ports]
 
@@ -270,11 +317,15 @@ class EspFlashManager:
         self._cancel_event.set()
         return True
 
-    def logs_since(self, after: int) -> dict[str, Any]:
+    def logs_since(self, after: int) -> FlashLogResponse:
         start = max(0, after)
-        return {"from_index": start, "next_index": len(self._logs), "lines": self._logs[start:]}
+        return FlashLogResponse(
+            from_index=start,
+            next_index=len(self._logs),
+            lines=self._logs[start:],
+        )
 
-    def history(self) -> list[dict[str, Any]]:
+    def history(self) -> list[EspFlashHistoryEntryDict]:
         return [entry.to_dict() for entry in self._history]
 
     def _append_log(self, line: str) -> None:
