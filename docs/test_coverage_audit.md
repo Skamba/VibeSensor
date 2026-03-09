@@ -53,7 +53,7 @@
 |---|---------|-------------|
 | 1 | Sensor connection | ESP sensor sends UDP HELLO → appears in /api/clients |
 | 2 | UDP data reception | DATA packets → queue → parse → ingest into SignalProcessor |
-| 3 | Start recording | POST /api/logging/start → HistoryDB creates run → live diagnostics reset |
+| 3 | Start recording | POST /api/logging/start → HistoryDB creates run |
 | 4 | Live WebSocket data | Processing loop → build_ws_payload → WS broadcast → UI renders |
 | 5 | Stop run + analysis | POST /api/logging/stop → finalize → post-analysis → status=complete |
 | 6 | Report generation | Analysis data → summarize_log → build_report_pdf → PDF |

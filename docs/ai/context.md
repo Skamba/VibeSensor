@@ -20,7 +20,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 	- `routes/`: HTTP and WebSocket route groups; `/api/health` is the operator-facing readiness summary and now includes startup phase/error plus managed background-task failures.
 	- `runtime/`: explicit runtime subsystem ownership, route-service assembly, lifecycle coordination, and websocket broadcast state; the broadcast path reuses shared per-tick payload state before applying per-recipient selected-client ids.
 	- `processing/`, `analysis/`: signal and findings logic.
-	- `metrics_log/`, `history_db/`, `history_*.py`, `runlog.py`: recording, live snapshot state, and persistence; within `metrics_log/`, `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping, `live_analysis.py` owns the rolling dashboard snapshot window, and `post_analysis.py` owns the background analysis queue while `logger.py` remains the façade. The runtime persistence subsystem owns the history query/delete/report/export services built around `HistoryDB`.
+	- `metrics_log/`, `history_db/`, `history_*.py`, `runlog.py`: recording and persistence; within `metrics_log/`, `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping, and `post_analysis.py` owns the background analysis queue while `logger.py` remains the façade. The runtime persistence subsystem owns the history query/delete/report/export services built around `HistoryDB`.
 	- `report/`, `report_i18n.py`: report rendering and report strings.
 	- `update/`: updater facade, workflow orchestration, and focused subsystems for Wi-Fi, releases, install and rollback, service control, status, and runtime reporting; validation and rollback snapshot creation are hard gates before live mutation.
 - Frontend: `apps/ui/src/` provides the dashboard, settings, and history UI; `app/ui_app_runtime.ts` is the composition root over `app/runtime/` shell, transport, and spectrum owners plus the feature bundle.
@@ -33,7 +33,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 1. `udp_data_rx.py` parses sensor frames and feeds the registry and processing buffers.
 2. `processing/` and `analysis/` compute spectra, vibration strength, and findings inputs.
 3. `runtime/` assembles explicit ingress, settings, diagnostics, persistence, update, processing, websocket, and route-service subsystems, then coordinates their background work through lifecycle ownership.
-4. `metrics_log/` owns recording orchestration through focused collaborators (`session_state.py`, `persistence.py`, `live_analysis.py`, `post_analysis.py`) while `history_db/` persists run data, analysis results, and settings through explicit read/write transactions and the runtime-owned history services.
+4. `metrics_log/` owns recording orchestration through focused collaborators (`session_state.py`, `persistence.py`, `post_analysis.py`) while `history_db/` persists run data, analysis results, and settings through explicit read/write transactions and the runtime-owned history services.
 5. `routes/` exposes the HTTP and WebSocket surface consumed by `apps/ui/src/`.
 6. `report/` builds PDFs from saved run and analysis data.
 

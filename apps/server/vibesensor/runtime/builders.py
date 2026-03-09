@@ -138,7 +138,6 @@ def build_diagnostics_subsystem(
     )
     diagnostics = RuntimeDiagnosticsSubsystem(
         metrics_logger=metrics_logger,
-        live_analysis=metrics_logger.live_analysis,
     )
     requeue_stale_analysis_runs(
         persistence=persistence,
@@ -181,7 +180,6 @@ def build_websocket_subsystem(
     config: AppConfig,
     ingress: RuntimeIngressSubsystem,
     settings: RuntimeSettingsSubsystem,
-    diagnostics: RuntimeDiagnosticsSubsystem,
 ) -> RuntimeWebsocketSubsystem:
     cache = WsBroadcastCache()
     hub = WebSocketHub()
@@ -191,7 +189,6 @@ def build_websocket_subsystem(
         ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
         ingress=ingress,
         settings=settings,
-        diagnostics=diagnostics,
     )
     return RuntimeWebsocketSubsystem(hub=hub, cache=cache, broadcast=broadcast)
 
