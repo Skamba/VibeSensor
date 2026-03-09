@@ -4,11 +4,10 @@ from __future__ import annotations
 """Strength labeling and reason-selection regressions.
 
 Covers:
-  1. live_diagnostics._combine_amplitude_strength_db — NaN guard
-  2. strength_labels.strength_label — NaN guard returns "unknown"
-  3. strength_labels.certainty_label — NaN confidence clamped to 0.0
-  4. ws_hub.run() — tick-rate drift compensation (source verification)
-  5. Tests for previously-untested helpers
+  1. strength_labels.strength_label — NaN guard returns "unknown"
+  2. strength_labels.certainty_label — NaN confidence clamped to 0.0
+  3. ws_hub.run() — tick-rate drift compensation (source verification)
+  4. Tests for previously-untested helpers
 """
 
 
@@ -26,38 +25,10 @@ from vibesensor.analysis.strength_labels import (
     certainty_label,
     strength_label,
 )
-from vibesensor.constants import SILENCE_DB
-from vibesensor.live_diagnostics._types import _combine_amplitude_strength_db
 from vibesensor.ws_hub import WebSocketHub
 
 # ------------------------------------------------------------------
-# 1. _combine_amplitude_strength_db — NaN guard
-# ------------------------------------------------------------------
-
-
-class TestCombineAmplitudeNanGuard:
-    """NaN values in dB list must be skipped, not mapped to 200 dB."""
-
-    @pytest.mark.parametrize(
-        ("values", "expected_silence"),
-        [
-            ([float("nan")], True),
-            ([float("inf")], True),
-            ([], True),
-        ],
-        ids=["nan", "inf", "empty"],
-    )
-    def test_invalid_returns_silence(self, values: list[float], expected_silence: bool) -> None:
-        assert _combine_amplitude_strength_db(values) == SILENCE_DB
-
-    def test_nan_mixed_with_valid(self) -> None:
-        result_clean = _combine_amplitude_strength_db([10.0, 20.0])
-        result_with_nan = _combine_amplitude_strength_db([10.0, float("nan"), 20.0])
-        assert result_with_nan == result_clean
-
-
-# ------------------------------------------------------------------
-# 2. strength_label — NaN guard
+# 1. strength_label — NaN guard
 # ------------------------------------------------------------------
 
 

@@ -147,7 +147,6 @@ def _make_runtime(**overrides: Any):
     diagnostics = runtime_module.RuntimeDiagnosticsSubsystem(
         metrics_logger=overrides.pop("metrics_logger", MagicMock()),
         live_analysis=overrides.pop("live_analysis", MagicMock()),
-        live_diagnostics=overrides.pop("live_diagnostics", MagicMock()),
     )
     persistence = runtime_module.RuntimePersistenceSubsystem(
         history_db=overrides.pop("history_db", MagicMock()),
