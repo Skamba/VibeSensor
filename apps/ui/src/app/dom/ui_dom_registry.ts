@@ -35,9 +35,6 @@ export interface UiDomElements {
   spectrumOverlay: HTMLElement | null;
   legend: HTMLElement | null;
   bandLegend: HTMLElement | null;
-  strengthChart: HTMLElement | null;
-  strengthTooltip: HTMLElement | null;
-  liveCarMapDots: HTMLElement | null;
   wheelBandwidthInput: HTMLInputElement | null;
   driveshaftBandwidthInput: HTMLInputElement | null;
   engineBandwidthInput: HTMLInputElement | null;
@@ -58,9 +55,6 @@ export interface UiDomElements {
   saveSpeedSourceBtn: HTMLButtonElement | null;
   settingsTabs: HTMLElement[];
   settingsTabPanels: HTMLElement[];
-  vibrationLog: HTMLElement | null;
-  vibrationMatrix: HTMLElement | null;
-  matrixTooltip: HTMLElement | null;
   updateSsidInput: HTMLInputElement | null;
   updatePasswordInput: HTMLInputElement | null;
   updateTogglePasswordBtn: HTMLButtonElement | null;
@@ -89,7 +83,6 @@ export interface UiDomElements {
   connectionBanner: HTMLElement | null;
   rotationalAssumptions: HTMLElement | null;
   rotationalAssumptionsBody: HTMLElement | null;
-  strengthAutoScaleToggle: HTMLInputElement | null;
 }
 
 function inputEl(id: string): HTMLInputElement | null {
@@ -146,9 +139,6 @@ export function createUiDomRegistry(): UiDomElements {
     spectrumOverlay: el("spectrumOverlay"),
     legend: el("legend"),
     bandLegend: el("bandLegend"),
-    strengthChart: el("strengthChart"),
-    strengthTooltip: el("strengthTooltip"),
-    liveCarMapDots: el("liveCarMapDots"),
     wheelBandwidthInput: inputEl("wheelBandwidthInput"),
     driveshaftBandwidthInput: inputEl("driveshaftBandwidthInput"),
     engineBandwidthInput: inputEl("engineBandwidthInput"),
@@ -169,9 +159,6 @@ export function createUiDomRegistry(): UiDomElements {
     saveSpeedSourceBtn: btnEl("saveSpeedSourceBtn"),
     settingsTabs: Array.from(document.querySelectorAll(".settings-tab")),
     settingsTabPanels: Array.from(document.querySelectorAll(".settings-tab-panel")),
-    vibrationLog: el("vibrationLog"),
-    vibrationMatrix: el("vibrationMatrix"),
-    matrixTooltip: el("matrixTooltip"),
     updateSsidInput: inputEl("updateSsidInput"),
     updatePasswordInput: inputEl("updatePasswordInput"),
     updateTogglePasswordBtn: btnEl("updateTogglePasswordBtn"),
@@ -200,6 +187,5 @@ export function createUiDomRegistry(): UiDomElements {
     fallbackModeSelect: selectEl("fallbackModeSelect"),
     rotationalAssumptions: el("rotationalAssumptions"),
     rotationalAssumptionsBody: el("rotationalAssumptionsBody"),
-    strengthAutoScaleToggle: inputEl("strengthAutoScaleToggle"),
   };
 }

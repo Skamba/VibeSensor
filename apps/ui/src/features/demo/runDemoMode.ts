@@ -66,58 +66,15 @@ export function runDemoMode(deps: DemoDeps): void {
     };
   });
 
-  const demoStrengthBands = [
-    { key: "l1", min_db: 0 },
-    { key: "l2", min_db: 10 },
-    { key: "l3", min_db: 18 },
-    { key: "l4", min_db: 28 },
-    { key: "l5", min_db: 40 },
-  ];
-
   const demoPayload = {
     server_time: new Date().toISOString(),
     clients: demoClients,
     speed_mps: 22.2,
     spectra: { clients: demoSpectra },
-    diagnostics: {
-      strength_bands: demoStrengthBands,
-      matrix: null,
-      events: [],
-      levels: {
-        by_source: {
-          wheel: { strength_db: 14.2, bucket_key: "l2" },
-          driveshaft: { strength_db: 8.1, bucket_key: "l1" },
-          engine: { strength_db: 6.5, bucket_key: "l1" },
-          other: { strength_db: 3.2, bucket_key: "l1" },
-        },
-      },
-    },
   };
 
   state.hasReceivedPayload = true;
   applyPayload(demoPayload);
 
-  const demoEventTimeout = setTimeout(() => {
-    // Increment frames_total so hasFreshSensorFrames returns true and events are processed
-    const eventClients = demoClients.map((c) => ({ ...c, frames_total: c.frames_total + 50 }));
-    const eventPayload = {
-      ...demoPayload,
-      clients: eventClients,
-      diagnostics: {
-        ...demoPayload.diagnostics,
-        events: [
-          {
-            severity_key: "l3",
-            [METRIC_FIELDS.vibration_strength_db]: 22.5,
-            peak_hz: 12.2,
-            class_key: "wheel",
-            sensor_labels: ["Rear Right Wheel"],
-          },
-        ],
-      },
-    };
-    applyPayload(eventPayload);
-  }, 800);
-
-  window.__vibesensorDemoCleanup = () => clearTimeout(demoEventTimeout);
+  window.__vibesensorDemoCleanup = undefined;
 }

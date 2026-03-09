@@ -200,7 +200,6 @@ export class UiShellController {
       this.state.spectrumPlot = null;
       this.renderSpectrumChart?.();
     }
-    features.dashboard.recreateStrengthChart();
     if (forceReloadInsights) {
       features.history.reloadExpandedRunOnLanguageChange();
     }
@@ -330,12 +329,6 @@ export class UiShellController {
     });
     this.els.startLoggingBtn?.addEventListener("click", features.realtime.startLogging);
     this.els.stopLoggingBtn?.addEventListener("click", features.realtime.stopLogging);
-    if (this.els.strengthAutoScaleToggle) {
-      this.els.strengthAutoScaleToggle.checked = this.state.strengthChartAutoScale;
-      this.els.strengthAutoScaleToggle.addEventListener("change", () => {
-        this.state.strengthChartAutoScale = this.els.strengthAutoScaleToggle!.checked;
-      });
-    }
     this.els.refreshHistoryBtn?.addEventListener("click", features.history.refreshHistory);
     this.els.deleteAllRunsBtn?.addEventListener("click", () => void features.history.deleteAllRuns());
   }
