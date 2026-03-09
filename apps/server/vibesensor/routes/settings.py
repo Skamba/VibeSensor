@@ -99,12 +99,7 @@ def create_settings_routes(
 
     # -- speed source ----------------------------------------------------------
 
-    @router.get("/api/settings/speed-source", response_model=SpeedSourceResponse)
-    async def get_speed_source() -> SpeedSourceResponse:
-        return SpeedSourceResponse(**settings_store.get_speed_source())
-
-    @router.post("/api/settings/speed-source", response_model=SpeedSourceResponse)
-    async def update_speed_source(req: SpeedSourceRequest) -> SpeedSourceResponse:
+    async def _apply_speed_source_update(req: SpeedSourceRequest) -> SpeedSourceResponse:
         payload = req.to_store_payload()
         result = await asyncio.to_thread(
             settings_store.update_speed_source,
@@ -112,6 +107,14 @@ def create_settings_routes(
         )
         apply_speed_source_settings()
         return SpeedSourceResponse(**result)
+
+    @router.get("/api/settings/speed-source", response_model=SpeedSourceResponse)
+    async def get_speed_source() -> SpeedSourceResponse:
+        return SpeedSourceResponse(**settings_store.get_speed_source())
+
+    @router.post("/api/settings/speed-source", response_model=SpeedSourceResponse)
+    async def update_speed_source(req: SpeedSourceRequest) -> SpeedSourceResponse:
+        return await _apply_speed_source_update(req)
 
     @router.get("/api/settings/speed-source/status", response_model=SpeedSourceStatusResponse)
     async def get_speed_source_status() -> SpeedSourceStatusResponse:
@@ -188,12 +191,6 @@ def create_settings_routes(
 
     @router.post("/api/simulator/speed-override", response_model=SpeedSourceResponse)
     async def set_simulator_speed_override(req: SpeedSourceRequest) -> SpeedSourceResponse:
-        payload = req.to_store_payload()
-        result = await asyncio.to_thread(
-            settings_store.update_speed_source,
-            payload,
-        )
-        apply_speed_source_settings()
-        return SpeedSourceResponse(**result)
+        return await _apply_speed_source_update(req)
 
     return router

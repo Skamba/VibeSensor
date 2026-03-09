@@ -116,8 +116,8 @@ class GPSSpeedMonitor:
         if self.manual_source_selected and _is_numeric(self.override_speed_mps):
             # _is_numeric() excludes bool to prevent accidental bool→speed coercion.
             override_speed = self.override_speed_mps
-            assert override_speed is not None
-            return SpeedResolution(float(override_speed), False, "manual")
+            if override_speed is not None:
+                return SpeedResolution(float(override_speed), False, "manual")
         # Manual selected but no override set → fall through to GPS
 
         # Read from the atomic (speed, timestamp) snapshot so the speed value
@@ -179,8 +179,8 @@ class GPSSpeedMonitor:
         # _is_numeric() excludes bool to match the guard in resolve_speed().
         if self.fallback_mode == "manual" and _is_numeric(self.override_speed_mps):
             override_speed = self.override_speed_mps
-            assert override_speed is not None
-            return float(override_speed)
+            if override_speed is not None:
+                return float(override_speed)
         return None
 
     def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None:
@@ -353,11 +353,11 @@ class GPSSpeedMonitor:
             writer_closed = False
             try:
                 self.connection_state = "disconnected"
-                reader, writer = await asyncio.wait_for(
+                reader, connected_writer = await asyncio.wait_for(
                     asyncio.open_connection(host, port),
                     timeout=_GPS_CONNECT_TIMEOUT_S,
                 )
-                assert writer is not None
+                writer = connected_writer
                 writer.write(b'?WATCH={"enable":true,"json":true};\n')
                 await writer.drain()
                 self.connection_state = "connected"

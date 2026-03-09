@@ -6,8 +6,9 @@ import asyncio
 import json
 import logging
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, cast
+from typing import TYPE_CHECKING, cast
 
 from fastapi import HTTPException
 
@@ -108,7 +109,8 @@ class HistoryReportService:
 
     @staticmethod
     def _build_pdf_bytes(analysis_summary: JsonObject) -> bytes:
-        return cast(bytes, build_report_pdf(map_summary(analysis_summary)))
+        mapped_summary = map_summary(cast(dict[str, object], analysis_summary))
+        return cast(bytes, build_report_pdf(mapped_summary))
 
     @staticmethod
     def _metadata_cache_token(metadata: object) -> str:

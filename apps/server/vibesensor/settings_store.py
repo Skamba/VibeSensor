@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from threading import RLock
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from .backend_types import (
     AnalysisSettingsPayload,
@@ -32,6 +32,7 @@ from .domain_models import (
     normalize_sensor_id,
     sanitize_aspects,
 )
+from .json_types import JsonObject
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB
@@ -159,7 +160,7 @@ class SettingsStore:
             return
         payload = self.snapshot()
         try:
-            self._db.set_settings_snapshot(payload)
+            self._db.set_settings_snapshot(cast(JsonObject, payload))
         except Exception as exc:
             LOGGER.error("Failed to persist settings to SQLite", exc_info=True)
             raise PersistenceError("Failed to persist settings to SQLite") from exc
@@ -266,7 +267,9 @@ class SettingsStore:
                 raise
             return self.get_cars()
 
-    def update_active_car_aspects(self, aspects: AnalysisSettingsPayload) -> AnalysisSettingsPayload:
+    def update_active_car_aspects(
+        self, aspects: AnalysisSettingsPayload
+    ) -> AnalysisSettingsPayload:
         with self._lock:
             car = self._find_car(self._active_car_id)
             if car is None:
@@ -328,10 +331,9 @@ class SettingsStore:
         sensor_id = normalize_sensor_id(mac)
         with self._lock:
             existing = self._sensors.get(sensor_id)
-            is_new = existing is None  # track for rollback on persist failure
-            if is_new:
+            is_new = existing is None
+            if existing is None:
                 existing = SensorConfig(sensor_id=sensor_id, name=sensor_id, location="")
-            assert existing is not None
             old_name, old_location = existing.name, existing.location
             if "name" in data:
                 name = _clamp_str(data["name"], 64)

@@ -112,7 +112,7 @@ def add_current_context_warnings(
         str(item.get("code") or "") for item in warnings
     }:
         warnings.append(dynamic_warning)
-    enriched["warnings"] = [warning for warning in warnings]
+    enriched["warnings"] = list(warnings)
     return enriched
 
 
@@ -240,9 +240,7 @@ def _resolve_i18n(lang: str, value: object) -> str:
 
 
 def _as_float(value: object) -> float | None:
-    if value in (None, ""):
-        return None
-    if isinstance(value, bool):
+    if value in (None, "") or isinstance(value, bool):
         return None
     if not isinstance(value, (int, float, str)):
         return None

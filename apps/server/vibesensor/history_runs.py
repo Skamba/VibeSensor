@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Never
+from typing import TYPE_CHECKING, Never, cast
 
 from fastapi import HTTPException
 
@@ -41,7 +41,10 @@ class HistoryRunQueryService(HistoryRunService):
     """Read-only run queries used by history endpoints."""
 
     async def list_runs(self) -> list[HistoryRunListEntryPayload]:
-        return await asyncio.to_thread(self._history_db.list_runs)
+        return cast(
+            list[HistoryRunListEntryPayload],
+            await asyncio.to_thread(self._history_db.list_runs),
+        )
 
     async def get_run(self, run_id: str) -> HistoryRunPayload:
         run = await async_require_run(self._history_db, run_id)
@@ -69,7 +72,9 @@ class HistoryRunQueryService(HistoryRunService):
             if self._settings_store is not None
             else None
         )
-        current_active_car_snapshot = active_car_snapshot() if callable(active_car_snapshot) else None
+        current_active_car_snapshot = (
+            active_car_snapshot() if callable(active_car_snapshot) else None
+        )
         analysis = add_current_context_warnings(
             analysis,
             current_active_car_snapshot=current_active_car_snapshot,
@@ -92,7 +97,7 @@ class HistoryRunQueryService(HistoryRunService):
             analysis.get("warnings"),
             lang=response_lang or "en",
         )
-        analysis["warnings"] = [warning for warning in localized_warnings]
+        analysis["warnings"] = list(localized_warnings)
 
         return HistoryJsonResult(status_code=200, payload=strip_internal_fields(analysis))
 

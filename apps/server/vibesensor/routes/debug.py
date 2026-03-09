@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -31,8 +31,10 @@ def create_debug_routes(processor: SignalProcessor) -> APIRouter:
         """Detailed spectrum debug info for independent verification."""
         normalized = normalize_client_id_or_400(client_id)
         result = processor.debug_spectrum(normalized)
-        if "error" in result:
-            raise HTTPException(status_code=404, detail=result["error"])
+        if isinstance(result, dict) and "error" in result:
+            raise HTTPException(
+                status_code=404, detail=cast(DebugSpectrumErrorPayload, result)["error"]
+            )
         return result
 
     @router.get("/api/debug/raw-samples/{client_id}")
@@ -43,8 +45,10 @@ def create_debug_routes(processor: SignalProcessor) -> APIRouter:
         """Raw time-domain samples in g for offline analysis."""
         normalized = normalize_client_id_or_400(client_id)
         result = processor.raw_samples(normalized, n_samples=n)
-        if "error" in result:
-            raise HTTPException(status_code=404, detail=result["error"])
+        if isinstance(result, dict) and "error" in result:
+            raise HTTPException(
+                status_code=404, detail=cast(RawSamplesErrorPayload, result)["error"]
+            )
         return result
 
     return router

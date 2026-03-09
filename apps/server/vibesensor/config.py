@@ -480,9 +480,14 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
     storage_cfg = _require_config_section(merged.get("storage", {}), "storage")
     update_cfg = _require_config_section(merged.get("update", {}), "update")
-    default_logging_cfg = _require_config_section(DEFAULT_CONFIG.get("logging", {}), "default logging")
+    default_logging_cfg = _require_config_section(
+        DEFAULT_CONFIG.get("logging", {}), "default logging"
+    )
     default_gps_cfg = _require_config_section(DEFAULT_CONFIG.get("gps", {}), "default gps")
-    default_update_cfg = _require_config_section(DEFAULT_CONFIG.get("update", {}), "default update")
+    default_update_cfg = _require_config_section(
+        DEFAULT_CONFIG.get("update", {}),
+        "default update",
+    )
     default_storage_cfg = _require_config_section(
         DEFAULT_CONFIG.get("storage", {}), "default storage"
     )
@@ -574,7 +579,9 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             ),
         ),
         processing=ProcessingConfig(
-            sample_rate_hz=_coerce_int(processing_cfg["sample_rate_hz"], "processing.sample_rate_hz"),
+            sample_rate_hz=_coerce_int(
+                processing_cfg["sample_rate_hz"], "processing.sample_rate_hz"
+            ),
             waveform_seconds=_coerce_int(
                 processing_cfg["waveform_seconds"], "processing.waveform_seconds"
             ),
@@ -585,9 +592,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             ui_heavy_push_hz=_coerce_int(
                 processing_cfg.get("ui_heavy_push_hz", 4), "processing.ui_heavy_push_hz"
             ),
-            fft_update_hz=_coerce_int(
-                processing_cfg["fft_update_hz"], "processing.fft_update_hz"
-            ),
+            fft_update_hz=_coerce_int(processing_cfg["fft_update_hz"], "processing.fft_update_hz"),
             fft_n=_coerce_int(processing_cfg["fft_n"], "processing.fft_n"),
             spectrum_min_hz=_coerce_float(
                 processing_cfg.get("spectrum_min_hz", 5.0), "processing.spectrum_min_hz"
@@ -622,9 +627,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                 path,
             ),
             persist_history_db=bool(
-                logging_cfg.get(
-                    "persist_history_db", default_logging_cfg["persist_history_db"]
-                )
+                logging_cfg.get("persist_history_db", default_logging_cfg["persist_history_db"])
             ),
             shutdown_analysis_timeout_s=_coerce_float(
                 logging_cfg.get(
@@ -645,13 +648,13 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         update=UpdateConfig(
             server_repo=str(update_cfg.get("server_repo", default_update_cfg["server_repo"])),
             rollback_dir=Path(
-                str(
-                    update_cfg.get("rollback_dir", default_update_cfg["rollback_dir"])
-                )
+                str(update_cfg.get("rollback_dir", default_update_cfg["rollback_dir"]))
             ),
         ),
         clients_json_path=_resolve_config_path(
-            str(storage_cfg.get("clients_json_path", str(default_storage_cfg["clients_json_path"]))),
+            str(
+                storage_cfg.get("clients_json_path", str(default_storage_cfg["clients_json_path"]))
+            ),
             path,
         ),
         config_path=path,

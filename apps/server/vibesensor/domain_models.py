@@ -18,7 +18,6 @@ from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
 from .backend_types import (
     AnalysisSettingsPayload,
     CarConfigPayload,
-    CarConfigUpdatePayload,
     FallbackMode,
     SensorConfigPayload,
     SpeedSourceKind,
@@ -160,8 +159,6 @@ def _coerce_speed_source(value: object) -> SpeedSourceKind:
 
 
 def _coerce_fallback_mode(value: object) -> FallbackMode:
-    if value == "manual":
-        return "manual"
     return "manual"
 
 
