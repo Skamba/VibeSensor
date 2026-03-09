@@ -130,6 +130,7 @@ def _plot_data(
     per_sample_phases: list[DrivingPhase] | None = None,
     phase_segments: list[PhaseSegment] | None = None,
 ) -> PlotDataResult:
+    # SummaryData is dict[str, object]; narrow dynamically populated "samples" field
     samples: list[Sample] = summary.get("samples", [])  # type: ignore[assignment]
     raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
     if run_noise_baseline_g is None:

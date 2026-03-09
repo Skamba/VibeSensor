@@ -25,8 +25,8 @@ from .helpers import (
 )
 
 
-class SpectrogramResult(TypedDict, total=False):
-    """Shape returned by spectrogram builders."""
+class _SpectrogramResultRequired(TypedDict):
+    """Required fields present in every spectrogram result (including empty)."""
 
     x_axis: str
     x_label_key: str
@@ -34,6 +34,15 @@ class SpectrogramResult(TypedDict, total=False):
     y_bins: list[float]
     cells: list[list[float]]
     max_amp: float
+
+
+class SpectrogramResult(_SpectrogramResultRequired, total=False):
+    """Shape returned by spectrogram builders.
+
+    All :class:`_SpectrogramResultRequired` fields are always present.
+    ``x_bin_width`` and ``y_bin_width`` are only set in non-empty results.
+    """
+
     x_bin_width: float
     y_bin_width: float
 

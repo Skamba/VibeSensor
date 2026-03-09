@@ -77,6 +77,7 @@ def build_plot_series(
     raw_sample_rate_hz: float | None,
 ) -> PlotSeriesBundle:
     """Build reusable time/speed/finding series for the plot payload."""
+    # SummaryData is dict[str, object]; narrow dynamically populated "samples" field
     samples: list[Sample] = summary.get("samples", [])  # type: ignore[assignment]
     vib_mag_points: list[tuple[float, float, str]] = []
     dominant_freq_points: list[tuple[float, float]] = []
