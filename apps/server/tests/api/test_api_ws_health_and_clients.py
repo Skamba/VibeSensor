@@ -58,13 +58,13 @@ async def test_health_ok_status_when_no_failures() -> None:
 
 
 @pytest.mark.asyncio
-async def test_health_degraded_status_when_processing_failures() -> None:
+async def test_health_warn_status_when_processing_failures() -> None:
     router, state = make_router_and_state()
     state.health_state.mark_ready()
     state.loop_state.processing_failure_count = 3
     endpoint = route_endpoint(router, "/api/health")
     resp = response_payload(await endpoint())
-    assert resp["status"] == "degraded"
+    assert resp["status"] == "warn"
     assert resp["processing_failures"] == 3
 
 

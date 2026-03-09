@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, TypeGuard
 from .backend_types import HistoryRunPayload
 from .history_helpers import async_require_run, safe_filename, strip_internal_fields
 from .json_types import JsonObject, JsonValue, is_json_object
+from .json_utils import sanitize_for_json
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB
@@ -193,20 +194,13 @@ def build_run_details_json(
     analysis = run_details.get("analysis")
     if is_json_object(analysis):
         run_details["analysis"] = strip_internal_fields(analysis)
-    try:
-        return json.dumps(
-            run_details,
-            ensure_ascii=False,
-            indent=2,
-            sort_keys=True,
-            allow_nan=False,
-        )
-    except ValueError:
-        LOGGER.warning("Export run %s: analysis contains non-finite floats", run_id)
-        return json.dumps(
-            run_details,
-            ensure_ascii=False,
-            indent=2,
-            sort_keys=True,
-            allow_nan=True,
-        )
+    sanitized, had_non_finite = sanitize_for_json(run_details)
+    if had_non_finite:
+        LOGGER.warning("Export run %s: sanitized non-finite floats in analysis data", run_id)
+    return json.dumps(
+        sanitized,
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=True,
+        allow_nan=False,
+    )

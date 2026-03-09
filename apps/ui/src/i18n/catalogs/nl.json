@@ -291,6 +291,7 @@
   "settings.update.runtime_assets_bad": "Komt niet overeen",
   "settings.update.health.label": "Operationele gezondheid",
   "settings.update.health.state.ok": "Gezond",
+  "settings.update.health.state.warn": "Waarschuwing",
   "settings.update.health.state.degraded": "Gedegradeerd",
   "settings.update.health.processing_state": "Verwerkingsstatus",
   "settings.update.health.processing_failures": "Verwerkingsfouten",

@@ -139,6 +139,14 @@ def test_create_run_recovers_previous_recording(tmp_path: Path) -> None:
     assert new_run is not None and new_run["status"] == "recording"
 
 
+def test_create_run_logs_stale_recovery(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-old", "2026-01-01T00:00:00Z", {"source": "test"})
+    with caplog.at_level(logging.WARNING, logger="vibesensor.history_db._run_writes"):
+        db.create_run("run-new", "2026-01-01T00:01:00Z", {"source": "test"})
+    assert any("stale recording" in r.message.lower() for r in caplog.records)
+
+
 def test_delete_run_cascades_samples(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-del", "2026-01-01T00:00:00Z", {"source": "test"})

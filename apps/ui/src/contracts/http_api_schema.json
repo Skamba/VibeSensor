@@ -1843,6 +1843,7 @@
           "status": {
             "enum": [
               "ok",
+              "warn",
               "degraded"
             ],
             "title": "Status",

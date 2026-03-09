@@ -48,6 +48,7 @@ logging:
   persist_history_db: true      # Persist run history across restarts via SQLite
   shutdown_analysis_timeout_s: 30  # Max seconds to wait for post-run analysis on shutdown
   history_db_path: data/history.db  # SQLite database path for run history
+  app_log_path: data/app.log       # Rotating application log file (5 MB × 3 backups)
 
 storage:
   clients_json_path: data/clients.json  # JSON file storing per-sensor client configuration

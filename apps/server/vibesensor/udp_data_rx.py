@@ -18,7 +18,7 @@ from .registry import ClientRegistry
 
 LOGGER = logging.getLogger(__name__)
 
-_QUEUE_DROP_LOG_INTERVAL_S: float = 10.0
+_QUEUE_DROP_LOG_INTERVAL_S: float = 2.0
 
 
 class DataDatagramProtocol(asyncio.DatagramProtocol):

@@ -130,6 +130,42 @@ When you change ownership boundaries, commands, or workflows, update the matchin
 - [docs/ai/repo-map.md](docs/ai/repo-map.md)
 - [docs/operational-runbooks.md](docs/operational-runbooks.md)
 
+## Configuration
+
+The backend uses a layered config system. Values are merged in this order (later wins):
+
+1. **Built-in defaults** (`vibesensor.config.DEFAULT_CONFIG`) — always present, never edited
+2. **`config.yaml`** — local overrides (gitignored; mostly empty by default)
+3. **Environment variables** — override individual keys at runtime
+
+Preset files ship with the repo for common environments:
+
+| File | Purpose |
+|---|---|
+| `config.example.yaml` | Canonical reference listing every key with its default |
+| `config.dev.yaml` | Native-dev overrides (port 8000, no GPS, relative paths) |
+| `config.docker.yaml` | Docker-compose overrides |
+
+**Quick start for local dev:**
+
+```bash
+cp apps/server/config.dev.yaml apps/server/config.yaml
+```
+
+Then edit `config.yaml` as needed. The file is gitignored, so your local changes won't affect others.
+
+## API contract sync
+
+Frontend TypeScript types are generated from the backend's OpenAPI schema. When you change backend API models (Pydantic models in `api_models.py`, route signatures), the frontend contracts must be regenerated.
+
+The sync runs automatically via `pretypecheck` and `prebuild` npm scripts, so `npm run build` and `npm run typecheck` always use fresh types. To run it manually:
+
+```bash
+cd apps/ui && npm run sync:contracts
+```
+
+If CI fails with a contract-check error, run the command above and commit the result.
+
 ## Common failure cases
 
 - Hook warning about missing `privacy_guard.py`: this is non-blocking; run the documented validation commands directly.

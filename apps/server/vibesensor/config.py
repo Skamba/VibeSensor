@@ -107,6 +107,7 @@ DEFAULT_CONFIG: JsonObject = {
         "sensor_model": "ADXL345",
         "persist_history_db": True,
         "shutdown_analysis_timeout_s": 30,
+        "app_log_path": "data/app.log",
     },
     "storage": {
         "clients_json_path": "data/clients.json",
@@ -380,6 +381,7 @@ class LoggingConfig:
     history_db_path: Path
     persist_history_db: bool
     shutdown_analysis_timeout_s: float
+    app_log_path: Path | None
 
     def __post_init__(self) -> None:
         if not isinstance(self.metrics_log_hz, int) or self.metrics_log_hz < 1:
@@ -635,6 +637,10 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                     default_logging_cfg["shutdown_analysis_timeout_s"],
                 ),
                 "logging.shutdown_analysis_timeout_s",
+            ),
+            app_log_path=_resolve_config_path(
+                str(logging_cfg.get("app_log_path", default_logging_cfg["app_log_path"])),
+                path,
             ),
         ),
         gps=GPSConfig(

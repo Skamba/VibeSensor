@@ -139,8 +139,8 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
 
     logger.start_logging()
     run_id = str(logger._run_id)
-    start_utc = str(logger._run_start_utc)
-    start_mono = float(logger._run_start_mono_s)
+    start_utc = str(logger._session.run_start_utc)
+    start_mono = float(logger._session.run_start_mono_s)
     seq = 1
 
     for step in range(70):
@@ -169,7 +169,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
             run_id,
             start_utc,
             start_mono,
-            session_generation=logger._session_generation,
+            session_generation=logger._session.session_generation,
         )
 
     logger.stop_logging()

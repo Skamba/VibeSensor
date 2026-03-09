@@ -107,10 +107,15 @@ def noise_floor(amps: FloatArray) -> float:
 
 
 def float_list(values: FloatArray | list[float]) -> list[float]:
-    """Convert an array-like to a plain Python ``list[float]``."""
+    """Convert an array-like to a plain Python ``list[float]``.
+
+    Non-finite values (NaN, ±Inf) are replaced with ``0.0`` so downstream
+    JSON serialisation never encounters them.
+    """
+    _isfinite = math.isfinite
     if isinstance(values, np.ndarray):
-        return [float(v) for v in values.ravel().tolist()]
-    return [float(v) for v in values]
+        return [float(v) if _isfinite(v) else 0.0 for v in values.ravel().tolist()]
+    return [float(v) if _isfinite(v) else 0.0 for v in values]
 
 
 def top_peaks(

@@ -13,6 +13,7 @@ import logging
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import uvicorn
@@ -39,10 +40,34 @@ on port 80).  Chosen to be a common unprivileged alternative."""
 _BIND_ERROR_NUMBERS: frozenset[int] = frozenset({errno.EACCES, errno.EADDRINUSE, 10013, 10048})
 """OS errno values indicating a port-bind failure (includes Windows equivalents)."""
 
+_LOG_MAX_BYTES = 5 * 1024 * 1024  # 5 MB per file
+_LOG_BACKUP_COUNT = 3
+
+
+def _setup_file_logging(log_path: Path | None) -> None:
+    """Attach a RotatingFileHandler to the root logger when *log_path* is set."""
+    if log_path is None:
+        return
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        handler = RotatingFileHandler(
+            log_path,
+            maxBytes=_LOG_MAX_BYTES,
+            backupCount=_LOG_BACKUP_COUNT,
+            encoding="utf-8",
+        )
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(name)s: %(message)s"))
+        logging.getLogger().addHandler(handler)
+        LOGGER.info("File logging enabled: %s", log_path)
+    except OSError:
+        LOGGER.warning("Failed to set up file logging at %s", log_path, exc_info=True)
+
 
 def create_app(config_path: Path | None = None) -> FastAPI:
     """Create and configure the VibeSensor FastAPI application."""
     config = load_config(config_path)
+    _setup_file_logging(config.logging.app_log_path)
     runtime = build_services(config)
 
     @asynccontextmanager

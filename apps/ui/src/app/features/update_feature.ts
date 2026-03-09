@@ -26,6 +26,7 @@ const STATE_VARIANT: Readonly<Record<string, string>> = {
 
 const HEALTH_VARIANT: Readonly<Record<HealthStatusPayload["status"], string>> = {
   ok: "ok",
+  warn: "warn",
   degraded: "warn",
 };
 

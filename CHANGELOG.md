@@ -1,5 +1,51 @@
 # Changelog
 
+## Unreleased — Engineering Hardening Pass
+
+### Breaking changes
+
+- **Removed v4→v5 database migration code** — The `_migrate_v4_to_v5()`
+  function and `_MIGRATIONS` registry entry are deleted. Opening a v4 schema
+  database now raises `RuntimeError`. Schema must be at version 5 or a fresh
+  DB is created.
+- **`as_float_or_none()` now rejects booleans** — `True`/`False` values
+  return `None` instead of `1.0`/`0.0`. This matches the domain intent
+  (booleans are not numeric measurements).
+
+### Improvements
+
+- **Bounded retry for `append_samples()`** — Transient SQLite write failures
+  now retry up to 3 times (100ms, 300ms delays) before dropping samples.
+  Reduces data loss from brief lock contention.
+- **Stale-run recovery logging** — `create_run()` now logs a warning when it
+  recovers stale recording runs, providing visibility into interrupted sessions.
+- **Export NaN/Inf sanitization** — `build_run_details_json()` scrubs
+  non-finite float values before JSON serialization, preventing export failures.
+- **Docker resource limits** — `docker-compose.yml` now sets `mem_limit`,
+  `memswap_limit` (384MB), and `pids_limit` (200) for Pi deployment safety.
+- **Rotating application log** — New `logging.app_log_path` config key enables
+  `RotatingFileHandler` (5MB × 3 backups) for persistent log capture.
+- **Three-tier health status** — `GET /api/health` now returns `"ok"`,
+  `"warn"`, or `"degraded"` instead of binary `"ok"` / `"degraded"`.
+  Error-level conditions (startup failures, persistence errors) produce
+  `"degraded"`; warn-level conditions (processing failures, data loss)
+  produce `"warn"`.
+- **Faster UDP drop logging** — Drop-log interval reduced from 10s to 2s for
+  quicker queue-overflow visibility.
+- **FFT NaN scrubbing** — `float_list()` now replaces non-finite values with
+  `0.0`, preventing NaN propagation through the processing pipeline.
+- **Consolidated `_as_float` duplicate** — The standalone `_as_float()` in
+  `run_context.py` is replaced by importing the canonical `as_float_or_none`
+  from `domain_models.py`. All analysis modules already used the canonical
+  version.
+- **Cleaned MetricsLogger delegation** — Removed 7 private delegating
+  `@property` methods that existed only to let tests reach internal
+  subsystems. Tests now access `logger._session` and `logger._persistence`
+  directly, making the delegation transparent.
+- **CONTRIBUTING.md** — Added Configuration section (layered config system,
+  quick-start for local dev) and API Contract Sync section (when and how to
+  regenerate frontend types).
+
 ## Unreleased — Legacy Compatibility Removal
 
 ### Breaking changes

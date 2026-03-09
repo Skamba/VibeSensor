@@ -321,7 +321,7 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
     generation = snapshot.generation
-    logger._last_data_progress_mono_s = 0.0
+    logger._session.last_data_progress_mono_s = 0.0
 
     timed_out = logger._append_records(
         run_id,
@@ -346,7 +346,7 @@ def test_append_records_does_not_timeout_on_brief_gap(
     start_mono = snapshot.start_mono_s
     generation = snapshot.generation
     monkeypatch.setattr("vibesensor.metrics_log.logger.time.monotonic", lambda: 100.0)
-    logger._last_data_progress_mono_s = 95.0
+    logger._session.last_data_progress_mono_s = 95.0
 
     timed_out = logger._append_records(
         run_id,
@@ -467,7 +467,7 @@ def test_shutdown_blocks_new_start_logging_until_wait_completes(
 ) -> None:
     logger = make_logger(history_db=_NullDB())
     logger.start_logging()
-    initial_generation = logger._session_generation
+    initial_generation = logger._session.session_generation
 
     allow_wait = threading.Event()
 
@@ -476,7 +476,7 @@ def test_shutdown_blocks_new_start_logging_until_wait_completes(
         start_result = logger.start_logging()
         assert start_result["enabled"] is False
         assert start_result["run_id"] is None
-        assert logger._session_generation == initial_generation + 1
+        assert logger._session.session_generation == initial_generation + 1
         allow_wait.set()
         return True
 
@@ -486,7 +486,7 @@ def test_shutdown_blocks_new_start_logging_until_wait_completes(
     assert allow_wait.is_set()
     restarted = logger.start_logging()
     assert restarted["enabled"] is True
-    assert logger._session_generation == initial_generation + 2
+    assert logger._session.session_generation == initial_generation + 2
     assert restarted["run_id"] is not None
 
 

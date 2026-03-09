@@ -201,9 +201,14 @@ class _FailingCreateRunHistoryDB(_FakeHistoryDB):
 
 
 class _FailingAppendOnceHistoryDB(_FakeHistoryDB):
+    """Fails append_samples enough times to exhaust the retry budget, then succeeds."""
+
     def __init__(self) -> None:
         super().__init__()
-        self._append_failures_remaining = 1
+        # Must exceed _MAX_APPEND_RETRIES (3) to actually surface a write error
+        from vibesensor.metrics_log.persistence import _MAX_APPEND_RETRIES
+
+        self._append_failures_remaining = _MAX_APPEND_RETRIES
 
     def append_samples(self, run_id: str, samples: list[dict]) -> None:
         if self._append_failures_remaining > 0:

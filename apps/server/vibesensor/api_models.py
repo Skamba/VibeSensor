@@ -290,7 +290,7 @@ class HealthIntakeStatsResponse(BaseModel):
 class HealthResponse(BaseModel):
     """Response body for the server health check endpoint."""
 
-    status: Literal["ok", "degraded"]
+    status: Literal["ok", "warn", "degraded"]
     startup_state: str
     startup_phase: str
     startup_error: str | None

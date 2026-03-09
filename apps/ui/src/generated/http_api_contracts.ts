@@ -852,7 +852,7 @@ export interface components {
        * Status
        * @enum {string}
        */
-      status: "ok" | "degraded";
+      status: "ok" | "warn" | "degraded";
     };
     /**
      * HistoryInsightWarningResponse
