@@ -109,7 +109,9 @@ class HistoryReportService:
 
     @staticmethod
     def _build_pdf_bytes(analysis_summary: JsonObject) -> bytes:
-        mapped_summary = map_summary(cast(dict[str, object], analysis_summary))
+        from .analysis import SummaryData
+
+        mapped_summary = map_summary(cast(SummaryData, analysis_summary))
         return cast(bytes, build_report_pdf(mapped_summary))
 
     @staticmethod

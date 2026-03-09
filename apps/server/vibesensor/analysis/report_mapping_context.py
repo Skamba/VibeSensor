@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
 
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import utc_now_iso
@@ -26,32 +25,32 @@ def extract_run_context(
     OriginSummary,
 ]:
     """Extract and normalize the structural context fields from a run summary."""
-    meta = summary.get("metadata")
-    if not isinstance(meta, dict):
-        meta = {}
+    meta = summary.get("metadata") or {}
     car_name = str(meta.get("car_name") or "").strip() or None
     car_type = str(meta.get("car_type") or "").strip() or None
     report_date = summary.get("report_date") or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
-    raw_top_causes = summary.get("top_causes", [])
-    if not isinstance(raw_top_causes, list):
-        raw_top_causes = []
-    raw_findings = summary.get("findings", [])
-    if not isinstance(raw_findings, list):
-        raw_findings = []
     findings, findings_non_ref, _top_causes_all, top_causes = select_effective_top_causes(
-        raw_top_causes,
-        raw_findings,
+        summary.get("top_causes", []),
+        summary.get("findings", []),
     )
 
-    speed_stats = summary.get("speed_stats")
-    if not isinstance(speed_stats, dict):
-        speed_stats = {}
-
-    origin = summary.get("most_likely_origin", {})
-    if not isinstance(origin, dict):
-        origin = {}
+    speed_stats: SpeedStats = summary.get("speed_stats") or {
+        "min_kmh": None,
+        "max_kmh": None,
+        "mean_kmh": None,
+        "stddev_kmh": None,
+        "range_kmh": None,
+        "steady_speed": False,
+    }
+    origin: OriginSummary = summary.get("most_likely_origin") or {
+        "location": "unknown",
+        "alternative_locations": [],
+        "source": "unknown",
+        "dominance_ratio": None,
+        "weak_spatial_separation": True,
+    }
 
     return (
         meta,
@@ -61,22 +60,19 @@ def extract_run_context(
         top_causes,
         findings_non_ref,
         findings,
-        cast(SpeedStats, speed_stats),
-        cast(OriginSummary, origin),
+        speed_stats,
+        origin,
     )
 
 
 def extract_sensor_locations(summary: SummaryData) -> list[str]:
     """Return active sensor locations for report rendering."""
-    sensor_locations_all = summary.get("sensor_locations", [])
-    if not isinstance(sensor_locations_all, list):
-        sensor_locations_all = []
     connected_locations = summary.get("sensor_locations_connected_throughout", [])
-    if not isinstance(connected_locations, list):
-        connected_locations = []
     sensor_locations_active = [str(loc) for loc in connected_locations if str(loc).strip()]
     if not sensor_locations_active:
-        sensor_locations_active = [str(loc) for loc in sensor_locations_all if str(loc).strip()]
+        sensor_locations_active = [
+            str(loc) for loc in summary.get("sensor_locations", []) if str(loc).strip()
+        ]
     return sensor_locations_active
 
 
