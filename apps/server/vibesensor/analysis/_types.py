@@ -6,16 +6,28 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Protocol, TypeAlias, TypedDict, TypeGuard
 
 from ..json_types import JsonObject, JsonValue
+from ..json_types import is_json_object as is_json_object  # re-export canonical source
 from .phase_segmentation import DrivingPhase
 
 if TYPE_CHECKING:
     from .plot_data import PlotDataResult
 
 Sample: TypeAlias = JsonObject
+"""A single recorded sample row.  Alias for ``JsonObject``; used for
+semantic clarity across analysis modules, not additional type safety."""
+
 MetadataDict: TypeAlias = JsonObject
+"""Run metadata dict.  Alias for ``JsonObject``; carries run-level
+configuration, firmware info, and timing details."""
+
 IntensityRow: TypeAlias = JsonObject
+"""Per-location intensity breakdown row."""
+
 I18nRef: TypeAlias = JsonObject
+"""Internationalised text reference (key + optional interpolation vars)."""
+
 TestStep: TypeAlias = JsonObject
+"""A single diagnostic test-plan step."""
 
 
 class AmplitudeMetric(TypedDict):
@@ -313,11 +325,6 @@ class SummaryData(_SummaryDataRequired, total=False):
 PhaseLabel: TypeAlias = DrivingPhase | str
 PhaseLabels: TypeAlias = Sequence[PhaseLabel]
 Translator: TypeAlias = Callable[[str], str]
-
-
-def is_json_object(value: object) -> TypeGuard[JsonObject]:
-    """Narrow a runtime value to the shared JSON-object shape used in analysis."""
-    return isinstance(value, dict)
 
 
 def is_finding(value: object) -> TypeGuard[Finding]:

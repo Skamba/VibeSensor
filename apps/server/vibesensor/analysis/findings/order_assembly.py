@@ -17,7 +17,7 @@ from ..order_analysis import (
     _i18n_ref,
     _order_label,
 )
-from ._constants import _SNR_LOG_DIVISOR
+from ._constants import SNR_LOG_DIVISOR
 from .order_models import OrderFindingBuildContext, OrderHypothesisLike, OrderMatchAccumulator
 
 
@@ -97,7 +97,7 @@ def assemble_order_finding(
     corroborating_locations = len(unique_match_locations)
     error_denominator = 0.25 * match.compliance
     error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / error_denominator))
-    snr_score = min(1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor)) / _SNR_LOG_DIVISOR)
+    snr_score = min(1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor)) / SNR_LOG_DIVISOR)
     if mean_amp <= 2 * MEMS_NOISE_FLOOR_G:
         snr_score = min(snr_score, 0.40)
     absolute_strength_db = canonical_vibration_db(
