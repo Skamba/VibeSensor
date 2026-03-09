@@ -9,7 +9,6 @@ import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 
 const DEFAULT_VIEW_ID = "dashboardView";
-
 export class UiAppRuntime {
   private readonly els: UiDomElements;
 
