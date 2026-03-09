@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi import FastAPI
+from test_support.response_models import response_payload
 
 from vibesensor.analysis_settings import AnalysisSettingsStore
 from vibesensor.api_models import ActiveCarRequest, AnalysisSettingsRequest, CarUpsertRequest
@@ -167,9 +168,11 @@ async def test_analysis_settings_endpoint_updates_active_car_aspects(_wiring) ->
     assert settings_store.active_car_aspects()["tire_width_mm"] == 255.0
     assert analysis_settings.snapshot()["tire_width_mm"] == 255.0
 
-    cars = await add_car(CarUpsertRequest(name="Second", aspects={"tire_width_mm": 225.0}))
+    cars = response_payload(
+        await add_car(CarUpsertRequest(name="Second", aspects={"tire_width_mm": 225.0}))
+    )
     second_id = cars["cars"][1]["id"]
     await set_active(ActiveCarRequest(carId=second_id))
     assert analysis_settings.snapshot()["tire_width_mm"] == 225.0
-    current = await get_cars()
+    current = response_payload(await get_cars())
     assert current["activeCarId"] == second_id

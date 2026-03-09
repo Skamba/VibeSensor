@@ -12,6 +12,7 @@ from _history_endpoint_helpers import (
     make_metadata,
     make_router_and_state,
     make_status_router,
+    response_payload,
     route_endpoint,
     sample,
 )
@@ -26,7 +27,7 @@ from vibesensor.routes import create_router
 async def test_history_insights_returns_persisted_analysis() -> None:
     router, _ = make_router_and_state(language="en")
     endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
-    result = await endpoint("run-1")
+    result = response_payload(await endpoint("run-1"))
     assert result["lang"] == "en"
     assert "most_likely_origin" in result
     check_keys = {

@@ -7,6 +7,7 @@ import pytest
 from _history_endpoint_helpers import (
     FakeWs,
     make_router_and_state,
+    response_payload,
     route_endpoint,
     route_endpoint_with_method,
 )
@@ -51,7 +52,7 @@ async def test_ws_ignores_invalid_client_selection_messages(messages: list[str])
 async def test_health_ok_status_when_no_failures() -> None:
     router, _ = make_router_and_state()
     endpoint = route_endpoint(router, "/api/health")
-    resp = await endpoint()
+    resp = response_payload(await endpoint())
     assert resp["status"] == "ok"
     assert resp["startup_state"] == "ready"
 
@@ -62,7 +63,7 @@ async def test_health_degraded_status_when_processing_failures() -> None:
     state.health_state.mark_ready()
     state.loop_state.processing_failure_count = 3
     endpoint = route_endpoint(router, "/api/health")
-    resp = await endpoint()
+    resp = response_payload(await endpoint())
     assert resp["status"] == "degraded"
     assert resp["processing_failures"] == 3
 
@@ -110,5 +111,7 @@ async def test_identify_client_200_when_sensor_reachable() -> None:
     router = create_client_routes(registry, control_plane, settings_store)
     endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
-    resp = await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})())
+    resp = response_payload(
+        await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})())
+    )
     assert resp == {"status": "sent", "cmd_seq": 7}

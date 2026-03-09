@@ -11,6 +11,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 from fastapi import FastAPI, WebSocketDisconnect
+from test_support.response_models import response_payload as _response_payload
 
 from vibesensor.analysis import summarize_run_data
 from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION
@@ -232,7 +233,13 @@ class FakeState:
             {
                 "debug_spectrum": lambda self, _id: {},
                 "raw_samples": lambda self, _id, n_samples=1: {},
-                "intake_stats": lambda self: {},
+                "intake_stats": lambda self: {
+                    "total_ingested_samples": 0,
+                    "total_compute_calls": 0,
+                    "last_compute_duration_s": 0.0,
+                    "last_compute_all_duration_s": 0.0,
+                    "last_ingest_duration_s": 0.0,
+                },
             },
         )()
         from vibesensor.runtime import ProcessingLoopState
@@ -312,6 +319,10 @@ def route_endpoint_with_method(router, path: str, method: str):
         if method.upper() in getattr(route, "methods", set()):
             return route.endpoint
     raise AssertionError(f"Route not found: {method.upper()} {path}")
+
+
+def response_payload(response):
+    return _response_payload(response)
 
 
 def make_status_router(
