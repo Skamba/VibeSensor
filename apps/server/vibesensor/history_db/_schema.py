@@ -3,12 +3,21 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 
 from ._typing import HistoryCursorProvider
 
 LOGGER = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
+"""Current schema version.
+
+History:
+  v5 — typed samples_v2 columns, WAL mode, run lifecycle fields.
+  v6 — added composite indexes idx_samples_v2_client_time and
+       idx_runs_status_created for faster per-sensor and filtered
+       list queries.
+"""
 
 SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS schema_meta (
@@ -69,9 +78,11 @@ CREATE TABLE IF NOT EXISTS samples_v2 (
 
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id);
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
+CREATE INDEX IF NOT EXISTS idx_samples_v2_client_time ON samples_v2(client_id, t_s);
 
 CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
 CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs(created_at);
+CREATE INDEX IF NOT EXISTS idx_runs_status_created ON runs(status, created_at);
 
 CREATE TABLE IF NOT EXISTS settings_kv (
     key         TEXT PRIMARY KEY,
@@ -85,6 +96,24 @@ CREATE TABLE IF NOT EXISTS client_names (
     updated_at  TEXT NOT NULL
 );
 """
+
+_MIGRATION_SQL_V5_TO_V6 = """\
+CREATE INDEX IF NOT EXISTS idx_samples_v2_client_time ON samples_v2(client_id, t_s);
+CREATE INDEX IF NOT EXISTS idx_runs_status_created ON runs(status, created_at);
+"""
+
+
+def _migrate_v5_to_v6(cur: sqlite3.Cursor) -> None:
+    """Apply schema v5 → v6 migration: add composite indexes.
+
+    Uses ``CREATE INDEX IF NOT EXISTS`` so the migration is idempotent and
+    safe to retry if the subsequent version-bump write fails.
+    """
+    for stmt in _MIGRATION_SQL_V5_TO_V6.strip().split(";"):
+        stmt = stmt.strip()
+        if stmt:
+            cur.execute(stmt)
+    LOGGER.info("Applied schema migration v5 → v6 (added composite indexes)")
 
 
 class HistorySchemaMixin:
@@ -118,6 +147,13 @@ class HistorySchemaMixin:
                 )
                 return
             if version == SCHEMA_VERSION:
+                return
+            if version == 5:
+                _migrate_v5_to_v6(cur)
+                cur.execute(
+                    "UPDATE schema_meta SET value = ? WHERE key = 'version'",
+                    (str(SCHEMA_VERSION),),
+                )
                 return
             raise RuntimeError(
                 f"Unsupported history DB schema version {version}; "

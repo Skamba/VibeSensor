@@ -366,3 +366,182 @@ def test_operations_after_close_raise(tmp_path: Path) -> None:
     db.close()
     with pytest.raises(RuntimeError, match="closed"):
         db.create_run("run-x", "2026-01-01T00:00:00Z", {})
+
+
+# ---------------------------------------------------------------------------
+# Schema v5 → v6 migration
+# ---------------------------------------------------------------------------
+
+_V5_SCHEMA_SQL = """\
+CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE runs (
+    run_id TEXT PRIMARY KEY,
+    status TEXT NOT NULL DEFAULT 'recording',
+    start_time_utc TEXT NOT NULL,
+    end_time_utc TEXT,
+    metadata_json TEXT NOT NULL,
+    analysis_json TEXT,
+    error_message TEXT,
+    sample_count INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    analysis_version INTEGER,
+    analysis_started_at TEXT,
+    analysis_completed_at TEXT
+);
+CREATE TABLE samples_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
+    record_type TEXT, schema_version TEXT, timestamp_utc TEXT, t_s REAL,
+    client_id TEXT, client_name TEXT, location TEXT, sample_rate_hz INTEGER,
+    speed_kmh REAL, gps_speed_kmh REAL, speed_source TEXT,
+    engine_rpm REAL, engine_rpm_source TEXT, gear REAL, final_drive_ratio REAL,
+    accel_x_g REAL, accel_y_g REAL, accel_z_g REAL,
+    dominant_freq_hz REAL, dominant_axis TEXT,
+    vibration_strength_db REAL, strength_bucket TEXT,
+    strength_peak_amp_g REAL, strength_floor_amp_g REAL,
+    frames_dropped_total INTEGER DEFAULT 0, queue_overflow_drops INTEGER DEFAULT 0,
+    top_peaks TEXT, top_peaks_x TEXT, top_peaks_y TEXT, top_peaks_z TEXT,
+    extra_json TEXT
+);
+CREATE INDEX idx_samples_v2_run_id ON samples_v2(run_id);
+CREATE INDEX idx_samples_v2_run_time ON samples_v2(run_id, t_s);
+CREATE INDEX idx_runs_status ON runs(status);
+CREATE INDEX idx_runs_created_at ON runs(created_at);
+CREATE TABLE settings_kv (
+    key TEXT PRIMARY KEY,
+    value_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE client_names (
+    client_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+INSERT INTO schema_meta (key, value) VALUES ('version', '5');
+"""
+
+
+def _make_v5_db(db_path: Path) -> None:
+    """Create a v5 schema database directly without migrating."""
+    conn = sqlite3.connect(str(db_path))
+    conn.executescript(_V5_SCHEMA_SQL)
+    conn.commit()
+    conn.close()
+
+
+def _index_names(db_path: Path) -> set[str]:
+    """Return all index names in the database."""
+    conn = sqlite3.connect(str(db_path))
+    cur = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%'"
+    )
+    names = {row[0] for row in cur.fetchall()}
+    conn.close()
+    return names
+
+
+def test_schema_v5_migrates_to_v6(tmp_path: Path) -> None:
+    """Opening a v5 database automatically migrates it to v6."""
+    db_path = tmp_path / "v5.db"
+    _make_v5_db(db_path)
+
+    before_indexes = _index_names(db_path)
+    assert "idx_samples_v2_client_time" not in before_indexes
+    assert "idx_runs_status_created" not in before_indexes
+
+    db = HistoryDB(db_path)
+    db.close()
+
+    after_indexes = _index_names(db_path)
+    assert "idx_samples_v2_client_time" in after_indexes, "migration must add client_time index"
+    assert "idx_runs_status_created" in after_indexes, "migration must add status_created index"
+
+    conn = sqlite3.connect(str(db_path))
+    cur = conn.execute("SELECT value FROM schema_meta WHERE key = 'version'")
+    row = cur.fetchone()
+    conn.close()
+    assert row is not None and row[0] == "6", "version must be bumped to 6 after migration"
+
+
+def test_schema_v5_migration_is_idempotent(tmp_path: Path) -> None:
+    """Opening a v5 database twice does not fail (migration is idempotent)."""
+    db_path = tmp_path / "v5_idempotent.db"
+    _make_v5_db(db_path)
+
+    db1 = HistoryDB(db_path)
+    db1.close()
+
+    db2 = HistoryDB(db_path)
+    db2.close()
+
+    after_indexes = _index_names(db_path)
+    assert "idx_samples_v2_client_time" in after_indexes
+    assert "idx_runs_status_created" in after_indexes
+
+
+def test_schema_v5_migration_preserves_existing_data(tmp_path: Path) -> None:
+    """Existing runs and samples in a v5 database survive the v6 migration."""
+    db_path = tmp_path / "v5_data.db"
+    _make_v5_db(db_path)
+
+    conn = sqlite3.connect(str(db_path))
+    conn.execute(
+        "INSERT INTO runs (run_id, status, start_time_utc, metadata_json, created_at) "
+        "VALUES ('run-pre', 'complete', '2026-01-01T00:00:00Z', '{}', '2026-01-01T00:00:00Z')"
+    )
+    conn.commit()
+    conn.close()
+
+    db = HistoryDB(db_path)
+    run = db.get_run("run-pre")
+    db.close()
+
+    assert run is not None
+    assert run["run_id"] == "run-pre"
+    assert run["status"] == "complete"
+
+
+# ---------------------------------------------------------------------------
+# create_run atomicity
+# ---------------------------------------------------------------------------
+
+
+def test_create_run_rollsback_stale_recovery_on_insert_failure(tmp_path: Path) -> None:
+    """If the INSERT in create_run fails, the preceding UPDATE must be rolled back.
+
+    This verifies the two-statement sequence (stale-run recovery UPDATE + new-run
+    INSERT) executes as a single atomic transaction, not two separate commits.
+    """
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-stale", "2026-01-01T00:00:00Z", {"source": "test"})
+
+    original_write_tx = db.write_transaction_cursor
+
+    @contextmanager
+    def _wrapped_write_transaction():
+        with original_write_tx() as cur:
+
+            class _FailOnInsert:
+                def __init__(self, base_cursor):
+                    self._base = base_cursor
+
+                def __getattr__(self, name: str):
+                    return getattr(self._base, name)
+
+                def execute(self, sql: str, params=()):
+                    if "INSERT INTO runs" in sql:
+                        raise sqlite3.IntegrityError("simulated INSERT failure")
+                    return self._base.execute(sql, params)
+
+            yield _FailOnInsert(cur)
+
+    db.write_transaction_cursor = _wrapped_write_transaction  # type: ignore[method-assign]
+
+    with pytest.raises(sqlite3.IntegrityError, match="simulated INSERT failure"):
+        db.create_run("run-new", "2026-01-01T00:01:00Z", {"source": "test"})
+
+    stale = db.get_run("run-stale")
+    assert stale is not None, "stale run must still exist after failed create_run"
+    assert stale["status"] == "recording", (
+        "UPDATE (stale-run recovery) must be rolled back when INSERT fails"
+    )

@@ -4,9 +4,10 @@ Stores run history (metadata, samples, analysis), application settings
 and client names in a single file – lightweight enough for a
 Raspberry Pi 3A+.
 
-Schema v5 stores time-series samples as typed columns in ``samples_v2``,
+Schema v6 stores time-series samples as typed columns in ``samples_v2``,
 providing fast write/read and compact storage on Raspberry Pi class
-hardware.
+hardware.  On-disk databases at schema v5 are automatically migrated to
+v6 on first open (additive index additions only; no data is modified).
 """
 
 from __future__ import annotations

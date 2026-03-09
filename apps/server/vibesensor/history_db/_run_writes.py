@@ -53,7 +53,7 @@ class HistoryRunWriteMixin:
         metadata: JsonObject,
     ) -> None:
         now = utc_now_iso()
-        with self._cursor() as cur:
+        with self.write_transaction_cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
                 (f"Recovered stale recording when starting run {run_id} at {now}",),
