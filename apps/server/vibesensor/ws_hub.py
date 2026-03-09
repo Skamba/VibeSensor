@@ -200,7 +200,7 @@ class WebSocketHub:
                 separators=(",", ":"),
                 allow_nan=False,
             )
-        except Exception:
+        except (TypeError, ValueError, OverflowError, KeyError, AttributeError, RuntimeError):
             LOGGER.error(
                 "WebSocket payload build failed for client %r; "
                 "sending error payload to affected connections.",

@@ -52,16 +52,10 @@ class RuntimeRecordingSubsystem:
 @dataclass(slots=True)
 class RuntimePersistenceSubsystem:
     history_db: HistoryDB
-    query_service: HistoryRunQueryService | None = None
-    delete_service: HistoryRunDeleteService | None = None
-    report_service: HistoryReportService | None = None
-    export_service: HistoryExportService | None = None
-
-    def bind_history_services(self, settings_store: SettingsStore | None = None) -> None:
-        self.query_service = HistoryRunQueryService(self.history_db, settings_store)
-        self.delete_service = HistoryRunDeleteService(self.history_db, settings_store)
-        self.report_service = HistoryReportService(self.history_db, settings_store)
-        self.export_service = HistoryExportService(self.history_db)
+    query_service: HistoryRunQueryService
+    delete_service: HistoryRunDeleteService
+    report_service: HistoryReportService
+    export_service: HistoryExportService
 
 
 @dataclass(slots=True)

@@ -27,10 +27,6 @@ def create_history_routes(
     delete_service = persistence.delete_service
     report_service = persistence.report_service
     export_service = persistence.export_service
-    assert query_service is not None
-    assert delete_service is not None
-    assert report_service is not None
-    assert export_service is not None
 
     # -- history CRUD ----------------------------------------------------------
 
