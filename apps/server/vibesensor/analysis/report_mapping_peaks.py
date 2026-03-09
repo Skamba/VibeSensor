@@ -8,19 +8,21 @@ from statistics import mean as _mean
 
 from ..report.report_data import PeakRow
 from ..runlog import as_float_or_none as _as_float
+from ._types import SummaryData
+from .plot_peak_table import PeakTableRow
 from .report_mapping_common import order_label_human, peak_classification_text
 
 
 def build_peak_rows_from_plots(
-    summary: dict,
+    summary: SummaryData,
     *,
     lang: str,
     tr: Callable,
 ) -> list[PeakRow]:
     """Build peak-table rows from the plots section."""
     plots = summary.get("plots")
-    if not isinstance(plots, dict):
-        plots = {}
+    if plots is None:
+        return []
     raw_peaks = [row for row in (plots.get("peaks_table", []) or []) if isinstance(row, dict)]
     above_noise = [
         row
@@ -30,7 +32,7 @@ def build_peak_rows_from_plots(
     return [build_peak_row(row, lang=lang, tr=tr) for row in above_noise[:8]]
 
 
-def build_peak_row(row: dict, *, lang: str, tr: Callable) -> PeakRow:
+def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable) -> PeakRow:
     """Build one report peak row from a plot peak-table row."""
     rank_val = _as_float(row.get("rank"))
     rank = str(int(rank_val)) if rank_val is not None else "—"
@@ -58,7 +60,9 @@ def build_peak_row(row: dict, *, lang: str, tr: Callable) -> PeakRow:
     )
 
 
-def peak_row_system_label(row: dict, *, order: str, tr: Callable[..., str]) -> str:
+def peak_row_system_label(
+    row: PeakTableRow, *, order: str, tr: Callable[..., str]
+) -> str:
     """Resolve the system label shown for one peak row."""
     order_lower = order.lower()
     source_hint = str(row.get("source") or row.get("suspected_source") or "").strip().lower()

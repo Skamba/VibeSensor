@@ -5,11 +5,12 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from ..report.report_data import DataTrustItem, NextStep
+from ._types import SummaryData
 from .report_mapping_common import is_i18n_ref, resolve_i18n
 
 
 def build_next_steps_from_summary(
-    summary: dict,
+    summary: SummaryData,
     *,
     tier: str,
     cert_reason: str,
@@ -59,7 +60,7 @@ def _resolve_optional_step_value(
 
 
 def build_data_trust_from_summary(
-    summary: dict,
+    summary: SummaryData,
     *,
     lang: str,
     tr: Callable,
