@@ -16,14 +16,14 @@ from unittest.mock import patch
 import pytest
 
 import vibesensor.analysis_settings as analysis_settings_mod
-import vibesensor.diagnostics_shared as diagnostics_shared_mod
 import vibesensor.locations as locations_mod
+import vibesensor.order_bands as order_bands_mod
 import vibesensor.udp_control_tx as udp_control_tx_mod
 from vibesensor.analysis_settings import sanitize_settings
 from vibesensor.car_library import CAR_LIBRARY, get_models_for_brand_type, get_variants_for_model
-from vibesensor.diagnostics_shared import as_float_or_none as diagnostics_as_float_or_none
 from vibesensor.gps_speed import GPSSpeedMonitor
 from vibesensor.locations import is_wheel_location
+from vibesensor.order_bands import as_float_or_none as order_bands_as_float_or_none
 from vibesensor.registry import ClientRegistry
 from vibesensor.settings_store import PersistenceError, SettingsStore
 from vibesensor.udp_control_tx import UDPControlPlane
@@ -266,17 +266,17 @@ class TestWorkerPoolAliveProtection:
 
 
 class TestAsFloatOrNoneImport:
-    def test_diagnostics_shared_uses_full_name(self) -> None:
-        """diagnostics_shared should import as_float_or_none, not _as_float."""
-        source = inspect.getsource(diagnostics_shared_mod)
+    def test_order_bands_uses_full_name(self) -> None:
+        """order_bands should import as_float_or_none, not _as_float."""
+        source = inspect.getsource(order_bands_mod)
         assert "as _as_float" not in source, (
-            "diagnostics_shared should not alias as_float_or_none to _as_float"
+            "order_bands should not alias as_float_or_none to _as_float"
         )
         assert "as_float_or_none" in source
 
-    def test_as_float_or_none_accessible_from_diagnostics_shared(self) -> None:
-        assert diagnostics_as_float_or_none(3.14) == 3.14
-        assert diagnostics_as_float_or_none(None) is None
+    def test_as_float_or_none_accessible_from_order_bands(self) -> None:
+        assert order_bands_as_float_or_none(3.14) == 3.14
+        assert order_bands_as_float_or_none(None) is None
 
 
 # ---------------------------------------------------------------------------
