@@ -29,12 +29,11 @@ def test_ui_runtime_is_a_thin_composition_root() -> None:
         assert forbidden not in source, (
             "UiAppRuntime should stay a composition root after the runtime split; "
             f"found low-level import {forbidden!r} in {ui_runtime}"
-    )
+        )
 
     line_count = len(source.splitlines())
     assert line_count <= 180, (
-        "UiAppRuntime should stay compact after the refactor, "
-        f"got {line_count} lines"
+        f"UiAppRuntime should stay compact after the refactor, got {line_count} lines"
     )
 
 
