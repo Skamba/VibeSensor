@@ -172,7 +172,6 @@ class TestUpdateStateStore:
             pytest.param(None, id="missing_file"),
             pytest.param("{this is not valid json}", id="corrupted_json"),
             pytest.param("", id="empty_file"),
-            pytest.param('{"state": "bogus", "phase": "idle"}', id="invalid_state"),
         ],
     )
     def test_load_returns_none_for_bad_input(
@@ -183,6 +182,17 @@ class TestUpdateStateStore:
             path.write_text(file_content, encoding="utf-8")
         store = UpdateStateStore(path=path)
         assert store.load() is None
+
+    def test_load_normalizes_invalid_state_to_idle(self, tmp_path: Path) -> None:
+        path = tmp_path / "state.json"
+        path.write_text('{"state": "bogus", "phase": "idle"}', encoding="utf-8")
+        store = UpdateStateStore(path=path)
+
+        loaded = store.load()
+
+        assert loaded is not None
+        assert loaded.state == UpdateState.idle
+        assert loaded.phase == UpdatePhase.idle
 
     def test_save_creates_parent_dirs(self, tmp_path: Path) -> None:
         path = tmp_path / "a" / "b" / "state.json"
