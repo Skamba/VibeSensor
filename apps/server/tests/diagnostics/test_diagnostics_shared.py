@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from math import inf, nan
 
-from vibesensor.diagnostics_shared import (
+from vibesensor.order_bands import (
     build_diagnostic_settings,
-    classify_peak_hz,
-    severity_from_peak,
     tolerance_for_order,
     vehicle_orders_hz,
 )
+from vibesensor.peak_classification import classify_peak_hz
+from vibesensor.severity import severity_from_peak
 
 _DEFAULT_SPEED_MPS = 27.7777777778  # 100 km/h
 
@@ -58,7 +58,7 @@ def test_classify_peak_matches_engine_order() -> None:
 
 def test_classify_peak_below_road_min_classified_as_road() -> None:
     """Peaks between ROAD_RESONANCE_MIN_HZ (0.5) and ROAD_RESONANCE_MAX_HZ should be 'road'."""
-    from vibesensor.diagnostics_shared import ROAD_RESONANCE_MIN_HZ
+    from vibesensor.constants import ROAD_RESONANCE_MIN_HZ
 
     assert ROAD_RESONANCE_MIN_HZ == 0.5
     settings = build_diagnostic_settings({})

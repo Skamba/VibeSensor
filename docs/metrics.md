@@ -53,7 +53,7 @@ Severity classification is performed solely by `bucket_for_strength(vibration_st
 `bucket_for_strength()` returns the highest band whose `min_db` threshold is met, or `None` if
 below all thresholds.
 
-Hysteresis and persistence logic is handled in `diagnostics_shared.severity_from_peak()`:
+Hysteresis and persistence logic is handled in `severity.severity_from_peak()`:
 
 - `HYSTERESIS_DB = 2.0` — dB subtracted from active band threshold on decay check
 - `PERSISTENCE_TICKS = 3` — ticks a new band must be seen before promotion

@@ -7,12 +7,12 @@ from math import pi
 import pytest
 
 from vibesensor.constants import KMH_TO_MPS
-from vibesensor.diagnostics_shared import (
+from vibesensor.order_bands import (
     build_diagnostic_settings,
-    classify_peak_hz,
     tolerance_for_order,
     vehicle_orders_hz,
 )
+from vibesensor.peak_classification import classify_peak_hz
 
 """
 Common-cause cases are based on recurring issues documented in:

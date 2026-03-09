@@ -7,7 +7,7 @@ from vibesensor_core.strength_bands import bucket_for_strength
 
 from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
 from vibesensor.analysis.helpers import _location_label
-from vibesensor.diagnostics_shared import classify_peak_hz
+from vibesensor.peak_classification import classify_peak_hz
 
 
 class TestStrengthBandsAlignment:

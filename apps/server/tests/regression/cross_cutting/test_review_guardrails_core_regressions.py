@@ -14,15 +14,16 @@ import time
 import pytest
 
 from vibesensor.config import ProcessingConfig
-from vibesensor.diagnostics_shared import build_order_bands, severity_from_peak
 from vibesensor.domain_models import (
     as_float_or_none,
     as_int_or_none,
     new_car_id,
     sanitize_aspects,
 )
+from vibesensor.order_bands import build_order_bands
 from vibesensor.registry import _sanitize_name
 from vibesensor.runlog import bounded_sample
+from vibesensor.severity import severity_from_peak
 from vibesensor.worker_pool import WorkerPool
 
 # ---------------------------------------------------------------------------
@@ -87,12 +88,12 @@ class TestCarLibraryImport:
 
 
 # ---------------------------------------------------------------------------
-# Item 4: build_order_bands lives in diagnostics_shared
+# Item 4: build_order_bands lives in order_bands
 # ---------------------------------------------------------------------------
 
 
 class TestBuildOrderBandsLocation:
-    def test_importable_from_diagnostics_shared(self) -> None:
+    def test_importable_from_order_bands(self) -> None:
         assert callable(build_order_bands)
 
     def test_not_in_runtime(self) -> None:

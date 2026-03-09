@@ -19,7 +19,7 @@ import yaml
 from _paths import REPO_ROOT, SERVER_ROOT
 
 from vibesensor.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
-from vibesensor.diagnostics_shared import DEFAULT_DIAGNOSTIC_SETTINGS
+from vibesensor.order_bands import DEFAULT_DIAGNOSTIC_SETTINGS
 
 
 def test_diagnostic_settings_is_analysis_settings() -> None:
@@ -109,14 +109,14 @@ def test_metrics_log_no_old_field_names() -> None:
 
 
 def test_as_float_single_source_of_truth() -> None:
-    """diagnostics_shared.as_float_or_none must be the canonical as_float_or_none
+    """order_bands.as_float_or_none must be the canonical as_float_or_none
     from runlog, not a local re-definition.
     """
-    from vibesensor.diagnostics_shared import as_float_or_none as diag_as_float
+    from vibesensor.order_bands import as_float_or_none as ob_as_float
     from vibesensor.runlog import as_float_or_none
 
-    assert diag_as_float is as_float_or_none, (
-        "diagnostics_shared.as_float_or_none must be imported from runlog.as_float_or_none"
+    assert ob_as_float is as_float_or_none, (
+        "order_bands.as_float_or_none must be imported from runlog.as_float_or_none"
     )
 
 
