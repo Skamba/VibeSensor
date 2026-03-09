@@ -5,11 +5,14 @@ modules:
 
 - :mod:`~vibesensor.metrics_log.sample_builder` — pure functions for
   building sample records from sensor metrics.
+- :mod:`~vibesensor.metrics_log.session_state` — explicit recording-session
+  lifecycle state.
+- :mod:`~vibesensor.metrics_log.persistence` — history DB create/append/finalize
+  coordination.
 - :mod:`~vibesensor.metrics_log.post_analysis` — ``PostAnalysisWorker``:
   background analysis thread/queue manager.
 - :mod:`~vibesensor.metrics_log.logger` — ``MetricsLogger``: the
-  orchestrator that ties session lifecycle, persistence, and the live
-  sample buffer together.
+  façade that coordinates the focused collaborators above.
 
 All public symbols are re-exported here so that existing
 ``from vibesensor.metrics_log import MetricsLogger`` (and similar)
@@ -20,6 +23,7 @@ from .live_analysis import LiveAnalysisWindow  # noqa: F401
 from .logger import (
     MetricsLogger,  # noqa: F401
     MetricsLoggerConfig,  # noqa: F401
+    MetricsShutdownReport,  # noqa: F401
 )
 from .post_analysis import (
     PostAnalysisWorker,  # noqa: F401
@@ -38,6 +42,7 @@ from .sample_builder import (  # noqa: F401
 __all__ = [
     "MetricsLogger",
     "MetricsLoggerConfig",
+    "MetricsShutdownReport",
     "LiveAnalysisWindow",
     "PostAnalysisWorker",
     "build_run_metadata",
