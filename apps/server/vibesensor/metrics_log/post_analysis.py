@@ -8,6 +8,7 @@ from the data-collection path and can be tested independently.
 from __future__ import annotations
 
 import logging
+import sqlite3
 import time
 from collections import deque
 from collections.abc import Callable
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 _MAX_POST_ANALYSIS_SAMPLES = 12_000
+_WARN_QUEUE_DEPTH = 10
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,6 +41,8 @@ class PostAnalysisHealthSnapshot:
     active_started_at: float | None
     oldest_queued_at: float | None
     max_queue_depth: int
+    last_completed_run_id: str | None
+    last_completed_error: str | None
 
 
 class PostAnalysisWorker:
@@ -72,6 +76,8 @@ class PostAnalysisWorker:
         self._analysis_active_run_id: str | None = None
         self._analysis_active_started_at: float | None = None
         self._analysis_max_queue_depth: int = 0
+        self._last_completed_run_id: str | None = None
+        self._last_completed_error: str | None = None
 
     # -- public API -----------------------------------------------------------
 
@@ -101,6 +107,8 @@ class PostAnalysisWorker:
                 active_started_at=self._analysis_active_started_at,
                 oldest_queued_at=oldest_queued_at,
                 max_queue_depth=self._analysis_max_queue_depth,
+                last_completed_run_id=self._last_completed_run_id,
+                last_completed_error=self._last_completed_error,
             )
 
     def schedule(self, run_id: str) -> None:
@@ -111,11 +119,17 @@ class PostAnalysisWorker:
                 return
             self._analysis_queue.append(_QueuedRun(run_id=run_id, enqueued_at=time.time()))
             self._analysis_enqueued_run_ids.add(run_id)
+            queue_depth = len(self._analysis_queue)
             self._analysis_max_queue_depth = max(
                 self._analysis_max_queue_depth,
-                len(self._analysis_queue),
+                queue_depth,
             )
             self._ensure_worker_running()
+        if queue_depth >= _WARN_QUEUE_DEPTH:
+            LOGGER.warning(
+                "Post-analysis queue depth reached %d; analysis may be falling behind",
+                queue_depth,
+            )
 
     def wait(self, timeout_s: float = 30.0) -> bool:
         """Block until all queued analysis completes or *timeout_s* elapses.
@@ -201,10 +215,14 @@ class PostAnalysisWorker:
 
             metadata = db.get_run_metadata(run_id)
             if metadata is None:
+                error_msg = "Metadata not found or corrupt; cannot analyse"
                 LOGGER.warning("Cannot analyse run %s: metadata not found", run_id)
+                with self._lock:
+                    self._last_completed_run_id = run_id
+                    self._last_completed_error = error_msg
                 try:
-                    db.store_analysis_error(run_id, "Metadata not found or corrupt; cannot analyse")
-                except Exception:
+                    db.store_analysis_error(run_id, error_msg)
+                except sqlite3.Error:
                     LOGGER.warning(
                         "Failed to store analysis error for run %s", run_id, exc_info=True
                     )
@@ -223,8 +241,12 @@ class PostAnalysisWorker:
                     normalized_iter, max_items=_MAX_POST_ANALYSIS_SAMPLES
                 )
             if not samples:
+                error_msg = "No samples collected during run"
                 LOGGER.warning("Skipping post-analysis for run %s: no samples collected", run_id)
-                db.store_analysis_error(run_id, "No samples collected during run")
+                with self._lock:
+                    self._last_completed_run_id = run_id
+                    self._last_completed_error = error_msg
+                db.store_analysis_error(run_id, error_msg)
                 return
             summary = summarize_run_data(
                 metadata, samples, lang=language, file_name=run_id, include_samples=False
@@ -251,7 +273,7 @@ class PostAnalysisWorker:
                         "explanation": explanation,
                     }
                 )
-            db.store_analysis(run_id, summary)
+            db.store_analysis(run_id, summary)  # type: ignore[arg-type]
 
             duration_s = time.monotonic() - analysis_start
             LOGGER.info(
@@ -260,9 +282,17 @@ class PostAnalysisWorker:
                 len(samples),
                 duration_s,
             )
+            with self._lock:
+                self._last_completed_run_id = run_id
+                self._last_completed_error = None
+            self._clear_error_cb()
         except Exception as exc:
             duration_s = time.monotonic() - analysis_start
-            self._error_cb(f"post-analysis failed for run {run_id}: {exc}")
+            error_msg = f"post-analysis failed for run {run_id}: {exc}"
+            self._error_cb(error_msg)
+            with self._lock:
+                self._last_completed_run_id = run_id
+                self._last_completed_error = str(exc)
             LOGGER.warning(
                 "Analysis failed for run %s after %.2fs: %s",
                 run_id,
@@ -272,6 +302,6 @@ class PostAnalysisWorker:
             )
             try:
                 db.store_analysis_error(run_id, str(exc))
-            except Exception as store_exc:
+            except sqlite3.Error as store_exc:
                 self._error_cb(f"history store_analysis_error failed for run {run_id}: {store_exc}")
                 LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)

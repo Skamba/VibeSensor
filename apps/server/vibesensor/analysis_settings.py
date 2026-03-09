@@ -90,7 +90,7 @@ DEFAULT_ANALYSIS_SETTINGS: dict[str, float] = {
 
 
 def sanitize_settings(
-    payload: dict[str, object],
+    payload: Mapping[str, object],
     allowed_keys: Mapping[str, float] | None = None,
 ) -> dict[str, float]:
     """Validate and filter analysis settings, dropping invalid values with logging.

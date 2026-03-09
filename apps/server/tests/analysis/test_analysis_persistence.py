@@ -31,14 +31,14 @@ def test_fresh_db_has_analysis_columns(tmp_path: Path) -> None:
     db.close()
 
 
-def test_old_schema_version_raises(tmp_path: Path) -> None:
-    """Opening a DB with an older schema version should raise RuntimeError."""
+def test_old_schema_version_raises_when_no_migration_registered(tmp_path: Path) -> None:
+    """Opening a DB with a very old version (no migration registered) should raise."""
     db_path = tmp_path / "history.db"
     conn = sqlite3.connect(str(db_path))
     conn.executescript(
         """\
 CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-INSERT INTO schema_meta (key, value) VALUES ('version', '3');
+INSERT INTO schema_meta (key, value) VALUES ('version', '1');
 CREATE TABLE runs (
     run_id TEXT PRIMARY KEY,
     status TEXT NOT NULL DEFAULT 'recording',
@@ -67,7 +67,7 @@ CREATE TABLE client_names (
     conn.commit()
     conn.close()
 
-    with pytest.raises(RuntimeError, match="Unsupported history DB schema version 3"):
+    with pytest.raises(RuntimeError, match="No migration registered"):
         HistoryDB(db_path)
 
 

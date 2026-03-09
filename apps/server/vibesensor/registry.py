@@ -7,11 +7,13 @@ timestamps) and exposes a snapshot API for connected clients.
 from __future__ import annotations
 
 import logging
+import sqlite3
 import time
 from dataclasses import dataclass, field
 from threading import RLock
 from typing import TYPE_CHECKING
 
+from .domain_models import normalize_sensor_id as _normalize_client_id
 from .payload_types import ClientApiRow, HealthDataLossPayload, TimingHealthPayload
 from .processing.models import MetricsPayload
 from .protocol import (
@@ -20,7 +22,6 @@ from .protocol import (
     HelloMessage,
     client_id_hex,
     client_id_mac,
-    parse_client_id,
 )
 
 if TYPE_CHECKING:
@@ -71,10 +72,6 @@ def _sanitize_name(name: str) -> str:
     if len(encoded) <= 32:
         return clean
     return encoded[:32].decode("utf-8", errors="ignore")
-
-
-def _normalize_client_id(client_id: str) -> str:
-    return str(parse_client_id(client_id).hex())
 
 
 @dataclass(slots=True)
@@ -196,7 +193,7 @@ class ClientRegistry:
             # Read from DB *outside* the registry lock so that incoming UDP
             # frames during startup are not blocked waiting for DB I/O.
             rows = self._db.list_client_names()
-        except Exception as exc:
+        except sqlite3.Error as exc:
             LOGGER.warning("Could not load persisted client names from DB: %s", exc)
             return
         with self._lock:
@@ -210,7 +207,7 @@ class ClientRegistry:
             return
         try:
             self._db.upsert_client_name(client_id, name)
-        except Exception:
+        except sqlite3.Error:
             LOGGER.warning("Failed to persist client name to DB", exc_info=True)
 
     def _delete_persisted_name(self, client_id: str) -> None:
@@ -218,7 +215,7 @@ class ClientRegistry:
             return
         try:
             self._db.delete_client_name(client_id)
-        except Exception:
+        except sqlite3.Error:
             LOGGER.warning("Failed to delete client name from DB", exc_info=True)
 
     @staticmethod

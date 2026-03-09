@@ -271,6 +271,10 @@ class HealthPersistenceResponse(BaseModel):
     analysis_queue_oldest_age_s: float | None = None
     analyzing_run_count: int = 0
     analyzing_oldest_age_s: float | None = None
+    samples_written: int = 0
+    samples_dropped: int = 0
+    last_completed_run_id: str | None = None
+    last_completed_run_error: str | None = None
 
 
 class HealthIntakeStatsResponse(BaseModel):
@@ -449,6 +453,10 @@ class LoggingStatusResponse(BaseModel):
     run_id: str | None
     write_error: str | None
     analysis_in_progress: bool
+    samples_written: int = 0
+    samples_dropped: int = 0
+    last_completed_run_id: str | None = None
+    last_completed_run_error: str | None = None
 
 
 class HistoryListEntryResponse(BaseModel):

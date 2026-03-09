@@ -188,8 +188,15 @@ class MetricsSessionState:
             return (now_mono_s - self._last_data_progress_mono_s) >= self._no_data_timeout_s
 
     def status_payload(
-        self, *, write_error: str | None, analysis_in_progress: bool
-    ) -> dict[str, str | bool | None]:
+        self,
+        *,
+        write_error: str | None,
+        analysis_in_progress: bool,
+        samples_written: int = 0,
+        samples_dropped: int = 0,
+        last_completed_run_id: str | None = None,
+        last_completed_run_error: str | None = None,
+    ) -> dict[str, str | bool | int | None]:
         with self._lock:
             return {
                 "enabled": self._enabled,
@@ -197,4 +204,8 @@ class MetricsSessionState:
                 "run_id": self._run_id,
                 "write_error": write_error,
                 "analysis_in_progress": analysis_in_progress,
+                "samples_written": samples_written,
+                "samples_dropped": samples_dropped,
+                "last_completed_run_id": last_completed_run_id,
+                "last_completed_run_error": last_completed_run_error,
             }

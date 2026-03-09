@@ -47,7 +47,7 @@ class HistoryDB(
             self._conn.execute("PRAGMA foreign_keys=ON")
             self._conn.execute("PRAGMA busy_timeout=5000")
             self._ensure_schema()
-        except Exception:
+        except sqlite3.Error:
             self._conn.close()
             raise
 
@@ -69,7 +69,7 @@ class HistoryDB(
                 yield cur
                 if commit:
                     self._conn.commit()
-            except Exception:
+            except sqlite3.Error:
                 self._conn.rollback()
                 raise
             finally:
@@ -86,7 +86,7 @@ class HistoryDB(
                 cur.execute("BEGIN IMMEDIATE")
                 yield cur
                 self._conn.commit()
-            except Exception:
+            except sqlite3.Error:
                 self._conn.rollback()
                 raise
             finally:
@@ -103,7 +103,7 @@ class HistoryDB(
                 cur.execute("BEGIN")
                 yield
                 self._conn.commit()
-            except Exception:
+            except sqlite3.Error:
                 self._conn.rollback()
                 raise
             finally:

@@ -31,9 +31,22 @@ def build_command(min_coverage: int, html: bool, fail_under: bool) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run backend coverage with pytest-cov")
-    parser.add_argument("--html", action="store_true", help="Write an HTML report under artifacts/coverage/html")
-    parser.add_argument("--fail-under", action="store_true", help="Fail when total coverage is below the threshold")
-    parser.add_argument("--min-coverage", type=int, default=80, help="Coverage threshold used with --fail-under")
+    parser.add_argument(
+        "--html",
+        action="store_true",
+        help="Write an HTML report under artifacts/coverage/html",
+    )
+    parser.add_argument(
+        "--fail-under",
+        action="store_true",
+        help="Fail when total coverage is below the threshold",
+    )
+    parser.add_argument(
+        "--min-coverage",
+        type=int,
+        default=80,
+        help="Coverage threshold used with --fail-under",
+    )
     args = parser.parse_args()
 
     command = build_command(args.min_coverage, args.html, args.fail_under)

@@ -58,16 +58,31 @@ def test_history_db_thread_safe_appends(tmp_path: Path) -> None:
     assert len(db.get_run_samples("run-2")) == 400
 
 
-@pytest.mark.parametrize("bad_version", ["0", "99"], ids=["ancient", "future"])
-def test_schema_version_mismatch_fails_fast(tmp_path: Path, bad_version: str) -> None:
+def test_schema_version_ancient_no_migration_fails_fast(tmp_path: Path) -> None:
+    """A DB with a very old version that has no migration path should raise."""
     db_path = tmp_path / "history.db"
     conn = sqlite3.connect(str(db_path))
     conn.execute("CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-    conn.execute("INSERT INTO schema_meta (key, value) VALUES ('version', ?)", (bad_version,))
+    conn.execute("INSERT INTO schema_meta (key, value) VALUES ('version', '0')")
     conn.commit()
     conn.close()
 
-    with pytest.raises(RuntimeError, match="Unsupported history DB schema version"):
+    with pytest.raises(RuntimeError, match="No migration registered"):
+        HistoryDB(db_path)
+
+
+def test_schema_version_future_fails_fast(tmp_path: Path) -> None:
+    """A DB with a newer version than supported should raise (no downgrade)."""
+    db_path = tmp_path / "history.db"
+    # Create a valid current-version DB first so the physical schema is correct
+    db = HistoryDB(db_path)
+    db.close()
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("UPDATE schema_meta SET value = '99' WHERE key = 'version'")
+    conn.commit()
+    conn.close()
+
+    with pytest.raises(RuntimeError, match="Cannot downgrade"):
         HistoryDB(db_path)
 
 

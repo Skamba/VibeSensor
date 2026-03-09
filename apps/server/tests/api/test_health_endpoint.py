@@ -85,6 +85,10 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
         "analysis_queue_oldest_age_s": 8.0,
         "analyzing_run_count": 1,
         "analyzing_oldest_age_s": 12.0,
+        "samples_written": 100,
+        "samples_dropped": 5,
+        "last_completed_run_id": None,
+        "last_completed_run_error": None,
     }
     state.loop_state.processing_state = "degraded"
     state.loop_state.processing_failure_count = 2
@@ -107,6 +111,7 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
         "frames_dropped",
         "server_queue_drops",
         "persistence_write_error",
+        "persistence_samples_dropped",
         "analyzing_runs_present",
     ]
     assert result["startup_phase"] == "gps-speed"

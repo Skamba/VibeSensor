@@ -223,5 +223,5 @@ CREATE TABLE samples (
     conn.commit()
     conn.close()
 
-    with pytest.raises(RuntimeError, match="Unsupported history DB schema version 2"):
+    with pytest.raises(RuntimeError, match="No migration registered for v2"):
         HistoryDB(db_path)

@@ -8,6 +8,7 @@ modules at runtime.
 from __future__ import annotations
 
 import logging
+import sqlite3
 from threading import RLock
 from typing import TYPE_CHECKING, cast
 
@@ -62,7 +63,7 @@ def _normalize_choice(value: object, default: str) -> str:
 
 def _coerce_language(value: object) -> LanguageCode:
     language = _normalize_choice(value, "en")
-    return "nl" if language == "nl" else "en"
+    return "nl" if language.startswith("nl") else "en"
 
 
 def _coerce_speed_unit(value: object) -> SpeedUnitCode:
@@ -161,7 +162,7 @@ class SettingsStore:
         payload = self.snapshot()
         try:
             self._db.set_settings_snapshot(cast(JsonObject, payload))
-        except Exception as exc:
+        except (sqlite3.Error, OSError) as exc:
             LOGGER.error("Failed to persist settings to SQLite", exc_info=True)
             raise PersistenceError("Failed to persist settings to SQLite") from exc
 
