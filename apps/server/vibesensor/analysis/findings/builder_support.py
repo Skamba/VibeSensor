@@ -16,7 +16,7 @@ from ..phase_segmentation import (
     segment_run_phases,
 )
 from ..ranking import finding_sort_key
-from ._constants import _ORDER_SUPPRESS_PERSISTENT_MIN_CONF
+from ._constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF
 from .reference_checks import _reference_missing_finding
 
 _MIN_DIAGNOSTIC_SAMPLES = 5
@@ -173,7 +173,7 @@ def collect_order_frequencies(order_findings: list[Finding]) -> set[float]:
     for order_finding in order_findings:
         if (
             _as_float(order_finding.get("confidence_0_to_1")) or 0.0
-        ) < _ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
+        ) < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
             continue
         points = order_finding.get("matched_points")
         if not isinstance(points, list):

@@ -12,21 +12,27 @@ from vibesensor_core.vibration_strength import PEAK_BANDWIDTH_HZ as PEAK_BANDWID
 from vibesensor_core.vibration_strength import PEAK_SEPARATION_HZ as PEAK_SEPARATION_HZ
 
 __all__ = [
+    "CONFIDENCE_CEILING",
+    "CONFIDENCE_FLOOR",
     "FREQUENCY_EPSILON_HZ",
     "HARMONIC_2X",
     "KMH_TO_MPS",
+    "LIGHT_STRENGTH_MAX_DB",
     "MEMS_NOISE_FLOOR_G",
     "MIN_ANALYSIS_FREQ_HZ",
     "MIN_OVERLAP_TOLERANCE",
     "MPS_TO_KMH",
     "MULTI_SENSOR_CORROBORATION_DB",
+    "NEGLIGIBLE_STRENGTH_MAX_DB",
     "NUMERIC_TYPES",
+    "ORDER_SUPPRESS_PERSISTENT_MIN_CONF",
     "PEAK_BANDWIDTH_HZ",
     "PEAK_SEPARATION_HZ",
     "ROAD_RESONANCE_MAX_HZ",
     "ROAD_RESONANCE_MIN_HZ",
     "SECONDS_PER_MINUTE",
     "SILENCE_DB",
+    "SNR_LOG_DIVISOR",
     "WEAK_SPATIAL_DOMINANCE_THRESHOLD",
 ]
 
@@ -106,6 +112,40 @@ orders (e.g. driveshaft 1× and engine 1×) overlap in frequency."""
 
 FREQUENCY_EPSILON_HZ: Final[float] = 1e-6
 """Tiny guard value to prevent division-by-zero in frequency ratios."""
+
+# ---------------------------------------------------------------------------
+# Confidence scoring
+# ---------------------------------------------------------------------------
+CONFIDENCE_FLOOR: Final[float] = 0.08
+"""Clamp lower bound for computed confidence so no finding is ever
+completely dismissed."""
+
+CONFIDENCE_CEILING: Final[float] = 0.97
+"""Clamp upper bound for computed confidence so no finding is ever
+shown as perfectly certain."""
+
+SNR_LOG_DIVISOR: Final[float] = 2.5
+"""Divisor for log1p(SNR) normalisation to [0, 1]."""
+
+ORDER_SUPPRESS_PERSISTENT_MIN_CONF: Final[float] = 0.40
+"""Minimum order-finding confidence to suppress a matching persistent-peak."""
+
+# ---------------------------------------------------------------------------
+# Strength-based classification thresholds
+# ---------------------------------------------------------------------------
+NEGLIGIBLE_STRENGTH_MAX_DB: Final[float] = 8.0
+"""Upper bound (exclusive) of the negligible vibration band in dB.
+
+Derived from the strength-labels table: the ``l1`` ("light") band starts
+at this threshold, meaning values strictly below this are classified as
+negligible."""
+
+LIGHT_STRENGTH_MAX_DB: Final[float] = 16.0
+"""Upper bound (exclusive) of the light vibration band in dB.
+
+Derived from the strength-labels table: the ``l2`` ("moderate") band starts
+at this threshold, meaning values below this are classified as light or
+negligible."""
 
 # ---------------------------------------------------------------------------
 # Type-check helpers
