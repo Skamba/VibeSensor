@@ -296,7 +296,7 @@ def _analysis_non_report_data_imports(source: str, filename: str) -> list[str]:
         level = node.level or 0
         # Relative: from ..report.xyz import ... (level=2, mod="report.xyz")
         if level > 0 and mod.startswith("report."):
-            sub = mod[len("report."):]  # e.g. "report_data", "pdf_engine", "theme"
+            sub = mod[len("report.") :]  # e.g. "report_data", "pdf_engine", "theme"
             if sub != _APPROVED_REPORT_IMPORT:
                 violations.append(f"line {node.lineno}: from {'.' * level}{mod} import ...")
         # Absolute: from vibesensor.report.xyz import ...
