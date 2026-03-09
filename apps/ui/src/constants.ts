@@ -15,10 +15,3 @@ export const defaultLocationCodes = [
   "rear_right_seat",
   "trunk",
 ] as const;
-
-export const sourceColumns = [
-  { key: "engine", labelKey: "matrix.source.engine" },
-  { key: "driveshaft", labelKey: "matrix.source.driveshaft" },
-  { key: "wheel", labelKey: "matrix.source.wheel" },
-  { key: "other", labelKey: "matrix.source.other" },
-] as const;

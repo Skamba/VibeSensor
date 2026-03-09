@@ -20,8 +20,6 @@ export interface RealtimeFeatureDeps {
   formatInt: (value: number) => string;
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
   setStatValue: (container: HTMLElement | null, value: string | number) => void;
-  createEmptyMatrix: () => Record<string, Record<string, { count: number; seconds: number; contributors: Record<string, number> }>>;
-  renderMatrix: () => void;
   sendSelection: () => void;
   refreshHistory: () => Promise<void>;
 }
@@ -40,7 +38,7 @@ export interface RealtimeFeature {
 }
 
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
-  const { state, els, t, escapeHtml, formatInt, setPillState, renderMatrix } = ctx;
+  const { state, els, t, escapeHtml, formatInt, setPillState } = ctx;
 
   const SHORTHAND_LOCATION_MAP: Record<string, string> = {
     "front left": "front_left_wheel",
@@ -209,15 +207,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     }
   }
 
-  function resetLiveVibrationCounts(): void {
-    state.eventMatrix = ctx.createEmptyMatrix();
-    renderMatrix();
-  }
-
   async function startLogging(): Promise<void> {
     try {
       state.loggingStatus = await startLoggingRun();
-      resetLiveVibrationCounts();
       renderLoggingStatus();
       await ctx.refreshHistory();
     } catch (err) {

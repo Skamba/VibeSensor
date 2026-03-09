@@ -96,7 +96,6 @@ export class UiLiveTransportController {
 
     const prevSelected = this.state.selectedClientId;
     this.state.clients = adapted.clients;
-    const hasFresh = features.dashboard.hasFreshSensorFrames(this.state.clients);
     const incomingSpectra = adapted.spectra
       ? {
         clients: Object.fromEntries(
@@ -127,13 +126,6 @@ export class UiLiveTransportController {
     this.state.rotationalSpeeds = adapted.rotational_speeds;
     this.state.hasSpectrumData = spectrumTick.hasSpectrumData;
     this.renderSpeedReadout();
-    features.dashboard.applyServerDiagnostics(adapted.diagnostics, hasFresh);
-    const liveIntensity = features.dashboard.extractLiveLocationIntensity();
-    const intensityToPlot = Object.keys(liveIntensity).length > 0
-      ? liveIntensity
-      : features.dashboard.extractConfirmedLocationIntensity();
-    features.dashboard.pushCarMapSample(intensityToPlot);
-    features.dashboard.renderCarMap();
     if (spectrumTick.hasNewSpectrumFrame) {
       this.renderSpectrum();
     } else {
@@ -142,11 +134,6 @@ export class UiLiveTransportController {
     features.realtime.renderStatus(
       this.state.clients.find((client) => client.id === this.state.selectedClientId),
     );
-  }
-
-  private resetLiveSessionCounters(): void {
-    this.state.strengthFrameTotalsByClient = {};
-    this.state.carMapSamples = [];
   }
 
   private connectWs(): void {
@@ -163,7 +150,6 @@ export class UiLiveTransportController {
         this.renderWsState();
         this.updateSpectrumOverlay();
         if (nextState === "connected" || nextState === "no_data") {
-          this.resetLiveSessionCounters();
           this.sendSelection();
         }
       },
