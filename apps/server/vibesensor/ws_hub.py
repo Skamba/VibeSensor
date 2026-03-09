@@ -200,6 +200,9 @@ class WebSocketHub:
                 separators=(",", ":"),
                 allow_nan=False,
             )
+        # TypeError/ValueError/OverflowError: json.dumps serialization failures
+        # KeyError/AttributeError: payload dict construction missing keys/attrs
+        # RuntimeError: callback/builder failures propagated from user code
         except (TypeError, ValueError, OverflowError, KeyError, AttributeError, RuntimeError):
             LOGGER.error(
                 "WebSocket payload build failed for client %r; "
