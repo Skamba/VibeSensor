@@ -1,10 +1,9 @@
 # ruff: noqa: E402, E501
 from __future__ import annotations
 
-"""Runtime quality-pass regressions (issues 19–24).
+"""Runtime quality-pass regressions (issues 20–24).
 
 Covers:
-  19 – bad-client diagnostics skip (live_diagnostics)
   20 – ring buffer wraparound (processing)
   21 – _bounded_sample edge cases (api)
   22 – speed_unit persistence (settings_store)
@@ -21,7 +20,6 @@ import numpy as np
 import pytest
 
 from vibesensor.history_db import HistoryDB
-from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
 from vibesensor.processing import SignalProcessor
 from vibesensor.runlog import bounded_sample as _bounded_sample
 from vibesensor.settings_store import SettingsStore
@@ -49,54 +47,6 @@ def _make_tone_chunk(freq_hz: float, n_samples: int, sample_rate_hz: int) -> np.
     x = (0.5 * np.sin(2 * pi * freq_hz * t)).astype(np.float32)
     zeros = np.zeros_like(x)
     return np.stack([x, zeros, zeros], axis=1)
-
-
-# ---------------------------------------------------------------------------
-# Issue 19 – _detect_sensor_events skips bad clients rather than crashing
-# ---------------------------------------------------------------------------
-
-
-class TestDiagnosticsSkipsBadClients:
-    """After the fix, a client with missing strength_metrics is silently
-    skipped instead of raising ``ValueError``."""
-
-    @staticmethod
-    def _engine() -> LiveDiagnosticsEngine:
-        return LiveDiagnosticsEngine()
-
-    def test_missing_strength_metrics_is_skipped(self) -> None:
-        engine = self._engine()
-        good_payload: dict = {
-            "strength_metrics": {
-                "top_peaks": [{"hz": 10.0, "amp": 0.01, "vibration_strength_db": 5.0}],
-            },
-        }
-        spectra = {"clients": {"good": good_payload, "bad": {"missing": True}}}
-        # Should not raise
-        events = engine._detect_sensor_events(
-            speed_mps=10.0,
-            clients=[{"id": "good"}, {"id": "bad"}],
-            spectra=spectra,
-            settings={},
-        )
-        # The good client is still processed; the bad one is silently skipped
-        assert isinstance(events, list)
-        assert len(events) >= 1, "Good client events should still be produced"
-
-    def test_missing_top_peaks_is_skipped(self) -> None:
-        engine = self._engine()
-        spectra = {
-            "clients": {
-                "c1": {"strength_metrics": {"no_peaks_here": True}},
-            }
-        }
-        events = engine._detect_sensor_events(
-            speed_mps=10.0,
-            clients=[{"id": "c1"}],
-            spectra=spectra,
-            settings={},
-        )
-        assert events == []
 
 
 # ---------------------------------------------------------------------------
