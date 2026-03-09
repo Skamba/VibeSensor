@@ -9,8 +9,21 @@ from __future__ import annotations
 
 import logging
 from threading import RLock
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 
+from .backend_types import (
+    AnalysisSettingsPayload,
+    CarConfigPayload,
+    CarConfigUpdatePayload,
+    CarsPayload,
+    LanguageCode,
+    SensorConfigUpdatePayload,
+    SensorsByMacPayload,
+    SettingsSnapshotPayload,
+    SpeedSourcePayload,
+    SpeedSourceUpdatePayload,
+    SpeedUnitCode,
+)
 from .domain_models import (
     CarConfig,
     SensorConfig,
@@ -19,6 +32,7 @@ from .domain_models import (
     normalize_sensor_id,
     sanitize_aspects,
 )
+from .json_types import JsonObject
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB
@@ -46,6 +60,34 @@ def _normalize_choice(value: object, default: str) -> str:
     return str(value or default).strip().lower()
 
 
+def _coerce_language(value: object) -> LanguageCode:
+    language = _normalize_choice(value, "en")
+    return "nl" if language == "nl" else "en"
+
+
+def _coerce_speed_unit(value: object) -> SpeedUnitCode:
+    unit = _normalize_choice(value, "kmh")
+    return "mps" if unit == "mps" else "kmh"
+
+
+def _validated_language(value: object) -> LanguageCode | None:
+    normalized = _normalize_choice(value, "")
+    if normalized == "en":
+        return "en"
+    if normalized == "nl":
+        return "nl"
+    return None
+
+
+def _validated_speed_unit(value: object) -> SpeedUnitCode | None:
+    normalized = _normalize_choice(value, "")
+    if normalized == "kmh":
+        return "kmh"
+    if normalized == "mps":
+        return "mps"
+    return None
+
+
 class SettingsStore:
     """Holds the full app settings: cars, speed source, and sensors.
 
@@ -61,8 +103,8 @@ class SettingsStore:
         self._cars: list[CarConfig] = []
         self._active_car_id: str | None = None
         self._speed_cfg = SpeedSourceConfig.default()
-        self._language: str = "en"
-        self._speed_unit: str = "kmh"
+        self._language: LanguageCode = "en"
+        self._speed_unit: SpeedUnitCode = "kmh"
         self._sensors: dict[str, SensorConfig] = {}
 
         self._load()
@@ -96,11 +138,8 @@ class SettingsStore:
                     "fallbackMode": raw.get("fallbackMode"),
                 }
             )
-            language = _normalize_choice(raw.get("language"), "en")
-            self._language = language if language in VALID_LANGUAGES else "en"
-
-            speed_unit = _normalize_choice(raw.get("speedUnit"), "kmh")
-            self._speed_unit = speed_unit if speed_unit in VALID_SPEED_UNITS else "kmh"
+            self._language = _coerce_language(raw.get("language"))
+            self._speed_unit = _coerce_speed_unit(raw.get("speedUnit"))
 
             # Sensors
             sensors = raw.get("sensorsByMac")
@@ -121,14 +160,14 @@ class SettingsStore:
             return
         payload = self.snapshot()
         try:
-            self._db.set_settings_snapshot(payload)
+            self._db.set_settings_snapshot(cast(JsonObject, payload))
         except Exception as exc:
             LOGGER.error("Failed to persist settings to SQLite", exc_info=True)
             raise PersistenceError("Failed to persist settings to SQLite") from exc
 
     # -- full snapshot ---------------------------------------------------------
 
-    def snapshot(self) -> dict[str, Any]:
+    def snapshot(self) -> SettingsSnapshotPayload:
         with self._lock:
             return {
                 "cars": [c.to_dict() for c in self._cars],
@@ -141,7 +180,7 @@ class SettingsStore:
 
     # -- car operations --------------------------------------------------------
 
-    def get_cars(self) -> dict[str, Any]:
+    def get_cars(self) -> CarsPayload:
         with self._lock:
             return {
                 "cars": [c.to_dict() for c in self._cars],
@@ -154,7 +193,7 @@ class SettingsStore:
             car = self._find_car(self._active_car_id)
             return dict(car.aspects) if car else None
 
-    def active_car_snapshot(self) -> dict[str, Any] | None:
+    def active_car_snapshot(self) -> CarConfigPayload | None:
         """Return the active car profile as a plain dict snapshot."""
         with self._lock:
             car = self._find_car(self._active_car_id)
@@ -165,7 +204,7 @@ class SettingsStore:
             return None
         return next((c for c in self._cars if c.id == car_id), None)
 
-    def set_active_car(self, car_id: str) -> dict[str, Any]:
+    def set_active_car(self, car_id: str) -> CarsPayload:
         with self._lock:
             car = self._find_car(car_id)
             if car is None:
@@ -179,10 +218,11 @@ class SettingsStore:
                 raise
             return self.get_cars()
 
-    def add_car(self, car_data: dict[str, Any]) -> dict[str, Any]:
+    def add_car(self, car_data: CarConfigUpdatePayload) -> CarsPayload:
         with self._lock:
-            car_data["id"] = new_car_id()
-            car = CarConfig.from_dict(car_data)
+            payload: dict[str, object] = dict(car_data)
+            payload["id"] = new_car_id()
+            car = CarConfig.from_dict(payload)
             self._cars.append(car)
             try:
                 self._persist()
@@ -191,7 +231,7 @@ class SettingsStore:
                 raise
             return self.get_cars()
 
-    def update_car(self, car_id: str, car_data: dict[str, Any]) -> dict[str, Any]:
+    def update_car(self, car_id: str, car_data: CarConfigUpdatePayload) -> CarsPayload:
         with self._lock:
             car = self._find_car(car_id)
             if car is None:
@@ -227,7 +267,9 @@ class SettingsStore:
                 raise
             return self.get_cars()
 
-    def update_active_car_aspects(self, aspects: dict[str, Any]) -> dict[str, Any]:
+    def update_active_car_aspects(
+        self, aspects: AnalysisSettingsPayload
+    ) -> AnalysisSettingsPayload:
         with self._lock:
             car = self._find_car(self._active_car_id)
             if car is None:
@@ -242,7 +284,7 @@ class SettingsStore:
                 raise
             return dict(car.aspects)
 
-    def delete_car(self, car_id: str) -> dict[str, Any]:
+    def delete_car(self, car_id: str) -> CarsPayload:
         with self._lock:
             car = self._find_car(car_id)
             if car is None:
@@ -264,11 +306,11 @@ class SettingsStore:
 
     # -- speed source ----------------------------------------------------------
 
-    def get_speed_source(self) -> dict[str, Any]:
+    def get_speed_source(self) -> SpeedSourcePayload:
         with self._lock:
             return self._speed_cfg.to_dict()
 
-    def update_speed_source(self, data: dict[str, Any]) -> dict[str, Any]:
+    def update_speed_source(self, data: SpeedSourceUpdatePayload) -> SpeedSourcePayload:
         with self._lock:
             old_dict = self._speed_cfg.to_dict()
             self._speed_cfg.apply_update(data)
@@ -281,16 +323,16 @@ class SettingsStore:
 
     # -- sensors ---------------------------------------------------------------
 
-    def get_sensors(self) -> dict[str, dict[str, Any]]:
+    def get_sensors(self) -> SensorsByMacPayload:
         with self._lock:
             return {sid: s.to_dict() for sid, s in self._sensors.items()}
 
-    def set_sensor(self, mac: str, data: dict[str, Any]) -> dict[str, Any]:
+    def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload:
         sensor_id = normalize_sensor_id(mac)
         with self._lock:
             existing = self._sensors.get(sensor_id)
-            is_new = existing is None  # track for rollback on persist failure
-            if is_new:
+            is_new = existing is None
+            if existing is None:
                 existing = SensorConfig(sensor_id=sensor_id, name=sensor_id, location="")
             old_name, old_location = existing.name, existing.location
             if "name" in data:
@@ -323,13 +365,13 @@ class SettingsStore:
             return True
 
     @property
-    def language(self) -> str:
+    def language(self) -> LanguageCode:
         with self._lock:
             return self._language
 
-    def set_language(self, value: str) -> str:
-        language = _normalize_choice(value, "en")
-        if language not in VALID_LANGUAGES:
+    def set_language(self, value: str) -> LanguageCode:
+        language = _validated_language(value)
+        if language is None:
             raise ValueError(f"language must be one of {sorted(VALID_LANGUAGES)}")
         with self._lock:
             old_language = self._language
@@ -342,13 +384,13 @@ class SettingsStore:
             return self._language
 
     @property
-    def speed_unit(self) -> str:
+    def speed_unit(self) -> SpeedUnitCode:
         with self._lock:
             return self._speed_unit
 
-    def set_speed_unit(self, value: str) -> str:
-        unit = _normalize_choice(value, "kmh")
-        if unit not in VALID_SPEED_UNITS:
+    def set_speed_unit(self, value: str) -> SpeedUnitCode:
+        unit = _validated_speed_unit(value)
+        if unit is None:
             raise ValueError(f"speed_unit must be one of {sorted(VALID_SPEED_UNITS)}")
         with self._lock:
             old_unit = self._speed_unit

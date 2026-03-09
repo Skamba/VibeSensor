@@ -88,8 +88,8 @@ def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
 
     rows = db.get_run_samples("run-nan")
     assert len(rows) == 1
-    assert "speed_kmh" not in rows[0]
-    assert "accel_x_g" not in rows[0]
+    assert rows[0]["speed_kmh"] is None
+    assert rows[0]["accel_x_g"] is None
     assert rows[0]["t_s"] == 1.0
 
 

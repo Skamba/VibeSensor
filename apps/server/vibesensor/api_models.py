@@ -5,9 +5,22 @@ Separated from ``api.py`` to keep routing logic distinct from data contracts.
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from .backend_types import (
+    AnalysisSettingsPayload,
+    CarConfigUpdatePayload,
+    FallbackMode,
+    LanguageCode,
+    ResolvedSpeedSource,
+    SensorConfigUpdatePayload,
+    SpeedSourceKind,
+    SpeedSourceUpdatePayload,
+    SpeedUnitCode,
+)
+from .payload_types import ClientApiRow
 
 __all__ = [
     # Request models
@@ -124,17 +137,25 @@ class AnalysisSettingsRequest(_FrozenBase):
     max_band_half_width_pct: float | None = Field(default=None, gt=0)
     tire_deflection_factor: float | None = Field(default=None, ge=0.85, le=1.0)
 
+    def to_settings_payload(self) -> AnalysisSettingsPayload:
+        payload: AnalysisSettingsPayload = {}
+        for field_name, field_value in self.model_dump(exclude_none=True).items():
+            if not isinstance(field_value, (int, float)):
+                raise ValueError(f"analysis setting {field_name} must be numeric")
+            payload[field_name] = float(field_value)
+        return payload
+
 
 class LanguageRequest(_FrozenBase):
     """Request body for changing the UI language."""
 
-    language: str = Field(pattern="^(en|nl)$")
+    language: LanguageCode
 
 
 class SpeedUnitRequest(_FrozenBase):
     """Request body for changing the displayed speed unit."""
 
-    speedUnit: str = Field(pattern="^(kmh|mps)$")
+    speedUnit: SpeedUnitCode
 
 
 class CarUpsertRequest(_FrozenBase):
@@ -144,6 +165,18 @@ class CarUpsertRequest(_FrozenBase):
     type: Annotated[str, Field(min_length=1, max_length=64)] | None = None
     aspects: dict[str, float] | None = None
     variant: Annotated[str, Field(min_length=1, max_length=64)] | None = None
+
+    def to_store_payload(self) -> CarConfigUpdatePayload:
+        payload: CarConfigUpdatePayload = {}
+        if self.name is not None:
+            payload["name"] = self.name
+        if self.type is not None:
+            payload["type"] = self.type
+        if self.aspects is not None:
+            payload["aspects"] = dict(self.aspects)
+        if self.variant is not None:
+            payload["variant"] = self.variant
+        return payload
 
 
 class ActiveCarRequest(_FrozenBase):
@@ -155,10 +188,22 @@ class ActiveCarRequest(_FrozenBase):
 class SpeedSourceRequest(_FrozenBase):
     """Request body for configuring the speed source (GPS, manual, OBD2, etc.)."""
 
-    speedSource: Literal["gps", "obd2", "manual"] | None = None
+    speedSource: SpeedSourceKind | None = None
     manualSpeedKph: float | None = Field(default=None, ge=0, le=500)
     staleTimeoutS: float | None = Field(default=None, ge=3, le=120)
-    fallbackMode: Literal["manual"] | None = None
+    fallbackMode: FallbackMode | None = None
+
+    def to_store_payload(self) -> SpeedSourceUpdatePayload:
+        payload: SpeedSourceUpdatePayload = {}
+        if self.speedSource is not None:
+            payload["speedSource"] = self.speedSource
+        if self.manualSpeedKph is not None:
+            payload["manualSpeedKph"] = self.manualSpeedKph
+        if self.staleTimeoutS is not None:
+            payload["staleTimeoutS"] = self.staleTimeoutS
+        if self.fallbackMode is not None:
+            payload["fallbackMode"] = self.fallbackMode
+        return payload
 
 
 class UpdateStartRequest(_FrozenBase):
@@ -187,6 +232,14 @@ class SensorRequest(_FrozenBase):
 
     name: str | None = Field(default=None, min_length=1, max_length=64)
     location: str | None = Field(default=None, max_length=64)
+
+    def to_store_payload(self) -> SensorConfigUpdatePayload:
+        payload: SensorConfigUpdatePayload = {}
+        if self.name is not None:
+            payload["name"] = self.name
+        if self.location is not None:
+            payload["location"] = self.location
+        return payload
 
 
 # ---------------------------------------------------------------------------
@@ -271,11 +324,11 @@ class CarsResponse(BaseModel):
 class SpeedSourceResponse(BaseModel):
     """Response body for the current speed-source configuration."""
 
-    speedSource: str
+    speedSource: SpeedSourceKind
     manualSpeedKph: float | None
-    obd2Config: dict[str, Any] = Field(default_factory=dict)
+    obd2Config: ApiPayloadObject = Field(default_factory=dict)
     staleTimeoutS: float
-    fallbackMode: str
+    fallbackMode: FallbackMode
 
 
 class SpeedSourceStatusResponse(BaseModel):
@@ -285,8 +338,8 @@ class SpeedSourceStatusResponse(BaseModel):
     connection_state: str
     device: str | None
     fix_mode: int | None
-    fix_dimension: str | None
-    speed_confidence: str | None
+    fix_dimension: Literal["3d", "2d", "none"]
+    speed_confidence: Literal["low", "medium", "high"]
     epx_m: float | None
     epy_m: float | None
     epv_m: float | None
@@ -296,8 +349,9 @@ class SpeedSourceStatusResponse(BaseModel):
     last_error: str | None
     reconnect_delay_s: float | None
     fallback_active: bool
+    speed_source: ResolvedSpeedSource
     stale_timeout_s: float
-    fallback_mode: str
+    fallback_mode: FallbackMode
 
 
 class SensorConfigResponse(BaseModel):
@@ -328,7 +382,7 @@ class SpeedUnitResponse(BaseModel):
 class ClientsResponse(BaseModel):
     """Response body listing all currently-connected sensor clients."""
 
-    clients: list[dict[str, Any]]
+    clients: list[ClientApiRow]
 
 
 class LocationOptionResponse(BaseModel):
@@ -344,10 +398,24 @@ class ClientLocationsResponse(BaseModel):
     locations: list[LocationOptionResponse]
 
 
-class AnalysisSettingsResponse(_ExtraAllowBase):
-    """Response body reflecting the current analysis settings (all fields pass-through)."""
+class AnalysisSettingsResponse(BaseModel):
+    """Response body reflecting the current validated analysis settings."""
 
-    pass
+    tire_width_mm: float
+    tire_aspect_pct: float
+    rim_in: float
+    final_drive_ratio: float
+    current_gear_ratio: float
+    wheel_bandwidth_pct: float
+    driveshaft_bandwidth_pct: float
+    engine_bandwidth_pct: float
+    speed_uncertainty_pct: float
+    tire_diameter_uncertainty_pct: float
+    final_drive_uncertainty_pct: float
+    gear_uncertainty_pct: float
+    min_abs_band_hz: float
+    max_band_half_width_pct: float
+    tire_deflection_factor: float
 
 
 class IdentifyResponse(BaseModel):
@@ -407,8 +475,8 @@ class HistoryRunResponse(_ExtraAllowBase):
 
     run_id: str
     status: str
-    metadata: dict[str, Any] = Field(default_factory=dict)
-    analysis: dict[str, Any] | None = None
+    metadata: ApiPayloadObject = Field(default_factory=dict)
+    analysis: ApiPayloadObject | None = None
 
 
 class HistoryInsightWarningResponse(BaseModel):
@@ -621,3 +689,6 @@ class CarLibraryModelsResponse(BaseModel):
     """Response body listing car library model entries."""
 
     models: list[CarLibraryModelEntry]
+
+
+ApiPayloadObject: TypeAlias = dict[str, object]

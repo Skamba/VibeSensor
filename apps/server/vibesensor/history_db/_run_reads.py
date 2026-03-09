@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from typing import cast
 
 from ..analysis_persistence import persisted_analysis_is_current, unwrap_persisted_analysis
 from ..json_types import JsonObject, is_json_object
@@ -254,7 +255,7 @@ class HistoryRunReadMixin:
             return None
         if parsed is None:
             return None
-        return unwrap_persisted_analysis(parsed).summary
+        return cast(JsonObject, unwrap_persisted_analysis(parsed).summary)
 
     def get_run_status(self: HistoryCursorProvider, run_id: str) -> str | None:
         with self._cursor(commit=False) as cur:

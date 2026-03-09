@@ -1,6 +1,11 @@
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { AppState } from "../state/ui_app_state";
-import type { CarsPayload, SpeedSourcePayload, SpeedSourceStatusPayload } from "../../api/types";
+import type {
+  AnalysisSettingsPayload,
+  CarsPayload,
+  SpeedSourcePayload,
+  SpeedSourceStatusPayload,
+} from "../../api/types";
 import {
   addSettingsCar,
   deleteSettingsCar,
@@ -42,6 +47,23 @@ export interface SettingsFeature {
 
 export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature {
   const { state, els, t, escapeHtml, fmt } = ctx;
+
+  const ANALYSIS_SETTING_KEYS = [
+    "tire_width_mm",
+    "tire_aspect_pct",
+    "rim_in",
+    "final_drive_ratio",
+    "current_gear_ratio",
+    "wheel_bandwidth_pct",
+    "driveshaft_bandwidth_pct",
+    "engine_bandwidth_pct",
+    "speed_uncertainty_pct",
+    "tire_diameter_uncertainty_pct",
+    "final_drive_uncertainty_pct",
+    "gear_uncertainty_pct",
+    "min_abs_band_hz",
+    "max_band_half_width_pct",
+  ] as const satisfies readonly (keyof AnalysisSettingsPayload)[];
 
   const GPS_POLL_FAST = 2_000;
   const GPS_POLL_SLOW = 10_000;
@@ -150,8 +172,9 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     try {
       const serverSettings = await getAnalysisSettings();
       if (serverSettings) {
-        for (const key of Object.keys(serverSettings)) {
-          if (typeof serverSettings[key] === "number") state.vehicleSettings[key] = serverSettings[key];
+        for (const key of ANALYSIS_SETTING_KEYS) {
+          const value = serverSettings[key];
+          if (typeof value === "number") state.vehicleSettings[key] = value;
         }
         syncSettingsInputs();
         ctx.renderSpectrum();

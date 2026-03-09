@@ -11,9 +11,11 @@ import json
 import logging
 import math
 import time
-from typing import Any, NamedTuple
+from typing import Literal, NamedTuple
 
+from .backend_types import FallbackMode, ResolvedSpeedSource, SpeedSourceStatusPayload
 from .constants import KMH_TO_MPS, MPS_TO_KMH, NUMERIC_TYPES
+from .json_types import JsonObject, is_json_object
 
 
 class SpeedResolution(NamedTuple):
@@ -21,7 +23,7 @@ class SpeedResolution(NamedTuple):
 
     speed_mps: float | None
     fallback_active: bool
-    source: str  # "manual", "gps", "fallback_manual", "none"
+    source: ResolvedSpeedSource
 
 
 LOGGER = logging.getLogger(__name__)
@@ -47,7 +49,7 @@ MIN_STALE_TIMEOUT_S: float = 3.0
 MAX_STALE_TIMEOUT_S: float = 120.0
 VALID_FALLBACK_MODES: frozenset[str] = frozenset({"manual"})
 """Use frozenset so ``in`` membership tests are O(1) and the set is immutable."""
-DEFAULT_FALLBACK_MODE: str = "manual"
+DEFAULT_FALLBACK_MODE: FallbackMode = "manual"
 
 # Speed plausibility limits
 _GPS_MAX_SPEED_MPS: float = 150.0
@@ -88,7 +90,7 @@ class GPSSpeedMonitor:
 
         # --- fallback ---
         self.stale_timeout_s: float = DEFAULT_STALE_TIMEOUT_S
-        self.fallback_mode: str = DEFAULT_FALLBACK_MODE
+        self.fallback_mode: FallbackMode = DEFAULT_FALLBACK_MODE
 
     @property
     def speed_mps(self) -> float | None:
@@ -113,7 +115,9 @@ class GPSSpeedMonitor:
         """
         if self.manual_source_selected and _is_numeric(self.override_speed_mps):
             # _is_numeric() excludes bool to prevent accidental bool→speed coercion.
-            return SpeedResolution(float(self.override_speed_mps), False, "manual")
+            override_speed = self.override_speed_mps
+            if override_speed is not None:
+                return SpeedResolution(float(override_speed), False, "manual")
         # Manual selected but no override set → fall through to GPS
 
         # Read from the atomic (speed, timestamp) snapshot so the speed value
@@ -174,7 +178,9 @@ class GPSSpeedMonitor:
         """Return fallback speed if available — **no side effects**."""
         # _is_numeric() excludes bool to match the guard in resolve_speed().
         if self.fallback_mode == "manual" and _is_numeric(self.override_speed_mps):
-            return float(self.override_speed_mps)
+            override_speed = self.override_speed_mps
+            if override_speed is not None:
+                return float(override_speed)
         return None
 
     def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None:
@@ -211,7 +217,7 @@ class GPSSpeedMonitor:
             )
         if fallback_mode is not None:
             if fallback_mode in VALID_FALLBACK_MODES:
-                self.fallback_mode = fallback_mode
+                self.fallback_mode = "manual"
             else:
                 LOGGER.warning(
                     "Ignoring unknown fallback_mode %r; valid values: %s",
@@ -220,20 +226,22 @@ class GPSSpeedMonitor:
                 )
 
     @staticmethod
-    def _read_non_negative_metric(payload: dict[str, Any], field: str) -> float | None:
+    def _read_non_negative_metric(payload: JsonObject, field: str) -> float | None:
         value = payload.get(field)
-        if _is_numeric(value) and math.isfinite(value) and value >= 0:
-            return float(value)
+        if isinstance(value, NUMERIC_TYPES) and not isinstance(value, bool):
+            numeric_value = float(value)
+            if math.isfinite(numeric_value) and numeric_value >= 0:
+                return numeric_value
         return None
 
     @staticmethod
-    def _tpv_mode(payload: dict[str, Any]) -> int | None:
+    def _tpv_mode(payload: JsonObject) -> int | None:
         mode = payload.get("mode")
         if isinstance(mode, int) and not isinstance(mode, bool):
             return mode
         return None
 
-    def _speed_confidence(self) -> str:
+    def _speed_confidence(self) -> Literal["low", "medium", "high"]:
         mode = self.last_fix_mode
         if not isinstance(mode, int) or mode < 2:
             return "low"
@@ -273,7 +281,7 @@ class GPSSpeedMonitor:
         self._speed_snapshot = (None, None)
         self.device_info = None
 
-    def status_dict(self) -> dict[str, Any]:
+    def status_dict(self) -> SpeedSourceStatusPayload:
         """Return a JSON-serializable status snapshot — **no side effects**."""
         now = time.monotonic()
         # Use a single resolve_speed() call for a consistent snapshot.
@@ -345,10 +353,11 @@ class GPSSpeedMonitor:
             writer_closed = False
             try:
                 self.connection_state = "disconnected"
-                reader, writer = await asyncio.wait_for(
+                reader, connected_writer = await asyncio.wait_for(
                     asyncio.open_connection(host, port),
                     timeout=_GPS_CONNECT_TIMEOUT_S,
                 )
+                writer = connected_writer
                 writer.write(b'?WATCH={"enable":true,"json":true};\n')
                 await writer.drain()
                 self.connection_state = "connected"
@@ -369,10 +378,10 @@ class GPSSpeedMonitor:
                     except json.JSONDecodeError:
                         LOGGER.debug("Ignoring malformed GPS JSON line")
                         continue
-                    if not isinstance(_parsed, dict):
+                    if not is_json_object(_parsed):
                         LOGGER.debug("Ignoring non-object GPS JSON line")
                         continue
-                    payload: dict[str, Any] = _parsed
+                    payload: JsonObject = _parsed
                     if payload.get("class") != "TPV":
                         # Extract device info from VERSION messages
                         if payload.get("class") == "VERSION":
@@ -389,10 +398,11 @@ class GPSSpeedMonitor:
                     if (
                         isinstance(mode, int)
                         and mode >= 2
-                        and _is_num(speed)
-                        and _isfinite(speed)
-                        and speed >= 0
-                        and speed <= _GPS_MAX_SPEED_MPS
+                        and isinstance(speed, NUMERIC_TYPES)
+                        and not isinstance(speed, bool)
+                        and _isfinite(float(speed))
+                        and float(speed) >= 0
+                        and float(speed) <= _GPS_MAX_SPEED_MPS
                     ):
                         speed_mps = float(speed)
                         if self._accept_speed_sample(speed_mps):
