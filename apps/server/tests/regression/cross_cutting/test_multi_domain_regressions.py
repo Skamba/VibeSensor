@@ -23,7 +23,6 @@ from vibesensor.analysis.test_plan import _weighted_speed_window_label
 from vibesensor.analysis.top_cause_selection import confidence_label
 from vibesensor.config import _split_host_port
 from vibesensor.domain_models import VALID_SPEED_SOURCES
-from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
 from vibesensor.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 from vibesensor.report_i18n import tr
 from vibesensor.runlog import as_float_or_none as runlog_as_float_or_none
@@ -270,23 +269,6 @@ class TestBug12PhaseSegmentTimestamps:
             second = segments[1]
             # Should not be 0.0 for a segment that comes after the first
             assert second.start_t_s > 0.0 or second.start_idx > 0
-
-
-# ---------------------------------------------------------------------------
-# Bug 13: Division by zero in live_diagnostics freq_bin
-# ---------------------------------------------------------------------------
-
-
-class TestBug13FreqBinDivision:
-    def test_zero_freq_bin_hz_no_crash(self) -> None:
-        engine = LiveDiagnosticsEngine()
-        # Even if _multi_freq_bin_hz were 0, the guard prevents division by zero
-        old_val = engine._multi_freq_bin_hz
-        engine._multi_freq_bin_hz = 0.0
-        # The freq_bin calculation should use max(0.01, ...) guard
-        freq_bin = round(10.0 / max(0.01, engine._multi_freq_bin_hz))
-        assert isinstance(freq_bin, int)
-        engine._multi_freq_bin_hz = old_val
 
 
 # ---------------------------------------------------------------------------

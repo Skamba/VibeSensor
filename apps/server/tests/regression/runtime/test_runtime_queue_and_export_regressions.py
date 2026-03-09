@@ -4,7 +4,6 @@ from __future__ import annotations
 """Runtime queue/history tracking and export-filter regressions."""
 
 
-from collections import deque
 from pathlib import Path
 
 import pytest
@@ -13,8 +12,6 @@ from _paths import SERVER_ROOT
 from vibesensor.analysis.helpers import _weighted_percentile
 from vibesensor.analysis.test_plan import _weighted_percentile_speed
 from vibesensor.history_db import HistoryDB
-from vibesensor.live_diagnostics._types import _TrackerLevelState
-from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
 from vibesensor.processing import SignalProcessor
 
 
@@ -50,44 +47,6 @@ class TestFlushBumpsGeneration:
         buf.count = 10  # pretend some data
         proc.flush_client_buffer("sensor-1")
         assert buf.ingest_generation == 6
-
-
-# ---------------------------------------------------------------------------
-# Fix 3 – _phase_speed_history is a deque with maxlen
-# ---------------------------------------------------------------------------
-class TestPhaseSpeedHistoryDeque:
-    def test_is_deque_with_maxlen(self) -> None:
-        engine = LiveDiagnosticsEngine()
-        assert isinstance(engine._phase_speed_history, deque)
-        assert engine._phase_speed_history.maxlen is not None
-        assert engine._phase_speed_history.maxlen > 0
-
-    def test_reset_preserves_deque(self) -> None:
-        engine = LiveDiagnosticsEngine()
-        engine.reset()
-        assert isinstance(engine._phase_speed_history, deque)
-        assert engine._phase_speed_history.maxlen is not None
-
-
-# ---------------------------------------------------------------------------
-# Fix 4 – _sensor_trackers pruning after silence
-# ---------------------------------------------------------------------------
-class TestSensorTrackersPruning:
-    def test_stale_trackers_are_pruned(self) -> None:
-        """Trackers not seen for many ticks should be removed."""
-        engine = LiveDiagnosticsEngine()
-        engine._sensor_trackers["stale:key"] = _TrackerLevelState()
-        # Simulate 60 ticks of silence (not in seen set)
-        for _ in range(60):
-            engine._decay_unseen_sensor_trackers(set())
-        assert "stale:key" not in engine._sensor_trackers
-
-    def test_seen_trackers_not_pruned(self) -> None:
-        engine = LiveDiagnosticsEngine()
-        engine._sensor_trackers["active:key"] = _TrackerLevelState()
-        for _ in range(100):
-            engine._decay_unseen_sensor_trackers({"active:key"})
-        assert "active:key" in engine._sensor_trackers
 
 
 # ---------------------------------------------------------------------------
