@@ -19,6 +19,53 @@ const SPECTRUM_DB_REFERENCE_AMP_G = 1e-4;
 const SPECTRUM_MIN_RENDER_AMP_G = 1e-6;
 const SPECTRUM_TWEEN_DURATION_MS = 180;
 const SPECTRUM_LOG10_REF = Math.log10(SPECTRUM_DB_REFERENCE_AMP_G);
+const FREQ_MATCH_EPSILON = 1e-6;
+
+/** Check if two freq arrays match up to `len` elements. */
+function freqGridsMatch(a: number[], b: number[], len: number): boolean {
+  for (let i = 0; i < len; i++) {
+    if (Math.abs(a[i] - b[i]) > FREQ_MATCH_EPSILON) return false;
+  }
+  return true;
+}
+
+/** Interpolate source values onto a different frequency grid. */
+function interpolateToTarget(
+  sourceFreq: number[],
+  sourceVals: number[],
+  desiredFreq: number[],
+  sourceLen: number,
+): number[] {
+  if (sourceLen < 2 || !desiredFreq.length) return [];
+  const out = new Array<number>(desiredFreq.length);
+  let index = 0;
+  for (let i = 0; i < desiredFreq.length; i += 1) {
+    const freq = desiredFreq[i];
+    while (index + 1 < sourceLen && sourceFreq[index + 1] < freq) index += 1;
+    if (index + 1 >= sourceLen) {
+      out[i] = sourceVals[sourceLen - 1];
+      continue;
+    }
+    const f0 = sourceFreq[index];
+    const f1 = sourceFreq[index + 1];
+    const v0 = sourceVals[index];
+    const v1 = sourceVals[index + 1];
+    out[i] = f1 <= f0 ? v0 : v0 + ((v1 - v0) * ((freq - f0) / (f1 - f0)));
+  }
+  return out;
+}
+
+/** Convert amplitude array to dB scale in-place. */
+function convertToDbInPlace(values: number[]): void {
+  for (let i = 0; i < values.length; i++) {
+    const amplitude = values[i];
+    const safe = Number.isFinite(amplitude) && amplitude > 0
+      ? Math.max(amplitude, SPECTRUM_MIN_RENDER_AMP_G)
+      : SPECTRUM_MIN_RENDER_AMP_G;
+    const db = 20 * (Math.log10(safe) - SPECTRUM_LOG10_REF);
+    values[i] = Math.max(SPECTRUM_DB_MIN, Math.min(SPECTRUM_DB_MAX, db));
+  }
+}
 
 const bandKeyColors: Record<string, string> = {
   wheel_1x: orderBandFills.wheel1,
@@ -104,32 +151,6 @@ export class UiSpectrumController {
     const entries: SpectrumSeriesEntry[] = [];
     let targetFreq: number[] = [];
 
-    const interpolateToTarget = (
-      sourceFreq: number[],
-      sourceVals: number[],
-      desiredFreq: number[],
-    ): number[] => {
-      if (!Array.isArray(sourceFreq) || !Array.isArray(sourceVals)) return [];
-      if (!Array.isArray(desiredFreq) || !desiredFreq.length) return sourceVals.slice();
-      if (sourceFreq.length !== sourceVals.length || sourceFreq.length < 2) return [];
-      const out = new Array(desiredFreq.length);
-      let index = 0;
-      for (let i = 0; i < desiredFreq.length; i += 1) {
-        const freq = desiredFreq[i];
-        while (index + 1 < sourceFreq.length && sourceFreq[index + 1] < freq) index += 1;
-        if (index + 1 >= sourceFreq.length) {
-          out[i] = sourceVals[sourceVals.length - 1];
-          continue;
-        }
-        const f0 = sourceFreq[index];
-        const f1 = sourceFreq[index + 1];
-        const v0 = sourceVals[index];
-        const v1 = sourceVals[index + 1];
-        out[i] = f1 <= f0 ? v0 : v0 + ((v1 - v0) * ((freq - f0) / (f1 - f0)));
-      }
-      return out;
-    };
-
     for (const [index, client] of this.state.clients.entries()) {
       if (!client?.connected) continue;
       const spectrum = this.state.spectra.clients?.[client.id];
@@ -139,35 +160,41 @@ export class UiSpectrumController {
         : fallbackFreq;
       const length = Math.min(clientFreq.length, spectrum.combined.length);
       if (!length) continue;
-      let blended = spectrum.combined.slice(0, length);
-      const freqSlice = clientFreq.slice(0, length);
+
+      // Use source arrays directly; only allocate when interpolation is needed.
+      let blended: number[];
+      let needsInterp = false;
       if (!targetFreq.length) {
-        targetFreq = freqSlice;
-      } else if (
-        freqSlice.length !== targetFreq.length
-        || freqSlice.some((value, freqIndex) => Math.abs(value - targetFreq[freqIndex]) > 1e-6)
-      ) {
-        blended = interpolateToTarget(freqSlice, blended, targetFreq);
+        targetFreq = clientFreq.length === length ? clientFreq : clientFreq.slice(0, length);
+        blended = spectrum.combined.length === length
+          ? spectrum.combined
+          : spectrum.combined.slice(0, length);
+      } else {
+        needsInterp = clientFreq.length !== targetFreq.length
+          || !freqGridsMatch(clientFreq, targetFreq, length);
+        if (needsInterp) {
+          blended = interpolateToTarget(clientFreq, spectrum.combined, targetFreq, length);
+        } else {
+          blended = spectrum.combined.length === length
+            ? spectrum.combined
+            : spectrum.combined.slice(0, length);
+        }
       }
       if (!blended.length) continue;
+
+      // Convert to dB in-place (we either own the array or just allocated it).
+      if (!needsInterp && blended === spectrum.combined) {
+        // Source array — must copy before mutating.
+        blended = blended.slice();
+      }
+      convertToDbInPlace(blended);
+
       entries.push({
         id: client.id,
         label: client.name || client.id,
         color: this.colorForClient(index),
         values: blended,
       });
-    }
-
-    const toDbAbsolute = (amplitude: number): number => {
-      const safeAmplitude = Number.isFinite(amplitude) && amplitude > 0
-        ? Math.max(amplitude, SPECTRUM_MIN_RENDER_AMP_G)
-        : SPECTRUM_MIN_RENDER_AMP_G;
-      const db = 20 * (Math.log10(safeAmplitude) - SPECTRUM_LOG10_REF);
-      return Math.max(SPECTRUM_DB_MIN, Math.min(SPECTRUM_DB_MAX, db));
-    };
-
-    for (const entry of entries) {
-      entry.values = entry.values.map(toDbAbsolute);
     }
 
     if (!this.state.spectrumPlot || this.state.spectrumPlot.getSeriesCount() !== entries.length + 1) {
@@ -206,10 +233,13 @@ export class UiSpectrumController {
 
     this.state.hasSpectrumData = true;
     const minLen = Math.min(targetFreq.length, ...entries.map((entry) => entry.values.length));
+    // Build frame without redundant copies — entries already own their arrays.
     const nextFrame: SpectrumHeavyFrame = {
       seriesIds: entries.map((entry) => entry.id),
-      freq: targetFreq.slice(0, minLen),
-      values: entries.map((entry) => entry.values.slice(0, minLen)),
+      freq: targetFreq.length === minLen ? targetFreq : targetFreq.slice(0, minLen),
+      values: entries.map((entry) =>
+        entry.values.length === minLen ? entry.values : entry.values.slice(0, minLen),
+      ),
     };
     const canTween = this.state.wsState === "connected"
       && areHeavyFramesCompatible(this.spectrumLastFrame, nextFrame);
@@ -257,11 +287,9 @@ export class UiSpectrumController {
   private setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
     if (!this.state.spectrumPlot) return;
     this.state.spectrumPlot.setData([frame.freq, ...frame.values]);
-    this.spectrumLastFrame = {
-      seriesIds: frame.seriesIds.slice(),
-      freq: frame.freq.slice(),
-      values: frame.values.map((series) => series.slice()),
-    };
+    // Store a shallow snapshot for tween comparison.
+    // The frame's arrays are not mutated after construction, so no deep clone needed.
+    this.spectrumLastFrame = frame;
   }
 
   private vehicleOrdersHz(): {

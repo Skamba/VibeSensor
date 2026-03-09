@@ -566,13 +566,13 @@ class FirmwareCache:
 
             LOGGER.info("Firmware cache updated: tag=%s, asset=%s", tag, asset_name)
             return meta
-        except Exception:
+        except OSError:
             # Restore previous cache if we moved it aside
             if old_current and old_current.exists() and not target.exists():
                 try:
                     old_current.rename(target)
                     LOGGER.info("Restored previous firmware cache after activation failure")
-                except Exception:
+                except OSError:
                     LOGGER.warning("Failed to restore previous firmware cache", exc_info=True)
             # Staging cleanup is handled by the finally block below.
             raise

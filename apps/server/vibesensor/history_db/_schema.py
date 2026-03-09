@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
+from ._migrations import backup_database, run_migrations
 from ._typing import HistoryCursorProvider
 
 LOGGER = logging.getLogger(__name__)
@@ -119,7 +121,22 @@ class HistorySchemaMixin:
                 return
             if version == SCHEMA_VERSION:
                 return
-            raise RuntimeError(
-                f"Unsupported history DB schema version {version}; "
-                f"expected {SCHEMA_VERSION}. Delete the database file to recreate."
+            if version > SCHEMA_VERSION:
+                raise RuntimeError(
+                    f"History DB schema version {version} is newer than "
+                    f"supported {SCHEMA_VERSION}. Cannot downgrade."
+                )
+            # -- Migrate forward: older version → current -----------------
+            db_path = getattr(self, "db_path", None)  # HistoryDB exposes this
+            if isinstance(db_path, Path):
+                backup_database(db_path, version)
+            LOGGER.info(
+                "Migrating history DB schema v%d → v%d …",
+                version,
+                SCHEMA_VERSION,
             )
+            conn = cur.connection
+            # Close this cursor's transaction before handing to runner.
+            conn.commit()
+            # run_migrations manages its own transaction.
+            run_migrations(conn, version, SCHEMA_VERSION)

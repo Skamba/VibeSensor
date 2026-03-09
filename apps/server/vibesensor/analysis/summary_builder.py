@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from statistics import median as _median
 
+from ..report_i18n import normalize_lang  # canonical source
 from ..run_context import build_summary_warnings
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import utc_now_iso
@@ -51,12 +52,6 @@ from .summary_suitability import (
 )
 from .test_plan import _merge_test_plan
 from .top_cause_selection import select_top_causes
-
-
-def normalize_lang(lang: object) -> str:
-    """Minimal language normalization without importing report_i18n."""
-    raw = str(lang or "").strip().lower()
-    return "nl" if raw.startswith("nl") else "en"
 
 
 def annotate_peaks_with_order_labels(summary: SummaryData) -> None:

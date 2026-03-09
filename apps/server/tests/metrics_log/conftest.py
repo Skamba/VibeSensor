@@ -7,6 +7,7 @@ fake collaborators used across multiple test modules.
 
 from __future__ import annotations
 
+import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -190,10 +191,13 @@ class _FakeHistoryDB:
         self.updated_metadata.append((run_id, metadata))
         self.finalize_calls.append(run_id)
 
+    def analyzing_run_health(self) -> dict:
+        return {"analyzing_run_count": 0, "analyzing_oldest_age_s": None}
+
 
 class _FailingCreateRunHistoryDB(_FakeHistoryDB):
     def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
-        raise RuntimeError("create_run boom")
+        raise sqlite3.OperationalError("create_run boom")
 
 
 class _FailingAppendOnceHistoryDB(_FakeHistoryDB):
@@ -204,7 +208,7 @@ class _FailingAppendOnceHistoryDB(_FakeHistoryDB):
     def append_samples(self, run_id: str, samples: list[dict]) -> None:
         if self._append_failures_remaining > 0:
             self._append_failures_remaining -= 1
-            raise RuntimeError("append boom")
+            raise sqlite3.OperationalError("append boom")
         super().append_samples(run_id, samples)
 
 

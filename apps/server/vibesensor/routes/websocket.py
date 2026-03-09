@@ -86,7 +86,7 @@ def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
                         )
                         continue
                     except Exception:
-                        LOGGER.debug("Error processing WS message", exc_info=True)
+                        LOGGER.warning("Error processing WS message", exc_info=True)
                         continue
                 else:
                     LOGGER.debug(

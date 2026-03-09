@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sqlite3
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -78,7 +79,7 @@ class MetricsShutdownReport:
     analysis_queue_oldest_age_s: float | None
     analysis_in_progress: bool
     write_error: str | None
-    final_status: dict[str, str | bool | None]
+    final_status: dict[str, str | bool | int | None]
 
 
 class MetricsLogger:
@@ -221,10 +222,15 @@ class MetricsLogger:
     def _session_snapshot(self) -> MetricsSessionSnapshot | None:
         return self._session.snapshot()
 
-    def status(self) -> dict[str, str | bool | None]:
+    def status(self) -> dict[str, str | bool | int | None]:
+        post_snapshot = self._post_analysis.snapshot()
         return self._session.status_payload(
             write_error=self._persistence.write_error,
             analysis_in_progress=self._post_analysis.is_active,
+            samples_written=self._persistence.written_sample_count,
+            samples_dropped=self._persistence.dropped_sample_count,
+            last_completed_run_id=post_snapshot.last_completed_run_id,
+            last_completed_run_error=post_snapshot.last_completed_error,
         )
 
     def health_snapshot(self) -> HealthPersistencePayload:
@@ -245,7 +251,7 @@ class MetricsLogger:
                 raw_oldest_age = analyzing_health.get("analyzing_oldest_age_s")
                 if isinstance(raw_oldest_age, (int, float)):
                     analyzing_oldest_age_s = max(0.0, float(raw_oldest_age))
-            except Exception:
+            except sqlite3.Error:
                 LOGGER.warning("Failed to read analyzing-run health snapshot", exc_info=True)
         return {
             "write_error": self._persistence.write_error,
@@ -258,9 +264,13 @@ class MetricsLogger:
             "analysis_queue_oldest_age_s": queue_oldest_age_s,
             "analyzing_run_count": analyzing_run_count,
             "analyzing_oldest_age_s": analyzing_oldest_age_s,
+            "samples_written": self._persistence.written_sample_count,
+            "samples_dropped": self._persistence.dropped_sample_count,
+            "last_completed_run_id": snapshot.last_completed_run_id,
+            "last_completed_run_error": snapshot.last_completed_error,
         }
 
-    def start_logging(self) -> dict[str, str | bool | None]:
+    def start_logging(self) -> dict[str, str | bool | int | None]:
         completed_run_id: str | None = None
         flush_snapshot: MetricsSessionSnapshot | None = None
         with self._lock:
@@ -292,7 +302,7 @@ class MetricsLogger:
 
     def stop_logging(
         self, *, _only_if_generation: int | None = None
-    ) -> dict[str, str | bool | None]:
+    ) -> dict[str, str | bool | int | None]:
         flush_snapshot: MetricsSessionSnapshot | None = None
         with self._lock:
             if _only_if_generation is not None and not self._session.matches_generation(

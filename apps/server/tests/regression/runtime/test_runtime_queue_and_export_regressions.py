@@ -70,18 +70,18 @@ class TestDeadFunctionsRemoved:
 
 
 # ---------------------------------------------------------------------------
-# Fix 6 – normalize_lang stays analysis-local (no report_i18n dependency)
+# Fix 6 – normalize_lang consolidated in report_i18n (canonical source)
 # ---------------------------------------------------------------------------
 class TestNormalizeLangArchitecturalBoundary:
     _SUMMARY_SRC = SERVER_ROOT / "vibesensor" / "analysis" / "summary_builder.py"
 
-    def test_summary_does_not_import_report_i18n(self) -> None:
-        """summary_builder.py must NOT import from report_i18n."""
-        assert "from ..report_i18n import" not in self._SUMMARY_SRC.read_text()
+    def test_summary_imports_normalize_lang_from_report_i18n(self) -> None:
+        """summary_builder.py must import normalize_lang from report_i18n (single source)."""
+        assert "from ..report_i18n import normalize_lang" in self._SUMMARY_SRC.read_text()
 
-    def test_summary_has_normalize_lang(self) -> None:
-        """summary_builder.py must define normalize_lang without report_i18n."""
-        assert "def normalize_lang" in self._SUMMARY_SRC.read_text()
+    def test_summary_does_not_define_own_normalize_lang(self) -> None:
+        """summary_builder.py must NOT define its own normalize_lang."""
+        assert "def normalize_lang" not in self._SUMMARY_SRC.read_text()
 
 
 # ---------------------------------------------------------------------------

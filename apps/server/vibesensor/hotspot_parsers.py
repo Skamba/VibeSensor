@@ -141,7 +141,7 @@ class HealStateStore:
             if not isinstance(data, dict):
                 return {}
             return {str(k): float(v) for k, v in data.items() if isinstance(v, (int, float))}
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             LOGGER.warning(
                 "HealStateStore: ignoring corrupt state file %s", self._path, exc_info=True
             )

@@ -17,8 +17,8 @@ from vibesensor.analysis.strength_labels import (
     CONFIDENCE_HIGH_THRESHOLD,
     CONFIDENCE_MEDIUM_THRESHOLD,
 )
-from vibesensor.analysis.summary_builder import normalize_lang
 from vibesensor.analysis.top_cause_selection import confidence_label, select_top_causes
+from vibesensor.report_i18n import normalize_lang
 
 # ---------------------------------------------------------------------------
 # confidence_label

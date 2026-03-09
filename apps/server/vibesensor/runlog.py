@@ -307,7 +307,7 @@ def read_jsonl_run(path: Path) -> RunData:
             elif record_type == _sample_type:
                 try:
                     samples.append(_normalize(payload))
-                except Exception as exc:
+                except (KeyError, ValueError, TypeError) as exc:
                     LOGGER.warning(
                         "Skipping malformed sample at line %d in %s: %s",
                         line_no,

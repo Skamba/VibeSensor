@@ -265,7 +265,7 @@ class WorkerPool:
                 item = pending.pop(fut)
                 try:
                     results[item] = fut.result()
-                except Exception:
+                except (ValueError, ArithmeticError, OSError, RuntimeError):
                     LOGGER.warning(
                         "WorkerPool task failed for item %r; skipping.",
                         item,

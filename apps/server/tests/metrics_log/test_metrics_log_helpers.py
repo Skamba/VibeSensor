@@ -12,6 +12,14 @@ from vibesensor.history_db import HistoryDB
 from vibesensor.metrics_log.post_analysis import PostAnalysisHealthSnapshot
 from vibesensor.metrics_log.sample_builder import safe_metric
 
+
+class _NullDB:
+    """Stub DB for tests that need a non-None history_db without real DB ops."""
+
+    def analyzing_run_health(self):
+        return {"analyzing_run_count": 0, "analyzing_oldest_age_s": None}
+
+
 # -- MetricsLogger._safe_metric ------------------------------------------------
 
 
@@ -421,7 +429,7 @@ def test_post_analysis_failure_sets_persistent_error_status(
 def test_post_analysis_burst_uses_single_daemon_worker(
     make_logger, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    logger = make_logger(history_db=object())
+    logger = make_logger(history_db=_NullDB())
 
     active = 0
     max_active = 0
@@ -457,7 +465,7 @@ def test_post_analysis_burst_uses_single_daemon_worker(
 def test_shutdown_blocks_new_start_logging_until_wait_completes(
     make_logger, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    logger = make_logger(history_db=object())
+    logger = make_logger(history_db=_NullDB())
     logger.start_logging()
     initial_generation = logger._session_generation
 
@@ -498,6 +506,8 @@ def test_shutdown_report_exposes_timeout_state(
             active_started_at=None,
             oldest_queued_at=time.time() - 5.0,
             max_queue_depth=2,
+            last_completed_run_id=None,
+            last_completed_error=None,
         ),
     )
 

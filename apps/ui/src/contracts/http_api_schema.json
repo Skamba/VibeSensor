@@ -1710,6 +1710,38 @@
             "title": "Analyzing Run Count",
             "type": "integer"
           },
+          "last_completed_run_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Completed Run Error"
+          },
+          "last_completed_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Completed Run Id"
+          },
+          "samples_dropped": {
+            "default": 0,
+            "title": "Samples Dropped",
+            "type": "integer"
+          },
+          "samples_written": {
+            "default": 0,
+            "title": "Samples Written",
+            "type": "integer"
+          },
           "write_error": {
             "anyOf": [
               {
@@ -2162,6 +2194,28 @@
             "title": "Enabled",
             "type": "boolean"
           },
+          "last_completed_run_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Completed Run Error"
+          },
+          "last_completed_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Completed Run Id"
+          },
           "run_id": {
             "anyOf": [
               {
@@ -2172,6 +2226,16 @@
               }
             ],
             "title": "Run Id"
+          },
+          "samples_dropped": {
+            "default": 0,
+            "title": "Samples Dropped",
+            "type": "integer"
+          },
+          "samples_written": {
+            "default": 0,
+            "title": "Samples Written",
+            "type": "integer"
           },
           "write_error": {
             "anyOf": [

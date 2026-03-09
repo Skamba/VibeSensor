@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from collections.abc import Iterator
 from datetime import UTC, datetime
-from typing import cast
 
 from ..analysis_persistence import persisted_analysis_is_current, unwrap_persisted_analysis
 from ..json_types import JsonObject, is_json_object
@@ -211,7 +211,7 @@ class HistoryRunReadMixin:
             for row in batch_rows:
                 try:
                     parsed_batch.append(v2_row_to_dict(row))
-                except Exception:
+                except (json.JSONDecodeError, KeyError, ValueError, TypeError):
                     total_skipped += 1
                     LOGGER.warning("Skipping corrupt v2 sample row id=%s", row[0], exc_info=True)
             if parsed_batch:
@@ -255,7 +255,7 @@ class HistoryRunReadMixin:
             return None
         if parsed is None:
             return None
-        return cast(JsonObject, unwrap_persisted_analysis(parsed).summary)
+        return unwrap_persisted_analysis(parsed).summary
 
     def get_run_status(self: HistoryCursorProvider, run_id: str) -> str | None:
         with self._cursor(commit=False) as cur:

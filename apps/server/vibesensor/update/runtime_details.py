@@ -65,7 +65,8 @@ class UpdateRuntimeDetailsCollector:
             from vibesensor import __version__
 
             version = __version__
-        except Exception:
+        except ImportError:
+            LOGGER.debug("vibesensor.__version__ not available", exc_info=True)
             version = "unknown"
 
         commit = ""

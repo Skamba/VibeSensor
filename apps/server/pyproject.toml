@@ -122,7 +122,13 @@ files = [
   "vibesensor/update",
   "vibesensor/processing",
   "vibesensor/analysis",
+  "vibesensor/analysis_persistence.py",
+  "vibesensor/analysis_settings.py",
+  "vibesensor/diagnostics_shared.py",
   "vibesensor/history_db",
+  "vibesensor/metrics_log",
+  "vibesensor/report_i18n.py",
+  "vibesensor/ws_models.py",
 ]
 follow_imports = "skip"
 check_untyped_defs = true

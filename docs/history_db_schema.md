@@ -116,7 +116,35 @@ checks the stored version (the text value of the `'version'` key):
 |----------------|--------|
 | No row (fresh DB, `schema_meta` table just created) | Create all v5 tables, insert version `'5'` |
 | `'5'` | No action needed |
-| Anything else | Raise `RuntimeError` (delete and recreate the database file) |
+| Older (e.g. `'4'`) | Back up the database file, run registered migrations to bring it to v5 |
+| Newer than `'5'` | Raise `RuntimeError` (downgrade not supported) |
+
+### Migration infrastructure
+
+Migrations are defined in `vibesensor/history_db/_migrations.py`. Each
+migration function upgrades the schema by exactly one version step and
+is registered in the `_MIGRATIONS` dict keyed by source version.
+
+Before any migration runs the database file is copied to
+`<db_path>.bak-v<N>` so operators have a manual rollback path.
+
+All steps for a given upgrade run inside a single `BEGIN IMMEDIATE`
+transaction so the upgrade is atomic — either all steps succeed and the
+version row is updated, or the database is left unchanged.
+
+Currently registered migrations:
+
+| From → To | Changes |
+|-----------|---------|
+| v4 → v5 | Add `analysis_version`, `analysis_started_at`, `analysis_completed_at` columns to `runs`; create `samples_v2` table and indexes |
+
+To add a new migration (say v5 → v6):
+
+1. Write a function `_migrate_v5_to_v6(cur: sqlite3.Cursor) -> None`
+   in `_migrations.py`.
+2. Register it: `_MIGRATIONS[5] = _migrate_v5_to_v6`.
+3. Bump `SCHEMA_VERSION` to `6` in `_schema.py`.
+4. Add migration tests in `tests/history/test_schema_migration.py`.
 
 ## Performance settings
 

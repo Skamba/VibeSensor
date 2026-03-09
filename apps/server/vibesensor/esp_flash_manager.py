@@ -203,7 +203,7 @@ class SerialPortProvider:
                     )
                 )
             return pyserial_ports
-        except Exception:
+        except (ImportError, OSError):
             LOGGER.warning("Serial port enumeration failed; returning empty list.", exc_info=True)
             return []
 

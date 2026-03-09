@@ -196,7 +196,7 @@ class SignalProcessor:
                 ),
                 client_ids,
             )
-        except Exception:
+        except (RuntimeError, OSError):
             LOGGER.warning(
                 "compute_all: worker pool raised; falling back to serial execution.",
                 exc_info=True,
@@ -262,7 +262,7 @@ class SignalProcessor:
                     client_id,
                     sample_rate_hz=rates.get(client_id),
                 )
-            except Exception:
+            except (ValueError, ArithmeticError, np.exceptions.DTypePromotionError):
                 if serial_fallback:
                     LOGGER.warning(
                         "compute_metrics failed for %s (serial fallback); skipping.",

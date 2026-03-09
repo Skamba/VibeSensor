@@ -6,10 +6,13 @@ independently of the public summary dict returned by history APIs.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 from .history_db._run_common import ANALYSIS_SCHEMA_VERSION
 from .json_types import JsonObject, is_json_object
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,11 +53,23 @@ def wrap_analysis_for_storage(summary: JsonObject) -> JsonObject:
 def unwrap_persisted_analysis(raw: JsonObject) -> PersistedAnalysisRead:
     summary = raw.get("summary")
     if is_json_object(summary):
+        sv = _coerce_schema_version(raw.get("schema_version"))
+        if sv is not None and sv < ANALYSIS_SCHEMA_VERSION:
+            LOGGER.debug(
+                "Analysis envelope has outdated schema_version %d (current %d)",
+                sv,
+                ANALYSIS_SCHEMA_VERSION,
+            )
         return PersistedAnalysisRead(
             summary=sanitize_analysis_summary(summary),
-            schema_version=_coerce_schema_version(raw.get("schema_version")),
+            schema_version=sv,
             is_enveloped=True,
         )
+    LOGGER.debug(
+        "Encountered unversioned (non-enveloped) persisted analysis; "
+        "consider re-analyzing this run to upgrade to schema v%d",
+        ANALYSIS_SCHEMA_VERSION,
+    )
     return PersistedAnalysisRead(
         summary=sanitize_analysis_summary(raw),
         schema_version=None,
@@ -71,7 +86,7 @@ def persisted_analysis_is_current(
     persisted = unwrap_persisted_analysis(raw)
     try:
         version_current = (
-            int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
+            int(analysis_version) >= ANALYSIS_SCHEMA_VERSION  # type: ignore[call-overload]
             if analysis_version is not None
             else False
         )
