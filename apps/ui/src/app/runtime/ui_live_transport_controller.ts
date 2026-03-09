@@ -6,7 +6,6 @@ import { applySpectrumTick, type AppState } from "../state/ui_app_state";
 
 type UiLiveTransportControllerDeps = {
   state: AppState;
-  getFeatures: () => AppFeatureBundle;
   payloadErrorMessage: () => string;
   renderWsState: () => void;
   renderSpeedReadout: () => void;
@@ -17,7 +16,7 @@ type UiLiveTransportControllerDeps = {
 export class UiLiveTransportController {
   private readonly state: AppState;
 
-  private readonly getFeatures: () => AppFeatureBundle;
+  private features: AppFeatureBundle | null = null;
 
   private readonly payloadErrorMessage: () => string;
 
@@ -31,12 +30,15 @@ export class UiLiveTransportController {
 
   constructor(deps: UiLiveTransportControllerDeps) {
     this.state = deps.state;
-    this.getFeatures = deps.getFeatures;
     this.payloadErrorMessage = deps.payloadErrorMessage;
     this.renderWsState = deps.renderWsState;
     this.renderSpeedReadout = deps.renderSpeedReadout;
     this.renderSpectrum = deps.renderSpectrum;
     this.updateSpectrumOverlay = deps.updateSpectrumOverlay;
+  }
+
+  attachFeatures(features: AppFeatureBundle): void {
+    this.features = features;
   }
 
   sendSelection(): void {
@@ -77,7 +79,7 @@ export class UiLiveTransportController {
   }
 
   private applyPayload(payload: unknown): void {
-    const features = this.getFeatures();
+    const features = this.requireFeatures();
     let adapted;
     try {
       adapted = adaptServerPayload(payload);
@@ -167,5 +169,12 @@ export class UiLiveTransportController {
       },
     });
     this.state.ws.connect();
+  }
+
+  private requireFeatures(): AppFeatureBundle {
+    if (this.features === null) {
+      throw new Error("UiLiveTransportController features used before initialization");
+    }
+    return this.features;
   }
 }

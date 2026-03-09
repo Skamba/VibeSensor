@@ -48,35 +48,28 @@ export class UiAppRuntime {
   ) {
     this.els = els;
     this.state = state;
-    let features: AppFeatureBundle | null = null;
-    const getFeatures = (): AppFeatureBundle => {
-      if (features === null) {
-        throw new Error("App features requested before initialization");
-      }
-      return features;
-    };
     this.shell = new UiShellController({
       state: this.state,
       els: this.els,
-      getFeatures,
-      renderSpectrum: () => this.spectrum.renderSpectrum(),
-      updateSpectrumOverlay: () => this.spectrum.updateSpectrumOverlay(),
     });
     this.spectrum = new UiSpectrumController({
       state: this.state,
       els: this.els,
       t: (key, vars) => this.shell.t(key, vars),
     });
+    this.shell.attachSpectrumHooks({
+      renderSpectrum: () => this.spectrum.renderSpectrum(),
+      updateSpectrumOverlay: () => this.spectrum.updateSpectrumOverlay(),
+    });
     this.transport = new UiLiveTransportController({
       state: this.state,
-      getFeatures,
       payloadErrorMessage: () => this.shell.t("ws.payload_error"),
       renderWsState: () => this.shell.renderWsState(),
       renderSpeedReadout: () => this.shell.renderSpeedReadout(),
       renderSpectrum: () => this.spectrum.renderSpectrum(),
       updateSpectrumOverlay: () => this.spectrum.updateSpectrumOverlay(),
     });
-    features = createAppFeatureBundle({
+    this.features = createAppFeatureBundle({
       state: this.state,
       els: this.els,
       t: (key, vars) => this.shell.t(key, vars),
@@ -93,7 +86,8 @@ export class UiAppRuntime {
       carMapPositions: CAR_MAP_POSITIONS,
       carMapWindowMs: CAR_MAP_WINDOW_MS,
     });
-    this.features = features;
+    this.shell.attachFeatures(this.features);
+    this.transport.attachFeatures(this.features);
   }
 
   start(): void {
