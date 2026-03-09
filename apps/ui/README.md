@@ -30,7 +30,13 @@ in one step.
 
 | File | Purpose |
 |------|---------|
-| `main.ts` | Core application logic, DOM bindings, view management |
+| `main.ts` | Thin Vite entry that boots the UI runtime |
+| `app/start_ui_app.ts` | CSS-aware startup entry that constructs and starts the app runtime |
+| `app/ui_app_runtime.ts` | UI composition root that wires state, DOM, features, and focused runtime controllers |
+| `app/runtime/ui_shell_controller.ts` | Menu/view shell, language and preference hydration, connection pill/banner, and other chrome state |
+| `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport, payload adaptation, and throttled live-session rendering |
+| `app/runtime/ui_spectrum_controller.ts` | Spectrum chart lifecycle, overlays, order-band calculation, and animation |
+| `app/app_feature_bundle.ts` | Feature composition for dashboard, realtime, settings, cars, history, update, and ESP flash flows |
 | `api.ts` | REST API client with typed request/response interfaces |
 | `ws.ts` | WebSocket client with auto-reconnect and stale detection |
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
@@ -51,6 +57,11 @@ in one step.
 - **Auto theme** — follows system light/dark preference
 - **Drive sizing** — larger touch targets on tablet viewports
 - **Demo mode** — deterministic UI state via `?demo=1` for testing
+
+The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
+composition root instead of becoming a single-file owner for transport, shell,
+and chart behavior. If you change startup wiring or long-lived UI ownership,
+update this README and the AI repo maps in the same change set.
 
 ## Visual Tests
 
