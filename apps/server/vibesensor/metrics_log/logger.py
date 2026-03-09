@@ -342,19 +342,6 @@ class MetricsLogger:
             history_run_created=self._persistence.history_run_created,
         )
 
-    def _ensure_history_run_created(
-        self,
-        run_id: str,
-        start_time_utc: str,
-        *,
-        session_generation: int,
-    ) -> None:
-        self._persistence.ensure_history_run_created(
-            run_id,
-            start_time_utc,
-            session_generation=session_generation,
-        )
-
     def _append_records(
         self,
         run_id: str,

@@ -28,8 +28,10 @@ Use this when changing backend code without scanning the whole package.
   `safe_json_dumps()` and `safe_json_loads()` for consistent
   serialisation/deserialisation with error handling.
 - `constants.py`: single source of truth for physical and analysis constants
-  (noise floors, resonance bands, corroboration bonuses, etc.).  Modules
+  (noise floors, resonance bands, confidence bounds, SNR divisors, etc.).  Modules
   should import constants from here rather than defining them locally.
+- `exceptions.py`: domain exception hierarchy — `VibeSensorError` base with
+  `ConfigurationError`, `PersistenceError`, `ProcessingError`, `UpdateError`.
 - `domain_models.py`: canonical `normalize_sensor_id()` for client/sensor
   ID normalisation — all other modules delegate to it.
 - `runlog.py`: canonical `utc_now_iso()` helper — prefer over inline
@@ -42,6 +44,14 @@ Use this when changing backend code without scanning the whole package.
   drawing, layout, and text helpers.
 - Diagram planning and drawing live in `pdf_diagram_layout.py`, `pdf_diagram_models.py`,
   and `pdf_diagram_render.py`.
+
+## Settings Boundary
+- `settings_store.py`: user-facing settings (cars, speed source, language, unit, sensors)
+  persisted to HistoryDB.
+- `analysis_settings.py`: in-memory-only analysis parameter store (tire_diameter,
+  tire_aspect, etc.) recomputed from the active car's aspects.
+- `history_db/_settings.py`: raw DB-level `get_setting()`/`set_setting()` KV operations.
+- `settings_store.py` owns semantic meaning; delegates persistence to `history_db/_settings`.
 
 ## API Surface
 - `routes/` is the HTTP and WebSocket boundary, assembled by `routes/__init__.py`.

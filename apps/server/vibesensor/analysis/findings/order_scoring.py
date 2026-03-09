@@ -190,7 +190,7 @@ def compute_order_confidence(
         n_connected_locations == 2 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD
     ):
         confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
-    return max(CONFIDENCE_FLOOR, min(CONFIDENCE_CEILING, confidence))
+    return max(CONFIDENCE_FLOOR, min(CONFIDENCE_CEILING, confidence))  # type: ignore[no-any-return]
 
 
 def suppress_engine_aliases(
