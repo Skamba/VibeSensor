@@ -74,7 +74,7 @@ def _sanitize_name(name: str) -> str:
 
 
 def _normalize_client_id(client_id: str) -> str:
-    return parse_client_id(client_id).hex()
+    return str(parse_client_id(client_id).hex())
 
 
 @dataclass(slots=True)
@@ -614,11 +614,18 @@ class ClientRegistry:
                             last_ack_status=record.last_ack_status,
                             reset_count=record.reset_count,
                             last_reset_time=record.last_reset_time,
-                            timing_health={
-                                "jitter_us_ema": record.timing_jitter_us_ema,
-                                "drift_us_total": record.timing_drift_us_total,
-                                "last_t0_us": record.last_t0_us,
-                            },
+                            timing_health=(
+                                {
+                                    "jitter_us_ema": record.timing_jitter_us_ema,
+                                    "drift_us_total": record.timing_drift_us_total,
+                                    "last_t0_us": record.last_t0_us,
+                                }
+                                if record.last_t0_us is not None
+                                else {
+                                    "jitter_us_ema": record.timing_jitter_us_ema,
+                                    "drift_us_total": record.timing_drift_us_total,
+                                }
+                            ),
                         ),
                     )
                 )

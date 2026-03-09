@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Never
 
 from fastapi import HTTPException
 
+from .backend_types import HistoryRunListEntryPayload, HistoryRunPayload
 from .history_db import RunStatus
 from .history_helpers import async_require_run, require_analysis_ready, strip_internal_fields
+from .json_types import JsonObject, is_json_object
 from .run_context import add_current_context_warnings, localize_warning_list
 
 if TYPE_CHECKING:
@@ -22,7 +24,7 @@ class HistoryJsonResult:
     """JSON-serialisable result with an explicit HTTP status."""
 
     status_code: int
-    payload: dict[str, Any]
+    payload: JsonObject
 
 
 class HistoryRunService:
@@ -38,15 +40,15 @@ class HistoryRunService:
 class HistoryRunQueryService(HistoryRunService):
     """Read-only run queries used by history endpoints."""
 
-    async def list_runs(self) -> list[dict[str, Any]]:
+    async def list_runs(self) -> list[HistoryRunListEntryPayload]:
         return await asyncio.to_thread(self._history_db.list_runs)
 
-    async def get_run(self, run_id: str) -> dict[str, Any]:
+    async def get_run(self, run_id: str) -> HistoryRunPayload:
         run = await async_require_run(self._history_db, run_id)
         analysis = run.get("analysis")
-        if isinstance(analysis, dict):
-            run = dict(run)
-            run["analysis"] = strip_internal_fields(analysis)
+        if is_json_object(analysis):
+            updated_run: HistoryRunPayload = {**run, "analysis": strip_internal_fields(analysis)}
+            return updated_run
         return run
 
     async def get_insights(
@@ -62,40 +64,37 @@ class HistoryRunQueryService(HistoryRunService):
             )
 
         analysis = require_analysis_ready(run)
-        if isinstance(analysis, dict):
-            active_car_snapshot = (
-                getattr(self._settings_store, "active_car_snapshot", None)
-                if self._settings_store is not None
-                else None
+        active_car_snapshot = (
+            getattr(self._settings_store, "active_car_snapshot", None)
+            if self._settings_store is not None
+            else None
+        )
+        current_active_car_snapshot = active_car_snapshot() if callable(active_car_snapshot) else None
+        analysis = add_current_context_warnings(
+            analysis,
+            current_active_car_snapshot=current_active_car_snapshot,
+        )
+        analysis_is_current = getattr(self._history_db, "analysis_is_current", None)
+        if callable(analysis_is_current):
+            analysis["analysis_is_current"] = await asyncio.to_thread(
+                analysis_is_current,
+                run_id,
             )
-            current_active_car_snapshot = (
-                active_car_snapshot() if callable(active_car_snapshot) else None
-            )
-            analysis = add_current_context_warnings(
-                analysis,
-                current_active_car_snapshot=current_active_car_snapshot,
-            )
-            analysis_is_current = getattr(self._history_db, "analysis_is_current", None)
-            if callable(analysis_is_current):
-                analysis["analysis_is_current"] = await asyncio.to_thread(
-                    analysis_is_current,
-                    run_id,
-                )
-            else:
-                analysis["analysis_is_current"] = False
-            metadata = run.get("metadata")
-            response_lang = requested_lang if isinstance(requested_lang, str) else None
-            if response_lang is None and isinstance(metadata, dict):
-                raw_lang = metadata.get("language")
-                if isinstance(raw_lang, str) and raw_lang.strip():
-                    response_lang = raw_lang.strip().lower()
-            analysis["warnings"] = localize_warning_list(
-                analysis.get("warnings"),
-                lang=response_lang or "en",
-            )
-            analysis = strip_internal_fields(analysis)
+        else:
+            analysis["analysis_is_current"] = False
+        metadata: object = run.get("metadata")
+        response_lang = requested_lang if isinstance(requested_lang, str) else None
+        if response_lang is None and is_json_object(metadata):
+            raw_lang = metadata.get("language")
+            if isinstance(raw_lang, str) and raw_lang.strip():
+                response_lang = raw_lang.strip().lower()
+        localized_warnings = localize_warning_list(
+            analysis.get("warnings"),
+            lang=response_lang or "en",
+        )
+        analysis["warnings"] = [warning for warning in localized_warnings]
 
-        return HistoryJsonResult(status_code=200, payload=analysis)
+        return HistoryJsonResult(status_code=200, payload=strip_internal_fields(analysis))
 
 
 class HistoryRunDeleteService(HistoryRunService):
@@ -108,7 +107,7 @@ class HistoryRunDeleteService(HistoryRunService):
         raise_delete_run_error(reason)
 
 
-def raise_delete_run_error(reason: str | None) -> None:
+def raise_delete_run_error(reason: str | None) -> Never:
     """Raise the public HTTP error for a failed delete attempt."""
     if reason == "not_found":
         raise HTTPException(status_code=404, detail="Run not found")

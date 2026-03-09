@@ -9,12 +9,24 @@ from __future__ import annotations
 import logging
 import math
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any, Final
+from typing import Final
 
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
+from .backend_types import (
+    AnalysisSettingsPayload,
+    CarConfigPayload,
+    CarConfigUpdatePayload,
+    FallbackMode,
+    SensorConfigPayload,
+    SpeedSourceKind,
+    SpeedSourcePayload,
+    SpeedSourceUpdatePayload,
+)
 from .constants import NUMERIC_TYPES
+from .json_types import JsonObject, is_json_object
 from .protocol import parse_client_id
 
 _isfinite = math.isfinite
@@ -78,7 +90,7 @@ def as_int_or_none(value: object) -> int | None:
     return round(out)
 
 
-def _parse_manual_speed(value: Any) -> float | None:
+def _parse_manual_speed(value: object) -> float | None:
     """Return a positive, finite float speed (≤500 km/h) or None."""
     if isinstance(value, NUMERIC_TYPES):
         f = float(value)
@@ -87,21 +99,75 @@ def _parse_manual_speed(value: Any) -> float | None:
     return None
 
 
-def _parse_stale_timeout(value: Any) -> float:
+def _parse_stale_timeout(value: object) -> float:
     """Return a stale-timeout value clamped to [3, 120], default 10."""
     if isinstance(value, NUMERIC_TYPES):
         return max(3.0, min(120.0, float(value)))
     return 10.0
 
 
-def sanitize_aspects(raw: dict[str, Any]) -> dict[str, float]:
+def sanitize_aspects(raw: Mapping[str, object]) -> AnalysisSettingsPayload:
     """Sanitize car aspects using the canonical validation from analysis_settings."""
-    return sanitize_settings(raw, allowed_keys=DEFAULT_CAR_ASPECTS)
+    sanitized = sanitize_settings(dict(raw), allowed_keys=DEFAULT_CAR_ASPECTS)
+    return {key: float(value) for key, value in sanitized.items()}
+
+
+def _as_str_or_none(value: object) -> str | None:
+    if isinstance(value, str):
+        normalized = value.strip()
+        return normalized or None
+    return None
+
+
+def _as_str_dict(value: object) -> dict[str, str] | None:
+    if not isinstance(value, Mapping):
+        return None
+    out: dict[str, str] = {}
+    for key, item in value.items():
+        if not isinstance(key, str) or not isinstance(item, str):
+            return None
+        out[key] = item
+    return out
+
+
+def _as_nested_str_dict(value: object) -> dict[str, dict[str, str]] | None:
+    if not isinstance(value, Mapping):
+        return None
+    out: dict[str, dict[str, str]] = {}
+    for key, item in value.items():
+        if not isinstance(key, str):
+            return None
+        nested = _as_str_dict(item)
+        if nested is None:
+            return None
+        out[key] = nested
+    return out
+
+
+def _phase_metadata_from_raw(value: object) -> dict[str, object]:
+    if not isinstance(value, Mapping):
+        return _default_phase_metadata()
+    return {str(key): item for key, item in value.items()}
+
+
+def _coerce_speed_source(value: object) -> SpeedSourceKind:
+    if isinstance(value, str) and value in VALID_SPEED_SOURCES:
+        if value == "obd2":
+            return "obd2"
+        if value == "manual":
+            return "manual"
+    return "gps"
+
+
+def _coerce_fallback_mode(value: object) -> FallbackMode:
+    if value == "manual":
+        return "manual"
+    return "manual"
 
 
 def normalize_sensor_id(sensor_id: str) -> str:
     """Normalize a sensor MAC / hex string to canonical lowercase hex."""
-    return parse_client_id(str(sensor_id)).hex()
+    return str(parse_client_id(str(sensor_id)).hex())
 
 
 # ---------------------------------------------------------------------------
@@ -127,7 +193,7 @@ class CarConfig:
     # -- construction ----------------------------------------------------------
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> CarConfig:
+    def from_dict(cls, data: Mapping[str, object]) -> CarConfig:
         """Construct a :class:`CarConfig` from a raw dict (e.g., loaded from JSON)."""
         car_id = str(data.get("id") or new_car_id())
         name = str(data.get("name") or "Unnamed Car").strip()[:64] or "Unnamed Car"
@@ -150,9 +216,9 @@ class CarConfig:
 
     # -- serialization ---------------------------------------------------------
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> CarConfigPayload:
         """Serialise this car config to a plain dict for JSON persistence."""
-        d: dict[str, Any] = {
+        d: CarConfigPayload = {
             "id": self.id,
             "name": self.name,
             "type": self.type,
@@ -177,7 +243,7 @@ class SensorConfig:
     location: str
 
     @classmethod
-    def from_dict(cls, sensor_id: str, data: dict[str, Any]) -> SensorConfig:
+    def from_dict(cls, sensor_id: str, data: Mapping[str, object]) -> SensorConfig:
         """Construct a :class:`SensorConfig` from *sensor_id* and a raw dict."""
         name = str(data.get("name") or sensor_id).strip()[:64]
         location = str(data.get("location") or "").strip()[:64]
@@ -187,7 +253,7 @@ class SensorConfig:
             location=location,
         )
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> SensorConfigPayload:
         """Serialise this sensor config to a plain dict."""
         return {"name": self.name, "location": self.location}
 
@@ -201,11 +267,11 @@ class SensorConfig:
 class SpeedSourceConfig:
     """Speed source settings (GPS, OBD2, or manual) with fallback policy."""
 
-    speed_source: str  # Literal values: "gps", "obd2", "manual"
+    speed_source: SpeedSourceKind
     manual_speed_kph: float | None
-    obd2_config: dict[str, Any]
+    obd2_config: JsonObject
     stale_timeout_s: float
-    fallback_mode: str
+    fallback_mode: FallbackMode
 
     @classmethod
     def default(cls) -> SpeedSourceConfig:
@@ -219,21 +285,15 @@ class SpeedSourceConfig:
         )
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> SpeedSourceConfig:
+    def from_dict(cls, data: Mapping[str, object]) -> SpeedSourceConfig:
         """Construct a :class:`SpeedSourceConfig` from a raw dict (e.g., from API payload)."""
-        src = str(data.get("speedSource") or "gps")
-        speed_source = src if src in VALID_SPEED_SOURCES else "gps"
+        speed_source = _coerce_speed_source(data.get("speedSource"))
         manual_speed_kph = _parse_manual_speed(data.get("manualSpeedKph"))
         obd2 = data.get("obd2Config")
-        obd2_config = obd2 if isinstance(obd2, dict) else {}
+        obd2_config = dict(obd2) if is_json_object(obd2) else {}
         raw_timeout = data.get("staleTimeoutS")
         stale_timeout_s = _parse_stale_timeout(raw_timeout)
-        raw_fallback = data.get("fallbackMode")
-        fallback_mode = (
-            str(raw_fallback)
-            if isinstance(raw_fallback, str) and raw_fallback in VALID_FALLBACK_MODES
-            else "manual"
-        )
+        fallback_mode = _coerce_fallback_mode(data.get("fallbackMode"))
         return cls(
             speed_source=speed_source,
             manual_speed_kph=manual_speed_kph,
@@ -242,7 +302,7 @@ class SpeedSourceConfig:
             fallback_mode=fallback_mode,
         )
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> SpeedSourcePayload:
         """Serialise this speed source config to a plain dict for JSON persistence."""
         return {
             "speedSource": self.speed_source,
@@ -252,11 +312,11 @@ class SpeedSourceConfig:
             "fallbackMode": self.fallback_mode,
         }
 
-    def apply_update(self, data: dict[str, Any]) -> None:
+    def apply_update(self, data: SpeedSourceUpdatePayload) -> None:
         """Mutate in-place from an API update payload."""
         src = data.get("speedSource")
-        if isinstance(src, str) and src in VALID_SPEED_SOURCES:
-            self.speed_source = src
+        if src is not None:
+            self.speed_source = _coerce_speed_source(src)
         if "manualSpeedKph" in data:
             manual = data["manualSpeedKph"]
             if manual is None:
@@ -264,14 +324,14 @@ class SpeedSourceConfig:
             else:
                 self.manual_speed_kph = _parse_manual_speed(manual)
         obd2 = data.get("obd2Config")
-        if isinstance(obd2, dict):
-            self.obd2_config = obd2
+        if is_json_object(obd2):
+            self.obd2_config = dict(obd2)
         raw_timeout = data.get("staleTimeoutS")
         if raw_timeout is not None:
             self.stale_timeout_s = _parse_stale_timeout(raw_timeout)
         raw_fallback = data.get("fallbackMode")
-        if isinstance(raw_fallback, str) and raw_fallback in VALID_FALLBACK_MODES:
-            self.fallback_mode = raw_fallback
+        if raw_fallback is not None:
+            self.fallback_mode = _coerce_fallback_mode(raw_fallback)
 
 
 # ---------------------------------------------------------------------------
@@ -386,7 +446,7 @@ class RunMetadata:
         )
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> RunMetadata:
+    def from_dict(cls, data: Mapping[str, object]) -> RunMetadata:
         accel_scale = data.get("accel_scale_g_per_lsb")
         accel_units = "g" if accel_scale is not None else "raw_lsb"
         run_id = str(data.get("run_id", ""))
@@ -397,27 +457,23 @@ class RunMetadata:
             schema_version=str(data.get("schema_version", RUN_SCHEMA_VERSION)),
             run_id=run_id,
             start_time_utc=str(data.get("start_time_utc", "")),
-            end_time_utc=data.get("end_time_utc"),
+            end_time_utc=_as_str_or_none(data.get("end_time_utc")),
             sensor_model=str(data.get("sensor_model", "unknown")),
             firmware_version=(str(data.get("firmware_version", "")).strip() or None),
             raw_sample_rate_hz=as_int_or_none(data.get("raw_sample_rate_hz")),
             feature_interval_s=as_float_or_none(data.get("feature_interval_s")),
             fft_window_size_samples=as_int_or_none(data.get("fft_window_size_samples")),
-            fft_window_type=data.get("fft_window_type"),
+            fft_window_type=_as_str_or_none(data.get("fft_window_type")),
             peak_picker_method=str(data.get("peak_picker_method", "")),
             accel_scale_g_per_lsb=as_float_or_none(accel_scale),
-            units=data.get("units") or _default_units(accel_units=accel_units),
-            amplitude_definitions=data.get("amplitude_definitions")
+            units=_as_str_dict(data.get("units")) or _default_units(accel_units=accel_units),
+            amplitude_definitions=_as_nested_str_dict(data.get("amplitude_definitions"))
             or _default_amplitude_definitions(accel_units=accel_units),
             incomplete_for_order_analysis=bool(data.get("incomplete_for_order_analysis", False)),
-            phase_metadata=(
-                dict(data.get("phase_metadata"))
-                if isinstance(data.get("phase_metadata"), dict)
-                else _default_phase_metadata()
-            ),
+            phase_metadata=_phase_metadata_from_raw(data.get("phase_metadata")),
         )
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "record_type": self.record_type,
             "schema_version": self.schema_version,
@@ -542,7 +598,7 @@ class SensorFrame:
         }
 
     @classmethod
-    def from_dict(cls, record: dict[str, Any]) -> SensorFrame:
+    def from_dict(cls, record: Mapping[str, object]) -> SensorFrame:
         """Normalize a raw sample dict (e.g. from JSONL or DB) into a SensorFrame."""
         t_s = as_float_or_none(record.get("t_s"))
         speed_kmh = as_float_or_none(record.get("speed_kmh"))

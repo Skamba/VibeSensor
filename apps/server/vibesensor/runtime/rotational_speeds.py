@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol
 
+from ..backend_types import SpeedSourcePayload
 from ..constants import SECONDS_PER_MINUTE
 from ..diagnostics_shared import build_order_bands, vehicle_orders_hz
 from ..payload_types import (
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 
 
 class _SpeedSourceSettingsStore(Protocol):
-    def get_speed_source(self) -> dict[str, object]: ...
+    def get_speed_source(self) -> SpeedSourcePayload: ...
 
 
 class _GpsMonitorState(Protocol):
