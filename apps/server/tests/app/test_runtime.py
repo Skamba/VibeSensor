@@ -287,6 +287,58 @@ async def test_processing_loop_broadcasts_sync_clock() -> None:
     assert control_plane.broadcast_sync_clock.called
 
 
+@pytest.mark.asyncio
+async def test_processing_loop_compute_timeout_triggers_failure(monkeypatch) -> None:
+    """When compute_all hangs beyond _COMPUTE_TIMEOUT_S the loop records a timeout failure."""
+    import time
+
+    import vibesensor.runtime.processing_loop as pl_mod
+
+    monkeypatch.setattr(pl_mod, "_COMPUTE_TIMEOUT_S", 0.001)  # 1 ms — fires immediately
+
+    processor = _StubProcessor()
+
+    def _slow_compute(*args: object, **kwargs: object) -> dict:
+        time.sleep(0.05)  # 50 ms — exceeds 1 ms timeout
+        return {}
+
+    processor.compute_all = _slow_compute
+    rt = _make_runtime(processor=processor)
+
+    await _run_processing_loop(rt, max_ticks=1)
+
+    assert rt.processing.state.processing_failure_count >= 1
+    assert rt.processing.state.last_failure_category == "compute_all_timeout"
+    assert rt.processing.state.processing_state in ("degraded", "fatal")
+
+
+@pytest.mark.asyncio
+async def test_processing_loop_compute_timeout_category_distinct_from_regular_failure(
+    monkeypatch,
+) -> None:
+    """Timeout failures are recorded under 'compute_all_timeout', not 'compute_all'."""
+    import time
+
+    import vibesensor.runtime.processing_loop as pl_mod
+
+    monkeypatch.setattr(pl_mod, "_COMPUTE_TIMEOUT_S", 0.001)
+
+    processor = _StubProcessor()
+
+    def _slow_compute(*args: object, **kwargs: object) -> dict:
+        time.sleep(0.05)
+        return {}
+
+    processor.compute_all = _slow_compute
+    rt = _make_runtime(processor=processor)
+
+    await _run_processing_loop(rt, max_ticks=1)
+
+    categories = rt.processing.state.processing_failure_categories
+    assert "compute_all_timeout" in categories, "timeout must be tracked separately"
+    assert "compute_all" not in categories, "regular compute_all category must not be set"
+
+
 # ---------------------------------------------------------------------------
 # start / stop tests
 # ---------------------------------------------------------------------------

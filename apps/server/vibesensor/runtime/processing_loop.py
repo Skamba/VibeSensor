@@ -26,6 +26,15 @@ FAILURE_BACKOFF_S = 30
 STALE_DATA_AGE_S = 2.0
 """Clients without fresh UDP data within this window are excluded from spectrum output."""
 
+_COMPUTE_TIMEOUT_S: float = 10.0
+"""Timeout applied to the asyncio.to_thread() call for compute_all().
+
+Prevents a stalled FFT computation from blocking the event loop indefinitely.
+Matches the DB-thread timeout used in MetricsLogger (_DB_THREAD_TIMEOUT_S) for
+consistency.  The timed-out thread continues running in the background (Python
+threads cannot be forcibly killed), but the event loop is freed immediately.
+"""
+
 _MAX_FAILURE_MESSAGE_LEN = 240
 
 
@@ -152,11 +161,16 @@ class ProcessingLoop:
                 )
 
         try:
-            metrics_by_client = await asyncio.to_thread(
-                self._ingress.processor.compute_all,
-                fresh_ids,
-                sample_rates_hz=sample_rates,
+            metrics_by_client = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self._ingress.processor.compute_all,
+                    fresh_ids,
+                    sample_rates_hz=sample_rates,
+                ),
+                timeout=_COMPUTE_TIMEOUT_S,
             )
+        except TimeoutError as exc:
+            raise ProcessingLoopError("compute_all_timeout", exc) from exc
         except Exception as exc:
             raise ProcessingLoopError("compute_all", exc) from exc
 
