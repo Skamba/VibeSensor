@@ -1,6 +1,7 @@
 import type { SpectrumChart } from "../../spectrum";
 import type { WsClient } from "../../ws";
 import type { StrengthMetricsPayload } from "../../contracts/ws_payload_types";
+import type { RotationalSpeeds } from "../../server_payload";
 import { defaultLocationCodes } from "../../constants";
 import type {
   CarRecord,
@@ -105,6 +106,7 @@ export interface AppState {
   spectrumPlot: SpectrumChart | null;
   spectra: { clients: Record<string, SpectrumClientData> };
   speedMps: number | null;
+  rotationalSpeeds: RotationalSpeeds | null;
   activeViewId: string;
   runs: HistoryEntry[];
   deleteAllRunsInFlight: boolean;
@@ -141,6 +143,7 @@ export function createAppState(): AppState {
     spectrumPlot: null,
     spectra: { clients: {} },
     speedMps: null,
+    rotationalSpeeds: null,
     activeViewId: "dashboardView",
     runs: [],
     deleteAllRunsInFlight: false,

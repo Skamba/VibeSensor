@@ -7,6 +7,7 @@
 - Backend route assembly: `apps/server/vibesensor/routes/__init__.py`
 - UI app entry: `apps/ui/src/main.ts`
 - UI runtime/composition root: `apps/ui/src/app/ui_app_runtime.ts`
+- UI runtime owners: `apps/ui/src/app/runtime/`
 - Simulator CLI: `apps/simulator/vibesensor_simulator/sim_sender.py`
 - Firmware app: `firmware/esp/src/main.cpp`
 - Pi image build: `infra/pi-image/pi-gen/build.sh`
@@ -35,6 +36,7 @@
 - `history_runs.py`, `history_reports.py`, `history_exports.py`, `history_helpers.py`, `runlog.py`: focused history services and helpers now owned by the runtime persistence subsystem instead of being composed inside routes.
 - `report/`: PDF renderer and report-template builders.
 - `update/`: public update manager facade plus focused modules for status tracking, Wi-Fi control, release discovery, install and rollback, service control, command execution, and state storage; workflow validation and rollback snapshot creation must both succeed before a live install begins.
+- `apps/ui/src/app/runtime/`: explicit UI runtime owners for shell/chrome state, live transport/payload application, and spectrum/chart orchestration beneath the `UiAppRuntime` composition root.
 
 ## Test layout
 
