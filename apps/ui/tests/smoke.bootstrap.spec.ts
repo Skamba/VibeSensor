@@ -48,13 +48,23 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "VibeSensor" })).toBeVisible();
   await expect(page.locator("#linkState")).not.toHaveText(/Connecting/i);
-  await page.locator("#tab-dashboard").focus();
-  await page.locator("#tab-dashboard").press("ArrowRight");
+  const dashboardTab = page.locator("#tab-dashboard");
+  const historyTab = page.locator("#tab-history");
+  const settingsTab = page.locator("#tab-settings");
+
+  await dashboardTab.focus();
+  await dashboardTab.press("ArrowRight");
   await expect(page.locator("#historyView")).toHaveClass(/active/);
-  await page.locator("#tab-history").click();
+  await historyTab.press("ArrowLeft");
+  await expect(page.locator("#dashboardView")).toHaveClass(/active/);
+  await dashboardTab.press("End");
+  await expect(page.locator("#settingsView")).toHaveClass(/active/);
+  await settingsTab.press("Home");
+  await expect(page.locator("#dashboardView")).toHaveClass(/active/);
+  await historyTab.click();
   await expect(page.locator("#historyView")).toHaveClass(/active/);
   await expect(page.locator("#historyTableBody")).toContainText("run-001");
-  await page.locator("#tab-dashboard").click();
+  await dashboardTab.click();
   await page.locator("#startLoggingBtn").click();
   await expect(page.locator("#loggingStatus")).toHaveText("Running");
   await expect.poll(() => startCalls).toBe(1);
