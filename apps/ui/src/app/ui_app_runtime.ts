@@ -139,12 +139,18 @@ export class UiAppRuntime {
   start(): void {
     this.bindUiEvents();
     this.features.settings.syncSettingsInputs();
-    void this.hydratePersistedPreferences();
+    this.runAsyncTask("hydrate persisted preferences", () => this.hydratePersistedPreferences());
     this.applyLanguage(false);
     this.renderCarSelectionWarning();
     this.setActiveView(DEFAULT_VIEW_ID);
     this.startBackgroundActivity();
     this.startTransportMode();
+  }
+
+  private runAsyncTask(taskName: string, task: () => Promise<void>): void {
+    void task().catch((error) => {
+      console.warn(`UI startup task failed: ${taskName}`, error);
+    });
   }
 
   private t(key: string, vars?: Record<string, unknown>): string {
@@ -888,8 +894,8 @@ export class UiAppRuntime {
         this.state.lang = I18N.normalizeLang(languageResponse.language);
         this.applyLanguage(true);
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      console.warn("Failed to load persisted language", error);
     }
     try {
       const speedUnitResponse = await getSettingsSpeedUnit();
@@ -900,18 +906,18 @@ export class UiAppRuntime {
         }
         this.renderSpeedReadout();
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      console.warn("Failed to load persisted speed unit", error);
     }
   }
 
   private startBackgroundActivity(): void {
-    void this.features.realtime.refreshLocationOptions();
-    void this.features.settings.loadSpeedSourceFromServer();
-    void this.features.settings.loadAnalysisSettingsFromServer();
-    void this.features.settings.loadCarsFromServer();
-    void this.features.realtime.refreshLoggingStatus();
-    void this.features.history.refreshHistory();
+    this.runAsyncTask("refresh location options", () => this.features.realtime.refreshLocationOptions());
+    this.runAsyncTask("load speed source", () => this.features.settings.loadSpeedSourceFromServer());
+    this.runAsyncTask("load analysis settings", () => this.features.settings.loadAnalysisSettingsFromServer());
+    this.runAsyncTask("load cars", () => this.features.settings.loadCarsFromServer());
+    this.runAsyncTask("refresh logging status", () => this.features.realtime.refreshLoggingStatus());
+    this.runAsyncTask("refresh history", () => this.features.history.refreshHistory());
     this.features.update.startPolling();
     this.features.espFlash.startPolling();
     this.features.settings.startGpsStatusPolling();

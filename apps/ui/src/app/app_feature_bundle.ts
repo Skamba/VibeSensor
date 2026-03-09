@@ -52,7 +52,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     formatInt,
   });
 
-  let dashboard!: DashboardFeature;
+  let dashboard: DashboardFeature | undefined;
 
   const realtime = createRealtimeFeature({
     state,
@@ -64,7 +64,7 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     setStatValue: deps.setStatValue,
     createEmptyMatrix: () => createEmptyMatrix(state.strengthBands),
     renderMatrix: () => {
-      dashboard.renderMatrix();
+      dashboard?.renderMatrix();
     },
     sendSelection: deps.sendSelection,
     refreshHistory: () => history.refreshHistory(),
@@ -103,6 +103,10 @@ export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBu
     carMapWindowMs: deps.carMapWindowMs,
     metricField: METRIC_FIELDS.vibration_strength_db,
   });
+
+  if (!dashboard) {
+    throw new Error("Dashboard feature failed to initialize");
+  }
 
   return {
     history,
