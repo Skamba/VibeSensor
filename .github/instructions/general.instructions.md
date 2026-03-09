@@ -18,8 +18,8 @@ Canonical agent workflow (shared source of truth)
   1. all plan items are complete and validated,
   2. no similar in-scope issues remain,
   3. a real blocker exists (credentials/hardware/external dependency),
-  4. time budget is reached.
-- Long, thorough runs are allowed and preferred for deeper tasks; a 45–60 minute run is acceptable for medium/large changes.
+  4. the user explicitly asks to pause.
+- Long, thorough runs are allowed and preferred for deeper tasks; multi-hour runs are acceptable when needed to complete in-scope work well.
 - Context/noise control:
   - avoid scanning generated/build/cache/vendor artifacts unless debugging them (`artifacts/`, `.cache/`, `node_modules/`, `dist/`, `.venv/`, `.pytest_cache/`, `.ruff_cache/`),
   - use focused file reads and scoped searches,
