@@ -23,8 +23,8 @@ Execution model
 - Avoid over-conservative blocking behavior: do not delay a clear in-scope fix for exhaustive hypotheticals or speculative edge cases.
 - Use bounded risk, not risk avoidance: keep changes reversible, test quickly, and correct fast when validation fails.
 - Continue autonomously on clearly adjacent in-scope issues.
-- Stop only when all plan items are validated complete, no similar in-scope issues remain, a real blocker exists, or the time budget is reached.
-- Long deep runs are allowed and preferred for medium or large work.
+- Stop only when all plan items are validated complete, no similar in-scope issues remain, a real blocker exists, or the user explicitly asks to pause.
+- Long deep runs are allowed and preferred for medium or large work; multi-hour runs are acceptable when needed to complete in-scope work well.
 
 Documentation maintenance
 - After every meaningful code change, check whether docs, repo maps, runbooks, READMEs, and instruction files that reference the touched area are now stale.
