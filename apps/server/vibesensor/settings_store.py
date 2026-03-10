@@ -63,8 +63,9 @@ VALID_SPEED_UNITS: frozenset[str] = frozenset({"kmh", "mps"})
 """Supported speed display units."""
 
 
-class PersistenceError(RuntimeError):
-    """Raised when settings fail to persist to the database."""
+# PersistenceError is imported from the domain exception hierarchy so that
+# settings-layer persistence failures are catchable as ``VibeSensorError``.
+from .exceptions import PersistenceError as PersistenceError  # noqa: E402
 
 
 def _clamp_str(value: object, maxlen: int) -> str:
