@@ -151,7 +151,7 @@ def test_v4_db_rejected(tmp_path: Path) -> None:
     conn.close()
 
     # No migrations are registered — opening a v4 database raises RuntimeError.
-    with pytest.raises(RuntimeError, match="No migration registered"):
+    with pytest.raises(RuntimeError, match="incompatible"):
         HistoryDB(db_path)
 
 

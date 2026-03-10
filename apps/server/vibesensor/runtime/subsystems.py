@@ -19,7 +19,6 @@ from ..worker_pool import WorkerPool
 from ..ws_hub import WebSocketHub
 from .health_state import RuntimeHealthState
 from .processing_loop import ProcessingLoop, ProcessingLoopState
-from .settings_sync import apply_car_settings, apply_speed_source_settings
 from .ws_broadcast import WsBroadcastCache, WsBroadcastService
 
 
@@ -38,10 +37,21 @@ class RuntimeSettingsSubsystem:
     gps_monitor: GPSSpeedMonitor
 
     def apply_car_settings(self) -> None:
-        apply_car_settings(self.settings_store, self.analysis_settings)
+        aspects = self.settings_store.active_car_aspects()
+        if aspects:
+            self.analysis_settings.update(aspects)
 
     def apply_speed_source_settings(self) -> None:
-        apply_speed_source_settings(self.settings_store, self.gps_monitor)
+        ss = self.settings_store.get_speed_source()
+        self.gps_monitor.set_manual_source_selected(ss["speedSource"] == "manual")
+        if ss["manualSpeedKph"] is not None:
+            self.gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
+        else:
+            self.gps_monitor.set_speed_override_kmh(None)
+        self.gps_monitor.set_fallback_settings(
+            stale_timeout_s=ss.get("staleTimeoutS"),
+            fallback_mode=ss.get("fallbackMode"),
+        )
 
 
 @dataclass(slots=True)

@@ -103,7 +103,6 @@ class UpdateWorkflow:
         if self.cancel_requested():
             return
         await self._complete_success("Update completed successfully")
-        await self.services.ensure_service_contracts_env()
         if await self.services.schedule_restart():
             return
         self.tracker.add_issue(

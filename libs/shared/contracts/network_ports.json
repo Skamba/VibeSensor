@@ -1,5 +1,0 @@
-{
-  "server_udp_data": 9000,
-  "server_udp_control": 9001,
-  "firmware_control_port_base": 9010
-}

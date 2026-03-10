@@ -2,18 +2,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from _report_pdf_test_helpers import (
-    KMH_TO_MPS,
+from _report_pdf_test_helpers import assert_pdf_contains, sample
+from test_support.report_helpers import (
     RUN_END,
-    assert_pdf_contains,
-    build_report_pdf,
-    map_summary,
-    run_metadata,
-    sample,
     suitability_by_key,
-    summarize_log,
     write_jsonl,
 )
+from test_support.report_helpers import (
+    report_run_metadata as run_metadata,
+)
+
+from vibesensor.analysis import map_summary, summarize_log
+from vibesensor.constants import KMH_TO_MPS
+from vibesensor.report.pdf_engine import build_report_pdf
 
 
 def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:

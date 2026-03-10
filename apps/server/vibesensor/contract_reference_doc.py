@@ -36,7 +36,7 @@ def render_contract_reference_markdown() -> str:
     control_port = _port(str(DEFAULT_CONFIG["udp"]["control_listen"]))
     server_http_port = int(DEFAULT_CONFIG["server"]["port"])
 
-    # Canonical metric/report field names (kept in sync with libs/shared/contracts/*.json)
+    # Canonical metric/report field names
     _metric_field_names = ["vibration_strength_db", "strength_bucket"]
     _report_field_names = [
         "run_id",
@@ -60,8 +60,7 @@ This document is generated from code and shared contract files.
 - Source of truth:
   - `apps/server/vibesensor/protocol.py`
   - `apps/server/vibesensor/config.py`
-  - `libs/shared/contracts/metrics_fields.json`
-  - `libs/shared/contracts/report_fields.json`
+  - `apps/server/vibesensor/contracts.py`
 
 ## Network contract
 

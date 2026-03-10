@@ -32,7 +32,7 @@ def test_fresh_db_has_analysis_columns(tmp_path: Path) -> None:
 
 
 def test_old_schema_version_raises_when_no_migration_registered(tmp_path: Path) -> None:
-    """Opening a DB with a very old version (no migration registered) should raise."""
+    """Opening a DB with an older incompatible version should raise."""
     db_path = tmp_path / "history.db"
     conn = sqlite3.connect(str(db_path))
     conn.executescript(
@@ -67,7 +67,7 @@ CREATE TABLE client_names (
     conn.commit()
     conn.close()
 
-    with pytest.raises(RuntimeError, match="No migration registered"):
+    with pytest.raises(RuntimeError, match="incompatible"):
         HistoryDB(db_path)
 
 
@@ -290,7 +290,7 @@ def _make_fake_state(history_db: Any) -> Any:
     state.persistence = SimpleNamespace(
         history_db=state.history_db,
         query_service=HistoryRunQueryService(state.history_db, state.settings_store),
-        delete_service=HistoryRunDeleteService(state.history_db, state.settings_store),
+        delete_service=HistoryRunDeleteService(state.history_db),
         report_service=HistoryReportService(state.history_db, state.settings_store),
         export_service=HistoryExportService(state.history_db),
     )

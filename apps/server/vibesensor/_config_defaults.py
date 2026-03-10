@@ -9,7 +9,7 @@ from __future__ import annotations
 from copy import deepcopy
 from pathlib import Path
 
-from vibesensor_shared.contracts import NETWORK_PORTS
+from vibesensor.contracts import NETWORK_PORTS
 
 from .json_types import JsonObject, is_json_object
 

@@ -339,20 +339,3 @@ class TestUpdateManagerAsync:
         with patch("shutil.which", which_without):
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
-
-    async def test_ensure_contracts_env_dropin_reload_when_changed(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path)
-        runner.set_response("python3 -c", 0, "changed", "")
-        contracts_dir = tmp_path / "contracts"
-        contracts_dir.mkdir()
-        with (
-            patch("vibesensor.update.manager.SERVICE_CONTRACTS_DIR", str(contracts_dir)),
-            patch(
-                "vibesensor.update.manager.SERVICE_ENV_DROPIN",
-                str(tmp_path / "10-contracts-dir.conf"),
-            ),
-        ):
-            await manager._ensure_service_contracts_env()
-        joined_calls = [" ".join(call[0]) for call in runner.calls]
-        assert any("python3 -c" in call for call in joined_calls)
-        assert any("systemctl daemon-reload" in call for call in joined_calls)

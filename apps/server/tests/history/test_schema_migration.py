@@ -1,4 +1,4 @@
-"""Tests for the database schema migration system."""
+"""Tests for the database schema versioning system."""
 
 from __future__ import annotations
 
@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 from vibesensor.history_db import HistoryDB
-from vibesensor.history_db._migrations import run_migrations
 from vibesensor.history_db._schema import SCHEMA_VERSION
 
 # -- helpers -----------------------------------------------------------------
@@ -50,107 +49,24 @@ CREATE TABLE client_names (
     conn.close()
 
 
-def _insert_v4_run(db_path: Path, run_id: str) -> None:
-    """Insert a test run into a v4 database."""
-    conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        "INSERT INTO runs (run_id, status, start_time_utc, metadata_json, created_at) "
-        "VALUES (?, 'recording', '2026-01-01T00:00:00Z', '{\"lang\": \"en\"}', "
-        "'2026-01-01T00:00:00Z')",
-        (run_id,),
-    )
-    conn.commit()
-    conn.close()
-
-
-# -- migration runner tests --------------------------------------------------
-
-
-def test_v4_database_raises_runtime_error(tmp_path: Path) -> None:
-    """Opening a v4 database should raise RuntimeError (no migration registered)."""
-    db_path = tmp_path / "history.db"
-    _create_v4_database(db_path)
-
-    conn = sqlite3.connect(str(db_path))
-    with pytest.raises(RuntimeError, match="No migration registered"):
-        run_migrations(conn, 4, 5)
-    conn.close()
-
-
-def test_migration_invalid_direction_raises(tmp_path: Path) -> None:
-    """Attempting to migrate to an older version should raise ValueError."""
-    db_path = tmp_path / "history.db"
-    _create_v4_database(db_path)
-
-    conn = sqlite3.connect(str(db_path))
-    with pytest.raises(ValueError, match="source must be older"):
-        run_migrations(conn, 5, 4)
-    conn.close()
-
-
-def test_migration_same_version_raises(tmp_path: Path) -> None:
-    """Migrating from a version to itself should raise ValueError."""
-    db_path = tmp_path / "history.db"
-    _create_v4_database(db_path)
-
-    conn = sqlite3.connect(str(db_path))
-    with pytest.raises(ValueError, match="source must be older"):
-        run_migrations(conn, 5, 5)
-    conn.close()
-
-
-def test_missing_migration_step_raises(tmp_path: Path) -> None:
-    """If no migration is registered for a step, RuntimeError should be raised."""
-    db_path = tmp_path / "history.db"
-    conn = sqlite3.connect(str(db_path))
-    conn.execute("CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-    conn.execute("INSERT INTO schema_meta (key, value) VALUES ('version', '2')")
-    conn.commit()
-
-    with pytest.raises(RuntimeError, match="No migration registered"):
-        run_migrations(conn, 2, 5)
-    conn.close()
-
-
 # -- HistoryDB integration tests ---------------------------------------------
 
 
 def test_historydb_rejects_v4_database(tmp_path: Path) -> None:
-    """HistoryDB should refuse to open a v4 database (no migration registered)."""
+    """HistoryDB should refuse to open an incompatible older database."""
     db_path = tmp_path / "history.db"
     _create_v4_database(db_path)
 
-    with pytest.raises(RuntimeError, match="No migration registered"):
+    with pytest.raises(RuntimeError, match="incompatible"):
         HistoryDB(db_path)
-
-
-def test_historydb_creates_backup_before_rejecting_v4(tmp_path: Path) -> None:
-    """HistoryDB should back up the database file before attempting migration."""
-    db_path = tmp_path / "history.db"
-    _create_v4_database(db_path)
-
-    with pytest.raises(RuntimeError):
-        HistoryDB(db_path)
-
-    backup_path = db_path.with_suffix(".bak-v4")
-    assert backup_path.exists()
-    # The backup should be a valid v4 database
-    conn = sqlite3.connect(str(backup_path))
-    row = conn.execute("SELECT value FROM schema_meta WHERE key = 'version'").fetchone()
-    assert row is not None
-    assert row[0] == "4"
-    conn.close()
 
 
 def test_historydb_newer_version_raises(tmp_path: Path) -> None:
     """HistoryDB should refuse to open a database with a newer schema version."""
     db_path = tmp_path / "history.db"
-    # Create a DB that already has the full v5 physical schema but is tagged
-    # as a *newer* version so that _ensure_schema sees version > SCHEMA_VERSION.
-    db = HistoryDB(db_path)  # creates a normal v5 DB
+    db = HistoryDB(db_path)
     db.close()
 
-    # Bump the stored version above the current one
     conn = sqlite3.connect(str(db_path))
     conn.execute(
         "UPDATE schema_meta SET value = ? WHERE key = 'version'",
@@ -178,7 +94,6 @@ def test_historydb_current_version_no_migration(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.close()
 
-    # Re-open — should be a no-op
     db2 = HistoryDB(tmp_path / "history.db")
     db2.close()
 

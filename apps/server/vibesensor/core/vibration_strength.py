@@ -18,9 +18,7 @@ combined_spectrum_amp_g
 from __future__ import annotations
 
 from math import isfinite, log10, sqrt
-from typing import Final
-
-from typing_extensions import TypedDict
+from typing import Final, TypedDict
 
 from .strength_bands import bucket_for_strength
 
@@ -356,10 +354,7 @@ def compute_vibration_strength_db(
         if len(chosen) >= top_n:
             break
         hz = float(candidate["hz"] or 0.0)
-        if any(
-            abs(float(existing["hz"] or 0.0) - hz) < peak_separation_hz
-            for existing in chosen
-        ):
+        if any(abs(float(existing["hz"] or 0.0) - hz) < peak_separation_hz for existing in chosen):
             continue
         chosen.append(candidate)
 

@@ -3,15 +3,22 @@ Repository overview
 - Backend architecture is package-based: `app.py` creates the FastAPI app, `bootstrap.py` wires services, `routes/` owns HTTP/WebSocket route groups, `runtime/` owns runtime coordination, `history_db/` owns SQLite persistence, `report/` owns PDF rendering, and `update/` owns wheel-based updates.
 - Key runtime artifacts are `docker-compose.yml` at repo root and `apps/server/pyproject.toml` for backend packaging and CLI entry points.
 - Units policy: raw ingest/sample acceleration values may use g, but post-stop analysis outputs (persisted summaries, findings, report-template artifacts) must expose vibration strength or intensity in dB only.
-- Canonical dB definition: `libs/core/python/vibesensor_core/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
+- Canonical dB definition: `vibesensor/core/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
 
 Source-of-truth note
 - This file is the canonical short AI guide; `AGENTS.md` and `CLAUDE.md` should remain pointers to this file to prevent drift.
+- AI guidance lives in this file, `.github/instructions/*.instructions.md`, and `docs/ai/repo-map.md`. Do not create additional guidance files in `docs/ai/`.
 
 Canonical instruction sources
 - Read `docs/ai/repo-map.md` first.
 - Shared workflow and validation guardrails live in `.github/instructions/general.instructions.md`.
 - Area-specific deltas live in `.github/instructions/{backend,frontend,tests,infra,docs,report}.instructions.md`.
+
+Architectural constraints
+- Offline-first hotspot boot: hotspot provisioning must not depend on internet connectivity. Required packages are baked into the image build stage.
+- Deterministic image outputs: custom pi-gen stage must export uniquely suffixed artifacts and self-validate rootfs contents.
+- Internal shared logic belongs in the server package (`vibesensor/core/`, `vibesensor/contracts.py`), not in separate pip packages under `libs/`. Do not introduce new packages under `libs/` without explicit justification.
+- Do not create runtime file-loading mechanisms for static configuration data. Use Python constants for values that don't change between deployments.
 
 Execution model
 - For medium or large tasks, start with an explicit checklist plan whose item titles include problem, fix, and user impact.
@@ -30,7 +37,7 @@ Documentation maintenance
 - After every meaningful code change, check whether docs, repo maps, runbooks, READMEs, and instruction files that reference the touched area are now stale.
 - Update stale documentation in the same change set. Do not leave documentation drift for later unless the user explicitly says not to update docs.
 - Remove or rewrite obsolete guidance instead of appending caveats to outdated sections.
-- Keep human-facing docs (`README.md`, `apps/server/README.md`, `docs/**`) and AI-facing guidance (`docs/ai/**`, `.github/**/*.instructions.md`, `.github/copilot-instructions.md`) aligned with the live codebase.
+- Keep human-facing docs (`README.md`, `apps/server/README.md`, `docs/**`) and AI-facing guidance (`docs/ai/repo-map.md`, `.github/**/*.instructions.md`, `.github/copilot-instructions.md`) aligned with the live codebase.
 
 Updater delivery model (authoritative)
 - Production updater behavior is wheel-based: devices fetch release wheels and install them through the `apps/server/vibesensor/update/` package, with `manager.py` as the public facade.
@@ -49,7 +56,6 @@ Common commands
 - `make docs-lint`
 - `make test-all` (CI-parity local suite: `backend-quality` + `backend-typecheck` + `frontend-typecheck` + `ui-smoke` + `backend-tests` + `e2e` jobs in parallel)
 - `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests` (faster backend-focused CI subset)
-- `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`
 - `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)
 - `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
 - `cd apps/ui && npm ci && npm run typecheck && npm run build`

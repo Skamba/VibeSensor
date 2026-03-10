@@ -6,8 +6,8 @@ from collections import defaultdict
 from math import floor as _math_floor
 from math import log1p
 
-from vibesensor_core.vibration_strength import percentile
-from vibesensor_core.vibration_strength import (
+from vibesensor.core.vibration_strength import percentile
+from vibesensor.core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 

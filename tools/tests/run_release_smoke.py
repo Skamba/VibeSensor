@@ -75,16 +75,10 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Use an existing wheel instead of building apps/server/dist/*.whl.",
     )
-    parser.add_argument(
-        "--contracts-dir",
-        default="libs/shared/contracts",
-        help="Shared contracts directory to expose as VIBESENSOR_CONTRACTS_DIR during smoke validation.",
-    )
     args = parser.parse_args(argv)
 
     repo_root = Path(__file__).resolve().parents[2]
     python_cmd = sys.executable
-    contracts_dir = (repo_root / args.contracts_dir).resolve()
 
     if not args.skip_ui_build:
         build_ui_cmd = [python_cmd, "tools/build_ui_static.py"]
@@ -128,7 +122,6 @@ def main(argv: list[str] | None = None) -> int:
                 str(args.port),
             ],
             cwd=repo_root,
-            env={"VIBESENSOR_CONTRACTS_DIR": str(contracts_dir)},
         )
 
     return 0
