@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import shutil
+import tempfile
 from pathlib import Path
 
 from ..json_types import JsonObject
@@ -33,7 +35,6 @@ from .workflow import (
     UpdateServiceControlConfig,
     UpdateServiceController,
     UpdateValidationConfig,
-    UpdateWorkflow,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -210,7 +211,132 @@ class UpdateManager:
             if isinstance(request_or_ssid, UpdateRequest)
             else UpdateRequest(ssid=request_or_ssid, password=password or "")
         )
-        await self._build_workflow().run(request)
+        commands = self._build_command_executor()
+        tracker = self._tracker
+        validator = UpdatePrerequisiteValidator(
+            commands=commands,
+            tracker=tracker,
+            config=self._validation_config,
+        )
+        wifi = self._build_wifi_controller(commands=commands)
+        releases = UpdateReleaseService(
+            tracker=tracker,
+            config=self._release_config,
+        )
+        installer = UpdateInstaller(
+            commands=commands,
+            tracker=tracker,
+            config=self._installer_config,
+        )
+        services = UpdateServiceController(
+            commands=commands,
+            tracker=tracker,
+            config=self._service_control_config,
+        )
+        cancel_requested = self._cancel_event.is_set
+
+        if not await validator.validate(request.ssid):
+            return
+        if cancel_requested():
+            return
+
+        tracker.transition(UpdatePhase.stopping_hotspot)
+        if not await wifi.stop_hotspot():
+            return
+        if cancel_requested():
+            return
+
+        tracker.transition(UpdatePhase.connecting_wifi)
+        if not await wifi.connect_uplink(request.ssid, request.password):
+            return
+        if cancel_requested():
+            return
+
+        tracker.transition(UpdatePhase.checking)
+        tracker.log("Checking for available updates...")
+        from vibesensor import __version__ as current_version
+
+        release_check = await releases.check_for_update(current_version)
+        if release_check.failed:
+            return
+        if release_check.release is None:
+            tracker.log(f"Already up-to-date (version={current_version})")
+            await installer.refresh_esp_firmware(pinned_tag=release_check.latest_tag)
+            if cancel_requested():
+                return
+            await self._complete_update_success(
+                tracker,
+                wifi,
+                "No server update needed; ESP firmware checked",
+            )
+            return
+
+        tracker.log(f"Update available: {current_version} → {release_check.release.version}")
+        if cancel_requested():
+            return
+
+        tracker.transition(UpdatePhase.downloading)
+        tracker.log(f"Downloading release {release_check.release.tag}...")
+        staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
+        try:
+            wheel_path = await releases.download(release_check.release, staging_dir)
+            if wheel_path is None:
+                return
+            tracker.log(
+                "Downloaded "
+                f"{wheel_path.name} "
+                f"(sha256={getattr(release_check.release, 'sha256', '')})",
+            )
+            if not await releases.verify_download(release_check.release, wheel_path):
+                return
+            await installer.refresh_esp_firmware(pinned_tag=release_check.release.tag)
+            if cancel_requested():
+                return
+
+            tracker.transition(UpdatePhase.installing)
+            tracker.log("Installing update...")
+            rollback_ok = await installer.snapshot_for_rollback()
+            if not rollback_ok:
+                tracker.fail(
+                    UpdatePhase.installing,
+                    "Rollback snapshot could not be created",
+                    "Install aborted before mutating the live environment",
+                )
+                return
+            if not await installer.install_release(
+                wheel_path,
+                str(release_check.release.version),
+            ):
+                return
+        finally:
+            shutil.rmtree(staging_dir, ignore_errors=True)
+
+        if cancel_requested():
+            return
+        await self._complete_update_success(tracker, wifi, "Update completed successfully")
+        if await services.schedule_restart():
+            return
+        tracker.add_issue(
+            "done",
+            "Backend restart was not scheduled automatically",
+            "Run 'sudo systemctl restart vibesensor.service' manually",
+        )
+        tracker.log("Automatic backend restart scheduling failed")
+
+    async def _complete_update_success(
+        self,
+        tracker: UpdateStatusTracker,
+        wifi: UpdateWifiController,
+        message: str,
+    ) -> None:
+        tracker.transition(UpdatePhase.restoring_hotspot)
+        tracker.log("Restoring hotspot...")
+        restored = await wifi.restore_hotspot()
+        if not restored:
+            tracker.status.state = UpdateState.failed
+            tracker.persist()
+            return
+        tracker.mark_success(message)
 
     async def _cleanup_after_update(self) -> None:
         tracker = self._tracker
@@ -237,33 +363,6 @@ class UpdateManager:
             tracker.finish_cleanup()
             self._status = tracker.status
             LOGGER.warning("Update cleanup interrupted", exc_info=True)
-
-    def _build_workflow(self) -> UpdateWorkflow:
-        commands = self._build_command_executor()
-        return UpdateWorkflow(
-            tracker=self._tracker,
-            validator=UpdatePrerequisiteValidator(
-                commands=commands,
-                tracker=self._tracker,
-                config=self._validation_config,
-            ),
-            wifi=self._build_wifi_controller(commands=commands),
-            releases=UpdateReleaseService(
-                tracker=self._tracker,
-                config=self._release_config,
-            ),
-            installer=UpdateInstaller(
-                commands=commands,
-                tracker=self._tracker,
-                config=self._installer_config,
-            ),
-            services=UpdateServiceController(
-                commands=commands,
-                tracker=self._tracker,
-                config=self._service_control_config,
-            ),
-            cancel_requested=self._cancel_event.is_set,
-        )
 
     def _build_command_executor(self) -> UpdateCommandExecutor:
         return UpdateCommandExecutor(runner=self._runner, tracker=self._tracker)

@@ -12,7 +12,7 @@ from vibesensor.core.vibration_strength import (
 
 from ..constants import MEMS_NOISE_FLOOR_G
 from ._types import Sample
-from .findings.persistent_findings import _classify_peak_type
+from .findings_persistent import _classify_peak_type
 from .helpers import (
     _amplitude_weighted_speed_window,
     _effective_baseline_floor,

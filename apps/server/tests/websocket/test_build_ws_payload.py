@@ -198,18 +198,8 @@ def _make_state(
         esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
         processing=processing,
         websocket=websocket,
-        lifecycle=LifecycleManager(
-            config=config,  # type: ignore[arg-type]
-            ingress=ingress,
-            settings=settings,
-            metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
-            persistence=persistence,
-            update_manager=_SENTINEL,  # type: ignore[arg-type]
-            esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
-            processing=processing,
-            websocket=websocket,
-        ),
     )
+    state.lifecycle = LifecycleManager(runtime=state)  # type: ignore[arg-type]
     state.websocket.cache.include_heavy = ws_include_heavy
     return state
 

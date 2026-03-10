@@ -9,20 +9,21 @@ from vibesensor.core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 
-from ...constants import MEMS_NOISE_FLOOR_G
-from ...domain_models import as_float_or_none as _as_float
-from .._types import Finding, JsonValue, LocationHotspot, PhaseEvidence
-from ..order_analysis import (
+from ..constants import MEMS_NOISE_FLOOR_G
+from ..domain_models import as_float_or_none as _as_float
+from ._types import Finding, JsonValue, LocationHotspot, PhaseEvidence
+from .findings_constants import SNR_LOG_DIVISOR
+from .findings_order_models import OrderFindingBuildContext, OrderMatchAccumulator
+from .order_analysis import (
+    OrderHypothesis,
     _finding_actions_for_source,
     _i18n_ref,
     _order_label,
 )
-from ._constants import SNR_LOG_DIVISOR
-from .order_models import OrderFindingBuildContext, OrderHypothesisLike, OrderMatchAccumulator
 
 
 def assemble_order_finding(
-    hypothesis: OrderHypothesisLike,
+    hypothesis: OrderHypothesis,
     match: OrderMatchAccumulator,
     *,
     context: OrderFindingBuildContext,

@@ -7,17 +7,17 @@ from collections import defaultdict
 
 from vibesensor.core.vibration_strength import percentile
 
-from ...domain_models import as_float_or_none as _as_float
-from .._types import IntensityRow, JsonObject, PhaseSpeedBreakdownRow, Sample, SpeedBreakdownRow
-from ..helpers import (
+from ..domain_models import as_float_or_none as _as_float
+from ._types import IntensityRow, JsonObject, PhaseSpeedBreakdownRow, Sample, SpeedBreakdownRow
+from .findings_speed_profile import _phase_to_str
+from .helpers import (
     _location_label,
     _primary_vibration_strength_db,
     _speed_bin_label,
     _speed_bin_sort_key,
     counter_delta,
 )
-from ..phase_segmentation import DrivingPhase
-from .speed_profile import _phase_to_str
+from .phase_segmentation import DrivingPhase
 
 
 def _mean(vals: list[float]) -> float:

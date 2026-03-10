@@ -72,6 +72,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        assert runtime.lifecycle is not None
         try:
             await runtime.lifecycle.start()
         except Exception:

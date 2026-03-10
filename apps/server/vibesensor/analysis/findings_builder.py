@@ -4,21 +4,21 @@ from __future__ import annotations
 
 from typing import cast
 
-from .._types import Finding, MetadataDict, PhaseLabels, Sample
-from ..helpers import (
-    _locations_connected_throughout_run,
-    _tire_reference_from_metadata,
-)
-from ..phase_segmentation import segment_run_phases
-from .builder_support import (
+from ._types import Finding, MetadataDict, PhaseLabels, Sample
+from .findings_builder_support import (
     PhaseSegmenter,
     build_reference_findings,
     collect_order_frequencies,
     finalize_findings,
     prepare_analysis_samples,
 )
-from .order_findings import _build_order_findings
-from .persistent_findings import _build_persistent_peak_findings
+from .findings_order_findings import _build_order_findings
+from .findings_persistent import _build_persistent_peak_findings
+from .helpers import (
+    _locations_connected_throughout_run,
+    _tire_reference_from_metadata,
+)
+from .phase_segmentation import segment_run_phases
 
 
 def _build_findings(

@@ -192,18 +192,8 @@ def _make_runtime(**overrides: Any):
         esp_flash_manager=esp_flash_manager,
         processing=processing,
         websocket=websocket,
-        lifecycle=LifecycleManager(
-            config=config,
-            ingress=ingress,
-            settings=settings,
-            metrics_logger=diagnostics,
-            persistence=persistence,
-            update_manager=update_manager,
-            esp_flash_manager=esp_flash_manager,
-            processing=processing,
-            websocket=websocket,
-        ),
     )
+    rt.lifecycle = LifecycleManager(runtime=rt)
     if overrides:
         for name, value in overrides.items():
             setattr(rt, name, value)

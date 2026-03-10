@@ -92,14 +92,6 @@ class SignalProcessor:
         self._views = SignalProcessorViews(store=self._store, metrics=self._metrics)
         self._worker_pool = worker_pool
 
-        # Preserve the established internal surface used by tests/regressions.
-        self._buffers = self._store.buffers
-        self._lock = self._store.lock
-        self._fft_window = self._metrics.fft_window
-        self._fft_scale = self._metrics.fft_scale
-        self._fft_cache = self._metrics.fft_cache
-        self._fft_cache_lock = self._metrics.fft_cache_lock
-
     @staticmethod
     def _smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
         return SignalMetricsComputer.smooth_spectrum(amps, bins=bins)
@@ -145,15 +137,15 @@ class SignalProcessor:
         )
 
     def _get_or_create(self, client_id: str) -> ClientBuffer:
-        with self._lock:
+        with self._store.lock:
             return self._store._get_or_create_unlocked(client_id)
 
     def _resize_buffer(self, buf: ClientBuffer, new_capacity: int) -> None:
-        with self._lock:
+        with self._store.lock:
             self._store._resize_buffer_unlocked(buf, new_capacity)
 
     def _latest(self, buf: ClientBuffer, n: int) -> FloatArray:
-        with self._lock:
+        with self._store.lock:
             return self._store.copy_latest(buf, n)
 
     def _fft_params(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray]:

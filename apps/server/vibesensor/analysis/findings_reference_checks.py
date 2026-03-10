@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .._types import Finding, JsonValue
+from ._types import Finding, JsonValue
 
 # ---------------------------------------------------------------------------
 # Module-level i18n reference constants (hoisted; avoids per-call dict

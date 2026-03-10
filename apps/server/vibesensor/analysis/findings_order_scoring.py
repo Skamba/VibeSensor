@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from ...domain_models import as_float_or_none as _as_float
-from .._types import Finding, MatchedPoint
-from ._constants import (
+from ..domain_models import as_float_or_none as _as_float
+from ._types import Finding, MatchedPoint
+from .findings_constants import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     LIGHT_STRENGTH_MAX_DB,

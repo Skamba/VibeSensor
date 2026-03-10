@@ -12,7 +12,7 @@ from test_support.scenario_regression import (
 )
 
 from vibesensor.analysis import build_findings_for_samples, summarize_run_data
-from vibesensor.analysis.findings.intensity import (
+from vibesensor.analysis.findings_intensity import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
 )

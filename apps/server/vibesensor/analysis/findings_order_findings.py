@@ -6,52 +6,53 @@ and engine orders; computes confidence scores; suppresses engine aliases.
 
 from __future__ import annotations
 
-from .._types import Finding, MatchedPoint, MetadataDict, PhaseEvidence, PhaseLabels, Sample
-from ..helpers import (
-    _corr_abs_clamped,
-    _sample_top_peaks,
-    _speed_bin_sort_key,
-)
-from ..order_analysis import (
-    _order_hypotheses,
-)
-from ..order_analysis import _order_label as _order_label_impl
-from ..test_plan import _location_speedbin_summary
-from ._constants import (
+from ._types import Finding, MatchedPoint, MetadataDict, PhaseEvidence, PhaseLabels, Sample
+from .findings_constants import (
     CONSTANT_SPEED_STDDEV_KMH,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
     ORDER_MIN_COVERAGE_POINTS,
     ORDER_MIN_MATCH_POINTS,
 )
-from .order_assembly import assemble_order_finding
-from .order_matching import match_samples_for_hypothesis
-from .order_models import OrderFindingBuildContext, OrderHypothesisLike, OrderMatchAccumulator
-from .order_scoring import (
+from .findings_order_assembly import assemble_order_finding
+from .findings_order_matching import match_samples_for_hypothesis
+from .findings_order_models import OrderFindingBuildContext, OrderMatchAccumulator
+from .findings_order_scoring import (
     _NEGLIGIBLE_STRENGTH_CONF_CAP as _NEGLIGIBLE_STRENGTH_CONF_CAP_IMPORTED,
 )
-from .order_scoring import (
+from .findings_order_scoring import (
     compute_order_confidence as _compute_order_confidence_impl,
 )
-from .order_scoring import (
+from .findings_order_scoring import (
     detect_diffuse_excitation as _detect_diffuse_excitation_impl,
 )
-from .order_scoring import (
+from .findings_order_scoring import (
     suppress_engine_aliases as _suppress_engine_aliases_impl,
 )
-from .order_support import (
+from .findings_order_support import (
     apply_localization_override as _apply_localization_override_impl,
 )
-from .order_support import (
+from .findings_order_support import (
     compute_amplitude_and_error_stats as _compute_amplitude_and_error_stats_impl,
 )
-from .order_support import (
+from .findings_order_support import (
     compute_matched_speed_phase_evidence as _compute_matched_speed_phase_evidence_impl,
 )
-from .order_support import (
+from .findings_order_support import (
     compute_phase_stats as _compute_phase_stats_impl,
 )
-from .speed_profile import _speed_profile_from_points
+from .findings_speed_profile import _speed_profile_from_points
+from .helpers import (
+    _corr_abs_clamped,
+    _sample_top_peaks,
+    _speed_bin_sort_key,
+)
+from .order_analysis import (
+    OrderHypothesis,
+    _order_hypotheses,
+)
+from .order_analysis import _order_label as _order_label_impl
+from .test_plan import _location_speedbin_summary
 
 _NEGLIGIBLE_STRENGTH_CONF_CAP = _NEGLIGIBLE_STRENGTH_CONF_CAP_IMPORTED
 
@@ -188,7 +189,7 @@ def _compute_matched_speed_phase_evidence(
 def _match_samples_for_hypothesis(
     samples: list[Sample],
     cached_peaks: list[list[tuple[float, float]]],
-    hypothesis: OrderHypothesisLike,
+    hypothesis: OrderHypothesis,
     metadata: MetadataDict,
     tire_circumference_m: float | None,
     per_sample_phases: PhaseLabels | None,
@@ -266,7 +267,7 @@ def _apply_localization_override(
 
 
 def _assemble_order_finding(
-    hypothesis: OrderHypothesisLike,
+    hypothesis: OrderHypothesis,
     m: OrderMatchAccumulator,
     *,
     context: OrderFindingBuildContext,

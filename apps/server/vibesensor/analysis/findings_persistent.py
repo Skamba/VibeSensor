@@ -11,10 +11,15 @@ from vibesensor.core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 
-from ...constants import MEMS_NOISE_FLOOR_G
-from ...domain_models import as_float_or_none as _as_float
-from .._types import Finding, FindingEvidenceMetrics, PhaseEvidence, PhaseLabels, Sample
-from ..helpers import (
+from ..constants import MEMS_NOISE_FLOOR_G
+from ..domain_models import as_float_or_none as _as_float
+from ._types import Finding, FindingEvidenceMetrics, PhaseEvidence, PhaseLabels, Sample
+from .findings_constants import (
+    NEGLIGIBLE_STRENGTH_MAX_DB,
+    SNR_LOG_DIVISOR,
+)
+from .findings_speed_profile import _phase_to_str, _speed_profile_from_points
+from .helpers import (
     _effective_baseline_floor,
     _estimate_strength_floor_amp_g,
     _location_label,
@@ -22,13 +27,8 @@ from ..helpers import (
     _sample_top_peaks,
     _speed_bin_label,
 )
-from ..order_analysis import _i18n_ref
-from ..phase_segmentation import DrivingPhase
-from ._constants import (
-    NEGLIGIBLE_STRENGTH_MAX_DB,
-    SNR_LOG_DIVISOR,
-)
-from .speed_profile import _phase_to_str, _speed_profile_from_points
+from .order_analysis import _i18n_ref
+from .phase_segmentation import DrivingPhase
 
 PERSISTENT_PEAK_MIN_PRESENCE = 0.15
 

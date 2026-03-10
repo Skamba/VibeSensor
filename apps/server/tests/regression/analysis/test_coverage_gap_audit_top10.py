@@ -23,7 +23,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.analysis import summarize_run_data
-from vibesensor.analysis.findings.order_findings import (
+from vibesensor.analysis.findings_order_findings import (
     _compute_order_confidence,
     _detect_diffuse_excitation,
     _suppress_engine_aliases,

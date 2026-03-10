@@ -22,17 +22,16 @@ from _paths import SERVER_ROOT
 
 _SERVER_PKG = SERVER_ROOT / "vibesensor"
 _ANALYSIS_PKG = _SERVER_PKG / "analysis"
-_REPORT_MAPPING_PKG = _SERVER_PKG / "report" / "mapping"
+_REPORT_MAPPING_MODULE = _SERVER_PKG / "report" / "mapping.py"
 
-# All Python files in vibesensor/ that are NOT inside analysis/ or report/mapping/
-# (report/mapping/ bridges analysis→report and legitimately uses analysis internals)
+# All Python files in vibesensor/ that are NOT inside analysis/ or report/mapping.py
+# (report/mapping.py bridges analysis→report and legitimately uses analysis internals)
 _EXTERNAL_MODULES = [
     p
     for p in _SERVER_PKG.rglob("*.py")
     if p.name != "__init__.py"
     and _ANALYSIS_PKG not in p.parents
-    and _REPORT_MAPPING_PKG not in p.parents
-    and p.parent != _REPORT_MAPPING_PKG
+    and p != _REPORT_MAPPING_MODULE
 ]
 
 
@@ -162,7 +161,6 @@ def test_summarize_run_data_returns_expected_structure() -> None:
 
 _ANALYSIS_ONLY_NAMES: frozenset[str] = frozenset(
     {
-        "findings.py",
         "order_analysis.py",
         "phase_segmentation.py",
         "plot_data.py",

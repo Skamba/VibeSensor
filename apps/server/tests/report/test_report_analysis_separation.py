@@ -32,7 +32,12 @@ _REPORT_DIR = SERVER_ROOT / "vibesensor" / "report"
 _ANALYSIS_PKG = "vibesensor.analysis"
 
 # Modules in the report package that should be checked.
-_REPORT_MODULES = [p for p in _REPORT_DIR.glob("*.py") if p.name != "__init__.py"]
+# mapping.py is excluded: it is the intentional analysis→report bridge.
+_REPORT_MODULES = [
+    p
+    for p in _REPORT_DIR.glob("*.py")
+    if p.name not in ("__init__.py", "mapping.py")
+]
 
 
 @pytest.mark.parametrize("module_path", _REPORT_MODULES, ids=lambda p: p.name)
