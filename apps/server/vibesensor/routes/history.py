@@ -13,6 +13,7 @@ from ..api_models import (
     HistoryListResponse,
     HistoryRunResponse,
 )
+from ._helpers import domain_errors_to_http
 
 if TYPE_CHECKING:
     from ..runtime.subsystems import RuntimePersistenceSubsystem
@@ -36,21 +37,24 @@ def create_history_routes(
 
     @router.get("/api/history/{run_id}", response_model=HistoryRunResponse)
     async def get_history_run(run_id: str) -> HistoryRunResponse:
-        return HistoryRunResponse(**await query_service.get_run(run_id))
+        with domain_errors_to_http():
+            return HistoryRunResponse(**await query_service.get_run(run_id))
 
     @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
     async def get_history_insights(
         run_id: str,
         lang: str | None = Query(default=None),
     ) -> HistoryInsightsResponse | JSONResponse:
-        result = await query_service.get_insights(run_id, requested_lang=lang)
+        with domain_errors_to_http():
+            result = await query_service.get_insights(run_id, requested_lang=lang)
         if result.status_code != 200:
             return JSONResponse(status_code=result.status_code, content=result.payload)
         return HistoryInsightsResponse(**result.payload)
 
     @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)
     async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:
-        return DeleteHistoryRunResponse(**await delete_service.delete_run(run_id))
+        with domain_errors_to_http():
+            return DeleteHistoryRunResponse(**await delete_service.delete_run(run_id))
 
     # -- report PDF ------------------------------------------------------------
 
@@ -59,7 +63,8 @@ def create_history_routes(
         run_id: str,
         lang: str | None = Query(default=None),
     ) -> Response:
-        pdf = await report_service.build_pdf(run_id, lang)
+        with domain_errors_to_http():
+            pdf = await report_service.build_pdf(run_id, lang)
         pdf_headers = {
             "Content-Disposition": f'attachment; filename="{pdf.filename}"',
         }
@@ -73,7 +78,8 @@ def create_history_routes(
 
     @router.get("/api/history/{run_id}/export", response_class=StreamingResponse)
     async def export_history_run(run_id: str) -> StreamingResponse:
-        export = await export_service.build_export(run_id)
+        with domain_errors_to_http():
+            export = await export_service.build_export(run_id)
         return StreamingResponse(
             content=export.iter_bytes(),
             media_type="application/zip",
