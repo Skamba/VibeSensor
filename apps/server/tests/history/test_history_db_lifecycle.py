@@ -67,7 +67,7 @@ def test_schema_version_ancient_no_migration_fails_fast(tmp_path: Path) -> None:
     conn.commit()
     conn.close()
 
-    with pytest.raises(RuntimeError, match="No migration registered"):
+    with pytest.raises(RuntimeError, match="incompatible"):
         HistoryDB(db_path)
 
 

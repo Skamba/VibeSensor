@@ -142,7 +142,7 @@ compute_ui_hash() {
     cd "${REPO_ROOT}"
     git ls-files \
       apps/ui \
-      libs/shared/contracts \
+      libs/shared/ts \
       tools/config/sync_shared_contracts_to_ui.mjs \
       | LC_ALL=C sort \
       | xargs sha256sum \
@@ -546,22 +546,8 @@ install -m 0644 \
 
 if [ ! -f "${ROOTFS_DIR}/etc/vibesensor/config.yaml" ]; then
   install -m 0644 \
-    "${ROOTFS_DIR}/opt/VibeSensor/apps/server/config.example.yaml" \
+    "${ROOTFS_DIR}/opt/VibeSensor/apps/server/config.pi.yaml" \
     "${ROOTFS_DIR}/etc/vibesensor/config.yaml"
-fi
-
-# Ensure first-boot config paths are writable by the non-root service user and
-# default HTTP binds to a non-privileged port.
-sed -i \
-  -e 's#state_file: data/hotspot-self-heal-state.json#state_file: /var/lib/vibesensor/hotspot-self-heal-state.json#' \
-  -e 's#metrics_log_path: data/metrics.jsonl#metrics_log_path: /var/log/vibesensor/metrics.jsonl#' \
-  -e 's#history_db_path: data/history.db#history_db_path: /var/lib/vibesensor/history.db#' \
-  "${ROOTFS_DIR}/etc/vibesensor/config.yaml"
-
-if [ ! -f "${ROOTFS_DIR}/etc/vibesensor/wifi-secrets.env" ]; then
-  install -m 0600 \
-    "${ROOTFS_DIR}/opt/VibeSensor/apps/server/wifi-secrets.example.env" \
-    "${ROOTFS_DIR}/etc/vibesensor/wifi-secrets.env"
 fi
 
 install -m 0644 \
@@ -1019,7 +1005,7 @@ mods = [
     "fastapi",
     "uvicorn",
     "vibesensor",
-    "vibesensor_core",
+    "vibesensor.core",
     "vibesensor_shared",
 ]
 for mod in mods:
@@ -1055,7 +1041,6 @@ ls /opt/VibeSensor/apps/server/.venv/lib/python*/site-packages/__editable__.vibe
 if ! run_qemu_chroot /bin/bash -lc '
 set -e
 export VIBESENSOR_DISABLE_AUTO_APP=1
-export VIBESENSOR_CONTRACTS_DIR=/opt/VibeSensor/libs/shared/contracts
 pkill -f "python -m vibesensor.app" >/dev/null 2>&1 || true
 cp /etc/vibesensor/config.yaml /tmp/vibesensor-smoke-config.yaml
 sed -i \

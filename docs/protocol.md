@@ -6,8 +6,7 @@ This document is generated from code and shared contract files.
 - Source of truth:
   - `apps/server/vibesensor/protocol.py`
   - `apps/server/vibesensor/config.py`
-  - `libs/shared/contracts/metrics_fields.json`
-  - `libs/shared/contracts/report_fields.json`
+  - `apps/server/vibesensor/contracts.py`
 
 ## Network contract
 

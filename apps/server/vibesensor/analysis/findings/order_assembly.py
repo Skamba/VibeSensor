@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from math import log1p
 
-from vibesensor_core.vibration_strength import (
+from vibesensor.core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 

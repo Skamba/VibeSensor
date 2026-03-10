@@ -5,7 +5,8 @@ from typing import TypeAlias, TypedDict
 
 import numpy as np
 import numpy.typing as npt
-from vibesensor_core.vibration_strength import VibrationStrengthMetrics
+
+from vibesensor.core.vibration_strength import VibrationStrengthMetrics
 
 from ..payload_types import AxisPeak, MetricsPayload
 

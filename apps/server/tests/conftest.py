@@ -78,7 +78,7 @@ class FakeState:
         self.persistence = RuntimePersistenceSubsystem(
             history_db=self.history_db,  # type: ignore[arg-type]
             query_service=HistoryRunQueryService(self.history_db, self.settings_store),
-            delete_service=HistoryRunDeleteService(self.history_db, self.settings_store),
+            delete_service=HistoryRunDeleteService(self.history_db),
             report_service=HistoryReportService(self.history_db, self.settings_store),
             export_service=HistoryExportService(self.history_db),
         )

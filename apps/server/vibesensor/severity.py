@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from vibesensor_core.strength_bands import (
+from vibesensor.core.strength_bands import (
     DECAY_TICKS,
     HYSTERESIS_DB,
     PERSISTENCE_TICKS,

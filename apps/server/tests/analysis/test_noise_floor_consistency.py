@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from vibesensor_core.vibration_strength import noise_floor_amp_p20_g
 
+from vibesensor.core.vibration_strength import noise_floor_amp_p20_g
 from vibesensor.processing import SignalProcessor
 
 # ---------------------------------------------------------------------------

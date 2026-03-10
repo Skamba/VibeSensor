@@ -3,7 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from _report_pdf_test_helpers import RUN_END, run_metadata, sample, summarize_log, write_jsonl
+from _report_pdf_test_helpers import sample
+from test_support.report_helpers import RUN_END, write_jsonl
+from test_support.report_helpers import report_run_metadata as run_metadata
+
+from vibesensor.analysis import summarize_log
 
 
 def test_sensor_location_stats_include_percentiles_and_strength_distribution(

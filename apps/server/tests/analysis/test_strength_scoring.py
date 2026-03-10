@@ -3,7 +3,8 @@ from __future__ import annotations
 from math import sqrt
 
 import pytest
-from vibesensor_core.vibration_strength import (
+
+from vibesensor.core.vibration_strength import (
     median,
     peak_band_rms_amp_g,
     strength_floor_amp_g,

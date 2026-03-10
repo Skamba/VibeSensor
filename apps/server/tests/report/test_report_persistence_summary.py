@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from _report_persistence_helpers import make_metadata, sample, summarize, uniform_samples
+from _report_persistence_helpers import summarize, uniform_samples
+from test_support.report_helpers import (
+    analysis_metadata as make_metadata,
+)
+from test_support.report_helpers import (
+    analysis_sample_with_peaks as sample,
+)
 
 from vibesensor.analysis import build_findings_for_samples
 from vibesensor.analysis.plot_data import (

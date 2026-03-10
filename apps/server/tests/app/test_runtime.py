@@ -125,6 +125,7 @@ class _StubProcessor:
 def _make_runtime(**overrides: Any):
     """Build a RuntimeState with stubs for lifecycle testing."""
     import vibesensor.runtime as runtime_module
+    from vibesensor.runtime.builders import build_lifecycle_manager
     from vibesensor.runtime.processing_loop import (
         ProcessingLoop,
         ProcessingLoopState,
@@ -186,7 +187,7 @@ def _make_runtime(**overrides: Any):
             settings=settings,
         ),
     )
-    rt = runtime_module.build_runtime_state(
+    rt = runtime_module.RuntimeState(
         config=config,
         ingress=ingress,
         settings=settings,
@@ -195,6 +196,16 @@ def _make_runtime(**overrides: Any):
         updates=updates,
         processing=processing,
         websocket=websocket,
+        lifecycle=build_lifecycle_manager(
+            config=config,
+            ingress=ingress,
+            settings=settings,
+            recording=diagnostics,
+            persistence=persistence,
+            updates=updates,
+            processing=processing,
+            websocket=websocket,
+        ),
     )
     if overrides:
         for name, value in overrides.items():

@@ -33,11 +33,11 @@ jobs:
 
       - name: Ruff check
         run: |
-          ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
+          ruff check apps/server/vibesensor apps/server/tests apps/simulator
 
       - name: Ruff format check
         run: |
-          ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
+          ruff format --check apps/server/vibesensor apps/server/tests apps/simulator
 
       - name: Line endings
         run: |
@@ -48,6 +48,7 @@ jobs:
           vibesensor-config-preflight apps/server/config.example.yaml
           vibesensor-config-preflight apps/server/config.dev.yaml
           vibesensor-config-preflight apps/server/config.docker.yaml
+          vibesensor-config-preflight apps/server/config.pi.yaml
 
       - name: Verify no path indirections
         run: |
@@ -89,7 +90,7 @@ jobs:
       - name: Mypy backend enforced coverage
         working-directory: apps/server
         env:
-          MYPYPATH: .:../../libs/core/python:../../libs/shared/python
+          MYPYPATH: .
         run: |
           python -m mypy --config-file pyproject.toml
 
@@ -182,17 +183,13 @@ jobs:
           python3 tools/tests/run_release_smoke.py
 
   backend-tests:
-    name: Backend tests (shard ${{ matrix.shard }}/4)
+    name: Backend tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs:
       - backend-quality
       - backend-typecheck
       - release-smoke
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
 
     steps:
       - uses: actions/checkout@v4
@@ -210,9 +207,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e "./apps/server[dev]"
 
-      - name: Backend tests (non-selenium, shard)
+      - name: Backend tests (non-selenium)
         run: |
-          python3 tools/tests/pytest_shard.py --shard-index ${{ matrix.shard }} --shard-count 4 -- -m "not selenium" --tb=short apps/server/tests
+          python -m pytest -q -m "not selenium" --tb=short apps/server/tests
 
   e2e:
     name: E2E (docker)

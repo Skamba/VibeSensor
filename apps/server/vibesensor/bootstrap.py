@@ -7,12 +7,10 @@ monolithic composition root.
 from __future__ import annotations
 
 from .config import AppConfig
-from .runtime import (
-    RuntimeState,
-    build_runtime_state,
-)
+from .runtime import RuntimeState
 from .runtime.builders import (
     build_ingress_subsystem,
+    build_lifecycle_manager,
     build_persistence_subsystem,
     build_processing_subsystem,
     build_recording_subsystem,
@@ -57,7 +55,7 @@ def build_services(config: AppConfig) -> RuntimeState:
         ingress=ingress,
         settings=settings,
     )
-    runtime = build_runtime_state(
+    runtime = RuntimeState(
         config=config,
         ingress=ingress,
         settings=settings,
@@ -66,6 +64,16 @@ def build_services(config: AppConfig) -> RuntimeState:
         updates=updates,
         processing=processing,
         websocket=websocket,
+        lifecycle=build_lifecycle_manager(
+            config=config,
+            ingress=ingress,
+            settings=settings,
+            recording=recording,
+            persistence=persistence,
+            updates=updates,
+            processing=processing,
+            websocket=websocket,
+        ),
     )
     settings.apply_car_settings()
     settings.apply_speed_source_settings()

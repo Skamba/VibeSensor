@@ -1,16 +1,9 @@
-"""Schema, typing, and shared constants for HistoryDB."""
+"""Schema and shared constants for HistoryDB."""
 
 from __future__ import annotations
 
 import logging
-import sqlite3
-from collections.abc import Iterator
-from contextlib import AbstractContextManager
-from pathlib import Path
-from typing import Final, Protocol
-
-from ..json_types import JsonObject, JsonValue
-from ._migrations import backup_database, run_migrations
+from typing import Final
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,50 +37,6 @@ def can_transition_run(current_status: str | None, target_status: str) -> bool:
 
 
 ANALYSIS_SCHEMA_VERSION = 1
-
-
-# ---------------------------------------------------------------------------
-# Cursor-provider protocol (previously _typing.py)
-# ---------------------------------------------------------------------------
-
-
-class HistoryCursorProvider(Protocol):
-    """Protocol for HistoryDB mixins that require SQLite cursor access."""
-
-    def _cursor(self, *, commit: bool = True) -> AbstractContextManager[sqlite3.Cursor]: ...
-
-    def write_transaction_cursor(self) -> AbstractContextManager[sqlite3.Cursor]: ...
-
-    @staticmethod
-    def _run_status(cur: sqlite3.Cursor, run_id: str) -> str | None: ...
-
-    @staticmethod
-    def _log_transition_skip(
-        run_id: str,
-        current_status: str | None,
-        target_status: str,
-    ) -> None: ...
-
-    def get_setting(self, key: str) -> JsonValue | None: ...
-
-    def set_setting(self, key: str, value: JsonValue) -> None: ...
-
-    def iter_run_samples(
-        self,
-        run_id: str,
-        batch_size: int = 1000,
-        offset: int = 0,
-    ) -> Iterator[list[JsonObject]]: ...
-
-    def _iter_v2_samples(
-        self,
-        run_id: str,
-        batch_size: int = 1000,
-        offset: int = 0,
-    ) -> Iterator[list[JsonObject]]: ...
-
-    def _resolve_keyset_offset(self, table: str, run_id: str, offset: int) -> int | None: ...
-
 
 SCHEMA_VERSION = 5
 
@@ -167,56 +116,3 @@ CREATE TABLE IF NOT EXISTS client_names (
     updated_at  TEXT NOT NULL
 );
 """
-
-
-class HistorySchemaMixin:
-    """Mixin responsible for ensuring the SQLite schema exists and is supported."""
-
-    __slots__ = ()
-
-    def _ensure_schema(self: HistoryCursorProvider) -> None:
-        with self._cursor() as cur:
-            cur.executescript(SCHEMA_SQL)
-        with self._cursor() as cur:
-            cur.execute("SELECT value FROM schema_meta WHERE key = ?", ("version",))
-            row = cur.fetchone()
-            if row is None:
-                cur.execute(
-                    "INSERT INTO schema_meta (key, value) VALUES (?, ?)",
-                    ("version", str(SCHEMA_VERSION)),
-                )
-                return
-            try:
-                version = int(str(row[0]))
-            except (ValueError, TypeError):
-                LOGGER.error(
-                    "Corrupted schema_meta version value %r; resetting to %s",
-                    row[0],
-                    SCHEMA_VERSION,
-                )
-                cur.execute(
-                    "UPDATE schema_meta SET value = ? WHERE key = 'version'",
-                    (str(SCHEMA_VERSION),),
-                )
-                return
-            if version == SCHEMA_VERSION:
-                return
-            if version > SCHEMA_VERSION:
-                raise RuntimeError(
-                    f"History DB schema version {version} is newer than "
-                    f"supported {SCHEMA_VERSION}. Cannot downgrade.",
-                )
-            # -- Migrate forward: older version → current -----------------
-            db_path = getattr(self, "db_path", None)  # HistoryDB exposes this
-            if isinstance(db_path, Path):
-                backup_database(db_path, version)
-            LOGGER.info(
-                "Migrating history DB schema v%d → v%d …",
-                version,
-                SCHEMA_VERSION,
-            )
-            conn = cur.connection
-            # Close this cursor's transaction before handing to runner.
-            conn.commit()
-            # run_migrations manages its own transaction.
-            run_migrations(conn, version, SCHEMA_VERSION)

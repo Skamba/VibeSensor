@@ -82,19 +82,8 @@ d /var/log/wifi 0755 root root -
 EOF
 run_as_root systemd-tmpfiles --create /etc/tmpfiles.d/vibesensor-wifi.conf >/dev/null 2>&1 || true
 if [ ! -f /etc/vibesensor/config.yaml ]; then
-  run_as_root cp "${PI_DIR}/config.example.yaml" /etc/vibesensor/config.yaml
+  run_as_root cp "${PI_DIR}/config.pi.yaml" /etc/vibesensor/config.yaml
 fi
-# Ensure first-boot config is writable for non-root service user and binds a non-privileged port.
-# Only rewrite known defaults so explicit custom values are preserved.
-run_as_root sed -i \
-  -e 's#state_file: data/hotspot-self-heal-state.json#state_file: /var/lib/vibesensor/hotspot-self-heal-state.json#' \
-  -e 's#metrics_log_path: data/metrics.jsonl#metrics_log_path: /var/log/vibesensor/metrics.jsonl#' \
-  -e 's#history_db_path: data/history.db#history_db_path: /var/lib/vibesensor/history.db#' \
-  /etc/vibesensor/config.yaml
-if [ ! -f /etc/vibesensor/wifi-secrets.env ]; then
-  run_as_root cp "${PI_DIR}/wifi-secrets.example.env" /etc/vibesensor/wifi-secrets.env
-fi
-run_as_root chmod 600 /etc/vibesensor/wifi-secrets.env
 
 sed \
   -e "s#__PI_DIR__#${PI_DIR}#g" \

@@ -2,16 +2,13 @@
 
 Maps short sensor location codes (e.g. ``"fl"``, ``"rr"``) to human-readable
 labels and provides helpers to identify wheel-mounted sensor positions.
-
-Location codes and labels are sourced from the shared contract
-``libs/shared/contracts/location_codes.json`` via ``vibesensor_shared.contracts``.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from vibesensor_shared.contracts import LOCATION_CODES
+from vibesensor.contracts import LOCATION_CODES
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

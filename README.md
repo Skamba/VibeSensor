@@ -42,7 +42,7 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 
 - Raw sensor samples may contain acceleration values in g (for example `accel_x_g`, `accel_y_g`, `accel_z_g`) and related ingest-time/raw-spectrum amplitudes.
 - Post-stop analysis outputs (persisted analysis summaries, findings metrics, report-template artifacts, and report-facing strength fields) are dB-only.
-- The canonical vibration-strength definition is implemented in `libs/core/python/vibesensor_core/vibration_strength.py` via `vibration_strength_db_scalar()` and follows:
+- The canonical vibration-strength definition is implemented in `apps/server/vibesensor/core/vibration_strength.py` via `vibration_strength_db_scalar()` and follows:
   - `20*log10((peak_band_rms_amp_g + eps) / (floor_amp_g + eps))`
   - `eps = max(1e-9, floor_amp_g * 0.05)`
 
@@ -101,7 +101,7 @@ Each component has its own README with setup instructions and details.
 - Operational runbooks: [docs/operational-runbooks.md](docs/operational-runbooks.md)
 - CI and release automation: [.github/workflows/ci.yml](.github/workflows/ci.yml), [.github/workflows/main-release.yml](.github/workflows/main-release.yml)
 - AI guidance (canonical): [docs/ai/repo-map.md](docs/ai/repo-map.md), [.github/instructions/general.instructions.md](.github/instructions/general.instructions.md), [.github/copilot-instructions.md](.github/copilot-instructions.md)
-- Historical snapshots/audits: [docs/test_coverage_audit.md](docs/test_coverage_audit.md), [docs/ai/progress.md](docs/ai/progress.md)
+- Historical snapshots/audits: [docs/test_coverage_audit.md](docs/test_coverage_audit.md)
 
 ## Quick Start
 
@@ -228,9 +228,6 @@ pytest -q -m "not selenium" apps/server/tests
 # Single feature area
 pytest -q apps/server/tests/analysis/
 pytest -q apps/server/tests/report/
-
-# With live progress and ETA
-python3 tools/tests/pytest_progress.py -- -m "not selenium" apps/server/tests
 
 # UI typecheck + build
 cd apps/ui && npm run typecheck && npm run build

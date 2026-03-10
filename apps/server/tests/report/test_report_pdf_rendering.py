@@ -4,23 +4,26 @@ from io import BytesIO
 from pathlib import Path
 
 from _report_pdf_test_helpers import (
-    KMH_TO_MPS,
-    RUN_END,
-    Canvas,
-    PartSuggestion,
-    PdfReader,
-    SystemFindingCard,
-    __version__,
-    _draw_system_card,
-    build_report_pdf,
-    car_location_diagram,
     extract_media_box,
-    map_summary,
-    run_metadata,
     sample,
-    summarize_log,
+)
+from pypdf import PdfReader
+from reportlab.pdfgen.canvas import Canvas
+from test_support.report_helpers import (
+    RUN_END,
     write_jsonl,
 )
+from test_support.report_helpers import (
+    report_run_metadata as run_metadata,
+)
+
+from vibesensor import __version__
+from vibesensor.analysis import map_summary, summarize_log
+from vibesensor.constants import KMH_TO_MPS
+from vibesensor.report.pdf_diagram_render import car_location_diagram
+from vibesensor.report.pdf_engine import build_report_pdf
+from vibesensor.report.pdf_page1 import _draw_system_card
+from vibesensor.report.report_data import PartSuggestion, SystemFindingCard
 
 
 def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:

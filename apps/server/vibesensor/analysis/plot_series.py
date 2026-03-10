@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TypedDict
 
-from vibesensor_core.vibration_strength import percentile
+from vibesensor.core.vibration_strength import percentile
 
 from ..domain_models import as_float_or_none as _as_float
 from ._types import Sample, SummaryData

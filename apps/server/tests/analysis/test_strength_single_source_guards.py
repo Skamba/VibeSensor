@@ -97,11 +97,11 @@ def test_client_assets_do_not_compute_strength_metrics() -> None:
 def test_strength_metric_definition_is_centralized() -> None:
     repo_root = REPO_ROOT
     server_root = repo_root / "apps" / "server" / "vibesensor"
-    core_vibration_math = (
-        repo_root / "libs" / "core" / "python" / "vibesensor_core" / "vibration_strength.py"
-    )
+    core_vibration_math = server_root / "core" / "vibration_strength.py"
 
     for path in sorted(server_root.rglob("*.py")):
+        if path == core_vibration_math:
+            continue
         text = _read(path)
         assert not _has_log10_call(text), f"Unexpected log10 use in {path}"
 

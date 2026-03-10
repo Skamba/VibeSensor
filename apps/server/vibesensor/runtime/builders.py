@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import cast
 
-from vibesensor_core.sensor_units import get_accel_scale_g_per_lsb
+from vibesensor.core.sensor_units import get_accel_scale_g_per_lsb
 
 from ..analysis_settings import AnalysisSettingsStore
 from ..config import AppConfig
@@ -71,7 +71,7 @@ def build_persistence_subsystem(
     return RuntimePersistenceSubsystem(
         history_db=history_db,
         query_service=HistoryRunQueryService(history_db, settings_store),
-        delete_service=HistoryRunDeleteService(history_db, settings_store),
+        delete_service=HistoryRunDeleteService(history_db),
         report_service=HistoryReportService(history_db, settings_store),
         export_service=HistoryExportService(history_db),
     )

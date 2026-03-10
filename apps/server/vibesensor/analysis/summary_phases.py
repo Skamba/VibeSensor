@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from datetime import datetime, timedelta
 
-from vibesensor_core.vibration_strength import (
+from vibesensor.core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 

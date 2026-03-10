@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
+from vibesensor.core.vibration_strength import compute_vibration_strength_db
 from vibesensor.processing import SignalProcessor
 
 

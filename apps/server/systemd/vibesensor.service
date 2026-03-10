@@ -21,7 +21,6 @@ TimeoutStopSec=20
 Restart=on-failure
 RestartSec=2
 Environment=PYTHONUNBUFFERED=1
-Environment=VIBESENSOR_CONTRACTS_DIR=/opt/VibeSensor/libs/shared/contracts
 
 [Install]
 WantedBy=multi-user.target

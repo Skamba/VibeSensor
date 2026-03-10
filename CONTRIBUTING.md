@@ -76,7 +76,6 @@ Useful focused examples:
 ```bash
 pytest -q apps/server/tests/update/
 pytest -q apps/server/tests/regression/runtime/
-python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
 ```
 
 ## CI jobs and local reproduction

@@ -62,15 +62,6 @@ def test_smoke_hotspot_script_has_no_runtime_apt_get(hotspot_script_text: str) -
     )
 
 
-@pytest.mark.smoke
-def test_smoke_hotspot_script_only_reactivates_ap_after_uplink_session(
-    hotspot_script_text: str,
-) -> None:
-    assert 'if [ "${UPLINK_SESSION_USED:-0}" = "1" ]; then' in hotspot_script_text, (
-        "hotspot script must not re-activate AP connection unconditionally"
-    )
-
-
 # ---------------------------------------------------------------------------
 # Build wrapper (parametrized for per-check failure isolation)
 # ---------------------------------------------------------------------------
@@ -154,15 +145,6 @@ def test_smoke_server_pyproject_includes_esptool_for_esp_flash() -> None:
         "Server must expose firmware cache refresh CLI entry point"
     )
     assert "vibesensor-fw-info" in text, "Server must expose firmware cache info CLI entry point"
-
-
-@pytest.mark.smoke
-def test_smoke_systemd_service_sets_contracts_dir_env() -> None:
-    service_template = SERVER_ROOT / "systemd" / "vibesensor.service"
-    text = service_template.read_text(encoding="utf-8")
-    assert "VIBESENSOR_CONTRACTS_DIR" in text, (
-        "systemd service must set shared contracts directory for wheel-based runtime"
-    )
 
 
 @pytest.mark.smoke

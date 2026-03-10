@@ -23,7 +23,7 @@ import pytest
 from vibesensor.analysis.findings.order_findings import _compute_effective_match_rate
 from vibesensor.analysis.helpers import _speed_bin_label
 from vibesensor.metrics_log import MetricsLogger
-from vibesensor.update.manager import _hash_tree
+from vibesensor.update.runtime_details import _hash_tree
 
 # ------------------------------------------------------------------
 # 1. Burstiness for near-zero median

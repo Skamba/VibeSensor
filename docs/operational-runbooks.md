@@ -1,6 +1,6 @@
 # Operational Runbooks
 
-This file is the human-facing operational guide for common VibeSensor incidents and release checks. It complements the developer-focused quick commands in [docs/ai/runbooks.md](ai/runbooks.md).
+This file is the human-facing operational guide for common VibeSensor incidents and release checks. Developer quick commands live in [.github/copilot-instructions.md](../.github/copilot-instructions.md).
 
 ## Quick health checks
 

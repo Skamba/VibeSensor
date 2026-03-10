@@ -9,7 +9,8 @@ from __future__ import annotations
 import math
 
 import pytest
-from vibesensor_core.vibration_strength import (
+
+from vibesensor.core.vibration_strength import (
     compute_vibration_strength_db,
     vibration_strength_db_scalar,
 )

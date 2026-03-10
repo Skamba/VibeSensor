@@ -16,20 +16,20 @@ from typing import Any
 import numpy as np
 import pytest
 
-# ─────────────────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────────────────
-from vibesensor_core.strength_bands import bucket_for_strength
-from vibesensor_core.vibration_strength import (
-    compute_vibration_strength_db,
-    noise_floor_amp_p20_g,
-)
-
 from vibesensor.analysis.helpers import _speed_stats
 from vibesensor.analysis.phase_segmentation import (
     segment_run_phases,
 )
 from vibesensor.analysis.strength_labels import strength_label
+
+# ─────────────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────────────
+from vibesensor.core.strength_bands import bucket_for_strength
+from vibesensor.core.vibration_strength import (
+    compute_vibration_strength_db,
+    noise_floor_amp_p20_g,
+)
 from vibesensor.processing import SignalProcessor
 
 

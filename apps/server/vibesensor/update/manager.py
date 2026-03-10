@@ -10,7 +10,7 @@ from pathlib import Path
 from ..json_types import JsonObject
 from .commands import UpdateCommandExecutor
 from .installer import UpdateInstaller, UpdateInstallerConfig
-from .models import UpdateJobStatus, UpdateRequest, UpdateState
+from .models import UpdateJobStatus, UpdatePhase, UpdateRequest, UpdateState
 from .network import (
     DNS_PROBE_HOST,
     DNS_READY_MIN_WAIT_S,
@@ -27,12 +27,11 @@ from .network import (
 from .releases import UpdateReleaseConfig, UpdateReleaseService
 from .runner import CommandRunner
 from .runtime_details import UpdateRuntimeDetailsCollector
-from .runtime_details import _hash_tree as _runtime_hash_tree
 from .service_control import UpdateServiceControlConfig, UpdateServiceController
 from .state_store import UpdateStateStore
 from .status import UpdateStatusTracker
 from .validation import UpdatePrerequisiteValidator, UpdateValidationConfig
-from .wifi import UpdateWifiConfig, UpdateWifiController, ssid_security_modes
+from .wifi import UpdateWifiConfig, UpdateWifiController
 from .workflow import UpdateWorkflow
 
 LOGGER = logging.getLogger(__name__)
@@ -44,8 +43,6 @@ ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
-SERVICE_ENV_DROPIN = "/etc/systemd/system/vibesensor.service.d/10-contracts-dir.conf"
-SERVICE_CONTRACTS_DIR = "/opt/VibeSensor/libs/shared/contracts"
 
 
 class UpdateManager:
@@ -194,14 +191,10 @@ class UpdateManager:
         await self._build_workflow().run(request)
 
     async def _cleanup_after_update(self) -> None:
-        tracker = getattr(self, "_tracker", None)
-        if tracker is None:
-            await self._cleanup_after_update_legacy()
-            return
-
+        tracker = self._tracker
         try:
             if tracker.status.state == UpdateState.running:
-                tracker.transition("restoring_hotspot")
+                tracker.transition(UpdatePhase.restoring_hotspot)
                 tracker.log("Restoring hotspot...")
                 await asyncio.shield(self._build_wifi_controller().restore_hotspot())
             tracker.clear_secrets()
@@ -222,22 +215,6 @@ class UpdateManager:
             tracker.finish_cleanup()
             self._status = tracker.status
             LOGGER.warning("Update cleanup interrupted", exc_info=True)
-
-    async def _cleanup_after_update_legacy(self) -> None:
-        status = getattr(self, "_status", None)
-        try:
-            if status is not None and getattr(status, "state", None) == UpdateState.running:
-                restore_hotspot = getattr(self, "_restore_hotspot", None)
-                if restore_hotspot is not None:
-                    await restore_hotspot()
-            collect_runtime_details = getattr(self, "_collect_runtime_details", None)
-            if callable(collect_runtime_details):
-                collect_runtime_details()
-            persist_status = getattr(self, "_persist_status", None)
-            if callable(persist_status):
-                persist_status()
-        except Exception:
-            LOGGER.warning("Legacy update cleanup interrupted", exc_info=True)
 
     def _build_workflow(self) -> UpdateWorkflow:
         commands = self._build_command_executor()
@@ -275,8 +252,6 @@ class UpdateManager:
                 config=UpdateServiceControlConfig(
                     service_name=UPDATE_SERVICE_NAME,
                     restart_unit=UPDATE_RESTART_UNIT,
-                    contracts_dir=Path(SERVICE_CONTRACTS_DIR),
-                    env_dropin=Path(SERVICE_ENV_DROPIN),
                 ),
             ),
             cancel_requested=self._cancel_event.is_set,
@@ -309,20 +284,6 @@ class UpdateManager:
             ),
         )
 
-    async def _ensure_service_contracts_env(self) -> None:
-        commands = self._build_command_executor()
-        services = UpdateServiceController(
-            commands=commands,
-            tracker=self._tracker,
-            config=UpdateServiceControlConfig(
-                service_name=UPDATE_SERVICE_NAME,
-                restart_unit=UPDATE_RESTART_UNIT,
-                contracts_dir=Path(SERVICE_CONTRACTS_DIR),
-                env_dropin=Path(SERVICE_ENV_DROPIN),
-            ),
-        )
-        await services.ensure_service_contracts_env()
-
     async def _snapshot_for_rollback(self) -> bool:
         commands = self._build_command_executor()
         installer = UpdateInstaller(
@@ -351,28 +312,5 @@ class UpdateManager:
         )
         return await installer.rollback()
 
-    @staticmethod
-    def _ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
-        return ssid_security_modes(scan_output, ssid)
-
-    @staticmethod
-    def _reinstall_venv_python_path(repo: Path) -> Path:
-        return UpdateInstaller.reinstall_venv_python_path(repo)
-
-    @staticmethod
-    def _reinstall_venv_config_path(repo: Path) -> Path:
-        return UpdateInstaller.reinstall_venv_config_path(repo)
-
-    @classmethod
-    def _is_reinstall_venv_ready(cls, repo: Path) -> bool:
-        return UpdateInstaller.is_reinstall_venv_ready(repo)
-
-    @staticmethod
-    def _reinstall_python_executable(repo: Path) -> str:
-        return UpdateInstaller.reinstall_python_executable(repo)
-
     def _collect_runtime_details(self) -> JsonObject:
         return self._runtime_details.collect()
-
-
-_hash_tree = _runtime_hash_tree

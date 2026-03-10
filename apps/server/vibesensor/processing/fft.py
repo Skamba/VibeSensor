@@ -14,7 +14,8 @@ from typing import TypeAlias
 
 import numpy as np
 import numpy.typing as npt
-from vibesensor_core.vibration_strength import (
+
+from vibesensor.core.vibration_strength import (
     PEAK_THRESHOLD_FLOOR_RATIO,
     STRENGTH_EPSILON_MIN_G,
     VibrationStrengthMetrics,
@@ -81,7 +82,7 @@ def noise_floor(amps: FloatArray) -> float:
 
     Returns ``0.0`` for empty or all-invalid inputs.  Delegates the
     actual percentile computation to
-    :func:`~vibesensor_core.vibration_strength.noise_floor_amp_p20_g`.
+    :func:`~vibesensor.core.vibration_strength.noise_floor_amp_p20_g`.
 
     Pre-sorts the array so that when ``noise_floor_amp_p20_g`` strips the DC
     bin (index 0), it discards the global minimum amplitude, yielding a
