@@ -4,7 +4,7 @@ from typing import TypeAlias
 
 from typing_extensions import TypedDict
 
-from vibesensor.core.vibration_strength import StrengthPeak, VibrationStrengthMetrics
+from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 
 from .json_types import JsonObject
 

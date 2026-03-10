@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import math
 
-from vibesensor.core.strength_bands import BANDS
+from vibesensor.strength_bands import BANDS
 
 _isfinite = math.isfinite  # local bind avoids repeated attribute lookup
 

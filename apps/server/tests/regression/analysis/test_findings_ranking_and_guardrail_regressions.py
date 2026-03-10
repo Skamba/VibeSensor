@@ -17,8 +17,10 @@ from pathlib import Path
 
 import pytest
 
-import vibesensor.analysis.findings_order_findings as order_findings_mod
-from vibesensor.analysis.findings_order_findings import _suppress_engine_aliases
+import vibesensor.analysis.findings_order_analysis as order_analysis_mod
+from vibesensor.analysis.findings_order_analysis import (
+    suppress_engine_aliases as _suppress_engine_aliases,
+)
 from vibesensor.analysis.helpers import _speed_stats
 from vibesensor.routes.clients import create_client_routes
 from vibesensor.runlog import append_jsonl_records
@@ -67,10 +69,10 @@ class TestNegligibleCapAligned:
         # After refactoring the literal 0.40 to a named constant, verify
         # _NEGLIGIBLE_STRENGTH_CONF_CAP holds the correct value and that
         # the code actually uses it as the cap expression.
-        assert pytest.approx(0.40) == order_findings_mod._NEGLIGIBLE_STRENGTH_CONF_CAP, (
+        assert pytest.approx(0.40) == order_analysis_mod._NEGLIGIBLE_STRENGTH_CONF_CAP, (
             "Negligible cap constant should be 0.40 (aligned with TIER_B_CEILING)"
         )
-        src = inspect.getsource(order_findings_mod)
+        src = inspect.getsource(order_analysis_mod.compute_order_confidence)
         assert "min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP)" in src, (
             "Negligible cap should use the _NEGLIGIBLE_STRENGTH_CONF_CAP constant"
         )

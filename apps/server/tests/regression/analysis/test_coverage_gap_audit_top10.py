@@ -23,10 +23,14 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.analysis import summarize_run_data
-from vibesensor.analysis.findings_order_findings import (
-    _compute_order_confidence,
-    _detect_diffuse_excitation,
-    _suppress_engine_aliases,
+from vibesensor.analysis.findings_order_analysis import (
+    compute_order_confidence as _compute_order_confidence,
+)
+from vibesensor.analysis.findings_order_analysis import (
+    detect_diffuse_excitation as _detect_diffuse_excitation,
+)
+from vibesensor.analysis.findings_order_analysis import (
+    suppress_engine_aliases as _suppress_engine_aliases,
 )
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.analysis.ranking import phase_adjusted_ranking_score as _phase_ranking_score

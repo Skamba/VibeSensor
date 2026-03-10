@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 
-from vibesensor.core.vibration_strength import compute_vibration_strength_db
+from vibesensor.vibration_strength import compute_vibration_strength_db
 
 
 def test_core_processing_produces_canonical_metric_fields() -> None:

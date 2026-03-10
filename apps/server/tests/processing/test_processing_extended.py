@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.core.vibration_strength import compute_vibration_strength_db
 from vibesensor.processing import MAX_CLIENT_SAMPLE_RATE_HZ, SignalProcessor
+from vibesensor.vibration_strength import compute_vibration_strength_db
 
 
 def _make_processor(**kwargs) -> SignalProcessor:

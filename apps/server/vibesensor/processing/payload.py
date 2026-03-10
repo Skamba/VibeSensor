@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ..core.vibration_strength import empty_vibration_strength_metrics
 from ..payload_types import (
     AlignmentInfoPayload,
     FrequencyWarningPayload,
     SpectraPayload,
     SpectrumSeriesPayload,
 )
+from ..vibration_strength import empty_vibration_strength_metrics
 from .fft import float_list
 from .models import SpectrumAxisData
 from .time_align import compute_overlap

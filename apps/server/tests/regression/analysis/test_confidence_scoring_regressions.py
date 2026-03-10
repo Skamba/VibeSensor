@@ -14,9 +14,11 @@ import inspect
 import pytest
 
 import vibesensor.analysis.findings_persistent as fmod_persistent
-from vibesensor.analysis.findings_order_findings import (
-    _compute_order_confidence,
-    _suppress_engine_aliases,
+from vibesensor.analysis.findings_order_analysis import (
+    compute_order_confidence as _compute_order_confidence,
+)
+from vibesensor.analysis.findings_order_analysis import (
+    suppress_engine_aliases as _suppress_engine_aliases,
 )
 
 # ---------------------------------------------------------------------------
@@ -32,17 +34,17 @@ class TestRankingScoreErrorDenominator:
     def test_no_hardcoded_denominator_in_ranking(self) -> None:
         """Source must not hardcode 0.5 denominator for ranking error.
 
-        The ranking_score computation was extracted to ``_assemble_order_finding``
-        in the refactoring; verify it there rather than in the outer orchestrator.
+        The ranking_score computation lives in ``assemble_order_finding``
+        in ``findings_order_assembly``; verify it there.
         """
-        from vibesensor.analysis.findings_order_findings import _assemble_order_finding
+        from vibesensor.analysis.findings_order_assembly import assemble_order_finding
 
-        src = inspect.getsource(_assemble_order_finding)
+        src = inspect.getsource(assemble_order_finding)
         # Old code had a hardcoded 0.5 denominator; new code derives from compliance.
         assert "mean_rel_err / 0.5" not in src, (
             "ranking_score must not hardcode error denominator to 0.5"
         )
-        assert "ranking_error_denom" in src, (
+        assert "match.compliance" in src, (
             "ranking_score must use a compliance-derived error denominator"
         )
 

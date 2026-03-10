@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from ..core.vibration_strength import VibrationStrengthMetrics, empty_vibration_strength_metrics
+from ..vibration_strength import VibrationStrengthMetrics, empty_vibration_strength_metrics
 from .models import ClientMetrics, SpectrumByAxis
 from .payload import SpectrumSeriesPayload
 

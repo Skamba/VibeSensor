@@ -23,9 +23,9 @@ from vibesensor.analysis.helpers import (
 from vibesensor.analysis.order_analysis import _wheel_hz
 from vibesensor.analysis.phase_segmentation import segment_run_phases
 from vibesensor.constants import KMH_TO_MPS
-from vibesensor.core.vibration_strength import percentile
 from vibesensor.domain_models import as_float_or_none as _as_float
 from vibesensor.report_i18n import normalize_lang
+from vibesensor.vibration_strength import percentile
 
 # -- normalize_lang -----------------------------------------------------------
 

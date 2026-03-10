@@ -21,16 +21,16 @@ from vibesensor.analysis.phase_segmentation import (
     segment_run_phases,
 )
 from vibesensor.analysis.strength_labels import strength_label
+from vibesensor.processing import SignalProcessor
 
 # ─────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────
-from vibesensor.core.strength_bands import bucket_for_strength
-from vibesensor.core.vibration_strength import (
+from vibesensor.strength_bands import bucket_for_strength
+from vibesensor.vibration_strength import (
     compute_vibration_strength_db,
     noise_floor_amp_p20_g,
 )
-from vibesensor.processing import SignalProcessor
 
 
 def _make_signal_processor(
@@ -203,22 +203,24 @@ class TestFinding4_ToleranceIgnoresCompliance:
     def test_compliance_used_in_tolerance(self):
         """FIXED: tolerance_hz now scales with sqrt(path_compliance).
 
-        The compliance-aware matching was extracted to
-        ``_match_samples_for_hypothesis``; check there.
+        The compliance-aware matching lives in
+        ``findings_order_analysis.match_samples_for_hypothesis``; check there.
         """
         import inspect
 
+        from vibesensor.analysis.findings_order_analysis import (
+            match_samples_for_hypothesis,
+        )
         from vibesensor.analysis.findings_order_findings import (
             _build_order_findings,
-            _match_samples_for_hypothesis,
         )
 
-        # The outer orchestrator still calls the helper which contains the fix.
+        # The outer orchestrator calls match_samples_for_hypothesis.
         outer_source = inspect.getsource(_build_order_findings)
-        assert "_match_samples_for_hypothesis" in outer_source
+        assert "match_samples_for_hypothesis" in outer_source
 
-        # The actual compliance-scaled tolerance lives in the extracted helper.
-        inner_source = inspect.getsource(_match_samples_for_hypothesis)
+        # The actual compliance-scaled tolerance lives in the implementation.
+        inner_source = inspect.getsource(match_samples_for_hypothesis)
         assert "compliance = getattr(hypothesis" in inner_source
         # After fix: compliance_scale IS used in the tolerance computation
         assert "compliance_scale" in inner_source

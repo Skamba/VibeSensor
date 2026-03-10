@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import cast
 
-from vibesensor.core.sensor_units import get_accel_scale_g_per_lsb
+from vibesensor.sensor_units import get_accel_scale_g_per_lsb
 
 from ..analysis_settings import AnalysisSettingsStore
 from ..config import AppConfig

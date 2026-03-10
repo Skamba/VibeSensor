@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 
-from vibesensor.core.vibration_strength import percentile
+from vibesensor.vibration_strength import percentile
 
 from ..domain_models import as_float_or_none as _as_float
 from ._types import IntensityRow, JsonObject, PhaseSpeedBreakdownRow, Sample, SpeedBreakdownRow

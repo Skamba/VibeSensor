@@ -97,7 +97,7 @@ def test_client_assets_do_not_compute_strength_metrics() -> None:
 def test_strength_metric_definition_is_centralized() -> None:
     repo_root = REPO_ROOT
     server_root = repo_root / "apps" / "server" / "vibesensor"
-    core_vibration_math = server_root / "core" / "vibration_strength.py"
+    core_vibration_math = server_root / "vibration_strength.py"
 
     for path in sorted(server_root.rglob("*.py")):
         if path == core_vibration_math:

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Final
 
-from vibesensor.core.vibration_strength import PEAK_BANDWIDTH_HZ as PEAK_BANDWIDTH_HZ
-from vibesensor.core.vibration_strength import PEAK_SEPARATION_HZ as PEAK_SEPARATION_HZ
+from vibesensor.vibration_strength import PEAK_BANDWIDTH_HZ as PEAK_BANDWIDTH_HZ
+from vibesensor.vibration_strength import PEAK_SEPARATION_HZ as PEAK_SEPARATION_HZ
 
 __all__ = [
     "CONFIDENCE_CEILING",

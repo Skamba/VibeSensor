@@ -6,67 +6,22 @@ and engine orders; computes confidence scores; suppresses engine aliases.
 
 from __future__ import annotations
 
-from ._types import Finding, MatchedPoint, MetadataDict, PhaseEvidence, PhaseLabels, Sample
-from .findings_constants import (
+from ..constants import (
     CONSTANT_SPEED_STDDEV_KMH,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
     ORDER_MIN_COVERAGE_POINTS,
     ORDER_MIN_MATCH_POINTS,
 )
+from ._types import Finding, MetadataDict, PhaseLabels, Sample
+from .findings_order_analysis import (
+    OrderFindingBuildContext,
+    match_samples_for_hypothesis,
+    suppress_engine_aliases,
+)
 from .findings_order_assembly import assemble_order_finding
-from .findings_order_matching import match_samples_for_hypothesis
-from .findings_order_models import OrderFindingBuildContext, OrderMatchAccumulator
-from .findings_order_scoring import (
-    _NEGLIGIBLE_STRENGTH_CONF_CAP as _NEGLIGIBLE_STRENGTH_CONF_CAP_IMPORTED,
-)
-from .findings_order_scoring import (
-    compute_order_confidence as _compute_order_confidence_impl,
-)
-from .findings_order_scoring import (
-    detect_diffuse_excitation as _detect_diffuse_excitation_impl,
-)
-from .findings_order_scoring import (
-    suppress_engine_aliases as _suppress_engine_aliases_impl,
-)
-from .findings_order_support import (
-    apply_localization_override as _apply_localization_override_impl,
-)
-from .findings_order_support import (
-    compute_amplitude_and_error_stats as _compute_amplitude_and_error_stats_impl,
-)
-from .findings_order_support import (
-    compute_matched_speed_phase_evidence as _compute_matched_speed_phase_evidence_impl,
-)
-from .findings_order_support import (
-    compute_phase_stats as _compute_phase_stats_impl,
-)
-from .findings_speed_profile import _speed_profile_from_points
-from .helpers import (
-    _corr_abs_clamped,
-    _sample_top_peaks,
-    _speed_bin_sort_key,
-)
-from .order_analysis import (
-    OrderHypothesis,
-    _order_hypotheses,
-)
-from .order_analysis import _order_label as _order_label_impl
-from .test_plan import _location_speedbin_summary
-
-_NEGLIGIBLE_STRENGTH_CONF_CAP = _NEGLIGIBLE_STRENGTH_CONF_CAP_IMPORTED
-
-
-def _order_label(order: float, order_label_base: str) -> str:
-    return _order_label_impl(int(order), order_label_base)
-
-
-# Source-audit note: the delegated scoring implementation still applies
-# min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP) for negligible-strength findings.
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+from .helpers import _sample_top_peaks, _speed_bin_sort_key
+from .order_analysis import _order_hypotheses
 
 
 def _compute_effective_match_rate(
@@ -110,184 +65,6 @@ def _compute_effective_match_rate(
     return effective_match_rate, focused_speed_band, per_location_dominant
 
 
-def _detect_diffuse_excitation(
-    connected_locations: set[str],
-    possible_by_location: dict[str, int],
-    matched_by_location: dict[str, int],
-    matched_points: list[MatchedPoint],
-) -> tuple[bool, float]:
-    return _detect_diffuse_excitation_impl(
-        connected_locations,
-        possible_by_location,
-        matched_by_location,
-        matched_points,
-        min_match_points=ORDER_MIN_MATCH_POINTS,
-    )
-
-
-def _compute_order_confidence(
-    *,
-    effective_match_rate: float,
-    error_score: float,
-    corr_val: float,
-    snr_score: float,
-    absolute_strength_db: float,
-    localization_confidence: float,
-    weak_spatial_separation: bool,
-    dominance_ratio: float | None,
-    constant_speed: bool,
-    steady_speed: bool,
-    matched: int,
-    corroborating_locations: int,
-    phases_with_evidence: int,
-    is_diffuse_excitation: bool,
-    diffuse_penalty: float,
-    n_connected_locations: int,
-    no_wheel_sensors: bool = False,
-    path_compliance: float = 1.0,
-) -> float:
-    return _compute_order_confidence_impl(
-        effective_match_rate=effective_match_rate,
-        error_score=error_score,
-        corr_val=corr_val,
-        snr_score=snr_score,
-        absolute_strength_db=absolute_strength_db,
-        localization_confidence=localization_confidence,
-        weak_spatial_separation=weak_spatial_separation,
-        dominance_ratio=dominance_ratio,
-        constant_speed=constant_speed,
-        steady_speed=steady_speed,
-        matched=matched,
-        corroborating_locations=corroborating_locations,
-        phases_with_evidence=phases_with_evidence,
-        is_diffuse_excitation=is_diffuse_excitation,
-        diffuse_penalty=diffuse_penalty,
-        n_connected_locations=n_connected_locations,
-        no_wheel_sensors=no_wheel_sensors,
-        path_compliance=path_compliance,
-    )
-
-
-def _suppress_engine_aliases(findings: list[tuple[float, Finding]]) -> list[Finding]:
-    return _suppress_engine_aliases_impl(findings, min_confidence=ORDER_MIN_CONFIDENCE)
-
-
-def _compute_matched_speed_phase_evidence(
-    matched_points: list[MatchedPoint],
-    *,
-    focused_speed_band: str | None,
-    hotspot_speed_band: str,
-) -> tuple[float | None, list[float], str | None, PhaseEvidence, str | None]:
-    return _compute_matched_speed_phase_evidence_impl(
-        matched_points,
-        focused_speed_band=focused_speed_band,
-        hotspot_speed_band=hotspot_speed_band,
-        speed_profile_from_points=_speed_profile_from_points,
-    )
-
-
-def _match_samples_for_hypothesis(
-    samples: list[Sample],
-    cached_peaks: list[list[tuple[float, float]]],
-    hypothesis: OrderHypothesis,
-    metadata: MetadataDict,
-    tire_circumference_m: float | None,
-    per_sample_phases: PhaseLabels | None,
-    lang: str,
-) -> OrderMatchAccumulator:
-    # Delegated implementation retains the compliance-aware tolerance:
-    # compliance = getattr(hypothesis, "path_compliance", 1.0)
-    # compliance_scale = compliance**0.5
-    return match_samples_for_hypothesis(
-        samples,
-        cached_peaks,
-        hypothesis,
-        metadata,
-        tire_circumference_m,
-        per_sample_phases,
-        lang,
-    )
-
-
-def _compute_phase_stats(
-    has_phases: bool,
-    possible_by_phase: dict[str, int],
-    matched_by_phase: dict[str, int],
-    min_match_rate: float,
-) -> tuple[dict[str, float] | None, int]:
-    return _compute_phase_stats_impl(
-        has_phases,
-        possible_by_phase,
-        matched_by_phase,
-        min_match_rate=min_match_rate,
-        min_match_points=ORDER_MIN_MATCH_POINTS,
-    )
-
-
-def _compute_amplitude_and_error_stats(
-    matched_amp: list[float],
-    matched_floor: list[float],
-    rel_errors: list[float],
-    predicted_vals: list[float],
-    measured_vals: list[float],
-    matched_points: list[MatchedPoint],
-    constant_speed: bool,
-) -> tuple[float, float, float, float, float | None]:
-    return _compute_amplitude_and_error_stats_impl(
-        matched_amp,
-        matched_floor,
-        rel_errors,
-        predicted_vals,
-        measured_vals,
-        matched_points,
-        constant_speed=constant_speed,
-        corr_abs_clamped=_corr_abs_clamped,
-    )
-
-
-def _apply_localization_override(
-    per_location_dominant: bool,
-    unique_match_locations: set[str],
-    connected_locations: set[str],
-    matched: int,
-    no_wheel_override: bool,
-    localization_confidence: float,
-    weak_spatial_separation: bool,
-) -> tuple[float, bool]:
-    return _apply_localization_override_impl(
-        per_location_dominant=per_location_dominant,
-        unique_match_locations=unique_match_locations,
-        connected_locations=connected_locations,
-        matched=matched,
-        no_wheel_override=no_wheel_override,
-        localization_confidence=localization_confidence,
-        weak_spatial_separation=weak_spatial_separation,
-        min_match_points=ORDER_MIN_MATCH_POINTS,
-    )
-
-
-def _assemble_order_finding(
-    hypothesis: OrderHypothesis,
-    m: OrderMatchAccumulator,
-    *,
-    context: OrderFindingBuildContext,
-) -> tuple[float, Finding]:
-    # Delegated implementation keeps the compliance-aware ranking formula:
-    # ranking_error_denom = 0.25 * compliance
-    return assemble_order_finding(
-        hypothesis,
-        m,
-        context=context,
-        location_speedbin_summary=_location_speedbin_summary,
-        compute_phase_stats=_compute_phase_stats,
-        compute_amplitude_and_error_stats=_compute_amplitude_and_error_stats,
-        apply_localization_override=_apply_localization_override,
-        detect_diffuse_excitation=_detect_diffuse_excitation,
-        compute_order_confidence=_compute_order_confidence,
-        compute_matched_speed_phase_evidence=_compute_matched_speed_phase_evidence,
-    )
-
-
 def _build_order_findings(
     *,
     metadata: MetadataDict,
@@ -318,7 +95,7 @@ def _build_order_findings(
         if hypothesis.key.startswith("engine_") and not engine_ref_sufficient:
             continue
 
-        m = _match_samples_for_hypothesis(
+        m = match_samples_for_hypothesis(
             samples,
             cached_peaks,
             hypothesis,
@@ -352,7 +129,7 @@ def _build_order_findings(
         if effective_match_rate < min_match_rate:
             continue
 
-        ranking_score, finding = _assemble_order_finding(
+        ranking_score, finding = assemble_order_finding(
             hypothesis,
             m,
             context=OrderFindingBuildContext(
@@ -369,4 +146,4 @@ def _build_order_findings(
         )
         findings.append((ranking_score, finding))
 
-    return _suppress_engine_aliases(findings)
+    return suppress_engine_aliases(findings, min_confidence=ORDER_MIN_CONFIDENCE)

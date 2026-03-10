@@ -19,10 +19,11 @@ from unittest.mock import patch
 
 import pytest
 
-from vibesensor.metrics_log.persistence import (
+from vibesensor.metrics_log.logger import (
     _MAX_HISTORY_CREATE_RETRIES,
     _RETRY_COOLDOWN_BASE_S,
-    MetricsPersistenceCoordinator,
+    _MetricsPersistenceCoordinator,
+    _MetricsSessionState,
 )
 from vibesensor.metrics_log.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysisWorker
 
@@ -35,13 +36,18 @@ def _make_coordinator(
     *,
     history_db: object | None = None,
     persist: bool = True,
-) -> MetricsPersistenceCoordinator:
+) -> _MetricsPersistenceCoordinator:
     """Build a coordinator with minimal dependencies."""
-    return MetricsPersistenceCoordinator(
+    session = _MetricsSessionState(enabled=True, no_data_timeout_s=15.0)
+    # Start a session so matches_generation always returns True for gen 1
+    session.start_new_session(
+        run_id="test", start_time_utc="", start_mono_s=0.0, current_total=0,
+    )
+    return _MetricsPersistenceCoordinator(
         history_db=history_db,
         persist_history_db=persist,
         metadata_builder=lambda _rid, _ts: {"run_id": _rid},
-        generation_matches=lambda _gen: True,
+        session=session,
     )
 
 
@@ -241,7 +247,7 @@ class TestRetryCooldown:
         assert not coord.history_run_created
 
         # Fast-forward past cooldown
-        with patch("vibesensor.metrics_log.persistence.time") as mock_time:
+        with patch("vibesensor.metrics_log.logger.time") as mock_time:
             # First call: check if past cooldown (return time after cooldown)
             mock_time.monotonic.return_value = time.monotonic() + _RETRY_COOLDOWN_BASE_S + 1
             coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
