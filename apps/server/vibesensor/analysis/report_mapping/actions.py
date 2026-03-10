@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from ..report.report_data import DataTrustItem, NextStep
-from ._types import SummaryData
-from .report_mapping_common import is_i18n_ref, resolve_i18n
+from ...report.report_data import DataTrustItem, NextStep
+from .._types import SummaryData
+from .common import is_i18n_ref, resolve_i18n
 
 
 def build_next_steps_from_summary(
