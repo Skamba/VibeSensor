@@ -44,10 +44,11 @@ def _extract_amp_by_location(
     summary: dict[str, object],
     location_rows: list[dict[str, object]],
 ) -> tuple[set[str], dict[str, float]]:
+    raw_locations = summary.get("sensor_locations", [])
     connected_locations = {
         _canonical_location(loc)
-        for loc in summary.get("sensor_locations", [])
-        if str(loc).strip()  # type: ignore[attr-defined]
+        for loc in (raw_locations if isinstance(raw_locations, list) else [])
+        if str(loc).strip()
     }
     amp_by_location: dict[str, float] = {}
     sensor_intensity_rows = summary.get("sensor_intensity_by_location", [])
