@@ -1,14 +1,93 @@
-"""Schema DDL and bootstrap helpers for HistoryDB."""
+"""Schema, typing, and shared constants for HistoryDB."""
 
 from __future__ import annotations
 
 import logging
+import sqlite3
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 from pathlib import Path
+from typing import Final, Protocol
 
+from ..json_types import JsonObject, JsonValue
 from ._migrations import backup_database, run_migrations
-from ._typing import HistoryCursorProvider
 
 LOGGER = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Run-status constants (previously _run_common.py)
+# ---------------------------------------------------------------------------
+
+
+class RunStatus:
+    """String constants for the ``runs.status`` column."""
+
+    RECORDING: str = "recording"
+    ANALYZING: str = "analyzing"
+    COMPLETE: str = "complete"
+    ERROR: str = "error"
+
+
+RUN_TRANSITIONS: Final[dict[str | None, frozenset[str]]] = {
+    None: frozenset({RunStatus.RECORDING}),
+    RunStatus.RECORDING: frozenset({RunStatus.ANALYZING, RunStatus.COMPLETE, RunStatus.ERROR}),
+    RunStatus.ANALYZING: frozenset({RunStatus.COMPLETE, RunStatus.ERROR}),
+    RunStatus.COMPLETE: frozenset(),
+    RunStatus.ERROR: frozenset(),
+}
+
+
+def can_transition_run(current_status: str | None, target_status: str) -> bool:
+    """Return whether a run can legally move from ``current_status`` to ``target_status``."""
+    return target_status in RUN_TRANSITIONS.get(current_status, frozenset())
+
+
+ANALYSIS_SCHEMA_VERSION = 1
+
+
+# ---------------------------------------------------------------------------
+# Cursor-provider protocol (previously _typing.py)
+# ---------------------------------------------------------------------------
+
+
+class HistoryCursorProvider(Protocol):
+    """Protocol for HistoryDB mixins that require SQLite cursor access."""
+
+    def _cursor(self, *, commit: bool = True) -> AbstractContextManager[sqlite3.Cursor]: ...
+
+    def write_transaction_cursor(self) -> AbstractContextManager[sqlite3.Cursor]: ...
+
+    @staticmethod
+    def _run_status(cur: sqlite3.Cursor, run_id: str) -> str | None: ...
+
+    @staticmethod
+    def _log_transition_skip(
+        run_id: str,
+        current_status: str | None,
+        target_status: str,
+    ) -> None: ...
+
+    def get_setting(self, key: str) -> JsonValue | None: ...
+
+    def set_setting(self, key: str, value: JsonValue) -> None: ...
+
+    def iter_run_samples(
+        self,
+        run_id: str,
+        batch_size: int = 1000,
+        offset: int = 0,
+    ) -> Iterator[list[JsonObject]]: ...
+
+    def _iter_v2_samples(
+        self,
+        run_id: str,
+        batch_size: int = 1000,
+        offset: int = 0,
+    ) -> Iterator[list[JsonObject]]: ...
+
+    def _resolve_keyset_offset(self, table: str, run_id: str, offset: int) -> int | None: ...
+
 
 SCHEMA_VERSION = 5
 

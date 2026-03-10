@@ -29,10 +29,10 @@
 - `app.py`: app factory and CLI-facing startup.
 - `bootstrap.py`: orchestrates focused runtime subsystem builders.
 - `routes/`: health, clients, settings, recording, history, websocket, updates, car library, and debug route groups; `/api/health` now surfaces startup readiness and managed-task failures in addition to processing degradation.
-- `runtime/`: subsystem builders, explicit runtime owners, lifecycle, processing loop, websocket broadcast, settings sync, and route-service assembly; the websocket broadcaster reuses shared per-tick payload state and only layers in recipient-specific selection at the end.
+- `runtime/`: subsystem builders, explicit runtime owners, lifecycle, processing loop, websocket broadcast, and settings sync; routes receive `RuntimeState` directly (no intermediate route-service assembly); the websocket broadcaster reuses shared per-tick payload state and only layers in recipient-specific selection at the end.
 - `processing/`, `analysis/`: signal processing and findings logic.
 - `metrics_log/`: recording pipeline package; `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping with drop counting and retry-with-cooldown for transient DB failures, `post_analysis.py` owns the background analysis queue with outcome tracking, and `logger.py` is the coordinating façade that enriches status/health payloads with sample counts and analysis results.
-- `history_db/`: SQLite-backed history and settings persistence with schema migration infrastructure (`_migrations.py`; all legacy migrations removed — schema must be at current version), including explicit read/write transaction helpers for run lifecycle updates.
+- `history_db/`: SQLite-backed history and settings persistence (6 files: `__init__.py` with connection management, settings KV, and client names; `_schema.py` with DDL, `RunStatus`, `HistoryCursorProvider` protocol, and `ANALYSIS_SCHEMA_VERSION`; `_run_reads.py`/`_run_writes.py` for run CRUD; `_samples.py` for v2 sample serialization; `_migrations.py` for schema migration infrastructure). Explicit read/write transaction helpers for run lifecycle updates.
 - `history_services/`: focused history service layer (run query/delete, reports, exports, helpers) above `history_db/`.
 - `hotspot/`: Wi-Fi AP monitoring, text parsing, and self-heal logic.
 - `runlog.py`: JSONL run-file I/O and normalization.

@@ -10,9 +10,8 @@ from datetime import UTC, datetime
 from ..analysis_persistence import persisted_analysis_is_current, unwrap_persisted_analysis
 from ..json_types import JsonObject, is_json_object
 from ..json_utils import safe_json_loads
-from ._run_common import ANALYSIS_SCHEMA_VERSION
 from ._samples import ALLOWED_SAMPLE_TABLES, V2_SELECT_SQL_COLS, v2_row_to_dict
-from ._typing import HistoryCursorProvider
+from ._schema import ANALYSIS_SCHEMA_VERSION, HistoryCursorProvider
 
 LOGGER = logging.getLogger(__name__)
 

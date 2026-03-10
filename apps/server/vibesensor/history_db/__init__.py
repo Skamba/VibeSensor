@@ -18,20 +18,21 @@ from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
 
-from ._client_names import HistoryClientNamesMixin
-from ._runs import ANALYSIS_SCHEMA_VERSION as ANALYSIS_SCHEMA_VERSION
-from ._runs import HistoryRunStoreMixin
-from ._runs import RunStatus as RunStatus
+from ..json_types import JsonObject, JsonValue, is_json_object
+from ..json_utils import safe_json_dumps, safe_json_loads
+from ..runlog import utc_now_iso
+from ._run_reads import HistoryRunReadMixin
+from ._run_writes import HistoryRunWriteMixin
+from ._schema import ANALYSIS_SCHEMA_VERSION as ANALYSIS_SCHEMA_VERSION
 from ._schema import HistorySchemaMixin
-from ._settings import HistorySettingsStoreMixin
+from ._schema import RunStatus as RunStatus
 
 LOGGER = logging.getLogger(__name__)
 
 
 class HistoryDB(
-    HistoryRunStoreMixin,
-    HistorySettingsStoreMixin,
-    HistoryClientNamesMixin,
+    HistoryRunWriteMixin,
+    HistoryRunReadMixin,
     HistorySchemaMixin,
 ):
     """Thin wrapper around a SQLite database for run history."""
@@ -108,3 +109,53 @@ class HistoryDB(
                 raise
             finally:
                 cur.close()
+
+    # -- settings_kv persistence (inlined from _settings.py) ------------------
+
+    def get_setting(self, key: str) -> JsonValue | None:
+        with self._cursor(commit=False) as cur:
+            cur.execute("SELECT value_json FROM settings_kv WHERE key = ?", (key,))
+            row = cur.fetchone()
+        if row is None:
+            return None
+        return safe_json_loads(row[0], context=f"setting {key}")
+
+    def set_setting(self, key: str, value: JsonValue) -> None:
+        now = utc_now_iso()
+        with self._cursor() as cur:
+            cur.execute(
+                "INSERT INTO settings_kv (key, value_json, updated_at) VALUES (?, ?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, "
+                "updated_at = excluded.updated_at",
+                (key, safe_json_dumps(value), now),
+            )
+
+    def get_settings_snapshot(self) -> JsonObject | None:
+        snapshot = self.get_setting("settings_snapshot")
+        return snapshot if is_json_object(snapshot) else None
+
+    def set_settings_snapshot(self, snapshot: JsonObject) -> None:
+        self.set_setting("settings_snapshot", snapshot)
+
+    # -- client_names persistence (inlined from _client_names.py) -------------
+
+    def list_client_names(self) -> dict[str, str]:
+        with self._cursor(commit=False) as cur:
+            cur.execute("SELECT client_id, name FROM client_names")
+            rows = cur.fetchall()
+        return {row[0]: row[1] for row in rows}
+
+    def upsert_client_name(self, client_id: str, name: str) -> None:
+        now = utc_now_iso()
+        with self._cursor() as cur:
+            cur.execute(
+                "INSERT INTO client_names (client_id, name, updated_at) VALUES (?, ?, ?) "
+                "ON CONFLICT(client_id) DO UPDATE SET name = excluded.name, "
+                "updated_at = excluded.updated_at",
+                (client_id, name, now),
+            )
+
+    def delete_client_name(self, client_id: str) -> bool:
+        with self._cursor() as cur:
+            cur.execute("DELETE FROM client_names WHERE client_id = ?", (client_id,))
+            return bool(int(cur.rowcount) > 0)

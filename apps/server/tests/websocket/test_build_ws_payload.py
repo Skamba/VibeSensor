@@ -204,15 +204,6 @@ def _make_state(
         updates=updates,
         processing=processing,
         websocket=websocket,
-        routes=runtime_module.RuntimeRouteServices(
-            ingress=ingress,
-            settings=settings,
-            recording=diagnostics,
-            persistence=persistence,
-            updates=updates,
-            processing=processing,
-            websocket=websocket,
-        ),
     )
     state.websocket.cache.include_heavy = ws_include_heavy
     return state

@@ -28,10 +28,10 @@ from .updates import create_update_routes
 from .websocket import create_websocket_routes
 
 if TYPE_CHECKING:
-    from ..runtime import RuntimeRouteServices
+    from ..runtime import RuntimeState
 
 
-def create_router(services: RuntimeRouteServices) -> APIRouter:
+def create_router(services: RuntimeState) -> APIRouter:
     """Assemble all domain-specific route groups into one router."""
     router = APIRouter()
     router.include_router(

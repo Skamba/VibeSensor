@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from .history_db._run_common import ANALYSIS_SCHEMA_VERSION
+from .history_db._schema import ANALYSIS_SCHEMA_VERSION
 from .json_types import JsonObject, is_json_object
 
 LOGGER = logging.getLogger(__name__)

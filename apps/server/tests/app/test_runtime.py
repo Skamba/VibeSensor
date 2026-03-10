@@ -195,15 +195,6 @@ def _make_runtime(**overrides: Any):
         updates=updates,
         processing=processing,
         websocket=websocket,
-        routes=runtime_module.RuntimeRouteServices(
-            ingress=ingress,
-            settings=settings,
-            recording=diagnostics,
-            persistence=persistence,
-            updates=updates,
-            processing=processing,
-            websocket=websocket,
-        ),
     )
     if overrides:
         for name, value in overrides.items():
@@ -431,7 +422,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     assert history_db.close.called
 
 
-@pytest.mark.parametrize("attr", ["settings", "processing", "websocket", "routes", "lifecycle"])
+@pytest.mark.parametrize("attr", ["settings", "processing", "websocket", "lifecycle"])
 def test_runtime_state_has_public_attribute(attr: str) -> None:
     """Canonical import path should expose key public attributes."""
     from vibesensor.runtime import RuntimeState

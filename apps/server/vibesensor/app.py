@@ -88,7 +88,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
 
     app = FastAPI(title="VibeSensor", lifespan=lifespan)
     app.state.runtime = runtime
-    app.include_router(create_router(runtime.routes))
+    app.include_router(create_router(runtime))
     if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
         static_dir = _PACKAGE_DIR / "static"
         if not (static_dir / "index.html").exists():
