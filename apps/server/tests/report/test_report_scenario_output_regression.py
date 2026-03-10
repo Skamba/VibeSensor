@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from _scenario_regression_helpers import build_speed_sweep_samples, make_sample, standard_metadata
+from test_support.scenario_regression import (
+    build_speed_sweep_samples,
+    make_sample,
+    standard_metadata,
+)
 
 from vibesensor.analysis import map_summary, select_top_causes, summarize_run_data
 from vibesensor.analysis.findings.reference_checks import _reference_missing_finding
