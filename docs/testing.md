@@ -16,7 +16,6 @@ The test tree is feature-based. Most directories mirror the backend package or m
 apps/server/tests/
 ├── conftest.py
 ├── _paths.py
-├── _*.py helper modules
 ├── test_support/
 ├── analysis/
 ├── api/
@@ -28,6 +27,7 @@ apps/server/tests/
 ├── e2e/
 ├── gps/
 ├── history/
+├── hotspot/
 ├── hygiene/
 ├── integration/
 ├── metrics_log/
@@ -36,7 +36,6 @@ apps/server/tests/
 ├── regression/
 │   └── {analysis,audits,cross_cutting,report,runtime}/
 ├── report/
-├── test_support/
 ├── update/
 └── websocket/
 ```
@@ -81,7 +80,7 @@ Regression coverage is grouped by intent:
 - `regression/report/`: report rendering and report-data regressions.
 - `regression/runtime/`: runtime, history, API, queueing, and update-adjacent regressions.
 
-Prefer focused files grouped by behavior or maintenance boundary. Recent high-churn suites in `api/`, `report/`, `update/`, `analysis/`, and `apps/ui/tests/` are intentionally split into smaller behavior-focused files plus local helper modules such as `_history_endpoint_helpers.py`, `_report_persistence_helpers.py`, `_report_pdf_test_helpers.py`, `_update_manager_test_helpers.py`, `_diagnosis_robustness_helpers.py`, `_phased_scenario_helpers.py`, and `smoke.helpers.ts` so failures stay easy to diagnose without centralizing unrelated assertions in one mega-file.
+Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `report_helpers.py`, `report_analysis_integration.py`, `scenario_ground_truth.py`, `scenario_regression.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
 
 ## Contract bridge tests
 

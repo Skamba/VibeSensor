@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 __all__ = [
+    "LOCATION_CODES",
     "METRIC_FIELDS",
     "NETWORK_PORTS",
     "REPORT_FIELDS",
@@ -74,6 +75,7 @@ def _load_int_map(name: str) -> dict[str, int]:
 METRIC_FIELDS: dict[str, str] = _load_string_map("metrics_fields.json")
 REPORT_FIELDS: dict[str, str] = _load_string_map("report_fields.json")
 NETWORK_PORTS: dict[str, int] = _load_int_map("network_ports.json")
+LOCATION_CODES: dict[str, str] = _load_string_map("location_codes.json")
 
 # Validate that required contract keys exist at import time so misconfigurations
 # surface immediately with a descriptive error rather than a cryptic KeyError later.
