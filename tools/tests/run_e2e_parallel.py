@@ -13,7 +13,36 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from pytest_shard import collect_test_ids
+
+def _parse_collected_test_ids(output: str) -> list[str]:
+    test_ids: list[str] = []
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if "::" not in line:
+            continue
+        if line.startswith("=") or line.startswith("<"):
+            continue
+        if line.startswith("tests/"):
+            test_ids.append(f"apps/server/{line}")
+            continue
+        if line.startswith("apps/server/tests/") or line.startswith(
+            "apps/server/tests_e2e/"
+        ):
+            test_ids.append(line)
+            continue
+        if line.startswith("tests_e2e/"):
+            test_ids.append(f"apps/server/{line}")
+    return test_ids
+
+
+def collect_test_ids(pytest_args: list[str]) -> list[str]:
+    cmd = [sys.executable, "-m", "pytest", "--collect-only", "-q", *pytest_args]
+    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    if result.returncode != 0:
+        sys.stdout.write(result.stdout or "")
+        sys.stderr.write(result.stderr or "")
+        raise SystemExit(result.returncode)
+    return _parse_collected_test_ids(result.stdout or "")
 
 ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "e2e_parallel"
