@@ -400,13 +400,16 @@ class GPSSpeedMonitor:
                         and mode >= 2
                         and isinstance(speed, NUMERIC_TYPES)
                         and not isinstance(speed, bool)
-                        and _isfinite(float(speed))  # type: ignore[arg-type]
-                        and float(speed) >= 0  # type: ignore[arg-type]
-                        and float(speed) <= _GPS_MAX_SPEED_MPS  # type: ignore[arg-type]
                     ):
-                        speed_mps = float(speed)  # type: ignore[arg-type]
-                        if self._accept_speed_sample(speed_mps):
-                            self._speed_snapshot = (speed_mps, _monotonic())
+                        speed_f = float(speed)  # type: ignore[arg-type]
+                        if (
+                            _isfinite(speed_f)
+                            and 0 <= speed_f <= _GPS_MAX_SPEED_MPS
+                        ):
+                            if self._accept_speed_sample(speed_f):
+                                self._speed_snapshot = (speed_f, _monotonic())
+                        else:
+                            self._zero_speed_streak = 0
                     else:
                         self._zero_speed_streak = 0
                     # Extract device from TPV
