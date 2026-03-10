@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from _test_helpers import assert_summary_sections, assert_top_cause_contract, extract_pdf_text
 from test_support import make_sample as make_sample
 from test_support import standard_metadata as standard_metadata
 from test_support import wheel_hz as wheel_hz
+from test_support.core import assert_summary_sections, assert_top_cause_contract, extract_pdf_text
 
 from vibesensor.analysis import map_summary, summarize_run_data
 

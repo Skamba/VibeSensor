@@ -7,7 +7,7 @@ from typing import cast
 
 from ...runlog import as_float_or_none as _as_float
 from .._types import Finding, MetadataDict, PhaseLabels, Sample
-from ..helpers import SPEED_COVERAGE_MIN_PCT, _effective_engine_rpm
+from ..helpers import _effective_engine_rpm
 from ..order_analysis import _i18n_ref
 from ..phase_segmentation import (
     DrivingPhase,
@@ -16,7 +16,7 @@ from ..phase_segmentation import (
     segment_run_phases,
 )
 from ..ranking import finding_sort_key
-from ._constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF
+from ._constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF, SPEED_COVERAGE_MIN_PCT
 from .reference_checks import _reference_missing_finding
 
 _MIN_DIAGNOSTIC_SAMPLES = 5
@@ -127,14 +127,12 @@ def has_engine_reference(
     tire_circumference_m: float | None,
 ) -> bool:
     """Return whether the engine reference coverage is sufficient."""
-    return (
-        engine_reference_coverage_pct(
-            samples,
-            metadata=metadata,
-            tire_circumference_m=tire_circumference_m,
-        )
-        >= SPEED_COVERAGE_MIN_PCT
+    pct: float = engine_reference_coverage_pct(
+        samples,
+        metadata=metadata,
+        tire_circumference_m=tire_circumference_m,
     )
+    return bool(pct >= SPEED_COVERAGE_MIN_PCT)
 
 
 def prepare_analysis_samples(

@@ -34,7 +34,7 @@ from .sample_builder import (
     build_sample_records,
     firmware_version_for_run,
 )
-from .session_state import MetricsSessionSnapshot, MetricsSessionState
+from .session_state import LoggingStatusPayload, MetricsSessionSnapshot, MetricsSessionState
 
 if TYPE_CHECKING:
     from ..analysis_settings import AnalysisSettingsStore
@@ -79,7 +79,7 @@ class MetricsShutdownReport:
     analysis_queue_oldest_age_s: float | None
     analysis_in_progress: bool
     write_error: str | None
-    final_status: dict[str, str | bool | int | None]
+    final_status: LoggingStatusPayload
 
 
 class MetricsLogger:
@@ -186,7 +186,7 @@ class MetricsLogger:
     def _session_snapshot(self) -> MetricsSessionSnapshot | None:
         return self._session.snapshot()
 
-    def status(self) -> dict[str, str | bool | int | None]:
+    def status(self) -> LoggingStatusPayload:
         post_snapshot = self._post_analysis.snapshot()
         return self._session.status_payload(
             write_error=self._persistence.write_error,
@@ -234,7 +234,7 @@ class MetricsLogger:
             "last_completed_run_error": snapshot.last_completed_error,
         }
 
-    def start_logging(self) -> dict[str, str | bool | int | None]:
+    def start_logging(self) -> LoggingStatusPayload:
         completed_run_id: str | None = None
         flush_snapshot: MetricsSessionSnapshot | None = None
         with self._lock:
@@ -268,7 +268,7 @@ class MetricsLogger:
         self,
         *,
         _only_if_generation: int | None = None,
-    ) -> dict[str, str | bool | int | None]:
+    ) -> LoggingStatusPayload:
         flush_snapshot: MetricsSessionSnapshot | None = None
         with self._lock:
             if _only_if_generation is not None and not self._session.matches_generation(

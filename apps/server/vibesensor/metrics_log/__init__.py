@@ -37,8 +37,12 @@ from .sample_builder import (
     resolve_speed_context,
     safe_metric,
 )
+from .session_state import (
+    LoggingStatusPayload,
+)
 
 __all__ = [
+    "LoggingStatusPayload",
     "MetricsLogger",
     "MetricsLoggerConfig",
     "MetricsShutdownReport",

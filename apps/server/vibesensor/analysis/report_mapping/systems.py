@@ -5,19 +5,19 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 
-from .. import __version__
-from ..report.report_data import PartSuggestion, PatternEvidence, SystemFindingCard
-from ..runlog import as_float_or_none as _as_float
-from ._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SummaryData
-from .pattern_parts import parts_for_pattern, why_parts_listed
-from .report_mapping_common import (
+from ... import __version__
+from ...report.report_data import PartSuggestion, PatternEvidence, SystemFindingCard
+from ...runlog import as_float_or_none as _as_float
+from .._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SummaryData
+from ..pattern_parts import parts_for_pattern, why_parts_listed
+from .common import (
     finding_strength_db,
     human_source,
     is_i18n_ref,
     order_label_human,
     resolve_i18n,
 )
-from .report_mapping_models import PrimaryCandidateContext, ReportMappingContext
+from .models import PrimaryCandidateContext, ReportMappingContext
 
 
 def top_strength_values(

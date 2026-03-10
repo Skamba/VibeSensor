@@ -2,7 +2,7 @@
 
 Pure data-class definitions consumed by the Canvas-based PDF renderer.
 The ``map_summary()`` builder that populates these classes lives in
-``vibesensor.analysis.report_mapping_pipeline`` so that the report package
+``vibesensor.analysis.report_mapping.pipeline`` so that the report package
 stays renderer-only with zero analysis imports.
 """
 

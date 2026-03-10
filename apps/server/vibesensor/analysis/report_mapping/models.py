@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SpeedStats
+from .._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SpeedStats
 
 
 @dataclass(frozen=True)

@@ -49,6 +49,7 @@ from .domain_models import (
     normalize_sensor_id,
     sanitize_aspects,
 )
+from .exceptions import PersistenceError as PersistenceError
 from .json_types import JsonObject
 
 if TYPE_CHECKING:
@@ -61,10 +62,6 @@ VALID_LANGUAGES: frozenset[str] = frozenset({"en", "nl"})
 
 VALID_SPEED_UNITS: frozenset[str] = frozenset({"kmh", "mps"})
 """Supported speed display units."""
-
-
-class PersistenceError(RuntimeError):
-    """Raised when settings fail to persist to the database."""
 
 
 def _clamp_str(value: object, maxlen: int) -> str:

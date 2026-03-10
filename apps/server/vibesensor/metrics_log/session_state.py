@@ -9,6 +9,25 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from threading import RLock
+from typing import TypedDict
+
+
+class LoggingStatusPayload(TypedDict):
+    """Shape of the dict returned by :meth:`MetricsSessionState.status_payload`.
+
+    Matches the fields of :class:`~vibesensor.api_models.LoggingStatusResponse`
+    so the dict can be unpacked directly into the Pydantic model.
+    """
+
+    enabled: bool
+    current_file: str | None
+    run_id: str | None
+    write_error: str | None
+    analysis_in_progress: bool
+    samples_written: int
+    samples_dropped: int
+    last_completed_run_id: str | None
+    last_completed_run_error: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -199,7 +218,7 @@ class MetricsSessionState:
         samples_dropped: int = 0,
         last_completed_run_id: str | None = None,
         last_completed_run_error: str | None = None,
-    ) -> dict[str, str | bool | int | None]:
+    ) -> LoggingStatusPayload:
         with self._lock:
             return {
                 "enabled": self._enabled,

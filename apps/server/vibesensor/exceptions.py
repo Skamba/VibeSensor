@@ -11,6 +11,7 @@ Hierarchy
 - ``ConfigurationError`` — invalid or inconsistent configuration.
 - ``PersistenceError`` — database / storage failures.
 - ``ProcessingError`` — signal processing pipeline failures.
+- ``ProtocolError`` — malformed or unexpected binary protocol message.
 - ``UpdateError`` — OTA update system failures.
 - ``RunNotFoundError`` — requested run does not exist.
 - ``AnalysisNotReadyError`` — analysis is in progress or failed.
@@ -25,6 +26,7 @@ __all__ = [
     "DataCorruptError",
     "PersistenceError",
     "ProcessingError",
+    "ProtocolError",
     "RunNotFoundError",
     "UpdateError",
     "VibeSensorError",
@@ -53,6 +55,14 @@ class PersistenceError(VibeSensorError, RuntimeError):
 
 class ProcessingError(VibeSensorError, RuntimeError):
     """Signal processing pipeline failure."""
+
+
+class ProtocolError(VibeSensorError, ValueError):
+    """Malformed or unexpected binary protocol message.
+
+    Inherits from ``ValueError`` for backward compatibility with code
+    that catches ``ValueError`` for parse/validation issues.
+    """
 
 
 class UpdateError(VibeSensorError, RuntimeError):

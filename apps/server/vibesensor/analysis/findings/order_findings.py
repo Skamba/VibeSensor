@@ -8,11 +8,6 @@ from __future__ import annotations
 
 from .._types import Finding, MatchedPoint, MetadataDict, PhaseEvidence, PhaseLabels, Sample
 from ..helpers import (
-    CONSTANT_SPEED_STDDEV_KMH,
-    ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
-    ORDER_MIN_CONFIDENCE,
-    ORDER_MIN_COVERAGE_POINTS,
-    ORDER_MIN_MATCH_POINTS,
     _corr_abs_clamped,
     _sample_top_peaks,
     _speed_bin_sort_key,
@@ -22,6 +17,13 @@ from ..order_analysis import (
 )
 from ..order_analysis import _order_label as _order_label_impl
 from ..test_plan import _location_speedbin_summary
+from ._constants import (
+    CONSTANT_SPEED_STDDEV_KMH,
+    ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
+    ORDER_MIN_CONFIDENCE,
+    ORDER_MIN_COVERAGE_POINTS,
+    ORDER_MIN_MATCH_POINTS,
+)
 from .order_assembly import assemble_order_finding
 from .order_matching import match_samples_for_hypothesis
 from .order_models import OrderFindingBuildContext, OrderHypothesisLike, OrderMatchAccumulator

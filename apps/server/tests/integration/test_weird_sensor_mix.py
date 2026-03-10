@@ -7,7 +7,6 @@ non-standard sensor topologies (cabin-only, mixed, sparse).
 from __future__ import annotations
 
 import pytest
-from _test_helpers import assert_summary_sections
 from test_support.analysis import extract_top, run_analysis
 from test_support.assertions import (
     assert_confidence_between,
@@ -27,6 +26,7 @@ from test_support.core import (
     SENSOR_RL,
     SENSOR_RR,
     SENSOR_TRUNK,
+    assert_summary_sections,
 )
 from test_support.fault_scenarios import make_fault_samples
 from test_support.sample_scenarios import make_diffuse_samples, make_noise_samples

@@ -13,6 +13,8 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from ..exceptions import ProcessingError
+
 if TYPE_CHECKING:
     from .subsystems import RuntimeIngressSubsystem
 
@@ -30,7 +32,7 @@ STALE_DATA_AGE_S = 2.0
 _MAX_FAILURE_MESSAGE_LEN = 240
 
 
-class ProcessingLoopError(RuntimeError):
+class ProcessingLoopError(ProcessingError):
     """Categorized processing-loop failure with a stable health-reporting key."""
 
     def __init__(self, category: str, cause: Exception) -> None:
