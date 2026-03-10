@@ -21,13 +21,14 @@ from ..udp_data_rx import start_udp_data_receiver
 
 if TYPE_CHECKING:
     from ..config import AppConfig
+    from ..esp_flash_manager import EspFlashManager
+    from ..metrics_log import MetricsLogger
+    from ..update.manager import UpdateManager
     from .subsystems import (
         RuntimeIngressSubsystem,
         RuntimePersistenceSubsystem,
         RuntimeProcessingSubsystem,
-        RuntimeRecordingSubsystem,
         RuntimeSettingsSubsystem,
-        RuntimeUpdateSubsystem,
         RuntimeWebsocketSubsystem,
     )
 
@@ -41,13 +42,14 @@ class LifecycleManager:
         "_config",
         "_data_consumer_task",
         "_data_transport",
+        "_esp_flash_manager",
         "_health_state",
         "_ingress",
+        "_metrics_logger",
         "_persistence",
         "_processing",
-        "_recording",
         "_settings",
-        "_updates",
+        "_update_manager",
         "_websocket",
         "tasks",
     )
@@ -58,18 +60,20 @@ class LifecycleManager:
         config: AppConfig,
         ingress: RuntimeIngressSubsystem,
         settings: RuntimeSettingsSubsystem,
-        recording: RuntimeRecordingSubsystem,
+        metrics_logger: MetricsLogger,
         persistence: RuntimePersistenceSubsystem,
-        updates: RuntimeUpdateSubsystem,
+        update_manager: UpdateManager,
+        esp_flash_manager: EspFlashManager,
         processing: RuntimeProcessingSubsystem,
         websocket: RuntimeWebsocketSubsystem,
     ) -> None:
         self._config = config
         self._ingress = ingress
         self._settings = settings
-        self._recording = recording
+        self._metrics_logger = metrics_logger
         self._persistence = persistence
-        self._updates = updates
+        self._update_manager = update_manager
+        self._esp_flash_manager = esp_flash_manager
         self._processing = processing
         self._websocket = websocket
         self._health_state = processing.health_state
@@ -174,7 +178,7 @@ class LifecycleManager:
 
             phase = "metrics-log"
             self._health_state.set_phase(phase)
-            self.tasks.append(self._start_task(self._recording.metrics_logger.run(), name=phase))
+            self.tasks.append(self._start_task(self._metrics_logger.run(), name=phase))
 
             phase = "gps-speed"
             self._health_state.set_phase(phase)
@@ -192,7 +196,7 @@ class LifecycleManager:
             self._health_state.set_phase(phase)
             self.tasks.append(
                 self._start_task(
-                    self._updates.update_manager.startup_recover(),
+                    self._update_manager.startup_recover(),
                     name=phase,
                 ),
             )
@@ -235,8 +239,8 @@ class LifecycleManager:
         # Cancel any in-progress update or flash jobs so cleanup
         # (e.g. hotspot restore) can run before shutdown completes.
         managed: list[asyncio.Task[None] | None] = [
-            self._updates.update_manager.job_task,
-            self._updates.esp_flash_manager.job_task,
+            self._update_manager.job_task,
+            self._esp_flash_manager.job_task,
         ]
         for managed_task in managed:
             if managed_task is not None:
@@ -248,7 +252,7 @@ class LifecycleManager:
 
         analysis_timeout_s = self._config.logging.shutdown_analysis_timeout_s
         shutdown_report = await asyncio.to_thread(
-            self._recording.metrics_logger.shutdown_report,
+            self._metrics_logger.shutdown_report,
             analysis_timeout_s,
         )
         if not shutdown_report.completed:

@@ -4,8 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.update.state_store import UpdateStateStore
-from vibesensor.update.status import UpdateStatusTracker
+from vibesensor.update.status import UpdateStateStore, UpdateStatusTracker
 from vibesensor.update.validation import UpdatePrerequisiteValidator, UpdateValidationConfig
 
 

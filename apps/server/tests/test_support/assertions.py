@@ -423,3 +423,58 @@ def assert_max_wheel_confidence(
                 f"Wheel/tire confidence {conf:.3f} exceeds max {max_confidence:.2f} "
                 f"at '{loc}'. {msg}",
             )
+
+
+def extract_top_finding(summary: dict[str, Any]) -> dict[str, Any] | None:
+    """Return the highest-confidence non-reference finding, or ``None``."""
+    findings = summary.get("findings", [])
+    non_ref = [
+        finding
+        for finding in findings
+        if isinstance(finding, dict) and not str(finding.get("finding_id", "")).startswith("REF_")
+    ]
+    if not non_ref:
+        return None
+    return max(non_ref, key=lambda finding: float(finding.get("confidence_0_to_1") or 0))
+
+
+def assert_finding_location(
+    summary: dict[str, Any],
+    expected: str,
+    label: str = "",
+) -> dict[str, Any]:
+    """Assert the top finding's strongest_location contains *expected*."""
+    top = extract_top_finding(summary)
+    assert top is not None, f"{label}: Should produce at least one diagnostic finding"
+    location = str(top.get("strongest_location") or "").lower()
+    assert expected in location, (
+        f"{label}: Expected '{expected}', got '{top.get('strongest_location')}'"
+    )
+    return top
+
+
+def assert_finding_source(
+    summary: dict[str, Any],
+    expected_sources: tuple[str, ...] = ("wheel", "tire"),
+    label: str = "",
+) -> dict[str, Any]:
+    """Assert the top finding's suspected_source matches one of *expected_sources*."""
+    top = extract_top_finding(summary)
+    assert top is not None, f"{label}: Should produce a finding"
+    source = str(top.get("suspected_source") or "").lower()
+    assert any(expected in source for expected in expected_sources), (
+        f"{label}: Expected one of {expected_sources}, got '{top.get('suspected_source')}'"
+    )
+    return top
+
+
+def parse_speed_band(finding: dict[str, Any]) -> tuple[float, float]:
+    """Parse ``strongest_speed_band`` like ``'60-80 km/h'`` into ``(60.0, 80.0)``."""
+    speed_band = str(finding.get("strongest_speed_band") or "")
+    parts = speed_band.replace("km/h", "").strip().split("-")
+    try:
+        low = float(parts[0].strip())
+        high = float(parts[-1].strip()) if len(parts) > 1 else low
+    except (ValueError, IndexError):
+        low = high = 0.0
+    return low, high

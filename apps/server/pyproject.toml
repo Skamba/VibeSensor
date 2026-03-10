@@ -135,13 +135,11 @@ files = [
   "vibesensor/update",
   "vibesensor/processing",
   "vibesensor/analysis",
-  "vibesensor/analysis_persistence.py",
   "vibesensor/analysis_settings.py",
   "vibesensor/core",
   "vibesensor/history_db",
   "vibesensor/metrics_log",
   "vibesensor/ws_hub.py",
-  "vibesensor/ws_models.py",
   "vibesensor/ws_schema_export.py",
 ]
 follow_imports = "skip"

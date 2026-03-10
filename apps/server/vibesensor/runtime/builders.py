@@ -28,9 +28,7 @@ from .subsystems import (
     RuntimeIngressSubsystem,
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
-    RuntimeRecordingSubsystem,
     RuntimeSettingsSubsystem,
-    RuntimeUpdateSubsystem,
     RuntimeWebsocketSubsystem,
 )
 from .ws_broadcast import WsBroadcastCache, WsBroadcastService
@@ -123,14 +121,14 @@ def build_settings_subsystem(
     )
 
 
-def build_recording_subsystem(
+def build_metrics_logger(
     *,
     config: AppConfig,
     ingress: RuntimeIngressSubsystem,
     settings: RuntimeSettingsSubsystem,
     persistence: RuntimePersistenceSubsystem,
     accel_scale_g_per_lsb: float,
-) -> RuntimeRecordingSubsystem:
+) -> MetricsLogger:
     metrics_logger = MetricsLogger(
         MetricsLoggerConfig(
             enabled=config.logging.log_metrics,
@@ -153,25 +151,19 @@ def build_recording_subsystem(
         settings_store=settings.settings_store,
         language_provider=lambda: settings.settings_store.language,
     )
-    recording = RuntimeRecordingSubsystem(
-        metrics_logger=metrics_logger,
-    )
     requeue_stale_analysis_runs(
         persistence=persistence,
-        recording=recording,
+        metrics_logger=metrics_logger,
     )
-    return recording
+    return metrics_logger
 
 
-def build_update_subsystem(*, config: AppConfig) -> RuntimeUpdateSubsystem:
-    return RuntimeUpdateSubsystem(
-        update_manager=UpdateManager(
-            ap_con_name=config.ap.con_name,
-            wifi_ifname=config.ap.ifname,
-            rollback_dir=str(config.update.rollback_dir),
-            server_repo=config.update.server_repo,
-        ),
-        esp_flash_manager=EspFlashManager(),
+def build_update_manager(*, config: AppConfig) -> UpdateManager:
+    return UpdateManager(
+        ap_con_name=config.ap.con_name,
+        wifi_ifname=config.ap.ifname,
+        rollback_dir=str(config.update.rollback_dir),
+        server_repo=config.update.server_repo,
     )
 
 
@@ -215,9 +207,10 @@ def build_lifecycle_manager(
     config: AppConfig,
     ingress: RuntimeIngressSubsystem,
     settings: RuntimeSettingsSubsystem,
-    recording: RuntimeRecordingSubsystem,
+    metrics_logger: MetricsLogger,
     persistence: RuntimePersistenceSubsystem,
-    updates: RuntimeUpdateSubsystem,
+    update_manager: UpdateManager,
+    esp_flash_manager: EspFlashManager,
     processing: RuntimeProcessingSubsystem,
     websocket: RuntimeWebsocketSubsystem,
 ) -> LifecycleManager:
@@ -225,9 +218,10 @@ def build_lifecycle_manager(
         config=config,
         ingress=ingress,
         settings=settings,
-        recording=recording,
+        metrics_logger=metrics_logger,
         persistence=persistence,
-        updates=updates,
+        update_manager=update_manager,
+        esp_flash_manager=esp_flash_manager,
         processing=processing,
         websocket=websocket,
     )
@@ -236,11 +230,11 @@ def build_lifecycle_manager(
 def requeue_stale_analysis_runs(
     *,
     persistence: RuntimePersistenceSubsystem,
-    recording: RuntimeRecordingSubsystem,
+    metrics_logger: MetricsLogger,
 ) -> None:
     stale_analyzing = persistence.history_db.stale_analyzing_run_ids()
     for stale_run_id in stale_analyzing:
         LOGGER.info("Re-queuing stuck analyzing run %s for re-analysis", stale_run_id)
-        recording.metrics_logger.schedule_post_analysis(stale_run_id)
+        metrics_logger.schedule_post_analysis(stale_run_id)
     if stale_analyzing:
         LOGGER.info("Re-queued %d stuck analyzing run(s)", len(stale_analyzing))

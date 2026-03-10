@@ -20,11 +20,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from threading import RLock
 
-from ..analysis_persistence import (
-    persisted_analysis_is_current,
-    unwrap_persisted_analysis,
-    wrap_analysis_for_storage,
-)
 from ..domain_models import SensorFrame
 from ..json_types import JsonObject, JsonValue, is_json_object
 from ..json_utils import safe_json_dumps, safe_json_loads
@@ -51,6 +46,20 @@ LOGGER = logging.getLogger(__name__)
 
 _RECOMMENDED_METADATA_KEYS: frozenset[str] = frozenset({"sensor_model", "sample_rate_hz"})
 _EXPECTED_ANALYSIS_KEYS: frozenset[str] = frozenset({"findings", "top_causes", "warnings"})
+
+
+def _sanitize_for_storage(summary: JsonObject) -> JsonObject:
+    """Strip internal-only keys before persisting an analysis summary."""
+    cleaned = dict(summary)
+    cleaned.pop("_report_template_data", None)
+    return cleaned
+
+
+def _sanitize_for_read(raw: JsonObject) -> JsonObject:
+    """Strip internal-only keys when returning a persisted analysis."""
+    cleaned = dict(raw)
+    cleaned.pop("_report_template_data", None)
+    return cleaned
 
 
 class HistoryDB:
@@ -384,7 +393,7 @@ class HistoryDB:
                 "analysis_version = ?, analysis_completed_at = ? "
                 "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
                 (
-                    safe_json_dumps(wrap_analysis_for_storage(analysis)),
+                    safe_json_dumps(_sanitize_for_storage(analysis)),
                     ANALYSIS_SCHEMA_VERSION,
                     now,
                     run_id,
@@ -442,33 +451,15 @@ class HistoryDB:
     def analysis_is_current(self, run_id: str) -> bool:
         with self._cursor(commit=False) as cur:
             cur.execute(
-                "SELECT analysis_version, analysis_json FROM runs WHERE run_id = ?",
+                "SELECT analysis_version FROM runs WHERE run_id = ?",
                 (run_id,),
             )
             row = cur.fetchone()
         if row is None:
             return False
-        analysis_version, analysis_json = row
-        parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
-        if parsed_analysis is not None and not is_json_object(parsed_analysis):
-            LOGGER.warning(
-                "analysis_is_current: run %s analysis_json parsed to %s, expected dict; "
-                "treating as outdated",
-                run_id,
-                type(parsed_analysis).__name__,
-            )
-            return False
-        if is_json_object(parsed_analysis):
-            return bool(persisted_analysis_is_current(analysis_version, parsed_analysis))
         try:
-            return int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
+            return int(row[0]) >= ANALYSIS_SCHEMA_VERSION
         except (ValueError, TypeError):
-            LOGGER.warning(
-                "analysis_is_current: invalid analysis_version value %r for run %s; "
-                "treating as outdated",
-                analysis_version,
-                run_id,
-            )
             return False
 
     def list_runs(self, limit: int = 500) -> list[JsonObject]:
@@ -544,7 +535,7 @@ class HistoryDB:
         if analysis_json:
             parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
             if is_json_object(parsed_analysis):
-                entry["analysis"] = unwrap_persisted_analysis(parsed_analysis)
+                entry["analysis"] = _sanitize_for_read(parsed_analysis)
             else:
                 entry["analysis_corrupt"] = True
         if error:
@@ -677,7 +668,7 @@ class HistoryDB:
             return None
         if parsed is None:
             return None
-        return unwrap_persisted_analysis(parsed)
+        return _sanitize_for_read(parsed)
 
     def get_run_status(self, run_id: str) -> str | None:
         with self._cursor(commit=False) as cur:

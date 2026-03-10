@@ -60,14 +60,14 @@ def create_settings_routes(
 
     @router.post("/api/settings/cars", response_model=CarsResponse)
     async def add_car(req: CarUpsertRequest) -> CarsResponse:
-        payload = req.to_store_payload()
+        payload = req.model_dump(exclude_none=True)
         result = await asyncio.to_thread(settings_store.add_car, payload)
         apply_car_settings()
         return CarsResponse(**result)
 
     @router.put("/api/settings/cars/{car_id}", response_model=CarsResponse)
     async def update_car(car_id: str, req: CarUpsertRequest) -> CarsResponse:
-        payload = req.to_store_payload()
+        payload = req.model_dump(exclude_none=True)
         with _value_error_to_http(404):
             result = await asyncio.to_thread(
                 settings_store.update_car,
@@ -100,7 +100,7 @@ def create_settings_routes(
     # -- speed source ----------------------------------------------------------
 
     async def _apply_speed_source_update(req: SpeedSourceRequest) -> SpeedSourceResponse:
-        payload = req.to_store_payload()
+        payload = req.model_dump(exclude_none=True)
         result = await asyncio.to_thread(
             settings_store.update_speed_source,
             payload,
@@ -132,7 +132,7 @@ def create_settings_routes(
     @router.post("/api/settings/sensors/{mac}", response_model=SensorsResponse)
     async def update_sensor(mac: str, req: SensorRequest) -> SensorsResponse:
         normalized_mac = normalize_mac_or_400(mac)
-        payload = req.to_store_payload()
+        payload = req.model_dump(exclude_none=True)
         with _value_error_to_http():
             await asyncio.to_thread(
                 settings_store.set_sensor,
@@ -180,7 +180,7 @@ def create_settings_routes(
 
     @router.post("/api/analysis-settings", response_model=AnalysisSettingsResponse)
     async def set_analysis_settings(req: AnalysisSettingsRequest) -> AnalysisSettingsResponse:
-        changes = req.to_settings_payload()
+        changes = req.model_dump(exclude_none=True)
         if changes:
             with _value_error_to_http():
                 await asyncio.to_thread(settings_store.update_active_car_aspects, changes)

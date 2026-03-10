@@ -1,9 +1,8 @@
 """Verify that root-level analysis bridge modules don't import from analysis/.
 
-``analysis_settings.py`` and ``analysis_persistence.py`` live at the
-vibesensor package root specifically to avoid circular dependencies:
-``runtime/`` and ``metrics_log/`` depend on them, and they must not
-depend on the ``analysis/`` subpackage.
+``analysis_settings.py`` lives at the vibesensor package root specifically
+to avoid circular dependencies: ``runtime/`` and ``metrics_log/`` depend on
+it, and it must not depend on the ``analysis/`` subpackage.
 """
 
 from __future__ import annotations
@@ -15,7 +14,6 @@ from _paths import SERVER_ROOT
 
 _BRIDGE_MODULES = [
     SERVER_ROOT / "vibesensor" / "analysis_settings.py",
-    SERVER_ROOT / "vibesensor" / "analysis_persistence.py",
 ]
 
 
@@ -44,15 +42,6 @@ def test_analysis_settings_does_not_import_from_analysis() -> None:
     violations = _imports_from_analysis(path)
     assert not violations, (
         f"analysis_settings.py must not import from the analysis/ package "
-        f"(circular dependency risk): {violations}"
-    )
-
-
-def test_analysis_persistence_does_not_import_from_analysis() -> None:
-    path = SERVER_ROOT / "vibesensor" / "analysis_persistence.py"
-    violations = _imports_from_analysis(path)
-    assert not violations, (
-        f"analysis_persistence.py must not import from the analysis/ package "
         f"(circular dependency risk): {violations}"
     )
 

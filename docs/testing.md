@@ -3,9 +3,8 @@
 ## Source of truth
 
 - Server tests live under `apps/server/tests/`.
-- The canonical local verification entry point is `python3 tools/tests/run_verification.py`.
-- The default CI-parity runner is `make test-all` (`python3 tools/tests/run_verification.py --suite ci-parity`).
-- The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_verification.py --suite full-stack`).
+- The canonical CI-parity runner is `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
+- The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_full_suite.py`).
 - Python test configuration lives in `apps/server/pyproject.toml`.
 
 ## Layout
@@ -51,7 +50,7 @@ apps/server/tests/
 | `vibesensor/history_db/*`, `history_services/*`, `runlog.py` | `apps/server/tests/history/` |
 | `vibesensor/update/*`, `firmware_cache.py`, `esp_flash_manager.py`, `release_fetcher.py` | `apps/server/tests/update/` |
 | `vibesensor/processing/*` | `apps/server/tests/processing/` |
-| `vibesensor/ws_hub.py`, `ws_models.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
+| `vibesensor/ws_hub.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
 | `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
 | `vibesensor/order_bands.py`, `peak_classification.py`, `severity.py` | `apps/server/tests/diagnostics/` |
 | `vibesensor/domain_models.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |

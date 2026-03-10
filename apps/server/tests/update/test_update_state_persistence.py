@@ -14,8 +14,7 @@ import pytest
 from vibesensor.update.manager import UpdateManager
 from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
 from vibesensor.update.runner import CommandRunner
-from vibesensor.update.state_store import UpdateStateStore
-from vibesensor.update.status import UpdateStatusTracker
+from vibesensor.update.status import UpdateStateStore, UpdateStatusTracker
 
 # ---------------------------------------------------------------------------
 # Fake runner (minimal; only records calls)

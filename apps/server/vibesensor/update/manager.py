@@ -8,7 +8,6 @@ import os
 from pathlib import Path
 
 from ..json_types import JsonObject
-from .commands import UpdateCommandExecutor
 from .installer import UpdateInstaller, UpdateInstallerConfig
 from .models import UpdateJobStatus, UpdatePhase, UpdateRequest, UpdateState
 from .network import (
@@ -25,14 +24,12 @@ from .network import (
     parse_wifi_diagnostics,
 )
 from .releases import UpdateReleaseConfig, UpdateReleaseService
-from .runner import CommandRunner
+from .runner import CommandRunner, UpdateCommandExecutor
 from .runtime_details import UpdateRuntimeDetailsCollector
-from .service_control import UpdateServiceControlConfig, UpdateServiceController
-from .state_store import UpdateStateStore
-from .status import UpdateStatusTracker
+from .status import UpdateStateStore, UpdateStatusTracker
 from .validation import UpdatePrerequisiteValidator, UpdateValidationConfig
 from .wifi import UpdateWifiConfig, UpdateWifiController
-from .workflow import UpdateWorkflow
+from .workflow import UpdateServiceControlConfig, UpdateServiceController, UpdateWorkflow
 
 LOGGER = logging.getLogger(__name__)
 
@@ -79,6 +76,26 @@ class UpdateManager:
         self._status = self._tracker.status
         self._task: asyncio.Task[None] | None = None
         self._cancel_event = asyncio.Event()
+
+        # Build config objects once — shared by workflow, snapshot, and rollback.
+        self._installer_config = UpdateInstallerConfig(
+            repo=self._repo,
+            rollback_dir=self._rollback_dir,
+            reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
+            firmware_refresh_timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
+        )
+        self._validation_config = UpdateValidationConfig(
+            rollback_dir=self._rollback_dir,
+            min_free_disk_bytes=MIN_FREE_DISK_BYTES,
+        )
+        self._release_config = UpdateReleaseConfig(
+            rollback_dir=self._rollback_dir,
+            server_repo=self._server_repo,
+        )
+        self._service_control_config = UpdateServiceControlConfig(
+            service_name=UPDATE_SERVICE_NAME,
+            restart_unit=UPDATE_RESTART_UNIT,
+        )
 
     @property
     def status(self) -> UpdateJobStatus:
@@ -223,36 +240,22 @@ class UpdateManager:
             validator=UpdatePrerequisiteValidator(
                 commands=commands,
                 tracker=self._tracker,
-                config=UpdateValidationConfig(
-                    rollback_dir=self._rollback_dir,
-                    min_free_disk_bytes=MIN_FREE_DISK_BYTES,
-                ),
+                config=self._validation_config,
             ),
             wifi=self._build_wifi_controller(commands=commands),
             releases=UpdateReleaseService(
                 tracker=self._tracker,
-                config=UpdateReleaseConfig(
-                    rollback_dir=self._rollback_dir,
-                    server_repo=self._server_repo,
-                ),
+                config=self._release_config,
             ),
             installer=UpdateInstaller(
                 commands=commands,
                 tracker=self._tracker,
-                config=UpdateInstallerConfig(
-                    repo=self._repo,
-                    rollback_dir=self._rollback_dir,
-                    reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
-                    firmware_refresh_timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
-                ),
+                config=self._installer_config,
             ),
             services=UpdateServiceController(
                 commands=commands,
                 tracker=self._tracker,
-                config=UpdateServiceControlConfig(
-                    service_name=UPDATE_SERVICE_NAME,
-                    restart_unit=UPDATE_RESTART_UNIT,
-                ),
+                config=self._service_control_config,
             ),
             cancel_requested=self._cancel_event.is_set,
         )
@@ -289,12 +292,7 @@ class UpdateManager:
         installer = UpdateInstaller(
             commands=commands,
             tracker=self._tracker,
-            config=UpdateInstallerConfig(
-                repo=self._repo,
-                rollback_dir=self._rollback_dir,
-                reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
-                firmware_refresh_timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
-            ),
+            config=self._installer_config,
         )
         return await installer.snapshot_for_rollback()
 
@@ -303,12 +301,7 @@ class UpdateManager:
         installer = UpdateInstaller(
             commands=commands,
             tracker=self._tracker,
-            config=UpdateInstallerConfig(
-                repo=self._repo,
-                rollback_dir=self._rollback_dir,
-                reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
-                firmware_refresh_timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
-            ),
+            config=self._installer_config,
         )
         return await installer.rollback()
 

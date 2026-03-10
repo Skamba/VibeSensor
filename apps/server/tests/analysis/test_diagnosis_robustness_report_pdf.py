@@ -3,16 +3,16 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Any
 
-from _diagnosis_robustness_helpers import (
+from pypdf import PdfReader
+from test_support import (
     ALL_SENSORS,
     extract_pdf_text,
     make_sample,
-    map_summary,
     standard_metadata,
-    summarize_run_data,
     wheel_hz,
 )
-from pypdf import PdfReader
+
+from vibesensor.analysis import map_summary, summarize_run_data
 
 
 class TestPdfContentForDiagnosedScenario:

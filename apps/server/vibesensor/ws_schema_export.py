@@ -25,9 +25,11 @@ _DEFAULT_OUT = (
 
 def export_schema(out_path: Path | None = None) -> str:
     """Return the JSON Schema string and optionally write it to *out_path*."""
-    from vibesensor.ws_models import LiveWsPayload
+    from pydantic import TypeAdapter
 
-    schema = LiveWsPayload.model_json_schema()
+    from vibesensor.payload_types import LiveWsPayload
+
+    schema = TypeAdapter(LiveWsPayload).json_schema()
     text = json.dumps(schema, indent=2, sort_keys=True) + "\n"
     if out_path is not None:
         out_path.parent.mkdir(parents=True, exist_ok=True)

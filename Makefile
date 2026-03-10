@@ -30,7 +30,7 @@ test-all:
 test-ci: test-all  # alias — use 'make test-all'
 
 test-full-suite:
-	python3 tools/tests/run_verification.py --suite full-stack
+	python3 tools/tests/run_full_suite.py
 
 sync-contracts:
 	cd apps/ui && npm run sync:contracts

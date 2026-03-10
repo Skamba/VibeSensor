@@ -151,19 +151,12 @@ def _make_state(
         analysis_settings=_StubAnalysisSettings(),  # type: ignore[arg-type]
         gps_monitor=_StubGPS(),  # type: ignore[arg-type]
     )
-    diagnostics = runtime_module.RuntimeRecordingSubsystem(
-        metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
-    )
     persistence = runtime_module.RuntimePersistenceSubsystem(  # type: ignore[arg-type]
         history_db=_SENTINEL,
         query_service=_SENTINEL,
         delete_service=_SENTINEL,
         report_service=_SENTINEL,
         export_service=_SENTINEL,
-    )
-    updates = runtime_module.RuntimeUpdateSubsystem(
-        update_manager=_SENTINEL,  # type: ignore[arg-type]
-        esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
     )
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
@@ -190,7 +183,6 @@ def _make_state(
             settings=settings,
         ),
     )
-
     config = _StubConfig(
         processing=_StubProcessingConfig(
             ui_push_hz=ui_push_hz,
@@ -201,18 +193,20 @@ def _make_state(
         config=config,  # type: ignore[arg-type]
         ingress=ingress,
         settings=settings,
-        recording=diagnostics,
+        metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
         persistence=persistence,
-        updates=updates,
+        update_manager=_SENTINEL,  # type: ignore[arg-type]
+        esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
         processing=processing,
         websocket=websocket,
         lifecycle=build_lifecycle_manager(
             config=config,  # type: ignore[arg-type]
             ingress=ingress,
             settings=settings,
-            recording=diagnostics,
+            metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
             persistence=persistence,
-            updates=updates,
+            update_manager=_SENTINEL,  # type: ignore[arg-type]
+            esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
             processing=processing,
             websocket=websocket,
         ),

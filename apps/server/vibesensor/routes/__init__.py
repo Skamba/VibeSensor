@@ -40,7 +40,7 @@ def create_router(services: RuntimeState) -> APIRouter:
             services.processing.health_state,
             services.ingress.processor,
             services.ingress.registry,
-            services.recording.metrics_logger,
+            services.metrics_logger,
         ),
     )
     router.include_router(
@@ -61,7 +61,7 @@ def create_router(services: RuntimeState) -> APIRouter:
     )
     router.include_router(
         create_recording_routes(
-            services.recording.metrics_logger,
+            services.metrics_logger,
         ),
     )
     router.include_router(
@@ -72,8 +72,8 @@ def create_router(services: RuntimeState) -> APIRouter:
     router.include_router(create_websocket_routes(services.websocket.hub))
     router.include_router(
         create_update_routes(
-            services.updates.update_manager,
-            services.updates.esp_flash_manager,
+            services.update_manager,
+            services.esp_flash_manager,
         ),
     )
     router.include_router(create_car_library_routes())

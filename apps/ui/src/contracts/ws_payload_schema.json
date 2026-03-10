@@ -1,7 +1,6 @@
 {
   "$defs": {
-    "AlignmentInfo": {
-      "description": "Multi-sensor clock-alignment quality metrics for a frequency window.",
+    "AlignmentInfoPayload": {
       "properties": {
         "aligned": {
           "title": "Aligned",
@@ -31,15 +30,56 @@
         "sensor_count",
         "clock_synced"
       ],
-      "title": "AlignmentInfo",
+      "title": "AlignmentInfoPayload",
       "type": "object"
     },
-    "ClientInfoModel": {
-      "additionalProperties": false,
-      "description": "Structured client row with explicit defaults for optional construction.",
+    "AxisMetrics": {
+      "properties": {
+        "p2p": {
+          "title": "P2P",
+          "type": "number"
+        },
+        "peaks": {
+          "items": {
+            "$ref": "#/$defs/AxisPeak"
+          },
+          "title": "Peaks",
+          "type": "array"
+        },
+        "rms": {
+          "title": "Rms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "rms",
+        "p2p",
+        "peaks"
+      ],
+      "title": "AxisMetrics",
+      "type": "object"
+    },
+    "AxisPeak": {
+      "properties": {
+        "amp": {
+          "title": "Amp",
+          "type": "number"
+        },
+        "hz": {
+          "title": "Hz",
+          "type": "number"
+        },
+        "snr_ratio": {
+          "title": "Snr Ratio",
+          "type": "number"
+        }
+      },
+      "title": "AxisPeak",
+      "type": "object"
+    },
+    "ClientApiRow": {
       "properties": {
         "connected": {
-          "default": false,
           "title": "Connected",
           "type": "boolean"
         },
@@ -62,7 +102,6 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Control Addr"
         },
         "data_addr": {
@@ -84,36 +123,29 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Data Addr"
         },
         "dropped_frames": {
-          "default": 0,
           "title": "Dropped Frames",
           "type": "integer"
         },
         "duplicates_received": {
-          "default": 0,
           "title": "Duplicates Received",
           "type": "integer"
         },
         "firmware_version": {
-          "default": "",
           "title": "Firmware Version",
           "type": "string"
         },
         "frame_samples": {
-          "default": 0,
           "title": "Frame Samples",
           "type": "integer"
         },
         "frames_total": {
-          "default": 0,
           "title": "Frames Total",
           "type": "integer"
         },
         "id": {
-          "default": "",
           "title": "Id",
           "type": "string"
         },
@@ -126,7 +158,6 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Last Ack Cmd Seq"
         },
         "last_ack_status": {
@@ -138,7 +169,6 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Last Ack Status"
         },
         "last_reset_time": {
@@ -150,7 +180,6 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Last Reset Time"
         },
         "last_seen_age_ms": {
@@ -162,51 +191,54 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Last Seen Age Ms"
         },
         "latest_metrics": {
-          "additionalProperties": true,
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AxisMetrics"
+              },
+              {
+                "$ref": "#/$defs/CombinedMetrics"
+              },
+              {
+                "$ref": "#/$defs/VibrationStrengthMetrics"
+              }
+            ]
+          },
           "title": "Latest Metrics",
           "type": "object"
         },
         "location": {
-          "default": "",
           "title": "Location",
           "type": "string"
         },
         "mac_address": {
-          "default": "",
           "title": "Mac Address",
           "type": "string"
         },
         "name": {
-          "default": "",
           "title": "Name",
           "type": "string"
         },
         "parse_errors": {
-          "default": 0,
           "title": "Parse Errors",
           "type": "integer"
         },
         "queue_overflow_drops": {
-          "default": 0,
           "title": "Queue Overflow Drops",
           "type": "integer"
         },
         "reset_count": {
-          "default": 0,
           "title": "Reset Count",
           "type": "integer"
         },
         "sample_rate_hz": {
-          "default": 0,
           "title": "Sample Rate Hz",
           "type": "integer"
         },
         "server_queue_drops": {
-          "default": 0,
           "title": "Server Queue Drops",
           "type": "integer"
         },
@@ -214,11 +246,59 @@
           "$ref": "#/$defs/TimingHealthPayload"
         }
       },
-      "title": "ClientInfoModel",
+      "required": [
+        "id",
+        "mac_address",
+        "name",
+        "connected",
+        "location",
+        "firmware_version",
+        "sample_rate_hz",
+        "frame_samples",
+        "last_seen_age_ms",
+        "data_addr",
+        "control_addr",
+        "frames_total",
+        "dropped_frames",
+        "duplicates_received",
+        "queue_overflow_drops",
+        "parse_errors",
+        "server_queue_drops",
+        "latest_metrics",
+        "last_ack_cmd_seq",
+        "last_ack_status",
+        "reset_count",
+        "last_reset_time",
+        "timing_health"
+      ],
+      "title": "ClientApiRow",
       "type": "object"
     },
-    "FrequencyWarning": {
-      "description": "Warning about frequency data quality issues in a spectra payload.",
+    "CombinedMetrics": {
+      "properties": {
+        "peaks": {
+          "items": {
+            "$ref": "#/$defs/StrengthPeak"
+          },
+          "title": "Peaks",
+          "type": "array"
+        },
+        "strength_metrics": {
+          "$ref": "#/$defs/VibrationStrengthMetrics"
+        },
+        "vib_mag_p2p": {
+          "title": "Vib Mag P2P",
+          "type": "number"
+        },
+        "vib_mag_rms": {
+          "title": "Vib Mag Rms",
+          "type": "number"
+        }
+      },
+      "title": "CombinedMetrics",
+      "type": "object"
+    },
+    "FrequencyWarningPayload": {
       "properties": {
         "client_ids": {
           "items": {
@@ -241,11 +321,10 @@
         "message",
         "client_ids"
       ],
-      "title": "FrequencyWarning",
+      "title": "FrequencyWarningPayload",
       "type": "object"
     },
-    "OrderBand": {
-      "description": "Frequency band for a specific rotation-order harmonic.",
+    "OrderBandPayload": {
       "properties": {
         "center_hz": {
           "title": "Center Hz",
@@ -265,11 +344,10 @@
         "center_hz",
         "tolerance"
       ],
-      "title": "OrderBand",
+      "title": "OrderBandPayload",
       "type": "object"
     },
-    "RotationalSpeedValue": {
-      "description": "Current rotational speed estimate with source and confidence metadata.",
+    "RotationalSpeedValuePayload": {
       "properties": {
         "mode": {
           "anyOf": [
@@ -280,7 +358,6 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Mode"
         },
         "reason": {
@@ -292,7 +369,6 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Reason"
         },
         "rpm": {
@@ -304,15 +380,18 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Rpm"
         }
       },
-      "title": "RotationalSpeedValue",
+      "required": [
+        "rpm",
+        "mode",
+        "reason"
+      ],
+      "title": "RotationalSpeedValuePayload",
       "type": "object"
     },
-    "RotationalSpeeds": {
-      "description": "Current per-system rotational speed estimates (wheel, driveshaft, engine).",
+    "RotationalSpeedsPayload": {
       "properties": {
         "basis_speed_source": {
           "anyOf": [
@@ -323,30 +402,19 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Basis Speed Source"
         },
         "driveshaft": {
-          "$ref": "#/$defs/RotationalSpeedValue",
-          "default": {
-            "mode": null,
-            "reason": null,
-            "rpm": null
-          }
+          "$ref": "#/$defs/RotationalSpeedValuePayload"
         },
         "engine": {
-          "$ref": "#/$defs/RotationalSpeedValue",
-          "default": {
-            "mode": null,
-            "reason": null,
-            "rpm": null
-          }
+          "$ref": "#/$defs/RotationalSpeedValuePayload"
         },
         "order_bands": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/OrderBand"
+                "$ref": "#/$defs/OrderBandPayload"
               },
               "type": "array"
             },
@@ -354,46 +422,35 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Order Bands"
         },
         "wheel": {
-          "$ref": "#/$defs/RotationalSpeedValue",
-          "default": {
-            "mode": null,
-            "reason": null,
-            "rpm": null
-          }
+          "$ref": "#/$defs/RotationalSpeedValuePayload"
         }
       },
-      "title": "RotationalSpeeds",
+      "required": [
+        "basis_speed_source",
+        "wheel",
+        "driveshaft",
+        "engine",
+        "order_bands"
+      ],
+      "title": "RotationalSpeedsPayload",
       "type": "object"
     },
     "SpectraPayload": {
-      "additionalProperties": true,
-      "description": "Top-level spectra block included on heavy ticks.",
       "properties": {
         "alignment": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/AlignmentInfo"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
+          "$ref": "#/$defs/AlignmentInfoPayload"
         },
         "clients": {
           "additionalProperties": {
-            "$ref": "#/$defs/SpectrumSeries"
+            "$ref": "#/$defs/SpectrumSeriesPayload"
           },
-          "default": {},
           "title": "Clients",
           "type": "object"
         },
         "freq": {
-          "default": [],
           "items": {
             "type": "number"
           },
@@ -401,26 +458,15 @@
           "type": "array"
         },
         "warning": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/FrequencyWarning"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
+          "$ref": "#/$defs/FrequencyWarningPayload"
         }
       },
       "title": "SpectraPayload",
       "type": "object"
     },
-    "SpectrumSeries": {
-      "additionalProperties": true,
-      "description": "Per-client spectrum data sent on heavy ticks.",
+    "SpectrumSeriesPayload": {
       "properties": {
         "combined_spectrum_amp_g": {
-          "default": [],
           "items": {
             "type": "number"
           },
@@ -428,25 +474,16 @@
           "type": "array"
         },
         "freq": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "number"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Freq"
+          "items": {
+            "type": "number"
+          },
+          "title": "Freq",
+          "type": "array"
         },
         "strength_metrics": {
-          "$ref": "#/$defs/StrengthMetricsModel"
+          "$ref": "#/$defs/StrengthMetricsPayload"
         },
         "x": {
-          "default": [],
           "items": {
             "type": "number"
           },
@@ -454,7 +491,6 @@
           "type": "array"
         },
         "y": {
-          "default": [],
           "items": {
             "type": "number"
           },
@@ -462,7 +498,6 @@
           "type": "array"
         },
         "z": {
-          "default": [],
           "items": {
             "type": "number"
           },
@@ -470,12 +505,10 @@
           "type": "array"
         }
       },
-      "title": "SpectrumSeries",
+      "title": "SpectrumSeriesPayload",
       "type": "object"
     },
-    "StrengthMetricsModel": {
-      "additionalProperties": false,
-      "description": "Structured vibration-strength metrics with explicit defaults.",
+    "StrengthMetricsPayload": {
       "properties": {
         "combined_spectrum_amp_g": {
           "items": {
@@ -485,12 +518,10 @@
           "type": "array"
         },
         "noise_floor_amp_g": {
-          "default": 0.0,
           "title": "Noise Floor Amp G",
           "type": "number"
         },
         "peak_amp_g": {
-          "default": 0.0,
           "title": "Peak Amp G",
           "type": "number"
         },
@@ -503,7 +534,6 @@
               "type": "null"
             }
           ],
-          "default": null,
           "title": "Strength Bucket"
         },
         "top_peaks": {
@@ -514,16 +544,14 @@
           "type": "array"
         },
         "vibration_strength_db": {
-          "default": 0.0,
           "title": "Vibration Strength Db",
           "type": "number"
         }
       },
-      "title": "StrengthMetricsModel",
+      "title": "StrengthMetricsPayload",
       "type": "object"
     },
     "StrengthPeak": {
-      "additionalProperties": false,
       "properties": {
         "amp": {
           "title": "Amp",
@@ -559,7 +587,6 @@
       "type": "object"
     },
     "TimingHealthPayload": {
-      "additionalProperties": false,
       "properties": {
         "drift_us_total": {
           "title": "Drift Us Total",
@@ -576,15 +603,63 @@
       },
       "title": "TimingHealthPayload",
       "type": "object"
+    },
+    "VibrationStrengthMetrics": {
+      "properties": {
+        "combined_spectrum_amp_g": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Combined Spectrum Amp G",
+          "type": "array"
+        },
+        "noise_floor_amp_g": {
+          "title": "Noise Floor Amp G",
+          "type": "number"
+        },
+        "peak_amp_g": {
+          "title": "Peak Amp G",
+          "type": "number"
+        },
+        "strength_bucket": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Strength Bucket"
+        },
+        "top_peaks": {
+          "items": {
+            "$ref": "#/$defs/StrengthPeak"
+          },
+          "title": "Top Peaks",
+          "type": "array"
+        },
+        "vibration_strength_db": {
+          "title": "Vibration Strength Db",
+          "type": "number"
+        }
+      },
+      "required": [
+        "combined_spectrum_amp_g",
+        "vibration_strength_db",
+        "peak_amp_g",
+        "noise_floor_amp_g",
+        "strength_bucket",
+        "top_peaks"
+      ],
+      "title": "VibrationStrengthMetrics",
+      "type": "object"
     }
   },
-  "additionalProperties": true,
-  "description": "Root model for every WebSocket message pushed to the UI.",
   "properties": {
     "clients": {
-      "default": [],
       "items": {
-        "$ref": "#/$defs/ClientInfoModel"
+        "$ref": "#/$defs/ClientApiRow"
       },
       "title": "Clients",
       "type": "array"
@@ -592,16 +667,14 @@
     "rotational_speeds": {
       "anyOf": [
         {
-          "$ref": "#/$defs/RotationalSpeeds"
+          "$ref": "#/$defs/RotationalSpeedsPayload"
         },
         {
           "type": "null"
         }
-      ],
-      "default": null
+      ]
     },
     "schema_version": {
-      "default": "1",
       "title": "Schema Version",
       "type": "string"
     },
@@ -614,7 +687,6 @@
           "type": "null"
         }
       ],
-      "default": null,
       "title": "Selected Client Id"
     },
     "server_time": {
@@ -622,15 +694,7 @@
       "type": "string"
     },
     "spectra": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/SpectraPayload"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
+      "$ref": "#/$defs/SpectraPayload"
     },
     "speed_mps": {
       "anyOf": [
@@ -641,13 +705,9 @@
           "type": "null"
         }
       ],
-      "default": null,
       "title": "Speed Mps"
     }
   },
-  "required": [
-    "server_time"
-  ],
   "title": "LiveWsPayload",
   "type": "object"
 }

@@ -44,6 +44,7 @@ def collect_test_ids(pytest_args: list[str]) -> list[str]:
         raise SystemExit(result.returncode)
     return _parse_collected_test_ids(result.stdout or "")
 
+
 ROOT = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT / "artifacts" / "ai" / "logs" / "e2e_parallel"
 PRINT_LOCK = threading.Lock()

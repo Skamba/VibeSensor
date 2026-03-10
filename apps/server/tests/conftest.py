@@ -21,9 +21,7 @@ from vibesensor.runtime.subsystems import (
     RuntimeIngressSubsystem,
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
-    RuntimeRecordingSubsystem,
     RuntimeSettingsSubsystem,
-    RuntimeUpdateSubsystem,
     RuntimeWebsocketSubsystem,
 )
 from vibesensor.runtime.ws_broadcast import WsBroadcastCache
@@ -72,9 +70,6 @@ class FakeState:
             gps_monitor=self.gps_monitor,  # type: ignore[arg-type]
             analysis_settings=self.analysis_settings,  # type: ignore[arg-type]
         )
-        self.recording = RuntimeRecordingSubsystem(
-            metrics_logger=self.metrics_logger,  # type: ignore[arg-type]
-        )
         self.persistence = RuntimePersistenceSubsystem(
             history_db=self.history_db,  # type: ignore[arg-type]
             query_service=HistoryRunQueryService(self.history_db, self.settings_store),
@@ -86,10 +81,6 @@ class FakeState:
             hub=self.ws_hub,  # type: ignore[arg-type]
             cache=WsBroadcastCache(),
             broadcast=MagicMock(),
-        )
-        self.updates = RuntimeUpdateSubsystem(
-            update_manager=self.update_manager,  # type: ignore[arg-type]
-            esp_flash_manager=self.esp_flash_manager,  # type: ignore[arg-type]
         )
         self.processing = RuntimeProcessingSubsystem(
             state=self.loop_state,

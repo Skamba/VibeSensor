@@ -22,9 +22,8 @@ if TYPE_CHECKING:
         RuntimeSettingsSubsystem,
     )
 
-from ..payload_types import LiveWsPayload, SpectraPayload
+from ..payload_types import SCHEMA_VERSION, LiveWsPayload, SpectraPayload
 from ..runlog import utc_now_iso
-from ..ws_models import SCHEMA_VERSION
 
 
 @dataclass(slots=True)

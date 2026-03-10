@@ -9,8 +9,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = resolve(__dirname, '../..');
 const requireFromUi = createRequire(resolve(root, 'apps/ui/package.json'));
-const sharedSrc = resolve(root, 'libs/shared/ts/contracts.ts');
-const sharedDst = resolve(root, 'apps/ui/src/generated/shared_contracts.ts');
 const httpSchemaSrc = resolve(root, 'apps/ui/src/contracts/http_api_schema.json');
 const httpTypesDst = resolve(root, 'apps/ui/src/generated/http_api_contracts.ts');
 const wsSchemaSrc = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.json');
@@ -67,15 +65,15 @@ function wsAliasBlock(schemaVersion) {
 		+ `export const EXPECTED_SCHEMA_VERSION = ${JSON.stringify(schemaVersion)} as const;\n\n`
 		+ 'type WsSchema<Name extends keyof components["schemas"]> = components["schemas"][Name];\n\n'
 		+ 'export type StrengthMetricPeak = WsSchema<"StrengthPeak">;\n'
-		+ 'export type StrengthMetricsPayload = WsSchema<"StrengthMetricsModel">;\n'
-		+ 'export type WsSpectrumSeries = WsSchema<"SpectrumSeries">;\n'
-		+ 'export type WsAlignmentInfo = WsSchema<"AlignmentInfo">;\n'
-		+ 'export type WsFrequencyWarning = WsSchema<"FrequencyWarning">;\n'
+		+ 'export type StrengthMetricsPayload = WsSchema<"StrengthMetricsPayload">;\n'
+		+ 'export type WsSpectrumSeries = WsSchema<"SpectrumSeriesPayload">;\n'
+		+ 'export type WsAlignmentInfo = WsSchema<"AlignmentInfoPayload">;\n'
+		+ 'export type WsFrequencyWarning = WsSchema<"FrequencyWarningPayload">;\n'
 		+ 'export type WsSpectraPayload = WsSchema<"SpectraPayload">;\n'
-		+ 'export type WsRotationalSpeedValue = WsSchema<"RotationalSpeedValue">;\n'
-		+ 'export type WsOrderBand = WsSchema<"OrderBand">;\n'
-		+ 'export type WsRotationalSpeeds = WsSchema<"RotationalSpeeds">;\n'
-		+ 'export type WsClientInfo = WsSchema<"ClientInfoModel">;\n'
+		+ 'export type WsRotationalSpeedValue = WsSchema<"RotationalSpeedValuePayload">;\n'
+		+ 'export type WsOrderBand = WsSchema<"OrderBandPayload">;\n'
+		+ 'export type WsRotationalSpeeds = WsSchema<"RotationalSpeedsPayload">;\n'
+		+ 'export type WsClientInfo = WsSchema<"ClientApiRow">;\n'
 		+ 'export type LiveWsPayload = WsSchema<"LiveWsPayload">;\n'
 	);
 }
@@ -124,10 +122,6 @@ async function generateWsTypes() {
 async function main() {
 	const checkMode = process.argv.includes('--check');
 
-	const sharedContent = readFileSync(sharedSrc, 'utf8');
-	const sharedGenerated = `// Generated from libs/shared/ts/contracts.ts\n// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs\n\n${sharedContent}`;
-	writeGenerated(sharedDst, sharedGenerated, checkMode);
-
 	const httpGenerated = await generateHttpTypes();
 	writeGenerated(httpTypesDst, httpGenerated, checkMode);
 
@@ -139,7 +133,6 @@ async function main() {
 		return;
 	}
 
-	console.log(`Synced ${sharedSrc} -> ${sharedDst}`);
 	console.log(`Generated ${httpSchemaSrc} -> ${httpTypesDst}`);
 	console.log(`Generated ${wsSchemaSrc} -> ${wsTypesDst}`);
 }

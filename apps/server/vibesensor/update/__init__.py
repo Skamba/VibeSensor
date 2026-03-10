@@ -7,13 +7,13 @@ Module topology
 ---------------
 - **Facade**: ``manager.py`` — public ``UpdateManager`` API for routes and
   runtime lifecycle.
-- **Workflow**: ``workflow.py`` — high-level multi-phase update orchestration.
+- **Workflow**: ``workflow.py`` — high-level multi-phase update orchestration
+  and systemd service control.
 - **Operations**: ``installer.py`` (install/rollback), ``wifi.py`` (Wi-Fi
-  connect/restore), ``releases.py`` (GitHub release discovery), ``commands.py``
-  (shell command helpers), ``runner.py`` (process execution), ``service_control.py``
-  (systemd management).
-- **State**: ``status.py`` (progress tracking), ``state_store.py`` (persistent
-  state), ``models.py`` (data models).
+  connect/restore), ``releases.py`` (GitHub release discovery),
+  ``runner.py`` (process execution and command helpers).
+- **State**: ``status.py`` (progress tracking and persistent state store),
+  ``models.py`` (data models).
 - **Validation**: ``validation.py`` (prerequisite checks).
 - **Diagnostics**: ``runtime_details.py`` (hash/version inspection), ``network.py``
   (DNS / connectivity).

@@ -33,6 +33,7 @@ SENSOR_FR = "front-right"
 SENSOR_RL = "rear-left"
 SENSOR_RR = "rear-right"
 ALL_WHEEL_SENSORS = [SENSOR_FL, SENSOR_FR, SENSOR_RL, SENSOR_RR]
+ALL_SENSORS = ALL_WHEEL_SENSORS  # convenience alias
 
 # Non-wheel sensor names for multi-sensor scenarios
 SENSOR_ENGINE = "engine-bay"

@@ -5,14 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..config import AppConfig
+from ..esp_flash_manager import EspFlashManager
+from ..metrics_log import MetricsLogger
+from ..update.manager import UpdateManager
 from .lifecycle import LifecycleManager
 from .subsystems import (
     RuntimeIngressSubsystem,
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
-    RuntimeRecordingSubsystem,
     RuntimeSettingsSubsystem,
-    RuntimeUpdateSubsystem,
     RuntimeWebsocketSubsystem,
 )
 
@@ -24,9 +25,10 @@ class RuntimeState:
     config: AppConfig
     ingress: RuntimeIngressSubsystem
     settings: RuntimeSettingsSubsystem
-    recording: RuntimeRecordingSubsystem
+    metrics_logger: MetricsLogger
     persistence: RuntimePersistenceSubsystem
-    updates: RuntimeUpdateSubsystem
+    update_manager: UpdateManager
+    esp_flash_manager: EspFlashManager
     processing: RuntimeProcessingSubsystem
     websocket: RuntimeWebsocketSubsystem
     lifecycle: LifecycleManager

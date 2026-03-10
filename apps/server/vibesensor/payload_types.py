@@ -8,6 +8,9 @@ from vibesensor.core.vibration_strength import StrengthPeak, VibrationStrengthMe
 
 from .json_types import JsonObject
 
+# Bump this when the payload shape changes in a backwards-incompatible way.
+SCHEMA_VERSION: str = "1"
+
 IntakeStatsPayload: TypeAlias = JsonObject
 
 
