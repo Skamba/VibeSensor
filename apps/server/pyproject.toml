@@ -135,7 +135,6 @@ files = [
   "vibesensor/update",
   "vibesensor/processing",
   "vibesensor/analysis",
-  "vibesensor/analysis_persistence.py",
   "vibesensor/analysis_settings.py",
   "vibesensor/core",
   "vibesensor/history_db",
