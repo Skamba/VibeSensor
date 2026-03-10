@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from vibesensor.update.status import UpdateStateStore, UpdateStatusTracker
-from vibesensor.update.validation import UpdatePrerequisiteValidator, UpdateValidationConfig
+from vibesensor.update.workflow import UpdatePrerequisiteValidator, UpdateValidationConfig
 
 
 def _mock_which(name: str) -> str | None:
