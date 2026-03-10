@@ -27,11 +27,7 @@ _ANALYSIS_PKG = _SERVER_PKG / "analysis"
 
 # Analysis modules that must NOT import from report_i18n.
 # report_mapping/pipeline.py is the sole i18n bridge and is allowed.
-_ANALYSIS_MODULES_NO_I18N = [
-    p
-    for p in _ANALYSIS_PKG.glob("*.py")
-    if p.name != "__init__.py"
-] + [
+_ANALYSIS_MODULES_NO_I18N = [p for p in _ANALYSIS_PKG.glob("*.py") if p.name != "__init__.py"] + [
     p
     for p in _ANALYSIS_PKG.glob("report_mapping/*.py")
     if p.name not in ("__init__.py", "pipeline.py")
