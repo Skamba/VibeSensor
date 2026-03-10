@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from ..esp_flash_manager import EspFlashManager
     from ..metrics_log import MetricsLogger
     from ..update.manager import UpdateManager
-    from .subsystems import (
+    from .state import (
         RuntimeIngressSubsystem,
         RuntimePersistenceSubsystem,
         RuntimeProcessingSubsystem,

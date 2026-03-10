@@ -125,7 +125,7 @@ class _StubProcessor:
 def _make_runtime(**overrides: Any):
     """Build a RuntimeState with stubs for lifecycle testing."""
     import vibesensor.runtime as runtime_module
-    from vibesensor.runtime.builders import build_lifecycle_manager
+    from vibesensor.runtime.lifecycle import LifecycleManager
     from vibesensor.runtime.processing_loop import (
         ProcessingLoop,
         ProcessingLoopState,
@@ -145,8 +145,7 @@ def _make_runtime(**overrides: Any):
     settings_store_mock = overrides.pop("settings_store", MagicMock())
     persistence = runtime_module.RuntimePersistenceSubsystem(
         history_db=overrides.pop("history_db", MagicMock()),
-        query_service=overrides.pop("query_service", MagicMock()),
-        delete_service=overrides.pop("delete_service", MagicMock()),
+        run_service=overrides.pop("run_service", MagicMock()),
         report_service=overrides.pop("report_service", MagicMock()),
         export_service=overrides.pop("export_service", MagicMock()),
     )
@@ -193,7 +192,7 @@ def _make_runtime(**overrides: Any):
         esp_flash_manager=esp_flash_manager,
         processing=processing,
         websocket=websocket,
-        lifecycle=build_lifecycle_manager(
+        lifecycle=LifecycleManager(
             config=config,
             ingress=ingress,
             settings=settings,

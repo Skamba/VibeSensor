@@ -12,7 +12,7 @@ import pytest
 from vibesensor.exceptions import AnalysisNotReadyError
 from vibesensor.history_services.exports import HistoryExportArchiveBuilder, build_run_details_json
 from vibesensor.history_services.reports import HistoryReportPdfCache, HistoryReportService
-from vibesensor.history_services.runs import HistoryRunDeleteService, raise_delete_run_error
+from vibesensor.history_services.runs import HistoryRunService, raise_delete_run_error
 
 
 @dataclass
@@ -42,7 +42,7 @@ def test_raise_delete_run_error_maps_unknown_reason_to_domain_error() -> None:
 
 @pytest.mark.asyncio
 async def test_delete_service_uses_delete_reason_mapping() -> None:
-    service = HistoryRunDeleteService(_HistoryDbStub(delete_result=(False, "active")))
+    service = HistoryRunService(_HistoryDbStub(delete_result=(False, "active")))
 
     with pytest.raises(AnalysisNotReadyError, match="Cannot delete the active run"):
         await service.delete_run("run-1")

@@ -17,8 +17,9 @@ from test_support.report_helpers import (
     report_sample as _base_sample,
 )
 
-from vibesensor.analysis import confidence_label, map_summary, select_top_causes, summarize_log
+from vibesensor.analysis import confidence_label, select_top_causes, summarize_log
 from vibesensor.constants import KMH_TO_MPS
+from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
 

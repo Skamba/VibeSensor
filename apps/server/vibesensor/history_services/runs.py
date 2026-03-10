@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Never, cast
 
 from ..backend_types import HistoryRunListEntryPayload, HistoryRunPayload
@@ -18,16 +17,8 @@ if TYPE_CHECKING:
     from ..settings_store import SettingsStore
 
 
-@dataclass(frozen=True)
-class HistoryJsonResult:
-    """JSON-serialisable result with an explicit HTTP status."""
-
-    status_code: int
-    payload: JsonObject
-
-
-class HistoryRunQueryService:
-    """Read-only run queries used by history endpoints."""
+class HistoryRunService:
+    """Run queries and delete operations used by history endpoints."""
 
     __slots__ = ("_history_db", "_settings_store")
 
@@ -53,13 +44,11 @@ class HistoryRunQueryService:
         self,
         run_id: str,
         requested_lang: str | None = None,
-    ) -> HistoryJsonResult:
+    ) -> JsonObject | None:
+        """Return analysis insights for a run, or ``None`` if still analyzing."""
         run = await async_require_run(self._history_db, run_id)
         if run["status"] == RunStatus.ANALYZING:
-            return HistoryJsonResult(
-                status_code=202,
-                payload={"run_id": run_id, "status": RunStatus.ANALYZING},
-            )
+            return None
 
         analysis = require_analysis_ready(run)
         active_car_snapshot = (
@@ -94,16 +83,7 @@ class HistoryRunQueryService:
         )
         analysis["warnings"] = list(localized_warnings)
 
-        return HistoryJsonResult(status_code=200, payload=strip_internal_fields(analysis))
-
-
-class HistoryRunDeleteService:
-    """Delete-policy adapter for history runs."""
-
-    __slots__ = ("_history_db",)
-
-    def __init__(self, history_db: HistoryDB) -> None:
-        self._history_db = history_db
+        return strip_internal_fields(analysis)
 
     async def delete_run(self, run_id: str) -> dict[str, str]:
         deleted, reason = await asyncio.to_thread(self._history_db.delete_run_if_safe, run_id)

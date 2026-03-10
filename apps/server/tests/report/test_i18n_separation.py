@@ -17,9 +17,10 @@ from pathlib import Path
 import pytest
 from _paths import SERVER_ROOT
 
-from vibesensor.analysis import map_summary, summarize_run_data
-from vibesensor.analysis.report_mapping.common import is_i18n_ref
-from vibesensor.analysis.report_mapping.common import resolve_i18n as resolve_i18n_impl
+from vibesensor.analysis import summarize_run_data
+from vibesensor.report.mapping import map_summary
+from vibesensor.report.mapping.common import is_i18n_ref
+from vibesensor.report.mapping.common import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
 
 _SERVER_PKG = SERVER_ROOT / "vibesensor"

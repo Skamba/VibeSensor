@@ -4,15 +4,20 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from ...report.report_data import (
+from ...analysis._types import SummaryData
+from ...analysis.strength_labels import (
+    certainty_label,
+    certainty_tier,
+    strength_label,
+    strength_text,
+)
+from ...report_i18n import normalize_lang
+from ...report_i18n import tr as _tr
+from ..report_data import (
     CarMeta,
     ObservedSignature,
     ReportTemplateData,
 )
-from ...report_i18n import normalize_lang
-from ...report_i18n import tr as _tr
-from .._types import SummaryData
-from ..strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 from .actions import build_data_trust_from_summary, build_next_steps_from_summary
 from .context import (
     extract_run_context,

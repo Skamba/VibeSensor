@@ -85,7 +85,7 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
 
     with patch("vibesensor.history_services.reports.map_summary") as patched_map_summary:
         patched_map_summary.side_effect = lambda summary: __import__(
-            "vibesensor.analysis",
+            "vibesensor.report.mapping",
             fromlist=["map_summary"],
         ).map_summary(summary)
         nl = await endpoint("run-1", "nl")

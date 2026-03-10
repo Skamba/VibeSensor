@@ -7,7 +7,8 @@ import json
 import sys
 from pathlib import Path
 
-from .analysis import map_summary, summarize_log
+from .analysis import summarize_log
+from .report.mapping import map_summary
 from .report.pdf_engine import build_report_pdf
 
 

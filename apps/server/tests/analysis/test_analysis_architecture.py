@@ -22,12 +22,17 @@ from _paths import SERVER_ROOT
 
 _SERVER_PKG = SERVER_ROOT / "vibesensor"
 _ANALYSIS_PKG = _SERVER_PKG / "analysis"
+_REPORT_MAPPING_PKG = _SERVER_PKG / "report" / "mapping"
 
-# All Python files in vibesensor/ that are NOT inside analysis/
+# All Python files in vibesensor/ that are NOT inside analysis/ or report/mapping/
+# (report/mapping/ bridges analysis→report and legitimately uses analysis internals)
 _EXTERNAL_MODULES = [
     p
     for p in _SERVER_PKG.rglob("*.py")
-    if p.name != "__init__.py" and _ANALYSIS_PKG not in p.parents
+    if p.name != "__init__.py"
+    and _ANALYSIS_PKG not in p.parents
+    and _REPORT_MAPPING_PKG not in p.parents
+    and p.parent != _REPORT_MAPPING_PKG
 ]
 
 
@@ -83,7 +88,6 @@ _EXPECTED_PUBLIC_SYMBOLS = [
     "build_findings_for_samples",
     "confidence_label",
     "select_top_causes",
-    "map_summary",
     "DrivingPhase",
     "classify_sample_phase",
 ]

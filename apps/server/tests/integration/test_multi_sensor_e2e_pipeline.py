@@ -9,7 +9,6 @@ import numpy as np
 import pytest
 from pypdf import PdfReader
 
-from vibesensor.analysis import map_summary
 from vibesensor.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     AnalysisSettingsStore,
@@ -22,6 +21,7 @@ from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 from vibesensor.processing import SignalProcessor
 from vibesensor.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.registry import ClientRegistry
+from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.udp_data_rx import DataDatagramProtocol
 
