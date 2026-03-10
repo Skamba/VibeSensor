@@ -155,13 +155,9 @@ def _make_runtime(**overrides: Any):
         analysis_settings=overrides.pop("analysis_settings", MagicMock()),
         gps_monitor=overrides.pop("gps_monitor", MagicMock()),
     )
-    diagnostics = runtime_module.RuntimeRecordingSubsystem(
-        metrics_logger=overrides.pop("metrics_logger", MagicMock()),
-    )
-    updates = runtime_module.RuntimeUpdateSubsystem(
-        update_manager=overrides.pop("update_manager", MagicMock()),
-        esp_flash_manager=overrides.pop("esp_flash_manager", MagicMock()),
-    )
+    diagnostics = overrides.pop("metrics_logger", MagicMock())
+    update_manager = overrides.pop("update_manager", MagicMock())
+    esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
     processing = runtime_module.RuntimeProcessingSubsystem(
@@ -191,18 +187,20 @@ def _make_runtime(**overrides: Any):
         config=config,
         ingress=ingress,
         settings=settings,
-        recording=diagnostics,
+        metrics_logger=diagnostics,
         persistence=persistence,
-        updates=updates,
+        update_manager=update_manager,
+        esp_flash_manager=esp_flash_manager,
         processing=processing,
         websocket=websocket,
         lifecycle=build_lifecycle_manager(
             config=config,
             ingress=ingress,
             settings=settings,
-            recording=diagnostics,
+            metrics_logger=diagnostics,
             persistence=persistence,
-            updates=updates,
+            update_manager=update_manager,
+            esp_flash_manager=esp_flash_manager,
             processing=processing,
             websocket=websocket,
         ),

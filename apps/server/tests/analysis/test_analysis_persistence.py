@@ -284,9 +284,6 @@ def _make_fake_state(history_db: Any) -> Any:
         apply_car_settings=state.apply_car_settings,
         apply_speed_source_settings=state.apply_speed_source_settings,
     )
-    state.recording = SimpleNamespace(
-        metrics_logger=state.metrics_logger,
-    )
     state.persistence = SimpleNamespace(
         history_db=state.history_db,
         query_service=HistoryRunQueryService(state.history_db, state.settings_store),
@@ -295,10 +292,6 @@ def _make_fake_state(history_db: Any) -> Any:
         export_service=HistoryExportService(state.history_db),
     )
     state.websocket = SimpleNamespace(hub=state.ws_hub)
-    state.updates = SimpleNamespace(
-        update_manager=state.update_manager,
-        esp_flash_manager=state.esp_flash_manager,
-    )
     state.processing = SimpleNamespace(
         state=state.loop_state,
         health_state=state.health_state,
