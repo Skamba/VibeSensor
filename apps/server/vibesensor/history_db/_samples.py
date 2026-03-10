@@ -134,7 +134,7 @@ def v2_row_to_dict(row: tuple[object, ...]) -> JsonObject:
     for i, col in enumerate(_V2_PEAK_COLS):
         raw = row[_V2_PEAK_OFFSET + i]
         if raw:
-            parsed = safe_json_loads(raw, context=f"peak column {col}")
+            parsed = safe_json_loads(raw, context=f"peak column {col}")  # type: ignore[arg-type]
             if is_json_array(parsed):
                 d[col] = parsed
             else:
@@ -152,7 +152,7 @@ def v2_row_to_dict(row: tuple[object, ...]) -> JsonObject:
 
     extra_json = row[_V2_EXTRA_OFFSET]
     if extra_json:
-        extra = safe_json_loads(extra_json, context="extra_json")
+        extra = safe_json_loads(extra_json, context="extra_json")  # type: ignore[arg-type]
         if is_json_object(extra):
             d.update(extra)
 
