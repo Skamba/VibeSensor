@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import cast
-
 from ..json_types import JsonObject, JsonValue, is_json_object
 from ..json_utils import safe_json_dumps, safe_json_loads
 from ..runlog import utc_now_iso
@@ -21,7 +19,7 @@ class HistorySettingsStoreMixin:
             row = cur.fetchone()
         if row is None:
             return None
-        return cast("JsonValue | None", safe_json_loads(row[0], context=f"setting {key}"))
+        return safe_json_loads(row[0], context=f"setting {key}")
 
     def set_setting(self: HistoryCursorProvider, key: str, value: JsonValue) -> None:
         now = utc_now_iso()

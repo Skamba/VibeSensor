@@ -193,7 +193,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
         for asset in release.get("assets", []):
             name = asset.get("name", "")
             if name.startswith("vibesensor") and name.endswith(".whl"):
-                return asset
+                return asset  # type: ignore[no-any-return]
         return None
 
     def download_wheel(

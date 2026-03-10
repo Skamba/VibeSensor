@@ -115,7 +115,7 @@ class HistoryReportService:
         from ..analysis import SummaryData
 
         mapped_summary = map_summary(cast("SummaryData", analysis_summary))
-        return cast("bytes", build_report_pdf(mapped_summary))
+        return build_report_pdf(mapped_summary)
 
     @staticmethod
     def _metadata_cache_token(metadata: object) -> str:

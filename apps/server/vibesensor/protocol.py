@@ -309,7 +309,7 @@ def pack_data(client_id: bytes, seq: int, t0_us: int, samples: np.ndarray) -> by
     if sample_count == 0:
         raise ValueError("pack_data: samples array must not be empty (sample_count must be > 0)")
     header = DATA_HEADER.pack(MSG_DATA, VERSION, client_id, seq, t0_us, sample_count)
-    return header + samples_int16.tobytes(order="C")
+    return header + samples_int16.tobytes(order="C")  # type: ignore[no-any-return]
 
 
 def parse_cmd(data: bytes) -> CmdMessage:

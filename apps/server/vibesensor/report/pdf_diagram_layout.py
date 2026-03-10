@@ -185,7 +185,7 @@ def _build_sensor_render_plan(
         key=lambda value: (location_points[value][1], location_points[value][0]),
     ):
         px, py = location_points[name]
-        marker = marker_by_name.get(name)
+        marker = marker_by_name.get(name)  # type: ignore[assignment]
         if marker is None:
             continue
         if marker.state == "connected-active":

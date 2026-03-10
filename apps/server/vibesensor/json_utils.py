@@ -61,7 +61,7 @@ def sanitize_for_json(obj: object, *, _max_depth: int = 128) -> tuple[object, bo
             v = v.item()
             t = type(v)
         if t is float:
-            if _isfinite(v):
+            if _isfinite(v):  # type: ignore[arg-type]
                 return v
             found_non_finite = True
             return None
@@ -107,7 +107,7 @@ def safe_json_loads(value: str | None, *, context: str) -> JsonValue | None:
     if not value:
         return None
     try:
-        return json.loads(value)
+        return json.loads(value)  # type: ignore[no-any-return]
     except json.JSONDecodeError:
         LOGGER.warning("Skipping invalid JSON payload while reading %s", context, exc_info=True)
         return None

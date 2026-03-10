@@ -190,7 +190,7 @@ def _build_report_template_data(
     )
     hotspot_rows = compute_location_hotspot_rows(raw_sensor_intensity)
 
-    return ReportTemplateData(
+    return ReportTemplateData(  # type: ignore[arg-type]
         title=tr("DIAGNOSTIC_WORKSHEET"),
         run_datetime=context.date_str,
         run_id=summary.get("run_id"),

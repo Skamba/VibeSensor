@@ -207,7 +207,7 @@ def packaged_static_index_path() -> Path:
             os.environ.pop("VIBESENSOR_DISABLE_AUTO_APP", None)
         else:
             os.environ["VIBESENSOR_DISABLE_AUTO_APP"] = previous_disable_auto_app
-    return Path(app_module.__file__).resolve().parent / "static" / "index.html"
+    return Path(app_module.__file__).resolve().parent / "static" / "index.html"  # type: ignore[arg-type]
 
 
 def validate_packaged_static_assets() -> Path:
