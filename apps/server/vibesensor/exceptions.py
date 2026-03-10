@@ -12,14 +12,20 @@ Hierarchy
 - ``PersistenceError`` — database / storage failures.
 - ``ProcessingError`` — signal processing pipeline failures.
 - ``UpdateError`` — OTA update system failures.
+- ``RunNotFoundError`` — requested run does not exist.
+- ``AnalysisNotReadyError`` — analysis is in progress or failed.
+- ``DataCorruptError`` — persisted data is in an unexpected format.
 """
 
 from __future__ import annotations
 
 __all__ = [
+    "AnalysisNotReadyError",
     "ConfigurationError",
+    "DataCorruptError",
     "PersistenceError",
     "ProcessingError",
+    "RunNotFoundError",
     "UpdateError",
     "VibeSensorError",
 ]
@@ -51,3 +57,19 @@ class ProcessingError(VibeSensorError, RuntimeError):
 
 class UpdateError(VibeSensorError, RuntimeError):
     """OTA update system failure."""
+
+
+class RunNotFoundError(VibeSensorError, LookupError):
+    """Requested run does not exist in the history database."""
+
+
+class AnalysisNotReadyError(VibeSensorError):
+    """Analysis is still in progress, has failed, or is not available."""
+
+    def __init__(self, message: str, *, status: str = "unavailable") -> None:
+        super().__init__(message)
+        self.status = status
+
+
+class DataCorruptError(VibeSensorError):
+    """Persisted data is in an unexpected or corrupt format."""

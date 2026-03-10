@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import pytest
-from fastapi import HTTPException
 
+from vibesensor.exceptions import AnalysisNotReadyError
 from vibesensor.history_exports import HistoryExportArchiveBuilder, build_run_details_json
 from vibesensor.history_reports import HistoryReportPdfCache, HistoryReportService
 from vibesensor.history_runs import HistoryRunDeleteService, raise_delete_run_error
@@ -35,23 +35,17 @@ class _HistoryDbStub:
             yield rows[start : start + batch_size]
 
 
-def test_raise_delete_run_error_maps_unknown_reason_to_public_409() -> None:
-    with pytest.raises(HTTPException) as exc_info:
+def test_raise_delete_run_error_maps_unknown_reason_to_domain_error() -> None:
+    with pytest.raises(AnalysisNotReadyError, match="Cannot delete run at this time"):
         raise_delete_run_error("locked")
-
-    assert exc_info.value.status_code == 409
-    assert exc_info.value.detail == "Cannot delete run at this time"
 
 
 @pytest.mark.asyncio
 async def test_delete_service_uses_delete_reason_mapping() -> None:
     service = HistoryRunDeleteService(_HistoryDbStub(delete_result=(False, "active")))
 
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(AnalysisNotReadyError, match="Cannot delete the active run"):
         await service.delete_run("run-1")
-
-    assert exc_info.value.status_code == 409
-    assert exc_info.value.detail == "Cannot delete the active run; stop recording first"
 
 
 @pytest.mark.asyncio

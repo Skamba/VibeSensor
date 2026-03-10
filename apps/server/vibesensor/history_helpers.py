@@ -1,4 +1,9 @@
-"""Shared helpers for history/read/report/export HTTP workflows."""
+"""Shared helpers for history service workflows.
+
+These helpers are framework-agnostic: they raise domain exceptions from
+``vibesensor.exceptions`` rather than HTTP-specific exceptions.  The
+routes layer translates domain exceptions to HTTP status codes.
+"""
 
 from __future__ import annotations
 
@@ -6,9 +11,8 @@ import asyncio
 import re
 from typing import TYPE_CHECKING, cast
 
-from fastapi import HTTPException
-
 from .backend_types import HistoryRunPayload
+from .exceptions import AnalysisNotReadyError, DataCorruptError, RunNotFoundError
 from .history_db import RunStatus
 from .json_types import JsonObject, is_json_object
 
@@ -25,12 +29,12 @@ def safe_filename(name: str) -> str:
 
 
 async def async_require_run(history_db: HistoryDB, run_id: str) -> HistoryRunPayload:
-    """Fetch a history run in a thread or raise 404."""
+    """Fetch a history run in a thread or raise a domain exception."""
     run = await asyncio.to_thread(history_db.get_run, run_id)
     if run is None:
-        raise HTTPException(status_code=404, detail="Run not found")
+        raise RunNotFoundError(f"Run {run_id!r} not found")
     if not is_json_object(run):
-        raise HTTPException(status_code=500, detail="Run data is corrupt")
+        raise DataCorruptError(f"Run {run_id!r} data is corrupt")
     return cast("HistoryRunPayload", run)
 
 
@@ -40,15 +44,15 @@ def strip_internal_fields(analysis: JsonObject) -> JsonObject:
 
 
 def require_analysis_ready(run: HistoryRunPayload) -> JsonObject:
-    """Return the analysis dict or raise an appropriate HTTPException."""
+    """Return the analysis dict or raise a domain exception."""
     if run["status"] == RunStatus.ANALYZING:
-        raise HTTPException(status_code=409, detail="Analysis is still in progress")
+        raise AnalysisNotReadyError("Analysis is still in progress", status="in_progress")
     if run["status"] == RunStatus.ERROR:
-        raise HTTPException(
-            status_code=422,
-            detail=run.get("error_message", "Analysis failed"),
+        raise AnalysisNotReadyError(
+            str(run.get("error_message", "Analysis failed")),
+            status="error",
         )
     analysis = run.get("analysis")
     if analysis is None:
-        raise HTTPException(status_code=422, detail="No analysis available for this run")
+        raise AnalysisNotReadyError("No analysis available for this run")
     return analysis

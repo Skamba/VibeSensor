@@ -103,27 +103,21 @@ def test_spectrum_series_common_fields_present() -> None:
     assert core_fields <= pd_fields, f"Pydantic missing core fields: {core_fields - pd_fields}"
 
 
-def test_spectra_payload_common_fields_present() -> None:
-    """SpectraPayload variants should share core data fields."""
+def test_spectra_payload_fields_match() -> None:
+    """SpectraPayload variants must have identical field sets."""
     td_fields = _typeddict_field_names(SpectraPayloadTD)
     pd_fields = _pydantic_field_names(SpectraPayloadPydantic)
-    core_fields = {"freq", "clients", "alignment", "warning"}
-    assert core_fields <= td_fields, f"TypedDict missing core: {core_fields - td_fields}"
-    assert core_fields <= pd_fields, f"Pydantic missing core: {core_fields - pd_fields}"
+    assert td_fields == pd_fields, (
+        f"SpectraPayload drift — TypedDict-only: {td_fields - pd_fields}, "
+        f"Pydantic-only: {pd_fields - td_fields}"
+    )
 
 
-def test_live_ws_payload_common_fields_present() -> None:
-    """LiveWsPayload variants should share core data fields."""
+def test_live_ws_payload_fields_match() -> None:
+    """LiveWsPayload variants must have identical field sets."""
     td_fields = _typeddict_field_names(LiveWsPayloadTD)
     pd_fields = _pydantic_field_names(LiveWsPayloadPydantic)
-    core_fields = {
-        "schema_version",
-        "server_time",
-        "speed_mps",
-        "clients",
-        "selected_client_id",
-        "rotational_speeds",
-        "spectra",
-    }
-    assert core_fields <= td_fields, f"TypedDict missing core: {core_fields - td_fields}"
-    assert core_fields <= pd_fields, f"Pydantic missing core: {core_fields - pd_fields}"
+    assert td_fields == pd_fields, (
+        f"LiveWsPayload drift — TypedDict-only: {td_fields - pd_fields}, "
+        f"Pydantic-only: {pd_fields - td_fields}"
+    )
