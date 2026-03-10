@@ -39,14 +39,6 @@ def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
     return hasher.hexdigest()
 
 
-def _sha256_file(path: Path) -> str:
-    hasher = hashlib.sha256()
-    with path.open("rb") as handle:
-        while chunk := handle.read(65536):
-            hasher.update(chunk)
-    return hasher.hexdigest()
-
-
 class UpdateRuntimeDetailsCollector:
     """Collects runtime versioning and static-asset verification details."""
 

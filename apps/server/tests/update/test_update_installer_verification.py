@@ -8,8 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from vibesensor.update.installer import UpdateInstaller, UpdateInstallerConfig
-from vibesensor.update.state_store import UpdateStateStore
-from vibesensor.update.status import UpdateStatusTracker
+from vibesensor.update.status import UpdateStateStore, UpdateStatusTracker
 
 
 class RecordingCommands:
