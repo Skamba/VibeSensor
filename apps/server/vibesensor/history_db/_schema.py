@@ -88,6 +88,7 @@ class HistoryCursorProvider(Protocol):
 
     def _resolve_keyset_offset(self, table: str, run_id: str, offset: int) -> int | None: ...
 
+
 SCHEMA_VERSION = 5
 
 SCHEMA_SQL = """\
