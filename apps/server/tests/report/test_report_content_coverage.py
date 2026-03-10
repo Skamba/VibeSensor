@@ -15,7 +15,7 @@ from _report_helpers import (
 from _report_helpers import (
     report_sample as _base_sample,
 )
-from _test_helpers import extract_pdf_text
+from test_support.core import extract_pdf_text
 
 from vibesensor.analysis import confidence_label, map_summary, select_top_causes, summarize_log
 from vibesensor.constants import KMH_TO_MPS

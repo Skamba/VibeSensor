@@ -29,8 +29,6 @@ from .domain_models import (
     RUN_SCHEMA_VERSION,
     RunMetadata,
     SensorFrame,
-    _default_amplitude_definitions,
-    _default_units,
 )
 from .domain_models import as_float_or_none as _as_float_or_none
 from .domain_models import as_int_or_none as _as_int_or_none
@@ -65,8 +63,6 @@ __all__ = [
     "bounded_sample",
     "create_run_end_record",
     "create_run_metadata",
-    "default_amplitude_definitions",
-    "default_units",
     "normalize_sample_record",
     "parse_iso8601",
     "read_jsonl_run",
@@ -113,8 +109,6 @@ def parse_iso8601(value: object) -> datetime | None:
 
 as_float_or_none = _as_float_or_none
 as_int_or_none = _as_int_or_none
-default_units = _default_units
-default_amplitude_definitions = _default_amplitude_definitions
 
 
 def create_run_metadata(
