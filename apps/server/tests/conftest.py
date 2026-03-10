@@ -24,7 +24,9 @@ from vibesensor.runtime.subsystems import (
     RuntimeRecordingSubsystem,
     RuntimeSettingsSubsystem,
     RuntimeUpdateSubsystem,
+    RuntimeWebsocketSubsystem,
 )
+from vibesensor.runtime.ws_broadcast import WsBroadcastCache
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers
@@ -80,9 +82,11 @@ class FakeState:
             report_service=HistoryReportService(self.history_db, self.settings_store),
             export_service=HistoryExportService(self.history_db),
         )
-        from types import SimpleNamespace
-
-        self.websocket = SimpleNamespace(hub=self.ws_hub)
+        self.websocket = RuntimeWebsocketSubsystem(
+            hub=self.ws_hub,  # type: ignore[arg-type]
+            cache=WsBroadcastCache(),
+            broadcast=MagicMock(),
+        )
         self.updates = RuntimeUpdateSubsystem(
             update_manager=self.update_manager,  # type: ignore[arg-type]
             esp_flash_manager=self.esp_flash_manager,  # type: ignore[arg-type]
