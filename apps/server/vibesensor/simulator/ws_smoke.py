@@ -53,9 +53,7 @@ async def run(
                         f"clients={len(client_ids)} ids={client_ids} "
                         f"selected={payload.get('selected_client_id')!r}"
                     )
-                    if debug and (
-                        (time.monotonic() - last_report_ts) >= max(0.1, report_every_s)
-                    ):
+                    if debug and ((time.monotonic() - last_report_ts) >= max(0.1, report_every_s)):
                         last_report_ts = time.monotonic()
                         print(f"[ws_smoke] recv#{recv_count} {last_payload_summary}")
                     if len(client_ids) >= min_clients:

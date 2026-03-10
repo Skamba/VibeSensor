@@ -6,11 +6,11 @@ setup:
 	cd apps/ui && npm ci
 
 format:
-	ruff format apps/server/vibesensor apps/server/tests apps/simulator tools/dev tools/tests tools/ci tools/config
+	ruff format apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
 
 lint:
-	ruff check apps/server/vibesensor apps/server/tests apps/simulator tools/dev tools/tests tools/ci tools/config
-	ruff format --check apps/server/vibesensor apps/server/tests apps/simulator tools/dev tools/tests tools/ci tools/config
+	ruff check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
+	ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
 
 typecheck-backend:
 	PYTHON=$(CURDIR)/.venv/bin/python; \

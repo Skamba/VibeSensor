@@ -202,14 +202,9 @@ build_app_artifacts() {
 
   build_root="$(mktemp -d -p "${CACHE_DIR}" app-build-XXXXXX)"
   mkdir -p \
-    "${build_root}/apps" \
-    "${build_root}/tools"
+    "${build_root}/apps"
   rsync -a --delete \
     "${REPO_ROOT}/apps/server/" "${build_root}/apps/server/"
-  rsync -a --delete \
-    "${REPO_ROOT}/apps/simulator/" "${build_root}/apps/simulator/"
-  rsync -a --delete \
-    "${REPO_ROOT}/tools/config/" "${build_root}/tools/config/"
 
   rm -rf "${build_root}/apps/server/vibesensor/static"
   mkdir -p "${build_root}/apps/server/vibesensor/static"
@@ -320,7 +315,6 @@ rsync -a --delete \
   --exclude "artifacts/" \
   --exclude '$MNT/' \
   --exclude "apps/ui/" \
-  --exclude "apps/simulator/" \
   --exclude "apps/server/tests/" \
   --exclude "apps/server/tests_e2e/" \
   --exclude "docs/" \

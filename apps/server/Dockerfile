@@ -19,8 +19,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY apps/server /app/apps/server
-COPY apps/simulator /app/apps/simulator
-COPY tools/config /app/tools/config
 RUN rm -rf /app/apps/server/vibesensor/static && mkdir -p /app/apps/server/vibesensor/static
 COPY --from=ui-build /app/apps/ui/dist/ /app/apps/server/vibesensor/static/
 

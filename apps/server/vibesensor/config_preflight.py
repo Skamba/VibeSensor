@@ -32,9 +32,7 @@ def summarize(cfg: AppConfig) -> dict[str, object]:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Validate and print resolved VibeSensor config"
-    )
+    parser = argparse.ArgumentParser(description="Validate and print resolved VibeSensor config")
     parser.add_argument("config", type=Path, help="Path to config YAML")
     return parser.parse_args()
 

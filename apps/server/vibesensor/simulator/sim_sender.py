@@ -12,8 +12,8 @@ from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
-from vibesensor.contracts import NETWORK_PORTS
 
+from vibesensor.contracts import NETWORK_PORTS
 from vibesensor.protocol import (
     CMD_IDENTIFY,
     MSG_CMD,
@@ -23,6 +23,7 @@ from vibesensor.protocol import (
     pack_hello,
     parse_cmd,
 )
+
 from .commands import (
     apply_command,
     apply_one_wheel_mild_scenario,
@@ -87,20 +88,14 @@ class SimClient:
     start_offset_s: float = 0.0
     control_transport: asyncio.DatagramTransport | None = None
     data_transport: asyncio.DatagramTransport | None = None
-    bump_state: np.ndarray = field(
-        default_factory=lambda: np.zeros(3, dtype=np.float32)
-    )
-    phase_offsets: np.ndarray = field(
-        default_factory=lambda: np.zeros(3, dtype=np.float32)
-    )
+    bump_state: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
+    phase_offsets: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
     rng: np.random.Generator | None = None
 
     def __post_init__(self) -> None:
         seed = int.from_bytes(self.client_id, "little")
         self.rng = np.random.default_rng(seed)
-        self.phase_offsets = np.asarray(
-            self.rng.uniform(0.0, np.pi, size=3), dtype=np.float32
-        )
+        self.phase_offsets = np.asarray(self.rng.uniform(0.0, np.pi, size=3), dtype=np.float32)
         # Intentional slight timing mismatch between sensors to mimic real deployments.
         self.send_period_scale = float(self.rng.uniform(0.997, 1.003))
         self.send_jitter_s = float(self.rng.uniform(0.001, 0.007))
@@ -120,7 +115,8 @@ class SimClient:
 
     def summary(self) -> str:
         return (
-            f"{self.name} id={self.client_id.hex()} mac={self.mac_address} profile={self.profile_name} "
+            f"{self.name} id={self.client_id.hex()} "
+            f"mac={self.mac_address} profile={self.profile_name} "
             f"amp={self.amp_scale:.2f} noise={self.noise_scale:.2f} "
             f"floor={self.noise_floor_std:.1f} "
             f"scene={self.scene_mode}:{self.scene_gain:.2f} "
@@ -141,10 +137,8 @@ class SimClient:
         dt = 1.0 / self.sample_rate_hz
         t = self.phase_s + np.arange(self.frame_samples, dtype=np.float32) * dt
 
-        modulation = 1.0 + profile.modulation_depth * np.sin(
-            _TWO_PI * profile.modulation_hz * t
-        )
-        signal = np.zeros((self.frame_samples, 3), dtype=np.float32)
+        modulation = 1.0 + profile.modulation_depth * np.sin(_TWO_PI * profile.modulation_hz * t)
+        signal: np.ndarray[Any, np.dtype[Any]] = np.zeros((self.frame_samples, 3), dtype=np.float32)
 
         # Compute speed-scaling ratio for order-based profiles.
         # Tones in wheel_imbalance / wheel_mild_imbalance were defined at the
@@ -187,9 +181,7 @@ class SimClient:
         for i in range(self.frame_samples):
             if self.rng.random() < profile.bump_probability:
                 jitter = self.rng.uniform(0.85, 1.15, size=3).astype(np.float32)
-                self.bump_state += (
-                    np.asarray(profile.bump_strength, dtype=np.float32) * jitter
-                )
+                self.bump_state += np.asarray(profile.bump_strength, dtype=np.float32) * jitter
             signal[i] += self.bump_state
             self.bump_state *= profile.bump_decay
 
@@ -209,7 +201,8 @@ class SimClient:
         signal += floor_noise
 
         self.phase_s = float(t[-1] + dt)
-        return np.clip(signal, -32768, 32767).astype(np.int16)
+        result: np.ndarray[Any, np.dtype[Any]] = np.clip(signal, -32768, 32767).astype(np.int16)
+        return result
 
 
 class ClientProtocol(asyncio.DatagramProtocol):
@@ -225,18 +218,12 @@ class ClientProtocol(asyncio.DatagramProtocol):
         try:
             cmd = parse_cmd(data)
         except Exception as exc:
-            print(
-                f"{self.sim.name}: ignoring unparseable command from {addr[0]}:{addr[1]}: {exc}"
-            )
+            print(f"{self.sim.name}: ignoring unparseable command from {addr[0]}:{addr[1]}: {exc}")
             return
         if cmd.client_id != self.sim.client_id:
             return
         if cmd.cmd_id == CMD_IDENTIFY:
-            duration_ms = (
-                int.from_bytes(cmd.params[:2], "little")
-                if len(cmd.params) >= 2
-                else 1000
-            )
+            duration_ms = int.from_bytes(cmd.params[:2], "little") if len(cmd.params) >= 2 else 1000
             print(f"{self.sim.name}: identify {duration_ms}ms from {addr[0]}:{addr[1]}")
             self.sim.pulse(1.4)
             ack = pack_ack(self.sim.client_id, cmd.cmd_seq, status=0)
@@ -295,20 +282,8 @@ class RoadSceneController:
         normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
         if normalized in _WHEEL_SLOT_ALIASES:
             return _WHEEL_SLOT_ALIASES[normalized]
-        axle = (
-            "front"
-            if "front" in normalized
-            else "rear"
-            if "rear" in normalized
-            else None
-        )
-        side = (
-            "left"
-            if "left" in normalized
-            else "right"
-            if "right" in normalized
-            else None
-        )
+        axle = "front" if "front" in normalized else "rear" if "rear" in normalized else None
+        side = "left" if "left" in normalized else "right" if "right" in normalized else None
         if axle and side:
             return f"{axle}-{side}"
         return None
@@ -366,9 +341,7 @@ class RoadSceneController:
                 client.scene_noise_gain = self.rng.uniform(0.92, 1.08) + 0.06 * coupling
                 client.amp_scale = self.rng.uniform(0.52, 0.70) + 0.22 * coupling
                 client.noise_scale = self.rng.uniform(0.95, 1.06)
-                client.common_event_gain = (
-                    self.rng.uniform(0.06, 0.12) + 0.10 * coupling
-                )
+                client.common_event_gain = self.rng.uniform(0.06, 0.12) + 0.10 * coupling
 
     def _apply_all_active(self) -> None:
         pulse_strength = self.rng.uniform(0.22, 0.60)
@@ -446,9 +419,7 @@ async def road_scene_loop(clients: list[SimClient], stop_event: asyncio.Event) -
         await asyncio.sleep(duration)
 
 
-async def run_client(
-    sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event
-) -> None:
+async def run_client(sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event) -> None:
     loop = asyncio.get_running_loop()
     control_transport, _ = await loop.create_datagram_endpoint(
         lambda: ClientProtocol(sim),
@@ -475,9 +446,7 @@ async def wait_stop(stop_event: asyncio.Event) -> None:
     raise asyncio.CancelledError()
 
 
-async def hello_loop(
-    sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event
-) -> None:
+async def hello_loop(sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event) -> None:
     while not stop_event.is_set():
         if sim.control_transport is not None:
             packet = pack_hello(
@@ -488,9 +457,7 @@ async def hello_loop(
                 frame_samples=sim.frame_samples,
                 firmware_version="sim-0.2",
             )
-            sim.control_transport.sendto(
-                packet, (sim.server_host, sim.server_control_port)
-            )
+            sim.control_transport.sendto(packet, (sim.server_host, sim.server_control_port))
         await asyncio.sleep(hello_interval_s)
 
 
@@ -526,9 +493,7 @@ async def async_main(args: argparse.Namespace) -> None:
     if not args.no_auto_server:
         managed_server = maybe_start_server(args, ROOT)
 
-    names = (
-        [n.strip() for n in args.names.split(",") if n.strip()] if args.names else []
-    )
+    names = [n.strip() for n in args.names.split(",") if n.strip()] if args.names else []
     while len(names) < args.count:
         names.append(f"sim-{len(names) + 1}")
 
@@ -594,9 +559,7 @@ async def async_main(args: argparse.Namespace) -> None:
 
     try:
         for client in clients:
-            tasks.append(
-                asyncio.create_task(run_client(client, args.hello_interval, stop_event))
-            )
+            tasks.append(asyncio.create_task(run_client(client, args.hello_interval, stop_event)))
         if args.scenario == "road" and not args.no_road_scene:
             tasks.append(asyncio.create_task(road_scene_loop(clients, stop_event)))
         else:
@@ -634,9 +597,7 @@ def parse_args() -> argparse.Namespace:
         default=int(NETWORK_PORTS["server_udp_control"]),
     )
     parser.add_argument("--count", type=int, default=5)
-    parser.add_argument(
-        "--names", default="front-left,front-right,rear-left,rear-right,trunk"
-    )
+    parser.add_argument("--names", default="front-left,front-right,rear-left,rear-right,trunk")
     parser.add_argument("--sample-rate-hz", type=int, default=800)
     parser.add_argument("--frame-samples", type=int, default=200)
     parser.add_argument("--hello-interval", type=float, default=2.0)
@@ -660,16 +621,17 @@ def parse_args() -> argparse.Namespace:
         "--scenario",
         choices=("road", "one-wheel-mild", "road-fixed"),
         default="road",
-        help="Simulation scenario: random road scene, deterministic mild single-wheel fault, or fixed road baseline (no randomization)",
+        help=(
+            "Simulation scenario: random road scene, deterministic mild"
+            " single-wheel fault, or fixed road baseline (no randomization)"
+        ),
     )
     parser.add_argument(
         "--fault-wheel",
         default="front-right",
         help="Client name to apply the mild wheel fault to when --scenario one-wheel-mild",
     )
-    parser.add_argument(
-        "--interactive", action="store_true", help="Force interactive command mode"
-    )
+    parser.add_argument("--interactive", action="store_true", help="Force interactive command mode")
     parser.add_argument(
         "--no-interactive", action="store_true", help="Disable interactive command mode"
     )

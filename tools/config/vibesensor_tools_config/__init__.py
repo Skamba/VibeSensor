@@ -1,1 +1,0 @@
-"""VibeSensor config tooling package."""

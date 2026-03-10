@@ -23,12 +23,8 @@ def _normalize_wheel_slot(name: str) -> str | None:
     normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
     if normalized in _WHEEL_ALIASES:
         return _WHEEL_ALIASES[normalized]
-    axle = (
-        "front" if "front" in normalized else "rear" if "rear" in normalized else None
-    )
-    side = (
-        "left" if "left" in normalized else "right" if "right" in normalized else None
-    )
+    axle = "front" if "front" in normalized else "rear" if "rear" in normalized else None
+    side = "left" if "left" in normalized else "right" if "right" in normalized else None
     if axle and side:
         return f"{axle}-{side}"
     return None
@@ -81,9 +77,7 @@ def apply_one_wheel_mild_scenario(clients: list[Any], fault_wheel: str) -> None:
             client.pulse(0.40)
         else:
             coupling = _cross_corner_coupling(fault_wheel, client.name)
-            client.profile_name = (
-                "wheel_mild_imbalance" if client_slot is not None else "rear_body"
-            )
+            client.profile_name = "wheel_mild_imbalance" if client_slot is not None else "rear_body"
             # Keep non-fault sensors active (real coupling), but clearly below fault.
             client.scene_gain = 0.30 + 0.20 * coupling
             client.scene_noise_gain = 0.96 + 0.12 * coupling

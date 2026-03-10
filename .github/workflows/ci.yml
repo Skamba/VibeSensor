@@ -33,15 +33,15 @@ jobs:
 
       - name: Ruff check
         run: |
-          ruff check apps/server/vibesensor apps/server/tests apps/simulator
+          ruff check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
 
       - name: Ruff format check
         run: |
-          ruff format --check apps/server/vibesensor apps/server/tests apps/simulator
+          ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
 
       - name: Line endings
         run: |
-          python tools/config/check_line_endings.py
+          python tools/dev/check_line_endings.py
 
       - name: Config preflight
         run: |

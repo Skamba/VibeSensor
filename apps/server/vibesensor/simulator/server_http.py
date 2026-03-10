@@ -28,7 +28,7 @@ def check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
     url = server_health_url(host, port)
     try:
         with urlopen(url, timeout=timeout_s) as resp:
-            return resp.status == 200
+            return bool(resp.status == 200)
     except (URLError, OSError, TimeoutError):
         return False
 
@@ -36,9 +36,9 @@ def check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
 def set_server_speed_override_kmh(
     host: str, port: int, speed_kmh: float, timeout_s: float
 ) -> float | None:
-    payload = json.dumps(
-        {"speedSource": "manual", "manualSpeedKph": float(speed_kmh)}
-    ).encode("utf-8")
+    payload = json.dumps({"speedSource": "manual", "manualSpeedKph": float(speed_kmh)}).encode(
+        "utf-8"
+    )
     req = Request(
         _speed_source_url(host, port),
         data=payload,
@@ -54,12 +54,10 @@ def set_server_speed_override_kmh(
 
 def _start_local_server(config_path: Path, repo_root: Path) -> subprocess.Popen[str]:
     cmd = [sys.executable, "-m", "vibesensor.app", "--config", str(config_path)]
-    return subprocess.Popen(cmd, cwd=str(repo_root / "apps" / "server"))
+    return subprocess.Popen(cmd, cwd=str(repo_root / "apps" / "server"), text=True)
 
 
-def maybe_start_server(
-    args: argparse.Namespace, repo_root: Path
-) -> subprocess.Popen[str] | None:
+def maybe_start_server(args: argparse.Namespace, repo_root: Path) -> subprocess.Popen[str] | None:
     host = args.server_host.strip().lower()
     if host not in LOCAL_SERVER_HOSTS:
         print(
@@ -92,14 +90,9 @@ def maybe_start_server(
     while time.monotonic() < deadline:
         if proc.poll() is not None:
             if check_server_running(srv_host, srv_port, timeout_s=check_timeout):
-                print(
-                    "Detected existing healthy server after auto-start race at "
-                    f"{health_url}"
-                )
+                print(f"Detected existing healthy server after auto-start race at {health_url}")
                 return None
-            raise RuntimeError(
-                f"Auto-started server exited early with code {proc.returncode}"
-            )
+            raise RuntimeError(f"Auto-started server exited early with code {proc.returncode}")
         if check_server_running(srv_host, srv_port, timeout_s=check_timeout):
             print(f"Server is now reachable at {health_url}")
             return proc

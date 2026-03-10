@@ -189,7 +189,7 @@ def test_silence_db_constant() -> None:
 def test_config_preflight_no_removed_fields() -> None:
     """config_preflight.summarize must not reference removed config fields."""
     root = REPO_ROOT
-    preflight_path = root / "tools" / "config" / "vibesensor_tools_config" / "config_preflight.py"
+    preflight_path = root / "apps" / "server" / "vibesensor" / "config_preflight.py"
     source = preflight_path.read_text(encoding="utf-8")
     assert "metrics_csv_path" not in source, (
         "config_preflight.py still references removed metrics_csv_path"
@@ -216,7 +216,8 @@ def test_simulator_defaults_match_analysis_settings() -> None:
     """Simulator vehicle defaults must be imported from the canonical source."""
     root = REPO_ROOT
     # Read the simulator source to verify it doesn't hardcode tire/vehicle constants
-    sim_source = (root / "apps" / "simulator" / "vibesensor_simulator" / "sim_sender.py").read_text(
+    sim_path = root / "apps" / "server" / "vibesensor" / "simulator" / "sim_sender.py"
+    sim_source = sim_path.read_text(
         encoding="utf-8",
     )
     # The simulator should NOT contain hardcoded tire/vehicle values as literal assignments
@@ -235,7 +236,8 @@ def test_simulator_defaults_match_analysis_settings() -> None:
 def test_simulator_no_production_asserts() -> None:
     """Simulator module-level and standalone functions must not use bare assert."""
     root = REPO_ROOT
-    sim_source = (root / "apps" / "simulator" / "vibesensor_simulator" / "sim_sender.py").read_text(
+    sim_path = root / "apps" / "server" / "vibesensor" / "simulator" / "sim_sender.py"
+    sim_source = sim_path.read_text(
         encoding="utf-8",
     )
     lines = sim_source.splitlines()
@@ -429,10 +431,9 @@ def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -
     import re
     import sys
 
-    from vibesensor_simulator.sim_sender import parse_args
-
     from vibesensor.config import DEFAULT_CONFIG
     from vibesensor.contracts import NETWORK_PORTS
+    from vibesensor.simulator.sim_sender import parse_args
 
     root = REPO_ROOT
     expected_data = int(NETWORK_PORTS["server_udp_data"])
