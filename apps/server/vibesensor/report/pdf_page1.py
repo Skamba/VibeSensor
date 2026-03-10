@@ -63,7 +63,7 @@ def _column_height(
     return _column_height_impl(rows, available_w=available_w, row_gap=row_gap)
 
 
-def _build_header_rows(
+def _build_header_rows(  # type: ignore[no-untyped-def]
     c: Canvas,
     data: ReportTemplateData,
     *,

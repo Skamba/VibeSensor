@@ -295,7 +295,7 @@ def _draw_additional_observations(
         if not order_label:
             order_label = tr("SOURCE_TRANSIENT_IMPACT")
         try:
-            confidence = float(finding.get("confidence_0_to_1") or 0.0)
+            confidence = float(finding.get("confidence_0_to_1") or 0.0)  # type: ignore[arg-type]
         except (ValueError, TypeError):
             confidence = 0.0
         if not isfinite(confidence):
@@ -391,7 +391,7 @@ def _page2(
 
     _render_peaks_panel_impl(c, data, tr=tr, layout=layout, draw_peaks_table=_draw_peaks_table)
 
-    obs_y = _render_observations_panel_impl(
+    obs_y = _render_observations_panel_impl(  # type: ignore[arg-type]
         c,
         layout=layout,
         transient_findings=transient_findings,
