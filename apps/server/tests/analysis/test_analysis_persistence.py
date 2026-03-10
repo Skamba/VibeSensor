@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import sqlite3
-from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -113,7 +112,7 @@ def test_store_analysis_persists_summary_directly_and_strips_internal_keys(
     assert '"summary"' not in raw
     assert "_report_template_data" not in raw
     assert '"lang"' in raw
-    assert db.get_run_analysis("r1") == {"lang": "en", "findings": []}
+    assert db.get_run("r1").get("analysis") == {"lang": "en", "findings": []}
     db.close()
 
 
@@ -521,10 +520,6 @@ async def test_export_offloaded_to_thread() -> None:
         def iter_run_samples(self, run_id, batch_size=1000):
             for start in range(0, len(samples), batch_size):
                 yield samples[start : start + batch_size]
-
-        @contextmanager
-        def read_transaction(self):
-            yield
 
     app = FastAPI()
     state = _make_fake_state(_DB())

@@ -4,7 +4,6 @@ import csv
 import io
 import json
 import zipfile
-from contextlib import contextmanager
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import Any
@@ -101,19 +100,10 @@ class FakeHistoryDB:
             return []
         return list(self.samples)
 
-    @contextmanager
-    def read_transaction(self):
-        yield
-
     def list_runs(self) -> list[dict[str, Any]]:
         return []
 
     def get_active_run_id(self) -> str | None:
-        return None
-
-    def get_run_status(self, run_id: str) -> str | None:
-        if run_id == "run-1":
-            return "complete"
         return None
 
     def delete_run(self, run_id: str) -> bool:

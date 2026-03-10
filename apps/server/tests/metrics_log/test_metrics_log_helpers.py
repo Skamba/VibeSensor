@@ -410,7 +410,10 @@ def test_stop_logging_does_not_block_on_post_analysis(
     assert elapsed < 0.45, f"stop_logging() blocked for {elapsed:.2f}s (expected < 0.45s)"
     assert summary_started.wait(timeout=2.0)
     allow_summary_finish.set()
-    assert wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=5.0)
+    def _status():
+        return (history_db.get_run(run_id) or {}).get("status")
+
+    assert wait_until(lambda: _status() == "complete", timeout_s=5.0)
 
 
 def test_post_analysis_failure_sets_persistent_error_status(
@@ -436,7 +439,10 @@ def test_post_analysis_failure_sets_persistent_error_status(
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _failing_summary)
     logger.stop_logging()
 
-    assert wait_until(lambda: history_db.get_run_status(run_id) == "error", timeout_s=2.0)
+    def _status():
+        return (history_db.get_run(run_id) or {}).get("status")
+
+    assert wait_until(lambda: _status() == "error", timeout_s=2.0)
     run = history_db.get_run(run_id)
     assert run is not None
     assert "analysis exploded" in str(run.get("error_message", ""))
@@ -561,8 +567,12 @@ def test_post_analysis_uses_run_language_from_metadata(
 
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _summary)
     logger.stop_logging()
-    assert wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=2.0)
-    stored = history_db.get_run_analysis(run_id)
+
+    def _status():
+        return (history_db.get_run(run_id) or {}).get("status")
+
+    assert wait_until(lambda: _status() == "complete", timeout_s=2.0)
+    stored = history_db.get_run(run_id).get("analysis")
     assert stored is not None
     assert stored["lang"] == "nl"
 
@@ -644,8 +654,12 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
 
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _summary)
     logger.stop_logging()
-    assert wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=3.0)
-    stored = history_db.get_run_analysis(run_id)
+
+    def _status():
+        return (history_db.get_run(run_id) or {}).get("status")
+
+    assert wait_until(lambda: _status() == "complete", timeout_s=3.0)
+    stored = history_db.get_run(run_id).get("analysis")
     assert stored is not None
     assert stored["row_count"] <= cap
     assert stored["analysis_metadata"]["total_sample_count"] >= stored["row_count"]

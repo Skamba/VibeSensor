@@ -114,23 +114,6 @@ class HistoryDB:
             finally:
                 cur.close()
 
-    @contextmanager
-    def read_transaction(self) -> Iterator[None]:
-        """Hold a single read transaction across multi-step read operations."""
-        with self._lock:
-            if self._conn is None:
-                raise RuntimeError("HistoryDB is closed")
-            cur = self._conn.cursor()
-            try:
-                cur.execute("BEGIN")
-                yield
-                self._conn.commit()
-            except sqlite3.Error:
-                self._conn.rollback()
-                raise
-            finally:
-                cur.close()
-
     # -- schema ---------------------------------------------------------------
 
     def _ensure_schema(self) -> None:
@@ -640,34 +623,6 @@ class HistoryDB:
                 )
             return None
         return parsed
-
-    def get_run_analysis(self, run_id: str) -> JsonObject | None:
-        with self._cursor(commit=False) as cur:
-            cur.execute(
-                "SELECT analysis_json FROM runs WHERE run_id = ? AND status = 'complete'",
-                (run_id,),
-            )
-            row = cur.fetchone()
-        if row is None:
-            return None
-        parsed = safe_json_loads(row[0], context=f"run {run_id} analysis")
-        if parsed is not None and not is_json_object(parsed):
-            LOGGER.warning(
-                "get_run_analysis: run %s analysis_json parsed to %s, expected dict; "
-                "treating as missing",
-                run_id,
-                type(parsed).__name__,
-            )
-            return None
-        if parsed is None:
-            return None
-        return parsed
-
-    def get_run_status(self, run_id: str) -> str | None:
-        with self._cursor(commit=False) as cur:
-            cur.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,))
-            row = cur.fetchone()
-        return str(row[0]) if row else None
 
     def get_active_run_id(self) -> str | None:
         with self._cursor(commit=False) as cur:

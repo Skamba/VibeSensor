@@ -1,8 +1,3 @@
-# Agent guidance pointer
+# Agent guidance
 
-This file is intentionally short to avoid drift.
-
-- Canonical AI workflow + commands: [.github/copilot-instructions.md](.github/copilot-instructions.md)
-- Canonical shared rules: [.github/instructions/general.instructions.md](.github/instructions/general.instructions.md)
-- Area-specific deltas: [.github/instructions/](.github/instructions/)
-- Read first for repo structure: [docs/ai/repo-map.md](docs/ai/repo-map.md)
+See [.github/copilot-instructions.md](.github/copilot-instructions.md) for all AI guidance.

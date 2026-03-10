@@ -1,18 +1,18 @@
 Repository overview
 - VibeSensor has a Python backend in `apps/server/`, a TypeScript/Vite dashboard in `apps/ui/`, simulator tooling in `apps/server/vibesensor/simulator/`, and device/firmware assets under `firmware/esp/`, `hardware/`, and `infra/pi-image/`.
-- Backend architecture is package-based: `app.py` creates the FastAPI app, `bootstrap.py` wires services, `routes/` owns HTTP/WebSocket route groups, `runtime/` owns runtime coordination, `history_db/` owns SQLite persistence, `report/` owns PDF rendering (with `report/mapping/` for summary-to-report data mapping), and `update/` owns wheel-based updates.
+- Backend architecture is package-based: `app.py` creates the FastAPI app, `bootstrap.py` wires services, `routes/` owns HTTP/WebSocket route groups, `runtime/` owns runtime coordination, `history_db/` owns SQLite persistence, `report/` owns PDF rendering, and `update/` owns wheel-based updates.
 - Key runtime artifacts are `docker-compose.yml` at repo root and `apps/server/pyproject.toml` for backend packaging and CLI entry points.
 - Units policy: raw ingest/sample acceleration values may use g, but post-stop analysis outputs (persisted summaries, findings, report-template artifacts) must expose vibration strength or intensity in dB only.
 - Canonical dB definition: `vibesensor/core/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
 
 Source-of-truth note
-- This file is the canonical short AI guide; `AGENTS.md` and `CLAUDE.md` should remain pointers to this file to prevent drift.
+- This file is the canonical short AI guide; `AGENTS.md` should remain a pointer to this file to prevent drift.
 - AI guidance lives in this file, `.github/instructions/*.instructions.md`, and `docs/ai/repo-map.md`. Do not create additional guidance files in `docs/ai/`.
 
 Canonical instruction sources
 - Read `docs/ai/repo-map.md` first.
 - Shared workflow, validation, and execution guardrails live in `.github/instructions/general.instructions.md` — do not duplicate them here.
-- Area-specific deltas live in `.github/instructions/{backend,frontend,tests,infra,docs,report}.instructions.md`.
+- Area-specific deltas live in `.github/instructions/{backend,frontend,tests}.instructions.md`.
 
 Architectural constraints
 - Offline-first hotspot boot: hotspot provisioning must not depend on internet connectivity. Required packages are baked into the image build stage.

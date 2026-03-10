@@ -94,21 +94,6 @@ def test_iter_run_samples_batches(tmp_path: Path) -> None:
     assert [len(batch) for batch in batches] == [4, 4, 3]
 
 
-def test_read_transaction_blocks_concurrent_delete_during_iteration(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-tx", "2026-01-01T00:00:00Z", {"source": "test"})
-    db.append_samples("run-tx", [{"i": i} for i in range(10)])
-    seen: list[int] = []
-    with ThreadPoolExecutor(max_workers=1) as pool:
-        with db.read_transaction():
-            delete_future = pool.submit(db.delete_run, "run-tx")
-            for batch in db.iter_run_samples("run-tx", batch_size=3):
-                seen.extend(int(row["i"]) for row in batch)
-            assert not delete_future.done()
-        assert delete_future.result(timeout=2.0) is True
-    assert seen == list(range(10))
-
-
 def test_list_runs_uses_incremental_sample_count(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-4", "2026-01-01T00:00:00Z", {"source": "test"})
@@ -164,18 +149,18 @@ def test_run_status_transitions(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
 
     db.create_run("run-st", "2026-01-01T00:00:00Z", {"source": "test"})
-    assert db.get_run_status("run-st") == "recording"
+    assert db.get_run("run-st")["status"] == "recording"
 
     db.finalize_run("run-st", "2026-01-01T00:10:00Z")
-    assert db.get_run_status("run-st") == "analyzing"
+    assert db.get_run("run-st")["status"] == "analyzing"
 
     db.store_analysis("run-st", {"score": 42})
-    assert db.get_run_status("run-st") == "complete"
+    assert db.get_run("run-st")["status"] == "complete"
 
     db.create_run("run-err", "2026-01-01T00:00:00Z", {"source": "test"})
     db.finalize_run("run-err", "2026-01-01T00:10:00Z")
     db.store_analysis_error("run-err", "something went wrong")
-    assert db.get_run_status("run-err") == "error"
+    assert db.get_run("run-err")["status"] == "error"
 
 
 def test_store_analysis_allows_direct_recording_to_complete(tmp_path: Path) -> None:
@@ -347,8 +332,8 @@ def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
     _ = db.list_runs()
     _ = list(db.iter_run_samples("run-ro", batch_size=1))
     _ = db.get_run_metadata("run-ro")
-    _ = db.get_run_analysis("run-ro")
-    _ = db.get_run_status("run-ro")
+    _ = db.get_run("run-ro").get("analysis")
+    _ = db.get_run("run-ro")["status"]
     _ = db.get_active_run_id()
     _ = db.get_setting("mode")
     _ = db.list_client_names()
