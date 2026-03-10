@@ -12,8 +12,9 @@ from test_support.report_helpers import (
     report_run_metadata as run_metadata,
 )
 
-from vibesensor.analysis import map_summary, summarize_log
+from vibesensor.analysis import summarize_log
 from vibesensor.constants import KMH_TO_MPS
+from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
 
 

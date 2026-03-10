@@ -15,10 +15,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
-from ..analysis import map_summary
 from ..backend_types import CarConfigPayload, HistoryRunPayload
 from ..exceptions import AnalysisNotReadyError, ProcessingError
 from ..json_types import JsonObject, is_json_object
+from ..report.mapping import map_summary
 from ..report.pdf_engine import build_report_pdf
 from ..run_context import add_current_context_warnings, current_car_snapshot_token
 from .helpers import async_require_run, require_analysis_ready, safe_filename

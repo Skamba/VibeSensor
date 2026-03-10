@@ -11,7 +11,6 @@ ap:
   con_name: VibeSensor-AP
   self_heal:
     enabled: true
-    interval_seconds: 120               # How often the watchdog polls (seconds, ≥1)
     diagnostics_lookback_minutes: 5     # Window for connectivity diagnostics (minutes, ≥1)
     min_restart_interval_seconds: 120   # Minimum cooldown between AP restarts (seconds, ≥1)
     allow_disable_resolved_stub_listener: false

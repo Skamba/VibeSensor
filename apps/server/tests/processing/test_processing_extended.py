@@ -119,13 +119,11 @@ def test_latest_sample_rate_hz_default_zero() -> None:
 def test_spectrum_payload_missing_client() -> None:
     proc = _make_processor()
     result = proc.spectrum_payload("unknown")
-    assert result == {
-        "x": [],
-        "y": [],
-        "z": [],
-        "combined_spectrum_amp_g": [],
-        "strength_metrics": {},
-    }
+    assert result["x"] == []
+    assert result["y"] == []
+    assert result["z"] == []
+    assert result["combined_spectrum_amp_g"] == []
+    assert result["strength_metrics"]["vibration_strength_db"] == 0.0
 
 
 def test_spectrum_payload_has_vibration_strength_db() -> None:

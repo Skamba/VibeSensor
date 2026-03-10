@@ -15,7 +15,7 @@ from test_support.response_models import response_payload
 from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION, HistoryDB
 from vibesensor.history_services.exports import HistoryExportService
 from vibesensor.history_services.reports import HistoryReportService
-from vibesensor.history_services.runs import HistoryRunDeleteService, HistoryRunQueryService
+from vibesensor.history_services.runs import HistoryRunService
 
 # -- Schema v4 tests ----------------------------------------------------------
 
@@ -297,8 +297,7 @@ def _make_fake_state(history_db: Any) -> Any:
     )
     state.persistence = SimpleNamespace(
         history_db=state.history_db,
-        query_service=HistoryRunQueryService(state.history_db, state.settings_store),
-        delete_service=HistoryRunDeleteService(state.history_db),
+        run_service=HistoryRunService(state.history_db, state.settings_store),
         report_service=HistoryReportService(state.history_db, state.settings_store),
         export_service=HistoryExportService(state.history_db),
     )

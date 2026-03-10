@@ -14,7 +14,8 @@ from test_support import (
     standard_metadata,
 )
 
-from vibesensor.analysis import SummaryData, map_summary, summarize_run_data
+from vibesensor.analysis import SummaryData, summarize_run_data
+from vibesensor.report.mapping import map_summary
 from vibesensor.report.report_data import ReportTemplateData
 
 

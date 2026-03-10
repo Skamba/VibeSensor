@@ -15,9 +15,9 @@ import pytest
 
 from vibesensor.history_services.exports import HistoryExportService
 from vibesensor.history_services.reports import HistoryReportService
-from vibesensor.history_services.runs import HistoryRunDeleteService, HistoryRunQueryService
+from vibesensor.history_services.runs import HistoryRunService
 from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
-from vibesensor.runtime.subsystems import (
+from vibesensor.runtime.state import (
     RuntimeIngressSubsystem,
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
@@ -72,8 +72,7 @@ class FakeState:
         )
         self.persistence = RuntimePersistenceSubsystem(
             history_db=self.history_db,  # type: ignore[arg-type]
-            query_service=HistoryRunQueryService(self.history_db, self.settings_store),
-            delete_service=HistoryRunDeleteService(self.history_db),
+            run_service=HistoryRunService(self.history_db, self.settings_store),
             report_service=HistoryReportService(self.history_db, self.settings_store),
             export_service=HistoryExportService(self.history_db),
         )

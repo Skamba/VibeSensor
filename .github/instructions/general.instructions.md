@@ -29,6 +29,12 @@ Canonical agent workflow (shared source of truth)
   - when adding large inline data definitions, move them into appropriate data files (`.json`, `.yaml`, etc.),
   - do not create duplicate parallel implementations when extending existing logic is cleaner.
 
+Complexity hygiene
+- Remove config fields that are not read by any code path. Do not add speculative config knobs.
+- Maintain a single source of truth for default values; do not duplicate defaults across files.
+- Do not add forward-extensibility machinery (overflow columns, plugin hooks, generic registries) until a concrete second consumer exists.
+- Prefer flat, direct structures. Only introduce grouping or wrapping when more than three consumers benefit from the indirection.
+
 Documentation maintenance (always required)
 - After every meaningful code change, check whether docs, repo maps, runbooks, READMEs, and instruction files that reference the touched area are now stale.
 - Update stale documentation in the same change set; do not leave documentation drift for later unless the user explicitly asks you not to touch docs.

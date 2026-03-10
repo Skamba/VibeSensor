@@ -106,7 +106,6 @@ def test_load_config_ap_self_heal_defaults(tmp_path: Path) -> None:
     result = load_config(config_path)
 
     assert result.ap.self_heal.enabled is True
-    assert result.ap.self_heal.interval_seconds == 120
     assert result.ap.self_heal.allow_disable_resolved_stub_listener is False
 
 
@@ -119,7 +118,6 @@ def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
             "ap": {
                 "self_heal": {
                     "enabled": True,
-                    "interval_seconds": 180,
                     "diagnostics_lookback_minutes": 7,
                     "min_restart_interval_seconds": 240,
                     "allow_disable_resolved_stub_listener": True,
@@ -131,7 +129,6 @@ def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
 
     result = load_config(config_path)
 
-    assert result.ap.self_heal.interval_seconds == 180
     assert result.ap.self_heal.diagnostics_lookback_minutes == 7
     assert result.ap.self_heal.min_restart_interval_seconds == 240
     assert result.ap.self_heal.allow_disable_resolved_stub_listener is True

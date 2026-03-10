@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from ..core.vibration_strength import empty_vibration_strength_metrics
 from ..payload_types import (
     AlignmentInfoPayload,
     FrequencyWarningPayload,
@@ -37,7 +38,7 @@ EMPTY_SPECTRUM_PAYLOAD: SpectrumSeriesPayload = {
     "y": [],
     "z": [],
     "combined_spectrum_amp_g": [],
-    "strength_metrics": {},
+    "strength_metrics": empty_vibration_strength_metrics(),
 }
 
 
@@ -47,7 +48,7 @@ def _empty_spectrum_payload() -> SpectrumSeriesPayload:
         "y": [],
         "z": [],
         "combined_spectrum_amp_g": [],
-        "strength_metrics": {},
+        "strength_metrics": empty_vibration_strength_metrics(),
     }
 
 
@@ -265,7 +266,7 @@ def build_selected_payload(
             "y": [],
             "z": [],
             "combined_spectrum_amp_g": [],
-            "strength_metrics": {},
+            "strength_metrics": empty_vibration_strength_metrics(),
         }
 
     payload: SelectedClientPayload = {

@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from ..exceptions import ProcessingError
 
 if TYPE_CHECKING:
-    from .subsystems import RuntimeIngressSubsystem
+    from .state import RuntimeIngressSubsystem
 
 LOGGER = logging.getLogger(__name__)
 

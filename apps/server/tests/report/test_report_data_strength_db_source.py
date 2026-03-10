@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.analysis import map_summary
+from vibesensor.report.mapping import map_summary
 
 _ORDER_TOP_CAUSE: dict = {
     "finding_id": "F_ORDER",

@@ -94,13 +94,11 @@ def extract_strength_data(
     strength_peak_amp_g, strength_floor_amp_g, top_peaks)``.
     """
     strength_metrics: dict[str, object] = {}
-    root_strength_metrics = metrics.get("strength_metrics")
-    if isinstance(root_strength_metrics, dict):
-        strength_metrics = root_strength_metrics
-    elif isinstance((combined := metrics.get("combined")), dict):
-        nested_strength_metrics = combined.get("strength_metrics")
-        if isinstance(nested_strength_metrics, dict):
-            strength_metrics = nested_strength_metrics
+    combined = metrics.get("combined")
+    if isinstance(combined, dict):
+        nested = combined.get("strength_metrics")
+        if isinstance(nested, dict):
+            strength_metrics = nested
 
     vibration_strength_db = _safe_float(strength_metrics, _VIB_STRENGTH_DB_KEY)
     _bucket_val = strength_metrics.get(_STRENGTH_BUCKET_KEY)

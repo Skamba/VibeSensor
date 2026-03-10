@@ -12,7 +12,7 @@ from vibesensor.analysis_settings import AnalysisSettingsStore
 from vibesensor.api_models import ActiveCarRequest, AnalysisSettingsRequest, CarUpsertRequest
 from vibesensor.history_services.exports import HistoryExportService
 from vibesensor.history_services.reports import HistoryReportService
-from vibesensor.history_services.runs import HistoryRunDeleteService, HistoryRunQueryService
+from vibesensor.history_services.runs import HistoryRunService
 from vibesensor.routes import create_router
 from vibesensor.settings_store import SettingsStore
 
@@ -103,8 +103,7 @@ class _State:
         )
         self.persistence = SimpleNamespace(
             history_db=self.history_db,
-            query_service=HistoryRunQueryService(self.history_db, self.settings_store),
-            delete_service=HistoryRunDeleteService(self.history_db),
+            run_service=HistoryRunService(self.history_db, self.settings_store),
             report_service=HistoryReportService(self.history_db, self.settings_store),
             export_service=HistoryExportService(self.history_db),
         )

@@ -9,7 +9,8 @@ from pathlib import Path
 import pytest
 from test_support.report_helpers import write_jsonl
 
-from vibesensor.analysis import map_summary, summarize_log
+from vibesensor.analysis import summarize_log
+from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
 
 pdfium = pytest.importorskip("pypdfium2")

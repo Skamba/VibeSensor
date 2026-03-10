@@ -114,19 +114,18 @@ class APSelfHealConfig:
     """Configuration for the Wi-Fi AP self-heal watchdog."""
 
     enabled: bool
-    interval_seconds: int
     diagnostics_lookback_minutes: int
     min_restart_interval_seconds: int
     allow_disable_resolved_stub_listener: bool
     state_file: Path
 
     def __post_init__(self) -> None:
-        for field_name in ("interval_seconds", "diagnostics_lookback_minutes"):
-            val = getattr(self, field_name)
-            if not isinstance(val, int) or val < 1:
-                raise ValueError(
-                    f"ap.self_heal.{field_name} must be a positive integer, got {val!r}",
-                )
+        val = self.diagnostics_lookback_minutes
+        if not isinstance(val, int) or val < 1:
+            raise ValueError(
+                "ap.self_heal.diagnostics_lookback_minutes must be"
+                f" a positive integer, got {val!r}",
+            )
         mri = self.min_restart_interval_seconds
         if not isinstance(mri, int) or mri < 0:
             raise ValueError(
@@ -471,10 +470,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             con_name=str(ap_cfg["con_name"]),
             self_heal=APSelfHealConfig(
                 enabled=bool(self_heal_cfg.get("enabled", True)),
-                interval_seconds=_coerce_int(
-                    self_heal_cfg.get("interval_seconds", 120),
-                    "ap.self_heal.interval_seconds",
-                ),
                 diagnostics_lookback_minutes=_coerce_int(
                     self_heal_cfg.get("diagnostics_lookback_minutes", 5),
                     "ap.self_heal.diagnostics_lookback_minutes",
