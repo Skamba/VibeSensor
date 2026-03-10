@@ -15,7 +15,6 @@ from .subsystems import (
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
     RuntimeRecordingSubsystem,
-    RuntimeRouteServices,
     RuntimeSettingsSubsystem,
     RuntimeUpdateSubsystem,
     RuntimeWebsocketSubsystem,
@@ -32,7 +31,6 @@ def build_runtime_state(
     updates: RuntimeUpdateSubsystem,
     processing: RuntimeProcessingSubsystem,
     websocket: RuntimeWebsocketSubsystem,
-    routes: RuntimeRouteServices,
 ) -> RuntimeState:
     """Construct a fully wired ``RuntimeState`` from explicit subsystems."""
     lifecycle: LifecycleManager = build_lifecycle_manager(
@@ -54,6 +52,5 @@ def build_runtime_state(
         updates=updates,
         processing=processing,
         websocket=websocket,
-        routes=routes,
         lifecycle=lifecycle,
     )

@@ -29,7 +29,6 @@ from .subsystems import (
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
     RuntimeRecordingSubsystem,
-    RuntimeRouteServices,
     RuntimeSettingsSubsystem,
     RuntimeUpdateSubsystem,
     RuntimeWebsocketSubsystem,
@@ -209,27 +208,6 @@ def build_websocket_subsystem(
         settings=settings,
     )
     return RuntimeWebsocketSubsystem(hub=hub, cache=cache, broadcast=broadcast)
-
-
-def build_route_services(
-    *,
-    ingress: RuntimeIngressSubsystem,
-    settings: RuntimeSettingsSubsystem,
-    recording: RuntimeRecordingSubsystem,
-    persistence: RuntimePersistenceSubsystem,
-    updates: RuntimeUpdateSubsystem,
-    processing: RuntimeProcessingSubsystem,
-    websocket: RuntimeWebsocketSubsystem,
-) -> RuntimeRouteServices:
-    return RuntimeRouteServices(
-        ingress=ingress,
-        settings=settings,
-        recording=recording,
-        persistence=persistence,
-        updates=updates,
-        processing=processing,
-        websocket=websocket,
-    )
 
 
 def build_lifecycle_manager(

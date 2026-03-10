@@ -76,14 +76,3 @@ class RuntimeWebsocketSubsystem:
     hub: WebSocketHub
     cache: WsBroadcastCache
     broadcast: WsBroadcastService
-
-
-@dataclass(slots=True)
-class RuntimeRouteServices:
-    ingress: RuntimeIngressSubsystem
-    settings: RuntimeSettingsSubsystem
-    recording: RuntimeRecordingSubsystem
-    persistence: RuntimePersistenceSubsystem
-    updates: RuntimeUpdateSubsystem
-    processing: RuntimeProcessingSubsystem
-    websocket: RuntimeWebsocketSubsystem
