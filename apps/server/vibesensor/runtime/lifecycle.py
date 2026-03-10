@@ -205,13 +205,13 @@ class LifecycleManager:
         """Graceful shutdown with explicit ingress-stop and metrics-drain phases."""
         try:
             self._ingress.control_plane.close()
-        except Exception:
+        except OSError:
             LOGGER.warning("Error closing control plane", exc_info=True)
         try:
             if self._data_transport is not None:
                 self._data_transport.close()
                 self._data_transport = None
-        except Exception:
+        except OSError:
             LOGGER.warning("Error closing data transport", exc_info=True)
         if self._data_consumer_task is not None:
             self._data_consumer_task.cancel()

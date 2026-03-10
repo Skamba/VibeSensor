@@ -6,11 +6,15 @@ from ...runlog import as_float_or_none as _as_float
 from .._types import Finding, MatchedPoint
 from ..helpers import ORDER_MIN_CONFIDENCE
 from ._constants import (
-    _CONFIDENCE_CEILING,
-    _CONFIDENCE_FLOOR,
-    _LIGHT_STRENGTH_MAX_DB,
-    _NEGLIGIBLE_STRENGTH_MAX_DB,
+    CONFIDENCE_CEILING,
+    CONFIDENCE_FLOOR,
+    LIGHT_STRENGTH_MAX_DB,
+    NEGLIGIBLE_STRENGTH_MAX_DB,
 )
+
+# Local type bindings so mypy resolves correct types under follow_imports=skip.
+_CONF_FLOOR: float = CONFIDENCE_FLOOR
+_CONF_CEIL: float = CONFIDENCE_CEILING
 
 # ── Diffuse excitation detection constants ──────────────────────────────
 _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO = 2.0
@@ -149,9 +153,9 @@ def compute_order_confidence(
         + (corr_weight * corr_val)
         + (_SNR_WEIGHT * snr_score)
     )
-    if absolute_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
+    if absolute_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB:
         confidence = min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP)
-    elif absolute_strength_db < _LIGHT_STRENGTH_MAX_DB:
+    elif absolute_strength_db < LIGHT_STRENGTH_MAX_DB:
         confidence *= _LIGHT_STRENGTH_PENALTY
     confidence *= _LOCALIZATION_BASE + (
         _LOCALIZATION_SPREAD * max(0.0, min(1.0, localization_confidence))
@@ -190,7 +194,7 @@ def compute_order_confidence(
         n_connected_locations == 2 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD
     ):
         confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
-    return max(_CONFIDENCE_FLOOR, min(_CONFIDENCE_CEILING, confidence))
+    return max(_CONF_FLOOR, min(_CONF_CEIL, confidence))
 
 
 def suppress_engine_aliases(

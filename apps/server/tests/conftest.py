@@ -9,7 +9,6 @@ sub-directory ``conftest.py`` files exist (which shadow this module in
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -18,6 +17,14 @@ from vibesensor.history_exports import HistoryExportService
 from vibesensor.history_reports import HistoryReportService
 from vibesensor.history_runs import HistoryRunDeleteService, HistoryRunQueryService
 from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
+from vibesensor.runtime.subsystems import (
+    RuntimeIngressSubsystem,
+    RuntimePersistenceSubsystem,
+    RuntimeProcessingSubsystem,
+    RuntimeRecordingSubsystem,
+    RuntimeSettingsSubsystem,
+    RuntimeUpdateSubsystem,
+)
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers
@@ -26,7 +33,12 @@ from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
 
 @dataclass
 class FakeState:
-    """Minimal stand-in for RuntimeState used by ``create_router``."""
+    """Minimal stand-in for RuntimeState used by ``create_router``.
+
+    Uses the actual production subsystem dataclass types so that shape
+    drift between test fixtures and production code is caught at
+    construction time rather than via obscure test failures.
+    """
 
     config: object = field(default_factory=MagicMock)
     registry: object = field(default_factory=MagicMock)
@@ -47,34 +59,39 @@ class FakeState:
 
     def __post_init__(self) -> None:
         self.health_state.mark_ready()
-        self.ingress = SimpleNamespace(
-            registry=self.registry,
-            processor=self.processor,
-            control_plane=self.control_plane,
+        self.ingress = RuntimeIngressSubsystem(
+            registry=self.registry,  # type: ignore[arg-type]
+            processor=self.processor,  # type: ignore[arg-type]
+            control_plane=self.control_plane,  # type: ignore[arg-type]
+            worker_pool=MagicMock(),
         )
-        self.settings = SimpleNamespace(
-            settings_store=self.settings_store,
-            gps_monitor=self.gps_monitor,
-            analysis_settings=self.analysis_settings,
-            apply_car_settings=self.apply_car_settings,
-            apply_speed_source_settings=self.apply_speed_source_settings,
+        self.settings = RuntimeSettingsSubsystem(
+            settings_store=self.settings_store,  # type: ignore[arg-type]
+            gps_monitor=self.gps_monitor,  # type: ignore[arg-type]
+            analysis_settings=self.analysis_settings,  # type: ignore[arg-type]
         )
-        self.recording = SimpleNamespace(
-            metrics_logger=self.metrics_logger,
+        self.recording = RuntimeRecordingSubsystem(
+            metrics_logger=self.metrics_logger,  # type: ignore[arg-type]
         )
-        self.persistence = SimpleNamespace(
-            history_db=self.history_db,
+        self.persistence = RuntimePersistenceSubsystem(
+            history_db=self.history_db,  # type: ignore[arg-type]
             query_service=HistoryRunQueryService(self.history_db, self.settings_store),
             delete_service=HistoryRunDeleteService(self.history_db, self.settings_store),
             report_service=HistoryReportService(self.history_db, self.settings_store),
             export_service=HistoryExportService(self.history_db),
         )
+        from types import SimpleNamespace
+
         self.websocket = SimpleNamespace(hub=self.ws_hub)
-        self.updates = SimpleNamespace(
-            update_manager=self.update_manager,
-            esp_flash_manager=self.esp_flash_manager,
+        self.updates = RuntimeUpdateSubsystem(
+            update_manager=self.update_manager,  # type: ignore[arg-type]
+            esp_flash_manager=self.esp_flash_manager,  # type: ignore[arg-type]
         )
-        self.processing = SimpleNamespace(state=self.loop_state, health_state=self.health_state)
+        self.processing = RuntimeProcessingSubsystem(
+            state=self.loop_state,
+            health_state=self.health_state,
+            loop=MagicMock(),
+        )
 
 
 @pytest.fixture

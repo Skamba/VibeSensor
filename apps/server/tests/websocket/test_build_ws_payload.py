@@ -155,6 +155,10 @@ def _make_state(
     )
     persistence = runtime_module.RuntimePersistenceSubsystem(  # type: ignore[arg-type]
         history_db=_SENTINEL,
+        query_service=_SENTINEL,
+        delete_service=_SENTINEL,
+        report_service=_SENTINEL,
+        export_service=_SENTINEL,
     )
     updates = runtime_module.RuntimeUpdateSubsystem(
         update_manager=_SENTINEL,  # type: ignore[arg-type]
