@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 
 from ..constants import ORDER_MIN_CONFIDENCE
-from ..runlog import as_float_or_none as _as_float
+from ..domain_models import as_float_or_none as _as_float
 from ._types import Finding, TopCause
 from .ranking import group_findings_by_source
 from .strength_labels import (

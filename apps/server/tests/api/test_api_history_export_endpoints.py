@@ -94,7 +94,7 @@ async def test_history_export_uses_streaming_response() -> None:
 
 @pytest.mark.asyncio
 async def test_history_export_csv_has_fixed_columns() -> None:
-    from vibesensor.history_exports import EXPORT_CSV_COLUMNS
+    from vibesensor.history_services.exports import EXPORT_CSV_COLUMNS
 
     router, _ = make_router_and_state(language="en", sample_count=5)
     endpoint = route_endpoint(router, "/api/history/{run_id}/export")

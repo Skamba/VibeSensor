@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..runlog import as_float_or_none as _as_float
+from ..domain_models import as_float_or_none as _as_float
 from ._types import (
     AccelStatistics,
     Finding,

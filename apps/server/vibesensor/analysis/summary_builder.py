@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from statistics import median as _median
 
+from ..domain_models import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang  # canonical source
 from ..run_context import build_summary_warnings
-from ..runlog import as_float_or_none as _as_float
 from ..runlog import utc_now_iso
 from ._types import (
     AccelStatistics,

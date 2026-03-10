@@ -17,7 +17,7 @@ import pytest
 from _paths import REPO_ROOT
 
 from vibesensor.esp_flash_manager import EspFlashManager
-from vibesensor.history_exports import flatten_for_csv as _flatten_for_csv
+from vibesensor.history_services.exports import flatten_for_csv as _flatten_for_csv
 from vibesensor.processing import SignalProcessor
 from vibesensor.report import pdf_diagram_render
 from vibesensor.report_cli import main as report_cli_main

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Callable
 
-from ...runlog import as_float_or_none as _as_float
+from ...domain_models import as_float_or_none as _as_float
 from .._types import MatchedPoint, PhaseEvidence
 from ..phase_segmentation import DrivingPhase
 
