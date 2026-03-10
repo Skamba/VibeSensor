@@ -16,8 +16,8 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
-from test_support.core import assert_summary_sections
 from test_support import make_sample
+from test_support.core import assert_summary_sections
 
 from vibesensor.analysis import summarize_run_data
 from vibesensor.analysis_settings import (
