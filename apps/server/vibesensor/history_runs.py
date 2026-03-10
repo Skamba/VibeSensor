@@ -1,4 +1,4 @@
-"""History run/query service for the HTTP layer."""
+"""History run/query service — framework-agnostic domain logic."""
 
 from __future__ import annotations
 
@@ -6,9 +6,8 @@ import asyncio
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Never, cast
 
-from fastapi import HTTPException
-
 from .backend_types import HistoryRunListEntryPayload, HistoryRunPayload
+from .exceptions import AnalysisNotReadyError, RunNotFoundError
 from .history_db import RunStatus
 from .history_helpers import async_require_run, require_analysis_ready, strip_internal_fields
 from .json_types import JsonObject, is_json_object
@@ -113,17 +112,17 @@ class HistoryRunDeleteService(HistoryRunService):
 
 
 def raise_delete_run_error(reason: str | None) -> Never:
-    """Raise the public HTTP error for a failed delete attempt."""
+    """Raise the domain error for a failed delete attempt."""
     if reason == "not_found":
-        raise HTTPException(status_code=404, detail="Run not found")
+        raise RunNotFoundError("Run not found")
     if reason == "active":
-        raise HTTPException(
-            status_code=409,
-            detail="Cannot delete the active run; stop recording first",
+        raise AnalysisNotReadyError(
+            "Cannot delete the active run; stop recording first",
+            status="active",
         )
     if reason == RunStatus.ANALYZING:
-        raise HTTPException(
-            status_code=409,
-            detail="Cannot delete run while analysis is in progress",
+        raise AnalysisNotReadyError(
+            "Cannot delete run while analysis is in progress",
+            status="in_progress",
         )
-    raise HTTPException(status_code=409, detail="Cannot delete run at this time")
+    raise AnalysisNotReadyError("Cannot delete run at this time", status="active")

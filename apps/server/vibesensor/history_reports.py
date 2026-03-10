@@ -1,4 +1,9 @@
-"""PDF report loading, language resolution, cache, and coordination."""
+"""PDF report loading, language resolution, cache, and coordination.
+
+Framework-agnostic: raises domain exceptions from ``vibesensor.exceptions``
+rather than HTTP-specific exceptions.  The routes layer translates domain
+exceptions to HTTP status codes.
+"""
 
 from __future__ import annotations
 
@@ -10,10 +15,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
-from fastapi import HTTPException
-
 from .analysis import map_summary
 from .backend_types import CarConfigPayload, HistoryRunPayload
+from .exceptions import AnalysisNotReadyError, ProcessingError
 from .history_helpers import async_require_run, require_analysis_ready, safe_filename
 from .json_types import JsonObject, is_json_object
 from .report.pdf_engine import build_report_pdf
@@ -77,9 +81,8 @@ class HistoryReportService:
         run = await async_require_run(self._history_db, run_id)
         analysis = require_analysis_ready(run)
         if not isinstance(analysis, dict) or not isinstance(analysis.get("findings"), list):
-            raise HTTPException(
-                status_code=422,
-                detail="Report data unavailable for this run. Re-analyze to regenerate the PDF.",
+            raise AnalysisNotReadyError(
+                "Report data unavailable for this run. Re-analyze to regenerate the PDF."
             )
 
         requested_lang = self._analysis_language(run, requested_lang)
@@ -192,12 +195,9 @@ class HistoryReportPdfCache:
             except Exception as exc:
                 LOGGER.warning("PDF generation failed for run %s", run_id, exc_info=True)
                 self._prune_stale_locks()
-                raise HTTPException(
-                    status_code=500,
-                    detail=(
-                        "PDF generation failed due to an internal error."
-                        " Please try again or re-analyze this run."
-                    ),
+                raise ProcessingError(
+                    "PDF generation failed due to an internal error."
+                    " Please try again or re-analyze this run."
                 ) from exc
             self._put(cache_key, pdf)
             return pdf

@@ -56,6 +56,11 @@ Use this when changing backend code without scanning the whole package.
 ## API Surface
 - `routes/` is the HTTP and WebSocket boundary, assembled by `routes/__init__.py`.
 - Keep response keys stable.
+- Rule: only `routes/` modules may import or raise `HTTPException`.
+  Service modules (`history_runs.py`, `history_reports.py`, `history_helpers.py`,
+  `history_exports.py`) raise domain exceptions from `exceptions.py`.
+  The `routes/_helpers.py::domain_errors_to_http()` context manager translates
+  domain exceptions to HTTP status codes at the route boundary.
 
 ## Persistence Surface
 - `metrics_log/` owns recording-time persistence semantics.

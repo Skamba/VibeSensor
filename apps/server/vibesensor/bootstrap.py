@@ -20,6 +20,7 @@ from .runtime.builders import (
     build_settings_subsystem,
     build_update_subsystem,
     build_websocket_subsystem,
+    create_history_db,
     resolve_accel_scale_g_per_lsb,
 )
 
@@ -27,23 +28,21 @@ from .runtime.builders import (
 def build_services(config: AppConfig) -> RuntimeState:
     """Construct all services and return a wired RuntimeState."""
     accel_scale_g_per_lsb = resolve_accel_scale_g_per_lsb(config)
-    # Build persistence first (creates HistoryDB), then settings (needs DB),
-    # then rebuild persistence with history services (needs SettingsStore).
-    persistence = build_persistence_subsystem(config=config)
+    # Create DB first, then settings (needs DB), then persistence services
+    # (needs both DB and SettingsStore) — single construction, no rebuild.
+    history_db = create_history_db(config)
+    settings = build_settings_subsystem(
+        history_db=history_db,
+        gps_enabled=config.gps.gps_enabled,
+    )
+    persistence = build_persistence_subsystem(
+        history_db=history_db,
+        settings_store=settings.settings_store,
+    )
     ingress = build_ingress_subsystem(
         config=config,
         persistence=persistence,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
-    )
-    settings = build_settings_subsystem(
-        persistence=persistence,
-        gps_enabled=config.gps.gps_enabled,
-    )
-    # Now that SettingsStore exists, rebuild persistence with full services.
-    persistence = build_persistence_subsystem(
-        config=config,
-        settings_store=settings.settings_store,
-        history_db=persistence.history_db,
     )
     recording = build_recording_subsystem(
         config=config,
