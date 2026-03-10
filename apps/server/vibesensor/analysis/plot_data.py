@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from ..runlog import as_float_or_none as _as_float
+from ..domain_models import as_float_or_none as _as_float
 from ._types import Sample, SummaryData
 from .helpers import _run_noise_baseline_g
 from .phase_segmentation import DrivingPhase, PhaseSegment

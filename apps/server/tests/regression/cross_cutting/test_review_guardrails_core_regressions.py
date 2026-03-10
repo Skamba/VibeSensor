@@ -62,7 +62,7 @@ class TestDomainModelsPublicAPI:
 
     def test_runlog_re_exports(self) -> None:
         """runlog.as_float_or_none still works as before."""
-        from vibesensor.runlog import as_float_or_none as runlog_as_float
+        from vibesensor.domain_models import as_float_or_none as runlog_as_float
 
         assert runlog_as_float(42) == 42.0
 

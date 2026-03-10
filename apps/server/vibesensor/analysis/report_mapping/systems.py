@@ -6,8 +6,8 @@ import os
 from collections.abc import Callable
 
 from ... import __version__
+from ...domain_models import as_float_or_none as _as_float
 from ...report.report_data import PartSuggestion, PatternEvidence, SystemFindingCard
-from ...runlog import as_float_or_none as _as_float
 from .._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SummaryData
 from ..pattern_parts import parts_for_pattern, why_parts_listed
 from .common import (

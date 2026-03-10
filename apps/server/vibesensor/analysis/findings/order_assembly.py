@@ -10,7 +10,7 @@ from vibesensor_core.vibration_strength import (
 )
 
 from ...constants import MEMS_NOISE_FLOOR_G
-from ...runlog import as_float_or_none as _as_float
+from ...domain_models import as_float_or_none as _as_float
 from .._types import Finding, JsonValue, LocationHotspot, PhaseEvidence
 from ..order_analysis import (
     _finding_actions_for_source,

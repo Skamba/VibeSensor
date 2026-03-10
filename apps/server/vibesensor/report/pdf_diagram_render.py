@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from ..runlog import as_float_or_none as _as_float
+from ..domain_models import as_float_or_none as _as_float
 from .pdf_diagram_layout import _build_sensor_render_plan, _estimate_text_width
 from .pdf_helpers import _canonical_location, _source_color
 from .theme import BMW_LENGTH_MM as _BMW_LENGTH_MM

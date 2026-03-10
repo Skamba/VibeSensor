@@ -38,7 +38,7 @@ dev = [
 vibesensor-server = "vibesensor.server_cli:main"
 vibesensor-report = "vibesensor.report_cli:main"
 vibesensor-http-api-schema-export = "vibesensor.http_api_schema_export:main"
-vibesensor-hotspot-self-heal = "vibesensor.hotspot_self_heal:main"
+vibesensor-hotspot-self-heal = "vibesensor.hotspot.self_heal:main"
 vibesensor-sim = "vibesensor_simulator.sim_sender:main"
 vibesensor-ws-smoke = "vibesensor_simulator.ws_smoke:main"
 vibesensor-config-preflight = "vibesensor_tools_config.config_preflight:main"
@@ -106,10 +106,7 @@ files = [
   "vibesensor/esp_flash_manager.py",
   "vibesensor/firmware_cache.py",
   "vibesensor/gps_speed.py",
-  "vibesensor/history_exports.py",
-  "vibesensor/history_helpers.py",
-  "vibesensor/history_reports.py",
-  "vibesensor/history_runs.py",
+  "vibesensor/history_services",
   "vibesensor/worker_pool.py",
   "vibesensor/json_types.py",
   "vibesensor/payload_types.py",

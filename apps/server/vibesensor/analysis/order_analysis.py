@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from ..analysis_settings import wheel_hz_from_speed_kmh
 from ..constants import SECONDS_PER_MINUTE
-from ..runlog import as_float_or_none as _as_float
+from ..domain_models import as_float_or_none as _as_float
 from ._types import I18nRef, JsonValue, MetadataDict, Sample, TestStep
 from .helpers import _effective_engine_rpm
 

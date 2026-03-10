@@ -112,8 +112,8 @@ def test_as_float_single_source_of_truth() -> None:
     """order_bands.as_float_or_none must be the canonical as_float_or_none
     from runlog, not a local re-definition.
     """
+    from vibesensor.domain_models import as_float_or_none
     from vibesensor.order_bands import as_float_or_none as ob_as_float
-    from vibesensor.runlog import as_float_or_none
 
     assert ob_as_float is as_float_or_none, (
         "order_bands.as_float_or_none must be imported from runlog.as_float_or_none"
