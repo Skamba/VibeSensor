@@ -65,15 +65,15 @@ function wsAliasBlock(schemaVersion) {
 		+ `export const EXPECTED_SCHEMA_VERSION = ${JSON.stringify(schemaVersion)} as const;\n\n`
 		+ 'type WsSchema<Name extends keyof components["schemas"]> = components["schemas"][Name];\n\n'
 		+ 'export type StrengthMetricPeak = WsSchema<"StrengthPeak">;\n'
-		+ 'export type StrengthMetricsPayload = WsSchema<"StrengthMetricsModel">;\n'
-		+ 'export type WsSpectrumSeries = WsSchema<"SpectrumSeries">;\n'
-		+ 'export type WsAlignmentInfo = WsSchema<"AlignmentInfo">;\n'
-		+ 'export type WsFrequencyWarning = WsSchema<"FrequencyWarning">;\n'
+		+ 'export type StrengthMetricsPayload = WsSchema<"StrengthMetricsPayload">;\n'
+		+ 'export type WsSpectrumSeries = WsSchema<"SpectrumSeriesPayload">;\n'
+		+ 'export type WsAlignmentInfo = WsSchema<"AlignmentInfoPayload">;\n'
+		+ 'export type WsFrequencyWarning = WsSchema<"FrequencyWarningPayload">;\n'
 		+ 'export type WsSpectraPayload = WsSchema<"SpectraPayload">;\n'
-		+ 'export type WsRotationalSpeedValue = WsSchema<"RotationalSpeedValue">;\n'
-		+ 'export type WsOrderBand = WsSchema<"OrderBand">;\n'
-		+ 'export type WsRotationalSpeeds = WsSchema<"RotationalSpeeds">;\n'
-		+ 'export type WsClientInfo = WsSchema<"ClientInfoModel">;\n'
+		+ 'export type WsRotationalSpeedValue = WsSchema<"RotationalSpeedValuePayload">;\n'
+		+ 'export type WsOrderBand = WsSchema<"OrderBandPayload">;\n'
+		+ 'export type WsRotationalSpeeds = WsSchema<"RotationalSpeedsPayload">;\n'
+		+ 'export type WsClientInfo = WsSchema<"ClientApiRow">;\n'
 		+ 'export type LiveWsPayload = WsSchema<"LiveWsPayload">;\n'
 	);
 }
