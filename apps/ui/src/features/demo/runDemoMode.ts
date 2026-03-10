@@ -1,4 +1,4 @@
-import { METRIC_FIELDS } from "../../generated/shared_contracts";
+import { METRIC_FIELDS } from "../../constants";
 
 type DemoDeps = {
   state: { wsState: string; hasReceivedPayload: boolean };

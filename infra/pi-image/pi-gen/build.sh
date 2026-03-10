@@ -142,7 +142,6 @@ compute_ui_hash() {
     cd "${REPO_ROOT}"
     git ls-files \
       apps/ui \
-      libs/shared/ts \
       tools/config/sync_shared_contracts_to_ui.mjs \
       | LC_ALL=C sort \
       | xargs sha256sum \
@@ -204,17 +203,11 @@ build_app_artifacts() {
   build_root="$(mktemp -d -p "${CACHE_DIR}" app-build-XXXXXX)"
   mkdir -p \
     "${build_root}/apps" \
-    "${build_root}/libs/core" \
-    "${build_root}/libs/shared" \
     "${build_root}/tools"
   rsync -a --delete \
     "${REPO_ROOT}/apps/server/" "${build_root}/apps/server/"
   rsync -a --delete \
     "${REPO_ROOT}/apps/simulator/" "${build_root}/apps/simulator/"
-  rsync -a --delete \
-    "${REPO_ROOT}/libs/core/python/" "${build_root}/libs/core/python/"
-  rsync -a --delete \
-    "${REPO_ROOT}/libs/shared/python/" "${build_root}/libs/shared/python/"
   rsync -a --delete \
     "${REPO_ROOT}/tools/config/" "${build_root}/tools/config/"
 
@@ -1006,7 +999,6 @@ mods = [
     "uvicorn",
     "vibesensor",
     "vibesensor.core",
-    "vibesensor_shared",
 ]
 for mod in mods:
     importlib.import_module(mod)

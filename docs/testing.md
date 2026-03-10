@@ -3,9 +3,8 @@
 ## Source of truth
 
 - Server tests live under `apps/server/tests/`.
-- The canonical local verification entry point is `python3 tools/tests/run_verification.py`.
-- The default CI-parity runner is `make test-all` (`python3 tools/tests/run_verification.py --suite ci-parity`).
-- The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_verification.py --suite full-stack`).
+- The canonical CI-parity runner is `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
+- The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_full_suite.py`).
 - Python test configuration lives in `apps/server/pyproject.toml`.
 
 ## Layout

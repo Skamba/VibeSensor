@@ -13,44 +13,23 @@ export type webhooks = Record<string, never>;
 
 export interface components {
   schemas: {
-    /**
-     * LiveWsPayload
-     * @description Root model for every WebSocket message pushed to the UI.
-     */
+    /** LiveWsPayload */
     LiveWsPayload: {
-      /**
-       * Clients
-       * @default []
-       */
-      clients?: components["schemas"]["ClientInfoModel"][];
-      /** @default null */
-      rotational_speeds?: components["schemas"]["RotationalSpeeds"] | null;
-      /**
-       * Schema Version
-       * @default 1
-       */
+      /** Clients */
+      clients?: components["schemas"]["ClientApiRow"][];
+      rotational_speeds?: components["schemas"]["RotationalSpeedsPayload"] | null;
+      /** Schema Version */
       schema_version?: string;
-      /**
-       * Selected Client Id
-       * @default null
-       */
+      /** Selected Client Id */
       selected_client_id?: string | null;
       /** Server Time */
-      server_time: string;
-      /** @default null */
-      spectra?: components["schemas"]["SpectraPayload"] | null;
-      /**
-       * Speed Mps
-       * @default null
-       */
+      server_time?: string;
+      spectra?: components["schemas"]["SpectraPayload"];
+      /** Speed Mps */
       speed_mps?: number | null;
-      [key: string]: unknown;
     };
-    /**
-     * AlignmentInfo
-     * @description Multi-sensor clock-alignment quality metrics for a frequency window.
-     */
-    AlignmentInfo: {
+    /** AlignmentInfoPayload */
+    AlignmentInfoPayload: {
       /** Aligned */
       aligned: boolean;
       /** Clock Synced */
@@ -62,127 +41,86 @@ export interface components {
       /** Shared Window S */
       shared_window_s: number;
     };
-    /**
-     * ClientInfoModel
-     * @description Structured client row with explicit defaults for optional construction.
-     */
-    ClientInfoModel: {
-      /**
-       * Connected
-       * @default false
-       */
-      connected?: boolean;
-      /**
-       * Control Addr
-       * @default null
-       */
-      control_addr?: [string, number] | null;
-      /**
-       * Data Addr
-       * @default null
-       */
-      data_addr?: [string, number] | null;
-      /**
-       * Dropped Frames
-       * @default 0
-       */
-      dropped_frames?: number;
-      /**
-       * Duplicates Received
-       * @default 0
-       */
-      duplicates_received?: number;
-      /**
-       * Firmware Version
-       * @default
-       */
-      firmware_version?: string;
-      /**
-       * Frame Samples
-       * @default 0
-       */
-      frame_samples?: number;
-      /**
-       * Frames Total
-       * @default 0
-       */
-      frames_total?: number;
-      /**
-       * Id
-       * @default
-       */
-      id?: string;
-      /**
-       * Last Ack Cmd Seq
-       * @default null
-       */
-      last_ack_cmd_seq?: number | null;
-      /**
-       * Last Ack Status
-       * @default null
-       */
-      last_ack_status?: number | null;
-      /**
-       * Last Reset Time
-       * @default null
-       */
-      last_reset_time?: number | null;
-      /**
-       * Last Seen Age Ms
-       * @default null
-       */
-      last_seen_age_ms?: number | null;
-      /** Latest Metrics */
-      latest_metrics?: {
-        [key: string]: unknown;
-      };
-      /**
-       * Location
-       * @default
-       */
-      location?: string;
-      /**
-       * Mac Address
-       * @default
-       */
-      mac_address?: string;
-      /**
-       * Name
-       * @default
-       */
-      name?: string;
-      /**
-       * Parse Errors
-       * @default 0
-       */
-      parse_errors?: number;
-      /**
-       * Queue Overflow Drops
-       * @default 0
-       */
-      queue_overflow_drops?: number;
-      /**
-       * Reset Count
-       * @default 0
-       */
-      reset_count?: number;
-      /**
-       * Sample Rate Hz
-       * @default 0
-       */
-      sample_rate_hz?: number;
-      /**
-       * Server Queue Drops
-       * @default 0
-       */
-      server_queue_drops?: number;
-      timing_health?: components["schemas"]["TimingHealthPayload"];
+    /** AxisMetrics */
+    AxisMetrics: {
+      /** P2P */
+      p2p: number;
+      /** Peaks */
+      peaks: components["schemas"]["AxisPeak"][];
+      /** Rms */
+      rms: number;
     };
-    /**
-     * FrequencyWarning
-     * @description Warning about frequency data quality issues in a spectra payload.
-     */
-    FrequencyWarning: {
+    /** AxisPeak */
+    AxisPeak: {
+      /** Amp */
+      amp?: number;
+      /** Hz */
+      hz?: number;
+      /** Snr Ratio */
+      snr_ratio?: number;
+    };
+    /** ClientApiRow */
+    ClientApiRow: {
+      /** Connected */
+      connected: boolean;
+      /** Control Addr */
+      control_addr: [string, number] | null;
+      /** Data Addr */
+      data_addr: [string, number] | null;
+      /** Dropped Frames */
+      dropped_frames: number;
+      /** Duplicates Received */
+      duplicates_received: number;
+      /** Firmware Version */
+      firmware_version: string;
+      /** Frame Samples */
+      frame_samples: number;
+      /** Frames Total */
+      frames_total: number;
+      /** Id */
+      id: string;
+      /** Last Ack Cmd Seq */
+      last_ack_cmd_seq: number | null;
+      /** Last Ack Status */
+      last_ack_status: number | null;
+      /** Last Reset Time */
+      last_reset_time: number | null;
+      /** Last Seen Age Ms */
+      last_seen_age_ms: number | null;
+      /** Latest Metrics */
+      latest_metrics: {
+        [key: string]: components["schemas"]["AxisMetrics"] | components["schemas"]["CombinedMetrics"] | components["schemas"]["VibrationStrengthMetrics"];
+      };
+      /** Location */
+      location: string;
+      /** Mac Address */
+      mac_address: string;
+      /** Name */
+      name: string;
+      /** Parse Errors */
+      parse_errors: number;
+      /** Queue Overflow Drops */
+      queue_overflow_drops: number;
+      /** Reset Count */
+      reset_count: number;
+      /** Sample Rate Hz */
+      sample_rate_hz: number;
+      /** Server Queue Drops */
+      server_queue_drops: number;
+      timing_health: components["schemas"]["TimingHealthPayload"];
+    };
+    /** CombinedMetrics */
+    CombinedMetrics: {
+      /** Peaks */
+      peaks?: components["schemas"]["StrengthPeak"][];
+      strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
+      /** Vib Mag P2P */
+      vib_mag_p2p?: number;
+      /** Vib Mag Rms */
+      vib_mag_rms?: number;
+    };
+    /** FrequencyWarningPayload */
+    FrequencyWarningPayload: {
       /** Client Ids */
       client_ids: string[];
       /** Code */
@@ -190,11 +128,8 @@ export interface components {
       /** Message */
       message: string;
     };
-    /**
-     * OrderBand
-     * @description Frequency band for a specific rotation-order harmonic.
-     */
-    OrderBand: {
+    /** OrderBandPayload */
+    OrderBandPayload: {
       /** Center Hz */
       center_hz: number;
       /** Key */
@@ -202,151 +137,63 @@ export interface components {
       /** Tolerance */
       tolerance: number;
     };
-    /**
-     * RotationalSpeedValue
-     * @description Current rotational speed estimate with source and confidence metadata.
-     */
-    RotationalSpeedValue: {
-      /**
-       * Mode
-       * @default null
-       */
-      mode?: string | null;
-      /**
-       * Reason
-       * @default null
-       */
-      reason?: string | null;
-      /**
-       * Rpm
-       * @default null
-       */
-      rpm?: number | null;
+    /** RotationalSpeedValuePayload */
+    RotationalSpeedValuePayload: {
+      /** Mode */
+      mode: string | null;
+      /** Reason */
+      reason: string | null;
+      /** Rpm */
+      rpm: number | null;
     };
-    /**
-     * RotationalSpeeds
-     * @description Current per-system rotational speed estimates (wheel, driveshaft, engine).
-     */
-    RotationalSpeeds: {
-      /**
-       * Basis Speed Source
-       * @default null
-       */
-      basis_speed_source?: string | null;
-      /**
-       * @default {
-       *   "mode": null,
-       *   "reason": null,
-       *   "rpm": null
-       * }
-       */
-      driveshaft?: components["schemas"]["RotationalSpeedValue"];
-      /**
-       * @default {
-       *   "mode": null,
-       *   "reason": null,
-       *   "rpm": null
-       * }
-       */
-      engine?: components["schemas"]["RotationalSpeedValue"];
-      /**
-       * Order Bands
-       * @default null
-       */
-      order_bands?: components["schemas"]["OrderBand"][] | null;
-      /**
-       * @default {
-       *   "mode": null,
-       *   "reason": null,
-       *   "rpm": null
-       * }
-       */
-      wheel?: components["schemas"]["RotationalSpeedValue"];
+    /** RotationalSpeedsPayload */
+    RotationalSpeedsPayload: {
+      /** Basis Speed Source */
+      basis_speed_source: string | null;
+      driveshaft: components["schemas"]["RotationalSpeedValuePayload"];
+      engine: components["schemas"]["RotationalSpeedValuePayload"];
+      /** Order Bands */
+      order_bands: components["schemas"]["OrderBandPayload"][] | null;
+      wheel: components["schemas"]["RotationalSpeedValuePayload"];
     };
-    /**
-     * SpectraPayload
-     * @description Top-level spectra block included on heavy ticks.
-     */
+    /** SpectraPayload */
     SpectraPayload: {
-      /** @default null */
-      alignment?: components["schemas"]["AlignmentInfo"] | null;
-      /**
-       * Clients
-       * @default {}
-       */
+      alignment?: components["schemas"]["AlignmentInfoPayload"];
+      /** Clients */
       clients?: {
-        [key: string]: components["schemas"]["SpectrumSeries"];
+        [key: string]: components["schemas"]["SpectrumSeriesPayload"];
       };
-      /**
-       * Freq
-       * @default []
-       */
+      /** Freq */
       freq?: number[];
-      /** @default null */
-      warning?: components["schemas"]["FrequencyWarning"] | null;
-      [key: string]: unknown;
+      warning?: components["schemas"]["FrequencyWarningPayload"];
     };
-    /**
-     * SpectrumSeries
-     * @description Per-client spectrum data sent on heavy ticks.
-     */
-    SpectrumSeries: {
-      /**
-       * Combined Spectrum Amp G
-       * @default []
-       */
-      combined_spectrum_amp_g?: number[];
-      /**
-       * Freq
-       * @default null
-       */
-      freq?: number[] | null;
-      strength_metrics?: components["schemas"]["StrengthMetricsModel"];
-      /**
-       * X
-       * @default []
-       */
-      x?: number[];
-      /**
-       * Y
-       * @default []
-       */
-      y?: number[];
-      /**
-       * Z
-       * @default []
-       */
-      z?: number[];
-      [key: string]: unknown;
-    };
-    /**
-     * StrengthMetricsModel
-     * @description Structured vibration-strength metrics with explicit defaults.
-     */
-    StrengthMetricsModel: {
+    /** SpectrumSeriesPayload */
+    SpectrumSeriesPayload: {
       /** Combined Spectrum Amp G */
       combined_spectrum_amp_g?: number[];
-      /**
-       * Noise Floor Amp G
-       * @default 0
-       */
+      /** Freq */
+      freq?: number[];
+      strength_metrics?: components["schemas"]["StrengthMetricsPayload"];
+      /** X */
+      x?: number[];
+      /** Y */
+      y?: number[];
+      /** Z */
+      z?: number[];
+    };
+    /** StrengthMetricsPayload */
+    StrengthMetricsPayload: {
+      /** Combined Spectrum Amp G */
+      combined_spectrum_amp_g?: number[];
+      /** Noise Floor Amp G */
       noise_floor_amp_g?: number;
-      /**
-       * Peak Amp G
-       * @default 0
-       */
+      /** Peak Amp G */
       peak_amp_g?: number;
-      /**
-       * Strength Bucket
-       * @default null
-       */
+      /** Strength Bucket */
       strength_bucket?: string | null;
       /** Top Peaks */
       top_peaks?: components["schemas"]["StrengthPeak"][];
-      /**
-       * Vibration Strength Db
-       * @default 0
-       */
+      /** Vibration Strength Db */
       vibration_strength_db?: number;
     };
     /** StrengthPeak */
@@ -368,6 +215,21 @@ export interface components {
       jitter_us_ema?: number;
       /** Last T0 Us */
       last_t0_us?: number;
+    };
+    /** VibrationStrengthMetrics */
+    VibrationStrengthMetrics: {
+      /** Combined Spectrum Amp G */
+      combined_spectrum_amp_g: number[];
+      /** Noise Floor Amp G */
+      noise_floor_amp_g: number;
+      /** Peak Amp G */
+      peak_amp_g: number;
+      /** Strength Bucket */
+      strength_bucket: string | null;
+      /** Top Peaks */
+      top_peaks: components["schemas"]["StrengthPeak"][];
+      /** Vibration Strength Db */
+      vibration_strength_db: number;
     };
   };
   responses: never;

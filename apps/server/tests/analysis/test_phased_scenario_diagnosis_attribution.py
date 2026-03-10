@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import pytest
-from _phased_scenario_helpers import (
-    _classify_peak_type,
+from test_support import (
     assert_finding_location,
     build_fault_samples_at_speed,
     build_speed_sweep_fault_samples,
     extract_top_finding,
+    make_sample,
     standard_metadata,
-    summarize_run_data,
     wheel_hz,
 )
-from test_support import make_sample
+
+from vibesensor.analysis import summarize_run_data
+from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
 
 
 class TestSpeedBandAttribution:

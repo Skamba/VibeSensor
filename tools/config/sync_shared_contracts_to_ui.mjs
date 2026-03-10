@@ -9,8 +9,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = resolve(__dirname, '../..');
 const requireFromUi = createRequire(resolve(root, 'apps/ui/package.json'));
-const sharedSrc = resolve(root, 'libs/shared/ts/contracts.ts');
-const sharedDst = resolve(root, 'apps/ui/src/generated/shared_contracts.ts');
 const httpSchemaSrc = resolve(root, 'apps/ui/src/contracts/http_api_schema.json');
 const httpTypesDst = resolve(root, 'apps/ui/src/generated/http_api_contracts.ts');
 const wsSchemaSrc = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.json');
@@ -124,10 +122,6 @@ async function generateWsTypes() {
 async function main() {
 	const checkMode = process.argv.includes('--check');
 
-	const sharedContent = readFileSync(sharedSrc, 'utf8');
-	const sharedGenerated = `// Generated from libs/shared/ts/contracts.ts\n// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs\n\n${sharedContent}`;
-	writeGenerated(sharedDst, sharedGenerated, checkMode);
-
 	const httpGenerated = await generateHttpTypes();
 	writeGenerated(httpTypesDst, httpGenerated, checkMode);
 
@@ -139,7 +133,6 @@ async function main() {
 		return;
 	}
 
-	console.log(`Synced ${sharedSrc} -> ${sharedDst}`);
 	console.log(`Generated ${httpSchemaSrc} -> ${httpTypesDst}`);
 	console.log(`Generated ${wsSchemaSrc} -> ${wsTypesDst}`);
 }

@@ -4,15 +4,16 @@ import math
 from typing import Any
 
 import pytest
-from _diagnosis_robustness_helpers import (
+from test_support import (
     ALL_SENSORS,
     assert_summary_sections,
     assert_top_cause_contract,
     make_sample,
     standard_metadata,
-    summarize_run_data,
     wheel_hz,
 )
+
+from vibesensor.analysis import summarize_run_data
 
 
 class TestDualFaultTwoCorners:
