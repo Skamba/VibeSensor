@@ -27,6 +27,7 @@ from ._config_defaults import (
     DEFAULT_CONFIG,
     DEFAULT_UDP_CONTROL_PORT,
     DEFAULT_UDP_DATA_PORT,
+    _require_config_section,
     documented_default_config,
 )
 from .constants import NUMERIC_TYPES
@@ -94,12 +95,6 @@ def _resolve_config_path(path_text: str, config_path: Path) -> Path:
     if path.is_absolute():
         return path
     return config_path.resolve().parent / path
-
-
-def _require_config_section(raw: object, section_name: str) -> JsonObject:
-    if is_json_object(raw):
-        return raw
-    raise ValueError(f"config section {section_name!r} must be a YAML object")
 
 
 def _coerce_int(value: object, field_name: str) -> int:
