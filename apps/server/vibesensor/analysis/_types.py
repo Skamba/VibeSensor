@@ -6,16 +6,28 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Protocol, TypeAlias, TypedDict, TypeGuard
 
 from ..json_types import JsonObject, JsonValue
+from ..json_types import is_json_object as is_json_object  # re-export canonical source
 from .phase_segmentation import DrivingPhase
 
 if TYPE_CHECKING:
     from .plot_data import PlotDataResult
 
 Sample: TypeAlias = JsonObject
+"""A single recorded sample row.  Alias for ``JsonObject``; used for
+semantic clarity across analysis modules, not additional type safety."""
+
 MetadataDict: TypeAlias = JsonObject
+"""Run metadata dict.  Alias for ``JsonObject``; carries run-level
+configuration, firmware info, and timing details."""
+
 IntensityRow: TypeAlias = JsonObject
+"""Per-location intensity breakdown row."""
+
 I18nRef: TypeAlias = JsonObject
+"""Internationalised text reference (key + optional interpolation vars)."""
+
 TestStep: TypeAlias = JsonObject
+"""A single diagnostic test-plan step."""
 
 
 class AmplitudeMetric(TypedDict):
@@ -315,19 +327,24 @@ PhaseLabels: TypeAlias = Sequence[PhaseLabel]
 Translator: TypeAlias = Callable[[str], str]
 
 
-def is_json_object(value: object) -> TypeGuard[JsonObject]:
-    """Narrow a runtime value to the shared JSON-object shape used in analysis."""
-    return isinstance(value, dict)
-
-
 def is_finding(value: object) -> TypeGuard[Finding]:
-    """Narrow a runtime value to the canonical finding shape."""
-    return isinstance(value, dict)
+    """Narrow a runtime value to the canonical finding shape.
+
+    Checks for ``isinstance(value, dict)`` *and* the presence of the
+    required ``finding_id`` key, which distinguishes a Finding from
+    other dict-shaped objects.
+    """
+    return isinstance(value, dict) and "finding_id" in value
 
 
 def is_top_cause(value: object) -> TypeGuard[TopCause]:
-    """Narrow a runtime value to the top-cause summary shape."""
-    return isinstance(value, dict)
+    """Narrow a runtime value to the top-cause summary shape.
+
+    Checks for ``isinstance(value, dict)`` *and* the presence of a key
+    characteristic of top-cause entries (``strongest_location`` or ``source``),
+    which helps distinguish a TopCause from other dict-shaped objects.
+    """
+    return isinstance(value, dict) and ("strongest_location" in value or "source" in value)
 
 
 class FindingsBuilder(Protocol):

@@ -27,6 +27,8 @@ from .runtime.builders import (
 def build_services(config: AppConfig) -> RuntimeState:
     """Construct all services and return a wired RuntimeState."""
     accel_scale_g_per_lsb = resolve_accel_scale_g_per_lsb(config)
+    # Build persistence first (creates HistoryDB), then settings (needs DB),
+    # then rebuild persistence with history services (needs SettingsStore).
     persistence = build_persistence_subsystem(config=config)
     ingress = build_ingress_subsystem(
         config=config,
@@ -37,7 +39,12 @@ def build_services(config: AppConfig) -> RuntimeState:
         persistence=persistence,
         gps_enabled=config.gps.gps_enabled,
     )
-    persistence.bind_history_services(settings.settings_store)
+    # Now that SettingsStore exists, rebuild persistence with full services.
+    persistence = build_persistence_subsystem(
+        config=config,
+        settings_store=settings.settings_store,
+        history_db=persistence.history_db,
+    )
     recording = build_recording_subsystem(
         config=config,
         ingress=ingress,

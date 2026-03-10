@@ -3,6 +3,22 @@
 ``SettingsStore`` provides thread-safe read/write access to JSON-backed
 settings and exposes the canonical vehicle and analysis settings to other
 modules at runtime.
+
+Boundary note
+-------------
+Settings management spans three layers:
+
+- ``settings_store.py`` (this module) — user-facing settings (cars, speed
+  source, language, unit, sensors) persisted to ``HistoryDB``.
+- ``analysis_settings.py`` — in-memory-only analysis parameter store
+  (tire_diameter, tire_aspect, etc.) recomputed from the active car's
+  aspects whenever car settings change.
+- ``history_db/_settings.py`` — raw DB-level ``get_setting()`` /
+  ``set_setting()`` key-value operations.
+
+``SettingsStore`` owns the semantic meaning of settings, delegates
+persistence to ``HistoryDB._settings``, and is the canonical source for
+runtime settings queries.
 """
 
 from __future__ import annotations

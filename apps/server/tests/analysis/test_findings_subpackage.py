@@ -12,9 +12,9 @@ import pytest
 
 from vibesensor.analysis._types import AmplitudeMetric, Finding, MatchedPoint
 from vibesensor.analysis.findings._constants import (
-    _CONFIDENCE_CEILING,
-    _CONFIDENCE_FLOOR,
-    _NEGLIGIBLE_STRENGTH_MAX_DB,
+    CONFIDENCE_CEILING,
+    CONFIDENCE_FLOOR,
+    NEGLIGIBLE_STRENGTH_MAX_DB,
 )
 from vibesensor.analysis.findings.builder import _build_findings
 from vibesensor.analysis.findings.intensity import (
@@ -167,13 +167,13 @@ class TestSharedConstants:
     """Verify shared constants have expected values."""
 
     def test_negligible_strength_max_db(self) -> None:
-        assert isinstance(_NEGLIGIBLE_STRENGTH_MAX_DB, float)
-        assert _NEGLIGIBLE_STRENGTH_MAX_DB > 0
+        assert isinstance(NEGLIGIBLE_STRENGTH_MAX_DB, float)
+        assert NEGLIGIBLE_STRENGTH_MAX_DB > 0
 
     def test_confidence_bounds(self) -> None:
-        assert _CONFIDENCE_FLOOR < _CONFIDENCE_CEILING
-        assert _CONFIDENCE_FLOOR >= 0.0
-        assert _CONFIDENCE_CEILING <= 1.0
+        assert CONFIDENCE_FLOOR < CONFIDENCE_CEILING
+        assert CONFIDENCE_FLOOR >= 0.0
+        assert CONFIDENCE_CEILING <= 1.0
 
 
 # -- classify_peak_type tests -------------------------------------------------

@@ -25,8 +25,8 @@ from ..helpers import (
 from ..order_analysis import _i18n_ref
 from ..phase_segmentation import DrivingPhase
 from ._constants import (
-    _NEGLIGIBLE_STRENGTH_MAX_DB,
-    _SNR_LOG_DIVISOR,
+    NEGLIGIBLE_STRENGTH_MAX_DB,
+    SNR_LOG_DIVISOR,
 )
 from .speed_profile import _phase_to_str, _speed_profile_from_points
 
@@ -364,7 +364,7 @@ def _build_persistent_peak_findings(
             speed_uniformity=speed_uniformity,
         )
 
-        snr_score = min(1.0, log1p(raw_snr) / _SNR_LOG_DIVISOR)
+        snr_score = min(1.0, log1p(raw_snr) / SNR_LOG_DIVISOR)
         spatial_concentration = (
             max(loc_counts_for_bin.values()) / count if loc_counts_for_bin and count > 0 else 1.0
         )
@@ -393,7 +393,7 @@ def _build_persistent_peak_findings(
             confidence = base_confidence * spatial_penalty
             if loc_counts_for_bin and spatial_concentration <= 0.35:
                 confidence = min(confidence, 0.35)
-            if peak_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
+            if peak_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB:
                 confidence = min(confidence, 0.40)
 
         peak_speed_kmh, speed_window_kmh, derived_speed_band = _speed_profile_from_points(

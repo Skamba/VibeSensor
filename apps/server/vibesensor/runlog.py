@@ -2,6 +2,12 @@
 
 Provides helpers for creating and reading metric run files in JSONL format,
 plus normalisation helpers for canonical field name handling.
+
+Canonical re-exports
+--------------------
+``as_float_or_none`` and ``as_int_or_none`` are defined in
+``vibesensor.domain_models`` and re-exported here for convenience.
+``utc_now_iso()`` is canonically defined in this module.
 """
 
 from __future__ import annotations

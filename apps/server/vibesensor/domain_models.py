@@ -2,6 +2,19 @@
 
 Replaces ad-hoc dicts with typed dataclasses while keeping all external
 JSON contracts (API responses, JSONL run schema, history DB blobs) stable.
+
+Module structure
+----------------
+1. **Shared helpers** — ``as_float_or_none()``, ``as_int_or_none()``,
+   ``new_car_id()``, ``normalize_sensor_id()``, ``sanitize_aspects()``.
+2. **Run schema constants** — ``RUN_SCHEMA_VERSION``, ``RUN_METADATA_TYPE``,
+   ``RUN_SAMPLE_TYPE``, ``RUN_END_TYPE``.
+3. **Speed source** — ``SpeedSourceConfig`` and valid speed-source/fallback
+   mode tuples.
+4. **Car configuration** — ``CarConfig``, ``DEFAULT_CAR_ASPECTS``.
+5. **Sensor configuration** — ``SensorConfig``.
+6. **Sensor frame** — ``SensorFrame``, binary protocol unpacking.
+7. **Run metadata** — ``RunMetadata``, run-level configuration record.
 """
 
 from __future__ import annotations

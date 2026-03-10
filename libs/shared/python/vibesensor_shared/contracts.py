@@ -15,13 +15,19 @@ def _contracts_dir() -> Path:
     # Allow explicit override (e.g. Docker containers with non-editable installs)
     env_path = os.environ.get("VIBESENSOR_CONTRACTS_DIR")
     if env_path:
-        return Path(env_path)
+        candidate = Path(env_path)
+        if candidate.is_dir():
+            return candidate
+        raise FileNotFoundError(
+            f"VIBESENSOR_CONTRACTS_DIR points to '{env_path}' which does not exist."
+        )
     # Source tree: contracts/ is a sibling of the python/ package directory
     source_dir = Path(__file__).resolve().parent.parent.parent / "contracts"
     if source_dir.is_dir():
         return source_dir
     raise FileNotFoundError(
         "Cannot locate shared contracts directory. "
+        f"Checked: {source_dir}. "
         "Set VIBESENSOR_CONTRACTS_DIR or run from the source tree."
     )
 
