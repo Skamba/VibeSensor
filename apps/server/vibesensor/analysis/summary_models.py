@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from ._types import (
-    AccelStatistics,
     Finding,
     I18nRef,
     IntensityRow,
@@ -74,14 +73,3 @@ class RunSuitabilityBundle:
     reference_complete: bool
     run_suitability: list[RunSuitabilityCheck]
     overall_strength_band_key: str | None
-
-
-@dataclass(frozen=True)
-class SummaryComputation:
-    """Aggregated intermediate state used to build the final summary payload."""
-
-    prepared: PreparedRunData
-    accel_stats: AccelStatistics
-    findings: FindingsBundle
-    sensors: SensorAnalysisBundle
-    suitability: RunSuitabilityBundle
