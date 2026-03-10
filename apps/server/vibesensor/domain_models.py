@@ -105,7 +105,7 @@ def as_int_or_none(value: object) -> int | None:
 def _parse_manual_speed(value: object) -> float | None:
     """Return a positive, finite float speed (≤500 km/h) or None."""
     if isinstance(value, NUMERIC_TYPES):
-        f = float(value)
+        f = float(value)  # type: ignore[arg-type]
         if _isfinite(f) and 0 < f <= 500:
             return f
     return None
@@ -114,7 +114,7 @@ def _parse_manual_speed(value: object) -> float | None:
 def _parse_stale_timeout(value: object) -> float:
     """Return a stale-timeout value clamped to [3, 120], default 10."""
     if isinstance(value, NUMERIC_TYPES):
-        return max(3.0, min(120.0, float(value)))
+        return max(3.0, min(120.0, float(value)))  # type: ignore[arg-type]
     return 10.0
 
 

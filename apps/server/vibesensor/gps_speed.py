@@ -127,7 +127,7 @@ class GPSSpeedMonitor:
             if self._is_gps_stale():
                 fb = self._fallback_speed_value()
                 return SpeedResolution(fb, True, "fallback_manual" if fb is not None else "none")
-            return SpeedResolution(float(_speed), False, "gps")
+            return SpeedResolution(float(_speed), False, "gps")  # type: ignore[arg-type]
 
         # No GPS data at all → check if fallback should kick in
         eff_conn = self._effective_connection_state()
@@ -229,7 +229,7 @@ class GPSSpeedMonitor:
     def _read_non_negative_metric(payload: JsonObject, field: str) -> float | None:
         value = payload.get(field)
         if isinstance(value, NUMERIC_TYPES) and not isinstance(value, bool):
-            numeric_value = float(value)
+            numeric_value = float(value)  # type: ignore[arg-type]
             if math.isfinite(numeric_value) and numeric_value >= 0:
                 return numeric_value
         return None
@@ -259,7 +259,7 @@ class GPSSpeedMonitor:
             prev_speed = self._speed_snapshot[0]  # direct tuple read
             if (
                 isinstance(prev_speed, NUMERIC_TYPES)
-                and prev_speed > _GPS_ZERO_DROP_PREV_THRESHOLD_MPS
+                and prev_speed > _GPS_ZERO_DROP_PREV_THRESHOLD_MPS  # type: ignore[operator]
             ):
                 self._zero_speed_streak += 1
                 return self._zero_speed_streak >= _GPS_ZERO_CONFIRM_SAMPLES
@@ -297,11 +297,11 @@ class GPSSpeedMonitor:
 
         raw_speed_kmh: float | None = None
         if isinstance(raw_speed, NUMERIC_TYPES):
-            raw_speed_kmh = round(raw_speed * MPS_TO_KMH, 2)
+            raw_speed_kmh = round(raw_speed * MPS_TO_KMH, 2)  # type: ignore[operator]
 
         effective_speed_kmh: float | None = None
         if isinstance(resolution.speed_mps, NUMERIC_TYPES):
-            effective_speed_kmh = round(resolution.speed_mps * MPS_TO_KMH, 2)
+            effective_speed_kmh = round(resolution.speed_mps * MPS_TO_KMH, 2)  # type: ignore[operator]
 
         return {
             "gps_enabled": self.gps_enabled,
@@ -400,11 +400,11 @@ class GPSSpeedMonitor:
                         and mode >= 2
                         and isinstance(speed, NUMERIC_TYPES)
                         and not isinstance(speed, bool)
-                        and _isfinite(float(speed))
-                        and float(speed) >= 0
-                        and float(speed) <= _GPS_MAX_SPEED_MPS
+                        and _isfinite(float(speed))  # type: ignore[arg-type]
+                        and float(speed) >= 0  # type: ignore[arg-type]
+                        and float(speed) <= _GPS_MAX_SPEED_MPS  # type: ignore[arg-type]
                     ):
-                        speed_mps = float(speed)
+                        speed_mps = float(speed)  # type: ignore[arg-type]
                         if self._accept_speed_sample(speed_mps):
                             self._speed_snapshot = (speed_mps, _monotonic())
                     else:
