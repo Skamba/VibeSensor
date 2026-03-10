@@ -2,32 +2,21 @@
 
 Maps short sensor location codes (e.g. ``"fl"``, ``"rr"``) to human-readable
 labels and provides helpers to identify wheel-mounted sensor positions.
+
+Location codes and labels are sourced from the shared contract
+``libs/shared/contracts/location_codes.json`` via ``vibesensor_shared.contracts``.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from vibesensor_shared.contracts import LOCATION_CODES
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-LOCATION_OPTIONS: tuple[tuple[str, str], ...] = (
-    ("front_left_wheel", "Front Left Wheel"),
-    ("front_right_wheel", "Front Right Wheel"),
-    ("rear_left_wheel", "Rear Left Wheel"),
-    ("rear_right_wheel", "Rear Right Wheel"),
-    ("transmission", "Transmission"),
-    ("driveshaft_tunnel", "Driveshaft Tunnel"),
-    ("engine_bay", "Engine Bay"),
-    ("front_subframe", "Front Subframe"),
-    ("rear_subframe", "Rear Subframe"),
-    ("driver_seat", "Driver Seat"),
-    ("front_passenger_seat", "Front Passenger Seat"),
-    ("rear_left_seat", "Rear Left Seat"),
-    ("rear_center_seat", "Rear Center Seat"),
-    ("rear_right_seat", "Rear Right Seat"),
-    ("trunk", "Trunk"),
-)
+LOCATION_OPTIONS: tuple[tuple[str, str], ...] = tuple(LOCATION_CODES.items())
 
 LOCATION_LABEL_BY_CODE: dict[str, str] = dict(LOCATION_OPTIONS)
 

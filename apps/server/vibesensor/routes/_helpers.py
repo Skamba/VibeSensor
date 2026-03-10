@@ -14,7 +14,7 @@ from ..exceptions import (
     ProcessingError,
     RunNotFoundError,
 )
-from ..history_helpers import async_require_run, safe_filename
+from ..history_services.helpers import async_require_run, safe_filename
 
 __all__ = [
     "async_require_run",

@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from _report_helpers import analysis_sample as _make_sample
 
+from test_support.report_helpers import analysis_sample as _make_sample
 from vibesensor.analysis.findings import order_findings as order_findings_module
 from vibesensor.analysis.findings.order_findings import (
     _build_order_findings as _findings_build_order_findings,

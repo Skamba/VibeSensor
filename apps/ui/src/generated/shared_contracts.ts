@@ -23,3 +23,21 @@ export const NETWORK_PORTS = {
   server_udp_control: 9001,
   firmware_control_port_base: 9010,
 } as const;
+
+export const LOCATION_CODES = [
+  "front_left_wheel",
+  "front_right_wheel",
+  "rear_left_wheel",
+  "rear_right_wheel",
+  "transmission",
+  "driveshaft_tunnel",
+  "engine_bay",
+  "front_subframe",
+  "rear_subframe",
+  "driver_seat",
+  "front_passenger_seat",
+  "rear_left_seat",
+  "rear_center_seat",
+  "rear_right_seat",
+  "trunk",
+] as const;

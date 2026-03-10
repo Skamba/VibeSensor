@@ -13,8 +13,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .config import APConfig, APSelfHealConfig, load_config
-from .hotspot_parsers import (
+from ..config import APConfig, APSelfHealConfig, load_config
+from .parsers import (
     HealStateStore,
     expected_ip_match,
     nm_log_signals,

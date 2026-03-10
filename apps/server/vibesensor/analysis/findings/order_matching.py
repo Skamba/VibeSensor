@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from ...runlog import as_float_or_none as _as_float
+from ...domain_models import as_float_or_none as _as_float
 from .._types import MatchedPoint, MetadataDict, PhaseLabels, Sample
 from ..helpers import (
     _estimate_strength_floor_amp_g,

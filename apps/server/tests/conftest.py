@@ -13,9 +13,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.history_exports import HistoryExportService
-from vibesensor.history_reports import HistoryReportService
-from vibesensor.history_runs import HistoryRunDeleteService, HistoryRunQueryService
+from vibesensor.history_services.exports import HistoryExportService
+from vibesensor.history_services.reports import HistoryReportService
+from vibesensor.history_services.runs import HistoryRunDeleteService, HistoryRunQueryService
 from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
 from vibesensor.runtime.subsystems import (
     RuntimeIngressSubsystem,

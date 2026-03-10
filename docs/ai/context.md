@@ -43,7 +43,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 - HTTP or WebSocket surface: `apps/server/vibesensor/routes/` and `apps/ui/src/api.ts` or `apps/ui/src/ws.ts`.
 - Runtime orchestration: `apps/server/vibesensor/runtime/`, `app.py`, `bootstrap.py`.
 - Signal math and vibration logic: `apps/server/vibesensor/processing/`, `apps/server/vibesensor/analysis/`, `libs/core/python/vibesensor_core/`.
-- History storage and exports: `apps/server/vibesensor/history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`; route-facing history behavior is composed by the runtime persistence subsystem.
+- History storage and exports: `apps/server/vibesensor/history_db/`, `history_services/`, `runlog.py`; route-facing history behavior is composed by the runtime persistence subsystem.
 - Report rendering: `apps/server/vibesensor/report/`, `apps/server/data/report_i18n.json`.
 - Updates and deployment: `apps/server/vibesensor/update/`, `apps/server/systemd/`, `apps/server/scripts/`, `infra/pi-image/pi-gen/`.
 - Test ownership: `apps/server/tests/` by feature area, plus `integration/` and `regression/` for broader coverage.

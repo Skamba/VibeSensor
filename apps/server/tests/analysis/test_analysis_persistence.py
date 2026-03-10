@@ -13,9 +13,9 @@ import pytest
 from test_support.response_models import response_payload
 
 from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION, HistoryDB
-from vibesensor.history_exports import HistoryExportService
-from vibesensor.history_reports import HistoryReportService
-from vibesensor.history_runs import HistoryRunDeleteService, HistoryRunQueryService
+from vibesensor.history_services.exports import HistoryExportService
+from vibesensor.history_services.reports import HistoryReportService
+from vibesensor.history_services.runs import HistoryRunDeleteService, HistoryRunQueryService
 
 # -- Schema v4 tests ----------------------------------------------------------
 

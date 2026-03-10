@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from _scenario_ground_truth_helpers import (
+from test_support import make_sample as _make_sample
+from test_support.scenario_ground_truth import (
     ALL_SENSORS,
     fault_phase,
     get_top_cause,
@@ -15,7 +16,6 @@ from _scenario_ground_truth_helpers import (
     scenario_metadata,
     wheel_hz,
 )
-from test_support import make_sample as _make_sample
 
 from vibesensor.analysis import summarize_run_data
 

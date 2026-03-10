@@ -10,9 +10,9 @@ from ..config import AppConfig
 from ..esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
-from ..history_exports import HistoryExportService
-from ..history_reports import HistoryReportService
-from ..history_runs import HistoryRunDeleteService, HistoryRunQueryService
+from ..history_services.exports import HistoryExportService
+from ..history_services.reports import HistoryReportService
+from ..history_services.runs import HistoryRunDeleteService, HistoryRunQueryService
 from ..metrics_log import MetricsLogger, MetricsLoggerConfig
 from ..processing import SignalProcessor
 from ..registry import ClientRegistry

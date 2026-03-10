@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from _scenario_ground_truth_helpers import (
+from test_support.core import assert_summary_sections, assert_top_cause_contract
+from test_support.scenario_ground_truth import (
     PhaseStep,
     ScenarioSpec,
     build_summary_from_scenario,
@@ -13,7 +14,6 @@ from _scenario_ground_truth_helpers import (
     ramp_phase,
     road_noise_phase,
 )
-from test_support.core import assert_summary_sections, assert_top_cause_contract
 
 SCENARIO_01 = ScenarioSpec(
     case_id="01_idle_to_100_fr_en",

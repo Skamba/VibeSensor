@@ -6,10 +6,10 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
-from _report_helpers import RUN_END, write_jsonl
-from _report_helpers import report_run_metadata as _run_metadata
-from _report_helpers import report_sample as _base_sample
 from pypdf import PdfReader
+from test_support.report_helpers import RUN_END, write_jsonl
+from test_support.report_helpers import report_run_metadata as _run_metadata
+from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.analysis import map_summary, summarize_log
 from vibesensor.report.pdf_engine import build_report_pdf
@@ -88,7 +88,7 @@ def test_assert_aspect_preserved_zero_dims() -> None:
 
 
 def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
-    from _report_helpers import minimal_summary
+    from test_support.report_helpers import minimal_summary
 
     summary = minimal_summary(
         lang="en",

@@ -6,12 +6,11 @@ from pathlib import Path
 
 import pytest
 
+from vibesensor.domain_models import as_float_or_none, as_int_or_none
 from vibesensor.runlog import (
     RUN_METADATA_TYPE,
     RUN_SAMPLE_TYPE,
     append_jsonl_records,
-    as_float_or_none,
-    as_int_or_none,
     bounded_sample,
     create_run_end_record,
     create_run_metadata,
