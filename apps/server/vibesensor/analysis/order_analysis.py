@@ -50,7 +50,7 @@ def _order_label(order: int, base: str) -> str:
 
 
 @dataclass(slots=True, frozen=True)
-class _OrderHypothesis:
+class OrderHypothesis:
     key: str
     suspected_source: str
     order_label_base: str
@@ -85,22 +85,22 @@ class _OrderHypothesis:
 # Pre-built hypothesis objects – avoids re-creating 6 frozen dataclass
 # instances on every call.  The thin wrapper function below is kept so that
 # test monkeypatches (which replace the callable) keep working.
-_ORDER_HYPOTHESES: tuple[_OrderHypothesis, ...] = (
+_ORDER_HYPOTHESES: tuple[OrderHypothesis, ...] = (
     # Wheel orders travel through tire sidewall → hub → knuckle → control
     # arms → bushings → subframe → body → sensor.  Each rubber component
     # broadens the peak and reduces tracking precision.
-    _OrderHypothesis("wheel_1x", "wheel/tire", "wheel", 1, path_compliance=1.5),
-    _OrderHypothesis("wheel_2x", "wheel/tire", "wheel", 2, path_compliance=1.5),
+    OrderHypothesis("wheel_1x", "wheel/tire", "wheel", 1, path_compliance=1.5),
+    OrderHypothesis("wheel_2x", "wheel/tire", "wheel", 2, path_compliance=1.5),
     # Driveshaft has a shorter, stiffer path: shaft → diff → subframe → body.
-    _OrderHypothesis("driveshaft_1x", "driveline", "driveshaft", 1, path_compliance=1.0),
-    _OrderHypothesis("driveshaft_2x", "driveline", "driveshaft", 2, path_compliance=1.0),
+    OrderHypothesis("driveshaft_1x", "driveline", "driveshaft", 1, path_compliance=1.0),
+    OrderHypothesis("driveshaft_2x", "driveline", "driveshaft", 2, path_compliance=1.0),
     # Engine is stiffly mounted on most vehicles.
-    _OrderHypothesis("engine_1x", "engine", "engine", 1, path_compliance=1.0),
-    _OrderHypothesis("engine_2x", "engine", "engine", 2, path_compliance=1.0),
+    OrderHypothesis("engine_1x", "engine", "engine", 1, path_compliance=1.0),
+    OrderHypothesis("engine_2x", "engine", "engine", 2, path_compliance=1.0),
 )
 
 
-def _order_hypotheses() -> tuple[_OrderHypothesis, ...]:
+def _order_hypotheses() -> tuple[OrderHypothesis, ...]:
     return _ORDER_HYPOTHESES
 
 

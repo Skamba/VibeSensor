@@ -86,7 +86,7 @@ def test_ingest_clamps_excessive_sample_rate() -> None:
     samples = _random_samples(10)
     proc.ingest("client1", samples, sample_rate_hz=250_000)
     assert proc.latest_sample_rate_hz("client1") == MAX_CLIENT_SAMPLE_RATE_HZ
-    assert proc._buffers["client1"].capacity == MAX_CLIENT_SAMPLE_RATE_HZ * 2
+    assert proc._store.buffers["client1"].capacity == MAX_CLIENT_SAMPLE_RATE_HZ * 2
 
 
 # -- latest_sample_xyz ---------------------------------------------------------

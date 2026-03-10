@@ -8,16 +8,15 @@
 - UI app entry: `apps/ui/src/main.ts`
 - UI runtime/composition root: `apps/ui/src/app/ui_app_runtime.ts`
 - UI runtime owners: `apps/ui/src/app/runtime/`
-- Simulator CLI: `apps/simulator/vibesensor_simulator/sim_sender.py`
+- Simulator CLI: `apps/server/vibesensor/simulator/sim_sender.py`
 - Firmware app: `firmware/esp/src/main.cpp`
 - Pi image build: `infra/pi-image/pi-gen/build.sh`
 - Local stack entry point: `docker-compose.yml`
 
 ## Top-level layout
 
-- `apps/server/`: backend package, configs, tests, scripts, systemd units, public UI assets.
+- `apps/server/`: backend package, configs, tests, scripts, systemd units, public UI assets, simulator, and config tooling.
 - `apps/ui/`: TypeScript/Vite dashboard and Playwright tests.
-- `apps/simulator/`: simulator package and websocket smoke tooling.
 - `firmware/esp/`: ESP32 firmware.
 - `vibesensor/core/`: shared vibration math and unit logic (inlined from former `libs/core/`).
 - `infra/pi-image/pi-gen/`: Raspberry Pi image build pipeline.

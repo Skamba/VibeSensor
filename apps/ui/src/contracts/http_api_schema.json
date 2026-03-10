@@ -3213,60 +3213,6 @@
   },
   "openapi": "3.1.0",
   "paths": {
-    "/api/analysis-settings": {
-      "get": {
-        "operationId": "get_analysis_settings_api_analysis_settings_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AnalysisSettingsResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Get Analysis Settings"
-      },
-      "post": {
-        "operationId": "set_analysis_settings_api_analysis_settings_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AnalysisSettingsRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AnalysisSettingsResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Set Analysis Settings"
-      }
-    },
     "/api/car-library/brands": {
       "get": {
         "description": "Return all available car manufacturer brands from the library.",
@@ -3960,6 +3906,60 @@
         "summary": "Stop Logging"
       }
     },
+    "/api/settings/analysis": {
+      "get": {
+        "operationId": "get_analysis_settings_api_settings_analysis_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Analysis Settings"
+      },
+      "post": {
+        "operationId": "set_analysis_settings_api_settings_analysis_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Analysis Settings"
+      }
+    },
     "/api/settings/cars": {
       "get": {
         "operationId": "get_cars_api_settings_cars_get",
@@ -4645,44 +4645,6 @@
           }
         },
         "summary": "Get Update Status"
-      }
-    },
-    "/api/simulator/speed-override": {
-      "post": {
-        "operationId": "set_simulator_speed_override_api_simulator_speed_override_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SpeedSourceRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SpeedSourceResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Set Simulator Speed Override"
       }
     }
   }

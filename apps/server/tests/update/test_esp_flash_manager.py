@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
-from test_support.response_models import response_payload
+from test_support import response_payload
 
 from vibesensor.esp_flash_manager import (
     EspFlashManager,

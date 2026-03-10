@@ -77,7 +77,11 @@ class WsBroadcastService:
         self.cache.advance(heavy_every)
 
     def _build_shared_payload(self) -> LiveWsPayload:
-        clients = self._ingress.registry.snapshot_for_api()
+        active_ids = self._ingress.registry.active_client_ids()
+        metrics_by_client = self._ingress.processor.all_latest_metrics(active_ids)
+        clients = self._ingress.registry.snapshot_for_api(
+            metrics_by_client=metrics_by_client,
+        )
         client_ids = [c["id"] for c in clients]
         fresh_ids = self._ingress.processor.clients_with_recent_data(
             client_ids,

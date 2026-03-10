@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.analysis.findings.builder_support import (
+from vibesensor.analysis.findings_builder_support import (
     collect_order_frequencies,
     finalize_findings,
 )

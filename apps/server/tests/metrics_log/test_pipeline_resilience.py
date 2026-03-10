@@ -336,11 +336,6 @@ class TestPostAnalysisOutcomeTracking:
             def store_analysis_error(self, run_id, msg):
                 pass
 
-            def read_transaction(self):
-                from contextlib import nullcontext
-
-                return nullcontext()
-
         worker = PostAnalysisWorker(history_db=FakeDB())
         worker.schedule("run-ok")
         assert worker.wait(timeout_s=5.0)
@@ -362,11 +357,6 @@ class TestPostAnalysisOutcomeTracking:
 
             def store_analysis_error(self, run_id, msg):
                 pass
-
-            def read_transaction(self):
-                from contextlib import nullcontext
-
-                return nullcontext()
 
         worker = PostAnalysisWorker(
             history_db=FakeDB(),
@@ -410,11 +400,6 @@ class TestPostAnalysisOutcomeTracking:
 
             def store_analysis_error(self, _run_id, _msg):
                 pass
-
-            def read_transaction(self):
-                from contextlib import nullcontext
-
-                return nullcontext()
 
         worker = PostAnalysisWorker(history_db=FakeDB())
         worker.schedule("run-empty")

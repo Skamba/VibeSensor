@@ -99,9 +99,6 @@ class _StubRegistry:
     def get(self, client_id: str) -> _StubRecord | None:
         return self._clients.get(client_id)
 
-    def set_latest_metrics(self, client_id: str, metrics: Any) -> None:
-        pass
-
 
 class _StubProcessor:
     def __init__(self) -> None:
@@ -192,18 +189,8 @@ def _make_runtime(**overrides: Any):
         esp_flash_manager=esp_flash_manager,
         processing=processing,
         websocket=websocket,
-        lifecycle=LifecycleManager(
-            config=config,
-            ingress=ingress,
-            settings=settings,
-            metrics_logger=diagnostics,
-            persistence=persistence,
-            update_manager=update_manager,
-            esp_flash_manager=esp_flash_manager,
-            processing=processing,
-            websocket=websocket,
-        ),
     )
+    rt.lifecycle = LifecycleManager(runtime=rt)
     if overrides:
         for name, value in overrides.items():
             setattr(rt, name, value)

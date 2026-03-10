@@ -1,7 +1,7 @@
-"""Tests for the findings subpackage structure and individual submodule contracts.
+"""Tests for the findings modules structure and individual module contracts.
 
-Validates that the findings/ subpackage submodules are independently
-importable and testable, and that each submodule exposes expected symbols.
+Validates that the findings_* modules are independently importable and
+testable, and that each module exposes expected symbols.
 """
 
 from __future__ import annotations
@@ -11,28 +11,28 @@ from typing import get_type_hints
 import pytest
 
 from vibesensor.analysis._types import AmplitudeMetric, Finding, MatchedPoint
-from vibesensor.analysis.findings._constants import (
+from vibesensor.analysis.findings_builder import _build_findings
+from vibesensor.analysis.findings_constants import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
-from vibesensor.analysis.findings.builder import _build_findings
-from vibesensor.analysis.findings.intensity import (
+from vibesensor.analysis.findings_intensity import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
     _speed_breakdown,
 )
-from vibesensor.analysis.findings.order_assembly import assemble_order_finding
-from vibesensor.analysis.findings.order_findings import (
+from vibesensor.analysis.findings_order_assembly import assemble_order_finding
+from vibesensor.analysis.findings_order_findings import (
     _compute_effective_match_rate,
     _compute_order_confidence,
     _detect_diffuse_excitation,
     _suppress_engine_aliases,
 )
-from vibesensor.analysis.findings.order_models import OrderMatchAccumulator
-from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
-from vibesensor.analysis.findings.reference_checks import _reference_missing_finding
-from vibesensor.analysis.findings.speed_profile import (
+from vibesensor.analysis.findings_order_models import OrderMatchAccumulator
+from vibesensor.analysis.findings_persistent import _classify_peak_type
+from vibesensor.analysis.findings_reference_checks import _reference_missing_finding
+from vibesensor.analysis.findings_speed_profile import (
     _phase_to_str,
     _speed_profile_from_points,
 )
@@ -41,28 +41,28 @@ from vibesensor.analysis.phase_segmentation import DrivingPhase
 # -- Subpackage structure tests -----------------------------------------------
 
 
-class TestFindingsSubpackageStructure:
-    """Verify the subpackage submodules are independently importable."""
+class TestFindingsModuleStructure:
+    """Verify the findings modules are independently importable."""
 
-    def test_submodules_importable_independently(self) -> None:
-        """Each submodule must be directly importable with expected symbols."""
-        from vibesensor.analysis.findings import (  # noqa: F401
-            _constants,
-            builder,
-            intensity,
-            order_findings,
-            persistent_findings,
-            reference_checks,
-            speed_profile,
+    def test_modules_importable_independently(self) -> None:
+        """Each findings module must be directly importable with expected symbols."""
+        from vibesensor.analysis import (  # noqa: F401
+            findings_builder,
+            findings_constants,
+            findings_intensity,
+            findings_order_findings,
+            findings_persistent,
+            findings_reference_checks,
+            findings_speed_profile,
         )
 
-        # Verify key symbols exist in each submodule
-        assert hasattr(builder, "_build_findings")
-        assert hasattr(intensity, "_sensor_intensity_by_location")
-        assert hasattr(order_findings, "_order_label")
-        assert hasattr(speed_profile, "_speed_profile_from_points")
-        assert hasattr(reference_checks, "_reference_missing_finding")
-        assert hasattr(persistent_findings, "_build_persistent_peak_findings")
+        # Verify key symbols exist in each module
+        assert hasattr(findings_builder, "_build_findings")
+        assert hasattr(findings_intensity, "_sensor_intensity_by_location")
+        assert hasattr(findings_order_findings, "_order_label")
+        assert hasattr(findings_speed_profile, "_speed_profile_from_points")
+        assert hasattr(findings_reference_checks, "_reference_missing_finding")
+        assert hasattr(findings_persistent, "_build_persistent_peak_findings")
 
 
 class TestCanonicalFindingModel:

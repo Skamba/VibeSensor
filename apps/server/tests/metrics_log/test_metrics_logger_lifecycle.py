@@ -38,9 +38,12 @@ def test_start_append_stop_produces_complete_run_in_db(
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _fast_summary)
     logger.stop_logging()
 
-    assert wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=3.0)
+    def _status():
+        return (history_db.get_run(run_id) or {}).get("status")
 
-    stored = history_db.get_run_analysis(run_id)
+    assert wait_until(lambda: _status() == "complete", timeout_s=3.0)
+
+    stored = history_db.get_run(run_id).get("analysis")
     assert stored is not None
     assert stored["score"] == 42
     assert stored["details"] == "looks good"

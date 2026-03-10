@@ -53,7 +53,7 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
   let persistedAnalysisSettings: Record<string, number> = {};
   let analysisPostCalls = 0;
   await installCommonRoutes(page, { settingsHandler: async (route) => { if (requestPath(route).startsWith("/api/settings/cars")) { await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], activeCarId: "car-1" }); return; } await fulfillJson(route, {}); } });
-  await page.route("**/api/analysis-settings", async (route) => {
+  await page.route("**/api/settings/analysis", async (route) => {
     const method = route.request().method();
     if (method === "POST") {
       analysisPostCalls += 1;

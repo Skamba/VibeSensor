@@ -55,7 +55,7 @@ _EXPECTED_PATHS = (
     "/api/settings/sensors",
     "/api/settings/language",
     "/api/settings/speed-unit",
-    "/api/analysis-settings",
+    "/api/settings/analysis",
     "/api/clients",
     "/api/client-locations",
     "/api/logging/status",
@@ -74,7 +74,6 @@ _EXPECTED_PATHS = (
     "/api/car-library/brands",
     "/api/car-library/types",
     "/api/car-library/models",
-    "/api/simulator/speed-override",
     "/ws",
 )
 

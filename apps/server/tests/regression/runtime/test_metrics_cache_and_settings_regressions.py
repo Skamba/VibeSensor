@@ -96,8 +96,8 @@ class TestComputeMetricsGenerationGuard:
         # First compute
         sp.compute_metrics(client)
 
-        with sp._lock:
-            buf = sp._buffers[client]
+        with sp._store.lock:
+            buf = sp._store.buffers[client]
             gen_after_first = buf.compute_generation
             # Artificially advance the compute generation to simulate a fresher result
             buf.compute_generation = gen_after_first + 100
@@ -105,8 +105,8 @@ class TestComputeMetricsGenerationGuard:
         # Compute again — this should NOT overwrite because snap_ingest_gen < compute_generation
         sp.compute_metrics(client)
 
-        with sp._lock:
-            buf = sp._buffers[client]
+        with sp._store.lock:
+            buf = sp._store.buffers[client]
             # Should still be the artificially advanced generation
             assert buf.compute_generation == gen_after_first + 100
 

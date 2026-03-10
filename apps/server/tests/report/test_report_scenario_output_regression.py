@@ -11,7 +11,7 @@ from test_support.scenario_regression import (
 )
 
 from vibesensor.analysis import select_top_causes, summarize_run_data
-from vibesensor.analysis.findings.reference_checks import _reference_missing_finding
+from vibesensor.analysis.findings_reference_checks import _reference_missing_finding
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.report.mapping import map_summary
 

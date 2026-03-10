@@ -13,7 +13,7 @@ import math
 import time
 from typing import Literal, NamedTuple
 
-from .backend_types import FallbackMode, ResolvedSpeedSource, SpeedSourceStatusPayload
+from .backend_types import FallbackMode, ResolvedSpeedSource
 from .constants import KMH_TO_MPS, MPS_TO_KMH, NUMERIC_TYPES
 from .json_types import JsonObject, is_json_object
 
@@ -281,7 +281,7 @@ class GPSSpeedMonitor:
         self._speed_snapshot = (None, None)
         self.device_info = None
 
-    def status_dict(self) -> SpeedSourceStatusPayload:
+    def status_dict(self) -> dict[str, object]:
         """Return a JSON-serializable status snapshot — **no side effects**."""
         now = time.monotonic()
         # Use a single resolve_speed() call for a consistent snapshot.

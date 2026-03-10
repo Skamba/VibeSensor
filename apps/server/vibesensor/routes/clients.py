@@ -21,6 +21,7 @@ from ..protocol import client_id_mac
 from ._helpers import normalize_client_id_or_400
 
 if TYPE_CHECKING:
+    from ..processing.processor import SignalProcessor
     from ..registry import ClientRegistry
     from ..settings_store import SettingsStore
     from ..udp_control_tx import UDPControlPlane
@@ -30,13 +31,16 @@ def create_client_routes(
     registry: ClientRegistry,
     control_plane: UDPControlPlane,
     settings_store: SettingsStore,
+    processor: SignalProcessor,
 ) -> APIRouter:
     """Create and return the client-management API routes."""
     router = APIRouter()
 
     @router.get("/api/clients", response_model=ClientsResponse)
     async def get_clients() -> ClientsResponse:
-        return ClientsResponse(clients=registry.snapshot_for_api())
+        active_ids = registry.active_client_ids()
+        metrics = processor.all_latest_metrics(active_ids)
+        return ClientsResponse(clients=registry.snapshot_for_api(metrics_by_client=metrics))
 
     @router.get("/api/client-locations", response_model=ClientLocationsResponse)
     async def get_client_locations() -> ClientLocationsResponse:

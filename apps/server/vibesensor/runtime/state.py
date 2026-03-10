@@ -93,4 +93,4 @@ class RuntimeState:
     esp_flash_manager: EspFlashManager
     processing: RuntimeProcessingSubsystem
     websocket: RuntimeWebsocketSubsystem
-    lifecycle: LifecycleManager
+    lifecycle: LifecycleManager | None = None
