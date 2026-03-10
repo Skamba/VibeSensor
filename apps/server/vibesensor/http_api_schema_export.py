@@ -61,7 +61,7 @@ def _build_openapi_app() -> FastAPI:
         processing=SimpleNamespace(state=placeholder, health_state=placeholder),
     )
     app = FastAPI(title="VibeSensor HTTP API")
-    app.include_router(create_router(services))
+    app.include_router(create_router(services))  # type: ignore[arg-type]
     return app
 
 

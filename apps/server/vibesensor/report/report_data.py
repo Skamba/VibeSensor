@@ -97,7 +97,7 @@ class PartSuggestion:
             return cls(name=d)
         if not is_json_object(d):
             return cls(name=str(d))
-        return cls(**_filter_fields(cls, d))
+        return cls(**_filter_fields(cls, d))  # type: ignore[arg-type]
 
 
 @dataclass
@@ -121,7 +121,7 @@ class SystemFindingCard:
             if is_json_array(parts_raw)
             else []
         )
-        return cls(**filtered)
+        return cls(**filtered)  # type: ignore[arg-type]
 
 
 @dataclass
@@ -179,7 +179,7 @@ class PatternEvidence(_FromDictMixin):
         filtered = _filter_fields(cls, d)
         if not is_json_array(filtered.get("matched_systems")):
             filtered["matched_systems"] = []
-        return cls(**filtered)
+        return cls(**filtered)  # type: ignore[arg-type]
 
 
 @dataclass
@@ -264,4 +264,4 @@ class ReportTemplateData:
             if is_json_array(peak_rows_raw)
             else []
         )
-        return cls(**filtered)
+        return cls(**filtered)  # type: ignore[arg-type]

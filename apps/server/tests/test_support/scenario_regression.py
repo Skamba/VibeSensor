@@ -6,7 +6,6 @@ from typing import Any
 
 from test_support.core import standard_metadata as _base_standard_metadata
 from test_support.sample_scenarios import make_sample as _base_make_sample
-
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
 _ORDER_SOURCES: set[str] = {"wheel/tire", "driveline", "engine"}

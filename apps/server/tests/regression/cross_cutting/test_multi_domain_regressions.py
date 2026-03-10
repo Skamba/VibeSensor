@@ -23,9 +23,9 @@ from vibesensor.analysis.test_plan import _weighted_speed_window_label
 from vibesensor.analysis.top_cause_selection import confidence_label
 from vibesensor.config import _split_host_port
 from vibesensor.domain_models import VALID_SPEED_SOURCES
+from vibesensor.domain_models import as_float_or_none as runlog_as_float_or_none
 from vibesensor.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 from vibesensor.report_i18n import tr
-from vibesensor.runlog import as_float_or_none as runlog_as_float_or_none
 from vibesensor.runlog import parse_iso8601
 
 

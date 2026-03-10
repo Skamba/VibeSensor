@@ -184,10 +184,10 @@ def resolve_speed_context(
     resolution = gps_monitor.resolve_speed()
     effective_speed_mps = resolution.speed_mps
     gps_speed_kmh = (
-        (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, NUMERIC_TYPES) else None
+        (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, NUMERIC_TYPES) else None  # type: ignore[arg-type]
     )
     speed_kmh = (
-        (float(effective_speed_mps) * MPS_TO_KMH)
+        (float(effective_speed_mps) * MPS_TO_KMH)  # type: ignore[arg-type]
         if isinstance(effective_speed_mps, NUMERIC_TYPES)
         else None
     )

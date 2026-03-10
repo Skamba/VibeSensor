@@ -5,8 +5,8 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 
+from ..domain_models import as_float_or_none as _as_float
 from ..run_context import order_reference_context_complete
-from ..runlog import as_float_or_none as _as_float
 from ._types import (
     AccelStatistics,
     JsonObject,

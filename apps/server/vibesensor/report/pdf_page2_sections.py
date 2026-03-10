@@ -35,7 +35,7 @@ def render_title_bar(c: Canvas, *, title: str, width: float, page_top: float) ->
     c.setFillColor(_hex(TEXT_CLR))
     c.setFont(FONT_B, 11)
     c.drawString(MARGIN + 4 * mm, layout.title_bar.y + 3.5 * mm, title)
-    return layout.title_bar.y - GAP
+    return layout.title_bar.y - GAP  # type: ignore[no-any-return]
 
 
 def render_car_visual_panel(
@@ -76,7 +76,7 @@ def render_car_visual_panel(
     }
     findings = data.findings
     diagram = car_location_diagram(
-        top_causes or (findings if isinstance(findings, list) else []),
+        top_causes or (findings if isinstance(findings, list) else []),  # type: ignore[arg-type]
         render_summary,
         location_rows,
         content_width=content_width,
@@ -88,7 +88,7 @@ def render_car_visual_panel(
     diagram.drawOn(c, box_x, box_y)
 
 
-def render_peaks_panel(
+def render_peaks_panel(  # type: ignore[no-untyped-def]
     c: Canvas,
     data: ReportTemplateData,
     *,
@@ -115,7 +115,7 @@ def render_peaks_panel(
     )
 
 
-def render_observations_panel(
+def render_observations_panel(  # type: ignore[no-untyped-def]
     c: Canvas,
     *,
     layout,
@@ -124,7 +124,7 @@ def render_observations_panel(
     draw_additional_observations: Callable[..., None],
 ) -> float:
     if layout.observations_panel is None:
-        return layout.peaks_panel.y
+        return layout.peaks_panel.y  # type: ignore[no-any-return]
     draw_additional_observations(
         c,
         layout.observations_panel.x,
@@ -134,10 +134,10 @@ def render_observations_panel(
         transient_findings,
         tr,
     )
-    return layout.observations_panel.y
+    return layout.observations_panel.y  # type: ignore[no-any-return]
 
 
-def render_continued_next_steps_panel(
+def render_continued_next_steps_panel(  # type: ignore[no-untyped-def]
     c: Canvas,
     *,
     panel,

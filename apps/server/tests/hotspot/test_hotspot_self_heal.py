@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from vibesensor.config import APConfig, APSelfHealConfig
-from vibesensor.hotspot_self_heal import (
+from vibesensor.hotspot.self_heal import (
     CommandResult,
     CommandRunner,
     HealStateStore,

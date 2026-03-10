@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from _report_helpers import minimal_summary
+from test_support.report_helpers import minimal_summary
 
 from vibesensor.analysis import map_summary
 from vibesensor.analysis.strength_labels import strength_text

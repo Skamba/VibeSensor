@@ -9,7 +9,6 @@ from typing import Any
 from test_support import make_sample as _make_sample
 from test_support import standard_metadata as _standard_metadata
 from test_support import wheel_hz as wheel_hz
-
 from vibesensor.analysis import summarize_run_data
 
 ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]

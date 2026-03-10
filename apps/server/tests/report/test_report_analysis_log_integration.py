@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from _report_analysis_integration_helpers import write_test_log
-from _report_helpers import analysis_metadata as _make_metadata
-from _report_helpers import analysis_sample as _make_sample
+from test_support.report_analysis_integration import write_test_log
+from test_support.report_helpers import analysis_metadata as _make_metadata
+from test_support.report_helpers import analysis_sample as _make_sample
 
 from vibesensor.analysis import summarize_log
 from vibesensor.runlog import append_jsonl_records, create_run_end_record

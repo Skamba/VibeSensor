@@ -66,10 +66,10 @@ def test_history_services_do_not_import_httpexception() -> None:
     translates them at the route boundary.
     """
     service_modules = [
-        SERVER_ROOT / "vibesensor" / "history_helpers.py",
-        SERVER_ROOT / "vibesensor" / "history_runs.py",
-        SERVER_ROOT / "vibesensor" / "history_reports.py",
-        SERVER_ROOT / "vibesensor" / "history_exports.py",
+        SERVER_ROOT / "vibesensor" / "history_services" / "helpers.py",
+        SERVER_ROOT / "vibesensor" / "history_services" / "runs.py",
+        SERVER_ROOT / "vibesensor" / "history_services" / "reports.py",
+        SERVER_ROOT / "vibesensor" / "history_services" / "exports.py",
     ]
     violations: list[str] = []
     for path in service_modules:

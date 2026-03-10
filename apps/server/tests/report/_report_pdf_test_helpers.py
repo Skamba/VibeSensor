@@ -3,11 +3,11 @@ from __future__ import annotations
 import re
 from io import BytesIO
 
-from _report_helpers import RUN_END, suitability_by_key, write_jsonl
-from _report_helpers import report_run_metadata as run_metadata
-from _report_helpers import report_sample as base_sample
 from pypdf import PdfReader
 from reportlab.pdfgen.canvas import Canvas
+from test_support.report_helpers import RUN_END, suitability_by_key, write_jsonl
+from test_support.report_helpers import report_run_metadata as run_metadata
+from test_support.report_helpers import report_sample as base_sample
 
 from vibesensor import __version__
 from vibesensor.analysis import map_summary, summarize_log

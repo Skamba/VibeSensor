@@ -39,7 +39,7 @@ from vibesensor.gps_speed import (
     GPSSpeedMonitor,
 )
 from vibesensor.history_db import HistoryDB
-from vibesensor.history_exports import flatten_for_csv as _flatten_for_csv
+from vibesensor.history_services.exports import flatten_for_csv as _flatten_for_csv
 from vibesensor.processing import SignalProcessor
 from vibesensor.routes._helpers import safe_filename as _safe_filename
 from vibesensor.worker_pool import WorkerPool

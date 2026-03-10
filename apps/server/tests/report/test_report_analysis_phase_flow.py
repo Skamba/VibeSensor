@@ -3,14 +3,14 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-from _report_analysis_integration_helpers import (
+from test_support.report_analysis_integration import (
     call_build_order_findings,
     make_order_finding_samples,
     patch_order_hypothesis,
     wheel_metadata,
 )
-from _report_helpers import analysis_metadata as _make_metadata
-from _report_helpers import analysis_sample as _make_sample
+from test_support.report_helpers import analysis_metadata as _make_metadata
+from test_support.report_helpers import analysis_sample as _make_sample
 
 from vibesensor.analysis import summarize_run_data
 from vibesensor.analysis.findings.builder import _build_findings as _findings_build_findings

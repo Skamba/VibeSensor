@@ -7,7 +7,7 @@ from typing import TypedDict
 
 from vibesensor_core.vibration_strength import percentile
 
-from ..runlog import as_float_or_none as _as_float
+from ..domain_models import as_float_or_none as _as_float
 from ._types import Sample, SummaryData
 from .helpers import _primary_vibration_strength_db
 from .phase_segmentation import DrivingPhase, PhaseSegment

@@ -12,10 +12,7 @@ TARGETED_MYPY_FILES = {
     "vibesensor/domain_models.py",
     "vibesensor/firmware_cache.py",
     "vibesensor/gps_speed.py",
-    "vibesensor/history_exports.py",
-    "vibesensor/history_helpers.py",
-    "vibesensor/history_reports.py",
-    "vibesensor/history_runs.py",
+    "vibesensor/history_services",
     "vibesensor/json_types.py",
     "vibesensor/payload_types.py",
     "vibesensor/registry.py",
@@ -23,9 +20,17 @@ TARGETED_MYPY_FILES = {
     "vibesensor/settings_store.py",
 }
 
-TARGETED_WEAK_TYPING_FILES = [
-    SERVER_ROOT / path for path in sorted(TARGETED_MYPY_FILES) if path != "vibesensor/json_types.py"
-]
+_TARGETED_MYPY_FILES_FOR_SCAN = sorted(
+    f for f in TARGETED_MYPY_FILES if f != "vibesensor/json_types.py"
+)
+
+TARGETED_WEAK_TYPING_FILES: list = []
+for _path_str in _TARGETED_MYPY_FILES_FOR_SCAN:
+    _p = SERVER_ROOT / _path_str
+    if _p.is_dir():
+        TARGETED_WEAK_TYPING_FILES.extend(sorted(_p.rglob("*.py")))
+    else:
+        TARGETED_WEAK_TYPING_FILES.append(_p)
 
 WEAK_TYPING_PATTERNS = [
     re.compile(r"\bAny\b"),

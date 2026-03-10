@@ -2,11 +2,6 @@
 
 Provides helpers for creating and reading metric run files in JSONL format,
 plus normalisation helpers for canonical field name handling.
-
-Canonical re-exports
---------------------
-``as_float_or_none`` and ``as_int_or_none`` are defined in
-``vibesensor.domain_models`` and re-exported here for convenience.
 ``utc_now_iso()`` is canonically defined in this module.
 """
 
@@ -30,8 +25,6 @@ from .domain_models import (
     RunMetadata,
     SensorFrame,
 )
-from .domain_models import as_float_or_none as _as_float_or_none
-from .domain_models import as_int_or_none as _as_int_or_none
 from .json_types import JsonObject, JsonValue
 
 LOGGER = logging.getLogger(__name__)
@@ -58,8 +51,6 @@ __all__ = [
     "RunData",
     "RunEndRecord",
     "append_jsonl_records",
-    "as_float_or_none",
-    "as_int_or_none",
     "bounded_sample",
     "create_run_end_record",
     "create_run_metadata",
@@ -105,10 +96,6 @@ def parse_iso8601(value: object) -> datetime | None:
         return dt
     except ValueError:
         return None
-
-
-as_float_or_none = _as_float_or_none
-as_int_or_none = _as_int_or_none
 
 
 def create_run_metadata(

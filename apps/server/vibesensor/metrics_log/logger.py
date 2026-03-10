@@ -109,9 +109,9 @@ class MetricsLogger:
         self.fft_window_type = config.fft_window_type
         self.peak_picker_method = config.peak_picker_method
         self.accel_scale_g_per_lsb = (
-            float(config.accel_scale_g_per_lsb)
+            float(config.accel_scale_g_per_lsb)  # type: ignore[arg-type]
             if isinstance(config.accel_scale_g_per_lsb, NUMERIC_TYPES)
-            and config.accel_scale_g_per_lsb > 0
+            and config.accel_scale_g_per_lsb > 0  # type: ignore[operator]
             else None
         )
         self._lock = RLock()

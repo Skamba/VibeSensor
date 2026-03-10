@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from _report_analysis_integration_helpers import max_non_ref_confidence, wheel_metadata
-from _report_helpers import analysis_sample as _make_sample
+from test_support.report_analysis_integration import max_non_ref_confidence, wheel_metadata
+from test_support.report_helpers import analysis_sample as _make_sample
 
 from vibesensor.analysis import build_findings_for_samples
 from vibesensor.analysis.findings import order_findings as order_findings_module

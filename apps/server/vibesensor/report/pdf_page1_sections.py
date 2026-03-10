@@ -34,7 +34,7 @@ from .report_data import NextStep, ReportTemplateData
 def label_width(c: Canvas, label: str, *, default_w: float, col_w: float) -> float:
     measured = c.stringWidth(f"{label}:", FONT, FS_BODY) + 1.2 * mm
     max_allowed = max(default_w, col_w - 20 * mm)
-    return min(max(default_w, measured), max_allowed)
+    return min(max(default_w, measured), max_allowed)  # type: ignore[no-any-return]
 
 
 def column_height(
@@ -191,7 +191,7 @@ def render_header_panel(
         header_columns.meta_row_gap,
     )
     _draw_kv_column(c, meta_right, meta_y0, right_rows, right_col_w, header_columns.meta_row_gap)
-    return layout.header.y - GAP
+    return layout.header.y - GAP  # type: ignore[no-any-return]
 
 
 def render_observed_signature_panel(
@@ -291,7 +291,7 @@ def render_observed_signature_panel(
         size=FS_SMALL,
         color=MUTED_CLR,
     )
-    return obs_y - GAP
+    return obs_y - GAP  # type: ignore[no-any-return]
 
 
 def render_systems_panel(
@@ -333,7 +333,7 @@ def render_systems_panel(
             cx = inner_x + idx * (card_w + card_gap)
             cy = cards_y + 3 * mm
             draw_system_card(c, cx, cy, card_w, card_h, card, tr=tr)
-    return cards_y - GAP
+    return cards_y - GAP  # type: ignore[no-any-return]
 
 
 def render_data_trust_panel(

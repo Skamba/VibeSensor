@@ -13,7 +13,7 @@ FastAPI backend for VibeSensor. It ingests UDP telemetry from ESP32 sensor nodes
 
 ```text
 ESP32 nodes -> udp_data_rx.py -> processing/ + analysis/ -> runtime/ -> routes/ + ws_hub.py -> apps/ui
-                                           \-> metrics_log/ + history_db/ -> history_* helpers -> report/
+                                           \-> metrics_log/ + history_db/ -> history_services/ -> report/
 ```
 
 Backend ownership boundaries:
@@ -23,9 +23,10 @@ Backend ownership boundaries:
 - `routes/`: HTTP and WebSocket route groups.
 - `runtime/`: explicit subsystem builders and owners for ingress, settings, diagnostics, persistence, updates, processing, websocket delivery, route services, and lifecycle.
 - `processing/`, `analysis/`: signal processing and findings logic.
-- `metrics_log/`, `history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`: recording, persistence, and exports. Inside `metrics_log/`, `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping, and `post_analysis.py` owns the background analysis queue; `logger.py` is the façade that coordinates those focused collaborators. The runtime persistence subsystem owns the history query/delete/report/export services built on top of `HistoryDB`.
+- `metrics_log/`, `history_db/`, `history_services/`, `runlog.py`: recording, persistence, and exports. Inside `metrics_log/`, `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping, and `post_analysis.py` owns the background analysis queue; `logger.py` is the façade that coordinates those focused collaborators. The `history_services/` package owns the domain-logic layer above `HistoryDB` — run query/delete, PDF report generation, CSV/ZIP exports.
 - `report/`: PDF rendering pipeline.
 - `update/`: wheel-based update flow.
+- `hotspot/`: Wi-Fi AP monitoring, parsing, and self-heal infrastructure.
 
 ## Important directories
 

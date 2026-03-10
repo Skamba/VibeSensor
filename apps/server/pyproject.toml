@@ -38,7 +38,7 @@ dev = [
 vibesensor-server = "vibesensor.server_cli:main"
 vibesensor-report = "vibesensor.report_cli:main"
 vibesensor-http-api-schema-export = "vibesensor.http_api_schema_export:main"
-vibesensor-hotspot-self-heal = "vibesensor.hotspot_self_heal:main"
+vibesensor-hotspot-self-heal = "vibesensor.hotspot.self_heal:main"
 vibesensor-sim = "vibesensor_simulator.sim_sender:main"
 vibesensor-ws-smoke = "vibesensor_simulator.ws_smoke:main"
 vibesensor-config-preflight = "vibesensor_tools_config.config_preflight:main"
@@ -101,24 +101,41 @@ files = [
   "vibesensor/api_models.py",
   "vibesensor/bootstrap.py",
   "vibesensor/backend_types.py",
+  "vibesensor/car_library.py",
   "vibesensor/config.py",
+  "vibesensor/constants.py",
+  "vibesensor/contract_reference_doc.py",
   "vibesensor/domain_models.py",
   "vibesensor/esp_flash_manager.py",
+  "vibesensor/exceptions.py",
   "vibesensor/firmware_cache.py",
   "vibesensor/gps_speed.py",
-  "vibesensor/history_exports.py",
-  "vibesensor/history_helpers.py",
-  "vibesensor/history_reports.py",
-  "vibesensor/history_runs.py",
-  "vibesensor/worker_pool.py",
+  "vibesensor/history_services",
+  "vibesensor/hotspot",
+  "vibesensor/http_api_schema_export.py",
   "vibesensor/json_types.py",
+  "vibesensor/json_utils.py",
+  "vibesensor/locations.py",
+  "vibesensor/worker_pool.py",
+  "vibesensor/order_bands.py",
   "vibesensor/payload_types.py",
+  "vibesensor/peak_classification.py",
+  "vibesensor/protocol.py",
   "vibesensor/registry.py",
+  "vibesensor/release_fetcher.py",
+  "vibesensor/release_validation.py",
+  "vibesensor/report",
+  "vibesensor/report_cli.py",
+  "vibesensor/report_i18n.py",
   "vibesensor/runtime",
   "vibesensor/routes",
   "vibesensor/run_context.py",
   "vibesensor/runlog.py",
+  "vibesensor/server_cli.py",
   "vibesensor/settings_store.py",
+  "vibesensor/severity.py",
+  "vibesensor/udp_control_tx.py",
+  "vibesensor/udp_data_rx.py",
   "vibesensor/update",
   "vibesensor/processing",
   "vibesensor/analysis",
@@ -126,11 +143,9 @@ files = [
   "vibesensor/analysis_settings.py",
   "vibesensor/history_db",
   "vibesensor/metrics_log",
-  "vibesensor/order_bands.py",
-  "vibesensor/peak_classification.py",
-  "vibesensor/report_i18n.py",
-  "vibesensor/severity.py",
+  "vibesensor/ws_hub.py",
   "vibesensor/ws_models.py",
+  "vibesensor/ws_schema_export.py",
 ]
 follow_imports = "skip"
 check_untyped_defs = true
@@ -142,3 +157,11 @@ warn_unused_ignores = true
 warn_return_any = true
 strict_equality = true
 show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+  "reportlab.*",
+  "yaml",
+]
+ignore_missing_imports = true
+disallow_any_unimported = false

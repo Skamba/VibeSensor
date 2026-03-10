@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from _scenario_regression_helpers import (
+from test_support.scenario_regression import (
     build_phased_samples,
     build_speed_sweep_samples,
     standard_metadata,

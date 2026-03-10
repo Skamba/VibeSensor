@@ -12,7 +12,7 @@ from vibesensor_core.vibration_strength import (
 )
 
 from ...constants import MEMS_NOISE_FLOOR_G
-from ...runlog import as_float_or_none as _as_float
+from ...domain_models import as_float_or_none as _as_float
 from .._types import Finding, FindingEvidenceMetrics, PhaseEvidence, PhaseLabels, Sample
 from ..helpers import (
     _effective_baseline_floor,

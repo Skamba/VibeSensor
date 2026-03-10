@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from vibesensor.domain_models import as_float_or_none
 from vibesensor.order_bands import (
     build_diagnostic_settings,
     combined_relative_uncertainty,
@@ -12,7 +13,6 @@ from vibesensor.peak_classification import (
     source_keys_from_class_key,
     suspected_source_from_class_key,
 )
-from vibesensor.runlog import as_float_or_none
 from vibesensor.severity import severity_from_peak
 
 # -- _as_float NaN/edge cases -------------------------------------------------

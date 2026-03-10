@@ -5,17 +5,17 @@ from pathlib import Path
 
 import pytest
 from _paths import SERVER_ROOT
-from _report_helpers import (
+from test_support.core import extract_pdf_text
+from test_support.report_helpers import (
     RUN_END,
     write_jsonl,
 )
-from _report_helpers import (
+from test_support.report_helpers import (
     report_run_metadata as _run_metadata,
 )
-from _report_helpers import (
+from test_support.report_helpers import (
     report_sample as _base_sample,
 )
-from test_support.core import extract_pdf_text
 
 from vibesensor.analysis import confidence_label, map_summary, select_top_causes, summarize_log
 from vibesensor.constants import KMH_TO_MPS
