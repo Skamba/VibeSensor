@@ -39,9 +39,9 @@ jobs:
         run: |
           ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
 
-      - name: Line endings
+      - name: Hygiene checks
         run: |
-          python tools/dev/check_line_endings.py
+          python tools/dev/check_hygiene.py
 
       - name: Config preflight
         run: |
@@ -49,10 +49,6 @@ jobs:
           vibesensor-config-preflight apps/server/config.dev.yaml
           vibesensor-config-preflight apps/server/config.docker.yaml
           vibesensor-config-preflight apps/server/config.pi.yaml
-
-      - name: Verify no path indirections
-        run: |
-          python tools/dev/verify_no_path_indirections.py
 
       - name: Docs lint
         run: |

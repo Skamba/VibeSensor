@@ -41,7 +41,10 @@ def _make_coordinator(
     session = _MetricsSessionState(enabled=True, no_data_timeout_s=15.0)
     # Start a session so matches_generation always returns True for gen 1
     session.start_new_session(
-        run_id="test", start_time_utc="", start_mono_s=0.0, current_total=0,
+        run_id="test",
+        start_time_utc="",
+        start_mono_s=0.0,
+        current_total=0,
     )
     return _MetricsPersistenceCoordinator(
         history_db=history_db,

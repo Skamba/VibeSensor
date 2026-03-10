@@ -1,9 +1,9 @@
 import { escapeHtml, fmt, fmtTs } from "../format";
-import type { UiDomElements } from "./dom/ui_dom_registry";
-import { createUiDomRegistry } from "./dom/ui_dom_registry";
+import type { UiDomElements } from "./ui_dom_registry";
+import { createUiDomRegistry } from "./ui_dom_registry";
 import { createAppFeatureBundle, type AppFeatureBundle } from "./app_feature_bundle";
-import type { AppState } from "./state/ui_app_state";
-import { createAppState } from "./state/ui_app_state";
+import type { AppState } from "./ui_app_state";
+import { createAppState } from "./ui_app_state";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
 import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";

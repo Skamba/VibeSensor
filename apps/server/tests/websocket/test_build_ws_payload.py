@@ -50,7 +50,6 @@ class _StubProcessor:
         return {"freq": [], "clients": {cid: {} for cid in client_ids}}
 
 
-
 class _SpeedResolution:
     """Minimal stand-in for gps_speed.SpeedResolution NamedTuple."""
 

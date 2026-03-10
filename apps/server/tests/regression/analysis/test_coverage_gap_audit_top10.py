@@ -1,18 +1,7 @@
 # ruff: noqa: E402
 from __future__ import annotations
 
-"""Coverage-gap audit: top 10 untested critical code paths.
-
-This file addresses the top 10 coverage gaps identified by systematic
-cross-referencing of public/private functions in:
-  - apps/server/vibesensor/analysis/findings.py
-  - apps/server/vibesensor/analysis/summary_builder.py
-  - apps/server/vibesensor/metrics_log.py
-  - apps/server/vibesensor/processing.py
-against all test files in apps/server/tests/.
-
-Each class documents the gap, its severity, and provides working tests.
-"""
+"""Coverage gap audit – untested critical code paths."""
 
 
 import math
@@ -120,15 +109,6 @@ def _make_metrics_logger() -> tuple[MetricsLogger, MagicMock]:
         analysis_settings=settings_mock,
     )
     return logger, gps_mock
-
-
-# ---------------------------------------------------------------------------
-# Finding 1: _compute_order_confidence  (findings.py:504)
-# SEVERITY: CRITICAL
-# WHY: Core confidence-scoring algorithm with 18+ tuning parameters, multiple
-#      conditional penalties/boosts, and clamped 0.08–0.97 output.  Every PDF
-#      report hinges on its output.  Zero direct unit tests.
-# ---------------------------------------------------------------------------
 
 
 class TestComputeOrderConfidence:
@@ -247,15 +227,6 @@ class TestComputeOrderConfidence:
         assert boosted > base, "3+ corroborating locations should boost confidence"
 
 
-# ---------------------------------------------------------------------------
-# Finding 2: _detect_diffuse_excitation  (findings.py:454)
-# SEVERITY: HIGH
-# WHY: Determines whether vibration is localized or diffuse across sensors.
-#      Misclassification silently penalizes genuine fault confidence by up to
-#      35%.  Zero direct unit tests.
-# ---------------------------------------------------------------------------
-
-
 class TestDetectDiffuseExcitation:
     """Direct unit tests for _detect_diffuse_excitation."""
 
@@ -309,15 +280,6 @@ class TestDetectDiffuseExcitation:
         assert penalty <= 1.0
 
 
-# ---------------------------------------------------------------------------
-# Finding 3: _suppress_engine_aliases  (findings.py:602)
-# SEVERITY: HIGH
-# WHY: Silently reduces engine-finding confidence when a stronger wheel
-#      finding exists.  Could mask real engine faults or over-suppress.
-#      Zero direct unit tests.
-# ---------------------------------------------------------------------------
-
-
 class TestSuppressEngineAliases:
     """Direct unit tests for _suppress_engine_aliases."""
 
@@ -365,15 +327,6 @@ class TestSuppressEngineAliases:
         findings = [(i, self._make_finding("wheel/tire", 0.50 + i * 0.05)) for i in range(7)]
         result = _suppress_engine_aliases(findings)
         assert len(result) <= 5
-
-
-# ---------------------------------------------------------------------------
-# Finding 4: build_run_suitability_checks  (summary_suitability.py)
-# SEVERITY: HIGH
-# WHY: Constructs the data-quality checklist visible in every PDF report.
-#      Logic for speed variation, sensor coverage, reference completeness,
-#      saturation, and frame integrity checks has zero direct tests.
-# ---------------------------------------------------------------------------
 
 
 class TestBuildRunSuitabilityChecks:
@@ -424,14 +377,6 @@ class TestBuildRunSuitabilityChecks:
         checks = _suitability_checks(**overrides)
         check = next(c for c in checks if c["check_key"] == check_key)
         assert check["state"] == "warn"
-
-
-# ---------------------------------------------------------------------------
-# Finding 5: build_phase_timeline  (summary_phases.py)
-# SEVERITY: MEDIUM-HIGH
-# WHY: Constructs the per-phase timeline shown in UI and PDF.  Bug here
-#      misrepresents which driving phases had fault evidence.  Zero tests.
-# ---------------------------------------------------------------------------
 
 
 class TestBuildPhaseTimeline:
@@ -485,15 +430,6 @@ class TestBuildPhaseTimeline:
         assert entries[0]["has_fault_evidence"] is False
 
 
-# ---------------------------------------------------------------------------
-# Finding 6: compute_accel_statistics  (summary_suitability.py)
-# SEVERITY: MEDIUM-HIGH
-# WHY: Computes saturation detection, per-axis mean/variance, and magnitude.
-#      Saturation miscounting silently breaks the suitability checklist.
-#      Zero direct tests.
-# ---------------------------------------------------------------------------
-
-
 class TestComputeAccelStatistics:
     """Direct unit tests for _compute_accel_statistics."""
 
@@ -545,15 +481,6 @@ class TestComputeAccelStatistics:
             assert result["sat_count"] == 0
 
 
-# ---------------------------------------------------------------------------
-# Finding 7: phase_adjusted_ranking_score  (ranking.py)
-# SEVERITY: MEDIUM
-# WHY: Multiplier used inside select_top_causes to rank findings by phase
-#      evidence.  Incorrect weighting silently re-orders top causes in
-#      the report.  Not directly tested.
-# ---------------------------------------------------------------------------
-
-
 class TestPhaseRankingScore:
     """Direct unit tests for _phase_ranking_score."""
 
@@ -588,15 +515,6 @@ class TestPhaseRankingScore:
     )
     def test_degenerate_confidence_returns_zero(self, finding: dict[str, object]) -> None:
         assert _phase_ranking_score(finding) == 0.0
-
-
-# ---------------------------------------------------------------------------
-# Finding 8: MetricsLogger._extract_strength_data  (metrics_log.py:429)
-# SEVERITY: MEDIUM-HIGH
-# WHY: Parses nested dicts from processor output to extract vibration_strength_db,
-#      strength_bucket, top_peaks.  Complex dict traversal with multiple fallback
-#      paths.  Zero direct tests.
-# ---------------------------------------------------------------------------
 
 
 class TestExtractStrengthData:
@@ -674,15 +592,6 @@ class TestExtractStrengthData:
         assert bucket is None
 
 
-# ---------------------------------------------------------------------------
-# Finding 9: MetricsLogger._resolve_speed_context  (metrics_log.py:367)
-# SEVERITY: MEDIUM
-# WHY: Resolves GPS/manual speed, computes estimated engine RPM from tire
-#      specs and gear ratios.  Incorrect RPM estimation propagates bad data
-#      into sample records and downstream analysis.  Zero direct tests.
-# ---------------------------------------------------------------------------
-
-
 class TestResolveSpeedContext:
     """Tests for _resolve_speed_context via a minimal MetricsLogger setup."""
 
@@ -736,15 +645,6 @@ class TestResolveSpeedContext:
             logger.analysis_settings.snapshot(),
         )
         assert rpm is None, "Without gear_ratio, RPM should not be estimated"
-
-
-# ---------------------------------------------------------------------------
-# Finding 10: summarize_run_data — edge cases (summary_builder.py)
-# SEVERITY: MEDIUM
-# WHY: The main orchestrator function.  While it has integration tests,
-#      boundary inputs (empty samples, all-None axes, zero duration) are
-#      untested and represent production crash vectors.
-# ---------------------------------------------------------------------------
 
 
 class TestSummarizeRunDataEdgeCases:

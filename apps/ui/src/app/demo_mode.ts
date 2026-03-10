@@ -1,4 +1,4 @@
-import { METRIC_FIELDS } from "../../constants";
+import { METRIC_FIELDS } from "../constants";
 
 type DemoDeps = {
   state: { wsState: string; hasReceivedPayload: boolean };
