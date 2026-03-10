@@ -127,14 +127,12 @@ def has_engine_reference(
     tire_circumference_m: float | None,
 ) -> bool:
     """Return whether the engine reference coverage is sufficient."""
-    return (
-        engine_reference_coverage_pct(
-            samples,
-            metadata=metadata,
-            tire_circumference_m=tire_circumference_m,
-        )
-        >= SPEED_COVERAGE_MIN_PCT
+    pct: float = engine_reference_coverage_pct(
+        samples,
+        metadata=metadata,
+        tire_circumference_m=tire_circumference_m,
     )
+    return bool(pct >= SPEED_COVERAGE_MIN_PCT)
 
 
 def prepare_analysis_samples(
