@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from _test_helpers import wait_until
+from test_support.core import wait_until
 
 from vibesensor.history_db import HistoryDB
 

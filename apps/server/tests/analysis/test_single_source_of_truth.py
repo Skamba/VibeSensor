@@ -88,7 +88,7 @@ def test_selected_payload_has_no_combined_alias() -> None:
 
 def test_metrics_log_no_old_field_names() -> None:
     """Metrics log records must not contain old field aliases."""
-    from vibesensor.runlog import default_units
+    from vibesensor.domain_models import _default_units as default_units
 
     units = default_units()
     old_fields = {
