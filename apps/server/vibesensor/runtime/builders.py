@@ -50,22 +50,25 @@ def resolve_accel_scale_g_per_lsb(config: AppConfig) -> float:
     )
 
 
+def create_history_db(config: AppConfig) -> HistoryDB:
+    """Create and initialise the HistoryDB, recovering any stale runs."""
+    history_db = HistoryDB(config.logging.history_db_path)
+    try:
+        recovered_runs = history_db.recover_stale_recording_runs()
+    except Exception:
+        LOGGER.error("Failed during early startup DB operations; closing DB.", exc_info=True)
+        history_db.close()
+        raise
+    if recovered_runs:
+        LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
+    return history_db
+
+
 def build_persistence_subsystem(
     *,
-    config: AppConfig,
+    history_db: HistoryDB,
     settings_store: SettingsStore | None = None,
-    history_db: HistoryDB | None = None,
 ) -> RuntimePersistenceSubsystem:
-    if history_db is None:
-        history_db = HistoryDB(config.logging.history_db_path)
-        try:
-            recovered_runs = history_db.recover_stale_recording_runs()
-        except Exception:
-            LOGGER.error("Failed during early startup DB operations; closing DB.", exc_info=True)
-            history_db.close()
-            raise
-        if recovered_runs:
-            LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
     return RuntimePersistenceSubsystem(
         history_db=history_db,
         query_service=HistoryRunQueryService(history_db, settings_store),
@@ -111,11 +114,11 @@ def build_ingress_subsystem(
 
 def build_settings_subsystem(
     *,
-    persistence: RuntimePersistenceSubsystem,
+    history_db: HistoryDB,
     gps_enabled: bool,
 ) -> RuntimeSettingsSubsystem:
     return RuntimeSettingsSubsystem(
-        settings_store=SettingsStore(db=persistence.history_db),
+        settings_store=SettingsStore(db=history_db),
         analysis_settings=AnalysisSettingsStore(),
         gps_monitor=GPSSpeedMonitor(gps_enabled=gps_enabled),
     )

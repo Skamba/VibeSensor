@@ -1,7 +1,7 @@
-"""Shared JSON sanitisation utilities.
+"""Shared JSON sanitisation and merging utilities.
 
-Provides a single implementation of numpy-aware, non-finite-float
-sanitisation used by both the WebSocket hub and the history database.
+Provides numpy-aware non-finite-float sanitisation and recursive
+dict-merge used across config loading, WebSocket hub, and history.
 """
 
 from __future__ import annotations
@@ -10,9 +10,10 @@ import json
 import logging
 import math
 
-from .json_types import JsonValue
+from .json_types import JsonObject, JsonValue, is_json_object
 
 __all__ = [
+    "deep_merge",
     "safe_json_dumps",
     "safe_json_loads",
     "sanitize_for_json",
@@ -110,3 +111,27 @@ def safe_json_loads(value: str | None, *, context: str) -> JsonValue | None:
     except json.JSONDecodeError:
         LOGGER.warning("Skipping invalid JSON payload while reading %s", context, exc_info=True)
         return None
+
+
+def deep_merge(base: JsonObject, override: JsonObject) -> JsonObject:
+    """Recursively merge *override* into *base* (new dict, no mutation).
+
+    - Nested dicts are merged recursively.
+    - ``None`` overrides for existing dict sections are logged and skipped
+      (YAML ``key:`` with no value produces ``None``).
+    - Scalar/list values in *override* replace the *base* value.
+    """
+    merged: JsonObject = dict(base)
+    for key, value in override.items():
+        existing = merged.get(key)
+        if is_json_object(value) and is_json_object(existing):
+            merged[key] = deep_merge(existing, value)
+        elif value is None and is_json_object(existing):
+            LOGGER.warning(
+                "Config key %r is null; keeping default section. "
+                "Did you mean to leave the section empty?",
+                key,
+            )
+        else:
+            merged[key] = value
+    return merged

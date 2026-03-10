@@ -1,3 +1,4 @@
+import type { FeatureDepsBase } from "../feature_deps_base";
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { EspFlashStatusPayload } from "../../api/types";
 import {
@@ -9,11 +10,7 @@ import {
   startEspFlash,
 } from "../../api/settings";
 
-export interface EspFlashFeatureDeps {
-  els: UiDomElements;
-  t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
-}
+export interface EspFlashFeatureDeps extends FeatureDepsBase {}
 
 export interface EspFlashFeature {
   bindHandlers(): void;

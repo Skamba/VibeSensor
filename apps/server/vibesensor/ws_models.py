@@ -3,6 +3,11 @@
 These models define the versioned schema for server→UI real-time messages.
 The ``schema_version`` field lets frontend and backend evolve independently
 while catching drift in CI via the exported JSON Schema artifact.
+
+Source of truth: ``payload_types.py`` TypedDicts define the runtime payload
+shapes.  These Pydantic models must stay field-aligned with their TypedDict
+counterparts — the alignment is enforced by
+``tests/hygiene/test_ws_payload_alignment.py``.
 """
 
 from __future__ import annotations
