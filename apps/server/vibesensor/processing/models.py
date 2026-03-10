@@ -8,7 +8,7 @@ import numpy.typing as npt
 
 from vibesensor.core.vibration_strength import VibrationStrengthMetrics
 
-from ..payload_types import AxisPeak, MetricsPayload
+from ..payload_types import AxisPeak, ClientMetrics
 
 FloatArray: TypeAlias = npt.NDArray[np.float32]
 IntIndexArray: TypeAlias = npt.NDArray[np.intp]
@@ -64,7 +64,7 @@ class ProcessorStats:
 class CachedMetricsHit:
     """Fast-path result when the latest metrics already match current input."""
 
-    metrics: MetricsPayload
+    metrics: ClientMetrics
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,7 +85,7 @@ class MetricsComputationResult:
     client_id: str
     sample_rate_hz: int
     ingest_generation: int
-    metrics: MetricsPayload
+    metrics: ClientMetrics
     spectrum_by_axis: SpectrumByAxis
     strength_metrics: VibrationStrengthMetrics
     has_fft_data: bool

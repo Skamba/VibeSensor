@@ -20,11 +20,11 @@ from .fft import (
     top_peaks,
 )
 from .models import (
+    ClientMetrics,
     FftSpectrumResult,
     FloatArray,
     IntIndexArray,
     MetricsComputationResult,
-    MetricsPayload,
     MetricsSnapshot,
     ProcessorConfig,
     SpectrumByAxis,
@@ -90,12 +90,12 @@ class SignalMetricsComputer:
         time_window = medfilt3(snapshot.time_window)
         time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
 
-        metrics: MetricsPayload = {}
+        metrics: ClientMetrics = {}
         if time_window_detrended.shape[1] > 0:
             rms_vals = np.sqrt(np.mean(np.square(time_window_detrended, dtype=np.float64), axis=1))
             p2p_vals = np.max(time_window_detrended, axis=1) - np.min(time_window_detrended, axis=1)
             for axis_idx, axis in enumerate(AXES):
-                metrics[axis] = {
+                metrics[axis] = {  # type: ignore[literal-required]
                     "rms": _finite_or_zero(float(rms_vals[axis_idx])),
                     "p2p": _finite_or_zero(float(p2p_vals[axis_idx])),
                     "peaks": [],
@@ -129,17 +129,16 @@ class SignalMetricsComputer:
                 default_axis_metrics: AxisMetrics = {"rms": 0.0, "p2p": 0.0, "peaks": []}
                 axis_metrics = cast(
                     "AxisMetrics",
-                    metrics.setdefault(axis, default_axis_metrics),
+                    metrics.setdefault(axis, default_axis_metrics),  # type: ignore[misc]
                 )
                 axis_metrics["peaks"] = fft_result["axis_peaks"][axis]
 
             if fft_result["axis_amp_slices"]:
                 combined_amp = fft_result["combined_amp"]
                 strength_metrics = fft_result["strength_metrics"]
-                combined_metrics = cast("CombinedMetrics", metrics["combined"])
+                combined_metrics = metrics["combined"]
                 combined_metrics["peaks"] = list(strength_metrics["top_peaks"])
                 combined_metrics["strength_metrics"] = strength_metrics
-                metrics["strength_metrics"] = strength_metrics
                 spectrum_by_axis["combined"] = {
                     "freq": freq_slice,
                     "amp": combined_amp,

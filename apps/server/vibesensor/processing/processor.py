@@ -38,10 +38,10 @@ from .buffers import ClientBuffer
 from .compute import SignalMetricsComputer
 from .models import (
     CachedMetricsHit,
+    ClientMetrics,
     FftSpectrumResult,
     FloatArray,
     IntIndexArray,
-    MetricsPayload,
     ProcessorConfig,
 )
 from .payload import SpectrumSeriesPayload
@@ -166,7 +166,7 @@ class SignalProcessor:
     ) -> FftSpectrumResult:
         return self._metrics.compute_fft_spectrum(fft_block, sample_rate_hz)
 
-    def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> MetricsPayload:
+    def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> ClientMetrics:
         plan = self._store.snapshot_for_compute(client_id, sample_rate_hz=sample_rate_hz)
         if plan is None:
             return {}
@@ -179,7 +179,7 @@ class SignalProcessor:
         self,
         client_ids: list[str],
         sample_rates_hz: dict[str, int] | None = None,
-    ) -> dict[str, MetricsPayload]:
+    ) -> dict[str, ClientMetrics]:
         rates = sample_rates_hz or {}
         t0 = time.monotonic()
 
@@ -254,8 +254,8 @@ class SignalProcessor:
         rates: dict[str, int],
         *,
         serial_fallback: bool = False,
-    ) -> dict[str, MetricsPayload]:
-        result: dict[str, MetricsPayload] = {}
+    ) -> dict[str, ClientMetrics]:
+        result: dict[str, ClientMetrics] = {}
         for client_id in client_ids:
             try:
                 result[client_id] = self.compute_metrics(
