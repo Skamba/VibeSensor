@@ -127,7 +127,6 @@ class TestMypyEnforcement:
             "vibesensor/order_bands.py",
             "vibesensor/peak_classification.py",
             "vibesensor/severity.py",
-            "vibesensor/ws_models.py",
             "vibesensor/report_i18n.py",
             "vibesensor/analysis_persistence.py",
             "vibesensor/analysis_settings.py",

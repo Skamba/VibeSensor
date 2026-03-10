@@ -51,7 +51,7 @@ apps/server/tests/
 | `vibesensor/history_db/*`, `history_services/*`, `runlog.py` | `apps/server/tests/history/` |
 | `vibesensor/update/*`, `firmware_cache.py`, `esp_flash_manager.py`, `release_fetcher.py` | `apps/server/tests/update/` |
 | `vibesensor/processing/*` | `apps/server/tests/processing/` |
-| `vibesensor/ws_hub.py`, `ws_models.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
+| `vibesensor/ws_hub.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
 | `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
 | `vibesensor/order_bands.py`, `peak_classification.py`, `severity.py` | `apps/server/tests/diagnostics/` |
 | `vibesensor/domain_models.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |

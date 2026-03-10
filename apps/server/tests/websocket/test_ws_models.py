@@ -1,4 +1,4 @@
-"""Tests for WS payload models and payload optimization (freq deduplication)."""
+"""Tests for WS schema export and payload optimization (freq deduplication)."""
 
 from __future__ import annotations
 
@@ -12,89 +12,9 @@ from typing import Any
 import numpy as np
 import pytest
 
+from vibesensor.payload_types import SCHEMA_VERSION
 from vibesensor.processing import ClientBuffer, SignalProcessor
-from vibesensor.ws_models import (
-    SCHEMA_VERSION,
-    LiveWsPayload,
-    SpectraPayload,
-    SpectrumSeries,
-)
 from vibesensor.ws_schema_export import export_schema
-
-# ---------------------------------------------------------------------------
-# ws_models.py – Pydantic model tests
-# ---------------------------------------------------------------------------
-
-
-class TestLiveWsPayloadModel:
-    def test_minimal_payload(self) -> None:
-        payload = LiveWsPayload(server_time="2025-01-01T00:00:00Z")
-        d = payload.model_dump()
-        assert d["schema_version"] == SCHEMA_VERSION
-        assert d["server_time"] == "2025-01-01T00:00:00Z"
-        assert d["speed_mps"] is None
-        assert d["clients"] == []
-
-    def test_schema_version_present(self) -> None:
-        payload = LiveWsPayload(server_time="2025-01-01T00:00:00Z")
-        assert payload.schema_version == SCHEMA_VERSION
-
-    def test_spectra_payload_round_trip(self) -> None:
-        series = SpectrumSeries(
-            x=[0.1, 0.2],
-            y=[0.3, 0.4],
-            z=[0.5, 0.6],
-            combined_spectrum_amp_g=[0.01, 0.02],
-            strength_metrics={"vibration_strength_db": 12.0},
-        )
-        spectra = SpectraPayload(
-            freq=[10.0, 20.0],
-            clients={"sensor1": series},
-        )
-        d = spectra.model_dump()
-        assert d["freq"] == [10.0, 20.0]
-        assert "sensor1" in d["clients"]
-        assert d["clients"]["sensor1"]["combined_spectrum_amp_g"] == [0.01, 0.02]
-        # per-client freq defaults to None (not included when shared)
-        assert d["clients"]["sensor1"]["freq"] is None
-
-    def test_per_client_freq_only_when_set(self) -> None:
-        # When freq is set on SpectrumSeries, it should appear in dump
-        series = SpectrumSeries(
-            combined_spectrum_amp_g=[0.01],
-            strength_metrics={},
-            freq=[99.0],
-        )
-        d = series.model_dump()
-        assert d["freq"] == [99.0]
-
-    def test_json_schema_export(self) -> None:
-        schema = LiveWsPayload.model_json_schema()
-        assert "properties" in schema
-        assert "schema_version" in schema["properties"]
-        assert "server_time" in schema["properties"]
-
-    def test_full_payload_serializable(self) -> None:
-        payload = LiveWsPayload(
-            server_time="2025-01-01T00:00:00Z",
-            speed_mps=12.5,
-            clients=[{"id": "aaa", "name": "front"}],
-            spectra=SpectraPayload(
-                freq=[10.0, 20.0, 30.0],
-                clients={
-                    "aaa": SpectrumSeries(
-                        combined_spectrum_amp_g=[0.01, 0.02, 0.03],
-                        strength_metrics={"vibration_strength_db": 5.0},
-                    ),
-                },
-            ),
-        )
-        text = json.dumps(payload.model_dump())
-        parsed = json.loads(text)
-        assert parsed["schema_version"] == SCHEMA_VERSION
-        assert parsed["spectra"]["freq"] == [10.0, 20.0, 30.0]
-        assert parsed["spectra"]["clients"]["aaa"]["freq"] is None
-
 
 # ---------------------------------------------------------------------------
 # Schema export check
