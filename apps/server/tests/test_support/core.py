@@ -7,6 +7,7 @@ import hashlib
 import math
 import re
 import time
+from collections.abc import Callable
 from functools import cache
 from io import BytesIO
 from typing import Any
@@ -301,23 +302,25 @@ def engine_hz(
 # ---------------------------------------------------------------------------
 
 
-def wait_until(predicate: object, timeout_s: float = 2.0, step_s: float = 0.02) -> bool:
+def wait_until(
+    predicate: Callable[[], object], timeout_s: float = 2.0, step_s: float = 0.02
+) -> bool:
     """Poll *predicate* until it returns truthy, or *timeout_s* expires."""
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
-        if predicate():  # type: ignore[operator]
+        if predicate():
             return True
         time.sleep(step_s)
     return False
 
 
 async def async_wait_until(
-    predicate: object, timeout_s: float = 2.0, step_s: float = 0.02
+    predicate: Callable[[], object], timeout_s: float = 2.0, step_s: float = 0.02
 ) -> bool:
     """Async version of :func:`wait_until` — yields to the event loop between polls."""
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
-        if predicate():  # type: ignore[operator]
+        if predicate():
             return True
         await asyncio.sleep(step_s)
     return False
