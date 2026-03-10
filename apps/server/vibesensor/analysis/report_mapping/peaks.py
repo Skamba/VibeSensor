@@ -6,11 +6,11 @@ from collections import defaultdict
 from collections.abc import Callable
 from statistics import mean as _mean
 
-from ..report.report_data import PeakRow
-from ..runlog import as_float_or_none as _as_float
-from ._types import SummaryData
-from .plot_peak_table import PeakTableRow
-from .report_mapping_common import order_label_human, peak_classification_text
+from ...report.report_data import PeakRow
+from ...runlog import as_float_or_none as _as_float
+from .._types import SummaryData
+from ..plot_peak_table import PeakTableRow
+from .common import order_label_human, peak_classification_text
 
 
 def build_peak_rows_from_plots(

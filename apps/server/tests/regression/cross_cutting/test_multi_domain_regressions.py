@@ -16,8 +16,8 @@ import pytest
 from vibesensor.analysis.findings.intensity import _sensor_intensity_by_location
 from vibesensor.analysis.helpers import _format_duration, _speed_bin_label
 from vibesensor.analysis.phase_segmentation import segment_run_phases
-from vibesensor.analysis.report_mapping_common import order_label_human
-from vibesensor.analysis.report_mapping_common import resolve_i18n as resolve_i18n_impl
+from vibesensor.analysis.report_mapping.common import order_label_human
+from vibesensor.analysis.report_mapping.common import resolve_i18n as resolve_i18n_impl
 from vibesensor.analysis.summary_phases import compute_run_timing
 from vibesensor.analysis.test_plan import _weighted_speed_window_label
 from vibesensor.analysis.top_cause_selection import confidence_label
