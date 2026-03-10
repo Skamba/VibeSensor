@@ -7,6 +7,15 @@ from vibesensor.sensor_units import get_accel_scale_g_per_lsb
 
 from ..analysis_settings import AnalysisSettingsStore
 from ..config import AppConfig
+from ..constants import (
+    FFT_N,
+    FFT_UPDATE_HZ,
+    SPECTRUM_MAX_HZ,
+    SPECTRUM_MIN_HZ,
+    UI_HEAVY_PUSH_HZ,
+    UI_PUSH_HZ,
+    WAVEFORM_DISPLAY_HZ,
+)
 from ..esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
@@ -79,10 +88,10 @@ def build_runtime(config: AppConfig) -> RuntimeState:
     processor = SignalProcessor(
         sample_rate_hz=config.processing.sample_rate_hz,
         waveform_seconds=config.processing.waveform_seconds,
-        waveform_display_hz=config.processing.waveform_display_hz,
-        fft_n=config.processing.fft_n,
-        spectrum_min_hz=config.processing.spectrum_min_hz,
-        spectrum_max_hz=config.processing.spectrum_max_hz,
+        waveform_display_hz=WAVEFORM_DISPLAY_HZ,
+        fft_n=FFT_N,
+        spectrum_min_hz=SPECTRUM_MIN_HZ,
+        spectrum_max_hz=SPECTRUM_MAX_HZ,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         worker_pool=worker_pool,
     )
@@ -97,9 +106,9 @@ def build_runtime(config: AppConfig) -> RuntimeState:
     health_state = RuntimeHealthState()
     processing_loop = ProcessingLoop(
         state=processing_loop_state,
-        fft_update_hz=config.processing.fft_update_hz,
+        fft_update_hz=FFT_UPDATE_HZ,
         sample_rate_hz=config.processing.sample_rate_hz,
-        fft_n=config.processing.fft_n,
+        fft_n=FFT_N,
         registry=registry,
         processor=processor,
         control_plane=control_plane,
@@ -110,8 +119,8 @@ def build_runtime(config: AppConfig) -> RuntimeState:
     ws_hub = WebSocketHub()
     ws_broadcast = WsBroadcastService(
         cache=ws_cache,
-        ui_push_hz=config.processing.ui_push_hz,
-        ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
+        ui_push_hz=UI_PUSH_HZ,
+        ui_heavy_push_hz=UI_HEAVY_PUSH_HZ,
         registry=registry,
         processor=processor,
         gps_monitor=gps_monitor,
@@ -128,7 +137,7 @@ def build_runtime(config: AppConfig) -> RuntimeState:
             no_data_timeout_s=config.logging.no_data_timeout_s,
             sensor_model=config.logging.sensor_model,
             default_sample_rate_hz=config.processing.sample_rate_hz,
-            fft_window_size_samples=config.processing.fft_n,
+            fft_window_size_samples=FFT_N,
             fft_window_type="hann",
             peak_picker_method="canonical_strength_metrics_module",
             accel_scale_g_per_lsb=accel_scale_g_per_lsb,
@@ -156,7 +165,6 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         ap_con_name=config.ap.con_name,
         wifi_ifname=config.ap.ifname,
         rollback_dir=str(config.update.rollback_dir),
-        server_repo=config.update.server_repo,
     )
 
     runtime = RuntimeState(

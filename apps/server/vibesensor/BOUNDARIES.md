@@ -54,8 +54,8 @@ Use this when changing backend code without scanning the whole package.
   tire_aspect, etc.) recomputed from the active car's aspects.  Lives at package root
   (not inside `analysis/`) because `runtime/` and `metrics_log/` depend on it — moving
   it into `analysis/` would create a circular dependency.
-- `history_db/_settings.py`: raw DB-level `get_setting()`/`set_setting()` KV operations.
-- `settings_store.py` owns semantic meaning; delegates persistence to `history_db/_settings`.
+- `history_db/`: `get_settings_snapshot()`/`set_settings_snapshot()` persist settings as a single JSON blob.
+- `settings_store.py` owns semantic meaning; delegates persistence to `history_db`.
 
 ## API Surface
 - `routes/` is the HTTP and WebSocket boundary, assembled by `routes/__init__.py`.

@@ -47,13 +47,6 @@ DEFAULT_CONFIG: JsonObject = {
     "processing": {
         "sample_rate_hz": 800,
         "waveform_seconds": 8,
-        "waveform_display_hz": 120,
-        "ui_push_hz": 10,
-        "ui_heavy_push_hz": 4,
-        "fft_update_hz": 4,
-        "fft_n": 2048,
-        "spectrum_min_hz": 5.0,
-        "spectrum_max_hz": 200,
         "client_ttl_seconds": 120,
         "accel_scale_g_per_lsb": None,
     },
@@ -73,7 +66,6 @@ DEFAULT_CONFIG: JsonObject = {
     },
     "gps": {"gps_enabled": True, "gpsd_host": "127.0.0.1", "gpsd_port": 2947},
     "update": {
-        "server_repo": "Skamba/VibeSensor",
         "rollback_dir": "/var/lib/vibesensor/rollback",
     },
 }

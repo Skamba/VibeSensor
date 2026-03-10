@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import logging
 import subprocess
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -44,16 +43,8 @@ class CommandResult:
     stderr: str
 
 
-class CommandRunner(ABC):
-    """Abstract base for running system commands (real subprocess or test stub)."""
-
-    @abstractmethod
-    def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult:
-        """Execute *argv* and return a :class:`CommandResult`."""
-
-
-class SubprocessRunner(CommandRunner):
-    """Default :class:`CommandRunner` that executes real subprocesses."""
+class CommandRunner:
+    """Runs system commands via subprocess. Subclass for test stubs."""
 
     def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult:
         """Execute *argv* as a subprocess and return the result."""
@@ -569,7 +560,7 @@ def run_self_heal(config_path: Path, diagnostics_only: bool = False) -> int:
     cfg = load_config(config_path)
     ap = cfg.ap
     self_heal = cfg.ap.self_heal
-    runner = SubprocessRunner()
+    runner = CommandRunner()
     store = HealStateStore(self_heal.state_file)
     return run_self_heal_once(ap, self_heal, runner, store, diagnostics_only=diagnostics_only)
 

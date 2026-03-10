@@ -17,6 +17,7 @@ from collections.abc import Coroutine
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from ..constants import UI_PUSH_HZ
 from ..udp_data_rx import start_udp_data_receiver
 
 if TYPE_CHECKING:
@@ -130,7 +131,7 @@ class LifecycleManager:
             self.tasks.append(
                 self._start_task(
                     self._runtime.ws_hub.run(
-                        self._runtime.config.processing.ui_push_hz,
+                        UI_PUSH_HZ,
                         self._runtime.ws_broadcast.build_payload,
                         on_tick=self._runtime.ws_broadcast.on_tick,
                     ),

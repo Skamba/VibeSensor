@@ -11,9 +11,42 @@ from typing import Final
 from vibesensor.vibration_strength import PEAK_BANDWIDTH_HZ as PEAK_BANDWIDTH_HZ
 from vibesensor.vibration_strength import PEAK_SEPARATION_HZ as PEAK_SEPARATION_HZ
 
+# ---------------------------------------------------------------------------
+# Processing / DSP constants — hardware-tied, not user-configurable
+# ---------------------------------------------------------------------------
+WAVEFORM_DISPLAY_HZ: Final[int] = 120
+"""Decimated sample rate sent to the UI waveform chart (Hz)."""
+
+UI_PUSH_HZ: Final[int] = 10
+"""Frequency of lightweight metric pushes to the UI (Hz)."""
+
+UI_HEAVY_PUSH_HZ: Final[int] = 4
+"""Frequency of heavy (FFT spectrum) pushes to the UI (Hz)."""
+
+FFT_UPDATE_HZ: Final[int] = 4
+"""FFT recomputation rate (Hz)."""
+
+FFT_N: Final[int] = 2048
+"""FFT window size (samples, power of 2)."""
+
+SPECTRUM_MIN_HZ: Final[float] = 5.0
+"""Lower frequency bound for the spectrum display (Hz)."""
+
+SPECTRUM_MAX_HZ: Final[float] = 200.0
+"""Upper frequency bound for the spectrum display (Hz)."""
+
+# ---------------------------------------------------------------------------
+# Repository identity
+# ---------------------------------------------------------------------------
+GITHUB_REPO: Final[str] = "Skamba/VibeSensor"
+"""GitHub owner/repo slug — single source of truth for updater and firmware cache."""
+
 __all__ = [
     "CONFIDENCE_CEILING",
     "CONFIDENCE_FLOOR",
+    "FFT_N",
+    "FFT_UPDATE_HZ",
+    "GITHUB_REPO",
     "CONSTANT_SPEED_STDDEV_KMH",
     "FREQUENCY_EPSILON_HZ",
     "HARMONIC_2X",
@@ -40,11 +73,16 @@ __all__ = [
     "SECONDS_PER_MINUTE",
     "SILENCE_DB",
     "SNR_LOG_DIVISOR",
+    "SPECTRUM_MAX_HZ",
+    "SPECTRUM_MIN_HZ",
     "SPEED_BIN_WIDTH_KMH",
     "SPEED_COVERAGE_MIN_PCT",
     "SPEED_MIN_POINTS",
     "STEADY_SPEED_RANGE_KMH",
     "STEADY_SPEED_STDDEV_KMH",
+    "UI_HEAVY_PUSH_HZ",
+    "UI_PUSH_HZ",
+    "WAVEFORM_DISPLAY_HZ",
     "WEAK_SPATIAL_DOMINANCE_THRESHOLD",
 ]
 

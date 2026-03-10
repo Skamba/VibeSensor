@@ -64,14 +64,9 @@ LOGGER = logging.getLogger(__name__)
 _PROCESSING_POS_FIELDS: tuple[str, ...] = (
     "sample_rate_hz",
     "waveform_seconds",
-    "waveform_display_hz",
-    "ui_push_hz",
-    "ui_heavy_push_hz",
-    "fft_update_hz",
     "client_ttl_seconds",
 )
 _PROCESSING_POS_MIN: int = 1
-_MAX_FFT_N: int = 65536
 _MAX_BUFFER_SAMPLES: int = 524_288
 
 VALID_24GHZ_CHANNELS: frozenset[int] = frozenset(range(1, 15))  # 1-14
@@ -182,17 +177,10 @@ class UDPConfig:
 
 @dataclass(slots=True)
 class ProcessingConfig:
-    """Signal processing parameters (sample rate, FFT size, UI push rates, etc.)."""
+    """Signal processing parameters (sample rate, buffer size, client TTL)."""
 
     sample_rate_hz: int
     waveform_seconds: int
-    waveform_display_hz: int
-    ui_push_hz: int
-    ui_heavy_push_hz: int
-    fft_update_hz: int
-    fft_n: int
-    spectrum_min_hz: float
-    spectrum_max_hz: float
     client_ttl_seconds: int
     accel_scale_g_per_lsb: float | None
 
@@ -210,73 +198,7 @@ class ProcessingConfig:
                 )
                 object.__setattr__(self, field_name, _PROCESSING_POS_MIN)
 
-        # --- spectrum_max_hz positive float guard -----------------------------------
-        if self.spectrum_max_hz < 1.0:
-            LOGGER.warning(
-                "processing.spectrum_max_hz=%s is below minimum 1.0 — clamped to 1.0",
-                self.spectrum_max_hz,
-            )
-            object.__setattr__(self, "spectrum_max_hz", 1.0)
-
-        # --- fft_n must be >= 16 and a power of 2 ----------------------------------
-        if self.fft_n < 16:
-            LOGGER.warning(
-                "processing.fft_n=%s is below minimum 16 — clamped to 16",
-                self.fft_n,
-            )
-            object.__setattr__(self, "fft_n", 16)
-        elif self.fft_n & (self.fft_n - 1) != 0:
-            # Round up to next power of 2
-            next_pow2 = 1 << (self.fft_n - 1).bit_length()
-            LOGGER.warning(
-                "processing.fft_n=%s is not a power of 2 — rounded up to %s",
-                self.fft_n,
-                next_pow2,
-            )
-            object.__setattr__(self, "fft_n", next_pow2)
-
-        if self.fft_n > _MAX_FFT_N:
-            LOGGER.warning(
-                "processing.fft_n=%s exceeds maximum %s — clamped",
-                self.fft_n,
-                _MAX_FFT_N,
-            )
-            object.__setattr__(self, "fft_n", _MAX_FFT_N)
-
-        # --- spectrum_min_hz must be non-negative ----------------------------------
-        if self.spectrum_min_hz < 0:
-            LOGGER.warning(
-                "processing.spectrum_min_hz=%s is negative — clamped to 0",
-                self.spectrum_min_hz,
-            )
-            object.__setattr__(self, "spectrum_min_hz", 0.0)
-
-        # --- spectrum_max_hz must be below Nyquist (sample_rate_hz / 2) -------------
-        nyquist = self.sample_rate_hz / 2
-        if nyquist > 0 and self.spectrum_max_hz >= nyquist:
-            clamped = int(nyquist - 1) if nyquist > 1 else 1
-            LOGGER.warning(
-                "processing.spectrum_max_hz=%s >= Nyquist (%s) — clamped to %s",
-                self.spectrum_max_hz,
-                nyquist,
-                clamped,
-            )
-            object.__setattr__(self, "spectrum_max_hz", clamped)
-
-        # --- spectrum_min_hz must be < spectrum_max_hz --------------------------
-        if self.spectrum_min_hz >= self.spectrum_max_hz:
-            LOGGER.warning(
-                "processing.spectrum_min_hz=%s >= spectrum_max_hz=%s — "
-                "clamping spectrum_min_hz to 0",
-                self.spectrum_min_hz,
-                self.spectrum_max_hz,
-            )
-            object.__setattr__(self, "spectrum_min_hz", 0.0)
-
         # --- buffer memory bound: sample_rate_hz * waveform_seconds ----------------
-        # Each client allocates a 3×capacity float32 buffer.  Cap the per-client
-        # buffer at ~2 MB (524288 samples × 3 × 4 bytes = 6 MB) to avoid OOM on
-        # memory-constrained devices like the Pi 3A+ (512 MB).
         buffer_samples = self.sample_rate_hz * self.waveform_seconds
         if buffer_samples > _MAX_BUFFER_SAMPLES:
             clamped_seconds = max(1, _MAX_BUFFER_SAMPLES // self.sample_rate_hz)
@@ -347,9 +269,8 @@ class GPSConfig:
 
 @dataclass(slots=True)
 class UpdateConfig:
-    """Server auto-update configuration (GitHub repo and rollback directory)."""
+    """Server auto-update configuration (rollback directory)."""
 
-    server_repo: str
     rollback_dir: Path
 
 
@@ -510,25 +431,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                 processing_cfg["waveform_seconds"],
                 "processing.waveform_seconds",
             ),
-            waveform_display_hz=_coerce_int(
-                processing_cfg["waveform_display_hz"],
-                "processing.waveform_display_hz",
-            ),
-            ui_push_hz=_coerce_int(processing_cfg["ui_push_hz"], "processing.ui_push_hz"),
-            ui_heavy_push_hz=_coerce_int(
-                processing_cfg.get("ui_heavy_push_hz", 4),
-                "processing.ui_heavy_push_hz",
-            ),
-            fft_update_hz=_coerce_int(processing_cfg["fft_update_hz"], "processing.fft_update_hz"),
-            fft_n=_coerce_int(processing_cfg["fft_n"], "processing.fft_n"),
-            spectrum_min_hz=_coerce_float(
-                processing_cfg.get("spectrum_min_hz", 5.0),
-                "processing.spectrum_min_hz",
-            ),
-            spectrum_max_hz=_coerce_float(
-                processing_cfg["spectrum_max_hz"],
-                "processing.spectrum_max_hz",
-            ),
             client_ttl_seconds=_coerce_int(
                 processing_cfg.get("client_ttl_seconds", 120),
                 "processing.client_ttl_seconds",
@@ -580,7 +482,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             ),
         ),
         update=UpdateConfig(
-            server_repo=str(update_cfg.get("server_repo", default_update_cfg["server_repo"])),
             rollback_dir=Path(
                 str(update_cfg.get("rollback_dir", default_update_cfg["rollback_dir"])),
             ),
