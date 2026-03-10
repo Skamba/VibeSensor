@@ -56,21 +56,23 @@ class TestSafeMetric:
 
 
 class TestExtractStrengthData:
-    def test_with_root_strength_metrics(self) -> None:
+    def test_with_combined_strength_metrics(self) -> None:
         metrics = {
-            "strength_metrics": {
-                "vibration_strength_db": 22.0,
-                "strength_bucket": "l2",
-                "peak_amp_g": 0.15,
-                "noise_floor_amp_g": 0.003,
-                "top_peaks": [
-                    {
-                        "hz": 15.0,
-                        "amp": 0.12,
-                        "vibration_strength_db": 22.0,
-                        "strength_bucket": "l2",
-                    },
-                ],
+            "combined": {
+                "strength_metrics": {
+                    "vibration_strength_db": 22.0,
+                    "strength_bucket": "l2",
+                    "peak_amp_g": 0.15,
+                    "noise_floor_amp_g": 0.003,
+                    "top_peaks": [
+                        {
+                            "hz": 15.0,
+                            "amp": 0.12,
+                            "vibration_strength_db": 22.0,
+                            "strength_bucket": "l2",
+                        },
+                    ],
+                },
             },
         }
         sm, db_val, bucket, peak, floor, peaks = extract_strength_data(metrics)
@@ -91,12 +93,14 @@ class TestExtractStrengthData:
 
     def test_invalid_peak_skipped(self) -> None:
         metrics = {
-            "strength_metrics": {
-                "top_peaks": [
-                    {"hz": "bad", "amp": 0.1},  # non-numeric
-                    {"hz": 0, "amp": 0.1},  # zero hz
-                    {"hz": 10.0, "amp": float("nan")},  # nan amp
-                ],
+            "combined": {
+                "strength_metrics": {
+                    "top_peaks": [
+                        {"hz": "bad", "amp": 0.1},  # non-numeric
+                        {"hz": 0, "amp": 0.1},  # zero hz
+                        {"hz": 10.0, "amp": float("nan")},  # nan amp
+                    ],
+                },
             },
         }
         _, _, _, _, _, peaks = extract_strength_data(metrics)
@@ -104,8 +108,10 @@ class TestExtractStrengthData:
 
     def test_max_8_peaks(self) -> None:
         metrics = {
-            "strength_metrics": {
-                "top_peaks": [{"hz": float(i), "amp": 0.01} for i in range(1, 12)],
+            "combined": {
+                "strength_metrics": {
+                    "top_peaks": [{"hz": float(i), "amp": 0.01} for i in range(1, 12)],
+                },
             },
         }
         _, _, _, _, _, peaks = extract_strength_data(metrics)

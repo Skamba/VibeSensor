@@ -95,7 +95,6 @@ def _self_heal_cfg(
 ) -> APSelfHealConfig:
     return APSelfHealConfig(
         enabled=True,
-        interval_seconds=120,
         diagnostics_lookback_minutes=5,
         min_restart_interval_seconds=0,
         allow_disable_resolved_stub_listener=allow_disable_resolved_stub_listener,

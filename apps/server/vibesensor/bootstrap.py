@@ -11,7 +11,6 @@ from .esp_flash_manager import EspFlashManager
 from .runtime import RuntimeState
 from .runtime.builders import (
     build_ingress_subsystem,
-    build_lifecycle_manager,
     build_metrics_logger,
     build_persistence_subsystem,
     build_processing_subsystem,
@@ -21,6 +20,7 @@ from .runtime.builders import (
     create_history_db,
     resolve_accel_scale_g_per_lsb,
 )
+from .runtime.lifecycle import LifecycleManager
 
 
 def build_services(config: AppConfig) -> RuntimeState:
@@ -67,7 +67,7 @@ def build_services(config: AppConfig) -> RuntimeState:
         esp_flash_manager=esp_flash_manager,
         processing=processing,
         websocket=websocket,
-        lifecycle=build_lifecycle_manager(
+        lifecycle=LifecycleManager(
             config=config,
             ingress=ingress,
             settings=settings,

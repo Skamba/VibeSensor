@@ -11,13 +11,12 @@ Sub-modules
 from .exports import HistoryExportService
 from .helpers import async_require_run, require_analysis_ready, safe_filename, strip_internal_fields
 from .reports import HistoryReportService
-from .runs import HistoryRunDeleteService, HistoryRunQueryService
+from .runs import HistoryRunService
 
 __all__ = [
     "HistoryExportService",
     "HistoryReportService",
-    "HistoryRunDeleteService",
-    "HistoryRunQueryService",
+    "HistoryRunService",
     "async_require_run",
     "require_analysis_ready",
     "safe_filename",

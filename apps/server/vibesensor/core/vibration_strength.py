@@ -59,7 +59,6 @@ class StrengthPeak(TypedDict):
 
 
 class VibrationStrengthMetrics(TypedDict):
-    combined_spectrum_amp_g: list[float]
     vibration_strength_db: float
     peak_amp_g: float
     noise_floor_amp_g: float
@@ -69,7 +68,6 @@ class VibrationStrengthMetrics(TypedDict):
 
 def empty_vibration_strength_metrics() -> VibrationStrengthMetrics:
     return {
-        "combined_spectrum_amp_g": [],
         "vibration_strength_db": 0.0,
         "peak_amp_g": 0.0,
         "noise_floor_amp_g": 0.0,
@@ -276,9 +274,8 @@ def compute_vibration_strength_db(
     and returns dB strength for the dominant peak together with the full
     candidate list.
 
-    Returns a dict with keys: ``combined_spectrum_amp_g``,
-    ``vibration_strength_db``, ``peak_amp_g``, ``noise_floor_amp_g``,
-    ``strength_bucket``, ``top_peaks``.
+    Returns a dict with keys: ``vibration_strength_db``, ``peak_amp_g``,
+    ``noise_floor_amp_g``, ``strength_bucket``, ``top_peaks``.
     """
     n = min(len(freq_hz), len(combined_spectrum_amp_g_values))
     if n <= 0:
@@ -371,7 +368,6 @@ def compute_vibration_strength_db(
         peak_amp_g = 0.0
 
     return {
-        "combined_spectrum_amp_g": combined,
         "vibration_strength_db": top_db,
         "peak_amp_g": peak_amp_g,
         "noise_floor_amp_g": float(floor_strength),

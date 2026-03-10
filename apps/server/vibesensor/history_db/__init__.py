@@ -55,13 +55,6 @@ def _sanitize_for_storage(summary: JsonObject) -> JsonObject:
     return cleaned
 
 
-def _sanitize_for_read(raw: JsonObject) -> JsonObject:
-    """Strip internal-only keys when returning a persisted analysis."""
-    cleaned = dict(raw)
-    cleaned.pop("_report_template_data", None)
-    return cleaned
-
-
 class HistoryDB:
     """Thin wrapper around a SQLite database for run history."""
 
@@ -535,7 +528,7 @@ class HistoryDB:
         if analysis_json:
             parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
             if is_json_object(parsed_analysis):
-                entry["analysis"] = _sanitize_for_read(parsed_analysis)
+                entry["analysis"] = parsed_analysis
             else:
                 entry["analysis_corrupt"] = True
         if error:
@@ -668,7 +661,7 @@ class HistoryDB:
             return None
         if parsed is None:
             return None
-        return _sanitize_for_read(parsed)
+        return parsed
 
     def get_run_status(self, run_id: str) -> str | None:
         with self._cursor(commit=False) as cur:

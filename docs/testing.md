@@ -33,7 +33,7 @@ apps/server/tests/
 ├── processing/
 ├── protocol/
 ├── regression/
-│   └── {analysis,audits,cross_cutting,report,runtime}/
+│   └── {analysis,cross_cutting,report,runtime}/
 ├── report/
 ├── update/
 └── websocket/
@@ -73,10 +73,9 @@ Use cross-cutting directories when a test is intentionally broader than one pack
 
 Regression coverage is grouped by intent:
 
-- `regression/analysis/`: scoring, ranking, signal-selection, and analysis pipeline guardrails.
-- `regression/audits/`: audit-style tests that verify known findings or coverage gaps.
+- `regression/analysis/`: scoring, ranking, signal-selection, analysis pipeline guardrails, and coverage audits.
 - `regression/cross_cutting/`: failures that span multiple subsystems.
-- `regression/report/`: report rendering and report-data regressions.
+- `regression/report/`: report rendering, report-data regressions, and report pipeline audits.
 - `regression/runtime/`: runtime, history, API, queueing, and update-adjacent regressions.
 
 Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `report_helpers.py`, `report_analysis_integration.py`, `scenario_ground_truth.py`, `scenario_regression.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.

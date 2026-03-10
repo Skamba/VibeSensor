@@ -10,7 +10,10 @@ from pathlib import Path
 from ..json_types import JsonObject
 from .installer import UpdateInstaller, UpdateInstallerConfig
 from .models import UpdateJobStatus, UpdatePhase, UpdateRequest, UpdateState
-from .network import (
+from .releases import UpdateReleaseConfig, UpdateReleaseService
+from .runner import CommandRunner, UpdateCommandExecutor
+from .status import UpdateRuntimeDetailsCollector, UpdateStateStore, UpdateStatusTracker
+from .wifi import (
     DNS_PROBE_HOST,
     DNS_READY_MIN_WAIT_S,
     DNS_RETRY_INTERVAL_S,
@@ -21,15 +24,17 @@ from .network import (
     UPLINK_CONNECT_WAIT_S,
     UPLINK_CONNECTION_NAME,
     UPLINK_FALLBACK_DNS,
+    UpdateWifiConfig,
+    UpdateWifiController,
     parse_wifi_diagnostics,
 )
-from .releases import UpdateReleaseConfig, UpdateReleaseService
-from .runner import CommandRunner, UpdateCommandExecutor
-from .runtime_details import UpdateRuntimeDetailsCollector
-from .status import UpdateStateStore, UpdateStatusTracker
-from .validation import UpdatePrerequisiteValidator, UpdateValidationConfig
-from .wifi import UpdateWifiConfig, UpdateWifiController
-from .workflow import UpdateServiceControlConfig, UpdateServiceController, UpdateWorkflow
+from .workflow import (
+    UpdatePrerequisiteValidator,
+    UpdateServiceControlConfig,
+    UpdateServiceController,
+    UpdateValidationConfig,
+    UpdateWorkflow,
+)
 
 LOGGER = logging.getLogger(__name__)
 

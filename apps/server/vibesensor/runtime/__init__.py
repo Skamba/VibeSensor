@@ -2,16 +2,14 @@
 
 Submodules
 ----------
-- ``_state``: top-level runtime assembly (RuntimeState dataclass)
+- ``state``: top-level runtime assembly (RuntimeState) and subsystem containers
 - ``builders``: focused subsystem builders
-- ``subsystems``: concern-owned runtime containers
 - ``processing_loop``: ProcessingLoop (async tick loop + failure tracking)
 - ``ws_broadcast``: WsBroadcastService (payload assembly + cache)
 - ``lifecycle``: LifecycleManager (start/stop + task management)
 - ``rotational_speeds``: Stateless rotational speed payload helpers
 """
 
-from ._state import RuntimeState
 from .health_state import RuntimeHealthState
 from .processing_loop import ProcessingLoopState
 from .rotational_speeds import (
@@ -20,11 +18,12 @@ from .rotational_speeds import (
 from .rotational_speeds import (
     rotational_basis_speed_source as _rotational_basis_speed_source,
 )
-from .subsystems import (
+from .state import (
     RuntimeIngressSubsystem,
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
     RuntimeSettingsSubsystem,
+    RuntimeState,
     RuntimeWebsocketSubsystem,
 )
 from .ws_broadcast import WsBroadcastCache

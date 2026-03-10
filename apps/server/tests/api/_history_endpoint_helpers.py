@@ -17,7 +17,7 @@ from vibesensor.analysis import summarize_run_data
 from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION
 from vibesensor.history_services.exports import HistoryExportService
 from vibesensor.history_services.reports import HistoryReportService
-from vibesensor.history_services.runs import HistoryRunDeleteService, HistoryRunQueryService
+from vibesensor.history_services.runs import HistoryRunService
 from vibesensor.routes import create_router
 from vibesensor.runtime import RuntimeHealthState
 
@@ -280,8 +280,7 @@ class FakeState:
         )
         self.persistence = SimpleNamespace(
             history_db=self.history_db,
-            query_service=HistoryRunQueryService(self.history_db, self.settings_store),
-            delete_service=HistoryRunDeleteService(self.history_db),
+            run_service=HistoryRunService(self.history_db, self.settings_store),
             report_service=HistoryReportService(self.history_db, self.settings_store),
             export_service=HistoryExportService(self.history_db),
         )

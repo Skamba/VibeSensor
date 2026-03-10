@@ -4,23 +4,22 @@ import logging
 import time
 from collections.abc import Callable
 from threading import RLock
-from typing import cast
 
 import numpy as np
 
+from ..core.vibration_strength import empty_vibration_strength_metrics
 from ..payload_types import (
     IntakeStatsPayload,
     RawSamplesErrorPayload,
     RawSamplesPayload,
-    StrengthMetricsPayload,
 )
 from .buffers import ClientBuffer
 from .models import (
     CachedMetricsHit,
+    ClientMetrics,
     DebugSpectrumRequest,
     FloatArray,
     MetricsComputationResult,
-    MetricsPayload,
     MetricsSnapshot,
     ProcessorConfig,
     ProcessorStats,
@@ -54,7 +53,7 @@ class SignalBufferStore:
             buf.samples_since_t0 = 0
             buf.latest_metrics = {}
             buf.latest_spectrum = {}
-            buf.latest_strength_metrics = {}
+            buf.latest_strength_metrics = empty_vibration_strength_metrics()
             buf.invalidate_caches()
             buf.ingest_generation += 1
         LOGGER.info("Flushed signal buffer for client %s after sensor reset", client_id)
@@ -161,7 +160,7 @@ class SignalBufferStore:
                 fft_block=fft_block,
             )
 
-    def store_metrics_result(self, result: MetricsComputationResult) -> MetricsPayload:
+    def store_metrics_result(self, result: MetricsComputationResult) -> ClientMetrics:
         """Commit a compute result back into shared state and update stats."""
         with self.lock:
             buf = self.buffers.get(result.client_id)
@@ -171,12 +170,10 @@ class SignalBufferStore:
                 buf.compute_sample_rate_hz = result.sample_rate_hz
                 if result.has_fft_data:
                     buf.latest_spectrum = result.spectrum_by_axis
-                    buf.latest_strength_metrics = cast(
-                        "StrengthMetricsPayload", result.strength_metrics
-                    )
+                    buf.latest_strength_metrics = result.strength_metrics
                 else:
                     buf.latest_spectrum = {}
-                    buf.latest_strength_metrics = {}
+                    buf.latest_strength_metrics = empty_vibration_strength_metrics()
                 buf.spectrum_generation += 1
                 buf.invalidate_caches()
             self.stats.last_compute_duration_s = result.duration_s

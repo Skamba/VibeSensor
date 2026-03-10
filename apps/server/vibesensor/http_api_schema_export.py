@@ -46,8 +46,7 @@ def _build_openapi_app() -> FastAPI:
         metrics_logger=placeholder,
         persistence=SimpleNamespace(
             history_db=placeholder,
-            query_service=placeholder,
-            delete_service=placeholder,
+            run_service=placeholder,
             report_service=placeholder,
             export_service=placeholder,
         ),

@@ -16,7 +16,7 @@ from ..api_models import (
 from ._helpers import domain_errors_to_http
 
 if TYPE_CHECKING:
-    from ..runtime.subsystems import RuntimePersistenceSubsystem
+    from ..runtime.state import RuntimePersistenceSubsystem
 
 
 def create_history_routes(
@@ -24,8 +24,7 @@ def create_history_routes(
 ) -> APIRouter:
     """Create and return the run-history / report API routes."""
     router = APIRouter()
-    query_service = persistence.query_service
-    delete_service = persistence.delete_service
+    run_service = persistence.run_service
     report_service = persistence.report_service
     export_service = persistence.export_service
 
@@ -33,12 +32,12 @@ def create_history_routes(
 
     @router.get("/api/history", response_model=HistoryListResponse)
     async def get_history() -> HistoryListResponse:
-        return HistoryListResponse(runs=await query_service.list_runs())
+        return HistoryListResponse(runs=await run_service.list_runs())
 
     @router.get("/api/history/{run_id}", response_model=HistoryRunResponse)
     async def get_history_run(run_id: str) -> HistoryRunResponse:
         with domain_errors_to_http():
-            return HistoryRunResponse(**await query_service.get_run(run_id))
+            return HistoryRunResponse(**await run_service.get_run(run_id))
 
     @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
     async def get_history_insights(
@@ -46,15 +45,18 @@ def create_history_routes(
         lang: str | None = Query(default=None),
     ) -> HistoryInsightsResponse | JSONResponse:
         with domain_errors_to_http():
-            result = await query_service.get_insights(run_id, requested_lang=lang)
-        if result.status_code != 200:
-            return JSONResponse(status_code=result.status_code, content=result.payload)
-        return HistoryInsightsResponse(**result.payload)
+            result = await run_service.get_insights(run_id, requested_lang=lang)
+        if result is None:
+            return JSONResponse(
+                status_code=202,
+                content={"run_id": run_id, "status": "analyzing"},
+            )
+        return HistoryInsightsResponse(**result)
 
     @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)
     async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:
         with domain_errors_to_http():
-            return DeleteHistoryRunResponse(**await delete_service.delete_run(run_id))
+            return DeleteHistoryRunResponse(**await run_service.delete_run(run_id))
 
     # -- report PDF ------------------------------------------------------------
 

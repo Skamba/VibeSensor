@@ -16,8 +16,8 @@ Recording stops
     → summarize_run_data() [vibesensor.analysis.summary_builder]
       → summary_phases.py / summary_suitability.py / summary_payload.py
       → findings/, ranking.py, top_cause_selection.py, plot_data.py
-    → map_summary() [vibesensor.analysis.report_mapping_pipeline]
-      → report_mapping_actions.py / report_mapping_peaks.py / report_mapping_systems.py
+    → map_summary() [vibesensor.report.mapping.pipeline]
+      → mapping/actions.py / mapping/peaks.py / mapping/systems.py
     → store_analysis() [vibesensor.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.routes.history]
@@ -86,6 +86,6 @@ needs:
 2. Add a corresponding field to `ReportTemplateData` in
    `vibesensor.report.report_data`.
 3. Populate the new field in `map_summary()` in
-   `vibesensor.analysis.report_mapping_pipeline`.
+   `vibesensor.report.mapping.pipeline`.
 4. Render the new field through `pdf_engine.py`, usually by wiring it into the relevant page or section module under `vibesensor.report`.
 5. Never add analysis logic to the renderer package — always pre-compute.

@@ -136,7 +136,7 @@ def _make_state(
     ui_heavy_push_hz: int = 4,
 ) -> RuntimeState:
     import vibesensor.runtime as runtime_module
-    from vibesensor.runtime.builders import build_lifecycle_manager
+    from vibesensor.runtime.lifecycle import LifecycleManager
     from vibesensor.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
     from vibesensor.runtime.ws_broadcast import WsBroadcastCache, WsBroadcastService
 
@@ -153,8 +153,7 @@ def _make_state(
     )
     persistence = runtime_module.RuntimePersistenceSubsystem(  # type: ignore[arg-type]
         history_db=_SENTINEL,
-        query_service=_SENTINEL,
-        delete_service=_SENTINEL,
+        run_service=_SENTINEL,
         report_service=_SENTINEL,
         export_service=_SENTINEL,
     )
@@ -199,7 +198,7 @@ def _make_state(
         esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
         processing=processing,
         websocket=websocket,
-        lifecycle=build_lifecycle_manager(
+        lifecycle=LifecycleManager(
             config=config,  # type: ignore[arg-type]
             ingress=ingress,
             settings=settings,

@@ -863,21 +863,7 @@
             "title": "Last Seen Age Ms"
           },
           "latest_metrics": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/AxisMetrics"
-                },
-                {
-                  "$ref": "#/components/schemas/CombinedMetrics"
-                },
-                {
-                  "$ref": "#/components/schemas/VibrationStrengthMetrics"
-                }
-              ]
-            },
-            "title": "Latest Metrics",
-            "type": "object"
+            "$ref": "#/components/schemas/ClientMetrics"
           },
           "location": {
             "title": "Location",
@@ -958,6 +944,24 @@
           "locations"
         ],
         "title": "ClientLocationsResponse",
+        "type": "object"
+      },
+      "ClientMetrics": {
+        "properties": {
+          "combined": {
+            "$ref": "#/components/schemas/CombinedMetrics"
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMetrics"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMetrics"
+          },
+          "z": {
+            "$ref": "#/components/schemas/AxisMetrics"
+          }
+        },
+        "title": "ClientMetrics",
         "type": "object"
       },
       "ClientsResponse": {
@@ -3160,13 +3164,6 @@
       },
       "VibrationStrengthMetrics": {
         "properties": {
-          "combined_spectrum_amp_g": {
-            "items": {
-              "type": "number"
-            },
-            "title": "Combined Spectrum Amp G",
-            "type": "array"
-          },
           "noise_floor_amp_g": {
             "title": "Noise Floor Amp G",
             "type": "number"
@@ -3199,7 +3196,6 @@
           }
         },
         "required": [
-          "combined_spectrum_amp_g",
           "vibration_strength_db",
           "peak_amp_g",
           "noise_floor_amp_g",

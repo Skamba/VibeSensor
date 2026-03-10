@@ -4,10 +4,17 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from ...analysis._types import (
+    CandidateFinding,
+    Finding,
+    MetadataDict,
+    OriginSummary,
+    SpeedStats,
+    SummaryData,
+)
+from ...analysis.diagnosis_candidates import normalize_origin_location, select_effective_top_causes
 from ...domain_models import as_float_or_none as _as_float
 from ...runlog import utc_now_iso
-from .._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SpeedStats, SummaryData
-from ..diagnosis_candidates import normalize_origin_location, select_effective_top_causes
 from .common import extract_confidence, human_source
 
 _EMPTY_SPEED_STATS: SpeedStats = {

@@ -7,7 +7,6 @@ in the main module while the large defaults dict lives here.
 from __future__ import annotations
 
 from copy import deepcopy
-from pathlib import Path
 
 from vibesensor.contracts import NETWORK_PORTS
 
@@ -33,7 +32,6 @@ DEFAULT_CONFIG: JsonObject = {
         "con_name": "VibeSensor-AP",
         "self_heal": {
             "enabled": True,
-            "interval_seconds": 120,
             "diagnostics_lookback_minutes": 5,
             "min_restart_interval_seconds": 120,
             "allow_disable_resolved_stub_listener": False,
@@ -62,6 +60,7 @@ DEFAULT_CONFIG: JsonObject = {
     "logging": {
         "log_metrics": True,
         "metrics_log_path": "data/metrics.jsonl",
+        "history_db_path": "data/history.db",
         "metrics_log_hz": 4,
         "no_data_timeout_s": 15.0,
         "sensor_model": "ADXL345",
@@ -82,8 +81,4 @@ DEFAULT_CONFIG: JsonObject = {
 
 def documented_default_config() -> JsonObject:
     """Return runtime defaults in the shape documented by config.example.yaml."""
-    defaults = deepcopy(DEFAULT_CONFIG)
-    logging_defaults = _require_config_section(defaults.get("logging", {}), "default logging")
-    metrics_log_path = Path(str(logging_defaults["metrics_log_path"]))
-    logging_defaults["history_db_path"] = str(metrics_log_path.parent / "history.db")
-    return defaults
+    return deepcopy(DEFAULT_CONFIG)

@@ -74,7 +74,7 @@ def test_build_sample_records_uses_only_active_clients(make_logger) -> None:
 def test_build_sample_records_caps_combined_and_axis_peak_lists(make_logger, fake_registry) -> None:
     active = fake_registry.get("active")
     assert active is not None
-    active.latest_metrics["strength_metrics"]["top_peaks"] = [  # type: ignore[index]
+    active.latest_metrics["combined"]["strength_metrics"]["top_peaks"] = [  # type: ignore[index]
         {"hz": float(i + 1), "amp": 0.2, "vibration_strength_db": 22.0, "strength_bucket": "l2"}
         for i in range(12)
     ]

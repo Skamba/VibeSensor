@@ -76,7 +76,6 @@ function asNumberArray(value: unknown): number[] {
 
 function emptyStrengthMetrics(): StrengthMetricsPayload {
   return {
-    combined_spectrum_amp_g: [],
     vibration_strength_db: 0,
     peak_amp_g: 0,
     noise_floor_amp_g: 0,
@@ -110,7 +109,6 @@ function parseStrengthMetrics(value: unknown): StrengthMetricsPayload | null {
         .filter((peak): peak is StrengthMetricPeak => peak !== null)
     : [];
   return {
-    combined_spectrum_amp_g: asNumberArray(record.combined_spectrum_amp_g),
     vibration_strength_db: getNumber(record, "vibration_strength_db") ?? defaults.vibration_strength_db,
     peak_amp_g: getNumber(record, "peak_amp_g") ?? defaults.peak_amp_g,
     noise_floor_amp_g: getNumber(record, "noise_floor_amp_g") ?? defaults.noise_floor_amp_g,

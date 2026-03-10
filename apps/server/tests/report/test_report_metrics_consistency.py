@@ -36,8 +36,8 @@ from test_support.sample_scenarios import (
     make_transient_samples,
 )
 
-from vibesensor.analysis import map_summary
 from vibesensor.analysis.strength_labels import certainty_tier
+from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.report_data import ReportTemplateData
 

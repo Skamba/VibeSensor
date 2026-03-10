@@ -6,10 +6,10 @@ import os
 from collections.abc import Callable
 
 from ... import __version__
+from ...analysis._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SummaryData
+from ...analysis.pattern_parts import parts_for_pattern, why_parts_listed
 from ...domain_models import as_float_or_none as _as_float
-from ...report.report_data import PartSuggestion, PatternEvidence, SystemFindingCard
-from .._types import CandidateFinding, Finding, MetadataDict, OriginSummary, SummaryData
-from ..pattern_parts import parts_for_pattern, why_parts_listed
+from ..report_data import PartSuggestion, PatternEvidence, SystemFindingCard
 from .common import (
     finding_strength_db,
     human_source,

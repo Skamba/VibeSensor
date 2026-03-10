@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+"""Run CI job groups in parallel locally (``make test-all``).
+
+Job definitions here mirror ``.github/workflows/ci.yml`` — keep them in sync.
+When a CI job's steps change, update the corresponding ``_*_steps()`` builder
+below to match.
+"""
+
 from __future__ import annotations
 
 import argparse

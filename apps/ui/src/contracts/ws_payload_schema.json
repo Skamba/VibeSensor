@@ -194,21 +194,7 @@
           "title": "Last Seen Age Ms"
         },
         "latest_metrics": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/AxisMetrics"
-              },
-              {
-                "$ref": "#/$defs/CombinedMetrics"
-              },
-              {
-                "$ref": "#/$defs/VibrationStrengthMetrics"
-              }
-            ]
-          },
-          "title": "Latest Metrics",
-          "type": "object"
+          "$ref": "#/$defs/ClientMetrics"
         },
         "location": {
           "title": "Location",
@@ -272,6 +258,24 @@
         "timing_health"
       ],
       "title": "ClientApiRow",
+      "type": "object"
+    },
+    "ClientMetrics": {
+      "properties": {
+        "combined": {
+          "$ref": "#/$defs/CombinedMetrics"
+        },
+        "x": {
+          "$ref": "#/$defs/AxisMetrics"
+        },
+        "y": {
+          "$ref": "#/$defs/AxisMetrics"
+        },
+        "z": {
+          "$ref": "#/$defs/AxisMetrics"
+        }
+      },
+      "title": "ClientMetrics",
       "type": "object"
     },
     "CombinedMetrics": {
@@ -481,7 +485,7 @@
           "type": "array"
         },
         "strength_metrics": {
-          "$ref": "#/$defs/StrengthMetricsPayload"
+          "$ref": "#/$defs/VibrationStrengthMetrics"
         },
         "x": {
           "items": {
@@ -506,49 +510,6 @@
         }
       },
       "title": "SpectrumSeriesPayload",
-      "type": "object"
-    },
-    "StrengthMetricsPayload": {
-      "properties": {
-        "combined_spectrum_amp_g": {
-          "items": {
-            "type": "number"
-          },
-          "title": "Combined Spectrum Amp G",
-          "type": "array"
-        },
-        "noise_floor_amp_g": {
-          "title": "Noise Floor Amp G",
-          "type": "number"
-        },
-        "peak_amp_g": {
-          "title": "Peak Amp G",
-          "type": "number"
-        },
-        "strength_bucket": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Strength Bucket"
-        },
-        "top_peaks": {
-          "items": {
-            "$ref": "#/$defs/StrengthPeak"
-          },
-          "title": "Top Peaks",
-          "type": "array"
-        },
-        "vibration_strength_db": {
-          "title": "Vibration Strength Db",
-          "type": "number"
-        }
-      },
-      "title": "StrengthMetricsPayload",
       "type": "object"
     },
     "StrengthPeak": {
@@ -606,13 +567,6 @@
     },
     "VibrationStrengthMetrics": {
       "properties": {
-        "combined_spectrum_amp_g": {
-          "items": {
-            "type": "number"
-          },
-          "title": "Combined Spectrum Amp G",
-          "type": "array"
-        },
         "noise_floor_amp_g": {
           "title": "Noise Floor Amp G",
           "type": "number"
@@ -645,7 +599,6 @@
         }
       },
       "required": [
-        "combined_spectrum_amp_g",
         "vibration_strength_db",
         "peak_amp_g",
         "noise_floor_amp_g",

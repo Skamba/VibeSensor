@@ -61,12 +61,14 @@ class TestExtractStrengthData:
     def test_top_peaks_with_zero_amp_are_filtered(self) -> None:
         """Peaks with amp ≤ 0 must be excluded from top_peaks output."""
         metrics = {
-            "strength_metrics": {
-                "top_peaks": [
-                    {"hz": 100.0, "amp": 0.0},  # should be filtered
-                    {"hz": 200.0, "amp": -1.0},  # should be filtered
-                    {"hz": 300.0, "amp": 0.5},  # should be kept
-                ],
+            "combined": {
+                "strength_metrics": {
+                    "top_peaks": [
+                        {"hz": 100.0, "amp": 0.0},  # should be filtered
+                        {"hz": 200.0, "amp": -1.0},  # should be filtered
+                        {"hz": 300.0, "amp": 0.5},  # should be kept
+                    ],
+                },
             },
         }
         _, _, _, _, _, peaks = extract_strength_data(metrics)
@@ -74,8 +76,8 @@ class TestExtractStrengthData:
         assert len(peaks) == 1
         assert peaks[0]["hz"] == 300.0
 
-    def test_combined_fallback_reads_nested_strength_metrics(self) -> None:
-        """When strength_metrics is absent, fall back to combined.strength_metrics."""
+    def test_combined_reads_nested_strength_metrics(self) -> None:
+        """Reads strength_metrics from combined.strength_metrics."""
         metrics = {
             "combined": {
                 "strength_metrics": {

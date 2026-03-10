@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from ...report.report_data import DataTrustItem, NextStep
-from .._types import SummaryData
+from ...analysis._types import SummaryData
+from ..report_data import DataTrustItem, NextStep
 from .common import is_i18n_ref, resolve_i18n
 
 

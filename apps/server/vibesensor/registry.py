@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 from .domain_models import normalize_sensor_id as _normalize_client_id
 from .payload_types import ClientApiRow, HealthDataLossPayload, TimingHealthPayload
-from .processing.models import MetricsPayload
+from .processing.models import ClientMetrics
 from .protocol import (
     AckMessage,
     DataMessage,
@@ -107,7 +107,7 @@ class ClientSnapshot:
     queue_overflow_drops: int = 0
     parse_errors: int = 0
     server_queue_drops: int = 0
-    latest_metrics: MetricsPayload | None = None
+    latest_metrics: ClientMetrics | None = None
     last_ack_cmd_seq: int | None = None
     last_ack_status: int | None = None
     reset_count: int = 0
@@ -142,7 +142,7 @@ class ClientRecord:
     last_t0_us: int | None = None
     timing_jitter_us_ema: float = 0.0
     timing_drift_us_total: float = 0.0
-    latest_metrics: MetricsPayload = field(default_factory=dict)
+    latest_metrics: ClientMetrics = field(default_factory=dict)  # type: ignore[assignment]
     duplicates_received: int = 0
     _seen_seqs: set[int] = field(default_factory=set)
     _seen_seqs_max: int = -1
@@ -455,7 +455,7 @@ class ClientRegistry:
                 self._delete_persisted_name(normalized)
             return existed
 
-    def set_latest_metrics(self, client_id: str, metrics: MetricsPayload) -> None:
+    def set_latest_metrics(self, client_id: str, metrics: ClientMetrics) -> None:
         with self._lock:
             record = self._get_or_create(client_id)
             record.latest_metrics = metrics

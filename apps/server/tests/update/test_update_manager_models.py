@@ -4,8 +4,8 @@ from pathlib import Path
 
 from vibesensor.update.installer import UpdateInstaller
 from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
-from vibesensor.update.network import parse_wifi_diagnostics
 from vibesensor.update.runner import sanitize_log_line as sanitize_log_line
+from vibesensor.update.wifi import parse_wifi_diagnostics
 
 
 class TestUpdateJobStatus:

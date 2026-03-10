@@ -41,7 +41,7 @@ from test_support import (
     top_confidence,
 )
 
-from vibesensor.analysis import map_summary
+from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
 
 # ---------------------------------------------------------------------------

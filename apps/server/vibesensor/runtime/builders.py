@@ -7,12 +7,11 @@ from vibesensor.core.sensor_units import get_accel_scale_g_per_lsb
 
 from ..analysis_settings import AnalysisSettingsStore
 from ..config import AppConfig
-from ..esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
 from ..history_services.exports import HistoryExportService
 from ..history_services.reports import HistoryReportService
-from ..history_services.runs import HistoryRunDeleteService, HistoryRunQueryService
+from ..history_services.runs import HistoryRunService
 from ..metrics_log import MetricsLogger, MetricsLoggerConfig
 from ..processing import SignalProcessor
 from ..registry import ClientRegistry
@@ -22,9 +21,8 @@ from ..update.manager import UpdateManager
 from ..worker_pool import WorkerPool
 from ..ws_hub import WebSocketHub
 from .health_state import RuntimeHealthState
-from .lifecycle import LifecycleManager
 from .processing_loop import ProcessingLoop, ProcessingLoopState
-from .subsystems import (
+from .state import (
     RuntimeIngressSubsystem,
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
@@ -68,8 +66,7 @@ def build_persistence_subsystem(
 ) -> RuntimePersistenceSubsystem:
     return RuntimePersistenceSubsystem(
         history_db=history_db,
-        query_service=HistoryRunQueryService(history_db, settings_store),
-        delete_service=HistoryRunDeleteService(history_db),
+        run_service=HistoryRunService(history_db, settings_store),
         report_service=HistoryReportService(history_db, settings_store),
         export_service=HistoryExportService(history_db),
     )
@@ -200,31 +197,6 @@ def build_websocket_subsystem(
         settings=settings,
     )
     return RuntimeWebsocketSubsystem(hub=hub, cache=cache, broadcast=broadcast)
-
-
-def build_lifecycle_manager(
-    *,
-    config: AppConfig,
-    ingress: RuntimeIngressSubsystem,
-    settings: RuntimeSettingsSubsystem,
-    metrics_logger: MetricsLogger,
-    persistence: RuntimePersistenceSubsystem,
-    update_manager: UpdateManager,
-    esp_flash_manager: EspFlashManager,
-    processing: RuntimeProcessingSubsystem,
-    websocket: RuntimeWebsocketSubsystem,
-) -> LifecycleManager:
-    return LifecycleManager(
-        config=config,
-        ingress=ingress,
-        settings=settings,
-        metrics_logger=metrics_logger,
-        persistence=persistence,
-        update_manager=update_manager,
-        esp_flash_manager=esp_flash_manager,
-        processing=processing,
-        websocket=websocket,
-    )
 
 
 def requeue_stale_analysis_runs(

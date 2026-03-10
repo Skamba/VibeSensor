@@ -189,7 +189,6 @@ jobs:
     needs:
       - backend-quality
       - backend-typecheck
-      - release-smoke
 
     steps:
       - uses: actions/checkout@v4
@@ -219,7 +218,6 @@ jobs:
       - backend-quality
       - backend-typecheck
       - frontend-typecheck
-      - release-smoke
 
     steps:
       - uses: actions/checkout@v4

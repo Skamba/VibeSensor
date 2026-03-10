@@ -605,14 +605,16 @@ class TestExtractStrengthData:
         assert bucket is None
         assert peaks == []
 
-    def test_top_level_strength_metrics(self) -> None:
+    def test_combined_strength_metrics(self) -> None:
         metrics: dict[str, object] = {
-            "strength_metrics": {
-                "vibration_strength_db": 18.5,
-                "strength_bucket": "l3",
-                "peak_amp_g": 0.02,
-                "noise_floor_amp_g": 0.001,
-                "top_peaks": [{"hz": 45.0, "amp": 0.015}],
+            "combined": {
+                "strength_metrics": {
+                    "vibration_strength_db": 18.5,
+                    "strength_bucket": "l3",
+                    "peak_amp_g": 0.02,
+                    "noise_floor_amp_g": 0.001,
+                    "top_peaks": [{"hz": 45.0, "amp": 0.015}],
+                },
             },
         }
         strength, db, bucket, peak, floor, peaks = extract_strength_data(metrics)
@@ -621,7 +623,7 @@ class TestExtractStrengthData:
         assert len(peaks) == 1
         assert peaks[0]["hz"] == pytest.approx(45.0)
 
-    def test_nested_combined_fallback(self) -> None:
+    def test_nested_combined_strength_metrics(self) -> None:
         metrics: dict[str, object] = {
             "combined": {
                 "strength_metrics": {
@@ -637,15 +639,17 @@ class TestExtractStrengthData:
 
     def test_invalid_peak_data_filtered(self) -> None:
         metrics: dict[str, object] = {
-            "strength_metrics": {
-                "vibration_strength_db": 10.0,
-                "top_peaks": [
-                    {"hz": float("nan"), "amp": 0.01},  # nan hz
-                    {"hz": 50.0, "amp": float("inf")},  # inf amp
-                    {"hz": -1.0, "amp": 0.01},  # negative hz
-                    {"hz": 50.0, "amp": 0.01},  # valid
-                    "not_a_dict",  # invalid type
-                ],
+            "combined": {
+                "strength_metrics": {
+                    "vibration_strength_db": 10.0,
+                    "top_peaks": [
+                        {"hz": float("nan"), "amp": 0.01},  # nan hz
+                        {"hz": 50.0, "amp": float("inf")},  # inf amp
+                        {"hz": -1.0, "amp": 0.01},  # negative hz
+                        {"hz": 50.0, "amp": 0.01},  # valid
+                        "not_a_dict",  # invalid type
+                    ],
+                },
             },
         }
         _, _, _, _, _, peaks = extract_strength_data(metrics)
@@ -654,10 +658,12 @@ class TestExtractStrengthData:
 
     def test_empty_bucket_treated_as_none(self) -> None:
         metrics: dict[str, object] = {
-            "strength_metrics": {
-                "vibration_strength_db": 5.0,
-                "strength_bucket": "",
-                "top_peaks": [],
+            "combined": {
+                "strength_metrics": {
+                    "vibration_strength_db": 5.0,
+                    "strength_bucket": "",
+                    "top_peaks": [],
+                },
             },
         }
         _, _, bucket, _, _, _ = extract_strength_data(metrics)

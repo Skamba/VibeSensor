@@ -59,17 +59,11 @@ class CombinedMetrics(TypedDict, total=False):
     strength_metrics: VibrationStrengthMetrics
 
 
-MetricEntry: TypeAlias = AxisMetrics | CombinedMetrics | VibrationStrengthMetrics
-MetricsPayload: TypeAlias = dict[str, MetricEntry]
-
-
-class StrengthMetricsPayload(TypedDict, total=False):
-    combined_spectrum_amp_g: list[float]
-    vibration_strength_db: float
-    peak_amp_g: float
-    noise_floor_amp_g: float
-    strength_bucket: str | None
-    top_peaks: list[StrengthPeak]
+class ClientMetrics(TypedDict, total=False):
+    x: AxisMetrics
+    y: AxisMetrics
+    z: AxisMetrics
+    combined: CombinedMetrics
 
 
 class TimingHealthPayload(TypedDict, total=False):
@@ -96,7 +90,7 @@ class ClientApiRow(TypedDict):
     queue_overflow_drops: int
     parse_errors: int
     server_queue_drops: int
-    latest_metrics: MetricsPayload
+    latest_metrics: ClientMetrics
     last_ack_cmd_seq: int | None
     last_ack_status: int | None
     reset_count: int
@@ -109,7 +103,7 @@ class SpectrumSeriesPayload(TypedDict, total=False):
     y: list[float]
     z: list[float]
     combined_spectrum_amp_g: list[float]
-    strength_metrics: StrengthMetricsPayload
+    strength_metrics: VibrationStrengthMetrics
     freq: list[float]
 
 
@@ -147,7 +141,7 @@ class SelectedSpectrumPayload(TypedDict, total=False):
     y: list[float]
     z: list[float]
     combined_spectrum_amp_g: list[float]
-    strength_metrics: StrengthMetricsPayload
+    strength_metrics: VibrationStrengthMetrics
 
 
 class SelectedClientPayload(TypedDict):
@@ -155,7 +149,7 @@ class SelectedClientPayload(TypedDict):
     sample_rate_hz: int
     waveform: WaveformPayload
     spectrum: SelectedSpectrumPayload
-    metrics: MetricsPayload
+    metrics: ClientMetrics
 
 
 class DebugSpectrumStatsPayload(TypedDict):

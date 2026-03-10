@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Apply Cleo's 10 API hardening fixes and commit each one on wave1/cleo-api."""
+
 from __future__ import annotations
 
 import subprocess
@@ -36,7 +37,7 @@ def commit(files: list[str], message: str) -> None:
     run("git checkout wave1/cleo-api")
     files_str = " ".join(files)
     run(f"git add {files_str}")
-    run(f'git commit -m {message!r}')
+    run(f"git commit -m {message!r}")
 
 
 # ---------------------------------------------------------------------------
@@ -146,20 +147,20 @@ commit(
 patch(
     history,
     (
-        "    @router.get(\"/api/history/{run_id}\", response_model=HistoryRunResponse)\n"
+        '    @router.get("/api/history/{run_id}", response_model=HistoryRunResponse)\n'
         "    async def get_history_run(run_id: str) -> HistoryRunResponse:\n"
         "        return await async_require_run(state.history_db, run_id)"
     ),
     (
-        "    @router.get(\"/api/history/{run_id}\", response_model=HistoryRunResponse)\n"
+        '    @router.get("/api/history/{run_id}", response_model=HistoryRunResponse)\n'
         "    async def get_history_run(run_id: str) -> HistoryRunResponse:\n"
         "        run = await async_require_run(state.history_db, run_id)\n"
         "        # Strip internal-only keys (prefixed with _) from the analysis block\n"
         "        # to prevent implementation details (e.g. _report_template_data)\n"
         "        # from leaking to API consumers.\n"
-        "        analysis = run.get(\"analysis\")\n"
+        '        analysis = run.get("analysis")\n'
         "        if isinstance(analysis, dict):\n"
-        "            run = {**run, \"analysis\": _strip_internal_fields(analysis)}\n"
+        '            run = {**run, "analysis": _strip_internal_fields(analysis)}\n'
         "        return run"
     ),
 )
@@ -259,7 +260,7 @@ patch(
 patch(
     settings,
     (
-        "    @router.post(\"/api/settings/sensors/{mac}\", response_model=SensorsResponse)\n"
+        '    @router.post("/api/settings/sensors/{mac}", response_model=SensorsResponse)\n'
         "    async def update_sensor(mac: str, req: SensorRequest) -> SensorsResponse:\n"
         "        payload = req.model_dump(exclude_none=True)\n"
         "        with _value_error_to_http():\n"
@@ -270,7 +271,7 @@ patch(
         "            )\n"
         "        return _sensors_response()\n"
         "\n"
-        "    @router.delete(\"/api/settings/sensors/{mac}\", response_model=SensorsResponse)\n"
+        '    @router.delete("/api/settings/sensors/{mac}", response_model=SensorsResponse)\n'
         "    async def delete_sensor(mac: str) -> SensorsResponse:\n"
         "        with _value_error_to_http():\n"
         "            removed = await asyncio.to_thread(state.settings_store.remove_sensor, mac)\n"
@@ -279,7 +280,7 @@ patch(
         "        return _sensors_response()"
     ),
     (
-        "    @router.post(\"/api/settings/sensors/{mac}\", response_model=SensorsResponse)\n"
+        '    @router.post("/api/settings/sensors/{mac}", response_model=SensorsResponse)\n'
         "    async def update_sensor(mac: str, req: SensorRequest) -> SensorsResponse:\n"
         "        normalized_mac = normalize_mac_or_400(mac)\n"
         "        payload = req.model_dump(exclude_none=True)\n"
@@ -291,7 +292,7 @@ patch(
         "            )\n"
         "        return _sensors_response()\n"
         "\n"
-        "    @router.delete(\"/api/settings/sensors/{mac}\", response_model=SensorsResponse)\n"
+        '    @router.delete("/api/settings/sensors/{mac}", response_model=SensorsResponse)\n'
         "    async def delete_sensor(mac: str) -> SensorsResponse:\n"
         "        normalized_mac = normalize_mac_or_400(mac)\n"
         "        with _value_error_to_http():\n"
@@ -333,13 +334,13 @@ patch(
 patch(
     debug,
     (
-        "    @router.get(\"/api/debug/spectrum/{client_id}\")\n"
+        '    @router.get("/api/debug/spectrum/{client_id}")\n'
         "    async def debug_spectrum(client_id: str) -> dict[str, Any]:\n"
         '        """Detailed spectrum debug info for independent verification."""\n'
         "        normalized = normalize_client_id_or_400(client_id)\n"
         "        return state.processor.debug_spectrum(normalized)\n"
         "\n"
-        "    @router.get(\"/api/debug/raw-samples/{client_id}\")\n"
+        '    @router.get("/api/debug/raw-samples/{client_id}")\n'
         "    async def debug_raw_samples(\n"
         "        client_id: str,\n"
         "        n: int = Query(default=2048, ge=1, le=6400),\n"
@@ -349,16 +350,16 @@ patch(
         "        return state.processor.raw_samples(normalized, n_samples=n)"
     ),
     (
-        "    @router.get(\"/api/debug/spectrum/{client_id}\")\n"
+        '    @router.get("/api/debug/spectrum/{client_id}")\n'
         "    async def debug_spectrum(client_id: str) -> dict[str, Any]:\n"
         '        """Detailed spectrum debug info for independent verification."""\n'
         "        normalized = normalize_client_id_or_400(client_id)\n"
         "        result = state.processor.debug_spectrum(normalized)\n"
-        "        if \"error\" in result:\n"
-        "            raise HTTPException(status_code=404, detail=result[\"error\"])\n"
+        '        if "error" in result:\n'
+        '            raise HTTPException(status_code=404, detail=result["error"])\n'
         "        return result\n"
         "\n"
-        "    @router.get(\"/api/debug/raw-samples/{client_id}\")\n"
+        '    @router.get("/api/debug/raw-samples/{client_id}")\n'
         "    async def debug_raw_samples(\n"
         "        client_id: str,\n"
         "        n: int = Query(default=2048, ge=1, le=6400),\n"
@@ -366,8 +367,8 @@ patch(
         '        """Raw time-domain samples in g for offline analysis."""\n'
         "        normalized = normalize_client_id_or_400(client_id)\n"
         "        result = state.processor.raw_samples(normalized, n_samples=n)\n"
-        "        if \"error\" in result:\n"
-        "            raise HTTPException(status_code=404, detail=result[\"error\"])\n"
+        '        if "error" in result:\n'
+        '            raise HTTPException(status_code=404, detail=result["error"])\n'
         "        return result"
     ),
 )
@@ -376,7 +377,7 @@ commit(
     (
         "fix(api): return 404 instead of 200+error body from debug spectrum endpoints\n\n"
         "GET /api/debug/spectrum/{client_id} and /debug/raw-samples/{client_id}\n"
-        "returned HTTP 200 with {\"error\": \"insufficient samples\"} when the sensor\n"
+        'returned HTTP 200 with {"error": "insufficient samples"} when the sensor\n'
         "was not connected or had insufficient data.  Callers received a success\n"
         "status code with an error payload, which is misleading and tricky to handle.\n\n"
         "Inspect the result dict and raise HTTP 404 when an 'error' key is present,\n"
@@ -394,17 +395,17 @@ patch(
     clients,
     (
         "            if conflict is not None:\n"
-        "                other_name = conflict.get(\"name\") or \"another sensor\"\n"
+        '                other_name = conflict.get("name") or "another sensor"\n'
         "                raise HTTPException(\n"
         "                    status_code=409,\n"
-        "                    detail=f\"Location already assigned to {other_name}\",\n"
+        '                    detail=f"Location already assigned to {other_name}",\n'
         "                )"
     ),
     (
         "            if conflict is not None:\n"
         "                raise HTTPException(\n"
         "                    status_code=409,\n"
-        "                    detail=\"Location is already assigned to another sensor\",\n"
+        '                    detail="Location is already assigned to another sensor",\n'
         "                )"
     ),
 )
@@ -435,7 +436,7 @@ patch(
 patch(
     ws_hub,
     (
-        '_ERROR_PAYLOAD: str = json.dumps(\n'
+        "_ERROR_PAYLOAD: str = json.dumps(\n"
         '    {"error": "payload_build_failed"},\n'
         '    separators=(",", ":"),\n'
         ")\n"
@@ -462,7 +463,7 @@ commit(
     ["apps/server/vibesensor/ws_hub.py"],
     (
         "fix(ws): include schema_version in WebSocket error payload\n\n"
-        "_ERROR_PAYLOAD was {\"error\": \"payload_build_failed\"} with no schema_version\n"
+        '_ERROR_PAYLOAD was {"error": "payload_build_failed"} with no schema_version\n'
         "field.  Frontend clients that unpack every live-payload frame by schema_version\n"
         "would fail to route this message correctly.\n\n"
         "Add schema_version to the error payload so it is structurally consistent\n"
@@ -479,9 +480,9 @@ ws_route = REPO / "apps/server/vibesensor/routes/websocket.py"
 patch(
     ws_route,
     (
-        "    @router.websocket(\"/ws\")\n"
+        '    @router.websocket("/ws")\n'
         "    async def ws_endpoint(ws: WebSocket) -> None:\n"
-        "        selected = ws.query_params.get(\"client_id\")\n"
+        '        selected = ws.query_params.get("client_id")\n'
         "        if selected is not None:\n"
         "            try:\n"
         "                selected = normalize_sensor_id(selected)\n"
@@ -491,17 +492,17 @@ patch(
         "        await state.ws_hub.add(ws, selected)"
     ),
     (
-        "    @router.websocket(\"/ws\")\n"
+        '    @router.websocket("/ws")\n'
         "    async def ws_endpoint(ws: WebSocket) -> None:\n"
-        "        selected = ws.query_params.get(\"client_id\")\n"
+        '        selected = ws.query_params.get("client_id")\n'
         "        client_id_invalid = False\n"
         "        if selected is not None:\n"
         "            try:\n"
         "                selected = normalize_sensor_id(selected)\n"
         "            except ValueError:\n"
         "                LOGGER.warning(\n"
-        "                    \"WebSocket connection received invalid client_id query param %r; \"\n"
-        "                    \"defaulting to all-sensor broadcast.\",\n"
+        '                    "WebSocket connection received invalid client_id query param %r; "\n'
+        '                    "defaulting to all-sensor broadcast.",\n'
         "                    selected,\n"
         "                )\n"
         "                client_id_invalid = True\n"
@@ -509,8 +510,8 @@ patch(
         "        await ws.accept()\n"
         "        if client_id_invalid:\n"
         "            await ws.send_text(\n"
-        "                '{\"error\":\"invalid_client_id\",'\n"
-        "                '\"detail\":\"Requested client_id was not a valid sensor identifier; '\n"
+        '                \'{"error":"invalid_client_id",\'\n'
+        '                \'"detail":"Requested client_id was not a valid sensor identifier; \'\n'
         "                'all sensors will be broadcast.\"}'\n"
         "            )\n"
         "        await state.ws_hub.add(ws, selected)"
@@ -551,7 +552,7 @@ patch(
         "    if not run_id or len(run_id) > _RUN_ID_MAX_LEN:\n"
         "        raise HTTPException(\n"
         "            status_code=400,\n"
-        "            detail=f\"run_id must be 1-{_RUN_ID_MAX_LEN} characters\",\n"
+        '            detail=f"run_id must be 1-{_RUN_ID_MAX_LEN} characters",\n'
         "        )\n"
         "    return run_id\n"
         "\n"
@@ -562,7 +563,7 @@ patch(
 patch(
     helpers,
     (
-        'async def async_require_run(history_db: HistoryDB, run_id: str) -> dict[str, Any]:\n'
+        "async def async_require_run(history_db: HistoryDB, run_id: str) -> dict[str, Any]:\n"
         '    """Fetch a history run in a thread or raise 404."""\n'
         "    run = await asyncio.to_thread(history_db.get_run, run_id)\n"
         "    if run is None:\n"
@@ -570,7 +571,7 @@ patch(
         "    return run"
     ),
     (
-        'async def async_require_run(history_db: HistoryDB, run_id: str) -> dict[str, Any]:\n'
+        "async def async_require_run(history_db: HistoryDB, run_id: str) -> dict[str, Any]:\n"
         '    """Validate *run_id* and fetch the history run or raise HTTP 4xx.\n'
         "\n"
         "    Returns HTTP 400 when *run_id* exceeds the maximum allowed length,\n"
@@ -587,12 +588,12 @@ patch(
 patch(
     history,
     (
-        "    @router.delete(\"/api/history/{run_id}\", response_model=DeleteHistoryRunResponse)\n"
+        '    @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)\n'
         "    async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:\n"
         "        deleted, reason = await asyncio.to_thread(state.history_db.delete_run_if_safe, run_id)"
     ),
     (
-        "    @router.delete(\"/api/history/{run_id}\", response_model=DeleteHistoryRunResponse)\n"
+        '    @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)\n'
         "    async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:\n"
         "        validate_run_id_or_400(run_id)\n"
         "        deleted, reason = await asyncio.to_thread(state.history_db.delete_run_if_safe, run_id)"

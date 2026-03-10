@@ -1,20 +1,27 @@
+"""RuntimeState – top-level runtime assembly and subsystem containers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 from ..analysis_settings import AnalysisSettingsStore
+from ..config import AppConfig
+from ..esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
 from ..history_services.exports import HistoryExportService
 from ..history_services.reports import HistoryReportService
-from ..history_services.runs import HistoryRunDeleteService, HistoryRunQueryService
+from ..history_services.runs import HistoryRunService
+from ..metrics_log import MetricsLogger
 from ..processing import SignalProcessor
 from ..registry import ClientRegistry
 from ..settings_store import SettingsStore
 from ..udp_control_tx import UDPControlPlane
+from ..update.manager import UpdateManager
 from ..worker_pool import WorkerPool
 from ..ws_hub import WebSocketHub
 from .health_state import RuntimeHealthState
+from .lifecycle import LifecycleManager
 from .processing_loop import ProcessingLoop, ProcessingLoopState
 from .ws_broadcast import WsBroadcastCache, WsBroadcastService
 
@@ -54,8 +61,7 @@ class RuntimeSettingsSubsystem:
 @dataclass(slots=True)
 class RuntimePersistenceSubsystem:
     history_db: HistoryDB
-    query_service: HistoryRunQueryService
-    delete_service: HistoryRunDeleteService
+    run_service: HistoryRunService
     report_service: HistoryReportService
     export_service: HistoryExportService
 
@@ -72,3 +78,19 @@ class RuntimeWebsocketSubsystem:
     hub: WebSocketHub
     cache: WsBroadcastCache
     broadcast: WsBroadcastService
+
+
+@dataclass(slots=True)
+class RuntimeState:
+    """Top-level runtime that exposes explicit subsystem ownership."""
+
+    config: AppConfig
+    ingress: RuntimeIngressSubsystem
+    settings: RuntimeSettingsSubsystem
+    metrics_logger: MetricsLogger
+    persistence: RuntimePersistenceSubsystem
+    update_manager: UpdateManager
+    esp_flash_manager: EspFlashManager
+    processing: RuntimeProcessingSubsystem
+    websocket: RuntimeWebsocketSubsystem
+    lifecycle: LifecycleManager

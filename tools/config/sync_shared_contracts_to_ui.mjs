@@ -65,7 +65,7 @@ function wsAliasBlock(schemaVersion) {
 		+ `export const EXPECTED_SCHEMA_VERSION = ${JSON.stringify(schemaVersion)} as const;\n\n`
 		+ 'type WsSchema<Name extends keyof components["schemas"]> = components["schemas"][Name];\n\n'
 		+ 'export type StrengthMetricPeak = WsSchema<"StrengthPeak">;\n'
-		+ 'export type StrengthMetricsPayload = WsSchema<"StrengthMetricsPayload">;\n'
+		+ 'export type StrengthMetricsPayload = WsSchema<"VibrationStrengthMetrics">;\n'
 		+ 'export type WsSpectrumSeries = WsSchema<"SpectrumSeriesPayload">;\n'
 		+ 'export type WsAlignmentInfo = WsSchema<"AlignmentInfoPayload">;\n'
 		+ 'export type WsFrequencyWarning = WsSchema<"FrequencyWarningPayload">;\n'

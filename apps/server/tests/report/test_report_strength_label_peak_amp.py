@@ -4,8 +4,8 @@ from typing import Any
 
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.analysis import map_summary
 from vibesensor.analysis.strength_labels import strength_text
+from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_drawing import _strength_with_peak
 
 # ---------------------------------------------------------------------------

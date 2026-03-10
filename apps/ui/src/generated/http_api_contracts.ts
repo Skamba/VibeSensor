@@ -474,10 +474,7 @@ export interface components {
       last_reset_time: number | null;
       /** Last Seen Age Ms */
       last_seen_age_ms: number | null;
-      /** Latest Metrics */
-      latest_metrics: {
-        [key: string]: components["schemas"]["AxisMetrics"] | components["schemas"]["CombinedMetrics"] | components["schemas"]["VibrationStrengthMetrics"];
-      };
+      latest_metrics: components["schemas"]["ClientMetrics"];
       /** Location */
       location: string;
       /** Mac Address */
@@ -503,6 +500,13 @@ export interface components {
     ClientLocationsResponse: {
       /** Locations */
       locations: components["schemas"]["LocationOptionResponse"][];
+    };
+    /** ClientMetrics */
+    ClientMetrics: {
+      combined?: components["schemas"]["CombinedMetrics"];
+      x?: components["schemas"]["AxisMetrics"];
+      y?: components["schemas"]["AxisMetrics"];
+      z?: components["schemas"]["AxisMetrics"];
     };
     /**
      * ClientsResponse
@@ -1373,8 +1377,6 @@ export interface components {
     };
     /** VibrationStrengthMetrics */
     VibrationStrengthMetrics: {
-      /** Combined Spectrum Amp G */
-      combined_spectrum_amp_g: number[];
       /** Noise Floor Amp G */
       noise_floor_amp_g: number;
       /** Peak Amp G */

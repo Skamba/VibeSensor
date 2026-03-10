@@ -125,6 +125,7 @@ import pathlib
 import sys
 
 defaults = {
+    # Keep in sync with apps/server/vibesensor/_config_defaults.py DEFAULT_CONFIG["ap"].
     "ssid": "VibeSensor",
     "psk": "",
     "ip": "10.4.0.1/24",

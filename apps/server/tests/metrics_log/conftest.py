@@ -44,23 +44,22 @@ class _FakeRegistry:
                 location="front_left_wheel",
                 sample_rate_hz=800,
                 latest_metrics={
-                    "strength_metrics": {
-                        "vibration_strength_db": 22.0,
-                        "strength_bucket": "l2",
-                        "peak_amp_g": 0.15,
-                        "noise_floor_amp_g": 0.003,
-                        "top_peaks": [
-                            {
-                                "hz": 15.0,
-                                "amp": 0.12,
-                                "vibration_strength_db": 22.0,
-                                "strength_bucket": "l2",
-                            },
-                        ],
-                        "combined_spectrum_amp_g": [],
-                    },
                     "combined": {
                         "peaks": [{"hz": 15.0, "amp": 0.12}],
+                        "strength_metrics": {
+                            "vibration_strength_db": 22.0,
+                            "strength_bucket": "l2",
+                            "peak_amp_g": 0.15,
+                            "noise_floor_amp_g": 0.003,
+                            "top_peaks": [
+                                {
+                                    "hz": 15.0,
+                                    "amp": 0.12,
+                                    "vibration_strength_db": 22.0,
+                                    "strength_bucket": "l2",
+                                },
+                            ],
+                        },
                     },
                     "x": {"rms": 0.04, "p2p": 0.11, "peaks": [{"hz": 15.0, "amp": 0.12}]},
                     "y": {"rms": 0.03, "p2p": 0.10, "peaks": [{"hz": 16.0, "amp": 0.08}]},
@@ -73,21 +72,20 @@ class _FakeRegistry:
                 location="rear_right_wheel",
                 sample_rate_hz=800,
                 latest_metrics={
-                    "strength_metrics": {
-                        "vibration_strength_db": 28.0,
-                        "strength_bucket": "l4",
-                        "top_peaks": [
-                            {
-                                "hz": 28.0,
-                                "amp": 0.26,
-                                "vibration_strength_db": 28.0,
-                                "strength_bucket": "l4",
-                            },
-                        ],
-                        "combined_spectrum_amp_g": [],
-                    },
                     "combined": {
                         "peaks": [{"hz": 28.0, "amp": 0.26}],
+                        "strength_metrics": {
+                            "vibration_strength_db": 28.0,
+                            "strength_bucket": "l4",
+                            "top_peaks": [
+                                {
+                                    "hz": 28.0,
+                                    "amp": 0.26,
+                                    "vibration_strength_db": 28.0,
+                                    "strength_bucket": "l4",
+                                },
+                            ],
+                        },
                     },
                     "x": {"rms": 0.10, "p2p": 0.22, "peaks": [{"hz": 28.0, "amp": 0.26}]},
                     "y": {"rms": 0.09, "p2p": 0.18, "peaks": [{"hz": 29.0, "amp": 0.20}]},

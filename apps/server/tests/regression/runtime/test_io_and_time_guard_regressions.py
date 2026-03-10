@@ -20,9 +20,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.analysis import map_summary
 from vibesensor.firmware_cache import FirmwareCache, FirmwareCacheConfig, GitHubReleaseFetcher
 from vibesensor.gps_speed import GPSSpeedMonitor
+from vibesensor.report.mapping import map_summary
 from vibesensor.report_cli import main as report_cli_main
 
 

@@ -18,8 +18,9 @@ from test_support.report_helpers import (
 )
 
 from vibesensor import __version__
-from vibesensor.analysis import map_summary, summarize_log
+from vibesensor.analysis import summarize_log
 from vibesensor.constants import KMH_TO_MPS
+from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_diagram_render import car_location_diagram
 from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.pdf_page1 import _draw_system_card

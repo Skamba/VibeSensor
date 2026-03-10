@@ -17,7 +17,7 @@ from .rotational_speeds import (
 )
 
 if TYPE_CHECKING:
-    from .subsystems import (
+    from .state import (
         RuntimeIngressSubsystem,
         RuntimeSettingsSubsystem,
     )

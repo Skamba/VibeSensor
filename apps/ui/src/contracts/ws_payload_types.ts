@@ -87,10 +87,7 @@ export interface components {
       last_reset_time: number | null;
       /** Last Seen Age Ms */
       last_seen_age_ms: number | null;
-      /** Latest Metrics */
-      latest_metrics: {
-        [key: string]: components["schemas"]["AxisMetrics"] | components["schemas"]["CombinedMetrics"] | components["schemas"]["VibrationStrengthMetrics"];
-      };
+      latest_metrics: components["schemas"]["ClientMetrics"];
       /** Location */
       location: string;
       /** Mac Address */
@@ -108,6 +105,13 @@ export interface components {
       /** Server Queue Drops */
       server_queue_drops: number;
       timing_health: components["schemas"]["TimingHealthPayload"];
+    };
+    /** ClientMetrics */
+    ClientMetrics: {
+      combined?: components["schemas"]["CombinedMetrics"];
+      x?: components["schemas"]["AxisMetrics"];
+      y?: components["schemas"]["AxisMetrics"];
+      z?: components["schemas"]["AxisMetrics"];
     };
     /** CombinedMetrics */
     CombinedMetrics: {
@@ -173,28 +177,13 @@ export interface components {
       combined_spectrum_amp_g?: number[];
       /** Freq */
       freq?: number[];
-      strength_metrics?: components["schemas"]["StrengthMetricsPayload"];
+      strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
       /** X */
       x?: number[];
       /** Y */
       y?: number[];
       /** Z */
       z?: number[];
-    };
-    /** StrengthMetricsPayload */
-    StrengthMetricsPayload: {
-      /** Combined Spectrum Amp G */
-      combined_spectrum_amp_g?: number[];
-      /** Noise Floor Amp G */
-      noise_floor_amp_g?: number;
-      /** Peak Amp G */
-      peak_amp_g?: number;
-      /** Strength Bucket */
-      strength_bucket?: string | null;
-      /** Top Peaks */
-      top_peaks?: components["schemas"]["StrengthPeak"][];
-      /** Vibration Strength Db */
-      vibration_strength_db?: number;
     };
     /** StrengthPeak */
     StrengthPeak: {
@@ -218,8 +207,6 @@ export interface components {
     };
     /** VibrationStrengthMetrics */
     VibrationStrengthMetrics: {
-      /** Combined Spectrum Amp G */
-      combined_spectrum_amp_g: number[];
       /** Noise Floor Amp G */
       noise_floor_amp_g: number;
       /** Peak Amp G */
@@ -250,7 +237,7 @@ export const EXPECTED_SCHEMA_VERSION = "1" as const;
 type WsSchema<Name extends keyof components["schemas"]> = components["schemas"][Name];
 
 export type StrengthMetricPeak = WsSchema<"StrengthPeak">;
-export type StrengthMetricsPayload = WsSchema<"StrengthMetricsPayload">;
+export type StrengthMetricsPayload = WsSchema<"VibrationStrengthMetrics">;
 export type WsSpectrumSeries = WsSchema<"SpectrumSeriesPayload">;
 export type WsAlignmentInfo = WsSchema<"AlignmentInfoPayload">;
 export type WsFrequencyWarning = WsSchema<"FrequencyWarningPayload">;

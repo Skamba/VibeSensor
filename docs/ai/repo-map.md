@@ -36,7 +36,7 @@
 - `hotspot/`: Wi-Fi AP monitoring, text parsing, and self-heal logic.
 - `runlog.py`: JSONL run-file I/O and normalization.
 - `report/`: PDF renderer and report-template builders.
-- `update/`: public update manager facade plus focused modules for status tracking, Wi-Fi control, release discovery, install and rollback, service control, command execution, and state storage; workflow validation and rollback snapshot creation must both succeed before a live install begins.
+- `update/`: public update manager facade plus focused modules for workflow orchestration and validation (`workflow.py`), Wi-Fi control and diagnostics (`wifi.py`), release discovery, install and rollback, service control, command execution, and status tracking with runtime detail collection (`status.py`); workflow validation and rollback snapshot creation must both succeed before a live install begins.
 - `apps/ui/src/app/runtime/`: explicit UI runtime owners for shell/chrome state, live transport/payload application, and spectrum/chart orchestration beneath the `UiAppRuntime` composition root.
 
 ## Test layout

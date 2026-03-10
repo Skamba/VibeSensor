@@ -2,18 +2,17 @@
 
 Regression tests are grouped by intent to make discovery predictable:
 
-- `audits/`: coverage/report audits that verify known finding sets.
-- `analysis/`: analysis/scoring/order-detection regression packs.
+- `analysis/`: analysis/scoring/order-detection regression packs and coverage audits.
 - `cross_cutting/`: broad regressions spanning multiple subsystems.
-- `report/`: PDF/report-data rendering and formatting regressions.
+- `report/`: PDF/report-data rendering, formatting, and report pipeline audits.
 - `runtime/`: runtime/storage/API guard regressions.
 
-Each intent folder now keeps focused regression files grouped by behavior or maintenance boundary rather than a single dumping-ground suite.
+Each intent folder keeps focused regression files grouped by behavior or maintenance boundary.
 
 Quick smoke-style entry points:
 
 - `analysis/test_analysis_pipeline_guard_regressions.py`
-- `audits/test_analysis_pipeline_audit.py`
+- `analysis/test_analysis_pipeline_audit.py`
 - `cross_cutting/test_multi_domain_regressions.py`
 - `report/test_report_rendering_regressions.py`
 - `runtime/test_api_history_processing_regressions.py`

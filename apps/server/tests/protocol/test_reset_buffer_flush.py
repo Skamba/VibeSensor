@@ -47,7 +47,7 @@ def test_flush_client_buffer_resets_count_and_write_idx() -> None:
     assert buf.write_idx == 0
     assert buf.latest_metrics == {}
     assert buf.latest_spectrum == {}
-    assert buf.latest_strength_metrics == {}
+    assert buf.latest_strength_metrics["vibration_strength_db"] == 0.0
     # Data array should be zeroed
     assert np.all(buf.data == 0.0)
 

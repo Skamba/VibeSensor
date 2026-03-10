@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from vibesensor.analysis.report_mapping.actions import _resolve_optional_step_value
-from vibesensor.analysis.report_mapping.peaks import (
+from vibesensor.report.mapping.actions import _resolve_optional_step_value
+from vibesensor.report.mapping.peaks import (
     collect_location_intensity,
     peak_row_system_label,
 )
-from vibesensor.analysis.report_mapping.systems import tire_spec_text
+from vibesensor.report.mapping.systems import tire_spec_text
 
 
 def test_resolve_optional_step_value_returns_none_for_empty_text() -> None:

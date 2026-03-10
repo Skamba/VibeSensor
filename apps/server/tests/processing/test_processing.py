@@ -61,7 +61,7 @@ def test_processing_combined_strength_top_peaks_includes_eight_candidates() -> N
     processor.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
 
     metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
-    top_peaks = metrics["strength_metrics"]["top_peaks"]
+    top_peaks = metrics["combined"]["strength_metrics"]["top_peaks"]
     assert len(top_peaks) >= 8
 
 

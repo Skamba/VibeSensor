@@ -31,20 +31,21 @@ class _FakeRecord:
 
 
 _FAKE_LATEST_METRICS: dict = {
-    "strength_metrics": {
-        "vibration_strength_db": 22.0,
-        "strength_bucket": "l2",
-        "top_peaks": [
-            {
-                "hz": 15.0,
-                "amp": 0.12,
-                "vibration_strength_db": 22.0,
-                "strength_bucket": "l2",
-            },
-        ],
-        "combined_spectrum_amp_g": [],
+    "combined": {
+        "peaks": [{"hz": 15.0, "amp": 0.12}],
+        "strength_metrics": {
+            "vibration_strength_db": 22.0,
+            "strength_bucket": "l2",
+            "top_peaks": [
+                {
+                    "hz": 15.0,
+                    "amp": 0.12,
+                    "vibration_strength_db": 22.0,
+                    "strength_bucket": "l2",
+                },
+            ],
+        },
     },
-    "combined": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
     "x": {"rms": 0.04, "p2p": 0.11, "peaks": [{"hz": 15.0, "amp": 0.12}]},
     "y": {"rms": 0.03, "p2p": 0.10, "peaks": [{"hz": 16.0, "amp": 0.08}]},
     "z": {"rms": 0.02, "p2p": 0.09, "peaks": [{"hz": 14.0, "amp": 0.07}]},

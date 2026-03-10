@@ -17,12 +17,16 @@ from typing import Any
 
 import pytest
 from test_support import make_sample
-from test_support.core import assert_summary_sections
+from test_support.core import (
+    FINAL_DRIVE,
+    GEAR_RATIO,
+    TIRE_CIRC,
+    assert_summary_sections,
+    standard_metadata,
+)
 
 from vibesensor.analysis import summarize_run_data
 from vibesensor.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-    tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
 
@@ -30,14 +34,6 @@ from vibesensor.analysis_settings import (
 # Shared helpers
 # ---------------------------------------------------------------------------
 
-_TIRE_CIRC = tire_circumference_m_from_spec(
-    DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"],
-    DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"],
-    DEFAULT_ANALYSIS_SETTINGS["rim_in"],
-    deflection_factor=DEFAULT_ANALYSIS_SETTINGS.get("tire_deflection_factor"),
-)
-_FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
-_GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
 _ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 
 
@@ -59,22 +55,9 @@ def _assert_no_false_positives(
 
 
 def _wheel_hz(speed_kmh: float) -> float:
-    hz = wheel_hz_from_speed_kmh(speed_kmh, _TIRE_CIRC)
+    hz = wheel_hz_from_speed_kmh(speed_kmh, TIRE_CIRC)
     assert hz is not None and hz > 0
     return hz
-
-
-def _standard_metadata(**overrides: Any) -> dict[str, Any]:
-    meta: dict[str, Any] = {
-        "tire_circumference_m": _TIRE_CIRC,
-        "raw_sample_rate_hz": 800.0,
-        "final_drive_ratio": _FINAL_DRIVE,
-        "current_gear_ratio": _GEAR_RATIO,
-        "sensor_model": "ADXL345",
-        "units": {"accel_x_g": "g"},
-    }
-    meta.update(overrides)
-    return meta
 
 
 def _build_samples(
@@ -126,7 +109,7 @@ class TestHealthyVehicleNoFalsePositive:
 
     def test_steady_speed_clean_data_no_fault_findings(self) -> None:
         """Steady 80 km/h with only road noise: zero non-REF findings above 0.20."""
-        meta = _standard_metadata()
+        meta = standard_metadata()
         samples = self._road_noise_samples(80.0)
         summary = summarize_run_data(meta, samples, lang="en", file_name="healthy_steady")
 
@@ -135,7 +118,7 @@ class TestHealthyVehicleNoFalsePositive:
 
     def test_speed_sweep_clean_data_no_fault_findings(self) -> None:
         """Speed sweep 40–120 km/h with only road noise: no false positives."""
-        meta = _standard_metadata()
+        meta = standard_metadata()
         samples = _build_samples(
             duration_s=40,
             speed_fn=lambda i: 40.0 + (80.0 / 40) * i,
@@ -151,7 +134,7 @@ class TestHealthyVehicleNoFalsePositive:
 
     def test_uniform_mild_vibration_no_fault_findings(self) -> None:
         """All four sensors at identical mild vibration: no corner flagged."""
-        meta = _standard_metadata()
+        meta = standard_metadata()
         whz = _wheel_hz(80.0)
         samples = _build_samples(
             duration_s=30,
@@ -176,8 +159,8 @@ class TestEngineOrderFaultScenario:
 
     def test_engine_1x_all_sensors_classified_as_engine(self) -> None:
         """Engine 1x peaks at RPM-derived frequency on all 4 sensors → engine source."""
-        meta = _standard_metadata()
-        engine_hz = (80.0 / 3.6 / _TIRE_CIRC) * _FINAL_DRIVE * _GEAR_RATIO
+        meta = standard_metadata()
+        engine_hz = (80.0 / 3.6 / TIRE_CIRC) * FINAL_DRIVE * GEAR_RATIO
         samples = _build_samples(
             duration_s=40,
             speed_fn=lambda _i: 80.0,
@@ -225,7 +208,7 @@ class TestVeryShortRecording:
 
     def test_5s_recording_produces_report(self) -> None:
         """5-second recording: should produce a summary with run_suitability warning."""
-        meta = _standard_metadata()
+        meta = standard_metadata()
         whz = _wheel_hz(80.0)
         samples = _build_samples(
             duration_s=5,
@@ -252,7 +235,7 @@ class TestVeryShortRecording:
 
     def test_3s_recording_does_not_crash(self) -> None:
         """3-second recording: must not crash, even if findings are empty."""
-        meta = _standard_metadata()
+        meta = standard_metadata()
         samples = _build_samples(
             duration_s=3,
             speed_fn=lambda _i: 60.0,
@@ -274,7 +257,7 @@ class TestGradualFaultOnset:
 
     def test_gradual_onset_detected_in_later_phase(self) -> None:
         """Wheel fault starts quiet and grows — pipeline should still detect it."""
-        meta = _standard_metadata()
+        meta = standard_metadata()
         whz = _wheel_hz(80.0)
         samples = _build_samples(
             duration_s=60,
@@ -312,7 +295,7 @@ class TestBorderlineTwoSourceOverlap:
 
     def test_overlapping_wheel_and_engine_freq(self) -> None:
         """Wheel_hz ≈ engine_hz: should produce findings without NaN or crash."""
-        meta = _standard_metadata()
+        meta = standard_metadata()
 
         whz = _wheel_hz(80.0)
         samples = _build_samples(
@@ -322,12 +305,12 @@ class TestBorderlineTwoSourceOverlap:
                 (
                     [
                         {"hz": whz, "amp": 0.06},
-                        {"hz": whz * _FINAL_DRIVE * _GEAR_RATIO, "amp": 0.04},
+                        {"hz": whz * FINAL_DRIVE * GEAR_RATIO, "amp": 0.04},
                     ],
                     26.0,
                 )
                 if sensor == "front-left"
-                else ([{"hz": whz * _FINAL_DRIVE * _GEAR_RATIO, "amp": 0.04}], 20.0)
+                else ([{"hz": whz * FINAL_DRIVE * GEAR_RATIO, "amp": 0.04}], 20.0)
             ),
         )
 

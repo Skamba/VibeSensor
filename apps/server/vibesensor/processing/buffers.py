@@ -8,17 +8,12 @@ change-detection and payload caching.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import cast
 
 import numpy as np
 
-from ..payload_types import StrengthMetricsPayload
-from .models import MetricsPayload, SpectrumByAxis
+from ..core.vibration_strength import VibrationStrengthMetrics, empty_vibration_strength_metrics
+from .models import ClientMetrics, SpectrumByAxis
 from .payload import SelectedClientPayload, SpectrumSeriesPayload
-
-
-def _empty_strength_metrics() -> StrengthMetricsPayload:
-    return cast("StrengthMetricsPayload", {})
 
 
 @dataclass(slots=True, eq=False, repr=False)
@@ -30,9 +25,11 @@ class ClientBuffer:
     write_idx: int = 0
     count: int = 0
     sample_rate_hz: int = 0
-    latest_metrics: MetricsPayload = field(default_factory=dict)
+    latest_metrics: ClientMetrics = field(default_factory=dict)  # type: ignore[assignment]
     latest_spectrum: SpectrumByAxis = field(default_factory=dict)
-    latest_strength_metrics: StrengthMetricsPayload = field(default_factory=_empty_strength_metrics)
+    latest_strength_metrics: VibrationStrengthMetrics = field(
+        default_factory=empty_vibration_strength_metrics
+    )
     last_ingest_mono_s: float = 0.0
     # Sensor-clock timestamp (µs) of the most recent ingested frame.
     # After CMD_SYNC_CLOCK this is server-relative and comparable across sensors.
