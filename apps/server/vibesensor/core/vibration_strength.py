@@ -18,7 +18,9 @@ combined_spectrum_amp_g
 from __future__ import annotations
 
 from math import isfinite, log10, sqrt
-from typing import Final, TypedDict
+from typing import Final
+
+from typing_extensions import TypedDict
 
 from .strength_bands import bucket_for_strength
 
