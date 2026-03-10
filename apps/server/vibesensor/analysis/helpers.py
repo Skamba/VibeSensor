@@ -15,27 +15,19 @@ from ..analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
-from ..constants import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ, WEAK_SPATIAL_DOMINANCE_THRESHOLD
+from ..constants import (
+    MEMS_NOISE_FLOOR_G,
+    MIN_ANALYSIS_FREQ_HZ,
+    SPEED_BIN_WIDTH_KMH,
+    STEADY_SPEED_RANGE_KMH,
+    STEADY_SPEED_STDDEV_KMH,
+    WEAK_SPATIAL_DOMINANCE_THRESHOLD,
+)
 from ..json_types import JsonObject
 from ..locations import label_for_code as _label_for_code
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
 from ._types import MetadataDict, PhaseLabel, PhaseSpeedStats, Sample, SpeedStats
-
-SPEED_BIN_WIDTH_KMH = 10
-SPEED_COVERAGE_MIN_PCT = 35.0
-SPEED_MIN_POINTS = 8
-
-ORDER_TOLERANCE_REL = 0.08
-ORDER_TOLERANCE_MIN_HZ = 0.5
-ORDER_MIN_MATCH_POINTS = 4
-ORDER_MIN_COVERAGE_POINTS = 6
-ORDER_MIN_CONFIDENCE = 0.25
-ORDER_CONSTANT_SPEED_MIN_MATCH_RATE = 0.55
-CONSTANT_SPEED_STDDEV_KMH = 0.5
-
-STEADY_SPEED_STDDEV_KMH = 2.0
-STEADY_SPEED_RANGE_KMH = 8.0
 
 # Maps driving-phase keys to their canonical i18n label keys.
 # Shared by summary-building logic (phase-onset notes) and report mapping

@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 from vibesensor_core.strength_bands import bucket_for_strength
 
-from vibesensor.analysis.helpers import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
+from vibesensor.constants import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
 from vibesensor.analysis.report_mapping_systems import top_strength_values
 from vibesensor.processing import SignalProcessor
 from vibesensor.processing.fft import compute_fft_spectrum
