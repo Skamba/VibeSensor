@@ -1,241 +1,169 @@
-# Chunk 3: Internal Architecture & Abstraction
+# Chunk 3: Analysis Pipeline & Internal Module Consolidation
 
 ## Mapped Findings
 
-- [1.1] LifecycleManager mirrors RuntimeState constructor (9 mirrored args)
-- [1.2] SignalProcessor proxies internal decomposition via 6 aliases + forwarding methods
-- [1.3] report/mapping/ is an 8-file sub-package for a single export
-- [2.1] OrderHypothesisLike Protocol with a single private implementor
-- [2.2] UpdateWorkflow dataclass assembled and discarded per invocation
-- [2.3] Two private Protocols in rotational_speeds.py with vacuous union types
-- [10.1] analysis/findings/ double-nesting at 4-segment import depth
+| ID | Original Finding | Source Subagent | Validation Status |
+|----|-----------------|-----------------|-------------------|
+| J1+I1+I2 | findings_order_* 7-file micro-sharding + findings_constants.py re-export shim + callable injection | Folder/Module/Ownership + Dependency/Library | **Validated** |
+| B2 | FindingsBundle/SensorAnalysisBundle/RunSuitabilityBundle one-shot wrappers | Abstraction & Indirection | **Validated** |
+| A3+C3 | MetricsLogger session_state.py and persistence.py have no independent existence + callback injection | Architecture & Layering + Data Flow | **Validated** |
+| I3 | vibesensor/core/ orphaned sub-package after libs/ absorbed | Dependency/Library | **Validated** |
 
 ## Validation Outcomes
 
-### [1.1] CONFIRMED (HIGH confidence)
-`RuntimeState` has 10 fields; `LifecycleManager.__init__` receives 9 of the same (all except `lifecycle` itself). `bootstrap.py` passes the identical 9 keyword arguments to both constructors. LifecycleManager stores each as a private slot. Verified in bootstrap.py, runtime/lifecycle.py, runtime/_state.py.
+### J1+I1+I2: findings_order_* micro-sharding — VALIDATED
 
-### [1.2] CONFIRMED (MEDIUM-HIGH confidence)
-After constructing `_store`, `_metrics`, `_views`, `SignalProcessor.__init__` creates 6 attribute aliases (3 from store, 3 from metrics) and has ~12 forwarding methods. The comment "Preserve the established internal surface used by tests/regressions" explicitly documents the compatibility shim nature. However, the 3 internal classes do have genuine separation of concern (buffer management, FFT computation, payload views). **Revised scope**: Don't collapse all 3 files back into processor.py. Instead: remove the 6 aliases and update test references to use the proper dot-path (`processor._store.buffers` instead of `processor._buffers`). This preserves the valid decomposition while removing the compatibility shim.
+Confirmed 7 files totaling 1189 lines:
+- `findings_constants.py` (23 lines): pure `from ..constants import X as X` re-exports, self-described as "exists only to keep local imports short"
+- `findings_order_models.py` (45 lines): 2 frozen dataclasses (`OrderMatchAccumulator`, `OrderFindingBuildContext`)
+- `findings_order_matching.py` (136 lines): 1 function (`match_samples_for_hypothesis`)
+- `findings_order_scoring.py` (231 lines): constants + 3 public functions
+- `findings_order_support.py` (157 lines): 4 functions for phase stats, amplitude, localization, speed evidence
+- `findings_order_assembly.py` (225 lines): 1 function (`assemble_order_finding`) with 7 `Callable[...]` parameters
+- `findings_order_findings.py` (372 lines): orchestrator that imports from ALL siblings, defines ~6 private wrapper functions that shadow the implementations
 
-### [1.3] CONFIRMED (MEDIUM confidence)
-8 files in `report/mapping/`, single public export `map_summary`. Only consumer: `history_services/reports.py`. Internal-only `models.py` (2 dataclasses) exists only to break a circular import within the sub-package.
+The callable injection pattern in `findings_order_assembly.py` is confirmed: `assemble_order_finding()` takes 7 callables as keyword args. `findings_order_findings.py` defines private wrappers (e.g., `_detect_diffuse_excitation_impl`) that just forward to the implementations, then passes them as callables. No test injects custom callables.
 
-**Revised scope**: The sub-package files are ~100-200 lines each with meaningfully distinct responsibilities (context extraction, peak rows, system cards, actions). Collapsing to a single ~500-line module is defensible but trades directory navigation complexity for scrolling complexity. **Decision**: Collapse to a single module. The functions remain private module-scope functions, the 2 `models.py` dataclasses become module-level. The caller import `from ..report.mapping import map_summary` stays the same.
+`findings_constants.py` has zero logic — all 14 constants are verbatim re-exports.
 
-### [2.1] CONFIRMED (HIGH confidence)
-`OrderHypothesisLike` is a Protocol in `order_models.py` with 5 properties + 1 method. Exactly one private concrete implementor: `_OrderHypothesis` frozen dataclass. Used in 3 consumer modules. No test doubles, no substitution.
+### B2: One-shot wrapper dataclasses — VALIDATED
 
-### [2.2] CONFIRMED (MEDIUM confidence)
-`UpdateWorkflow` is create-once-run-once-discard. `_build_workflow()` constructs it, immediately calls `.run()`. The `_snapshot_for_rollback()` and `_rollback()` paths bypass the workflow and build their own `UpdateInstaller` separately.
+Confirmed in `summary_models.py`:
+- `FindingsBundle` (5 fields): created in `build_findings_bundle()`, destructured immediately in `summarize_run_data()`
+- `SensorAnalysisBundle` (3 fields): created in `build_sensor_bundle()`, destructured immediately
+- `RunSuitabilityBundle` (3 fields): created in `build_run_suitability_bundle()`, destructured immediately
 
-**Revised scope**: The workflow logic is ~100 lines and non-trivial. Rather than inlining ALL of it into `UpdateManager`, the better fix is: (a) remove the `UpdateWorkflow` **dataclass wrapper**, and (b) make `UpdateWorkflow.run()` a private method on `UpdateManager` that accepts the required sub-objects as direct parameters. This eliminates the per-invocation dataclass without creating a 400-line method.
+All three are constructed once and immediately unpacked. Zero external consumers outside `summary_builder.py`. `PreparedRunData` (also in `summary_models.py`) IS reused — it stays.
 
-### [2.3] CONFIRMED (MEDIUM confidence)
-Two private Protocols in `rotational_speeds.py`: `_SpeedSourceSettingsStore` (1 method) and `_GpsMonitorState` (2 properties). Used in vacuous union types. The concrete types already satisfy the protocol structurally.
+### A3+C3: MetricsLogger session_state/persistence — VALIDATED
 
-### [10.1] CONFIRMED (HIGH confidence)
-`analysis/` has 20 files. `analysis/findings/` has 14 files nested inside. Import paths are 4 segments deep: `vibesensor.analysis.findings.order_findings`. Related code is split across levels: `order_analysis.py` (top) and `order_findings.py` (sub-package).
+Confirmed:
+- `session_state.py`: `MetricsSessionState` (88 lines of thread-safe property wrappers for ~8 private fields). Only production import is in `logger.py`. Also exports `LoggingStatusPayload` (TypedDict) and `MetricsSessionSnapshot` (frozen dataclass).
+- `persistence.py`: `MetricsPersistenceCoordinator` with `generation_matches: Callable[[int], bool]` injected at construction. 8 guard sites with `if not self._generation_matches(session_generation): return`. Only production consumer is `logger.py`.
 
-## Root Complexity Drivers
+The callback injection is confirmed: `logger.py` passes `generation_matches=self._session.matches_generation` — a closure wrapping a thread-safe integer comparison. The coordinator cannot be constructed independently.
 
-1. **Mirrored constructor pattern**: LifecycleManager was extracted from RuntimeState but not given a reference back to it. Each subsystem is passed individually to both.
+### I3: vibesensor/core/ orphaned sub-package — VALIDATED
 
-2. **Compatibility-shim decomposition**: SignalProcessor was decomposed into internal classes but old access patterns were preserved via aliases. The decomposition was done without updating consumers.
+Confirmed: `vibesensor/core/__init__.py` is a docstring-only module. Contains 3 files:
+- `vibration_strength.py`: canonical dB computation, ~20 import sites
+- `strength_bands.py`: band definitions, bucket classification
+- `sensor_units.py`: 26 lines, one function (`get_accel_scale_g_per_lsb`)
 
-3. **Premature sub-packaging**: `report/mapping/` and `analysis/findings/` were given sub-package treatment when flat modules would suffice. The sub-package overhead (directories, `__init__.py`, internal imports) adds cognitive cost.
+All imports use `from vibesensor.core.vibration_strength import ...`. The `core/` nesting adds no information — these are the most-imported modules and the extra path level costs every consumer a longer import.
 
-4. **Protocol overuse**: Protocols were added for type narrowing where only one concrete type exists. The Protocols provide fictional substitutability that is never exercised.
+## Root Causes
 
-5. **Per-invocation wrappers**: `UpdateWorkflow` wraps constructor arguments into a dataclass that lives for one method call. The pattern obscures ownership.
+1. **findings_order_***: Decomposition refactor went too fine-grained, creating a file per concern where a module per concern would suffice. Callable injection was likely an attempt to break potential circular imports or enable test injection, but neither need materialized.
+2. **One-shot bundles**: Pipeline was split into named sub-steps for readability, using typed containers instead of tuples. The containers add type safety but violate the "no wrapper dataclasses for one-shot operations" rule.
+3. **session_state/persistence**: Internal implementation details extracted for testability, but they're so coupled to the logger that they can't be independently constructed or tested meaningfully.
+4. **core/**: Historical artifact from when shared libraries were separate pip packages.
 
-## Simplification Strategy
+## Implementation Steps
 
-### Step 1: Fix LifecycleManager to accept RuntimeState
+### Step 1: Delete findings_constants.py and update imports
 
-**Implementation:**
-1. Modify `LifecycleManager.__init__` to accept a single `runtime: RuntimeState` parameter
-2. Store `self._runtime = runtime` and access subsystems via `self._runtime.ingress`, `self._runtime.settings`, etc.
-3. Handle the circular construction issue: In `bootstrap.py`, construct `RuntimeState` first (with `lifecycle=None` or a sentinel), then construct `LifecycleManager(runtime)` and assign `runtime.lifecycle = lifecycle_manager`
-4. Alternatively, use a factory pattern: `lifecycle = LifecycleManager.__new__(LifecycleManager)`, assign to RuntimeState, then call `lifecycle._init(runtime)`. But this is over-engineered — the `lifecycle=None` then assign pattern is simpler.
-5. Update `RuntimeState` to allow `lifecycle` to be set after construction (remove `frozen=True` for that field, or make it a property with a setter, or use `object.__setattr__`)
-6. Delete the 9 individual parameter slots from `LifecycleManager.__init__`
+1. Delete `vibesensor/analysis/findings_constants.py`
+2. In all 7 consumer files, replace `from .findings_constants import X` with `from ..constants import X`
+3. Verify with `ruff check` and `make typecheck-backend`
 
-**Key consideration**: `RuntimeState` is a dataclass. If it's frozen, we need to handle post-construction assignment of `lifecycle`. Check whether it's frozen.
+### Step 2: Consolidate findings_order_* into 2 files
 
-### Step 2: Remove SignalProcessor compatibility aliases
+Target structure:
+- `findings_order_analysis.py` (merge models + matching + scoring + support): contains `OrderMatchAccumulator`, `OrderFindingBuildContext`, `match_samples_for_hypothesis`, scoring functions, support functions
+- `findings_order_assembly.py` (keep, but remove callable injection): refactor `assemble_order_finding` to call scoring/support functions directly instead of receiving them as callables
+- Delete `findings_order_models.py`, `findings_order_matching.py`, `findings_order_scoring.py`, `findings_order_support.py`
+- Simplify `findings_order_findings.py`: remove private wrapper functions, call implementations directly from `findings_order_analysis.py`
 
-**Implementation:**
-1. Remove the 6 attribute aliases from `SignalProcessor.__init__`:
-   - `self._buffers`, `self._lock`, `self._fft_window`, `self._fft_scale`, `self._fft_cache`, `self._fft_cache_lock`
-2. Update any test code that accesses these aliased attributes to use the proper path:
-   - `processor._buffers` → `processor._store.buffers`
-   - `processor._lock` → `processor._store.lock`
-   - `processor._fft_cache` → `processor._metrics.fft_cache`
-   etc.
-3. Keep the 3 internal classes (`SignalBufferStore`, `SignalMetricsComputer`, `SignalProcessorViews`) — they have genuine separation of concern
-4. Remove the comment about "Preserve the established internal surface"
+Implementation:
+1. Create `findings_order_analysis.py` by merging content from models, matching, scoring, support
+2. Update `findings_order_assembly.py` to import directly from `findings_order_analysis.py` instead of taking callables
+3. Remove all `Callable[...]` parameters from `assemble_order_finding()` — call functions directly
+4. Simplify `findings_order_findings.py`:
+   - Remove all private wrapper functions (`_detect_diffuse_excitation`, etc.)
+   - Import directly from `findings_order_analysis.py`
+   - The `_build_order_findings()` function calls functions directly
+5. Delete the 4 old files
+6. Update all test imports
 
-### Step 3: Collapse report/mapping/ sub-package into single module
+### Step 3: Inline one-shot summary bundles
 
-**Implementation:**
-1. Create `apps/server/vibesensor/report/mapping.py` (new file)
-2. Concatenate the contents of `pipeline.py`, `context.py`, `systems.py`, `peaks.py`, `actions.py`, `common.py`, `models.py` into the single file
-3. Order: models/dataclasses first, then common helpers, then context, systems, peaks, actions, then the pipeline entry point `map_summary()`
-4. Make all functions that were previously module-scope but internal into `_private` functions
-5. Delete `report/mapping/` directory (7 files + __init__.py)
-6. The caller import `from ..report.mapping import map_summary` stays unchanged since Python allows `report/mapping.py` module import via the same path
-7. Update any test imports that referenced sub-modules inside `report/mapping/`
+1. In `summary_builder.py`, replace `FindingsBundle`, `SensorAnalysisBundle`, `RunSuitabilityBundle` with direct local variable bindings
+2. The `build_findings_bundle()`, `build_sensor_bundle()`, `build_run_suitability_bundle()` functions return tuples or their results are inlined into `summarize_run_data()`
+3. Remove the 3 dataclass definitions from `summary_models.py`
+4. Keep `PreparedRunData` (it IS reused)
+5. If `summary_models.py` only has `PreparedRunData` left, keep it or merge into `summary_builder.py`
 
-### Step 4: Remove OrderHypothesisLike Protocol and export concrete class
+### Step 4: Merge metrics_log session_state.py and persistence.py into logger.py
 
-**Implementation:**
-1. Rename `_OrderHypothesis` to `OrderHypothesis` in `analysis/order_analysis.py` (remove underscore prefix)
-2. Export it from `order_analysis.py` — add to `__all__` or make publicly importable
-3. In `order_models.py`, delete the `OrderHypothesisLike` Protocol definition
-4. In `order_assembly.py`, `order_matching.py`, `order_findings.py`: replace `OrderHypothesisLike` with `OrderHypothesis` in all type annotations
-5. Update imports in consumer modules: `from ..order_analysis import OrderHypothesis`
-6. If `order_models.py` becomes empty (only had the Protocol + `OrderMatchAccumulator`), keep `OrderMatchAccumulator` in it or move it
+1. Move `MetricsSessionState` class from `session_state.py` into `logger.py` (as `_MetricsSessionState`)
+2. Move `LoggingStatusPayload` and `MetricsSessionSnapshot` into `logger.py`
+3. Move `MetricsPersistenceCoordinator` from `persistence.py` into `logger.py` (as `_MetricsPersistenceCoordinator`)
+4. Replace the `generation_matches` callable with a direct reference to `MetricsSessionState` (pass the state object, not a closure)
+5. Delete `session_state.py` and `persistence.py`
+6. Update `metrics_log/__init__.py` exports
+7. Keep `post_analysis.py` and `sample_builder.py` as separate files (they are genuinely independent)
+8. Update test imports — tests that construct `MetricsPersistenceCoordinator` directly should test through `MetricsLogger` instead, or access the private class for focused testing
 
-### Step 5: Inline UpdateWorkflow into UpdateManager
+### Step 5: Flatten vibesensor/core/ into vibesensor/
 
-**Implementation:**
-1. Move the `run()` method logic from `UpdateWorkflow` into a private method on `UpdateManager` (e.g., `_execute_update_workflow()`)
-2. Instead of constructing `UpdateWorkflow(tracker, validator, ...)`, the method directly creates local variables: `validator = UpdatePrerequisiteValidator(self._validation_config)`, etc.
-3. This aligns the main update path with `_snapshot_for_rollback()` and `_rollback()`, which already construct their sub-objects inline
-4. Delete the `UpdateWorkflow` dataclass from `workflow.py`
-5. Delete `_build_workflow()` from `manager.py`
-6. Keep the rest of `workflow.py` (validation config, prerequisite validator, etc.) — only the wrapper dataclass is removed
+1. Move `vibration_strength.py`, `strength_bands.py`, `sensor_units.py` from `vibesensor/core/` to `vibesensor/`
+2. Delete `vibesensor/core/__init__.py` and `vibesensor/core/` directory
+3. Update all ~20+ import sites: `from vibesensor.core.vibration_strength import ...` → `from vibesensor.vibration_strength import ...` (or `from ..vibration_strength import ...` for relative imports)
+4. Update test imports similarly
+5. Update `pyproject.toml` mypy entries if they reference `core/`
 
-### Step 6: Remove private Protocols in rotational_speeds.py
+### Step 6: Verify everything
 
-**Implementation:**
-1. Delete `_SpeedSourceSettingsStore` Protocol definition
-2. Delete `_GpsMonitorState` Protocol definition
-3. Replace union types in function signatures:
-   - `SettingsStore | _SpeedSourceSettingsStore` → `SettingsStore`
-   - `GPSSpeedMonitor | _GpsMonitorState` → `GPSSpeedMonitor`
-4. Remove unused Protocol import
-
-### Step 7: Flatten analysis/findings/ into analysis/
-
-**Implementation:**
-1. Move all 14 files from `analysis/findings/` to `analysis/` with prefix naming:
-   - `findings/__init__.py` → delete (re-export file)
-   - `findings/builder.py` → `analysis/findings_builder.py`
-   - `findings/builder_support.py` → `analysis/findings_builder_support.py`
-   - `findings/intensity.py` → `analysis/findings_intensity.py`
-   - `findings/order_findings.py` → `analysis/findings_order.py`
-   - `findings/order_matching.py` → `analysis/findings_order_matching.py`
-   - `findings/order_assembly.py` → `analysis/findings_order_assembly.py`
-   - `findings/order_models.py` → `analysis/findings_order_models.py` (or merged after step 4)
-   - `findings/transient.py` → `analysis/findings_transient.py`
-   - `findings/severity.py` → `analysis/findings_severity.py` (check for collision with existing analysis/severity.py)
-   - `findings/_constants.py` → `analysis/findings_constants.py`
-   - etc.
-2. Update all imports from `vibesensor.analysis.findings.X` to `vibesensor.analysis.findings_X`
-3. Delete `analysis/findings/` directory
-4. Update test imports that reference `analysis.findings.*`
-
-**Key concern**: Check for filename collisions between `analysis/` and `findings/` files. For example, both might have a `severity.py`. Use the `findings_` prefix to avoid collisions systematically.
+1. `ruff check apps/server/`
+2. `make typecheck-backend`
+3. `pytest -q apps/server/tests/analysis/ apps/server/tests/metrics_log/`
+4. Full test suite: `pytest -q apps/server/tests/ -m "not selenium"`
 
 ## Dependencies on Other Chunks
 
-- **Chunk 1** must complete first (it changes import paths for simulator, which might affect some test files)
-- **Chunk 4** builds on this chunk's type cleanup — the TypedDict removal in chunk 4 pairs well with the Protocol removal here
-- Step 4 (OrderHypothesisLike) and Step 7 (flatten findings/) interact: do the Protocol removal first (step 4 prepares the ground), then the flatten (step 7 moves the files)
+- Executes after Chunk 1 (dead code) and Chunk 2 (runtime flattening)
+- Independent of Chunks 4 and 5
 
 ## Risks and Tradeoffs
 
-- **LifecycleManager circular construction**: The biggest risk is the circular dependency between RuntimeState (needs lifecycle) and LifecycleManager (needs runtime). Mitigation: use a two-phase construction with `lifecycle=None` initially.
-- **SignalProcessor alias removal**: Tests that access `processor._buffers` directly will need updates. These are private API tests — the risk is moderate but the changes are mechanical.
-- **report/mapping/ collapse**: A 500-line file is harder to navigate than 8 smaller files. But one file is easier to understand holistically for a single-consumer function.
-- **analysis/findings/ flatten**: This is the largest rename operation, touching ~14 files and potentially many import sites. Risk is mechanical but blast radius is large.
+- **findings_order_analysis.py size**: Merging models + matching + scoring + support creates a ~570-line file. This is acceptable — the algorithms are cohesive and readers no longer need to hop between 7 files.
+- **metrics_log/logger.py size**: Merging session_state and persistence makes logger.py ~500+ lines. The internal classes are prefixed with `_` to signal they're implementation details. Tests can still import them for focused testing.
+- **core/ flattening import churn**: ~20+ import sites need updating. This is mechanical and safe.
 
 ## Validation Steps
 
-1. `pytest -q apps/server/tests/` — full test suite
-2. `make lint` — ruff passes
-3. `make typecheck-backend` — mypy passes with all changes
-4. `pytest -q apps/server/tests/integration/` — integration tests work
-5. Verify no `from vibesensor.analysis.findings.` imports remain (should be `findings_`)
-6. Verify `report/mapping/` directory no longer exists (only `report/mapping.py`)
-7. Verify `UpdateWorkflow` class no longer exists
+- `ruff check apps/server/`
+- `make typecheck-backend`
+- `pytest -q apps/server/tests/analysis/ apps/server/tests/metrics_log/ apps/server/tests/domain/`
+- Full: `pytest -q apps/server/tests/ -m "not selenium"`
 
-## Required Documentation Updates
+## Documentation Updates
 
-- `docs/ai/repo-map.md`: Update references to `report/mapping/` sub-package and `analysis/findings/` sub-package
-- `docs/report_pipeline.md`: Update if it references mapping sub-package structure
+- Update `docs/ai/repo-map.md`: remove `core/` sub-package reference, update metrics_log description, update analysis description
+- Update `.github/copilot-instructions.md`: remove `vibesensor/core/` reference, update canonical dB definition path
+- Update `.github/instructions/backend.instructions.md`: update package layout section
+- Update `docs/testing.md` if test paths changed
 
-## Required AI Instruction Updates
+## AI Instruction Updates
 
-- `.github/instructions/general.instructions.md`: Add guidance:
-  - Do not create sub-packages for single-consumer, single-export modules
-  - Do not create Protocol types for classes with only one implementor
-  - Do not add compatibility aliases/shims when refactoring — update consumers directly
-  - Prefer direct constructor parameters over wrapper dataclasses for one-shot operations
-- `.github/instructions/backend.instructions.md`: Update references to analysis/findings/ structure
+- Add to `general.instructions.md`:
+  - "Do not create re-export shim modules that only alias imports from another module. Consumers should import from the source directly."
+  - "Do not use Callable injection in function signatures when the callables are always the same implementations and no test injects alternatives. Call functions directly."
+  - "Do not split a coherent algorithm across more than 3 files unless files have genuinely independent consumers."
 
-## Required Test Updates
+## Test Updates
 
-- Update tests accessing `processor._buffers` etc. to use `processor._store.buffers`
-- Update imports from `vibesensor.analysis.findings.X` to `vibesensor.analysis.findings_X`
-- Update imports from `vibesensor.report.mapping.X` if any tests import sub-modules
+- Update test imports for renamed/moved modules
+- Simplify tests that import `MetricsPersistenceCoordinator` directly
+- Update analysis test imports for consolidated findings_order modules
+- Verify regression tests still pass with inlined summary bundles
 
 ## Simplification Crosswalk
 
-### [1.1] LifecycleManager mirrors RuntimeState
-- **Validation**: CONFIRMED
-- **Root cause**: Per-field constructor mirroring
-- **Steps**: Accept RuntimeState reference, remove 9 individual params
-- **Code areas**: bootstrap.py, lifecycle.py, _state.py
-- **What can be removed**: ~25 lines of duplicated constructor args
-- **Verification**: Tests pass, lifecycle start/stop works
-
-### [1.2] SignalProcessor aliases
-- **Validation**: CONFIRMED (revised: keep decomposition, remove aliases only)
-- **Root cause**: Compatibility shim over internal refactor
-- **Steps**: Remove 6 aliases, update test references
-- **Code areas**: processing/processor.py, test files
-- **What can be removed**: 6 alias lines, compatibility comment
-- **Verification**: Tests pass with updated references
-
-### [1.3] report/mapping/ sub-package
-- **Validation**: CONFIRMED
-- **Root cause**: Sub-package for single-consumer function
-- **Steps**: Concatenate 7 implementation files into mapping.py, delete directory
-- **Code areas**: report/mapping/, history_services/reports.py
-- **What can be removed**: 7 files, directory, internal circular-import workaround
-- **Verification**: map_summary() import works, report tests pass
-
-### [2.1] OrderHypothesisLike Protocol
-- **Validation**: CONFIRMED
-- **Root cause**: Protocol for single private implementor
-- **Steps**: Export concrete class, delete Protocol, update 3 consumer imports
-- **Code areas**: analysis/findings/order_models.py, order_analysis.py, 3 consumer modules
-- **What can be removed**: Protocol definition (~20 lines)
-- **Verification**: mypy passes, analysis tests pass
-
-### [2.2] UpdateWorkflow dataclass
-- **Validation**: CONFIRMED (revised: inline orchestration, not full method body)
-- **Root cause**: Per-invocation wrapper dataclass
-- **Steps**: Move run() logic to UpdateManager private method, delete dataclass
-- **Code areas**: update/workflow.py, update/manager.py
-- **What can be removed**: UpdateWorkflow class, _build_workflow() factory
-- **Verification**: Update workflow tests pass
-
-### [2.3] Private Protocols in rotational_speeds.py
-- **Validation**: CONFIRMED
-- **Root cause**: Vacuous union types with structural-subtype redundancy
-- **Steps**: Delete 2 Protocols, use concrete types in signatures
-- **Code areas**: runtime/rotational_speeds.py
-- **What can be removed**: 2 Protocol definitions, union types
-- **Verification**: mypy passes
-
-### [10.1] analysis/findings/ double-nesting
-- **Validation**: CONFIRMED
-- **Root cause**: Sub-package for related code within a package
-- **Steps**: Move 14 files to analysis/ with findings_ prefix, update imports
-- **Code areas**: analysis/findings/, all importing modules
-- **What can be removed**: findings/ directory, __init__.py
-- **Verification**: All analysis and integration tests pass
+| Finding | Steps | Removable | Verification |
+|---------|-------|-----------|-------------|
+| J1+I1+I2 | Steps 1-2 | 5 files deleted, ~6 wrapper functions, callable injection pattern, re-export shim | analysis tests pass, zero remaining findings_constants imports |
+| B2 | Step 3 | 3 dataclass definitions, 3 intermediate functions | summary_builder tests pass, PreparedRunData still exists |
+| A3+C3 | Step 4 | 2 files deleted, callback injection pattern simplified | metrics_log tests pass, logger.py consolidates session/persistence |
+| I3 | Step 5 | core/ directory, __init__.py, one import level across ~20 sites | all imports resolve, typecheck passes |

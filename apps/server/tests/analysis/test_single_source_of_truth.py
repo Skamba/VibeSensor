@@ -78,36 +78,6 @@ def test_spectrum_payload_has_no_combined_alias() -> None:
     _assert_no_combined_alias(proc.spectrum_payload("test_client"))
 
 
-def test_selected_payload_has_no_combined_alias() -> None:
-    """Selected payload spectrum must not contain the dead 'combined' alias."""
-    proc = _make_signal_processor()
-    _ingest_noise(proc, seed=43)
-    payload = proc.selected_payload("test_client")
-    _assert_no_combined_alias(payload["spectrum"])
-
-
-def test_metrics_log_no_old_field_names() -> None:
-    """Metrics log records must not contain old field aliases."""
-    from vibesensor.domain_models import _default_units as default_units
-
-    units = default_units()
-    old_fields = {
-        "accel_magnitude_rms_g",
-        "accel_magnitude_p2p_g",
-        "dominant_peak_amp_g",
-        "noise_floor_amp",
-        "vib_mag_rms_g",
-        "vib_mag_p2p_g",
-        "noise_floor_amp_p20_g",
-        "strength_floor_amp_g",
-        "strength_peak_band_rms_amp_g",
-        "strength_db",
-    }
-    present = old_fields & set(units.keys())
-    assert not present, f"Old fields still in default_units: {present}"
-    assert "vibration_strength_db" in units, "vibration_strength_db missing from default_units"
-
-
 def test_as_float_single_source_of_truth() -> None:
     """order_bands.as_float_or_none must be the canonical as_float_or_none
     from runlog, not a local re-definition.

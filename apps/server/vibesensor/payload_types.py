@@ -73,9 +73,6 @@ class ClientApiRow(TypedDict):
 
 
 class SpectrumSeriesPayload(TypedDict, total=False):
-    x: list[float]
-    y: list[float]
-    z: list[float]
     combined_spectrum_amp_g: list[float]
     strength_metrics: VibrationStrengthMetrics
     freq: list[float]
@@ -100,30 +97,6 @@ class SpectraPayload(TypedDict, total=False):
     clients: dict[str, SpectrumSeriesPayload]
     alignment: AlignmentInfoPayload
     warning: FrequencyWarningPayload
-
-
-class WaveformPayload(TypedDict, total=False):
-    t: list[float]
-    x: list[float]
-    y: list[float]
-    z: list[float]
-
-
-class SelectedSpectrumPayload(TypedDict, total=False):
-    freq: list[float]
-    x: list[float]
-    y: list[float]
-    z: list[float]
-    combined_spectrum_amp_g: list[float]
-    strength_metrics: VibrationStrengthMetrics
-
-
-class SelectedClientPayload(TypedDict):
-    client_id: str
-    sample_rate_hz: int
-    waveform: WaveformPayload
-    spectrum: SelectedSpectrumPayload
-    metrics: ClientMetrics
 
 
 class DebugSpectrumStatsPayload(TypedDict):

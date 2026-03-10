@@ -1,200 +1,105 @@
-# Chunk 1: Package Structure & Build System
+# Chunk 1: Dead Code, Unused Data & Payload Trimming
 
 ## Mapped Findings
 
-- [9.1] vibesensor_simulator fake-independent package with fragile path hack
-- [9.2] vibesensor_tools_config unnecessary 2-file package
-- [9.3] Three-layer thin wrapper script proliferation
-- [7.3] Config-tool triple-layering with inconsistent invocation paths
-- [10.3] hotspot/ micro-package and live_diagnostics/ ghost directory
+| ID | Original Finding | Source Subagent | Validation Status |
+|----|-----------------|-----------------|-------------------|
+| D1 | Per-axis peak blobs stored but never read | Persistence & Schema | **Validated** |
+| E1 | ClientApiRow embeds 16 unused diagnostic fields in every WS tick | API & Interface | **Validated** |
+| E2 | Per-axis spectra (x/y/z) serialized in WS but discarded by frontend | API & Interface | **Validated** |
+| E3 | SelectedClientPayload/WaveformPayload/build_selected_payload() dead pipeline | API & Interface | **Validated** |
+| D3 | RunMetadata embeds three always-default documentation blobs | Persistence & Schema | **Validated** |
+| C2 | ClientBuffer 4 generation counters + 2 payload caches | Data Flow & State | **Partially solved by E3** |
 
 ## Validation Outcomes
 
-### [9.1] CONFIRMED (HIGH confidence)
-`vibesensor_simulator` in `apps/simulator/vibesensor_simulator/` contains 5 source files (commands.py, profiles.py, server_http.py, sim_sender.py, ws_smoke.py). It imports directly from `vibesensor.*` (4+ imports from vibesensor.contracts, vibesensor.protocol, vibesensor.analysis_settings, vibesensor.constants). Cannot run independently. Bundled into the server wheel via a multi-root `packages.find where = [".", "../../apps/simulator", "../../tools/config"]` hack in pyproject.toml. Entry points (`vibesensor-sim`, `vibesensor-ws-smoke`) are registered in the server's pyproject.toml, not in a separate package. The Dockerfile has a redundant `COPY apps/simulator` step.
+### D1: Per-axis peak blobs — VALIDATED
+`top_peaks_x`, `top_peaks_y`, `top_peaks_z` columns in `_schema.py` SCHEMA_SQL. `_V2_PEAK_COLS` in `_samples.py`. `SensorFrame` carries them. Zero consumers in analysis/, report/, or UI. Only `top_peaks` (combined) is read by `_sample_top_peaks()`.
 
-### [9.2] CONFIRMED (HIGH confidence)
-`tools/config/vibesensor_tools_config/` contains only 2 source files (`config_preflight.py`, `check_line_endings.py`) plus an `__init__.py` with a docstring. `check_line_endings.py` has zero imports from `vibesensor.*` — it's a pure git/repo maintenance script using `subprocess`. It ships in the production wheel despite having no production purpose. The package adds a third root to `packages.find where`.
+### E1: ClientApiRow WS bloat — VALIDATED
+`ClientApiRow` has 23 fields. Frontend `parseClient()` uses only 10. The rest are serialized every WS tick for zero benefit.
 
-### [9.3] CONFIRMED (MEDIUM confidence)
-Three thin wrapper scripts exist for the simulator that all do `from vibesensor_simulator.sim_sender import main; main()`:
-- `apps/simulator/sim_sender.py`
-- `apps/tools/simulator`
-- `tools/simulator`
+### E2: Per-axis spectra — VALIDATED
+`SpectrumSeriesPayload` has `x, y, z` fields. `build_spectrum_payload()` computes all three. Frontend `parseSpectra()` only reads `combined_spectrum_amp_g` and `strength_metrics`.
 
-And for config:
-- `tools/config/config_preflight.py`
-- `apps/tools/config`
+### E3: SelectedClientPayload dead pipeline — VALIDATED
+`SelectedClientPayload`, `WaveformPayload`, `SelectedSpectrumPayload` TypedDicts, `build_selected_payload()` (~90 lines), `cached_selected_payload` / `cached_selected_payload_key` on `ClientBuffer`, `SignalProcessor.selected_payload()`. Zero production callsites.
 
-All are redundant with the registered entry points (`vibesensor-sim`, `vibesensor-config-preflight`).
+### D3: RunMetadata always-default blobs — VALIDATED
+`_default_units()`, `_default_amplitude_definitions()`, `_default_phase_metadata()` return fixed dicts. No code reads them.
 
-### [7.3] CONFIRMED (MEDIUM-HIGH confidence)
-Config preflight has 3 invocation paths: entry point `vibesensor-config-preflight`, script `tools/config/config_preflight.py`, and `apps/tools/config`. The `run_ci_parallel.py` uses the script path while `ci.yml` uses the entry point — confirmed drift.
+### C2: ClientBuffer generation counters — REFINED
+After E3 removal, `cached_selected_payload` and `cached_selected_payload_key` disappear. Remaining cache fields are justified. No further action needed beyond E3 cleanup.
 
-### [10.3] CONFIRMED
-- `live_diagnostics/`: Ghost directory containing only `__pycache__/` with stale .pyc files. No `.py` source files exist. Confirmed by filesystem check.
-- `hotspot/`: Contains 2 files (parsers.py, self_heal.py) plus `__init__.py`. Only 3 import sites. Finding is valid for live_diagnostics/ (immediate cleanup); hotspot/ is borderline (keeping as package is defensible since it groups Wi-Fi AP concerns).
+## Root Causes
 
-## Root Complexity Drivers
+Speculative feature code: data structures built for undelivered features (per-axis spectrum display, per-sensor waveform view, per-axis peak analysis) are maintained but never consumed.
 
-1. **Multi-root packages.find hack**: The main driver is the aspiration to treat simulator and tools as independent packages while they have zero independence. The `where = [".", "../../apps/simulator", "../../tools/config"]` pattern is fragile (only works from `apps/server/`), adds build complexity, and ships dev-only code in the production wheel.
+## Implementation Steps
 
-2. **Accumulated wrapper scripts**: Each tool gained wrapper scripts in multiple locations (apps/tools/, tools/, module root) before entry points were standardized. Old wrappers were never cleaned up.
+### Step 1: Remove SelectedClientPayload dead pipeline (E3)
+1. Delete `WaveformPayload`, `SelectedSpectrumPayload`, `SelectedClientPayload` from `payload_types.py`
+2. Delete `build_selected_payload()` from `processing/payload.py` (~90 lines)
+3. Remove imports of deleted types from `processing/payload.py`
+4. Remove `cached_selected_payload` and `cached_selected_payload_key` from `ClientBuffer` in `processing/buffers.py`
+5. Update `invalidate_caches()` to remove selected-payload cache clearing
+6. Remove `selected_payload()` from `processing/views.py` and `processing/processor.py`
+7. Clean up any test references
 
-3. **Package-for-everything pattern**: `vibesensor_tools_config` was given a package namespace for 2 files. `hotspot/` was created for 2 files. `live_diagnostics/` was left as a ghost after its contents were moved.
+### Step 2: Remove per-axis spectra from WS payload (E2)
+1. Remove `x`, `y`, `z` keys from `SpectrumSeriesPayload` in `payload_types.py`
+2. Update `build_spectrum_payload()` to stop computing x/y/z
+3. Update `EMPTY_SPECTRUM_PAYLOAD` and `_empty_spectrum_payload()` to remove x/y/z
+4. Update WS payload schema JSON if needed
 
-## Simplification Strategy
+### Step 3: Trim ClientApiRow for WS broadcast (E1)
+1. Create `ClientWsBriefRow` TypedDict with only the 10 frontend-consumed fields
+2. Keep `ClientApiRow` for REST debug endpoint
+3. Update WS broadcast builder to use brief row
+4. Update WS payload schema JSON
 
-### Step 1: Move vibesensor_simulator into vibesensor/simulator/
+### Step 4: Remove per-axis peak blobs (D1)
+1. Remove `top_peaks_x`, `top_peaks_y`, `top_peaks_z` from SCHEMA_SQL
+2. Bump SCHEMA_VERSION from 5 to 6
+3. Remove per-axis peak entries from `_samples.py`
+4. Remove per-axis peak fields from `SensorFrame` in `domain_models.py`
+5. Remove per-axis peak extraction from `sample_builder.py`
+6. Remove per-axis peak columns from CSV export
+7. Update tests
 
-This is the highest-impact change in this chunk.
+### Step 5: Remove RunMetadata documentation blobs (D3)
+1. Remove `units`, `amplitude_definitions`, `phase_metadata` from `RunMetadata`
+2. Remove `_default_units()`, `_default_amplitude_definitions()`, `_default_phase_metadata()`
+3. Remove parsing helpers used only for these fields
+4. Update `create()`, `from_dict()`, `to_dict()`
+5. If JSONL export needs unit docs, inject at export time only
 
-**Implementation:**
-1. Create `apps/server/vibesensor/simulator/` directory
-2. Move all 5 source files from `apps/simulator/vibesensor_simulator/` to `apps/server/vibesensor/simulator/`
-3. Create `apps/server/vibesensor/simulator/__init__.py` (minimal, reexport main entry points if needed)
-4. Update all imports from `vibesensor_simulator.X` to `vibesensor.simulator.X`:
-   - Entry points in pyproject.toml: `vibesensor-sim`, `vibesensor-ws-smoke`
-   - All test files that import from `vibesensor_simulator`
-   - Any references in CI, Makefile, documentation
-5. Remove `../../apps/simulator` from `packages.find where`
-6. Remove `vibesensor_simulator*` from `packages.find include`
-7. Remove `COPY apps/simulator` from Dockerfile
-8. Delete `apps/simulator/` directory entirely (including README.md, the root sim_sender.py, ws_smoke.py wrappers)
-
-**Import changes needed (search for `vibesensor_simulator`):**
-- pyproject.toml entry points
-- Test files (integration tests, scenario tests)
-- Dockerfile
-- Any CI or script references
-
-### Step 2: Inline vibesensor_tools_config
-
-**Implementation:**
-1. Move `tools/config/vibesensor_tools_config/config_preflight.py` to `apps/server/vibesensor/config_preflight.py`
-2. Move `tools/config/vibesensor_tools_config/check_line_endings.py` to `tools/dev/check_line_endings.py` (it's a dev-only script, should NOT be in the wheel)
-3. Update entry point in pyproject.toml: `vibesensor-config-preflight = "vibesensor.config_preflight:main"`
-4. Remove `../../tools/config` from `packages.find where`
-5. Remove `vibesensor_tools_config*` from `packages.find include`
-6. Delete `tools/config/vibesensor_tools_config/` directory
-7. Update any CI, test, or script references
-
-### Step 3: Delete thin wrapper scripts
-
-**Implementation:**
-1. Delete `apps/simulator/sim_sender.py` (3-line wrapper)
-2. Delete `apps/simulator/ws_smoke.py` (if it exists as a wrapper)
-3. Delete `apps/tools/simulator` (3-line wrapper)
-4. Delete `apps/tools/config` (3-line wrapper)
-5. Delete `tools/simulator` (3-line wrapper)
-6. Delete `tools/config/config_preflight.py` (3-line wrapper)
-7. After all wrappers are deleted, check if `apps/tools/` directory is empty — if so, delete it
-8. Update any Makefile or CI references to use entry point names instead of script paths
-9. Update `run_ci_parallel.py` (if it still exists at this point) to use entry point `vibesensor-config-preflight` instead of `python tools/config/config_preflight.py`
-
-### Step 4: Clean up ghost directory and micro-packages
-
-**Implementation:**
-1. Delete `apps/server/vibesensor/live_diagnostics/` entirely (ghost directory with only `__pycache__/`)
-2. For `hotspot/`: Keep as-is. With only 2 files and 3 import sites, the package adds minimal overhead. The `vibesensor-hotspot-self-heal` entry point references `vibesensor.hotspot.self_heal:main`, so flattening would change a registered entry point for marginal benefit. Decision: **Keep hotspot/ as a package**.
-
-### Step 5: Simplify pyproject.toml packages.find
-
-After steps 1-4, the `packages.find` section simplifies from:
-```toml
-where = [".", "../../apps/simulator", "../../tools/config"]
-include = ["vibesensor*", "vibesensor_simulator*", "vibesensor_tools_config*"]
-```
-To:
-```toml
-where = ["."]
-include = ["vibesensor*"]
-```
-
-This is the single most impactful line-count reduction: eliminates the fragile relative-path hack entirely.
+### Step 6: Verify and update tests
+1. Run targeted tests for processing, metrics_log, domain, history_db
+2. Fix assertions on removed fields
+3. Remove dead test code for selected-payload and axis peaks
 
 ## Dependencies on Other Chunks
-
-- **Chunk 2** references `run_ci_parallel.py` which uses script paths that this chunk changes. If chunk 2 deletes `run_ci_parallel.py`, the path fix in step 3 is moot. If chunk 2 doesn't delete it, this chunk must update it.
-- **Chunk 5** documentation updates will reference the new `vibesensor.simulator` import path.
-- No dependencies on chunks 3 or 4.
+None — pure removal, executes first.
 
 ## Risks and Tradeoffs
-
-- **Import churn**: All `vibesensor_simulator` imports must be updated. This touches integration tests, simulation-related tests, and possibly CI scripts. Risk is low (mechanical find/replace) but the blast radius is moderate.
-- **Entry point stability**: The `vibesensor-sim` and `vibesensor-ws-smoke` CLI entry points don't change for end users — only their internal module path changes. No breaking change for Raspberry Pi deployments.
-- **Dockerfile change**: Removing `COPY apps/simulator` simplifies the Docker build. The server's pip install pulls in the simulator since it's now inside `vibesensor/`.
-- **check_line_endings.py removal from wheel**: This script was never production-relevant, so removing it from the wheel is pure benefit.
+- Schema v5→v6 bump: existing DBs become incompatible (acceptable fail-fast behavior)
+- JSONL export format changes: keep unit constants as export-time injection if needed
+- REST API `GET /api/clients` keeps full diagnostic type for debugging
 
 ## Validation Steps
-
-1. `pip install -e "./apps/server[dev]"` — verify clean install without multi-root hack
-2. `vibesensor-sim --help` — verify entry point works
-3. `vibesensor-ws-smoke --help` — verify entry point works
-4. `vibesensor-config-preflight apps/server/config.yaml` — verify entry point works
-5. `pytest -q apps/server/tests/integration/test_level_sim_ingestion.py` — verify sim tests pass
-6. `make lint` — verify ruff passes
-7. `make typecheck-backend` — verify mypy passes
-8. `docker compose build --pull` — verify Docker build succeeds
-9. Verify `apps/simulator/` no longer exists
-10. Verify `tools/config/vibesensor_tools_config/` no longer exists
-11. Verify `apps/server/vibesensor/live_diagnostics/` no longer exists
-12. Verify `apps/tools/` no longer exists (if empty)
-13. Run full test suite: `pytest -q -m "not selenium" apps/server/tests`
-
-## Required Documentation Updates
-
-- `docs/ai/repo-map.md`: Update simulator reference from `apps/simulator/` to `vibesensor/simulator/`
-- `.github/copilot-instructions.md`: Update simulator tooling reference
-- `apps/server/README.md`: Update any simulator references
-- `CONTRIBUTING.md`: Update if it references simulator paths
-
-## Required AI Instruction Updates
-
-- `.github/copilot-instructions.md`: Remove references to `apps/simulator/` as a separate app
-- `.github/instructions/general.instructions.md`: Add guidance against creating separate packages for code that depends on the main server package
-
-## Required Test Updates
-
-- All tests importing from `vibesensor_simulator` must be updated to `vibesensor.simulator`
-- Test files referencing `apps/simulator/` paths must be updated
+- `pytest -q apps/server/tests/processing/ apps/server/tests/metrics_log/ apps/server/tests/domain/ apps/server/tests/history_db/`
+- `ruff check apps/server/`
+- `make typecheck-backend`
+- Frontend `npm run build` and `npm run typecheck`
 
 ## Simplification Crosswalk
 
-### [9.1] vibesensor_simulator → vibesensor/simulator/
-- **Validation**: CONFIRMED
-- **Root cause**: Package separation aspiration with zero actual independence
-- **Steps**: Move files, update imports, update entry points, remove Dockerfile COPY, clean up pyproject.toml
-- **Code areas**: apps/simulator/, apps/server/pyproject.toml, Dockerfile, test files
-- **What can be removed**: apps/simulator/ directory, multi-root path hack
-- **Verification**: Entry points work, tests pass, Docker builds
-
-### [9.2] vibesensor_tools_config → inline
-- **Validation**: CONFIRMED
-- **Root cause**: Package namespace for 2 files, one of which isn't even production code
-- **Steps**: Move config_preflight to vibesensor/, move check_line_endings to tools/dev/, update entry point, clean up pyproject.toml
-- **Code areas**: tools/config/vibesensor_tools_config/, pyproject.toml
-- **What can be removed**: vibesensor_tools_config package, third packages.find root
-- **Verification**: Entry point works, check_line_endings still runs, clean lint
-
-### [9.3] Delete thin wrapper scripts
-- **Validation**: CONFIRMED
-- **Root cause**: Historical accumulation of pre-entry-point era scripts
-- **Steps**: Delete 5-6 wrapper scripts, delete apps/tools/ if empty
-- **Code areas**: apps/simulator/sim_sender.py, apps/tools/*, tools/simulator, tools/config/config_preflight.py
-- **What can be removed**: ~6 files, potentially apps/tools/ directory
-- **Verification**: Entry points still work, no references to deleted scripts
-
-### [7.3] Config-tool triple-layering
-- **Validation**: CONFIRMED (merged with [9.2] and [9.3])
-- **Root cause**: Same as [9.2] and [9.3] — resolved by those steps
-- **Steps**: Covered by [9.2] (entry point path fix) and [9.3] (wrapper deletion)
-- **Verification**: Single invocation path works
-
-### [10.3] Ghost directory and micro-packages
-- **Validation**: CONFIRMED for live_diagnostics/; hotspot/ retained
-- **Root cause**: live_diagnostics/ is leftover from module removal
-- **Steps**: Delete live_diagnostics/ directory
-- **Code areas**: apps/server/vibesensor/live_diagnostics/
-- **What can be removed**: Ghost directory with stale __pycache__
-- **Verification**: No import errors, no test failures
+| Finding | Steps | Removable | Verification |
+|---------|-------|-----------|-------------|
+| D1 | Step 4 | 3 schema cols, peak fields, extraction code, CSV cols | tests pass, no axis-peak references |
+| E1 | Step 3 | 13 fields from WS broadcast | frontend renders, WS payload smaller |
+| E2 | Step 2 | x/y/z from SpectrumSeriesPayload | parseSpectra works, no x/y/z in UI |
+| E3 | Step 1 | ~100 lines dead code, 3 TypedDicts, 2 buffer fields, 2 methods | zero callsites for selected_payload |
+| D3 | Step 5 | 3 fields, 3 defaults, 2 parsing helpers | RunMetadata smaller, tests pass |
+| C2 | By Step 1 | 2 buffer cache fields | buffer has fewer fields |

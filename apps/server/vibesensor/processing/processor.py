@@ -27,7 +27,6 @@ from ..payload_types import (
     IntakeStatsPayload,
     RawSamplesErrorPayload,
     RawSamplesPayload,
-    SelectedClientPayload,
     SpectraPayload,
     TimeAlignmentPayload,
 )
@@ -202,9 +201,6 @@ class SignalProcessor:
 
     def multi_spectrum_payload(self, client_ids: list[str]) -> SpectraPayload:
         return self._views.multi_spectrum_payload(client_ids)
-
-    def selected_payload(self, client_id: str) -> SelectedClientPayload:
-        return self._views.selected_payload(client_id)
 
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:
         return self._store.latest_sample_xyz(client_id)

@@ -236,7 +236,7 @@ class TestRunMetadata:
         )
         assert rm.run_id == "r1"
         assert rm.sensor_model == "ADXL345"
-        assert "g" in rm.units.get("accel_x_g", "")
+        assert rm.accel_scale_g_per_lsb == 0.004
 
     def test_from_dict_minimal(self) -> None:
         rm = RunMetadata.from_dict({"run_id": "r2", "sensor_model": "TEST"})
@@ -273,10 +273,6 @@ class TestRunMetadata:
         assert rm2.sensor_model == rm.sensor_model
         assert rm2.raw_sample_rate_hz == rm.raw_sample_rate_hz
 
-    def test_default_phase_metadata(self) -> None:
-        rm = RunMetadata.from_dict({"run_id": "old"})
-        assert "version" in rm.phase_metadata
-
 
 # ---------------------------------------------------------------------------
 # SensorFrame
@@ -309,9 +305,6 @@ class TestSensorFrame:
         assert sf.speed_kmh == 80.0
         assert sf.accel_x_g == 0.02
         assert len(sf.top_peaks) == 1
-        assert sf.top_peaks_x == []
-        assert sf.top_peaks_y == []
-        assert sf.top_peaks_z == []
 
     def test_nan_fields_replaced_with_none(self) -> None:
         """NaN in numeric fields should be normalized to None."""
@@ -355,35 +348,15 @@ class TestSensorFrame:
         sf = SensorFrame.from_dict(self._minimal_record(top_peaks=peaks))
         assert len(sf.top_peaks) <= 10
 
-    def test_axis_top_peaks_normalized_and_capped_at_3(self) -> None:
-        axis_peaks = [{"hz": float(i + 1), "amp": 0.01} for i in range(8)]
-        sf = SensorFrame.from_dict(
-            self._minimal_record(
-                top_peaks_x=axis_peaks,
-                top_peaks_y=[{"hz": 0.0, "amp": 0.01}, {"hz": 5.0, "amp": 0.02}],
-                top_peaks_z=[{"hz": 7.0, "amp": None}, {"hz": 6.0, "amp": 0.03}],
-            ),
-        )
-        assert len(sf.top_peaks_x) == 3
-        assert sf.top_peaks_y == [{"hz": 5.0, "amp": 0.02}]
-        assert sf.top_peaks_z == [{"hz": 6.0, "amp": 0.03}]
-
     def test_roundtrip(self) -> None:
         sf = SensorFrame.from_dict(
-            self._minimal_record(
-                top_peaks_x=[{"hz": 24.0, "amp": 0.04}],
-                top_peaks_y=[{"hz": 25.0, "amp": 0.03}],
-                top_peaks_z=[{"hz": 26.0, "amp": 0.02}],
-            ),
+            self._minimal_record(),
         )
         d = sf.to_dict()
         sf2 = SensorFrame.from_dict(d)
         assert sf2.run_id == sf.run_id
         assert sf2.speed_kmh == sf.speed_kmh
         assert len(sf2.top_peaks) == len(sf.top_peaks)
-        assert sf2.top_peaks_x == sf.top_peaks_x
-        assert sf2.top_peaks_y == sf.top_peaks_y
-        assert sf2.top_peaks_z == sf.top_peaks_z
 
     def test_missing_optional_fields(self) -> None:
         """Minimal record with most fields missing should still parse."""

@@ -49,8 +49,6 @@ class _StubProcessor:
         self.multi_spectrum_calls += 1
         return {"freq": [], "clients": {cid: {} for cid in client_ids}}
 
-    def selected_payload(self, client_id: str) -> dict[str, Any]:
-        return {"client_id": client_id, "waveform": {}, "spectrum": {}}
 
 
 class _SpeedResolution:

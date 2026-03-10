@@ -119,9 +119,6 @@ def test_latest_sample_rate_hz_default_zero() -> None:
 def test_spectrum_payload_missing_client() -> None:
     proc = _make_processor()
     result = proc.spectrum_payload("unknown")
-    assert result["x"] == []
-    assert result["y"] == []
-    assert result["z"] == []
     assert result["combined_spectrum_amp_g"] == []
     assert result["strength_metrics"]["vibration_strength_db"] == 0.0
 
@@ -150,13 +147,6 @@ def test_spectrum_payload_has_vibration_strength_db() -> None:
             300,
             400,
             id="spectrum",
-        ),
-        pytest.param(
-            {"sample_rate_hz": 200, "waveform_seconds": 2, "waveform_display_hz": 50},
-            "selected_payload",
-            500,
-            200,
-            id="selected",
         ),
     ],
 )
@@ -232,58 +222,6 @@ def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
     result = proc.multi_spectrum_payload(["c1", "c2"])
     assert sorted(result["clients"]) == ["c1", "c2"]
     assert result["freq"]
-
-
-# -- selected_payload ----------------------------------------------------------
-
-
-def test_selected_payload_missing_client() -> None:
-    proc = _make_processor()
-    result = proc.selected_payload("unknown")
-    assert result["client_id"] == "unknown"
-    assert result["waveform"] == {}
-    assert result["spectrum"] == {}
-    assert result["metrics"] == {}
-
-
-def test_selected_payload_waveform_respects_configured_window() -> None:
-    """Waveform serialization should be bounded by `waveform_seconds` at client sample rate.
-
-    Returning the full ring buffer leaks stale data when the configured display window is
-    shorter than buffered history. The selected payload must slice to the configured window
-    before decimation so UI time spans stay consistent.
-    """
-    proc = _make_processor(sample_rate_hz=100, waveform_seconds=2, waveform_display_hz=25)
-    samples = _random_samples(400)
-    proc.ingest("client1", samples, sample_rate_hz=50)
-
-    result = proc.selected_payload("client1")
-    waveform = result["waveform"]
-    expected_window_samples = 2 * 50
-    expected_step = max(1, 50 // 25)
-    expected_points = expected_window_samples // expected_step
-
-    assert len(waveform["t"]) == expected_points
-    assert waveform["t"][-1] == pytest.approx(0.0)
-    assert waveform["t"][1] - waveform["t"][0] == pytest.approx(expected_step / 50.0)
-
-
-def test_waveform_window_respects_seconds_for_each_client_sample_rate() -> None:
-    proc = _make_processor(sample_rate_hz=100, waveform_seconds=2, waveform_display_hz=25)
-    low_sr = _random_samples(400)
-    high_sr = _random_samples(1200, seed=99)
-    proc.ingest("c-low", low_sr, sample_rate_hz=50)
-    proc.ingest("c-high", high_sr, sample_rate_hz=300)
-
-    low_payload = proc.selected_payload("c-low")
-    high_payload = proc.selected_payload("c-high")
-
-    low_t = low_payload["waveform"]["t"]
-    high_t = high_payload["waveform"]["t"]
-    assert low_t[-1] == pytest.approx(0.0)
-    assert high_t[-1] == pytest.approx(0.0)
-    assert low_t[0] == pytest.approx(-1.96, abs=0.05)
-    assert high_t[0] == pytest.approx(-2.0, abs=0.05)
 
 
 # -- compute_metrics -----------------------------------------------------------

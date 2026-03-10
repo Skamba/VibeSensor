@@ -13,7 +13,7 @@ import numpy as np
 
 from ..core.vibration_strength import VibrationStrengthMetrics, empty_vibration_strength_metrics
 from .models import ClientMetrics, SpectrumByAxis
-from .payload import SelectedClientPayload, SpectrumSeriesPayload
+from .payload import SpectrumSeriesPayload
 
 
 @dataclass(slots=True, eq=False, repr=False)
@@ -46,8 +46,6 @@ class ClientBuffer:
     spectrum_generation: int = 0
     cached_spectrum_payload: SpectrumSeriesPayload | None = None
     cached_spectrum_payload_generation: int = -1
-    cached_selected_payload: SelectedClientPayload | None = None
-    cached_selected_payload_key: tuple[int, int, int] | None = None
 
     def __repr__(self) -> str:
         """Compact repr that omits large numpy array data."""
@@ -62,9 +60,7 @@ class ClientBuffer:
         # Fast-path: skip redundant writes when caches are already clear.
         # During rapid ingestion invalidate_caches is called every batch but
         # compute runs less frequently, so most calls are no-ops.
-        if self.cached_spectrum_payload is None and self.cached_selected_payload is None:
+        if self.cached_spectrum_payload is None:
             return
         self.cached_spectrum_payload = None
         self.cached_spectrum_payload_generation = -1
-        self.cached_selected_payload = None
-        self.cached_selected_payload_key = None

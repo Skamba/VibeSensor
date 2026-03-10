@@ -57,9 +57,6 @@ _V2_TYPED_COLS: tuple[str, ...] = (
 
 _V2_PEAK_COLS: tuple[str, ...] = (
     "top_peaks",
-    "top_peaks_x",
-    "top_peaks_y",
-    "top_peaks_z",
 )
 
 _V2_KNOWN_KEYS: frozenset[str] = frozenset(_V2_TYPED_COLS) | frozenset(_V2_PEAK_COLS)
