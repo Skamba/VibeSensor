@@ -1,3 +1,4 @@
+import type { FeatureDepsBase } from "../feature_deps_base";
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { AppState, ClientRow, LocationOption } from "../state/ui_app_state";
 import * as I18N from "../../i18n";
@@ -12,11 +13,8 @@ import {
 } from "../../api";
 import { defaultLocationCodes } from "../../constants";
 
-export interface RealtimeFeatureDeps {
+export interface RealtimeFeatureDeps extends FeatureDepsBase {
   state: AppState;
-  els: UiDomElements;
-  t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
   formatInt: (value: number) => string;
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
   setStatValue: (container: HTMLElement | null, value: string | number) => void;

@@ -49,7 +49,11 @@ Use this when changing backend code without scanning the whole package.
 - `settings_store.py`: user-facing settings (cars, speed source, language, unit, sensors)
   persisted to HistoryDB.
 - `analysis_settings.py`: in-memory-only analysis parameter store (tire_diameter,
-  tire_aspect, etc.) recomputed from the active car's aspects.
+  tire_aspect, etc.) recomputed from the active car's aspects.  Lives at package root
+  (not inside `analysis/`) because `runtime/` and `metrics_log/` depend on it — moving
+  it into `analysis/` would create a circular dependency.
+- `analysis_persistence.py`: save/load analysis results to history DB.  Lives at package
+  root for the same dependency-direction reason as `analysis_settings.py`.
 - `history_db/_settings.py`: raw DB-level `get_setting()`/`set_setting()` KV operations.
 - `settings_store.py` owns semantic meaning; delegates persistence to `history_db/_settings`.
 

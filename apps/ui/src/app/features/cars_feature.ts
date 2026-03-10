@@ -1,11 +1,8 @@
-import type { UiDomElements } from "../dom/ui_dom_registry";
+import type { FeatureDepsBase } from "../feature_deps_base";
 import { getCarLibraryBrands, getCarLibraryModels, getCarLibraryTypes } from "../../api";
 import type { CarLibraryModel, CarLibraryGearbox, CarLibraryTireOption, CarLibraryVariant } from "../../api";
 
-export interface CarsFeatureDeps {
-  els: UiDomElements;
-  t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
+export interface CarsFeatureDeps extends FeatureDepsBase {
   fmt: (n: number, digits?: number) => string;
   addCarFromWizard: (name: string, carType: string, aspects: Record<string, number>, variant?: string) => Promise<void>;
 }

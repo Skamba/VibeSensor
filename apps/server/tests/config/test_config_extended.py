@@ -6,12 +6,12 @@ import pytest
 import yaml
 
 from vibesensor.config import (
-    _deep_merge,
     _read_config_file,
     _resolve_config_path,
     _split_host_port,
     load_config,
 )
+from vibesensor.json_utils import deep_merge as _deep_merge
 
 # -- _split_host_port ---------------------------------------------------------
 
