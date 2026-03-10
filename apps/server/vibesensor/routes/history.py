@@ -16,17 +16,19 @@ from ..api_models import (
 from ._helpers import domain_errors_to_http
 
 if TYPE_CHECKING:
-    from ..runtime.state import RuntimePersistenceSubsystem
+    from ..history_services.exports import HistoryExportService
+    from ..history_services.reports import HistoryReportService
+    from ..history_services.runs import HistoryRunService
 
 
 def create_history_routes(
-    persistence: RuntimePersistenceSubsystem,
+    *,
+    run_service: HistoryRunService,
+    report_service: HistoryReportService,
+    export_service: HistoryExportService,
 ) -> APIRouter:
     """Create and return the run-history / report API routes."""
     router = APIRouter()
-    run_service = persistence.run_service
-    report_service = persistence.report_service
-    export_service = persistence.export_service
 
     # -- history CRUD ----------------------------------------------------------
 

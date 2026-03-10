@@ -13,16 +13,10 @@ class TestUpdateApiEndpoints:
         from vibesensor.routes import create_router
 
         state = MagicMock()
-        state.ingress = MagicMock()
-        state.settings = MagicMock()
-        state.metrics_logger = MagicMock()
-        state.persistence = MagicMock()
-        state.websocket = MagicMock()
-        state.processing = MagicMock()
         state.update_manager = UpdateManager()
         state.esp_flash_manager = MagicMock()
-        state.settings.apply_car_settings = MagicMock()
-        state.settings.apply_speed_source_settings = MagicMock()
+        state.apply_car_settings = MagicMock()
+        state.apply_speed_source_settings = MagicMock()
         router = create_router(state)
         paths = [route.path for route in router.routes]
         assert "/api/settings/update/status" in paths

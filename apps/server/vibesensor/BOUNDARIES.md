@@ -10,13 +10,11 @@ Use this when changing backend code without scanning the whole package.
 - Rule: no analysis helpers outside the analysis folder.
 
 ## Orchestration vs Computation
-- `app.py`: thin FastAPI wiring layer; delegates service construction to `bootstrap.py`.
-- `bootstrap.py`: builds focused runtime service groups and hands them to runtime composition.
-- `runtime/` package: explicit composition (`composition.py`), subsystem groups
-  (`subsystems.py`), service builders (`builders.py`), thin coordinator (`_state.py`),
+- `app.py`: thin FastAPI wiring layer; delegates service construction to `runtime/builders.py`.
+- `runtime/` package: flat `RuntimeState` (`state.py`), service builders (`builders.py`),
   lifecycle management (`lifecycle.py`), health tracking (`health_state.py`),
   processing loop (`processing_loop.py`), WebSocket broadcast (`ws_broadcast.py`),
-  settings sync (`settings_sync.py`), and rotational speed helpers (`rotational_speeds.py`).
+  and rotational speed helpers (`rotational_speeds.py`).
 - FFT/metrics computation source of truth lives in `vibesensor.core`
         (`vibesensor/core/vibration_strength.py` and
         `vibesensor/core/strength_bands.py`).

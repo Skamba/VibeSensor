@@ -1,4 +1,4 @@
-"""RuntimeState – top-level runtime assembly and subsystem containers."""
+"""RuntimeState – top-level runtime assembly."""
 
 from __future__ import annotations
 
@@ -27,18 +27,37 @@ from .ws_broadcast import WsBroadcastCache, WsBroadcastService
 
 
 @dataclass(slots=True)
-class RuntimeIngressSubsystem:
+class RuntimeState:
+    """Top-level runtime with flat field access."""
+
+    config: AppConfig
+    # ingress
     registry: ClientRegistry
     processor: SignalProcessor
     control_plane: UDPControlPlane
     worker_pool: WorkerPool
-
-
-@dataclass(slots=True)
-class RuntimeSettingsSubsystem:
+    # settings
     settings_store: SettingsStore
     analysis_settings: AnalysisSettingsStore
     gps_monitor: GPSSpeedMonitor
+    # persistence
+    history_db: HistoryDB
+    run_service: HistoryRunService
+    report_service: HistoryReportService
+    export_service: HistoryExportService
+    # processing
+    processing_loop_state: ProcessingLoopState
+    health_state: RuntimeHealthState
+    processing_loop: ProcessingLoop
+    # websocket
+    ws_hub: WebSocketHub
+    ws_cache: WsBroadcastCache
+    ws_broadcast: WsBroadcastService
+    # top-level
+    metrics_logger: MetricsLogger
+    update_manager: UpdateManager
+    esp_flash_manager: EspFlashManager
+    lifecycle: LifecycleManager | None = None
 
     def apply_car_settings(self) -> None:
         aspects = self.settings_store.active_car_aspects()
@@ -56,41 +75,3 @@ class RuntimeSettingsSubsystem:
             stale_timeout_s=ss.get("staleTimeoutS"),
             fallback_mode=ss.get("fallbackMode"),
         )
-
-
-@dataclass(slots=True)
-class RuntimePersistenceSubsystem:
-    history_db: HistoryDB
-    run_service: HistoryRunService
-    report_service: HistoryReportService
-    export_service: HistoryExportService
-
-
-@dataclass(slots=True)
-class RuntimeProcessingSubsystem:
-    state: ProcessingLoopState
-    health_state: RuntimeHealthState
-    loop: ProcessingLoop
-
-
-@dataclass(slots=True)
-class RuntimeWebsocketSubsystem:
-    hub: WebSocketHub
-    cache: WsBroadcastCache
-    broadcast: WsBroadcastService
-
-
-@dataclass(slots=True)
-class RuntimeState:
-    """Top-level runtime that exposes explicit subsystem ownership."""
-
-    config: AppConfig
-    ingress: RuntimeIngressSubsystem
-    settings: RuntimeSettingsSubsystem
-    metrics_logger: MetricsLogger
-    persistence: RuntimePersistenceSubsystem
-    update_manager: UpdateManager
-    esp_flash_manager: EspFlashManager
-    processing: RuntimeProcessingSubsystem
-    websocket: RuntimeWebsocketSubsystem
-    lifecycle: LifecycleManager | None = None

@@ -87,7 +87,6 @@ python_version = "3.11"
 files = [
   "vibesensor/app.py",
   "vibesensor/api_models.py",
-  "vibesensor/bootstrap.py",
   "vibesensor/backend_types.py",
   "vibesensor/car_library.py",
   "vibesensor/config.py",

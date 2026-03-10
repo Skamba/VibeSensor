@@ -149,48 +149,14 @@ def _make_state(
     from vibesensor.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
     from vibesensor.runtime.ws_broadcast import WsBroadcastCache, WsBroadcastService
 
-    ingress = runtime_module.RuntimeIngressSubsystem(
-        registry=_StubRegistry(clients),  # type: ignore[arg-type]
-        processor=_StubProcessor(),  # type: ignore[arg-type]
-        control_plane=_SENTINEL,  # type: ignore[arg-type]
-        worker_pool=_SENTINEL,  # type: ignore[arg-type]
-    )
-    settings = runtime_module.RuntimeSettingsSubsystem(
-        settings_store=_StubSettingsStore(),  # type: ignore[arg-type]
-        analysis_settings=_StubAnalysisSettings(),  # type: ignore[arg-type]
-        gps_monitor=_StubGPS(),  # type: ignore[arg-type]
-    )
-    persistence = runtime_module.RuntimePersistenceSubsystem(  # type: ignore[arg-type]
-        history_db=_SENTINEL,
-        run_service=_SENTINEL,
-        report_service=_SENTINEL,
-        export_service=_SENTINEL,
-    )
+    registry = _StubRegistry(clients)
+    processor = _StubProcessor()
+    gps_monitor = _StubGPS()
+    analysis_settings = _StubAnalysisSettings()
+    settings_store = _StubSettingsStore()
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
-    processing = runtime_module.RuntimeProcessingSubsystem(
-        state=processing_state,
-        health_state=health_state,
-        loop=ProcessingLoop(
-            state=processing_state,
-            fft_update_hz=4,
-            sample_rate_hz=800,
-            fft_n=2048,
-            ingress=ingress,
-        ),
-    )
     cache = WsBroadcastCache()
-    websocket = runtime_module.RuntimeWebsocketSubsystem(
-        hub=_SENTINEL,  # type: ignore[arg-type]
-        cache=cache,
-        broadcast=WsBroadcastService(
-            cache=cache,
-            ui_push_hz=ui_push_hz,
-            ui_heavy_push_hz=ui_heavy_push_hz,
-            ingress=ingress,
-            settings=settings,
-        ),
-    )
     config = _StubConfig(
         processing=_StubProcessingConfig(
             ui_push_hz=ui_push_hz,
@@ -199,17 +165,45 @@ def _make_state(
     )
     state = runtime_module.RuntimeState(
         config=config,  # type: ignore[arg-type]
-        ingress=ingress,
-        settings=settings,
+        registry=registry,  # type: ignore[arg-type]
+        processor=processor,  # type: ignore[arg-type]
+        control_plane=_SENTINEL,  # type: ignore[arg-type]
+        worker_pool=_SENTINEL,  # type: ignore[arg-type]
+        settings_store=settings_store,  # type: ignore[arg-type]
+        analysis_settings=analysis_settings,  # type: ignore[arg-type]
+        gps_monitor=gps_monitor,  # type: ignore[arg-type]
+        history_db=_SENTINEL,  # type: ignore[arg-type]
+        run_service=_SENTINEL,  # type: ignore[arg-type]
+        report_service=_SENTINEL,  # type: ignore[arg-type]
+        export_service=_SENTINEL,  # type: ignore[arg-type]
+        processing_loop_state=processing_state,
+        health_state=health_state,
+        processing_loop=ProcessingLoop(
+            state=processing_state,
+            fft_update_hz=4,
+            sample_rate_hz=800,
+            fft_n=2048,
+            registry=registry,  # type: ignore[arg-type]
+            processor=processor,  # type: ignore[arg-type]
+        ),
+        ws_hub=_SENTINEL,  # type: ignore[arg-type]
+        ws_cache=cache,
+        ws_broadcast=WsBroadcastService(
+            cache=cache,
+            ui_push_hz=ui_push_hz,
+            ui_heavy_push_hz=ui_heavy_push_hz,
+            registry=registry,  # type: ignore[arg-type]
+            processor=processor,  # type: ignore[arg-type]
+            gps_monitor=gps_monitor,  # type: ignore[arg-type]
+            analysis_settings=analysis_settings,  # type: ignore[arg-type]
+            settings_store=settings_store,  # type: ignore[arg-type]
+        ),
         metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
-        persistence=persistence,
         update_manager=_SENTINEL,  # type: ignore[arg-type]
         esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
-        processing=processing,
-        websocket=websocket,
     )
     state.lifecycle = LifecycleManager(runtime=state)  # type: ignore[arg-type]
-    state.websocket.cache.include_heavy = ws_include_heavy
+    state.ws_cache.include_heavy = ws_include_heavy
     return state
 
 
@@ -247,7 +241,7 @@ def _assert_rotational(
 
 def test_build_ws_payload_returns_required_keys() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
-    payload = state.websocket.broadcast.build_payload(selected_client="aaa")
+    payload = state.ws_broadcast.build_payload(selected_client="aaa")
 
     # Always-present keys
     for key in ("server_time", "speed_mps", "clients", "selected_client_id", "rotational_speeds"):
@@ -264,21 +258,21 @@ def test_build_ws_payload_returns_required_keys() -> None:
 
 def test_build_ws_payload_light_tick_omits_spectra_and_selected() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
-    payload = state.websocket.broadcast.build_payload(selected_client="aaa")
+    payload = state.ws_broadcast.build_payload(selected_client="aaa")
 
     assert "spectra" not in payload
 
 
 def test_build_ws_payload_auto_selects_first_client() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
-    payload = state.websocket.broadcast.build_payload(selected_client=None)
+    payload = state.ws_broadcast.build_payload(selected_client=None)
 
     assert payload["selected_client_id"] == "aaa"
 
 
 def test_build_ws_payload_no_clients() -> None:
     state = _make_state(clients=[], ws_include_heavy=True)
-    payload = state.websocket.broadcast.build_payload(selected_client=None)
+    payload = state.ws_broadcast.build_payload(selected_client=None)
 
     assert payload["clients"] == []
     assert payload["selected_client_id"] is None
@@ -286,18 +280,18 @@ def test_build_ws_payload_no_clients() -> None:
 
 def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
-    registry = state.ingress.registry
-    processor = state.ingress.processor
-    gps = state.settings.gps_monitor
-    analysis_settings = state.settings.analysis_settings
+    registry = state.registry
+    processor = state.processor
+    gps = state.gps_monitor
+    analysis_settings = state.analysis_settings
     assert isinstance(registry, _StubRegistry)
     assert isinstance(processor, _StubProcessor)
     assert isinstance(gps, _StubGPS)
     assert isinstance(analysis_settings, _StubAnalysisSettings)
 
-    state.websocket.cache.tick = 77
-    payload_aaa = state.websocket.broadcast.build_payload(selected_client="aaa")
-    payload_bbb = state.websocket.broadcast.build_payload(selected_client="bbb")
+    state.ws_cache.tick = 77
+    payload_aaa = state.ws_broadcast.build_payload(selected_client="aaa")
+    payload_bbb = state.ws_broadcast.build_payload(selected_client="bbb")
 
     assert payload_aaa["selected_client_id"] == "aaa"
     assert payload_bbb["selected_client_id"] == "bbb"
@@ -313,13 +307,13 @@ def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
 def test_on_ws_broadcast_tick_toggles_heavy() -> None:
     # ui_push_hz=10, ui_heavy_push_hz=2 → heavy_every=5
     state = _make_state(ui_push_hz=10, ui_heavy_push_hz=2)
-    state.websocket.cache.tick = 0
-    state.websocket.cache.include_heavy = True  # initial
+    state.ws_cache.tick = 0
+    state.ws_cache.include_heavy = True  # initial
 
     results: list[bool] = []
     for _ in range(10):
-        state.websocket.broadcast.on_tick()
-        results.append(state.websocket.cache.include_heavy)
+        state.ws_broadcast.on_tick()
+        results.append(state.ws_cache.include_heavy)
 
     # Ticks 1..10: heavy at tick 5 and 10 (tick % 5 == 0)
     assert results == [False, False, False, False, True, False, False, False, False, True]
@@ -327,9 +321,9 @@ def test_on_ws_broadcast_tick_toggles_heavy() -> None:
 
 def test_build_ws_payload_rotational_speeds_include_reason_when_speed_unavailable() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
-    gps = state.settings.gps_monitor
+    gps = state.gps_monitor
     assert isinstance(gps, _StubGPS)
     gps.effective_speed_mps = None
 
-    payload = state.websocket.broadcast.build_payload(selected_client="aaa")
+    payload = state.ws_broadcast.build_payload(selected_client="aaa")
     _assert_rotational(payload["rotational_speeds"], reason="speed_unavailable")
