@@ -402,10 +402,7 @@ class GPSSpeedMonitor:
                         and not isinstance(speed, bool)
                     ):
                         speed_f = float(speed)  # type: ignore[arg-type]
-                        if (
-                            _isfinite(speed_f)
-                            and 0 <= speed_f <= _GPS_MAX_SPEED_MPS
-                        ):
+                        if _isfinite(speed_f) and 0 <= speed_f <= _GPS_MAX_SPEED_MPS:
                             if self._accept_speed_sample(speed_f):
                                 self._speed_snapshot = (speed_f, _monotonic())
                         else:

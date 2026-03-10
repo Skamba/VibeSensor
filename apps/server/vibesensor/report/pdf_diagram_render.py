@@ -45,7 +45,9 @@ def _extract_amp_by_location(
     location_rows: list[dict[str, object]],
 ) -> tuple[set[str], dict[str, float]]:
     connected_locations = {
-        _canonical_location(loc) for loc in summary.get("sensor_locations", []) if str(loc).strip()  # type: ignore[attr-defined]
+        _canonical_location(loc)
+        for loc in summary.get("sensor_locations", [])
+        if str(loc).strip()  # type: ignore[attr-defined]
     }
     amp_by_location: dict[str, float] = {}
     sensor_intensity_rows = summary.get("sensor_intensity_by_location", [])
@@ -180,7 +182,9 @@ def _draw_vehicle_shell(
     )
 
 
-def _draw_markers_and_labels(drawing: Any, *, markers: list[Any], labels: list[Any], hex_color: Any) -> None:
+def _draw_markers_and_labels(
+    drawing: Any, *, markers: list[Any], labels: list[Any], hex_color: Any
+) -> None:
     from reportlab.graphics.shapes import Circle, String
 
     for marker in markers:
