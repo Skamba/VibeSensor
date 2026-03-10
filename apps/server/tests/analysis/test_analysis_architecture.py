@@ -29,9 +29,7 @@ _REPORT_MAPPING_MODULE = _SERVER_PKG / "report" / "mapping.py"
 _EXTERNAL_MODULES = [
     p
     for p in _SERVER_PKG.rglob("*.py")
-    if p.name != "__init__.py"
-    and _ANALYSIS_PKG not in p.parents
-    and p != _REPORT_MAPPING_MODULE
+    if p.name != "__init__.py" and _ANALYSIS_PKG not in p.parents and p != _REPORT_MAPPING_MODULE
 ]
 
 

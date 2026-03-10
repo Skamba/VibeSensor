@@ -410,6 +410,7 @@ def test_stop_logging_does_not_block_on_post_analysis(
     assert elapsed < 0.45, f"stop_logging() blocked for {elapsed:.2f}s (expected < 0.45s)"
     assert summary_started.wait(timeout=2.0)
     allow_summary_finish.set()
+
     def _status():
         return (history_db.get_run(run_id) or {}).get("status")
 

@@ -14,9 +14,6 @@ SCHEMA_VERSION: str = "1"
 IntakeStatsPayload: TypeAlias = JsonObject
 
 
-
-
-
 class AxisPeak(TypedDict, total=False):
     hz: float
     amp: float

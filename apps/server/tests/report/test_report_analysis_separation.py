@@ -34,9 +34,7 @@ _ANALYSIS_PKG = "vibesensor.analysis"
 # Modules in the report package that should be checked.
 # mapping.py is excluded: it is the intentional analysis→report bridge.
 _REPORT_MODULES = [
-    p
-    for p in _REPORT_DIR.glob("*.py")
-    if p.name not in ("__init__.py", "mapping.py")
+    p for p in _REPORT_DIR.glob("*.py") if p.name not in ("__init__.py", "mapping.py")
 ]
 
 
