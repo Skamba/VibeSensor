@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from _report_helpers import RUN_END, minimal_summary, write_jsonl
-from _report_helpers import report_run_metadata as _run_metadata
-from _report_helpers import report_sample as _base_sample
+from test_support.report_helpers import RUN_END, minimal_summary, write_jsonl
+from test_support.report_helpers import report_run_metadata as _run_metadata
+from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.analysis import map_summary, summarize_log
 from vibesensor.analysis.summary_payload import summarize_origin
