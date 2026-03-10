@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from ...runlog import as_float_or_none as _as_float
 from .._types import Finding, MatchedPoint
-from ..helpers import ORDER_MIN_CONFIDENCE
 from ._constants import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     LIGHT_STRENGTH_MAX_DB,
     NEGLIGIBLE_STRENGTH_MAX_DB,
+    ORDER_MIN_CONFIDENCE,
 )
 
 # Local type bindings so mypy resolves correct types under follow_imports=skip.

@@ -7,7 +7,7 @@ from typing import cast
 
 from ...runlog import as_float_or_none as _as_float
 from .._types import Finding, MetadataDict, PhaseLabels, Sample
-from ..helpers import SPEED_COVERAGE_MIN_PCT, _effective_engine_rpm
+from ..helpers import _effective_engine_rpm
 from ..order_analysis import _i18n_ref
 from ..phase_segmentation import (
     DrivingPhase,
@@ -16,7 +16,7 @@ from ..phase_segmentation import (
     segment_run_phases,
 )
 from ..ranking import finding_sort_key
-from ._constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF
+from ._constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF, SPEED_COVERAGE_MIN_PCT
 from .reference_checks import _reference_missing_finding
 
 _MIN_DIAGNOSTIC_SAMPLES = 5
