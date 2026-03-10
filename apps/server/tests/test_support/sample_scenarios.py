@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from vibesensor_core.strength_bands import bucket_for_strength
+from vibesensor.core.strength_bands import bucket_for_strength
 
 from .core import _stable_hash
 

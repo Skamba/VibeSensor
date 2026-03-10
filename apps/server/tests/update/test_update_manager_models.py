@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.update.manager import UpdateManager
+from vibesensor.update.installer import UpdateInstaller
 from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
 from vibesensor.update.network import parse_wifi_diagnostics
 from vibesensor.update.runner import sanitize_log_line as sanitize_log_line
@@ -48,13 +48,13 @@ class TestUpdaterInterpreterSelection:
         venv_python.write_text("#!/usr/bin/env python3\n")
         venv_python.chmod(0o755)
         (repo / "apps" / "server" / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
-        assert UpdateManager._reinstall_python_executable(repo) == str(venv_python)
+        assert UpdateInstaller.reinstall_python_executable(repo) == str(venv_python)
 
     def test_reinstall_python_uses_server_venv_path_even_if_missing(self, tmp_path) -> None:
         repo = tmp_path / "repo"
         repo.mkdir()
         expected = repo / "apps" / "server" / ".venv" / "bin" / "python3"
-        assert UpdateManager._reinstall_python_executable(repo) == str(expected)
+        assert UpdateInstaller.reinstall_python_executable(repo) == str(expected)
 
     def test_reinstall_venv_readiness_requires_pyvenv_cfg(self, tmp_path) -> None:
         repo = tmp_path / "repo"
@@ -62,9 +62,9 @@ class TestUpdaterInterpreterSelection:
         venv_python.parent.mkdir(parents=True)
         venv_python.write_text("#!/usr/bin/env python3\n")
         venv_python.chmod(0o755)
-        assert not UpdateManager._is_reinstall_venv_ready(repo)
+        assert not UpdateInstaller.is_reinstall_venv_ready(repo)
         (repo / "apps" / "server" / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
-        assert UpdateManager._is_reinstall_venv_ready(repo)
+        assert UpdateInstaller.is_reinstall_venv_ready(repo)
 
 
 class TestSanitizeLogLine:

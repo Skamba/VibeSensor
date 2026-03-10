@@ -136,6 +136,7 @@ def _make_state(
     ui_heavy_push_hz: int = 4,
 ) -> RuntimeState:
     import vibesensor.runtime as runtime_module
+    from vibesensor.runtime.builders import build_lifecycle_manager
     from vibesensor.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
     from vibesensor.runtime.ws_broadcast import WsBroadcastCache, WsBroadcastService
 
@@ -190,13 +191,14 @@ def _make_state(
         ),
     )
 
-    state = runtime_module.build_runtime_state(
-        config=_StubConfig(
-            processing=_StubProcessingConfig(
-                ui_push_hz=ui_push_hz,
-                ui_heavy_push_hz=ui_heavy_push_hz,
-            ),
-        ),  # type: ignore[arg-type]
+    config = _StubConfig(
+        processing=_StubProcessingConfig(
+            ui_push_hz=ui_push_hz,
+            ui_heavy_push_hz=ui_heavy_push_hz,
+        ),
+    )
+    state = runtime_module.RuntimeState(
+        config=config,  # type: ignore[arg-type]
         ingress=ingress,
         settings=settings,
         recording=diagnostics,
@@ -204,6 +206,16 @@ def _make_state(
         updates=updates,
         processing=processing,
         websocket=websocket,
+        lifecycle=build_lifecycle_manager(
+            config=config,  # type: ignore[arg-type]
+            ingress=ingress,
+            settings=settings,
+            recording=diagnostics,
+            persistence=persistence,
+            updates=updates,
+            processing=processing,
+            websocket=websocket,
+        ),
     )
     state.websocket.cache.include_heavy = ws_include_heavy
     return state

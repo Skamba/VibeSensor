@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import pytest
-from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
 from vibesensor.analysis.strength_labels import strength_text
+from vibesensor.core.vibration_strength import compute_vibration_strength_db
 
 # Fields every result dict must contain as floats.
 _AMPLITUDE_FIELDS = ("peak_amp_g", "noise_floor_amp_g")

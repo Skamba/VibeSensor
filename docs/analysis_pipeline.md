@@ -39,7 +39,7 @@ reasoning (pattern matching, order tracking, confidence scoring,
 localisation) to produce findings and reports.
 
 The mathematical primitives (e.g. `compute_vibration_strength_db`,
-`noise_floor_amp_p20_g`) live in the shared `vibesensor_core` library
+`noise_floor_amp_p20_g`) live in the `vibesensor.core` package
 and are used by both layers — this is intentional code reuse, not
 duplication.
 

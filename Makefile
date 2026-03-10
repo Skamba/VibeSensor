@@ -1,4 +1,4 @@
-.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-fast test-all test-ci test-full-suite sync-contracts coverage coverage-html coverage-strict smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
+.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-fast test-all test-ci test-full-suite sync-contracts coverage coverage-html coverage-strict smoke loc docs-lint
 
 setup:
 	python3 -m pip install --upgrade pip
@@ -6,16 +6,16 @@ setup:
 	cd apps/ui && npm ci
 
 format:
-	ruff format apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python tools/dev tools/tests tools/ci tools/config
+	ruff format apps/server/vibesensor apps/server/tests apps/simulator tools/dev tools/tests tools/ci tools/config
 
 lint:
-	ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python tools/dev tools/tests tools/ci tools/config
-	ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python tools/dev tools/tests tools/ci tools/config
+	ruff check apps/server/vibesensor apps/server/tests apps/simulator tools/dev tools/tests tools/ci tools/config
+	ruff format --check apps/server/vibesensor apps/server/tests apps/simulator tools/dev tools/tests tools/ci tools/config
 
 typecheck-backend:
 	PYTHON=$(CURDIR)/.venv/bin/python; \
 	if [ ! -x "$$PYTHON" ]; then PYTHON=python3; fi; \
-	cd apps/server && MYPYPATH=.:../../libs/core/python:../../libs/shared/python "$$PYTHON" -m mypy --config-file pyproject.toml
+	cd apps/server && "$$PYTHON" -m mypy --config-file pyproject.toml
 
 typecheck: typecheck-backend ui-typecheck
 
@@ -56,20 +56,3 @@ docs-lint:
 
 ui-typecheck:
 	cd apps/ui && npm run typecheck
-
-ai-check:
-	@scripts/ai/task ai:check
-
-ai-test:
-	@scripts/ai/task ai:test
-
-ai-smoke:
-	@scripts/ai/task ai:smoke
-
-ai-pack:
-	@scripts/ai/task ai:pack
-
-ai\:check: ai-check
-ai\:test: ai-test
-ai\:smoke: ai-smoke
-ai\:pack: ai-pack

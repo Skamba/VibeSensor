@@ -30,14 +30,6 @@ fi
 exec > >(awk '{ print strftime("%Y-%m-%dT%H:%M:%S%z"), $0 }' >>"${LOG_FILE}") 2>&1
 
 CONFIG_PATH="${VIBESENSOR_CONFIG_PATH:-/etc/vibesensor/config.yaml}"
-SECRETS_PATH="${VIBESENSOR_WIFI_SECRETS_PATH:-/etc/vibesensor/wifi-secrets.env}"
-REPO_PATH="${VIBESENSOR_REPO_PATH:-/opt/VibeSensor}"
-GIT_REMOTE_URL="${VIBESENSOR_GIT_REMOTE:-https://github.com/Skamba/VibeSensor.git}"
-GIT_BRANCH="${VIBESENSOR_GIT_BRANCH:-main}"
-UPLINK_SCAN_TIMEOUT_SECONDS="${UPLINK_SCAN_TIMEOUT_SECONDS:-10}"
-UPLINK_CONNECTION_NAME="${UPLINK_CONNECTION_NAME:-VibeSensor-Uplink}"
-GIT_UPDATE_TIMEOUT_SECONDS="${GIT_UPDATE_TIMEOUT_SECONDS:-120}"
-UPLINK_SESSION_USED=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -126,87 +118,6 @@ EOF
 
 trap 'rc=$?; failed_line=${BASH_LINENO[0]:-0}; failed_cmd=${BASH_COMMAND:-unknown}; echo "ERROR rc=${rc} line=${failed_line} cmd=${failed_cmd}"; dump_all error; write_summary FAILED "${rc}"; exit "${rc}"' ERR
 trap 'rc=$?; echo "EXIT rc=${rc}"' EXIT
-
-safe_source_secrets() {
-  if [ ! -f "${SECRETS_PATH}" ]; then
-    return 0
-  fi
-
-  local perms
-  perms="$(run_as_root stat -c '%a' "${SECRETS_PATH}" 2>/dev/null || echo '')"
-  if [ -n "${perms}" ] && [ "${perms}" != "600" ]; then
-    echo "Warning: ${SECRETS_PATH} should use mode 600."
-  fi
-
-  # shellcheck disable=SC1090
-  source "${SECRETS_PATH}"
-}
-
-maybe_update_from_uplink() {
-  safe_source_secrets
-  if [ -z "${WIFI_UPLINK_SSID:-}" ] || [ -z "${WIFI_UPLINK_PSK:-}" ]; then
-    echo "No uplink Wi-Fi secrets configured; skipping update step."
-    return 0
-  fi
-
-  local deadline
-  deadline=$((SECONDS + UPLINK_SCAN_TIMEOUT_SECONDS))
-  local found=0
-  while [ "${SECONDS}" -lt "${deadline}" ]; do
-    if run_as_root nmcli -t -f SSID dev wifi list ifname "${IFNAME}" --rescan yes | grep -Fxq "${WIFI_UPLINK_SSID}"; then
-      found=1
-      break
-    fi
-    sleep 1
-  done
-
-  if [ "${found}" -ne 1 ]; then
-    echo "Uplink SSID '${WIFI_UPLINK_SSID}' not found within ${UPLINK_SCAN_TIMEOUT_SECONDS}s; continuing with hotspot."
-    return 0
-  fi
-
-  echo "Found uplink SSID; attempting temporary connection for update."
-  run_as_root nmcli connection delete "${UPLINK_CONNECTION_NAME}" >/dev/null 2>&1 || true
-  run_as_root nmcli connection add type wifi ifname "${IFNAME}" con-name "${UPLINK_CONNECTION_NAME}" autoconnect no ssid "${WIFI_UPLINK_SSID}" >/dev/null
-  run_as_root nmcli connection modify "${UPLINK_CONNECTION_NAME}" \
-    802-11-wireless-security.key-mgmt wpa-psk \
-    802-11-wireless-security.psk "${WIFI_UPLINK_PSK}" \
-    ipv4.method auto \
-    ipv6.method ignore
-
-  if ! run_as_root nmcli connection up "${UPLINK_CONNECTION_NAME}" --wait 10 >/dev/null 2>&1; then
-    echo "Uplink connection failed; continuing with hotspot."
-    run_as_root nmcli connection delete "${UPLINK_CONNECTION_NAME}" >/dev/null 2>&1 || true
-    return 0
-  fi
-
-  UPLINK_SESSION_USED=1
-
-  if [ -d "${REPO_PATH}/.git" ] && command -v git >/dev/null 2>&1; then
-    echo "Updating ${REPO_PATH} from ${GIT_REMOTE_URL} (${GIT_BRANCH})..."
-    # Keep the uplink active until git operations complete.
-    if command -v timeout >/dev/null 2>&1; then
-      run_as_root timeout "${GIT_UPDATE_TIMEOUT_SECONDS}" \
-        git -C "${REPO_PATH}" remote set-url origin "${GIT_REMOTE_URL}" >/dev/null 2>&1 || true
-      run_as_root timeout "${GIT_UPDATE_TIMEOUT_SECONDS}" \
-        git -C "${REPO_PATH}" fetch --depth 1 origin "${GIT_BRANCH}" >/dev/null 2>&1 || true
-      run_as_root timeout "${GIT_UPDATE_TIMEOUT_SECONDS}" \
-        git -C "${REPO_PATH}" checkout "${GIT_BRANCH}" >/dev/null 2>&1 || true
-      run_as_root timeout "${GIT_UPDATE_TIMEOUT_SECONDS}" \
-        git -C "${REPO_PATH}" pull --ff-only origin "${GIT_BRANCH}" >/dev/null 2>&1 || true
-    else
-      run_as_root git -C "${REPO_PATH}" remote set-url origin "${GIT_REMOTE_URL}" >/dev/null 2>&1 || true
-      run_as_root git -C "${REPO_PATH}" fetch --depth 1 origin "${GIT_BRANCH}" >/dev/null 2>&1 || true
-      run_as_root git -C "${REPO_PATH}" checkout "${GIT_BRANCH}" >/dev/null 2>&1 || true
-      run_as_root git -C "${REPO_PATH}" pull --ff-only origin "${GIT_BRANCH}" >/dev/null 2>&1 || true
-    fi
-  else
-    echo "Repo path ${REPO_PATH} is not a git checkout; skipping update."
-  fi
-
-  run_as_root nmcli connection down "${UPLINK_CONNECTION_NAME}" >/dev/null 2>&1 || true
-  run_as_root nmcli connection delete "${UPLINK_CONNECTION_NAME}" >/dev/null 2>&1 || true
-}
 
 eval "$(
 python3 - "${CONFIG_PATH}" <<'PY'
@@ -346,13 +257,6 @@ if ! run_as_root nmcli connection up "${CON_NAME}"; then
   exit 22
 fi
 
-if ! maybe_update_from_uplink; then
-  echo "WARNING: uplink update step failed; continuing with hotspot enabled."
-fi
-
-if [ "${UPLINK_SESSION_USED:-0}" = "1" ]; then
-  run_as_root nmcli connection up "${CON_NAME}" >/dev/null 2>&1 || true
-fi
 run_as_root nmcli -f GENERAL.STATE,IP4.ADDRESS connection show "${CON_NAME}"
 dump_all post
 write_summary OK 0

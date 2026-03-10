@@ -60,13 +60,9 @@ where = [
   ".",
   "../../apps/simulator",
   "../../tools/config",
-  "../../libs/core/python",
-  "../../libs/shared/python",
 ]
 include = [
   "vibesensor*",
-  "vibesensor_core*",
-  "vibesensor_shared*",
   "vibesensor_simulator*",
   "vibesensor_tools_config*",
 ]
@@ -141,6 +137,7 @@ files = [
   "vibesensor/analysis",
   "vibesensor/analysis_persistence.py",
   "vibesensor/analysis_settings.py",
+  "vibesensor/core",
   "vibesensor/history_db",
   "vibesensor/metrics_log",
   "vibesensor/ws_hub.py",

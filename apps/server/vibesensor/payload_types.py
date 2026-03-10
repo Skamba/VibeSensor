@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import TypeAlias
 
 from typing_extensions import TypedDict
-from vibesensor_core.vibration_strength import StrengthPeak, VibrationStrengthMetrics
+
+from vibesensor.core.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 
 from .json_types import JsonObject
 

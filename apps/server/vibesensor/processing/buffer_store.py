@@ -4,10 +4,16 @@ import logging
 import time
 from collections.abc import Callable
 from threading import RLock
+from typing import cast
 
 import numpy as np
 
-from ..payload_types import IntakeStatsPayload, RawSamplesErrorPayload, RawSamplesPayload
+from ..payload_types import (
+    IntakeStatsPayload,
+    RawSamplesErrorPayload,
+    RawSamplesPayload,
+    StrengthMetricsPayload,
+)
 from .buffers import ClientBuffer
 from .models import (
     CachedMetricsHit,
@@ -165,7 +171,9 @@ class SignalBufferStore:
                 buf.compute_sample_rate_hz = result.sample_rate_hz
                 if result.has_fft_data:
                     buf.latest_spectrum = result.spectrum_by_axis
-                    buf.latest_strength_metrics = result.strength_metrics
+                    buf.latest_strength_metrics = cast(
+                        "StrengthMetricsPayload", result.strength_metrics
+                    )
                 else:
                     buf.latest_spectrum = {}
                     buf.latest_strength_metrics = {}

@@ -5,7 +5,8 @@ from __future__ import annotations
 import math
 
 import pytest
-from vibesensor_core.vibration_strength import (
+
+from vibesensor.core.vibration_strength import (
     combined_spectrum_amp_g,
     median,
     noise_floor_amp_p20_g,

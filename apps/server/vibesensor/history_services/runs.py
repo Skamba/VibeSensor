@@ -26,18 +26,14 @@ class HistoryJsonResult:
     payload: JsonObject
 
 
-class HistoryRunService:
-    """Load, sanitise, and mutate history-run resources for HTTP endpoints."""
+class HistoryRunQueryService:
+    """Read-only run queries used by history endpoints."""
 
     __slots__ = ("_history_db", "_settings_store")
 
     def __init__(self, history_db: HistoryDB, settings_store: SettingsStore | None = None) -> None:
         self._history_db = history_db
         self._settings_store = settings_store
-
-
-class HistoryRunQueryService(HistoryRunService):
-    """Read-only run queries used by history endpoints."""
 
     async def list_runs(self) -> list[HistoryRunListEntryPayload]:
         return cast(
@@ -101,8 +97,13 @@ class HistoryRunQueryService(HistoryRunService):
         return HistoryJsonResult(status_code=200, payload=strip_internal_fields(analysis))
 
 
-class HistoryRunDeleteService(HistoryRunService):
+class HistoryRunDeleteService:
     """Delete-policy adapter for history runs."""
+
+    __slots__ = ("_history_db",)
+
+    def __init__(self, history_db: HistoryDB) -> None:
+        self._history_db = history_db
 
     async def delete_run(self, run_id: str) -> dict[str, str]:
         deleted, reason = await asyncio.to_thread(self._history_db.delete_run_if_safe, run_id)

@@ -356,10 +356,7 @@ def compute_vibration_strength_db(
         if len(chosen) >= top_n:
             break
         hz = float(candidate["hz"] or 0.0)
-        if any(
-            abs(float(existing["hz"] or 0.0) - hz) < peak_separation_hz
-            for existing in chosen
-        ):
+        if any(abs(float(existing["hz"] or 0.0) - hz) < peak_separation_hz for existing in chosen):
             continue
         chosen.append(candidate)
 

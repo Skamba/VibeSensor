@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
-from vibesensor_shared.contracts import NETWORK_PORTS
+from vibesensor.contracts import NETWORK_PORTS
 
 from vibesensor.protocol import (
     CMD_IDENTIFY,

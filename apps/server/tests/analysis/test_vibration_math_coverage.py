@@ -6,8 +6,9 @@ from math import log10, sqrt
 from typing import Any
 
 import pytest
-from vibesensor_core.strength_bands import bucket_for_strength
-from vibesensor_core.vibration_strength import (
+
+from vibesensor.core.strength_bands import bucket_for_strength
+from vibesensor.core.vibration_strength import (
     STRENGTH_EPSILON_FLOOR_RATIO,
     STRENGTH_EPSILON_MIN_G,
     combined_spectrum_amp_g,

@@ -13,7 +13,7 @@ assignees: []
 <!-- Non-negotiables, UX/performance/safety/scope limits. Backward compatibility is optional and never required. -->
 
 ## Affected Area
-<!-- Pick from docs/ai/map.md -->
+<!-- Pick from docs/ai/repo-map.md -->
 
 ## Files to Touch (expected)
 - 
@@ -21,8 +21,8 @@ assignees: []
 ## Validations to Run
 ```bash
 # example
-scripts/ai/task ai:check
-scripts/ai/task ai:test -- apps/server/tests/config/test_config.py -k my_case -q
+make lint
+pytest -q apps/server/tests/config/test_config.py -k my_case
 make test-all
 # (optional faster CI-parity subset)
 python3 tools/tests/run_ci_parallel.py --job preflight --job tests

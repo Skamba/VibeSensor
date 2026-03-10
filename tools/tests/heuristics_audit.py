@@ -81,9 +81,9 @@ def check_core_purity() -> tuple[bool, list[str]]:
         r"\bpsycopg\b",
     ]
     bad: list[str] = []
-    core_dir = ROOT / "libs/core"
+    core_dir = ROOT / "apps/server/vibesensor/core"
     if not core_dir.exists():
-        return False, ["missing libs/core"]
+        return False, ["missing apps/server/vibesensor/core"]
     for path in core_dir.rglob("*.py"):
         text = path.read_text(encoding="utf-8", errors="ignore")
         for pat in forbidden:
@@ -94,12 +94,6 @@ def check_core_purity() -> tuple[bool, list[str]]:
 
 
 def check_contracts() -> tuple[bool, list[str]]:
-    needed = [
-        ROOT / "libs/shared/contracts/ingestion_payload.schema.json",
-        ROOT / "libs/shared/contracts/metrics_fields.json",
-        ROOT / "libs/shared/contracts/report_fields.json",
-    ]
-    missing = [str(p.relative_to(ROOT)) for p in needed if not p.exists()]
     uses: list[str] = []
     server_ref = ROOT / "apps/server/vibesensor/domain_models.py"
     ui_ref = ROOT / "apps/ui/src/main.ts"
@@ -116,9 +110,8 @@ def check_contracts() -> tuple[bool, list[str]]:
         encoding="utf-8", errors="ignore"
     ):
         uses.append("firmware_contract_reference")
-    ok = not missing and len(uses) == 3
+    ok = len(uses) == 3
     msgs = [f"uses={','.join(uses) if uses else 'none'}"]
-    msgs.extend([f"missing: {m}" for m in missing])
     return ok, msgs
 
 

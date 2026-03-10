@@ -13,7 +13,8 @@ counterparts — the alignment is enforced by
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
-from vibesensor_core.vibration_strength import StrengthPeak
+
+from vibesensor.core.vibration_strength import StrengthPeak
 
 from .payload_types import (
     TimingHealthPayload,

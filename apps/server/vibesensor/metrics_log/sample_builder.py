@@ -79,7 +79,7 @@ def safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None
 
 
 def extract_strength_data(
-    metrics: dict[str, object],
+    metrics: Mapping[str, object],
 ) -> tuple[
     dict[str, object],
     float | None,
@@ -135,7 +135,7 @@ def extract_strength_data(
     )
 
 
-def extract_axis_top_peaks(metrics: dict[str, object], axis: str) -> list[dict[str, object]]:
+def extract_axis_top_peaks(metrics: Mapping[str, object], axis: str) -> list[dict[str, object]]:
     """Return the top 3 peaks for a single axis."""
     axis_metrics = metrics.get(axis)
     if not isinstance(axis_metrics, dict):

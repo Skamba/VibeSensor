@@ -7,7 +7,8 @@ from threading import RLock
 from typing import cast
 
 import numpy as np
-from vibesensor_core.vibration_strength import empty_vibration_strength_metrics
+
+from vibesensor.core.vibration_strength import empty_vibration_strength_metrics
 
 from ..payload_types import AxisMetrics, AxisPeak, CombinedMetrics
 from .fft import (
