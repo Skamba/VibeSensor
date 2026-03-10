@@ -12,6 +12,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from .exceptions import ProtocolError as ProtocolError  # re-export for consumers
+
 LOGGER = logging.getLogger(__name__)
 
 __all__ = [
@@ -81,10 +83,6 @@ ACCEL_AXES: int = 3
 
 BYTES_PER_SAMPLE: int = ACCEL_AXES * _SAMPLE_DTYPE.itemsize
 """Wire size of one accelerometer sample in bytes (3 axes × 2 bytes for int16)."""
-
-
-class ProtocolError(ValueError):
-    """Raised when a binary protocol message is malformed or unexpected."""
 
 
 @dataclass(slots=True)

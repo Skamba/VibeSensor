@@ -9,6 +9,7 @@ from vibesensor_core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 
+from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601
 from ._types import (
@@ -20,9 +21,6 @@ from ._types import (
     SpeedStats,
 )
 from .helpers import (
-    MEMS_NOISE_FLOOR_G,
-    SPEED_COVERAGE_MIN_PCT,
-    SPEED_MIN_POINTS,
     _speed_stats,
 )
 from .phase_segmentation import DrivingPhase, PhaseSegment, segment_run_phases

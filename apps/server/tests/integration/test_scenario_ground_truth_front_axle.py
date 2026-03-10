@@ -13,7 +13,7 @@ from _scenario_ground_truth_helpers import (
     ramp_phase,
     road_noise_phase,
 )
-from _test_helpers import assert_summary_sections, assert_top_cause_contract
+from test_support.core import assert_summary_sections, assert_top_cause_contract
 
 SCENARIO_01 = ScenarioSpec(
     case_id="01_idle_to_100_fr_en",

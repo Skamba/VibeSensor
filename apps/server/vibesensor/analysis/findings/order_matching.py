@@ -7,12 +7,11 @@ from collections import defaultdict
 from ...runlog import as_float_or_none as _as_float
 from .._types import MatchedPoint, MetadataDict, PhaseLabels, Sample
 from ..helpers import (
-    ORDER_TOLERANCE_MIN_HZ,
-    ORDER_TOLERANCE_REL,
     _estimate_strength_floor_amp_g,
     _location_label,
     _speed_bin_label,
 )
+from ._constants import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
 from .order_models import OrderHypothesisLike, OrderMatchAccumulator
 from .speed_profile import _phase_to_str
 
