@@ -15,7 +15,7 @@ Covers:
 import pytest
 
 from vibesensor.analysis.order_analysis import _driveshaft_hz, _order_label
-from vibesensor.runlog import as_float_or_none
+from vibesensor.domain_models import as_float_or_none
 
 # ------------------------------------------------------------------
 # 1. pdf_engine confidence guard (integration-level)

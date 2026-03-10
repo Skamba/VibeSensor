@@ -33,7 +33,9 @@
 - `processing/`, `analysis/`: signal processing and findings logic.
 - `metrics_log/`: recording pipeline package; `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping with drop counting and retry-with-cooldown for transient DB failures, `post_analysis.py` owns the background analysis queue with outcome tracking, and `logger.py` is the coordinating façade that enriches status/health payloads with sample counts and analysis results.
 - `history_db/`: SQLite-backed history and settings persistence with schema migration infrastructure (`_migrations.py`; all legacy migrations removed — schema must be at current version), including explicit read/write transaction helpers for run lifecycle updates.
-- `history_runs.py`, `history_reports.py`, `history_exports.py`, `history_helpers.py`, `runlog.py`: focused history services and helpers now owned by the runtime persistence subsystem instead of being composed inside routes.
+- `history_services/`: focused history service layer (run query/delete, reports, exports, helpers) above `history_db/`.
+- `hotspot/`: Wi-Fi AP monitoring, text parsing, and self-heal logic.
+- `runlog.py`: JSONL run-file I/O and normalization.
 - `report/`: PDF renderer and report-template builders.
 - `update/`: public update manager facade plus focused modules for status tracking, Wi-Fi control, release discovery, install and rollback, service control, command execution, and state storage; workflow validation and rollback snapshot creation must both succeed before a live install begins.
 - `apps/ui/src/app/runtime/`: explicit UI runtime owners for shell/chrome state, live transport/payload application, and spectrum/chart orchestration beneath the `UiAppRuntime` composition root.

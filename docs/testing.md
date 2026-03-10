@@ -49,7 +49,7 @@ apps/server/tests/
 | `vibesensor/report/*`, `report_i18n.py` | `apps/server/tests/report/` |
 | `vibesensor/routes/*` | `apps/server/tests/api/` |
 | `vibesensor/app.py`, `bootstrap.py`, `runtime/*`, `worker_pool.py` | `apps/server/tests/app/` |
-| `vibesensor/history_db/*`, `history_*.py`, `runlog.py` | `apps/server/tests/history/` |
+| `vibesensor/history_db/*`, `history_services/*`, `runlog.py` | `apps/server/tests/history/` |
 | `vibesensor/update/*`, `firmware_cache.py`, `esp_flash_manager.py`, `release_fetcher.py` | `apps/server/tests/update/` |
 | `vibesensor/processing/*` | `apps/server/tests/processing/` |
 | `vibesensor/ws_hub.py`, `ws_models.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
@@ -60,6 +60,9 @@ apps/server/tests/
 | `vibesensor/protocol.py`, `udp_*.py` | `apps/server/tests/protocol/` |
 | `vibesensor/metrics_log/*` | `apps/server/tests/metrics_log/` |
 | `vibesensor/car_library.py` and related data | `apps/server/tests/car_library/` |
+| `vibesensor/hotspot/*` | `apps/server/tests/hotspot/` |
+| `vibesensor/locations.py` | `apps/server/tests/analysis/` |
+| `vibesensor/release_validation.py` | `apps/server/tests/app/` |
 
 Use cross-cutting directories when a test is intentionally broader than one package boundary:
 
