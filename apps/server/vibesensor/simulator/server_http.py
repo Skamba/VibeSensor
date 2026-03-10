@@ -21,7 +21,7 @@ def server_health_url(host: str, port: int) -> str:
 
 
 def _speed_source_url(host: str, port: int) -> str:
-    return f"http://{_normalize_http_host(host)}:{port}/api/simulator/speed-override"
+    return f"http://{_normalize_http_host(host)}:{port}/api/settings/speed-source"
 
 
 def check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:

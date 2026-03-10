@@ -75,7 +75,7 @@ async def test_identify_client_404_when_sensor_not_in_registry() -> None:
     registry = type("R", (), {"get": lambda self, cid: None})()
     control_plane = MagicMock()
     settings_store = MagicMock()
-    router = create_client_routes(registry, control_plane, settings_store)
+    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
     endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
     with pytest.raises(HTTPException) as exc_info:
@@ -92,7 +92,7 @@ async def test_identify_client_503_when_sensor_known_but_unreachable() -> None:
     registry = type("R", (), {"get": lambda self, cid: sentinel})()
     control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
     settings_store = MagicMock()
-    router = create_client_routes(registry, control_plane, settings_store)
+    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
     endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
     with pytest.raises(HTTPException) as exc_info:
@@ -108,7 +108,7 @@ async def test_identify_client_200_when_sensor_reachable() -> None:
     registry = type("R", (), {"get": lambda self, cid: sentinel})()
     control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (True, 7)})()
     settings_store = MagicMock()
-    router = create_client_routes(registry, control_plane, settings_store)
+    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
     endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
     resp = response_payload(

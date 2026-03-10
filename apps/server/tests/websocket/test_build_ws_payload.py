@@ -20,7 +20,15 @@ class _StubRegistry:
         self._clients = clients or []
         self.snapshot_calls = 0
 
-    def snapshot_for_api(self, now: float | None = None) -> list[dict[str, Any]]:
+    def active_client_ids(self) -> list[str]:
+        return [c["id"] for c in self._clients if "id" in c]
+
+    def snapshot_for_api(
+        self,
+        now: float | None = None,
+        *,
+        metrics_by_client: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         self.snapshot_calls += 1
         return list(self._clients)
 
@@ -33,6 +41,9 @@ class _StubProcessor:
     def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
         self.recent_data_calls += 1
         return list(client_ids)
+
+    def all_latest_metrics(self, client_ids: list[str]) -> dict[str, Any]:
+        return {}
 
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
         self.multi_spectrum_calls += 1

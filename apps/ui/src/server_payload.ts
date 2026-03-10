@@ -4,14 +4,9 @@ import {
   type StrengthMetricsPayload,
   type WsOrderBand,
 } from "./contracts/ws_payload_types";
+import type { SpectrumClientData } from "./app/state/ui_app_state";
 
 type UnknownRecord = Record<string, unknown>;
-
-export type AdaptedSpectrum = {
-  freq: number[];
-  combined: number[];
-  strength_metrics: StrengthMetricsPayload;
-};
 
 export type AdaptedClient = {
   id: string;
@@ -47,7 +42,7 @@ export type AdaptedPayload = {
   speed_mps: number | null;
   rotational_speeds: RotationalSpeeds | null;
   spectra: {
-    clients: Record<string, AdaptedSpectrum>;
+    clients: Record<string, SpectrumClientData>;
   } | null;
 };
 
@@ -169,7 +164,7 @@ function parseSpectra(value: unknown): AdaptedPayload["spectra"] | null {
   const clientsRecord = asRecord(record.clients);
   if (!clientsRecord) return null;
 
-  const adaptedClients: Record<string, AdaptedSpectrum> = {};
+  const adaptedClients: Record<string, SpectrumClientData> = {};
   for (const [clientId, spectrum] of Object.entries(clientsRecord)) {
     const spectrumRecord = asRecord(spectrum);
     if (!spectrumRecord) continue;

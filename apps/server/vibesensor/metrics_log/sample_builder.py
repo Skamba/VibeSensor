@@ -268,7 +268,7 @@ def build_sample_records(
         record = registry.get(client_id)
         if record is None:
             continue
-        metrics = record.latest_metrics
+        metrics = processor.latest_metrics(client_id)
         if not metrics:
             continue
 

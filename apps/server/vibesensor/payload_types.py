@@ -14,30 +14,7 @@ SCHEMA_VERSION: str = "1"
 IntakeStatsPayload: TypeAlias = JsonObject
 
 
-class HealthDataLossPayload(TypedDict):
-    tracked_clients: int
-    affected_clients: int
-    frames_dropped: int
-    queue_overflow_drops: int
-    server_queue_drops: int
-    parse_errors: int
 
-
-class HealthPersistencePayload(TypedDict):
-    write_error: str | None
-    analysis_in_progress: bool
-    analysis_queue_depth: int
-    analysis_queue_max_depth: int
-    analysis_active_run_id: str | None
-    analysis_started_at: float | None
-    analysis_elapsed_s: float | None
-    analysis_queue_oldest_age_s: float | None
-    analyzing_run_count: int
-    analyzing_oldest_age_s: float | None
-    samples_written: int
-    samples_dropped: int
-    last_completed_run_id: str | None
-    last_completed_run_error: str | None
 
 
 class AxisPeak(TypedDict, total=False):

@@ -99,9 +99,6 @@ class _StubRegistry:
     def get(self, client_id: str) -> _StubRecord | None:
         return self._clients.get(client_id)
 
-    def set_latest_metrics(self, client_id: str, metrics: Any) -> None:
-        pass
-
 
 class _StubProcessor:
     def __init__(self) -> None:

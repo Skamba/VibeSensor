@@ -130,11 +130,20 @@ class _FakeGPSMonitor:
 
 
 class _FakeProcessor:
+    def __init__(self, registry: _FakeRegistry | None = None) -> None:
+        self._registry = registry
+
     def latest_sample_xyz(self, client_id: str):
         return (0.01, 0.02, 0.03)
 
     def latest_sample_rate_hz(self, client_id: str):
         return 800
+
+    def latest_metrics(self, client_id: str) -> dict:
+        if self._registry is None:
+            return {}
+        rec = self._registry.get(client_id)
+        return rec.latest_metrics if rec is not None else {}
 
     def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
         return list(client_ids)
@@ -263,11 +272,12 @@ def _make_logger(
         persist_history_db=config_fields.get("persist_history_db", True),
         no_data_timeout_s=config_fields.get("no_data_timeout_s", 15.0),
     )
+    reg = registry or _FakeRegistry()
     return MetricsLogger(
         config,
-        registry=registry or _FakeRegistry(),
+        registry=reg,
         gps_monitor=gps_monitor or _FakeGPSMonitor(),
-        processor=processor or _FakeProcessor(),
+        processor=processor or _FakeProcessor(registry=reg),  # type: ignore[arg-type]
         analysis_settings=analysis_settings or _FakeAnalysisSettings(),
         history_db=history_db,
         **extra,

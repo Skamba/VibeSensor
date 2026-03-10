@@ -162,9 +162,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
             for cid in active_ids
             if registry.get(cid) is not None
         }
-        metrics_by_client = processor.compute_all(active_ids, sample_rates_hz=rates)
-        for cid, metrics in metrics_by_client.items():
-            registry.set_latest_metrics(cid, metrics)
+        processor.compute_all(active_ids, sample_rates_hz=rates)
         logger._append_records(
             run_id,
             start_utc,

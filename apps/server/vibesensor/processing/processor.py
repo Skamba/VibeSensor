@@ -212,6 +212,14 @@ class SignalProcessor:
     def latest_sample_rate_hz(self, client_id: str) -> int | None:
         return self._store.latest_sample_rate_hz(client_id)
 
+    def latest_metrics(self, client_id: str) -> ClientMetrics:
+        """Return latest computed metrics for a client."""
+        return self._store.latest_metrics(client_id)
+
+    def all_latest_metrics(self, client_ids: list[str]) -> dict[str, ClientMetrics]:
+        """Return latest metrics for requested clients."""
+        return self._store.all_latest_metrics(client_ids)
+
     def debug_spectrum(self, client_id: str) -> DebugSpectrumPayload | DebugSpectrumErrorPayload:
         return self._views.debug_spectrum(client_id)
 

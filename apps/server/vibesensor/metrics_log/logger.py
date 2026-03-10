@@ -22,7 +22,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from threading import RLock
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from ..constants import NUMERIC_TYPES
@@ -40,7 +40,6 @@ if TYPE_CHECKING:
     from ..analysis_settings import AnalysisSettingsStore
     from ..gps_speed import GPSSpeedMonitor
     from ..history_db import HistoryDB
-    from ..payload_types import HealthPersistencePayload
     from ..processing import SignalProcessor
     from ..registry import ClientRegistry
     from ..settings_store import SettingsStore
@@ -197,7 +196,7 @@ class MetricsLogger:
             last_completed_run_error=post_snapshot.last_completed_error,
         )
 
-    def health_snapshot(self) -> HealthPersistencePayload:
+    def health_snapshot(self) -> dict[str, Any]:
         snapshot = self._post_analysis.snapshot()
         analysis_elapsed_s = None
         if snapshot.active_started_at is not None:
