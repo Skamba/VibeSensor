@@ -20,7 +20,6 @@
 - `apps/simulator/`: simulator package and websocket smoke tooling.
 - `firmware/esp/`: ESP32 firmware.
 - `vibesensor/core/`: shared vibration math and unit logic (inlined from former `libs/core/`).
-- `libs/shared/`: shared contracts and generated assets used across server and UI.
 - `infra/pi-image/pi-gen/`: Raspberry Pi image build pipeline.
 - `docs/`: human-facing docs plus AI repo maps and runbooks.
 

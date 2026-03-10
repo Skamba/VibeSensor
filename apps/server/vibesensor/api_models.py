@@ -10,14 +10,10 @@ from typing import Annotated, Literal, TypeAlias
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .backend_types import (
-    AnalysisSettingsPayload,
-    CarConfigUpdatePayload,
     FallbackMode,
     LanguageCode,
     ResolvedSpeedSource,
-    SensorConfigUpdatePayload,
     SpeedSourceKind,
-    SpeedSourceUpdatePayload,
     SpeedUnitCode,
 )
 from .payload_types import ClientApiRow
@@ -137,14 +133,6 @@ class AnalysisSettingsRequest(_FrozenBase):
     max_band_half_width_pct: float | None = Field(default=None, gt=0)
     tire_deflection_factor: float | None = Field(default=None, ge=0.85, le=1.0)
 
-    def to_settings_payload(self) -> AnalysisSettingsPayload:
-        payload: AnalysisSettingsPayload = {}
-        for field_name, field_value in self.model_dump(exclude_none=True).items():
-            if not isinstance(field_value, (int, float)):
-                raise ValueError(f"analysis setting {field_name} must be numeric")
-            payload[field_name] = float(field_value)
-        return payload
-
 
 class LanguageRequest(_FrozenBase):
     """Request body for changing the UI language."""
@@ -166,18 +154,6 @@ class CarUpsertRequest(_FrozenBase):
     aspects: dict[str, float] | None = None
     variant: Annotated[str, Field(min_length=1, max_length=64)] | None = None
 
-    def to_store_payload(self) -> CarConfigUpdatePayload:
-        payload: CarConfigUpdatePayload = {}
-        if self.name is not None:
-            payload["name"] = self.name
-        if self.type is not None:
-            payload["type"] = self.type
-        if self.aspects is not None:
-            payload["aspects"] = dict(self.aspects)
-        if self.variant is not None:
-            payload["variant"] = self.variant
-        return payload
-
 
 class ActiveCarRequest(_FrozenBase):
     """Request body for selecting the active car profile."""
@@ -192,18 +168,6 @@ class SpeedSourceRequest(_FrozenBase):
     manualSpeedKph: float | None = Field(default=None, ge=0, le=500)
     staleTimeoutS: float | None = Field(default=None, ge=3, le=120)
     fallbackMode: FallbackMode | None = None
-
-    def to_store_payload(self) -> SpeedSourceUpdatePayload:
-        payload: SpeedSourceUpdatePayload = {}
-        if self.speedSource is not None:
-            payload["speedSource"] = self.speedSource
-        if self.manualSpeedKph is not None:
-            payload["manualSpeedKph"] = self.manualSpeedKph
-        if self.staleTimeoutS is not None:
-            payload["staleTimeoutS"] = self.staleTimeoutS
-        if self.fallbackMode is not None:
-            payload["fallbackMode"] = self.fallbackMode
-        return payload
 
 
 class UpdateStartRequest(_FrozenBase):
@@ -232,14 +196,6 @@ class SensorRequest(_FrozenBase):
 
     name: str | None = Field(default=None, min_length=1, max_length=64)
     location: str | None = Field(default=None, max_length=64)
-
-    def to_store_payload(self) -> SensorConfigUpdatePayload:
-        payload: SensorConfigUpdatePayload = {}
-        if self.name is not None:
-            payload["name"] = self.name
-        if self.location is not None:
-            payload["location"] = self.location
-        return payload
 
 
 # ---------------------------------------------------------------------------

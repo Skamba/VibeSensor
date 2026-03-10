@@ -36,7 +36,7 @@ def can_transition_run(current_status: str | None, target_status: str) -> bool:
     return target_status in RUN_TRANSITIONS.get(current_status, frozenset())
 
 
-ANALYSIS_SCHEMA_VERSION = 1
+ANALYSIS_SCHEMA_VERSION = 2
 
 SCHEMA_VERSION = 5
 

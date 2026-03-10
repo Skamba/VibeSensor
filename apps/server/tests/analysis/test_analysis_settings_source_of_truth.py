@@ -101,9 +101,6 @@ class _State:
             apply_car_settings=self.apply_car_settings,
             apply_speed_source_settings=self.apply_speed_source_settings,
         )
-        self.recording = SimpleNamespace(
-            metrics_logger=self.metrics_logger,
-        )
         self.persistence = SimpleNamespace(
             history_db=self.history_db,
             query_service=HistoryRunQueryService(self.history_db, self.settings_store),
@@ -112,10 +109,6 @@ class _State:
             export_service=HistoryExportService(self.history_db),
         )
         self.websocket = SimpleNamespace(hub=self.ws_hub)
-        self.updates = SimpleNamespace(
-            update_manager=self.update_manager,
-            esp_flash_manager=self.esp_flash_manager,
-        )
         self.processing = SimpleNamespace(
             state=self.loop_state,
             health_state=self.health_state,

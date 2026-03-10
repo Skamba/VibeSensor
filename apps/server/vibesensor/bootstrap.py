@@ -7,15 +7,16 @@ monolithic composition root.
 from __future__ import annotations
 
 from .config import AppConfig
+from .esp_flash_manager import EspFlashManager
 from .runtime import RuntimeState
 from .runtime.builders import (
     build_ingress_subsystem,
     build_lifecycle_manager,
+    build_metrics_logger,
     build_persistence_subsystem,
     build_processing_subsystem,
-    build_recording_subsystem,
     build_settings_subsystem,
-    build_update_subsystem,
+    build_update_manager,
     build_websocket_subsystem,
     create_history_db,
     resolve_accel_scale_g_per_lsb,
@@ -41,14 +42,15 @@ def build_services(config: AppConfig) -> RuntimeState:
         persistence=persistence,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
     )
-    recording = build_recording_subsystem(
+    metrics_logger = build_metrics_logger(
         config=config,
         ingress=ingress,
         settings=settings,
         persistence=persistence,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
     )
-    updates = build_update_subsystem(config=config)
+    update_manager = build_update_manager(config=config)
+    esp_flash_manager = EspFlashManager()
     processing = build_processing_subsystem(config=config, ingress=ingress)
     websocket = build_websocket_subsystem(
         config=config,
@@ -59,18 +61,20 @@ def build_services(config: AppConfig) -> RuntimeState:
         config=config,
         ingress=ingress,
         settings=settings,
-        recording=recording,
+        metrics_logger=metrics_logger,
         persistence=persistence,
-        updates=updates,
+        update_manager=update_manager,
+        esp_flash_manager=esp_flash_manager,
         processing=processing,
         websocket=websocket,
         lifecycle=build_lifecycle_manager(
             config=config,
             ingress=ingress,
             settings=settings,
-            recording=recording,
+            metrics_logger=metrics_logger,
             persistence=persistence,
-            updates=updates,
+            update_manager=update_manager,
+            esp_flash_manager=esp_flash_manager,
             processing=processing,
             websocket=websocket,
         ),

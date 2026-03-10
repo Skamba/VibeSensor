@@ -43,9 +43,7 @@ def _build_openapi_app() -> FastAPI:
             apply_car_settings=placeholder,
             apply_speed_source_settings=placeholder,
         ),
-        recording=SimpleNamespace(
-            metrics_logger=placeholder,
-        ),
+        metrics_logger=placeholder,
         persistence=SimpleNamespace(
             history_db=placeholder,
             query_service=placeholder,
@@ -54,10 +52,8 @@ def _build_openapi_app() -> FastAPI:
             export_service=placeholder,
         ),
         websocket=SimpleNamespace(hub=placeholder),
-        updates=SimpleNamespace(
-            update_manager=placeholder,
-            esp_flash_manager=placeholder,
-        ),
+        update_manager=placeholder,
+        esp_flash_manager=placeholder,
         processing=SimpleNamespace(state=placeholder, health_state=placeholder),
     )
     app = FastAPI(title="VibeSensor HTTP API")

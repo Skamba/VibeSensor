@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..release_fetcher import ReleaseInfo
-from .runtime_details import _sha256_file
+from .installer import _sha256_file
 from .status import UpdateStatusTracker
 
 

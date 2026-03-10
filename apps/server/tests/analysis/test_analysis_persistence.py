@@ -95,7 +95,7 @@ def test_store_analysis_sets_version_and_timestamps(tmp_path: Path) -> None:
     db.close()
 
 
-def test_store_analysis_persists_versioned_envelope_but_public_reads_return_summary(
+def test_store_analysis_persists_summary_directly_and_strips_internal_keys(
     tmp_path: Path,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
@@ -109,18 +109,20 @@ def test_store_analysis_persists_versioned_envelope_but_public_reads_return_summ
         row = cur.fetchone()
     assert row is not None
     raw = row[0]
-    assert '"schema_version": 1' in raw
-    assert '"summary"' in raw
+    # No envelope — summary stored directly
+    assert '"summary"' not in raw
     assert "_report_template_data" not in raw
+    assert '"lang"' in raw
     assert db.get_run_analysis("r1") == {"lang": "en", "findings": []}
     db.close()
 
 
-def test_analysis_is_current_requires_versioned_envelope(tmp_path: Path) -> None:
+def test_analysis_is_current_uses_column_version(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})
     db.finalize_run("r1", "2026-01-01T00:01:00Z")
 
+    # Set analysis with current version — should be current
     with db._cursor() as cur:
         cur.execute(
             "UPDATE runs SET status = 'complete', analysis_json = ?, analysis_version = ? WHERE run_id = ?",
@@ -129,6 +131,15 @@ def test_analysis_is_current_requires_versioned_envelope(tmp_path: Path) -> None
                 ANALYSIS_SCHEMA_VERSION,
                 "r1",
             ),
+        )
+
+    assert db.analysis_is_current("r1") is True
+
+    # Set analysis with old version — should be outdated
+    with db._cursor() as cur:
+        cur.execute(
+            "UPDATE runs SET analysis_version = ? WHERE run_id = ?",
+            (0, "r1"),
         )
 
     assert db.analysis_is_current("r1") is False
@@ -284,9 +295,6 @@ def _make_fake_state(history_db: Any) -> Any:
         apply_car_settings=state.apply_car_settings,
         apply_speed_source_settings=state.apply_speed_source_settings,
     )
-    state.recording = SimpleNamespace(
-        metrics_logger=state.metrics_logger,
-    )
     state.persistence = SimpleNamespace(
         history_db=state.history_db,
         query_service=HistoryRunQueryService(state.history_db, state.settings_store),
@@ -295,10 +303,6 @@ def _make_fake_state(history_db: Any) -> Any:
         export_service=HistoryExportService(state.history_db),
     )
     state.websocket = SimpleNamespace(hub=state.ws_hub)
-    state.updates = SimpleNamespace(
-        update_manager=state.update_manager,
-        esp_flash_manager=state.esp_flash_manager,
-    )
     state.processing = SimpleNamespace(
         state=state.loop_state,
         health_state=state.health_state,

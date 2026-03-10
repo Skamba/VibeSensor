@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from _phased_scenario_helpers import (
+from test_support import (
     assert_finding_location,
     assert_finding_source,
     build_fault_samples_at_speed,
@@ -11,9 +11,10 @@ from _phased_scenario_helpers import (
     make_sample,
     parse_speed_band,
     standard_metadata,
-    summarize_run_data,
     wheel_hz,
 )
+
+from vibesensor.analysis import summarize_run_data
 
 
 class TestScenario1IdleToSpeedUp:

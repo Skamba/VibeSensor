@@ -430,7 +430,7 @@ ws_hub = REPO / "apps/server/vibesensor/ws_hub.py"
 patch(
     ws_hub,
     "from .json_utils import sanitize_for_json",
-    "from .json_utils import sanitize_for_json\nfrom .ws_models import SCHEMA_VERSION",
+    "from .json_utils import sanitize_for_json\nfrom .payload_types import SCHEMA_VERSION",
 )
 patch(
     ws_hub,

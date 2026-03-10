@@ -41,7 +41,6 @@ from .summary_models import (
     PreparedRunData,
     RunSuitabilityBundle,
     SensorAnalysisBundle,
-    SummaryComputation,
 )
 from .summary_payload import build_sensor_analysis, build_summary_payload, summarize_origin
 from .summary_phases import build_phase_timeline, compute_run_timing, prepare_speed_and_phases
@@ -292,53 +291,46 @@ def summarize_run_data(
         per_sample_phases=prepared.per_sample_phases,
     )
 
-    computation = SummaryComputation(
-        prepared=prepared,
-        accel_stats=accel_stats,
-        findings=findings_bundle,
-        sensors=sensors,
-        suitability=suitability,
-    )
     summary = build_summary_payload(
         file_name=file_name,
-        run_id=computation.prepared.run_id,
+        run_id=prepared.run_id,
         samples=samples,
-        duration_s=computation.prepared.duration_s,
+        duration_s=prepared.duration_s,
         language=language,
         metadata=metadata,
-        raw_sample_rate_hz=computation.prepared.raw_sample_rate_hz,
-        speed_breakdown=computation.prepared.speed_breakdown,
-        phase_speed_breakdown=computation.prepared.phase_speed_breakdown,
-        phase_segments=computation.prepared.phase_segments,
-        run_noise_baseline_g=computation.prepared.run_noise_baseline_g,
-        speed_breakdown_skipped_reason=computation.prepared.speed_breakdown_skipped_reason,
-        findings=computation.findings.findings,
-        top_causes=computation.findings.top_causes,
-        most_likely_origin=computation.findings.most_likely_origin,
-        test_plan=computation.findings.test_plan,
-        phase_timeline=computation.findings.phase_timeline,
-        speed_stats=computation.prepared.speed_stats,
-        speed_stats_by_phase=computation.prepared.speed_stats_by_phase,
-        phase_info=computation.prepared.phase_info,
-        sensor_locations=computation.sensors.sensor_locations,
-        connected_locations=computation.sensors.connected_locations,
-        sensor_intensity_by_location=computation.sensors.sensor_intensity_by_location,
-        run_suitability=computation.suitability.run_suitability,
-        speed_values=computation.prepared.speed_values,
-        speed_non_null_pct=computation.prepared.speed_non_null_pct,
-        accel_stats=computation.accel_stats,
-        amp_metric_values=computation.accel_stats["amp_metric_values"],
+        raw_sample_rate_hz=prepared.raw_sample_rate_hz,
+        speed_breakdown=prepared.speed_breakdown,
+        phase_speed_breakdown=prepared.phase_speed_breakdown,
+        phase_segments=prepared.phase_segments,
+        run_noise_baseline_g=prepared.run_noise_baseline_g,
+        speed_breakdown_skipped_reason=prepared.speed_breakdown_skipped_reason,
+        findings=findings_bundle.findings,
+        top_causes=findings_bundle.top_causes,
+        most_likely_origin=findings_bundle.most_likely_origin,
+        test_plan=findings_bundle.test_plan,
+        phase_timeline=findings_bundle.phase_timeline,
+        speed_stats=prepared.speed_stats,
+        speed_stats_by_phase=prepared.speed_stats_by_phase,
+        phase_info=prepared.phase_info,
+        sensor_locations=sensors.sensor_locations,
+        connected_locations=sensors.connected_locations,
+        sensor_intensity_by_location=sensors.sensor_intensity_by_location,
+        run_suitability=suitability.run_suitability,
+        speed_values=prepared.speed_values,
+        speed_non_null_pct=prepared.speed_non_null_pct,
+        accel_stats=accel_stats,
+        amp_metric_values=accel_stats["amp_metric_values"],
     )
     summary["warnings"] = build_summary_warnings(
         metadata,
-        reference_complete=computation.suitability.reference_complete,
+        reference_complete=suitability.reference_complete,
     )
     summary["report_date"] = metadata.get("end_time_utc") or utc_now_iso()
     summary["plots"] = _plot_data(
         summary,
-        run_noise_baseline_g=computation.prepared.run_noise_baseline_g,
-        per_sample_phases=computation.prepared.per_sample_phases,
-        phase_segments=computation.prepared.phase_segments,
+        run_noise_baseline_g=prepared.run_noise_baseline_g,
+        per_sample_phases=prepared.per_sample_phases,
+        phase_segments=prepared.phase_segments,
     )
     annotate_peaks_with_order_labels(summary)
     if not include_samples:

@@ -8,7 +8,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from .commands import UpdateCommandExecutor
+from .runner import UpdateCommandExecutor
 from .status import UpdateStatusTracker
 
 

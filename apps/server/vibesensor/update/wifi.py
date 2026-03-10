@@ -7,7 +7,7 @@ import re
 import time
 from dataclasses import dataclass
 
-from .commands import UpdateCommandExecutor
+from .runner import UpdateCommandExecutor
 from .status import UpdateStatusTracker
 
 _UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
