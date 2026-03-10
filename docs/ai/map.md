@@ -21,7 +21,7 @@
 - Analysis: `processing/`, `analysis/`, `libs/core/python/vibesensor_core/`.
 - Runtime coordination: `app.py`, `bootstrap.py`, `runtime/`.
 - API delivery: `routes/`, `ws_hub.py`, `ws_models.py`.
-- Persistence and exports: `metrics_log/`, `history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`.
+- Persistence and exports: `metrics_log/`, `history_db/`, `history_services/`, `runlog.py`.
 - Reports: `report/`, `report_i18n.py`.
 - Updates and device ops: `update/`, `firmware_cache.py`, `esp_flash_manager.py`, `release_fetcher.py`, `apps/server/scripts/`, `apps/server/systemd/`.
 

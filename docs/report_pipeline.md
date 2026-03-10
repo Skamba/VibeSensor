@@ -21,7 +21,7 @@ Recording stops
     → store_analysis() [vibesensor.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.routes.history]
-  → HistoryReportService.build_pdf() [vibesensor.history_reports]
+  → HistoryReportService.build_pdf() [vibesensor.history_services.reports]
     → build_report_pdf(data) [vibesensor.report.pdf_engine]
 ```
 

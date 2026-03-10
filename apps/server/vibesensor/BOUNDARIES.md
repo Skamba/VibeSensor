@@ -65,17 +65,20 @@ Use this when changing backend code without scanning the whole package.
 - `routes/` is the HTTP and WebSocket boundary, assembled by `routes/__init__.py`.
 - Keep response keys stable.
 - Rule: only `routes/` modules may import or raise `HTTPException`.
-  Service modules (`history_runs.py`, `history_reports.py`, `history_helpers.py`,
-  `history_exports.py`) raise domain exceptions from `exceptions.py`.
+  Service modules in `history_services/` (`runs.py`, `reports.py`, `helpers.py`,
+  `exports.py`) raise domain exceptions from `exceptions.py`.
   The `routes/_helpers.py::domain_errors_to_http()` context manager translates
   domain exceptions to HTTP status codes at the route boundary.
 
 ## Persistence Surface
 - `metrics_log/` owns recording-time persistence semantics.
 - `history_db/` owns SQLite storage, schema, run/status lifecycle, settings, and client-name persistence.
-- `history_runs.py`, `history_reports.py`, and `history_exports.py` are the read/export coordination layer above the DB package.
+- `history_services/` is the read/export coordination layer above the DB package
+  (`runs.py`, `reports.py`, `exports.py`, `helpers.py`).
 - Rule: logging flow should only ingest fresh client data.
 
-## Device/Ops Surface
+## Hotspot / Infrastructure Surface
+- `hotspot/` owns Wi-Fi AP monitoring, parsing, and self-heal logic
+  (`parsers.py` and `self_heal.py`).
 - `apps/server/scripts/hotspot_nmcli.sh`: offline AP bring-up first, optional uplink second.
 - `apps/server/systemd/*.service`: startup behavior and boot-time guarantees.

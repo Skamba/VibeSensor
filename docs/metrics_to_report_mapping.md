@@ -13,7 +13,7 @@ analysis.summarize_run_data(meta, samples)
   → summary dict (persisted in history_db as a versioned analysis envelope)
     → analysis.map_summary(summary)
       → ReportTemplateData (rebuilt on demand)
-        → history_reports.HistoryReportService + report.pdf_engine.build_report_pdf(ReportTemplateData)
+        → history_services.reports.HistoryReportService + report.pdf_engine.build_report_pdf(ReportTemplateData)
           → PDF bytes
 ```
 

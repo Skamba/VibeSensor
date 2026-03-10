@@ -92,8 +92,8 @@ class TestNormalizeLangArchitecturalBoundary:
 class TestExportZipFiltersInternals:
     def test_underscore_fields_stripped_in_source(self) -> None:
         """Export assembly must strip _-prefixed analysis keys before zipping details."""
-        helper_text = (SERVER_ROOT / "vibesensor" / "history_helpers.py").read_text()
-        export_text = (SERVER_ROOT / "vibesensor" / "history_exports.py").read_text()
+        helper_text = (SERVER_ROOT / "vibesensor" / "history_services" / "helpers.py").read_text()
+        export_text = (SERVER_ROOT / "vibesensor" / "history_services" / "exports.py").read_text()
         assert 'if not key.startswith("_")' in helper_text
         assert "strip_internal_fields(analysis)" in export_text
 
