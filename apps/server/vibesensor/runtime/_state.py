@@ -11,7 +11,6 @@ from .subsystems import (
     RuntimePersistenceSubsystem,
     RuntimeProcessingSubsystem,
     RuntimeRecordingSubsystem,
-    RuntimeRouteServices,
     RuntimeSettingsSubsystem,
     RuntimeUpdateSubsystem,
     RuntimeWebsocketSubsystem,
@@ -30,5 +29,4 @@ class RuntimeState:
     updates: RuntimeUpdateSubsystem
     processing: RuntimeProcessingSubsystem
     websocket: RuntimeWebsocketSubsystem
-    routes: RuntimeRouteServices
     lifecycle: LifecycleManager

@@ -7,7 +7,7 @@ Backend (python `apps/server/`)
 	- `apps/server/vibesensor/app.py`: FastAPI app factory and CLI-facing startup entry.
 	- `apps/server/vibesensor/bootstrap.py`: subsystem-builder orchestration entry point.
 	- `apps/server/vibesensor/routes/`: HTTP and WebSocket route groups, assembled by `routes/__init__.py`.
-	- `apps/server/vibesensor/runtime/`: subsystem ownership, route-service assembly, lifecycle coordination, processing loop, and websocket broadcast state.
+	- `apps/server/vibesensor/runtime/`: subsystem ownership, lifecycle coordination, processing loop, and websocket broadcast state; routes receive `RuntimeState` directly.
 	- `apps/server/vibesensor/history_db/`: SQLite-backed history and settings persistence.
 	- `apps/server/vibesensor/report/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
 	- `apps/server/vibesensor/update/`: wheel-based updater package; `manager.py` is the public facade over focused modules for workflow, Wi-Fi, releases, install and rollback, service control, and status.

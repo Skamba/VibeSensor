@@ -1,6 +1,6 @@
 """Service construction and wiring.
 
-Bootstrap now orchestrates focused runtime builders instead of acting as a
+Bootstrap orchestrates focused runtime builders instead of acting as a
 monolithic composition root.
 """
 
@@ -16,7 +16,6 @@ from .runtime.builders import (
     build_persistence_subsystem,
     build_processing_subsystem,
     build_recording_subsystem,
-    build_route_services,
     build_settings_subsystem,
     build_update_subsystem,
     build_websocket_subsystem,
@@ -67,15 +66,6 @@ def build_services(config: AppConfig) -> RuntimeState:
         updates=updates,
         processing=processing,
         websocket=websocket,
-        routes=build_route_services(
-            ingress=ingress,
-            settings=settings,
-            recording=recording,
-            persistence=persistence,
-            updates=updates,
-            processing=processing,
-            websocket=websocket,
-        ),
     )
     settings.apply_car_settings()
     settings.apply_speed_source_settings()
