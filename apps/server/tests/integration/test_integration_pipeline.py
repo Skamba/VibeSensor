@@ -10,7 +10,7 @@ multi-sensor scenario including transient events.  It validates:
 
 NOTE: This is NOT a true integration/E2E test (it uses direct data injection,
 not the simulator or server). It is an analysis-pipeline contract test.
-For true simulator→ingestion→analysis E2E, see test_level_sim_ingestion.py.
+For true simulator→ingestion→analysis E2E, see test_sim_ingestion.py.
 """
 
 from __future__ import annotations

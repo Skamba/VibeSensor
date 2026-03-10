@@ -1,9 +1,0 @@
-[Unit]
-Description=VibeSensor hotspot periodic health check and self-heal
-After=NetworkManager.service
-Wants=NetworkManager.service
-
-[Service]
-Type=oneshot
-ExecStart=/opt/VibeSensor/apps/server/.venv/bin/python -m vibesensor.hotspot_self_heal --mode check-heal --config /etc/vibesensor/config.yaml
-SyslogIdentifier=vibesensor-hotspot-selfheal

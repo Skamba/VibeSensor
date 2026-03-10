@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from test_support.response_models import response_payload
+from test_support import response_payload
 
 from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION, HistoryDB
 from vibesensor.history_services.exports import HistoryExportService

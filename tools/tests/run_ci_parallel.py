@@ -173,6 +173,10 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 [python_cmd, "tools/dev/verify_no_path_indirections.py"],
             ),
             Step(
+                "docs lint",
+                [python_cmd, "tools/dev/docs_lint.py"],
+            ),
+            Step(
                 "ws payload schema sync check",
                 [python_cmd, "-m", "vibesensor.ws_schema_export", "--check"],
             ),
@@ -223,6 +227,7 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                     "-q",
                     "-m",
                     "not selenium",
+                    "--tb=short",
                     "apps/server/tests",
                 ],
             ),
@@ -234,7 +239,7 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                     python_cmd,
                     "tools/tests/run_e2e_parallel.py",
                     "--shards",
-                    "2",
+                    "3",
                     "--fast-e2e",
                 ],
             ),

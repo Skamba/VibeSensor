@@ -537,27 +537,31 @@ if [ ! -f "${ROOTFS_DIR}/etc/vibesensor/config.yaml" ]; then
     "${ROOTFS_DIR}/etc/vibesensor/config.yaml"
 fi
 
-install -m 0644 \
-  "${ROOTFS_DIR}/opt/VibeSensor/infra/pi-image/pi-gen/assets/vibesensor-hotspot.service" \
-  "${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot.service"
+SYSTEMD_SRC="${ROOTFS_DIR}/opt/VibeSensor/apps/server/systemd"
+
+sed \
+  -e 's#__PI_DIR__#/opt/VibeSensor/apps/server#g' \
+  -e 's#__VENV_DIR__#/opt/VibeSensor/apps/server/.venv#g' \
+  -e 's#__SERVICE_USER__#pi#g' \
+  "${SYSTEMD_SRC}/vibesensor-hotspot.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot.service"
 
 install -m 0644 \
-  "${ROOTFS_DIR}/opt/VibeSensor/infra/pi-image/pi-gen/assets/vibesensor-rfkill-unblock.service" \
+  "${SYSTEMD_SRC}/vibesensor-rfkill-unblock.service" \
   "${ROOTFS_DIR}/etc/systemd/system/vibesensor-rfkill-unblock.service"
 
-install -m 0644 \
-  "${ROOTFS_DIR}/opt/VibeSensor/infra/pi-image/pi-gen/assets/vibesensor-hotspot-self-heal.service" \
-  "${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot-self-heal.service"
+sed \
+  -e 's#__VENV_DIR__#/opt/VibeSensor/apps/server/.venv#g' \
+  "${SYSTEMD_SRC}/vibesensor-hotspot-self-heal.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot-self-heal.service"
 
 install -m 0644 \
-  "${ROOTFS_DIR}/opt/VibeSensor/infra/pi-image/pi-gen/assets/vibesensor-hotspot-self-heal.timer" \
+  "${SYSTEMD_SRC}/vibesensor-hotspot-self-heal.timer" \
   "${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot-self-heal.timer"
 
 sed \
   -e 's#__PI_DIR__#/opt/VibeSensor/apps/server#g' \
   -e 's#__VENV_DIR__#/opt/VibeSensor/apps/server/.venv#g' \
   -e 's#__SERVICE_USER__#pi#g' \
-  "${ROOTFS_DIR}/opt/VibeSensor/apps/server/systemd/vibesensor.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor.service"
+  "${SYSTEMD_SRC}/vibesensor.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor.service"
 
 mkdir -p "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants"
 ln -sf /etc/systemd/system/vibesensor.service \

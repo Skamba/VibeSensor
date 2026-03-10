@@ -11,7 +11,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 from fastapi import FastAPI, WebSocketDisconnect
-from test_support.response_models import response_payload as _response_payload
+from test_support import response_payload as _response_payload
 
 from vibesensor.analysis import summarize_run_data
 from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION
