@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vibesensor-core"
+version = "0.1.0"
+description = "Pure-Python domain logic for VibeSensor (vibration strength, sensor units, strength bands)"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["vibesensor_core*"]
+
+[tool.setuptools.package-data]
+"vibesensor_core" = ["py.typed"]
