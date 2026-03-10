@@ -57,6 +57,7 @@ def create_router(services: RuntimeState) -> APIRouter:
             services.ingress.registry,
             services.ingress.control_plane,
             services.settings.settings_store,
+            services.ingress.processor,
         ),
     )
     router.include_router(

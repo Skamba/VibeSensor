@@ -432,16 +432,14 @@ class TestHistoryDBAnalysisIdempotency:
     def test_analysis_is_current_for_missing_run(self, history_db: HistoryDB) -> None:
         assert history_db.analysis_is_current("nonexistent") is False
 
-    def test_get_run_analysis_only_returns_complete(self, history_db: HistoryDB) -> None:
+    def test_get_run_analysis_returns_stored_analysis(self, history_db: HistoryDB) -> None:
         history_db.create_run("r1", "2026-01-01T00:00:00Z", {})
-        # Still recording — get_run_analysis should return None
-        assert history_db.get_run_analysis("r1") is None
+        # No analysis yet
+        assert history_db.get_run("r1").get("analysis") is None
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
-        # Analyzing — still None
-        assert history_db.get_run_analysis("r1") is None
         history_db.store_analysis("r1", {"result": "ok"})
         # Complete — should return
-        result = history_db.get_run_analysis("r1")
+        result = history_db.get_run("r1").get("analysis")
         assert result is not None
         assert result["result"] == "ok"
 
@@ -477,8 +475,8 @@ class TestHistoryDBFinalizeNoOp:
         # Metadata should still be the original if the call didn't match status
         assert run["status"] == "analyzing"
 
-    def test_get_run_status_missing_returns_none(self, history_db: HistoryDB) -> None:
-        assert history_db.get_run_status("nonexistent") is None
+    def test_get_run_missing_returns_none(self, history_db: HistoryDB) -> None:
+        assert history_db.get_run("nonexistent") is None
 
     def test_get_active_run_id(self, history_db: HistoryDB) -> None:
         assert history_db.get_active_run_id() is None

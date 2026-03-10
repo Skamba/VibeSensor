@@ -126,7 +126,8 @@ def run_simulator(
     )
     sim_cmd = [
         sys.executable,
-        str(ROOT / "apps" / "simulator" / "sim_sender.py"),
+        "-m",
+        "vibesensor.simulator.sim_sender",
         "--server-host",
         sim_host,
         "--server-data-port",

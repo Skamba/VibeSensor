@@ -20,17 +20,7 @@ from typing import TYPE_CHECKING
 from ..udp_data_rx import start_udp_data_receiver
 
 if TYPE_CHECKING:
-    from ..config import AppConfig
-    from ..esp_flash_manager import EspFlashManager
-    from ..metrics_log import MetricsLogger
-    from ..update.manager import UpdateManager
-    from .state import (
-        RuntimeIngressSubsystem,
-        RuntimePersistenceSubsystem,
-        RuntimeProcessingSubsystem,
-        RuntimeSettingsSubsystem,
-        RuntimeWebsocketSubsystem,
-    )
+    from .state import RuntimeState
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,44 +29,16 @@ class LifecycleManager:
     """Manages server startup (UDP receiver, background tasks) and graceful shutdown."""
 
     __slots__ = (
-        "_config",
         "_data_consumer_task",
         "_data_transport",
-        "_esp_flash_manager",
         "_health_state",
-        "_ingress",
-        "_metrics_logger",
-        "_persistence",
-        "_processing",
-        "_settings",
-        "_update_manager",
-        "_websocket",
+        "_runtime",
         "tasks",
     )
 
-    def __init__(
-        self,
-        *,
-        config: AppConfig,
-        ingress: RuntimeIngressSubsystem,
-        settings: RuntimeSettingsSubsystem,
-        metrics_logger: MetricsLogger,
-        persistence: RuntimePersistenceSubsystem,
-        update_manager: UpdateManager,
-        esp_flash_manager: EspFlashManager,
-        processing: RuntimeProcessingSubsystem,
-        websocket: RuntimeWebsocketSubsystem,
-    ) -> None:
-        self._config = config
-        self._ingress = ingress
-        self._settings = settings
-        self._metrics_logger = metrics_logger
-        self._persistence = persistence
-        self._update_manager = update_manager
-        self._esp_flash_manager = esp_flash_manager
-        self._processing = processing
-        self._websocket = websocket
-        self._health_state = processing.health_state
+    def __init__(self, *, runtime: RuntimeState) -> None:
+        self._runtime = runtime
+        self._health_state = runtime.processing.health_state
         self.tasks: list[asyncio.Task[object]] = []
         self._data_transport: asyncio.DatagramTransport | None = None
         self._data_consumer_task: asyncio.Task[object] | None = None
@@ -119,7 +81,7 @@ class LifecycleManager:
     def _validate_startup(self) -> None:
         """Run lightweight startup precondition checks (warnings only)."""
         try:
-            db_path = self._config.logging.history_db_path
+            db_path = self._runtime.config.logging.history_db_path
             data_dir = Path(db_path).parent if db_path else None
         except (AttributeError, TypeError):
             return
@@ -146,31 +108,31 @@ class LifecycleManager:
             phase = "udp_receiver"
             self._health_state.set_phase(phase)
             self._data_transport, self._data_consumer_task = await start_udp_data_receiver(
-                host=self._config.udp.data_host,
-                port=self._config.udp.data_port,
-                registry=self._ingress.registry,
-                processor=self._ingress.processor,
-                queue_maxsize=self._config.udp.data_queue_maxsize,
+                host=self._runtime.config.udp.data_host,
+                port=self._runtime.config.udp.data_port,
+                registry=self._runtime.ingress.registry,
+                processor=self._runtime.ingress.processor,
+                queue_maxsize=self._runtime.config.udp.data_queue_maxsize,
             )
 
             phase = "control_plane"
             self._health_state.set_phase(phase)
-            await self._ingress.control_plane.start()
+            await self._runtime.ingress.control_plane.start()
 
             self.tasks = []
 
             phase = "processing-loop"
             self._health_state.set_phase(phase)
-            self.tasks.append(self._start_task(self._processing.loop.run(), name=phase))
+            self.tasks.append(self._start_task(self._runtime.processing.loop.run(), name=phase))
 
             phase = "ws-broadcast"
             self._health_state.set_phase(phase)
             self.tasks.append(
                 self._start_task(
-                    self._websocket.hub.run(
-                        self._config.processing.ui_push_hz,
-                        self._websocket.broadcast.build_payload,
-                        on_tick=self._websocket.broadcast.on_tick,
+                    self._runtime.websocket.hub.run(
+                        self._runtime.config.processing.ui_push_hz,
+                        self._runtime.websocket.broadcast.build_payload,
+                        on_tick=self._runtime.websocket.broadcast.on_tick,
                     ),
                     name=phase,
                 ),
@@ -178,15 +140,15 @@ class LifecycleManager:
 
             phase = "metrics-log"
             self._health_state.set_phase(phase)
-            self.tasks.append(self._start_task(self._metrics_logger.run(), name=phase))
+            self.tasks.append(self._start_task(self._runtime.metrics_logger.run(), name=phase))
 
             phase = "gps-speed"
             self._health_state.set_phase(phase)
             self.tasks.append(
                 self._start_task(
-                    self._settings.gps_monitor.run(
-                        host=self._config.gps.gpsd_host,
-                        port=self._config.gps.gpsd_port,
+                    self._runtime.settings.gps_monitor.run(
+                        host=self._runtime.config.gps.gpsd_host,
+                        port=self._runtime.config.gps.gpsd_port,
                     ),
                     name=phase,
                 ),
@@ -196,7 +158,7 @@ class LifecycleManager:
             self._health_state.set_phase(phase)
             self.tasks.append(
                 self._start_task(
-                    self._update_manager.startup_recover(),
+                    self._runtime.update_manager.startup_recover(),
                     name=phase,
                 ),
             )
@@ -208,7 +170,7 @@ class LifecycleManager:
     async def stop(self) -> None:
         """Graceful shutdown with explicit ingress-stop and metrics-drain phases."""
         try:
-            self._ingress.control_plane.close()
+            self._runtime.ingress.control_plane.close()
         except OSError:
             LOGGER.warning("Error closing control plane", exc_info=True)
         try:
@@ -239,8 +201,8 @@ class LifecycleManager:
         # Cancel any in-progress update or flash jobs so cleanup
         # (e.g. hotspot restore) can run before shutdown completes.
         managed: list[asyncio.Task[None] | None] = [
-            self._update_manager.job_task,
-            self._esp_flash_manager.job_task,
+            self._runtime.update_manager.job_task,
+            self._runtime.esp_flash_manager.job_task,
         ]
         for managed_task in managed:
             if managed_task is not None:
@@ -250,9 +212,9 @@ class LifecycleManager:
                 with contextlib.suppress(asyncio.CancelledError, Exception):
                     await asyncio.wait_for(asyncio.shield(managed_task), timeout=10.0)
 
-        analysis_timeout_s = self._config.logging.shutdown_analysis_timeout_s
+        analysis_timeout_s = self._runtime.config.logging.shutdown_analysis_timeout_s
         shutdown_report = await asyncio.to_thread(
-            self._metrics_logger.shutdown_report,
+            self._runtime.metrics_logger.shutdown_report,
             analysis_timeout_s,
         )
         if not shutdown_report.completed:
@@ -268,11 +230,11 @@ class LifecycleManager:
                 shutdown_report.write_error,
             )
         try:
-            await asyncio.to_thread(self._ingress.worker_pool.shutdown, True)
+            await asyncio.to_thread(self._runtime.ingress.worker_pool.shutdown, True)
         except Exception:
             LOGGER.warning("Error shutting down worker pool", exc_info=True)
         try:
-            self._persistence.history_db.close()
+            self._runtime.persistence.history_db.close()
         except Exception:
             LOGGER.warning("Error closing history DB", exc_info=True)
         LOGGER.info("Runtime lifecycle stopped cleanly.")

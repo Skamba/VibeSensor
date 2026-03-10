@@ -67,18 +67,8 @@ def build_services(config: AppConfig) -> RuntimeState:
         esp_flash_manager=esp_flash_manager,
         processing=processing,
         websocket=websocket,
-        lifecycle=LifecycleManager(
-            config=config,
-            ingress=ingress,
-            settings=settings,
-            metrics_logger=metrics_logger,
-            persistence=persistence,
-            update_manager=update_manager,
-            esp_flash_manager=esp_flash_manager,
-            processing=processing,
-            websocket=websocket,
-        ),
     )
+    runtime.lifecycle = LifecycleManager(runtime=runtime)
     settings.apply_car_settings()
     settings.apply_speed_source_settings()
     return runtime

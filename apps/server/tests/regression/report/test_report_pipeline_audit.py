@@ -11,14 +11,10 @@ PDF pipeline.  Each test class corresponds to one audit finding.
 
 import inspect
 
+from vibesensor.report.mapping import finding_strength_db as _finding_strength_values
 from vibesensor.report.mapping import map_summary
-from vibesensor.report.mapping.common import (
-    finding_strength_db as _finding_strength_values,
-)
-from vibesensor.report.mapping.common import (
-    peak_classification_text as _peak_classification_text,
-)
-from vibesensor.report.mapping.systems import top_strength_values as _top_strength_values
+from vibesensor.report.mapping import peak_classification_text as _peak_classification_text
+from vibesensor.report.mapping import top_strength_values as _top_strength_values
 from vibesensor.report.pdf_page1 import _draw_next_steps_table, _draw_system_card, _page1
 from vibesensor.report.pdf_page2 import _draw_peaks_table
 from vibesensor.report_i18n import tr

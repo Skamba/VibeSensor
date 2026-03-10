@@ -8,12 +8,6 @@
 
 
 export interface paths {
-  "/api/analysis-settings": {
-    /** Get Analysis Settings */
-    get: operations["get_analysis_settings_api_analysis_settings_get"];
-    /** Set Analysis Settings */
-    post: operations["set_analysis_settings_api_analysis_settings_post"];
-  };
   "/api/car-library/brands": {
     /**
      * Get Car Library Brands
@@ -107,6 +101,12 @@ export interface paths {
     /** Stop Logging */
     post: operations["stop_logging_api_logging_stop_post"];
   };
+  "/api/settings/analysis": {
+    /** Get Analysis Settings */
+    get: operations["get_analysis_settings_api_settings_analysis_get"];
+    /** Set Analysis Settings */
+    post: operations["set_analysis_settings_api_settings_analysis_post"];
+  };
   "/api/settings/cars": {
     /** Get Cars */
     get: operations["get_cars_api_settings_cars_get"];
@@ -190,10 +190,6 @@ export interface paths {
   "/api/settings/update/status": {
     /** Get Update Status */
     get: operations["get_update_status_api_settings_update_status_get"];
-  };
-  "/api/simulator/speed-override": {
-    /** Set Simulator Speed Override */
-    post: operations["set_simulator_speed_override_api_simulator_speed_override_post"];
   };
 }
 
@@ -1402,39 +1398,6 @@ export type external = Record<string, never>;
 
 export interface operations {
 
-  /** Get Analysis Settings */
-  get_analysis_settings_api_analysis_settings_get: {
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["AnalysisSettingsResponse"];
-        };
-      };
-    };
-  };
-  /** Set Analysis Settings */
-  set_analysis_settings_api_analysis_settings_post: {
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["AnalysisSettingsRequest"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["AnalysisSettingsResponse"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
   /**
    * Get Car Library Brands
    * @description Return all available car manufacturer brands from the library.
@@ -1814,6 +1777,39 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["LoggingStatusResponse"];
+        };
+      };
+    };
+  };
+  /** Get Analysis Settings */
+  get_analysis_settings_api_settings_analysis_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AnalysisSettingsResponse"];
+        };
+      };
+    };
+  };
+  /** Set Analysis Settings */
+  set_analysis_settings_api_settings_analysis_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AnalysisSettingsRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AnalysisSettingsResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
     };
@@ -2220,28 +2216,6 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["UpdateStatusResponse"];
-        };
-      };
-    };
-  };
-  /** Set Simulator Speed Override */
-  set_simulator_speed_override_api_simulator_speed_override_post: {
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["SpeedSourceRequest"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["SpeedSourceResponse"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
     };

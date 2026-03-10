@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from test_support.report_helpers import analysis_sample as _make_sample
-from vibesensor.analysis.findings import order_findings as order_findings_module
-from vibesensor.analysis.findings.order_findings import (
+from vibesensor.analysis import findings_order_findings as order_findings_module
+from vibesensor.analysis.findings_order_findings import (
     _build_order_findings as _findings_build_order_findings,
 )
 from vibesensor.runlog import (

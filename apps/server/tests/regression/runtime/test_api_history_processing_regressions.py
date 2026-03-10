@@ -110,7 +110,7 @@ class TestProcessingZeroSampleRate:
         raw = np.zeros((10, 3), dtype=np.int16)
         proc.ingest("c1", raw, sample_rate_hz=800)
         # Force buf.sample_rate_hz back to 0 to simulate the bug path
-        buf = proc._buffers["c1"]
+        buf = proc._store.buffers["c1"]
         buf.sample_rate_hz = 0
         result = proc.selected_payload("c1")
         # Must return without crash; waveform/spectrum/metrics empty

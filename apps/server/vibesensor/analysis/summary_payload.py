@@ -23,7 +23,7 @@ from ._types import (
     TestStep,
     TopCause,
 )
-from .findings.intensity import _sensor_intensity_by_location
+from .findings_intensity import _sensor_intensity_by_location
 from .helpers import (
     PHASE_I18N_KEYS,
     _format_duration,

@@ -12,7 +12,6 @@ import sqlite3
 import time
 from collections import deque
 from collections.abc import Callable
-from contextlib import nullcontext
 from dataclasses import dataclass
 from threading import RLock, Thread
 from typing import TYPE_CHECKING
@@ -231,18 +230,15 @@ class PostAnalysisWorker:
                 return
             language = str(metadata.get("language") or "en")
 
-            read_tx = getattr(db, "read_transaction", None)
-            tx_ctx = read_tx() if callable(read_tx) else nullcontext()
-            with tx_ctx:
-                normalized_iter = (
-                    normalize_sample_record(sample)
-                    for batch in db.iter_run_samples(run_id, batch_size=1024)
-                    for sample in batch
-                )
-                samples, total_sample_count, stride = bounded_sample(
-                    normalized_iter,
-                    max_items=_MAX_POST_ANALYSIS_SAMPLES,
-                )
+            normalized_iter = (
+                normalize_sample_record(sample)
+                for batch in db.iter_run_samples(run_id, batch_size=1024)
+                for sample in batch
+            )
+            samples, total_sample_count, stride = bounded_sample(
+                normalized_iter,
+                max_items=_MAX_POST_ANALYSIS_SAMPLES,
+            )
             if not samples:
                 error_msg = "No samples collected during run"
                 LOGGER.warning("Skipping post-analysis for run %s: no samples collected", run_id)

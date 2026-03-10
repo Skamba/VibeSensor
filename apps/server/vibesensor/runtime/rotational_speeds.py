@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
-from ..backend_types import SpeedSourcePayload
 from ..constants import SECONDS_PER_MINUTE
 from ..order_bands import build_order_bands, vehicle_orders_hz
 from ..payload_types import (
@@ -17,18 +16,9 @@ if TYPE_CHECKING:
     from ..settings_store import SettingsStore
 
 
-class _SpeedSourceSettingsStore(Protocol):
-    def get_speed_source(self) -> SpeedSourcePayload: ...
-
-
-class _GpsMonitorState(Protocol):
-    gps_enabled: bool
-    fallback_active: bool
-
-
 def rotational_basis_speed_source(
-    settings_store: SettingsStore | _SpeedSourceSettingsStore,
-    gps_monitor: GPSSpeedMonitor | _GpsMonitorState,
+    settings_store: SettingsStore,
+    gps_monitor: GPSSpeedMonitor,
     *,
     resolution_source: str | None = None,
 ) -> str:

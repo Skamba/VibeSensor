@@ -195,10 +195,10 @@ def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
         db.append_samples("run-full", batch)
 
     db.finalize_run("run-full", "2026-01-01T00:00:20Z")
-    assert db.get_run_status("run-full") == "analyzing"
+    assert db.get_run("run-full")["status"] == "analyzing"
 
     db.store_analysis("run-full", {"score": 42})
-    assert db.get_run_status("run-full") == "complete"
+    assert db.get_run("run-full")["status"] == "complete"
 
     all_samples = db.get_run_samples("run-full")
     assert len(all_samples) == 20
@@ -212,7 +212,7 @@ def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
     assert run is not None
     assert run["sample_count"] == 20
     assert run["status"] == "complete"
-    analysis = db.get_run_analysis("run-full")
+    analysis = db.get_run("run-full").get("analysis")
     assert analysis is not None
     assert analysis["score"] == 42
 

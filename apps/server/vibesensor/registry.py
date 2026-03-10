@@ -14,7 +14,7 @@ from threading import RLock
 from typing import TYPE_CHECKING
 
 from .domain_models import normalize_sensor_id as _normalize_client_id
-from .payload_types import ClientApiRow, HealthDataLossPayload, TimingHealthPayload
+from .payload_types import ClientApiRow, TimingHealthPayload
 from .processing.models import ClientMetrics
 from .protocol import (
     AckMessage,
@@ -142,7 +142,6 @@ class ClientRecord:
     last_t0_us: int | None = None
     timing_jitter_us_ema: float = 0.0
     timing_drift_us_total: float = 0.0
-    latest_metrics: ClientMetrics = field(default_factory=dict)  # type: ignore[assignment]
     duplicates_received: int = 0
     _seen_seqs: set[int] = field(default_factory=set)
     _seen_seqs_max: int = -1
@@ -455,11 +454,6 @@ class ClientRegistry:
                 self._delete_persisted_name(normalized)
             return existed
 
-    def set_latest_metrics(self, client_id: str, metrics: ClientMetrics) -> None:
-        with self._lock:
-            record = self._get_or_create(client_id)
-            record.latest_metrics = metrics
-
     def get(self, client_id: str) -> ClientRecord | None:
         try:
             normalized = _normalize_client_id(client_id)
@@ -483,9 +477,9 @@ class ClientRegistry:
                 and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds
             ]
 
-    def data_loss_snapshot(self) -> HealthDataLossPayload:
+    def data_loss_snapshot(self) -> dict[str, int]:
         with self._lock:
-            snapshot: HealthDataLossPayload = {
+            snapshot: dict[str, int] = {
                 "tracked_clients": len(self._clients),
                 "affected_clients": 0,
                 "frames_dropped": 0,
@@ -566,6 +560,7 @@ class ClientRegistry:
         now: float | None = None,
         *,
         now_mono: float | None = None,
+        metrics_by_client: dict[str, ClientMetrics] | None = None,
     ) -> list[ClientApiRow]:
         with self._lock:
             now_ts = self._resolve_now_wall(now)
@@ -611,7 +606,11 @@ class ClientRegistry:
                             queue_overflow_drops=record.queue_overflow_drops,
                             parse_errors=record.parse_errors,
                             server_queue_drops=record.server_queue_drops,
-                            latest_metrics=record.latest_metrics,
+                            latest_metrics=(
+                                metrics_by_client.get(record.client_id, {})
+                                if metrics_by_client is not None
+                                else {}
+                            ),
                             last_ack_cmd_seq=record.last_ack_cmd_seq,
                             last_ack_status=record.last_ack_status,
                             reset_count=record.reset_count,

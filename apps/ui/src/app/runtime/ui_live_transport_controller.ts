@@ -96,24 +96,10 @@ export class UiLiveTransportController {
 
     const prevSelected = this.state.selectedClientId;
     this.state.clients = adapted.clients;
-    const incomingSpectra = adapted.spectra
-      ? {
-        clients: Object.fromEntries(
-          Object.entries(adapted.spectra.clients).map(([clientId, spectrum]) => [
-            clientId,
-            {
-              freq: spectrum.freq,
-              strength_metrics: spectrum.strength_metrics,
-              combined: spectrum.combined,
-            },
-          ]),
-        ),
-      }
-      : null;
     const spectrumTick = applySpectrumTick(
       this.state.spectra,
       this.state.hasSpectrumData,
-      incomingSpectra,
+      adapted.spectra,
     );
     this.state.spectra = spectrumTick.spectra;
     features.realtime.updateClientSelection();

@@ -34,6 +34,16 @@ Complexity hygiene
 - Maintain a single source of truth for default values; do not duplicate defaults across files.
 - Do not add forward-extensibility machinery (overflow columns, plugin hooks, generic registries) until a concrete second consumer exists.
 - Prefer flat, direct structures. Only introduce grouping or wrapping when more than three consumers benefit from the indirection.
+- Do not create sub-packages for single-consumer, single-export modules. A flat module file is preferred until 3+ distinct consumers exist.
+- Do not create Protocol types for single-implementor classes. Use the concrete type directly.
+- Do not add compatibility aliases or shims when refactoring. Update all consumers directly in the same change set.
+- Do not create wrapper dataclasses for one-shot operations (constructed only to call a single method and then discarded).
+- Do not create TypedDict mirrors of Pydantic models. Use Pydantic for HTTP boundaries and TypedDicts only for WebSocket/non-Pydantic dict construction.
+- Route handlers must be thin HTTP translators. Extract business logic into service functions that are independently testable.
+- Do not create duplicate API endpoints for the same operation.
+- Do not create standalone Python scripts for simple pytest flag combinations. Use Makefile recipes directly.
+- Do not create Makefile aliases that are documented as "use X instead". Remove the alias.
+- Prefer few large modules over many tiny modules when the modules serve a single consumer.
 
 Documentation maintenance (always required)
 - After every meaningful code change, check whether docs, repo maps, runbooks, READMEs, and instruction files that reference the touched area are now stale.
@@ -68,3 +78,17 @@ Validation (always required)
   7. check `docker compose logs --tail 50` if needed.
 - Breaking changes are allowed when intentional.
 - No-backward-compatibility policy: we own the full codebase end to end. Do not add or preserve backward-compatibility layers (deprecated paths, adapters, fallbacks, shims, version-bridging logic, or legacy schema support) unless explicitly asked. Remove them when encountered. Standardize on the current contract, schema, config, and runtime path. Do not add new compatibility code "just in case". If compatibility seems necessary, flag it explicitly rather than implementing it silently.
+
+Docs (`docs/`)
+- Keep `docs/` short and focused. Add design changes (e.g. report layout) to `docs/design_language.md`.
+- For any user-visible text changes, update `apps/server/data/report_i18n.json` and mention new keys in docs.
+- Rewrite or remove stale sections aggressively; do not keep contradictory historical guidance in place.
+- Prefer direct pointers to current source-of-truth files over long prose that will drift.
+- When architecture, file ownership, commands, or workflows change, update the matching repo maps, runbooks, READMEs, and instruction files in the same change set.
+
+Infra / Docker / CI (`docker-compose.yml`, `.github/workflows/`)
+- Local dev: `docker compose build --pull` then `docker compose up -d`.
+- CI: `.github/workflows/ci.yml` is authoritative for blocking job commands (`backend-quality`, `backend-typecheck`, `frontend-typecheck`, `ui-smoke`, `backend-tests`, `e2e`).
+- Local CI-parity run: `make test-all` (runs `python3 tools/tests/run_ci_parallel.py`, which mirrors those CI job command groups in parallel).
+- Keep CI steps maintainable; larger CI/workflow updates are allowed when needed. If adding new test dependencies, update `apps/server/pyproject.toml` so CI installs them via the editable install.
+- Avoid embedding secrets in workflow files; use repository secrets for tokens.

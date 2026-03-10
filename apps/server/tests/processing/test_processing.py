@@ -103,7 +103,7 @@ def test_clients_with_recent_data_filters_stale() -> None:
     processor.ingest("c2", samples, sample_rate_hz=800)
 
     # Make c2's last ingest look old by patching its timestamp
-    processor._buffers["c2"].last_ingest_mono_s = time.monotonic() - 10.0
+    processor._store.buffers["c2"].last_ingest_mono_s = time.monotonic() - 10.0
 
     result = processor.clients_with_recent_data(["c1", "c2", "c3"], max_age_s=3.0)
     assert result == ["c1"]
@@ -124,13 +124,13 @@ def test_ingest_waits_while_processor_lock_is_held() -> None:
         processor.ingest("c-lock", samples, sample_rate_hz=800)
         done.set()
 
-    processor._lock.acquire()
+    processor._store.lock.acquire()
     worker = Thread(target=_ingest)
     worker.start()
     try:
         assert not done.wait(timeout=0.05)
     finally:
-        processor._lock.release()
+        processor._store.lock.release()
     worker.join(timeout=1.0)
     assert done.is_set()
 

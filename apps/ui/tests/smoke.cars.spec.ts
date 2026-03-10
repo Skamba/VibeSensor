@@ -14,7 +14,7 @@ test("shows header warning and blocks car-dependent analysis save when no car is
       await fulfillJson(route, {});
     },
   });
-  await page.route("**/api/analysis-settings", async (route) => {
+  await page.route("**/api/settings/analysis", async (route) => {
     if (route.request().method() === "POST") {
       analysisPostCalls += 1;
     }

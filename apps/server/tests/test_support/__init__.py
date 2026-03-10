@@ -4,12 +4,172 @@ Import shared synthetic-data builders and assertions from ``test_support``.
 This package is the canonical shared test-helper entrypoint.
 """
 
-# ruff: noqa: F401,F403
+from typing import Any
 
-from .analysis import *
-from .assertions import *
-from .core import *
-from .core import _stable_hash
-from .fault_scenarios import *
-from .perturbation_scenarios import *
-from .sample_scenarios import *
+from .analysis import extract_top, run_analysis, top_confidence
+from .assertions import (
+    assert_confidence_between,
+    assert_confidence_label_valid,
+    assert_diagnosis_contract,
+    assert_finding_location,
+    assert_finding_source,
+    assert_forbidden_systems,
+    assert_has_warnings,
+    assert_no_localized_wheel,
+    assert_no_persistent_fault,
+    assert_no_wheel_fault,
+    assert_only_allowed_systems,
+    assert_pairwise_monotonic,
+    assert_strict_no_fault,
+    assert_strongest_location,
+    assert_tolerant_no_fault,
+    assert_wheel_source,
+    extract_top_finding,
+    parse_speed_band,
+)
+from .core import (
+    ALL_SENSORS,
+    ALL_WHEEL_SENSORS,
+    CAR_PROFILE_IDS,
+    CAR_PROFILES,
+    CORNER_SENSORS,
+    NON_WHEEL_SENSORS,
+    SENSOR_DRIVESHAFT,
+    SENSOR_ENGINE,
+    SENSOR_FL,
+    SENSOR_FR,
+    SENSOR_RL,
+    SENSOR_RR,
+    SENSOR_TRANSMISSION,
+    SENSOR_TRUNK,
+    SPEED_HIGH,
+    SPEED_LOW,
+    SPEED_MID,
+    SPEED_VERY_HIGH,
+    _stable_hash,
+    assert_summary_sections,
+    assert_top_cause_contract,
+    engine_hz,
+    extract_pdf_text,
+    profile_circ,
+    profile_metadata,
+    profile_wheel_hz,
+    standard_metadata,
+    wheel_hz,
+)
+from .fault_scenarios import (
+    build_fault_samples_at_speed,
+    build_speed_sweep_fault_samples,
+    make_engine_order_samples,
+    make_fault_samples,
+    make_profile_dual_fault_samples,
+    make_profile_engine_order_samples,
+    make_profile_fault_samples,
+    make_profile_gain_mismatch_samples,
+    make_profile_speed_sweep_fault_samples,
+    make_speed_sweep_fault_samples,
+)
+from .perturbation_scenarios import (
+    make_clipped_samples,
+    make_clock_skew_samples,
+    make_dropout_samples,
+    make_out_of_order_samples,
+    make_speed_jitter_samples,
+)
+from .sample_scenarios import (
+    make_diffuse_samples,
+    make_idle_samples,
+    make_noise_samples,
+    make_ramp_samples,
+    make_road_phase_samples,
+    make_sample,
+    make_transient_samples,
+)
+
+__all__ = [
+    # analysis
+    "extract_top",
+    "run_analysis",
+    "top_confidence",
+    # assertions
+    "assert_confidence_between",
+    "assert_confidence_label_valid",
+    "assert_diagnosis_contract",
+    "assert_finding_location",
+    "assert_finding_source",
+    "assert_forbidden_systems",
+    "assert_has_warnings",
+    "assert_no_localized_wheel",
+    "assert_no_persistent_fault",
+    "assert_no_wheel_fault",
+    "assert_only_allowed_systems",
+    "assert_pairwise_monotonic",
+    "assert_strict_no_fault",
+    "assert_strongest_location",
+    "assert_tolerant_no_fault",
+    "assert_wheel_source",
+    "extract_top_finding",
+    "parse_speed_band",
+    # core
+    "ALL_SENSORS",
+    "ALL_WHEEL_SENSORS",
+    "CAR_PROFILES",
+    "CAR_PROFILE_IDS",
+    "CORNER_SENSORS",
+    "NON_WHEEL_SENSORS",
+    "SENSOR_DRIVESHAFT",
+    "SENSOR_ENGINE",
+    "SENSOR_FL",
+    "SENSOR_FR",
+    "SENSOR_RL",
+    "SENSOR_RR",
+    "SENSOR_TRANSMISSION",
+    "SENSOR_TRUNK",
+    "SPEED_HIGH",
+    "SPEED_LOW",
+    "SPEED_MID",
+    "SPEED_VERY_HIGH",
+    "_stable_hash",
+    "assert_summary_sections",
+    "assert_top_cause_contract",
+    "engine_hz",
+    "extract_pdf_text",
+    "profile_circ",
+    "profile_metadata",
+    "profile_wheel_hz",
+    "standard_metadata",
+    "wheel_hz",
+    # fault_scenarios
+    "build_fault_samples_at_speed",
+    "build_speed_sweep_fault_samples",
+    "make_engine_order_samples",
+    "make_fault_samples",
+    "make_profile_dual_fault_samples",
+    "make_profile_engine_order_samples",
+    "make_profile_fault_samples",
+    "make_profile_gain_mismatch_samples",
+    "make_profile_speed_sweep_fault_samples",
+    "make_speed_sweep_fault_samples",
+    # perturbation_scenarios
+    "make_clipped_samples",
+    "make_clock_skew_samples",
+    "make_dropout_samples",
+    "make_out_of_order_samples",
+    "make_speed_jitter_samples",
+    # sample_scenarios
+    "make_diffuse_samples",
+    "make_idle_samples",
+    "make_noise_samples",
+    "make_ramp_samples",
+    "make_road_phase_samples",
+    "make_sample",
+    "make_transient_samples",
+    # local
+    "response_payload",
+]
+
+
+def response_payload(response: Any) -> Any:
+    if hasattr(response, "model_dump"):
+        return response.model_dump(mode="json")
+    return response

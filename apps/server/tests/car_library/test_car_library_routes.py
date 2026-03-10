@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 from fastapi import HTTPException
-from test_support.response_models import response_payload
+from test_support import response_payload
 
 
 def _get_endpoint(router, path: str):

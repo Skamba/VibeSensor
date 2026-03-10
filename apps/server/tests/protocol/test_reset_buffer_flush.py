@@ -37,7 +37,7 @@ def test_flush_client_buffer_resets_count_and_write_idx() -> None:
     samples = _rng.standard_normal((500, 3)).astype(np.float32)
     proc.ingest("c1", samples, sample_rate_hz=800)
 
-    buf = proc._buffers["c1"]
+    buf = proc._store.buffers["c1"]
     assert buf.count == 500
     assert buf.write_idx == 500
 
@@ -78,7 +78,7 @@ def test_fft_waits_for_new_samples_after_flush() -> None:
     partial = np.random.default_rng(43).standard_normal((fft_n // 2, 3)).astype(np.float32)
     proc.ingest("c1", partial, sample_rate_hz=800)
     proc.compute_metrics("c1", sample_rate_hz=800)
-    buf = proc._buffers["c1"]
+    buf = proc._store.buffers["c1"]
     assert buf.count == fft_n // 2
     # Should NOT have spectrum peaks because count < fft_n
     assert buf.latest_spectrum == {}

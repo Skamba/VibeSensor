@@ -211,8 +211,8 @@ Full field layout: [docs/protocol.md](docs/protocol.md).
 ### Lint and format
 
 ```bash
-ruff check apps/server/vibesensor apps/server/tests apps/simulator
-ruff format --check apps/server/vibesensor apps/server/tests apps/simulator
+ruff check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
+ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
 ```
 
 ### Tests

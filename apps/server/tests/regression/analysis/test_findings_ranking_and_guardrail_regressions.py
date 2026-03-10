@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pytest
 
-import vibesensor.analysis.findings.order_findings as order_findings_mod
-from vibesensor.analysis.findings.order_findings import _suppress_engine_aliases
+import vibesensor.analysis.findings_order_findings as order_findings_mod
+from vibesensor.analysis.findings_order_findings import _suppress_engine_aliases
 from vibesensor.analysis.helpers import _speed_stats
 from vibesensor.routes.clients import create_client_routes
 from vibesensor.runlog import append_jsonl_records

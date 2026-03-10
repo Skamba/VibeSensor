@@ -318,7 +318,7 @@ class TestSyncedClockAlignment:
     def test_t0_us_stored_in_buffer(self) -> None:
         proc = _make_processor()
         _fill_sensor(proc, "s1", n_samples=100, mono_time=42.0, t0_us=99_000_000)
-        buf = proc._buffers["s1"]
+        buf = proc._store.buffers["s1"]
         assert buf.last_t0_us == 99_000_000
         assert buf.samples_since_t0 == 100
 
@@ -326,7 +326,7 @@ class TestSyncedClockAlignment:
         proc = _make_processor()
         _fill_sensor(proc, "s1", n_samples=100, mono_time=42.0, t0_us=99_000_000)
         proc.flush_client_buffer("s1")
-        buf = proc._buffers["s1"]
+        buf = proc._store.buffers["s1"]
         assert buf.last_t0_us == 0
         assert buf.samples_since_t0 == 0
 
@@ -347,7 +347,7 @@ class TestSyncedClockAlignment:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=100, mono_time=100.0, t0_us=50_000_000)
         _fill_sensor(proc, "s1", n_samples=100, mono_time=100.5)  # no t0_us
-        buf = proc._buffers["s1"]
+        buf = proc._store.buffers["s1"]
         assert buf.last_t0_us == 50_000_000
         assert buf.samples_since_t0 == 200  # 100 + 100
 

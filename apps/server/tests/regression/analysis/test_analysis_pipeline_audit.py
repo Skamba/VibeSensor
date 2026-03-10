@@ -208,7 +208,7 @@ class TestFinding4_ToleranceIgnoresCompliance:
         """
         import inspect
 
-        from vibesensor.analysis.findings.order_findings import (
+        from vibesensor.analysis.findings_order_findings import (
             _build_order_findings,
             _match_samples_for_hypothesis,
         )

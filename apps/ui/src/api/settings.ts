@@ -45,11 +45,11 @@ export async function setSettingsSpeedUnit(speedUnit: string): Promise<SpeedUnit
 }
 
 export async function getAnalysisSettings(): Promise<AnalysisSettingsPayload> {
-  return apiJson("/api/analysis-settings");
+  return apiJson("/api/settings/analysis");
 }
 
 export async function setAnalysisSettings(payload: Record<string, number>): Promise<AnalysisSettingsPayload> {
-  return apiJson("/api/analysis-settings", {
+  return apiJson("/api/settings/analysis", {
     method: "POST",
     headers: JSON_HEADERS,
     body: JSON.stringify(payload),

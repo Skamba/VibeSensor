@@ -77,27 +77,6 @@ class SettingsSnapshotPayload(SpeedSourcePayload):
     sensorsByMac: SensorsByMacPayload
 
 
-class SpeedSourceStatusPayload(TypedDict):
-    gps_enabled: bool
-    connection_state: str
-    device: str | None
-    fix_mode: int | None
-    fix_dimension: Literal["3d", "2d", "none"]
-    speed_confidence: Literal["low", "medium", "high"]
-    epx_m: float | None
-    epy_m: float | None
-    epv_m: float | None
-    last_update_age_s: float | None
-    raw_speed_kmh: float | None
-    effective_speed_kmh: float | None
-    last_error: str | None
-    reconnect_delay_s: float | None
-    fallback_active: bool
-    speed_source: ResolvedSpeedSource
-    stale_timeout_s: float
-    fallback_mode: FallbackMode
-
-
 class HistoryRunListEntryPayload(TypedDict, total=False):
     run_id: str
     status: str

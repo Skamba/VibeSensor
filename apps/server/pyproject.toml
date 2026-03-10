@@ -39,9 +39,9 @@ vibesensor-server = "vibesensor.server_cli:main"
 vibesensor-report = "vibesensor.report_cli:main"
 vibesensor-http-api-schema-export = "vibesensor.http_api_schema_export:main"
 vibesensor-hotspot-self-heal = "vibesensor.hotspot.self_heal:main"
-vibesensor-sim = "vibesensor_simulator.sim_sender:main"
-vibesensor-ws-smoke = "vibesensor_simulator.ws_smoke:main"
-vibesensor-config-preflight = "vibesensor_tools_config.config_preflight:main"
+vibesensor-sim = "vibesensor.simulator.sim_sender:main"
+vibesensor-ws-smoke = "vibesensor.simulator.ws_smoke:main"
+vibesensor-config-preflight = "vibesensor.config_preflight:main"
 vibesensor-fw-refresh = "vibesensor.firmware_cache:refresh_cache_cli"
 vibesensor-fw-info = "vibesensor.firmware_cache:cache_info_cli"
 vibesensor-release-fetch = "vibesensor.release_fetcher:fetch_latest_wheel_cli"
@@ -56,16 +56,8 @@ include-package-data = true
 vibesensor = ["static/**"]
 
 [tool.setuptools.packages.find]
-where = [
-  ".",
-  "../../apps/simulator",
-  "../../tools/config",
-]
-include = [
-  "vibesensor*",
-  "vibesensor_simulator*",
-  "vibesensor_tools_config*",
-]
+where = ["."]
+include = ["vibesensor*"]
 
 [tool.pytest.ini_options]
 addopts = "-n auto --dist worksteal"
@@ -141,6 +133,8 @@ files = [
   "vibesensor/metrics_log",
   "vibesensor/ws_hub.py",
   "vibesensor/ws_schema_export.py",
+  "vibesensor/simulator",
+  "vibesensor/config_preflight.py",
 ]
 follow_imports = "skip"
 check_untyped_defs = true

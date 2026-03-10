@@ -40,7 +40,7 @@ class _FakeSimClient:
 
 class TestSimulatorDeterminism:
     def test_road_fixed_scenario_applies_stable_gains(self) -> None:
-        from vibesensor_simulator.commands import apply_road_fixed_scenario
+        from vibesensor.simulator.commands import apply_road_fixed_scenario
 
         clients = [_FakeSimClient(name) for name in ALL_SENSORS]
         apply_road_fixed_scenario(clients)
@@ -55,7 +55,7 @@ class TestSimulatorDeterminism:
             assert client.noise_scale == 1.00
 
     def test_road_fixed_all_clients_identical(self) -> None:
-        from vibesensor_simulator.commands import apply_road_fixed_scenario
+        from vibesensor.simulator.commands import apply_road_fixed_scenario
 
         clients = [_FakeSimClient(name) for name in ALL_SENSORS]
         apply_road_fixed_scenario(clients)
@@ -63,7 +63,7 @@ class TestSimulatorDeterminism:
         assert all(gain == gains[0] for gain in gains)
 
     def test_one_wheel_mild_fault_is_strong_but_others_remain_coupled(self) -> None:
-        from vibesensor_simulator.commands import apply_one_wheel_mild_scenario
+        from vibesensor.simulator.commands import apply_one_wheel_mild_scenario
 
         clients = [_FakeSimClient(name) for name in ALL_SENSORS]
         apply_one_wheel_mild_scenario(clients, "rear-left")
@@ -86,7 +86,7 @@ class TestSimulatorDeterminism:
             assert 0.11 <= client.common_event_gain <= 0.13
 
     def test_road_scene_single_mode_keeps_non_active_sensors_alive(self) -> None:
-        from vibesensor_simulator.sim_sender import RoadSceneController
+        from vibesensor.simulator.sim_sender import RoadSceneController
 
         clients = [_FakeSimClient(name, profile_name="rough_road") for name in ALL_SENSORS]
         controller = RoadSceneController(clients)
@@ -103,7 +103,7 @@ class TestSimulatorDeterminism:
             assert client.common_event_gain >= 0.10
 
     def test_sensor_noise_floor_stays_present_even_when_scene_gain_is_zero(self) -> None:
-        from vibesensor_simulator.sim_sender import SimClient, make_client_id
+        from vibesensor.simulator.sim_sender import SimClient, make_client_id
 
         client = SimClient(
             name="front-left",

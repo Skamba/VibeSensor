@@ -21,8 +21,8 @@ from ._types import (
     is_json_object,
 )
 from .diagnosis_candidates import non_reference_findings
-from .findings.builder import _build_findings
-from .findings.intensity import (
+from .findings_builder import _build_findings
+from .findings_intensity import (
     _phase_speed_breakdown,
     _speed_breakdown,
 )

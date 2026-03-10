@@ -13,8 +13,8 @@ import inspect
 
 import pytest
 
-import vibesensor.analysis.findings.persistent_findings as fmod_persistent
-from vibesensor.analysis.findings.order_findings import (
+import vibesensor.analysis.findings_persistent as fmod_persistent
+from vibesensor.analysis.findings_order_findings import (
     _compute_order_confidence,
     _suppress_engine_aliases,
 )
@@ -35,7 +35,7 @@ class TestRankingScoreErrorDenominator:
         The ranking_score computation was extracted to ``_assemble_order_finding``
         in the refactoring; verify it there rather than in the outer orchestrator.
         """
-        from vibesensor.analysis.findings.order_findings import _assemble_order_finding
+        from vibesensor.analysis.findings_order_findings import _assemble_order_finding
 
         src = inspect.getsource(_assemble_order_finding)
         # Old code had a hardcoded 0.5 denominator; new code derives from compliance.

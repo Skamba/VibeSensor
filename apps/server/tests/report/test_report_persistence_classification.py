@@ -4,7 +4,7 @@ import pytest
 from _report_persistence_helpers import build_findings, findings_at_freq, uniform_samples
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
-from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
+from vibesensor.analysis.findings_persistent import _classify_peak_type
 from vibesensor.analysis.plot_data import (
     _aggregate_fft_spectrum,
     _aggregate_fft_spectrum_raw,

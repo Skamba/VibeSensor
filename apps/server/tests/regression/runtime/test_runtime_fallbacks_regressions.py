@@ -113,12 +113,12 @@ class TestStoreAnalysisErrorGuard:
 
         # Complete the analysis
         db.store_analysis(run_id, {"result": "ok"})
-        status_before = db.get_run_status(run_id)
+        status_before = db.get_run(run_id)["status"]
         assert status_before == "complete"
 
         # Try to overwrite with an error
         db.store_analysis_error(run_id, "spurious error")
-        status_after = db.get_run_status(run_id)
+        status_after = db.get_run(run_id)["status"]
         assert status_after == "complete", "store_analysis_error must not overwrite a completed run"
 
 

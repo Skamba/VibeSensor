@@ -146,7 +146,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             )
             for key, value in car_aspects.items():
                 assert float(active_car["aspects"][key]) == pytest.approx(value)
-            analysis_settings = api_json(base_url, "/api/analysis-settings")
+            analysis_settings = api_json(base_url, "/api/settings/analysis")
             for key, value in car_aspects.items():
                 assert float(analysis_settings[key]) == pytest.approx(value)
 

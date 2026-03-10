@@ -214,11 +214,11 @@ def test_finalize_run_only_from_recording(db: HistoryDB) -> None:
     """Fix 7: finalize_run only transitions from 'recording' state."""
     db.create_run("r1", _START, {})
     db.finalize_run("r1", _END)
-    assert db.get_run_status("r1") == "analyzing"
+    assert db.get_run("r1")["status"] == "analyzing"
 
     # Second finalize should be a no-op (already in 'analyzing')
     db.finalize_run("r1", "2026-01-01T00:10:00Z")
-    assert db.get_run_status("r1") == "analyzing"
+    assert db.get_run("r1")["status"] == "analyzing"
 
 
 def test_store_analysis_idempotent(db: HistoryDB) -> None:
@@ -310,8 +310,8 @@ def test_recover_stale_does_not_touch_analyzing(db: HistoryDB) -> None:
     """Fix 14: recover_stale_recording_runs leaves 'analyzing' runs alone."""
     _setup_stale_pair(db)
     assert db.recover_stale_recording_runs() == 1  # only r2
-    assert db.get_run_status("r1") == "analyzing"
-    assert db.get_run_status("r2") == "error"
+    assert db.get_run("r1")["status"] == "analyzing"
+    assert db.get_run("r2")["status"] == "error"
 
 
 # ---------------------------------------------------------------------------
@@ -369,13 +369,13 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     run_id = "e2e-test-run"
     metadata = _simple_metadata(run_id)
     db.create_run(run_id, _START, metadata)
-    assert db.get_run_status(run_id) == "recording"
+    assert db.get_run(run_id)["status"] == "recording"
 
     samples = _simple_samples(30)
     db.append_samples(run_id, samples)
 
     db.finalize_run(run_id, _END)
-    assert db.get_run_status(run_id) == "analyzing"
+    assert db.get_run(run_id)["status"] == "analyzing"
 
     read_samples = db.get_run_samples(run_id)
     normalized = [normalize_sample_record(s) for s in read_samples]
@@ -393,7 +393,7 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     assert "samples" not in summary
 
     db.store_analysis(run_id, summary)
-    assert db.get_run_status(run_id) == "complete"
+    assert db.get_run(run_id)["status"] == "complete"
     assert db.analysis_is_current(run_id)
 
     run = db.get_run(run_id)

@@ -51,11 +51,6 @@ async def test_delete_active_run_returns_409() -> None:
 async def test_delete_analyzing_run_returns_409() -> None:
     @dataclass
     class AnalyzingDB(FakeHistoryDB):
-        def get_run_status(self, run_id: str) -> str | None:
-            if run_id == "run-1":
-                return "analyzing"
-            return None
-
         def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
             if run_id == "run-1":
                 return False, "analyzing"

@@ -204,6 +204,24 @@ class SignalBufferStore:
             rate = int(buf.sample_rate_hz or 0)
             return rate if rate > 0 else None
 
+    def latest_metrics(self, client_id: str) -> ClientMetrics:
+        """Return the most recent computed metrics for *client_id*."""
+        with self.lock:
+            buf = self.buffers.get(client_id)
+            if buf is None:
+                return {}
+            return buf.latest_metrics
+
+    def all_latest_metrics(self, client_ids: list[str]) -> dict[str, ClientMetrics]:
+        """Return latest metrics for all requested clients (lock once)."""
+        with self.lock:
+            result: dict[str, ClientMetrics] = {}
+            for cid in client_ids:
+                buf = self.buffers.get(cid)
+                if buf is not None and buf.latest_metrics:
+                    result[cid] = buf.latest_metrics
+            return result
+
     def debug_request(self, client_id: str) -> DebugSpectrumRequest:
         with self.lock:
             buf = self.buffers.get(client_id)

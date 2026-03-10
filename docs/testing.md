@@ -138,8 +138,7 @@ make coverage-strict
 For direct control over thresholds and output:
 
 ```bash
-python3 tools/tests/run_coverage.py --min-coverage 75
-python3 tools/tests/run_coverage.py --html --fail-under --min-coverage 85
+cd apps/server && python -m pytest -q -m "not selenium" --cov=vibesensor --cov-report=term-missing:skip-covered tests
 ```
 
 Coverage guidance:

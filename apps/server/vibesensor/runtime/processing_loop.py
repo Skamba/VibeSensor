@@ -159,7 +159,7 @@ class ProcessingLoop:
                 )
 
         try:
-            metrics_by_client = await asyncio.to_thread(
+            await asyncio.to_thread(
                 self._ingress.processor.compute_all,
                 fresh_ids,
                 sample_rates_hz=sample_rates,
@@ -168,8 +168,6 @@ class ProcessingLoop:
             raise ProcessingLoopError("compute_all", exc) from exc
 
         try:
-            for client_id, metrics in metrics_by_client.items():
-                self._ingress.registry.set_latest_metrics(client_id, metrics)
             self._ingress.processor.evict_clients(set(active_ids))
         except Exception as exc:
             raise ProcessingLoopError("publish_metrics", exc) from exc

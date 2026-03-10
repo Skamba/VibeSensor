@@ -174,11 +174,11 @@ def create_settings_routes(
 
     # -- analysis settings -----------------------------------------------------
 
-    @router.get("/api/analysis-settings", response_model=AnalysisSettingsResponse)
+    @router.get("/api/settings/analysis", response_model=AnalysisSettingsResponse)
     async def get_analysis_settings() -> AnalysisSettingsResponse:
         return AnalysisSettingsResponse(**analysis_settings.snapshot())
 
-    @router.post("/api/analysis-settings", response_model=AnalysisSettingsResponse)
+    @router.post("/api/settings/analysis", response_model=AnalysisSettingsResponse)
     async def set_analysis_settings(req: AnalysisSettingsRequest) -> AnalysisSettingsResponse:
         changes = req.model_dump(exclude_none=True)
         if changes:
@@ -186,11 +186,5 @@ def create_settings_routes(
                 await asyncio.to_thread(settings_store.update_active_car_aspects, changes)
             apply_car_settings()
         return AnalysisSettingsResponse(**analysis_settings.snapshot())
-
-    # -- simulator speed override (delegates to speed source) ------------------
-
-    @router.post("/api/simulator/speed-override", response_model=SpeedSourceResponse)
-    async def set_simulator_speed_override(req: SpeedSourceRequest) -> SpeedSourceResponse:
-        return await _apply_speed_source_update(req)
 
     return router
