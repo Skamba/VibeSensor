@@ -1,12 +1,9 @@
+import type { FeatureDepsBase } from "../feature_deps_base";
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { HealthStatusPayload, UpdateStatusPayload } from "../../api/types";
 import { getHealthStatus, getUpdateStatus, startUpdate, cancelUpdate } from "../../api/settings";
 
-export interface UpdateFeatureDeps {
-  els: UiDomElements;
-  t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
-}
+export interface UpdateFeatureDeps extends FeatureDepsBase {}
 
 export interface UpdateFeature {
   bindUpdateHandlers(): void;

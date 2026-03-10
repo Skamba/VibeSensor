@@ -18,15 +18,20 @@ from __future__ import annotations
 
 import ipaddress
 import logging
-from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 
 import yaml  # type: ignore[import-untyped]
-from vibesensor_shared.contracts import NETWORK_PORTS
 
+from ._config_defaults import (
+    DEFAULT_CONFIG,
+    DEFAULT_UDP_CONTROL_PORT,
+    DEFAULT_UDP_DATA_PORT,
+    documented_default_config,
+)
 from .constants import NUMERIC_TYPES
 from .json_types import JsonObject, is_json_object
+from .json_utils import deep_merge
 
 __all__ = [
     "DEFAULT_CONFIG",
@@ -54,9 +59,6 @@ SERVER_DIR = Path(__file__).resolve().parents[1]
 REPO_DIR = SERVER_DIR.parents[1]
 LOGGER = logging.getLogger(__name__)
 
-DEFAULT_UDP_DATA_PORT = int(NETWORK_PORTS["server_udp_data"])
-DEFAULT_UDP_CONTROL_PORT = int(NETWORK_PORTS["server_udp_control"])
-
 # ProcessingConfig validation constants (hoisted to avoid per-instance allocation)
 _PROCESSING_POS_FIELDS: tuple[str, ...] = (
     "sample_rate_hz",
@@ -72,89 +74,6 @@ _MAX_FFT_N: int = 65536
 _MAX_BUFFER_SAMPLES: int = 524_288
 
 VALID_24GHZ_CHANNELS: frozenset[int] = frozenset(range(1, 15))  # 1-14
-
-DEFAULT_CONFIG: JsonObject = {
-    "ap": {
-        "ssid": "VibeSensor",
-        "psk": "",
-        "ip": "10.4.0.1/24",
-        "channel": 7,
-        "ifname": "wlan0",
-        "con_name": "VibeSensor-AP",
-        "self_heal": {
-            "enabled": True,
-            "interval_seconds": 120,
-            "diagnostics_lookback_minutes": 5,
-            "min_restart_interval_seconds": 120,
-            "allow_disable_resolved_stub_listener": False,
-            "state_file": "data/hotspot-self-heal-state.json",
-        },
-    },
-    "server": {"host": "0.0.0.0", "port": 80},
-    "udp": {
-        "data_listen": f"0.0.0.0:{DEFAULT_UDP_DATA_PORT}",
-        "control_listen": f"0.0.0.0:{DEFAULT_UDP_CONTROL_PORT}",
-        "data_queue_maxsize": 1024,
-    },
-    "processing": {
-        "sample_rate_hz": 800,
-        "waveform_seconds": 8,
-        "waveform_display_hz": 120,
-        "ui_push_hz": 10,
-        "ui_heavy_push_hz": 4,
-        "fft_update_hz": 4,
-        "fft_n": 2048,
-        "spectrum_min_hz": 5.0,
-        "spectrum_max_hz": 200,
-        "client_ttl_seconds": 120,
-        "accel_scale_g_per_lsb": None,
-    },
-    "logging": {
-        "log_metrics": True,
-        "metrics_log_path": "data/metrics.jsonl",
-        "metrics_log_hz": 4,
-        "no_data_timeout_s": 15.0,
-        "sensor_model": "ADXL345",
-        "persist_history_db": True,
-        "shutdown_analysis_timeout_s": 30,
-        "app_log_path": "data/app.log",
-    },
-    "storage": {
-        "clients_json_path": "data/clients.json",
-    },
-    "gps": {"gps_enabled": True, "gpsd_host": "127.0.0.1", "gpsd_port": 2947},
-    "update": {
-        "server_repo": "Skamba/VibeSensor",
-        "rollback_dir": "/var/lib/vibesensor/rollback",
-    },
-}
-
-
-def documented_default_config() -> JsonObject:
-    """Return runtime defaults in the shape documented by config.example.yaml."""
-    defaults = deepcopy(DEFAULT_CONFIG)
-    logging_defaults = _require_config_section(defaults.get("logging", {}), "default logging")
-    metrics_log_path = Path(str(logging_defaults["metrics_log_path"]))
-    logging_defaults["history_db_path"] = str(metrics_log_path.parent / "history.db")
-    return defaults
-
-
-def _deep_merge(base: JsonObject, override: JsonObject) -> JsonObject:
-    merged: JsonObject = dict(base)
-    for key, value in override.items():
-        existing = merged.get(key)
-        if is_json_object(value) and is_json_object(existing):
-            merged[key] = _deep_merge(existing, value)
-        elif value is None and is_json_object(existing):
-            # YAML `key:` with no value produces None — preserve defaults
-            LOGGER.warning(
-                "Config key %r is null; keeping default section. "
-                "Did you mean to leave the section empty?",
-                key,
-            )
-        else:
-            merged[key] = value
-    return merged
 
 
 def _split_host_port(value: str) -> tuple[str, int]:
@@ -483,7 +402,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     if config_path is not None and not path.exists():
         raise FileNotFoundError(f"Explicitly specified config file does not exist: {path}")
     override = _read_config_file(path)
-    merged = _deep_merge(DEFAULT_CONFIG, override)
+    merged = deep_merge(DEFAULT_CONFIG, override)
     ap_cfg = _require_config_section(merged.get("ap", {}), "ap")
     server_cfg = _require_config_section(merged.get("server", {}), "server")
     udp_cfg = _require_config_section(merged.get("udp", {}), "udp")

@@ -1,3 +1,4 @@
+import type { FeatureDepsBase } from "../feature_deps_base";
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { AppState, RunDetail } from "../state/ui_app_state";
 import type {
@@ -14,11 +15,8 @@ import {
 } from "../../api";
 import { normalizeUnit, heatColor } from "./heat_utils";
 
-export interface HistoryFeatureDeps {
+export interface HistoryFeatureDeps extends FeatureDepsBase {
   state: AppState;
-  els: UiDomElements;
-  t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
   fmt: (n: number, digits?: number) => string;
   fmtTs: (iso: string) => string;
   formatInt: (value: number) => string;

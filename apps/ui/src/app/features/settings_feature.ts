@@ -1,3 +1,4 @@
+import type { FeatureDepsBase } from "../feature_deps_base";
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { AppState } from "../state/ui_app_state";
 import type {
@@ -18,11 +19,8 @@ import {
   updateSettingsSpeedSource,
 } from "../../api";
 
-export interface SettingsFeatureDeps {
+export interface SettingsFeatureDeps extends FeatureDepsBase {
   state: AppState;
-  els: UiDomElements;
-  t: (key: string, vars?: Record<string, unknown>) => string;
-  escapeHtml: (value: unknown) => string;
   fmt: (n: number, digits?: number) => string;
   renderSpectrum: () => void;
   renderSpeedReadout: () => void;
