@@ -180,7 +180,7 @@ def _draw_vehicle_shell(
     )
 
 
-def _draw_markers_and_labels(drawing: Any, *, markers: list[Any], labels: list[Any], hex_color: Any) -> None:  # type: ignore[no-untyped-def]
+def _draw_markers_and_labels(drawing: Any, *, markers: list[Any], labels: list[Any], hex_color: Any) -> None:
     from reportlab.graphics.shapes import Circle, String
 
     for marker in markers:

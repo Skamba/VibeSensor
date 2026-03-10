@@ -190,20 +190,20 @@ def _build_report_template_data(
     )
     hotspot_rows = compute_location_hotspot_rows(raw_sensor_intensity)
 
-    return ReportTemplateData(  # type: ignore[arg-type]
+    return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),
         run_datetime=context.date_str,
         run_id=summary.get("run_id"),
-        duration_text=run_meta["duration_text"],
-        start_time_utc=run_meta["start_time_utc"],
-        end_time_utc=run_meta["end_time_utc"],
-        sample_rate_hz=run_meta["sample_rate_hz"],
-        tire_spec_text=run_meta["tire_spec_text"],
-        sample_count=run_meta["sample_count"],
+        duration_text=run_meta["duration_text"],  # type: ignore[arg-type]
+        start_time_utc=run_meta["start_time_utc"],  # type: ignore[arg-type]
+        end_time_utc=run_meta["end_time_utc"],  # type: ignore[arg-type]
+        sample_rate_hz=run_meta["sample_rate_hz"],  # type: ignore[arg-type]
+        tire_spec_text=run_meta["tire_spec_text"],  # type: ignore[arg-type]
+        sample_count=run_meta["sample_count"],  # type: ignore[arg-type]
         sensor_count=primary.sensor_count,
         sensor_locations=context.sensor_locations_active,
-        sensor_model=run_meta["sensor_model"],
-        firmware_version=run_meta["firmware_version"],
+        sensor_model=run_meta["sensor_model"],  # type: ignore[arg-type]
+        firmware_version=run_meta["firmware_version"],  # type: ignore[arg-type]
         car=CarMeta(name=context.car_name, car_type=context.car_type),
         observed=observed,
         system_cards=system_cards,
@@ -214,8 +214,8 @@ def _build_report_template_data(
         version_marker=version_marker,
         lang=lang,
         certainty_tier_key=primary.tier,
-        findings=context.findings,
-        top_causes=context.top_causes,
+        findings=context.findings,  # type: ignore[arg-type]
+        top_causes=context.top_causes,  # type: ignore[arg-type]
         sensor_intensity_by_location=raw_sensor_intensity,
         location_hotspot_rows=hotspot_rows,
     )

@@ -75,8 +75,8 @@ def render_car_visual_panel(
         "sensor_intensity_by_location": data.sensor_intensity_by_location,
     }
     findings = data.findings
-    diagram = car_location_diagram(  # type: ignore[arg-type]
-        top_causes or (findings if isinstance(findings, list) else []),
+    diagram = car_location_diagram(
+        top_causes or (findings if isinstance(findings, list) else []),  # type: ignore[arg-type]
         render_summary,
         location_rows,
         content_width=content_width,
@@ -124,7 +124,7 @@ def render_observations_panel(  # type: ignore[no-untyped-def]
     draw_additional_observations: Callable[..., None],
 ) -> float:
     if layout.observations_panel is None:
-        return layout.peaks_panel.y
+        return layout.peaks_panel.y  # type: ignore[no-any-return]
     draw_additional_observations(
         c,
         layout.observations_panel.x,

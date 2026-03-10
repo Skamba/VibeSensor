@@ -391,10 +391,10 @@ def _page2(
 
     _render_peaks_panel_impl(c, data, tr=tr, layout=layout, draw_peaks_table=_draw_peaks_table)
 
-    obs_y = _render_observations_panel_impl(  # type: ignore[arg-type]
+    obs_y = _render_observations_panel_impl(
         c,
         layout=layout,
-        transient_findings=transient_findings,
+        transient_findings=transient_findings,  # type: ignore[arg-type]
         tr=tr,
         draw_additional_observations=_draw_additional_observations,
     )
