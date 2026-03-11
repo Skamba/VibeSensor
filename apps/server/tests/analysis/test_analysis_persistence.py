@@ -8,12 +8,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from conftest import FakeState
 from test_support import response_payload
 
-from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION, HistoryDB
-from vibesensor.history_services.exports import HistoryExportService
-from vibesensor.history_services.reports import HistoryReportService
-from vibesensor.history_services.runs import HistoryRunService
+from vibesensor.history_db import HistoryDB
 
 # -- Schema v4 tests ----------------------------------------------------------
 
@@ -33,10 +31,9 @@ def test_old_schema_version_raises_when_no_migration_registered(tmp_path: Path) 
     """Opening a DB with an older incompatible version should raise."""
     db_path = tmp_path / "history.db"
     conn = sqlite3.connect(str(db_path))
+    conn.execute("PRAGMA user_version = 1")
     conn.executescript(
         """\
-CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-INSERT INTO schema_meta (key, value) VALUES ('version', '1');
 CREATE TABLE runs (
     run_id TEXT PRIMARY KEY,
     status TEXT NOT NULL DEFAULT 'recording',
@@ -87,7 +84,6 @@ def test_store_analysis_sets_version_and_timestamps(tmp_path: Path) -> None:
     run = db.get_run("r1")
     assert run is not None
     assert run["status"] == "complete"
-    assert run["analysis_version"] == ANALYSIS_SCHEMA_VERSION
     assert run.get("analysis_completed_at") is not None
     assert run["analysis"] == {"lang": "en", "findings": []}
     db.close()
@@ -136,7 +132,6 @@ def test_list_runs_includes_analysis_version(tmp_path: Path) -> None:
 
     runs = db.list_runs()
     assert len(runs) == 1
-    assert runs[0]["analysis_version"] == ANALYSIS_SCHEMA_VERSION
     db.close()
 
 
@@ -171,90 +166,8 @@ def _sample(i: int) -> dict[str, Any]:
 
 
 def _make_fake_state(history_db: Any) -> Any:
-    """Build a minimal fake ``RuntimeState``-alike for router tests.
-
-    Provides the superset of attributes needed by PDF, insights, and export
-    endpoint tests so each test only has to supply its own ``history_db``.
-    """
-
-    class _FakeState:
-        ws_hub = type(
-            "WH",
-            (),
-            {
-                "add": staticmethod(lambda ws, sel: None),
-                "remove": staticmethod(lambda ws: None),
-            },
-        )()
-        settings_store = type("S", (), {"language": "en", "set_language": lambda self, v: v})()
-        metrics_logger = type(
-            "M",
-            (),
-            {
-                "status": lambda self: {},
-                "start_logging": lambda self: {},
-                "stop_logging": lambda self: {},
-            },
-        )()
-        registry = type(
-            "R",
-            (),
-            {
-                "snapshot_for_api": lambda self: [],
-                "get": lambda self, _: None,
-                "set_name": lambda self, cid, name: type(
-                    "U",
-                    (),
-                    {"client_id": cid, "name": name},
-                )(),
-                "remove_client": lambda self, _: True,
-            },
-        )()
-        control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
-        gps_monitor = type(
-            "G",
-            (),
-            {
-                "effective_speed_mps": None,
-                "override_speed_mps": None,
-                "set_speed_override_kmh": lambda self, _: None,
-            },
-        )()
-        analysis_settings = type(
-            "A",
-            (),
-            {
-                "snapshot": lambda self: {},
-                "update": lambda self, payload: payload,
-            },
-        )()
-        processor = type(
-            "P",
-            (),
-            {
-                "debug_spectrum": lambda self, _id: {},
-                "raw_samples": lambda self, _id, n_samples=1: {},
-                "intake_stats": lambda self: {},
-            },
-        )()
-
-    state = _FakeState()
-    state.history_db = history_db
-    from unittest.mock import MagicMock
-
-    from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
-
-    state.processing_loop_state = ProcessingLoopState()
-    state.health_state = RuntimeHealthState()
-    state.health_state.mark_ready()
-    state.apply_car_settings = lambda: None
-    state.apply_speed_source_settings = lambda: None
-    state.update_manager = MagicMock()
-    state.esp_flash_manager = MagicMock()
-    state.run_service = HistoryRunService(state.history_db, state.settings_store)
-    state.report_service = HistoryReportService(state.history_db, state.settings_store)
-    state.export_service = HistoryExportService(state.history_db)
-    return state
+    """Build a minimal fake ``RuntimeState``-alike using shared FakeState."""
+    return FakeState(history_db=history_db)
 
 
 def _find_endpoint(router, path: str):
@@ -333,7 +246,6 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     run = db.get_run(run_id)
     assert run is not None
     assert run["status"] == "complete"
-    assert run["analysis_version"] == ANALYSIS_SCHEMA_VERSION
     assert run.get("analysis") is not None
     assert run["analysis"]["lang"] == "en"
     assert run.get("analysis_started_at") is not None

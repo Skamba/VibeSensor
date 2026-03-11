@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from test_support.report_analysis_integration import write_test_log
+from test_support.report_helpers import write_test_log
 from test_support.report_helpers import analysis_metadata as _make_metadata
 from test_support.report_helpers import analysis_sample as _make_sample
 

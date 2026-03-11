@@ -24,6 +24,7 @@ from .config import load_config
 from .routes import create_router
 from .runtime import RuntimeState
 from .runtime.builders import build_runtime
+from .runtime.lifecycle import LifecycleManager
 
 __all__ = ["create_app", "main"]
 
@@ -69,23 +70,23 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     config = load_config(config_path)
     _setup_file_logging(config.logging.app_log_path)
     runtime = build_runtime(config)
+    lifecycle = LifecycleManager(runtime=runtime)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        assert runtime.lifecycle is not None
         try:
-            await runtime.lifecycle.start()
+            await lifecycle.start()
         except Exception:
             LOGGER.error(
                 "Runtime lifecycle start failed; cleaning up before re-raise",
                 exc_info=True,
             )
-            await runtime.lifecycle.stop()
+            await lifecycle.stop()
             raise
         try:
             yield
         finally:
-            await runtime.lifecycle.stop()
+            await lifecycle.stop()
 
     app = FastAPI(title="VibeSensor", lifespan=lifespan)
     app.state.runtime = runtime

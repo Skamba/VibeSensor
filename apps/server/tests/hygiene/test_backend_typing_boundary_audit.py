@@ -10,7 +10,6 @@ TARGETED_MYPY_FILES = {
     "vibesensor/backend_types.py",
     "vibesensor/config.py",
     "vibesensor/domain_models.py",
-    "vibesensor/firmware_cache.py",
     "vibesensor/gps_speed.py",
     "vibesensor/history_services",
     "vibesensor/json_types.py",

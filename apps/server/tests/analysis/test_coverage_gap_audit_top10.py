@@ -595,7 +595,7 @@ class TestResolveSpeedContext:
 
     def test_no_speed_available(self) -> None:
         logger, _ = _make_metrics_logger()
-        speed_kmh, gps_speed, source, rpm, fdr, gr = resolve_speed_context(
+        speed_kmh, gps_speed, source, rpm = resolve_speed_context(
             logger.gps_monitor,
             logger.analysis_settings.snapshot(),
         )
@@ -606,7 +606,7 @@ class TestResolveSpeedContext:
         logger, gps_mock = _make_metrics_logger()
         gps_mock.speed_mps = 10.0  # 36 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
-        speed_kmh, gps_speed, source, rpm, _, _ = resolve_speed_context(
+        speed_kmh, gps_speed, source, rpm = resolve_speed_context(
             logger.gps_monitor,
             logger.analysis_settings.snapshot(),
         )
@@ -619,7 +619,7 @@ class TestResolveSpeedContext:
         logger, gps_mock = _make_metrics_logger()
         gps_mock.override_speed_mps = 20.0  # 72 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="manual", speed_mps=20.0)
-        speed_kmh, _, source, _, _, _ = resolve_speed_context(
+        speed_kmh, _, source, _ = resolve_speed_context(
             logger.gps_monitor,
             logger.analysis_settings.snapshot(),
         )
@@ -638,7 +638,7 @@ class TestResolveSpeedContext:
             "current_gear_ratio": None,  # missing
             "tire_deflection_factor": None,
         }
-        _, _, _, rpm, _, _ = resolve_speed_context(
+        _, _, _, rpm = resolve_speed_context(
             logger.gps_monitor,
             logger.analysis_settings.snapshot(),
         )

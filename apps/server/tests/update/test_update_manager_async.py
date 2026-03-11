@@ -17,6 +17,7 @@ from _update_manager_test_helpers import (
 )
 
 from vibesensor.update.models import UpdateState
+from vibesensor.update.status import collect_runtime_details
 
 
 def _build_fake_wheel(path, *, version: str) -> bytes:
@@ -58,7 +59,7 @@ class TestUpdateManagerAsync:
         ]
         assert_hotspot_restored(runner)
         firmware_refresh_calls = [
-            call[0] for call in runner.calls if "vibesensor.firmware_cache" in " ".join(call[0])
+            call[0] for call in runner.calls if "vibesensor.update.firmware_cache" in " ".join(call[0])
         ]
         assert firmware_refresh_calls
         restart_cmd = (
@@ -127,8 +128,8 @@ class TestUpdateManagerAsync:
         with (
             patch("shutil.which", mock_which),
             patch("vibesensor.update.manager.asyncio.sleep", new=AsyncMock(return_value=None)),
-            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as mock_fetcher,
-            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor.update.release_fetcher.ServerReleaseFetcher") as mock_fetcher,
+            patch("vibesensor.update.release_fetcher.ReleaseFetcherConfig"),
             patch("vibesensor._version.__version__", "2025.6.15"),
         ):
             mock_fetcher.return_value.check_update_available.return_value = None
@@ -297,7 +298,7 @@ class TestUpdateManagerAsync:
     async def test_stale_public_assets_detected_in_runtime(self, tmp_path) -> None:
         manager, _runner, repo = setup_update_env(tmp_path)
         seed_runtime_artifacts(repo, manager, valid=False)
-        details = manager._runtime_details.collect()
+        details = collect_runtime_details(repo)
         assert details["assets_verified"] is False
 
     async def test_timeout_handling(self, tmp_path) -> None:

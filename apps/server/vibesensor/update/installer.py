@@ -213,7 +213,7 @@ class UpdateInstaller:
         if pinned_tag:
             refresh_args.extend(["--tag", pinned_tag])
         refresh_cmd = (
-            [venv_python, "-m", "vibesensor.firmware_cache", *refresh_args]
+            [venv_python, "-m", "vibesensor.update.firmware_cache", *refresh_args]
             if not Path(refresh_exe).is_file()
             else [refresh_exe, *refresh_args]
         )

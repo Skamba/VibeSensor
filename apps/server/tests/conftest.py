@@ -49,8 +49,6 @@ class FakeState:
     health_state: RuntimeHealthState = field(default_factory=RuntimeHealthState)
     processing_loop: object = field(default_factory=MagicMock)
     ws_broadcast: object = field(default_factory=MagicMock)
-    apply_car_settings: object = field(default_factory=MagicMock)
-    apply_speed_source_settings: object = field(default_factory=MagicMock)
     run_service: object | None = None
     report_service: object | None = None
     export_service: object | None = None

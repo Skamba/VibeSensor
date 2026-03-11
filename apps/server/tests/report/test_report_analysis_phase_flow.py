@@ -3,7 +3,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-from test_support.report_analysis_integration import (
+from test_support.report_helpers import (
     call_build_order_findings,
     make_order_finding_samples,
     patch_order_hypothesis,

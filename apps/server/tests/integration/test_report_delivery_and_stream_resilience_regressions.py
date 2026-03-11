@@ -16,7 +16,7 @@ from unittest.mock import patch
 import pytest
 from _paths import REPO_ROOT
 
-from vibesensor.esp_flash_manager import EspFlashManager
+from vibesensor.update.esp_flash_manager import EspFlashManager
 from vibesensor.processing import SignalProcessor
 from vibesensor.report import pdf_diagram_render
 from vibesensor.report_cli import main as report_cli_main

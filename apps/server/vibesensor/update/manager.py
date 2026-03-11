@@ -10,10 +10,10 @@ import tempfile
 from pathlib import Path
 
 from .installer import UpdateInstaller, UpdateInstallerConfig
-from .models import UpdateJobStatus, UpdatePhase, UpdateRequest, UpdateState
+from .models import UpdateJobStatus, UpdatePhase, UpdateRequest, UpdateState, UpdateValidationConfig
 from .releases import UpdateReleaseService
 from .runner import CommandRunner, UpdateCommandExecutor
-from .status import UpdateRuntimeDetailsCollector, UpdateStateStore, UpdateStatusTracker
+from .status import UpdateStateStore, UpdateStatusTracker, collect_runtime_details
 from .wifi import (
     DNS_PROBE_HOST,
     DNS_READY_MIN_WAIT_S,
@@ -29,12 +29,6 @@ from .wifi import (
     UpdateWifiController,
     parse_wifi_diagnostics,
 )
-from .workflow import (
-    UpdateValidationConfig,
-    schedule_service_restart,
-    validate_prerequisites,
-)
-
 LOGGER = logging.getLogger(__name__)
 
 UPDATE_TIMEOUT_S = 600
@@ -73,8 +67,7 @@ class UpdateManager:
             state_store=self._state_store,
             status=loaded if loaded is not None else UpdateJobStatus(),
         )
-        self._runtime_details = UpdateRuntimeDetailsCollector(repo=self._repo)
-        self._tracker.set_runtime(self._runtime_details.collect())
+        self._tracker.set_runtime(collect_runtime_details(self._repo))
         self._status = self._tracker.status
         self._task: asyncio.Task[None] | None = None
         self._cancel_event = asyncio.Event()
@@ -335,7 +328,7 @@ class UpdateManager:
                 await asyncio.shield(self._build_wifi_controller().restore_hotspot())
             tracker.clear_secrets()
             try:
-                tracker.set_runtime(await asyncio.to_thread(self._runtime_details.collect))
+                tracker.set_runtime(await asyncio.to_thread(collect_runtime_details, self._repo))
                 self._status = tracker.status
             except Exception:
                 LOGGER.warning("Failed to collect runtime details", exc_info=True)
@@ -396,3 +389,126 @@ class UpdateManager:
             config=self._installer_config,
         )
         return await installer.rollback()
+
+
+# ---------------------------------------------------------------------------
+# Prerequisite validation
+# ---------------------------------------------------------------------------
+
+
+def _probe_rollback_dir(rollback_dir: Path) -> None:
+    rollback_dir.mkdir(parents=True, exist_ok=True)
+    probe_handle = tempfile.NamedTemporaryFile(
+        prefix=".rollback-write-probe-",
+        dir=rollback_dir,
+        delete=False,
+    )
+    probe_path = Path(probe_handle.name)
+    try:
+        probe_handle.write(b"ok")
+        probe_handle.flush()
+    finally:
+        probe_handle.close()
+    probe_path.unlink(missing_ok=True)
+
+
+async def validate_prerequisites(
+    *,
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    config: UpdateValidationConfig,
+    ssid: str,
+) -> bool:
+    """Validate tool availability, privilege access, and disk space."""
+    tracker.log(f"Starting update with SSID: {ssid}")
+    for tool in ("nmcli", "python3"):
+        if not shutil.which(tool):
+            tracker.fail("validating", f"Required tool not found: {tool}")
+            return False
+
+    if os.geteuid() != 0:
+        rc, _, _ = await commands.run(
+            ["sudo", "-n", "true"],
+            phase="validating",
+            timeout=5,
+            sudo=False,
+        )
+        if rc != 0:
+            tracker.fail(
+                "validating",
+                "Insufficient privileges",
+                "Cannot run sudo non-interactively. In dev/Docker "
+                "environments, hotspot management is not available.",
+            )
+            return False
+
+    try:
+        _probe_rollback_dir(config.rollback_dir)
+    except OSError as exc:
+        tracker.fail(
+            "validating",
+            "Rollback directory is not writable",
+            f"{config.rollback_dir}: {exc}",
+        )
+        return False
+
+    try:
+        disk_check_path = config.rollback_dir.parent
+        if not disk_check_path.exists():
+            disk_check_path = Path("/var/lib") if Path("/var/lib").exists() else Path("/")
+        free_bytes = shutil.disk_usage(disk_check_path).free
+        if free_bytes < config.min_free_disk_bytes:
+            free_mb = free_bytes // (1024 * 1024)
+            min_mb = config.min_free_disk_bytes // (1024 * 1024)
+            tracker.fail(
+                "validating",
+                f"Insufficient disk space: {free_mb} MiB free, {min_mb} MiB required",
+            )
+            return False
+    except OSError as exc:
+        tracker.fail(
+            "validating",
+            "Could not verify free disk space",
+            str(exc),
+        )
+        return False
+
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Service control
+# ---------------------------------------------------------------------------
+
+
+async def schedule_service_restart(
+    *,
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    service_name: str,
+    restart_unit: str,
+) -> bool:
+    """Schedule a systemd restart of the backend service."""
+    restart_attempts = [
+        [
+            "systemd-run",
+            "--unit",
+            restart_unit,
+            "--on-active=2s",
+            "systemctl",
+            "restart",
+            service_name,
+        ],
+        ["systemctl", "restart", service_name],
+    ]
+    for command in restart_attempts:
+        rc, _, _ = await commands.run(
+            command,
+            phase="done",
+            timeout=30,
+            sudo=True,
+        )
+        if rc == 0:
+            tracker.log("Scheduled backend service restart")
+            return True
+    return False

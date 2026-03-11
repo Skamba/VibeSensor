@@ -20,7 +20,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.firmware_cache import FirmwareCache, FirmwareCacheConfig, GitHubReleaseFetcher
+from vibesensor.update.firmware_cache import FirmwareCache, FirmwareCacheConfig, GitHubReleaseFetcher
 from vibesensor.gps_speed import GPSSpeedMonitor
 from vibesensor.report.mapping import map_summary
 from vibesensor.report_cli import main as report_cli_main
@@ -97,7 +97,7 @@ class TestDownloadAssetFdLeakGuard:
         fake_resp.__exit__ = lambda s, *a: None
 
         with (
-            patch("vibesensor.firmware_cache.urlopen", return_value=fake_resp),
+            patch("vibesensor.update.firmware_cache.urlopen", return_value=fake_resp),
             patch("os.fdopen", side_effect=OSError("mock fdopen failure")),
             patch("os.close") as mock_close,
         ):

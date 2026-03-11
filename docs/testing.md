@@ -23,7 +23,6 @@ apps/server/tests/
 ├── config/
 ├── diagnostics/
 ├── domain/
-├── e2e/
 ├── gps/
 ├── history/
 ├── hotspot/
@@ -46,7 +45,7 @@ apps/server/tests/
 | `vibesensor/routes/*` | `apps/server/tests/api/` |
 | `vibesensor/app.py`, `bootstrap.py`, `runtime/*`, `worker_pool.py` | `apps/server/tests/app/` |
 | `vibesensor/history_db/*`, `history_services/*`, `runlog.py` | `apps/server/tests/history/` |
-| `vibesensor/update/*`, `firmware_cache.py`, `esp_flash_manager.py`, `release_fetcher.py` | `apps/server/tests/update/` |
+| `vibesensor/update/*` | `apps/server/tests/update/` |
 | `vibesensor/processing/*` | `apps/server/tests/processing/` |
 | `vibesensor/ws_hub.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
 | `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
@@ -58,18 +57,16 @@ apps/server/tests/
 | `vibesensor/car_library.py` and related data | `apps/server/tests/car_library/` |
 | `vibesensor/hotspot/*` | `apps/server/tests/hotspot/` |
 | `vibesensor/locations.py` | `apps/server/tests/analysis/` |
-| `vibesensor/release_validation.py` | `apps/server/tests/app/` |
 
 Use cross-cutting directories when a test is intentionally broader than one package boundary:
 
 - `apps/server/tests/integration/`: scenario, pipeline, multi-module behavior, and bug-fix regressions spanning multiple subsystems.
 - `apps/server/tests/hygiene/`: architecture guards and repo hygiene.
-- `apps/server/tests/e2e/`: browser and Docker-backed end-to-end coverage.
 
 Regression tests live alongside the feature they primarily test. Cross-cutting
 regressions that span multiple subsystems go in `integration/`.
 
-Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `report_helpers.py`, `report_analysis_integration.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
+Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `report_helpers.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
 
 ## Contract bridge tests
 
@@ -87,7 +84,7 @@ These tests run in standard CI (no special markers). They use minimal synthetic 
 Two tiers: `make test` for iteration, `make test-all` before pushing.
 
 ```bash
-# Fast iteration — backend unit tests (excludes selenium)
+# Fast iteration — backend unit tests
 make test
 
 # Full CI-parity — all blocking CI jobs in parallel
@@ -128,13 +125,12 @@ make coverage-strict
 For direct control over thresholds and output:
 
 ```bash
-cd apps/server && python -m pytest -q -m "not selenium" --cov=vibesensor --cov-report=term-missing:skip-covered tests
+cd apps/server && python -m pytest -q --cov=vibesensor --cov-report=term-missing:skip-covered tests
 ```
 
 Coverage guidance:
 
 - Treat coverage as a risk-finding tool, not the only quality signal.
-- Default coverage runs exclude `selenium` tests to match the fast local path.
 - High-risk backend areas such as `analysis/`, `processing/`, `history_db/`, and `update/` should stay above the repo-wide baseline whenever practical.
 
 The default CI-parity suite now mirrors these blocking GitHub checks:
@@ -157,7 +153,6 @@ The default CI-parity suite now mirrors these blocking GitHub checks:
 
 | Marker | Meaning |
 |---|---|
-| `selenium` | Browser-based UI tests |
 | `e2e` | Docker-based end-to-end tests |
 | `long_sim` | Longer simulated-run tests |
 | `smoke` | Minimal critical-path checks |

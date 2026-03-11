@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from vibesensor.analysis.helpers import _corr_abs_clamped, _weighted_percentile
-from vibesensor.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher, _dir_sha256
+from vibesensor.update.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher, _dir_sha256
 from vibesensor.report.pdf_diagram_render import _canonical_location
 from vibesensor.report.pdf_drawing import _strength_with_peak
 from vibesensor.report_i18n import normalize_lang, tr
@@ -172,7 +172,7 @@ class TestFirmwareCacheStreamingDownload:
         mock_resp.__enter__ = lambda s: s
         mock_resp.__exit__ = lambda s, *a: None
 
-        with patch("vibesensor.firmware_cache.urlopen", return_value=mock_resp):
+        with patch("vibesensor.update.firmware_cache.urlopen", return_value=mock_resp):
             fetcher._download_asset("https://example.com/fw.bin", dest)
 
         assert dest.exists()

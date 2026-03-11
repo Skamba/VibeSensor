@@ -116,11 +116,11 @@ Production devices use the wheel-based updater in `apps/server/vibesensor/update
 ```bash
 make lint
 make typecheck-backend
-pytest -q -m "not selenium" apps/server/tests
-python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
+pytest -q apps/server/tests
+python3 tools/tests/pytest_progress.py --show-test-names apps/server/tests
 make test-all
 ```
 
-`make typecheck-backend` is the enforced backend static-typing gate for app, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages. Use `docs/testing.md` for the full test map. Start with the matching feature directory under `apps/server/tests/`, then add `integration/` or `regression/` coverage when the behavior crosses package boundaries.
+`make typecheck-backend` is the enforced backend static-typing gate for app, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages. Use `docs/testing.md` for the full test map. Start with the matching feature directory under `apps/server/tests/`, then add `integration/` coverage when the behavior crosses package boundaries.
 
 When tightening Python types, treat `Any` as a smell rather than a shortcut: prefer shared `JsonValue`/`JsonObject` aliases for persisted JSON, `TypedDict`/dataclass contracts for nested payloads, and `ParamSpec` for generic callable wrappers so mypy reflects the real runtime contract instead of a permissive fallback.

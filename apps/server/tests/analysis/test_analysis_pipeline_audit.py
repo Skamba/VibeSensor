@@ -55,7 +55,7 @@ class TestFirstValidBinZeroed:
         signal = 0.5 * np.sin(2 * np.pi * 6 * t)
         block = np.stack([signal, signal, signal])
 
-        result = sp._compute_fft_spectrum(block, 512)
+        result = sp._metrics.compute_fft_spectrum(block, 512)
         freq_slice = result["freq_slice"]
         combined_amp = result["combined_amp"]
 
@@ -137,7 +137,7 @@ class TestCombinedSpectrumInheritsZeroedBin:
         rng = np.random.default_rng(42)
         block = rng.standard_normal((3, 256)).astype(np.float32) * 0.1
 
-        result = sp._compute_fft_spectrum(block, 256)
+        result = sp._metrics.compute_fft_spectrum(block, 256)
         combined = result["combined_amp"]
 
         if combined.size > 0:

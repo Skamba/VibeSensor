@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter
@@ -17,7 +16,7 @@ if TYPE_CHECKING:
     from ..runtime.processing_loop import ProcessingLoopState
 
 
-def build_health_snapshot(
+def _build_health_snapshot(
     loop_state: ProcessingLoopState,
     health_state: RuntimeHealthState,
     processor: SignalProcessor,
@@ -102,13 +101,21 @@ def build_health_snapshot(
 
 
 def create_health_routes(
-    snapshot_fn: Callable[[], dict[str, Any]],
+    loop_state: ProcessingLoopState,
+    health_state: RuntimeHealthState,
+    processor: SignalProcessor,
+    registry: ClientRegistry,
+    metrics_logger: MetricsLogger,
 ) -> APIRouter:
     """Create and return the health-check API routes."""
     router = APIRouter()
 
     @router.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
-        return HealthResponse(**snapshot_fn())
+        return HealthResponse(
+            **_build_health_snapshot(
+                loop_state, health_state, processor, registry, metrics_logger
+            )
+        )
 
     return router

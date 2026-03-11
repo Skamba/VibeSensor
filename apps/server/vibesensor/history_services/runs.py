@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Never, cast
 from ..backend_types import HistoryRunListEntryPayload, HistoryRunPayload
 from ..exceptions import AnalysisNotReadyError, RunNotFoundError
 from ..history_db import RunStatus
-from ..history_db._schema import ANALYSIS_SCHEMA_VERSION
 from ..json_types import JsonObject, is_json_object
 from ..run_context import add_current_context_warnings, localize_warning_list
 from .helpers import async_require_run, require_analysis_ready, strip_internal_fields
@@ -63,9 +62,6 @@ class HistoryRunService:
         analysis = add_current_context_warnings(
             analysis,
             current_active_car_snapshot=current_active_car_snapshot,
-        )
-        analysis["analysis_is_current"] = (
-            int(run.get("analysis_version") or 0) >= ANALYSIS_SCHEMA_VERSION
         )
         metadata: object = run.get("metadata")
         response_lang = requested_lang if isinstance(requested_lang, str) else None

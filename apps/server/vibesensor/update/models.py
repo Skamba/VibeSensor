@@ -5,9 +5,16 @@ from __future__ import annotations
 import enum
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TypedDict, TypeGuard
 
 from ..json_types import JsonObject, is_json_array, is_json_object
+
+
+@dataclass(frozen=True, slots=True)
+class UpdateValidationConfig:
+    rollback_dir: Path
+    min_free_disk_bytes: int
 
 
 class UpdateIssuePayload(TypedDict):

@@ -149,32 +149,6 @@ async def test_history_insights_does_not_mutate_db_analysis() -> None:
 
 
 @pytest.mark.asyncio
-async def test_history_insights_always_emits_analysis_is_current() -> None:
-    @dataclass
-    class NoVersionDB(FakeHistoryDB):
-        def get_run(self, run_id: str) -> dict[str, object] | None:
-            if run_id != "run-1":
-                return None
-            return {
-                "run_id": run_id,
-                "status": "complete",
-                "metadata": self.metadata,
-                "analysis": self.analysis,
-            }
-
-    metadata = make_metadata()
-    samples = [sample(i) for i in range(5)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    db = NoVersionDB(metadata, samples, analysis)
-    router = create_router(FakeState(db, FakeWsHub()))
-    endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
-
-    payload = response_payload(await endpoint("run-1"))
-    assert "analysis_is_current" in payload
-    assert payload["analysis_is_current"] is False
-
-
-@pytest.mark.asyncio
 async def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
     metadata = make_metadata(
         active_car_snapshot={

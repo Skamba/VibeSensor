@@ -10,8 +10,6 @@ from vibesensor.routes import create_router
 
 def _openapi_state() -> MagicMock:
     state = MagicMock()
-    state.apply_car_settings = MagicMock()
-    state.apply_speed_source_settings = MagicMock()
     return state
 
 

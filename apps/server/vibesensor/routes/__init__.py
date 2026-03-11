@@ -20,7 +20,7 @@ from fastapi import APIRouter
 from .car_library import create_car_library_routes
 from .clients import create_client_routes
 from .debug import create_debug_routes
-from .health import build_health_snapshot, create_health_routes
+from .health import create_health_routes
 from .history import create_history_routes
 from .recording import create_recording_routes
 from .settings import create_settings_routes
@@ -36,13 +36,11 @@ def create_router(services: RuntimeState) -> APIRouter:
     router = APIRouter()
     router.include_router(
         create_health_routes(
-            lambda: build_health_snapshot(
-                services.processing_loop_state,
-                services.health_state,
-                services.processor,
-                services.registry,
-                services.metrics_logger,
-            ),
+            services.processing_loop_state,
+            services.health_state,
+            services.processor,
+            services.registry,
+            services.metrics_logger,
         ),
     )
     router.include_router(
@@ -50,8 +48,6 @@ def create_router(services: RuntimeState) -> APIRouter:
             services.settings_store,
             services.gps_monitor,
             services.analysis_settings,
-            services.apply_car_settings,
-            services.apply_speed_source_settings,
         ),
     )
     router.include_router(

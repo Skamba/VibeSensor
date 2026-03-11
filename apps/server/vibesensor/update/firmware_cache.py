@@ -41,9 +41,9 @@ from pathlib import Path
 from typing import TypedDict
 from urllib.request import Request, urlopen
 
-from vibesensor.constants import GITHUB_REPO
+from ..constants import GITHUB_REPO
 
-from .json_types import JsonObject, is_json_array, is_json_object
+from ..json_types import JsonObject, is_json_array, is_json_object
 from .release_fetcher import (
     DOWNLOAD_CHUNK_BYTES,
     GitHubAPIClient,
@@ -540,7 +540,7 @@ class FirmwareCache:
             validate_bundle(extract_dir)
 
             # Write metadata
-            from .runlog import utc_now_iso
+            from ..runlog import utc_now_iso
 
             meta = BundleMeta(
                 tag=tag,

@@ -113,5 +113,5 @@ here.
 python -m pytest apps/server/tests/processing/test_time_alignment.py -v
 
 # Full backend suite:
-pytest -q -m "not selenium" apps/server/tests
+pytest -q apps/server/tests
 ```

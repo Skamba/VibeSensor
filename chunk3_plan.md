@@ -1,209 +1,183 @@
-# Chunk 3: Persistence & Report Data Flow Simplification
-
-## Overview
-The persistence and report layers have accumulated unnecessary complexity through triple-
-maintained column lists, unnecessary SensorFrame round-trips on DB-sourced samples, a redundant
-second DB query hidden behind `getattr` duck-typing, and an 11-type conversion ceremony for
-the report pipeline. This chunk consolidates the samples_v2 schema source of truth, removes
-the SensorFrame round-trip for DB samples, inlines the `analysis_is_current` check, and
-simplifies the `ReportTemplateData` conversion machinery.
+# Chunk 3: Module Consolidation & Dead Code Removal
 
 ## Mapped Findings
 
-### Finding 1: samples_v2 column list triple-maintenance (A4-1)
-- **Original**: Subagent 4 finding 1
-- **Validation result**: CONFIRMED. The 26 data columns are maintained in 3 places:
-  1. DDL string in `_schema.py:60-87` (SQL definition)
-  2. `_V2_TYPED_COLS` + `_V2_PEAK_COLS` in `_samples.py:30-57` (Python tuples for INSERT/SELECT)
-  3. `EXPORT_CSV_COLUMNS` in `exports.py:32-57` (CSV export ordering)
-  Column ordering differs between exports and the other two. A hygiene test
-  (`test_sample_column_alignment.py`) verifies set-equality but not order, so ordering
-  discrepancies are undetectable. The docs (`history_db_schema.md`) have already drifted.
-- **Validated root cause**: Concern separation (DDL vs serialization vs export) assumed
-  independence, but all three are coupled to the same schema fact.
+| ID | Original Title | Validation | Status |
+|----|---------------|------------|--------|
+| A1 | update/workflow.py misnamed single-consumer module fragment | **Validated** — 3 exports (dataclass + 2 functions), single consumer (manager.py), docstring says "workflow orchestration" but actual orchestration is in manager.py | Proceed |
+| B2 | UpdateRuntimeDetailsCollector single-method class wrapping Path | **Validated** — Class at status.py:278 with `__slots__ = ("_repo",)` and one `collect()` method. Constructed and immediately called in manager.py:76-77. Matches "construct-call-discard" anti-pattern. | Proceed |
+| J2 | ESP/firmware 4 modules scattered at top level outside update/ | **Validated** — `release_fetcher.py`, `firmware_cache.py`, `esp_flash_manager.py`, `release_validation.py` at vibesensor/ root. `update/releases.py` imports `from ..release_fetcher`; `update/installer.py` references `vibesensor.firmware_cache` as subprocess. Tests mapped to tests/update/. | Proceed |
+| J3 | metrics_log/ barrel re-export | **Validated** — `__init__.py` re-exports 9 symbols including `PostAnalysisWorker` and all `sample_builder` functions. Comment: "so that existing imports continue to work without changes". Only `MetricsLogger` and `MetricsLoggerConfig` used externally. | Proceed |
+| D1 | schema_meta migration dead code running on every startup | **Validated** — `_ensure_schema()` checks for legacy `schema_meta` table on every startup. All current dbs use `PRAGMA user_version`. The check always finds nothing. | Proceed |
+| D2 | analysis_version/analysis_is_current unused pipeline | **Validated** — `ANALYSIS_SCHEMA_VERSION=3` written to runs table, `analysis_is_current` computed and added to API response. UI never reads this field. No reanalysis endpoint exists. | Proceed |
+| G3 | cleo_api_fixes.py dead one-shot script | **Validated** — Hardcodes `wave1/cleo-api` branch, contains literal patches, zero references from Makefile/CI/README. | Proceed |
 
-### Finding 2: Unnecessary SensorFrame round-trip for DB samples (A4-2)
-- **Original**: Subagent 4 finding 2
-- **Validation result**: CONFIRMED. In `post_analysis.py:235-240`, every sample from
-  `db.iter_run_samples()` passes through `normalize_sample_record()` which constructs a
-  `SensorFrame` then calls `.to_dict()`. `v2_row_to_dict()` in `_samples.py:119-141`
-  already produces correctly typed output. The round-trip adds `record_type` and
-  `schema_version` keys that are never read by analysis code (confirmed: zero matches
-  for these keys in `vibesensor/analysis/`). On a Pi 3A+ with 12,000 samples, this
-  means 12,000 unnecessary SensorFrame constructions + dict merges.
-- **Validated root cause**: `normalize_sample_record()` was designed for the JSONL read path
-  where raw records can contain string-encoded numbers. It was reused on the DB path without
-  recognizing that DB output is already typed.
+## Root Complexity Drivers
 
-### Finding 3: analysis_is_current redundant DB query (A4-3)
-- **Original**: Subagent 4 finding 3
-- **Validation result**: CONFIRMED. `get_insights()` in `runs.py:42-71` first loads the
-  full run via `async_require_run()` which calls `db.get_run()` including `analysis_version`
-  in the returned dict (at `__init__.py:515`). Then separately dispatches
-  `getattr(self._history_db, "analysis_is_current", None)` which issues a second
-  `SELECT analysis_version FROM runs WHERE run_id = ?` — reading the same column already
-  loaded. The `getattr` guard on a statically typed `HistoryDB` class serves no purpose
-  (the method always exists).
-- **Validated root cause**: `analysis_is_current` was added as a post-hoc check without
-  noticing the run dict already contained the same data.
-
-### Finding 4: ReportTemplateData conversion ceremony (A1-2)
-- **Original**: Subagent 1 finding 2
-- **Validation result**: CONFIRMED. The conversion pipeline from `SummaryData` to
-  `ReportTemplateData` uses 11 named types: 2 private pipeline contexts in `mapping.py`
-  (`ReportMappingContext` with 12 fields, `PrimaryCandidateContext` with 17 fields), 8
-  component dataclasses in `report_data.py` (CarMeta, ObservedSignature, PartSuggestion,
-  SystemFindingCard, NextStep, DataTrustItem, PatternEvidence, PeakRow), and
-  `ReportTemplateData` itself. A `_FromDictMixin` framework with `_valid_field_names()`
-  (lru_cache) and `_filter_fields()` supports `from_dict()` on 6 of the 8 component
-  classes. The `_FromDictMixin` has zero consumers outside `report_data.py`.
-- **Validated root cause**: The boundary between analysis output and PDF renderer was designed
-  as a full typed-object conversion, but both source (`SummaryData` TypedDict with Optional/
-  NotRequired fields) and target (dataclasses with Optional defaults) independently handle
-  missing fields, making the conversion framework redundant.
-
-## Root Causes Behind These Findings
-1. Schema facts coupled across 3 files with no single source of truth
-2. Path-inappropriate normalization (JSONL normalizer applied to DB path)
-3. Post-hoc queries that duplicate data already loaded
-4. Over-engineered type conversion for a single-consumer pipeline
-
-## Relevant Code Paths and Components
-
-### Column list consolidation
-- `apps/server/vibesensor/history_db/_schema.py` — DDL definition
-- `apps/server/vibesensor/history_db/_samples.py` — V2_TYPED_COLS, V2_PEAK_COLS, INSERT/SELECT SQL
-- `apps/server/vibesensor/history_services/exports.py` — EXPORT_CSV_COLUMNS
-- `apps/server/tests/hygiene/test_sample_column_alignment.py` — sync verification
-
-### SensorFrame round-trip removal
-- `apps/server/vibesensor/metrics_log/post_analysis.py` — normalize_sample_record call
-- `apps/server/vibesensor/runlog.py` — normalize_sample_record definition
-- `apps/server/vibesensor/history_db/_samples.py` — v2_row_to_dict
-
-### analysis_is_current removal
-- `apps/server/vibesensor/history_services/runs.py` — get_insights(), getattr pattern
-- `apps/server/vibesensor/history_db/__init__.py` — analysis_is_current method
-- `apps/server/vibesensor/history_db/_schema.py` — ANALYSIS_SCHEMA_VERSION constant
-
-### Report mapping simplification
-- `apps/server/vibesensor/report/report_data.py` — dataclasses + _FromDictMixin
-- `apps/server/vibesensor/report/mapping.py` — mapping pipeline + context classes
-- `apps/server/vibesensor/report/pdf_engine.py` — consumer of ReportTemplateData
+1. **Module fragments left over from decomposition**: `workflow.py` and `UpdateRuntimeDetailsCollector` are artifacts of splitting larger classes into modules, where the split went too far.
+2. **Scattered ownership**: ESP/firmware modules logically belong in `update/` but live at the package root, creating cross-boundary imports.
+3. **Backward-compat shimming**: The metrics_log barrel re-export exists to preserve old import paths, violating the "no backward-compat" policy.
+4. **Dead migration code**: `schema_meta` migration that has already completed runs on every startup.
+5. **Speculative feature stub**: `analysis_version` supports a reanalysis feature that was never built.
+6. **Dead tooling**: One-shot script preserved in tools/.
 
 ## Simplification Approach
 
-### Step 1: Derive EXPORT_CSV_COLUMNS from _samples.py
-1. In `exports.py`, import `_V2_TYPED_COLS` and `_V2_PEAK_COLS` from `history_db._samples`
-2. Derive `EXPORT_CSV_COLUMNS` as `list(_V2_TYPED_COLS) + list(_V2_PEAK_COLS) + ["extras"]`
-   (or whatever ordering matches the current export behavior — verify order expectations)
-3. The DDL in `_schema.py` stays as-is (SQL DDL is naturally a separate artifact that must
-   be literal)
-4. Update the hygiene test to verify column order agreement, not just set equality
+### A1: Merge update/workflow.py into manager.py and models.py
 
-### Step 2: Remove SensorFrame round-trip for DB path
-1. In `post_analysis.py`, remove `normalize_sample_record(sample)` from the DB sample
-   iterator
-2. Use `v2_row_to_dict` output directly (it's already typed)
-3. Keep `normalize_sample_record` in `runlog.py` for the JSONL path (it's still needed there)
-4. Verify no analysis code depends on `record_type` or `schema_version` keys being present
+**Steps**:
+1. Move `UpdateValidationConfig` to `update/models.py`
+2. Move `validate_prerequisites()` and `schedule_service_restart()` to `update/manager.py` as module-level functions
+3. Delete `update/workflow.py`
+4. Update imports in `update/manager.py` (from models import UpdateValidationConfig, remove workflow imports)
+5. Update test imports if any reference workflow.py directly
 
-### Step 3: Remove analysis_is_current method and inline the check
-1. In `runs.py:get_insights()`, replace the `getattr`/`analysis_is_current` call with:
-   `analysis["analysis_is_current"] = int(run.get("analysis_version") or 0) >= ANALYSIS_SCHEMA_VERSION`
-2. Import `ANALYSIS_SCHEMA_VERSION` from `history_db._schema`
-3. Remove `analysis_is_current()` method from `HistoryDB` class
-4. Update any test doubles that stub this method
+### B2: Replace UpdateRuntimeDetailsCollector class with function
 
-### Step 4: Simplify ReportTemplateData conversion
-1. Remove `_FromDictMixin`, `_filter_fields()`, `_valid_field_names()` from
-   `report_data.py` — these are a custom framework with zero consumers outside this file
-2. On each dataclass that used `_FromDictMixin`, replace `from_dict()` classmethod with
-   direct keyword construction in `mapping.py` (the builder functions already have all the
-   data extracted; they don't need a second `from_dict` step)
-3. Simplify `ReportMappingContext` — if the 12-field frozen dataclass is only instantiated
-   once by `prepare_report_mapping_context()` and consumed immediately, consider using local
-   variables or a simpler NamedTuple instead
-4. Keep `PrimaryCandidateContext` (17 fields) — it has enough fields to justify a named
-   container, but consider if it can be a NamedTuple
-5. Keep all 8 component dataclasses (they serve as typed contracts for the PDF renderer)
-   but strip the `from_dict()` methods that aren't needed when construction happens in
-   `mapping.py` already
+**Steps**:
+1. Convert `UpdateRuntimeDetailsCollector.collect()` to a module-level function `collect_runtime_details(repo: Path) -> JsonObject` in `update/status.py`
+2. Delete the `UpdateRuntimeDetailsCollector` class
+3. In `update/manager.py`, replace `self._runtime_details = UpdateRuntimeDetailsCollector(repo=self._repo)` and `self._runtime_details.collect()` with `collect_runtime_details(self._repo)`
+4. Update test code that accesses `manager._runtime_details.collect()` to call `collect_runtime_details(manager._repo)` or `collect_runtime_details(Path(...))` directly
 
-## Dependencies on Earlier/Later Chunks
-- **Depends on Chunk 1**: The confidence field rename (`confidence_0_to_1` → `confidence`)
-  affects `extract_confidence()` in `report/mapping.py`. This chunk simplifies that function
-  further. Chunk 1 must complete first.
-- No dependencies on Chunk 2, 4, or 5.
+### J2: Move ESP/firmware modules into update/
+
+**Steps**:
+1. Move `vibesensor/release_fetcher.py` → `vibesensor/update/release_fetcher.py`
+2. Move `vibesensor/firmware_cache.py` → `vibesensor/update/firmware_cache.py`
+3. Move `vibesensor/esp_flash_manager.py` → `vibesensor/update/esp_flash_manager.py`
+4. Move `vibesensor/release_validation.py` → `vibesensor/update/release_validation.py`
+5. Update all imports across the codebase:
+   - `update/releases.py`: `from ..release_fetcher` → `from .release_fetcher`
+   - `update/installer.py`: subprocess `vibesensor.firmware_cache` → `vibesensor.update.firmware_cache`
+   - `runtime/state.py`: `from ..esp_flash_manager` → `from ..update.esp_flash_manager`
+   - `runtime/builders.py`: similar import update
+   - `routes/updates.py`: similar import update
+6. Update test imports in `tests/update/`
+
+### J3: Clean metrics_log barrel re-export
+
+**Steps**:
+1. Reduce `metrics_log/__init__.py` to export only `MetricsLogger`, `MetricsLoggerConfig`, `MetricsShutdownReport`
+2. Remove re-exports of `PostAnalysisWorker`, `build_run_metadata`, `build_sample_records`, `dominant_hz_from_strength`, `extract_strength_data`, `resolve_speed_context`, `safe_metric`, `firmware_version_for_run`
+3. Update the backward-compat comment to remove the "continue to work" language
+4. Find and update any external imports that use the barrel path:
+   - `tests/processing/test_sample_builder.py` → import from `vibesensor.metrics_log.sample_builder` directly
+   - Any other test files or production code → similar import path updates
+5. Consider moving `test_sample_builder.py` from `tests/processing/` to `tests/metrics_log/` if it exists (fixing the confused ownership)
+
+### D1: Remove schema_meta migration dead code
+
+**Steps**:
+1. In `history_db/__init__.py::_ensure_schema()`, remove the block that checks for `schema_meta` table and migrates to `PRAGMA user_version`
+2. Remove any tests that create fake `schema_meta` tables to test the migration
+3. Update `docs/history_db_schema.md` to remove `schema_meta` documentation
+
+### D2: Remove analysis_version/analysis_is_current pipeline
+
+**Steps**:
+1. In `_schema.py`, remove `ANALYSIS_SCHEMA_VERSION = 3` constant
+2. In `history_db/__init__.py::store_analysis()`, remove writing `ANALYSIS_SCHEMA_VERSION` to runs table
+3. In `history_services/runs.py`, remove `analysis_is_current` computation
+4. In `api_models.py`, remove `analysis_is_current` field from the response model
+5. Keep `analysis_version INTEGER` column in schema SQL for now (removing columns requires a migration; the column can remain unused)
+6. Update generated TypeScript types if they include `analysis_is_current`
+
+### G3: Delete cleo_api_fixes.py
+
+**Steps**:
+1. Delete `tools/cleo_api_fixes.py`
+
+## Dependencies on Other Chunks
+
+- J3 barrel cleanup may interact with Chunk 2's changes to sample_builder (C2, C3) — ensure import paths remain consistent
+- D2 removal of ANALYSIS_SCHEMA_VERSION: verify no tests in Chunk 4 depend on it
 
 ## Risks and Tradeoffs
-- **EXPORT_CSV_COLUMNS ordering**: If any consumer depends on the specific column order of
-  the CSV export, deriving from `_V2_TYPED_COLS` may change the order. Need to verify and
-  preserve existing order or document the change.
-- **SensorFrame round-trip removal**: The JSONL path still needs `normalize_sample_record`.
-  Only the DB path is changed. This is clean separation.
-- **analysis_is_current removal**: The method is simple enough that inlining it is zero-risk.
-  Test doubles that stub it must be updated.
-- **ReportTemplateData simplification**: The `from_dict()` methods handle schema evolution
-  for older persisted runs. After removing them, the `mapping.py` builder functions must
-  handle missing/optional fields explicitly. This is already the case since the builder
-  functions already use `.get()` with defaults.
+
+1. **J2 (move to update/)**: The `firmware_cache.py` subprocess invocation uses module path `vibesensor.firmware_cache` — must update to `vibesensor.update.firmware_cache`. All consumers must be found and updated.
+2. **D2**: Leaving the `analysis_version` column in the schema is a minor inconsistency but avoids needing a schema migration. The column will simply stop being written to.
+3. **A1**: `validate_prerequisites` is moderately large (~100 lines). Moving it to manager.py increases that file's size but improves discoverability.
 
 ## Validation Steps
-1. `ruff check apps/server/` — lint passes
-2. `make typecheck-backend` — type checking passes
-3. `pytest -q apps/server/tests/history/` — history tests pass
-4. `pytest -q apps/server/tests/report/` — report tests pass
-5. `pytest -q apps/server/tests/metrics_log/` — metrics log tests pass
-6. `pytest -q apps/server/tests/hygiene/` — hygiene tests pass (column alignment)
-7. `pytest -q apps/server/tests/regression/report/` — report regression tests pass
-8. Grep for `analysis_is_current` — zero matches in production code (only in test migration)
-9. Grep for `normalize_sample_record` in post_analysis.py — zero matches
+
+1. `pytest -q apps/server/tests/update/` — update module tests
+2. `pytest -q apps/server/tests/history/` — history/schema tests
+3. `pytest -q apps/server/tests/processing/` — sample builder tests
+4. `pytest -q apps/server/tests/integration/` — integration tests
+5. `make lint && make typecheck-backend`
 
 ## Required Documentation Updates
-- `docs/history_db_schema.md` — correct any drifted column documentation
-- `docs/ai/repo-map.md` — update history_db description if methods change
+
+- `docs/ai/repo-map.md` — update update/ package description, metrics_log description
+- `docs/history_db_schema.md` — remove schema_meta docs, note analysis_version column unused
+- `.github/copilot-instructions.md` — update update/ file list if documented
 
 ## Required AI Instruction Updates
-- Add guidance to derive column lists from a single source rather than maintaining parallels
-- Add guidance against applying normalization functions to already-normalized data paths
-- Add guidance against `getattr` duck-typing on concrete typed dependencies
+
+- Add guardrail: "Do not create barrel re-exports in package __init__.py for internal implementation symbols. Only export the package's true public API."
+- Update update/ file count in backend instructions
 
 ## Required Test Updates
-- Update `test_sample_column_alignment.py` to verify column order agreement
-- Update/remove test doubles for `analysis_is_current`
-- Verify post-analysis tests still pass without SensorFrame round-trip
+
+- Update test imports for moved modules
+- Remove tests for schema_meta migration
+- Update tests that check analysis_is_current field
 
 ## Simplification Crosswalk
 
-### A4-1 → Single source of truth for samples_v2 columns
-- Validation: CONFIRMED (3 files, ordering discrepancy, set-only test)
-- Root cause: Assumed independence of DDL/serialization/export
-- Steps: Derive EXPORT_CSV_COLUMNS from _samples.py tuples, add order test
-- Code areas: exports.py, _samples.py, test_sample_column_alignment.py
-- What can be removed: Hardcoded EXPORT_CSV_COLUMNS list
-- Verification: Hygiene tests pass with order check
+### A1: update/workflow.py misnamed fragment
+- **Validation**: Confirmed. 3 exports, 1 consumer, misleading name.
+- **Root cause**: Over-decomposition during module split.
+- **Steps**: Move dataclass to models.py, functions to manager.py, delete workflow.py.
+- **Code areas**: update/workflow.py, update/manager.py, update/models.py
+- **Removed**: 1 file (workflow.py)
+- **Verification**: `pytest -q apps/server/tests/update/`
 
-### A4-2 → Remove SensorFrame round-trip for DB samples
-- Validation: CONFIRMED (unnecessary construction + dict merge per sample)
-- Root cause: JSONL normalizer reused on typed DB output
-- Steps: Remove normalize_sample_record from DB path in post_analysis.py
-- Code areas: post_analysis.py
-- What can be removed: normalize_sample_record call on DB samples (~5 lines)
-- Verification: Post-analysis tests pass, analysis results unchanged
+### B2: UpdateRuntimeDetailsCollector class
+- **Validation**: Confirmed. Single-method class, construct-call-discard.
+- **Root cause**: Extraction from manager preserved object style.
+- **Steps**: Convert to function, update callers.
+- **Code areas**: update/status.py, update/manager.py
+- **Removed**: 1 class definition
+- **Verification**: `pytest -q apps/server/tests/update/`
 
-### A4-3 → Inline analysis_is_current check
-- Validation: CONFIRMED (redundant DB query + getattr on concrete class)
-- Root cause: Post-hoc check that duplicated already-loaded data
-- Steps: Inline comparison in get_insights(), remove method from HistoryDB
-- Code areas: runs.py, history_db/__init__.py
-- What can be removed: analysis_is_current method, getattr pattern
-- Verification: API tests pass, insights endpoint returns same data
+### J2: ESP/firmware modules at package root
+- **Validation**: Confirmed. 4 files logically belong in update/.
+- **Root cause**: Left at top level during update/ consolidation.
+- **Steps**: Move 4 files into update/, update all imports.
+- **Code areas**: 4 module files + all importers
+- **Removed**: 4 files from package root (moved)
+- **Verification**: `pytest -q apps/server/tests/ && make typecheck-backend`
 
-### A1-2 → Simplify ReportTemplateData conversion
-- Validation: CONFIRMED (11 intermediate types, _FromDictMixin framework)
-- Root cause: Over-engineered type boundary for single-consumer pipeline
-- Steps: Remove _FromDictMixin framework, simplify dataclass from_dict methods
-- Code areas: report_data.py, mapping.py
-- What can be removed: _FromDictMixin, _filter_fields, _valid_field_names, from_dict methods
-- Verification: Report tests pass, PDF output unchanged
+### J3: metrics_log barrel re-export
+- **Validation**: Confirmed. 9 symbols re-exported, only 3 used externally.
+- **Root cause**: Backward-compat shim never cleaned up.
+- **Steps**: Reduce __init__.py to 3 exports, fix external imports.
+- **Code areas**: metrics_log/__init__.py, external importers
+- **Removed**: 6 unnecessary re-exports
+- **Verification**: `pytest -q apps/server/tests/`
+
+### D1: schema_meta dead migration
+- **Validation**: Confirmed. Always no-ops, runs every startup.
+- **Root cause**: One-shot migration never cleaned up.
+- **Steps**: Remove migration block and tests.
+- **Code areas**: history_db/__init__.py, tests/history/
+- **Removed**: ~15 lines migration code, related tests
+- **Verification**: `pytest -q apps/server/tests/history/`
+
+### D2: analysis_version/analysis_is_current
+- **Validation**: Confirmed. UI never reads field, no reanalysis endpoint.
+- **Root cause**: Speculative feature stub.
+- **Steps**: Remove constant, stop writing, remove computation, remove API field.
+- **Code areas**: _schema.py, history_db, history_services/runs.py, api_models.py
+- **Removed**: 1 constant, 1 write, 1 computation, 1 API field
+- **Verification**: `pytest -q apps/server/tests/history/ apps/server/tests/api/`
+
+### G3: cleo_api_fixes.py
+- **Validation**: Confirmed. Dead script, hardcoded branch, no references.
+- **Root cause**: One-shot automation never removed.
+- **Steps**: Delete file.
+- **Code areas**: tools/cleo_api_fixes.py
+- **Removed**: 1 file
+- **Verification**: N/A (no consumers)

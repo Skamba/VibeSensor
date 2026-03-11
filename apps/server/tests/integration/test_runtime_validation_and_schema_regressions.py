@@ -159,17 +159,18 @@ class TestApiModelValidationBounds:
 class TestHistoryDbCorruptedSchemaVersion:
     """_ensure_schema must not crash on corrupted version metadata."""
 
-    def test_corrupted_version_string_recovers(self, tmp_path) -> None:
+    def test_legacy_schema_meta_rejected(self, tmp_path) -> None:
         db_path = tmp_path / "test.db"
-        # Create a DB with a corrupted version value
+        # Create a DB with a legacy schema_meta table
         conn = sqlite3.connect(str(db_path))
         conn.execute("CREATE TABLE IF NOT EXISTS schema_meta (key TEXT PRIMARY KEY, value TEXT)")
         conn.execute("INSERT INTO schema_meta (key, value) VALUES ('version', 'CORRUPT')")
         conn.commit()
         conn.close()
 
-        # Should not crash — should recover
-        assert HistoryDB(db_path) is not None
+        # Legacy schema_meta databases are no longer supported
+        with pytest.raises(RuntimeError, match="legacy"):
+            HistoryDB(db_path)
 
     def test_valid_version_still_works(self, tmp_path) -> None:
         assert HistoryDB(tmp_path / "test.db") is not None

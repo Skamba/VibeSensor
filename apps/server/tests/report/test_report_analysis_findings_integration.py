@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from test_support.report_analysis_integration import (
+from test_support.report_helpers import (
     call_build_order_findings,
     patch_order_hypothesis,
     wheel_metadata,

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from vibesensor.update.status import UpdateStateStore, UpdateStatusTracker
-from vibesensor.update.workflow import (
+from vibesensor.update.manager import (
     UpdateValidationConfig,
     validate_prerequisites,
 )
@@ -32,7 +32,7 @@ async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_p
 
     monkeypatch.setattr("shutil.which", _mock_which)
     monkeypatch.setattr(
-        "vibesensor.update.workflow._probe_rollback_dir",
+        "vibesensor.update.manager._probe_rollback_dir",
         _raise_probe,
     )
 

@@ -1,6 +1,0 @@
-# Local overrides only.
-# Runtime defaults come from `vibesensor.config.DEFAULT_CONFIG`.
-#
-# Example:
-# server:
-#   port: 8000

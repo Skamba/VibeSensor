@@ -146,7 +146,7 @@ class TestResolveSpeedContext:
         gps.effective_speed_mps = None
         gps.resolve_speed.return_value = MagicMock(source="none")
         settings = {}
-        speed, gps_speed, source, rpm, fdr, gr = resolve_speed_context(gps, settings)
+        speed, gps_speed, source, rpm = resolve_speed_context(gps, settings)
         assert speed is None
         assert rpm is None
         assert source == "none"
@@ -162,7 +162,7 @@ class TestResolveSpeedContext:
             "final_drive_ratio": 3.73,
             "current_gear_ratio": 1.0,
         }
-        speed, gps_speed, source, rpm, fdr, gr = resolve_speed_context(gps, settings)
+        speed, gps_speed, source, rpm = resolve_speed_context(gps, settings)
         assert speed == pytest.approx(36.0, rel=0.01)
         assert source == "gps"
         assert rpm is not None and rpm > 0

@@ -95,10 +95,8 @@ def test_v4_db_rejected(tmp_path: Path) -> None:
 
     conn = sqlite3.connect(str(db_path))
     conn.execute("PRAGMA foreign_keys=ON")
+    conn.execute("PRAGMA user_version = 4")
     conn.executescript("""\
-        CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-        INSERT INTO schema_meta (key, value) VALUES ('version', '4');
-
         CREATE TABLE runs (
             run_id TEXT PRIMARY KEY,
             status TEXT NOT NULL DEFAULT 'recording',
