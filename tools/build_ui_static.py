@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+"""Build and sync the UI static assets into the server package.
+
+This script is intentionally self-contained — it must run without the
+``vibesensor`` package installed (e.g. in the Release-smoke CI job that
+runs *before* ``pip install``).  Do not import from ``vibesensor`` here.
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -7,9 +14,16 @@ import shutil
 import subprocess
 from pathlib import Path
 
+# Keep in sync with vibesensor.update.status.UI_BUILD_METADATA_FILE
+UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
+
 
 def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
-    """Deterministic SHA-256 of a directory tree (sorted, filtered)."""
+    """Deterministic SHA-256 of a directory tree (sorted, filtered).
+
+    Canonical copy lives in ``vibesensor.update.status.hash_tree``; this
+    local duplicate exists so the script stays self-contained.
+    """
     if not root.exists():
         return ""
     hasher = hashlib.sha256()
@@ -30,9 +44,6 @@ def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
             continue
         hasher.update(b"\0")
     return hasher.hexdigest()
-
-
-UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 
 
 def _run(command: list[str], cwd: Path) -> None:

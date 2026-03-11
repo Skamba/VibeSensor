@@ -4,9 +4,9 @@
   building sample records from sensor metrics.
 - :mod:`~vibesensor.metrics_log.post_analysis` — ``PostAnalysisWorker``:
   background analysis thread/queue manager.
-- :mod:`~vibesensor.metrics_log.logger` — ``MetricsLogger``: the
-  façade that coordinates recording lifecycle, session state, and
-  history-DB persistence.
+- :mod:`~vibesensor.metrics_log.logger` — ``MetricsLogger``: single
+  class that owns recording lifecycle, session state, and
+  history-DB persistence inline.
 """
 
 from .logger import (
