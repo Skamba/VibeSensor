@@ -30,6 +30,14 @@ TestStep: TypeAlias = JsonObject
 """A single diagnostic test-plan step."""
 
 
+def i18n_ref(key: str, **params: JsonValue) -> I18nRef:
+    """Build a language-neutral i18n reference dict."""
+    ref: I18nRef = {"_i18n_key": key}
+    if params:
+        ref.update(params)
+    return ref
+
+
 class AmplitudeMetric(TypedDict):
     name: str
     value: float | None
@@ -107,13 +115,12 @@ class Finding(TypedDict, total=False):
     evidence_summary: Required[JsonValue]
     frequency_hz_or_order: Required[JsonValue]
     amplitude_metric: Required[AmplitudeMetric]
-    confidence_0_to_1: Required[float | None]
+    confidence: Required[float | None]
     quick_checks: Required[list[JsonValue]]
     finding_type: str
     finding_key: str
     severity: str
     source: str
-    confidence: float | None
     confidence_label_key: str
     confidence_tone: str
     confidence_pct: str

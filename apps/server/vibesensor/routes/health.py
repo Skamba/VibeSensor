@@ -96,8 +96,8 @@ def build_health_snapshot(
         "tick_duration_s": loop_state.last_tick_duration_s,
         "max_tick_duration_s": loop_state.max_tick_duration_s,
         "tick_count": loop_state.tick_count,
-        "db_last_write_duration_s": metrics_logger.persistence.last_write_duration_s,
-        "db_max_write_duration_s": metrics_logger.persistence.max_write_duration_s,
+        "db_last_write_duration_s": metrics_logger.last_write_duration_s,
+        "db_max_write_duration_s": metrics_logger.max_write_duration_s,
     }
 
 

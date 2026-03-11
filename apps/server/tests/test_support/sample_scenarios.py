@@ -310,7 +310,7 @@ def max_order_source_conf(
     """Return max confidence among non-reference order-tracking findings."""
     return max(
         (
-            float(finding.get("confidence_0_to_1") or 0.0)
+            float(finding.get("confidence") or 0.0)
             for finding in summary.get("findings", [])
             if not str(finding.get("finding_id", "")).startswith("REF_")
             and str(finding.get("suspected_source") or "").strip().lower() in sources

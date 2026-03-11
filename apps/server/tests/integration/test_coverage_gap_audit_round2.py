@@ -429,9 +429,6 @@ class TestHistoryDBAnalysisIdempotency:
         assert run["status"] == "error"
         assert run["error_message"] == "pipeline crash"
 
-    def test_analysis_is_current_for_missing_run(self, history_db: HistoryDB) -> None:
-        assert history_db.analysis_is_current("nonexistent") is False
-
     def test_get_run_analysis_returns_stored_analysis(self, history_db: HistoryDB) -> None:
         history_db.create_run("r1", "2026-01-01T00:00:00Z", {})
         # No analysis yet

@@ -36,8 +36,6 @@ def _make_logger(tmp_path: Path, **overrides):
             "sensor_model",
             "default_sample_rate_hz",
             "fft_window_size_samples",
-            "fft_window_type",
-            "peak_picker_method",
             "accel_scale_g_per_lsb",
             "persist_history_db",
             "no_data_timeout_s",

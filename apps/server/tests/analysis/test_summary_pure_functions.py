@@ -136,7 +136,7 @@ def _make_finding(
     return {
         "finding_id": finding_id,
         "suspected_source": source,
-        "confidence_0_to_1": confidence,
+        "confidence": confidence,
         "severity": severity,
     }
 

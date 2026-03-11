@@ -133,7 +133,7 @@ class TestNextStepFieldsNotRendered:
         finding = {
             "finding_id": "F_ORDER",
             "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 0.85,
+            "confidence": 0.85,
             "frequency_hz_or_order": "1x wheel",
             "strongest_location": "front-left wheel",
             "amplitude_metric": {"value": 0.05},
@@ -181,7 +181,7 @@ class TestTopCausesFallbackBypassesPersistenceRanking:
             {
                 "finding_id": "F_ORDER",
                 "suspected_source": "wheel/tire",
-                "confidence_0_to_1": 0.3,
+                "confidence": 0.3,
                 "frequency_hz_or_order": "1x wheel",
                 "strongest_location": "front-left wheel",
                 "amplitude_metric": {"value": 0.05},
@@ -190,7 +190,7 @@ class TestTopCausesFallbackBypassesPersistenceRanking:
             {
                 "finding_id": "F_ORDER",
                 "suspected_source": "engine",
-                "confidence_0_to_1": 0.6,
+                "confidence": 0.6,
                 "frequency_hz_or_order": "2x engine",
                 "strongest_location": "engine bay",
                 "amplitude_metric": {"value": 0.08},
@@ -240,7 +240,7 @@ class TestSystemFindingCardToneUnused:
         finding = {
             "finding_id": "F_ORDER",
             "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 0.8,
+            "confidence": 0.8,
             "frequency_hz_or_order": "1x wheel",
             "strongest_location": "front-left wheel",
             "amplitude_metric": {"value": 0.05},

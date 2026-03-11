@@ -8,7 +8,7 @@ High-level analysis entry points are re-exported here so callers can use
 ``from vibesensor.analysis import …`` without depending on file layout.
 """
 
-from ._types import Finding, SummaryData
+from ._types import Finding, SummaryData, i18n_ref
 from .phase_segmentation import DrivingPhase, classify_sample_phase
 from .summary_builder import build_findings_for_samples, summarize_log, summarize_run_data
 from .top_cause_selection import confidence_label, select_top_causes
@@ -20,6 +20,7 @@ __all__ = [
     "build_findings_for_samples",
     "classify_sample_phase",
     "confidence_label",
+    "i18n_ref",
     "select_top_causes",
     "summarize_log",
     "summarize_run_data",

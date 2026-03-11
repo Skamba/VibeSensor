@@ -50,7 +50,7 @@ def select_top_causes(
         if isinstance(finding, dict)
         and not str(finding.get("finding_id", "")).startswith("REF_")
         and str(finding.get("severity") or "diagnostic").strip().lower() != "info"
-        and (_as_float(finding.get("confidence_0_to_1")) or 0) >= ORDER_MIN_CONFIDENCE
+        and (_as_float(finding.get("confidence")) or 0) >= ORDER_MIN_CONFIDENCE
     ]
     if not diagnostic_findings:
         return []
@@ -69,14 +69,14 @@ def select_top_causes(
     result: list[TopCause] = []
     for representative in selected:
         label_key, tone, pct_text = confidence_label(
-            _as_float(representative.get("confidence_0_to_1")) or 0,
+            _as_float(representative.get("confidence")) or 0,
             strength_band_key=strength_band_key,
         )
         result.append(
             {
                 "finding_id": str(representative.get("finding_id") or ""),
                 "source": str(representative.get("suspected_source") or ""),
-                "confidence": representative.get("confidence_0_to_1"),
+                "confidence": representative.get("confidence"),
                 "confidence_label_key": label_key,
                 "confidence_tone": tone,
                 "confidence_pct": pct_text,

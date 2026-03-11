@@ -317,6 +317,9 @@ class SpeedSourceConfig:
 # 4) RunMetadata
 # ---------------------------------------------------------------------------
 
+FFT_WINDOW_TYPE: str = "hann"
+PEAK_PICKER_METHOD: str = "canonical_strength_metrics_module"
+
 
 @dataclass(slots=True)
 class RunMetadata:
@@ -347,8 +350,6 @@ class RunMetadata:
         raw_sample_rate_hz: int | None,
         feature_interval_s: float | None,
         fft_window_size_samples: int | None,
-        fft_window_type: str | None,
-        peak_picker_method: str,
         accel_scale_g_per_lsb: float | None,
         firmware_version: str | None = None,
         end_time_utc: str | None = None,
@@ -365,8 +366,8 @@ class RunMetadata:
             raw_sample_rate_hz=raw_sample_rate_hz,
             feature_interval_s=feature_interval_s,
             fft_window_size_samples=fft_window_size_samples,
-            fft_window_type=fft_window_type,
-            peak_picker_method=peak_picker_method,
+            fft_window_type=FFT_WINDOW_TYPE,
+            peak_picker_method=PEAK_PICKER_METHOD,
             accel_scale_g_per_lsb=accel_scale_g_per_lsb,
             incomplete_for_order_analysis=bool(incomplete_for_order_analysis),
         )

@@ -211,7 +211,6 @@ class PostAnalysisWorker:
         LOGGER.info("Analysis started for run %s", run_id)
         try:
             from ..analysis import summarize_run_data
-            from ..runlog import normalize_sample_record
 
             metadata = db.get_run_metadata(run_id)
             if metadata is None:
@@ -231,13 +230,11 @@ class PostAnalysisWorker:
                 return
             language = str(metadata.get("language") or "en")
 
-            normalized_iter = (
-                normalize_sample_record(sample)
-                for batch in db.iter_run_samples(run_id, batch_size=1024)
-                for sample in batch
+            sample_iter = (
+                sample for batch in db.iter_run_samples(run_id, batch_size=1024) for sample in batch
             )
             samples, total_sample_count, stride = bounded_sample(
-                normalized_iter,
+                sample_iter,
                 max_items=_MAX_POST_ANALYSIS_SAMPLES,
             )
             if not samples:

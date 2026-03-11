@@ -78,7 +78,7 @@ def seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True
     (repo / "apps" / "server" / "vibesensor" / "static" / "index.html").write_text(
         "<html>ok</html>\n",
     )
-    details = mgr._collect_runtime_details()
+    details = mgr._runtime_details.collect()
     metadata = {
         "ui_source_hash": details["ui_source_hash"] if valid else "stale-source-hash",
         "static_assets_hash": details["static_assets_hash"],

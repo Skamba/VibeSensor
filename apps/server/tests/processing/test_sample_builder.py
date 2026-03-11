@@ -226,8 +226,6 @@ def _default_run_metadata_kwargs(**overrides) -> dict:
         "default_sample_rate_hz": 800,
         "metrics_log_hz": 4,
         "fft_window_size_samples": 512,
-        "fft_window_type": "hann",
-        "peak_picker_method": "canonical",
         "accel_scale_g_per_lsb": None,
     }
     defaults.update(overrides)

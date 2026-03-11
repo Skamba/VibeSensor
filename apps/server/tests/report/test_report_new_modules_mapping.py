@@ -100,12 +100,12 @@ def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> Non
             "dominance_ratio": 1.05,
             "weak_spatial_separation": True,
             "strongest_speed_band": "80-90 km/h",
-            "confidence_0_to_1": 0.81,
+            "confidence": 0.81,
         },
         {
             "strongest_location": "Front Right",
             "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 0.74,
+            "confidence": 0.74,
         },
     ]
 
@@ -136,7 +136,7 @@ def test_most_likely_origin_summary_phase_onset(
             "weak_spatial_separation": False,
             "strongest_speed_band": speed_band,
             "dominant_phase": phase,
-            "confidence_0_to_1": confidence,
+            "confidence": confidence,
         },
     ]
 
@@ -162,7 +162,7 @@ def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
             "weak_spatial_separation": False,
             "strongest_speed_band": "80-100 km/h",
             "dominant_phase": "cruise",
-            "confidence_0_to_1": 0.80,
+            "confidence": 0.80,
         },
     ]
 
@@ -178,7 +178,7 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
             "dominance_ratio": 3.0,
             "weak_spatial_separation": False,
             "strongest_speed_band": "80-100 km/h",
-            "confidence_0_to_1": 0.80,
+            "confidence": 0.80,
         },
     ]
 

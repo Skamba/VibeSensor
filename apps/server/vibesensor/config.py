@@ -323,16 +323,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     logging_cfg = _require_config_section(merged.get("logging", {}), "logging")
     gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
     update_cfg = _require_config_section(merged.get("update", {}), "update")
-    default_logging_cfg = _require_config_section(
-        DEFAULT_CONFIG.get("logging", {}),
-        "default logging",
-    )
-    default_gps_cfg = _require_config_section(DEFAULT_CONFIG.get("gps", {}), "default gps")
-    default_update_cfg = _require_config_section(
-        DEFAULT_CONFIG.get("update", {}),
-        "default update",
-    )
-    log_metrics = bool(logging_cfg.get("log_metrics", True))
+    log_metrics = bool(logging_cfg["log_metrics"])
 
     data_host, data_port = _split_host_port(str(udp_cfg["data_listen"]))
     control_host, control_port = _split_host_port(str(udp_cfg["control_listen"]))
@@ -361,11 +352,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         raise ValueError(f"ap.ip must be a valid IPv4 address or CIDR, got {ap_ip_raw!r}") from None
 
     self_heal_cfg = _require_config_section(ap_cfg.get("self_heal", {}), "ap.self_heal")
-    default_ap_cfg = _require_config_section(DEFAULT_CONFIG.get("ap", {}), "default ap")
-    self_heal_defaults = _require_config_section(
-        default_ap_cfg.get("self_heal", {}),
-        "default ap.self_heal",
-    )
     app_config = AppConfig(
         ap=APConfig(
             ssid=str(ap_cfg["ssid"]),
@@ -375,20 +361,20 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             ifname=str(ap_cfg["ifname"]),
             con_name=str(ap_cfg["con_name"]),
             self_heal=APSelfHealConfig(
-                enabled=bool(self_heal_cfg.get("enabled", True)),
+                enabled=bool(self_heal_cfg["enabled"]),
                 diagnostics_lookback_minutes=_coerce_int(
-                    self_heal_cfg.get("diagnostics_lookback_minutes", 5),
+                    self_heal_cfg["diagnostics_lookback_minutes"],
                     "ap.self_heal.diagnostics_lookback_minutes",
                 ),
                 min_restart_interval_seconds=_coerce_int(
-                    self_heal_cfg.get("min_restart_interval_seconds", 120),
+                    self_heal_cfg["min_restart_interval_seconds"],
                     "ap.self_heal.min_restart_interval_seconds",
                 ),
                 allow_disable_resolved_stub_listener=bool(
-                    self_heal_cfg.get("allow_disable_resolved_stub_listener", False),
+                    self_heal_cfg["allow_disable_resolved_stub_listener"],
                 ),
                 state_file=_resolve_config_path(
-                    str(self_heal_cfg.get("state_file", str(self_heal_defaults["state_file"]))),
+                    str(self_heal_cfg["state_file"]),
                     path,
                 ),
             ),
@@ -404,7 +390,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             control_port=control_port,
             data_queue_maxsize=max(
                 1,
-                _coerce_int(udp_cfg.get("data_queue_maxsize", 1024), "udp.data_queue_maxsize"),
+                _coerce_int(udp_cfg["data_queue_maxsize"], "udp.data_queue_maxsize"),
             ),
         ),
         processing=ProcessingConfig(
@@ -417,7 +403,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                 "processing.waveform_seconds",
             ),
             client_ttl_seconds=_coerce_int(
-                processing_cfg.get("client_ttl_seconds", 120),
+                processing_cfg["client_ttl_seconds"],
                 "processing.client_ttl_seconds",
             ),
             accel_scale_g_per_lsb=accel_scale,
@@ -426,49 +412,34 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             log_metrics=log_metrics,
             metrics_log_hz=_coerce_int(logging_cfg["metrics_log_hz"], "logging.metrics_log_hz"),
             no_data_timeout_s=_coerce_float(
-                logging_cfg.get(
-                    "no_data_timeout_s",
-                    default_logging_cfg["no_data_timeout_s"],
-                ),
+                logging_cfg["no_data_timeout_s"],
                 "logging.no_data_timeout_s",
             ),
-            sensor_model=str(logging_cfg.get("sensor_model", "ADXL345")),
+            sensor_model=str(logging_cfg["sensor_model"]),
             history_db_path=_resolve_config_path(
-                str(
-                    logging_cfg.get(
-                        "history_db_path",
-                        default_logging_cfg["history_db_path"],
-                    ),
-                ),
+                str(logging_cfg["history_db_path"]),
                 path,
             ),
-            persist_history_db=bool(
-                logging_cfg.get("persist_history_db", default_logging_cfg["persist_history_db"]),
-            ),
+            persist_history_db=bool(logging_cfg["persist_history_db"]),
             shutdown_analysis_timeout_s=_coerce_float(
-                logging_cfg.get(
-                    "shutdown_analysis_timeout_s",
-                    default_logging_cfg["shutdown_analysis_timeout_s"],
-                ),
+                logging_cfg["shutdown_analysis_timeout_s"],
                 "logging.shutdown_analysis_timeout_s",
             ),
             app_log_path=_resolve_config_path(
-                str(logging_cfg.get("app_log_path", default_logging_cfg["app_log_path"])),
+                str(logging_cfg["app_log_path"]),
                 path,
             ),
         ),
         gps=GPSConfig(
             gps_enabled=bool(gps_cfg["gps_enabled"]),
-            gpsd_host=str(gps_cfg.get("gpsd_host", default_gps_cfg["gpsd_host"])),
+            gpsd_host=str(gps_cfg["gpsd_host"]),
             gpsd_port=_coerce_int(
-                gps_cfg.get("gpsd_port", default_gps_cfg["gpsd_port"]),
+                gps_cfg["gpsd_port"],
                 "gps.gpsd_port",
             ),
         ),
         update=UpdateConfig(
-            rollback_dir=Path(
-                str(update_cfg.get("rollback_dir", default_update_cfg["rollback_dir"])),
-            ),
+            rollback_dir=Path(str(update_cfg["rollback_dir"])),
         ),
         config_path=path,
     )

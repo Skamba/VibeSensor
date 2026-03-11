@@ -32,8 +32,6 @@ apps/server/tests/
 ├── metrics_log/
 ├── processing/
 ├── protocol/
-├── regression/
-│   └── {analysis,cross_cutting,report,runtime}/
 ├── report/
 ├── update/
 └── websocket/
@@ -64,19 +62,12 @@ apps/server/tests/
 
 Use cross-cutting directories when a test is intentionally broader than one package boundary:
 
-- `apps/server/tests/integration/`: scenario, pipeline, and multi-module behavior.
-- `apps/server/tests/regression/`: bug-fix regressions grouped by intent.
+- `apps/server/tests/integration/`: scenario, pipeline, multi-module behavior, and bug-fix regressions spanning multiple subsystems.
 - `apps/server/tests/hygiene/`: architecture guards and repo hygiene.
 - `apps/server/tests/e2e/`: browser and Docker-backed end-to-end coverage.
 
-## Regression layout
-
-Regression coverage is grouped by intent:
-
-- `regression/analysis/`: scoring, ranking, signal-selection, analysis pipeline guardrails, and coverage audits.
-- `regression/cross_cutting/`: failures that span multiple subsystems.
-- `regression/report/`: report rendering, report-data regressions, and report pipeline audits.
-- `regression/runtime/`: runtime, history, API, queueing, and update-adjacent regressions.
+Regression tests live alongside the feature they primarily test. Cross-cutting
+regressions that span multiple subsystems go in `integration/`.
 
 Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `report_helpers.py`, `report_analysis_integration.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
 
@@ -109,7 +100,6 @@ pytest -q apps/server/tests/update/
 
 # Cross-cutting scopes
 pytest -q apps/server/tests/integration/
-pytest -q apps/server/tests/regression/report/
 
 # Focused CI job groups
 python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests

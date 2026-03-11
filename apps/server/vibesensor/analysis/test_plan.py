@@ -8,9 +8,9 @@ from math import ceil, floor, log1p, pow
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
 from ..domain_models import as_float_or_none as _as_float
 from ..locations import has_any_wheel_location, is_wheel_location
-from ._types import Finding, JsonObject, LocationHotspot, MatchedPoint, TestStep
+from ._types import Finding, JsonObject, LocationHotspot, MatchedPoint, TestStep, i18n_ref
 from .helpers import _speed_bin_label, _weighted_percentile, weak_spatial_dominance_threshold
-from .order_analysis import _finding_actions_for_source, _i18n_ref
+from .order_analysis import _finding_actions_for_source
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
 
@@ -95,7 +95,7 @@ def _merge_test_plan(
     for finding in findings:
         if not isinstance(finding, dict):
             continue
-        finding_confidence = _as_float(finding.get("confidence_0_to_1"))
+        finding_confidence = _as_float(finding.get("confidence"))
         finding_speed_band = _normalized_text(finding.get("strongest_speed_band"))
         finding_frequency = _normalized_text(finding.get("frequency_hz_or_order"))
         actions = finding.get("actions")
@@ -148,12 +148,12 @@ def _merge_test_plan(
     return [
         {
             "action_id": "general_mechanical_inspection",
-            "what": _i18n_ref("COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS"),
-            "why": _i18n_ref("NO_ACTIONABLE_FINDINGS_WERE_GENERATED_FROM_CURRENT_DATA"),
-            "confirm": _i18n_ref(
+            "what": i18n_ref("COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS"),
+            "why": i18n_ref("NO_ACTIONABLE_FINDINGS_WERE_GENERATED_FROM_CURRENT_DATA"),
+            "confirm": i18n_ref(
                 "CONFIRM_CONCRETE_MECHANICAL_ISSUE_IDENTIFIED",
             ),
-            "falsify": _i18n_ref(
+            "falsify": i18n_ref(
                 "FALSIFY_NO_ABNORMAL_PLAY_WEAR_OR_LOOSENESS",
             ),
             "eta": "20-35 min",
@@ -396,13 +396,13 @@ def _location_speedbin_summary(
     best_out: LocationHotspot = {**best}
     best_out["per_bin_results"] = [{**item} for item in per_bin_results]
 
-    sentence = _i18n_ref(
+    sentence = i18n_ref(
         "STRONGEST_AT_LOCATION_IN_SPEED_RANGE",
         location=str(best_out.get("location") or ""),
         speed_range=str(best_out.get("speed_range") or ""),
         dominance=f"{(_as_float(best_out.get('dominance_ratio')) or 0.0):.2f}",
         weak_note=(
-            _i18n_ref("WEAK_SPATIAL_SEPARATION_NOTE")
+            i18n_ref("WEAK_SPATIAL_SEPARATION_NOTE")
             if bool(best_out.get("weak_spatial_separation"))
             else ""
         ),

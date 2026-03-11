@@ -40,8 +40,8 @@
 ## Test layout
 
 - `apps/server/tests/` is feature-based and mirrors backend ownership boundaries.
-- Cross-cutting coverage lives in `integration/`, `regression/`, `hygiene/`, and `e2e/`.
-- `regression/` is further split by intent: `analysis/`, `cross_cutting/`, `report/`, `runtime/`.
+- Cross-cutting coverage lives in `integration/`, `hygiene/`, and `e2e/`.
+- Regression tests live in the feature directory they primarily test, or in `integration/` for cross-cutting regressions.
 - Shared test support lives at the test root (`conftest.py`, `_paths.py`, focused helper modules, and the `test_support/` package).
 - Full map: `docs/testing.md`.
 

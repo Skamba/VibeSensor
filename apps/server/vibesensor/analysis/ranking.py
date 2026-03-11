@@ -18,7 +18,7 @@ def finding_sort_key(item: Finding) -> tuple[float, float]:
     otherwise equivalent findings, leaving the explicit ranking score to break
     ties consistently.
     """
-    conf = _as_float(item.get("confidence_0_to_1")) or 0.0
+    conf = _as_float(item.get("confidence")) or 0.0
     quantised = round(conf * _QUANTISE_INV) * _QUANTISE_STEP
     rank = _as_float(item.get("_ranking_score")) or 0.0
     return (quantised, rank)
@@ -26,7 +26,7 @@ def finding_sort_key(item: Finding) -> tuple[float, float]:
 
 def phase_adjusted_ranking_score(finding: Finding) -> float:
     """Compute the phase-aware score used for top-cause selection."""
-    conf = finding.get("confidence_0_to_1")
+    conf = finding.get("confidence")
     confidence = float(conf if conf is not None else 0)
     phase_ev = finding.get("phase_evidence")
     cruise_fraction = (

@@ -38,6 +38,7 @@ from ._types import (
     PhaseLabels,
     Sample,
     TestStep,
+    i18n_ref,
 )
 from .helpers import (
     _corr_abs_clamped,
@@ -175,14 +176,6 @@ def _wheel_focus_from_location(location: str) -> I18nRef:
     return {"_i18n_key": "WHEEL_FOCUS_ALL"}
 
 
-def _i18n_ref(key: str, **params: JsonValue) -> I18nRef:
-    """Build a language-neutral i18n reference dict."""
-    ref: I18nRef = {"_i18n_key": key}
-    if params:
-        ref.update(params)
-    return ref
-
-
 def _finding_actions_for_source(
     source: str,
     *,
@@ -220,61 +213,61 @@ def _finding_actions_for_source(
     # ref dict, which is semantically different from the key being absent and
     # could confuse template renderers that check for key presence vs truthiness.
     _speed_hint_param: I18nRef = (
-        {"speed_hint": _i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band)} if speed_band else {}
+        {"speed_hint": i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band)} if speed_band else {}
     )
     if source == "wheel/tire":
         wheel_focus = _wheel_focus_from_location(location)
         location_hint = (
-            _i18n_ref("LOCATION_HINT_NEAR", location=location)
+            i18n_ref("LOCATION_HINT_NEAR", location=location)
             if location
-            else _i18n_ref("LOCATION_HINT_AT_WHEEL_CORNERS")
+            else i18n_ref("LOCATION_HINT_AT_WHEEL_CORNERS")
         )
         return [
             {
                 "action_id": "wheel_balance_and_runout",
-                "what": _i18n_ref(
+                "what": i18n_ref(
                     "ACTION_WHEEL_BALANCE_WHAT",
                     wheel_focus=wheel_focus,
                     **_speed_hint_param,
                 ),
-                "why": _i18n_ref("ACTION_WHEEL_BALANCE_WHY", location_hint=location_hint),
-                "confirm": _i18n_ref("ACTION_WHEEL_BALANCE_CONFIRM"),
-                "falsify": _i18n_ref("ACTION_WHEEL_BALANCE_FALSIFY"),
+                "why": i18n_ref("ACTION_WHEEL_BALANCE_WHY", location_hint=location_hint),
+                "confirm": i18n_ref("ACTION_WHEEL_BALANCE_CONFIRM"),
+                "falsify": i18n_ref("ACTION_WHEEL_BALANCE_FALSIFY"),
                 "eta": "20-45 min",
             },
             {
                 "action_id": "wheel_tire_condition",
-                "what": _i18n_ref("ACTION_TIRE_CONDITION_WHAT", wheel_focus=wheel_focus),
-                "why": _i18n_ref("ACTION_TIRE_CONDITION_WHY"),
-                "confirm": _i18n_ref("ACTION_TIRE_CONDITION_CONFIRM"),
-                "falsify": _i18n_ref("ACTION_TIRE_CONDITION_FALSIFY"),
+                "what": i18n_ref("ACTION_TIRE_CONDITION_WHAT", wheel_focus=wheel_focus),
+                "why": i18n_ref("ACTION_TIRE_CONDITION_WHY"),
+                "confirm": i18n_ref("ACTION_TIRE_CONDITION_CONFIRM"),
+                "falsify": i18n_ref("ACTION_TIRE_CONDITION_FALSIFY"),
                 "eta": "10-20 min",
             },
         ]
     if source == "driveline":
         driveline_focus = (
-            _i18n_ref("LOCATION_HINT_NEAR_SHORT", location=location)
+            i18n_ref("LOCATION_HINT_NEAR_SHORT", location=location)
             if location
-            else _i18n_ref("LOCATION_HINT_ALONG_DRIVELINE")
+            else i18n_ref("LOCATION_HINT_ALONG_DRIVELINE")
         )
         return [
             {
                 "action_id": "driveline_inspection",
-                "what": _i18n_ref(
+                "what": i18n_ref(
                     "ACTION_DRIVELINE_INSPECTION_WHAT",
                     driveline_focus=driveline_focus,
                 ),
-                "why": _i18n_ref("ACTION_DRIVELINE_INSPECTION_WHY"),
-                "confirm": _i18n_ref("ACTION_DRIVELINE_INSPECTION_CONFIRM"),
-                "falsify": _i18n_ref("ACTION_DRIVELINE_INSPECTION_FALSIFY"),
+                "why": i18n_ref("ACTION_DRIVELINE_INSPECTION_WHY"),
+                "confirm": i18n_ref("ACTION_DRIVELINE_INSPECTION_CONFIRM"),
+                "falsify": i18n_ref("ACTION_DRIVELINE_INSPECTION_FALSIFY"),
                 "eta": "20-35 min",
             },
             {
                 "action_id": "driveline_mounts_and_fasteners",
-                "what": _i18n_ref("ACTION_DRIVELINE_MOUNTS_WHAT"),
-                "why": _i18n_ref("ACTION_DRIVELINE_MOUNTS_WHY"),
-                "confirm": _i18n_ref("ACTION_DRIVELINE_MOUNTS_CONFIRM"),
-                "falsify": _i18n_ref("ACTION_DRIVELINE_MOUNTS_FALSIFY"),
+                "what": i18n_ref("ACTION_DRIVELINE_MOUNTS_WHAT"),
+                "why": i18n_ref("ACTION_DRIVELINE_MOUNTS_WHY"),
+                "confirm": i18n_ref("ACTION_DRIVELINE_MOUNTS_CONFIRM"),
+                "falsify": i18n_ref("ACTION_DRIVELINE_MOUNTS_FALSIFY"),
                 "eta": "10-20 min",
             },
         ]
@@ -282,31 +275,31 @@ def _finding_actions_for_source(
         return [
             {
                 "action_id": "engine_mounts_and_accessories",
-                "what": _i18n_ref("ACTION_ENGINE_MOUNTS_WHAT"),
-                "why": _i18n_ref("ACTION_ENGINE_MOUNTS_WHY"),
-                "confirm": _i18n_ref("ACTION_ENGINE_MOUNTS_CONFIRM"),
-                "falsify": _i18n_ref("ACTION_ENGINE_MOUNTS_FALSIFY"),
+                "what": i18n_ref("ACTION_ENGINE_MOUNTS_WHAT"),
+                "why": i18n_ref("ACTION_ENGINE_MOUNTS_WHY"),
+                "confirm": i18n_ref("ACTION_ENGINE_MOUNTS_CONFIRM"),
+                "falsify": i18n_ref("ACTION_ENGINE_MOUNTS_FALSIFY"),
                 "eta": "15-30 min",
             },
             {
                 "action_id": "engine_combustion_quality",
-                "what": _i18n_ref("ACTION_ENGINE_COMBUSTION_WHAT"),
-                "why": _i18n_ref("ACTION_ENGINE_COMBUSTION_WHY"),
-                "confirm": _i18n_ref("ACTION_ENGINE_COMBUSTION_CONFIRM"),
-                "falsify": _i18n_ref("ACTION_ENGINE_COMBUSTION_FALSIFY"),
+                "what": i18n_ref("ACTION_ENGINE_COMBUSTION_WHAT"),
+                "why": i18n_ref("ACTION_ENGINE_COMBUSTION_WHY"),
+                "confirm": i18n_ref("ACTION_ENGINE_COMBUSTION_CONFIRM"),
+                "falsify": i18n_ref("ACTION_ENGINE_COMBUSTION_FALSIFY"),
                 "eta": "10-20 min",
             },
         ]
-    fallback_why = _i18n_ref("ACTION_GENERAL_FALLBACK_WHY")
+    fallback_why = i18n_ref("ACTION_GENERAL_FALLBACK_WHY")
     if weak_spatial_separation:
-        fallback_why = _i18n_ref("ACTION_GENERAL_WEAK_SPATIAL_WHY")
+        fallback_why = i18n_ref("ACTION_GENERAL_WEAK_SPATIAL_WHY")
     return [
         {
             "action_id": "general_mechanical_inspection",
-            "what": _i18n_ref("ACTION_GENERAL_INSPECTION_WHAT"),
+            "what": i18n_ref("ACTION_GENERAL_INSPECTION_WHAT"),
             "why": fallback_why,
-            "confirm": _i18n_ref("ACTION_GENERAL_INSPECTION_CONFIRM"),
-            "falsify": _i18n_ref("ACTION_GENERAL_INSPECTION_FALSIFY"),
+            "confirm": i18n_ref("ACTION_GENERAL_INSPECTION_CONFIRM"),
+            "falsify": i18n_ref("ACTION_GENERAL_INSPECTION_FALSIFY"),
             "eta": "20-35 min",
         },
     ]
@@ -676,7 +669,7 @@ def suppress_engine_aliases(
     """Suppress engine findings likely to be aliases of stronger wheel findings."""
     best_wheel_conf = max(
         (
-            _as_float(finding.get("confidence_0_to_1")) or 0.0
+            _as_float(finding.get("confidence")) or 0.0
             for _, finding in findings
             if _normalized_source(finding) == "wheel/tire"
         ),
@@ -686,10 +679,10 @@ def suppress_engine_aliases(
         for index, (ranking_score, finding) in enumerate(findings):
             if _normalized_source(finding) != "engine":
                 continue
-            eng_conf = _as_float(finding.get("confidence_0_to_1")) or 0.0
+            eng_conf = _as_float(finding.get("confidence")) or 0.0
             if eng_conf <= best_wheel_conf * _HARMONIC_ALIAS_RATIO:
                 suppressed = eng_conf * _ENGINE_ALIAS_SUPPRESSION
-                finding["confidence_0_to_1"] = suppressed
+                finding["confidence"] = suppressed
                 new_ranking_score = ranking_score * _ENGINE_ALIAS_SUPPRESSION
                 finding["_ranking_score"] = new_ranking_score
                 findings[index] = (new_ranking_score, finding)
@@ -697,7 +690,7 @@ def suppress_engine_aliases(
     valid = [
         item[1]
         for item in findings
-        if (_as_float(item[1].get("confidence_0_to_1")) or 0.0) >= min_confidence
+        if (_as_float(item[1].get("confidence")) or 0.0) >= min_confidence
     ]
     return valid[:5]
 
@@ -963,7 +956,7 @@ def assemble_order_finding(
     )
 
     ref_text = ", ".join(sorted(match.ref_sources))
-    evidence = _i18n_ref(
+    evidence = i18n_ref(
         "EVIDENCE_ORDER_TRACKED",
         order_label=_order_label(hypothesis.order, hypothesis.order_label_base),
         matched=match.matched,
@@ -1006,9 +999,9 @@ def assemble_order_finding(
             "name": "vibration_strength_db",
             "value": absolute_strength_db,
             "units": "dB",
-            "definition": _i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
+            "definition": i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
         },
-        "confidence_0_to_1": confidence,
+        "confidence": confidence,
         "quick_checks": quick_checks,
         "matched_points": match.matched_points,
         "location_hotspot": hotspot_dict,
@@ -1040,7 +1033,7 @@ def assemble_order_finding(
             "phases_with_evidence": phases_with_evidence,
         },
         "next_sensor_move": (
-            actions[0].get("what") if actions else _i18n_ref("NEXT_SENSOR_MOVE_DEFAULT")
+            actions[0].get("what") if actions else i18n_ref("NEXT_SENSOR_MOVE_DEFAULT")
         ),
         "actions": actions,
         "_ranking_score": ranking_score,

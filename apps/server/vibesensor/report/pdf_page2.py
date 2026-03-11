@@ -379,7 +379,7 @@ def _draw_additional_observations(
         if not order_label:
             order_label = tr("SOURCE_TRANSIENT_IMPACT")
         try:
-            confidence = float(finding.get("confidence_0_to_1") or 0.0)  # type: ignore[arg-type]
+            confidence = float(finding.get("confidence") or 0.0)  # type: ignore[arg-type]
         except (ValueError, TypeError):
             confidence = 0.0
         if not isfinite(confidence):

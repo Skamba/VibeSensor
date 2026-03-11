@@ -14,6 +14,7 @@ import pytest
 
 from vibesensor.analysis import build_findings_for_samples, summarize_run_data
 from vibesensor.history_db import HistoryDB
+from vibesensor.history_db._schema import ANALYSIS_SCHEMA_VERSION
 from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
@@ -183,25 +184,6 @@ class TestWorkerThreadRace:
         logger.schedule_post_analysis("run-2")
         logger.wait_for_post_analysis(timeout_s=2.0)
         assert seen == ["run-1", "run-2"]
-
-
-# ---------------------------------------------------------------------------
-# Fix 6: analysis_is_current staleness check
-# ---------------------------------------------------------------------------
-
-
-def test_analysis_is_current(db: HistoryDB) -> None:
-    """Fix 6: analysis_is_current returns True when version matches."""
-    db.create_run("r1", _START, {})
-    db.finalize_run("r1", _END)
-    db.store_analysis("r1", {"findings": []})
-    assert db.analysis_is_current("r1") is True
-
-
-def test_analysis_is_not_current_without_analysis(db: HistoryDB) -> None:
-    """Fix 6: analysis_is_current returns False for unanalyzed run."""
-    db.create_run("r1", _START, {})
-    assert db.analysis_is_current("r1") is False
 
 
 # ---------------------------------------------------------------------------
@@ -393,7 +375,8 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
 
     db.store_analysis(run_id, summary)
     assert db.get_run(run_id)["status"] == "complete"
-    assert db.analysis_is_current(run_id)
+    run = db.get_run(run_id)
+    assert int(run.get("analysis_version") or 0) >= ANALYSIS_SCHEMA_VERSION
 
     run = db.get_run(run_id)
     assert run is not None

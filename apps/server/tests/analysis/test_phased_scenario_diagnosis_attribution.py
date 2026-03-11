@@ -99,7 +99,7 @@ class TestWheelVsEngineDrivelineGating:
         ]
         if findings:
             source = str(
-                max(findings, key=lambda f: float(f.get("confidence_0_to_1") or 0)).get(
+                max(findings, key=lambda f: float(f.get("confidence") or 0)).get(
                     "suspected_source",
                 )
                 or "",
@@ -131,7 +131,7 @@ class TestConfidenceWithSpatialAmbiguity:
         conf = float(
             extract_top_finding(
                 summarize_run_data(standard_metadata(), samples, include_samples=False),
-            ).get("confidence_0_to_1")
+            ).get("confidence")
             or 0,
         )
         assert conf < 0.70
@@ -154,7 +154,7 @@ class TestConfidenceWithSpatialAmbiguity:
                     ),
                     include_samples=False,
                 ),
-            ).get("confidence_0_to_1")
+            ).get("confidence")
             or 0,
         )
         assert conf >= 0.40

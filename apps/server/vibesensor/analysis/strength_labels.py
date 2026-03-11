@@ -164,7 +164,7 @@ def _select_reason_key(
 
 
 def certainty_label(
-    confidence_0_to_1: float,
+    confidence: float,
     *,
     lang: str = "en",
     steady_speed: bool = False,
@@ -177,7 +177,7 @@ def certainty_label(
 
     Parameters
     ----------
-    confidence_0_to_1:
+    confidence:
         Analysis confidence from 0.0 to 1.0.
     lang:
         ``"en"`` or ``"nl"``.
@@ -205,14 +205,14 @@ def certainty_label(
     """
     # Guard non-finite inputs before any arithmetic so that all downstream
     # expressions (pct, threshold comparisons) work on a valid float.
-    if not _isfinite(confidence_0_to_1):
-        confidence_0_to_1 = 0.0
-    pct = max(0.0, min(100.0, confidence_0_to_1 * 100.0))
+    if not _isfinite(confidence):
+        confidence = 0.0
+    pct = max(0.0, min(100.0, confidence * 100.0))
     pct_text = f"{pct:.0f}%"
 
-    if confidence_0_to_1 >= CONFIDENCE_HIGH_THRESHOLD:
+    if confidence >= CONFIDENCE_HIGH_THRESHOLD:
         level_key, label_en, label_nl = "high", "High", "Hoog"
-    elif confidence_0_to_1 >= CONFIDENCE_MEDIUM_THRESHOLD:
+    elif confidence >= CONFIDENCE_MEDIUM_THRESHOLD:
         level_key, label_en, label_nl = "medium", "Medium", "Gemiddeld"
     else:
         level_key, label_en, label_nl = "low", "Low", "Laag"
@@ -221,7 +221,7 @@ def certainty_label(
 
     label = label_nl if lang == "nl" else label_en
     reason_key = _select_reason_key(
-        confidence_0_to_1,
+        confidence,
         steady_speed=steady_speed,
         weak_spatial=weak_spatial,
         sensor_count=sensor_count,
@@ -259,7 +259,7 @@ TIER_B_CEILING = 0.40  # Guarded: hypotheses only, verification steps
 
 
 def certainty_tier(
-    confidence_0_to_1: float,
+    confidence: float,
     *,
     strength_band_key: str | None = None,
 ) -> str:
@@ -267,7 +267,7 @@ def certainty_tier(
 
     Parameters
     ----------
-    confidence_0_to_1:
+    confidence:
         Analysis confidence from 0.0 to 1.0.
     strength_band_key:
         Optional vibration-strength band key (e.g. ``"negligible"``).
@@ -284,11 +284,11 @@ def certainty_tier(
     # Non-finite confidence (inf/nan/-inf) must not flow through the tier
     # guards: float('inf') would pass both <= checks and return "C" (highest
     # tier), silently granting full diagnostic permissions to garbage input.
-    if not _isfinite(confidence_0_to_1):
-        confidence_0_to_1 = 0.0
-    if confidence_0_to_1 <= TIER_A_CEILING:
+    if not _isfinite(confidence):
+        confidence = 0.0
+    if confidence <= TIER_A_CEILING:
         return "A"
-    if confidence_0_to_1 <= TIER_B_CEILING:
+    if confidence <= TIER_B_CEILING:
         return "B"
     # Cap at B when the vibration strength is negligible — recommending
     # specific repairs for a barely-detectable signal is misleading.

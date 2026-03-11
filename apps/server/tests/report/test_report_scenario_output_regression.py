@@ -114,7 +114,7 @@ class TestReferenceFindingDistinguishability:
             reference,
             {
                 "finding_id": "F001",
-                "confidence_0_to_1": 0.80,
+                "confidence": 0.80,
                 "suspected_source": "wheel/tire",
                 "severity": "diagnostic",
             },
@@ -139,5 +139,5 @@ class TestReferenceFindingDistinguishability:
             evidence_summary="Speed data missing",
             quick_checks=[],
         )
-        assert "confidence_0_to_1" in reference
-        assert reference["confidence_0_to_1"] is None
+        assert "confidence" in reference
+        assert reference["confidence"] is None

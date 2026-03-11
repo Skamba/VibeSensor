@@ -39,7 +39,7 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
                     "suspected_source": "wheel/tire",
                     "strongest_location": "front-left",
                     "strongest_speed_band": "50-80 km/h",
-                    "confidence_0_to_1": 0.71,
+                    "confidence": 0.71,
                     "evidence_metrics": {"vibration_strength_db": 21.0},
                 },
             ],

@@ -419,20 +419,6 @@ class HistoryDB:
 
     # -- run reads ------------------------------------------------------------
 
-    def analysis_is_current(self, run_id: str) -> bool:
-        with self._cursor(commit=False) as cur:
-            cur.execute(
-                "SELECT analysis_version FROM runs WHERE run_id = ?",
-                (run_id,),
-            )
-            row = cur.fetchone()
-        if row is None:
-            return False
-        try:
-            return int(row[0]) >= ANALYSIS_SCHEMA_VERSION
-        except (ValueError, TypeError):
-            return False
-
     def list_runs(self, limit: int = 500) -> list[JsonObject]:
         with self._cursor(commit=False) as cur:
             limit = max(limit, 0)

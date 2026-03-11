@@ -87,7 +87,6 @@ def _make_summary(
         "source": source,
         "suspected_source": source,
         "confidence": confidence,
-        "confidence_0_to_1": confidence,
         "strongest_location": location,
         "strongest_speed_band": speed_band,
         "signatures_observed": ["1x wheel"],

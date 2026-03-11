@@ -135,8 +135,6 @@ def build_runtime(config: AppConfig) -> RuntimeState:
             sensor_model=config.logging.sensor_model,
             default_sample_rate_hz=config.processing.sample_rate_hz,
             fft_window_size_samples=FFT_N,
-            fft_window_type="hann",
-            peak_picker_method="canonical_strength_metrics_module",
             accel_scale_g_per_lsb=accel_scale_g_per_lsb,
             persist_history_db=config.logging.persist_history_db,
         ),

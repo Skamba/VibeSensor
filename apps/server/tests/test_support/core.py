@@ -347,7 +347,7 @@ def extract_pdf_text(pdf_bytes: bytes) -> str:
 _FINDING_REQUIRED_FIELDS = (
     "finding_id",
     "suspected_source",
-    "confidence_0_to_1",
+    "confidence",
     "evidence_summary",
     "frequency_hz_or_order",
 )
@@ -418,7 +418,7 @@ def assert_finding_contract(
             f"Missing required field '{field_name}' in finding: {list(finding.keys())}"
         )
 
-    _assert_confidence_valid(finding, "confidence_0_to_1", confidence_range)
+    _assert_confidence_valid(finding, "confidence", confidence_range)
 
     if expected_source is not None:
         _assert_source_contains(finding, "suspected_source", expected_source)

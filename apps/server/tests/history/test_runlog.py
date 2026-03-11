@@ -32,8 +32,6 @@ def _make_run_metadata(*, run_id: str = "r1", **overrides) -> dict:
         "raw_sample_rate_hz": 200,
         "feature_interval_s": 0.5,
         "fft_window_size_samples": 256,
-        "fft_window_type": "hann",
-        "peak_picker_method": "max_peak_amp_across_axes",
         "accel_scale_g_per_lsb": 1.0 / 256.0,
     }
     defaults.update(overrides)

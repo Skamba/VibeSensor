@@ -85,9 +85,6 @@ class FakeHistoryDB:
         result["sample_count"] = len(self.samples)
         return result
 
-    def analysis_is_current(self, run_id: str) -> bool:
-        return run_id == "run-1" and self.analysis_version == ANALYSIS_SCHEMA_VERSION
-
     def iter_run_samples(self, run_id: str, batch_size: int = 1000):
         if run_id != "run-1":
             return
@@ -186,6 +183,8 @@ class FakeState:
                         "max_write_duration_s": 0.0,
                     },
                 )(),
+                "last_write_duration_s": 0.0,
+                "max_write_duration_s": 0.0,
                 "start_logging": lambda self: {},
                 "stop_logging": lambda self: {},
             },

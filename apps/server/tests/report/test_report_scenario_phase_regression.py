@@ -236,7 +236,7 @@ class TestOrderFindingsPhaseFiltering:
         assert "findings" in summary
         for finding in summary["findings"]:
             assert "finding_id" in finding
-            assert "confidence_0_to_1" in finding
+            assert "confidence" in finding
 
 
 class TestPhaseSpeedBreakdown:

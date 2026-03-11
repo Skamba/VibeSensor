@@ -17,7 +17,7 @@ _F_ORDER_CAUSE: dict[str, Any] = {
     "suspected_source": "wheel/tire",
     "strongest_location": "front-left",
     "strongest_speed_band": "40-60 km/h",
-    "confidence_0_to_1": 0.8,
+    "confidence": 0.8,
     "signatures_observed": ["1x wheel order"],
 }
 

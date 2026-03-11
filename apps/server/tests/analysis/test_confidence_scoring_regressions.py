@@ -67,7 +67,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 1.0,
                 {
                     "suspected_source": "wheel/tire",
-                    "confidence_0_to_1": 0.80,
+                    "confidence": 0.80,
                     "_ranking_score": 1.0,
                 },
             ),
@@ -75,7 +75,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 0.9,
                 {
                     "suspected_source": "wheel/tire",
-                    "confidence_0_to_1": 0.70,
+                    "confidence": 0.70,
                     "_ranking_score": 0.9,
                 },
             ),
@@ -84,7 +84,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 0.7,
                 {
                     "suspected_source": "engine",
-                    "confidence_0_to_1": 0.40,
+                    "confidence": 0.40,
                     "_ranking_score": 0.7,
                 },
             ),
@@ -92,7 +92,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 0.6,
                 {
                     "suspected_source": "engine",
-                    "confidence_0_to_1": 0.38,
+                    "confidence": 0.38,
                     "_ranking_score": 0.6,
                 },
             ),
@@ -100,7 +100,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 0.5,
                 {
                     "suspected_source": "engine",
-                    "confidence_0_to_1": 0.35,
+                    "confidence": 0.35,
                     "_ranking_score": 0.5,
                 },
             ),
@@ -109,7 +109,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 0.4,
                 {
                     "suspected_source": "driveline",
-                    "confidence_0_to_1": 0.55,
+                    "confidence": 0.55,
                     "_ranking_score": 0.4,
                 },
             ),
@@ -117,7 +117,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 0.3,
                 {
                     "suspected_source": "driveline",
-                    "confidence_0_to_1": 0.50,
+                    "confidence": 0.50,
                     "_ranking_score": 0.3,
                 },
             ),
@@ -134,7 +134,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 1.0,
                 {
                     "suspected_source": "wheel/tire",
-                    "confidence_0_to_1": 0.80,
+                    "confidence": 0.80,
                     "_ranking_score": 1.0,
                 },
             ),
@@ -142,7 +142,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 0.5,
                 {
                     "suspected_source": "engine",
-                    "confidence_0_to_1": 0.30,
+                    "confidence": 0.30,
                     "_ranking_score": 0.5,
                 },
             ),
