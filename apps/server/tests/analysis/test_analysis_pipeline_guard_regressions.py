@@ -8,7 +8,7 @@ Covers:
   2. findings.py _compute_effective_match_rate iterates all speed bins
   3. phase_segmentation.py math.isfinite guard for t_s=0.0
   4. helpers.py _speed_bin_label handles negative and NaN kmh
-  5. update_manager.py _hash_tree survives file deletion mid-scan
+  5. update/status.py hash_tree survives file deletion mid-scan
   6. metrics_log.py run() snapshots session state under lock
 """
 
@@ -23,7 +23,7 @@ import pytest
 from vibesensor.analysis.helpers import _speed_bin_label
 from vibesensor.analysis.order_analysis import _compute_effective_match_rate
 from vibesensor.metrics_log import MetricsLogger
-from vibesensor.update.status import _hash_tree
+from vibesensor.update.status import hash_tree
 
 # ------------------------------------------------------------------
 # 1. Burstiness for near-zero median
@@ -120,18 +120,18 @@ class TestSpeedBinLabelEdgeCases:
 
 
 # ------------------------------------------------------------------
-# 5. _hash_tree — survives file deletion mid-scan
+# 5. hash_tree — survives file deletion mid-scan
 # ------------------------------------------------------------------
 
 
 class TestHashTreeFileDeletedMidScan:
-    """_hash_tree must not crash if a file is deleted between rglob and open."""
+    """hash_tree must not crash if a file is deleted between rglob and open."""
 
     def test_deleted_file_skipped_gracefully(self, tmp_path: Path) -> None:
         (tmp_path / "a.txt").write_text("hello")
         (tmp_path / "b.txt").write_text("world")
 
-        h1 = _hash_tree(tmp_path, ignore_names=set())
+        h1 = hash_tree(tmp_path, ignore_names=set())
         assert len(h1) == 64  # SHA256 hex digest
 
         original_path_open = Path.open
@@ -142,16 +142,16 @@ class TestHashTreeFileDeletedMidScan:
             return original_path_open(self, *args, **kwargs)
 
         with patch.object(Path, "open", side_effect=failing_path_open, autospec=True):
-            h2 = _hash_tree(tmp_path, ignore_names=set())
+            h2 = hash_tree(tmp_path, ignore_names=set())
             assert len(h2) == 64
             assert h2 != h1
 
     def test_empty_dir_returns_empty(self, tmp_path: Path) -> None:
-        result = _hash_tree(tmp_path, ignore_names=set())
+        result = hash_tree(tmp_path, ignore_names=set())
         assert isinstance(result, str)
 
     def test_nonexistent_dir_returns_empty_string(self, tmp_path: Path) -> None:
-        result = _hash_tree(tmp_path / "nonexistent", ignore_names=set())
+        result = hash_tree(tmp_path / "nonexistent", ignore_names=set())
         assert result == ""
 
 

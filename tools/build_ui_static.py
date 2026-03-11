@@ -7,32 +7,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-
-def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
-    """Deterministic SHA-256 of a directory tree (sorted, filtered)."""
-    if not root.exists():
-        return ""
-    hasher = hashlib.sha256()
-    for path in sorted(p for p in root.rglob("*") if p.is_file()):
-        relative = path.relative_to(root)
-        if any(part in ignore_names for part in relative.parts):
-            continue
-        hasher.update(str(relative.as_posix()).encode("utf-8"))
-        hasher.update(b"\0")
-        try:
-            with path.open("rb") as handle:
-                while True:
-                    chunk = handle.read(65536)
-                    if not chunk:
-                        break
-                    hasher.update(chunk)
-        except OSError:
-            continue
-        hasher.update(b"\0")
-    return hasher.hexdigest()
-
-
-UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
+from vibesensor.update.status import UI_BUILD_METADATA_FILE, hash_tree
 
 
 def _run(command: list[str], cwd: Path) -> None:
@@ -67,11 +42,11 @@ def main() -> None:
     shutil.rmtree(static_dir, ignore_errors=True)
     static_dir.mkdir(parents=True, exist_ok=True)
     shutil.copytree(dist_dir, static_dir, dirs_exist_ok=True)
-    ui_source_hash = _hash_tree(
+    ui_source_hash = hash_tree(
         ui_dir,
         ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
     )
-    static_assets_hash = _hash_tree(static_dir, ignore_names={UI_BUILD_METADATA_FILE})
+    static_assets_hash = hash_tree(static_dir, ignore_names={UI_BUILD_METADATA_FILE})
     git_commit = (
         subprocess.run(
             ["git", "-C", str(repo_root), "rev-parse", "HEAD"],

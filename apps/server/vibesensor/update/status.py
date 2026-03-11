@@ -252,7 +252,8 @@ UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 _PACKAGED_STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
-def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
+def hash_tree(root: Path, *, ignore_names: set[str]) -> str:
+    """Deterministic SHA-256 of a directory tree (sorted, filtered)."""
     if not root.exists():
         return ""
     hasher = hashlib.sha256()
@@ -305,11 +306,11 @@ def collect_runtime_details(repo: Path) -> JsonObject:
             LOGGER.debug("git rev-parse failed; commit hash unavailable", exc_info=True)
 
     has_packaged_static = (_PACKAGED_STATIC_DIR / "index.html").exists()
-    ui_source_hash = _hash_tree(
+    ui_source_hash = hash_tree(
         ui_root,
         ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
     )
-    static_assets_hash = _hash_tree(static_root, ignore_names={UI_BUILD_METADATA_FILE})
+    static_assets_hash = hash_tree(static_root, ignore_names={UI_BUILD_METADATA_FILE})
 
     metadata: JsonObject = {}
     if metadata_path.is_file():
