@@ -231,9 +231,7 @@ class PostAnalysisWorker:
             language = str(metadata.get("language") or "en")
 
             sample_iter = (
-                sample
-                for batch in db.iter_run_samples(run_id, batch_size=1024)
-                for sample in batch
+                sample for batch in db.iter_run_samples(run_id, batch_size=1024) for sample in batch
             )
             samples, total_sample_count, stride = bounded_sample(
                 sample_iter,

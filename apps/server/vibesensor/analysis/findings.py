@@ -244,9 +244,7 @@ def collect_order_frequencies(order_findings: list[Finding]) -> set[float]:
     """Collect matched order frequencies used to suppress duplicate persistent findings."""
     order_freqs: set[float] = set()
     for order_finding in order_findings:
-        if (
-            _as_float(order_finding.get("confidence")) or 0.0
-        ) < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
+        if (_as_float(order_finding.get("confidence")) or 0.0) < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
             continue
         points = order_finding.get("matched_points")
         if not isinstance(points, list):

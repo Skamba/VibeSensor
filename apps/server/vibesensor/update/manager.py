@@ -396,4 +396,3 @@ class UpdateManager:
             config=self._installer_config,
         )
         return await installer.rollback()
-
