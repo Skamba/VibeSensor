@@ -7,7 +7,30 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from vibesensor.update.status import _hash_tree
+
+def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
+    """Deterministic SHA-256 of a directory tree (sorted, filtered)."""
+    if not root.exists():
+        return ""
+    hasher = hashlib.sha256()
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        relative = path.relative_to(root)
+        if any(part in ignore_names for part in relative.parts):
+            continue
+        hasher.update(str(relative.as_posix()).encode("utf-8"))
+        hasher.update(b"\0")
+        try:
+            with path.open("rb") as handle:
+                while True:
+                    chunk = handle.read(65536)
+                    if not chunk:
+                        break
+                    hasher.update(chunk)
+        except OSError:
+            continue
+        hasher.update(b"\0")
+    return hasher.hexdigest()
+
 
 UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 
