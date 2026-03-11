@@ -486,27 +486,6 @@
         },
         "strength_metrics": {
           "$ref": "#/$defs/VibrationStrengthMetrics"
-        },
-        "x": {
-          "items": {
-            "type": "number"
-          },
-          "title": "X",
-          "type": "array"
-        },
-        "y": {
-          "items": {
-            "type": "number"
-          },
-          "title": "Y",
-          "type": "array"
-        },
-        "z": {
-          "items": {
-            "type": "number"
-          },
-          "title": "Z",
-          "type": "array"
         }
       },
       "title": "SpectrumSeriesPayload",
