@@ -8,9 +8,6 @@ ap:
 server:
   port: 8000
 
-logging:
-  metrics_log_path: data/metrics.jsonl
-
 gps:
   gps_enabled: false  # Docker containers do not run a gpsd daemon
 

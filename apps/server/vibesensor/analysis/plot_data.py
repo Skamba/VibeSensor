@@ -19,7 +19,6 @@ from .plot_series import (
     build_plot_series,
 )
 from .plot_spectrum import (
-    PeakSampleScan,
     SpectrogramResult,
     aggregate_fft_spectrum,
     aggregate_fft_spectrum_raw,
@@ -46,81 +45,6 @@ class PlotDataResult(TypedDict):
     peaks_table: list[PeakTableRow]
     phase_segments: list[PhaseSegmentOut]
     phase_boundaries: list[PhaseBoundary]
-
-
-def _aggregate_fft_spectrum(
-    samples: list[Sample],
-    *,
-    freq_bin_hz: float = 2.0,
-    aggregation: str = "persistence",
-    run_noise_baseline_g: float | None = None,
-    peak_scan: PeakSampleScan | None = None,
-) -> list[tuple[float, float]]:
-    return aggregate_fft_spectrum(
-        samples,
-        freq_bin_hz=freq_bin_hz,
-        aggregation=aggregation,
-        run_noise_baseline_g=run_noise_baseline_g,
-        peak_scan=peak_scan,
-    )
-
-
-def _aggregate_fft_spectrum_raw(
-    samples: list[Sample],
-    *,
-    freq_bin_hz: float = 2.0,
-    run_noise_baseline_g: float | None = None,
-    peak_scan: PeakSampleScan | None = None,
-) -> list[tuple[float, float]]:
-    return aggregate_fft_spectrum_raw(
-        samples,
-        freq_bin_hz=freq_bin_hz,
-        run_noise_baseline_g=run_noise_baseline_g,
-        peak_scan=peak_scan,
-    )
-
-
-def _spectrogram_from_peaks(
-    samples: list[Sample],
-    *,
-    run_noise_baseline_g: float | None = None,
-    peak_scan: PeakSampleScan | None = None,
-) -> SpectrogramResult:
-    return spectrogram_from_peaks(
-        samples,
-        run_noise_baseline_g=run_noise_baseline_g,
-        peak_scan=peak_scan,
-    )
-
-
-def _spectrogram_from_peaks_raw(
-    samples: list[Sample],
-    *,
-    run_noise_baseline_g: float | None = None,
-    peak_scan: PeakSampleScan | None = None,
-) -> SpectrogramResult:
-    return spectrogram_from_peaks_raw(
-        samples,
-        run_noise_baseline_g=run_noise_baseline_g,
-        peak_scan=peak_scan,
-    )
-
-
-def _top_peaks_table_rows(
-    samples: list[Sample],
-    *,
-    top_n: int = 12,
-    freq_bin_hz: float = 1.0,
-    run_noise_baseline_g: float | None = None,
-    peak_scan: PeakSampleScan | None = None,
-) -> list[PeakTableRow]:
-    return top_peaks_table_rows(
-        samples,
-        top_n=top_n,
-        freq_bin_hz=freq_bin_hz,
-        run_noise_baseline_g=run_noise_baseline_g,
-        peak_scan=peak_scan,
-    )
 
 
 def _plot_data(
@@ -157,27 +81,27 @@ def _plot_data(
         matched_amp_vs_speed=series.matched_amp_vs_speed,
         freq_vs_speed_by_finding=series.freq_vs_speed_by_finding,
         steady_speed_distribution=series.steady_speed_distribution,
-        fft_spectrum=_aggregate_fft_spectrum(
+        fft_spectrum=aggregate_fft_spectrum(
             samples,
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=peak_scan,
         ),
-        fft_spectrum_raw=_aggregate_fft_spectrum_raw(
+        fft_spectrum_raw=aggregate_fft_spectrum_raw(
             samples,
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=peak_scan,
         ),
-        peaks_spectrogram=_spectrogram_from_peaks(
+        peaks_spectrogram=spectrogram_from_peaks(
             samples,
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=peak_scan,
         ),
-        peaks_spectrogram_raw=_spectrogram_from_peaks_raw(
+        peaks_spectrogram_raw=spectrogram_from_peaks_raw(
             samples,
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=peak_scan,
         ),
-        peaks_table=_top_peaks_table_rows(
+        peaks_table=top_peaks_table_rows(
             samples,
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=peak_scan,

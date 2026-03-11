@@ -19,9 +19,9 @@ class TestUpdateApiEndpoints:
         state.apply_speed_source_settings = MagicMock()
         router = create_router(state)
         paths = [route.path for route in router.routes]
-        assert "/api/settings/update/status" in paths
-        assert "/api/settings/update/start" in paths
-        assert "/api/settings/update/cancel" in paths
+        assert "/api/update/status" in paths
+        assert "/api/update/start" in paths
+        assert "/api/update/cancel" in paths
 
     def test_start_request_model_validation(self) -> None:
         from vibesensor.api_models import UpdateStartRequest

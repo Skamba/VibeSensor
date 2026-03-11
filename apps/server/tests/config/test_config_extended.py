@@ -101,7 +101,7 @@ def _write_config(path: Path, payload: dict) -> None:
 
 def test_load_config_ap_self_heal_defaults(tmp_path: Path) -> None:
     config_path = tmp_path / "config.yaml"
-    _write_config(config_path, {"logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"}})
+    _write_config(config_path, {})
 
     result = load_config(config_path)
 
@@ -114,7 +114,6 @@ def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
     _write_config(
         config_path,
         {
-            "logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"},
             "ap": {
                 "self_heal": {
                     "enabled": True,

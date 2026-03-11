@@ -66,11 +66,7 @@ def build_release_smoke_config(
     data["ap"]["self_heal"]["state_file"] = str(runtime_data / "hotspot-self-heal-state.json")
 
     data.setdefault("logging", {})
-    data["logging"]["metrics_log_path"] = str(runtime_data / "metrics.jsonl")
     data["logging"]["history_db_path"] = str(runtime_data / "history.db")
-
-    data.setdefault("storage", {})
-    data["storage"]["clients_json_path"] = str(runtime_data / "clients.json")
 
     data.setdefault("update", {})
     data["update"]["rollback_dir"] = str(rollback_dir)

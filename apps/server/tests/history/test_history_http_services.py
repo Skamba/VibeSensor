@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 from vibesensor.exceptions import AnalysisNotReadyError
-from vibesensor.history_services.exports import HistoryExportArchiveBuilder, build_run_details_json
+from vibesensor.history_services.exports import HistoryExportService, build_run_details_json
 from vibesensor.history_services.reports import HistoryReportPdfCache, HistoryReportService
 from vibesensor.history_services.runs import HistoryRunService, raise_delete_run_error
 
@@ -128,13 +128,13 @@ def test_build_run_details_json_sanitizes_non_finite_floats() -> None:
 
 
 def test_export_archive_builder_creates_csv_and_json_entries() -> None:
-    builder = HistoryExportArchiveBuilder(
+    service = HistoryExportService(
         _HistoryDbStub(
             samples=[{"run_id": "run-1", "t_s": 1.0, "custom": "x"}],
         ),
     )
 
-    spool = builder.build_zip_file(
+    spool = service._build_zip_file(
         {
             "run_id": "run-1",
             "analysis": {"score": 1, "_internal": "secret"},

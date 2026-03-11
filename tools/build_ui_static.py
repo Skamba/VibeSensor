@@ -67,6 +67,7 @@ def main() -> None:
     if should_run_npm_ci:
         _run(["npm", "ci"], cwd=ui_dir)
         lock_hash_file.write_text(lock_hash, encoding="utf-8")
+    _run(["npm", "run", "typecheck"], cwd=ui_dir)
     _run(["npm", "run", "build"], cwd=ui_dir)
 
     shutil.rmtree(static_dir, ignore_errors=True)

@@ -13,7 +13,7 @@ from typing import Any, cast
 
 import numpy as np
 
-from vibesensor.contracts import NETWORK_PORTS
+from vibesensor._config_defaults import NETWORK_PORTS
 from vibesensor.protocol import (
     CMD_IDENTIFY,
     MSG_CMD,

@@ -93,14 +93,14 @@ def test_store_analysis_sets_version_and_timestamps(tmp_path: Path) -> None:
     db.close()
 
 
-def test_store_analysis_persists_summary_directly_and_strips_internal_keys(
+def test_store_analysis_persists_summary_directly(
     tmp_path: Path,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})
     db.finalize_run("r1", "2026-01-01T00:01:00Z")
 
-    db.store_analysis("r1", {"lang": "en", "findings": [], "_report_template_data": {"x": 1}})
+    db.store_analysis("r1", {"lang": "en", "findings": []})
 
     with db._cursor(commit=False) as cur:
         cur.execute("SELECT analysis_json FROM runs WHERE run_id = ?", ("r1",))
@@ -109,7 +109,6 @@ def test_store_analysis_persists_summary_directly_and_strips_internal_keys(
     raw = row[0]
     # No envelope — summary stored directly
     assert '"summary"' not in raw
-    assert "_report_template_data" not in raw
     assert '"lang"' in raw
     assert db.get_run("r1").get("analysis") == {"lang": "en", "findings": []}
     db.close()

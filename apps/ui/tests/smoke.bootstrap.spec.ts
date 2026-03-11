@@ -20,10 +20,6 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
       });
     },
     settingsHandler: async (route) => {
-      if (requestPath(route).startsWith("/api/settings/esp-flash/")) {
-        await route.fallback();
-        return;
-      }
       await fulfillJson(route, {});
     },
   });

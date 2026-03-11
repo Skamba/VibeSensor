@@ -9,25 +9,12 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
 from ..report_i18n import tr as _tr
+from .pdf_diagram_render import car_location_diagram
 from .pdf_drawing import _cert_display, _draw_panel, _hex, _norm, _safe, _strength_with_peak
-from .pdf_page2_sections import (
-    render_car_visual_panel as _render_car_visual_panel_impl,
-)
-from .pdf_page2_sections import (
-    render_continued_next_steps_panel as _render_continued_next_steps_panel_impl,
-)
-from .pdf_page2_sections import (
-    render_observations_panel as _render_observations_panel_impl,
-)
-from .pdf_page2_sections import (
-    render_peaks_panel as _render_peaks_panel_impl,
-)
-from .pdf_page2_sections import (
-    render_title_bar as _render_title_bar_impl,
-)
 from .pdf_page_layouts import build_page2_layout
 from .pdf_render_context import PdfRenderContext
 from .pdf_style import (
+    CAR_PANEL_TITLE_RESERVE,
     FONT,
     FONT_B,
     FS_SMALL,
@@ -46,10 +33,82 @@ from .pdf_style import (
 )
 from .pdf_text import _draw_kv, _draw_section_block, _draw_text
 from .report_data import NextStep, PatternEvidence, ReportTemplateData
+from .theme import BMW_LENGTH_MM as _BMW_LENGTH_MM
+from .theme import BMW_WIDTH_MM as _BMW_WIDTH_MM
+
+# -- Aspect-ratio helpers (merged from pdf_layout) ----------------------------
+
+
+def fit_rect_preserve_aspect(
+    src_w: float,
+    src_h: float,
+    box_x: float,
+    box_y: float,
+    box_w: float,
+    box_h: float,
+) -> tuple[float, float, float, float]:
+    """Return (x, y, w, h) fitted inside box while preserving src aspect."""
+    if src_w <= 0 or src_h <= 0:
+        return box_x, box_y, box_w, box_h
+    src_ratio = src_w / src_h
+    box_ratio = box_w / box_h if box_h else src_ratio
+    if box_ratio > src_ratio:
+        h = box_h
+        w = h * src_ratio
+        x = box_x + (box_w - w) / 2
+        y = box_y
+    else:
+        w = box_w
+        h = w / src_ratio
+        x = box_x
+        y = box_y + (box_h - h) / 2
+    return x, y, w, h
+
+
+def assert_aspect_preserved(
+    src_w: float,
+    src_h: float,
+    drawn_w: float,
+    drawn_h: float,
+    tolerance: float = 0.03,
+) -> None:
+    """Raise if aspect ratio deviates more than *tolerance* (3 %)."""
+    if src_w <= 0 or src_h <= 0 or drawn_w <= 0 or drawn_h <= 0:
+        raise AssertionError("Invalid dimensions for aspect ratio check")
+    cross_src = src_w * drawn_h
+    cross_drawn = drawn_w * src_h
+    if abs(cross_drawn - cross_src) > tolerance * cross_src:
+        src_ratio = src_w / src_h
+        drawn_ratio = drawn_w / drawn_h
+        delta = abs(drawn_ratio - src_ratio) / src_ratio
+        raise AssertionError(
+            f"Car visual aspect ratio distorted. src={src_ratio:.4f}, "
+            f"drawn={drawn_ratio:.4f}, delta={delta:.2%}",
+        )
+
+
+# -- Section helpers (merged from pdf_page2_sections) -------------------------
 
 
 def _draw_title_bar(c: Canvas, *, title: str, width: float, page_top: float) -> float:
-    return _render_title_bar_impl(c, title=title, width=width, page_top=page_top)
+    layout = build_page2_layout(
+        width=width,
+        page_top=page_top,
+        has_transient_findings=False,
+        has_next_steps_continued=False,
+    )
+    _draw_panel(
+        c,
+        layout.title_bar.x,
+        layout.title_bar.y,
+        layout.title_bar.w,
+        layout.title_bar.h,
+        fill=SOFT_BG,
+    )
+    c.setFillColor(_hex(TEXT_CLR))
+    c.setFont(FONT_B, 11)
+    c.drawString(MARGIN + 4 * mm, layout.title_bar.y + 3.5 * mm, title)
+    return layout.title_bar.y - GAP  # type: ignore[no-any-return]
 
 
 def _draw_car_visual_panel(
@@ -66,19 +125,40 @@ def _draw_car_visual_panel(
     top_causes: list,
     content_width: float,
 ) -> None:
-    _render_car_visual_panel_impl(
-        c,
-        data,
-        tr_fn=tr_fn,
-        text_fn=text_fn,
-        x=x,
-        y=y,
-        w=w,
-        h=h,
-        location_rows=location_rows,
-        top_causes=top_causes,
-        content_width=content_width,
+    _draw_panel(c, x, y, w, h, tr_fn("EVIDENCE_AND_HOTSPOTS"))
+    layout = build_page2_layout(
+        width=content_width,
+        page_top=PAGE_H - MARGIN,
+        has_transient_findings=False,
+        has_next_steps_continued=False,
     )
+    car_layout = layout.car_panel
+    box_x = car_layout.box_x if x == MARGIN else x + 5 * mm
+    box_y = car_layout.box_y if x == MARGIN else y + 5 * mm
+    box_w = car_layout.box_w if x == MARGIN else w - 10 * mm
+    box_h = car_layout.box_h if x == MARGIN else h - CAR_PANEL_TITLE_RESERVE
+
+    src_w = _BMW_WIDTH_MM
+    src_h = _BMW_LENGTH_MM
+    _dx, _dy, draw_w, draw_h = fit_rect_preserve_aspect(src_w, src_h, box_x, box_y, box_w, box_h)
+    assert_aspect_preserved(src_w, src_h, draw_w, draw_h, tolerance=0.03)
+
+    render_summary = {
+        "sensor_locations": data.sensor_locations,
+        "sensor_intensity_by_location": data.sensor_intensity_by_location,
+    }
+    findings = data.findings
+    diagram = car_location_diagram(
+        top_causes or (findings if isinstance(findings, list) else []),  # type: ignore[arg-type]
+        render_summary,
+        location_rows,
+        content_width=content_width,
+        tr=tr_fn,
+        text_fn=text_fn,
+        diagram_width=box_w,
+        diagram_height=box_h,
+    )
+    diagram.drawOn(c, box_x, box_y)
 
 
 def _draw_pattern_evidence(
@@ -322,13 +402,16 @@ def _draw_continued_next_steps(
         return
     from .pdf_page1 import _draw_next_steps_table
 
-    _render_continued_next_steps_panel_impl(
+    panel = layout.continued_next_steps
+    _draw_panel(c, panel.x, panel.y, panel.w, panel.h, tr("NEXT_STEPS"))
+    _draw_next_steps_table(
         c,
-        panel=layout.continued_next_steps,
-        next_steps_continued=next_steps_continued,
+        panel.x + 4 * mm,
+        panel.y + panel.h - 11 * mm,
+        panel.w - 8 * mm,
+        panel.y + 3 * mm,
+        next_steps_continued,
         start_number=start_number,
-        tr=tr,
-        draw_next_steps_table=_draw_next_steps_table,
     )
 
 
@@ -389,15 +472,37 @@ def _page2(
         tr,
     )
 
-    _render_peaks_panel_impl(c, data, tr=tr, layout=layout, draw_peaks_table=_draw_peaks_table)
-
-    obs_y = _render_observations_panel_impl(
+    _draw_panel(
         c,
-        layout=layout,
-        transient_findings=transient_findings,  # type: ignore[arg-type]
-        tr=tr,
-        draw_additional_observations=_draw_additional_observations,
+        layout.peaks_panel.x,
+        layout.peaks_panel.y,
+        layout.peaks_panel.w,
+        layout.peaks_panel.h,
+        tr("DIAGNOSTIC_PEAKS"),
     )
+    _draw_peaks_table(
+        c,
+        layout.peaks_panel.x + 4 * mm,
+        layout.peaks_panel.y + layout.peaks_panel.h - 10 * mm,
+        layout.peaks_panel.w - 8 * mm,
+        layout.peaks_panel.y + 3 * mm,
+        data,
+        tr,
+    )
+
+    if layout.observations_panel is not None:
+        _draw_additional_observations(
+            c,
+            layout.observations_panel.x,
+            layout.observations_panel.y,
+            layout.observations_panel.w,
+            layout.observations_panel.h,
+            transient_findings,  # type: ignore[arg-type]
+            tr,
+        )
+        obs_y = layout.observations_panel.y
+    else:
+        obs_y = layout.peaks_panel.y
 
     if next_steps_continued:
         page1_drawn = len(data.next_steps) - len(next_steps_continued)

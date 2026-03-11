@@ -172,7 +172,7 @@ See [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md) for detai
 
 ### Verification
 
-Connect a phone to the `VibeSensor` Wi-Fi (default in `config.example.yaml` is
+Connect a phone to the `VibeSensor` Wi-Fi (the default config uses
 an open AP with empty PSK) and open http://10.4.0.1. Sensor nodes should appear
 within seconds.
 

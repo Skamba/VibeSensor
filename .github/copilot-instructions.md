@@ -28,7 +28,7 @@ Common commands
 - `make test-all` (CI-parity local suite: `python3 tools/tests/run_ci_parallel.py`)
 - `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests` (faster backend-focused CI subset)
 - `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)
-- `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
+- `python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
 - `cd apps/ui && npm ci && npm run typecheck && npm run build`
 - `docker compose build --pull && docker compose up -d`
 

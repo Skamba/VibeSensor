@@ -14,7 +14,7 @@ from test_support.report_helpers import (
 
 from vibesensor.analysis import build_findings_for_samples
 from vibesensor.analysis.phase_segmentation import DrivingPhase
-from vibesensor.analysis.plot_data import _top_peaks_table_rows
+from vibesensor.analysis.plot_peak_table import top_peaks_table_rows as _top_peaks_table_rows
 from vibesensor.analysis.summary_builder import annotate_peaks_with_order_labels
 
 

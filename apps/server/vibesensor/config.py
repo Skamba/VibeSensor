@@ -219,7 +219,6 @@ class LoggingConfig:
     """Run-logging configuration (file path, sample rate, history DB, timeouts)."""
 
     log_metrics: bool
-    metrics_log_path: Path
     metrics_log_hz: int
     no_data_timeout_s: float
     sensor_model: str
@@ -285,7 +284,6 @@ class AppConfig:
     logging: LoggingConfig
     gps: GPSConfig
     update: UpdateConfig
-    clients_json_path: Path
     config_path: Path
     repo_dir: Path = REPO_DIR
 
@@ -324,7 +322,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     processing_cfg = _require_config_section(merged.get("processing", {}), "processing")
     logging_cfg = _require_config_section(merged.get("logging", {}), "logging")
     gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
-    storage_cfg = _require_config_section(merged.get("storage", {}), "storage")
     update_cfg = _require_config_section(merged.get("update", {}), "update")
     default_logging_cfg = _require_config_section(
         DEFAULT_CONFIG.get("logging", {}),
@@ -335,19 +332,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         DEFAULT_CONFIG.get("update", {}),
         "default update",
     )
-    default_storage_cfg = _require_config_section(
-        DEFAULT_CONFIG.get("storage", {}),
-        "default storage",
-    )
-    metrics_log_path_raw = logging_cfg.get("metrics_log_path")
     log_metrics = bool(logging_cfg.get("log_metrics", True))
-    if not isinstance(metrics_log_path_raw, str) or not metrics_log_path_raw.strip():
-        if log_metrics:
-            raise ValueError(
-                "logging.metrics_log_path must be configured when log_metrics is true.",
-            )
-        metrics_log_path_raw = str(default_logging_cfg["metrics_log_path"])
-    metrics_log_path = _resolve_config_path(metrics_log_path_raw, path)
 
     data_host, data_port = _split_host_port(str(udp_cfg["data_listen"]))
     control_host, control_port = _split_host_port(str(udp_cfg["control_listen"]))
@@ -439,7 +424,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         ),  # NOTE: ProcessingConfig.__post_init__ validates & clamps all fields
         logging=LoggingConfig(
             log_metrics=log_metrics,
-            metrics_log_path=metrics_log_path,
             metrics_log_hz=_coerce_int(logging_cfg["metrics_log_hz"], "logging.metrics_log_hz"),
             no_data_timeout_s=_coerce_float(
                 logging_cfg.get(
@@ -453,7 +437,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                 str(
                     logging_cfg.get(
                         "history_db_path",
-                        str(metrics_log_path.parent / "history.db"),
+                        default_logging_cfg["history_db_path"],
                     ),
                 ),
                 path,
@@ -486,18 +470,11 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                 str(update_cfg.get("rollback_dir", default_update_cfg["rollback_dir"])),
             ),
         ),
-        clients_json_path=_resolve_config_path(
-            str(
-                storage_cfg.get("clients_json_path", str(default_storage_cfg["clients_json_path"])),
-            ),
-            path,
-        ),
         config_path=path,
     )
     LOGGER.info(
-        "Loaded config=%s metrics_log_path=%s clients_json_path=%s",
+        "Loaded config=%s history_db_path=%s",
         app_config.config_path,
-        app_config.logging.metrics_log_path,
-        app_config.clients_json_path,
+        app_config.logging.history_db_path,
     )
     return app_config

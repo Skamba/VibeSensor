@@ -107,15 +107,14 @@ class HistoryExportDownload:
 class HistoryExportService:
     """Build ZIP exports for history runs without route-local business logic."""
 
-    __slots__ = ("_archive_builder", "_history_db")
+    __slots__ = ("_history_db",)
 
     def __init__(self, history_db: HistoryDB) -> None:
         self._history_db = history_db
-        self._archive_builder = HistoryExportArchiveBuilder(history_db)
 
     async def build_export(self, run_id: str) -> HistoryExportDownload:
         run = await async_require_run(self._history_db, run_id)
-        spool = await asyncio.to_thread(self._archive_builder.build_zip_file, run, run_id)
+        spool = await asyncio.to_thread(self._build_zip_file, run, run_id)
         file_size = spool.seek(0, 2)
         spool.seek(0)
         return HistoryExportDownload(
@@ -124,16 +123,7 @@ class HistoryExportService:
             spool=spool,
         )
 
-
-class HistoryExportArchiveBuilder:
-    """Build the ZIP archive contents for a run export."""
-
-    __slots__ = ("_history_db",)
-
-    def __init__(self, history_db: HistoryDB) -> None:
-        self._history_db = history_db
-
-    def build_zip_file(
+    def _build_zip_file(
         self,
         run: HistoryRunPayload,
         run_id: str,

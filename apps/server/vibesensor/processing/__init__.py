@@ -6,8 +6,6 @@ This package contains the core vibration signal processing pipeline:
   and state snapshots.
 - :mod:`~vibesensor.processing.compute` — FFT cache/window ownership plus metric
   computation from immutable snapshots.
-- :mod:`~vibesensor.processing.views` — payload shaping, debug output, and
-  time-alignment views built from buffered state.
 - :mod:`~vibesensor.processing.fft` — pure FFT / spectral-analysis functions.
 - :mod:`~vibesensor.processing.time_align` — multi-sensor time-alignment utilities.
 - :mod:`~vibesensor.processing.processor` — the stable :class:`SignalProcessor`

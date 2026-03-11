@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shlex
 import shutil
@@ -12,6 +13,8 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.error import URLError
+from urllib.request import urlopen
 
 
 def _parse_collected_test_ids(output: str) -> list[str]:
@@ -127,6 +130,139 @@ def _build_image(image: str) -> int:
     return _run(cmd, log_path=LOG_DIR / "docker-build.log")
 
 
+def _api_snapshot(base_url: str, path: str) -> str:
+    try:
+        with urlopen(f"{base_url}{path}", timeout=5) as resp:
+            payload = json.loads(resp.read())
+        return json.dumps(payload, indent=2, sort_keys=True)
+    except (URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
+        return f"<unavailable: {exc}>"
+
+
+def _wait_health(base_url: str, timeout_s: float = 60.0) -> None:
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        try:
+            with urlopen(f"{base_url}/api/health", timeout=2) as resp:
+                if resp.status == 200:
+                    return
+        except (URLError, TimeoutError, OSError):
+            pass
+        time.sleep(0.5)
+    raise RuntimeError("Container did not become healthy in time")
+
+
+def _print_diagnostics(*, sim_log: Path, container_name: str, base_url: str) -> None:
+    _emit("\n=== diagnostics: docker ps ===")
+    subprocess.run(["docker", "ps", "-a"], cwd=str(ROOT), check=False)
+    _emit("\n=== diagnostics: docker logs (tail 200) ===")
+    subprocess.run(
+        ["docker", "logs", "--tail", "200", container_name],
+        cwd=str(ROOT),
+        check=False,
+    )
+    _emit(
+        f"\n=== diagnostics: /api/clients ===\n{_api_snapshot(base_url, '/api/clients')}"
+    )
+    _emit(
+        f"\n=== diagnostics: /api/history ===\n{_api_snapshot(base_url, '/api/history')}"
+    )
+    if sim_log.exists():
+        _emit(
+            f"\n=== diagnostics: simulator log ===\n{sim_log.read_text(encoding='utf-8')}"
+        )
+
+
+def _run_shard_e2e(
+    *,
+    config: ShardConfig,
+    marker: str,
+    image: str,
+    log_path: Path,
+) -> int:
+    """Run Docker e2e tests for one shard — replaces the old run_full_suite.py subprocess call."""
+    base_url = f"http://127.0.0.1:{config.http_port}"
+    data_dir = config.data_dir
+    data_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(ROOT / "apps" / "server" / "data", data_dir, dirs_exist_ok=True)
+    sim_log = data_dir / "sim_sender.log"
+    container_started = False
+    try:
+        docker_run_cmd = [
+            "docker",
+            "run",
+            "--detach",
+            "--name",
+            config.container_name,
+            "-p",
+            f"{config.http_port}:8000",
+            "-p",
+            f"{config.sim_data_port}:9000/udp",
+            "-p",
+            f"{config.sim_control_port}:9001/udp",
+            "-v",
+            f"{data_dir}:/app/apps/server/data",
+            image,
+        ]
+        rc = _run(docker_run_cmd, log_path=log_path)
+        if rc != 0:
+            return rc
+        container_started = True
+        _wait_health(base_url)
+        env = os.environ.copy()
+        env.update(
+            {
+                "VIBESENSOR_BASE_URL": base_url,
+                "VIBESENSOR_SIM_SERVER_HOST": "127.0.0.1",
+                "VIBESENSOR_SIM_DATA_PORT": str(config.sim_data_port),
+                "VIBESENSOR_SIM_CONTROL_PORT": str(config.sim_control_port),
+                "VIBESENSOR_SIM_CLIENT_CONTROL_BASE": str(
+                    config.sim_client_control_base
+                ),
+                "VIBESENSOR_SIM_DURATION": "8",
+                "VIBESENSOR_SIM_DURATION_LONG": "20",
+                "VIBESENSOR_SIM_LOG": str(sim_log),
+            }
+        )
+        pytest_cmd = [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "-n",
+            "0",
+            "-m",
+            marker,
+            *config.tests,
+        ]
+        with log_path.open("a", encoding="utf-8") as log_file:
+            log_file.write(f"$ {shlex.join(pytest_cmd)}\n")
+            proc = subprocess.run(
+                pytest_cmd,
+                cwd=str(ROOT),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                env=env,
+            )
+            if proc.stdout:
+                log_file.write(proc.stdout)
+        return proc.returncode if proc.returncode is not None else 1
+    except Exception:
+        _print_diagnostics(
+            sim_log=sim_log, container_name=config.container_name, base_url=base_url
+        )
+        raise
+    finally:
+        if container_started:
+            subprocess.run(
+                ["docker", "rm", "-f", config.container_name],
+                cwd=str(ROOT),
+                check=False,
+                capture_output=True,
+            )
+
+
 def _shard_worker(
     *,
     config: ShardConfig,
@@ -144,37 +280,16 @@ def _shard_worker(
             )
             rc = 0
         else:
-            cmd = [
-                sys.executable,
-                "tools/tests/run_full_suite.py",
-                "--skip-ui-sync",
-                "--skip-ui-smoke",
-                "--skip-unit-tests",
-                "--skip-docker-build",
-                "--docker-image",
-                image,
-                "--container-name",
-                config.container_name,
-                "--http-port",
-                str(config.http_port),
-                "--sim-data-port",
-                str(config.sim_data_port),
-                "--sim-control-port",
-                str(config.sim_control_port),
-                "--sim-client-control-base",
-                str(config.sim_client_control_base),
-                "--data-dir",
-                str(config.data_dir),
-                "--pytest-marker",
-                marker,
-            ]
-            for test_id in config.tests:
-                cmd.extend(["--pytest-target", test_id])
             _emit(
                 f"[e2e-parallel] shard {config.index}/{config.count}: "
                 f"tests={len(config.tests)} log={config.log_path}"
             )
-            rc = _run(cmd, log_path=config.log_path)
+            rc = _run_shard_e2e(
+                config=config,
+                marker=marker,
+                image=image,
+                log_path=config.log_path,
+            )
             if rc != 0:
                 _emit(
                     f"[e2e-parallel] shard {config.index}/{config.count} failed "

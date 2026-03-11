@@ -5,7 +5,10 @@ from pathlib import Path
 import pytest
 
 from vibesensor.update.status import UpdateStateStore, UpdateStatusTracker
-from vibesensor.update.workflow import UpdatePrerequisiteValidator, UpdateValidationConfig
+from vibesensor.update.workflow import (
+    UpdateValidationConfig,
+    validate_prerequisites,
+)
 
 
 def _mock_which(name: str) -> str | None:
@@ -23,22 +26,25 @@ class _Commands:
 @pytest.mark.asyncio
 async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_path: Path) -> None:
     tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "state.json"))
-    validator = UpdatePrerequisiteValidator(
+
+    def _raise_probe(rollback_dir: Path) -> None:
+        raise OSError("readonly")
+
+    monkeypatch.setattr("shutil.which", _mock_which)
+    monkeypatch.setattr(
+        "vibesensor.update.workflow._probe_rollback_dir",
+        _raise_probe,
+    )
+
+    result = await validate_prerequisites(
         commands=_Commands(),
         tracker=tracker,
         config=UpdateValidationConfig(
             rollback_dir=tmp_path / "rollback",
             min_free_disk_bytes=1,
         ),
+        ssid="TestNet",
     )
-
-    def _raise_probe(self) -> None:
-        raise OSError("readonly")
-
-    monkeypatch.setattr("shutil.which", _mock_which)
-    monkeypatch.setattr(UpdatePrerequisiteValidator, "_probe_rollback_dir", _raise_probe)
-
-    result = await validator.validate("TestNet")
 
     assert result is False
     assert tracker.status.state.value == "failed"

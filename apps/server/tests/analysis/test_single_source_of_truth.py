@@ -15,7 +15,6 @@ from __future__ import annotations
 import importlib
 
 import pytest
-import yaml
 from _paths import REPO_ROOT, SERVER_ROOT
 
 from vibesensor.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
@@ -401,8 +400,8 @@ def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -
     import re
     import sys
 
+    from vibesensor._config_defaults import NETWORK_PORTS
     from vibesensor.config import DEFAULT_CONFIG
-    from vibesensor.contracts import NETWORK_PORTS
     from vibesensor.simulator.sim_sender import parse_args
 
     root = REPO_ROOT
@@ -434,17 +433,14 @@ def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -
     assert _macro("VS_FIRMWARE_CONTROL_PORT_BASE") == expected_fw_base
 
 
-def test_config_example_matches_documented_defaults() -> None:
-    """config.example.yaml must be derived from canonical runtime defaults."""
+def test_config_example_does_not_exist() -> None:
+    """config.example.yaml was removed — use ``vibesensor-config-preflight --dump-defaults``."""
     root = REPO_ROOT
     config_example = root / "apps" / "server" / "config.example.yaml"
-
-    observed = yaml.safe_load(config_example.read_text(encoding="utf-8"))
-
-    from vibesensor.config import documented_default_config
-
-    expected = documented_default_config()
-    assert observed == expected
+    assert not config_example.exists(), (
+        "config.example.yaml should not exist — defaults come from "
+        "vibesensor._config_defaults.DEFAULT_CONFIG"
+    )
 
 
 def test_server_dockerfile_is_real_build_recipe() -> None:

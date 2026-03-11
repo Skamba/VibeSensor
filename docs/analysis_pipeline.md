@@ -106,7 +106,7 @@ acceleration fields may still be expressed in g.
 ## Module Map
 
 - `__init__.py`: package-level public API re-exports.
-- Summary orchestration: `summary_builder.py`, `summary_models.py`, `summary_phases.py`, `summary_suitability.py`, `summary_payload.py`.
+- Summary orchestration: `summary_builder.py`, `summary_phases.py`, `summary_suitability.py`, `summary_payload.py`.
 - Finding selection and ranking: `findings_*.py`, `ranking.py`, `top_cause_selection.py`.
 - Domain helpers: `order_analysis.py`, `phase_segmentation.py`, `helpers.py`, `strength_labels.py`, `test_plan.py`, `pattern_parts.py`.
 - Report mapping: `diagnosis_candidates.py`, `report_mapping_common.py`, `report_mapping_context.py`, `report_mapping_models.py`, `report_mapping_pipeline.py`, `report_mapping_actions.py`, `report_mapping_peaks.py`, `report_mapping_systems.py`.

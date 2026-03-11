@@ -129,10 +129,6 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
             Step("lint (ruff check + format)", ["make", "lint"]),
             Step("hygiene checks", [python_cmd, "tools/dev/check_hygiene.py"]),
             Step(
-                "config preflight (example)",
-                ["vibesensor-config-preflight", "apps/server/config.example.yaml"],
-            ),
-            Step(
                 "config preflight (dev)",
                 ["vibesensor-config-preflight", "apps/server/config.dev.yaml"],
             ),

@@ -6,10 +6,16 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from test_support import make_sample as _make_sample
 from test_support import standard_metadata as standard_metadata
 from test_support import wheel_hz as wheel_hz
-from test_support.core import _stable_hash
+from test_support.sample_scenarios import (
+    make_idle_samples,
+    make_noise_samples,
+    make_ramp_samples,
+)
+from test_support.sample_scenarios import (
+    make_sample as _make_sample,
+)
 from vibesensor.analysis import summarize_run_data
 
 ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
@@ -24,26 +30,13 @@ def idle_phase(
     noise_amp: float = 0.003,
 ) -> list[dict[str, Any]]:
     """Generate idle/stationary samples with only noise peaks."""
-    samples: list[dict[str, Any]] = []
-    n = max(1, int(duration_s / dt_s))
-    for idx in range(n):
-        t = start_t_s + idx * dt_s
-        for sensor in sensors:
-            peaks = [
-                {"hz": 12.5 + _stable_hash(sensor) % 10, "amp": noise_amp},
-                {"hz": 25.0, "amp": noise_amp * 0.5},
-            ]
-            samples.append(
-                _make_sample(
-                    t_s=t,
-                    speed_kmh=0.0,
-                    client_name=sensor,
-                    top_peaks=peaks,
-                    vibration_strength_db=6.0,
-                    strength_floor_amp_g=noise_amp,
-                ),
-            )
-    return samples
+    return make_idle_samples(
+        sensors=sensors,
+        n_samples=max(1, int(duration_s / dt_s)),
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        noise_amp=noise_amp,
+    )
 
 
 def road_noise_phase(
@@ -57,27 +50,15 @@ def road_noise_phase(
     road_vib_db: float = 10.0,
 ) -> list[dict[str, Any]]:
     """Generate road-noise-only samples with no order peaks."""
-    samples: list[dict[str, Any]] = []
-    n = max(1, int(duration_s / dt_s))
-    for idx in range(n):
-        t = start_t_s + idx * dt_s
-        for sensor in sensors:
-            peaks = [
-                {"hz": 15.0 + _stable_hash(sensor) % 20, "amp": noise_amp},
-                {"hz": 34.0, "amp": noise_amp * 0.7},
-                {"hz": 88.0, "amp": noise_amp * 0.5},
-            ]
-            samples.append(
-                _make_sample(
-                    t_s=t,
-                    speed_kmh=speed_kmh,
-                    client_name=sensor,
-                    top_peaks=peaks,
-                    vibration_strength_db=road_vib_db,
-                    strength_floor_amp_g=noise_amp,
-                ),
-            )
-    return samples
+    return make_noise_samples(
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=max(1, int(duration_s / dt_s)),
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        noise_amp=noise_amp,
+        vib_db=road_vib_db,
+    )
 
 
 def ramp_phase(
@@ -93,30 +74,17 @@ def ramp_phase(
     road_vib_db: float = 10.0,
 ) -> list[dict[str, Any]]:
     """Generate speed ramp phase with road-only noise."""
-    samples: list[dict[str, Any]] = []
-    t = start_t_s
-    for step in range(n_steps):
-        ratio = step / max(1, n_steps - 1)
-        speed = speed_start + (speed_end - speed_start) * ratio
-        n_per_step = max(1, int(step_duration_s / dt_s))
-        for _ in range(n_per_step):
-            for sensor in sensors:
-                peaks = [
-                    {"hz": 15.0 + _stable_hash(sensor) % 20, "amp": noise_amp},
-                    {"hz": 60.0, "amp": noise_amp * 0.6},
-                ]
-                samples.append(
-                    _make_sample(
-                        t_s=t,
-                        speed_kmh=speed,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=road_vib_db,
-                        strength_floor_amp_g=noise_amp,
-                    ),
-                )
-            t += dt_s
-    return samples
+    total_samples = n_steps * max(1, int(step_duration_s / dt_s))
+    return make_ramp_samples(
+        sensors=sensors,
+        speed_start=speed_start,
+        speed_end=speed_end,
+        n_samples=total_samples,
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        noise_amp=noise_amp,
+        vib_db=road_vib_db,
+    )
 
 
 def fault_phase(

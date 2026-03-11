@@ -7,31 +7,31 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   let logCursor = 0;
   const logs = ["build ok", "erase ok", "upload ok"];
   await installCommonRoutes(page, {
-    settingsHandler: async (route) => {
+    espFlashHandler: async (route) => {
       const url = new URL(route.request().url());
       const path = normalizePathname(url.pathname);
-      if (path === "/api/settings/esp-flash/ports") {
+      if (path === "/api/esp-flash/ports") {
         await fulfillJson(route, { ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }] });
         return;
       }
-      if (path === "/api/settings/esp-flash/start") {
+      if (path === "/api/esp-flash/start") {
         statusState = "running";
         logCursor = 0;
         await fulfillJson(route, { status: "started", job_id: 1 });
         return;
       }
-      if (path === "/api/settings/esp-flash/status") {
+      if (path === "/api/esp-flash/status") {
         if (statusState === "running" && logCursor >= logs.length) statusState = "success";
         await fulfillJson(route, { state: statusState, phase: statusState === "running" ? "flashing" : "done", job_id: 1, selected_port: "/dev/ttyUSB0", auto_detect: false, started_at: 1, finished_at: statusState === "running" ? null : 2, last_success_at: statusState === "success" ? 2 : null, exit_code: statusState === "success" ? 0 : null, error: null, log_count: logCursor });
         return;
       }
-      if (path === "/api/settings/esp-flash/logs") {
+      if (path === "/api/esp-flash/logs") {
         const after = Number(url.searchParams.get("after") || "0");
         if (after === 0) logCursor = Math.min(logs.length, logCursor + 2); else logCursor = logs.length;
         await fulfillJson(route, { from_index: after, next_index: logCursor, lines: logs.slice(after, logCursor) });
         return;
       }
-      if (path === "/api/settings/esp-flash/history") {
+      if (path === "/api/esp-flash/history") {
         await fulfillJson(route, { attempts: statusState === "success" ? [{ job_id: 1, state: "success", selected_port: "/dev/ttyUSB0", auto_detect: false, started_at: 1, finished_at: 2, exit_code: 0, error: null }] : [] });
         return;
       }
@@ -53,17 +53,17 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
 
 test("settings esp flash status falls back to idle when API omits state", async ({ page }) => {
   await installCommonRoutes(page, {
-    settingsHandler: async (route) => {
+    espFlashHandler: async (route) => {
       const path = requestPath(route);
-      if (path === "/api/settings/esp-flash/ports") {
+      if (path === "/api/esp-flash/ports") {
         await fulfillJson(route, { ports: [] });
         return;
       }
-      if (path === "/api/settings/esp-flash/status") {
+      if (path === "/api/esp-flash/status") {
         await fulfillJson(route, { log_count: 0, error: null });
         return;
       }
-      if (path === "/api/settings/esp-flash/history") {
+      if (path === "/api/esp-flash/history") {
         await fulfillJson(route, { attempts: [] });
         return;
       }

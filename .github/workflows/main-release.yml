@@ -57,20 +57,7 @@ jobs:
 
       - name: Build UI
         shell: bash
-        run: |
-          set -euo pipefail
-          cd apps/ui && npm ci && cd ../..
-          node tools/config/sync_shared_contracts_to_ui.mjs
-          cd apps/ui
-          npm run typecheck
-          npm run build
-
-      - name: Copy UI dist into package static dir
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf apps/server/vibesensor/static
-          cp -r apps/ui/dist apps/server/vibesensor/static
+        run: python3 tools/build_ui_static.py
 
       - uses: actions/setup-python@v5
         with:

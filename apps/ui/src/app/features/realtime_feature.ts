@@ -1,6 +1,7 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { UiDomElements } from "../ui_dom_registry";
-import type { AppState, ClientRow, LocationOption } from "../ui_app_state";
+import type { AppState, LocationOption } from "../ui_app_state";
+import type { AdaptedClient } from "../../server_payload";
 import * as I18N from "../../i18n";
 import {
   getClientLocations,
@@ -26,8 +27,8 @@ export interface RealtimeFeature {
   buildLocationOptions(codes: readonly string[]): LocationOption[];
   maybeRenderSensorsSettingsList(force?: boolean): void;
   updateClientSelection(): void;
-  locationCodeForClient(client: ClientRow): string;
-  renderStatus(clientRow: ClientRow | undefined): void;
+  locationCodeForClient(client: AdaptedClient): string;
+  renderStatus(clientRow: AdaptedClient | undefined): void;
   renderLoggingStatus(): void;
   refreshLoggingStatus(): Promise<void>;
   startLogging(): Promise<void>;
@@ -58,7 +59,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     return codes.map((code) => ({ code, label: locationLabel(code) }));
   }
 
-  function locationCodeForClient(client: ClientRow): string {
+  function locationCodeForClient(client: AdaptedClient): string {
     const explicitCode = String(client.location_code || "").trim();
     if (explicitCode && state.locationCodes.includes(explicitCode)) return explicitCode;
     const name = String(client.name || "").trim();
@@ -168,7 +169,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     });
   }
 
-  function renderStatus(clientRow: ClientRow | undefined): void {
+  function renderStatus(clientRow: AdaptedClient | undefined): void {
     if (!clientRow) {
       ctx.setStatValue(els.lastSeen, "--");
       ctx.setStatValue(els.dropped, "--");

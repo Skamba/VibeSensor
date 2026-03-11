@@ -40,6 +40,7 @@ export type CommonRouteOptions = {
   locations?: Array<Record<string, unknown>>;
   historyHandler?: (route: Route) => Promise<void>;
   settingsHandler?: (route: Route) => Promise<void>;
+  espFlashHandler?: (route: Route) => Promise<void>;
 };
 
 export type SettingsRouteValue = unknown | ((route: Route, path: string, method: string) => Promise<unknown | void>);
@@ -88,6 +89,17 @@ export async function installCommonRoutes(page: Page, options: CommonRouteOption
     }
     if (options.settingsHandler) {
       await options.settingsHandler(route);
+      return;
+    }
+    await fulfillJson(route, {});
+  });
+  await page.route("**/api/esp-flash/**", async (route) => {
+    if (!requestPath(route).startsWith("/api/esp-flash")) {
+      await route.fallback();
+      return;
+    }
+    if (options.espFlashHandler) {
+      await options.espFlashHandler(route);
       return;
     }
     await fulfillJson(route, {});

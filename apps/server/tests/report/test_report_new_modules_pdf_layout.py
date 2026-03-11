@@ -14,7 +14,7 @@ from test_support.report_helpers import report_sample as _base_sample
 from vibesensor.analysis import summarize_log
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
-from vibesensor.report.pdf_layout import assert_aspect_preserved, fit_rect_preserve_aspect
+from vibesensor.report.pdf_page2 import assert_aspect_preserved, fit_rect_preserve_aspect
 
 
 def _sample(idx: int, *, speed_kmh: float, dominant_freq_hz: float, peak_amp_g: float) -> dict:

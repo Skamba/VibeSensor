@@ -17,7 +17,6 @@ imports continue to work without changes.
 """
 
 from .logger import (
-    LoggingStatusPayload,
     MetricsLogger,
     MetricsLoggerConfig,
     MetricsShutdownReport,
@@ -36,7 +35,6 @@ from .sample_builder import (
 )
 
 __all__ = [
-    "LoggingStatusPayload",
     "MetricsLogger",
     "MetricsLoggerConfig",
     "MetricsShutdownReport",

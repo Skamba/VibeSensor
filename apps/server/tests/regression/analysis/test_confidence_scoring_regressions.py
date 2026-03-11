@@ -35,9 +35,9 @@ class TestRankingScoreErrorDenominator:
         """Source must not hardcode 0.5 denominator for ranking error.
 
         The ranking_score computation lives in ``assemble_order_finding``
-        in ``findings_order_assembly``; verify it there.
+        in ``findings_order_findings``; verify it there.
         """
-        from vibesensor.analysis.findings_order_assembly import assemble_order_finding
+        from vibesensor.analysis.findings_order_findings import assemble_order_finding
 
         src = inspect.getsource(assemble_order_finding)
         # Old code had a hardcoded 0.5 denominator; new code derives from compliance.

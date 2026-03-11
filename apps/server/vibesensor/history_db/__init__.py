@@ -48,13 +48,6 @@ _RECOMMENDED_METADATA_KEYS: frozenset[str] = frozenset({"sensor_model", "sample_
 _EXPECTED_ANALYSIS_KEYS: frozenset[str] = frozenset({"findings", "top_causes", "warnings"})
 
 
-def _sanitize_for_storage(summary: JsonObject) -> JsonObject:
-    """Strip internal-only keys before persisting an analysis summary."""
-    cleaned = dict(summary)
-    cleaned.pop("_report_template_data", None)
-    return cleaned
-
-
 class HistoryDB:
     """Thin wrapper around a SQLite database for run history."""
 
@@ -368,7 +361,7 @@ class HistoryDB:
                 "analysis_version = ?, analysis_completed_at = ? "
                 "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
                 (
-                    safe_json_dumps(_sanitize_for_storage(analysis)),
+                    safe_json_dumps(analysis),
                     ANALYSIS_SCHEMA_VERSION,
                     now,
                     run_id,

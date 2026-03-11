@@ -63,6 +63,30 @@ export interface paths {
      */
     get: operations["debug_spectrum_api_debug_spectrum__client_id__get"];
   };
+  "/api/esp-flash/cancel": {
+    /** Cancel Esp Flash */
+    post: operations["cancel_esp_flash_api_esp_flash_cancel_post"];
+  };
+  "/api/esp-flash/history": {
+    /** Get Esp Flash History */
+    get: operations["get_esp_flash_history_api_esp_flash_history_get"];
+  };
+  "/api/esp-flash/logs": {
+    /** Get Esp Flash Logs */
+    get: operations["get_esp_flash_logs_api_esp_flash_logs_get"];
+  };
+  "/api/esp-flash/ports": {
+    /** List Esp Flash Ports */
+    get: operations["list_esp_flash_ports_api_esp_flash_ports_get"];
+  };
+  "/api/esp-flash/start": {
+    /** Start Esp Flash */
+    post: operations["start_esp_flash_api_esp_flash_start_post"];
+  };
+  "/api/esp-flash/status": {
+    /** Get Esp Flash Status */
+    get: operations["get_esp_flash_status_api_esp_flash_status_get"];
+  };
   "/api/health": {
     /** Health */
     get: operations["health_api_health_get"];
@@ -123,30 +147,6 @@ export interface paths {
     /** Delete Car */
     delete: operations["delete_car_api_settings_cars__car_id__delete"];
   };
-  "/api/settings/esp-flash/cancel": {
-    /** Cancel Esp Flash */
-    post: operations["cancel_esp_flash_api_settings_esp_flash_cancel_post"];
-  };
-  "/api/settings/esp-flash/history": {
-    /** Get Esp Flash History */
-    get: operations["get_esp_flash_history_api_settings_esp_flash_history_get"];
-  };
-  "/api/settings/esp-flash/logs": {
-    /** Get Esp Flash Logs */
-    get: operations["get_esp_flash_logs_api_settings_esp_flash_logs_get"];
-  };
-  "/api/settings/esp-flash/ports": {
-    /** List Esp Flash Ports */
-    get: operations["list_esp_flash_ports_api_settings_esp_flash_ports_get"];
-  };
-  "/api/settings/esp-flash/start": {
-    /** Start Esp Flash */
-    post: operations["start_esp_flash_api_settings_esp_flash_start_post"];
-  };
-  "/api/settings/esp-flash/status": {
-    /** Get Esp Flash Status */
-    get: operations["get_esp_flash_status_api_settings_esp_flash_status_get"];
-  };
   "/api/settings/language": {
     /** Get Language */
     get: operations["get_language_api_settings_language_get"];
@@ -179,17 +179,17 @@ export interface paths {
     /** Set Speed Unit */
     post: operations["set_speed_unit_api_settings_speed_unit_post"];
   };
-  "/api/settings/update/cancel": {
+  "/api/update/cancel": {
     /** Cancel Update */
-    post: operations["cancel_update_api_settings_update_cancel_post"];
+    post: operations["cancel_update_api_update_cancel_post"];
   };
-  "/api/settings/update/start": {
+  "/api/update/start": {
     /** Start Update */
-    post: operations["start_update_api_settings_update_start_post"];
+    post: operations["start_update_api_update_start_post"];
   };
-  "/api/settings/update/status": {
+  "/api/update/status": {
     /** Get Update Status */
-    get: operations["get_update_status_api_settings_update_status_get"];
+    get: operations["get_update_status_api_update_status_get"];
   };
 }
 
@@ -1614,6 +1614,94 @@ export interface operations {
       };
     };
   };
+  /** Cancel Esp Flash */
+  cancel_esp_flash_api_esp_flash_cancel_post: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashCancelResponse"];
+        };
+      };
+    };
+  };
+  /** Get Esp Flash History */
+  get_esp_flash_history_api_esp_flash_history_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashHistoryResponse"];
+        };
+      };
+    };
+  };
+  /** Get Esp Flash Logs */
+  get_esp_flash_logs_api_esp_flash_logs_get: {
+    parameters: {
+      query?: {
+        after?: number;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashLogsResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** List Esp Flash Ports */
+  list_esp_flash_ports_api_esp_flash_ports_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashPortsResponse"];
+        };
+      };
+    };
+  };
+  /** Start Esp Flash */
+  start_esp_flash_api_esp_flash_start_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EspFlashStartRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashStartResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Get Esp Flash Status */
+  get_esp_flash_status_api_esp_flash_status_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EspFlashStatusResponse"];
+        };
+      };
+    };
+  };
   /** Health */
   health_api_health_get: {
     responses: {
@@ -1918,94 +2006,6 @@ export interface operations {
       };
     };
   };
-  /** Cancel Esp Flash */
-  cancel_esp_flash_api_settings_esp_flash_cancel_post: {
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EspFlashCancelResponse"];
-        };
-      };
-    };
-  };
-  /** Get Esp Flash History */
-  get_esp_flash_history_api_settings_esp_flash_history_get: {
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EspFlashHistoryResponse"];
-        };
-      };
-    };
-  };
-  /** Get Esp Flash Logs */
-  get_esp_flash_logs_api_settings_esp_flash_logs_get: {
-    parameters: {
-      query?: {
-        after?: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EspFlashLogsResponse"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** List Esp Flash Ports */
-  list_esp_flash_ports_api_settings_esp_flash_ports_get: {
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EspFlashPortsResponse"];
-        };
-      };
-    };
-  };
-  /** Start Esp Flash */
-  start_esp_flash_api_settings_esp_flash_start_post: {
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["EspFlashStartRequest"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EspFlashStartResponse"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Get Esp Flash Status */
-  get_esp_flash_status_api_settings_esp_flash_status_get: {
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EspFlashStatusResponse"];
-        };
-      };
-    };
-  };
   /** Get Language */
   get_language_api_settings_language_get: {
     responses: {
@@ -2177,7 +2177,7 @@ export interface operations {
     };
   };
   /** Cancel Update */
-  cancel_update_api_settings_update_cancel_post: {
+  cancel_update_api_update_cancel_post: {
     responses: {
       /** @description Successful Response */
       200: {
@@ -2188,7 +2188,7 @@ export interface operations {
     };
   };
   /** Start Update */
-  start_update_api_settings_update_start_post: {
+  start_update_api_update_start_post: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["UpdateStartRequest"];
@@ -2210,7 +2210,7 @@ export interface operations {
     };
   };
   /** Get Update Status */
-  get_update_status_api_settings_update_status_get: {
+  get_update_status_api_update_status_get: {
     responses: {
       /** @description Successful Response */
       200: {

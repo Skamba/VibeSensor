@@ -4,7 +4,7 @@
 
 - Server tests live under `apps/server/tests/`.
 - The canonical CI-parity runner is `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
-- The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_full_suite.py`).
+- The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`).
 - Python test configuration lives in `apps/server/pyproject.toml`.
 
 ## Layout

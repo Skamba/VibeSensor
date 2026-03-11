@@ -17,7 +17,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from ..constants import NUMERIC_TYPES
@@ -54,29 +54,20 @@ blocking the metrics-logger event loop indefinitely."""
 # ---------------------------------------------------------------------------
 
 
-class LoggingStatusPayload(TypedDict):
-    """Shape of the dict returned by :meth:`MetricsLogger.status`.
-
-    Matches the fields of :class:`~vibesensor.api_models.LoggingStatusResponse`
-    so the dict can be unpacked directly into the Pydantic model.
-    """
-
-    enabled: bool
-    current_file: str | None
-    run_id: str | None
-    write_error: str | None
-    analysis_in_progress: bool
-    samples_written: int
-    samples_dropped: int
-    last_completed_run_id: str | None
-    last_completed_run_error: str | None
-
-
 @dataclass(frozen=True, slots=True)
 class MetricsSessionSnapshot:
     run_id: str
     start_time_utc: str
     start_mono_s: float
+
+
+@dataclass(frozen=True, slots=True)
+class PersistenceStatusSnapshot:
+    """Bulk snapshot of persistence status fields (single lock acquisition)."""
+
+    write_error: str | None
+    written_sample_count: int
+    dropped_sample_count: int
 
 
 class _MetricsSessionState:
@@ -273,11 +264,6 @@ class _MetricsPersistenceCoordinator:
         self._max_write_duration_s: float = 0.0
 
     @property
-    def write_error(self) -> str | None:
-        with self._lock:
-            return self._last_write_error
-
-    @property
     def history_run_created(self) -> bool:
         with self._lock:
             return self._history_run_created
@@ -286,11 +272,6 @@ class _MetricsPersistenceCoordinator:
     def history_run_created(self, value: bool) -> None:
         with self._lock:
             self._history_run_created = bool(value)
-
-    @property
-    def history_create_fail_count(self) -> int:
-        with self._lock:
-            return self._history_create_fail_count
 
     @property
     def written_sample_count(self) -> int:
@@ -308,6 +289,11 @@ class _MetricsPersistenceCoordinator:
             return self._dropped_sample_count
 
     @property
+    def history_create_fail_count(self) -> int:
+        with self._lock:
+            return self._history_create_fail_count
+
+    @property
     def last_write_duration_s(self) -> float:
         with self._lock:
             return self._last_write_duration_s
@@ -316,6 +302,15 @@ class _MetricsPersistenceCoordinator:
     def max_write_duration_s(self) -> float:
         with self._lock:
             return self._max_write_duration_s
+
+    def status_snapshot(self) -> PersistenceStatusSnapshot:
+        """Read all status-relevant fields under a single lock acquisition."""
+        with self._lock:
+            return PersistenceStatusSnapshot(
+                write_error=self._last_write_error,
+                written_sample_count=self._written_sample_count,
+                dropped_sample_count=self._dropped_sample_count,
+            )
 
     def reset_for_new_session(self, run_id: str | None = None) -> None:
         with self._lock:
@@ -534,7 +529,7 @@ class MetricsShutdownReport:
     analysis_queue_oldest_age_s: float | None
     analysis_in_progress: bool
     write_error: str | None
-    final_status: LoggingStatusPayload
+    final_status: dict[str, object]
 
 
 class MetricsLogger:
@@ -633,16 +628,17 @@ class MetricsLogger:
     def _session_snapshot(self) -> MetricsSessionSnapshot | None:
         return self._session.snapshot()
 
-    def status(self) -> LoggingStatusPayload:
+    def status(self) -> dict[str, object]:
         post_snapshot = self._post_analysis.snapshot()
+        persist = self._persistence.status_snapshot()
         return {
             "enabled": self.enabled,
             "current_file": None,
             "run_id": self._run_id,
-            "write_error": self._persistence.write_error,
+            "write_error": persist.write_error,
             "analysis_in_progress": self._post_analysis.is_active,
-            "samples_written": self._persistence.written_sample_count,
-            "samples_dropped": self._persistence.dropped_sample_count,
+            "samples_written": persist.written_sample_count,
+            "samples_dropped": persist.dropped_sample_count,
             "last_completed_run_id": post_snapshot.last_completed_run_id,
             "last_completed_run_error": post_snapshot.last_completed_error,
         }
@@ -667,8 +663,9 @@ class MetricsLogger:
                     analyzing_oldest_age_s = max(0.0, float(raw_oldest_age))
             except sqlite3.Error:
                 LOGGER.warning("Failed to read analyzing-run health snapshot", exc_info=True)
+        persist = self._persistence.status_snapshot()
         return {
-            "write_error": self._persistence.write_error,
+            "write_error": persist.write_error,
             "analysis_in_progress": self._post_analysis.is_active,
             "analysis_queue_depth": snapshot.queue_depth,
             "analysis_queue_max_depth": snapshot.max_queue_depth,
@@ -678,13 +675,13 @@ class MetricsLogger:
             "analysis_queue_oldest_age_s": queue_oldest_age_s,
             "analyzing_run_count": analyzing_run_count,
             "analyzing_oldest_age_s": analyzing_oldest_age_s,
-            "samples_written": self._persistence.written_sample_count,
-            "samples_dropped": self._persistence.dropped_sample_count,
+            "samples_written": persist.written_sample_count,
+            "samples_dropped": persist.dropped_sample_count,
             "last_completed_run_id": snapshot.last_completed_run_id,
             "last_completed_run_error": snapshot.last_completed_error,
         }
 
-    def start_logging(self) -> LoggingStatusPayload:
+    def start_logging(self) -> dict[str, object]:
         completed_run_id: str | None = None
         flush_snapshot: MetricsSessionSnapshot | None = None
         with self._lock:
@@ -717,7 +714,7 @@ class MetricsLogger:
         self,
         *,
         _only_if_run_id: str | None = None,
-    ) -> LoggingStatusPayload:
+    ) -> dict[str, object]:
         flush_snapshot: MetricsSessionSnapshot | None = None
         with self._lock:
             if _only_if_run_id is not None and self._run_id != _only_if_run_id:

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from statistics import median as _median
 
@@ -17,10 +19,14 @@ from ._types import (
     IntensityRow,
     MetadataDict,
     OriginSummary,
+    PhaseSpeedBreakdownRow,
+    PhaseSpeedStats,
     PhaseSummary,
     PhaseTimelineEntry,
     RunSuitabilityCheck,
     Sample,
+    SpeedBreakdownRow,
+    SpeedStats,
     SummaryData,
     TestStep,
     TopCause,
@@ -42,7 +48,6 @@ from .order_analysis import _i18n_ref
 from .phase_segmentation import DrivingPhase, PhaseSegment
 from .plot_data import _plot_data
 from .strength_labels import strength_label as _strength_label
-from .summary_models import PreparedRunData
 from .summary_payload import build_sensor_analysis, build_summary_payload, summarize_origin
 from .summary_phases import build_phase_timeline, compute_run_timing, prepare_speed_and_phases
 from .summary_suitability import (
@@ -52,6 +57,29 @@ from .summary_suitability import (
 )
 from .test_plan import _merge_test_plan
 from .top_cause_selection import select_top_causes
+
+
+@dataclass(frozen=True)
+class PreparedRunData:
+    """Shared timing, speed, and phase context for summary generation."""
+
+    run_id: str
+    start_ts: datetime | None
+    end_ts: datetime | None
+    duration_s: float
+    raw_sample_rate_hz: float | None
+    speed_values: list[float]
+    speed_stats: SpeedStats
+    speed_non_null_pct: float
+    speed_sufficient: bool
+    per_sample_phases: list[DrivingPhase]
+    phase_segments: list[PhaseSegment]
+    run_noise_baseline_g: float | None
+    phase_info: PhaseSummary
+    speed_stats_by_phase: dict[str, PhaseSpeedStats]
+    speed_breakdown: list[SpeedBreakdownRow]
+    speed_breakdown_skipped_reason: I18nRef | None
+    phase_speed_breakdown: list[PhaseSpeedBreakdownRow]
 
 
 def annotate_peaks_with_order_labels(summary: SummaryData) -> None:

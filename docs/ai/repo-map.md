@@ -25,7 +25,7 @@
 ## Backend package layout
 
 - `app.py`: app factory and CLI-facing startup.
-- `routes/`: health, clients, settings, recording, history, websocket, updates, car library, and debug route groups; `/api/health` now surfaces startup readiness and managed-task failures in addition to processing degradation.
+- `routes/`: health, clients, settings, recording, history, websocket, updates (`/api/update/`, `/api/esp-flash/`), car library, and debug route groups; `/api/health` now surfaces startup readiness and managed-task failures in addition to processing degradation.
 - `runtime/`: flat `RuntimeState` (`state.py`), service builders (`builders.py`), lifecycle management (`lifecycle.py`), processing loop (`processing_loop.py`), and websocket broadcast (`ws_broadcast.py`); `builders.py::build_runtime()` constructs the flat `RuntimeState` directly; routes receive `RuntimeState` (no intermediate route-service assembly); the websocket broadcaster reuses shared per-tick payload state and only layers in recipient-specific selection at the end.
 - `processing/`, `analysis/`: signal processing and findings logic.
 - `metrics_log/`: recording pipeline package; `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping with drop counting and retry-with-cooldown for transient DB failures, `post_analysis.py` owns the background analysis queue with outcome tracking, and `logger.py` is the coordinating façade that enriches status/health payloads with sample counts and analysis results.
@@ -41,7 +41,7 @@
 
 - `apps/server/tests/` is feature-based and mirrors backend ownership boundaries.
 - Cross-cutting coverage lives in `integration/`, `regression/`, `hygiene/`, and `e2e/`.
-- `regression/` is further split by intent: `analysis/`, `audits/`, `cross_cutting/`, `report/`, `runtime/`.
+- `regression/` is further split by intent: `analysis/`, `cross_cutting/`, `report/`, `runtime/`.
 - Shared test support lives at the test root (`conftest.py`, `_paths.py`, focused helper modules, and the `test_support/` package).
 - Full map: `docs/testing.md`.
 

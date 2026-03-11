@@ -124,15 +124,9 @@ python3 - "${CONFIG_PATH}" <<'PY'
 import pathlib
 import sys
 
-defaults = {
-    # Keep in sync with apps/server/vibesensor/_config_defaults.py DEFAULT_CONFIG["ap"].
-    "ssid": "VibeSensor",
-    "psk": "",
-    "ip": "10.4.0.1/24",
-    "channel": 7,
-    "ifname": "wlan0",
-    "con_name": "VibeSensor-AP",
-}
+from vibesensor._config_defaults import DEFAULT_CONFIG
+
+defaults = {k: v for k, v in DEFAULT_CONFIG["ap"].items() if k != "self_heal"}
 
 config_path = pathlib.Path(sys.argv[1])
 cfg = {}
@@ -147,7 +141,8 @@ if config_path.exists():
 
 ap = {**defaults, **cfg}
 for k, v in ap.items():
-    print(f"{k.upper()}={v!r}")
+    if not isinstance(v, dict):
+        print(f"{k.upper()}={v!r}")
 PY
 )"
 

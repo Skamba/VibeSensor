@@ -12,6 +12,7 @@ import pytest
 
 from vibesensor.analysis._types import AmplitudeMetric, Finding, MatchedPoint
 from vibesensor.analysis.findings_builder import _build_findings
+from vibesensor.analysis.findings_builder_support import _reference_missing_finding
 from vibesensor.analysis.findings_intensity import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
@@ -29,12 +30,11 @@ from vibesensor.analysis.findings_order_analysis import (
 from vibesensor.analysis.findings_order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
-from vibesensor.analysis.findings_order_assembly import assemble_order_finding
 from vibesensor.analysis.findings_order_findings import (
     _compute_effective_match_rate,
+    assemble_order_finding,
 )
 from vibesensor.analysis.findings_persistent import _classify_peak_type
-from vibesensor.analysis.findings_reference_checks import _reference_missing_finding
 from vibesensor.analysis.findings_speed_profile import (
     _phase_to_str,
     _speed_profile_from_points,
@@ -56,10 +56,10 @@ class TestFindingsModuleStructure:
         """Each findings module must be directly importable with expected symbols."""
         from vibesensor.analysis import (  # noqa: F401
             findings_builder,
+            findings_builder_support,
             findings_intensity,
             findings_order_findings,
             findings_persistent,
-            findings_reference_checks,
             findings_speed_profile,
         )
 
@@ -68,7 +68,7 @@ class TestFindingsModuleStructure:
         assert hasattr(findings_intensity, "_sensor_intensity_by_location")
         assert hasattr(findings_order_findings, "_build_order_findings")
         assert hasattr(findings_speed_profile, "_speed_profile_from_points")
-        assert hasattr(findings_reference_checks, "_reference_missing_finding")
+        assert hasattr(findings_builder_support, "_reference_missing_finding")
         assert hasattr(findings_persistent, "_build_persistent_peak_findings")
 
 

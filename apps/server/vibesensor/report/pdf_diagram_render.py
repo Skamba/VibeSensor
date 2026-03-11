@@ -6,13 +6,46 @@ from typing import TYPE_CHECKING, Any
 
 from ..domain_models import as_float_or_none as _as_float
 from .pdf_diagram_layout import _build_sensor_render_plan, _estimate_text_width
-from .pdf_helpers import _canonical_location, _source_color
 from .theme import BMW_LENGTH_MM as _BMW_LENGTH_MM
 from .theme import BMW_WIDTH_MM as _BMW_WIDTH_MM
 from .theme import FINDING_SOURCE_COLORS, REPORT_COLORS
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+# ── Location canonicalisation (merged from pdf_helpers) ───────────────────────
+
+_FL_COMPACTS: frozenset[str] = frozenset({"frontleft", "frontleftwheel", "fl", "flwheel"})
+_FR_COMPACTS: frozenset[str] = frozenset({"frontright", "frontrightwheel", "fr", "frwheel"})
+_RL_COMPACTS: frozenset[str] = frozenset({"rearleft", "rearleftwheel", "rl", "rlwheel"})
+_RR_COMPACTS: frozenset[str] = frozenset({"rearright", "rearrightwheel", "rr", "rrwheel"})
+
+
+def _canonical_location(raw: object) -> str:
+    token = str(raw or "").strip().lower().replace("_", "-")
+    compact = "".join(ch for ch in token if ch.isalnum())
+    if ("front" in token and "left" in token and "wheel" in token) or compact in _FL_COMPACTS:
+        return "front-left wheel"
+    if ("front" in token and "right" in token and "wheel" in token) or compact in _FR_COMPACTS:
+        return "front-right wheel"
+    if ("rear" in token and "left" in token and "wheel" in token) or compact in _RL_COMPACTS:
+        return "rear-left wheel"
+    if ("rear" in token and "right" in token and "wheel" in token) or compact in _RR_COMPACTS:
+        return "rear-right wheel"
+    if "trunk" in token:
+        return "trunk"
+    if "driveshaft" in token or "tunnel" in token:
+        return "driveshaft tunnel"
+    if "engine" in token:
+        return "engine bay"
+    if "driver" in token:
+        return "driver seat"
+    return token
+
+
+def _source_color(source: object) -> str:
+    src = str(source or "unknown").strip().lower()
+    return FINDING_SOURCE_COLORS.get(src, FINDING_SOURCE_COLORS["unknown"])
 
 
 def _location_points(

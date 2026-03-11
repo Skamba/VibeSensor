@@ -31,7 +31,7 @@ via `asyncio.to_thread()` so the event loop never performs FFT work directly.
 
 - `processing/buffer_store.py`: buffer lifecycle, locking, ingest, and immutable snapshots
 - `processing/compute.py`: FFT cache ownership plus metric computation from snapshots
-- `processing/views.py`: payload shaping, debug output, and time-alignment views
+- `processing/processor.py`: facade class with payload shaping, debug output, and time-alignment views
 
 Inside `SignalProcessor.compute_all()`, per-client FFT work is dispatched through
 the shared `WorkerPool` when multiple clients are active. `compute_metrics()` now

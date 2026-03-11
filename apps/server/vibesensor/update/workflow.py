@@ -22,93 +22,84 @@ class UpdateValidationConfig:
     min_free_disk_bytes: int
 
 
-class UpdatePrerequisiteValidator:
-    """Validates tool availability, privilege access, and disk space."""
+def _probe_rollback_dir(rollback_dir: Path) -> None:
+    rollback_dir.mkdir(parents=True, exist_ok=True)
+    probe_handle = tempfile.NamedTemporaryFile(
+        prefix=".rollback-write-probe-",
+        dir=rollback_dir,
+        delete=False,
+    )
+    probe_path = Path(probe_handle.name)
+    try:
+        probe_handle.write(b"ok")
+        probe_handle.flush()
+    finally:
+        probe_handle.close()
+    probe_path.unlink(missing_ok=True)
 
-    __slots__ = ("_commands", "_config", "_tracker")
 
-    def __init__(
-        self,
-        *,
-        commands: UpdateCommandExecutor,
-        tracker: UpdateStatusTracker,
-        config: UpdateValidationConfig,
-    ) -> None:
-        self._commands = commands
-        self._tracker = tracker
-        self._config = config
+async def validate_prerequisites(
+    *,
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    config: UpdateValidationConfig,
+    ssid: str,
+) -> bool:
+    """Validate tool availability, privilege access, and disk space."""
+    tracker.log(f"Starting update with SSID: {ssid}")
+    for tool in ("nmcli", "python3"):
+        if not shutil.which(tool):
+            tracker.fail("validating", f"Required tool not found: {tool}")
+            return False
 
-    def _probe_rollback_dir(self) -> None:
-        self._config.rollback_dir.mkdir(parents=True, exist_ok=True)
-        probe_dir = self._config.rollback_dir
-        probe_handle = tempfile.NamedTemporaryFile(
-            prefix=".rollback-write-probe-",
-            dir=probe_dir,
-            delete=False,
+    if os.geteuid() != 0:
+        rc, _, _ = await commands.run(
+            ["sudo", "-n", "true"],
+            phase="validating",
+            timeout=5,
+            sudo=False,
         )
-        probe_path = Path(probe_handle.name)
-        try:
-            probe_handle.write(b"ok")
-            probe_handle.flush()
-        finally:
-            probe_handle.close()
-        probe_path.unlink(missing_ok=True)
-
-    async def validate(self, ssid: str) -> bool:
-        self._tracker.log(f"Starting update with SSID: {ssid}")
-        for tool in ("nmcli", "python3"):
-            if not shutil.which(tool):
-                self._tracker.fail("validating", f"Required tool not found: {tool}")
-                return False
-
-        if os.geteuid() != 0:
-            rc, _, _ = await self._commands.run(
-                ["sudo", "-n", "true"],
-                phase="validating",
-                timeout=5,
-                sudo=False,
-            )
-            if rc != 0:
-                self._tracker.fail(
-                    "validating",
-                    "Insufficient privileges",
-                    "Cannot run sudo non-interactively. In dev/Docker "
-                    "environments, hotspot management is not available.",
-                )
-                return False
-
-        try:
-            self._probe_rollback_dir()
-        except OSError as exc:
-            self._tracker.fail(
+        if rc != 0:
+            tracker.fail(
                 "validating",
-                "Rollback directory is not writable",
-                f"{self._config.rollback_dir}: {exc}",
+                "Insufficient privileges",
+                "Cannot run sudo non-interactively. In dev/Docker "
+                "environments, hotspot management is not available.",
             )
             return False
 
-        try:
-            disk_check_path = self._config.rollback_dir.parent
-            if not disk_check_path.exists():
-                disk_check_path = Path("/var/lib") if Path("/var/lib").exists() else Path("/")
-            free_bytes = shutil.disk_usage(disk_check_path).free
-            if free_bytes < self._config.min_free_disk_bytes:
-                free_mb = free_bytes // (1024 * 1024)
-                min_mb = self._config.min_free_disk_bytes // (1024 * 1024)
-                self._tracker.fail(
-                    "validating",
-                    f"Insufficient disk space: {free_mb} MiB free, {min_mb} MiB required",
-                )
-                return False
-        except OSError as exc:
-            self._tracker.fail(
+    try:
+        _probe_rollback_dir(config.rollback_dir)
+    except OSError as exc:
+        tracker.fail(
+            "validating",
+            "Rollback directory is not writable",
+            f"{config.rollback_dir}: {exc}",
+        )
+        return False
+
+    try:
+        disk_check_path = config.rollback_dir.parent
+        if not disk_check_path.exists():
+            disk_check_path = Path("/var/lib") if Path("/var/lib").exists() else Path("/")
+        free_bytes = shutil.disk_usage(disk_check_path).free
+        if free_bytes < config.min_free_disk_bytes:
+            free_mb = free_bytes // (1024 * 1024)
+            min_mb = config.min_free_disk_bytes // (1024 * 1024)
+            tracker.fail(
                 "validating",
-                "Could not verify free disk space",
-                str(exc),
+                f"Insufficient disk space: {free_mb} MiB free, {min_mb} MiB required",
             )
             return False
+    except OSError as exc:
+        tracker.fail(
+            "validating",
+            "Could not verify free disk space",
+            str(exc),
+        )
+        return False
 
-        return True
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -122,43 +113,33 @@ class UpdateServiceControlConfig:
     restart_unit: str
 
 
-class UpdateServiceController:
-    """Owns systemd drop-in management and restart scheduling."""
-
-    __slots__ = ("_commands", "_config", "_tracker")
-
-    def __init__(
-        self,
-        *,
-        commands: UpdateCommandExecutor,
-        tracker: UpdateStatusTracker,
-        config: UpdateServiceControlConfig,
-    ) -> None:
-        self._commands = commands
-        self._tracker = tracker
-        self._config = config
-
-    async def schedule_restart(self) -> bool:
-        restart_attempts = [
-            [
-                "systemd-run",
-                "--unit",
-                self._config.restart_unit,
-                "--on-active=2s",
-                "systemctl",
-                "restart",
-                self._config.service_name,
-            ],
-            ["systemctl", "restart", self._config.service_name],
-        ]
-        for command in restart_attempts:
-            rc, _, _ = await self._commands.run(
-                command,
-                phase="done",
-                timeout=30,
-                sudo=True,
-            )
-            if rc == 0:
-                self._tracker.log("Scheduled backend service restart")
-                return True
-        return False
+async def schedule_service_restart(
+    *,
+    commands: UpdateCommandExecutor,
+    tracker: UpdateStatusTracker,
+    config: UpdateServiceControlConfig,
+) -> bool:
+    """Schedule a systemd restart of the backend service."""
+    restart_attempts = [
+        [
+            "systemd-run",
+            "--unit",
+            config.restart_unit,
+            "--on-active=2s",
+            "systemctl",
+            "restart",
+            config.service_name,
+        ],
+        ["systemctl", "restart", config.service_name],
+    ]
+    for command in restart_attempts:
+        rc, _, _ = await commands.run(
+            command,
+            phase="done",
+            timeout=30,
+            sudo=True,
+        )
+        if rc == 0:
+            tracker.log("Scheduled backend service restart")
+            return True
+    return False

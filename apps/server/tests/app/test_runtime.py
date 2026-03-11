@@ -51,7 +51,6 @@ class _StubUDPConfig:
 class _StubLoggingConfig:
     shutdown_analysis_timeout_s: float = 5.0
     log_metrics: bool = False
-    metrics_log_path: str = "/tmp/m.jsonl"
     history_db_path: str = ":memory:"
     metrics_log_hz: int = 1
     no_data_timeout_s: int = 10

@@ -374,11 +374,11 @@ async def test_esp_flash_api_lifecycle(tmp_path: Path) -> None:
     mgr, _ = _build_manager(cache_dir)
 
     router = create_update_routes(None, mgr)
-    start_ep = _route_endpoint(router, "/api/settings/esp-flash/start", "POST")
-    status_ep = _route_endpoint(router, "/api/settings/esp-flash/status", "GET")
-    logs_ep = _route_endpoint(router, "/api/settings/esp-flash/logs", "GET")
-    cancel_ep = _route_endpoint(router, "/api/settings/esp-flash/cancel", "POST")
-    history_ep = _route_endpoint(router, "/api/settings/esp-flash/history", "GET")
+    start_ep = _route_endpoint(router, "/api/esp-flash/start", "POST")
+    status_ep = _route_endpoint(router, "/api/esp-flash/status", "GET")
+    logs_ep = _route_endpoint(router, "/api/esp-flash/logs", "GET")
+    cancel_ep = _route_endpoint(router, "/api/esp-flash/cancel", "POST")
+    history_ep = _route_endpoint(router, "/api/esp-flash/history", "GET")
 
     await start_ep(type("Req", (), {"port": None, "auto_detect": True})())
     assert mgr._task is not None
@@ -396,7 +396,7 @@ async def test_esp_flash_api_rejects_concurrent_start(tmp_path: Path) -> None:
     mgr, _ = _build_manager(cache_dir, runner=_FakeRunner(hang=True))
 
     router = create_update_routes(None, mgr)
-    start_ep = _route_endpoint(router, "/api/settings/esp-flash/start", "POST")
+    start_ep = _route_endpoint(router, "/api/esp-flash/start", "POST")
 
     req = type("Req", (), {"port": None, "auto_detect": True})()
     await start_ep(req)

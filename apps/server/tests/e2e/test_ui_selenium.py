@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import socket
 import subprocess
@@ -93,20 +92,6 @@ def live_server(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     if control_port == data_port:
         control_port = _free_port()
     config_path = tmp_dir / "config.selenium.yaml"
-    persist_path = tmp_dir / "clients.json"
-    persist_path.write_text(
-        json.dumps(
-            {
-                "clients": [
-                    {
-                        "id": "d05a00000099",
-                        "name": "offline-node",
-                    },
-                ],
-            },
-        ),
-        encoding="utf-8",
-    )
     cfg = {
         "server": {"host": "127.0.0.1", "port": port},
         "udp": {
@@ -115,10 +100,8 @@ def live_server(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
         },
         "logging": {
             "log_metrics": False,
-            "metrics_log_path": str(tmp_dir / "metrics.jsonl"),
             "metrics_log_hz": 4,
         },
-        "storage": {"clients_json_path": str(persist_path)},
         "gps": {"gps_enabled": False},
     }
     config_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")

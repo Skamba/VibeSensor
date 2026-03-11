@@ -31,10 +31,10 @@ from .wifi import (
     parse_wifi_diagnostics,
 )
 from .workflow import (
-    UpdatePrerequisiteValidator,
     UpdateServiceControlConfig,
-    UpdateServiceController,
     UpdateValidationConfig,
+    schedule_service_restart,
+    validate_prerequisites,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -210,11 +210,6 @@ class UpdateManager:
         )
         commands = self._build_command_executor()
         tracker = self._tracker
-        validator = UpdatePrerequisiteValidator(
-            commands=commands,
-            tracker=tracker,
-            config=self._validation_config,
-        )
         wifi = self._build_wifi_controller(commands=commands)
         releases = UpdateReleaseService(
             tracker=tracker,
@@ -225,14 +220,14 @@ class UpdateManager:
             tracker=tracker,
             config=self._installer_config,
         )
-        services = UpdateServiceController(
-            commands=commands,
-            tracker=tracker,
-            config=self._service_control_config,
-        )
         cancel_requested = self._cancel_event.is_set
 
-        if not await validator.validate(request.ssid):
+        if not await validate_prerequisites(
+            commands=commands,
+            tracker=tracker,
+            config=self._validation_config,
+            ssid=request.ssid,
+        ):
             return
         if cancel_requested():
             return
@@ -311,7 +306,11 @@ class UpdateManager:
         if cancel_requested():
             return
         await self._complete_update_success(tracker, wifi, "Update completed successfully")
-        if await services.schedule_restart():
+        if await schedule_service_restart(
+            commands=commands,
+            tracker=tracker,
+            config=self._service_control_config,
+        ):
             return
         tracker.add_issue(
             "done",
