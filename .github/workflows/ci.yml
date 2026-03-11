@@ -45,7 +45,6 @@ jobs:
 
       - name: Config preflight
         run: |
-          vibesensor-config-preflight apps/server/config.example.yaml
           vibesensor-config-preflight apps/server/config.dev.yaml
           vibesensor-config-preflight apps/server/config.docker.yaml
           vibesensor-config-preflight apps/server/config.pi.yaml

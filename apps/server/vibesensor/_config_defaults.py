@@ -73,5 +73,5 @@ DEFAULT_CONFIG: JsonObject = {
 
 
 def documented_default_config() -> JsonObject:
-    """Return runtime defaults in the shape documented by config.example.yaml."""
+    """Return runtime defaults used by config loading and preflight checks."""
     return deepcopy(DEFAULT_CONFIG)

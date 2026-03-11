@@ -142,7 +142,6 @@ Preset files ship with the repo for common environments:
 
 | File | Purpose |
 |---|---|
-| `config.example.yaml` | Canonical reference listing every key with its default |
 | `config.dev.yaml` | Native-dev overrides (port 8000, no GPS, relative paths) |
 | `config.docker.yaml` | Docker-compose overrides |
 
