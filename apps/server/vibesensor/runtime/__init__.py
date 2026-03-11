@@ -12,18 +12,10 @@ Submodules
 
 from .health_state import RuntimeHealthState
 from .processing_loop import ProcessingLoopState
-from .rotational_speeds import (
-    build_rotational_speeds_payload as _build_rotational_speeds_payload,
-)
-from .rotational_speeds import (
-    rotational_basis_speed_source as _rotational_basis_speed_source,
-)
 from .state import RuntimeState
 
 __all__ = [
     "ProcessingLoopState",
     "RuntimeHealthState",
     "RuntimeState",
-    "_build_rotational_speeds_payload",
-    "_rotational_basis_speed_source",
 ]

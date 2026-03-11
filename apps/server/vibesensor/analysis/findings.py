@@ -61,7 +61,7 @@ from .phase_segmentation import (
     diagnostic_sample_mask,
     segment_run_phases,
 )
-from .ranking import finding_sort_key
+from .top_cause_selection import finding_sort_key
 
 # ---------------------------------------------------------------------------
 # Builder support helpers

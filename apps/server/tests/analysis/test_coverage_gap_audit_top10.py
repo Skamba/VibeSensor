@@ -21,7 +21,9 @@ from vibesensor.analysis.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
 from vibesensor.analysis.phase_segmentation import DrivingPhase
-from vibesensor.analysis.ranking import phase_adjusted_ranking_score as _phase_ranking_score
+from vibesensor.analysis.top_cause_selection import (
+    phase_adjusted_ranking_score as _phase_ranking_score,
+)
 from vibesensor.analysis.summary_builder import build_phase_timeline as _build_phase_timeline
 from vibesensor.analysis.summary_builder import (
     build_run_suitability_checks as _build_run_suitability_checks,
