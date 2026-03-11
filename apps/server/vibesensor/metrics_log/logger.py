@@ -732,9 +732,7 @@ class MetricsLogger:
                 start_time_utc=start_time_utc,
                 rows=rows,
             )
-        return (self._sess_run_id == run_id) and self._sess_should_auto_stop(
-            now_mono_s=now_mono_s
-        )
+        return (self._sess_run_id == run_id) and self._sess_should_auto_stop(now_mono_s=now_mono_s)
 
     def _finalize_run_locked(self) -> bool:
         run_id = self._run_id

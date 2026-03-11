@@ -4,7 +4,6 @@ from pathlib import Path
 
 from vibesensor.contract_reference_doc import render_contract_reference_markdown
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 
