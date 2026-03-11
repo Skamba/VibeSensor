@@ -1,155 +1,160 @@
-# Chunk 3: Abstraction and Indirection Reduction
-
-## Execution order: 3 of 5
+# Chunk 3: State Management & Persistence Simplification
 
 ## Mapped Findings
 
-| ID | Original Finding | Validation Result |
-|----|-----------------|-------------------|
-| B1 | `LoggingStatusPayload` TypedDict mirrors `LoggingStatusResponse` Pydantic model | CONFIRMED — 9 identical fields. TypedDict docstring says "so the dict can be unpacked directly into the Pydantic model." Violates project's own rule: "Do not create TypedDict mirrors of Pydantic models." Used in 3 route handlers via `LoggingStatusResponse(**metrics_logger.status())`. Also used in `MetricsShutdownReport.final_status`. |
-| B2 | `UpdatePrerequisiteValidator` + `UpdateServiceController` are one-shot wrapper classes | CONFIRMED — Both constructed in `_run_update_inner()`, each called once, then discarded. `UpdatePrerequisiteValidator` has 1 public method (`validate`) + 1 private helper. `UpdateServiceController` has 1 public method (`schedule_restart`). Both match the prohibited pattern: "Do not create wrapper dataclasses for one-shot operations." |
-| B3 | `MetricsLogger` has 3 separate RLocks via 2 private proxy classes | CONFIRMED — `_MetricsSessionState._lock` (10 per-property lock blocks), `_MetricsPersistenceCoordinator._lock` (10 per-property lock blocks), `MetricsLogger._lock`. Both private classes are exclusively owned by `MetricsLogger`. ~20 `@property` methods follow identical `with self._lock: return self._field` pattern. |
+| ID | Original Finding | Source Subagents | Validation Result |
+|----|-----------------|------------------|-------------------|
+| A2+C1 | Metrics_log lock-per-property boilerplate in _MetricsSessionState and _MetricsPersistenceCoordinator (~150 lines of individual-field locks alongside batch snapshot methods) | Architecture, Data Flow | **VALIDATED** — _MetricsSessionState confirmed at logger.py:79 with 9+ individually-locked properties. _MetricsPersistenceCoordinator has 8+ individually-locked properties. Both provide snapshot()/status_snapshot() that do the correct single-lock bulk read. The per-property locks provide individual field safety but callers need multi-field consistency, which only snapshots provide. |
+| D1 | Four parallel sample column definitions maintained independently with no enforcement | Persistence | **VALIDATED** — Schema DDL at _schema.py:40, _V2_TYPED_COLS list at _samples.py, SensorFrame at domain_models.py, and EXPORT_CSV_COLUMNS at exports.py each independently define the sample field set. No automated cross-check exists. A typo produces silent NULL insertion. |
+| D2 | Settings persistence as degenerate one-row KV table + dual sensor name stores (client_names table vs sensorsByMac blob) | Persistence | **PARTIALLY VALIDATED** — settings_kv table uses a single key 'settings_snapshot'. However, the KV pattern is cosmetically inefficient but functionally simple. The dual sensor name issue (client_names vs sensorsByMac) is the actual complexity problem. Downscoped: focus on documenting/resolving the dual sensor name ambiguity rather than restructuring settings_kv. |
+| D3 | Two schema version trackers with inconsistent storage — schema_meta table vs PRAGMA user_version | Persistence | **VALIDATED** — schema_meta table at _schema.py:30 reimplements what PRAGMA user_version does natively. _ensure_schema() has 40+ lines for this. ANALYSIS_SCHEMA_VERSION is stored as a column on runs, which is legitimate for per-row versioning. The schema_meta → PRAGMA user_version migration is a clean, low-risk simplification. |
+| B2-ws | WsBroadcastCache dataclass as externally-visible mutable container in ws_broadcast.py | Abstraction | **NEEDS VALIDATION** — Must check if WsBroadcastCache fields are accessed outside WsBroadcastService. |
+
+## Additional Validation: WsBroadcastCache
+
+Need to verify whether WsBroadcastCache is accessed externally.
 
 ## Root Causes
 
-- **B1**: Layering purism — avoiding an import from `api_models` in a service-layer module. The TypedDict was created as an internal type to avoid the perception of a "wrong direction" import.
-- **B2**: Domain-object-per-phase design — each update phase was modeled as a separate class to give it a namespace, even though neither phase carries state across calls.
-- **B3**: Progressive privatization — two coherent subsets of MetricsLogger state were extracted into private classes, each with their own lock, creating three independent locking domains for fields that are always read/written as a unit during `status()` calls.
+1. **Defensive concurrency habit**: Every mutable field gets its own lock guard, creating boilerplate that doesn't address the actual multi-field consistency requirement.
+2. **No schema-column enforcement**: Sample fields are defined in 4 places because each serves a slightly different purpose (DDL, insertion, domain model, export). No mechanism derives them from one source.
+3. **SQLite feature unfamiliarity**: schema_meta reimplements a built-in SQLite mechanism (PRAGMA user_version) because the developer preferred a table-based approach.
+4. **Settings evolution**: The single-key KV pattern was an over-general design for future extensibility that never materialized.
 
 ## Relevant Code Paths
 
-### B1: LoggingStatusPayload mirror
-- `apps/server/vibesensor/metrics_log/logger.py` L57-68 — `LoggingStatusPayload` TypedDict (9 fields)
-- `apps/server/vibesensor/api_models.py` — `LoggingStatusResponse` Pydantic model (same 9 fields)
-- `apps/server/vibesensor/routes/recording.py` L25,29,33 — bridge: `LoggingStatusResponse(**metrics_logger.status())`
-- `apps/server/vibesensor/metrics_log/logger.py` L537 — `MetricsShutdownReport.final_status: LoggingStatusPayload`
-- `apps/server/vibesensor/metrics_log/__init__.py` L20 — re-exports `LoggingStatusPayload`
+### Lock-per-property (metrics_log/logger.py)
+- `_MetricsSessionState` — 9 properties with individual `with self._lock:` blocks, plus snapshot(), pending_flush_snapshot(), start_new_session(), stop_session() for bulk reads
+- `_MetricsPersistenceCoordinator` — 8+ similarly-locked properties, plus status_snapshot() for bulk reads
+- `MetricsLogger.status()` and `.health_snapshot()` — callers that read multiple fields
 
-### B2: Update one-shot classes
-- `apps/server/vibesensor/update/workflow.py` L25 — `UpdatePrerequisiteValidator` class
-- `apps/server/vibesensor/update/workflow.py` L125 — `UpdateServiceController` class
-- `apps/server/vibesensor/update/manager.py` L213-234 — construction and single-call sites
-- Both config dataclasses (`UpdateValidationConfig`, `UpdateServiceControlConfig`) stay — they're legitimate config groupings
-- `apps/server/tests/update/test_update_validation.py` — tests `UpdatePrerequisiteValidator` directly
+### Sample columns
+- `history_db/_schema.py` — DDL for samples_v2 table (26 columns)
+- `history_db/_samples.py` — _V2_TYPED_COLS tuple (25 entries), _V2_PEAK_COLS, sample_to_v2_row(), v2_row_to_dict()
+- `domain_models.py` — SensorFrame dataclass (27 fields), to_dict(), from_dict()
+- `history_services/exports.py` — EXPORT_CSV_COLUMNS (27 entries)
+- `metrics_log/sample_builder.py` — build_sample_records() produces the dict at runtime
 
-### B3: MetricsLogger locking
-- `apps/server/vibesensor/metrics_log/logger.py` L85 — `_MetricsSessionState._lock` 
-- `apps/server/vibesensor/metrics_log/logger.py` L244 — `_MetricsPersistenceCoordinator._lock`
-- `apps/server/vibesensor/metrics_log/logger.py` L577 — `MetricsLogger._lock`
-- Per-property pattern: `@property def X(self): with self._lock: return self._X` × ~20
+### Schema version
+- `history_db/_schema.py` — SCHEMA_VERSION = 7, schema_meta DDL
+- `history_db/__init__.py` — _ensure_schema() with 40+ lines of schema_meta management
+
+### WsBroadcastCache
+- `runtime/ws_broadcast.py` — WsBroadcastCache dataclass definition
+- `runtime/builders.py` — constructs WsBroadcastCache
 
 ## Simplification Approach
 
-### B1: Delete LoggingStatusPayload, use dict return
+### Step 1: Remove per-property lock boilerplate from _MetricsSessionState
 
-**Strategy**: Remove the TypedDict entirely. Have `MetricsLogger.status()`, `start_logging()`, `stop_logging()` return `dict[str, object]`. The route handlers already construct `LoggingStatusResponse` from the dict — they just won't need a TypedDict annotation.
+1. Make all state fields plain `_x` attributes (no property wrappers)
+2. Keep `start_new_session()`, `stop_session()`, `snapshot()`, `pending_flush_snapshot()` as the only locked transaction methods
+3. Add a `should_auto_stop()` locked method for the timeout check
+4. The `enabled` setter needs to remain as a locked setter (it's called from HTTP handlers)
+5. Remove all 7-8 property getters that just `with self._lock: return self._x`
+6. Audit callers to ensure they use snapshot methods, not individual field access
 
-**Steps**:
-1. In `logger.py`: delete the `LoggingStatusPayload` TypedDict definition (L57-68)
-2. Update `MetricsLogger.status()` return type from `LoggingStatusPayload` to `dict[str, object]`
-3. Update `MetricsLogger.start_logging()` return type similarly
-4. Update `MetricsLogger.stop_logging()` return type similarly
-5. Update `MetricsShutdownReport.final_status` type from `LoggingStatusPayload` to `dict[str, object]`
-6. Remove `LoggingStatusPayload` from `metrics_log/__init__.py` re-exports
-7. Routes in `recording.py` continue to work unchanged: `LoggingStatusResponse(**metrics_logger.status())`
-8. The Pydantic model `LoggingStatusResponse` becomes the single source of truth for field names
+### Step 2: Remove per-property lock boilerplate from _MetricsPersistenceCoordinator
 
-### B2: Convert one-shot classes to module-level functions
+1. Make all state fields plain `_x` attributes
+2. Keep `status_snapshot()` as the only bulk read method
+3. Keep specific write methods (set_history_run_created, record_write, etc.) as locked setters
+4. Remove all 8+ property getters that just `with self._lock: return self._x`
 
-**Strategy**: Replace each one-shot class with a standalone async function. The function receives the same parameters that were in `__init__`.
+### Step 3: Replace schema_meta table with PRAGMA user_version
 
-**Steps**:
-1. In `workflow.py`: convert `UpdatePrerequisiteValidator` class to `async def validate_prerequisites(commands, tracker, config, ssid) -> bool`
-   - Move `_probe_rollback_dir()` to be a nested function or module-level private function
-   - The `validate()` method body becomes the function body
-   
-2. In `workflow.py`: convert `UpdateServiceController` class to `async def schedule_service_restart(commands, tracker, config) -> bool`
-   - The `schedule_restart()` method body becomes the function body
+1. In _ensure_schema(), replace `CREATE TABLE IF NOT EXISTS schema_meta` DDL with `PRAGMA user_version`
+2. Replace the version read: `SELECT value FROM schema_meta WHERE key = 'version'` → `PRAGMA user_version`
+3. Replace the version write: `INSERT/UPDATE schema_meta` → `PRAGMA user_version = N`
+4. Remove schema_meta DDL from SCHEMA_SQL
+5. Handle migration: if schema_meta table exists (old DB), read version from it, set PRAGMA, then drop schema_meta table
+6. This simplifies _ensure_schema() from ~40 lines to ~15 lines
 
-3. In `manager.py`: update `_run_update_inner()` to call the functions directly:
-   ```python
-   # Before:
-   validator = UpdatePrerequisiteValidator(commands=commands, tracker=tracker, config=self._validation_config)
-   if not await validator.validate(request.ssid): return
-   
-   # After:
-   if not await validate_prerequisites(commands, tracker, self._validation_config, request.ssid): return
-   ```
-   
-4. Keep `UpdateValidationConfig` and `UpdateServiceControlConfig` frozen dataclasses — they're legitimate config groupings with 3+ fields each
+### Step 4: Derive sample column definitions from a single source
 
-5. Update `test_update_validation.py` to test `validate_prerequisites()` function directly instead of constructing `UpdatePrerequisiteValidator`
+1. Create a canonical `SAMPLE_COLUMNS` tuple in `_samples.py` defining every column with its name and SQL type
+2. Generate `_V2_TYPED_COLS` from SAMPLE_COLUMNS
+3. Add a hygiene test that verifies SensorFrame.to_dict() keys and EXPORT_CSV_COLUMNS align with SAMPLE_COLUMNS
+4. This doesn't change runtime behavior but prevents drift
 
-### B3: Reduce MetricsLogger per-property lock boilerplate
+### Step 5: Document dual sensor name stores
 
-**Strategy**: Rather than the risky full refactor of merging private classes into MetricsLogger, take the safer approach: replace individual per-property lock acquisitions with bulk snapshot/status methods. Keep the class structure but eliminate the boilerplate pattern.
+1. Add a clear documentation comment in settings_store.py and registry.py explaining the two stores and their distinct purposes
+2. The actual merge of client_names into sensorsByMac is too risky for this chunk (it would change runtime behavior for sensor auto-discovery). Document it as a future simplification.
 
-**Steps**:
-1. In `_MetricsSessionState`: 
-   - Remove individual `@property` getters that do `with self._lock: return self._X`
-   - Keep compound methods (`start_new_session`, `stop_session`, `snapshot`) that legitimately need the lock
-   - Replace per-field reads in MetricsLogger with `snapshot()` calls where multiple fields are needed
-   - For 1-2 fields accessed individually (like `run_id`), use direct attribute access (GIL-safe for simple attribute reads)
+### Step 6: WsBroadcastCache inline (if validated)
 
-2. In `_MetricsPersistenceCoordinator`:
-   - Same approach: remove per-property lock wrappers
-   - Keep compound methods (`reset_for_new_session`, `ensure_history_run_created`, `append_rows`, `finalize_run`)
-   - Add a `status_snapshot()` method that reads all status-relevant fields under one lock
-
-3. In `MetricsLogger.status()`:
-   - Instead of 5 separate property accesses (each acquiring its own lock), call `self._session.snapshot()` + `self._persistence.status_snapshot()` for two lock acquisitions total
-
-4. Keep the 3-lock architecture (don't merge classes yet — too risky for this PR)
-
-## Implementation Sequence
-
-1. B1 (LoggingStatusPayload removal — lowest risk, clear rule violation)
-2. B2 (Update classes → functions — moderate, well-scoped)
-3. B3 (MetricsLogger lock cleanup — most complex, do last)
-
-## Dependencies on Other Chunks
-
-- B1 changes `MetricsLogger` return types — no dependency on other chunks
-- B2 changes `update/workflow.py` and `update/manager.py` — no dependency on other chunks
-- B3 changes `metrics_log/logger.py` — must be done after B1 (which also changes logger.py)
-- No dependency on Chunk 1 or 2
-
-## Risks and Tradeoffs
-
-- **B1**: Very low risk. The route handlers already construct `LoggingStatusResponse` from the dict via `**` unpack. Removing the TypedDict doesn't change any runtime behavior.
-- **B2**: Low-medium risk. The function signatures preserve all the same parameters. Test must be updated to call functions instead of constructing classes.
-- **B3**: Medium risk. Changing locking patterns in a threaded recording path requires careful verification. The "replace per-property with bulk snapshot" approach is much safer than full class merge. Key risk: callers of individual properties must be identified and updated to use snapshot results.
-
-## Validation Steps
-
-1. `pytest -q apps/server/tests/api/` — recording route tests
-2. `pytest -q apps/server/tests/update/` — update tests
-3. `pytest -q apps/server/tests/app/` — app-level tests
-4. `make lint && make typecheck-backend`
-5. Full suite: `python3 tools/tests/run_ci_parallel.py --job backend-tests`
-
-## Required Documentation Updates
-
-- Update `docs/ai/repo-map.md` update/ section to mention functions instead of classes
-- No significant doc changes needed for B1 or B3
-
-## Required AI Instruction Updates
-
-- Add to `.github/instructions/general.instructions.md` complexity hygiene:
-  - "Do not create TypedDict mirrors of Pydantic models at HTTP boundaries. Use the Pydantic model directly or return `dict[str, object]` and let the route handler validate."
-  - "Do not create classes for one-shot operations. If a class is constructed, used once, and discarded, convert it to a function."
-  - "Avoid per-property lock patterns for private classes. Use bulk snapshot methods that read all needed fields under a single lock acquisition."
-
-## Required Test Updates
-
-- `test_update_validation.py` — update to test `validate_prerequisites()` function
-- Recording route tests — should continue to pass unchanged (they test the response shape, not the TypedDict)
-- MetricsLogger tests — update any that access individual properties directly
+- If WsBroadcastCache is only accessed within WsBroadcastService, inline its 5 fields as private attributes on the service.
 
 ## Simplification Crosswalk
 
-| Finding | Validation | Root Cause | Steps | Areas Changed | What's Removed | Verification |
-|---------|-----------|------------|-------|---------------|----------------|--------------|
-| B1 | CONFIRMED (9-field TypedDict identical to Pydantic model) | Layering purism avoiding api_models import | Delete TypedDict, return dict[str, object] | logger.py, __init__.py | ~15 lines TypedDict + re-export, 1 type definition | Recording route tests pass, status endpoint returns same JSON |
-| B2 | CONFIRMED (2 classes with 1 method each, constructed and discarded per-call) | Domain-object-per-phase design | Convert classes to async functions | workflow.py, manager.py, test_update_validation.py | 2 classes (~70 lines of class scaffolding) | Update tests pass, update flow works |
-| B3 | CONFIRMED (20 per-property lock blocks across 2 private classes) | Progressive privatization of state subsets | Replace per-property locks with bulk snapshot methods | logger.py | ~40 lines of per-property lock boilerplate | MetricsLogger tests pass, status() returns correct data, no race conditions |
+### A2+C1 → Lock-per-property boilerplate
+- **Validation**: Confirmed — 17+ property getters doing nothing but lock-acquire-read-release
+- **Root cause**: Defensive concurrency habit; callers need multi-field snapshots, not individual reads
+- **Steps**: Remove property wrappers, make fields plain attributes, keep only transaction methods
+- **Removable**: ~100 lines of property boilerplate across both classes
+- **Verification**: All metrics_log tests pass, MetricsLogger.status() still returns correct data
+
+### D1 → Parallel sample column definitions
+- **Validation**: Confirmed — 4 independent definitions with no cross-check
+- **Root cause**: Each definition serves a different purpose with no enforcement
+- **Steps**: Create canonical SAMPLE_COLUMNS, derive _V2_TYPED_COLS, add drift-detection test
+- **Removable**: Nothing removed (this is a guardrail addition)
+- **Verification**: Hygiene test catches any column drift, existing tests still pass
+
+### D2 → Settings KV + dual sensor names
+- **Validation**: Partially validated — KV table is cosmetic, dual names is real
+- **Root cause**: settings_kv uses generic KV for a single-key use case; client_names vs sensorsByMac serve different purposes but overlap
+- **Steps**: Document the dual-store relationship; the KV→single-row migration is cosmetic and not worth the schema migration risk
+- **Removable**: Nothing removed (documentation improvement)
+- **Verification**: No runtime changes, documentation review
+
+### D3 → Schema version via schema_meta table
+- **Validation**: Confirmed — schema_meta reimplements PRAGMA user_version
+- **Root cause**: SQLite feature unfamiliarity
+- **Steps**: Replace schema_meta with PRAGMA user_version, handle migration from existing DBs
+- **Removable**: schema_meta DDL, 25+ lines of _ensure_schema() logic
+- **Verification**: Fresh DB and migrated DB both work, schema version reads correctly
+
+### B2-ws → WsBroadcastCache externally visible
+- **Validation**: Needs code inspection to confirm external access
+- **Steps**: If confirmed externally unused, inline 5 fields on WsBroadcastService
+- **Removable**: WsBroadcastCache class definition
+- **Verification**: WS broadcast still works, all WS tests pass
+
+## Dependencies on Other Chunks
+
+- No dependencies on Chunks 1 or 2.
+- Chunk 4 (testing) may need to update tests that construct _MetricsSessionState or check individual properties.
+- Chunk 5 is independent.
+
+## Risks and Tradeoffs
+
+1. **Lock removal**: Removing per-property locks changes the threading contract. Risk: callers that currently read individual fields outside snapshots will lose per-field atomicity. Mitigated: audit all callers to ensure they use snapshots.
+2. **PRAGMA user_version migration**: Existing databases have schema_meta. Need graceful migration path. Risk: if migration fails, DB is unusable. Mitigated: read from schema_meta first if it exists, migrate forward.
+3. **Sample column enforcement**: Adding a hygiene test may fail initially if columns have already drifted. This is intentional — it catches existing drift.
+
+## Validation Steps
+
+1. `pytest -q apps/server/tests/metrics_log/` — metrics_log tests pass
+2. `pytest -q apps/server/tests/history/` — history/persistence tests pass  
+3. `pytest -q apps/server/tests/hygiene/` — hygiene tests pass (including new column drift test)
+4. `make lint` — clean
+5. `make typecheck-backend` — clean
+6. Full test suite: `pytest -q -m "not selenium" apps/server/tests`
+
+## Required Documentation Updates
+
+- docs/history_db_schema.md — update schema version mechanism description
+- docs/ai/repo-map.md — update history_db description
+
+## Required AI Instruction Updates
+
+- Add to .github/instructions/general.instructions.md: "Use snapshot methods instead of per-property lock wrapping for concurrent state. Do not add new per-property lock patterns."
+- Add: "Prefer SQLite built-in mechanisms (PRAGMA, CHECK constraints) over reimplementing them in table design."
+
+## Required Test Updates
+
+- Update tests that access _MetricsSessionState properties directly → use snapshot methods
+- Add hygiene test for sample column alignment
+- Update _ensure_schema tests for PRAGMA user_version

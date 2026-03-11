@@ -13,11 +13,11 @@ import inspect
 
 import pytest
 
-import vibesensor.analysis.findings_persistent as fmod_persistent
-from vibesensor.analysis.findings_order_analysis import (
+import vibesensor.analysis.findings as fmod_persistent
+from vibesensor.analysis.order_analysis import (
     compute_order_confidence as _compute_order_confidence,
 )
-from vibesensor.analysis.findings_order_analysis import (
+from vibesensor.analysis.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
 
@@ -35,9 +35,9 @@ class TestRankingScoreErrorDenominator:
         """Source must not hardcode 0.5 denominator for ranking error.
 
         The ranking_score computation lives in ``assemble_order_finding``
-        in ``findings_order_findings``; verify it there.
+        in ``order_analysis``; verify it there.
         """
-        from vibesensor.analysis.findings_order_findings import assemble_order_finding
+        from vibesensor.analysis.order_analysis import assemble_order_finding
 
         src = inspect.getsource(assemble_order_finding)
         # Old code had a hardcoded 0.5 denominator; new code derives from compliance.

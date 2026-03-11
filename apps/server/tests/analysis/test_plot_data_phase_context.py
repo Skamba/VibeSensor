@@ -9,11 +9,9 @@ from __future__ import annotations
 
 import pytest
 
-import vibesensor.analysis.plot_data as plot_data_module
-import vibesensor.analysis.plot_peak_table as plot_peak_table_module
-import vibesensor.analysis.plot_spectrum as plot_spectrum_module
+import vibesensor.analysis.plots as plots_module
 from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
-from vibesensor.analysis.plot_data import _plot_data
+from vibesensor.analysis.plots import _plot_data
 
 
 def _make_sample(
@@ -136,8 +134,8 @@ def test_plot_data_reuses_precomputed_phase_and_noise(monkeypatch: pytest.Monkey
         noise_calls += 1
         return 0.02
 
-    monkeypatch.setattr(plot_data_module, "_segment_run_phases", _count_segment_calls)
-    monkeypatch.setattr(plot_data_module, "_run_noise_baseline_g", _count_noise_calls)
+    monkeypatch.setattr(plots_module, "_segment_run_phases", _count_segment_calls)
+    monkeypatch.setattr(plots_module, "_run_noise_baseline_g", _count_noise_calls)
 
     _plot_data(
         _make_summary(samples),
@@ -154,25 +152,19 @@ def test_plot_data_scans_peak_samples_once_for_peak_driven_views(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(4)]
-    top_peak_calls = 0
+    scan_calls = 0
+    original_scan = plots_module.scan_peak_samples
 
-    def _count_top_peaks(sample: dict) -> list[tuple[float, float]]:
-        nonlocal top_peak_calls
-        top_peak_calls += 1
-        return [(float(peak["hz"]), float(peak["amp"])) for peak in sample.get("top_peaks", [])]
+    def _counting_scan(s: list) -> object:
+        nonlocal scan_calls
+        scan_calls += 1
+        return original_scan(s)
 
-    def _fail_if_direct_peak_scan(_sample: dict) -> list[tuple[float, float]]:
-        raise AssertionError("top_peaks should be read from the shared peak scan")
-
-    def _fail_if_table_rescans(_samples: list[dict]) -> object:
-        raise AssertionError("plot_peak_table should receive the shared peak scan")
-
-    monkeypatch.setattr(plot_spectrum_module, "_sample_top_peaks", _count_top_peaks)
-    monkeypatch.setattr(plot_peak_table_module, "scan_peak_samples", _fail_if_table_rescans)
+    monkeypatch.setattr(plots_module, "scan_peak_samples", _counting_scan)
 
     _plot_data(_make_summary(samples))
 
-    assert top_peak_calls == len(samples)
+    assert scan_calls == 1, f"scan_peak_samples called {scan_calls} times, expected 1"
 
 
 # ---------------------------------------------------------------------------
@@ -188,7 +180,7 @@ def test_aggregate_fft_spectrum_presence_ratio_clamped_to_one() -> None:
     bin (bin_center = 45 Hz). Previously len(amps)=2 / n_samples=1 = 2.0 gave
     a persistence score inflated by 4× relative to a single-peak sample.
     """
-    from vibesensor.analysis.plot_spectrum import aggregate_fft_spectrum as _aggregate_fft_spectrum
+    from vibesensor.analysis.plots import aggregate_fft_spectrum as _aggregate_fft_spectrum
 
     # Two co-binned peaks from one sample — should behave like presence_ratio=1.
     two_peaks_sample = [

@@ -10,7 +10,7 @@ from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.analysis import summarize_log
-from vibesensor.analysis.summary_payload import summarize_origin
+from vibesensor.analysis.summary_builder import summarize_origin
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.report_data import ReportTemplateData
 

@@ -34,7 +34,7 @@ from .health_state import RuntimeHealthState
 from .lifecycle import LifecycleManager
 from .processing_loop import ProcessingLoop, ProcessingLoopState
 from .state import RuntimeState
-from .ws_broadcast import WsBroadcastCache, WsBroadcastService
+from .ws_broadcast import WsBroadcastService
 
 LOGGER = logging.getLogger(__name__)
 
@@ -115,10 +115,8 @@ def build_runtime(config: AppConfig) -> RuntimeState:
     )
 
     # websocket
-    ws_cache = WsBroadcastCache()
     ws_hub = WebSocketHub()
     ws_broadcast = WsBroadcastService(
-        cache=ws_cache,
         ui_push_hz=UI_PUSH_HZ,
         ui_heavy_push_hz=UI_HEAVY_PUSH_HZ,
         registry=registry,

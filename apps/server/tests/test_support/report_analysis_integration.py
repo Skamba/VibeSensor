@@ -8,15 +8,13 @@ import pytest
 
 from test_support.report_helpers import analysis_sample as _make_sample
 from vibesensor.analysis import (
-    findings_order_analysis as _order_analysis_module,
+    order_analysis as _order_analysis_module,
 )
 from vibesensor.analysis import (
-    findings_order_findings as _order_assembly_module,
+    order_analysis as order_findings_module,
 )
-from vibesensor.analysis import (
-    findings_order_findings as order_findings_module,
-)
-from vibesensor.analysis.findings_order_findings import (
+from vibesensor.analysis import test_plan as _test_plan_module
+from vibesensor.analysis.order_analysis import (
     _build_order_findings as _findings_build_order_findings,
 )
 from vibesensor.runlog import (
@@ -73,7 +71,7 @@ def patch_order_hypothesis(
     monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [HypothesisStub()])
     monkeypatch.setattr(_order_analysis_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
-        _order_assembly_module,
+        _test_plan_module,
         "_location_speedbin_summary",
         lambda _points, **_kwargs: (
             "",

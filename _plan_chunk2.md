@@ -1,183 +1,157 @@
-# Chunk 2: Backend Module Consolidation
-
-## Execution order: 2 of 5
+# Chunk 2: API Surface & Type System Simplification
 
 ## Mapped Findings
 
-| ID | Original Finding | Validation Result |
-|----|-----------------|-------------------|
-| A1 | `analysis/` micro-file fragmentation (29 files, single-consumer modules, 4-deep findings chain) | CONFIRMED — `findings_order_assembly.py` (1 function, 1 consumer), `summary_models.py` (1 dataclass, 1 consumer), `findings_reference_checks.py` (1 function, 1 consumer), `findings_builder_support.py` (6 functions, 1 consumer). `findings_speed_profile.py` has 3 consumers — NOT single-consumer, keep separate. `plot_data.py` has 5 pure delegation wrappers that just forward to `plot_spectrum` and `plot_peak_table`. |
-| A2 | `report/` single-consumer section files + nano-files (18 files) | CONFIRMED — `pdf_page1.py` has 7 forwarding wrappers importing from `pdf_page1_sections.py`. `pdf_page2.py` has 5 forwarding wrappers from `pdf_page2_sections.py`. `pdf_helpers.py` (2 functions, 1 consumer). `pdf_layout.py` (2 functions, 1 consumer). All 4 satellite files have exactly 1 production consumer each. |
-| A3 | `processing/views.py` pure-delegation single-consumer class | CONFIRMED — `SignalProcessorViews` (200 lines, 10 methods) used only by `processor.py`. 5 methods on `processor.py` are one-liner delegations to `self._views.*`. Class never imported/instantiated elsewhere. |
-| B4 | `HistoryExportArchiveBuilder` single-consumer wrapper class | CONFIRMED — Used only by `HistoryExportService` in production (same file). Has 1 test consumer (`test_history_http_services.py`) that tests it directly. Constructor + 1 method. |
+| ID | Original Finding | Source Subagents | Validation Result |
+|----|-----------------|------------------|-------------------|
+| B1 | TypedDict Required/Optional base-class inheritance split (FindingRequired, _SummaryDataRequired, _CarConfigPayloadRequired) | Abstraction | **VALIDATED** — FindingRequired at _types.py:104 is used only as base class for Finding. _SummaryDataRequired at _types.py:265 is used only as base for SummaryData. _CarConfigPayloadRequired at backend_types.py:28 is base for CarConfigPayload. The codebase already uses NotRequired (imported in backend_types.py line 5). |
+| B3 | Private Pydantic base classes _FrozenBase and _ExtraAllowBase hiding model_config via inheritance | Abstraction | **VALIDATED** — _FrozenBase confirmed at api_models.py:88, used by 11+ request models. _ExtraAllowBase confirmed at api_models.py:94. Both add a single model_config attribute that is invisible at each model's definition site. |
+| E1 | ClientApiRow broadcasts 15 debug-only fields on every WS tick | API & Interface | **VALIDATED** — ClientApiRow at payload_types.py has 23 fields. Frontend parseClient() in server_payload.ts uses ~10 fields. data_addr, control_addr, last_ack_*, reset_*, duplicates_received, parse_errors, server_queue_drops, queue_overflow_drops, timing_health, latest_metrics are never consumed by the UI. |
+| E2 | HealthResponse is a backend diagnostic dump with ~60% unused fields | API & Interface | **VALIDATED** — HealthResponse has 22 top-level fields + 3 nested sub-models. update_feature.ts is the only UI consumer, accessing only ~8 fields. HealthIntakeStatsResponse (5 fields) has zero UI consumers. |
+| E3 | Mutation responses typed through 3 layers but discarded by frontend | API & Interface | **VALIDATED** — setClientLocation(), identifyClient(), removeClient() all return Promise<void>. The Pydantic response models (SetClientLocationResponse, IdentifyResponse, RemoveClientResponse) are defined, schema-exported, and TS-typed but never read. |
 
 ## Root Causes
 
-Incremental extraction refactoring produced increasingly small modules that fell below the minimum viable size. The analysis/ package grew by pulling functions into separate files without periodically re-evaluating consolidation. The report/ page/sections split was a file-size management strategy that introduced forwarding-only wrappers. The processing/views split tried to separate "compute" from "payload building" but ended up as pure delegation.
+1. **Pre-NotRequired TypedDict pattern**: The Required base + total=False subclass pattern was the standard approach before Python 3.11's NotRequired. The codebase evolved past the need but never cleaned up the pattern.
+2. **DRY reflex over readability**: _FrozenBase saves one line per model but hides the frozen constraint behind inheritance, requiring readers to jump to the base class.
+3. **Debug-visibility creep**: ClientApiRow grew to serve both dashboard display and on-device diagnostics without separating the two concerns. Each new diagnostic field was added to the same dict.
+4. **OpenAPI-first response discipline**: FastAPI's response_model encourages typed responses even for fire-and-forget mutations. The generated TS types create an illusion of a live API contract that the frontend silently ignores.
 
 ## Relevant Code Paths
 
-### A1: analysis/ modules to merge
-- `apps/server/vibesensor/analysis/findings_order_assembly.py` — 1 function `assemble_order_finding`, ~218 lines
-- `apps/server/vibesensor/analysis/findings_order_findings.py` — sole consumer of `assemble_order_finding`
-- `apps/server/vibesensor/analysis/summary_models.py` — 1 dataclass `PreparedRunData`, ~40 lines
-- `apps/server/vibesensor/analysis/summary_builder.py` — sole consumer of `PreparedRunData`
-- `apps/server/vibesensor/analysis/findings_reference_checks.py` — 1 function `_reference_missing_finding` + 2 constant dicts, ~46 lines
-- `apps/server/vibesensor/analysis/findings_builder_support.py` — sole consumer of `_reference_missing_finding`
-- `apps/server/vibesensor/analysis/plot_data.py` — 5 delegation wrappers + 1 orchestrator `_plot_data`, ~198 lines
-- `apps/server/vibesensor/analysis/plot_spectrum.py` — actual implementation of spectrum functions
-- `apps/server/vibesensor/analysis/plot_peak_table.py` — actual implementation of peak table functions
-- Tests: `test_report_analysis_localization_integration.py`, `test_report_scenario_output_regression.py`, `test_findings_builder_support.py`
+### TypedDict Splits
+- `vibesensor/analysis/_types.py` — FindingRequired (L104) + Finding (L114), _SummaryDataRequired (L265) + SummaryData (L309)
+- `vibesensor/backend_types.py` — _CarConfigPayloadRequired (L28) + CarConfigPayload (L33)
 
-### A2: report/ modules to merge
-- `apps/server/vibesensor/report/pdf_page1.py` — 7 forwarding wrappers + page orchestrator
-- `apps/server/vibesensor/report/pdf_page1_sections.py` — 8 section render functions
-- `apps/server/vibesensor/report/pdf_page2.py` — 5 forwarding wrappers + page orchestrator
-- `apps/server/vibesensor/report/pdf_page2_sections.py` — 5 section render functions
-- `apps/server/vibesensor/report/pdf_helpers.py` — 2 functions (`_canonical_location`, `_source_color`)
-- `apps/server/vibesensor/report/pdf_layout.py` — 2 functions (`fit_rect_preserve_aspect`, `assert_aspect_preserved`)
-- `apps/server/vibesensor/report/pdf_diagram_render.py` — sole consumer of `pdf_helpers.py`
-- Tests: `test_runtime_nan_and_update_guard_regressions.py` imports from `pdf_helpers`, `test_report_new_modules_pdf_layout.py` imports from `pdf_layout`
+### Pydantic Bases
+- `vibesensor/api_models.py` — _FrozenBase (L88), _ExtraAllowBase (L94), 11+ consuming request models
 
-### A3: processing/views.py
-- `apps/server/vibesensor/processing/views.py` — `SignalProcessorViews` class
-- `apps/server/vibesensor/processing/processor.py` — sole consumer, 5 delegation methods
+### WS Payload
+- `vibesensor/payload_types.py` — ClientApiRow (23 fields), ClientMetrics, AxisMetrics, AxisPeak, CombinedMetrics, TimingHealthPayload (all nested types)
+- `vibesensor/registry.py` — _client_api_row() assembles all 25 fields unconditionally
+- `apps/ui/src/server_payload.ts` — parseClient() extracts ~10 fields
+- `apps/ui/src/contracts/ws_payload_types.ts` — generated types including 6 unused type definitions
 
-### B4: HistoryExportArchiveBuilder
-- `apps/server/vibesensor/history_services/exports.py` — both classes in same file
-- `apps/server/tests/history_services/test_history_http_services.py` — direct test consumer
+### Health Response
+- `vibesensor/api_models.py` — HealthResponse, HealthDataLossResponse, HealthPersistenceResponse, HealthIntakeStatsResponse
+- `vibesensor/routes/health.py` — build_health_snapshot() collects from 5 services
+- `apps/ui/src/app/features/update_feature.ts` — reads ~8 of ~47 fields
+
+### Mutation Responses
+- `vibesensor/api_models.py` — IdentifyResponse, SetClientLocationResponse, RemoveClientResponse
+- `apps/ui/src/api/clients.ts` — all return Promise<void>
 
 ## Simplification Approach
 
-### A1: Merge analysis/ micro-files (29 → ~24 files)
+### Step 1: Flatten TypedDict Required/Optional splits
 
-**Step 1**: Merge `findings_order_assembly.py` into `findings_order_findings.py`
-- Move `assemble_order_finding()` function into `findings_order_findings.py`
-- Update the import within `findings_order_findings.py` from external to local
-- Update test import in `test_report_analysis_localization_integration.py`
-- Delete `findings_order_assembly.py`
+For each split pair, merge into a single TypedDict using NotRequired:
 
-**Step 2**: Merge `summary_models.py` into `summary_builder.py`
-- Move `PreparedRunData` dataclass to top of `summary_builder.py`
-- Remove the import line
-- Delete `summary_models.py`
+1. **Finding**: Merge FindingRequired fields into Finding as Required[T] markers, delete FindingRequired
+2. **SummaryData**: Merge _SummaryDataRequired fields into SummaryData, delete _SummaryDataRequired
+3. **CarConfigPayload**: Already uses NotRequired for variant. Merge _CarConfigPayloadRequired into CarConfigPayload, delete _CarConfigPayloadRequired
 
-**Step 3**: Merge `findings_reference_checks.py` into `findings_builder_support.py`
-- Move `_REF_MISSING`, `_REF_MISSING_AMPLITUDE` dicts and `_reference_missing_finding()` function
-- Update imports
-- Update test import in `test_report_scenario_output_regression.py`
-- Delete `findings_reference_checks.py`
+### Step 2: Inline Pydantic model_config
 
-**Step 4**: Eliminate `plot_data.py` delegation wrappers
-- In `plot_data.py`, the orchestrator function `_plot_data()` calls 5 wrapper functions that just delegate. Replace with direct calls to `plot_spectrum.*` and `plot_peak_table.*`
-- Keep `_plot_data()` as the orchestrator but inline calls
-- OR: move `_plot_data()` into `summary_builder.py` (its primary consumer) and delete `plot_data.py` entirely
-- Update `_types.py` if it imports `PlotDataResult` from `plot_data`
+Remove _FrozenBase and _ExtraAllowBase. Add `model_config = ConfigDict(frozen=True)` directly to each request model that inherited _FrozenBase. Add `model_config = ConfigDict(extra="allow")` to models that inherited _ExtraAllowBase.
 
-**NOT merging**: `findings_speed_profile.py` — has 3 consumers, justified as a standalone utility module.
+### Step 3: Slim ClientApiRow for WS broadcast
 
-### A2: Merge report/ nano-files (18 → ~12 files)
+1. Create `ClientWsRow` with only the ~10 fields the UI actually consumes: id, mac_address, name, connected, location, firmware_version, sample_rate_hz, frame_samples, last_seen_age_ms, frames_total, dropped_frames
+2. Add a `snapshot_for_ws()` method to registry that returns ClientWsRow
+3. Keep full ClientApiRow for the HTTP GET /api/clients endpoint (diagnostic use)
+4. Update LiveWsPayload to use ClientWsRow instead of ClientApiRow
+5. Update the WS broadcast path to use snapshot_for_ws()
+6. Regenerate TS contracts — the unused TS types (AxisMetrics, CombinedMetrics, TimingHealthPayload, etc.) will be removed from ws_payload_types.ts
 
-**Step 1**: Merge `pdf_page1_sections.py` into `pdf_page1.py`
-- Move all 8 section render functions into `pdf_page1.py`
-- Remove the 7 forwarding wrappers and `_impl` aliases
-- Replace wrapper calls with direct section function calls
-- Delete `pdf_page1_sections.py`
+### Step 4: Slim HealthResponse for UI
 
-**Step 2**: Merge `pdf_page2_sections.py` into `pdf_page2.py`
-- Same approach as Step 1
-- Delete `pdf_page2_sections.py`
+1. Split HealthResponse into a slim `HealthUiResponse` (8 fields the UI reads) used by the /api/health endpoint
+2. Move the full diagnostic payload to a /api/debug/health endpoint using the existing HealthResponse or a raw dict
+3. Keep HealthDataLossResponse (all 6 fields are used by UI)
+4. Slim HealthPersistenceResponse from 14 to 5 fields for the UI version
+5. Remove HealthIntakeStatsResponse (zero UI consumers) from the UI-facing model
 
-**Step 3**: Merge `pdf_helpers.py` into `pdf_diagram_render.py`
-- Move `_canonical_location()` and `_source_color()` into `pdf_diagram_render.py`
-- Update test import in `test_runtime_nan_and_update_guard_regressions.py`
-- Delete `pdf_helpers.py`
+### Step 5: Simplify mutation responses
 
-**Step 4**: Merge `pdf_layout.py` into `pdf_page2.py` (since `pdf_page2_sections.py` is now merged there)
-- Move `fit_rect_preserve_aspect()` and `assert_aspect_preserved()` 
-- Update test import in `test_report_new_modules_pdf_layout.py`
-- Delete `pdf_layout.py`
+1. Change setClientLocation, identifyClient, removeClient routes to return 204 No Content instead of typed response models
+2. Delete IdentifyResponse, SetClientLocationResponse, RemoveClientResponse from api_models.py
+3. Remove from __all__ and generated schema
+4. Update frontend API functions (they already discard the response, so no logic change needed)
 
-### A3: Inline processing/views.py
+### Step 6: Regenerate contracts
 
-**Step 1**: Move all methods from `SignalProcessorViews` into `SignalProcessor`
-- Copy method bodies into `processor.py`
-- Methods that access `self._store` and `self._metrics` can use the same attributes since `SignalProcessor` already owns them
-- Replace 5 delegation methods with the actual implementation code
-- Add a comment section `# --- Payload / view methods ---` for readability
-
-**Step 2**: Remove `SignalProcessorViews` instantiation from `SignalProcessor.__init__`
-- Delete `self._views = SignalProcessorViews(...)` line
-
-**Step 3**: Delete `views.py`
-- Update `processing/__init__.py` if it re-exports anything from views
-
-### B4: Inline HistoryExportArchiveBuilder
-
-**Step 1**: Move `build_zip_file()` method into `HistoryExportService`
-- Rename to `_build_zip_file()` (private)
-- Wire `self._history_db` directly (already available on the service)
-
-**Step 2**: Update `build_export()` to call `self._build_zip_file(...)` instead of `self._archive_builder.build_zip_file(...)`
-
-**Step 3**: Remove `HistoryExportArchiveBuilder` class and its construction in `__init__`
-
-**Step 4**: Update test in `test_history_http_services.py` to test through `HistoryExportService` instead of `HistoryExportArchiveBuilder` directly
-
-## Implementation Sequence
-
-1. A1 (analysis/ merges) — largest, most impactful
-2. A2 (report/ merges) — second largest
-3. A3 (processing/views.py) — straightforward
-4. B4 (HistoryExportArchiveBuilder) — quick, one file
-
-## Dependencies on Other Chunks
-
-- Chunk 1 dissolves `contracts.py` — no dependency on this chunk
-- Chunk 3 changes `MetricsLogger` and `update/workflow.py` — no dependency on analysis/report/processing changes
-- Test imports will change — tests in Chunk 5 (T1, T2) may need minor adjustments if they import from merged modules
-
-## Risks and Tradeoffs
-
-- **A1**: Large merge in analysis/ may cause merge conflicts if other work touches these files. Mitigated by doing it early.
-- **A2**: Report files are complex (PDF rendering with coordinates). Must verify PDF output is unchanged by running report tests.
-- **A3**: `processor.py` will grow by ~200 lines. Still reasonable for a primary class file. The conceptual separation is preserved via comment sections.
-- **B4**: Test change required — the test that directly tests `HistoryExportArchiveBuilder` must be updated to test through `HistoryExportService`.
-
-## Validation Steps
-
-1. `pytest -q apps/server/tests/analysis/` — all analysis tests
-2. `pytest -q apps/server/tests/report/` — all report tests
-3. `pytest -q apps/server/tests/history_services/` — export tests
-4. `make lint && make typecheck-backend`
-5. Full suite: `python3 tools/tests/run_ci_parallel.py --job backend-tests`
-
-## Required Documentation Updates
-
-- Update `docs/ai/repo-map.md` to reflect reduced file counts in analysis/ and report/
-- Update any references to deleted file names in docs/
-
-## Required AI Instruction Updates
-
-- Add to `.github/instructions/general.instructions.md` complexity hygiene section:
-  - "Do not extract single-function or single-consumer modules. Keep functions in their consumer's module until 3+ distinct consumers exist."
-  - "Do not create forwarding-wrapper modules that alias imports with no added logic."
-  - "Prefer few large focused modules over many tiny single-purpose modules."
-
-## Required Test Updates
-
-- `test_report_analysis_localization_integration.py` — update import from `findings_order_assembly` to `findings_order_findings`
-- `test_report_scenario_output_regression.py` — update import from `findings_reference_checks` to `findings_builder_support`
-- `test_runtime_nan_and_update_guard_regressions.py` — update import from `pdf_helpers` to `pdf_diagram_render`
-- `test_report_new_modules_pdf_layout.py` — update import from `pdf_layout` to `pdf_page2`
-- `test_history_http_services.py` — update test to use `HistoryExportService`
-- `test_findings_builder_support.py` — may need import updates
+Run the contract sync pipeline to update TypeScript types reflecting the slimmer API surface.
 
 ## Simplification Crosswalk
 
-| Finding | Validation | Root Cause | Steps | Areas Changed | What's Removed | Verification |
-|---------|-----------|------------|-------|---------------|----------------|--------------|
-| A1 | CONFIRMED (4 single-consumer modules in 29-file package) | Incremental extraction without consolidation review | Merge 3 single-consumer modules + eliminate 5 delegation wrappers in plot_data | findings_order_assembly→findings_order_findings, summary_models→summary_builder, findings_reference_checks→findings_builder_support, plot_data simplified | 3-4 files (~300 lines of module overhead) | analysis tests pass, imports resolve |
-| A2 | CONFIRMED (4 single-consumer modules in 18-file package) | File-size management split that created forwarding-only wrappers | Merge sections→pages, merge nano-files into consumers | pdf_page1_sections→pdf_page1, pdf_page2_sections→pdf_page2, pdf_helpers→pdf_diagram_render, pdf_layout→pdf_page2 | 4 files (~150 lines of forwarding boilerplate) | report tests pass, PDF output unchanged |
-| A3 | CONFIRMED (pure-delegation class with 1 consumer) | Extraction for size management | Move methods into SignalProcessor, delete views.py | processing/views.py→processor.py | 1 file, ~200 lines of delegation overhead | processing tests pass |
-| B4 | CONFIRMED (single-consumer wrapper class in same file) | Refactor split for threading boundary visibility | Inline _build_zip_file into HistoryExportService | history_services/exports.py | 1 class (~25 lines of scaffolding) | export tests pass |
+### B1 → TypedDict base-class splits
+- **Validation**: Confirmed — 3 split pairs, all using pre-NotRequired pattern, NotRequired already imported
+- **Root cause**: Pre-Python 3.11 pattern not cleaned up
+- **Steps**: Merge each Required base into its subclass using NotRequired/Required markers
+- **Removable**: FindingRequired, _SummaryDataRequired, _CarConfigPayloadRequired
+- **Verification**: All imports of Finding, SummaryData, CarConfigPayload still work; mypy passes
+
+### B3 → Pydantic hidden bases
+- **Validation**: Confirmed — 2 private bases, 11+ consumers
+- **Root cause**: DRY over readability
+- **Steps**: Delete _FrozenBase and _ExtraAllowBase, inline model_config on each consumer
+- **Removable**: _FrozenBase, _ExtraAllowBase
+- **Verification**: All API model tests pass, schema unchanged
+
+### E1 → ClientApiRow WS bloat
+- **Validation**: Confirmed — 15 unused fields broadcast per tick
+- **Root cause**: Single dict serves dashboard + diagnostics
+- **Steps**: Create ClientWsRow (10 fields), use in WS payload, keep full ClientApiRow for HTTP
+- **Removable**: 6 unused TS types from contracts
+- **Verification**: UI renders correctly, WS payload smaller, /api/clients still returns full data
+
+### E2 → HealthResponse bloat
+- **Validation**: Confirmed — ~28 of ~47 fields unused by frontend
+- **Root cause**: Single endpoint serves UI + diagnostics
+- **Steps**: Slim HealthResponse for UI, move full dump to debug endpoint
+- **Removable**: HealthIntakeStatsResponse, ~14 fields from HealthResponse, ~9 from HealthPersistenceResponse
+- **Verification**: Update feature UI still works, debug endpoint returns full data
+
+### E3 → Mutation response waste
+- **Validation**: Confirmed — 3 response models never read by frontend
+- **Root cause**: OpenAPI response_model discipline applied to fire-and-forget mutations
+- **Steps**: Return 204 No Content, delete 3 response models
+- **Removable**: IdentifyResponse, SetClientLocationResponse, RemoveClientResponse
+- **Verification**: Frontend mutation calls still succeed (they already ignore responses)
+
+## Dependencies on Other Chunks
+
+- Chunk 1 consolidates analysis/ files including _types.py where FindingRequired lives. Chunk 1 moves files but doesn't change TypedDict patterns. This chunk changes the TypedDict pattern without moving files. No conflict.
+- Chunk 5 handles contract sync pipeline simplification. This chunk uses the existing pipeline to regenerate; Chunk 5 simplifies the pipeline itself.
+
+## Risks and Tradeoffs
+
+1. **ClientApiRow split**: External tooling or scripts that consume /ws may break if they read debug fields. Risk is low — the WS protocol is internal.
+2. **HealthResponse split**: Any external monitoring consuming /api/health will see fewer fields. Mitigated: move full data to /api/debug/health.
+3. **204 No Content**: Any client that inspects mutation responses will get none. Current frontend doesn't, but hypothetical future consumers might.
+
+## Validation Steps
+
+1. `pytest -q apps/server/tests/` — full test suite passes
+2. `make lint` — clean
+3. `make typecheck-backend` — clean
+4. `cd apps/ui && npm run typecheck && npm run build` — frontend builds
+5. Contract sync produces expected slimmer types
+6. Verify WS payload in browser devtools shows only 10 client fields
+
+## Required Documentation Updates
+
+- docs/protocol.md — update WS payload field documentation if it references ClientApiRow
+- docs/ai/repo-map.md — update if it references health/client API specifics
+
+## Required AI Instruction Updates
+
+- Add to .github/instructions/general.instructions.md: "Do not add diagnostic/debug fields to UI-facing payload types. Use separate debug endpoints."
+- Add: "Do not create response models for fire-and-forget mutations. Use 204 No Content."
+
+## Required Test Updates
+
+- Update tests that construct ClientApiRow with all 25 fields to use the appropriate type
+- Update tests that test health endpoint response shape
+- May need to add tests for /api/debug/health endpoint

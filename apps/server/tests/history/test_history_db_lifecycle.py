@@ -62,8 +62,7 @@ def test_schema_version_ancient_no_migration_fails_fast(tmp_path: Path) -> None:
     """A DB with a very old version that has no migration path should raise."""
     db_path = tmp_path / "history.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute("CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-    conn.execute("INSERT INTO schema_meta (key, value) VALUES ('version', '0')")
+    conn.execute("PRAGMA user_version = 1")
     conn.commit()
     conn.close()
 
@@ -78,7 +77,7 @@ def test_schema_version_future_fails_fast(tmp_path: Path) -> None:
     db = HistoryDB(db_path)
     db.close()
     conn = sqlite3.connect(str(db_path))
-    conn.execute("UPDATE schema_meta SET value = '99' WHERE key = 'version'")
+    conn.execute("PRAGMA user_version = 99")
     conn.commit()
     conn.close()
 

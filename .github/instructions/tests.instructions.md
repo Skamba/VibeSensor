@@ -11,6 +11,7 @@ Tests
 - Use `test_support/sample_scenarios.py` builders as the single source for synthetic sample/phase construction. Do not duplicate sample-generation logic in other helpers.
 - New tests: place in the matching `tests/<module>/` subdirectory; use `tests/integration/` for cross-cutting scenarios, `tests/regression/` for bug-fix regressions.
 - When an intentional refactor changes function-level seams or helper boundaries, update or replace tightly coupled tests so they validate current behavior and contracts instead of preserving obsolete internals.
+- Do not use `inspect.getsource` or `ast.parse` on production code in tests. These create brittle source-string-matching assertions that break on any refactor. Instead, test the observable behavior: call the function with representative inputs and assert on outputs, side-effects, or raised exceptions.
 - Default CI-aligned test suite: `make test-all` (runs `python3 tools/tests/run_ci_parallel.py` to mirror CI `backend-quality`, `backend-typecheck`, `frontend-typecheck`, `ui-smoke`, `backend-tests`, and `e2e` job groups in parallel).
 - Optional CI job subset for faster local iteration: `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests`.
 - Run a single feature area: `pytest -q apps/server/tests/analysis/` (or any subdirectory).

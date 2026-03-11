@@ -5,8 +5,8 @@ from test_support.report_analysis_integration import max_non_ref_confidence, whe
 from test_support.report_helpers import analysis_sample as _make_sample
 
 from vibesensor.analysis import build_findings_for_samples
-from vibesensor.analysis import findings_order_findings as order_assembly_module
-from vibesensor.analysis.summary_payload import summarize_origin
+from vibesensor.analysis import test_plan as _test_plan_module
+from vibesensor.analysis.summary_builder import summarize_origin
 from vibesensor.analysis.test_plan import _location_speedbin_summary
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
@@ -210,7 +210,7 @@ def test_build_findings_penalizes_low_localization_confidence(
         )
 
     monkeypatch.setattr(
-        order_assembly_module,
+        _test_plan_module,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "strong location",
@@ -228,7 +228,7 @@ def test_build_findings_penalizes_low_localization_confidence(
     )
 
     monkeypatch.setattr(
-        order_assembly_module,
+        _test_plan_module,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "ambiguous location",
@@ -260,7 +260,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
         )
 
     monkeypatch.setattr(
-        order_assembly_module,
+        _test_plan_module,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "strong location",
@@ -278,7 +278,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     )
 
     monkeypatch.setattr(
-        order_assembly_module,
+        _test_plan_module,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "weak location",
@@ -296,7 +296,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     )
 
     monkeypatch.setattr(
-        order_assembly_module,
+        _test_plan_module,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "near tie location",
