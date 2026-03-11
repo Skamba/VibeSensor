@@ -44,6 +44,10 @@ Complexity hygiene
 - Do not create standalone Python scripts for simple pytest flag combinations. Use Makefile recipes directly.
 - Do not create Makefile aliases that are documented as "use X instead". Remove the alias.
 - Prefer few large modules over many tiny modules when the modules serve a single consumer.
+- Do not create private helper classes within a module when the helper has a single consumer class in the same module. Inline the logic directly and use section comments for organization.
+- Do not create separate modules for fewer than 3 functions with fewer than 2 distinct production consumers. Merge into the consumer module instead.
+- Do not add dead re-exports or speculative private-alias re-exports to package ``__init__.py`` files. Only export symbols that are actually imported by external consumers.
+- Do not duplicate utility functions across modules. Maintain a single canonical implementation and import from it.
 
 Documentation maintenance (always required)
 - After every meaningful code change, check whether docs, repo maps, runbooks, READMEs, and instruction files that reference the touched area are now stale.
