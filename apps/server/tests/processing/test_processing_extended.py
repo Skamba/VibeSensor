@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from vibesensor.processing import MAX_CLIENT_SAMPLE_RATE_HZ, SignalProcessor
+from vibesensor.processing.fft import noise_floor, smooth_spectrum, top_peaks
 from vibesensor.vibration_strength import compute_vibration_strength_db
 
 
@@ -250,20 +251,20 @@ def test_compute_metrics_with_data() -> None:
 
 
 def test_smooth_spectrum_empty() -> None:
-    result = SignalProcessor._smooth_spectrum(np.array([], dtype=np.float32))
+    result = smooth_spectrum(np.array([], dtype=np.float32))
     assert result.size == 0
 
 
 def test_smooth_spectrum_small_array() -> None:
     arr = np.array([1.0, 2.0], dtype=np.float32)
-    result = SignalProcessor._smooth_spectrum(arr, bins=5)
+    result = smooth_spectrum(arr, bins=5)
     # Array smaller than kernel → returns copy
     assert result.size == 2
 
 
 def test_smooth_spectrum_single_bin() -> None:
     arr = np.array([1.0, 2.0, 3.0], dtype=np.float32)
-    result = SignalProcessor._smooth_spectrum(arr, bins=1)
+    result = smooth_spectrum(arr, bins=1)
     np.testing.assert_array_equal(result, arr)
 
 
@@ -279,7 +280,7 @@ def test_smooth_spectrum_single_bin() -> None:
     ],
 )
 def test_noise_floor_edge_cases(arr: np.ndarray, expected: float) -> None:
-    assert SignalProcessor._noise_floor(arr) == expected
+    assert noise_floor(arr) == expected
 
 
 # -- evict_clients -------------------------------------------------------------
@@ -299,7 +300,7 @@ def test_evict_clients() -> None:
 
 
 def test_top_peaks_empty() -> None:
-    result = SignalProcessor._top_peaks(np.array([]), np.array([]))
+    result = top_peaks(np.array([]), np.array([]))
     assert result == []
 
 
@@ -310,7 +311,7 @@ def test_top_peaks_with_data() -> None:
     for i in range(8, 13):
         amps[i] = 1.0
     amps[10] = 2.0  # Peak center
-    peaks = SignalProcessor._top_peaks(freqs, amps, top_n=3, smoothing_bins=3)
+    peaks = top_peaks(freqs, amps, top_n=3, smoothing_bins=3)
     assert len(peaks) >= 1
     assert peaks[0]["amp"] > 0
 
@@ -320,7 +321,7 @@ def test_top_peaks_dominant_frequency_aligns_with_strength_metrics() -> None:
     amps = np.zeros(128, dtype=np.float32)
     amps[35] = 2.0
     amps[74] = 1.6
-    peaks = SignalProcessor._top_peaks(freqs, amps, top_n=1, smoothing_bins=1)
+    peaks = top_peaks(freqs, amps, top_n=1, smoothing_bins=1)
     strength = compute_vibration_strength_db(
         freq_hz=freqs.tolist(),
         combined_spectrum_amp_g_values=amps.tolist(),

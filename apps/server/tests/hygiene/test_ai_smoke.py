@@ -48,7 +48,6 @@ def test_smoke_health_route_registered() -> None:
     state.report_service = MagicMock()
     state.export_service = MagicMock()
     state.ws_hub = MagicMock()
-    state.ws_cache = MagicMock()
     state.ws_broadcast = MagicMock()
     state.processing_loop_state = MagicMock()
     state.health_state = MagicMock()

@@ -15,6 +15,7 @@ from vibesensor.analysis.phase_segmentation import (
 )
 from vibesensor.analysis.strength_labels import strength_label
 from vibesensor.processing import SignalProcessor
+from vibesensor.processing.fft import noise_floor
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.vibration_strength import (
     compute_vibration_strength_db,
@@ -86,7 +87,7 @@ class TestDoubleBinRemoval:
         )
 
         correct_floor = noise_floor_amp_p20_g(combined_spectrum_amp_g=[float(v) for v in amps])
-        actual_floor = SignalProcessor._noise_floor(amps)
+        actual_floor = noise_floor(amps)
 
         # After fix: both should agree exactly
         assert actual_floor == pytest.approx(correct_floor, abs=1e-6), (
@@ -159,8 +160,8 @@ class TestCombinedSpectrumInheritsZeroedBin:
     """Combined spectrum inherits the zeroed bin from amp_for_peaks."""
 
     def test_combined_spectrum_preserves_bin0(self):
-        """
-        broadband input because axis_amp_slices now uses amp_slice.
+        """Combined spectrum preserves bin 0 because spectrum_by_axis
+        stores the original amp_slice, not the DC-zeroed amp_for_peaks.
         """
         sp = _make_signal_processor(sample_rate_hz=256, fft_n=256)
         rng = np.random.default_rng(42)

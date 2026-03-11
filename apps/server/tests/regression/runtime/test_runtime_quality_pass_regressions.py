@@ -41,7 +41,7 @@ def _seeded_history_db(
     """Create a HistoryDB with one run containing *n_samples* rows."""
     db = _make_history_db(tmp_path, name)
     db.create_run(run_id, "2026-01-01T00:00:00Z", {"src": "test"})
-    db.append_samples(run_id, [{"i": i} for i in range(n_samples)])
+    db.append_samples(run_id, [{"t_s": float(i)} for i in range(n_samples)])
     return db
 
 
@@ -180,7 +180,7 @@ def test_iter_run_samples_returns_all_rows(tmp_path: Path) -> None:
     for batch in db.iter_run_samples("r1", batch_size=10):
         all_rows.extend(batch)
     assert len(all_rows) == total
-    assert [r["i"] for r in all_rows] == list(range(total))
+    assert [r["t_s"] for r in all_rows] == [float(i) for i in range(total)]
 
 
 def test_iter_run_samples_offset(tmp_path: Path) -> None:
@@ -190,7 +190,7 @@ def test_iter_run_samples_offset(tmp_path: Path) -> None:
     for batch in db.iter_run_samples("r2", batch_size=5, offset=10):
         all_rows.extend(batch)
     assert len(all_rows) == 10
-    assert all_rows[0]["i"] == 10
+    assert all_rows[0]["t_s"] == 10.0
 
 
 # ---------------------------------------------------------------------------

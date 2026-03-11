@@ -25,8 +25,6 @@ SpectrumByAxis: TypeAlias = dict[str, SpectrumAxisData]
 class FftSpectrumResult(TypedDict):
     freq_slice: FloatArray
     spectrum_by_axis: SpectrumByAxis
-    axis_amp_slices: list[FloatArray]
-    axis_amps: dict[str, FloatArray]
     combined_amp: FloatArray
     strength_metrics: VibrationStrengthMetrics
     axis_peaks: dict[str, list[AxisPeak]]

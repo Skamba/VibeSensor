@@ -23,7 +23,6 @@ from vibesensor.metrics_log.logger import (
     _MAX_HISTORY_CREATE_RETRIES,
     _RETRY_COOLDOWN_BASE_S,
     _MetricsPersistenceCoordinator,
-    _MetricsSessionState,
 )
 from vibesensor.metrics_log.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysisWorker
 
@@ -36,22 +35,16 @@ def _make_coordinator(
     *,
     history_db: object | None = None,
     persist: bool = True,
+    run_id: str = "run-1",
 ) -> _MetricsPersistenceCoordinator:
     """Build a coordinator with minimal dependencies."""
-    session = _MetricsSessionState(enabled=True, no_data_timeout_s=15.0)
-    # Start a session so matches_generation always returns True for gen 1
-    session.start_new_session(
-        run_id="test",
-        start_time_utc="",
-        start_mono_s=0.0,
-        current_total=0,
-    )
-    return _MetricsPersistenceCoordinator(
+    coord = _MetricsPersistenceCoordinator(
         history_db=history_db,
         persist_history_db=persist,
         metadata_builder=lambda _rid, _ts: {"run_id": _rid},
-        session=session,
     )
+    coord.reset_for_new_session(run_id=run_id)
+    return coord
 
 
 class _FailingDB:
@@ -135,7 +128,7 @@ class TestDropCounting:
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
 
         assert coord.history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES
 
@@ -144,7 +137,6 @@ class TestDropCounting:
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"sample": 1}, {"sample": 2}, {"sample": 3}],
-            session_generation=1,
         )
         assert result.rows_written == 0
         assert coord.dropped_sample_count == 3
@@ -153,14 +145,13 @@ class TestDropCounting:
         """When append_samples throws on all retries, dropped count is incremented."""
         coord = _make_coordinator(history_db=_FailingAppendDB())
 
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
         assert coord.history_run_created
 
         result = coord.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
-            session_generation=1,
         )
         assert result.rows_written == 0
         assert coord.dropped_sample_count == 2
@@ -170,14 +161,13 @@ class TestDropCounting:
         db = _FailNAppendThenSucceedDB(fail_count=1)
         coord = _make_coordinator(history_db=db)
 
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
         assert coord.history_run_created
 
         result = coord.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
-            session_generation=1,
         )
         assert result.rows_written == 2
         assert coord.dropped_sample_count == 0
@@ -186,26 +176,24 @@ class TestDropCounting:
     def test_drops_accumulate_across_calls(self) -> None:
         """Drop count accumulates across multiple append calls."""
         coord = _make_coordinator(history_db=_FailingAppendDB())
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
 
         for _ in range(3):
             coord.append_rows(
                 run_id="run-1",
                 start_time_utc="2025-01-01T00:00:00Z",
                 rows=[{"s": 1}],
-                session_generation=1,
             )
         assert coord.dropped_sample_count == 3
 
     def test_drops_reset_on_new_session(self) -> None:
         """Drop count resets to 0 when a new session starts."""
         coord = _make_coordinator(history_db=_FailingAppendDB())
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
         coord.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
-            session_generation=1,
         )
         assert coord.dropped_sample_count == 2
 
@@ -215,12 +203,11 @@ class TestDropCounting:
     def test_successful_writes_do_not_increment_drops(self) -> None:
         """Normal successful writes don't affect drop counter."""
         coord = _make_coordinator(history_db=_SucceedingDB())
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
         result = coord.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
-            session_generation=1,
         )
         assert result.rows_written == 2
         assert coord.dropped_sample_count == 0
@@ -240,20 +227,20 @@ class TestRetryCooldown:
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
 
         assert not coord.history_run_created
         assert coord.history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES
 
         # Before cooldown — should still be blocked
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
         assert not coord.history_run_created
 
         # Fast-forward past cooldown
         with patch("vibesensor.metrics_log.logger.time") as mock_time:
             # First call: check if past cooldown (return time after cooldown)
             mock_time.monotonic.return_value = time.monotonic() + _RETRY_COOLDOWN_BASE_S + 1
-            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
 
         assert coord.history_run_created
         assert db.created == ["run-1"]
@@ -264,7 +251,7 @@ class TestRetryCooldown:
         coord = _make_coordinator(history_db=db)
 
         for _ in range(4):
-            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
 
         assert coord.history_run_created
 
@@ -274,12 +261,12 @@ class TestRetryCooldown:
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z", session_generation=1)
+            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
 
-        coord.reset_for_new_session()
+        coord.reset_for_new_session(run_id="run-2")
         assert coord.history_create_fail_count == 0
         # Should be able to retry immediately after reset
-        coord.ensure_history_run_created("run-2", "2025-01-01T00:00:00Z", session_generation=1)
+        coord.ensure_history_run_created("run-2", "2025-01-01T00:00:00Z")
         # Will fail (DB still failing), but it should attempt (count incremented)
         assert coord.history_create_fail_count == 1
 
@@ -521,7 +508,6 @@ class TestHealthSnapshotEnrichment:
             snapshot.run_id,
             snapshot.start_time_utc,
             snapshot.start_mono_s,
-            session_generation=snapshot.generation,
         )
 
         health = logger.health_snapshot()

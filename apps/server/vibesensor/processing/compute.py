@@ -10,14 +10,11 @@ import numpy as np
 
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
-from ..payload_types import AxisMetrics, AxisPeak
+from ..payload_types import AxisMetrics
 from .fft import (
     AXES,
     compute_fft_spectrum,
     medfilt3,
-    noise_floor,
-    smooth_spectrum,
-    top_peaks,
 )
 from .models import (
     ClientMetrics,
@@ -133,7 +130,7 @@ class SignalMetricsComputer:
                 )
                 axis_metrics["peaks"] = fft_result["axis_peaks"][axis]
 
-            if fft_result["axis_amp_slices"]:
+            if fft_result["spectrum_by_axis"]:
                 combined_amp = fft_result["combined_amp"]
                 strength_metrics = fft_result["strength_metrics"]
                 combined_metrics = metrics["combined"]
@@ -155,31 +152,3 @@ class SignalMetricsComputer:
             has_fft_data=has_fft_data,
             duration_s=time.monotonic() - t0,
         )
-
-    @staticmethod
-    def smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
-        return cast("np.ndarray", smooth_spectrum(np.asarray(amps, dtype=np.float32), bins=bins))
-
-    @staticmethod
-    def noise_floor(amps: np.ndarray) -> float:
-        return noise_floor(amps)
-
-    @classmethod
-    def top_peaks(
-        cls,
-        freqs: np.ndarray,
-        amps: np.ndarray,
-        *,
-        top_n: int = 5,
-        floor_ratio: float | None = None,
-        smoothing_bins: int = 5,
-    ) -> list[AxisPeak]:
-        if floor_ratio is not None:
-            return top_peaks(
-                freqs,
-                amps,
-                top_n=top_n,
-                floor_ratio=floor_ratio,
-                smoothing_bins=smoothing_bins,
-            )
-        return top_peaks(freqs, amps, top_n=top_n, smoothing_bins=smoothing_bins)

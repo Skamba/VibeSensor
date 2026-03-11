@@ -68,12 +68,12 @@ class SignalProcessorViews:
 
         fft_result = self._metrics.compute_fft_spectrum(fft_block, request.sample_rate_hz)
         freq_slice = fft_result["freq_slice"]
-        axis_amps = fft_result["axis_amps"]
         combined_amp = fft_result["combined_amp"]
         strength_metrics = fft_result["strength_metrics"]
         detrended_std = (fft_block - fft_block.mean(axis=1, keepdims=True)).std(axis=1).tolist()
 
         sorted_idx = np.argsort(combined_amp)[::-1]
+        spectrum = fft_result["spectrum_by_axis"]
         top_bins: list[DebugSpectrumTopBinPayload] = []
         for index in sorted_idx[:10]:
             top_bins.append(
@@ -81,9 +81,9 @@ class SignalProcessorViews:
                     "bin": int(index),
                     "freq_hz": float(freq_slice[index]),
                     "combined_amp_g": float(combined_amp[index]),
-                    "x_amp_g": float(axis_amps["x"][index]),
-                    "y_amp_g": float(axis_amps["y"][index]),
-                    "z_amp_g": float(axis_amps["z"][index]),
+                    "x_amp_g": float(spectrum["x"]["amp"][index]),
+                    "y_amp_g": float(spectrum["y"]["amp"][index]),
+                    "z_amp_g": float(spectrum["z"]["amp"][index]),
                 },
             )
 
