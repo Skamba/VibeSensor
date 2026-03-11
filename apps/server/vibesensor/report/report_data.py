@@ -19,43 +19,9 @@ __all__ = [
     "SystemFindingCard",
 ]
 
-import dataclasses
 from dataclasses import dataclass, field
-from functools import lru_cache
-from typing import Self
 
-from ..json_types import JsonObject, is_json_array, is_json_object
-
-
-@lru_cache(maxsize=16)
-def _valid_field_names(cls: type) -> frozenset[str]:
-    """Return declared dataclass field names for *cls* (cached per class)."""
-    return frozenset(f.name for f in dataclasses.fields(cls))
-
-
-def _filter_fields(cls: type, raw: JsonObject) -> dict[str, object]:
-    """Keep only keys that match declared dataclass fields.
-
-    All dataclass fields in this module use defaults so that ``from_dict()``
-    tolerates missing keys when reconstructing from older persisted data.
-    """
-    valid = _valid_field_names(cls)
-    return {k: v for k, v in raw.items() if k in valid}
-
-
-class _FromDictMixin:
-    """Shared ``from_dict()`` class-method for simple report dataclasses.
-
-    Subclasses that need custom deserialization (e.g. nested dataclass
-    fields) should override ``from_dict`` directly.
-    """
-
-    @classmethod
-    def from_dict(cls, d: object) -> Self:
-        if not is_json_object(d):
-            return cls()
-        return cls(**_filter_fields(cls, d))
-
+from ..json_types import JsonObject
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -63,7 +29,7 @@ class _FromDictMixin:
 
 
 @dataclass
-class CarMeta(_FromDictMixin):
+class CarMeta:
     """Vehicle identification metadata (name, type) extracted from the report run."""
 
     name: str | None = None
@@ -71,7 +37,7 @@ class CarMeta(_FromDictMixin):
 
 
 @dataclass
-class ObservedSignature(_FromDictMixin):
+class ObservedSignature:
     """The dominant vibration signature observed during the run."""
 
     primary_system: str | None = None
@@ -90,14 +56,6 @@ class PartSuggestion:
 
     name: str = ""
 
-    @classmethod
-    def from_dict(cls, d: object) -> Self:
-        if isinstance(d, str):
-            return cls(name=d)
-        if not is_json_object(d):
-            return cls(name=str(d))
-        return cls(**_filter_fields(cls, d))  # type: ignore[arg-type]
-
 
 @dataclass
 class SystemFindingCard:
@@ -109,22 +67,9 @@ class SystemFindingCard:
     parts: list[PartSuggestion] = field(default_factory=list)
     tone: str = "neutral"
 
-    @classmethod
-    def from_dict(cls, d: object) -> Self:
-        if not is_json_object(d):
-            return cls()
-        filtered = _filter_fields(cls, d)
-        parts_raw = d.get("parts")
-        filtered["parts"] = (
-            [PartSuggestion.from_dict(part) for part in parts_raw]
-            if is_json_array(parts_raw)
-            else []
-        )
-        return cls(**filtered)  # type: ignore[arg-type]
-
 
 @dataclass
-class NextStep(_FromDictMixin):
+class NextStep:
     """A recommended diagnostic next step (action, rationale, ETA)."""
 
     action: str = ""
@@ -135,7 +80,7 @@ class NextStep(_FromDictMixin):
 
 
 @dataclass
-class DataTrustItem(_FromDictMixin):
+class DataTrustItem:
     """A single data-quality check result (pass/warn/fail with detail).
 
     ``state`` defaults to ``"warn"`` so that data quality items reconstructed
@@ -149,7 +94,7 @@ class DataTrustItem(_FromDictMixin):
 
 
 @dataclass
-class PatternEvidence(_FromDictMixin):
+class PatternEvidence:
     """Evidence summary for the dominant vibration pattern from post-analysis."""
 
     matched_systems: list[str] = field(default_factory=list)
@@ -164,25 +109,9 @@ class PatternEvidence(_FromDictMixin):
     interpretation: str | None = None
     why_parts_text: str | None = None
 
-    @classmethod
-    def from_dict(cls, d: object) -> Self:
-        """Reconstruct from a persisted dict, guarding ``matched_systems`` against ``None``.
-
-        Older persisted records may omit ``matched_systems`` or store ``null``,
-        which would bypass the ``default_factory`` and set the field to ``None``.
-        This override coerces any non-list value back to an empty list so the
-        renderer can safely call ``', '.join(ev.matched_systems)``.
-        """
-        if not is_json_object(d):
-            return cls()
-        filtered = _filter_fields(cls, d)
-        if not is_json_array(filtered.get("matched_systems")):
-            filtered["matched_systems"] = []
-        return cls(**filtered)  # type: ignore[arg-type]
-
 
 @dataclass
-class PeakRow(_FromDictMixin):
+class PeakRow:
     """A single row in the report's peak-frequency evidence table."""
 
     rank: str = ""
@@ -229,38 +158,3 @@ class ReportTemplateData:
     top_causes: list[JsonObject] = field(default_factory=list)
     sensor_intensity_by_location: list[JsonObject] = field(default_factory=list)
     location_hotspot_rows: list[JsonObject] = field(default_factory=list)
-
-    @classmethod
-    def from_dict(cls, d: object) -> ReportTemplateData:
-        """Reconstruct a :class:`ReportTemplateData` from a persisted dict."""
-        if not is_json_object(d):
-            return cls()
-        filtered = _filter_fields(cls, d)
-        filtered["car"] = CarMeta.from_dict(d.get("car"))
-        filtered["observed"] = ObservedSignature.from_dict(d.get("observed"))
-        system_cards_raw = d.get("system_cards")
-        next_steps_raw = d.get("next_steps")
-        data_trust_raw = d.get("data_trust")
-        peak_rows_raw = d.get("peak_rows")
-        filtered["system_cards"] = (
-            [SystemFindingCard.from_dict(card) for card in system_cards_raw]
-            if is_json_array(system_cards_raw)
-            else []
-        )
-        filtered["next_steps"] = (
-            [NextStep.from_dict(step) for step in next_steps_raw]
-            if is_json_array(next_steps_raw)
-            else []
-        )
-        filtered["data_trust"] = (
-            [DataTrustItem.from_dict(item) for item in data_trust_raw]
-            if is_json_array(data_trust_raw)
-            else []
-        )
-        filtered["pattern_evidence"] = PatternEvidence.from_dict(d.get("pattern_evidence"))
-        filtered["peak_rows"] = (
-            [PeakRow.from_dict(row) for row in peak_rows_raw]
-            if is_json_array(peak_rows_raw)
-            else []
-        )
-        return cls(**filtered)  # type: ignore[arg-type]

@@ -1,4 +1,4 @@
-.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-all test-full-suite sync-contracts coverage smoke loc docs-lint
+.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-all test-full-suite sync-contracts regen-contracts coverage smoke loc docs-lint
 
 setup:
 	python3 -m pip install --upgrade pip
@@ -30,6 +30,9 @@ test-full-suite:
 
 sync-contracts:
 	cd apps/ui && npm run sync:contracts
+
+regen-contracts: sync-contracts
+	python3 tools/config/generate_contract_reference_doc.py
 
 coverage:  ## COV_OPTS="--cov-report=html:../../artifacts/coverage/html" or "--cov-fail-under=80"
 	cd apps/server && python3 -m pytest -q -m "not selenium" --cov=vibesensor --cov-report=term-missing:skip-covered $(COV_OPTS) tests

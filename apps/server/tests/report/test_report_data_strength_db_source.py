@@ -9,7 +9,7 @@ _ORDER_TOP_CAUSE: dict = {
     "suspected_source": "wheel/tire",
     "strongest_location": "front-left",
     "strongest_speed_band": "40-60 km/h",
-    "confidence_0_to_1": 0.8,
+    "confidence": 0.8,
     "signatures_observed": ["1x wheel order"],
 }
 
@@ -46,7 +46,7 @@ def test_map_summary_prefers_non_ref_top_cause_for_observed_location() -> None:
             "suspected_source": "unknown_resonance",
             "strongest_location": "unknown",
             "strongest_speed_band": "100-110 km/h",
-            "confidence_0_to_1": 0.95,
+            "confidence": 0.95,
             "signatures_observed": ["reference gap"],
         },
         {
@@ -54,7 +54,7 @@ def test_map_summary_prefers_non_ref_top_cause_for_observed_location() -> None:
             "suspected_source": "wheel/tire",
             "strongest_location": "rear-left",
             "strongest_speed_band": "40-60 km/h",
-            "confidence_0_to_1": 0.8,
+            "confidence": 0.8,
             "signatures_observed": ["1x wheel order"],
         },
     ]
@@ -78,7 +78,7 @@ def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeho
             "source": "unknown_resonance",
             "strongest_location": "unknown",
             "strongest_speed_band": "100-110 km/h",
-            "confidence_0_to_1": 0.95,
+            "confidence": 0.95,
         },
     ]
 
@@ -102,7 +102,7 @@ def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() 
             "source": "unknown_resonance",
             "strongest_location": "unknown",
             "strongest_speed_band": "100-110 km/h",
-            "confidence_0_to_1": 0.95,
+            "confidence": 0.95,
             "weak_spatial_separation": False,
             "signatures_observed": ["reference gap"],
         },

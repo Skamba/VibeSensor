@@ -15,8 +15,6 @@ Scenarios
 
 from __future__ import annotations
 
-from dataclasses import asdict
-
 import pytest
 from test_support.analysis import run_analysis
 from test_support.core import (
@@ -55,11 +53,6 @@ ScenarioPair = tuple[dict, ReportTemplateData]
 def _build_report_data(summary: dict) -> ReportTemplateData:
     """Build ReportTemplateData from a summary dict."""
     return map_summary(summary)
-
-
-def _roundtrip_report_data(rd: ReportTemplateData) -> ReportTemplateData:
-    """Simulate persistence round-trip (dict -> ReportTemplateData)."""
-    return ReportTemplateData.from_dict(asdict(rd))
 
 
 # ---------------------------------------------------------------------------
@@ -251,7 +244,7 @@ def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> 
 
     if effective_causes:
         primary = effective_causes[0]
-        conf_val = primary.get("confidence") or primary.get("confidence_0_to_1") or 0.0
+        conf_val = primary.get("confidence") or primary.get("confidence") or 0.0
         conf = float(conf_val)
     else:
         conf = 0.0
@@ -299,15 +292,8 @@ def _run_all_consistency_checks(
             f"Expected tier '{expect_tier}', got '{rd.certainty_tier_key}'"
         )
 
-    # Also test persistence round-trip
-    rd_rt = _roundtrip_report_data(rd)
-    _assert_cross_section_consistency(rd_rt)
-    _assert_tier_gating(rd_rt)
-    _assert_unit_consistency(rd_rt)
-
-    # Generate PDF from both original and round-tripped data
+    # Generate PDF
     pdf = _assert_pdf_generates(rd)
-    _assert_pdf_generates(rd_rt)
 
     return pdf
 

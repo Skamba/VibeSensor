@@ -38,8 +38,7 @@ Use this when changing backend code without scanning the whole package.
   ID normalisation — all other modules delegate to it.
 - `runlog.py`: canonical `utc_now_iso()` helper — prefer over inline
   `datetime.now(UTC).isoformat()` everywhere.
-- `report/report_data.py`: all report dataclasses expose `from_dict()`
-  for dict→dataclass reconstruction; avoid manual field-by-field unpacking.
+- `report/report_data.py`: pure data-class definitions for the diagnostic PDF.
 - `report/pdf_engine.py`: public PDF renderer entrypoint and pagination.
 - `report/pdf_page1.py`, `pdf_page2.py`, `pdf_page*_sections.py`,
   `pdf_drawing.py`, `pdf_text.py`, and `pdf_page_layouts.py`: focused PDF page composition,

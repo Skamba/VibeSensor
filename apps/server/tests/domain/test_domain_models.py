@@ -230,8 +230,6 @@ class TestRunMetadata:
             raw_sample_rate_hz=800,
             feature_interval_s=1.0,
             fft_window_size_samples=1024,
-            fft_window_type="hann",
-            peak_picker_method="local_max",
             accel_scale_g_per_lsb=0.004,
         )
         assert rm.run_id == "r1"
@@ -263,8 +261,6 @@ class TestRunMetadata:
             raw_sample_rate_hz=400,
             feature_interval_s=0.5,
             fft_window_size_samples=512,
-            fft_window_type="hann",
-            peak_picker_method="maxima",
             accel_scale_g_per_lsb=0.002,
         )
         d = rm.to_dict()

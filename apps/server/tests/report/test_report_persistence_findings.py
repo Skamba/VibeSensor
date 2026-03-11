@@ -38,7 +38,7 @@ class TestBuildPersistentPeakFindings:
             for f in findings
             if f.get("peak_classification") == "patterned" and findings_at_freq([f], "41.0", "40.0")
         )
-        assert float(target.get("confidence_0_to_1", 0.0)) >= 0.50
+        assert float(target.get("confidence", 0.0)) >= 0.50
 
     def test_uniform_multi_sensor_peak_confidence_is_penalized(self) -> None:
         locations = ["Front Left", "Front Right", "Rear Left", "Rear Right"]
@@ -51,7 +51,7 @@ class TestBuildPersistentPeakFindings:
 
         findings = build_findings(samples)
         candidates = findings_at_freq(findings, "41.0", "40.0")
-        assert max(float(f.get("confidence_0_to_1", 0.0)) for f in candidates) <= 0.35
+        assert max(float(f.get("confidence", 0.0)) for f in candidates) <= 0.35
 
     def test_negligible_strength_persistent_peak_confidence_is_capped(self) -> None:
         findings = build_findings(uniform_samples(20, 40.0, 0.002))
@@ -60,7 +60,7 @@ class TestBuildPersistentPeakFindings:
             for f in findings_at_freq(findings, "41.0", "40.0")
             if str(f.get("peak_classification") or "") in {"patterned", "persistent"}
         ]
-        assert max(float(f.get("confidence_0_to_1", 0.0)) for f in candidates) <= 0.40
+        assert max(float(f.get("confidence", 0.0)) for f in candidates) <= 0.40
 
     def test_single_thud_classified_as_transient(self) -> None:
         samples = []
@@ -87,7 +87,7 @@ class TestBuildPersistentPeakFindings:
             f for f in build_findings(samples) if f.get("peak_classification") == "transient"
         ]
         for finding in transient:
-            assert float(finding.get("confidence_0_to_1", 0)) <= 0.25
+            assert float(finding.get("confidence", 0)) <= 0.25
 
     def test_order_freqs_excluded(self) -> None:
         findings_with = build_findings(uniform_samples(20, 40.0, 0.06), order_finding_freqs={40.0})
@@ -126,8 +126,8 @@ class TestBuildPersistentPeakFindings:
     def test_run_noise_baseline_lowers_confidence_for_borderline_peak(self) -> None:
         findings_low = build_findings(uniform_samples(20, 30.0, 0.06, strength_floor_amp_g=0.01))
         findings_high = build_findings(uniform_samples(20, 30.0, 0.06, strength_floor_amp_g=0.05))
-        confidence_low = max(float(f.get("confidence_0_to_1") or 0.0) for f in findings_low)
-        confidence_high = max(float(f.get("confidence_0_to_1") or 0.0) for f in findings_high)
+        confidence_low = max(float(f.get("confidence") or 0.0) for f in findings_low)
+        confidence_high = max(float(f.get("confidence") or 0.0) for f in findings_high)
         assert confidence_low > confidence_high
         metrics = dict(findings_low[0].get("evidence_metrics") or {})
         assert "run_noise_baseline_db" in metrics

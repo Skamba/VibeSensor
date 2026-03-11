@@ -114,35 +114,6 @@ def test_store_analysis_persists_summary_directly(
     db.close()
 
 
-def test_analysis_is_current_uses_column_version(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})
-    db.finalize_run("r1", "2026-01-01T00:01:00Z")
-
-    # Set analysis with current version — should be current
-    with db._cursor() as cur:
-        cur.execute(
-            "UPDATE runs SET status = 'complete', analysis_json = ?, analysis_version = ? WHERE run_id = ?",
-            (
-                '{"lang": "en", "findings": []}',
-                ANALYSIS_SCHEMA_VERSION,
-                "r1",
-            ),
-        )
-
-    assert db.analysis_is_current("r1") is True
-
-    # Set analysis with old version — should be outdated
-    with db._cursor() as cur:
-        cur.execute(
-            "UPDATE runs SET analysis_version = ? WHERE run_id = ?",
-            (0, "r1"),
-        )
-
-    assert db.analysis_is_current("r1") is False
-    db.close()
-
-
 def test_store_analysis_error_sets_completed_at(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})

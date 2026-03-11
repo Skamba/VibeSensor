@@ -60,19 +60,19 @@ def test_select_top_causes_groups_by_source() -> None:
         {
             "finding_id": "F001",
             "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 0.80,
+            "confidence": 0.80,
             "frequency_hz_or_order": "1x wheel order",
         },
         {
             "finding_id": "F002",
             "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 0.65,
+            "confidence": 0.65,
             "frequency_hz_or_order": "2x wheel order",
         },
         {
             "finding_id": "F003",
             "suspected_source": "engine",
-            "confidence_0_to_1": 0.55,
+            "confidence": 0.55,
             "frequency_hz_or_order": "2x engine order",
         },
     ]
@@ -95,19 +95,19 @@ def test_select_top_causes_excludes_reference_findings() -> None:
         {
             "finding_id": "REF_SPEED",
             "suspected_source": "unknown",
-            "confidence_0_to_1": 1.0,
+            "confidence": 1.0,
             "frequency_hz_or_order": "reference missing",
         },
         {
             "finding_id": "REF_WHEEL",
             "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 1.0,
+            "confidence": 1.0,
             "frequency_hz_or_order": "reference missing",
         },
         {
             "finding_id": "REF_ENGINE",
             "suspected_source": "engine",
-            "confidence_0_to_1": 1.0,
+            "confidence": 1.0,
             "frequency_hz_or_order": "reference missing",
         },
     ]
@@ -132,7 +132,7 @@ def test_select_top_causes_excludes_informational_transient_findings(
             "severity": "info",
             "suspected_source": "transient_impact",
             "peak_classification": "transient",
-            "confidence_0_to_1": confidence,
+            "confidence": confidence,
             "frequency_hz_or_order": freq_hz,
         },
     ]
@@ -147,14 +147,14 @@ def test_select_top_causes_prefers_diagnostic_over_info() -> None:
             "severity": "info",
             "suspected_source": "transient_impact",
             "peak_classification": "transient",
-            "confidence_0_to_1": 0.99,
+            "confidence": 0.99,
             "frequency_hz_or_order": "120.0 Hz",
         },
         {
             "finding_id": "F010",
             "severity": "diagnostic",
             "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 0.26,
+            "confidence": 0.26,
             "frequency_hz_or_order": "1x wheel order",
         },
     ]
@@ -172,7 +172,7 @@ def test_select_top_causes_prefers_cruise_phase_evidence() -> None:
             "finding_id": "F_A",
             "severity": "diagnostic",
             "suspected_source": "driveline",
-            "confidence_0_to_1": 0.60,
+            "confidence": 0.60,
             "frequency_hz_or_order": "3x driveshaft",
             # No phase evidence — neutral multiplier
         },
@@ -180,7 +180,7 @@ def test_select_top_causes_prefers_cruise_phase_evidence() -> None:
             "finding_id": "F_B",
             "severity": "diagnostic",
             "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 0.60,
+            "confidence": 0.60,
             "frequency_hz_or_order": "1x wheel order",
             # All matches were in cruise phase
             "phase_evidence": {"cruise_fraction": 1.0, "phases_detected": ["cruise"]},
@@ -201,7 +201,7 @@ def test_select_top_causes_phase_evidence_in_output() -> None:
             "finding_id": "F_C",
             "severity": "diagnostic",
             "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 0.75,
+            "confidence": 0.75,
             "frequency_hz_or_order": "1x wheel order",
             "phase_evidence": phase_ev,
         },
@@ -218,7 +218,7 @@ def test_select_top_causes_no_phase_evidence_still_works() -> None:
             "finding_id": "F_D",
             "severity": "diagnostic",
             "suspected_source": "engine",
-            "confidence_0_to_1": 0.55,
+            "confidence": 0.55,
             "frequency_hz_or_order": "2x engine order",
         },
     ]
@@ -335,7 +335,7 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
                 "finding_id": "F001",
                 "severity": "diagnostic",
                 "suspected_source": "wheel/tire",
-                "confidence_0_to_1": 0.55,
+                "confidence": 0.55,
                 "frequency_hz_or_order": "1x wheel order",
             },
             {
@@ -343,7 +343,7 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
                 "severity": "info",
                 "suspected_source": "transient_impact",
                 "peak_classification": "transient",
-                "confidence_0_to_1": 0.22,
+                "confidence": 0.22,
                 "frequency_hz_or_order": "95.0 Hz",
             },
         ],

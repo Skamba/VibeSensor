@@ -297,7 +297,7 @@ class TestUpdateManagerAsync:
     async def test_stale_public_assets_detected_in_runtime(self, tmp_path) -> None:
         manager, _runner, repo = setup_update_env(tmp_path)
         seed_runtime_artifacts(repo, manager, valid=False)
-        details = manager._collect_runtime_details()
+        details = manager._runtime_details.collect()
         assert details["assets_verified"] is False
 
     async def test_timeout_handling(self, tmp_path) -> None:

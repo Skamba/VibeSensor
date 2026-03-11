@@ -115,7 +115,7 @@ def call_build_order_findings(
 def max_non_ref_confidence(findings: list[dict[str, object]]) -> float:
     """Return the highest confidence among non-reference findings."""
     return max(
-        float(f.get("confidence_0_to_1") or 0.0)
+        float(f.get("confidence") or 0.0)
         for f in findings
         if not str(f.get("finding_id") or "").startswith("REF_")
     )
@@ -130,8 +130,6 @@ def write_test_log(path: Path, n_samples: int = 20, speed: float = 85.0) -> None
         raw_sample_rate_hz=200,
         feature_interval_s=0.5,
         fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
         accel_scale_g_per_lsb=1.0 / 256.0,
     )
     samples = [_make_sample(float(i) * 0.5, speed, 0.01 + i * 0.001) for i in range(n_samples)]

@@ -167,7 +167,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       ? findings
           .map((finding) => {
             const source = finding?.suspected_source || t("report.missing");
-            const confidence = typeof finding?.confidence_0_to_1 === "number" ? fmt(finding.confidence_0_to_1, 2) : "--";
+            const confidence = typeof finding?.confidence === "number" ? fmt(finding.confidence, 2) : "--";
             return `<li><strong>${escapeHtml(source)}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}) - ${escapeHtml(finding?.evidence_summary || "")}</li>`;
           })
           .join("")

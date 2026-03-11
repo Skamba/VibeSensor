@@ -99,8 +99,8 @@ def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() 
 
     assert single_findings
     assert multi_findings
-    conf_single = float(single_findings[0].get("confidence_0_to_1") or 0.0)
-    conf_multi = float(multi_findings[0].get("confidence_0_to_1") or 0.0)
+    conf_single = float(single_findings[0].get("confidence") or 0.0)
+    conf_multi = float(multi_findings[0].get("confidence") or 0.0)
     assert conf_multi >= conf_single
     assert (multi_findings[0].get("evidence_metrics") or {}).get("phases_with_evidence", 0) >= 2
 

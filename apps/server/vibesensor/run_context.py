@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 
+from .analysis import i18n_ref
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, tire_circumference_m_from_spec
 from .domain_models import as_float_or_none as _as_float
 from .json_types import JsonObject, JsonValue, is_json_object
@@ -14,12 +15,6 @@ ANALYSIS_SETTINGS_SNAPSHOT_KEYS: tuple[str, ...] = tuple(DEFAULT_ANALYSIS_SETTIN
 
 WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE = "reference_context_incomplete"
 WARNING_CODE_CAR_SETTINGS_CHANGED = "car_settings_changed"
-
-
-def _i18n_ref(key: str, **params: JsonValue) -> JsonObject:
-    ref: JsonObject = {"_i18n_key": key}
-    ref.update(params)
-    return ref
 
 
 def build_run_context_snapshot(
@@ -90,8 +85,8 @@ def build_summary_warnings(
                 "code": WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
                 "severity": "warn",
                 "applies_to": "order_analysis",
-                "title": _i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"),
-                "detail": _i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"),
+                "title": i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"),
+                "detail": i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"),
             },
         )
     return warnings
@@ -163,8 +158,8 @@ def _build_car_settings_changed_warning(
         "code": WARNING_CODE_CAR_SETTINGS_CHANGED,
         "severity": "warn",
         "applies_to": "order_analysis",
-        "title": _i18n_ref("RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_TITLE"),
-        "detail": _i18n_ref(
+        "title": i18n_ref("RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_TITLE"),
+        "detail": i18n_ref(
             "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_DETAIL",
             run_car=_car_label(recorded_snapshot),
             current_car=_car_label(current_active_car_snapshot),

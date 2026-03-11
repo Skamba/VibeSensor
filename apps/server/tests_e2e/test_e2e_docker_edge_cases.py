@@ -581,8 +581,8 @@ def test_language_and_speed_unit_validation_e2e(e2e_env: dict[str, str]) -> None
             en_first = insights_en["findings"][0]
             nl_first = insights_nl["findings"][0]
             assert en_first.get("suspected_source") == nl_first.get("suspected_source")
-            assert float(en_first.get("confidence", 0.0)) == pytest.approx(
-                float(nl_first.get("confidence", 0.0)), abs=1e-6
+            assert float(en_first.get("confidence") or 0.0) == pytest.approx(
+                float(nl_first.get("confidence") or 0.0), abs=1e-6
             )
     finally:
         api_json(base, "/api/logging/stop", method="POST")

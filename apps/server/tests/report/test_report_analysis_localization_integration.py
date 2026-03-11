@@ -70,7 +70,7 @@ def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> Non
                 "dominance_ratio": 1.30,
                 "weak_spatial_separation": False,
                 "location_hotspot": {"location_count": 3},
-                "confidence_0_to_1": 0.8,
+                "confidence": 0.8,
             },
         ],
     )

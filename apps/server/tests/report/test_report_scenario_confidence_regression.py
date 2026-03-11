@@ -35,7 +35,7 @@ class TestConfidenceCalibration:
         def best_order_conf(summary: dict[str, object]) -> float:
             return max(
                 (
-                    float(finding.get("confidence_0_to_1") or 0.0)
+                    float(finding.get("confidence") or 0.0)
                     for finding in summary.get("findings", [])
                     if isinstance(finding, dict) and str(finding.get("finding_id", "")) == "F_ORDER"
                 ),

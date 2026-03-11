@@ -37,6 +37,7 @@ from ._types import (
     PhaseSpeedBreakdownRow,
     Sample,
     SpeedBreakdownRow,
+    i18n_ref,
 )
 from .helpers import (
     _effective_baseline_floor,
@@ -54,7 +55,7 @@ from .helpers import (
     _tire_reference_from_metadata,
     counter_delta,
 )
-from .order_analysis import _build_order_findings, _i18n_ref
+from .order_analysis import _build_order_findings
 from .phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,
@@ -94,7 +95,7 @@ def _reference_missing_finding(
             "units": "n/a",
             "definition": {**_REF_MISSING_AMPLITUDE},
         },
-        "confidence_0_to_1": None,
+        "confidence": None,
         "quick_checks": quick_checks[:3],
     }
 
@@ -115,14 +116,14 @@ def build_reference_findings(
             _reference_missing_finding(
                 finding_id="REF_SPEED",
                 suspected_source="unknown",
-                evidence_summary=_i18n_ref(
+                evidence_summary=i18n_ref(
                     "VEHICLE_SPEED_COVERAGE_IS_SPEED_NON_NULL_PCT",
                     speed_non_null_pct=speed_non_null_pct,
                     threshold=SPEED_COVERAGE_MIN_PCT,
                 ),
                 quick_checks=[
-                    _i18n_ref("RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR"),
-                    _i18n_ref("VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM"),
+                    i18n_ref("RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR"),
+                    i18n_ref("VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM"),
                 ],
             ),
         )
@@ -132,12 +133,12 @@ def build_reference_findings(
             _reference_missing_finding(
                 finding_id="REF_WHEEL",
                 suspected_source="wheel/tire",
-                evidence_summary=_i18n_ref(
+                evidence_summary=i18n_ref(
                     "VEHICLE_SPEED_IS_AVAILABLE_BUT_TIRE_CIRCUMFERENCE_REFERENCE",
                 ),
                 quick_checks=[
-                    _i18n_ref("PROVIDE_TIRE_CIRCUMFERENCE_OR_TIRE_SIZE_WIDTH_ASPECT"),
-                    _i18n_ref("RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE"),
+                    i18n_ref("PROVIDE_TIRE_CIRCUMFERENCE_OR_TIRE_SIZE_WIDTH_ASPECT"),
+                    i18n_ref("RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE"),
                 ],
             ),
         )
@@ -157,13 +158,13 @@ def build_reference_findings(
             _reference_missing_finding(
                 finding_id="REF_ENGINE",
                 suspected_source="engine",
-                evidence_summary=_i18n_ref(
+                evidence_summary=i18n_ref(
                     "ENGINE_SPEED_REFERENCE_COVERAGE_IS_ENGINE_RPM_NON",
                     engine_rpm_non_null_pct=engine_rpm_non_null_pct,
                 ),
                 quick_checks=[
-                    _i18n_ref("LOG_ENGINE_RPM_FROM_CAN_OBD_FOR_THE"),
-                    _i18n_ref("KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED"),
+                    i18n_ref("LOG_ENGINE_RPM_FROM_CAN_OBD_FOR_THE"),
+                    i18n_ref("KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED"),
                 ],
             ),
         )
@@ -173,8 +174,8 @@ def build_reference_findings(
             _reference_missing_finding(
                 finding_id="REF_SAMPLE_RATE",
                 suspected_source="unknown",
-                evidence_summary=_i18n_ref("RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT"),
-                quick_checks=[_i18n_ref("RECORD_THE_TRUE_ACCELEROMETER_SAMPLE_RATE_IN_RUN")],
+                evidence_summary=i18n_ref("RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT"),
+                quick_checks=[i18n_ref("RECORD_THE_TRUE_ACCELEROMETER_SAMPLE_RATE_IN_RUN")],
             ),
         )
     return findings, engine_ref_sufficient
@@ -243,9 +244,7 @@ def collect_order_frequencies(order_findings: list[Finding]) -> set[float]:
     """Collect matched order frequencies used to suppress duplicate persistent findings."""
     order_freqs: set[float] = set()
     for order_finding in order_findings:
-        if (
-            _as_float(order_finding.get("confidence_0_to_1")) or 0.0
-        ) < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
+        if (_as_float(order_finding.get("confidence")) or 0.0) < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
             continue
         points = order_finding.get("matched_points")
         if not isinstance(points, list):
@@ -661,7 +660,7 @@ def _build_persistent_peak_findings(
         )
         speed_band = derived_speed_band or "-"
 
-        evidence = _i18n_ref(
+        evidence = i18n_ref(
             "EVIDENCE_PEAK_PRESENT",
             freq=bin_center,
             pct=presence_ratio,
@@ -735,9 +734,9 @@ def _build_persistent_peak_findings(
                 "name": "vibration_strength_db",
                 "value": peak_strength_db,
                 "units": "dB",
-                "definition": _i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
+                "definition": i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
             },
-            "confidence_0_to_1": confidence,
+            "confidence": confidence,
             "quick_checks": [],
             "peak_classification": peak_type,
             "phase_evidence": peak_phase_evidence,

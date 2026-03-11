@@ -9,20 +9,20 @@ def test_group_findings_by_source_preserves_ranked_signatures() -> None:
             {
                 "finding_id": "F001",
                 "suspected_source": "wheel/tire",
-                "confidence_0_to_1": 0.62,
+                "confidence": 0.62,
                 "frequency_hz_or_order": "2x wheel order",
             },
             {
                 "finding_id": "F002",
                 "suspected_source": "wheel/tire",
-                "confidence_0_to_1": 0.62,
+                "confidence": 0.62,
                 "frequency_hz_or_order": "1x wheel order",
                 "phase_evidence": {"cruise_fraction": 1.0},
             },
             {
                 "finding_id": "F003",
                 "suspected_source": "engine",
-                "confidence_0_to_1": 0.50,
+                "confidence": 0.50,
                 "frequency_hz_or_order": "2x engine order",
             },
         ],
