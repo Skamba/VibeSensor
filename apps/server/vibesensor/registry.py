@@ -650,9 +650,7 @@ class ClientRegistry:
                     rows.append(
                         {
                             "id": client_id,
-                            "name": self._user_names.get(
-                                client_id, f"client-{client_id[-4:]}"
-                            ),
+                            "name": self._user_names.get(client_id, f"client-{client_id[-4:]}"),
                             "connected": False,
                             "mac_address": client_id_mac(client_id),
                             "location": "",
@@ -665,9 +663,7 @@ class ClientRegistry:
                     )
                     continue
                 age_ms = (
-                    int(max(0.0, now_ts - record.last_seen) * 1000)
-                    if record.last_seen
-                    else None
+                    int(max(0.0, now_ts - record.last_seen) * 1000) if record.last_seen else None
                 )
                 connected = bool(
                     record.last_seen_mono

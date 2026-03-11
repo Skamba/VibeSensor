@@ -120,8 +120,7 @@ class HistoryDB:
             # Check for legacy schema_meta table (pre-v5 databases).
             with self._cursor(commit=False) as cur:
                 cur.execute(
-                    "SELECT name FROM sqlite_master "
-                    "WHERE type='table' AND name='schema_meta'"
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_meta'"
                 )
                 if cur.fetchone() is not None:
                     raise RuntimeError(

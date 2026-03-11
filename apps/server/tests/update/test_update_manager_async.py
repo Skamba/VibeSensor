@@ -59,9 +59,7 @@ class TestUpdateManagerAsync:
         ]
         assert_hotspot_restored(runner)
         fw_mod = "vibesensor.update.firmware_cache"
-        firmware_refresh_calls = [
-            call[0] for call in runner.calls if fw_mod in " ".join(call[0])
-        ]
+        firmware_refresh_calls = [call[0] for call in runner.calls if fw_mod in " ".join(call[0])]
         assert firmware_refresh_calls
         restart_cmd = (
             "systemd-run --unit vibesensor-post-update-restart --on-active=2s "

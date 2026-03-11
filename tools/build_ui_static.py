@@ -32,8 +32,7 @@ def main() -> None:
     )
 
     should_run_npm_ci = (
-        not (ui_dir / "node_modules").exists()
-        or lock_hash != previous_lock_hash
+        not (ui_dir / "node_modules").exists() or lock_hash != previous_lock_hash
     )
 
     if should_run_npm_ci:
