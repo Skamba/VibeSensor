@@ -36,28 +36,28 @@ def create_router(services: RuntimeState) -> APIRouter:
     router = APIRouter()
     router.include_router(
         create_health_routes(
-            services.processing.state,
-            services.processing.health_state,
-            services.ingress.processor,
-            services.ingress.registry,
+            services.processing_loop_state,
+            services.health_state,
+            services.processor,
+            services.registry,
             services.metrics_logger,
         ),
     )
     router.include_router(
         create_settings_routes(
-            services.settings.settings_store,
-            services.settings.gps_monitor,
-            services.settings.analysis_settings,
-            services.settings.apply_car_settings,
-            services.settings.apply_speed_source_settings,
+            services.settings_store,
+            services.gps_monitor,
+            services.analysis_settings,
+            services.apply_car_settings,
+            services.apply_speed_source_settings,
         ),
     )
     router.include_router(
         create_client_routes(
-            services.ingress.registry,
-            services.ingress.control_plane,
-            services.settings.settings_store,
-            services.ingress.processor,
+            services.registry,
+            services.control_plane,
+            services.settings_store,
+            services.processor,
         ),
     )
     router.include_router(
@@ -67,10 +67,12 @@ def create_router(services: RuntimeState) -> APIRouter:
     )
     router.include_router(
         create_history_routes(
-            services.persistence,
+            run_service=services.run_service,
+            report_service=services.report_service,
+            export_service=services.export_service,
         ),
     )
-    router.include_router(create_websocket_routes(services.websocket.hub))
+    router.include_router(create_websocket_routes(services.ws_hub))
     router.include_router(
         create_update_routes(
             services.update_manager,
@@ -78,5 +80,5 @@ def create_router(services: RuntimeState) -> APIRouter:
         ),
     )
     router.include_router(create_car_library_routes())
-    router.include_router(create_debug_routes(services.ingress.processor))
+    router.include_router(create_debug_routes(services.processor))
     return router

@@ -40,9 +40,6 @@ def _sensor_frame_dict(i: int, *, run_id: str = "run-v2") -> dict:
         "top_peaks": [
             {"hz": 15.0, "amp": 0.12, "vibration_strength_db": 22.0, "strength_bucket": "l2"},
         ],
-        "top_peaks_x": [{"hz": 15.0, "amp": 0.12}],
-        "top_peaks_y": [{"hz": 16.0, "amp": 0.08}],
-        "top_peaks_z": [],
     }
 
 
@@ -62,9 +59,6 @@ def test_v2_structured_roundtrip(tmp_path: Path) -> None:
         assert row["accel_x_g"] == pytest.approx(orig["accel_x_g"])
         assert row["vibration_strength_db"] == orig["vibration_strength_db"]
         assert row["top_peaks"] == orig["top_peaks"]
-        assert row["top_peaks_x"] == orig["top_peaks_x"]
-        assert row["top_peaks_y"] == orig["top_peaks_y"]
-        assert row["top_peaks_z"] == orig["top_peaks_z"]
 
 
 def test_v2_extra_keys_preserved(tmp_path: Path) -> None:

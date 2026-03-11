@@ -7,18 +7,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from test_support import make_sample as _make_sample
-from test_support import standard_metadata as _standard_metadata
+from test_support import standard_metadata as standard_metadata
 from test_support import wheel_hz as wheel_hz
+from test_support.core import _stable_hash
 from vibesensor.analysis import summarize_run_data
 
 ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
-
-
-def sensor_offset(sensor: str, modulo: int) -> int:
-    """Stable per-sensor offset independent of PYTHONHASHSEED."""
-    if sensor in ALL_SENSORS:
-        return ALL_SENSORS.index(sensor) % modulo
-    return sum(ord(char) for char in sensor) % modulo
 
 
 def idle_phase(
@@ -36,7 +30,7 @@ def idle_phase(
         t = start_t_s + idx * dt_s
         for sensor in sensors:
             peaks = [
-                {"hz": 12.5 + sensor_offset(sensor, 10), "amp": noise_amp},
+                {"hz": 12.5 + _stable_hash(sensor) % 10, "amp": noise_amp},
                 {"hz": 25.0, "amp": noise_amp * 0.5},
             ]
             samples.append(
@@ -69,7 +63,7 @@ def road_noise_phase(
         t = start_t_s + idx * dt_s
         for sensor in sensors:
             peaks = [
-                {"hz": 15.0 + sensor_offset(sensor, 20), "amp": noise_amp},
+                {"hz": 15.0 + _stable_hash(sensor) % 20, "amp": noise_amp},
                 {"hz": 34.0, "amp": noise_amp * 0.7},
                 {"hz": 88.0, "amp": noise_amp * 0.5},
             ]
@@ -108,7 +102,7 @@ def ramp_phase(
         for _ in range(n_per_step):
             for sensor in sensors:
                 peaks = [
-                    {"hz": 15.0 + sensor_offset(sensor, 20), "amp": noise_amp},
+                    {"hz": 15.0 + _stable_hash(sensor) % 20, "amp": noise_amp},
                     {"hz": 60.0, "amp": noise_amp * 0.6},
                 ]
                 samples.append(
@@ -182,11 +176,6 @@ def fault_phase(
     return samples
 
 
-def scenario_metadata(*, language: str = "en") -> dict[str, Any]:
-    """Return shared ground-truth scenario metadata."""
-    return _standard_metadata(language=language)
-
-
 def get_top_cause(summary: dict[str, Any]) -> dict[str, Any]:
     """Return the highest-priority top cause from a summary."""
     top_causes = summary.get("top_causes", [])
@@ -228,7 +217,7 @@ def build_summary_from_scenario(spec: ScenarioSpec) -> dict[str, Any]:
         samples.extend(step.builder(start_t_s=t, sensors=ALL_SENSORS, **step.kwargs))
         t += step.duration_s
     return summarize_run_data(
-        scenario_metadata(language=spec.language),
+        standard_metadata(language=spec.language),
         samples,
         lang=spec.language,
         file_name=spec.file_name,

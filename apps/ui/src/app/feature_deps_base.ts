@@ -5,7 +5,7 @@
  * the common fields (DOM elements, i18n translation, HTML escaping)
  * across every feature module.
  */
-import type { UiDomElements } from "./dom/ui_dom_registry";
+import type { UiDomElements } from "./ui_dom_registry";
 
 export interface FeatureDepsBase {
   els: UiDomElements;

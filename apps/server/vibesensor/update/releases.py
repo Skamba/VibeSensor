@@ -14,7 +14,6 @@ from .status import UpdateStatusTracker
 @dataclass(frozen=True, slots=True)
 class UpdateReleaseConfig:
     rollback_dir: Path
-    server_repo: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,7 +37,6 @@ class UpdateReleaseService:
 
         fetcher = ServerReleaseFetcher(
             ReleaseFetcherConfig(
-                server_repo=self._config.server_repo,
                 rollback_dir=str(self._config.rollback_dir),
             ),
         )
@@ -65,7 +63,6 @@ class UpdateReleaseService:
 
         fetcher = ServerReleaseFetcher(
             ReleaseFetcherConfig(
-                server_repo=self._config.server_repo,
                 rollback_dir=str(self._config.rollback_dir),
             ),
         )

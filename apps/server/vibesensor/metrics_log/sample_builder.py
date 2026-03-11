@@ -133,21 +133,6 @@ def extract_strength_data(
     )
 
 
-def extract_axis_top_peaks(metrics: Mapping[str, object], axis: str) -> list[dict[str, object]]:
-    """Return the top 3 peaks for a single axis."""
-    axis_metrics = metrics.get(axis)
-    if not isinstance(axis_metrics, dict):
-        return []
-    axis_peaks_raw = axis_metrics.get("peaks")
-    axis_peaks: list[dict[str, object]] = []
-    if isinstance(axis_peaks_raw, list):
-        for peak in axis_peaks_raw[:3]:
-            parsed = _parse_peak(peak)
-            if parsed is not None:
-                axis_peaks.append({"hz": parsed[0], "amp": parsed[1]})
-    return axis_peaks
-
-
 def dominant_hz_from_strength(
     strength_metrics: dict[str, object],
 ) -> float | None:
@@ -285,9 +270,6 @@ def build_sample_records(
             strength_floor_amp_g,
             top_peaks,
         ) = extract_strength_data(metrics)
-        top_peaks_x = extract_axis_top_peaks(metrics, "x")
-        top_peaks_y = extract_axis_top_peaks(metrics, "y")
-        top_peaks_z = extract_axis_top_peaks(metrics, "z")
         dominant_hz = dominant_hz_from_strength(strength_metrics)
 
         sample_rate_hz = (
@@ -321,9 +303,6 @@ def build_sample_records(
             dominant_freq_hz=dominant_hz,
             dominant_axis="combined",
             top_peaks=top_peaks,
-            top_peaks_x=top_peaks_x,
-            top_peaks_y=top_peaks_y,
-            top_peaks_z=top_peaks_z,
             vibration_strength_db=vibration_strength_db,
             strength_bucket=strength_bucket,
             strength_peak_amp_g=strength_peak_amp_g,

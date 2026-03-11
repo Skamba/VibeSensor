@@ -34,6 +34,7 @@ class _State:
     ws_hub: object = field(init=False)
     processor: object = field(init=False)
     loop_state: object = field(init=False)
+    processing_loop_state: object = field(init=False)
     update_manager: object = field(init=False)
     esp_flash_manager: object = field(init=False)
 
@@ -49,6 +50,7 @@ class _State:
         from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
 
         self.loop_state = ProcessingLoopState()
+        self.processing_loop_state = self.loop_state
         self.health_state = RuntimeHealthState()
         self.health_state.mark_ready()
         self.update_manager = None
@@ -89,29 +91,9 @@ class _State:
             raw_samples=lambda _id, n_samples=1: {},
             intake_stats=dict,
         )
-        self.ingress = SimpleNamespace(
-            registry=self.registry,
-            processor=self.processor,
-            control_plane=self.control_plane,
-        )
-        self.settings = SimpleNamespace(
-            settings_store=self.settings_store,
-            gps_monitor=self.gps_monitor,
-            analysis_settings=self.analysis_settings,
-            apply_car_settings=self.apply_car_settings,
-            apply_speed_source_settings=self.apply_speed_source_settings,
-        )
-        self.persistence = SimpleNamespace(
-            history_db=self.history_db,
-            run_service=HistoryRunService(self.history_db, self.settings_store),
-            report_service=HistoryReportService(self.history_db, self.settings_store),
-            export_service=HistoryExportService(self.history_db),
-        )
-        self.websocket = SimpleNamespace(hub=self.ws_hub)
-        self.processing = SimpleNamespace(
-            state=self.loop_state,
-            health_state=self.health_state,
-        )
+        self.run_service = HistoryRunService(self.history_db, self.settings_store)
+        self.report_service = HistoryReportService(self.history_db, self.settings_store)
+        self.export_service = HistoryExportService(self.history_db)
 
 
 def _route(router, path: str, method: str = "GET"):

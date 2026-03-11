@@ -19,9 +19,10 @@ from pathlib import Path
 from typing import Any
 from urllib.request import Request, urlopen
 
+from vibesensor.constants import GITHUB_REPO
+
 LOGGER = logging.getLogger(__name__)
 
-_DEFAULT_REPO = "Skamba/VibeSensor"
 _DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 
 # Shared download constants used by both server and firmware fetchers.
@@ -43,7 +44,7 @@ class ReleaseFetcherConfig:
 
     def __post_init__(self) -> None:
         if not self.server_repo:
-            self.server_repo = os.environ.get("VIBESENSOR_SERVER_REPO", _DEFAULT_REPO)
+            self.server_repo = os.environ.get("VIBESENSOR_SERVER_REPO", GITHUB_REPO)
         if not self.github_token:
             self.github_token = os.environ.get("GITHUB_TOKEN", "")
         if not self.rollback_dir:

@@ -133,62 +133,62 @@ def _make_runtime(**overrides: Any):
     )
 
     config = overrides.pop("config", _StubConfig(processing=_StubProcessingConfig()))
-    ingress = runtime_module.RuntimeIngressSubsystem(
-        registry=overrides.pop("registry", _StubRegistry()),
-        processor=overrides.pop("processor", _StubProcessor()),
-        control_plane=overrides.pop("control_plane", MagicMock()),
-        worker_pool=overrides.pop("worker_pool", MagicMock()),
-    )
-    settings_store_mock = overrides.pop("settings_store", MagicMock())
-    persistence = runtime_module.RuntimePersistenceSubsystem(
-        history_db=overrides.pop("history_db", MagicMock()),
-        run_service=overrides.pop("run_service", MagicMock()),
-        report_service=overrides.pop("report_service", MagicMock()),
-        export_service=overrides.pop("export_service", MagicMock()),
-    )
-    settings = runtime_module.RuntimeSettingsSubsystem(
-        settings_store=settings_store_mock,
-        analysis_settings=overrides.pop("analysis_settings", MagicMock()),
-        gps_monitor=overrides.pop("gps_monitor", MagicMock()),
-    )
+    registry = overrides.pop("registry", _StubRegistry())
+    processor = overrides.pop("processor", _StubProcessor())
+    control_plane = overrides.pop("control_plane", MagicMock())
+    worker_pool = overrides.pop("worker_pool", MagicMock())
+    settings_store = overrides.pop("settings_store", MagicMock())
+    analysis_settings = overrides.pop("analysis_settings", MagicMock())
+    gps_monitor = overrides.pop("gps_monitor", MagicMock())
+    history_db = overrides.pop("history_db", MagicMock())
+    run_service = overrides.pop("run_service", MagicMock())
+    report_service = overrides.pop("report_service", MagicMock())
+    export_service = overrides.pop("export_service", MagicMock())
     diagnostics = overrides.pop("metrics_logger", MagicMock())
     update_manager = overrides.pop("update_manager", MagicMock())
     esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
-    processing = runtime_module.RuntimeProcessingSubsystem(
-        state=processing_state,
+    ws_cache = WsBroadcastCache()
+    rt = runtime_module.RuntimeState(
+        config=config,
+        registry=registry,
+        processor=processor,
+        control_plane=control_plane,
+        worker_pool=worker_pool,
+        settings_store=settings_store,
+        analysis_settings=analysis_settings,
+        gps_monitor=gps_monitor,
+        history_db=history_db,
+        run_service=run_service,
+        report_service=report_service,
+        export_service=export_service,
+        processing_loop_state=processing_state,
         health_state=health_state,
-        loop=ProcessingLoop(
+        processing_loop=ProcessingLoop(
             state=processing_state,
             fft_update_hz=config.processing.fft_update_hz,
             sample_rate_hz=config.processing.sample_rate_hz,
             fft_n=config.processing.fft_n,
-            ingress=ingress,
+            registry=registry,
+            processor=processor,
+            control_plane=control_plane,
         ),
-    )
-    ws_cache = WsBroadcastCache()
-    websocket = runtime_module.RuntimeWebsocketSubsystem(
-        hub=overrides.pop("ws_hub", MagicMock()),
-        cache=ws_cache,
-        broadcast=WsBroadcastService(
+        ws_hub=overrides.pop("ws_hub", MagicMock()),
+        ws_cache=ws_cache,
+        ws_broadcast=WsBroadcastService(
             cache=ws_cache,
             ui_push_hz=config.processing.ui_push_hz,
             ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
-            ingress=ingress,
-            settings=settings,
+            registry=registry,
+            processor=processor,
+            gps_monitor=gps_monitor,
+            analysis_settings=analysis_settings,
+            settings_store=settings_store,
         ),
-    )
-    rt = runtime_module.RuntimeState(
-        config=config,
-        ingress=ingress,
-        settings=settings,
         metrics_logger=diagnostics,
-        persistence=persistence,
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
-        processing=processing,
-        websocket=websocket,
     )
     rt.lifecycle = LifecycleManager(runtime=rt)
     if overrides:
@@ -203,7 +203,7 @@ def _make_runtime(**overrides: Any):
 
 
 async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
-    """Run *rt*.processing.loop() for *max_ticks* iterations, then cancel.
+    """Run *rt*.processing_loop.run() for *max_ticks* iterations, then cancel.
 
     Temporarily replaces ``asyncio.sleep`` with a counting stub so the loop
     completes deterministically without real delays.
@@ -221,7 +221,7 @@ async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
     asyncio.sleep = _counting_sleep
     try:
         with pytest.raises(asyncio.CancelledError):
-            await rt.processing.loop.run()
+            await rt.processing_loop.run()
     finally:
         asyncio.sleep = original_sleep
 
@@ -230,11 +230,11 @@ async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
 async def test_processing_loop_runs_one_tick_and_resets_state() -> None:
     """processing_loop should call compute_all and set state to 'ok'."""
     rt = _make_runtime()
-    rt.processing.state.processing_state = "degraded"
+    rt.processing_loop_state.processing_state = "degraded"
 
     await _run_processing_loop(rt, max_ticks=1)
 
-    assert rt.processing.state.processing_state == "ok"
+    assert rt.processing_loop_state.processing_state == "ok"
 
 
 @pytest.mark.asyncio
@@ -250,8 +250,8 @@ async def test_processing_loop_handles_failure_gracefully() -> None:
 
     await _run_processing_loop(rt, max_ticks=1)
 
-    assert rt.processing.state.processing_failure_count >= 1
-    assert rt.processing.state.processing_state in ("degraded", "fatal")
+    assert rt.processing_loop_state.processing_failure_count >= 1
+    assert rt.processing_loop_state.processing_state in ("degraded", "fatal")
 
 
 @pytest.mark.asyncio
@@ -309,8 +309,8 @@ async def test_start_creates_tasks(monkeypatch) -> None:
     await rt.lifecycle.start()
     assert len(rt.lifecycle.tasks) == 5
     assert control_plane.start.called
-    assert rt.processing.health_state.startup_state == "ready"
-    assert rt.processing.health_state.startup_phase == "ready"
+    assert rt.health_state.startup_state == "ready"
+    assert rt.health_state.startup_phase == "ready"
 
     await rt.lifecycle.stop()
 
@@ -352,7 +352,7 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
     failed_task = next(task for task in rt.lifecycle.tasks if task.get_name() == "ws-broadcast")
     await asyncio.gather(failed_task, return_exceptions=True)
 
-    assert rt.processing.health_state.background_task_failures["ws-broadcast"] == "ws boom"
+    assert rt.health_state.background_task_failures["ws-broadcast"] == "ws boom"
 
     await rt.lifecycle.stop()
 
@@ -417,7 +417,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     assert history_db.close.called
 
 
-@pytest.mark.parametrize("attr", ["settings", "processing", "websocket", "lifecycle"])
+@pytest.mark.parametrize("attr", ["settings_store", "processing_loop", "ws_broadcast", "lifecycle"])
 def test_runtime_state_has_public_attribute(attr: str) -> None:
     """Canonical import path should expose key public attributes."""
     from vibesensor.runtime import RuntimeState

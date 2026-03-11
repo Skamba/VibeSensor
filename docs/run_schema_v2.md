@@ -24,8 +24,6 @@ Required fields:
 - `fft_window_type`
 - `peak_picker_method`
 - `accel_scale_g_per_lsb` (`null` if unknown / not converted)
-- `units`
-- `amplitude_definitions`
 
 If key references are missing, set:
 
@@ -35,7 +33,6 @@ Optional but recommended:
 
 - `tire_circumference_m` (required for wheel-order labeling)
 - `firmware_version` (ESP firmware version string captured from connected sensors)
-- `phase_metadata` (phase-classification metadata: version, thresholds, and labels)
 
 ### `sample` (per timestamp)
 
@@ -59,7 +56,6 @@ Common derived fields:
 - `vibration_strength_db` (canonical vibration severity metric in dB — see `docs/metrics.md`)
 - `strength_bucket` (severity band key: `l1`–`l5` or `null`)
 - `top_peaks` (up to 8 entries of `{hz, amp, vibration_strength_db, strength_bucket}` from combined spectrum)
-- `top_peaks_x` / `top_peaks_y` / `top_peaks_z` (bounded per-axis summaries, up to 3 entries per axis: `{hz, amp}`)
 
 ### `run_end`
 

@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from vibesensor.config import AppConfig, load_config
+from vibesensor.constants import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 
 
 def summarize(cfg: AppConfig) -> dict[str, object]:
@@ -19,8 +20,8 @@ def summarize(cfg: AppConfig) -> dict[str, object]:
         },
         "processing": {
             "sample_rate_hz": cfg.processing.sample_rate_hz,
-            "ui_push_hz": cfg.processing.ui_push_hz,
-            "ui_heavy_push_hz": cfg.processing.ui_heavy_push_hz,
+            "ui_push_hz": UI_PUSH_HZ,
+            "ui_heavy_push_hz": UI_HEAVY_PUSH_HZ,
         },
         "paths": {
             "metrics_log_path": str(cfg.logging.metrics_log_path),

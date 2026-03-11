@@ -38,7 +38,7 @@ def can_transition_run(current_status: str | None, target_status: str) -> bool:
 
 ANALYSIS_SCHEMA_VERSION = 2
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS schema_meta (
@@ -92,9 +92,6 @@ CREATE TABLE IF NOT EXISTS samples_v2 (
     frames_dropped_total  INTEGER DEFAULT 0,
     queue_overflow_drops  INTEGER DEFAULT 0,
     top_peaks             TEXT,
-    top_peaks_x           TEXT,
-    top_peaks_y           TEXT,
-    top_peaks_z           TEXT,
     extra_json            TEXT
 );
 

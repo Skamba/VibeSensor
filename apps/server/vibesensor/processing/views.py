@@ -9,7 +9,6 @@ from ..payload_types import (
     DebugSpectrumTopBinPayload,
     RawSamplesErrorPayload,
     RawSamplesPayload,
-    SelectedClientPayload,
     SharedWindowPayload,
     SpectraPayload,
     SpectrumSeriesPayload,
@@ -22,7 +21,6 @@ from .compute import SignalMetricsComputer
 from .payload import (
     _empty_spectrum_payload,
     build_multi_spectrum_payload,
-    build_selected_payload,
     build_spectrum_payload,
 )
 from .time_align import analysis_time_range, compute_overlap
@@ -51,27 +49,6 @@ class SignalProcessorViews:
                 client_ids,
                 spectrum_fn=self._spectrum_payload_unlocked,
                 analysis_time_range_fn=self._analysis_time_range_unlocked,
-            )
-
-    def selected_payload(self, client_id: str) -> SelectedClientPayload:
-        with self._store.lock:
-            buf = self._store.buffers.get(client_id)
-            if buf is None or buf.count == 0:
-                sr = self._store.config.sample_rate_hz
-                return {
-                    "client_id": client_id,
-                    "sample_rate_hz": sr,
-                    "waveform": {},
-                    "spectrum": {},
-                    "metrics": {},
-                }
-            return build_selected_payload(
-                buf,
-                client_id,
-                sample_rate_hz=self._store.config.sample_rate_hz,
-                waveform_seconds=self._store.config.waveform_seconds,
-                waveform_display_hz=self._store.config.waveform_display_hz,
-                latest_fn=self._store.copy_latest,
             )
 
     def debug_spectrum(self, client_id: str) -> DebugSpectrumPayload | DebugSpectrumErrorPayload:

@@ -10,7 +10,7 @@ import math
 
 import pytest
 
-from vibesensor.core.vibration_strength import (
+from vibesensor.vibration_strength import (
     compute_vibration_strength_db,
     vibration_strength_db_scalar,
 )

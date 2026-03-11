@@ -12,24 +12,27 @@ import pytest
 
 from vibesensor.analysis._types import AmplitudeMetric, Finding, MatchedPoint
 from vibesensor.analysis.findings_builder import _build_findings
-from vibesensor.analysis.findings_constants import (
-    CONFIDENCE_CEILING,
-    CONFIDENCE_FLOOR,
-    NEGLIGIBLE_STRENGTH_MAX_DB,
-)
 from vibesensor.analysis.findings_intensity import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
     _speed_breakdown,
 )
+from vibesensor.analysis.findings_order_analysis import (
+    OrderMatchAccumulator,
+)
+from vibesensor.analysis.findings_order_analysis import (
+    compute_order_confidence as _compute_order_confidence,
+)
+from vibesensor.analysis.findings_order_analysis import (
+    detect_diffuse_excitation as _detect_diffuse_excitation,
+)
+from vibesensor.analysis.findings_order_analysis import (
+    suppress_engine_aliases as _suppress_engine_aliases,
+)
 from vibesensor.analysis.findings_order_assembly import assemble_order_finding
 from vibesensor.analysis.findings_order_findings import (
     _compute_effective_match_rate,
-    _compute_order_confidence,
-    _detect_diffuse_excitation,
-    _suppress_engine_aliases,
 )
-from vibesensor.analysis.findings_order_models import OrderMatchAccumulator
 from vibesensor.analysis.findings_persistent import _classify_peak_type
 from vibesensor.analysis.findings_reference_checks import _reference_missing_finding
 from vibesensor.analysis.findings_speed_profile import (
@@ -37,6 +40,11 @@ from vibesensor.analysis.findings_speed_profile import (
     _speed_profile_from_points,
 )
 from vibesensor.analysis.phase_segmentation import DrivingPhase
+from vibesensor.constants import (
+    CONFIDENCE_CEILING,
+    CONFIDENCE_FLOOR,
+    NEGLIGIBLE_STRENGTH_MAX_DB,
+)
 
 # -- Subpackage structure tests -----------------------------------------------
 
@@ -48,7 +56,6 @@ class TestFindingsModuleStructure:
         """Each findings module must be directly importable with expected symbols."""
         from vibesensor.analysis import (  # noqa: F401
             findings_builder,
-            findings_constants,
             findings_intensity,
             findings_order_findings,
             findings_persistent,
@@ -59,7 +66,7 @@ class TestFindingsModuleStructure:
         # Verify key symbols exist in each module
         assert hasattr(findings_builder, "_build_findings")
         assert hasattr(findings_intensity, "_sensor_intensity_by_location")
-        assert hasattr(findings_order_findings, "_order_label")
+        assert hasattr(findings_order_findings, "_build_order_findings")
         assert hasattr(findings_speed_profile, "_speed_profile_from_points")
         assert hasattr(findings_reference_checks, "_reference_missing_finding")
         assert hasattr(findings_persistent, "_build_persistent_peak_findings")

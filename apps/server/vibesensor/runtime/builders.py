@@ -3,10 +3,20 @@ from __future__ import annotations
 import logging
 from typing import cast
 
-from vibesensor.core.sensor_units import get_accel_scale_g_per_lsb
+from vibesensor.sensor_units import get_accel_scale_g_per_lsb
 
 from ..analysis_settings import AnalysisSettingsStore
 from ..config import AppConfig
+from ..constants import (
+    FFT_N,
+    FFT_UPDATE_HZ,
+    SPECTRUM_MAX_HZ,
+    SPECTRUM_MIN_HZ,
+    UI_HEAVY_PUSH_HZ,
+    UI_PUSH_HZ,
+    WAVEFORM_DISPLAY_HZ,
+)
+from ..esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
 from ..history_services.exports import HistoryExportService
@@ -21,14 +31,9 @@ from ..update.manager import UpdateManager
 from ..worker_pool import WorkerPool
 from ..ws_hub import WebSocketHub
 from .health_state import RuntimeHealthState
+from .lifecycle import LifecycleManager
 from .processing_loop import ProcessingLoop, ProcessingLoopState
-from .state import (
-    RuntimeIngressSubsystem,
-    RuntimePersistenceSubsystem,
-    RuntimeProcessingSubsystem,
-    RuntimeSettingsSubsystem,
-    RuntimeWebsocketSubsystem,
-)
+from .state import RuntimeState
 from .ws_broadcast import WsBroadcastCache, WsBroadcastService
 
 LOGGER = logging.getLogger(__name__)
@@ -59,37 +64,34 @@ def create_history_db(config: AppConfig) -> HistoryDB:
     return history_db
 
 
-def build_persistence_subsystem(
-    *,
-    history_db: HistoryDB,
-    settings_store: SettingsStore | None = None,
-) -> RuntimePersistenceSubsystem:
-    return RuntimePersistenceSubsystem(
-        history_db=history_db,
-        run_service=HistoryRunService(history_db, settings_store),
-        report_service=HistoryReportService(history_db, settings_store),
-        export_service=HistoryExportService(history_db),
-    )
+def build_runtime(config: AppConfig) -> RuntimeState:
+    """Construct all services and return a wired RuntimeState."""
+    accel_scale_g_per_lsb = resolve_accel_scale_g_per_lsb(config)
 
+    # DB + settings
+    history_db = create_history_db(config)
+    settings_store = SettingsStore(db=history_db)
+    analysis_settings = AnalysisSettingsStore()
+    gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
 
-def build_ingress_subsystem(
-    *,
-    config: AppConfig,
-    persistence: RuntimePersistenceSubsystem,
-    accel_scale_g_per_lsb: float,
-) -> RuntimeIngressSubsystem:
+    # persistence services
+    run_service = HistoryRunService(history_db, settings_store)
+    report_service = HistoryReportService(history_db, settings_store)
+    export_service = HistoryExportService(history_db)
+
+    # ingress
     registry = ClientRegistry(
-        db=persistence.history_db,
+        db=history_db,
         stale_ttl_seconds=config.processing.client_ttl_seconds,
     )
     worker_pool = WorkerPool(max_workers=4, thread_name_prefix="vibesensor-fft")
     processor = SignalProcessor(
         sample_rate_hz=config.processing.sample_rate_hz,
         waveform_seconds=config.processing.waveform_seconds,
-        waveform_display_hz=config.processing.waveform_display_hz,
-        fft_n=config.processing.fft_n,
-        spectrum_min_hz=config.processing.spectrum_min_hz,
-        spectrum_max_hz=config.processing.spectrum_max_hz,
+        waveform_display_hz=WAVEFORM_DISPLAY_HZ,
+        fft_n=FFT_N,
+        spectrum_min_hz=SPECTRUM_MIN_HZ,
+        spectrum_max_hz=SPECTRUM_MAX_HZ,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         worker_pool=worker_pool,
     )
@@ -98,34 +100,35 @@ def build_ingress_subsystem(
         bind_host=config.udp.control_host,
         bind_port=config.udp.control_port,
     )
-    return RuntimeIngressSubsystem(
+
+    # processing loop
+    processing_loop_state = ProcessingLoopState()
+    health_state = RuntimeHealthState()
+    processing_loop = ProcessingLoop(
+        state=processing_loop_state,
+        fft_update_hz=FFT_UPDATE_HZ,
+        sample_rate_hz=config.processing.sample_rate_hz,
+        fft_n=FFT_N,
         registry=registry,
         processor=processor,
         control_plane=control_plane,
-        worker_pool=worker_pool,
     )
 
-
-def build_settings_subsystem(
-    *,
-    history_db: HistoryDB,
-    gps_enabled: bool,
-) -> RuntimeSettingsSubsystem:
-    return RuntimeSettingsSubsystem(
-        settings_store=SettingsStore(db=history_db),
-        analysis_settings=AnalysisSettingsStore(),
-        gps_monitor=GPSSpeedMonitor(gps_enabled=gps_enabled),
+    # websocket
+    ws_cache = WsBroadcastCache()
+    ws_hub = WebSocketHub()
+    ws_broadcast = WsBroadcastService(
+        cache=ws_cache,
+        ui_push_hz=UI_PUSH_HZ,
+        ui_heavy_push_hz=UI_HEAVY_PUSH_HZ,
+        registry=registry,
+        processor=processor,
+        gps_monitor=gps_monitor,
+        analysis_settings=analysis_settings,
+        settings_store=settings_store,
     )
 
-
-def build_metrics_logger(
-    *,
-    config: AppConfig,
-    ingress: RuntimeIngressSubsystem,
-    settings: RuntimeSettingsSubsystem,
-    persistence: RuntimePersistenceSubsystem,
-    accel_scale_g_per_lsb: float,
-) -> MetricsLogger:
+    # metrics logger
     metrics_logger = MetricsLogger(
         MetricsLoggerConfig(
             enabled=config.logging.log_metrics,
@@ -134,79 +137,60 @@ def build_metrics_logger(
             no_data_timeout_s=config.logging.no_data_timeout_s,
             sensor_model=config.logging.sensor_model,
             default_sample_rate_hz=config.processing.sample_rate_hz,
-            fft_window_size_samples=config.processing.fft_n,
+            fft_window_size_samples=FFT_N,
             fft_window_type="hann",
             peak_picker_method="canonical_strength_metrics_module",
             accel_scale_g_per_lsb=accel_scale_g_per_lsb,
             persist_history_db=config.logging.persist_history_db,
         ),
-        registry=ingress.registry,
-        gps_monitor=settings.gps_monitor,
-        processor=ingress.processor,
-        analysis_settings=settings.analysis_settings,
-        history_db=persistence.history_db,
-        settings_store=settings.settings_store,
-        language_provider=lambda: settings.settings_store.language,
-    )
-    requeue_stale_analysis_runs(
-        persistence=persistence,
-        metrics_logger=metrics_logger,
-    )
-    return metrics_logger
-
-
-def build_update_manager(*, config: AppConfig) -> UpdateManager:
-    return UpdateManager(
-        ap_con_name=config.ap.con_name,
-        wifi_ifname=config.ap.ifname,
-        rollback_dir=str(config.update.rollback_dir),
-        server_repo=config.update.server_repo,
+        registry=registry,
+        gps_monitor=gps_monitor,
+        processor=processor,
+        analysis_settings=analysis_settings,
+        history_db=history_db,
+        settings_store=settings_store,
+        language_provider=lambda: settings_store.language,
     )
 
-
-def build_processing_subsystem(
-    *,
-    config: AppConfig,
-    ingress: RuntimeIngressSubsystem,
-) -> RuntimeProcessingSubsystem:
-    state = ProcessingLoopState()
-    health_state = RuntimeHealthState()
-    loop = ProcessingLoop(
-        state=state,
-        fft_update_hz=config.processing.fft_update_hz,
-        sample_rate_hz=config.processing.sample_rate_hz,
-        fft_n=config.processing.fft_n,
-        ingress=ingress,
-    )
-    return RuntimeProcessingSubsystem(state=state, health_state=health_state, loop=loop)
-
-
-def build_websocket_subsystem(
-    *,
-    config: AppConfig,
-    ingress: RuntimeIngressSubsystem,
-    settings: RuntimeSettingsSubsystem,
-) -> RuntimeWebsocketSubsystem:
-    cache = WsBroadcastCache()
-    hub = WebSocketHub()
-    broadcast = WsBroadcastService(
-        cache=cache,
-        ui_push_hz=config.processing.ui_push_hz,
-        ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
-        ingress=ingress,
-        settings=settings,
-    )
-    return RuntimeWebsocketSubsystem(hub=hub, cache=cache, broadcast=broadcast)
-
-
-def requeue_stale_analysis_runs(
-    *,
-    persistence: RuntimePersistenceSubsystem,
-    metrics_logger: MetricsLogger,
-) -> None:
-    stale_analyzing = persistence.history_db.stale_analyzing_run_ids()
+    # requeue stale analysis runs
+    stale_analyzing = history_db.stale_analyzing_run_ids()
     for stale_run_id in stale_analyzing:
         LOGGER.info("Re-queuing stuck analyzing run %s for re-analysis", stale_run_id)
         metrics_logger.schedule_post_analysis(stale_run_id)
     if stale_analyzing:
         LOGGER.info("Re-queued %d stuck analyzing run(s)", len(stale_analyzing))
+
+    # update manager
+    update_manager = UpdateManager(
+        ap_con_name=config.ap.con_name,
+        wifi_ifname=config.ap.ifname,
+        rollback_dir=str(config.update.rollback_dir),
+    )
+
+    runtime = RuntimeState(
+        config=config,
+        registry=registry,
+        processor=processor,
+        control_plane=control_plane,
+        worker_pool=worker_pool,
+        settings_store=settings_store,
+        analysis_settings=analysis_settings,
+        gps_monitor=gps_monitor,
+        history_db=history_db,
+        run_service=run_service,
+        report_service=report_service,
+        export_service=export_service,
+        processing_loop_state=processing_loop_state,
+        health_state=health_state,
+        processing_loop=processing_loop,
+        ws_hub=ws_hub,
+        ws_cache=ws_cache,
+        ws_broadcast=ws_broadcast,
+        metrics_logger=metrics_logger,
+        update_manager=update_manager,
+        esp_flash_manager=EspFlashManager(),
+    )
+    runtime.lifecycle = LifecycleManager(runtime=runtime)
+    runtime.apply_car_settings()
+    runtime.apply_speed_source_settings()
+    return runtime

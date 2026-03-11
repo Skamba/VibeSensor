@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from math import floor
 from typing import TypedDict
 
-from vibesensor.core.vibration_strength import (
+from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 

@@ -5,10 +5,10 @@ from __future__ import annotations
 from math import log1p
 
 import pytest
-from test_support.scenario_regression import (
+from test_support.core import standard_metadata
+from test_support.sample_scenarios import (
     build_speed_sweep_samples,
     max_order_source_conf,
-    standard_metadata,
 )
 
 from vibesensor.analysis import confidence_label, summarize_run_data

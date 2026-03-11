@@ -4,7 +4,7 @@ import {
   type StrengthMetricsPayload,
   type WsOrderBand,
 } from "./contracts/ws_payload_types";
-import type { SpectrumClientData } from "./app/state/ui_app_state";
+import type { SpectrumClientData } from "./app/ui_app_state";
 
 type UnknownRecord = Record<string, unknown>;
 

@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from ..domain_models import as_float_or_none as _as_float
-from ._types import Finding, MatchedPoint
-from .findings_constants import (
+from ..constants import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     LIGHT_STRENGTH_MAX_DB,
     NEGLIGIBLE_STRENGTH_MAX_DB,
     ORDER_MIN_CONFIDENCE,
 )
+from ..domain_models import as_float_or_none as _as_float
+from ._types import Finding, MatchedPoint
 
 # Local type bindings so mypy resolves correct types under follow_imports=skip.
 _CONF_FLOOR: float = CONFIDENCE_FLOOR

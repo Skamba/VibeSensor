@@ -28,13 +28,6 @@ udp:
 processing:
   sample_rate_hz: 800          # ADC sample rate expected from the sensor
   waveform_seconds: 8          # Seconds of raw waveform kept per client buffer
-  waveform_display_hz: 120     # Decimated rate sent to the UI waveform chart
-  ui_push_hz: 10               # Frequency of lightweight metric pushes to UI
-  ui_heavy_push_hz: 4          # Frequency of heavy (FFT spectrum) pushes to UI
-  fft_update_hz: 4             # FFT recomputation rate
-  fft_n: 2048                  # FFT window size (power of 2, 16–65536)
-  spectrum_min_hz: 5.0         # Lower frequency shown on the spectrum chart (Hz, ≥0)
-  spectrum_max_hz: 200         # Upper frequency shown on the spectrum chart (Hz, float, < Nyquist)
   client_ttl_seconds: 120      # Seconds of silence before a client buffer is evicted
   accel_scale_g_per_lsb: null  # Override accelerometer scale (null = auto-detect from sensor)
 
@@ -59,5 +52,4 @@ gps:
   gpsd_port: 2947        # Port must be 1–65535
 
 update:
-  server_repo: Skamba/VibeSensor  # GitHub repo used by the auto-updater (owner/name)
   rollback_dir: /var/lib/vibesensor/rollback  # Directory for storing rollback wheels

@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -275,36 +274,16 @@ def _make_fake_state(history_db: Any) -> Any:
 
     from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
 
-    state.loop_state = ProcessingLoopState()
+    state.processing_loop_state = ProcessingLoopState()
     state.health_state = RuntimeHealthState()
     state.health_state.mark_ready()
     state.apply_car_settings = lambda: None
     state.apply_speed_source_settings = lambda: None
     state.update_manager = MagicMock()
     state.esp_flash_manager = MagicMock()
-    state.ingress = SimpleNamespace(
-        registry=state.registry,
-        processor=state.processor,
-        control_plane=state.control_plane,
-    )
-    state.settings = SimpleNamespace(
-        settings_store=state.settings_store,
-        gps_monitor=state.gps_monitor,
-        analysis_settings=state.analysis_settings,
-        apply_car_settings=state.apply_car_settings,
-        apply_speed_source_settings=state.apply_speed_source_settings,
-    )
-    state.persistence = SimpleNamespace(
-        history_db=state.history_db,
-        run_service=HistoryRunService(state.history_db, state.settings_store),
-        report_service=HistoryReportService(state.history_db, state.settings_store),
-        export_service=HistoryExportService(state.history_db),
-    )
-    state.websocket = SimpleNamespace(hub=state.ws_hub)
-    state.processing = SimpleNamespace(
-        state=state.loop_state,
-        health_state=state.health_state,
-    )
+    state.run_service = HistoryRunService(state.history_db, state.settings_store)
+    state.report_service = HistoryReportService(state.history_db, state.settings_store)
+    state.export_service = HistoryExportService(state.history_db)
     return state
 
 

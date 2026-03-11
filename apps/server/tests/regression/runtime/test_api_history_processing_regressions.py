@@ -7,7 +7,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-import numpy as np
 import pytest
 from _paths import SERVER_ROOT
 
@@ -103,18 +102,6 @@ class TestProcessingZeroSampleRate:
             fft_n=256,
             spectrum_max_hz=200,
         )
-
-    def test_selected_payload_returns_empty_on_zero_sr(self) -> None:
-        # Processor with sr=0 but data ingested at a valid rate
-        proc = self._make_processor(0)
-        raw = np.zeros((10, 3), dtype=np.int16)
-        proc.ingest("c1", raw, sample_rate_hz=800)
-        # Force buf.sample_rate_hz back to 0 to simulate the bug path
-        buf = proc._store.buffers["c1"]
-        buf.sample_rate_hz = 0
-        result = proc.selected_payload("c1")
-        # Must return without crash; waveform/spectrum/metrics empty
-        assert result.get("waveform") == {} or result.get("metrics") == {}
 
     @pytest.mark.parametrize(
         ("sr", "expect_empty"),

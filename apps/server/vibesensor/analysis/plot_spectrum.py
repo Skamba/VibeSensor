@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from math import floor
 from typing import Literal, TypedDict
 
-from vibesensor.core.vibration_strength import percentile
-from vibesensor.core.vibration_strength import (
+from vibesensor.vibration_strength import percentile
+from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 

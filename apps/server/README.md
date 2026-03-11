@@ -19,9 +19,8 @@ ESP32 nodes -> udp_data_rx.py -> processing/ + analysis/ -> runtime/ -> routes/ 
 Backend ownership boundaries:
 
 - `app.py`: FastAPI app factory and startup entry.
-- `bootstrap.py`: orchestrates focused subsystem builders and returns the assembled runtime.
 - `routes/`: HTTP and WebSocket route groups.
-- `runtime/`: explicit subsystem builders and owners for ingress, settings, diagnostics, persistence, updates, processing, websocket delivery, route services, and lifecycle.
+- `runtime/`: service builders, flat `RuntimeState`, processing loop, WebSocket broadcast, and lifecycle management.
 - `processing/`, `analysis/`: signal processing and findings logic.
 - `metrics_log/`, `history_db/`, `history_services/`, `runlog.py`: recording, persistence, and exports. Inside `metrics_log/`, `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping, and `post_analysis.py` owns the background analysis queue; `logger.py` is the façade that coordinates those focused collaborators. The `history_services/` package owns the domain-logic layer above `HistoryDB` — run query/delete, PDF report generation, CSV/ZIP exports.
 - `report/`: PDF rendering pipeline.
@@ -123,6 +122,6 @@ python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" ap
 make test-all
 ```
 
-`make typecheck-backend` is the enforced backend static-typing gate for app/bootstrap, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages. Use `docs/testing.md` for the full test map. Start with the matching feature directory under `apps/server/tests/`, then add `integration/` or `regression/` coverage when the behavior crosses package boundaries.
+`make typecheck-backend` is the enforced backend static-typing gate for app, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages. Use `docs/testing.md` for the full test map. Start with the matching feature directory under `apps/server/tests/`, then add `integration/` or `regression/` coverage when the behavior crosses package boundaries.
 
 When tightening Python types, treat `Any` as a smell rather than a shortcut: prefer shared `JsonValue`/`JsonObject` aliases for persisted JSON, `TypedDict`/dataclass contracts for nested payloads, and `ParamSpec` for generic callable wrappers so mypy reflects the real runtime contract instead of a permissive fallback.

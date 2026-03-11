@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from _paths import REPO_ROOT
 
-from vibesensor.core.strength_bands import BANDS, band_by_key, band_rank, bucket_for_strength
+from vibesensor.strength_bands import BANDS, band_by_key, band_rank, bucket_for_strength
 
 # -- bucket_for_strength -------------------------------------------------------
 

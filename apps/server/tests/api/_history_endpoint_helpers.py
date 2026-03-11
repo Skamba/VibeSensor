@@ -5,7 +5,6 @@ import io
 import json
 import zipfile
 from dataclasses import dataclass, field
-from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -249,33 +248,16 @@ class FakeState:
         )()
         from vibesensor.runtime import ProcessingLoopState
 
-        self.loop_state = ProcessingLoopState()
+        self.processing_loop_state = ProcessingLoopState()
         self.health_state = RuntimeHealthState()
         self.health_state.mark_ready()
         self.apply_car_settings = lambda: None
         self.apply_speed_source_settings = lambda: None
         self.update_manager = MagicMock()
         self.esp_flash_manager = MagicMock()
-        self.ingress = SimpleNamespace(
-            registry=self.registry,
-            processor=self.processor,
-            control_plane=self.control_plane,
-        )
-        self.settings = SimpleNamespace(
-            settings_store=self.settings_store,
-            gps_monitor=self.gps_monitor,
-            analysis_settings=self.analysis_settings,
-            apply_car_settings=self.apply_car_settings,
-            apply_speed_source_settings=self.apply_speed_source_settings,
-        )
-        self.persistence = SimpleNamespace(
-            history_db=self.history_db,
-            run_service=HistoryRunService(self.history_db, self.settings_store),
-            report_service=HistoryReportService(self.history_db, self.settings_store),
-            export_service=HistoryExportService(self.history_db),
-        )
-        self.websocket = SimpleNamespace(hub=self.ws_hub)
-        self.processing = SimpleNamespace(state=self.loop_state, health_state=self.health_state)
+        self.run_service = HistoryRunService(self.history_db, self.settings_store)
+        self.report_service = HistoryReportService(self.history_db, self.settings_store)
+        self.export_service = HistoryExportService(self.history_db)
 
 
 def make_router_and_state(

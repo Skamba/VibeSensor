@@ -26,16 +26,9 @@ def _write_config(path: Path, payload: dict) -> None:
 
 def _make_processing(**overrides: float | None) -> ProcessingConfig:
     """Return a ProcessingConfig with sensible defaults, applying *overrides*."""
-    defaults = {
+    defaults: dict[str, float | None] = {
         "sample_rate_hz": 800,
         "waveform_seconds": 8,
-        "waveform_display_hz": 120,
-        "ui_push_hz": 10,
-        "ui_heavy_push_hz": 4,
-        "fft_update_hz": 4,
-        "fft_n": 2048,
-        "spectrum_min_hz": 5.0,
-        "spectrum_max_hz": 200,
         "client_ttl_seconds": 120,
         "accel_scale_g_per_lsb": None,
     }
@@ -51,11 +44,6 @@ class TestPositiveIntegerClamping:
         [
             "sample_rate_hz",
             "waveform_seconds",
-            "waveform_display_hz",
-            "ui_push_hz",
-            "ui_heavy_push_hz",
-            "fft_update_hz",
-            "spectrum_max_hz",
             "client_ttl_seconds",
         ],
     )
@@ -69,10 +57,6 @@ class TestPositiveIntegerClamping:
         [
             "sample_rate_hz",
             "waveform_seconds",
-            "waveform_display_hz",
-            "ui_push_hz",
-            "ui_heavy_push_hz",
-            "fft_update_hz",
             "client_ttl_seconds",
         ],
     )
@@ -81,80 +65,12 @@ class TestPositiveIntegerClamping:
         assert getattr(cfg, field) == 42
 
 
-class TestFftNValidation:
-    """fft_n must be >= 16 and a power of 2."""
-
-    def test_zero_fft_n_clamped(self) -> None:
-        cfg = _make_processing(fft_n=0)
-        assert cfg.fft_n >= 16
-
-    def test_negative_fft_n_clamped(self) -> None:
-        cfg = _make_processing(fft_n=-512)
-        assert cfg.fft_n >= 16
-
-    def test_small_fft_n_clamped_to_16(self) -> None:
-        cfg = _make_processing(fft_n=4)
-        assert cfg.fft_n == 16
-
-    def test_non_power_of_2_rounded_up(self) -> None:
-        cfg = _make_processing(fft_n=1000)
-        assert cfg.fft_n == 1024
-        # Must be a power of 2
-        assert cfg.fft_n & (cfg.fft_n - 1) == 0
-
-    def test_non_power_of_2_small(self) -> None:
-        cfg = _make_processing(fft_n=17)
-        assert cfg.fft_n == 32
-
-    @pytest.mark.parametrize("n", [16, 64, 128, 256, 512, 1024, 2048, 4096])
-    def test_valid_power_of_2_preserved(self, n: int) -> None:
-        cfg = _make_processing(fft_n=n)
-        assert cfg.fft_n == n
-
-
-class TestSpectrumMaxHzNyquist:
-    """spectrum_max_hz must be below Nyquist (sample_rate_hz / 2)."""
-
-    def test_spectrum_max_at_nyquist_clamped(self) -> None:
-        # Nyquist for 800 Hz = 400; spectrum_max_hz=400 should be clamped
-        cfg = _make_processing(sample_rate_hz=800, spectrum_max_hz=400)
-        assert cfg.spectrum_max_hz < 400
-
-    def test_spectrum_max_above_nyquist_clamped(self) -> None:
-        cfg = _make_processing(sample_rate_hz=800, spectrum_max_hz=500)
-        assert cfg.spectrum_max_hz < 400
-
-    def test_spectrum_max_below_nyquist_preserved(self) -> None:
-        cfg = _make_processing(sample_rate_hz=800, spectrum_max_hz=200)
-        assert cfg.spectrum_max_hz == 200
-
-
-class TestSpectrumMinHz:
-    """spectrum_min_hz validation."""
-
-    def test_negative_spectrum_min_hz_clamped_to_zero(self) -> None:
-        cfg = _make_processing(spectrum_min_hz=-5.0)
-        assert cfg.spectrum_min_hz == 0.0
-
-    def test_zero_spectrum_min_hz_preserved(self) -> None:
-        cfg = _make_processing(spectrum_min_hz=0.0)
-        assert cfg.spectrum_min_hz == 0.0
-
-    def test_positive_spectrum_min_hz_preserved(self) -> None:
-        cfg = _make_processing(spectrum_min_hz=5.0)
-        assert cfg.spectrum_min_hz == 5.0
-
-    def test_default_spectrum_min_hz(self) -> None:
-        cfg = _make_processing()
-        assert cfg.spectrum_min_hz == 5.0
-
-
 class TestLoadConfigValidation:
     """load_config() integration: invalid YAML values are clamped."""
 
     @pytest.mark.parametrize(
         "field",
-        ["sample_rate_hz", "waveform_seconds", "fft_update_hz", "ui_push_hz"],
+        ["sample_rate_hz", "waveform_seconds"],
     )
     def test_zero_value_clamped_to_at_least_1(self, tmp_path: Path, field: str) -> None:
         config_path = tmp_path / "config.yaml"
@@ -162,23 +78,13 @@ class TestLoadConfigValidation:
         cfg = load_config(config_path)
         assert getattr(cfg.processing, field) >= 1, f"{field} should be clamped to >= 1"
 
-    def test_negative_fft_n_clamped(self, tmp_path: Path) -> None:
-        config_path = tmp_path / "config.yaml"
-        _write_config(config_path, {"processing": {"fft_n": -1}})
-        cfg = load_config(config_path)
-        assert cfg.processing.fft_n >= 16
-        assert cfg.processing.fft_n & (cfg.processing.fft_n - 1) == 0
-
     def test_default_config_passes_validation(self, tmp_path: Path) -> None:
         """Empty override → defaults must all pass validation unchanged."""
         config_path = tmp_path / "config.yaml"
         _write_config(config_path, {})
         cfg = load_config(config_path)
         assert cfg.processing.sample_rate_hz == 800
-        assert cfg.processing.fft_n == 2048
         assert cfg.processing.waveform_seconds == 8
-        assert cfg.processing.spectrum_min_hz == 5.0
-        assert cfg.processing.spectrum_max_hz == 200
 
 
 # ---------------------------------------------------------------------------
@@ -286,45 +192,6 @@ class TestLoggingConfigValidation:
     def test_negative_shutdown_timeout_clamped(self) -> None:
         cfg = self._make(shutdown_analysis_timeout_s=-1.0)
         assert cfg.shutdown_analysis_timeout_s >= 0
-
-
-# ---------------------------------------------------------------------------
-# ProcessingConfig: fft_n max bound
-# ---------------------------------------------------------------------------
-
-
-class TestFftNMaxBound:
-    """fft_n exceeding _MAX_FFT_N (65536) must be clamped."""
-
-    def test_fft_n_exceeding_max_clamped(self) -> None:
-        cfg = _make_processing(fft_n=131072)
-        assert cfg.fft_n == 65536
-
-    def test_fft_n_at_max_preserved(self) -> None:
-        cfg = _make_processing(fft_n=65536)
-        assert cfg.fft_n == 65536
-
-
-# ---------------------------------------------------------------------------
-# ProcessingConfig: spectrum_min_hz >= spectrum_max_hz
-# ---------------------------------------------------------------------------
-
-
-class TestSpectrumMinVsMax:
-    """spectrum_min_hz must be < spectrum_max_hz; otherwise clamped to 0."""
-
-    def test_min_equal_to_max_clamped(self) -> None:
-        cfg = _make_processing(spectrum_min_hz=200.0, spectrum_max_hz=200)
-        assert cfg.spectrum_min_hz == 0.0
-        assert cfg.spectrum_min_hz < cfg.spectrum_max_hz
-
-    def test_min_greater_than_max_clamped(self) -> None:
-        cfg = _make_processing(spectrum_min_hz=300.0, spectrum_max_hz=200)
-        assert cfg.spectrum_min_hz == 0.0
-
-    def test_min_less_than_max_preserved(self) -> None:
-        cfg = _make_processing(spectrum_min_hz=5.0, spectrum_max_hz=200)
-        assert cfg.spectrum_min_hz == 5.0
 
 
 # ---------------------------------------------------------------------------

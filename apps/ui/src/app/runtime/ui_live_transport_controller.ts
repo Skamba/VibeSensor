@@ -1,8 +1,8 @@
 import { adaptServerPayload } from "../../server_payload";
-import { runDemoMode } from "../../features/demo/runDemoMode";
+import { runDemoMode } from "../demo_mode";
 import { WsClient } from "../../ws";
 import type { AppFeatureBundle } from "../app_feature_bundle";
-import { applySpectrumTick, type AppState } from "../state/ui_app_state";
+import { applySpectrumTick, type AppState } from "../ui_app_state";
 
 type UiLiveTransportControllerDeps = {
   state: AppState;

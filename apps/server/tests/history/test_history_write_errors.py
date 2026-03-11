@@ -272,7 +272,7 @@ class TestDroppedSamplesLogged:
             )
 
         # Now append_records should log about dropped samples
-        with patch("vibesensor.metrics_log.persistence.LOGGER") as mock_logger:
+        with patch("vibesensor.metrics_log.logger.LOGGER") as mock_logger:
             logger._append_records(run_id, start_utc, start_mono, session_generation=generation)
             # Verify warning about dropped samples was logged
             warning_calls = [

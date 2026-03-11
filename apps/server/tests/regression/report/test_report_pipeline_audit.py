@@ -1,12 +1,7 @@
 # ruff: noqa: E402
 from __future__ import annotations
 
-"""Report pipeline audit — tests covering 10 findings from the report-generation
-traceability and consistency audit.
-
-These tests document and verify issues found in the analysis → report_data →
-PDF pipeline.  Each test class corresponds to one audit finding.
-"""
+"""Report pipeline audit – rendering and data consistency regressions."""
 
 
 import inspect
@@ -86,13 +81,6 @@ def _en_tr(key: str, **kw: object) -> str:
     return tr("en", key, **kw)
 
 
-# ===================================================================
-# Finding 1 (KNOWN-C1, confirmed still present):
-#   Peaks table "Peak (dB)" and "Strength (dB)" columns always show
-#   identical values — both read from p95_intensity_db.
-# ===================================================================
-
-
 class TestPeakDbEqualsStrengthDb:
     """Peaks-table strength_db is always assigned p95_intensity_db,
     making the two columns redundant.
@@ -124,13 +112,6 @@ class TestPeakDbEqualsStrengthDb:
         pr = data.peak_rows[0]
         assert pr.peak_db == "22.3"
         assert pr.strength_db == "15.1"
-
-
-# ===================================================================
-# Finding 2 (KNOWN-C1, confirmed still present):
-#   NextStep confirm/falsify/eta/speed_band populated but never
-#   rendered in PDF.
-# ===================================================================
 
 
 class TestNextStepFieldsNotRendered:
@@ -198,12 +179,6 @@ class TestNextStepFieldsNotRendered:
         assert "step.eta" in source
 
 
-# ===================================================================
-# Finding 3 (KNOWN-C1, confirmed still present):
-#   top_causes fallback chain can bypass persistence-aware ranking.
-# ===================================================================
-
-
 class TestTopCausesFallbackBypassesPersistenceRanking:
     """When top_causes_actionable is empty, the fallback chain falls to
     findings_non_ref (raw findings) which are NOT ranked by
@@ -250,13 +225,6 @@ class TestTopCausesFallbackBypassesPersistenceRanking:
         assert data.observed.primary_system is not None
 
 
-# ===================================================================
-# Finding 4 (KNOWN-C1, confirmed still present):
-#   _peak_classification_text maps unrecognized classifications to
-#   "persistent".
-# ===================================================================
-
-
 class TestPeakClassificationFallback:
     """Unrecognized peak_classification values silently map to
     CLASSIFICATION_PERSISTENT instead of UNKNOWN.
@@ -274,14 +242,8 @@ class TestPeakClassificationFallback:
         assert result == _en_tr("UNKNOWN")
 
 
-# ===================================================================
-# Finding 5 (KNOWN-C1, confirmed still present):
-#   Dead db_value variable in _top_strength_values.
-# ===================================================================
-
-
 class TestDeadDbValueVariable:
-    """FIXED: _top_strength_values no longer has the dead db_value
+    """
     variable. The function directly returns sensor_db in the fallback
     path without an intermediate unused variable.
     """
@@ -290,12 +252,6 @@ class TestDeadDbValueVariable:
         """After fix: db_value variable should no longer exist in source."""
         source = inspect.getsource(_top_strength_values)
         assert "db_value" not in source, "Dead db_value variable should have been removed"
-
-
-# ===================================================================
-# Finding 6 (KNOWN-C1, confirmed still present):
-#   SystemFindingCard.tone never used by PDF renderer.
-# ===================================================================
 
 
 class TestSystemFindingCardToneUnused:
@@ -343,13 +299,6 @@ class TestSystemFindingCardToneUnused:
         assert data.system_cards[0].tone in {"neutral", "success", "warn"}
 
 
-# ===================================================================
-# Finding 7 (NEW):
-#   Data trust panel has no boundary check — long detail strings can
-#   draw below the panel rectangle.
-# ===================================================================
-
-
 class TestDataTrustPanelOverflow:
     """The data-trust panel renders items in a loop decrementing ty
     but never checks whether ty has gone below the panel's bottom edge
@@ -367,14 +316,6 @@ class TestDataTrustPanelOverflow:
         source = inspect.getsource(_page1)
         # The data-trust section exists in _page1.
         assert "Data Trust" in source
-
-
-# ===================================================================
-# Finding 9 (NEW):
-#   Peaks table on page 2 has a fixed height (53 mm) which may not
-#   accommodate 6 data rows + header when rendered with wrapping
-#   relevance text.
-# ===================================================================
 
 
 class TestPeaksTableFixedHeight:
@@ -402,14 +343,6 @@ class TestPeaksTableFixedHeight:
         # The renderer uses height-based y_bottom limiting (not hard slice)
         source = inspect.getsource(_draw_peaks_table)
         assert "y_bottom" in source
-
-
-# ===================================================================
-# Finding 10 (NEW):
-#   _finding_strength_values computes peak_amp but may not use it
-#   when evidence_metrics.vibration_strength_db exists — the computed
-#   peak_amp is wasted work.
-# ===================================================================
 
 
 class TestFindingStrengthValuesWastedComputation:

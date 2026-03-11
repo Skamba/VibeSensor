@@ -131,37 +131,6 @@ def _as_str_or_none(value: object) -> str | None:
     return None
 
 
-def _as_str_dict(value: object) -> dict[str, str] | None:
-    if not isinstance(value, Mapping):
-        return None
-    out: dict[str, str] = {}
-    for key, item in value.items():
-        if not isinstance(key, str) or not isinstance(item, str):
-            return None
-        out[key] = item
-    return out
-
-
-def _as_nested_str_dict(value: object) -> dict[str, dict[str, str]] | None:
-    if not isinstance(value, Mapping):
-        return None
-    out: dict[str, dict[str, str]] = {}
-    for key, item in value.items():
-        if not isinstance(key, str):
-            return None
-        nested = _as_str_dict(item)
-        if nested is None:
-            return None
-        out[key] = nested
-    return out
-
-
-def _phase_metadata_from_raw(value: object) -> dict[str, object]:
-    if not isinstance(value, Mapping):
-        return _default_phase_metadata()
-    return {str(key): item for key, item in value.items()}
-
-
 def _coerce_speed_source(value: object) -> SpeedSourceKind:
     if isinstance(value, str) and value in VALID_SPEED_SOURCES:
         if value == "obd2":
@@ -349,52 +318,6 @@ class SpeedSourceConfig:
 # ---------------------------------------------------------------------------
 
 
-def _default_units(*, accel_units: str = "g") -> dict[str, str]:
-    return {
-        "timestamp_utc": "iso8601",
-        "t_s": "s",
-        "speed_kmh": "km/h",
-        "gps_speed_kmh": "km/h",
-        "accel_x_g": accel_units,
-        "accel_y_g": accel_units,
-        "accel_z_g": accel_units,
-        "engine_rpm": "rpm",
-        "gear": "ratio",
-        "dominant_freq_hz": "Hz",
-        "vibration_strength_db": "dB",
-        "strength_bucket": "band_key",
-    }
-
-
-def _default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[str, str]]:
-    return {
-        "vibration_strength_db": {
-            "statistic": "dB above floor",
-            "units": "dB",
-            "definition": (
-                "20*log10((peak_band_rms_amp_g+eps)/(floor_amp_g+eps)); "
-                "eps=max(1e-9, floor_amp_g*0.05)"
-            ),
-        },
-        "strength_bucket": {
-            "statistic": "Bucket",
-            "units": "band_key",
-            "definition": "strength severity bucket derived from vibration_strength_db",
-        },
-    }
-
-
-def _default_phase_metadata() -> dict[str, object]:
-    return {
-        "version": "v1",
-        "idle_speed_kmh_max": 3.0,
-        "acceleration_threshold_kmh_s": 1.5,
-        "deceleration_threshold_kmh_s": -1.5,
-        "coast_down_speed_kmh_max": 15.0,
-        "labels": ["idle", "acceleration", "cruise", "deceleration", "coast_down"],
-    }
-
-
 @dataclass(slots=True)
 class RunMetadata:
     """Metadata record from the header of a JSONL run file."""
@@ -412,10 +335,7 @@ class RunMetadata:
     fft_window_type: str | None
     peak_picker_method: str
     accel_scale_g_per_lsb: float | None
-    units: dict[str, str]
-    amplitude_definitions: dict[str, dict[str, str]]
     incomplete_for_order_analysis: bool
-    phase_metadata: dict[str, object]
 
     @classmethod
     def create(
@@ -434,7 +354,6 @@ class RunMetadata:
         end_time_utc: str | None = None,
         incomplete_for_order_analysis: bool = False,
     ) -> RunMetadata:
-        accel_units = "g" if accel_scale_g_per_lsb is not None else "raw_lsb"
         return cls(
             record_type=RUN_METADATA_TYPE,
             schema_version=RUN_SCHEMA_VERSION,
@@ -449,16 +368,11 @@ class RunMetadata:
             fft_window_type=fft_window_type,
             peak_picker_method=peak_picker_method,
             accel_scale_g_per_lsb=accel_scale_g_per_lsb,
-            units=_default_units(accel_units=accel_units),
-            amplitude_definitions=_default_amplitude_definitions(accel_units=accel_units),
             incomplete_for_order_analysis=bool(incomplete_for_order_analysis),
-            phase_metadata=_default_phase_metadata(),
         )
 
     @classmethod
     def from_dict(cls, data: Mapping[str, object]) -> RunMetadata:
-        accel_scale = data.get("accel_scale_g_per_lsb")
-        accel_units = "g" if accel_scale is not None else "raw_lsb"
         run_id = str(data.get("run_id", ""))
         if not run_id:
             _LOGGER.warning("RunMetadata.from_dict: missing or empty run_id in record %r", data)
@@ -475,12 +389,8 @@ class RunMetadata:
             fft_window_size_samples=as_int_or_none(data.get("fft_window_size_samples")),
             fft_window_type=_as_str_or_none(data.get("fft_window_type")),
             peak_picker_method=str(data.get("peak_picker_method", "")),
-            accel_scale_g_per_lsb=as_float_or_none(accel_scale),
-            units=_as_str_dict(data.get("units")) or _default_units(accel_units=accel_units),
-            amplitude_definitions=_as_nested_str_dict(data.get("amplitude_definitions"))
-            or _default_amplitude_definitions(accel_units=accel_units),
+            accel_scale_g_per_lsb=as_float_or_none(data.get("accel_scale_g_per_lsb")),
             incomplete_for_order_analysis=bool(data.get("incomplete_for_order_analysis", False)),
-            phase_metadata=_phase_metadata_from_raw(data.get("phase_metadata")),
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -498,10 +408,7 @@ class RunMetadata:
             "fft_window_type": self.fft_window_type,
             "peak_picker_method": self.peak_picker_method,
             "accel_scale_g_per_lsb": self.accel_scale_g_per_lsb,
-            "units": dict(self.units),
-            "amplitude_definitions": {k: dict(v) for k, v in self.amplitude_definitions.items()},
             "incomplete_for_order_analysis": self.incomplete_for_order_analysis,
-            "phase_metadata": dict(self.phase_metadata),
         }
 
 
@@ -562,9 +469,6 @@ class SensorFrame:
     dominant_freq_hz: float | None
     dominant_axis: str
     top_peaks: list[dict[str, object]]
-    top_peaks_x: list[dict[str, object]]
-    top_peaks_y: list[dict[str, object]]
-    top_peaks_z: list[dict[str, object]]
     vibration_strength_db: float | None
     strength_bucket: str | None
     strength_peak_amp_g: float | None
@@ -596,9 +500,6 @@ class SensorFrame:
             "dominant_freq_hz": self.dominant_freq_hz,
             "dominant_axis": self.dominant_axis,
             "top_peaks": list(self.top_peaks),
-            "top_peaks_x": list(self.top_peaks_x),
-            "top_peaks_y": list(self.top_peaks_y),
-            "top_peaks_z": list(self.top_peaks_z),
             _VSD_KEY: self.vibration_strength_db,
             _BUCKET_KEY: self.strength_bucket,
             "strength_peak_amp_g": self.strength_peak_amp_g,
@@ -627,9 +528,6 @@ class SensorFrame:
         sample_rate_hz = as_int_or_none(record.get("sample_rate_hz"))
 
         normalized_peaks = _normalize_peak_list(record.get("top_peaks"), max_items=10)
-        normalized_peaks_x = _normalize_peak_list(record.get("top_peaks_x"), max_items=3)
-        normalized_peaks_y = _normalize_peak_list(record.get("top_peaks_y"), max_items=3)
-        normalized_peaks_z = _normalize_peak_list(record.get("top_peaks_z"), max_items=3)
 
         return cls(
             record_type=RUN_SAMPLE_TYPE,
@@ -654,9 +552,6 @@ class SensorFrame:
             dominant_freq_hz=dominant_freq_hz,
             dominant_axis=str(record.get("dominant_axis", "")),
             top_peaks=normalized_peaks,
-            top_peaks_x=normalized_peaks_x,
-            top_peaks_y=normalized_peaks_y,
-            top_peaks_z=normalized_peaks_z,
             vibration_strength_db=vibration_strength_db,
             strength_bucket=strength_bucket,
             strength_peak_amp_g=strength_peak_amp_g,

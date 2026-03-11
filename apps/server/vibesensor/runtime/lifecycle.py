@@ -17,6 +17,7 @@ from collections.abc import Coroutine
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from ..constants import UI_PUSH_HZ
 from ..udp_data_rx import start_udp_data_receiver
 
 if TYPE_CHECKING:
@@ -38,7 +39,7 @@ class LifecycleManager:
 
     def __init__(self, *, runtime: RuntimeState) -> None:
         self._runtime = runtime
-        self._health_state = runtime.processing.health_state
+        self._health_state = runtime.health_state
         self.tasks: list[asyncio.Task[object]] = []
         self._data_transport: asyncio.DatagramTransport | None = None
         self._data_consumer_task: asyncio.Task[object] | None = None
@@ -110,29 +111,29 @@ class LifecycleManager:
             self._data_transport, self._data_consumer_task = await start_udp_data_receiver(
                 host=self._runtime.config.udp.data_host,
                 port=self._runtime.config.udp.data_port,
-                registry=self._runtime.ingress.registry,
-                processor=self._runtime.ingress.processor,
+                registry=self._runtime.registry,
+                processor=self._runtime.processor,
                 queue_maxsize=self._runtime.config.udp.data_queue_maxsize,
             )
 
             phase = "control_plane"
             self._health_state.set_phase(phase)
-            await self._runtime.ingress.control_plane.start()
+            await self._runtime.control_plane.start()
 
             self.tasks = []
 
             phase = "processing-loop"
             self._health_state.set_phase(phase)
-            self.tasks.append(self._start_task(self._runtime.processing.loop.run(), name=phase))
+            self.tasks.append(self._start_task(self._runtime.processing_loop.run(), name=phase))
 
             phase = "ws-broadcast"
             self._health_state.set_phase(phase)
             self.tasks.append(
                 self._start_task(
-                    self._runtime.websocket.hub.run(
-                        self._runtime.config.processing.ui_push_hz,
-                        self._runtime.websocket.broadcast.build_payload,
-                        on_tick=self._runtime.websocket.broadcast.on_tick,
+                    self._runtime.ws_hub.run(
+                        UI_PUSH_HZ,
+                        self._runtime.ws_broadcast.build_payload,
+                        on_tick=self._runtime.ws_broadcast.on_tick,
                     ),
                     name=phase,
                 ),
@@ -146,7 +147,7 @@ class LifecycleManager:
             self._health_state.set_phase(phase)
             self.tasks.append(
                 self._start_task(
-                    self._runtime.settings.gps_monitor.run(
+                    self._runtime.gps_monitor.run(
                         host=self._runtime.config.gps.gpsd_host,
                         port=self._runtime.config.gps.gpsd_port,
                     ),
@@ -170,7 +171,7 @@ class LifecycleManager:
     async def stop(self) -> None:
         """Graceful shutdown with explicit ingress-stop and metrics-drain phases."""
         try:
-            self._runtime.ingress.control_plane.close()
+            self._runtime.control_plane.close()
         except OSError:
             LOGGER.warning("Error closing control plane", exc_info=True)
         try:
@@ -230,11 +231,11 @@ class LifecycleManager:
                 shutdown_report.write_error,
             )
         try:
-            await asyncio.to_thread(self._runtime.ingress.worker_pool.shutdown, True)
+            await asyncio.to_thread(self._runtime.worker_pool.shutdown, True)
         except Exception:
             LOGGER.warning("Error shutting down worker pool", exc_info=True)
         try:
-            self._runtime.persistence.history_db.close()
+            self._runtime.history_db.close()
         except Exception:
             LOGGER.warning("Error closing history DB", exc_info=True)
         LOGGER.info("Runtime lifecycle stopped cleanly.")

@@ -17,10 +17,10 @@ import numpy as np
 import pytest
 
 from vibesensor.constants import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
-from vibesensor.core.strength_bands import bucket_for_strength
 from vibesensor.processing import SignalProcessor
 from vibesensor.processing.fft import compute_fft_spectrum
 from vibesensor.report.mapping import top_strength_values
+from vibesensor.strength_bands import bucket_for_strength
 
 
 class TestBucketForStrengthNegativeDB:

@@ -87,7 +87,6 @@ python_version = "3.11"
 files = [
   "vibesensor/app.py",
   "vibesensor/api_models.py",
-  "vibesensor/bootstrap.py",
   "vibesensor/backend_types.py",
   "vibesensor/car_library.py",
   "vibesensor/config.py",
@@ -128,7 +127,9 @@ files = [
   "vibesensor/processing",
   "vibesensor/analysis",
   "vibesensor/analysis_settings.py",
-  "vibesensor/core",
+  "vibesensor/vibration_strength.py",
+  "vibesensor/strength_bands.py",
+  "vibesensor/sensor_units.py",
   "vibesensor/history_db",
   "vibesensor/metrics_log",
   "vibesensor/ws_hub.py",

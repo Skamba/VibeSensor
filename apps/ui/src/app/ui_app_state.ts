@@ -1,14 +1,14 @@
-import type { SpectrumChart } from "../../spectrum";
-import type { WsClient } from "../../ws";
-import type { StrengthMetricsPayload } from "../../contracts/ws_payload_types";
-import type { RotationalSpeeds } from "../../server_payload";
-import { defaultLocationCodes } from "../../constants";
+import type { SpectrumChart } from "../spectrum";
+import type { WsClient } from "../ws";
+import type { StrengthMetricsPayload } from "../contracts/ws_payload_types";
+import type { RotationalSpeeds } from "../server_payload";
+import { defaultLocationCodes } from "../constants";
 import type {
   CarRecord,
   HistoryEntry,
   HistoryInsightsPayload,
   LoggingStatusPayload,
-} from "../../api/types";
+} from "../api/types";
 
 export interface LocationOption {
   code: string;

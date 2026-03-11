@@ -58,7 +58,6 @@ class TestInvalidateCachesFastPath:
         buf = _make_buf()
         # Confirm caches are already None
         assert buf.cached_spectrum_payload is None
-        assert buf.cached_selected_payload is None
 
         before_gen = buf.cached_spectrum_payload_generation
         buf.invalidate_caches()
@@ -67,16 +66,10 @@ class TestInvalidateCachesFastPath:
         # beyond what the initial state established).
         assert buf.cached_spectrum_payload_generation == before_gen
 
-    def test_no_op_preserves_selected_payload_key_as_none(self) -> None:
-        """Fast-path must leave cached_selected_payload_key as None."""
-        buf = _make_buf()
-        buf.invalidate_caches()
-        assert buf.cached_selected_payload_key is None
-
     def test_idempotent_double_call(self) -> None:
         """Calling invalidate_caches twice in a row must not raise."""
         buf = _make_buf()
-        buf.cached_spectrum_payload = {"x": [1.0]}
+        buf.cached_spectrum_payload = {"combined_spectrum_amp_g": [1.0]}
         buf.invalidate_caches()
         # Second call triggers the fast-path
         buf.invalidate_caches()

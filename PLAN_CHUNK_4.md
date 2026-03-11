@@ -1,255 +1,176 @@
-# Chunk 4: Type System, API & Data Flow
+# Chunk 4: Configuration & Operational Simplification
 
 ## Mapped Findings
 
-- [5.1] Parallel TypedDict/Pydantic dual-layer type system (at least 6 mirror pairs)
-- [5.2] /api/health is 65-70-line business logic function in a route handler
-- [5.3] Redundant speed-override endpoint + /api/analysis-settings URL inconsistency
-- [3.1] VibrationStrengthMetrics type-erased into nested dict, then re-parsed field by field
-- [3.2] Dual ClientMetrics ownership in processor buffer AND ClientRecord
-- [3.3] UI WS pipeline defensive re-parse with AdaptedSpectrum → SpectrumClientData identity remap
+| ID | Original Finding | Source Subagent | Validation Status |
+|----|-----------------|-----------------|-------------------|
+| H1 | ProcessingConfig exposes 11 DSP/UI knobs that no deployment overrides | Operational/Config | **Validated** |
+| H3 | update.server_repo configurable in 4-5 places, never changed | Operational/Config | **Validated** |
+| D2 | settings_kv general KV abstraction stores only one key | Persistence & Schema | **Validated** |
+| C1 | Update status persist() on every mutation | Data Flow & State | **Validated** |
+| B1 | CommandRunner ABC in hotspot/self_heal.py unnecessary hierarchy | Abstraction & Indirection | **Validated** |
+| H2 | hotspot_nmcli.sh embeds Python config reader duplicating defaults | Operational/Config | **Validated, downgraded** |
 
 ## Validation Outcomes
 
-### [5.1] CONFIRMED (HIGH confidence)
-At least 6 field-for-field mirror pairs exist between TypedDict definitions in `payload_types.py`/`backend_types.py` and Pydantic models in `api_models.py`:
-- `HealthDataLossPayload` ↔ `HealthDataLossResponse` (6 fields)
-- `HealthPersistencePayload` ↔ `HealthPersistenceResponse` (14 fields)
-- `SpeedSourcePayload` ↔ `SpeedSourceResponse` (5 fields)
-- `SpeedSourceStatusPayload` ↔ `SpeedSourceStatusResponse` (18 fields)
-- `SensorConfigPayload` ↔ `SensorConfigResponse` (2 fields)
-- `CarConfigPayload` ↔ `CarResponse` (5 fields)
+### H1: ProcessingConfig over-configuration — VALIDATED
+Confirmed in `config.py`: `ProcessingConfig` has 11 fields including `sample_rate_hz`, `waveform_seconds`, `waveform_display_hz`, `ui_push_hz`, `ui_heavy_push_hz`, `fft_update_hz`, `fft_n`, `spectrum_min_hz`, `spectrum_max_hz`, `client_ttl_seconds`, `accel_scale_g_per_lsb`. The `__post_init__` has ~90 lines of clamping logic. Zero deployment configs override any of these fields.
 
-**Revised scope**: Not all TypedDicts can be eliminated. WS payload TypedDicts (`LiveWsPayload`, `SpectraPayload`, etc.) serve a real purpose — they annotate dict construction for WebSocket wire payloads where Pydantic is not used. Only the HTTP response-mirroring TypedDicts in `payload_types.py` and `backend_types.py` should be removed. The WS TypedDicts stay.
+Fields to promote to constants: `waveform_display_hz`, `ui_push_hz`, `ui_heavy_push_hz`, `fft_update_hz`, `fft_n`, `spectrum_min_hz`, `spectrum_max_hz` (7 fields).
 
-### [5.2] CONFIRMED (HIGH confidence)
-Health route handler has ~65-70 lines of business logic: builds `degradation_reasons` with 15+ conditional branches, computes `status` field, constructs nested response. Receives 5 injected dependencies (more than any other route module). The logic is pure business logic with zero HTTP concerns — it's untestable without a FastAPI test client.
+Fields to keep configurable: `sample_rate_hz` (fallback before sensor reports), `waveform_seconds` (memory bound), `client_ttl_seconds` (operational), `accel_scale_g_per_lsb` (alternative sensor escape hatch).
 
-### [5.3] CONFIRMED (HIGH confidence)
-Both `POST /api/settings/speed-source` and `POST /api/simulator/speed-override` call the same private function `_apply_speed_source_update(req)`. The speed-override endpoint is a named alias with zero additional behavior. `/api/analysis-settings` breaks the `/api/settings/*` prefix convention used by all other settings endpoints.
+### H3: update.server_repo scattered declarations — VALIDATED
+Confirmed: `"Skamba/VibeSensor"` appears as:
+1. `DEFAULT_CONFIG["update"]["server_repo"]` in `_config_defaults.py`
+2. Config field `UpdateConfig.server_repo` in `config.py`
+3. `_DEFAULT_REPO` constant in `release_fetcher.py`
+4. `_DEFAULT_FIRMWARE_REPO` in `firmware_cache.py`
+5. `VIBESENSOR_SERVER_REPO` env var read in `update/manager.py` and `release_fetcher.py`
 
-### [3.1] CONFIRMED (HIGH confidence)
-`VibrationStrengthMetrics` is stored in two places simultaneously:
-1. `buf.latest_strength_metrics` (typed, direct)
-2. `metrics["combined"]["strength_metrics"]` (type-erased, nested in generic dict)
+The `manager.py` fallback is `os.environ.get("VIBESENSOR_SERVER_REPO", "")` (empty string), while `release_fetcher.py` fallback is the correct repo slug. This is an inconsistency.
 
-`sample_builder.extract_strength_data()` receives the generic dict path and re-parses every field with `_safe_float()` guards, converting back to the same fields that were already typed at computation time.
+### D2: settings_kv single-key abstraction — VALIDATED
+Confirmed: `settings_kv` table is a general KV store but only ever stores key `"settings_snapshot"`. `get_setting(key)` / `set_setting(key, value)` are the generic API. `get_settings_snapshot()` / `set_settings_snapshot()` hardcode the key string.
 
-### [3.2] CONFIRMED (MEDIUM-HIGH confidence)
-Same `ClientMetrics` dict is written to both:
-1. `ClientBuffer.latest_metrics` (via `buffer_store.store_metrics_result()`)
-2. `ClientRecord.latest_metrics` (via `processing_loop → registry.set_latest_metrics()`)
+**Refinement**: While the KV table is over-general, replacing it with a single-row table requires a schema migration. Since D1 (Chunk 1) already bumps the schema version, this change can piggyback. However, the simplification gain is modest — it's 2 method signatures and a magic constant. Given the effort-to-value ratio, I'll keep this finding but scope it to: remove the generic `get_setting`/`set_setting` methods (fold them into `get_settings_snapshot`/`set_settings_snapshot` as direct SQL) without changing the table DDL.
 
-Different consumers read from different copies. The dual write creates cross-subsystem coupling.
+### C1: Update status persist() on every mutation — VALIDATED
+Confirmed: `UpdateStatusTracker` in `update/status.py` calls `self.persist()` on every mutation: `start_job`, `transition`, `set_runtime`, `log`, `add_issue`, `extend_issues`, `fail`, `mark_success`, `finish_cleanup`. The `log()` method is called for every subprocess command invocation, producing 30-80+ fsync calls per update.
 
-**Revised scope**: Removing `latest_metrics` from `ClientRecord` requires changing how `snapshot_for_api()` assembles the WS broadcast payload. This is a deeper refactor that could destabilize the hot path. **Decision**: Keep this finding but implement it as a targeted change: make `snapshot_for_api()` accept a `metrics_by_client` parameter instead of reading from `ClientRecord`. Remove `latest_metrics` from `ClientRecord` and the `set_latest_metrics` method. Remove the cross-subsystem write in `_run_tick()`.
+Simplification: Only persist on phase transitions (`start_job`, `transition`, `fail`, `mark_success`, `finish_cleanup`). Skip persist in `log()`, `set_runtime()`, and `add_issue()`/`extend_issues()`.
 
-### [3.3] CONFIRMED (HIGH confidence)
-`AdaptedSpectrum` (in `server_payload.ts`) and `SpectrumClientData` (in `ui_app_state.ts`) are field-for-field identical: `{ freq: number[], combined: number[], strength_metrics: StrengthMetricsPayload }`. The transport controller does an explicit field-by-field identity spread from one to the other. The `adaptServerPayload()` function manually re-validates ~15 field definitions that are already available as generated types in `ws_payload_types.ts`.
+### B1: CommandRunner ABC in hotspot — VALIDATED
+Confirmed: `CommandRunner(ABC)` with `@abstractmethod run()`, `SubprocessRunner(CommandRunner)` as the only real implementor. Tests define `_FakeRunner(CommandRunner)`. The `update/runner.py` module solves the same problem without an ABC — just a concrete class with a docstring saying "Override for testing."
 
-**Revised scope**: Full elimination of the defensive parsing layer is high-risk for the UI. **Decision**: Keep the schema-version check. Unify `AdaptedSpectrum` and `SpectrumClientData` into a single type. Remove the identity remap. Simplify `adaptServerPayload()` to use `as` type assertion after schema version check, keeping only the minimal business-logic transformations (location_code fallback, etc.) rather than full field-by-field re-parse.
+### H2: hotspot_nmcli.sh config duplication — VALIDATED, DOWNGRADED
+Confirmed: the shell script has an inline Python heredoc reading config. However, this script runs as root before the Python venv is available — it genuinely cannot `import vibesensor`. The duplication is a real maintenance hazard but the fix requires creating a CLI entry point that works outside the venv, which is infrastructure work beyond simplification scope. **Downgrade to out-of-scope** — the finding is valid but the fix is additive (new CLI binary), not simplifying.
 
-## Root Complexity Drivers
+## Implementation Steps
 
-1. **Type-definition sprawl**: Multiple files define the same shapes for different layers (internal TypedDict, external Pydantic). No tooling enforces sync.
+### Step 1: Promote ProcessingConfig constants (H1)
 
-2. **Route-as-service pattern**: Business logic that should be in a service class lives inside route handlers, making it untestable without HTTP infrastructure.
-
-3. **Endpoint accumulation**: New endpoints were added alongside existing ones without consolidating the redundant older ones.
-
-4. **Type-erasure through dict nesting**: Typed objects are embedded in generic dicts to pass through a single pipeline, then manually re-extracted downstream.
-
-5. **Defensive-everything frontend**: The UI treats backend payloads as fully untrusted, re-validating every field despite owning both ends.
-
-## Simplification Strategy
-
-### Step 1: Remove TypedDict mirrors of Pydantic models
-
-**Implementation:**
-1. Identify all TypedDicts in `payload_types.py` and `backend_types.py` that mirror Pydantic models in `api_models.py`
-2. For each mirror pair:
-   a. Check all callers that construct the TypedDict
-   b. Have those callers return the Pydantic model directly, or a plain dict that the route handler wraps in Pydantic
-   c. Delete the TypedDict definition
-3. TypedDicts to DELETE from `payload_types.py`:
-   - `HealthDataLossPayload` (→ use `HealthDataLossResponse` or plain dict)
-   - `HealthPersistencePayload` (→ use `HealthPersistenceResponse` or plain dict)
-4. TypedDicts to DELETE from `backend_types.py`:
-   - `SpeedSourcePayload` (→ use `SpeedSourceResponse`)
-   - `SpeedSourceStatusPayload` (→ use `SpeedSourceStatusResponse`)
-   - `SensorConfigPayload` (→ use `SensorConfigResponse`)
-   - `CarConfigPayload` (→ use `CarResponse`)
-5. TypedDicts to KEEP in `payload_types.py`:
-   - `LiveWsPayload`, `SpectraPayload`, `ClientApiRow`, `StrengthMetricsPayload` — these annotate WS dict construction, not HTTP responses
-6. If `backend_types.py` becomes empty or has only type aliases, fold remaining content into `api_models.py` or `payload_types.py`
-7. Update all imports accordingly
-
-### Step 2: Extract /api/health business logic to a service
-
-**Implementation:**
-1. Create a function `build_health_snapshot()` (either in a new `runtime/health_service.py` or in the existing `runtime/health.py` if it exists) that:
-   - Accepts the 5 subsystem references
-   - Performs the degradation-reason enumeration (15+ conditional branches)
-   - Returns a dict or a `HealthSnapshot` dataclass
-2. The health route handler becomes ~5 lines:
+1. Create/extend `vibesensor/constants.py` with new processing constants:
    ```python
-   @router.get("/api/health")
-   async def health() -> HealthResponse:
-       snapshot = build_health_snapshot(loop_state, health_state, processor, registry, metrics_logger)
-       return HealthResponse(**snapshot)
+   WAVEFORM_DISPLAY_HZ = 30
+   UI_PUSH_HZ = 10
+   UI_HEAVY_PUSH_HZ = 1
+   FFT_UPDATE_HZ = 5
+   FFT_N = 2048
+   SPECTRUM_MIN_HZ = 0.0
+   SPECTRUM_MAX_HZ = 200.0
    ```
-3. Add unit tests for `build_health_snapshot()` that don't require FastAPI test client
-4. The route factory `create_health_routes` still receives the 5 dependencies and passes them to the extracted function — no change to the wiring surface
+2. Remove these 7 fields from `ProcessingConfig` dataclass
+3. Remove the corresponding ~80 lines of `__post_init__` clamping code
+4. Remove these keys from `DEFAULT_CONFIG["processing"]` in `_config_defaults.py`
+5. Remove them from `config.example.yaml`
+6. Update all consumers that read from `config.processing.fft_n` etc. to import from `constants.py` instead:
+   - `runtime/builders.py`
+   - `processing/` modules
+   - `runtime/processing_loop.py`
+   - `runtime/ws_broadcast.py`
+7. Verify with `make typecheck-backend`
 
-**NOTE**: This step pairs well with Step 1 — once the TypedDict mirrors for health payloads are removed, the health service can return plain dicts or Pydantic models directly.
+### Step 2: Consolidate update.server_repo (H3)
 
-### Step 3: Remove redundant speed-override endpoint and fix URL prefix
+1. Define `GITHUB_REPO: str = "Skamba/VibeSensor"` in `vibesensor/constants.py` as the single source of truth
+2. In `release_fetcher.py`:
+   - Remove `_DEFAULT_REPO` constant
+   - Read `os.environ.get("VIBESENSOR_SERVER_REPO")` only here
+   - Fall back to `GITHUB_REPO` from constants
+3. In `firmware_cache.py`:
+   - Remove `_DEFAULT_FIRMWARE_REPO` constant
+   - Import `GITHUB_REPO` from constants
+4. Remove `server_repo` from:
+   - `DEFAULT_CONFIG["update"]` in `_config_defaults.py`
+   - `UpdateConfig` dataclass in `config.py`
+   - `config.example.yaml`
+5. In `update/manager.py`:
+   - Remove `os.environ.get("VIBESENSOR_SERVER_REPO", "")` fallback
+   - The repo slug now comes only from `release_fetcher.py` via `GITHUB_REPO`
+6. Fix the empty-string inconsistency
 
-**Implementation:**
-1. Delete `POST /api/simulator/speed-override` endpoint from `routes/settings.py`
-2. Update any UI/simulator code that calls `/api/simulator/speed-override` to use `/api/settings/speed-source` instead
-3. Move `/api/analysis-settings` (GET and POST) to `/api/settings/analysis`:
-   - `GET /api/analysis-settings` → `GET /api/settings/analysis`
-   - `POST /api/analysis-settings` → `POST /api/settings/analysis`
-4. Update UI/frontend code to use the new URL prefix
-5. Update any test code that references these endpoints
+### Step 3: Simplify settings_kv access (D2)
 
-### Step 4: Fix VibrationStrengthMetrics type-erasure
+1. In `HistoryDB`:
+   - Make `get_setting()` and `set_setting()` private (`_get_setting`, `_set_setting`)
+   - Or inline their SQL into `get_settings_snapshot()` / `set_settings_snapshot()`
+2. Remove the public generic key-based API
+3. Replace the magic string `"settings_snapshot"` with a constant or inline it
+4. Keep the table DDL unchanged (no schema migration needed)
 
-**Implementation:**
-1. In `processing/compute.py`: Keep storing `strength_metrics` in both `buf.latest_strength_metrics` (typed) AND `combined_metrics["strength_metrics"]` (for WS broadcast compatibility)
-2. In `metrics_log/sample_builder.py`: Instead of calling `extract_strength_data()` on the generic `metrics` dict:
-   a. Pass `latest_strength_metrics: VibrationStrengthMetrics` directly from the buffer or from the metrics result
-   b. Access fields directly: `strength_metrics["vibration_strength_db"]` instead of `_safe_float(nested_dict, "vibration_strength_db")`
-   c. Eliminate `extract_strength_data()` function and the `_safe_float()` re-validation
-3. The key change: `build_sample_records()` needs access to the typed `VibrationStrengthMetrics`, not just the generic `ClientMetrics` dict
+### Step 4: Reduce update status persist frequency (C1)
 
-**Dependency**: This step intersects with [3.2] — if `ClientRecord.latest_metrics` is the current source for sample_builder, and we're removing that in step 5, we need to coordinate the data source.
+1. In `UpdateStatusTracker` (`update/status.py`):
+   - Remove `self.persist()` from `log()` method
+   - Remove `self.persist()` from `set_runtime()` method
+   - Remove `self.persist()` from `add_issue()` and `extend_issues()` methods
+   - Keep `self.persist()` in: `start_job()`, `transition()`, `fail()`, `mark_success()`, `finish_cleanup()`
+2. Add a `flush()` public method that calls `persist()` for callers that need explicit flush
+3. The in-memory state (`self._status`) remains always-consistent for reads
 
-### Step 5: Remove dual ClientMetrics ownership
+### Step 5: Remove CommandRunner ABC in hotspot (B1)
 
-**Implementation:**
-1. Remove `latest_metrics` field from `ClientRecord` in `registry.py`
-2. Remove `set_latest_metrics()` method from registry
-3. Remove the cross-subsystem write loop in `processing_loop._run_tick()`:
-   ```python
-   # DELETE this loop:
-   for client_id, metrics in metrics_by_client.items():
-       self._ingress.registry.set_latest_metrics(client_id, metrics)
-   ```
-4. Modify `snapshot_for_api()` to accept `metrics_by_client: dict[str, ClientMetrics]` as a parameter
-5. The WS broadcast pass calls `snapshot_for_api(metrics_by_client)` — the metrics come from the processing loop's most recent `compute_all()` result, passed through to the broadcast
-6. Update `sample_builder` to receive metrics from the processing result, not from the registry
+1. In `hotspot/self_heal.py`:
+   - Rename `SubprocessRunner` to `CommandRunner`
+   - Remove the `CommandRunner(ABC)` base class
+   - Make the `run()` method concrete (it already is in `SubprocessRunner`)
+   - Remove ABC/abstractmethod imports
+2. In `tests/hotspot/test_hotspot_self_heal.py`:
+   - Update `_FakeRunner(CommandRunner)` — it now subclasses the concrete class (same pattern as `update/runner.py`)
 
-### Step 6: Simplify UI WS pipeline
+### Step 6: Verify
 
-**Implementation:**
-1. Unify `AdaptedSpectrum` and `SpectrumClientData` into a single type. Keep `SpectrumClientData` as the canonical name, delete `AdaptedSpectrum`
-2. In `ui_live_transport_controller.ts`, remove the identity remap — assign spectrum data directly instead of field-by-field spread
-3. Simplify `adaptServerPayload()` in `server_payload.ts`:
-   - Keep the `EXPECTED_SCHEMA_VERSION` check as the meaningful safety net
-   - Replace the manual field-by-field re-validation functions with a type assertion: `const payload = data as LiveWsPayload` (using the generated type)
-   - Keep only true business-logic transformations (location_code fallback, etc.)
-   - Remove `parseClient()`, `parseSpectra()`, `parseStrengthMetrics()` manual parsers (or reduce them significantly)
-4. Update any other UI code that referenced `AdaptedSpectrum`
+1. `ruff check apps/server/`
+2. `make typecheck-backend`
+3. `pytest -q apps/server/tests/config/ apps/server/tests/update/ apps/server/tests/hotspot/ apps/server/tests/history_db/`
+4. Full: `pytest -q apps/server/tests/ -m "not selenium"`
 
 ## Dependencies on Other Chunks
 
-- **Chunk 3** should complete first — the analysis/findings/ flattening and Protocol removal may affect some of the same files
-- Steps within this chunk have ordering dependencies:
-  - Step 1 (TypedDict removal) before Step 2 (health extraction) — cleaner if health sub-models are already simplified
-  - Step 4 (strength metrics) and Step 5 (dual metrics) should be done together — they share the data flow
-  - Step 6 (UI WS) is independent of steps 1-5
+- Schema-related changes (D2) don't require a version bump since we're not changing table DDL
+- H1 values may be referenced by code touched in Chunk 3 (analysis constants) — execute after Chunk 3
+- Independent of Chunk 5
 
 ## Risks and Tradeoffs
 
-- **TypedDict removal**: Callers that currently type-annotate internal dicts with these TypedDicts lose that annotation. Mitigation: the Pydantic model at the HTTP boundary provides the same validation. Internal code can use plain `dict` or annotate with the Pydantic model type.
-- **Health logic extraction**: Creating a new file/function for ~65 lines of logic adds a file. Mitigation: the benefit (unit-testability, thin route) outweighs the cost.
-- **API endpoint changes**: Removing `/api/simulator/speed-override` and moving `/api/analysis-settings` are breaking API changes. Per the repo's no-backward-compatibility policy, this is acceptable.
-- **Dual metrics removal**: Changing how `snapshot_for_api()` receives metrics affects the hot WS broadcast path. Must be thoroughly tested.
-- **UI WS simplification**: Removing defensive parsing could mask backend bugs that corrupt payload shapes. Mitigation: the schema-version check remains; the generated TypeScript types serve as the compile-time safety net; the backend's Python-side validation at point of construction covers runtime safety.
+- **H1 constant promotion**: If a future sensor has different hardware requirements, these constants would need to become configurable again. Mitigated by commenting that they're sensor-specific and can be promoted back to config if a second sensor type is supported.
+- **C1 crash recovery**: Reducing persist frequency means the status file may not reflect the very latest log entries if the server crashes mid-update. Phase boundaries are still persisted, so the UI shows the correct overall state.
+- **H2 out of scope**: The hotspot config duplication remains. Document it as a known complexity.
 
 ## Validation Steps
 
-1. `pytest -q apps/server/tests/` — all backend tests pass
-2. `make lint` and `make typecheck-backend` — clean
-3. `cd apps/ui && npm run typecheck && npm run build` — frontend compiles
-4. `pytest -q apps/server/tests/routes/` — route tests pass
-5. `pytest -q apps/server/tests/integration/` — integration tests pass
-6. `pytest -q apps/server/tests/metrics_log/` — metrics tests pass
-7. Docker build and run: verify WebSocket data flow works end-to-end
+- `ruff check apps/server/`
+- `make typecheck-backend`
+- `pytest -q apps/server/tests/`
+- Verify config loading: `python -c "from vibesensor.config import load_config; load_config()"`
 
-## Required Documentation Updates
+## Documentation Updates
 
-- `docs/ai/repo-map.md`: Update any references to backend_types.py if it's eliminated
-- `docs/protocol.md`: Update if it references endpoint URLs that changed
-- `docs/metrics.md`: Update if it references the strength_metrics data flow
+- Remove processing knobs from `config.example.yaml`
+- Remove `server_repo` from `config.example.yaml`
+- Update `docs/ai/repo-map.md` if config structure changes
 
-## Required AI Instruction Updates
+## AI Instruction Updates
 
-- `.github/instructions/backend.instructions.md`: Update to reflect simplified type system:
-  - Remove `backend_types.py` from the type gate list if eliminated
-  - Note that WS payload TypedDicts stay in `payload_types.py`
-  - Note that HTTP response types use Pydantic models only (no TypedDict mirrors)
-- `.github/instructions/general.instructions.md`: Add guidance:
-  - Do not create TypedDict mirrors of Pydantic models
-  - Route handlers should be thin HTTP translators, not business logic containers
-  - Do not create duplicate API endpoints for the same operation
-  - Avoid re-validating data that was already validated at the point of construction
+- Add to `general.instructions.md`:
+  - "Do not expose DSP/hardware-tuned parameters as user-facing config unless operators actually need to change them. Use constants for values tied to specific hardware."
+  - "Do not scatter a single identity string (repo slug, service name) across multiple files. Define it once as a constant."
+  - "Prefer erroring on invalid config over silently clamping. Clamping hides misconfiguration."
 
-## Required Test Updates
+## Test Updates
 
-- Add unit tests for `build_health_snapshot()` function
-- Update route tests that reference deleted endpoints
-- Update tests that use TypedDict type annotations from deleted definitions
-- Add/keep tests validating the strength_metrics data flow
+- Update config tests that verify ProcessingConfig validation (remove clamping tests for promoted constants)
+- Update update tests that mock `server_repo` config
+- Update hotspot tests for concrete `CommandRunner`
 
 ## Simplification Crosswalk
 
-### [5.1] TypedDict/Pydantic dual layer
-- **Validation**: CONFIRMED (6+ mirror pairs)
-- **Root cause**: Separate "internal" and "external" type layers with no actual boundary
-- **Steps**: Delete 6+ TypedDict mirrors, update callers, potentially fold backend_types.py
-- **Code areas**: payload_types.py, backend_types.py, api_models.py, all importing modules
-- **What can be removed**: ~200 lines of duplicate type definitions
-- **Verification**: mypy passes, routes still serialize correctly
-
-### [5.2] Health route business logic
-- **Validation**: CONFIRMED (65-70 lines of policy logic)
-- **Root cause**: Business logic in route handler
-- **Steps**: Extract to build_health_snapshot(), thin route handler
-- **Code areas**: routes/health.py, new health service function
-- **What can be removed**: 60+ lines moved out of route handler
-- **Verification**: Health endpoint returns same data, new unit tests pass
-
-### [5.3] Redundant speed-override + URL prefix
-- **Validation**: CONFIRMED
-- **Root cause**: Endpoint accumulation without consolidation
-- **Steps**: Delete redundant endpoint, move analysis-settings URL
-- **Code areas**: routes/settings.py, UI fetch calls
-- **What can be removed**: 1 endpoint, 1 handler function
-- **Verification**: Settings API works, UI uses correct URLs
-
-### [3.1] VibrationStrengthMetrics type-erasure
-- **Validation**: CONFIRMED
-- **Root cause**: Typed data buried in generic dict, re-parsed downstream
-- **Steps**: Pass typed object directly to sample_builder, delete extract_strength_data()
-- **Code areas**: sample_builder.py, compute.py, buffer_store.py
-- **What can be removed**: extract_strength_data(), _safe_float() calls (~60 lines)
-- **Verification**: Metrics logging produces identical output
-
-### [3.2] Dual ClientMetrics ownership
-- **Validation**: CONFIRMED
-- **Root cause**: Cross-subsystem copy for convenience
-- **Steps**: Remove from ClientRecord, pass through parameters, update snapshot_for_api()
-- **Code areas**: registry.py, processing_loop.py, ws_broadcast
-- **What can be removed**: ClientRecord.latest_metrics field, set_latest_metrics(), cross-subsystem write loop
-- **Verification**: WS broadcast works, API snapshots correct
-
-### [3.3] UI WS pipeline
-- **Validation**: CONFIRMED
-- **Root cause**: Defensive parsing + duplicate type definitions
-- **Steps**: Unify types, remove identity remap, simplify parsePayload
-- **Code areas**: server_payload.ts, ui_app_state.ts, ui_live_transport_controller.ts
-- **What can be removed**: AdaptedSpectrum type, identity remap, manual parsers (~120-150 lines)
-- **Verification**: UI builds, WebSocket data displayed correctly
+| Finding | Steps | Removable | Verification |
+|---------|-------|-----------|-------------|
+| H1 | Step 1 | 7 config fields, ~80 lines clamping code, 7 YAML keys | config loads, no clamping warnings |
+| H3 | Step 2 | 4-5 scattered repo slug declarations, inconsistent fallback | single constant, env var override works |
+| D2 | Step 3 | Generic `get_setting`/`set_setting` public API | settings load/save works |
+| C1 | Step 4 | ~5 unnecessary persist() calls | update workflow works, fewer fsyncs |
+| B1 | Step 5 | ABC + abstractmethod, SubprocessRunner indirection | hotspot tests pass |
+| H2 | N/A | Out of scope — fix is additive, not simplifying | Documented as known complexity |

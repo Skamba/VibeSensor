@@ -78,9 +78,6 @@ are stored as typed columns; peak arrays use compact JSON in TEXT columns.
 | `frames_dropped_total` | INTEGER | Cumulative dropped frames |
 | `queue_overflow_drops` | INTEGER | Queue overflow drop count |
 | `top_peaks` | TEXT | JSON array of combined top peaks |
-| `top_peaks_x` | TEXT | JSON array of X-axis top peaks |
-| `top_peaks_y` | TEXT | JSON array of Y-axis top peaks |
-| `top_peaks_z` | TEXT | JSON array of Z-axis top peaks |
 | `extra_json` | TEXT | JSON dict of any non-standard keys |
 
 **Indexes:**

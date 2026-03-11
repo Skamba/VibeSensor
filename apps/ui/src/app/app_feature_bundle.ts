@@ -1,11 +1,11 @@
-import type { UiDomElements } from "./dom/ui_dom_registry";
+import type { UiDomElements } from "./ui_dom_registry";
 import { createCarsFeature, type CarsFeature } from "./features/cars_feature";
 import { createEspFlashFeature, type EspFlashFeature } from "./features/esp_flash_feature";
 import { createHistoryFeature, type HistoryFeature } from "./features/history_feature";
 import { createRealtimeFeature, type RealtimeFeature } from "./features/realtime_feature";
 import { createSettingsFeature, type SettingsFeature } from "./features/settings_feature";
 import { createUpdateFeature, type UpdateFeature } from "./features/update_feature";
-import type { AppState, ClientRow } from "./state/ui_app_state";
+import type { AppState, ClientRow } from "./ui_app_state";
 
 export interface AppFeatureBundle {
   history: HistoryFeature;

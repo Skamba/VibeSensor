@@ -213,7 +213,7 @@ class _FailingAppendOnceHistoryDB(_FakeHistoryDB):
     def __init__(self) -> None:
         super().__init__()
         # Must exceed _MAX_APPEND_RETRIES (3) to actually surface a write error
-        from vibesensor.metrics_log.persistence import _MAX_APPEND_RETRIES
+        from vibesensor.metrics_log.logger import _MAX_APPEND_RETRIES
 
         self._append_failures_remaining = _MAX_APPEND_RETRIES
 

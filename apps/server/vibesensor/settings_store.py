@@ -13,11 +13,11 @@ Settings management spans three layers:
 - ``analysis_settings.py`` — in-memory-only analysis parameter store
   (tire_diameter, tire_aspect, etc.) recomputed from the active car's
   aspects whenever car settings change.
-- ``history_db/_settings.py`` — raw DB-level ``get_setting()`` /
-  ``set_setting()`` key-value operations.
+- ``history_db/`` — ``get_settings_snapshot()`` / ``set_settings_snapshot()``
+  persist settings as a single JSON blob.
 
 ``SettingsStore`` owns the semantic meaning of settings, delegates
-persistence to ``HistoryDB._settings``, and is the canonical source for
+persistence to ``HistoryDB``, and is the canonical source for
 runtime settings queries.
 """
 

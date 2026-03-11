@@ -1,6 +1,6 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { UiDomElements } from "../dom/ui_dom_registry";
-import type { AppState, ClientRow, LocationOption } from "../state/ui_app_state";
+import type { UiDomElements } from "../ui_dom_registry";
+import type { AppState, ClientRow, LocationOption } from "../ui_app_state";
 import * as I18N from "../../i18n";
 import {
   getClientLocations,

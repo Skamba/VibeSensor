@@ -41,6 +41,8 @@ from pathlib import Path
 from typing import TypedDict
 from urllib.request import Request, urlopen
 
+from vibesensor.constants import GITHUB_REPO
+
 from .json_types import JsonObject, is_json_array, is_json_object
 from .release_fetcher import (
     DOWNLOAD_CHUNK_BYTES,
@@ -51,7 +53,6 @@ from .release_fetcher import (
 LOGGER = logging.getLogger(__name__)
 
 _DEFAULT_CACHE_DIR = "/var/lib/vibesensor/firmware"
-_DEFAULT_FIRMWARE_REPO = "Skamba/VibeSensor"
 _META_FILE = "_meta.json"
 _MANIFEST_FILE = "flash.json"
 _MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024  # 100 MB hard limit for firmware assets
@@ -155,7 +156,7 @@ class FirmwareCacheConfig:
     """Configuration for the local ESP32 firmware download cache."""
 
     cache_dir: str = ""
-    firmware_repo: str = _DEFAULT_FIRMWARE_REPO
+    firmware_repo: str = GITHUB_REPO
     channel: str = "stable"  # "stable" or "prerelease"
     pinned_tag: str = ""
     github_token: str = ""
@@ -164,7 +165,7 @@ class FirmwareCacheConfig:
         if not self.cache_dir:
             self.cache_dir = os.environ.get("VIBESENSOR_FIRMWARE_CACHE_DIR", _DEFAULT_CACHE_DIR)
         if not self.firmware_repo:
-            self.firmware_repo = os.environ.get("VIBESENSOR_FIRMWARE_REPO", _DEFAULT_FIRMWARE_REPO)
+            self.firmware_repo = os.environ.get("VIBESENSOR_FIRMWARE_REPO", GITHUB_REPO)
         if not self.channel:
             self.channel = os.environ.get("VIBESENSOR_FIRMWARE_CHANNEL", "stable")
         if not self.pinned_tag:

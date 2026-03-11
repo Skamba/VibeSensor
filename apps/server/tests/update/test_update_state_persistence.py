@@ -365,7 +365,7 @@ class TestPersistenceDuringLifecycle:
         assert tracker.status.phase_started_at > started_phase_at
         assert tracker.status.updated_at >= tracker.status.phase_started_at
 
-    def test_tracker_persists_runtime_logs_and_bulk_issues_immediately(
+    def test_tracker_updates_in_memory_and_persists_on_flush(
         self,
         tmp_path: Path,
     ) -> None:
@@ -386,6 +386,13 @@ class TestPersistenceDuringLifecycle:
             ],
         )
 
+        # In-memory state is always up-to-date
+        assert tracker.status.runtime == {"version": "1.2.3"}
+        assert tracker.status.log_tail[-1] == "runtime collected"
+        assert tracker.status.issues[-1].message == "Wi-Fi warning"
+
+        # Disk state is only updated after explicit persist
+        tracker.persist()
         loaded = store.load()
         assert loaded is not None
         assert loaded.runtime == {"version": "1.2.3"}

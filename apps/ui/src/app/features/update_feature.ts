@@ -1,5 +1,5 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { UiDomElements } from "../dom/ui_dom_registry";
+import type { UiDomElements } from "../ui_dom_registry";
 import type { HealthStatusPayload, UpdateStatusPayload } from "../../api/types";
 import { getHealthStatus, getUpdateStatus, startUpdate, cancelUpdate } from "../../api/settings";
 

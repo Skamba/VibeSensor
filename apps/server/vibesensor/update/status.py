@@ -80,7 +80,6 @@ class UpdateStatusTracker:
     def set_runtime(self, runtime: JsonObject) -> None:
         self._status.runtime = runtime
         self._touch()
-        self.persist()
 
     def track_secret(self, secret: str) -> None:
         self._redact_secrets = {secret} if secret else set()
@@ -121,7 +120,6 @@ class UpdateStatusTracker:
         if len(log_tail) > _LOG_TAIL_MAX:
             del log_tail[:-_LOG_TAIL_TRIM_TO]
         self._touch()
-        self.persist()
 
     def add_issue(self, phase: UpdatePhase | str, message: str, detail: str = "") -> None:
         self._status.issues.append(
@@ -132,7 +130,6 @@ class UpdateStatusTracker:
             ),
         )
         self._touch()
-        self.persist()
 
     def extend_issues(self, issues: list[UpdateIssue]) -> None:
         for issue in issues:
@@ -145,7 +142,6 @@ class UpdateStatusTracker:
             )
         if issues:
             self._touch()
-            self.persist()
 
     def fail(self, phase: UpdatePhase | str, message: str, detail: str = "") -> None:
         self.add_issue(phase, message, detail)

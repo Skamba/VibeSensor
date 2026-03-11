@@ -11,8 +11,8 @@ def _health_router(fake_state):
     """Return ``(router, state)`` for health-endpoint tests."""
     from vibesensor.routes import create_router
 
-    fake_state.loop_state.processing_state = "ok"
-    fake_state.loop_state.processing_failure_count = 0
+    fake_state.processing_loop_state.processing_state = "ok"
+    fake_state.processing_loop_state.processing_failure_count = 0
     return create_router(fake_state), fake_state
 
 
@@ -90,11 +90,11 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
         "last_completed_run_id": None,
         "last_completed_run_error": None,
     }
-    state.loop_state.processing_state = "degraded"
-    state.loop_state.processing_failure_count = 2
-    state.loop_state.processing_failure_categories = {"compute_all": 2}
-    state.loop_state.last_failure_category = "compute_all"
-    state.loop_state.last_failure_message = "worker pool failed"
+    state.processing_loop_state.processing_state = "degraded"
+    state.processing_loop_state.processing_failure_count = 2
+    state.processing_loop_state.processing_failure_categories = {"compute_all": 2}
+    state.processing_loop_state.last_failure_category = "compute_all"
+    state.processing_loop_state.last_failure_message = "worker pool failed"
     state.health_state.mark_failed("gps-speed", "gpsd unavailable")
     state.health_state.record_task_failure("metrics-log", "disk write failed")
 

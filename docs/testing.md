@@ -78,7 +78,7 @@ Regression coverage is grouped by intent:
 - `regression/report/`: report rendering, report-data regressions, and report pipeline audits.
 - `regression/runtime/`: runtime, history, API, queueing, and update-adjacent regressions.
 
-Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `report_helpers.py`, `report_analysis_integration.py`, `scenario_ground_truth.py`, `scenario_regression.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
+Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `report_helpers.py`, `report_analysis_integration.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
 
 ## Contract bridge tests
 

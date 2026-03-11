@@ -279,38 +279,11 @@ def test_client_names_crud(tmp_path: Path) -> None:
     assert "client-2" not in db.list_client_names()
 
 
-def test_settings_kv_roundtrip(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-
-    assert db.get_setting("missing") is None
-
-    db.set_setting("name", "VibeSensor")
-    assert db.get_setting("name") == "VibeSensor"
-
-    db.set_setting("count", 42)
-    assert db.get_setting("count") == 42
-
-    db.set_setting("ratio", 3.14)
-    assert db.get_setting("ratio") == 3.14
-
-    db.set_setting("enabled", True)
-    assert db.get_setting("enabled") is True
-
-    db.set_setting("empty", None)
-    assert db.get_setting("empty") is None
-
-    db.set_setting("nested", {"a": [1, 2, 3]})
-    assert db.get_setting("nested") == {"a": [1, 2, 3]}
-
-    db.set_setting("name", "Updated")
-    assert db.get_setting("name") == "Updated"
-
-
 def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-ro", "2026-01-01T00:00:00Z", {"source": "test"})
     db.append_samples("run-ro", [{"i": 1}, {"i": 2}])
-    db.set_setting("mode", {"enabled": True})
+    db.set_settings_snapshot({"enabled": True})
     db.upsert_client_name("client-1", "Alice")
 
     class _ConnProxy:
@@ -335,12 +308,12 @@ def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
     _ = db.get_run("run-ro").get("analysis")
     _ = db.get_run("run-ro")["status"]
     _ = db.get_active_run_id()
-    _ = db.get_setting("mode")
+    _ = db.get_settings_snapshot()
     _ = db.list_client_names()
 
     assert proxy.commit_calls == 0
 
-    db.set_setting("mode", {"enabled": False})
+    db.set_settings_snapshot({"enabled": False})
     assert proxy.commit_calls == 1
 
 

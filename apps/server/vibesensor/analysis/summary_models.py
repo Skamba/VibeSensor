@@ -6,19 +6,12 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from ._types import (
-    Finding,
     I18nRef,
-    IntensityRow,
-    OriginSummary,
     PhaseSpeedBreakdownRow,
     PhaseSpeedStats,
     PhaseSummary,
-    PhaseTimelineEntry,
-    RunSuitabilityCheck,
     SpeedBreakdownRow,
     SpeedStats,
-    TestStep,
-    TopCause,
 )
 from .phase_segmentation import DrivingPhase, PhaseSegment
 
@@ -44,32 +37,3 @@ class PreparedRunData:
     speed_breakdown: list[SpeedBreakdownRow]
     speed_breakdown_skipped_reason: I18nRef | None
     phase_speed_breakdown: list[PhaseSpeedBreakdownRow]
-
-
-@dataclass(frozen=True)
-class FindingsBundle:
-    """Diagnosis outputs assembled after building findings."""
-
-    findings: list[Finding]
-    most_likely_origin: OriginSummary
-    test_plan: list[TestStep]
-    phase_timeline: list[PhaseTimelineEntry]
-    top_causes: list[TopCause]
-
-
-@dataclass(frozen=True)
-class SensorAnalysisBundle:
-    """Location-scoped sensor analysis ready for summary/report use."""
-
-    sensor_locations: list[str]
-    connected_locations: set[str]
-    sensor_intensity_by_location: list[IntensityRow]
-
-
-@dataclass(frozen=True)
-class RunSuitabilityBundle:
-    """Run-suitability evaluation and confidence context."""
-
-    reference_complete: bool
-    run_suitability: list[RunSuitabilityCheck]
-    overall_strength_band_key: str | None

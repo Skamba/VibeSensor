@@ -7,7 +7,15 @@ from pathlib import Path
 import pytest
 
 from test_support.report_helpers import analysis_sample as _make_sample
-from vibesensor.analysis import findings_order_findings as order_findings_module
+from vibesensor.analysis import (
+    findings_order_analysis as _order_analysis_module,
+)
+from vibesensor.analysis import (
+    findings_order_assembly as _order_assembly_module,
+)
+from vibesensor.analysis import (
+    findings_order_findings as order_findings_module,
+)
 from vibesensor.analysis.findings_order_findings import (
     _build_order_findings as _findings_build_order_findings,
 )
@@ -57,9 +65,9 @@ def patch_order_hypothesis(
 ) -> None:
     """Apply standard order-hypothesis stubs to order-findings internals."""
     monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [HypothesisStub()])
-    monkeypatch.setattr(order_findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(_order_analysis_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
-        order_findings_module,
+        _order_assembly_module,
         "_location_speedbin_summary",
         lambda _points, **_kwargs: (
             "",

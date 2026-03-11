@@ -1,6 +1,6 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { UiDomElements } from "../dom/ui_dom_registry";
-import type { AppState, RunDetail } from "../state/ui_app_state";
+import type { UiDomElements } from "../ui_dom_registry";
+import type { AppState, RunDetail } from "../ui_app_state";
 import type {
   HistoryEntry,
   HistoryInsightWarningPayload,

@@ -126,32 +126,8 @@ def _bootstrap_steps(python_cmd: str, run_npm_ci: bool) -> list[Step]:
 def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
     return {
         "backend-quality": [
-            Step(
-                "ruff check",
-                [
-                    "ruff",
-                    "check",
-                    "apps/server/vibesensor",
-                    "apps/server/tests",
-                    "tools/dev",
-                    "tools/tests",
-                    "tools/ci",
-                ],
-            ),
-            Step(
-                "ruff format --check",
-                [
-                    "ruff",
-                    "format",
-                    "--check",
-                    "apps/server/vibesensor",
-                    "apps/server/tests",
-                    "tools/dev",
-                    "tools/tests",
-                    "tools/ci",
-                ],
-            ),
-            Step("line endings", [python_cmd, "tools/dev/check_line_endings.py"]),
+            Step("lint (ruff check + format)", ["make", "lint"]),
+            Step("hygiene checks", [python_cmd, "tools/dev/check_hygiene.py"]),
             Step(
                 "config preflight (example)",
                 ["vibesensor-config-preflight", "apps/server/config.example.yaml"],
@@ -169,10 +145,6 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 ["vibesensor-config-preflight", "apps/server/config.pi.yaml"],
             ),
             Step(
-                "verify no path indirections",
-                [python_cmd, "tools/dev/verify_no_path_indirections.py"],
-            ),
-            Step(
                 "docs lint",
                 [python_cmd, "tools/dev/docs_lint.py"],
             ),
@@ -186,14 +158,7 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
             ),
         ],
         "backend-typecheck": [
-            Step(
-                "mypy backend runtime/api boundary",
-                [python_cmd, "-m", "mypy", "--config-file", "pyproject.toml"],
-                cwd=ROOT / "apps" / "server",
-                env={
-                    "MYPYPATH": ".",
-                },
-            ),
+            Step("mypy", ["make", "typecheck-backend"]),
         ],
         "frontend-typecheck": [
             Step(

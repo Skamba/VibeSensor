@@ -10,8 +10,8 @@ import {
 import { SpectrumChart } from "../../spectrum";
 import { chartSeriesPalette, orderBandFills } from "../../theme";
 import { areHeavyFramesCompatible, interpolateHeavyFrame, type SpectrumHeavyFrame } from "../spectrum_animation";
-import type { UiDomElements } from "../dom/ui_dom_registry";
-import type { AppState, ChartBand } from "../state/ui_app_state";
+import type { UiDomElements } from "../ui_dom_registry";
+import type { AppState, ChartBand } from "../ui_app_state";
 
 const SPECTRUM_DB_MIN = 0;
 const SPECTRUM_DB_MAX = 100;
