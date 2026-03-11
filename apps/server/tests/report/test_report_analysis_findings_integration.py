@@ -10,10 +10,10 @@ from test_support.report_helpers import analysis_metadata as _make_metadata
 from test_support.report_helpers import analysis_sample as _make_sample
 
 from vibesensor.analysis import build_findings_for_samples
-from vibesensor.analysis import findings_builder as findings_builder_module
-from vibesensor.analysis.findings_builder import _build_findings as _findings_build_findings
-from vibesensor.analysis.findings_intensity import _speed_breakdown
-from vibesensor.analysis.plot_peak_table import top_peaks_table_rows as _top_peaks_table_rows
+from vibesensor.analysis import findings as findings_builder_module
+from vibesensor.analysis.findings import _build_findings as _findings_build_findings
+from vibesensor.analysis.findings import _speed_breakdown
+from vibesensor.analysis.plots import top_peaks_table_rows as _top_peaks_table_rows
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
 
@@ -344,9 +344,9 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
             },
         )
 
-    from vibesensor.analysis import findings_order_findings as order_assembly_module
+    from vibesensor.analysis import test_plan as _test_plan_module
 
-    monkeypatch.setattr(order_assembly_module, "_location_speedbin_summary", _fake_location_summary)
+    monkeypatch.setattr(_test_plan_module, "_location_speedbin_summary", _fake_location_summary)
 
     samples = []
     for idx in range(30):

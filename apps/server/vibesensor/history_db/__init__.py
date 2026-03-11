@@ -112,41 +112,44 @@ class HistoryDB:
     def _ensure_schema(self) -> None:
         with self._cursor() as cur:
             cur.executescript(SCHEMA_SQL)
+
         with self._cursor() as cur:
-            cur.execute("SELECT value FROM schema_meta WHERE key = ?", ("version",))
-            row = cur.fetchone()
-            if row is None:
-                cur.execute(
-                    "INSERT INTO schema_meta (key, value) VALUES (?, ?)",
-                    ("version", str(SCHEMA_VERSION)),
-                )
-                return
-            try:
-                version = int(str(row[0]))
-            except (ValueError, TypeError):
-                LOGGER.error(
-                    "Corrupted schema_meta version value %r; resetting to %s",
-                    row[0],
-                    SCHEMA_VERSION,
-                )
-                cur.execute(
-                    "UPDATE schema_meta SET value = ? WHERE key = 'version'",
-                    (str(SCHEMA_VERSION),),
-                )
-                return
-            if version == SCHEMA_VERSION:
-                return
-            if version > SCHEMA_VERSION:
-                raise RuntimeError(
-                    f"History DB schema version {version} is newer than "
-                    f"supported {SCHEMA_VERSION}. Cannot downgrade.",
-                )
-            msg = (
-                f"Database schema v{version} is incompatible with "
-                f"current v{SCHEMA_VERSION}. "
-                f"Delete the database file at {self.db_path} to recreate it."
+            # Migrate from legacy schema_meta table to PRAGMA user_version.
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_meta'")
+            if cur.fetchone() is not None:
+                cur.execute("SELECT value FROM schema_meta WHERE key = ?", ("version",))
+                row = cur.fetchone()
+                if row is not None:
+                    try:
+                        legacy_ver = int(str(row[0]))
+                    except (ValueError, TypeError):
+                        legacy_ver = SCHEMA_VERSION
+                    cur.execute(f"PRAGMA user_version = {legacy_ver}")
+                cur.execute("DROP TABLE schema_meta")
+
+        with self._cursor(commit=False) as cur:
+            cur.execute("PRAGMA user_version")
+            version = cur.fetchone()[0]
+
+        if version == 0:
+            # Fresh database — stamp with current version.
+            with self._cursor() as cur:
+                cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+            return
+
+        if version == SCHEMA_VERSION:
+            return
+        if version > SCHEMA_VERSION:
+            raise RuntimeError(
+                f"History DB schema version {version} is newer than "
+                f"supported {SCHEMA_VERSION}. Cannot downgrade.",
             )
-            raise RuntimeError(msg)
+        msg = (
+            f"Database schema v{version} is incompatible with "
+            f"current v{SCHEMA_VERSION}. "
+            f"Delete the database file at {self.db_path} to recreate it."
+        )
+        raise RuntimeError(msg)
 
     # -- settings_kv persistence ----------------------------------------------
 

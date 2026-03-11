@@ -10,8 +10,7 @@ from reportlab.pdfgen.canvas import Canvas
 from .pdf_drawing import _draw_footer
 from .pdf_page1 import _page1
 from .pdf_page2 import _page2
-from .pdf_render_context import PdfRenderContext
-from .pdf_style import PAGE_SIZE
+from .pdf_style import PAGE_SIZE, PdfRenderContext
 from .report_data import ReportTemplateData
 
 LOGGER = logging.getLogger(__name__)

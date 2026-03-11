@@ -1,172 +1,189 @@
-# Chunk 5: Build, Tooling, and Test Infrastructure
-
-## Execution order: 5 of 5
+# Chunk 5: Configuration, Tooling & Dev-Workflow Simplification
 
 ## Mapped Findings
 
-| ID | Original Finding | Validation Result |
-|----|-----------------|-------------------|
-| E1 | Three-layer E2E runner chain: `run_ci_parallel.py` → `run_e2e_parallel.py` → `run_full_suite.py` (330 lines, 14 argparse flags, 4 always-skipped) | CONFIRMED — Full chain verified. run_full_suite.py is a 330-line orchestration script with 14 argparse flags and 4 features that are always-skipped. run_e2e_parallel.py adds a parallel wrapper. After removing always-skipped code, ~50 lines of Docker orchestration logic survive. |
-| E2 | `run_ci_parallel.py` mirrors CI YAML jobs with an explicit "keep in sync" docstring — no shared config | CONFIRMED — Docstring says "keep this file in sync with .github/workflows/ci.yml". 7 CI jobs are mirrored inline. One divergence: local script adds `[ocr]` extras for the test install. |
-| E3 | Release workflow has an inline shell UI build while `tools/build_ui_static.py` is a separate implementation for the same task | CONFIRMED — Release workflow `.github/workflows/main-release.yml` has 8 lines of inline shell for UI build. `tools/build_ui_static.py` is a proper Python script. They have 3 differences: contract sync step, typecheck step, metadata JSON. |
-| E4 | `sync_shared_contracts_to_ui.mjs` dedicates 48% of its code (65/136 lines) to converting WebSocket schema to fake-OpenAPI format | CONFIRMED — 65 of 136 lines are devoted to a fake-OpenAPI conversion pipeline that wraps WS message schemas in an artificial OpenAPI response envelope. |
-| T1 | Dual phase-builder families for test fixture construction — `scenario_ground_truth.py` and `sample_scenarios.py` provide overlapping builder types | CONFIRMED — 3 of 7 builder types are duplicated (idle, noise, ramp). Both share the same `make_sample` base function. `scenario_ground_truth.py` has 3 test file consumers. |
-| T2 | `report_analysis_integration.py` patches private internals to create fixtures | Has 4 test consumers (not 2 as originally stated): test_report_analysis_log_integration.py, test_report_analysis_phase_flow.py, test_report_analysis_localization_integration.py, test_report_analysis_findings_integration.py. |
-| A4 | `tools/ci/` subdirectory contains exactly 1 file (`watch_pr_checks.py`) | CONFIRMED — tools/ci/ is a single-file subdirectory. tools/ root also has 2 loose files (build_ui_static.py, cleo_api_fixes.py). |
+| ID | Original Finding | Source Subagents | Validation Result |
+|----|-----------------|------------------|-------------------|
+| H1+H3 | Config knob bloat — 24 of 31 fields never overridden in any YAML config file | Config/Knobs | **VALIDATED** — 24 fields in _config_defaults.py are never overridden by config.yaml, config.dev.yaml, config.docker.yaml, or config.pi.yaml. 16 are strong inline candidates (hardware constants, internal tuning, always-true booleans). 8 are weaker candidates (network identity, listen addresses) that are legitimate per-deployment knobs even if currently constant. |
+| H2 | Update config dataclass proliferation — 5 intermediary config dataclasses in update/manager.py, 3 of which are single-consumer single-use wrappers | Config/Knobs | **VALIDATED** — UpdateReleaseConfig (1 field), UpdateServiceControlConfig (2 constant fields), UpdateWifiConfig (12 fields, 10 are module constants). These 3 are eliminable. UpdateInstallerConfig (4 fields) and UpdateValidationConfig (2 fields) are border cases used for test injection. |
+| G1+G2+G3 | Makefile test target redundancy — 3 coverage variants differ by one flag | CI Tooling | **PARTIALLY VALIDATED** — 3 coverage targets (coverage, coverage-html, coverage-strict) are almost identical. However, none are "aliases documented as use X instead" so the strict instruction doesn't apply. The consolidation to a single parameterized target is still worthwhile but low priority. |
+| I1 | Contract sync pipeline complexity — openapi-typescript for WS types requires synthetic OpenAPI 3.1 envelope wrapping | Pipeline/Sync | **VALIDATED** — sync_shared_contracts_to_ui.mjs has a 4-5 step pipeline. WS types are plain JSON Schema force-wrapped into an OpenAPI envelope. Justified for HTTP types (4651-line OpenAPI schema). Questionable for WS types (645-line JSON Schema, 12 type aliases). Single-tool uniformity is the reason. |
+| I3 | Ghost vibesensor.core references — stale paths in 10+ docs/config/build files after package inlining | Cross-cutting | **VALIDATED** — 10 stale references confirmed across .github/copilot-instructions.md, .github/instructions/backend.instructions.md, README.md, BOUNDARIES.md, docs/ai/repo-map.md, docs/metrics.md, docs/analysis_pipeline.md, tools/tests/heuristics_audit.py, infra/pi-image/pi-gen/build.sh. The build.sh reference is **actively broken** (import will fail). |
+| A3 | UI feature factory abstraction | Architecture | **REJECTED** — Investigation shows a clean, flat composition pattern. FeatureDepsBase is a 3-field interface extended by all 6 feature deps. No class hierarchy, no abstract factory, no over-engineering. No action needed. |
 
 ## Root Causes
 
-- **E1**: Test orchestration scripts were layered incrementally (full_suite first, then E2E parallelizer, then CI parallelizer) without consolidating. Features were skipped via flags rather than deleted.
-- **E2**: No shared definition of CI jobs; each copy (YAML, Python) is maintained independently with only a docstring reminder to stay in sync.
-- **E3**: Release workflow was written before `build_ui_static.py` existed, and neither was unified afterward.
-- **E4**: WebSocket schemas don't fit OpenAPI natively, so a conversion layer was added to reuse `openapi-typescript` for codegen. The conversion is fragile and verbose.
-- **T1**: Test DSL (`sample_scenarios.py`) was added after `scenario_ground_truth.py`, which already had its own builder functions. Neither was consolidated.
-- **T2**: Integration helpers patch private module internals because the public API doesn't expose the right seams for testing.
-- **A4**: `tools/ci/` was created speculatively before more CI tools were added.
+1. **Config over-generality**: _config_defaults.py was designed for maximum flexibility, exposing every internal tuning parameter as a YAML-overridable knob. In practice, hardware constants (sample_rate_hz, sensor_model) and internal design constants (waveform_seconds, data_queue_maxsize) never vary.
+2. **Config-as-interface habit**: Each subsystem in update/ receives a config dataclass, even when the subsystem reads only 1-2 values that are already constants in its own module.
+3. **Documentation drift**: The vibesensor.core package was inlined into vibesensor/ but references across 10+ files were not updated.
+4. **Pipeline uniformity**: Using openapi-typescript for both HTTP and WS schemas keeps one tool, but forces WS schemas through a synthetic OpenAPI wrapper.
 
 ## Simplification Approach
 
-### E1: Simplify E2E runner chain
+### Step 1: Fix ghost vibesensor.core references (IMMEDIATE — one is actively broken)
 
-**Strategy**: Inline the Docker orchestration logic from `run_full_suite.py` into `run_e2e_parallel.py`. Remove `run_full_suite.py`. Strip out the 4 always-skipped feature flags and their dead code.
+Update 10 stale references:
 
-**Steps**:
-1. Read `run_full_suite.py` and identify the ~50 lines of surviving Docker orchestration logic
-2. Move that logic into `run_e2e_parallel.py` as a helper function
-3. Delete `run_full_suite.py`
-4. In `run_e2e_parallel.py`, remove any argparse flags that only existed for skipped features
-5. Update any Makefile targets or docs that reference `run_full_suite.py`
+| File | Fix |
+|------|-----|
+| `.github/copilot-instructions.md` L20 | `vibesensor/core/vibration_strength.py` → `vibesensor/vibration_strength.py` |
+| `.github/instructions/backend.instructions.md` L23 | `vibesensor.core.vibration_strength` → `vibesensor.vibration_strength` |
+| `README.md` L45 | `apps/server/vibesensor/core/vibration_strength.py` → `apps/server/vibesensor/vibration_strength.py` |
+| `apps/server/vibesensor/BOUNDARIES.md` L18-20 | `vibesensor.core` → `vibesensor`, `vibesensor/core/*.py` → `vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py` |
+| `docs/ai/repo-map.md` L21 | Remove `vibesensor/core/` line or update path |
+| `docs/metrics.md` L27, L43 | `vibesensor/core/vibration_strength.py` → `vibesensor/vibration_strength.py`, same for `strength_bands.py` |
+| `docs/analysis_pipeline.md` L42 | `vibesensor.core` → `vibesensor` |
+| `tools/tests/heuristics_audit.py` L84-86 | Update path check to `apps/server/vibesensor` |
+| `infra/pi-image/pi-gen/build.sh` L999 | `import vibesensor.core` → `import vibesensor.vibration_strength` (or equivalent valid import) |
 
-### E2: Reduce run_ci_parallel.py drift risk
+### Step 2: Inline strong-candidate config constants
 
-**Strategy**: The "keep in sync" approach is inherently fragile. The simplest fix is to add a comment in CI YAML pointing to the Python script and vice versa, making the coupling explicit and bidirectional. Also remove the OCR extras divergence by standardizing on one approach.
+Convert 16 never-overridden fields from YAML-configurable to Python constants:
 
-Actually, for a simplification PR, the most impactful approach is: reduce the drift surface by extracting CI job definitions to a shared data structure. But this adds machinery. The pragmatic approach: add a hygiene test that confirms the local runner's job list matches CI YAML job names. This catches drift at CI time.
+**Processing section** → constants in the consuming module:
+- `sample_rate_hz = 800` — hardware-determined
+- `waveform_seconds = 8` — buffer design constant
+- `client_ttl_seconds = 120` — internal timeout
+- `accel_scale_g_per_lsb = None` — auto-detect default
 
-**Steps**:
-1. Add a hygiene test that reads `.github/workflows/ci.yml` and extracts job names
-2. Import the job list from `run_ci_parallel.py` 
-3. Assert both lists match (ignoring execution details)
-4. Fix the OCR extras divergence — add `[ocr]` to the CI install too, or remove it from local
+**Logging section** → constants in the consuming module:
+- `metrics_log_hz = 4` — internal tuning
+- `no_data_timeout_s = 15.0` — internal timeout
+- `sensor_model = "ADXL345"` — hardware constant
+- `shutdown_analysis_timeout_s = 30` — internal timeout
+- `persist_history_db = True` — always true
+- `log_metrics = True` — always true
 
-### E3: Unify UI build
+**UDP section** → constants in the consuming module:
+- `data_queue_maxsize = 1024` — internal tuning
 
-**Strategy**: Make the release workflow call `build_ui_static.py` instead of inline shell. Add the missing steps (contract sync, typecheck) to `build_ui_static.py` if they're not already there.
+**AP self-heal section** → constants in self_heal module:
+- `diagnostics_lookback_minutes = 5`
+- `min_restart_interval_seconds = 120`
+- `allow_disable_resolved_stub_listener = False`
 
-**Steps**:
-1. Read `build_ui_static.py` and identify what it does vs what the release workflow does
-2. Add missing steps to `build_ui_static.py` (contract sync, typecheck) if needed
-3. Replace the inline shell in `main-release.yml` with a call to `python3 tools/build_ui_static.py`
-4. Test that the build produces the same output
+**GPS section** → constants in GPS module:
+- `gpsd_host = "127.0.0.1"` — standard localhost
+- `gpsd_port = 2947` — standard gpsd port
 
-### E4: Simplify WS schema sync
+Process:
+1. For each field, find all readers (grep for the config field name)
+2. Replace config reads with direct constant access
+3. Remove the field from _config_defaults.py and the config dataclass
+4. Remove from config.py parsing
+5. Verify no YAML file overrides it (already confirmed — none do)
 
-**Strategy**: The fake-OpenAPI conversion exists solely to reuse `openapi-typescript` for WS schema types. The simpler alternative: generate TypeScript types directly from the Python schemas without the OpenAPI detour. This eliminates 48% of the script.
+### Step 3: Eliminate 3 update config dataclasses
 
-But this is a significant refactor with risk of breaking the generated types. A safer approach: extract the WS schema conversion into a clearly separated section with explicit comments, making it obvious what's WS-specific vs general. Or better — just simplify the conversion logic itself.
+**UpdateReleaseConfig** (1 field: `rollback_dir`):
+- Replace with passing `rollback_dir: Path` directly to `UpdateReleaseService.__init__()`
+- Delete the dataclass
 
-Actually, the simplest approach aligned with "minimize machinery": if the WS schemas are simple enough, hand-maintain the TypeScript types and delete the codegen pipeline entirely. But this creates drift risk.
+**UpdateServiceControlConfig** (2 fields: module constants):
+- Inline `UPDATE_SERVICE_NAME` and `UPDATE_RESTART_UNIT` directly in `schedule_service_restart()`
+- Delete the dataclass
 
-For this PR, the pragmatic approach: clean up the 65-line conversion to be more concise (the code likely has unnecessary intermediate transformations). Target: reduce from 65 lines to ~30 by removing redundant steps.
+**UpdateWifiConfig** (12 fields, 10 are constants):
+- Let the wifi module use its own constants directly instead of receiving them through a config bundle
+- Pass only the 2 varying fields (`ap_con_name`, `wifi_ifname`) as parameters
+- Delete the dataclass
 
-**Steps**:
-1. Read `sync_shared_contracts_to_ui.mjs` in full
-2. Identify which conversion steps are actually necessary
-3. Simplify: remove unnecessary intermediate arrays, reduce object spreading, consolidate transformation steps
-4. Verify the generated TypeScript output is identical before and after
+### Step 4: Consolidate Makefile coverage targets
 
-### T1: Consolidate phase-builder families
+Replace 3 targets with 1 parameterized target:
 
-**Strategy**: Make `scenario_ground_truth.py` use the builders from `sample_scenarios.py` instead of duplicating them. Since `sample_scenarios.py` is the DSL layer, it should be the single source of builder functions.
+```makefile
+coverage:  ## Run coverage (use COV_OPTS for extras: COV_OPTS="--cov-report=html --cov-fail-under=80")
+	pytest --cov=vibesensor --cov-report=term $(COV_OPTS) apps/server/tests
+```
 
-**Steps**:
-1. In `scenario_ground_truth.py`, replace the 3 duplicated builder functions (idle, noise, ramp) with imports from `sample_scenarios.py`
-2. Verify that the builder APIs are compatible (same parameters, same output format)
-3. If APIs differ slightly, adapt `scenario_ground_truth.py` callers to use the DSL API
-4. Ensure all 3 test consumers still pass
+Remove `coverage-html` and `coverage-strict`. Document:
+- `make coverage` — basic terminal report
+- `make coverage COV_OPTS="--cov-report=html"` — HTML report
+- `make coverage COV_OPTS="--cov-fail-under=80"` — strict threshold
 
-### T2: Localize report_analysis_integration helpers
+### Step 5: Clean stale build artifacts
 
-**Strategy**: Since all 4 consumers are in `tests/report/`, this helper is scoped to report testing. Keep it but clean up any private-patching that could be replaced with public API usage.
+- Add `apps/server/build/` to `.gitignore` if not already present
+- Remove `apps/server/build/` from git tracking (it contains stale compiled artifacts referencing vibesensor_core)
 
-**Steps**:
-1. Read `report_analysis_integration.py` to understand what it patches
-2. Determine which patches can be replaced with public API calls
-3. Where patches are truly necessary, add comments explaining why
-4. Keep the file in `test_support/` since 4 consumers share it
+### Step 6: Simplify contract sync WS path (LOW PRIORITY — defer if time-constrained)
 
-### A4: Flatten tools/ci/
+The WS sync path in `sync_shared_contracts_to_ui.mjs` wraps plain JSON Schema in a synthetic OpenAPI envelope. This works but is unnecessarily complex. A simpler approach:
+- Use `json-schema-to-typescript` for WS types
+- Keep `openapi-typescript` only for HTTP types
 
-**Strategy**: Move `watch_pr_checks.py` from `tools/ci/` to `tools/`. Delete the empty `tools/ci/` directory.
-
-**Steps**:
-1. Move `tools/ci/watch_pr_checks.py` → `tools/watch_pr_checks.py`
-2. Update all references: `.github/copilot-instructions.md`, Makefile, any docs
-3. Delete `tools/ci/` directory
-4. Update any imports or path references
-
-## Implementation Sequence
-
-1. A4 (flatten tools/ci/ — smallest change, no dependencies)
-2. E1 (simplify E2E chain — self-contained test infra change)
-3. T1 (consolidate phase-builders — test helper cleanup)
-4. T2 (localize integration helpers — inspect and clean up)
-5. E3 (unify UI build — CI workflow change)
-6. E4 (simplify WS schema sync — tool script cleanup)
-7. E2 (CI drift guard — hygiene test addition)
-
-## Dependencies on Other Chunks
-
-- E5 sync guard (Chunk 4) depends on E6 (Chunk 1) for `locations.py` as LOCATION_CODES source. No conflict with Chunk 5.
-- T1 and T2 are independent of all other chunks.
-- E1/E2/E3 touch CI infrastructure but don't conflict with other chunks.
-- A4 (tools/ flatten) doesn't affect other chunks since the `watch_pr_checks.py` path is referenced in copilot-instructions.md (updated in Chunk 1's doc updates if needed, or done here).
-
-## Risks and Tradeoffs
-
-- **E1**: Low risk. Deleting a script and inlining its surviving logic. May break Makefile targets that reference `run_full_suite.py`.
-- **E2**: Very low risk. Adding a hygiene test, not changing production code.
-- **E3**: Medium risk. Changing CI workflow requires being very confident the Python script replicates the inline shell behavior.
-- **E4**: Medium risk. Any change to codegen scripts could produce different TypeScript output. Must verify output is identical.
-- **T1**: Low risk. Replacing builder definitions with imports. If APIs differ, need careful adaptation.
-- **T2**: Low risk. Inspecting and potentially cleaning up test helpers. No production code changes.
-- **A4**: Zero risk. File move with reference updates.
-
-## Validation Steps
-
-1. `make test-all` — full CI-parity run to catch any breakage
-2. `pytest -q apps/server/tests/regression/` — regression suite
-3. `make lint && make typecheck-backend` — code quality
-4. `cd apps/ui && npm run typecheck && npm run build` — frontend (for E4 changes)
-5. Verify generated TypeScript output is identical after E4 changes
-6. Check Makefile targets still work after file moves
-
-## Required Documentation Updates
-
-- `docs/ai/repo-map.md` — update tools/ section
-- `docs/testing.md` — update runner references
-- `.github/copilot-instructions.md` — update `watch_pr_checks.py` path
-- `tools/tests/README.md` or similar if exists
-
-## Required AI Instruction Updates
-
-- `.github/instructions/tests.instructions.md`: "Use sample_scenarios.py builders as the single source for test fixture construction. Do not duplicate builder functions across helper modules."
-- `.github/instructions/general.instructions.md`: "Reference tools/ scripts by flat paths. Do not create subdirectories for single files."
-
-## Required Test Updates
-
-- Fix any tests that import from `run_full_suite.py` or reference it
-- Add hygiene test for CI job list parity (E2)
-- Update test fixture imports after T1 consolidation
+However, the current approach is functional and the cost is ~30 lines of extra code. **Defer this unless a natural opportunity arises.**
 
 ## Simplification Crosswalk
 
-| Finding | Validation | Root Cause | Steps | Areas Changed | What's Removed | Verification |
-|---------|-----------|------------|-------|---------------|----------------|--------------|
-| E1 | CONFIRMED (330 lines, 14 flags, 4 always-skip) | Layered scripts without consolidation | Inline Docker logic into run_e2e_parallel.py, delete run_full_suite.py | tools/tests/ | 1 file (~330 lines) | make test-all passes |
-| E2 | CONFIRMED (explicit sync warning, 7 mirrored jobs) | No shared job definition | Add hygiene test for job-name parity | tests/hygiene/ | 0 code removed, drift guard added | Hygiene test passes |
-| E3 | CONFIRMED (2 separate UI build implementations) | Scripts created at different times | Make release workflow call build_ui_static.py | main-release.yml, build_ui_static.py | ~8 lines inline shell from workflow | Release workflow functions correctly |
-| E4 | CONFIRMED (48% of sync script is fake-OpenAPI) | Reusing openapi-typescript for non-OpenAPI schemas | Simplify conversion logic | sync_shared_contracts_to_ui.mjs | ~30 lines of verbose conversion | Generated TS output identical |
-| T1 | CONFIRMED (3 of 7 builders duplicated) | DSL added after ground-truth without consolidation | Use sample_scenarios.py builders instead of duplicates | scenario_ground_truth.py | 3 duplicated builder functions | All 3 test consumers pass |
-| T2 | CONFIRMED (4 consumers, patches privates) | Public API lacks test-friendly seams | Inspect and document, clean up where possible | report_analysis_integration.py | Private patches replaced where feasible | All 4 consumer tests pass |
-| A4 | CONFIRMED (1-file subdirectory) | Speculative directory creation | Move file, delete directory | tools/ci/ → tools/ | 1 empty directory | All path references updated |
+### H1+H3 → Config knob bloat
+- **Validation**: 24/31 fields never overridden; 16 are strong inline candidates
+- **Root cause**: Over-general config designed for maximum flexibility
+- **Steps**: Inline 16 constants, remove from config dataclass/defaults/parsing
+- **Removable**: 16 fields from _config_defaults.py, corresponding dataclass fields, parsing code
+- **Verification**: All config files still load; all tests pass; no runtime changes
+
+### H2 → Update config dataclass proliferation
+- **Validation**: 3 eliminable dataclasses (UpdateReleaseConfig, UpdateServiceControlConfig, UpdateWifiConfig)
+- **Root cause**: Config-as-interface habit
+- **Steps**: Delete 3 dataclasses, pass values directly or use module constants
+- **Removable**: 3 dataclass definitions, construction code in __init__
+- **Verification**: Update tests pass; update workflow runs correctly
+
+### G1+G2+G3 → Makefile test target redundancy
+- **Validation**: 3 coverage variants nearly identical
+- **Steps**: Consolidate to 1 parameterized target
+- **Removable**: 2 Makefile targets (~6 lines)
+- **Verification**: `make coverage` works; documented alternatives work
+
+### I1 → Contract sync pipeline
+- **Validation**: WS path has unnecessary OpenAPI wrapping
+- **Steps**: DEFER — functional, low impact
+- **Removable**: Potentially ~30 lines, but not worth the risk/effort now
+- **Verification**: N/A (deferred)
+
+### I3 → Ghost vibesensor.core references
+- **Validation**: 10 stale references, 1 actively broken (build.sh)
+- **Steps**: Fix all 10 references to current paths
+- **Removable**: 0 lines (rewrites, not deletions)
+- **Verification**: `grep -r "vibesensor.core\|vibesensor/core" docs/ .github/ README.md tools/ infra/` returns 0
+
+### A3 → UI feature factory (REJECTED)
+- Clean composition pattern, no over-engineering
+- No action needed
+
+## Dependencies on Other Chunks
+
+- Ghost reference fixes (Step 1) are independent of all other chunks
+- Config inlining (Step 2) is independent but should be done after Chunk 3 (which may change how some config values are accessed in metrics_log)
+- Update dataclass elimination (Step 3) is independent
+- Makefile changes (Step 4) are independent
+
+## Risks and Tradeoffs
+
+1. **Config inlining**: Makes these values non-configurable via YAML. Risk: an advanced user might want to change sample_rate_hz for different hardware. Mitigated: these are hardware-determined values; changing hardware would require code changes anyway.
+2. **Build artifact removal**: If someone depends on `apps/server/build/`, removing it from git would break them. Risk: very low — build artifacts should be generated, not committed. Mitigated: .gitignore entry prevents future accidental commits.
+3. **Makefile consolidation**: Users with `make coverage-html` in scripts or muscle memory will need to adapt. Risk: low — this is a dev convenience target.
+
+## Validation Steps
+
+1. `grep -r "vibesensor.core\|vibesensor/core" docs/ .github/ README.md tools/ infra/ apps/server/vibesensor/BOUNDARIES.md` — returns 0
+2. `make lint` — clean
+3. `make typecheck-backend` — clean
+4. `pytest -q apps/server/tests/` — all tests pass
+5. Config loading: `python -c "from vibesensor.config import load_config; load_config('apps/server/config.yaml')"` — no errors
+6. Update tests: `pytest -q apps/server/tests/update/` — all pass
+7. `make test-all` — full CI-parity suite passes
+
+## Required Documentation Updates
+
+- All 10 ghost vibesensor.core references fixed (Step 1)
+- docs/ai/repo-map.md — update config section to note which values are now constants
+- README.md — update architecture section
+
+## Required AI Instruction Updates
+
+- .github/copilot-instructions.md — fix vibesensor/core path references
+- .github/instructions/backend.instructions.md — fix vibesensor.core.vibration_strength reference
+- Add: "Do not add config knobs for values that are hardware-determined, internal design constants, or always-true booleans. Use Python constants instead."

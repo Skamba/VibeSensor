@@ -75,64 +75,15 @@ class _MetricsSessionState:
 
     def __init__(self, *, enabled: bool, no_data_timeout_s: float) -> None:
         self._lock = RLock()
-        self._enabled = bool(enabled)
-        self._no_data_timeout_s = max(1.0, float(no_data_timeout_s))
-        self._run_id: str | None = None
-        self._run_start_utc: str | None = None
-        self._run_start_mono_s: float | None = None
-        self._last_data_progress_mono_s: float | None = None
+        self.enabled = bool(enabled)
+        self.no_data_timeout_s = max(1.0, float(no_data_timeout_s))
+        self.run_id: str | None = None
+        self.run_start_utc: str | None = None
+        self.run_start_mono_s: float | None = None
+        self.last_data_progress_mono_s: float | None = None
         self._session_start_frames_total = 0
         self._last_active_frames_total = 0
-        self._shutdown_requested = False
-
-    @property
-    def enabled(self) -> bool:
-        with self._lock:
-            return self._enabled
-
-    @enabled.setter
-    def enabled(self, value: bool) -> None:
-        with self._lock:
-            self._enabled = bool(value)
-
-    @property
-    def run_id(self) -> str | None:
-        with self._lock:
-            return self._run_id
-
-    @property
-    def run_start_utc(self) -> str | None:
-        with self._lock:
-            return self._run_start_utc
-
-    @property
-    def run_start_mono_s(self) -> float | None:
-        with self._lock:
-            return self._run_start_mono_s
-
-    @property
-    def last_data_progress_mono_s(self) -> float | None:
-        with self._lock:
-            return self._last_data_progress_mono_s
-
-    @last_data_progress_mono_s.setter
-    def last_data_progress_mono_s(self, value: float | None) -> None:
-        with self._lock:
-            self._last_data_progress_mono_s = float(value) if value is not None else None
-
-    @property
-    def shutdown_requested(self) -> bool:
-        with self._lock:
-            return self._shutdown_requested
-
-    @property
-    def no_data_timeout_s(self) -> float:
-        with self._lock:
-            return self._no_data_timeout_s
-
-    def set_shutdown_requested(self, requested: bool) -> None:
-        with self._lock:
-            self._shutdown_requested = bool(requested)
+        self.shutdown_requested = False
 
     def start_new_session(
         self,
@@ -143,11 +94,11 @@ class _MetricsSessionState:
         current_total: int,
     ) -> MetricsSessionSnapshot:
         with self._lock:
-            self._enabled = True
-            self._run_id = run_id
-            self._run_start_utc = start_time_utc
-            self._run_start_mono_s = start_mono_s
-            self._last_data_progress_mono_s = start_mono_s
+            self.enabled = True
+            self.run_id = run_id
+            self.run_start_utc = start_time_utc
+            self.run_start_mono_s = start_mono_s
+            self.last_data_progress_mono_s = start_mono_s
             self._session_start_frames_total = current_total
             self._last_active_frames_total = current_total
             return MetricsSessionSnapshot(
@@ -158,27 +109,27 @@ class _MetricsSessionState:
 
     def stop_session(self) -> None:
         with self._lock:
-            self._enabled = False
-            self._run_id = None
-            self._run_start_utc = None
-            self._run_start_mono_s = None
-            self._last_data_progress_mono_s = None
+            self.enabled = False
+            self.run_id = None
+            self.run_start_utc = None
+            self.run_start_mono_s = None
+            self.last_data_progress_mono_s = None
             self._session_start_frames_total = 0
             self._last_active_frames_total = 0
 
     def snapshot(self) -> MetricsSessionSnapshot | None:
         with self._lock:
             if (
-                not self._enabled
-                or not self._run_id
-                or not self._run_start_utc
-                or self._run_start_mono_s is None
+                not self.enabled
+                or not self.run_id
+                or not self.run_start_utc
+                or self.run_start_mono_s is None
             ):
                 return None
             return MetricsSessionSnapshot(
-                run_id=self._run_id,
-                start_time_utc=self._run_start_utc,
-                start_mono_s=self._run_start_mono_s,
+                run_id=self.run_id,
+                start_time_utc=self.run_start_utc,
+                start_mono_s=self.run_start_mono_s,
             )
 
     def pending_flush_snapshot(
@@ -189,10 +140,10 @@ class _MetricsSessionState:
     ) -> MetricsSessionSnapshot | None:
         with self._lock:
             if (
-                not self._enabled
-                or not self._run_id
-                or not self._run_start_utc
-                or self._run_start_mono_s is None
+                not self.enabled
+                or not self.run_id
+                or not self.run_start_utc
+                or self.run_start_mono_s is None
             ):
                 return None
             if history_run_created:
@@ -201,9 +152,9 @@ class _MetricsSessionState:
             elif current_total <= self._session_start_frames_total:
                 return None
             return MetricsSessionSnapshot(
-                run_id=self._run_id,
-                start_time_utc=self._run_start_utc,
-                start_mono_s=self._run_start_mono_s,
+                run_id=self.run_id,
+                start_time_utc=self.run_start_utc,
+                start_mono_s=self.run_start_mono_s,
             )
 
     def should_drop_prebuilt_rows(self, *, current_total: int, history_run_created: bool) -> bool:
@@ -214,17 +165,17 @@ class _MetricsSessionState:
         with self._lock:
             if current_total != self._last_active_frames_total:
                 self._last_active_frames_total = current_total
-                self._last_data_progress_mono_s = now_mono_s
+                self.last_data_progress_mono_s = now_mono_s
 
     def mark_rows_written(self, *, now_mono_s: float) -> None:
         with self._lock:
-            self._last_data_progress_mono_s = now_mono_s
+            self.last_data_progress_mono_s = now_mono_s
 
     def should_auto_stop(self, *, now_mono_s: float) -> bool:
         with self._lock:
-            if self._last_data_progress_mono_s is None:
+            if self.last_data_progress_mono_s is None:
                 return False
-            return (now_mono_s - self._last_data_progress_mono_s) >= self._no_data_timeout_s
+            return (now_mono_s - self.last_data_progress_mono_s) >= self.no_data_timeout_s
 
 
 # ---------------------------------------------------------------------------
@@ -253,87 +204,39 @@ class _MetricsPersistenceCoordinator:
         self._metadata_builder = metadata_builder
         self._current_run_id: str | None = None
         self._lock = RLock()
-        self._history_run_created = False
-        self._history_create_fail_count = 0
+        self.history_run_created = False
+        self.history_create_fail_count = 0
         self._retry_cycle_count = 0
-        self._written_sample_count = 0
-        self._dropped_sample_count = 0
-        self._last_write_error: str | None = None
+        self.written_sample_count = 0
+        self.dropped_sample_count = 0
+        self.last_write_error: str | None = None
         self._retry_after_mono_s: float = 0.0
-        self._last_write_duration_s: float = 0.0
-        self._max_write_duration_s: float = 0.0
-
-    @property
-    def history_run_created(self) -> bool:
-        with self._lock:
-            return self._history_run_created
-
-    @history_run_created.setter
-    def history_run_created(self, value: bool) -> None:
-        with self._lock:
-            self._history_run_created = bool(value)
-
-    @property
-    def written_sample_count(self) -> int:
-        with self._lock:
-            return self._written_sample_count
-
-    @written_sample_count.setter
-    def written_sample_count(self, value: int) -> None:
-        with self._lock:
-            self._written_sample_count = max(0, int(value))
-
-    @property
-    def dropped_sample_count(self) -> int:
-        with self._lock:
-            return self._dropped_sample_count
-
-    @property
-    def history_create_fail_count(self) -> int:
-        with self._lock:
-            return self._history_create_fail_count
-
-    @property
-    def last_write_duration_s(self) -> float:
-        with self._lock:
-            return self._last_write_duration_s
-
-    @property
-    def max_write_duration_s(self) -> float:
-        with self._lock:
-            return self._max_write_duration_s
+        self.last_write_duration_s: float = 0.0
+        self.max_write_duration_s: float = 0.0
 
     def status_snapshot(self) -> PersistenceStatusSnapshot:
         """Read all status-relevant fields under a single lock acquisition."""
         with self._lock:
             return PersistenceStatusSnapshot(
-                write_error=self._last_write_error,
-                written_sample_count=self._written_sample_count,
-                dropped_sample_count=self._dropped_sample_count,
+                write_error=self.last_write_error,
+                written_sample_count=self.written_sample_count,
+                dropped_sample_count=self.dropped_sample_count,
             )
 
     def reset_for_new_session(self, run_id: str | None = None) -> None:
         with self._lock:
             self._current_run_id = run_id
-            self._history_run_created = False
-            self._history_create_fail_count = 0
+            self.history_run_created = False
+            self.history_create_fail_count = 0
             self._retry_cycle_count = 0
-            self._written_sample_count = 0
-            self._dropped_sample_count = 0
-            self._last_write_error = None
+            self.written_sample_count = 0
+            self.dropped_sample_count = 0
+            self.last_write_error = None
             self._retry_after_mono_s = 0.0
-
-    def set_last_write_error(self, message: str) -> None:
-        with self._lock:
-            self._last_write_error = message
-
-    def clear_last_write_error(self) -> None:
-        with self._lock:
-            self._last_write_error = None
 
     def ready_for_analysis(self, run_id: str | None) -> str | None:
         with self._lock:
-            if run_id and self._history_run_created and self._written_sample_count > 0:
+            if run_id and self.history_run_created and self.written_sample_count > 0:
                 return run_id
             return None
 
@@ -348,9 +251,9 @@ class _MetricsPersistenceCoordinator:
         with self._lock:
             if not self._run_id_matches(run_id):
                 return
-            if self._history_db is None or self._history_run_created:
+            if self._history_db is None or self.history_run_created:
                 return
-            if self._history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
+            if self.history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
                 if time.monotonic() < self._retry_after_mono_s:
                     return
                 self._retry_cycle_count += 1
@@ -360,24 +263,24 @@ class _MetricsPersistenceCoordinator:
                     run_id,
                     self._retry_cycle_count,
                 )
-                self._history_create_fail_count = 0
+                self.history_create_fail_count = 0
         metadata = self._metadata_builder(run_id, start_time_utc)
         try:
             self._history_db.create_run(run_id, start_time_utc, metadata)  # type: ignore[arg-type]
             with self._lock:
                 if not self._run_id_matches(run_id):
                     return
-                self._history_run_created = True
-                self._history_create_fail_count = 0
+                self.history_run_created = True
+                self.history_create_fail_count = 0
                 self._retry_cycle_count = 0
                 self._retry_after_mono_s = 0.0
-            self.clear_last_write_error()
+            self.last_write_error = None
         except (sqlite3.Error, OSError) as exc:
             with self._lock:
                 if not self._run_id_matches(run_id):
                     return
-                self._history_create_fail_count += 1
-                fail_count = self._history_create_fail_count
+                self.history_create_fail_count += 1
+                fail_count = self.history_create_fail_count
                 if fail_count >= _MAX_HISTORY_CREATE_RETRIES:
                     cooldown = min(10.0, _RETRY_COOLDOWN_BASE_S * (2**self._retry_cycle_count))
                     self._retry_after_mono_s = time.monotonic() + cooldown
@@ -386,7 +289,7 @@ class _MetricsPersistenceCoordinator:
                 f" (attempt {fail_count}"
                 f"/{_MAX_HISTORY_CREATE_RETRIES}): {exc}"
             )
-            self.set_last_write_error(msg)
+            self.last_write_error = msg
             if fail_count >= _MAX_HISTORY_CREATE_RETRIES:
                 cooldown = min(10.0, _RETRY_COOLDOWN_BASE_S * (2**self._retry_cycle_count))
                 LOGGER.error(
@@ -422,7 +325,7 @@ class _MetricsPersistenceCoordinator:
             with self._lock:
                 if not self._run_id_matches(run_id):
                     return AppendRowsResult(history_created=False, rows_written=0)
-                history_created = self._history_run_created
+                history_created = self.history_run_created
             if history_created:
                 last_exc: Exception | None = None
                 for attempt in range(_MAX_APPEND_RETRIES):
@@ -433,19 +336,19 @@ class _MetricsPersistenceCoordinator:
                         with self._lock:
                             if not self._run_id_matches(run_id):
                                 return AppendRowsResult(history_created=True, rows_written=0)
-                            self._written_sample_count += len(rows)
-                            self._last_write_duration_s = write_dur
-                            if write_dur > self._max_write_duration_s:
-                                self._max_write_duration_s = write_dur
-                        self.clear_last_write_error()
+                            self.written_sample_count += len(rows)
+                            self.last_write_duration_s = write_dur
+                            if write_dur > self.max_write_duration_s:
+                                self.max_write_duration_s = write_dur
+                        self.last_write_error = None
                         return AppendRowsResult(history_created=True, rows_written=len(rows))
                     except (sqlite3.Error, OSError) as exc:
                         last_exc = exc
                         if attempt < _MAX_APPEND_RETRIES - 1:
                             time.sleep(_APPEND_RETRY_DELAYS_S[attempt])
                 with self._lock:
-                    self._dropped_sample_count += len(rows)
-                self.set_last_write_error(f"history append_samples failed: {last_exc}")
+                    self.dropped_sample_count += len(rows)
+                self.last_write_error = f"history append_samples failed: {last_exc}"
                 LOGGER.warning(
                     "Failed to append %d samples to history DB after %d attempts",
                     len(rows),
@@ -454,8 +357,8 @@ class _MetricsPersistenceCoordinator:
                 )
                 return AppendRowsResult(history_created=True, rows_written=0)
             with self._lock:
-                self._dropped_sample_count += len(rows)
-                fail_count = self._history_create_fail_count
+                self.dropped_sample_count += len(rows)
+                fail_count = self.history_create_fail_count
             LOGGER.warning(
                 "Dropping %d sample(s) for run %s: history run not created (fail count %d/%d)",
                 len(rows),
@@ -467,12 +370,12 @@ class _MetricsPersistenceCoordinator:
         with self._lock:
             if not self._run_id_matches(run_id):
                 return AppendRowsResult(history_created=False, rows_written=0)
-            self._written_sample_count += len(rows)
+            self.written_sample_count += len(rows)
         return AppendRowsResult(history_created=False, rows_written=len(rows))
 
     def finalize_run(self, run_id: str, start_time_utc: str, end_utc: str) -> bool:
         with self._lock:
-            if not self._history_run_created:
+            if not self.history_run_created:
                 return True
         if self._history_db is None:
             return True
@@ -485,16 +388,16 @@ class _MetricsPersistenceCoordinator:
                 latest_metadata,  # type: ignore[arg-type]
             )
             if finalized is False:
-                self.set_last_write_error("history finalize_run skipped due to invalid state")
+                self.last_write_error = "history finalize_run skipped due to invalid state"
                 LOGGER.warning(
                     "History DB finalize_run_with_metadata skipped for run %s",
                     run_id,
                 )
                 return False
-            self.clear_last_write_error()
+            self.last_write_error = None
             return True
         except (sqlite3.Error, OSError) as exc:
-            self.set_last_write_error(f"history finalize_run failed: {exc}")
+            self.last_write_error = f"history finalize_run failed: {exc}"
             LOGGER.warning("Failed to finalize run in history DB", exc_info=True)
             return False
 
@@ -578,8 +481,8 @@ class MetricsLogger:
         )
         self._post_analysis = PostAnalysisWorker(
             history_db=history_db,
-            error_callback=self._persistence.set_last_write_error,
-            clear_error_callback=self._persistence.clear_last_write_error,
+            error_callback=lambda msg: setattr(self._persistence, "last_write_error", msg),
+            clear_error_callback=lambda: setattr(self._persistence, "last_write_error", None),
         )
 
         if config.enabled:
@@ -842,7 +745,7 @@ class MetricsLogger:
     def shutdown_report(self, timeout_s: float = 30.0) -> MetricsShutdownReport:
         with self._lock:
             active_run_id_before_stop = self._run_id
-        self._session.set_shutdown_requested(True)
+        self._session.shutdown_requested = True
         try:
             final_status = self.stop_logging()
             analysis_completed = self.wait_for_post_analysis(timeout_s)
@@ -858,7 +761,7 @@ class MetricsLogger:
                 final_status=final_status,
             )
         finally:
-            self._session.set_shutdown_requested(False)
+            self._session.shutdown_requested = False
 
     def shutdown(self, timeout_s: float = 30.0) -> bool:
         return self.shutdown_report(timeout_s).completed
@@ -907,13 +810,13 @@ class MetricsLogger:
                         )
                         self.stop_logging(_only_if_run_id=snapshot.run_id)
             except TimeoutError:
-                self._persistence.set_last_write_error("metrics logger DB call timed out")
+                self._persistence.last_write_error = "metrics logger DB call timed out"
                 LOGGER.warning(
                     "Metrics logger DB call exceeded %.1fs timeout; skipping tick.",
                     _DB_THREAD_TIMEOUT_S,
                 )
             except Exception as exc:
-                self._persistence.set_last_write_error(f"metrics logger tick failed: {exc}")
+                self._persistence.last_write_error = f"metrics logger tick failed: {exc}"
                 LOGGER.warning(
                     "Metrics logger tick failed; will retry next interval.",
                     exc_info=True,

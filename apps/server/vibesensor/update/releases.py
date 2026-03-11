@@ -12,11 +12,6 @@ from .status import UpdateStatusTracker
 
 
 @dataclass(frozen=True, slots=True)
-class UpdateReleaseConfig:
-    rollback_dir: Path
-
-
-@dataclass(frozen=True, slots=True)
 class UpdateReleaseCheck:
     release: ReleaseInfo | None
     latest_tag: str = ""
@@ -26,18 +21,18 @@ class UpdateReleaseCheck:
 class UpdateReleaseService:
     """Checks GitHub releases and downloads the selected wheel."""
 
-    __slots__ = ("_config", "_tracker")
+    __slots__ = ("_rollback_dir", "_tracker")
 
-    def __init__(self, *, tracker: UpdateStatusTracker, config: UpdateReleaseConfig) -> None:
+    def __init__(self, *, tracker: UpdateStatusTracker, rollback_dir: Path) -> None:
         self._tracker = tracker
-        self._config = config
+        self._rollback_dir = rollback_dir
 
     async def check_for_update(self, current_version: str) -> UpdateReleaseCheck:
         from vibesensor.release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
 
         fetcher = ServerReleaseFetcher(
             ReleaseFetcherConfig(
-                rollback_dir=str(self._config.rollback_dir),
+                rollback_dir=str(self._rollback_dir),
             ),
         )
         try:
@@ -63,7 +58,7 @@ class UpdateReleaseService:
 
         fetcher = ServerReleaseFetcher(
             ReleaseFetcherConfig(
-                rollback_dir=str(self._config.rollback_dir),
+                rollback_dir=str(self._rollback_dir),
             ),
         )
         try:

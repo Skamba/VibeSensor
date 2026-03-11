@@ -11,22 +11,22 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.analysis import summarize_run_data
-from vibesensor.analysis.findings_order_analysis import (
+from vibesensor.analysis.order_analysis import (
     compute_order_confidence as _compute_order_confidence,
 )
-from vibesensor.analysis.findings_order_analysis import (
+from vibesensor.analysis.order_analysis import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
-from vibesensor.analysis.findings_order_analysis import (
+from vibesensor.analysis.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.analysis.ranking import phase_adjusted_ranking_score as _phase_ranking_score
-from vibesensor.analysis.summary_phases import build_phase_timeline as _build_phase_timeline
-from vibesensor.analysis.summary_suitability import (
+from vibesensor.analysis.summary_builder import build_phase_timeline as _build_phase_timeline
+from vibesensor.analysis.summary_builder import (
     build_run_suitability_checks as _build_run_suitability_checks,
 )
-from vibesensor.analysis.summary_suitability import (
+from vibesensor.analysis.summary_builder import (
     compute_accel_statistics as _compute_accel_statistics,
 )
 from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig

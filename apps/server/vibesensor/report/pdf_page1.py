@@ -9,8 +9,6 @@ from reportlab.pdfgen.canvas import Canvas
 
 from ..report_i18n import tr as _tr
 from .pdf_drawing import _cert_display, _draw_panel, _hex, _safe, _strength_with_peak
-from .pdf_page_layouts import HeaderColumnsLayout, build_page1_layout
-from .pdf_render_context import PdfRenderContext
 from .pdf_style import (
     DATA_TRUST_LABEL_W,
     DISCLAIMER_Y_OFFSET,
@@ -28,13 +26,16 @@ from .pdf_style import (
     PAGE_H,
     PANEL_BG,
     PANEL_HEADER_H,
+    REPORT_COLORS,
     SOFT_BG,
     SUB_CLR,
     TEXT_CLR,
+    HeaderColumnsLayout,
+    PdfRenderContext,
+    build_page1_layout,
 )
 from .pdf_text import _draw_kv, _draw_kv_column, _draw_text, _kv_consumed_height, _wrap_lines
 from .report_data import NextStep, ReportTemplateData, SystemFindingCard
-from .theme import REPORT_COLORS
 
 # -- Section helpers (merged from pdf_page1_sections) -------------------------
 

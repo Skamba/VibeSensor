@@ -996,7 +996,7 @@ mods = [
     "fastapi",
     "uvicorn",
     "vibesensor",
-    "vibesensor.core",
+    "vibesensor.vibration_strength",
 ]
 for mod in mods:
     importlib.import_module(mod)

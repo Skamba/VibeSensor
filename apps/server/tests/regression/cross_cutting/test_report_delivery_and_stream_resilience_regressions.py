@@ -54,40 +54,11 @@ class TestEspFlashManagerCancelledError:
         assert "raise" in cancel_block, "CancelledError handler must re-raise the exception"
 
 
-# ── 2. PDF diagram SOURCE_LEGEND_TITLE dead fallback ─────────────────────
-
-
-class TestPdfDiagramDeadFallback:
-    """Verify the dead English fallback for SOURCE_LEGEND_TITLE was removed."""
-
-    def test_no_inline_english_fallback(self):
-        """pdf_diagram_render.py should not contain 'Finding source:' as a fallback."""
-        assert 'else "Finding source:"' not in _PDF_DIAGRAM_SRC, (
-            "Dead English fallback 'Finding source:' should be removed"
-        )
-
-    def test_tr_called_directly(self):
-        """tr('SOURCE_LEGEND_TITLE') should be called without a conditional guard."""
-        assert 'tr("SOURCE_LEGEND_TITLE")' in _PDF_DIAGRAM_SRC, (
-            "tr('SOURCE_LEGEND_TITLE') should remain as a direct call"
-        )
-        # The old pattern was: tr("SOURCE_LEGEND_TITLE") if tr("SOURCE_LEGEND_TITLE") != "SOURCE_LEGEND_TITLE"
-        assert _PDF_DIAGRAM_SRC.count('tr("SOURCE_LEGEND_TITLE")') < 3, (
-            "Should not have the old double-invocation conditional pattern"
-        )
-
-
 # ── 3. PDF diagram bare assert → ValueError ─────────────────────────────
 
 
 class TestPdfDiagramAssertReplacement:
     """Verify bare assert replaced with ValueError for label placement."""
-
-    def test_no_bare_assert_best(self):
-        """pdf_diagram_render.py should not use bare assert for best placement."""
-        assert "assert best is not None" not in _PDF_DIAGRAM_SRC, (
-            "Bare 'assert best is not None' should be replaced with ValueError"
-        )
 
     def test_value_error_on_no_placement(self):
         """When no label placement is found, ValueError should be raised."""
@@ -101,13 +72,6 @@ class TestPdfDiagramAssertReplacement:
 
 class TestOwnsPoolRemoval:
     """Verify _owns_pool dead code was removed from SignalProcessor."""
-
-    def test_no_owns_pool_attribute(self):
-        """SignalProcessor should not have _owns_pool attribute."""
-        source = inspect.getsource(SignalProcessor.__init__)
-        assert "_owns_pool" not in source, (
-            "Dead _owns_pool flag should be removed from SignalProcessor.__init__"
-        )
 
     def test_constructor_still_works(self):
         """SignalProcessor can still be constructed with or without a pool."""
@@ -153,23 +117,6 @@ class TestReportCliErrorHandling:
 
 class TestWebSocketHubCircuitBreaker:
     """Verify consecutive failure tracking in ws_hub.run()."""
-
-    _WS_HUB_RUN_SRC = inspect.getsource(WebSocketHub.run)
-
-    def test_run_method_has_consecutive_failure_tracking(self):
-        """ws_hub.run() should track consecutive failures."""
-        assert "consecutive_failures" in self._WS_HUB_RUN_SRC, (
-            "run() should track consecutive failures"
-        )
-        assert "_MAX_CONSECUTIVE_FAILURES" in self._WS_HUB_RUN_SRC, (
-            "run() should have a max consecutive failures threshold"
-        )
-
-    def test_failure_counter_resets_on_success(self):
-        """After a successful tick, the failure counter should reset."""
-        assert "consecutive_failures = 0" in self._WS_HUB_RUN_SRC, (
-            "Failure counter should be reset to 0 on success"
-        )
 
     @pytest.mark.asyncio
     async def test_run_tolerates_failures_and_continues(self):

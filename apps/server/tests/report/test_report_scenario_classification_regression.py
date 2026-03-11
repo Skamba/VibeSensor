@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis.findings_persistent import _classify_peak_type
+from vibesensor.analysis.findings import _classify_peak_type
 from vibesensor.analysis.helpers import _location_label
 from vibesensor.peak_classification import classify_peak_hz
 from vibesensor.strength_bands import bucket_for_strength

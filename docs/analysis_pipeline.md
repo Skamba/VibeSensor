@@ -39,7 +39,7 @@ reasoning (pattern matching, order tracking, confidence scoring,
 localisation) to produce findings and reports.
 
 The mathematical primitives (e.g. `compute_vibration_strength_db`,
-`noise_floor_amp_p20_g`) live in the `vibesensor.core` package
+`noise_floor_amp_p20_g`) live in the `vibesensor` package
 and are used by both layers — this is intentional code reuse, not
 duplication.
 
@@ -80,7 +80,7 @@ in order. Each step runs exactly once per analysis invocation.
 | 10 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
 | 11 | Sensor analysis | `build_sensor_bundle`, `_sensor_intensity_by_location` | Per-location vibration intensity and connection stability |
 | 13 | Summary construction | `build_summary_payload` | Assemble the final summary dict |
-| 14 | Plot generation | `_plot_data`, `plot_series.py`, `plot_spectrum.py`, `plot_peak_table.py` | Build time/speed series, FFT aggregation, spectrograms, and peak table |
+| 14 | Plot generation | `_plot_data`, `plots.py` | Build time/speed series, FFT aggregation, spectrograms, and peak table |
 | 15 | Peak annotation | `_annotate_peaks_with_order_labels` | Label peaks with human-readable order names |
 
 ## Persisted Outputs
@@ -106,11 +106,11 @@ acceleration fields may still be expressed in g.
 ## Module Map
 
 - `__init__.py`: package-level public API re-exports.
-- Summary orchestration: `summary_builder.py`, `summary_phases.py`, `summary_suitability.py`, `summary_payload.py`.
-- Finding selection and ranking: `findings_*.py`, `ranking.py`, `top_cause_selection.py`.
+- Summary orchestration: `summary_builder.py`.
+- Finding selection and ranking: `findings.py`, `ranking.py`, `top_cause_selection.py`.
 - Domain helpers: `order_analysis.py`, `phase_segmentation.py`, `helpers.py`, `strength_labels.py`, `test_plan.py`, `pattern_parts.py`.
-- Report mapping: `diagnosis_candidates.py`, `report_mapping_common.py`, `report_mapping_context.py`, `report_mapping_models.py`, `report_mapping_pipeline.py`, `report_mapping_actions.py`, `report_mapping_peaks.py`, `report_mapping_systems.py`.
-- Plot shaping: `plot_data.py`, `plot_series.py`, `plot_spectrum.py`, `plot_peak_table.py`.
+- Report mapping: `diagnosis_candidates.py`, `vibesensor/report/mapping.py`.
+- Plot shaping: `plots.py`.
 
 ## Adding a New Analysis Step
 
@@ -120,7 +120,7 @@ acceleration fields may still be expressed in g.
    pipeline.  Each step should have clear inputs (prior step outputs
    or raw samples) and outputs (added to the summary dict).
 3. If the new output is needed by the renderer, update
-   `report_mapping_pipeline.py:map_summary()` and the
+   `report/mapping.py:map_summary()` and the
    `ReportTemplateData` dataclass.
 4. Export any new public symbol from `analysis/__init__.py`.
 5. Run `pytest apps/server/tests/analysis/test_analysis_architecture.py` to
