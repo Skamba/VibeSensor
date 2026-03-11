@@ -59,9 +59,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          cd apps/ui && npm ci && cd ../..
           node tools/config/sync_shared_contracts_to_ui.mjs
           cd apps/ui
-          npm ci
           npm run typecheck
           npm run build
 

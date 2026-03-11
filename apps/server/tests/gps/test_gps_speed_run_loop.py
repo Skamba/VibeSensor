@@ -123,26 +123,28 @@ async def test_run_reconnects_on_connection_failure(
     """run() retries after ConnectionRefusedError instead of crashing."""
     monitor = GPSSpeedMonitor(gps_enabled=True)
     attempt_count = 0
+    enough_attempts = asyncio.Event()
 
     async def _failing_open(*args, **kwargs):  # noqa: ANN002, ANN003
         nonlocal attempt_count
         attempt_count += 1
+        if attempt_count >= 2:
+            enough_attempts.set()
         raise ConnectionRefusedError("mock refused")
 
     monkeypatch.setattr(asyncio, "open_connection", _failing_open)
-    # Shrink reconnect delay so the test doesn't wait long
     monkeypatch.setattr("vibesensor.gps_speed._GPS_RECONNECT_DELAY_S", 0.02)
     monkeypatch.setattr("vibesensor.gps_speed._GPS_RECONNECT_MAX_DELAY_S", 0.04)
     caplog.set_level("WARNING")
 
     task = asyncio.create_task(monitor.run(host="127.0.0.1", port=9999))
-    await asyncio.sleep(0.15)
+    await asyncio.wait_for(enough_attempts.wait(), timeout=5.0)
 
     assert attempt_count >= 2, f"Expected at least 2 attempts, got {attempt_count}"
     assert monitor.speed_mps is None
 
     task.cancel()
-    await asyncio.wait_for(asyncio.gather(task, return_exceptions=True), timeout=1.0)
+    await asyncio.wait_for(asyncio.gather(task, return_exceptions=True), timeout=5.0)
 
     assert "GPS connection lost, retrying" in caplog.text
 
