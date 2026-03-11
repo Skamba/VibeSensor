@@ -26,6 +26,8 @@ Common commands
 - `make typecheck-backend`
 - `make docs-lint`
 - `make test-all` (CI-parity local suite: `python3 tools/tests/run_ci_parallel.py`)
+- `act -j backend-quality -W .github/workflows/ci.yml` (run a single CI job locally via `act`; requires Docker)
+- `act -l -W .github/workflows/ci.yml` (list CI jobs)
 - `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests` (faster backend-focused CI subset)
 - `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)
 - `python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
