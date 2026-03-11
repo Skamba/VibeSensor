@@ -112,6 +112,70 @@ wheel, validates packaged static assets, boots the packaged server, and checks
 that `/api/health` reaches readiness. It is complementary to Docker/e2e
 validation, not a duplicate of it.
 
+## Local CI with `act`
+
+[`act`](https://nektosact.com/) runs the real `.github/workflows/ci.yml` locally
+inside Docker containers. It is the primary path for CI-parity validation.
+
+Prerequisites: Docker and [`act`](https://nektosact.com/installation/index.html).
+
+### Raw `act` commands (primary interface)
+
+```bash
+# List available CI jobs
+act -l -W .github/workflows/ci.yml
+
+# Run all CI jobs (push event)
+act -W .github/workflows/ci.yml
+
+# Run a single job
+act -j backend-quality -W .github/workflows/ci.yml
+act -j backend-typecheck -W .github/workflows/ci.yml
+act -j frontend-typecheck -W .github/workflows/ci.yml
+act -j backend-tests -W .github/workflows/ci.yml
+act -j ui-smoke -W .github/workflows/ci.yml
+act -j release-smoke -W .github/workflows/ci.yml
+
+# Run with pull_request event (uses the included event payload)
+act pull_request -W .github/workflows/ci.yml -e tools/tests/act-event.json
+```
+
+### Optional wrapper (convenience only)
+
+A thin shell wrapper is provided at `tools/tests/run_ci_with_act.sh`. It checks
+prerequisites and passes arguments through to `act`:
+
+```bash
+./tools/tests/run_ci_with_act.sh -l               # list jobs
+./tools/tests/run_ci_with_act.sh                   # run all CI jobs
+./tools/tests/run_ci_with_act.sh -j backend-quality  # run one job
+```
+
+### Secrets
+
+No secrets are currently required. If needed in the future, copy
+`.secrets.act.example` to `.secrets.act`, fill in values, and the wrapper (or
+`--secret-file .secrets.act`) will pick them up. Never commit `.secrets.act`.
+
+### Known limitations under `act`
+
+| Job | Status | Notes |
+|---|---|---|
+| `backend-quality` | ✅ Fully supported | — |
+| `backend-typecheck` | ✅ Fully supported | — |
+| `frontend-typecheck` | ✅ Fully supported | — |
+| `ui-smoke` | ✅ Fully supported | — |
+| `release-smoke` | ✅ Fully supported | — |
+| `backend-tests` | ⚠️ Mostly works | 5 update-module tests that depend on system-level features (sudo, network interfaces) may fail inside the `act` container. All other tests pass. |
+| `e2e` | ❌ Not supported | Requires Docker-in-Docker. Run `make test-full-suite` or use GitHub CI instead. |
+
+### Relationship to `run_ci_parallel.py`
+
+`tools/tests/run_ci_parallel.py` (`make test-all`) remains available as a fast
+local convenience runner. `act` is the primary CI-parity mechanism — it runs the
+actual GitHub workflow file. Use `run_ci_parallel.py` when you want a faster
+non-containerized local run without Docker.
+
 ## Coverage reporting
 
 Use coverage runs to expose untested paths before they become release risk.

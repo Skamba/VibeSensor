@@ -15,6 +15,7 @@ Tests
 - Do not create local `FakeState` or fake runtime classes in individual test files. Use the shared `FakeState` from `conftest.py` and customise it via constructor arguments.
 - Do not add private bridge/shim methods to production classes solely for test access. Test sub-components directly (e.g. `proc._store._get_or_create_unlocked`, `proc._metrics.fft_params`) instead of adding pass-through wrappers on the outer class.
 - Default CI-aligned test suite: `make test-all` (runs `python3 tools/tests/run_ci_parallel.py` to mirror CI `backend-quality`, `backend-typecheck`, `frontend-typecheck`, `ui-smoke`, `backend-tests`, and `e2e` job groups in parallel).
+- CI-parity via `act`: `act -j backend-quality -W .github/workflows/ci.yml` (or any job id) runs the real GitHub workflow locally in Docker. See `docs/testing.md` for full usage, known limitations, and the optional wrapper at `tools/tests/run_ci_with_act.sh`.
 - Optional CI job subset for faster local iteration: `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests`.
 - Run a single feature area: `pytest -q apps/server/tests/analysis/` (or any subdirectory).
 - Optional focused backend pytest run (for faster iteration, not a CI substitute): `python3 tools/tests/pytest_progress.py --show-test-names apps/server/tests`.
