@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, TypeAlias, TypedDict, TypeGuard
+from typing import TYPE_CHECKING, NotRequired, Required, TypeAlias, TypedDict, TypeGuard
 
 from ..json_types import JsonObject, JsonValue
 from ..json_types import is_json_object as is_json_object  # re-export canonical source
 from .phase_segmentation import DrivingPhase
 
 if TYPE_CHECKING:
-    from .plot_data import PlotDataResult
+    from .plots import PlotDataResult
 
 Sample: TypeAlias = JsonObject
 """A single recorded sample row.  Alias for ``JsonObject``; used for
@@ -101,17 +101,14 @@ class FindingEvidenceMetrics(TypedDict, total=False):
     speed_uniformity: float | None
 
 
-class FindingRequired(TypedDict):
-    finding_id: str
-    suspected_source: str
-    evidence_summary: JsonValue
-    frequency_hz_or_order: JsonValue
-    amplitude_metric: AmplitudeMetric
-    confidence_0_to_1: float | None
-    quick_checks: list[JsonValue]
-
-
-class Finding(FindingRequired, total=False):
+class Finding(TypedDict, total=False):
+    finding_id: Required[str]
+    suspected_source: Required[str]
+    evidence_summary: Required[JsonValue]
+    frequency_hz_or_order: Required[JsonValue]
+    amplitude_metric: Required[AmplitudeMetric]
+    confidence_0_to_1: Required[float | None]
+    quick_checks: Required[list[JsonValue]]
     finding_type: str
     finding_key: str
     severity: str
@@ -262,8 +259,16 @@ class RunSuitabilityCheck(TypedDict):
     explanation: JsonValue
 
 
-class _SummaryDataRequired(TypedDict):
-    """Fields always present in the analysis summary payload."""
+class SummaryData(TypedDict):
+    """Full analysis summary payload.
+
+    Required fields are always set by :func:`build_summary_payload`.
+    Optional fields are set later in the pipeline or may be removed:
+
+    * ``samples`` – present unless ``include_samples=False`` removes it.
+    * ``plots`` – set by :func:`_plot_data` after initial assembly.
+    * ``analysis_metadata`` – set by post-analysis workers.
+    """
 
     file_name: str
     run_id: str
@@ -304,22 +309,9 @@ class _SummaryDataRequired(TypedDict):
     sensor_intensity_by_location: list[IntensityRow]
     run_suitability: list[RunSuitabilityCheck]
     data_quality: JsonObject
-
-
-class SummaryData(_SummaryDataRequired, total=False):
-    """Full analysis summary payload.
-
-    Required fields are always set by :func:`build_summary_payload`.
-    Optional fields are set later in the pipeline or may be removed:
-
-    * ``samples`` – present unless ``include_samples=False`` removes it.
-    * ``plots`` – set by :func:`_plot_data` after initial assembly.
-    * ``analysis_metadata`` – set by post-analysis workers.
-    """
-
-    samples: list[Sample]
-    plots: PlotDataResult
-    analysis_metadata: JsonObject
+    samples: NotRequired[list[Sample]]
+    plots: NotRequired[PlotDataResult]
+    analysis_metadata: NotRequired[JsonObject]
 
 
 PhaseLabel: TypeAlias = DrivingPhase | str

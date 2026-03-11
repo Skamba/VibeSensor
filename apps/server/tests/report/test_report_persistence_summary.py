@@ -9,12 +9,14 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.analysis import build_findings_for_samples
-from vibesensor.analysis.plot_peak_table import top_peaks_table_rows as _top_peaks_table_rows
-from vibesensor.analysis.plot_spectrum import (
+from vibesensor.analysis.plots import (
     spectrogram_from_peaks as _spectrogram_from_peaks,
 )
-from vibesensor.analysis.plot_spectrum import (
+from vibesensor.analysis.plots import (
     spectrogram_from_peaks_raw as _spectrogram_from_peaks_raw,
+)
+from vibesensor.analysis.plots import (
+    top_peaks_table_rows as _top_peaks_table_rows,
 )
 
 

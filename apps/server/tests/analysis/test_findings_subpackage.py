@@ -11,33 +11,29 @@ from typing import get_type_hints
 import pytest
 
 from vibesensor.analysis._types import AmplitudeMetric, Finding, MatchedPoint
-from vibesensor.analysis.findings_builder import _build_findings
-from vibesensor.analysis.findings_builder_support import _reference_missing_finding
-from vibesensor.analysis.findings_intensity import (
+from vibesensor.analysis.findings import (
+    _build_findings,
+    _classify_peak_type,
     _phase_speed_breakdown,
+    _phase_to_str,
+    _reference_missing_finding,
     _sensor_intensity_by_location,
     _speed_breakdown,
+    _speed_profile_from_points,
 )
-from vibesensor.analysis.findings_order_analysis import (
+from vibesensor.analysis.order_analysis import (
     OrderMatchAccumulator,
-)
-from vibesensor.analysis.findings_order_analysis import (
-    compute_order_confidence as _compute_order_confidence,
-)
-from vibesensor.analysis.findings_order_analysis import (
-    detect_diffuse_excitation as _detect_diffuse_excitation,
-)
-from vibesensor.analysis.findings_order_analysis import (
-    suppress_engine_aliases as _suppress_engine_aliases,
-)
-from vibesensor.analysis.findings_order_findings import (
     _compute_effective_match_rate,
     assemble_order_finding,
 )
-from vibesensor.analysis.findings_persistent import _classify_peak_type
-from vibesensor.analysis.findings_speed_profile import (
-    _phase_to_str,
-    _speed_profile_from_points,
+from vibesensor.analysis.order_analysis import (
+    compute_order_confidence as _compute_order_confidence,
+)
+from vibesensor.analysis.order_analysis import (
+    detect_diffuse_excitation as _detect_diffuse_excitation,
+)
+from vibesensor.analysis.order_analysis import (
+    suppress_engine_aliases as _suppress_engine_aliases,
 )
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.constants import (
@@ -53,23 +49,18 @@ class TestFindingsModuleStructure:
     """Verify the findings modules are independently importable."""
 
     def test_modules_importable_independently(self) -> None:
-        """Each findings module must be directly importable with expected symbols."""
+        """Consolidated findings module must be directly importable with expected symbols."""
         from vibesensor.analysis import (  # noqa: F401
-            findings_builder,
-            findings_builder_support,
-            findings_intensity,
-            findings_order_findings,
-            findings_persistent,
-            findings_speed_profile,
+            findings,
+            order_analysis,
         )
 
-        # Verify key symbols exist in each module
-        assert hasattr(findings_builder, "_build_findings")
-        assert hasattr(findings_intensity, "_sensor_intensity_by_location")
-        assert hasattr(findings_order_findings, "_build_order_findings")
-        assert hasattr(findings_speed_profile, "_speed_profile_from_points")
-        assert hasattr(findings_builder_support, "_reference_missing_finding")
-        assert hasattr(findings_persistent, "_build_persistent_peak_findings")
+        # Verify key symbols exist
+        assert hasattr(findings, "_build_findings")
+        assert hasattr(findings, "_sensor_intensity_by_location")
+        assert hasattr(findings, "_reference_missing_finding")
+        assert hasattr(findings, "_build_persistent_peak_findings")
+        assert hasattr(order_analysis, "_build_order_findings")
 
 
 class TestCanonicalFindingModel:

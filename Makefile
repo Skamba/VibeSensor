@@ -1,4 +1,4 @@
-.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-all test-full-suite sync-contracts coverage coverage-html coverage-strict smoke loc docs-lint
+.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-all test-full-suite sync-contracts coverage smoke loc docs-lint
 
 setup:
 	python3 -m pip install --upgrade pip
@@ -31,14 +31,8 @@ test-full-suite:
 sync-contracts:
 	cd apps/ui && npm run sync:contracts
 
-coverage:
-	cd apps/server && python3 -m pytest -q -m "not selenium" --cov=vibesensor --cov-report=term-missing:skip-covered tests
-
-coverage-html:
-	cd apps/server && python3 -m pytest -q -m "not selenium" --cov=vibesensor --cov-report=term-missing:skip-covered --cov-report=html:../../artifacts/coverage/html tests
-
-coverage-strict:
-	cd apps/server && python3 -m pytest -q -m "not selenium" --cov=vibesensor --cov-report=term-missing:skip-covered --cov-fail-under=80 tests
+coverage:  ## COV_OPTS="--cov-report=html:../../artifacts/coverage/html" or "--cov-fail-under=80"
+	cd apps/server && python3 -m pytest -q -m "not selenium" --cov=vibesensor --cov-report=term-missing:skip-covered $(COV_OPTS) tests
 
 smoke:
 	vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server

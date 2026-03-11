@@ -41,11 +41,6 @@ ANALYSIS_SCHEMA_VERSION = 2
 SCHEMA_VERSION = 7
 
 SCHEMA_SQL = """\
-CREATE TABLE IF NOT EXISTS schema_meta (
-    key   TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS runs (
     run_id                  TEXT PRIMARY KEY,
     status                  TEXT NOT NULL DEFAULT 'recording'

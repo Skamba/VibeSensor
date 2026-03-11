@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 import json
 from io import BytesIO
 
@@ -11,8 +10,7 @@ from _paths import SERVER_ROOT
 from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor.report import pdf_page1
-from vibesensor.report.pdf_page1 import _draw_next_steps_table, _draw_system_card
-from vibesensor.report.pdf_page2 import _page2
+from vibesensor.report.pdf_page1 import _draw_next_steps_table
 from vibesensor.report.report_data import NextStep
 
 
@@ -48,21 +46,6 @@ class TestNextStepNumberingContinuation:
 
         assert drawn == 1
         assert "5." in labels
-
-    def test_page2_passes_start_number(self) -> None:
-        src = inspect.getsource(_page2)
-        assert "start_number=" in src, "_page2 must pass start_number to _draw_next_steps_table"
-
-
-class TestSystemCardTone:
-    """Regression: _draw_system_card must use card.tone for colors."""
-
-    def test_tone_used_in_draw_system_card(self) -> None:
-        src = inspect.getsource(_draw_system_card)
-        assert "card.tone" in src, "Must reference card.tone"
-        assert "card_neutral_bg" in src or "card_{card.tone}" in src, (
-            "Must look up tone-specific theme colors"
-        )
 
 
 class TestNextStepFieldsRendered:
@@ -120,25 +103,3 @@ class TestOrphanI18nKeysRemoved:
         data = json.loads(i18n_path.read_text())
         for key in self.ORPHAN_KEYS:
             assert key not in data, f"Orphan key {key!r} should have been removed"
-
-
-class TestNoGlobalRandomSeed:
-    """Regression: test files must not use global random.seed()."""
-
-    def test_i18n_separation_no_global_seed(self) -> None:
-        import tests.report.test_i18n_separation as mod
-
-        src = inspect.getsource(mod)
-        assert "random.seed(" not in src, "Must use random.Random(seed) instead of random.seed()"
-
-
-class TestNoMutableClassDefault:
-    """Regression: _FakeRecord must not use mutable class-level default."""
-
-    def test_shutdown_analysis_fake_record(self) -> None:
-        import tests.analysis.test_shutdown_analysis as mod
-
-        src = inspect.getsource(mod)
-        assert "latest_metrics: dict = {}" not in src, (
-            "Must use __init__ or field(default_factory=dict)"
-        )

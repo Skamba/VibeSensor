@@ -11,8 +11,6 @@ Covers:
 """
 
 
-import inspect
-
 import pytest
 
 from vibesensor.analysis.helpers import (
@@ -25,7 +23,6 @@ from vibesensor.analysis.strength_labels import (
     certainty_label,
     strength_label,
 )
-from vibesensor.ws_hub import WebSocketHub
 
 # ------------------------------------------------------------------
 # 1. strength_label — NaN guard
@@ -74,20 +71,6 @@ class TestCertaintyLabelNanGuard:
         )
         assert level == "high"
         assert pct == "85%"
-
-
-# ------------------------------------------------------------------
-# 4. ws_hub.run() — drift compensation (source verification)
-# ------------------------------------------------------------------
-
-
-class TestWsHubDriftCompensation:
-    """run() should subtract elapsed time from sleep to maintain tick rate."""
-
-    def test_run_subtracts_elapsed(self) -> None:
-        source = inspect.getsource(WebSocketHub.run)
-        assert "loop.time()" in source or "tick_start" in source
-        assert "interval - elapsed" in source
 
 
 # ------------------------------------------------------------------

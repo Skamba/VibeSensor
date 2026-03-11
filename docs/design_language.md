@@ -27,7 +27,7 @@ Web tokens are defined in:
 - `apps/ui/src/styles/app.css` (`:root` + `@media (prefers-color-scheme: dark)`)
 
 Report tokens are defined in:
-- `apps/server/vibesensor/report/theme.py`
+- `apps/server/vibesensor/report/pdf_style.py`
 
 ## Theme
 - **Auto theme**: default follows system preference (`prefers-color-scheme`).
@@ -88,14 +88,14 @@ The generated PDF uses A4 portrait and is structured as a **diagnostic worksheet
 | `strength_text(db_value, lang)` | `apps/server/vibesensor/analysis/strength_labels.py` | Natural-language strength label with dB |
 | `certainty_label(conf, lang, …)` | `apps/server/vibesensor/analysis/strength_labels.py` | Certainty level + short reason from controlled phrases |
 
-### Card tone tokens (`report/theme.py`)
+### Card tone tokens (`report/pdf_style.py`)
 - `card_neutral_bg / _border` — informational
 - `card_success_bg / _border` — good / ok status
 - `card_warn_bg / _border` — attention needed
 - `card_error_bg / _border` — critical issue
 
-### Heat-map endpoints
-`HEAT_LOW` → `HEAT_MID` → `HEAT_HIGH` define the gradient for the car hotspot diagram.
+### Heat-map gradient
+The car hotspot diagram uses a severity gradient defined in `report/pdf_style.py`.
 
 ### i18n
 All user-visible strings go through `tr(lang, KEY)` in `report_i18n.py`. Add new keys there instead of introducing new inline literals across the PDF renderer modules.

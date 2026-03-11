@@ -20,8 +20,8 @@ from unittest.mock import patch
 
 import pytest
 
-from vibesensor.analysis.findings_order_findings import _compute_effective_match_rate
 from vibesensor.analysis.helpers import _speed_bin_label
+from vibesensor.analysis.order_analysis import _compute_effective_match_rate
 from vibesensor.metrics_log import MetricsLogger
 from vibesensor.update.status import _hash_tree
 

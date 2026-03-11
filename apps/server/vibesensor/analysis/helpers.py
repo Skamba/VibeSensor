@@ -529,3 +529,76 @@ def counter_delta(counter_values: list[float]) -> int:
         delta += max(0.0, current - prev)
         prev = current
     return int(delta)
+
+
+# ---------------------------------------------------------------------------
+# Phase-string and speed-profile helpers (formerly in findings_speed_profile)
+# ---------------------------------------------------------------------------
+
+_SENTINEL = object()
+
+
+def _phase_to_str(phase: object) -> str | None:
+    """Return the string value for a phase object (DrivingPhase or str)."""
+    if phase is None:
+        return None
+    val = getattr(phase, "value", _SENTINEL)
+    if val is _SENTINEL:
+        return str(phase)
+    return str(val)
+
+
+def _speed_profile_from_points(
+    points: list[tuple[float, float]],
+    *,
+    allowed_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
+    phase_weights: list[float] | None = None,
+) -> tuple[float | None, tuple[float, float] | None, str | None]:
+    allowed = set(allowed_speed_bins) if allowed_speed_bins is not None else None
+
+    _bin_label = _speed_bin_label
+    _float_or_none = _as_float
+
+    valid: list[tuple[float, float]] = []
+    effective_amps: list[float] = []
+    speeds: list[float] = []
+    phase_weights_seq = phase_weights if phase_weights is not None else []
+    has_weights = phase_weights is not None
+    n_weights = len(phase_weights_seq)
+
+    for idx, (speed, amp) in enumerate(points):
+        if speed <= 0 or amp <= 0:
+            continue
+        if allowed is not None and _bin_label(speed) not in allowed:
+            continue
+        phase_weight = 1.0
+        if has_weights and idx < n_weights:
+            parsed_weight = _float_or_none(phase_weights_seq[idx])
+            if parsed_weight is not None and parsed_weight > 0:
+                phase_weight = parsed_weight
+        valid.append((speed, amp))
+        effective_amps.append(amp * phase_weight)
+        speeds.append(speed)
+
+    if not valid:
+        return None, None, None
+
+    peak_speed_kmh = max(valid, key=lambda item: item[1])[0]
+    low = _weighted_percentile(valid, 0.10)
+    high = _weighted_percentile(valid, 0.90)
+    if low is None or high is None:
+        return peak_speed_kmh, None, None
+    if high < low:
+        low, high = high, low
+    speed_window_kmh = (low, high)
+
+    low_speed, high_speed = _amplitude_weighted_speed_window(
+        speeds,
+        effective_amps,
+    )
+    strongest_speed_band = (
+        f"{low_speed:.0f}-{high_speed:.0f} km/h"
+        if low_speed is not None and high_speed is not None
+        else None
+    )
+    return peak_speed_kmh, speed_window_kmh, strongest_speed_band

@@ -1,13 +1,7 @@
-"""WsBroadcastService – WebSocket payload assembly with per-tick caching.
-
-Owns:
-- ``WsBroadcastCache`` dataclass (tick counter + per-tick result caches)
-- ``WsBroadcastService`` (payload assembly + tick management)
-"""
+"""WsBroadcastService – WebSocket payload assembly with per-tick caching."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .processing_loop import STALE_DATA_AGE_S
@@ -27,22 +21,6 @@ from ..payload_types import SCHEMA_VERSION, LiveWsPayload, SpectraPayload
 from ..runlog import utc_now_iso
 
 
-@dataclass(slots=True)
-class WsBroadcastCache:
-    """Tick counter and per-tick caches for WebSocket payload assembly."""
-
-    tick: int = 0
-    include_heavy: bool = True
-    shared_payload: LiveWsPayload | None = None
-    shared_payload_tick: int = -1
-    shared_payload_heavy: bool = True
-
-    def advance(self, heavy_every: int) -> None:
-        """Advance the tick counter and update ``include_heavy``."""
-        self.tick += 1
-        self.include_heavy = (self.tick % heavy_every) == 0
-
-
 class WsBroadcastService:
     """WebSocket payload assembly: tick management and cached payload building."""
 
@@ -54,13 +32,16 @@ class WsBroadcastService:
         "_settings_store",
         "_ui_heavy_push_hz",
         "_ui_push_hz",
-        "cache",
+        "include_heavy",
+        "tick",
+        "_shared_payload",
+        "_shared_payload_tick",
+        "_shared_payload_heavy",
     )
 
     def __init__(
         self,
         *,
-        cache: WsBroadcastCache,
         ui_push_hz: int,
         ui_heavy_push_hz: int,
         registry: ClientRegistry,
@@ -69,7 +50,11 @@ class WsBroadcastService:
         analysis_settings: AnalysisSettingsStore,
         settings_store: SettingsStore,
     ) -> None:
-        self.cache = cache
+        self.tick = 0
+        self.include_heavy = True
+        self._shared_payload: LiveWsPayload | None = None
+        self._shared_payload_tick: int = -1
+        self._shared_payload_heavy: bool = True
         self._ui_push_hz = ui_push_hz
         self._ui_heavy_push_hz = ui_heavy_push_hz
         self._registry = registry
@@ -84,7 +69,8 @@ class WsBroadcastService:
             1,
             int(self._ui_push_hz / max(1, self._ui_heavy_push_hz)),
         )
-        self.cache.advance(heavy_every)
+        self.tick += 1
+        self.include_heavy = (self.tick % heavy_every) == 0
 
     def _build_shared_payload(self) -> LiveWsPayload:
         active_ids = self._registry.active_client_ids()
@@ -118,26 +104,26 @@ class WsBroadcastService:
             analysis_settings=analysis_settings_snapshot,
         )
         spectra: SpectraPayload | None = None
-        if self.cache.include_heavy:
+        if self.include_heavy:
             spectra = self._processor.multi_spectrum_payload(fresh_ids)
             payload["spectra"] = spectra
         return payload
 
     def _refresh_shared_payload(self) -> LiveWsPayload:
         cache_valid = (
-            self.cache.shared_payload is not None
-            and self.cache.shared_payload_tick == self.cache.tick
-            and self.cache.shared_payload_heavy == self.cache.include_heavy
+            self._shared_payload is not None
+            and self._shared_payload_tick == self.tick
+            and self._shared_payload_heavy == self.include_heavy
         )
         if cache_valid:
-            assert self.cache.shared_payload is not None, (
+            assert self._shared_payload is not None, (
                 "shared payload cache must be populated when cache_valid is True"
             )
-            return self.cache.shared_payload
+            return self._shared_payload
         payload = self._build_shared_payload()
-        self.cache.shared_payload = payload
-        self.cache.shared_payload_tick = self.cache.tick
-        self.cache.shared_payload_heavy = self.cache.include_heavy
+        self._shared_payload = payload
+        self._shared_payload_tick = self.tick
+        self._shared_payload_heavy = self.include_heavy
         return payload
 
     def build_payload(self, selected_client: str | None) -> LiveWsPayload:

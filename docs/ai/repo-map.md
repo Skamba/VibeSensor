@@ -18,7 +18,7 @@
 - `apps/server/`: backend package, configs, tests, scripts, systemd units, public UI assets, simulator, and config tooling.
 - `apps/ui/`: TypeScript/Vite dashboard and Playwright tests.
 - `firmware/esp/`: ESP32 firmware.
-- `vibesensor/core/`: shared vibration math and unit logic (inlined from former `libs/core/`).
+- `vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`: shared vibration math and unit logic (inlined from former `libs/core/`).
 - `infra/pi-image/pi-gen/`: Raspberry Pi image build pipeline.
 - `docs/`: human-facing docs plus AI repo maps and runbooks.
 
@@ -28,7 +28,7 @@
 - `routes/`: health, clients, settings, recording, history, websocket, updates (`/api/update/`, `/api/esp-flash/`), car library, and debug route groups; `/api/health` now surfaces startup readiness and managed-task failures in addition to processing degradation.
 - `runtime/`: flat `RuntimeState` (`state.py`), service builders (`builders.py`), lifecycle management (`lifecycle.py`), processing loop (`processing_loop.py`), and websocket broadcast (`ws_broadcast.py`); `builders.py::build_runtime()` constructs the flat `RuntimeState` directly; routes receive `RuntimeState` (no intermediate route-service assembly); the websocket broadcaster reuses shared per-tick payload state and only layers in recipient-specific selection at the end.
 - `processing/`, `analysis/`: signal processing and findings logic.
-- `metrics_log/`: recording pipeline package; `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping with drop counting and retry-with-cooldown for transient DB failures, `post_analysis.py` owns the background analysis queue with outcome tracking, and `logger.py` is the coordinating façade that enriches status/health payloads with sample counts and analysis results.
+- `metrics_log/`: recording pipeline package; `logger.py` is the coordinating façade that owns session state (`_MetricsSessionState`), persistence coordination (`_MetricsPersistenceCoordinator`), and the `MetricsLogger` public API enriching status/health payloads with sample counts and analysis results; `post_analysis.py` owns the background analysis queue with outcome tracking; `sample_builder.py` owns pure sample-building functions.
 - `history_db/`: SQLite-backed history and settings persistence (3 files: `__init__.py` with `HistoryDB` class consolidating connection management, settings KV, client names, and all run reads/writes; `_schema.py` with DDL, `RunStatus`, and `ANALYSIS_SCHEMA_VERSION`; `_samples.py` for v2 sample serialization). Incompatible older schemas raise a clear error directing the user to delete the DB file.
 - `history_services/`: focused history service layer (run query/delete, reports, exports, helpers) above `history_db/`.
 - `hotspot/`: Wi-Fi AP monitoring, text parsing, and self-heal logic.

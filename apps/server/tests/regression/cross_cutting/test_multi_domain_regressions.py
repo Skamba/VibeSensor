@@ -13,10 +13,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.analysis.findings_intensity import _sensor_intensity_by_location
+from vibesensor.analysis.findings import _sensor_intensity_by_location
 from vibesensor.analysis.helpers import _format_duration, _speed_bin_label
 from vibesensor.analysis.phase_segmentation import segment_run_phases
-from vibesensor.analysis.summary_phases import compute_run_timing
+from vibesensor.analysis.summary_builder import compute_run_timing
 from vibesensor.analysis.test_plan import _weighted_speed_window_label
 from vibesensor.analysis.top_cause_selection import confidence_label
 from vibesensor.config import _split_host_port

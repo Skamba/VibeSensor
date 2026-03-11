@@ -22,7 +22,7 @@ from ..analysis._types import (
 from ..analysis.diagnosis_candidates import normalize_origin_location, select_effective_top_causes
 from ..analysis.helpers import PHASE_I18N_KEYS
 from ..analysis.pattern_parts import parts_for_pattern, why_parts_listed
-from ..analysis.plot_peak_table import PeakTableRow
+from ..analysis.plots import PeakTableRow
 from ..analysis.strength_labels import (
     certainty_label,
     certainty_tier,
@@ -228,47 +228,6 @@ _EMPTY_ORIGIN: OriginSummary = {
 }
 
 
-def extract_run_context(
-    summary: SummaryData,
-) -> tuple[
-    MetadataDict,
-    str | None,
-    str | None,
-    str,
-    list[CandidateFinding],
-    list[Finding],
-    list[Finding],
-    SpeedStats,
-    OriginSummary,
-]:
-    """Extract and normalize the structural context fields from a run summary."""
-    meta = summary.get("metadata") or {}
-    car_name = str(meta.get("car_name") or "").strip() or None
-    car_type = str(meta.get("car_type") or "").strip() or None
-    report_date = summary.get("report_date") or utc_now_iso()
-    date_str = str(report_date)[:19].replace("T", " ") + " UTC"
-
-    findings, findings_non_ref, _top_causes_all, top_causes = select_effective_top_causes(
-        summary.get("top_causes", []),
-        summary.get("findings", []),
-    )
-
-    speed_stats: SpeedStats = summary.get("speed_stats") or _EMPTY_SPEED_STATS
-    origin: OriginSummary = summary.get("most_likely_origin") or _EMPTY_ORIGIN
-
-    return (
-        meta,
-        car_name,
-        car_type,
-        date_str,
-        top_causes,
-        findings_non_ref,
-        findings,
-        speed_stats,
-        origin,
-    )
-
-
 def extract_sensor_locations(summary: SummaryData) -> list[str]:
     """Return active sensor locations for report rendering."""
     connected_locations = summary.get("sensor_locations_connected_throughout", [])
@@ -278,38 +237,6 @@ def extract_sensor_locations(summary: SummaryData) -> list[str]:
             str(loc) for loc in summary.get("sensor_locations", []) if str(loc).strip()
         ]
     return sensor_locations_active
-
-
-def resolve_primary_candidate(
-    top_causes: list[CandidateFinding],
-    findings_non_ref: list[Finding],
-    origin_location: str,
-    tr: Callable[[str], str],
-) -> tuple[CandidateFinding | None, object, str, str, str, float]:
-    """Resolve the primary diagnosis candidate used by the report."""
-    primary_candidates = top_causes or findings_non_ref
-    primary_candidate = primary_candidates[0] if primary_candidates else None
-    if primary_candidate:
-        primary_source = primary_candidate.get("source") or primary_candidate.get(
-            "suspected_source",
-        )
-        primary_system = human_source(primary_source, tr=tr)
-        primary_location = origin_location or str(
-            primary_candidate.get("strongest_location") or tr("UNKNOWN"),
-        )
-        primary_speed = str(
-            primary_candidate.get("strongest_speed_band")
-            or primary_candidate.get("speed_band")
-            or tr("UNKNOWN"),
-        )
-        conf = extract_confidence(primary_candidate)
-    else:
-        primary_source = None
-        primary_system = tr("UNKNOWN")
-        primary_location = origin_location or tr("UNKNOWN")
-        primary_speed = tr("UNKNOWN")
-        conf = 0.0
-    return primary_candidate, primary_source, primary_system, primary_location, primary_speed, conf
 
 
 def normalized_origin_location(origin: OriginSummary) -> str:
@@ -752,17 +679,20 @@ def prepare_report_mapping_context(
     summary: SummaryData,
 ) -> ReportMappingContext:
     """Extract structural summary context for report mapping."""
-    (
-        meta,
-        car_name,
-        car_type,
-        date_str,
-        top_causes,
-        findings_non_ref,
-        findings,
-        speed_stats,
-        origin,
-    ) = extract_run_context(summary)
+    meta = summary.get("metadata") or {}
+    car_name = str(meta.get("car_name") or "").strip() or None
+    car_type = str(meta.get("car_type") or "").strip() or None
+    report_date = summary.get("report_date") or utc_now_iso()
+    date_str = str(report_date)[:19].replace("T", " ") + " UTC"
+
+    findings, findings_non_ref, _top_causes_all, top_causes = select_effective_top_causes(
+        summary.get("top_causes", []),
+        summary.get("findings", []),
+    )
+
+    speed_stats: SpeedStats = summary.get("speed_stats") or _EMPTY_SPEED_STATS
+    origin: OriginSummary = summary.get("most_likely_origin") or _EMPTY_ORIGIN
+
     origin_location = normalized_origin_location(origin)
     sensor_locations_active = extract_sensor_locations(summary)
     return ReportMappingContext(
@@ -788,19 +718,29 @@ def resolve_primary_report_candidate(
     lang: str,
 ) -> PrimaryCandidateContext:
     """Resolve the primary candidate and all derived certainty fields."""
-    (
-        primary_candidate,
-        primary_source,
-        primary_system,
-        primary_location,
-        primary_speed,
-        confidence,
-    ) = resolve_primary_candidate(
-        context.top_causes,
-        context.findings_non_ref,
-        context.origin_location,
-        tr,
-    )
+    primary_candidates = context.top_causes or context.findings_non_ref
+    primary_candidate = primary_candidates[0] if primary_candidates else None
+    if primary_candidate:
+        primary_source = primary_candidate.get("source") or primary_candidate.get(
+            "suspected_source"
+        )
+        primary_system = human_source(primary_source, tr=tr)
+        primary_location = context.origin_location or str(
+            primary_candidate.get("strongest_location") or tr("UNKNOWN"),
+        )
+        primary_speed = str(
+            primary_candidate.get("strongest_speed_band")
+            or primary_candidate.get("speed_band")
+            or tr("UNKNOWN"),
+        )
+        confidence = extract_confidence(primary_candidate)
+    else:
+        primary_source = None
+        primary_system = tr("UNKNOWN")
+        primary_location = context.origin_location or tr("UNKNOWN")
+        primary_speed = tr("UNKNOWN")
+        confidence = 0.0
+
     strength_db = top_strength_values(summary, effective_causes=context.top_causes)
     strength_text_value = strength_text(strength_db, lang=lang)
     weak_spatial = bool(

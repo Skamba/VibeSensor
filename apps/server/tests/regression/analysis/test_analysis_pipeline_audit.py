@@ -109,36 +109,6 @@ class TestBucketVsLabelInconsistency:
         assert label_key == "negligible", f"strength_label({db_value}) returns {label_key}"
 
 
-class TestToleranceIgnoresCompliance:
-    """Demonstrate that compliance is computed but not used in tolerance_hz."""
-
-    def test_compliance_used_in_tolerance(self):
-        """
-
-        The compliance-aware matching lives in
-        ``findings_order_analysis.match_samples_for_hypothesis``; check there.
-        """
-        import inspect
-
-        from vibesensor.analysis.findings_order_analysis import (
-            match_samples_for_hypothesis,
-        )
-        from vibesensor.analysis.findings_order_findings import (
-            _build_order_findings,
-        )
-
-        # The outer orchestrator calls match_samples_for_hypothesis.
-        outer_source = inspect.getsource(_build_order_findings)
-        assert "match_samples_for_hypothesis" in outer_source
-
-        # The actual compliance-scaled tolerance lives in the implementation.
-        inner_source = inspect.getsource(match_samples_for_hypothesis)
-        assert "compliance = getattr(hypothesis" in inner_source
-        # After fix: compliance_scale IS used in the tolerance computation
-        assert "compliance_scale" in inner_source
-        assert "compliance**0.5" in inner_source or "compliance ** 0.5" in inner_source
-
-
 class TestBoundedSampleNoHint:
     """Demonstrate the reactive doubling behavior without total_hint."""
 

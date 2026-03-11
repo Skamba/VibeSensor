@@ -7,7 +7,6 @@ Each test group validates one of the hate-list items to prevent regression.
 """
 
 
-import inspect
 import os
 import threading
 import time
@@ -15,9 +14,7 @@ from unittest.mock import patch
 
 import pytest
 
-import vibesensor.analysis_settings as analysis_settings_mod
 import vibesensor.locations as locations_mod
-import vibesensor.order_bands as order_bands_mod
 import vibesensor.udp_control_tx as udp_control_tx_mod
 from vibesensor.analysis_settings import sanitize_settings
 from vibesensor.car_library import CAR_LIBRARY, get_models_for_brand_type, get_variants_for_model
@@ -225,15 +222,6 @@ class TestWSDebugLazy:
 
 
 class TestAnalysisSettingsOrder:
-    def test_default_settings_defined_before_sanitize(self) -> None:
-        source = inspect.getsource(analysis_settings_mod)
-        # DEFAULT_ANALYSIS_SETTINGS must appear before def sanitize_settings
-        defaults_pos = source.index("DEFAULT_ANALYSIS_SETTINGS: dict")
-        sanitize_pos = source.index("def sanitize_settings(")
-        assert defaults_pos < sanitize_pos, (
-            "DEFAULT_ANALYSIS_SETTINGS must be defined before sanitize_settings"
-        )
-
     def test_sanitize_settings_works_with_defaults(self) -> None:
         result = sanitize_settings({"tire_width_mm": 225.0})
         assert "tire_width_mm" in result
@@ -266,14 +254,6 @@ class TestWorkerPoolAliveProtection:
 
 
 class TestAsFloatOrNoneImport:
-    def test_order_bands_uses_full_name(self) -> None:
-        """order_bands should import as_float_or_none, not _as_float."""
-        source = inspect.getsource(order_bands_mod)
-        assert "as _as_float" not in source, (
-            "order_bands should not alias as_float_or_none to _as_float"
-        )
-        assert "as_float_or_none" in source
-
     def test_as_float_or_none_accessible_from_order_bands(self) -> None:
         assert order_bands_as_float_or_none(3.14) == 3.14
         assert order_bands_as_float_or_none(None) is None

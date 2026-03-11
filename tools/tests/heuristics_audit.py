@@ -81,10 +81,14 @@ def check_core_purity() -> tuple[bool, list[str]]:
         r"\bpsycopg\b",
     ]
     bad: list[str] = []
-    core_dir = ROOT / "apps/server/vibesensor/core"
-    if not core_dir.exists():
-        return False, ["missing apps/server/vibesensor/core"]
-    for path in core_dir.rglob("*.py"):
+    core_files = [
+        ROOT / "apps/server/vibesensor/vibration_strength.py",
+        ROOT / "apps/server/vibesensor/strength_bands.py",
+    ]
+    missing = [str(f.relative_to(ROOT)) for f in core_files if not f.exists()]
+    if missing:
+        return False, [f"missing {', '.join(missing)}"]
+    for path in core_files:
         text = path.read_text(encoding="utf-8", errors="ignore")
         for pat in forbidden:
             if re.search(pat, text):

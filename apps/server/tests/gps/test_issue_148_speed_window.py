@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.analysis.findings_intensity import _speed_breakdown
+from vibesensor.analysis.findings import _speed_breakdown
 from vibesensor.analysis.test_plan import _location_speedbin_summary
 
 

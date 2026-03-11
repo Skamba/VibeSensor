@@ -107,30 +107,25 @@ async def validate_prerequisites(
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class UpdateServiceControlConfig:
-    service_name: str
-    restart_unit: str
-
-
 async def schedule_service_restart(
     *,
     commands: UpdateCommandExecutor,
     tracker: UpdateStatusTracker,
-    config: UpdateServiceControlConfig,
+    service_name: str,
+    restart_unit: str,
 ) -> bool:
     """Schedule a systemd restart of the backend service."""
     restart_attempts = [
         [
             "systemd-run",
             "--unit",
-            config.restart_unit,
+            restart_unit,
             "--on-active=2s",
             "systemctl",
             "restart",
-            config.service_name,
+            service_name,
         ],
-        ["systemctl", "restart", config.service_name],
+        ["systemctl", "restart", service_name],
     ]
     for command in restart_attempts:
         rc, _, _ = await commands.run(

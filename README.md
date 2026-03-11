@@ -42,7 +42,7 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 
 - Raw sensor samples may contain acceleration values in g (for example `accel_x_g`, `accel_y_g`, `accel_z_g`) and related ingest-time/raw-spectrum amplitudes.
 - Post-stop analysis outputs (persisted analysis summaries, findings metrics, report-template artifacts, and report-facing strength fields) are dB-only.
-- The canonical vibration-strength definition is implemented in `apps/server/vibesensor/core/vibration_strength.py` via `vibration_strength_db_scalar()` and follows:
+- The canonical vibration-strength definition is implemented in `apps/server/vibesensor/vibration_strength.py` via `vibration_strength_db_scalar()` and follows:
   - `20*log10((peak_band_rms_amp_g + eps) / (floor_amp_g + eps))`
   - `eps = max(1e-9, floor_amp_g * 0.05)`
 

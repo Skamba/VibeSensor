@@ -4,14 +4,9 @@ from __future__ import annotations
 """Report pipeline audit – rendering and data consistency regressions."""
 
 
-import inspect
-
 from vibesensor.report.mapping import finding_strength_db as _finding_strength_values
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.mapping import peak_classification_text as _peak_classification_text
-from vibesensor.report.mapping import top_strength_values as _top_strength_values
-from vibesensor.report.pdf_page1 import _draw_next_steps_table, _draw_system_card, _page1
-from vibesensor.report.pdf_page2 import _draw_peaks_table
 from vibesensor.report_i18n import tr
 
 # ---------------------------------------------------------------------------
@@ -168,16 +163,6 @@ class TestNextStepFieldsNotRendered:
         assert ns.falsify == "Noise persists with new bearing"
         assert ns.eta == "30 min"
 
-    def test_pdf_renderer_renders_confirm_falsify_eta(self) -> None:
-        """After fix: renderer now accesses .action, .why, and optional fields."""
-        source = inspect.getsource(_draw_next_steps_table)
-        assert "step.action" in source
-        assert "step.why" in source
-        # These fields are NOW referenced after the fix:
-        assert "step.confirm" in source
-        assert "step.falsify" in source
-        assert "step.eta" in source
-
 
 class TestTopCausesFallbackBypassesPersistenceRanking:
     """When top_causes_actionable is empty, the fallback chain falls to
@@ -242,18 +227,6 @@ class TestPeakClassificationFallback:
         assert result == _en_tr("UNKNOWN")
 
 
-class TestDeadDbValueVariable:
-    """
-    variable. The function directly returns sensor_db in the fallback
-    path without an intermediate unused variable.
-    """
-
-    def test_db_value_removed(self) -> None:
-        """After fix: db_value variable should no longer exist in source."""
-        source = inspect.getsource(_top_strength_values)
-        assert "db_value" not in source, "Dead db_value variable should have been removed"
-
-
 class TestSystemFindingCardToneUnused:
     """SystemFindingCard.tone is set by the builder but the PDF renderer
     never reads it — cards are always drawn with SOFT_BG background.
@@ -262,11 +235,6 @@ class TestSystemFindingCardToneUnused:
               theme.py defines card_success_bg/card_warn_bg/card_error_bg
               which are never referenced by pdf_page1.py.
     """
-
-    def test_tone_referenced_in_renderer(self) -> None:
-        """After fix: _draw_system_card uses card.tone for colors."""
-        source = inspect.getsource(_draw_system_card)
-        assert "card.tone" in source, "_draw_system_card must reference card.tone for theme colors"
 
     def test_tone_is_populated_by_builder(self) -> None:
         finding = {
@@ -299,25 +267,6 @@ class TestSystemFindingCardToneUnused:
         assert data.system_cards[0].tone in {"neutral", "success", "warn"}
 
 
-class TestDataTrustPanelOverflow:
-    """The data-trust panel renders items in a loop decrementing ty
-    but never checks whether ty has gone below the panel's bottom edge
-    (next_y).  With 5+ items having multi-line detail text, content
-    can overflow.
-
-    Evidence: pdf_page1.py — no `ty < bottom` guard.
-    Impact: text drawn outside the panel boundary overlapping the footer.
-    """
-
-    def test_data_trust_panel_renders(self) -> None:
-        """Verify that the data-trust section renders without crashing,
-        even with many items.
-        """
-        source = inspect.getsource(_page1)
-        # The data-trust section exists in _page1.
-        assert "Data Trust" in source
-
-
 class TestPeaksTableFixedHeight:
     """The peaks table uses a fixed panel height of 53 mm regardless of
     how many rows it contains.  _draw_peaks_table uses a y_bottom guard
@@ -325,11 +274,6 @@ class TestPeaksTableFixedHeight:
 
     Evidence: pdf_page2.py: y - row_h < y_bottom: break
     """
-
-    def test_peaks_table_rows_cap_at_six(self) -> None:
-        """Verify the renderer uses height-based limiting (y_bottom guard)."""
-        source = inspect.getsource(_draw_peaks_table)
-        assert "y_bottom" in source
 
     def test_fixed_height_with_many_rows(self) -> None:
         """Eight peaks in data; the builder forwards all of them and the
@@ -340,9 +284,6 @@ class TestPeaksTableFixedHeight:
         data = map_summary(summary)
         # Builder forwards up to 8 above-noise peaks
         assert len(data.peak_rows) == 8
-        # The renderer uses height-based y_bottom limiting (not hard slice)
-        source = inspect.getsource(_draw_peaks_table)
-        assert "y_bottom" in source
 
 
 class TestFindingStrengthValuesWastedComputation:

@@ -12,7 +12,7 @@ from pathlib import Path
 from ..json_types import JsonObject
 from .installer import UpdateInstaller, UpdateInstallerConfig
 from .models import UpdateJobStatus, UpdatePhase, UpdateRequest, UpdateState
-from .releases import UpdateReleaseConfig, UpdateReleaseService
+from .releases import UpdateReleaseService
 from .runner import CommandRunner, UpdateCommandExecutor
 from .status import UpdateRuntimeDetailsCollector, UpdateStateStore, UpdateStatusTracker
 from .wifi import (
@@ -31,7 +31,6 @@ from .wifi import (
     parse_wifi_diagnostics,
 )
 from .workflow import (
-    UpdateServiceControlConfig,
     UpdateValidationConfig,
     schedule_service_restart,
     validate_prerequisites,
@@ -91,13 +90,6 @@ class UpdateManager:
         self._validation_config = UpdateValidationConfig(
             rollback_dir=self._rollback_dir,
             min_free_disk_bytes=MIN_FREE_DISK_BYTES,
-        )
-        self._release_config = UpdateReleaseConfig(
-            rollback_dir=self._rollback_dir,
-        )
-        self._service_control_config = UpdateServiceControlConfig(
-            service_name=UPDATE_SERVICE_NAME,
-            restart_unit=UPDATE_RESTART_UNIT,
         )
 
     @property
@@ -213,7 +205,7 @@ class UpdateManager:
         wifi = self._build_wifi_controller(commands=commands)
         releases = UpdateReleaseService(
             tracker=tracker,
-            config=self._release_config,
+            rollback_dir=self._rollback_dir,
         )
         installer = UpdateInstaller(
             commands=commands,
@@ -309,7 +301,8 @@ class UpdateManager:
         if await schedule_service_restart(
             commands=commands,
             tracker=tracker,
-            config=self._service_control_config,
+            service_name=UPDATE_SERVICE_NAME,
+            restart_unit=UPDATE_RESTART_UNIT,
         ):
             return
         tracker.add_issue(

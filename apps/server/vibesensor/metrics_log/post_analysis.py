@@ -53,7 +53,8 @@ class PostAnalysisWorker:
         Database handle used to read samples and store analysis results.
     error_callback:
         Called with an error message string whenever a write or analysis
-        operation fails.  Typically wired to ``MetricsLogger._set_last_write_error``.
+        operation fails.  Typically wired to the persistence coordinator's
+        ``last_write_error`` attribute.
     clear_error_callback:
         Called (no args) when an error condition is resolved.
 

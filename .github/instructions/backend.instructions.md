@@ -20,7 +20,7 @@ Backend (python `apps/server/`)
 - Backend type gate: `make typecheck-backend` runs the enforced mypy slice for app/bootstrap, runtime/routes, core typed-boundary modules, `history_services/`, and the high-risk `analysis/`, `processing/`, `history_db/`, `metrics_log/`, and `update/` packages.
 - Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject` aliases) over broad `Any` when shaping analysis, report, and persistence data.
 - Treat `Any` as a design smell by default: prefer `object` for untrusted inputs, shared JSON aliases for persisted payloads, `ParamSpec` for callable wrappers, and focused `TypedDict`/protocol contracts for nested state.
-- For live processing / WebSocket payloads, prefer shared contracts in `apps/server/vibesensor/payload_types.py` and `vibesensor.core.vibration_strength` over ad-hoc `dict[str, Any]` bags.
+- For live processing / WebSocket payloads, prefer shared contracts in `apps/server/vibesensor/payload_types.py` and `vibesensor.vibration_strength` over ad-hoc `dict[str, Any]` bags.
 - Tests: add tests in the matching `tests/<module>/` subdirectory (see `docs/testing.md`); use `tests/integration/` for cross-cutting scenarios and `tests/regression/{analysis,cross_cutting,report,runtime}/` for bug-fix regressions grouped by intent. Prefer `-m "not selenium"` for fast runs. Run a single area with `pytest -q apps/server/tests/<module>/`.
 - i18n: Add/modify keys in `apps/server/data/report_i18n.json` when changing user-facing strings.
 - Styling/lint: `ruff` is enforced in CI; follow existing `ruff` conventions.

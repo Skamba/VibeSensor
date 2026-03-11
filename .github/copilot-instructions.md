@@ -3,7 +3,7 @@ Repository overview
 - Backend architecture is package-based: `app.py` creates the FastAPI app, `bootstrap.py` wires services, `routes/` owns HTTP/WebSocket route groups, `runtime/` owns runtime coordination, `history_db/` owns SQLite persistence, `report/` owns PDF rendering, and `update/` owns wheel-based updates.
 - Key runtime artifacts are `docker-compose.yml` at repo root and `apps/server/pyproject.toml` for backend packaging and CLI entry points.
 - Units policy: raw ingest/sample acceleration values may use g, but post-stop analysis outputs (persisted summaries, findings, report-template artifacts) must expose vibration strength or intensity in dB only.
-- Canonical dB definition: `vibesensor/core/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
+- Canonical dB definition: `vibesensor/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
 
 Source-of-truth note
 - This file is the canonical short AI guide; `AGENTS.md` should remain a pointer to this file to prevent drift.
@@ -17,7 +17,7 @@ Canonical instruction sources
 Architectural constraints
 - Offline-first hotspot boot: hotspot provisioning must not depend on internet connectivity. Required packages are baked into the image build stage.
 - Deterministic image outputs: custom pi-gen stage must export uniquely suffixed artifacts and self-validate rootfs contents.
-- Internal shared logic belongs in the server package (`vibesensor/core/`, `vibesensor/contracts.py`), not in separate packages. Shared TS constants live directly in `apps/ui/src/constants.ts`.
+- Internal shared logic belongs in the server package (`vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`, `vibesensor/contracts.py`), not in separate packages. Shared TS constants live directly in `apps/ui/src/constants.ts`.
 - Do not create runtime file-loading mechanisms for static configuration data. Use Python constants for values that don't change between deployments.
 
 Common commands

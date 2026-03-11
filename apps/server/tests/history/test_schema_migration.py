@@ -68,10 +68,7 @@ def test_historydb_newer_version_raises(tmp_path: Path) -> None:
     db.close()
 
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        "UPDATE schema_meta SET value = ? WHERE key = 'version'",
-        (str(SCHEMA_VERSION + 1),),
-    )
+    conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION + 1}")
     conn.commit()
     conn.close()
 
@@ -99,3 +96,27 @@ def test_historydb_current_version_no_migration(tmp_path: Path) -> None:
 
     backup = tmp_path / "history.bak-v5"
     assert not backup.exists()
+
+
+def test_historydb_legacy_schema_meta_migrated(tmp_path: Path) -> None:
+    """A database using the old schema_meta table should migrate to PRAGMA user_version."""
+    db_path = tmp_path / "history.db"
+    conn = sqlite3.connect(str(db_path))
+    conn.executescript(f"""\
+CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+INSERT INTO schema_meta (key, value) VALUES ('version', '{SCHEMA_VERSION}');
+""")
+    conn.commit()
+    conn.close()
+
+    db = HistoryDB(db_path)
+    db.close()
+
+    # schema_meta table should be gone
+    conn = sqlite3.connect(str(db_path))
+    cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_meta'")
+    assert cur.fetchone() is None
+    # PRAGMA user_version should be set
+    cur = conn.execute("PRAGMA user_version")
+    assert cur.fetchone()[0] == SCHEMA_VERSION
+    conn.close()

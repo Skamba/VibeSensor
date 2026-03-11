@@ -146,7 +146,7 @@ def _make_state(
     import vibesensor.runtime as runtime_module
     from vibesensor.runtime.lifecycle import LifecycleManager
     from vibesensor.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
-    from vibesensor.runtime.ws_broadcast import WsBroadcastCache, WsBroadcastService
+    from vibesensor.runtime.ws_broadcast import WsBroadcastService
 
     registry = _StubRegistry(clients)
     processor = _StubProcessor()
@@ -155,7 +155,6 @@ def _make_state(
     settings_store = _StubSettingsStore()
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
-    cache = WsBroadcastCache()
     config = _StubConfig(
         processing=_StubProcessingConfig(
             ui_push_hz=ui_push_hz,
@@ -187,7 +186,6 @@ def _make_state(
         ),
         ws_hub=_SENTINEL,  # type: ignore[arg-type]
         ws_broadcast=WsBroadcastService(
-            cache=cache,
             ui_push_hz=ui_push_hz,
             ui_heavy_push_hz=ui_heavy_push_hz,
             registry=registry,  # type: ignore[arg-type]
@@ -201,7 +199,7 @@ def _make_state(
         esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
     )
     state.lifecycle = LifecycleManager(runtime=state)  # type: ignore[arg-type]
-    state.ws_broadcast.cache.include_heavy = ws_include_heavy
+    state.ws_broadcast.include_heavy = ws_include_heavy
     return state
 
 
@@ -287,7 +285,7 @@ def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
     assert isinstance(gps, _StubGPS)
     assert isinstance(analysis_settings, _StubAnalysisSettings)
 
-    state.ws_broadcast.cache.tick = 77
+    state.ws_broadcast.tick = 77
     payload_aaa = state.ws_broadcast.build_payload(selected_client="aaa")
     payload_bbb = state.ws_broadcast.build_payload(selected_client="bbb")
 
@@ -305,13 +303,13 @@ def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
 def test_on_ws_broadcast_tick_toggles_heavy() -> None:
     # ui_push_hz=10, ui_heavy_push_hz=2 → heavy_every=5
     state = _make_state(ui_push_hz=10, ui_heavy_push_hz=2)
-    state.ws_broadcast.cache.tick = 0
-    state.ws_broadcast.cache.include_heavy = True  # initial
+    state.ws_broadcast.tick = 0
+    state.ws_broadcast.include_heavy = True  # initial
 
     results: list[bool] = []
     for _ in range(10):
         state.ws_broadcast.on_tick()
-        results.append(state.ws_broadcast.cache.include_heavy)
+        results.append(state.ws_broadcast.include_heavy)
 
     # Ticks 1..10: heavy at tick 5 and 10 (tick % 5 == 0)
     assert results == [False, False, False, False, True, False, False, False, False, True]

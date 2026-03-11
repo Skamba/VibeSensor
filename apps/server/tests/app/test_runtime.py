@@ -127,7 +127,6 @@ def _make_runtime(**overrides: Any):
         ProcessingLoopState,
     )
     from vibesensor.runtime.ws_broadcast import (
-        WsBroadcastCache,
         WsBroadcastService,
     )
 
@@ -148,7 +147,6 @@ def _make_runtime(**overrides: Any):
     esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
-    ws_cache = WsBroadcastCache()
     rt = runtime_module.RuntimeState(
         config=config,
         registry=registry,
@@ -175,7 +173,6 @@ def _make_runtime(**overrides: Any):
         ),
         ws_hub=overrides.pop("ws_hub", MagicMock()),
         ws_broadcast=WsBroadcastService(
-            cache=ws_cache,
             ui_push_hz=config.processing.ui_push_hz,
             ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
             registry=registry,

@@ -15,9 +15,9 @@ Use this when changing backend code without scanning the whole package.
   lifecycle management (`lifecycle.py`), health tracking (`health_state.py`),
   processing loop (`processing_loop.py`), WebSocket broadcast (`ws_broadcast.py`),
   and rotational speed helpers (`rotational_speeds.py`).
-- FFT/metrics computation source of truth lives in `vibesensor.core`
-        (`vibesensor/core/vibration_strength.py` and
-        `vibesensor/core/strength_bands.py`).
+- FFT/metrics computation source of truth lives in `vibesensor`
+        (`vibesensor/vibration_strength.py` and
+        `vibesensor/strength_bands.py`).
 - `processing/` orchestrates calls into core computation.
 - Rule: do not move algorithm details into `app.py` or `runtime/`.
 

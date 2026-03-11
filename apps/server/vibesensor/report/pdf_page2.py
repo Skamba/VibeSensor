@@ -11,8 +11,12 @@ from reportlab.pdfgen.canvas import Canvas
 from ..report_i18n import tr as _tr
 from .pdf_diagram_render import car_location_diagram
 from .pdf_drawing import _cert_display, _draw_panel, _hex, _norm, _safe, _strength_with_peak
-from .pdf_page_layouts import build_page2_layout
-from .pdf_render_context import PdfRenderContext
+from .pdf_style import (
+    BMW_LENGTH_MM as _BMW_LENGTH_MM,
+)
+from .pdf_style import (
+    BMW_WIDTH_MM as _BMW_WIDTH_MM,
+)
 from .pdf_style import (
     CAR_PANEL_TITLE_RESERVE,
     FONT,
@@ -30,11 +34,11 @@ from .pdf_style import (
     SUB_CLR,
     TEXT_CLR,
     WARN_CLR,
+    PdfRenderContext,
+    build_page2_layout,
 )
 from .pdf_text import _draw_kv, _draw_section_block, _draw_text
 from .report_data import NextStep, PatternEvidence, ReportTemplateData
-from .theme import BMW_LENGTH_MM as _BMW_LENGTH_MM
-from .theme import BMW_WIDTH_MM as _BMW_WIDTH_MM
 
 # -- Aspect-ratio helpers (merged from pdf_layout) ----------------------------
 

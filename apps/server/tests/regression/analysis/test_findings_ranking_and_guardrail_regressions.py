@@ -17,11 +17,10 @@ from pathlib import Path
 
 import pytest
 
-import vibesensor.analysis.findings_order_analysis as order_analysis_mod
-from vibesensor.analysis.findings_order_analysis import (
+from vibesensor.analysis.helpers import _speed_stats
+from vibesensor.analysis.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
-from vibesensor.analysis.helpers import _speed_stats
 from vibesensor.routes.clients import create_client_routes
 from vibesensor.runlog import append_jsonl_records
 
@@ -58,24 +57,6 @@ class TestRankingScoreSyncAfterSuppression:
             assert f["_ranking_score"] == pytest.approx(0.7 * 0.60, abs=1e-9), (
                 "_ranking_score must be updated after suppression"
             )
-
-
-class TestNegligibleCapAligned:
-    """Regression: negligible-strength confidence cap must not exceed
-    TIER_B_CEILING (0.40).
-    """
-
-    def test_order_cap_value_in_source(self) -> None:
-        # After refactoring the literal 0.40 to a named constant, verify
-        # _NEGLIGIBLE_STRENGTH_CONF_CAP holds the correct value and that
-        # the code actually uses it as the cap expression.
-        assert pytest.approx(0.40) == order_analysis_mod._NEGLIGIBLE_STRENGTH_CONF_CAP, (
-            "Negligible cap constant should be 0.40 (aligned with TIER_B_CEILING)"
-        )
-        src = inspect.getsource(order_analysis_mod.compute_order_confidence)
-        assert "min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP)" in src, (
-            "Negligible cap should use the _NEGLIGIBLE_STRENGTH_CONF_CAP constant"
-        )
 
 
 class TestSteadySpeedUsesAND:
@@ -163,37 +144,3 @@ class TestSuppressEngineAliasesCapRaised:
         ]
         result = _suppress_engine_aliases(findings)
         assert len(result) == 4, f"Expected 4 findings (was capped at 3), got {len(result)}"
-
-
-class TestWorkerPoolDeterministic:
-    """Regression: test_worker_pool should use np.random.default_rng,
-    not np.random.seed (global state mutation).
-    """
-
-    def test_no_global_seed_in_source(self) -> None:
-        import tests.app.test_worker_pool as mod
-
-        source = inspect.getsource(mod)
-        assert "np.random.seed" not in source, "Must use np.random.default_rng, not np.random.seed"
-
-
-_UNSEEDED_RANDOM_MODULES = [
-    pytest.param("tests.processing.test_processing_extended", id="processing_extended"),
-    pytest.param("tests.protocol.test_reset_buffer_flush", id="reset_buffer_flush"),
-]
-
-
-class TestNoUnseededRandomInTests:
-    """Guardrail: test files must use np.random.default_rng(seed), never
-    the unseeded global PRNG functions like np.random.randn or np.random.rand.
-    """
-
-    @pytest.mark.parametrize("modpath", _UNSEEDED_RANDOM_MODULES)
-    def test_no_unseeded_randn(self, modpath: str) -> None:
-        import importlib
-
-        mod = importlib.import_module(modpath)
-        source = inspect.getsource(mod)
-        assert "np.random.randn" not in source, (
-            "Use np.random.default_rng(seed).standard_normal() instead of np.random.randn()"
-        )

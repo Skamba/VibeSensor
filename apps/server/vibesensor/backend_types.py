@@ -24,14 +24,11 @@ class CarConfigUpdatePayload(TypedDict, total=False):
     variant: str
 
 
-class _CarConfigPayloadRequired(TypedDict):
+class CarConfigPayload(TypedDict):
     id: str
     name: str
     type: str
     aspects: AnalysisSettingsPayload
-
-
-class CarConfigPayload(_CarConfigPayloadRequired, total=False):
     variant: NotRequired[str]
 
 
