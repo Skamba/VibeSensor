@@ -162,9 +162,6 @@ async def test_history_insights_always_emits_analysis_is_current() -> None:
                 "analysis": self.analysis,
             }
 
-        def analysis_is_current(self, run_id: str) -> bool:
-            return False
-
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
