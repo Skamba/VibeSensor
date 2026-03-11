@@ -15,8 +15,6 @@ import urllib.request
 from collections.abc import Sequence
 from pathlib import Path
 
-import yaml
-
 
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
@@ -33,6 +31,8 @@ def build_release_smoke_config(
     host: str,
     port: int,
 ) -> Path:
+    import yaml
+
     data = yaml.safe_load(source_config.read_text(encoding="utf-8")) or {}
     if not isinstance(data, dict):
         raise ValueError(f"Expected config mapping in {source_config}")
