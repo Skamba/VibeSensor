@@ -186,6 +186,8 @@ class FakeState:
                         "max_write_duration_s": 0.0,
                     },
                 )(),
+                "last_write_duration_s": 0.0,
+                "max_write_duration_s": 0.0,
                 "start_logging": lambda self: {},
                 "stop_logging": lambda self: {},
             },

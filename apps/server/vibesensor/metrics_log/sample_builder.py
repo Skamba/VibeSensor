@@ -325,8 +325,6 @@ def build_run_metadata(
     default_sample_rate_hz: int,
     metrics_log_hz: int,
     fft_window_size_samples: int,
-    fft_window_type: str,
-    peak_picker_method: str,
     accel_scale_g_per_lsb: float | None,
     active_car_snapshot: Mapping[str, object] | None = None,
     language_provider: Callable[[], str] | None = None,
@@ -346,8 +344,6 @@ def build_run_metadata(
         raw_sample_rate_hz=raw_sample_rate_hz,
         feature_interval_s=feature_interval_s,
         fft_window_size_samples=fft_window_size_samples if fft_window_size_samples > 0 else None,
-        fft_window_type=fft_window_type or None,
-        peak_picker_method=peak_picker_method,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         incomplete_for_order_analysis=incomplete,
     )

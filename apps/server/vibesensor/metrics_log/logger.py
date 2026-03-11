@@ -416,8 +416,6 @@ class MetricsLoggerConfig:
     sensor_model: str
     default_sample_rate_hz: int
     fft_window_size_samples: int
-    fft_window_type: str = "hann"
-    peak_picker_method: str = "max_peak_amp_across_axes"
     accel_scale_g_per_lsb: float | None = None
     persist_history_db: bool = True
     no_data_timeout_s: float = 15.0
@@ -458,8 +456,6 @@ class MetricsLogger:
         self.sensor_model = config.sensor_model.strip() or "unknown"
         self.default_sample_rate_hz = int(config.default_sample_rate_hz)
         self.fft_window_size_samples = int(config.fft_window_size_samples)
-        self.fft_window_type = config.fft_window_type
-        self.peak_picker_method = config.peak_picker_method
         self.accel_scale_g_per_lsb = (
             float(config.accel_scale_g_per_lsb)  # type: ignore[arg-type]
             if isinstance(config.accel_scale_g_per_lsb, NUMERIC_TYPES)
@@ -499,8 +495,12 @@ class MetricsLogger:
         self._session.enabled = value
 
     @property
-    def persistence(self) -> _MetricsPersistenceCoordinator:
-        return self._persistence
+    def last_write_duration_s(self) -> float:
+        return self._persistence.last_write_duration_s
+
+    @property
+    def max_write_duration_s(self) -> float:
+        return self._persistence.max_write_duration_s
 
     @property
     def _run_id(self) -> str | None:
@@ -651,8 +651,6 @@ class MetricsLogger:
             default_sample_rate_hz=self.default_sample_rate_hz,
             metrics_log_hz=self.metrics_log_hz,
             fft_window_size_samples=self.fft_window_size_samples,
-            fft_window_type=self.fft_window_type,
-            peak_picker_method=self.peak_picker_method,
             accel_scale_g_per_lsb=self.accel_scale_g_per_lsb,
             active_car_snapshot=(
                 self._settings_store.active_car_snapshot()

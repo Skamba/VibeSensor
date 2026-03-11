@@ -130,8 +130,6 @@ def write_test_log(path: Path, n_samples: int = 20, speed: float = 85.0) -> None
         raw_sample_rate_hz=200,
         feature_interval_s=0.5,
         fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
         accel_scale_g_per_lsb=1.0 / 256.0,
     )
     samples = [_make_sample(float(i) * 0.5, speed, 0.01 + i * 0.001) for i in range(n_samples)]

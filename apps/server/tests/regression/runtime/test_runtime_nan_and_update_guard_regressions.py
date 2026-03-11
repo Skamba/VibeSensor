@@ -205,7 +205,8 @@ class TestUpdateManagerCancelledError:
             raise asyncio.CancelledError()
 
         mgr._run_update_inner = mock_inner
-        mgr._collect_runtime_details = MagicMock(return_value={})
+        mgr._runtime_details = MagicMock()
+        mgr._runtime_details.collect = MagicMock(return_value={})
         mgr._build_wifi_controller = MagicMock()
 
         with pytest.raises(asyncio.CancelledError):

@@ -9,7 +9,6 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from ..json_types import JsonObject
 from .installer import UpdateInstaller, UpdateInstallerConfig
 from .models import UpdateJobStatus, UpdatePhase, UpdateRequest, UpdateState
 from .releases import UpdateReleaseService
@@ -75,7 +74,7 @@ class UpdateManager:
             status=loaded if loaded is not None else UpdateJobStatus(),
         )
         self._runtime_details = UpdateRuntimeDetailsCollector(repo=self._repo)
-        self._tracker.set_runtime(self._collect_runtime_details())
+        self._tracker.set_runtime(self._runtime_details.collect())
         self._status = self._tracker.status
         self._task: asyncio.Task[None] | None = None
         self._cancel_event = asyncio.Event()
@@ -336,7 +335,7 @@ class UpdateManager:
                 await asyncio.shield(self._build_wifi_controller().restore_hotspot())
             tracker.clear_secrets()
             try:
-                tracker.set_runtime(await asyncio.to_thread(self._collect_runtime_details))
+                tracker.set_runtime(await asyncio.to_thread(self._runtime_details.collect))
                 self._status = tracker.status
             except Exception:
                 LOGGER.warning("Failed to collect runtime details", exc_info=True)
@@ -398,5 +397,3 @@ class UpdateManager:
         )
         return await installer.rollback()
 
-    def _collect_runtime_details(self) -> JsonObject:
-        return self._runtime_details.collect()
