@@ -151,7 +151,7 @@ class TestCreateRunFailureExposesWriteError:
 
         run_id, start_utc, start_mono = _start_and_snapshot(logger)
 
-        logger._persistence.ensure_history_run_created(
+        logger._persist_ensure_history_run(
             run_id,
             start_utc,
         )
@@ -159,7 +159,7 @@ class TestCreateRunFailureExposesWriteError:
         status = logger.status()
         assert status["write_error"] is not None
         assert "disk full" in status["write_error"]
-        assert not logger._persistence.history_run_created
+        assert not logger._persist_history_run_created
 
     def test_create_run_success_clears_write_error(self, tmp_path: Path) -> None:
         db = MagicMock()
@@ -169,18 +169,18 @@ class TestCreateRunFailureExposesWriteError:
         run_id, start_utc, start_mono = _start_and_snapshot(logger)
 
         # First call fails
-        logger._persistence.ensure_history_run_created(
+        logger._persist_ensure_history_run(
             run_id,
             start_utc,
         )
         assert logger.status()["write_error"] is not None
 
         # Second call succeeds
-        logger._persistence.ensure_history_run_created(
+        logger._persist_ensure_history_run(
             run_id,
             start_utc,
         )
-        assert logger._persistence.history_run_created
+        assert logger._persist_history_run_created
         assert logger.status()["write_error"] is None
 
 
@@ -195,15 +195,15 @@ class TestPersistentCreateRunFailureStopsRetrying:
         run_id, start_utc, _start_mono = _start_and_snapshot(logger)
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES + 3):
-            logger._persistence.ensure_history_run_created(
+            logger._persist_ensure_history_run(
                 run_id,
                 start_utc,
             )
 
         # Should have been called exactly _MAX_HISTORY_CREATE_RETRIES times
         assert db.create_run.call_count == _MAX_HISTORY_CREATE_RETRIES
-        assert logger._persistence.history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
-        assert not logger._persistence.history_run_created
+        assert logger._persist_history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
+        assert not logger._persist_history_run_created
         assert logger.status()["write_error"] is not None
 
     def test_retry_counter_resets_on_new_session(self, tmp_path: Path) -> None:
@@ -214,17 +214,17 @@ class TestPersistentCreateRunFailureStopsRetrying:
         run_id, start_utc, _ = _start_and_snapshot(logger)
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            logger._persistence.ensure_history_run_created(
+            logger._persist_ensure_history_run(
                 run_id,
                 start_utc,
             )
 
-        assert logger._persistence.history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
+        assert logger._persist_history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
 
         # Starting a new session resets the counter
         db.create_run.side_effect = None  # Next call succeeds
         logger.start_logging()
-        assert logger._persistence.history_create_fail_count == 0
+        assert logger._persist_history_create_fail_count == 0
 
 
 class TestAppendSamplesFailureExposesError:
@@ -244,7 +244,7 @@ class TestAppendSamplesFailureExposesError:
         assert status["write_error"] is not None
         assert "write error" in status["write_error"]
         # Sample count should NOT increment on failure
-        assert logger._persistence.written_sample_count == 0
+        assert logger._persist_written_sample_count == 0
 
 
 class TestDroppedSamplesLogged:
@@ -259,7 +259,7 @@ class TestDroppedSamplesLogged:
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            logger._persistence.ensure_history_run_created(
+            logger._persist_ensure_history_run(
                 run_id,
                 start_utc,
             )
@@ -291,7 +291,7 @@ class TestStatusAlwaysIncludesWriteError:
         logger = _make_logger(db, tmp_path)
 
         run_id, start_utc, _ = _start_and_snapshot(logger)
-        logger._persistence.ensure_history_run_created(
+        logger._persist_ensure_history_run(
             run_id,
             start_utc,
         )
@@ -306,7 +306,7 @@ class TestStatusAlwaysIncludesWriteError:
         logger = _make_logger(db, tmp_path)
 
         run_id, start_utc, _ = _start_and_snapshot(logger)
-        logger._persistence.ensure_history_run_created(
+        logger._persist_ensure_history_run(
             run_id,
             start_utc,
         )

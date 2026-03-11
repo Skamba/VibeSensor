@@ -1,7 +1,7 @@
 """Tests for recording pipeline error visibility and resilience.
 
 Covers:
-- Drop counting in MetricsPersistenceCoordinator
+- Drop counting in MetricsLogger persistence coordination
 - Retry cooldown after max DB create failures
 - Last analysis outcome tracking in PostAnalysisWorker
 - Queue depth warning in PostAnalysisWorker
@@ -22,7 +22,7 @@ import pytest
 from vibesensor.metrics_log.logger import (
     _MAX_HISTORY_CREATE_RETRIES,
     _RETRY_COOLDOWN_BASE_S,
-    _MetricsPersistenceCoordinator,
+    MetricsLogger,
 )
 from vibesensor.metrics_log.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysisWorker
 
@@ -31,23 +31,13 @@ from vibesensor.metrics_log.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysis
 # ---------------------------------------------------------------------------
 
 
-def _make_coordinator(
-    *,
-    history_db: object | None = None,
-    persist: bool = True,
-    run_id: str = "run-1",
-) -> _MetricsPersistenceCoordinator:
-    """Build a coordinator with minimal dependencies."""
-    from threading import RLock
-
-    coord = _MetricsPersistenceCoordinator(
-        history_db=history_db,
-        persist_history_db=persist,
-        metadata_builder=lambda _rid, _ts: {"run_id": _rid},
-        lock=RLock(),
-    )
-    coord.reset_for_new_session(run_id=run_id)
-    return coord
+def _make_persist_logger(
+    make_logger, *, history_db: object, run_id: str = "run-1"
+) -> MetricsLogger:
+    """Build a MetricsLogger with the given DB and set up persistence for *run_id*."""
+    logger = make_logger(history_db=history_db)
+    logger._persist_reset(run_id=run_id)
+    return logger
 
 
 class _FailingDB:
@@ -116,104 +106,104 @@ class _FailNThenSucceedDB:
 
 
 # ---------------------------------------------------------------------------
-# MetricsPersistenceCoordinator drop tracking
+# Persistence coordination drop tracking
 # ---------------------------------------------------------------------------
 
 
 class TestDropCounting:
-    def test_initial_drop_count_is_zero(self) -> None:
-        coord = _make_coordinator(history_db=_SucceedingDB())
-        assert coord.dropped_sample_count == 0
+    def test_initial_drop_count_is_zero(self, make_logger) -> None:
+        logger = _make_persist_logger(make_logger, history_db=_SucceedingDB())
+        assert logger._persist_dropped_sample_count == 0
 
-    def test_drops_counted_when_create_run_exhausted(self) -> None:
+    def test_drops_counted_when_create_run_exhausted(self, make_logger) -> None:
         """After max create retries, appending rows counts them as dropped."""
-        coord = _make_coordinator(history_db=_FailingDB())
+        logger = _make_persist_logger(make_logger, history_db=_FailingDB())
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
+            logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        assert coord.history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES
+        assert logger._persist_history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES
 
         # Now append — should be dropped and counted
-        result = coord.append_rows(
+        result = logger._persist_append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"sample": 1}, {"sample": 2}, {"sample": 3}],
         )
         assert result.rows_written == 0
-        assert coord.dropped_sample_count == 3
+        assert logger._persist_dropped_sample_count == 3
 
-    def test_drops_counted_on_append_failure(self) -> None:
+    def test_drops_counted_on_append_failure(self, make_logger) -> None:
         """When append_samples throws on all retries, dropped count is incremented."""
-        coord = _make_coordinator(history_db=_FailingAppendDB())
+        logger = _make_persist_logger(make_logger, history_db=_FailingAppendDB())
 
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
-        assert coord.history_run_created
+        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        assert logger._persist_history_run_created
 
-        result = coord.append_rows(
+        result = logger._persist_append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
         )
         assert result.rows_written == 0
-        assert coord.dropped_sample_count == 2
+        assert logger._persist_dropped_sample_count == 2
 
-    def test_append_retries_on_transient_failure(self) -> None:
+    def test_append_retries_on_transient_failure(self, make_logger) -> None:
         """Append retries on transient SQLite errors and succeeds."""
         db = _FailNAppendThenSucceedDB(fail_count=1)
-        coord = _make_coordinator(history_db=db)
+        logger = _make_persist_logger(make_logger, history_db=db)
 
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
-        assert coord.history_run_created
+        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        assert logger._persist_history_run_created
 
-        result = coord.append_rows(
+        result = logger._persist_append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
         )
         assert result.rows_written == 2
-        assert coord.dropped_sample_count == 0
+        assert logger._persist_dropped_sample_count == 0
         assert db.appended == [("run-1", 2)]
 
-    def test_drops_accumulate_across_calls(self) -> None:
+    def test_drops_accumulate_across_calls(self, make_logger) -> None:
         """Drop count accumulates across multiple append calls."""
-        coord = _make_coordinator(history_db=_FailingAppendDB())
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
+        logger = _make_persist_logger(make_logger, history_db=_FailingAppendDB())
+        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
         for _ in range(3):
-            coord.append_rows(
+            logger._persist_append_rows(
                 run_id="run-1",
                 start_time_utc="2025-01-01T00:00:00Z",
                 rows=[{"s": 1}],
             )
-        assert coord.dropped_sample_count == 3
+        assert logger._persist_dropped_sample_count == 3
 
-    def test_drops_reset_on_new_session(self) -> None:
+    def test_drops_reset_on_new_session(self, make_logger) -> None:
         """Drop count resets to 0 when a new session starts."""
-        coord = _make_coordinator(history_db=_FailingAppendDB())
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
-        coord.append_rows(
+        logger = _make_persist_logger(make_logger, history_db=_FailingAppendDB())
+        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        logger._persist_append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
         )
-        assert coord.dropped_sample_count == 2
+        assert logger._persist_dropped_sample_count == 2
 
-        coord.reset_for_new_session()
-        assert coord.dropped_sample_count == 0
+        logger._persist_reset()
+        assert logger._persist_dropped_sample_count == 0
 
-    def test_successful_writes_do_not_increment_drops(self) -> None:
+    def test_successful_writes_do_not_increment_drops(self, make_logger) -> None:
         """Normal successful writes don't affect drop counter."""
-        coord = _make_coordinator(history_db=_SucceedingDB())
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
-        result = coord.append_rows(
+        logger = _make_persist_logger(make_logger, history_db=_SucceedingDB())
+        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        result = logger._persist_append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
         )
         assert result.rows_written == 2
-        assert coord.dropped_sample_count == 0
+        assert logger._persist_dropped_sample_count == 0
 
 
 # ---------------------------------------------------------------------------
@@ -222,56 +212,56 @@ class TestDropCounting:
 
 
 class TestRetryCooldown:
-    def test_retries_after_cooldown_expires(self) -> None:
-        """After hitting max retries, coordinator retries when cooldown expires."""
+    def test_retries_after_cooldown_expires(self, make_logger) -> None:
+        """After hitting max retries, logger retries when cooldown expires."""
         # Fail 5 times, then succeed
         db = _FailNThenSucceedDB(fail_count=_MAX_HISTORY_CREATE_RETRIES)
-        coord = _make_coordinator(history_db=db)
+        logger = _make_persist_logger(make_logger, history_db=db)
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
+            logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        assert not coord.history_run_created
-        assert coord.history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES
+        assert not logger._persist_history_run_created
+        assert logger._persist_history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES
 
         # Before cooldown — should still be blocked
-        coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
-        assert not coord.history_run_created
+        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        assert not logger._persist_history_run_created
 
         # Fast-forward past cooldown
         with patch("vibesensor.metrics_log.logger.time") as mock_time:
             # First call: check if past cooldown (return time after cooldown)
             mock_time.monotonic.return_value = time.monotonic() + _RETRY_COOLDOWN_BASE_S + 1
-            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
+            logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        assert coord.history_run_created
+        assert logger._persist_history_run_created
         assert db.created == ["run-1"]
 
-    def test_no_cooldown_during_initial_retries(self) -> None:
+    def test_no_cooldown_during_initial_retries(self, make_logger) -> None:
         """Within the retry budget, retries happen immediately."""
         db = _FailNThenSucceedDB(fail_count=3)
-        coord = _make_coordinator(history_db=db)
+        logger = _make_persist_logger(make_logger, history_db=db)
 
         for _ in range(4):
-            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
+            logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        assert coord.history_run_created
+        assert logger._persist_history_run_created
 
-    def test_cooldown_resets_on_new_session(self) -> None:
+    def test_cooldown_resets_on_new_session(self, make_logger) -> None:
         """Cooldown state resets when a new session starts."""
-        coord = _make_coordinator(history_db=_FailingDB())
+        logger = _make_persist_logger(make_logger, history_db=_FailingDB())
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            coord.ensure_history_run_created("run-1", "2025-01-01T00:00:00Z")
+            logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        coord.reset_for_new_session(run_id="run-2")
-        assert coord.history_create_fail_count == 0
+        logger._persist_reset(run_id="run-2")
+        assert logger._persist_history_create_fail_count == 0
         # Should be able to retry immediately after reset
-        coord.ensure_history_run_created("run-2", "2025-01-01T00:00:00Z")
+        logger._persist_ensure_history_run("run-2", "2025-01-01T00:00:00Z")
         # Will fail (DB still failing), but it should attempt (count incremented)
-        assert coord.history_create_fail_count == 1
+        assert logger._persist_history_create_fail_count == 1
 
 
 # ---------------------------------------------------------------------------

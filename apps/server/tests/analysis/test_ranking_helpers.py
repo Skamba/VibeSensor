@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.analysis.ranking import group_findings_by_source
+from vibesensor.analysis.top_cause_selection import group_findings_by_source
 
 
 def test_group_findings_by_source_preserves_ranked_signatures() -> None:

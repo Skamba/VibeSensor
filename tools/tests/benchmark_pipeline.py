@@ -20,7 +20,6 @@ import time
 from math import pi
 
 import numpy as np
-
 from vibesensor.processing import SignalProcessor
 from vibesensor.worker_pool import WorkerPool
 
