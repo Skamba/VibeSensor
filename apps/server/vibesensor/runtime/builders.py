@@ -132,7 +132,6 @@ def build_runtime(config: AppConfig) -> RuntimeState:
     metrics_logger = MetricsLogger(
         MetricsLoggerConfig(
             enabled=config.logging.log_metrics,
-            log_path=config.logging.metrics_log_path,
             metrics_log_hz=config.logging.metrics_log_hz,
             no_data_timeout_s=config.logging.no_data_timeout_s,
             sensor_model=config.logging.sensor_model,
@@ -184,7 +183,6 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         health_state=health_state,
         processing_loop=processing_loop,
         ws_hub=ws_hub,
-        ws_cache=ws_cache,
         ws_broadcast=ws_broadcast,
         metrics_logger=metrics_logger,
         update_manager=update_manager,

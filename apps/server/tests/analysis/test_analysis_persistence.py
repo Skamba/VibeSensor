@@ -318,7 +318,6 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     logger = MetricsLogger(
         MetricsLoggerConfig(
             enabled=False,
-            log_path=tmp_path / "metrics.jsonl",
             metrics_log_hz=10,
             sensor_model="ADXL345",
             default_sample_rate_hz=800,

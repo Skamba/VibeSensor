@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from typing import cast
-
 from ._types import Finding, MetadataDict, PhaseLabels, Sample
 from .findings_builder_support import (
-    PhaseSegmenter,
     build_reference_findings,
     collect_order_frequencies,
     finalize_findings,
@@ -18,7 +15,6 @@ from .helpers import (
     _locations_connected_throughout_run,
     _tire_reference_from_metadata,
 )
-from .phase_segmentation import segment_run_phases
 
 
 def _build_findings(
@@ -72,7 +68,6 @@ def _build_findings(
         prepare_analysis_samples(
             samples,
             per_sample_phases=per_sample_phases,
-            phase_segmenter=cast("PhaseSegmenter", segment_run_phases),
         )
     )
 

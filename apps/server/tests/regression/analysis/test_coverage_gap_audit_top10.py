@@ -5,7 +5,6 @@ from __future__ import annotations
 
 
 import math
-from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -96,7 +95,6 @@ def _make_metrics_logger() -> tuple[MetricsLogger, MagicMock]:
     logger = MetricsLogger(
         MetricsLoggerConfig(
             enabled=False,
-            log_path=Path("/tmp/test"),
             metrics_log_hz=1,
             sensor_model="test",
             default_sample_rate_hz=800,

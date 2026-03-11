@@ -384,7 +384,7 @@ python3 -m venv /tmp/vibesensor-wheel-build
 /tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
   --prefer-binary \
   --cache-dir "${PIP_TMP_CACHE}" \
-  "${PREBUILT_WHEEL}"
+  "${PREBUILT_WHEEL}[esp]"
 /tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
   --prefer-binary \
   --cache-dir "${PIP_TMP_CACHE}" \
@@ -410,7 +410,7 @@ fi
   --find-links "${WHEELHOUSE}" \
   --force-reinstall \
   --no-build-isolation \
-  "${VIBESENSOR_WHEEL}" \
+  "${VIBESENSOR_WHEEL}[esp]" \
   --quiet
 echo "Purging transient build deps"
 apt-get purge -y "${BUILD_DEPS[@]}"

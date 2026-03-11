@@ -157,7 +157,6 @@ class TestWorkerThreadRace:
         logger = MetricsLogger(
             MetricsLoggerConfig(
                 enabled=False,
-                log_path=tmp_path / "m.jsonl",
                 metrics_log_hz=2,
                 sensor_model="test",
                 default_sample_rate_hz=800,

@@ -61,19 +61,6 @@ def test_v2_structured_roundtrip(tmp_path: Path) -> None:
         assert row["top_peaks"] == orig["top_peaks"]
 
 
-def test_v2_extra_keys_preserved(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-extra", "2026-01-01T00:00:00Z", {"source": "test"})
-    sample = {"custom_key": "hello", "nested": {"a": 1}, "i": 42}
-    db.append_samples("run-extra", [sample])
-
-    rows = db.get_run_samples("run-extra")
-    assert len(rows) == 1
-    assert rows[0]["custom_key"] == "hello"
-    assert rows[0]["nested"] == {"a": 1}
-    assert rows[0]["i"] == 42
-
-
 def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-nan", "2026-01-01T00:00:00Z", {"source": "test"})
@@ -214,16 +201,16 @@ def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
 def test_v2_iter_with_offset(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-off", "2026-01-01T00:00:00Z", {"source": "test"})
-    db.append_samples("run-off", [{"i": i} for i in range(10)])
+    db.append_samples("run-off", [{"t_s": float(i)} for i in range(10)])
 
     rows0 = [s for b in db.iter_run_samples("run-off", offset=0) for s in b]
-    assert [r["i"] for r in rows0] == list(range(10))
+    assert [r["t_s"] for r in rows0] == [float(i) for i in range(10)]
 
     rows1 = [s for b in db.iter_run_samples("run-off", offset=1) for s in b]
-    assert [r["i"] for r in rows1] == list(range(1, 10))
+    assert [r["t_s"] for r in rows1] == [float(i) for i in range(1, 10)]
 
     rows5 = [s for b in db.iter_run_samples("run-off", batch_size=3, offset=5) for s in b]
-    assert [r["i"] for r in rows5] == [5, 6, 7, 8, 9]
+    assert [r["t_s"] for r in rows5] == [5.0, 6.0, 7.0, 8.0, 9.0]
 
     rows_past = [s for b in db.iter_run_samples("run-off", offset=20) for s in b]
     assert rows_past == []
@@ -232,22 +219,22 @@ def test_v2_iter_with_offset(tmp_path: Path) -> None:
 def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-corrupt", "2026-01-01T00:00:00Z", {"source": "test"})
-    db.append_samples("run-corrupt", [{"i": 1}, {"i": 2}])
+    db.append_samples("run-corrupt", [{"t_s": 1.0}, {"t_s": 2.0}])
     with db._cursor() as cur:
         cur.execute(
             "INSERT INTO samples_v2 (run_id, top_peaks) VALUES (?, ?)",
             ("run-corrupt", "{bad"),
         )
-    db.append_samples("run-corrupt", [{"i": 3}])
+    db.append_samples("run-corrupt", [{"t_s": 3.0}])
 
     rows = [
         sample for batch in db.iter_run_samples("run-corrupt", batch_size=2) for sample in batch
     ]
     assert len(rows) == 4
-    assert rows[0].get("i") == 1
-    assert rows[1].get("i") == 2
+    assert rows[0].get("t_s") == 1.0
+    assert rows[1].get("t_s") == 2.0
     assert rows[2].get("top_peaks") == []
-    assert rows[3].get("i") == 3
+    assert rows[3].get("t_s") == 3.0
 
 
 def test_v2_row_to_dict_non_list_peak_column_warns_and_uses_empty(
