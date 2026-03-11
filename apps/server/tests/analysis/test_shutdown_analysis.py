@@ -133,7 +133,6 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
             {
                 "logging": {
                     "log_metrics": False,
-                    "metrics_log_path": str(tmp_path / "metrics.jsonl"),
                     "history_db_path": str(tmp_path / "history.db"),
                     "shutdown_analysis_timeout_s": 10,
                 },
@@ -199,7 +198,7 @@ def test_config_shutdown_analysis_timeout(tmp_path: Path, cfg_timeout, expected)
     """shutdown_analysis_timeout_s must default to 30 and accept overrides."""
     from vibesensor.config import load_config
 
-    logging_cfg: dict = {"metrics_log_path": str(tmp_path / "m.jsonl")}
+    logging_cfg: dict = {}
     if cfg_timeout is not None:
         logging_cfg["shutdown_analysis_timeout_s"] = cfg_timeout
 

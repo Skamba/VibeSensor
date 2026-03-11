@@ -1,7 +1,7 @@
 import type { SpectrumChart } from "../spectrum";
 import type { WsClient } from "../ws";
 import type { StrengthMetricsPayload } from "../contracts/ws_payload_types";
-import type { RotationalSpeeds } from "../server_payload";
+import type { AdaptedClient, RotationalSpeeds } from "../server_payload";
 import { defaultLocationCodes } from "../constants";
 import type {
   CarRecord,
@@ -51,17 +51,6 @@ export interface ChartBand {
   color: string;
 }
 
-export interface ClientRow {
-  id: string;
-  name: string;
-  connected: boolean;
-  mac_address: string;
-  location_code: string;
-  last_seen_age_ms: number | null;
-  dropped_frames: number | null;
-  frames_total: number | null;
-}
-
 export interface SpectrumClientData {
   freq: number[];
   strength_metrics: StrengthMetricsPayload;
@@ -101,7 +90,7 @@ export interface AppState {
   wsState: string;
   lang: string;
   speedUnit: string;
-  clients: ClientRow[];
+  clients: AdaptedClient[];
   selectedClientId: string | null;
   spectrumPlot: SpectrumChart | null;
   spectra: { clients: Record<string, SpectrumClientData> };

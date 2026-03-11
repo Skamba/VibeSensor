@@ -6,11 +6,11 @@ setup:
 	cd apps/ui && npm ci
 
 format:
-	ruff format apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
+	ruff format apps/server/vibesensor apps/server/tests tools/dev tools/tests tools
 
 lint:
-	ruff check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
-	ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
+	ruff check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools
+	ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools
 
 typecheck-backend:
 	PYTHON=$(CURDIR)/.venv/bin/python; \
@@ -26,7 +26,7 @@ test-all:
 	python3 tools/tests/run_ci_parallel.py
 
 test-full-suite:
-	python3 tools/tests/run_full_suite.py
+	python3 tools/tests/run_e2e_parallel.py --shards 1
 
 sync-contracts:
 	cd apps/ui && npm run sync:contracts

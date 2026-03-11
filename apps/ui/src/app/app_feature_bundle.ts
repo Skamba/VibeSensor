@@ -5,7 +5,8 @@ import { createHistoryFeature, type HistoryFeature } from "./features/history_fe
 import { createRealtimeFeature, type RealtimeFeature } from "./features/realtime_feature";
 import { createSettingsFeature, type SettingsFeature } from "./features/settings_feature";
 import { createUpdateFeature, type UpdateFeature } from "./features/update_feature";
-import type { AppState, ClientRow } from "./ui_app_state";
+import type { AppState } from "./ui_app_state";
+import type { AdaptedClient } from "../server_payload";
 
 export interface AppFeatureBundle {
   history: HistoryFeature;
@@ -30,7 +31,7 @@ export interface AppFeatureBundleDeps {
   renderSpeedReadout: () => void;
   renderCarSelectionWarning: () => void;
   sendSelection: () => void;
-  locationCodeForClient?: (client: ClientRow) => string;
+  locationCodeForClient?: (client: AdaptedClient) => string;
 }
 
 export function createAppFeatureBundle(deps: AppFeatureBundleDeps): AppFeatureBundle {

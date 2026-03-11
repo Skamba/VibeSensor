@@ -41,11 +41,10 @@ The `vibesensor.report` package contains **only** rendering code:
 | File | Purpose |
 |---|---|
 | `pdf_engine.py` | Public PDF entrypoint, validation, pagination, and page orchestration |
-| `pdf_page1.py`, `pdf_page2.py` | Page-level composition |
-| `pdf_page1_sections.py`, `pdf_page2_sections.py`, `pdf_page_layouts.py` | Focused page section renderers and geometry |
-| `pdf_drawing.py`, `pdf_text.py`, `pdf_layout.py` | Shared drawing, text, and geometry helpers |
-| `pdf_diagram_layout.py`, `pdf_diagram_models.py`, `pdf_diagram_render.py` | Diagram planning, typed models, and drawing |
-| `pdf_helpers.py` | Shared PDF helper functions |
+| `pdf_page1.py`, `pdf_page2.py` | Page-level composition (including section renderers and aspect-ratio helpers) |
+| `pdf_page_layouts.py` | Page geometry and layout calculations |
+| `pdf_drawing.py`, `pdf_text.py` | Shared drawing and text helpers |
+| `pdf_diagram_layout.py`, `pdf_diagram_models.py`, `pdf_diagram_render.py` | Diagram planning, typed models, drawing, and location canonicalisation |
 | `report_data.py` | Dataclass definitions (pure data) |
 | `theme.py` | Color tokens and styling constants |
 

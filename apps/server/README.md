@@ -35,7 +35,6 @@ apps/server/
 ├── config.yaml
 ├── config.dev.yaml
 ├── config.docker.yaml
-├── config.example.yaml
 ├── data/
 ├── scripts/
 ├── systemd/
@@ -67,7 +66,7 @@ The local development configs default the HTTP listener to port `8000`.
 
 ## Configuration
 
-Configuration is YAML-based. Use `apps/server/config.example.yaml` as the canonical config reference and `apps/server/config.dev.yaml` or `apps/server/config.docker.yaml` for local overrides.
+Configuration is YAML-based. Run `vibesensor-config-preflight --dump-defaults` to see all available keys with defaults. Use `apps/server/config.dev.yaml` or `apps/server/config.docker.yaml` for local overrides.
 
 Common runtime files under `apps/server/data/` include:
 

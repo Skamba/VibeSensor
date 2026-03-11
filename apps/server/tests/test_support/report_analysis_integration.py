@@ -11,7 +11,7 @@ from vibesensor.analysis import (
     findings_order_analysis as _order_analysis_module,
 )
 from vibesensor.analysis import (
-    findings_order_assembly as _order_assembly_module,
+    findings_order_findings as _order_assembly_module,
 )
 from vibesensor.analysis import (
     findings_order_findings as order_findings_module,
@@ -63,7 +63,13 @@ def patch_order_hypothesis(
     *,
     dominance_ratio: float = 2.0,
 ) -> None:
-    """Apply standard order-hypothesis stubs to order-findings internals."""
+    """Apply standard order-hypothesis stubs to order-findings internals.
+
+    These patches target private symbols because the order-findings pipeline
+    has no public injection points for hypotheses, correlation, or localization.
+    Tests need deterministic, isolated findings without running the full
+    multi-stage pipeline.
+    """
     monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [HypothesisStub()])
     monkeypatch.setattr(_order_analysis_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
