@@ -23,7 +23,7 @@ from ..api_models import (
 )
 
 if TYPE_CHECKING:
-    from ..esp_flash_manager import EspFlashManager
+    from ..update.esp_flash_manager import EspFlashManager
     from ..update.manager import UpdateManager
 
 __all__ = ["create_update_routes"]

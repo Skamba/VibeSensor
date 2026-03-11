@@ -32,6 +32,15 @@ class _StubRegistry:
         self.snapshot_calls += 1
         return list(self._clients)
 
+    def ws_snapshot(
+        self,
+        now: float | None = None,
+        *,
+        now_mono: float | None = None,
+    ) -> list[dict[str, Any]]:
+        self.snapshot_calls += 1
+        return list(self._clients)
+
 
 class _StubProcessor:
     def __init__(self) -> None:
@@ -144,7 +153,6 @@ def _make_state(
     ui_heavy_push_hz: int = 4,
 ) -> RuntimeState:
     import vibesensor.runtime as runtime_module
-    from vibesensor.runtime.lifecycle import LifecycleManager
     from vibesensor.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
     from vibesensor.runtime.ws_broadcast import WsBroadcastService
 
@@ -198,7 +206,6 @@ def _make_state(
         update_manager=_SENTINEL,  # type: ignore[arg-type]
         esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
     )
-    state.lifecycle = LifecycleManager(runtime=state)  # type: ignore[arg-type]
     state.ws_broadcast.include_heavy = ws_include_heavy
     return state
 

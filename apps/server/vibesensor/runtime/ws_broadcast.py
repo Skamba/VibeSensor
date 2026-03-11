@@ -73,11 +73,7 @@ class WsBroadcastService:
         self.include_heavy = (self.tick % heavy_every) == 0
 
     def _build_shared_payload(self) -> LiveWsPayload:
-        active_ids = self._registry.active_client_ids()
-        metrics_by_client = self._processor.all_latest_metrics(active_ids)
-        clients = self._registry.snapshot_for_api(
-            metrics_by_client=metrics_by_client,
-        )
+        clients = self._registry.ws_snapshot()
         client_ids = [c["id"] for c in clients]
         fresh_ids = self._processor.clients_with_recent_data(
             client_ids,

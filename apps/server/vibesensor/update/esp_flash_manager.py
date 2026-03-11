@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
 
-from vibesensor.firmware_cache import FirmwareCache, validate_bundle
+from .firmware_cache import FirmwareCache, validate_bundle
 
 LOGGER = logging.getLogger(__name__)
 

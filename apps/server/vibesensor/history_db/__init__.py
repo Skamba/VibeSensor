@@ -32,7 +32,6 @@ from ._samples import (
     v2_row_to_dict,
 )
 from ._schema import (
-    ANALYSIS_SCHEMA_VERSION,
     SCHEMA_SQL,
     SCHEMA_VERSION,
     RunStatus,
@@ -40,7 +39,7 @@ from ._schema import (
 )
 
 # Re-export for public API.
-__all__ = ["ANALYSIS_SCHEMA_VERSION", "HistoryDB", "RunStatus"]
+__all__ = ["HistoryDB", "RunStatus"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -113,25 +112,22 @@ class HistoryDB:
         with self._cursor() as cur:
             cur.executescript(SCHEMA_SQL)
 
-        with self._cursor() as cur:
-            # Migrate from legacy schema_meta table to PRAGMA user_version.
-            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_meta'")
-            if cur.fetchone() is not None:
-                cur.execute("SELECT value FROM schema_meta WHERE key = ?", ("version",))
-                row = cur.fetchone()
-                if row is not None:
-                    try:
-                        legacy_ver = int(str(row[0]))
-                    except (ValueError, TypeError):
-                        legacy_ver = SCHEMA_VERSION
-                    cur.execute(f"PRAGMA user_version = {legacy_ver}")
-                cur.execute("DROP TABLE schema_meta")
-
         with self._cursor(commit=False) as cur:
             cur.execute("PRAGMA user_version")
             version = cur.fetchone()[0]
 
         if version == 0:
+            # Check for legacy schema_meta table (pre-v5 databases).
+            with self._cursor(commit=False) as cur:
+                cur.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_meta'"
+                )
+                if cur.fetchone() is not None:
+                    raise RuntimeError(
+                        f"Database at {self.db_path} uses a legacy "
+                        "schema_meta table incompatible with the current "
+                        f"v{SCHEMA_VERSION} format. Delete it to recreate."
+                    )
             # Fresh database — stamp with current version.
             with self._cursor() as cur:
                 cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
@@ -361,11 +357,10 @@ class HistoryDB:
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'complete', analysis_json = ?, "
-                "analysis_version = ?, analysis_completed_at = ? "
+                "analysis_completed_at = ? "
                 "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
                 (
                     safe_json_dumps(analysis),
-                    ANALYSIS_SCHEMA_VERSION,
                     now,
                     run_id,
                 ),

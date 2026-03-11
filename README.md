@@ -221,8 +221,8 @@ mirroring source modules. See [docs/testing.md](docs/testing.md) for the full
 layout, mapping rules, and how to add new tests.
 
 ```bash
-# Full suite (excludes browser tests)
-pytest -q -m "not selenium" apps/server/tests
+# Full suite
+pytest -q apps/server/tests
 
 # Single feature area
 pytest -q apps/server/tests/analysis/

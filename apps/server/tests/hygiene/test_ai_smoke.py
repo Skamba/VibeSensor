@@ -54,8 +54,6 @@ def test_smoke_health_route_registered() -> None:
     state.processing_loop = MagicMock()
     state.update_manager = MagicMock()
     state.esp_flash_manager = MagicMock()
-    state.apply_car_settings = MagicMock()
-    state.apply_speed_source_settings = MagicMock()
     router = create_router(state)
     routes = {r.path: r.methods for r in router.routes if hasattr(r, "methods")}
     assert "/api/health" in routes, "Missing /api/health route"

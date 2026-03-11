@@ -16,7 +16,6 @@ from ..constants import (
     UI_PUSH_HZ,
     WAVEFORM_DISPLAY_HZ,
 )
-from ..esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
 from ..history_services.exports import HistoryExportService
@@ -27,11 +26,11 @@ from ..processing import SignalProcessor
 from ..registry import ClientRegistry
 from ..settings_store import SettingsStore
 from ..udp_control_tx import UDPControlPlane
+from ..update.esp_flash_manager import EspFlashManager
 from ..update.manager import UpdateManager
 from ..worker_pool import WorkerPool
 from ..ws_hub import WebSocketHub
 from .health_state import RuntimeHealthState
-from .lifecycle import LifecycleManager
 from .processing_loop import ProcessingLoop, ProcessingLoopState
 from .state import RuntimeState
 from .ws_broadcast import WsBroadcastService
@@ -70,9 +69,13 @@ def build_runtime(config: AppConfig) -> RuntimeState:
 
     # DB + settings
     history_db = create_history_db(config)
-    settings_store = SettingsStore(db=history_db)
     analysis_settings = AnalysisSettingsStore()
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
+    settings_store = SettingsStore(
+        db=history_db,
+        analysis_settings=analysis_settings,
+        gps_monitor=gps_monitor,
+    )
 
     # persistence services
     run_service = HistoryRunService(history_db, settings_store)
@@ -184,7 +187,5 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         update_manager=update_manager,
         esp_flash_manager=EspFlashManager(),
     )
-    runtime.lifecycle = LifecycleManager(runtime=runtime)
-    runtime.apply_car_settings()
-    runtime.apply_speed_source_settings()
+    settings_store.sync_all()
     return runtime

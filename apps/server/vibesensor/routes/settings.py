@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
@@ -46,8 +46,6 @@ def create_settings_routes(
     settings_store: SettingsStore,
     gps_monitor: GPSSpeedMonitor,
     analysis_settings: AnalysisSettingsStore,
-    apply_car_settings: Callable[[], None],
-    apply_speed_source_settings: Callable[[], None],
 ) -> APIRouter:
     """Create and return the device-settings API routes."""
     router = APIRouter()
@@ -62,7 +60,6 @@ def create_settings_routes(
     async def add_car(req: CarUpsertRequest) -> CarsResponse:
         payload = req.model_dump(exclude_none=True)
         result = await asyncio.to_thread(settings_store.add_car, payload)
-        apply_car_settings()
         return CarsResponse(**result)
 
     @router.put("/api/settings/cars/{car_id}", response_model=CarsResponse)
@@ -74,7 +71,6 @@ def create_settings_routes(
                 car_id,
                 payload,
             )
-        apply_car_settings()
         return CarsResponse(**result)
 
     @router.delete("/api/settings/cars/{car_id}", response_model=CarsResponse)
@@ -86,7 +82,6 @@ def create_settings_routes(
             raise HTTPException(status_code=404, detail=f"Car {car_id!r} not found")
         with _value_error_to_http():
             result = await asyncio.to_thread(settings_store.delete_car, car_id)
-        apply_car_settings()
         return CarsResponse(**result)
 
     @router.post("/api/settings/cars/active", response_model=CarsResponse)
@@ -94,7 +89,6 @@ def create_settings_routes(
         car_id = req.carId
         with _value_error_to_http(404):
             result = await asyncio.to_thread(settings_store.set_active_car, car_id)
-        apply_car_settings()
         return CarsResponse(**result)
 
     # -- speed source ----------------------------------------------------------
@@ -105,7 +99,6 @@ def create_settings_routes(
             settings_store.update_speed_source,
             payload,
         )
-        apply_speed_source_settings()
         return SpeedSourceResponse(**result)
 
     @router.get("/api/settings/speed-source", response_model=SpeedSourceResponse)
@@ -184,7 +177,6 @@ def create_settings_routes(
         if changes:
             with _value_error_to_http():
                 await asyncio.to_thread(settings_store.update_active_car_aspects, changes)
-            apply_car_settings()
         return AnalysisSettingsResponse(**analysis_settings.snapshot())
 
     return router

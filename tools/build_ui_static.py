@@ -1,12 +1,36 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
 import shutil
 import subprocess
 from pathlib import Path
+
+
+def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
+    """Deterministic SHA-256 of a directory tree (sorted, filtered)."""
+    if not root.exists():
+        return ""
+    hasher = hashlib.sha256()
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        relative = path.relative_to(root)
+        if any(part in ignore_names for part in relative.parts):
+            continue
+        hasher.update(str(relative.as_posix()).encode("utf-8"))
+        hasher.update(b"\0")
+        try:
+            with path.open("rb") as handle:
+                while True:
+                    chunk = handle.read(65536)
+                    if not chunk:
+                        break
+                    hasher.update(chunk)
+        except OSError:
+            continue
+        hasher.update(b"\0")
+    return hasher.hexdigest()
+
 
 UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 
@@ -15,35 +39,7 @@ def _run(command: list[str], cwd: Path) -> None:
     subprocess.run(command, cwd=cwd, check=True)
 
 
-def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
-    hasher = hashlib.sha256()
-    for path in sorted(p for p in root.rglob("*") if p.is_file()):
-        relative = path.relative_to(root)
-        if any(part in ignore_names for part in relative.parts):
-            continue
-        hasher.update(str(relative.as_posix()).encode("utf-8"))
-        hasher.update(b"\0")
-        hasher.update(path.read_bytes())
-        hasher.update(b"\0")
-    return hasher.hexdigest()
-
-
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Build apps/ui and sync dist output into apps/server/vibesensor/static."
-    )
-    parser.add_argument(
-        "--skip-npm-ci",
-        action="store_true",
-        help="Skip `npm ci` before building.",
-    )
-    parser.add_argument(
-        "--force-npm-ci",
-        action="store_true",
-        help="Force `npm ci` even when node_modules and lockfile hash are unchanged.",
-    )
-    args = parser.parse_args()
-
     repo_root = Path(__file__).resolve().parents[1]
     ui_dir = repo_root / "apps" / "ui"
     dist_dir = ui_dir / "dist"
@@ -58,10 +54,8 @@ def main() -> None:
         else ""
     )
 
-    should_run_npm_ci = not args.skip_npm_ci and (
-        args.force_npm_ci
-        or not (ui_dir / "node_modules").exists()
-        or lock_hash != previous_lock_hash
+    should_run_npm_ci = (
+        not (ui_dir / "node_modules").exists() or lock_hash != previous_lock_hash
     )
 
     if should_run_npm_ci:

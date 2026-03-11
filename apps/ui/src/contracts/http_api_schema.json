@@ -1955,17 +1955,6 @@
         "additionalProperties": true,
         "description": "Response body with aggregated diagnostic insights for a run.",
         "properties": {
-          "analysis_is_current": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Analysis Is Current"
-          },
           "run_id": {
             "anyOf": [
               {

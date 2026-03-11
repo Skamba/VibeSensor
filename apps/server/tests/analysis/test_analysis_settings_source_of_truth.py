@@ -1,99 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
+from conftest import FakeState
 from fastapi import FastAPI
 from test_support import response_payload
 
 from vibesensor.analysis_settings import AnalysisSettingsStore
 from vibesensor.api_models import ActiveCarRequest, AnalysisSettingsRequest, CarUpsertRequest
-from vibesensor.history_services.exports import HistoryExportService
-from vibesensor.history_services.reports import HistoryReportService
-from vibesensor.history_services.runs import HistoryRunService
 from vibesensor.routes import create_router
 from vibesensor.settings_store import SettingsStore
-
-
-def _noop(*_args, **_kwargs):  # noqa: ANN202
-    return None
-
-
-@dataclass
-class _State:
-    settings_store: SettingsStore
-    analysis_settings: AnalysisSettingsStore
-
-    metrics_logger: object = field(init=False)
-    history_db: object = field(init=False)
-    registry: object = field(init=False)
-    control_plane: object = field(init=False)
-    gps_monitor: object = field(init=False)
-    ws_hub: object = field(init=False)
-    processor: object = field(init=False)
-    loop_state: object = field(init=False)
-    processing_loop_state: object = field(init=False)
-    update_manager: object = field(init=False)
-    esp_flash_manager: object = field(init=False)
-
-    def apply_car_settings(self) -> None:
-        aspects = self.settings_store.active_car_aspects()
-        if aspects:
-            self.analysis_settings.update(aspects)
-
-    def apply_speed_source_settings(self) -> None:
-        pass
-
-    def __post_init__(self) -> None:
-        from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
-
-        self.loop_state = ProcessingLoopState()
-        self.processing_loop_state = self.loop_state
-        self.health_state = RuntimeHealthState()
-        self.health_state.mark_ready()
-        self.update_manager = None
-        self.esp_flash_manager = None
-        self.metrics_logger = SimpleNamespace(
-            status=dict,
-            start_logging=_noop,
-            stop_logging=_noop,
-        )
-        self.history_db = SimpleNamespace(
-            list_runs=list,
-            get_run=_noop,
-            iter_run_samples=lambda *_a, **_kw: iter(()),
-            get_active_run_id=_noop,
-            delete_run=lambda _id: False,
-        )
-        self.registry = SimpleNamespace(
-            snapshot_for_api=list,
-            get=_noop,
-            set_name=lambda cid, name: SimpleNamespace(client_id=cid, name=name),
-            remove_client=lambda _cid: True,
-        )
-        self.control_plane = SimpleNamespace(
-            send_identify=lambda _id, _dur: (False, None),
-        )
-        self.gps_monitor = SimpleNamespace(
-            effective_speed_mps=None,
-            override_speed_mps=None,
-            set_speed_override_kmh=_noop,
-        )
-        self.ws_hub = SimpleNamespace(
-            add=_noop,
-            remove=_noop,
-            update_selected_client=_noop,
-        )
-        self.processor = SimpleNamespace(
-            debug_spectrum=lambda _id: {},
-            raw_samples=lambda _id, n_samples=1: {},
-            intake_stats=dict,
-        )
-        self.run_service = HistoryRunService(self.history_db, self.settings_store)
-        self.report_service = HistoryReportService(self.history_db, self.settings_store)
-        self.export_service = HistoryExportService(self.history_db)
 
 
 def _route(router, path: str, method: str = "GET"):
@@ -113,12 +30,15 @@ def _wiring(tmp_path: Path):
     from vibesensor.history_db import HistoryDB
 
     db = HistoryDB(tmp_path / "test.db")
-    settings_store = SettingsStore(db=db)
+    analysis_settings = AnalysisSettingsStore()
+    settings_store = SettingsStore(db=db, analysis_settings=analysis_settings)
     initial = settings_store.add_car({"name": "Primary"})
     settings_store.set_active_car(initial["cars"][0]["id"])
-    analysis_settings = AnalysisSettingsStore()
-    analysis_settings.update(settings_store.active_car_aspects() or {})
-    state = _State(settings_store=settings_store, analysis_settings=analysis_settings)
+    state = FakeState(
+        settings_store=settings_store,
+        analysis_settings=analysis_settings,
+        history_db=db,
+    )
     app = FastAPI()
     router = create_router(state)
     app.include_router(router)

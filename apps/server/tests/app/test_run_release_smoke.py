@@ -37,7 +37,7 @@ def test_run_release_smoke_builds_ui_and_wheel_then_runs_smoke(monkeypatch, tmp_
     assert commands[0][1] == repo_root
     assert any(command[0][-1] == str(built_wheel) for command in commands)
     smoke_command = commands[-1]
-    assert smoke_command[0][1:4] == ["-m", "vibesensor.release_validation", "smoke-server"]
+    assert smoke_command[0][1:4] == ["-m", "vibesensor.update.release_validation", "smoke-server"]
     assert smoke_command[2] is None
 
 

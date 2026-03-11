@@ -980,7 +980,7 @@ if [ "${VALIDATE}" = "1" ]; then
 
   # Validate firmware cache CLI is available
   if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python -c '
-import vibesensor.firmware_cache
+import vibesensor.update.firmware_cache
 print("FIRMWARE_CACHE_MODULE_OK")
 '; then
     echo "Validation failed: firmware_cache module not importable in target rootfs"

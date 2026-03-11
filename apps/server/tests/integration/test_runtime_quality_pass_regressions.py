@@ -202,10 +202,9 @@ def test_old_schema_version_raises(tmp_path: Path) -> None:
     """Opening a DB with an older schema version should raise RuntimeError."""
     db_path = tmp_path / "history.db"
     conn = sqlite3.connect(str(db_path))
+    conn.execute("PRAGMA user_version = 2")
     conn.executescript(
         """\
-CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-INSERT INTO schema_meta (key, value) VALUES ('version', '2');
 CREATE TABLE runs (
     run_id TEXT PRIMARY KEY,
     start_time TEXT NOT NULL,

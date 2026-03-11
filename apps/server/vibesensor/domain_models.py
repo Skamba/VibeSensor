@@ -448,8 +448,6 @@ def _normalize_peak_list(peaks_raw: object, *, max_items: int) -> list[dict[str,
 class SensorFrame:
     """A single sample/data record from a JSONL run file."""
 
-    record_type: str
-    schema_version: str
     run_id: str
     timestamp_utc: str
     t_s: float | None
@@ -479,8 +477,8 @@ class SensorFrame:
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "record_type": self.record_type,
-            "schema_version": self.schema_version,
+            "record_type": RUN_SAMPLE_TYPE,
+            "schema_version": RUN_SCHEMA_VERSION,
             "run_id": self.run_id,
             "timestamp_utc": self.timestamp_utc,
             "t_s": self.t_s,
@@ -531,8 +529,6 @@ class SensorFrame:
         normalized_peaks = _normalize_peak_list(record.get("top_peaks"), max_items=10)
 
         return cls(
-            record_type=RUN_SAMPLE_TYPE,
-            schema_version=str(record.get("schema_version", RUN_SCHEMA_VERSION)),
             run_id=str(record.get("run_id", "")),
             timestamp_utc=str(record.get("timestamp_utc", "")),
             t_s=t_s,
