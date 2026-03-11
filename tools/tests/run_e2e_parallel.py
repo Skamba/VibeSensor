@@ -161,10 +161,16 @@ def _print_diagnostics(*, sim_log: Path, container_name: str, base_url: str) -> 
         cwd=str(ROOT),
         check=False,
     )
-    _emit(f"\n=== diagnostics: /api/clients ===\n{_api_snapshot(base_url, '/api/clients')}")
-    _emit(f"\n=== diagnostics: /api/history ===\n{_api_snapshot(base_url, '/api/history')}")
+    _emit(
+        f"\n=== diagnostics: /api/clients ===\n{_api_snapshot(base_url, '/api/clients')}"
+    )
+    _emit(
+        f"\n=== diagnostics: /api/history ===\n{_api_snapshot(base_url, '/api/history')}"
+    )
     if sim_log.exists():
-        _emit(f"\n=== diagnostics: simulator log ===\n{sim_log.read_text(encoding='utf-8')}")
+        _emit(
+            f"\n=== diagnostics: simulator log ===\n{sim_log.read_text(encoding='utf-8')}"
+        )
 
 
 def _run_shard_e2e(
@@ -183,12 +189,19 @@ def _run_shard_e2e(
     container_started = False
     try:
         docker_run_cmd = [
-            "docker", "run", "--detach",
-            "--name", config.container_name,
-            "-p", f"{config.http_port}:8000",
-            "-p", f"{config.sim_data_port}:9000/udp",
-            "-p", f"{config.sim_control_port}:9001/udp",
-            "-v", f"{data_dir}:/app/apps/server/data",
+            "docker",
+            "run",
+            "--detach",
+            "--name",
+            config.container_name,
+            "-p",
+            f"{config.http_port}:8000",
+            "-p",
+            f"{config.sim_data_port}:9000/udp",
+            "-p",
+            f"{config.sim_control_port}:9001/udp",
+            "-v",
+            f"{data_dir}:/app/apps/server/data",
             image,
         ]
         rc = _run(docker_run_cmd, log_path=log_path)
@@ -197,38 +210,56 @@ def _run_shard_e2e(
         container_started = True
         _wait_health(base_url)
         env = os.environ.copy()
-        env.update({
-            "VIBESENSOR_BASE_URL": base_url,
-            "VIBESENSOR_SIM_SERVER_HOST": "127.0.0.1",
-            "VIBESENSOR_SIM_DATA_PORT": str(config.sim_data_port),
-            "VIBESENSOR_SIM_CONTROL_PORT": str(config.sim_control_port),
-            "VIBESENSOR_SIM_CLIENT_CONTROL_BASE": str(config.sim_client_control_base),
-            "VIBESENSOR_SIM_DURATION": "8",
-            "VIBESENSOR_SIM_DURATION_LONG": "20",
-            "VIBESENSOR_SIM_LOG": str(sim_log),
-        })
+        env.update(
+            {
+                "VIBESENSOR_BASE_URL": base_url,
+                "VIBESENSOR_SIM_SERVER_HOST": "127.0.0.1",
+                "VIBESENSOR_SIM_DATA_PORT": str(config.sim_data_port),
+                "VIBESENSOR_SIM_CONTROL_PORT": str(config.sim_control_port),
+                "VIBESENSOR_SIM_CLIENT_CONTROL_BASE": str(
+                    config.sim_client_control_base
+                ),
+                "VIBESENSOR_SIM_DURATION": "8",
+                "VIBESENSOR_SIM_DURATION_LONG": "20",
+                "VIBESENSOR_SIM_LOG": str(sim_log),
+            }
+        )
         pytest_cmd = [
-            sys.executable, "-m", "pytest", "-q", "-n", "0",
-            "-m", marker,
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "-n",
+            "0",
+            "-m",
+            marker,
             *config.tests,
         ]
         with log_path.open("a", encoding="utf-8") as log_file:
             log_file.write(f"$ {shlex.join(pytest_cmd)}\n")
             proc = subprocess.run(
-                pytest_cmd, cwd=str(ROOT), text=True,
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+                pytest_cmd,
+                cwd=str(ROOT),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                env=env,
             )
             if proc.stdout:
                 log_file.write(proc.stdout)
         return proc.returncode if proc.returncode is not None else 1
     except Exception:
-        _print_diagnostics(sim_log=sim_log, container_name=config.container_name, base_url=base_url)
+        _print_diagnostics(
+            sim_log=sim_log, container_name=config.container_name, base_url=base_url
+        )
         raise
     finally:
         if container_started:
             subprocess.run(
                 ["docker", "rm", "-f", config.container_name],
-                cwd=str(ROOT), check=False, capture_output=True,
+                cwd=str(ROOT),
+                check=False,
+                capture_output=True,
             )
 
 
