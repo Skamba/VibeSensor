@@ -35,13 +35,9 @@ cd "$REPO_ROOT"
 
 EVENT_FILE="tools/tests/act-event.json"
 
-SECRET_ARGS=()
+ACT_ARGS=(-W .github/workflows/ci.yml -e "$EVENT_FILE")
 if [ -f .secrets.act ]; then
-  SECRET_ARGS=(--secret-file .secrets.act)
+  ACT_ARGS+=(--secret-file .secrets.act)
 fi
 
-exec act \
-  -W .github/workflows/ci.yml \
-  -e "$EVENT_FILE" \
-  "${SECRET_ARGS[@]}" \
-  "$@"
+exec act "${ACT_ARGS[@]}" "$@"
