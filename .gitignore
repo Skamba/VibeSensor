@@ -57,6 +57,9 @@ apps/server/data/*.db-wal
 apps/server/data/clients.json
 apps/server/wifi-secrets.env
 
+# act (local GitHub Actions runner) secrets
+.secrets.act
+
 # Firmware build artifacts
 firmware/esp/.pio/
 
