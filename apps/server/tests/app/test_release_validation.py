@@ -34,9 +34,7 @@ def test_build_release_smoke_config_rewrites_runtime_paths(tmp_path: Path) -> No
     }
     assert data["gps"]["gps_enabled"] is False
     assert data["ap"]["self_heal"]["enabled"] is False
-    assert data["logging"]["metrics_log_path"].endswith("metrics.jsonl")
     assert data["logging"]["history_db_path"].endswith("history.db")
-    assert data["storage"]["clients_json_path"].endswith("clients.json")
     assert data["update"]["rollback_dir"].endswith("rollback")
 
 

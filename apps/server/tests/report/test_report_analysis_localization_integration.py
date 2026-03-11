@@ -5,7 +5,7 @@ from test_support.report_analysis_integration import max_non_ref_confidence, whe
 from test_support.report_helpers import analysis_sample as _make_sample
 
 from vibesensor.analysis import build_findings_for_samples
-from vibesensor.analysis import findings_order_assembly as order_assembly_module
+from vibesensor.analysis import findings_order_findings as order_assembly_module
 from vibesensor.analysis.summary_payload import summarize_origin
 from vibesensor.analysis.test_plan import _location_speedbin_summary
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh

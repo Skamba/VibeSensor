@@ -1,11 +1,10 @@
 # Pi deployment config overlay.
 # Copied to /etc/vibesensor/config.yaml during install_pi.sh and pi-gen image build.
-# Overrides paths from config.example.yaml to use system directories.
+# Overrides paths from defaults to use system directories.
 
 ap:
   self_heal:
     state_file: /var/lib/vibesensor/hotspot-self-heal-state.json
 
 logging:
-  metrics_log_path: /var/log/vibesensor/metrics.jsonl
   history_db_path: /var/lib/vibesensor/history.db

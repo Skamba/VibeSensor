@@ -6,8 +6,7 @@ from collections.abc import Sequence
 
 from ..constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF, SPEED_COVERAGE_MIN_PCT
 from ..domain_models import as_float_or_none as _as_float
-from ._types import Finding, MetadataDict, PhaseLabels, Sample
-from .findings_reference_checks import _reference_missing_finding
+from ._types import Finding, JsonValue, MetadataDict, PhaseLabels, Sample
 from .helpers import _effective_engine_rpm
 from .order_analysis import _i18n_ref
 from .phase_segmentation import (
@@ -18,6 +17,35 @@ from .phase_segmentation import (
 from .ranking import finding_sort_key
 
 _MIN_DIAGNOSTIC_SAMPLES = 5
+
+_REF_MISSING: dict[str, str] = {"_i18n_key": "REFERENCE_MISSING"}
+_REF_MISSING_AMPLITUDE: dict[str, str] = {
+    "_i18n_key": "REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED",
+}
+
+
+def _reference_missing_finding(
+    *,
+    finding_id: str,
+    suspected_source: str,
+    evidence_summary: JsonValue,
+    quick_checks: list[JsonValue],
+) -> Finding:
+    return {
+        "finding_id": finding_id,
+        "finding_type": "reference",
+        "suspected_source": suspected_source,
+        "evidence_summary": evidence_summary,
+        "frequency_hz_or_order": {**_REF_MISSING},
+        "amplitude_metric": {
+            "name": "not_available",
+            "value": None,
+            "units": "n/a",
+            "definition": {**_REF_MISSING_AMPLITUDE},
+        },
+        "confidence_0_to_1": None,
+        "quick_checks": quick_checks[:3],
+    }
 
 
 def build_reference_findings(

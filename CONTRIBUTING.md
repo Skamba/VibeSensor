@@ -115,7 +115,7 @@ When a single shard fails in CI, run the corresponding focused suite locally fir
 - After opening or updating a PR, monitor checks until they are green:
 
 ```bash
-python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor
+python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor
 ```
 
 - Do not merge until required checks are green.

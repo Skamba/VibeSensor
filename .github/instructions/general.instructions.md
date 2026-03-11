@@ -58,7 +58,7 @@ Updater deployment policy
 
 Validation (always required)
 - Pull request default mode: after opening or updating a PR, check CI/review status, fix all blocking issues, push updates, and keep monitoring until required checks are green.
-- For every PR, use `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor` as the default monitor.
+- For every PR, use `python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor` as the default monitor.
 - Treat watcher exit `RESULT=NON_GREEN` as immediate action: inspect the latest failing run promptly, determine root cause, implement the smallest complete maintainable fix, push, and restart the watcher.
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - Test in this order: targeted tests first, then broader relevant suites.

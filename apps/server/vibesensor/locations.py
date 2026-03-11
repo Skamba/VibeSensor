@@ -6,12 +6,28 @@ labels and provides helpers to identify wheel-mounted sensor positions.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from vibesensor.contracts import LOCATION_CODES
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+LOCATION_CODES: Final[dict[str, str]] = {
+    "front_left_wheel": "Front Left Wheel",
+    "front_right_wheel": "Front Right Wheel",
+    "rear_left_wheel": "Rear Left Wheel",
+    "rear_right_wheel": "Rear Right Wheel",
+    "transmission": "Transmission",
+    "driveshaft_tunnel": "Driveshaft Tunnel",
+    "engine_bay": "Engine Bay",
+    "front_subframe": "Front Subframe",
+    "rear_subframe": "Rear Subframe",
+    "driver_seat": "Driver Seat",
+    "front_passenger_seat": "Front Passenger Seat",
+    "rear_left_seat": "Rear Left Seat",
+    "rear_center_seat": "Rear Center Seat",
+    "rear_right_seat": "Rear Right Seat",
+    "trunk": "Trunk",
+}
 
 LOCATION_OPTIONS: tuple[tuple[str, str], ...] = tuple(LOCATION_CODES.items())
 

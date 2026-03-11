@@ -7,10 +7,15 @@ in the main module while the large defaults dict lives here.
 from __future__ import annotations
 
 from copy import deepcopy
-
-from vibesensor.contracts import NETWORK_PORTS
+from typing import Final
 
 from .json_types import JsonObject, is_json_object
+
+NETWORK_PORTS: Final[dict[str, int]] = {
+    "server_udp_data": 9000,
+    "server_udp_control": 9001,
+    "firmware_control_port_base": 9010,
+}
 
 DEFAULT_UDP_DATA_PORT = int(NETWORK_PORTS["server_udp_data"])
 DEFAULT_UDP_CONTROL_PORT = int(NETWORK_PORTS["server_udp_control"])
@@ -52,7 +57,6 @@ DEFAULT_CONFIG: JsonObject = {
     },
     "logging": {
         "log_metrics": True,
-        "metrics_log_path": "data/metrics.jsonl",
         "history_db_path": "data/history.db",
         "metrics_log_hz": 4,
         "no_data_timeout_s": 15.0,
@@ -60,9 +64,6 @@ DEFAULT_CONFIG: JsonObject = {
         "persist_history_db": True,
         "shutdown_analysis_timeout_s": 30,
         "app_log_path": "data/app.log",
-    },
-    "storage": {
-        "clients_json_path": "data/clients.json",
     },
     "gps": {"gps_enabled": True, "gpsd_host": "127.0.0.1", "gpsd_port": 2947},
     "update": {

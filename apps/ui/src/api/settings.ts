@@ -107,7 +107,7 @@ export async function getSpeedSourceStatus(): Promise<SpeedSourceStatusPayload> 
 }
 
 export async function getUpdateStatus(): Promise<UpdateStatusPayload> {
-  return apiJson("/api/settings/update/status");
+  return apiJson("/api/update/status");
 }
 
 export async function getHealthStatus(): Promise<HealthStatusPayload> {
@@ -115,7 +115,7 @@ export async function getHealthStatus(): Promise<HealthStatusPayload> {
 }
 
 export async function startUpdate(ssid: string, password: string): Promise<UpdateStartPayload> {
-  return apiJson("/api/settings/update/start", {
+  return apiJson("/api/update/start", {
     method: "POST",
     headers: JSON_HEADERS,
     body: JSON.stringify({ ssid, password }),
@@ -123,17 +123,17 @@ export async function startUpdate(ssid: string, password: string): Promise<Updat
 }
 
 export async function cancelUpdate(): Promise<UpdateCancelPayload> {
-  return apiJson("/api/settings/update/cancel", {
+  return apiJson("/api/update/cancel", {
     method: "POST",
   });
 }
 
 export async function getEspFlashPorts(): Promise<EspFlashPortsPayload> {
-  return apiJson("/api/settings/esp-flash/ports");
+  return apiJson("/api/esp-flash/ports");
 }
 
 export async function startEspFlash(port: string | null, auto_detect: boolean): Promise<EspFlashStartPayload> {
-  return apiJson("/api/settings/esp-flash/start", {
+  return apiJson("/api/esp-flash/start", {
     method: "POST",
     headers: JSON_HEADERS,
     body: JSON.stringify({ port, auto_detect }),
@@ -141,19 +141,19 @@ export async function startEspFlash(port: string | null, auto_detect: boolean): 
 }
 
 export async function getEspFlashStatus(): Promise<EspFlashStatusPayload> {
-  return apiJson("/api/settings/esp-flash/status");
+  return apiJson("/api/esp-flash/status");
 }
 
 export async function getEspFlashLogs(after: number): Promise<EspFlashLogsPayload> {
-  return apiJson(`/api/settings/esp-flash/logs?after=${encodeURIComponent(String(after))}`);
+  return apiJson(`/api/esp-flash/logs?after=${encodeURIComponent(String(after))}`);
 }
 
 export async function cancelEspFlash(): Promise<EspFlashCancelPayload> {
-  return apiJson("/api/settings/esp-flash/cancel", {
+  return apiJson("/api/esp-flash/cancel", {
     method: "POST",
   });
 }
 
 export async function getEspFlashHistory(): Promise<EspFlashHistoryPayload> {
-  return apiJson("/api/settings/esp-flash/history");
+  return apiJson("/api/esp-flash/history");
 }

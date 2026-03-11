@@ -48,46 +48,46 @@ def create_update_routes(
 
     # -- software update -------------------------------------------------------
 
-    @router.get("/api/settings/update/status", response_model=UpdateStatusResponse)
+    @router.get("/api/update/status", response_model=UpdateStatusResponse)
     async def get_update_status() -> UpdateStatusResponse:
         return UpdateStatusResponse(**update_manager.status.to_dict())
 
-    @router.post("/api/settings/update/start", response_model=UpdateStartResponse)
+    @router.post("/api/update/start", response_model=UpdateStartResponse)
     async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
         with _update_errors_to_http():
             update_manager.start(req.ssid, req.password)
         return UpdateStartResponse(status="started", ssid=req.ssid)
 
-    @router.post("/api/settings/update/cancel", response_model=UpdateCancelResponse)
+    @router.post("/api/update/cancel", response_model=UpdateCancelResponse)
     async def cancel_update() -> UpdateCancelResponse:
         return UpdateCancelResponse(cancelled=update_manager.cancel())
 
     # -- ESP flash -------------------------------------------------------------
 
-    @router.get("/api/settings/esp-flash/ports", response_model=EspFlashPortsResponse)
+    @router.get("/api/esp-flash/ports", response_model=EspFlashPortsResponse)
     async def list_esp_flash_ports() -> EspFlashPortsResponse:
         ports = await esp_flash_manager.list_ports()
         return EspFlashPortsResponse(ports=ports)
 
-    @router.post("/api/settings/esp-flash/start", response_model=EspFlashStartResponse)
+    @router.post("/api/esp-flash/start", response_model=EspFlashStartResponse)
     async def start_esp_flash(req: EspFlashStartRequest) -> EspFlashStartResponse:
         with _update_errors_to_http():
             job_id = esp_flash_manager.start(port=req.port, auto_detect=req.auto_detect)
         return EspFlashStartResponse(status="started", job_id=job_id)
 
-    @router.get("/api/settings/esp-flash/status", response_model=EspFlashStatusResponse)
+    @router.get("/api/esp-flash/status", response_model=EspFlashStatusResponse)
     async def get_esp_flash_status() -> EspFlashStatusResponse:
         return EspFlashStatusResponse(**esp_flash_manager.status.to_dict())
 
-    @router.get("/api/settings/esp-flash/logs", response_model=EspFlashLogsResponse)
+    @router.get("/api/esp-flash/logs", response_model=EspFlashLogsResponse)
     async def get_esp_flash_logs(after: int = Query(default=0, ge=0)) -> EspFlashLogsResponse:
         return EspFlashLogsResponse(**esp_flash_manager.logs_since(after))
 
-    @router.post("/api/settings/esp-flash/cancel", response_model=EspFlashCancelResponse)
+    @router.post("/api/esp-flash/cancel", response_model=EspFlashCancelResponse)
     async def cancel_esp_flash() -> EspFlashCancelResponse:
         return EspFlashCancelResponse(cancelled=esp_flash_manager.cancel())
 
-    @router.get("/api/settings/esp-flash/history", response_model=EspFlashHistoryResponse)
+    @router.get("/api/esp-flash/history", response_model=EspFlashHistoryResponse)
     async def get_esp_flash_history() -> EspFlashHistoryResponse:
         return EspFlashHistoryResponse(attempts=esp_flash_manager.history())
 

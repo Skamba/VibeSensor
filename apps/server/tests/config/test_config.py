@@ -24,22 +24,8 @@ def cfg_path(tmp_path: Path) -> Path:
     return tmp_path / "config.yaml"
 
 
-def test_metrics_log_path_required_when_metrics_enabled(cfg_path: Path) -> None:
-    _write_config(cfg_path, {"logging": {"log_metrics": True, "metrics_log_path": ""}})
-    with pytest.raises(
-        ValueError,
-        match="metrics_log_path must be configured when log_metrics is true",
-    ):
-        load_config(cfg_path)
-
-
-def test_metrics_log_path_resolves_relative_to_config_dir(cfg_path: Path) -> None:
-    cfg = _write_and_load(cfg_path, {"logging": {"metrics_log_path": "new_metrics.jsonl"}})
-    assert cfg.logging.metrics_log_path == (cfg_path.parent / "new_metrics.jsonl")
-
-
-def test_metrics_log_path_not_required_when_metrics_disabled(cfg_path: Path) -> None:
-    cfg = _write_and_load(cfg_path, {"logging": {"log_metrics": False, "metrics_log_path": ""}})
+def test_metrics_can_be_disabled(cfg_path: Path) -> None:
+    cfg = _write_and_load(cfg_path, {"logging": {"log_metrics": False}})
     assert cfg.logging.log_metrics is False
 
 
@@ -65,7 +51,6 @@ def test_dev_and_docker_configs_equivalent() -> None:
     dev_cfg = load_config(SERVER_DIR / "config.dev.yaml")
     docker_cfg = load_config(SERVER_DIR / "config.docker.yaml")
     # Core transport and processing settings must still agree
-    assert dev_cfg.logging.metrics_log_path == docker_cfg.logging.metrics_log_path
     assert dev_cfg.server == docker_cfg.server
     assert dev_cfg.udp == docker_cfg.udp
     assert dev_cfg.processing == docker_cfg.processing

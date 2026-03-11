@@ -188,7 +188,7 @@ def test_aggregate_fft_spectrum_presence_ratio_clamped_to_one() -> None:
     bin (bin_center = 45 Hz). Previously len(amps)=2 / n_samples=1 = 2.0 gave
     a persistence score inflated by 4× relative to a single-peak sample.
     """
-    from vibesensor.analysis.plot_data import _aggregate_fft_spectrum
+    from vibesensor.analysis.plot_spectrum import aggregate_fft_spectrum as _aggregate_fft_spectrum
 
     # Two co-binned peaks from one sample — should behave like presence_ratio=1.
     two_peaks_sample = [

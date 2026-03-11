@@ -35,7 +35,7 @@ def _response_schema(openapi: dict, path: str, method: str = "get") -> dict:
         ("/api/health", "HealthResponse"),
         ("/api/settings/language", "LanguageResponse"),
         ("/api/settings/cars", "CarsResponse"),
-        ("/api/settings/update/status", "UpdateStatusResponse"),
+        ("/api/update/status", "UpdateStatusResponse"),
     ],
     ids=["health", "language", "cars", "update_status"],
 )
@@ -156,7 +156,7 @@ async def test_esp_flash_start_returns_400_on_value_error() -> None:
 
     start_endpoint = None
     for route in router.routes:
-        path_match = getattr(route, "path", "") == "/api/settings/esp-flash/start"
+        path_match = getattr(route, "path", "") == "/api/esp-flash/start"
         method_match = "POST" in getattr(route, "methods", set())
         if path_match and method_match:
             start_endpoint = route.endpoint
