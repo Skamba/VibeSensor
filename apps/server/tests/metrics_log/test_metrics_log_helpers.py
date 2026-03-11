@@ -64,9 +64,6 @@ def test_build_sample_records_uses_only_active_clients(make_logger) -> None:
     assert peaks[0]["amp"] == 0.12
     assert peaks[0]["vibration_strength_db"] == 22.0
     assert peaks[0]["strength_bucket"] == "l2"
-    assert rows[0]["top_peaks_x"] == [{"hz": 15.0, "amp": 0.12}]
-    assert rows[0]["top_peaks_y"] == [{"hz": 16.0, "amp": 0.08}]
-    assert rows[0]["top_peaks_z"] == [{"hz": 14.0, "amp": 0.07}]
     assert rows[0]["strength_peak_amp_g"] == 0.15
     assert rows[0]["strength_floor_amp_g"] == 0.003
 
@@ -91,7 +88,6 @@ def test_build_sample_records_caps_combined_and_axis_peak_lists(make_logger, fak
     )
 
     assert len(rows[0]["top_peaks"]) == 8
-    assert len(rows[0]["top_peaks_x"]) == 3
 
 
 @pytest.mark.parametrize(

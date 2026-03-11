@@ -7,12 +7,12 @@ from threading import RLock
 
 import numpy as np
 
-from ..core.vibration_strength import empty_vibration_strength_metrics
 from ..payload_types import (
     IntakeStatsPayload,
     RawSamplesErrorPayload,
     RawSamplesPayload,
 )
+from ..vibration_strength import empty_vibration_strength_metrics
 from .buffers import ClientBuffer
 from .models import (
     CachedMetricsHit,

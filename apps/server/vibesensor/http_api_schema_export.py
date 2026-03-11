@@ -31,29 +31,24 @@ _DEFAULT_OUT = (
 def _build_openapi_app() -> FastAPI:
     placeholder = object()
     services = SimpleNamespace(
-        ingress=SimpleNamespace(
-            processor=placeholder,
-            registry=placeholder,
-            control_plane=placeholder,
-        ),
-        settings=SimpleNamespace(
-            settings_store=placeholder,
-            gps_monitor=placeholder,
-            analysis_settings=placeholder,
-            apply_car_settings=placeholder,
-            apply_speed_source_settings=placeholder,
-        ),
+        registry=placeholder,
+        processor=placeholder,
+        control_plane=placeholder,
+        settings_store=placeholder,
+        gps_monitor=placeholder,
+        analysis_settings=placeholder,
+        apply_car_settings=placeholder,
+        apply_speed_source_settings=placeholder,
         metrics_logger=placeholder,
-        persistence=SimpleNamespace(
-            history_db=placeholder,
-            run_service=placeholder,
-            report_service=placeholder,
-            export_service=placeholder,
-        ),
-        websocket=SimpleNamespace(hub=placeholder),
+        history_db=placeholder,
+        run_service=placeholder,
+        report_service=placeholder,
+        export_service=placeholder,
+        ws_hub=placeholder,
         update_manager=placeholder,
         esp_flash_manager=placeholder,
-        processing=SimpleNamespace(state=placeholder, health_state=placeholder),
+        processing_loop_state=placeholder,
+        health_state=placeholder,
     )
     app = FastAPI(title="VibeSensor HTTP API")
     app.include_router(create_router(services))  # type: ignore[arg-type]

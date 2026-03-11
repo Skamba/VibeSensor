@@ -6,18 +6,14 @@ from collections import defaultdict
 from math import floor as _math_floor
 from math import log1p
 
-from vibesensor.core.vibration_strength import percentile
-from vibesensor.core.vibration_strength import (
+from vibesensor.vibration_strength import percentile
+from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 
-from ..constants import MEMS_NOISE_FLOOR_G
+from ..constants import MEMS_NOISE_FLOOR_G, NEGLIGIBLE_STRENGTH_MAX_DB, SNR_LOG_DIVISOR
 from ..domain_models import as_float_or_none as _as_float
 from ._types import Finding, FindingEvidenceMetrics, PhaseEvidence, PhaseLabels, Sample
-from .findings_constants import (
-    NEGLIGIBLE_STRENGTH_MAX_DB,
-    SNR_LOG_DIVISOR,
-)
 from .findings_speed_profile import _phase_to_str, _speed_profile_from_points
 from .helpers import (
     _effective_baseline_floor,

@@ -15,7 +15,6 @@ from vibesensor.metrics_log.sample_builder import (
     build_run_metadata,
     build_sample_records,
     dominant_hz_from_strength,
-    extract_axis_top_peaks,
     extract_strength_data,
     firmware_version_for_run,
     resolve_speed_context,
@@ -116,27 +115,6 @@ class TestExtractStrengthData:
         }
         _, _, _, _, _, peaks = extract_strength_data(metrics)
         assert len(peaks) == 8
-
-
-# ---------------------------------------------------------------------------
-# extract_axis_top_peaks
-# ---------------------------------------------------------------------------
-
-
-class TestExtractAxisTopPeaks:
-    def test_valid_peaks(self) -> None:
-        metrics = {"x": {"peaks": [{"hz": 10.0, "amp": 0.05}, {"hz": 20.0, "amp": 0.03}]}}
-        result = extract_axis_top_peaks(metrics, "x")
-        assert len(result) == 2
-        assert result[0] == {"hz": 10.0, "amp": 0.05}
-
-    def test_max_3_peaks(self) -> None:
-        metrics = {"x": {"peaks": [{"hz": float(i), "amp": 0.01} for i in range(1, 6)]}}
-        result = extract_axis_top_peaks(metrics, "x")
-        assert len(result) == 3
-
-    def test_missing_axis(self) -> None:
-        assert extract_axis_top_peaks({}, "x") == []
 
 
 # ---------------------------------------------------------------------------

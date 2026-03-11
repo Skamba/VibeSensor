@@ -1,218 +1,182 @@
-# Chunk 5: Persistence, Config & Documentation
+# Chunk 5: Tooling, Testing & Structure Cleanup
 
 ## Mapped Findings
 
-- [4.1] Four parallel peak columns with identical serialization
-- [4.2] read_transaction() redundant API with getattr fallback in caller
-- [4.3] get_run_analysis and get_run_status have zero production callers
-- [10.2] AI guidance file chain: 10 surfaces, 3 redirects, measurable drift
-- [8.2] Processing config section has 11 knobs never overridden from defaults
-- [8.3] config.dev.yaml and config.docker.yaml share 3/4 identical fields
+| ID | Original Finding | Source Subagent | Validation Status |
+|----|-----------------|-----------------|-------------------|
+| G1 | run_ci_parallel.py is a forked copy of ci.yml | Build/Tooling | **Validated, refined** |
+| G2 | Three separate scripts for trivial git-hygiene grep checks | Build/Tooling | **Validated** |
+| G3 | run_full_suite.py accumulated --skip-* flags from shard repurposing | Build/Tooling | **Validated, downgraded** |
+| F1 | scenario_regression.py is a redundant shim module | Testing | **Validated** |
+| F2 | Audit test files are half prose, half test | Testing | **Validated** |
+| F3 | scenario_ground_truth.py duplicates fault_scenarios.py | Testing | **Validated** |
+| J2 | Three UI single-file sub-directories | Folder/Module/Ownership | **Validated** |
+| J3 | vibesensor/hotspot/ zero server consumers | Folder/Module/Ownership | **Validated, downgraded** |
 
 ## Validation Outcomes
 
-### [4.1] PARTIALLY REFUTED — reduced scope
-The 4 peak columns DO exist as separate TEXT columns, and `_V2_PEAK_COLS` drives them. However, the serialization is already consolidated into a single loop per direction (not "four separate identical loops" as the subagent implied). The code is already reasonably factored; the question is whether 4 separate columns vs. 1 JSON column is better.
+### G1: run_ci_parallel.py CI mirror — VALIDATED, REFINED
+The script mirrors CI job definitions locally. This duplication is real. However, the script provides genuine value: parallel local CI runs with per-job log files. The fix is not to delete it but to make it thinner — have it reference Makefile targets instead of inlining all step commands. This makes it a job-runner that delegates to existing targets rather than a CI-step-reimplementation.
 
-**Revised decision**: REMOVE from this chunk. The serialization code is already consolidated. The schema change (4 columns → 1) requires a migration for existing databases, and the complexity reduction is marginal since the loop already handles it cleanly. Cost exceeds benefit.
+**Refined scope**: Simplify `run_ci_parallel.py` to call Makefile targets (or small command groups) instead of inlining every ruff flag and mypy argument. This eliminates the "keep in sync" maintenance burden.
 
-### [4.2] CONFIRMED with nuance (MEDIUM-HIGH confidence)
-`read_transaction()` exists at line 118. It acquires the RLock, creates a cursor, issues `BEGIN`, yields `None` (not the cursor), commits on exit. The only production caller in `post_analysis.py` uses `getattr(db, "read_transaction", None)` with a `nullcontext()` fallback.
+### G2: Three hygiene scripts — VALIDATED
+Confirmed:
+- `check_line_endings.py` (54 lines): CRLF detection via `git ls-files` + byte scan
+- `check_no_pycache.py` (61 lines): **dead code** — not in CI, not in Makefile
+- `verify_no_path_indirections.py` (65 lines): sys.path hack detection
 
-**Nuance**: The RLock and SQL `BEGIN` serve complementary purposes — RLock prevents Python thread interleaving, `BEGIN` creates a SQLite WAL snapshot. However, since the system uses a single connection managed by the RLock, the RLock already serializes all operations. The `getattr` fallback is a code smell regardless.
+`check_no_pycache.py` has zero callsites. The other two could be a single file or Makefile recipes.
 
-**Decision**: Remove `read_transaction()` and the `getattr` guard. The RLock serialization is sufficient.
+### G3: run_full_suite.py --skip-* flags — VALIDATED, DOWNGRADED
+The `--skip-*` flags are real complexity, but refactoring this involves splitting a 400+ line script and updating the E2E shard runner. This is a significant refactor with high test-infrastructure risk and modest simplification payoff. **Downgrade to out-of-scope** for this iteration — the finding is valid but the risk/benefit ratio for a working test pipeline doesn't justify the change.
 
-### [4.3] CONFIRMED (HIGH confidence)
-Both `get_run_analysis()` and `get_run_status()` have zero production callers. Used only in test files. `get_run()` already returns both `status` and `analysis` fields.
+### F1: scenario_regression.py shim — VALIDATED
+Confirmed: `test_support/scenario_regression.py` wraps `sample_scenarios.make_sample` and `core.standard_metadata` with thin compatibility layers. Only 3 consumers, all in `tests/report/`. The module docstring calls `make_sample` a "compatibility sample factory."
 
-### [10.2] CONFIRMED (HIGH confidence)
-11 AI guidance files total: AGENTS.md, CLAUDE.md, .github/copilot-instructions.md, 7 instruction files, docs/ai/repo-map.md. Two redirect hops (CLAUDE.md → AGENTS.md → copilot-instructions.md). `docs.instructions.md` (8 lines), `infra.instructions.md` (9 lines) have minimal delta content. `backend.instructions.md` has stale references (mentions `history_helpers.py` as standalone file — now inside `history_services/`).
+### F2: Audit test prose — VALIDATED
+Confirmed: `test_analysis_pipeline_audit.py` and `test_report_pipeline_audit.py` have extensive embedded prose ("FINDING N", "FIXED:", severity ratings). The tests themselves are valid regression tests but the framing is noise — git history is for tracking fixes.
 
-### [8.2] CONFIRMED (MEDIUM confidence)
-11 processing config knobs, all use hardcoded defaults, none overridden in any deployment config. `__post_init__` has 9 validation checks in ~90 lines.
+### F3: scenario_ground_truth.py duplication — VALIDATED
+Confirmed: `fault_phase`, `road_noise_phase`, `ramp_phase`, `idle_phase` duplicate logic from `sample_scenarios` and `fault_scenarios`. The `PhaseStep`/`ScenarioSpec` dataclass framework is useful but the phase functions duplicate existing builders.
 
-**Revised decision**: KEEP IN SCOPE but with conservative approach. Rather than removing config fields (which could break custom deployments), convert the 7 fields that are truly hardware-coupled constants (`sample_rate_hz=800`, `fft_n=2048`, `waveform_seconds=8`, `accel_scale_g_per_lsb=None`, `waveform_display_hz=50`, `fft_update_hz=4`, `client_ttl_seconds=5`) to Python constants with config-override capability preserved. Simplify the validation proportionally.
+### J2: UI single-file directories — VALIDATED
+Confirmed:
+- `app/state/` contains only `ui_app_state.ts`
+- `app/dom/` contains only `ui_dom_registry.ts`
+- `features/demo/` contains only `runDemoMode.ts`
+All siblings in `app/` are flat files. The directories are inconsistent.
 
-Actually, on further reflection, this changes the config schema and adds risk for marginal benefit. **REVISED DECISION**: Mark as OUT OF SCOPE. The config knobs are legitimate even if never overridden — they document tunable parameters. The validation code, while long, prevents misconfigurations. Removing them risks breaking custom deployments with no concrete payoff.
+### J3: hotspot/ zero server consumers — VALIDATED, DOWNGRADED
+Confirmed: zero server runtime imports from `vibesensor.hotspot`. But the package is correctly placed — it uses `vibesensor.config` types and shares the pip-installed package. Moving it elsewhere adds complexity. **Downgrade to out-of-scope** — the packaging is reasonable given it shares config types.
 
-### [8.3] CONFIRMED (MEDIUM confidence)
-`config.dev.yaml` is a strict subset of `config.docker.yaml` — all 3 dev lines appear verbatim in docker.yaml. Docker adds 2 container-specific overrides.
+## Implementation Steps
 
-**Revised decision**: OUT OF SCOPE. The files are 5-8 lines each. The duplication is minimal. Merging requires either a config system change or documentation to explain why one file covers both use cases. Cost exceeds benefit.
+### Step 1: Delete dead check_no_pycache.py + merge hygiene scripts (G2)
 
-## Findings Remapped or Removed
+1. Delete `tools/dev/check_no_pycache.py` (dead code — no callsite)
+2. Merge `check_line_endings.py` and `verify_no_path_indirections.py` into `tools/dev/check_hygiene.py`:
+   - One file with `check_line_endings()` and `check_path_indirections()` functions
+   - Main block runs both checks
+3. Update CI workflow (`.github/workflows/ci.yml`) to call `check_hygiene.py` instead of the two separate scripts
+4. Add `check_hygiene.py` to the Makefile `lint` target so local and CI align
 
-- **[4.1] REMOVED** — serialization is already well-factored. Schema change cost exceeds benefit.
-- **[8.2] OUT OF SCOPE** — config knobs are legitimate documentation of tunable parameters. Validation prevents misconfiguration.
-- **[8.3] OUT OF SCOPE** — minimal duplication in tiny files. Not worth the merge effort.
+### Step 2: Simplify run_ci_parallel.py (G1)
 
-## Remaining Active Findings
+1. Replace inlined step commands with Makefile target calls where possible:
+   - `backend-quality` job → `make lint` + `make docs-lint` + config preflight + hygiene check
+   - `backend-typecheck` → `make typecheck-backend`
+   - `frontend-typecheck` → `cd apps/ui && npm run typecheck`
+   - `backend-tests` → `pytest -q apps/server/tests/ -m "not selenium"`
+   - `e2e` → existing `run_e2e_parallel.py` call
+2. Keep the parallel-threading infrastructure (it provides genuine value)
+3. Remove the duplicated per-step ruff flags, mypy arguments, and npm commands — let Makefile own those
+4. This turns `run_ci_parallel.py` from a "CI reimplementation" into a "parallel job launcher"
 
-- [4.2] Remove read_transaction()
-- [4.3] Remove get_run_analysis() and get_run_status()
-- [10.2] Consolidate AI guidance files
+### Step 3: Delete scenario_regression.py shim (F1)
 
-## Root Complexity Drivers
+1. Delete `tests/test_support/scenario_regression.py`
+2. Update the 3 consumers in `tests/report/`:
+   - `test_report_scenario_output_regression.py`
+   - `test_report_scenario_confidence_regression.py`
+   - `test_report_scenario_phase_regression.py`
+3. Replace imports:
+   - `from test_support.scenario_regression import make_sample` → `from test_support.sample_scenarios import make_sample`
+   - `from test_support.scenario_regression import standard_metadata` → `from test_support.core import standard_metadata`
+   - `from test_support.scenario_regression import build_speed_sweep_samples` → use `from test_support.fault_scenarios import build_speed_sweep_fault_samples` (or refactor)
 
-1. **API surface accumulation**: `HistoryDB` gained convenience methods that were never used in production, only tests. The API surface grew without production need.
+### Step 4: Consolidate scenario_ground_truth.py duplicates (F3)
 
-2. **Defensive duck-typing**: The `getattr` + `nullcontext()` pattern in `post_analysis.py` treats an internal API as uncertain, adding fragility.
+1. Replace `idle_phase`, `road_noise_phase`, `ramp_phase`, `fault_phase` in `scenario_ground_truth.py` with thin adapters that delegate to canonical builders:
+   - `idle_phase` → delegates to `sample_scenarios.make_idle_samples`
+   - `road_noise_phase` → delegates to `sample_scenarios.make_noise_samples`
+   - `ramp_phase` → delegates to `sample_scenarios.make_ramp_samples`
+   - `fault_phase` → delegates to `fault_scenarios.make_fault_samples`
+2. Replace `sensor_offset()` with `_stable_hash()` from `core.py`
+3. Keep `PhaseStep` and `ScenarioSpec` (genuinely useful framework)
+4. Reduce from ~120 lines of duplicate logic to ~20 lines of delegation
 
-3. **Guidance file proliferation**: Each concern got its own guidance file. Redirect chains (CLAUDE.md → AGENTS.md → copilot-instructions.md) add hops without content. Small-delta files (docs.instructions.md, infra.instructions.md) don't justify separate `applyTo` scoping.
+### Step 5: Clean up audit test prose (F2)
 
-## Simplification Strategy
+1. In `test_analysis_pipeline_audit.py`:
+   - Remove embedded "FINDING N" severity/evidence/root-cause prose blocks
+   - Keep one-line comment per test class explaining what invariant is enforced
+   - Remove `# FIXED:` annotations (that's what git is for)
+   - Rename classes from `TestFindingN_Name` to behavior-oriented names
+2. In `test_report_pipeline_audit.py`:
+   - Same cleanup pattern
+3. In `test_coverage_gap_audit_top10.py`:
+   - Remove audit methodology prose in module docstring
+   - Keep concise test docstrings
 
-### Step 1: Remove unused HistoryDB methods
+### Step 6: Flatten UI single-file directories (J2)
 
-**Implementation:**
-1. Delete `get_run_analysis()` from `HistoryDB` in `history_db/__init__.py`
-2. Delete `get_run_status()` from `HistoryDB` in `history_db/__init__.py`
-3. Update test callers:
-   - In `test_metrics_log_helpers.py`: Replace `db.get_run_analysis(run_id)` with `db.get_run(run_id).get("analysis")`
-   - In `test_metrics_log_helpers.py`: Replace `db.get_run_status(run_id)` with `db.get_run(run_id)["status"]`
-   - In `test_coverage_gap_audit_round2.py`: Replace similarly
-   - In `test_history_db_lifecycle.py`: Replace similarly
-   - In `test_history_db_structured_storage.py`: Replace similarly
-   - In `test_analysis_persistence.py`: Replace similarly
-   - In `test_metrics_logger_lifecycle.py`: Replace similarly
-4. Note: `get_run_analysis` has a subtle `AND status = 'complete'` SQL filter. Replace with explicit assertion in test: fetch run, check status, check analysis.
+1. Move `apps/ui/src/app/state/ui_app_state.ts` → `apps/ui/src/app/ui_app_state.ts`
+2. Move `apps/ui/src/app/dom/ui_dom_registry.ts` → `apps/ui/src/app/ui_dom_registry.ts`
+3. Move `apps/ui/src/features/demo/runDemoMode.ts` → `apps/ui/src/app/demo_mode.ts` (or `apps/ui/src/features/demo_mode.ts`)
+4. Delete empty directories
+5. Update all import paths in TypeScript files
+6. Verify: `cd apps/ui && npm run typecheck && npm run build`
 
-### Step 2: Remove read_transaction()
+### Step 7: Verify everything
 
-**Implementation:**
-1. Delete `read_transaction()` context manager from `HistoryDB` in `history_db/__init__.py`
-2. In `post_analysis.py`: Remove the `getattr`/`nullcontext` guard:
-   ```python
-   # DELETE:
-   read_tx = getattr(db, "read_transaction", None)
-   tx_ctx = read_tx() if callable(read_tx) else nullcontext()
-   with tx_ctx:
-       ...
-   
-   # REPLACE WITH direct call (no transaction wrapper needed):
-   # Just call db.iter_run_samples() directly
-   ```
-3. Verify that the RLock in `_cursor()` provides sufficient serialization for the batch sample scan
-
-### Step 3: Consolidate AI guidance files
-
-**Implementation:**
-1. **Delete CLAUDE.md** — it's a 4-line redirect to AGENTS.md
-2. **Simplify AGENTS.md** — make it a 1-line pointer to copilot-instructions.md:
-   ```markdown
-   # Agent guidance
-   See [.github/copilot-instructions.md](.github/copilot-instructions.md) for all AI guidance.
-   ```
-3. **Fold docs.instructions.md into general.instructions.md** — its 8 lines of documentation guidance can be a section in general
-4. **Fold infra.instructions.md into general.instructions.md** — its 9 lines of infra guidance can be a section in general
-5. **Fold report.instructions.md into backend.instructions.md** — report is a backend sub-concern, the 5 substantive rules fit naturally under backend guidance
-6. **Fix drift in backend.instructions.md**: Update stale references to `history_helpers.py`, `history_exports.py`, `history_runs.py` → now inside `history_services/` package
-7. **Update copilot-instructions.md**: After the folds, update the "Area-specific deltas" list to reflect the remaining files:
-   - `general.instructions.md` (shared + docs + infra)
-   - `backend.instructions.md` (backend + report)
-   - `frontend.instructions.md`
-   - `tests.instructions.md`
-8. Result: From 10 AI guidance files → 6 (AGENTS.md, copilot-instructions.md, general.instructions.md, backend.instructions.md, frontend.instructions.md, tests.instructions.md)
-
-### Step 4: Add anti-complexity guardrails to AI instructions
-
-This is the step where we add concrete guidance to prevent the complexity patterns found across all 5 chunks from recurring.
-
-**Implementation in general.instructions.md:**
-Add a new section "Complexity guardrails" with specific rules:
-```markdown
-Complexity guardrails
-- Do not create sub-packages for single-consumer, single-export modules. A flat module file is preferred until 3+ distinct consumers exist.
-- Do not create Protocol types for single-implementor classes. Use the concrete type directly.
-- Do not add compatibility aliases or shims when refactoring. Update all consumers directly in the same change set.
-- Do not create wrapper dataclasses for one-shot operations (constructed only to call a single method and then discarded).
-- Do not create separate packages for code that imports from the main server package. If it depends on vibesensor.*, it belongs inside vibesensor/.
-- Do not create TypedDict mirrors of Pydantic models. Use Pydantic for HTTP boundaries and TypedDicts only for WebSocket/non-Pydantic dict construction.
-- Route handlers must be thin HTTP translators. Extract business logic into service functions that are independently testable.
-- Do not create duplicate API endpoints for the same operation.
-- Do not create standalone Python scripts for simple pytest flag combinations. Use Makefile recipes directly.
-- Do not create Makefile aliases that are documented as "use X instead". Remove the alias.
-- Avoid defensive re-parsing of internally-validated data. Trust upstream validation at subsystem boundaries.
-- Prefer few large modules over many tiny modules when the modules serve a single consumer.
-- Do not add forward-extensibility machinery (protocols, registries, factories) until a second concrete consumer exists.
-```
-
-**Implementation in backend.instructions.md:**
-Fix the stale history_* references and add backend-specific guardrails.
-
-**Implementation in copilot-instructions.md:**
-Update the canonical instruction source list to reflect the reduced set.
+1. `ruff check apps/server/`
+2. `make typecheck-backend`
+3. `pytest -q apps/server/tests/ -m "not selenium"`
+4. `cd apps/ui && npm run typecheck && npm run build`
+5. `make test-all` (verify the simplified CI runner works)
 
 ## Dependencies on Other Chunks
 
-- This chunk should execute LAST — it updates documentation and guardrails that reference the state after all other chunks are complete.
-- Steps 1-2 (DB cleanup) are independent of chunks 1-4.
-- Step 3-4 (guidance cleanup) must happen after all code changes are done so the documentation reflects the final state.
+- Executes last — no downstream dependencies
+- G1 (CI runner) depends on Makefile targets being stable from Chunks 1-4
 
 ## Risks and Tradeoffs
 
-- **Removing get_run_analysis()**: The implicit `AND status = 'complete'` filter is a subtle behavior difference from `get_run()`. Tests must be updated to explicitly check status before accessing analysis data.
-- **Removing read_transaction()**: If the RLock is not actually sufficient for cross-batch isolation under WAL mode, removing the explicit `BEGIN` could introduce rare data inconsistencies during analysis. Risk is low because the single-connection model serializes all operations.
-- **AI guidance consolidation**: Fewer files means less precise `applyTo` scoping. The 8-line docs guidance will be injected for all files, not just docs/. This is acceptable — the rules are short and universally applicable.
+- **G1 refactoring**: Changing the CI-parity runner may break `make test-all`. Must test carefully.
+- **F3 consolidation**: The delegation approach requires the canonical builders to accept the same parameters as the ground-truth phase functions. Minor signature adjustments may be needed.
+- **J2 UI moves**: Import path changes touch multiple TypeScript files. `npm run typecheck` verifies correctness.
+- **G3 out of scope**: The run_full_suite.py complexity remains. Document as known complexity.
+- **J3 out of scope**: The hotspot package structure remains. Reasonable given shared config types.
 
 ## Validation Steps
 
-1. `pytest -q apps/server/tests/` — all backend tests pass
-2. `make lint` — ruff passes
-3. `make typecheck-backend` — mypy passes
-4. Verify CLAUDE.md no longer exists
-5. Verify only 4 files remain in .github/instructions/ (general, backend, frontend, tests)
-6. Verify no references to `get_run_analysis` or `get_run_status` in production code
-7. Verify no `read_transaction` references remain
+- `ruff check apps/server/ tools/`
+- `make typecheck-backend`
+- `pytest -q apps/server/tests/ -m "not selenium"`
+- `cd apps/ui && npm run typecheck && npm run build`
+- `make test-all`
 
-## Required Documentation Updates
+## Documentation Updates
 
-- `docs/ai/repo-map.md`: Update test layout section, update guidance file references
-- `.github/copilot-instructions.md`: Update instruction source list
-- `AGENTS.md`: Simplify to single pointer
-- All surviving instruction files: Update cross-references
+- Update `docs/testing.md` if test helper structure changes
+- Update `docs/ai/repo-map.md` if test layout description changes
 
-## Required AI Instruction Updates
+## AI Instruction Updates
 
-- Covered extensively in Steps 3 and 4 above
+- Add to `tests.instructions.md`:
+  - "Do not create compatibility shim modules in test_support/. Import from the canonical builder modules directly."
+  - "Do not embed extensive prose audit reports in test files. Keep test class/function docstrings to one line describing the invariant being enforced. Use git history for tracking fix provenance."
+  - "Do not create duplicate sample-building functions across test helper modules. Extend existing builders with parameters instead."
+- Add to `general.instructions.md`:
+  - "Do not create standalone Python scripts for operations that a Makefile recipe can express in 1-3 lines (grep checks, git hygiene)."
+  - "Do not fork CI workflow step definitions into local scripts. If a local CI-parity tool is needed, have it call Makefile targets rather than inlining CI step commands."
 
-## Required Test Updates
+## Test Updates
 
-- Update 5-7 test files that call `get_run_analysis()` or `get_run_status()` to use `get_run()` instead
-- Verify test coverage for `read_transaction` scenarios still passes without the method
+- All test changes in this chunk ARE the test updates (F1, F2, F3 are test findings)
+- Verify scenario tests still pass after ground-truth consolidation
+- Verify report regression tests still pass after shim deletion
 
 ## Simplification Crosswalk
 
-### [4.2] read_transaction()
-- **Validation**: CONFIRMED
-- **Root cause**: Redundant API with defensive getattr caller
-- **Steps**: Delete method, remove getattr guard, call iter_run_samples directly
-- **Code areas**: history_db/__init__.py, post_analysis.py
-- **What can be removed**: ~20 lines from HistoryDB, getattr guard
-- **Verification**: Analysis pipeline tests pass
-
-### [4.3] get_run_analysis/get_run_status
-- **Validation**: CONFIRMED
-- **Root cause**: Convenience methods with zero production use
-- **Steps**: Delete methods, update test callers to use get_run()
-- **Code areas**: history_db/__init__.py, 5-7 test files
-- **What can be removed**: ~30 lines from HistoryDB
-- **Verification**: All tests pass with updated callers
-
-### [10.2] AI guidance file chain
-- **Validation**: CONFIRMED
-- **Root cause**: File proliferation and redirect chains
-- **Steps**: Delete CLAUDE.md, fold docs/infra/report instructions, fix drift, add guardrails
-- **Code areas**: CLAUDE.md, AGENTS.md, .github/instructions/*.md, copilot-instructions.md
-- **What can be removed**: 4 files (CLAUDE.md, docs.instructions.md, infra.instructions.md, report.instructions.md)
-- **Verification**: Remaining guidance files are consistent and complete
-
-### [4.1] Four parallel peak columns — REMOVED
-- **Reason**: Serialization is already well-factored via loop. Schema migration cost exceeds benefit.
-
-### [8.2] Processing config knobs — OUT OF SCOPE
-- **Reason**: Config knobs document legitimate tunable parameters. Validation prevents misconfiguration. Not structural complexity.
-
-### [8.3] dev/docker config duplication — OUT OF SCOPE
-- **Reason**: Files are 5-8 lines. Duplication is minimal. Merge effort exceeds payoff.
+| Finding | Steps | Removable | Verification |
+|---------|-------|-----------|-------------|
+| G1 | Step 2 | ~150 lines of inlined CI step commands | make test-all works |
+| G2 | Step 1 | 1 dead file, 2 files merged into 1 | CI hygiene checks pass |
+| G3 | N/A | Out of scope | Documented |
+| F1 | Step 3 | 1 shim file | report regression tests pass |
+| F2 | Step 5 | ~100+ lines of prose comments | audit tests still pass |
+| F3 | Step 4 | ~100 lines of duplicate logic | scenario tests pass |
+| J2 | Step 6 | 3 unnecessary directories | npm typecheck + build pass |
+| J3 | N/A | Out of scope | Documented |

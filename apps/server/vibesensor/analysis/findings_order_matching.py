@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+from ..constants import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
 from ..domain_models import as_float_or_none as _as_float
 from ._types import MatchedPoint, MetadataDict, PhaseLabels, Sample
-from .findings_constants import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
-from .findings_order_models import OrderMatchAccumulator
+from .findings_order_analysis import OrderMatchAccumulator
 from .findings_speed_profile import _phase_to_str
 from .helpers import (
     _estimate_strength_floor_amp_g,

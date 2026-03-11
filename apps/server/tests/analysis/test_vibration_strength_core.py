@@ -6,7 +6,7 @@ import math
 
 import pytest
 
-from vibesensor.core.vibration_strength import (
+from vibesensor.vibration_strength import (
     combined_spectrum_amp_g,
     median,
     noise_floor_amp_p20_g,

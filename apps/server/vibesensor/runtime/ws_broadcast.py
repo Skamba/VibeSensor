@@ -17,10 +17,11 @@ from .rotational_speeds import (
 )
 
 if TYPE_CHECKING:
-    from .state import (
-        RuntimeIngressSubsystem,
-        RuntimeSettingsSubsystem,
-    )
+    from ..analysis_settings import AnalysisSettingsStore
+    from ..gps_speed import GPSSpeedMonitor
+    from ..processing import SignalProcessor
+    from ..registry import ClientRegistry
+    from ..settings_store import SettingsStore
 
 from ..payload_types import SCHEMA_VERSION, LiveWsPayload, SpectraPayload
 from ..runlog import utc_now_iso
@@ -46,8 +47,11 @@ class WsBroadcastService:
     """WebSocket payload assembly: tick management and cached payload building."""
 
     __slots__ = (
-        "_ingress",
-        "_settings",
+        "_analysis_settings",
+        "_gps_monitor",
+        "_processor",
+        "_registry",
+        "_settings_store",
         "_ui_heavy_push_hz",
         "_ui_push_hz",
         "cache",
@@ -59,14 +63,20 @@ class WsBroadcastService:
         cache: WsBroadcastCache,
         ui_push_hz: int,
         ui_heavy_push_hz: int,
-        ingress: RuntimeIngressSubsystem,
-        settings: RuntimeSettingsSubsystem,
+        registry: ClientRegistry,
+        processor: SignalProcessor,
+        gps_monitor: GPSSpeedMonitor,
+        analysis_settings: AnalysisSettingsStore,
+        settings_store: SettingsStore,
     ) -> None:
         self.cache = cache
         self._ui_push_hz = ui_push_hz
         self._ui_heavy_push_hz = ui_heavy_push_hz
-        self._ingress = ingress
-        self._settings = settings
+        self._registry = registry
+        self._processor = processor
+        self._gps_monitor = gps_monitor
+        self._analysis_settings = analysis_settings
+        self._settings_store = settings_store
 
     def on_tick(self) -> None:
         """Advance the broadcast tick counter and toggle heavy-tick flag."""
@@ -77,18 +87,18 @@ class WsBroadcastService:
         self.cache.advance(heavy_every)
 
     def _build_shared_payload(self) -> LiveWsPayload:
-        active_ids = self._ingress.registry.active_client_ids()
-        metrics_by_client = self._ingress.processor.all_latest_metrics(active_ids)
-        clients = self._ingress.registry.snapshot_for_api(
+        active_ids = self._registry.active_client_ids()
+        metrics_by_client = self._processor.all_latest_metrics(active_ids)
+        clients = self._registry.snapshot_for_api(
             metrics_by_client=metrics_by_client,
         )
         client_ids = [c["id"] for c in clients]
-        fresh_ids = self._ingress.processor.clients_with_recent_data(
+        fresh_ids = self._processor.clients_with_recent_data(
             client_ids,
             max_age_s=STALE_DATA_AGE_S,
         )
 
-        resolution = self._settings.gps_monitor.resolve_speed()
+        resolution = self._gps_monitor.resolve_speed()
         speed_mps = resolution.speed_mps
         payload: LiveWsPayload = {
             "schema_version": SCHEMA_VERSION,
@@ -96,10 +106,10 @@ class WsBroadcastService:
             "speed_mps": speed_mps,
             "clients": clients,
         }
-        analysis_settings_snapshot = self._settings.analysis_settings.snapshot()
+        analysis_settings_snapshot = self._analysis_settings.snapshot()
         basis = rotational_basis_speed_source(
-            self._settings.settings_store,
-            self._settings.gps_monitor,
+            self._settings_store,
+            self._gps_monitor,
             resolution_source=resolution.source,
         )
         payload["rotational_speeds"] = build_rotational_speeds_payload(
@@ -109,7 +119,7 @@ class WsBroadcastService:
         )
         spectra: SpectraPayload | None = None
         if self.cache.include_heavy:
-            spectra = self._ingress.processor.multi_spectrum_payload(fresh_ids)
+            spectra = self._processor.multi_spectrum_payload(fresh_ids)
             payload["spectra"] = spectra
         return payload
 

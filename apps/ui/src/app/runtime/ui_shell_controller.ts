@@ -7,8 +7,8 @@ import {
   setSettingsSpeedUnit,
 } from "../../api/settings";
 import type { AppFeatureBundle } from "../app_feature_bundle";
-import type { UiDomElements } from "../dom/ui_dom_registry";
-import type { AppState } from "../state/ui_app_state";
+import type { UiDomElements } from "../ui_dom_registry";
+import type { AppState } from "../ui_app_state";
 
 const DEFAULT_VIEW_ID = "dashboardView";
 

@@ -344,9 +344,9 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
             },
         )
 
-    from vibesensor.analysis import findings_order_findings as order_findings_module
+    from vibesensor.analysis import findings_order_assembly as order_assembly_module
 
-    monkeypatch.setattr(order_findings_module, "_location_speedbin_summary", _fake_location_summary)
+    monkeypatch.setattr(order_assembly_module, "_location_speedbin_summary", _fake_location_summary)
 
     samples = []
     for idx in range(30):

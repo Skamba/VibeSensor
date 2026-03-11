@@ -21,7 +21,7 @@ from pathlib import Path
 from threading import RLock
 
 from ..domain_models import SensorFrame
-from ..json_types import JsonObject, JsonValue, is_json_object
+from ..json_types import JsonObject, is_json_object
 from ..json_utils import safe_json_dumps, safe_json_loads
 from ..runlog import utc_now_iso
 from ._samples import (
@@ -157,30 +157,29 @@ class HistoryDB:
 
     # -- settings_kv persistence ----------------------------------------------
 
-    def get_setting(self, key: str) -> JsonValue | None:
+    _SETTINGS_SNAPSHOT_KEY = "settings_snapshot"
+
+    def get_settings_snapshot(self) -> JsonObject | None:
         with self._cursor(commit=False) as cur:
-            cur.execute("SELECT value_json FROM settings_kv WHERE key = ?", (key,))
+            cur.execute(
+                "SELECT value_json FROM settings_kv WHERE key = ?",
+                (self._SETTINGS_SNAPSHOT_KEY,),
+            )
             row = cur.fetchone()
         if row is None:
             return None
-        return safe_json_loads(row[0], context=f"setting {key}")
+        snapshot = safe_json_loads(row[0], context="settings_snapshot")
+        return snapshot if is_json_object(snapshot) else None
 
-    def set_setting(self, key: str, value: JsonValue) -> None:
+    def set_settings_snapshot(self, snapshot: JsonObject) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
                 "INSERT INTO settings_kv (key, value_json, updated_at) VALUES (?, ?, ?) "
                 "ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, "
                 "updated_at = excluded.updated_at",
-                (key, safe_json_dumps(value), now),
+                (self._SETTINGS_SNAPSHOT_KEY, safe_json_dumps(snapshot), now),
             )
-
-    def get_settings_snapshot(self) -> JsonObject | None:
-        snapshot = self.get_setting("settings_snapshot")
-        return snapshot if is_json_object(snapshot) else None
-
-    def set_settings_snapshot(self, snapshot: JsonObject) -> None:
-        self.set_setting("settings_snapshot", snapshot)
 
     # -- client_names persistence ---------------------------------------------
 

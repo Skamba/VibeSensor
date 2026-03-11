@@ -2,24 +2,32 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from math import log1p
 
-from vibesensor.core.vibration_strength import (
+from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 
-from ..constants import MEMS_NOISE_FLOOR_G
+from ..constants import MEMS_NOISE_FLOOR_G, SNR_LOG_DIVISOR
 from ..domain_models import as_float_or_none as _as_float
-from ._types import Finding, JsonValue, LocationHotspot, PhaseEvidence
-from .findings_constants import SNR_LOG_DIVISOR
-from .findings_order_models import OrderFindingBuildContext, OrderMatchAccumulator
+from ._types import Finding, JsonValue
+from .findings_order_analysis import (
+    OrderFindingBuildContext,
+    OrderMatchAccumulator,
+    apply_localization_override,
+    compute_amplitude_and_error_stats,
+    compute_matched_speed_phase_evidence,
+    compute_order_confidence,
+    compute_phase_stats,
+    detect_diffuse_excitation,
+)
 from .order_analysis import (
     OrderHypothesis,
     _finding_actions_for_source,
     _i18n_ref,
     _order_label,
 )
+from .test_plan import _location_speedbin_summary
 
 
 def assemble_order_finding(
@@ -27,26 +35,13 @@ def assemble_order_finding(
     match: OrderMatchAccumulator,
     *,
     context: OrderFindingBuildContext,
-    location_speedbin_summary: Callable[..., tuple[object, LocationHotspot | None]],
-    compute_phase_stats: Callable[..., tuple[dict[str, float] | None, int]],
-    compute_amplitude_and_error_stats: Callable[
-        ...,
-        tuple[float, float, float, float, float | None],
-    ],
-    apply_localization_override: Callable[..., tuple[float, bool]],
-    detect_diffuse_excitation: Callable[..., tuple[bool, float]],
-    compute_order_confidence: Callable[..., float],
-    compute_matched_speed_phase_evidence: Callable[
-        ...,
-        tuple[float | None, list[float], str | None, PhaseEvidence, str | None],
-    ],
 ) -> tuple[float, Finding]:
     """Build a single order finding from a successful match result."""
     per_phase_confidence, phases_with_evidence = compute_phase_stats(
         match.has_phases,
         match.possible_by_phase,
         match.matched_by_phase,
-        context.min_match_rate,
+        min_match_rate=context.min_match_rate,
     )
     mean_amp, mean_floor, mean_rel_err, corr_val, corr = compute_amplitude_and_error_stats(
         match.matched_amp,
@@ -55,11 +50,11 @@ def assemble_order_finding(
         match.predicted_vals,
         match.measured_vals,
         match.matched_points,
-        context.constant_speed,
+        constant_speed=context.constant_speed,
     )
 
     relevant_speed_bins = [context.focused_speed_band] if context.focused_speed_band else None
-    location_line, location_hotspot = location_speedbin_summary(
+    location_line, location_hotspot = _location_speedbin_summary(
         match.matched_points,
         lang=context.lang,
         relevant_speed_bins=relevant_speed_bins,
@@ -86,13 +81,13 @@ def assemble_order_finding(
         bool(hotspot_dict.get("no_wheel_sensors")) if hotspot_dict is not None else False
     )
     localization_confidence, weak_spatial_separation = apply_localization_override(
-        context.per_location_dominant,
-        unique_match_locations,
-        context.connected_locations,
-        match.matched,
-        no_wheel_override,
-        localization_confidence,
-        weak_spatial_separation,
+        per_location_dominant=context.per_location_dominant,
+        unique_match_locations=unique_match_locations,
+        connected_locations=context.connected_locations,
+        matched=match.matched,
+        no_wheel_override=no_wheel_override,
+        localization_confidence=localization_confidence,
+        weak_spatial_separation=weak_spatial_separation,
     )
 
     corroborating_locations = len(unique_match_locations)

@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import cast
 
+from ..constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF, SPEED_COVERAGE_MIN_PCT
 from ..domain_models import as_float_or_none as _as_float
 from ._types import Finding, MetadataDict, PhaseLabels, Sample
-from .findings_constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF, SPEED_COVERAGE_MIN_PCT
 from .findings_reference_checks import _reference_missing_finding
 from .helpers import _effective_engine_rpm
 from .order_analysis import _i18n_ref

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from vibesensor.core.vibration_strength import vibration_strength_db_scalar
 from vibesensor.severity import severity_from_peak
+from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 
 def _run_severity_ticks(

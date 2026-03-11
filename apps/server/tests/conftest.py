@@ -17,14 +17,6 @@ from vibesensor.history_services.exports import HistoryExportService
 from vibesensor.history_services.reports import HistoryReportService
 from vibesensor.history_services.runs import HistoryRunService
 from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
-from vibesensor.runtime.state import (
-    RuntimeIngressSubsystem,
-    RuntimePersistenceSubsystem,
-    RuntimeProcessingSubsystem,
-    RuntimeSettingsSubsystem,
-    RuntimeWebsocketSubsystem,
-)
-from vibesensor.runtime.ws_broadcast import WsBroadcastCache
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers
@@ -35,15 +27,16 @@ from vibesensor.runtime.ws_broadcast import WsBroadcastCache
 class FakeState:
     """Minimal stand-in for RuntimeState used by ``create_router``.
 
-    Uses the actual production subsystem dataclass types so that shape
-    drift between test fixtures and production code is caught at
-    construction time rather than via obscure test failures.
+    Provides the same flat fields as the production ``RuntimeState``
+    so that shape drift between test fixtures and production code is
+    caught at construction time rather than via obscure test failures.
     """
 
     config: object = field(default_factory=MagicMock)
     registry: object = field(default_factory=MagicMock)
     processor: object = field(default_factory=MagicMock)
     control_plane: object = field(default_factory=MagicMock)
+    worker_pool: object = field(default_factory=MagicMock)
     ws_hub: object = field(default_factory=MagicMock)
     gps_monitor: object = field(default_factory=MagicMock)
     analysis_settings: object = field(default_factory=MagicMock)
@@ -52,40 +45,25 @@ class FakeState:
     history_db: object = field(default_factory=MagicMock)
     update_manager: object = field(default_factory=MagicMock)
     esp_flash_manager: object = field(default_factory=MagicMock)
-    loop_state: ProcessingLoopState = field(default_factory=ProcessingLoopState)
+    processing_loop_state: ProcessingLoopState = field(default_factory=ProcessingLoopState)
     health_state: RuntimeHealthState = field(default_factory=RuntimeHealthState)
+    processing_loop: object = field(default_factory=MagicMock)
+    ws_cache: object = field(default_factory=MagicMock)
+    ws_broadcast: object = field(default_factory=MagicMock)
     apply_car_settings: object = field(default_factory=MagicMock)
     apply_speed_source_settings: object = field(default_factory=MagicMock)
+    run_service: object | None = None
+    report_service: object | None = None
+    export_service: object | None = None
 
     def __post_init__(self) -> None:
         self.health_state.mark_ready()
-        self.ingress = RuntimeIngressSubsystem(
-            registry=self.registry,  # type: ignore[arg-type]
-            processor=self.processor,  # type: ignore[arg-type]
-            control_plane=self.control_plane,  # type: ignore[arg-type]
-            worker_pool=MagicMock(),
-        )
-        self.settings = RuntimeSettingsSubsystem(
-            settings_store=self.settings_store,  # type: ignore[arg-type]
-            gps_monitor=self.gps_monitor,  # type: ignore[arg-type]
-            analysis_settings=self.analysis_settings,  # type: ignore[arg-type]
-        )
-        self.persistence = RuntimePersistenceSubsystem(
-            history_db=self.history_db,  # type: ignore[arg-type]
-            run_service=HistoryRunService(self.history_db, self.settings_store),
-            report_service=HistoryReportService(self.history_db, self.settings_store),
-            export_service=HistoryExportService(self.history_db),
-        )
-        self.websocket = RuntimeWebsocketSubsystem(
-            hub=self.ws_hub,  # type: ignore[arg-type]
-            cache=WsBroadcastCache(),
-            broadcast=MagicMock(),
-        )
-        self.processing = RuntimeProcessingSubsystem(
-            state=self.loop_state,
-            health_state=self.health_state,
-            loop=MagicMock(),
-        )
+        if self.run_service is None:
+            self.run_service = HistoryRunService(self.history_db, self.settings_store)
+        if self.report_service is None:
+            self.report_service = HistoryReportService(self.history_db, self.settings_store)
+        if self.export_service is None:
+            self.export_service = HistoryExportService(self.history_db)
 
 
 @pytest.fixture

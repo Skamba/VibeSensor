@@ -1,4 +1,4 @@
-"""Payload formatting for spectrum, multi-spectrum, and selected-client views.
+"""Payload formatting for spectrum and multi-spectrum views.
 
 Pure functions that assemble API/WebSocket payload dicts from
 :class:`~vibesensor.processing.buffers.ClientBuffer` state.  Called by
@@ -12,16 +12,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ..core.vibration_strength import empty_vibration_strength_metrics
 from ..payload_types import (
     AlignmentInfoPayload,
     FrequencyWarningPayload,
-    SelectedClientPayload,
-    SelectedSpectrumPayload,
     SpectraPayload,
     SpectrumSeriesPayload,
-    WaveformPayload,
 )
+from ..vibration_strength import empty_vibration_strength_metrics
 from .fft import float_list
 from .models import SpectrumAxisData
 from .time_align import compute_overlap
@@ -34,9 +31,6 @@ if TYPE_CHECKING:
 _EMPTY_F32: np.ndarray = np.array([], dtype=np.float32)
 
 EMPTY_SPECTRUM_PAYLOAD: SpectrumSeriesPayload = {
-    "x": [],
-    "y": [],
-    "z": [],
     "combined_spectrum_amp_g": [],
     "strength_metrics": empty_vibration_strength_metrics(),
 }
@@ -44,9 +38,6 @@ EMPTY_SPECTRUM_PAYLOAD: SpectrumSeriesPayload = {
 
 def _empty_spectrum_payload() -> SpectrumSeriesPayload:
     return {
-        "x": [],
-        "y": [],
-        "z": [],
         "combined_spectrum_amp_g": [],
         "strength_metrics": empty_vibration_strength_metrics(),
     }
@@ -72,14 +63,8 @@ def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
         and buf.cached_spectrum_payload_generation == buf.spectrum_generation
     ):
         return buf.cached_spectrum_payload
-    x_axis = _axis_data_or_empty(buf.latest_spectrum, "x")
-    y_axis = _axis_data_or_empty(buf.latest_spectrum, "y")
-    z_axis = _axis_data_or_empty(buf.latest_spectrum, "z")
     combined_axis = _axis_data_or_empty(buf.latest_spectrum, "combined")
     payload: SpectrumSeriesPayload = {
-        "x": float_list(x_axis["amp"]),
-        "y": float_list(y_axis["amp"]),
-        "z": float_list(z_axis["amp"]),
         "combined_spectrum_amp_g": float_list(combined_axis["amp"]),
         "strength_metrics": buf.latest_strength_metrics,
     }
@@ -177,105 +162,4 @@ def build_multi_spectrum_payload(
             "clock_synced": all_synced and any_synced,
         }
         payload["alignment"] = alignment
-    return payload
-
-
-def build_selected_payload(
-    buf: ClientBuffer,
-    client_id: str,
-    *,
-    sample_rate_hz: int,
-    waveform_seconds: int,
-    waveform_display_hz: int,
-    latest_fn: Callable[[ClientBuffer, int], np.ndarray],
-) -> SelectedClientPayload:
-    """Build the selected-client detailed payload (waveform + spectrum + metrics).
-
-    Parameters
-    ----------
-    buf:
-        The client's circular buffer (already under lock).
-    client_id:
-        ID of the selected client.
-    sample_rate_hz:
-        Effective sample rate.
-    waveform_seconds:
-        Time window for the waveform display.
-    waveform_display_hz:
-        Target display refresh rate for waveform decimation.
-    latest_fn:
-        Callable ``(buf, n) -> ndarray`` to extract the latest *n* samples.
-
-    """
-    sr = buf.sample_rate_hz or sample_rate_hz
-    no_data = buf.count == 0
-    if no_data or sr <= 0:
-        return {
-            "client_id": client_id,
-            "sample_rate_hz": sr,
-            "waveform": {},
-            "spectrum": {},
-            "metrics": {},
-        }
-    selected_cache_key = (buf.ingest_generation, buf.spectrum_generation, sr)
-    if (
-        buf.cached_selected_payload is not None
-        and buf.cached_selected_payload_key == selected_cache_key
-    ):
-        return buf.cached_selected_payload
-    window_samples = min(
-        buf.count,
-        buf.capacity,
-        max(1, int(sr * max(1, waveform_seconds))),
-    )
-    waveform_raw = latest_fn(buf, window_samples)
-    waveform_step = max(1, sr // max(1, waveform_display_hz))
-    decimated = waveform_raw[:, ::waveform_step]
-    points = decimated.shape[1]
-    x = (np.arange(points, dtype=np.float32) - (points - 1)) * (waveform_step / sr)
-
-    waveform: WaveformPayload = {"t": float_list(x)}
-    waveform["x"] = float_list(decimated[0])
-    waveform["y"] = float_list(decimated[1])
-    waveform["z"] = float_list(decimated[2])
-
-    spectrum: SelectedSpectrumPayload
-    if buf.latest_spectrum:
-        x_axis: SpectrumAxisData = _axis_data_or_empty(buf.latest_spectrum, "x")
-        freq = x_axis["freq"]
-        spectrum = {
-            "freq": float_list(freq),
-            "x": [],
-            "y": [],
-            "z": [],
-            "combined_spectrum_amp_g": [],
-            "strength_metrics": buf.latest_strength_metrics,
-        }
-        x_data = _axis_data_or_empty(buf.latest_spectrum, "x")
-        y_data = _axis_data_or_empty(buf.latest_spectrum, "y")
-        z_data = _axis_data_or_empty(buf.latest_spectrum, "z")
-        spectrum["x"] = float_list(x_data["amp"])
-        spectrum["y"] = float_list(y_data["amp"])
-        spectrum["z"] = float_list(z_data["amp"])
-        combined = _axis_data_or_empty(buf.latest_spectrum, "combined")
-        spectrum["combined_spectrum_amp_g"] = float_list(combined["amp"])
-    else:
-        spectrum = {
-            "freq": [],
-            "x": [],
-            "y": [],
-            "z": [],
-            "combined_spectrum_amp_g": [],
-            "strength_metrics": empty_vibration_strength_metrics(),
-        }
-
-    payload: SelectedClientPayload = {
-        "client_id": client_id,
-        "sample_rate_hz": sr,
-        "waveform": waveform,
-        "spectrum": spectrum,
-        "metrics": buf.latest_metrics,
-    }
-    buf.cached_selected_payload = payload
-    buf.cached_selected_payload_key = selected_cache_key
     return payload

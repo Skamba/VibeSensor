@@ -14,10 +14,16 @@ from ._types import (
     Finding,
     FindingsBuilder,
     I18nRef,
+    IntensityRow,
     MetadataDict,
+    OriginSummary,
     PhaseSummary,
+    PhaseTimelineEntry,
+    RunSuitabilityCheck,
     Sample,
     SummaryData,
+    TestStep,
+    TopCause,
     is_json_object,
 )
 from .diagnosis_candidates import non_reference_findings
@@ -36,12 +42,7 @@ from .order_analysis import _i18n_ref
 from .phase_segmentation import DrivingPhase, PhaseSegment
 from .plot_data import _plot_data
 from .strength_labels import strength_label as _strength_label
-from .summary_models import (
-    FindingsBundle,
-    PreparedRunData,
-    RunSuitabilityBundle,
-    SensorAnalysisBundle,
-)
+from .summary_models import PreparedRunData
 from .summary_payload import build_sensor_analysis, build_summary_payload, summarize_origin
 from .summary_phases import build_phase_timeline, compute_run_timing, prepare_speed_and_phases
 from .summary_suitability import (
@@ -172,7 +173,7 @@ def build_findings_bundle(
     prepared: PreparedRunData,
     overall_strength_band_key: str | None,
     findings_builder: FindingsBuilder | None = None,
-) -> FindingsBundle:
+) -> tuple[list[Finding], OriginSummary, list[TestStep], list[PhaseTimelineEntry], list[TopCause]]:
     """Build findings plus derived diagnosis narrative fields."""
     builder = findings_builder or _build_findings
     findings = builder(
@@ -196,13 +197,7 @@ def build_findings_bundle(
         min_confidence=0.25,
     )
     top_causes = select_top_causes(findings, strength_band_key=overall_strength_band_key)
-    return FindingsBundle(
-        findings=findings,
-        most_likely_origin=most_likely_origin,
-        test_plan=test_plan,
-        phase_timeline=phase_timeline,
-        top_causes=top_causes,
-    )
+    return findings, most_likely_origin, test_plan, phase_timeline, top_causes
 
 
 def build_sensor_bundle(
@@ -210,17 +205,12 @@ def build_sensor_bundle(
     *,
     language: str,
     per_sample_phases: list[DrivingPhase],
-) -> SensorAnalysisBundle:
+) -> tuple[list[str], set[str], list[IntensityRow]]:
     """Build location-scoped sensor summaries used by analysis and reports."""
-    sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_analysis(
+    return build_sensor_analysis(
         samples=samples,
         language=language,
         per_sample_phases=per_sample_phases,
-    )
-    return SensorAnalysisBundle(
-        sensor_locations=sensor_locations,
-        connected_locations=connected_locations,
-        sensor_intensity_by_location=sensor_intensity_by_location,
     )
 
 
@@ -230,7 +220,7 @@ def build_run_suitability_bundle(
     *,
     prepared: PreparedRunData,
     accel_stats: AccelStatistics,
-) -> RunSuitabilityBundle:
+) -> tuple[bool, list[RunSuitabilityCheck], str | None]:
     """Build run-suitability checks and related confidence context."""
     reference_complete = compute_reference_completeness(metadata)
     sensor_ids = {
@@ -250,11 +240,7 @@ def build_run_suitability_bundle(
     overall_strength_band_key = (
         _strength_label(_median(amp_metric_values))[0] if amp_metric_values else None
     )
-    return RunSuitabilityBundle(
-        reference_complete=reference_complete,
-        run_suitability=run_suitability,
-        overall_strength_band_key=overall_strength_band_key,
-    )
+    return reference_complete, run_suitability, overall_strength_band_key
 
 
 def summarize_run_data(
@@ -271,21 +257,21 @@ def summarize_run_data(
 
     prepared = prepare_run_data(metadata, samples, file_name=file_name)
     accel_stats: AccelStatistics = compute_accel_statistics(samples, metadata.get("sensor_model"))
-    suitability = build_run_suitability_bundle(
+    reference_complete, run_suitability, overall_strength_band_key = build_run_suitability_bundle(
         metadata,
         samples,
         prepared=prepared,
         accel_stats=accel_stats,
     )
-    findings_bundle = build_findings_bundle(
+    findings, most_likely_origin, test_plan, phase_timeline, top_causes = build_findings_bundle(
         metadata,
         samples,
         language=language,
         prepared=prepared,
-        overall_strength_band_key=suitability.overall_strength_band_key,
+        overall_strength_band_key=overall_strength_band_key,
         findings_builder=findings_builder,
     )
-    sensors = build_sensor_bundle(
+    sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_bundle(
         samples,
         language=language,
         per_sample_phases=prepared.per_sample_phases,
@@ -304,18 +290,18 @@ def summarize_run_data(
         phase_segments=prepared.phase_segments,
         run_noise_baseline_g=prepared.run_noise_baseline_g,
         speed_breakdown_skipped_reason=prepared.speed_breakdown_skipped_reason,
-        findings=findings_bundle.findings,
-        top_causes=findings_bundle.top_causes,
-        most_likely_origin=findings_bundle.most_likely_origin,
-        test_plan=findings_bundle.test_plan,
-        phase_timeline=findings_bundle.phase_timeline,
+        findings=findings,
+        top_causes=top_causes,
+        most_likely_origin=most_likely_origin,
+        test_plan=test_plan,
+        phase_timeline=phase_timeline,
         speed_stats=prepared.speed_stats,
         speed_stats_by_phase=prepared.speed_stats_by_phase,
         phase_info=prepared.phase_info,
-        sensor_locations=sensors.sensor_locations,
-        connected_locations=sensors.connected_locations,
-        sensor_intensity_by_location=sensors.sensor_intensity_by_location,
-        run_suitability=suitability.run_suitability,
+        sensor_locations=sensor_locations,
+        connected_locations=connected_locations,
+        sensor_intensity_by_location=sensor_intensity_by_location,
+        run_suitability=run_suitability,
         speed_values=prepared.speed_values,
         speed_non_null_pct=prepared.speed_non_null_pct,
         accel_stats=accel_stats,
@@ -323,7 +309,7 @@ def summarize_run_data(
     )
     summary["warnings"] = build_summary_warnings(
         metadata,
-        reference_complete=suitability.reference_complete,
+        reference_complete=reference_complete,
     )
     summary["report_date"] = metadata.get("end_time_utc") or utc_now_iso()
     summary["plots"] = _plot_data(

@@ -1,9 +1,9 @@
-"""Runtime package – subsystem-based runtime coordination.
+"""Runtime package – runtime coordination.
 
 Submodules
 ----------
-- ``state``: top-level runtime assembly (RuntimeState) and subsystem containers
-- ``builders``: focused subsystem builders
+- ``state``: top-level runtime assembly (RuntimeState)
+- ``builders``: focused service builders
 - ``processing_loop``: ProcessingLoop (async tick loop + failure tracking)
 - ``ws_broadcast``: WsBroadcastService (payload assembly + cache)
 - ``lifecycle``: LifecycleManager (start/stop + task management)
@@ -18,25 +18,13 @@ from .rotational_speeds import (
 from .rotational_speeds import (
     rotational_basis_speed_source as _rotational_basis_speed_source,
 )
-from .state import (
-    RuntimeIngressSubsystem,
-    RuntimePersistenceSubsystem,
-    RuntimeProcessingSubsystem,
-    RuntimeSettingsSubsystem,
-    RuntimeState,
-    RuntimeWebsocketSubsystem,
-)
+from .state import RuntimeState
 from .ws_broadcast import WsBroadcastCache
 
 __all__ = [
     "ProcessingLoopState",
     "RuntimeHealthState",
-    "RuntimeIngressSubsystem",
-    "RuntimePersistenceSubsystem",
-    "RuntimeProcessingSubsystem",
-    "RuntimeSettingsSubsystem",
     "RuntimeState",
-    "RuntimeWebsocketSubsystem",
     "WsBroadcastCache",
     "_build_rotational_speeds_payload",
     "_rotational_basis_speed_source",

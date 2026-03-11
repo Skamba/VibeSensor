@@ -8,7 +8,7 @@ from math import isfinite, sqrt
 from pathlib import Path
 from typing import TypedDict, cast
 
-from vibesensor.core.vibration_strength import percentile
+from vibesensor.vibration_strength import percentile
 
 from ..analysis_settings import (
     engine_rpm_from_wheel_hz,

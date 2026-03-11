@@ -329,7 +329,13 @@ def test_store_language_roundtrip() -> None:
 def test_store_corrupted_snapshot_falls_back_to_defaults(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     # Write invalid JSON directly into the settings_kv table
-    db.set_setting("settings_snapshot", "not-valid-json{{{")
+    from vibesensor.runlog import utc_now_iso
+
+    with db._cursor() as cur:
+        cur.execute(
+            "INSERT INTO settings_kv (key, value_json, updated_at) VALUES (?, ?, ?)",
+            ("settings_snapshot", "not-valid-json{{{", utc_now_iso()),
+        )
     store = SettingsStore(db=db)
     snap = store.snapshot()
     assert snap["cars"] == []

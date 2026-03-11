@@ -1,6 +1,6 @@
 """FastAPI application factory and CLI entry point.
 
-Service construction lives in ``bootstrap.py``.  Runtime coordination
+Service construction lives in ``runtime/builders.py``.  Runtime coordination
 lives in the ``runtime/`` package.  This module creates the FastAPI app,
 wires the lifespan, and serves static assets.
 """
@@ -20,10 +20,10 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from .bootstrap import build_services
 from .config import load_config
 from .routes import create_router
 from .runtime import RuntimeState
+from .runtime.builders import build_runtime
 
 __all__ = ["create_app", "main"]
 
@@ -68,7 +68,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     """Create and configure the VibeSensor FastAPI application."""
     config = load_config(config_path)
     _setup_file_logging(config.logging.app_log_path)
-    runtime = build_services(config)
+    runtime = build_runtime(config)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:

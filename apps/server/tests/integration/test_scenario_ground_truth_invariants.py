@@ -13,7 +13,7 @@ from test_support.scenario_ground_truth import (
     idle_phase,
     ramp_phase,
     road_noise_phase,
-    scenario_metadata,
+    standard_metadata,
     wheel_hz,
 )
 
@@ -129,7 +129,7 @@ class TestSimulatorDeterminism:
 class TestLanguageSelectionPrecedence:
     def test_explicit_lang_overrides_metadata(self) -> None:
         summary = summarize_run_data(
-            scenario_metadata(language="nl"),
+            standard_metadata(language="nl"),
             fault_phase(
                 speed_kmh=80.0,
                 duration_s=10.0,
@@ -144,7 +144,7 @@ class TestLanguageSelectionPrecedence:
 
     def test_metadata_language_used_when_no_explicit_lang(self) -> None:
         summary = summarize_run_data(
-            scenario_metadata(language="nl"),
+            standard_metadata(language="nl"),
             fault_phase(
                 speed_kmh=80.0,
                 duration_s=10.0,
@@ -158,7 +158,7 @@ class TestLanguageSelectionPrecedence:
         assert summary.get("lang") == "nl"
 
     def test_en_default_when_no_lang_anywhere(self) -> None:
-        metadata = scenario_metadata()
+        metadata = standard_metadata()
         del metadata["language"]
         summary = summarize_run_data(
             metadata,
@@ -176,7 +176,7 @@ class TestLanguageSelectionPrecedence:
 
     def test_nl_report_has_dutch_labels(self) -> None:
         summary = summarize_run_data(
-            scenario_metadata(language="nl"),
+            standard_metadata(language="nl"),
             fault_phase(
                 speed_kmh=80.0,
                 duration_s=10.0,
@@ -218,7 +218,7 @@ class TestSpeedBandMixedPhase:
         )
 
         summary = summarize_run_data(
-            scenario_metadata(),
+            standard_metadata(),
             samples,
             lang="en",
             file_name="speed_band_test",
@@ -263,7 +263,7 @@ class TestSpeedBandMixedPhase:
         band = str(
             get_top_cause(
                 summarize_run_data(
-                    scenario_metadata(),
+                    standard_metadata(),
                     samples,
                     lang="en",
                     file_name="dominant_band_test",
@@ -313,7 +313,7 @@ class TestSpeedBandMixedPhase:
         band = str(
             get_top_cause(
                 summarize_run_data(
-                    scenario_metadata(),
+                    standard_metadata(),
                     samples,
                     lang="en",
                     file_name="accel_weight_test",
@@ -327,7 +327,7 @@ class TestSpeedBandMixedPhase:
 class TestConfidenceGuardrails:
     def test_clear_single_sensor_fault_has_reasonable_confidence(self) -> None:
         summary = summarize_run_data(
-            scenario_metadata(),
+            standard_metadata(),
             fault_phase(
                 speed_kmh=80.0,
                 duration_s=40.0,
@@ -359,7 +359,7 @@ class TestConfidenceGuardrails:
                     ),
                 )
         top_causes = summarize_run_data(
-            scenario_metadata(),
+            standard_metadata(),
             samples,
             lang="en",
             file_name="conf_equal",
@@ -371,7 +371,7 @@ class TestConfidenceGuardrails:
 
     def test_short_intermittent_fault_lower_than_long_sustained(self) -> None:
         short_summary = summarize_run_data(
-            scenario_metadata(),
+            standard_metadata(),
             fault_phase(
                 speed_kmh=80.0,
                 duration_s=8.0,
@@ -383,7 +383,7 @@ class TestConfidenceGuardrails:
             file_name="conf_short",
         )
         long_summary = summarize_run_data(
-            scenario_metadata(),
+            standard_metadata(),
             fault_phase(
                 speed_kmh=80.0,
                 duration_s=40.0,

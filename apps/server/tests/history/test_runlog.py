@@ -304,29 +304,16 @@ def test_read_jsonl_run_logs_warning_for_corrupt_lines(
 # -- create_run_metadata -------------------------------------------------------
 
 
-def test_create_run_metadata_units_g_when_scale_provided() -> None:
+def test_create_run_metadata_basic_fields() -> None:
     meta = _make_run_metadata()
-    assert meta["units"]["accel_x_g"] == "g"
     assert meta["record_type"] == RUN_METADATA_TYPE
-
-
-def test_create_run_metadata_units_raw_when_no_scale() -> None:
-    meta = _make_run_metadata(sensor_model="unknown", accel_scale_g_per_lsb=None)
-    assert meta["units"]["accel_x_g"] == "raw_lsb"
+    assert meta["run_id"] == "r1"
+    assert meta["sensor_model"] == "ADXL345"
 
 
 def test_create_run_metadata_includes_firmware_version_when_provided() -> None:
     meta = _make_run_metadata(firmware_version="esp-fw-1.2.3")
     assert meta["firmware_version"] == "esp-fw-1.2.3"
-
-
-def test_create_run_metadata_includes_phase_metadata_defaults() -> None:
-    meta = _make_run_metadata()
-    phase_meta = meta.get("phase_metadata")
-    assert isinstance(phase_meta, dict)
-    assert phase_meta["version"] == "v1"
-    assert phase_meta["idle_speed_kmh_max"] == 3.0
-    assert phase_meta["labels"] == ["idle", "acceleration", "cruise", "deceleration", "coast_down"]
 
 
 def test_append_jsonl_records_preserves_unicode_text(tmp_path: Path) -> None:

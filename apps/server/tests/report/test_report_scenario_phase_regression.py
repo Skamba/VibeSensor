@@ -5,10 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from test_support.scenario_regression import (
+from test_support.core import standard_metadata
+from test_support.sample_scenarios import (
     build_phased_samples,
     build_speed_sweep_samples,
-    standard_metadata,
 )
 
 from vibesensor.analysis import build_findings_for_samples, summarize_run_data

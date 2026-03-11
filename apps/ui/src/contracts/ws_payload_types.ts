@@ -178,12 +178,6 @@ export interface components {
       /** Freq */
       freq?: number[];
       strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
-      /** X */
-      x?: number[];
-      /** Y */
-      y?: number[];
-      /** Z */
-      z?: number[];
     };
     /** StrengthPeak */
     StrengthPeak: {
