@@ -34,13 +34,13 @@
 - `hotspot/`: Wi-Fi AP monitoring, text parsing, and self-heal logic.
 - `runlog.py`: JSONL run-file I/O and normalization.
 - `report/`: PDF renderer and report-template builders.
-- `update/`: public update manager facade plus focused modules for workflow orchestration and validation (`workflow.py`), Wi-Fi control and diagnostics (`wifi.py`), release discovery, install and rollback, service control, command execution, and status tracking with runtime detail collection (`status.py`); workflow validation and rollback snapshot creation must both succeed before a live install begins.
+- `update/`: public update manager facade (`manager.py`) with workflow orchestration, validation, and models (`models.py`); Wi-Fi control and diagnostics (`wifi.py`), release discovery (`releases.py`), ESP flash management, firmware cache, release validation, install and rollback, command execution, and status tracking with runtime detail collection (`status.py`); workflow validation and rollback snapshot creation must both succeed before a live install begins.
 - `apps/ui/src/app/runtime/`: explicit UI runtime owners for shell/chrome state, live transport/payload application, and spectrum/chart orchestration beneath the `UiAppRuntime` composition root.
 
 ## Test layout
 
 - `apps/server/tests/` is feature-based and mirrors backend ownership boundaries.
-- Cross-cutting coverage lives in `integration/`, `hygiene/`, and `e2e/`.
+- Cross-cutting coverage lives in `integration/` and `hygiene/`.
 - Regression tests live in the feature directory they primarily test, or in `integration/` for cross-cutting regressions.
 - Shared test support lives at the test root (`conftest.py`, `_paths.py`, focused helper modules, and the `test_support/` package).
 - Full map: `docs/testing.md`.

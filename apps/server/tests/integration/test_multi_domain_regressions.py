@@ -22,11 +22,11 @@ from vibesensor.analysis.top_cause_selection import confidence_label
 from vibesensor.config import _split_host_port
 from vibesensor.domain_models import VALID_SPEED_SOURCES
 from vibesensor.domain_models import as_float_or_none as runlog_as_float_or_none
-from vibesensor.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 from vibesensor.report.mapping import order_label_human
 from vibesensor.report.mapping import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
 from vibesensor.runlog import parse_iso8601
+from vibesensor.update.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 
 
 def _make_release_info(version: str) -> ReleaseInfo:
@@ -125,23 +125,6 @@ class TestBug05ReleaseVersionComparison:
         result = fetcher.check_update_available("2025.6.0")
         assert result is not None
         assert result.version == "2026.1.0"
-
-
-# ---------------------------------------------------------------------------
-# Bug 6: int(analysis_version) crashes on non-integer
-# ---------------------------------------------------------------------------
-
-
-class TestBug06AnalysisVersionCast:
-    def test_non_integer_version_does_not_crash(self) -> None:
-        """Simulate the API path with a non-integer analysis_version."""
-        analysis: dict = {}
-        analysis_version = "not_a_number"
-        try:
-            analysis["_analysis_is_current"] = int(analysis_version) >= 1
-        except (TypeError, ValueError):
-            analysis["_analysis_is_current"] = False
-        assert analysis["_analysis_is_current"] is False
 
 
 # ---------------------------------------------------------------------------

@@ -73,7 +73,7 @@ function wsAliasBlock(schemaVersion) {
 		+ 'export type WsRotationalSpeedValue = WsSchema<"RotationalSpeedValuePayload">;\n'
 		+ 'export type WsOrderBand = WsSchema<"OrderBandPayload">;\n'
 		+ 'export type WsRotationalSpeeds = WsSchema<"RotationalSpeedsPayload">;\n'
-		+ 'export type WsClientInfo = WsSchema<"ClientApiRow">;\n'
+		+ 'export type WsClientInfo = WsSchema<"WsClientRow">;\n'
 		+ 'export type LiveWsPayload = WsSchema<"LiveWsPayload">;\n'
 	);
 }

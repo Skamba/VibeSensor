@@ -1,220 +1,171 @@
-# Chunk 4: Configuration & Tooling Simplification
-
-## Overview
-The configuration and tooling layers have accumulated post-merge fallback clutter, never-
-overridden config fields, and dual-maintained CI runner infrastructure. This chunk removes
-redundant `config.get(key, fallback)` sites that exist after `deep_merge` guarantees defaults,
-collapses `APSelfHealConfig` to only its 2 actually-overridden fields, simplifies CI parallel
-runner duplication, removes bespoke build detection overhead, and creates a unified contract
-regeneration command.
+# Chunk 4: Test Infrastructure Simplification
 
 ## Mapped Findings
 
-### Finding 1: Redundant config fallbacks after deep_merge (A8-1)
-- **Original**: Subagent 8 finding 1
-- **Validation result**: CONFIRMED. `load_config()` in `config.py` uses `deep_merge()`
-  (imported from `_dict_merge.py`) to overlay YAML values onto `DEFAULT_CONFIG`. After merge,
-  every path in `DEFAULT_CONFIG` is guaranteed present. Yet 9 call sites still use
-  `config.get("key", fallback)` or `config.get("section", {}).get("key", default)` pattern,
-  adding redundant fallback logic. Additionally, 3 `default_*_cfg` local variables are
-  extracted from `DEFAULT_CONFIG` then used as standalone fallback dicts, duplicating the
-  merged config.
-- **Validated root cause**: The fallback pattern predates `deep_merge` and was never cleaned
-  up after merge guarantees were added.
+| ID | Original Title | Validation | Status |
+|----|---------------|------------|--------|
+| F1/J1 | regression/ hollow duplicate directory | **Validated** — 4 files in 3 subdirs, all byte-for-byte identical to copies in analysis/ and integration/. Confirmed via diff. | Proceed |
+| F2 | test_support/ scenario builders over-split into 5 thin modules | **Validated** — perturbation_scenarios.py (112 lines, 5 thin functions), scenario_ground_truth.py (192 lines, keyword-argument adapters), __init__.py re-exports ~80 symbols. Chain: core→sample_scenarios→fault_scenarios/perturbation_scenarios/scenario_ground_truth. | Proceed |
+| F3 | Four independent FakeState classes | **Validated** — conftest.py:FakeState (112 lines), api/_history_endpoint_helpers.py:FakeState, analysis/test_analysis_settings_source_of_truth.py:_State, analysis/test_analysis_persistence.py:_FakeState. Each has its own field set that must track RuntimeState evolution. | Proceed |
+| B1 | SignalProcessor private bridge shims for test access | **Validated** — 5 one-liner methods at processor.py:117-136 (`_get_or_create`, `_resize_buffer`, `_latest`, `_fft_params`, `_compute_fft_spectrum`). Zero production callers. Tests can use SignalBufferStore/SignalMetricsComputer directly. | Proceed |
+| I1 | Selenium: full browser framework CI never runs | **Validated** — Only in test_ui_selenium.py:14 via importorskip. CI permanently excludes with `-m "not selenium"`. Playwright suites already exist in apps/ui/tests/. | Proceed |
+| I2 | pypdfium2: 80MB binary in mandatory dev deps for one skippable test | **Validated** — In pyproject.toml `[dev]` deps. Single consumer: test_report_pdf_ocr_text_fidelity.py:16 via importorskip. Its companion rapidocr is correctly in `[ocr]` extras. | Proceed |
 
-### Finding 2: APSelfHealConfig has 3 never-overridden fields (A8-3)
-- **Original**: Subagent 8 finding 3
-- **Validation result**: CONFIRMED. `APSelfHealConfig` has 5 fields. Searching all YAML
-  config files (`config.yaml`, `config.dev.yaml`, `config.docker.yaml`, `config.pi.yaml`),
-  only `enabled` and `check_interval_s` are ever set. The other 3 fields
-  (`max_restart_attempts`, `restart_delay_s`, `cooldown_period_s`) always use their Python
-  defaults. These should be Python constants, not config fields.
-- **Validated root cause**: Premature configurability — fields were added for hypothetical
-  tuning needs.
+## Root Complexity Drivers
 
-### Finding 3: Duplicate CI parallel runner infrastructure (A7-1+A7-2)
-- **Original**: Subagent 7 findings 1+2 (combined)
-- **Validation result**: CONFIRMED. `run_ci_parallel.py` and `run_e2e_parallel.py` share
-  duplicated infrastructure primitives: ANSI color helpers, progress line formatting,
-  subprocess management, and result summary reporting. Both define 7 job groups that mirror
-  `ci.yml`. `run_e2e_parallel.py` has its own `_run_job()`, `_print_summary()`, and color
-  constants that are near-identical copies of the CI runner.
-- **Validated root cause**: `run_e2e_parallel.py` was written by copying `run_ci_parallel.py`
-  and adapting rather than extracting shared primitives.
-
-### Finding 4: Bespoke incremental build detection (A7-3)
-- **Original**: Subagent 7 finding 3
-- **Validation result**: PARTIALLY CONFIRMED, SCALED BACK. The `hash_tree()` function
-  in `build_ui_static.py` is primarily for build metadata stamps (embedding in output), not
-  for build-skipping. The npm-ci lockfile hash check (`_needs_npm_ci()`) is only ~8 lines
-  and provides legitimate value (avoids slow `npm ci` when `package-lock.json` hasn't
-  changed). Scale back: only remove `hash_tree()` if it's truly unused for anything beyond
-  metadata, and leave `_needs_npm_ci()` in place since it's small and useful.
-- **Validated root cause**: `hash_tree()` adds complexity for build metadata that isn't
-  consumed meaningfully.
-
-### Finding 5: No unified contract regeneration command (A9-3)
-- **Original**: Subagent 9 finding 3
-- **Validation result**: CONFIRMED. `make sync-contracts` runs only the Node.js half
-  (`tools/config/sync_shared_contracts_to_ui.mjs` which copies TS types from
-  `libs/shared/ts/contracts.ts` to the UI generated output). Python contract exporters
-  (if any) and the WS schema pipeline (A9-1, handled in Chunk 5) are separate manual steps.
-  There's no single `make regen-contracts` that regenerates everything.
-- **Validated root cause**: Contract sync was added incrementally, Node.js half first, without
-  a unified entry point.
-
-## Root Causes Behind These Findings
-1. Post-merge fallback patterns left behind after `deep_merge()` was introduced
-2. Premature configurability for fields that have never been overridden
-3. Copy-paste development for parallel test runners
-4. Build metadata complexity that may not justify its cost
-5. Incremental contract tooling without a unified entry point
-
-## Relevant Code Paths and Components
-
-### Config fallback cleanup
-- `apps/server/vibesensor/config.py` — `load_config()`, `DEFAULT_CONFIG`, `deep_merge`
-- `apps/server/vibesensor/_dict_merge.py` — `deep_merge()` implementation
-- All consumer sites that call `config.get("key", fallback)`
-
-### APSelfHealConfig
-- `apps/server/vibesensor/hotspot/self_heal.py` or wherever APSelfHealConfig is defined
-- All YAML config files: `config.yaml`, `config.dev.yaml`, `config.docker.yaml`, `config.pi.yaml`
-
-### CI runner
-- `tools/tests/run_ci_parallel.py` — main CI runner
-- `tools/tests/run_e2e_parallel.py` — E2E runner
-- `.github/workflows/ci.yml` — source of truth for CI jobs
-
-### Build detection
-- `tools/build_ui_static.py` — `hash_tree()`, `_needs_npm_ci()`
-
-### Contract regen
-- `tools/config/sync_shared_contracts_to_ui.mjs` — TS contract sync
-- `Makefile` — `sync-contracts` target
+1. **Zombie directory**: `regression/` was partially migrated but originals were never deleted, causing test double-running.
+2. **Over-split helpers**: Test scenario builders were split by category into too many thin modules, requiring an 80-symbol barrel re-export.
+3. **Duplicated runtime fakes**: Four independent RuntimeState fakes drift out of sync with the real RuntimeState.
+4. **Test-only bridge methods on production class**: SignalProcessor carries 5 private methods used exclusively by tests, when the underlying components can be tested directly.
+5. **Dead dependency**: Selenium is installed but CI never runs it; Playwright covers the same layer.
+6. **Incorrectly scoped dependency**: pypdfium2 is in mandatory dev deps but its test uses importorskip (designed for optional deps).
 
 ## Simplification Approach
 
-### Step 1: Remove redundant config fallbacks
-1. Identify all 9 `config.get("key", fallback)` sites post-deep_merge
-2. Replace each with direct `config["key"]` access (safe because deep_merge guarantees
-   every DEFAULT_CONFIG path exists in the merged result)
-3. Remove the 3 `default_*_cfg` extraction variables that duplicate DEFAULT_CONFIG sections
-4. Keep `deep_merge()` and `DEFAULT_CONFIG` as they are — they're the correct mechanism
-5. Add a test that verifies `load_config()` output always has all expected keys (if not
-   already covered)
+### F1/J1: Delete regression/ duplicate directory
 
-### Step 2: Collapse APSelfHealConfig
-1. Remove the 3 never-overridden fields from the config dataclass
-2. Convert them to module-level constants (e.g., `_MAX_RESTART_ATTEMPTS = 3`)
-3. Update all consumers to read from constants instead of config fields
-4. Remove the fields from `DEFAULT_CONFIG` if they're present there
-5. Verify no YAML file mentions these fields (already confirmed)
+**Steps**:
+1. Delete `apps/server/tests/regression/` directory entirely (all 4 files are duplicates)
+2. Verify the canonical copies exist: `analysis/test_analysis_pipeline_integration_regressions.py`, `integration/test_concurrency_generation_guard_regressions.py`, `integration/test_runtime_nan_and_update_guard_regressions.py`, `integration/test_coverage_gap_audit_round2.py`
+3. Remove any `conftest.py` or `__init__.py` files in regression/ subdirs
 
-### Step 3: Consolidate CI runner infrastructure
-1. Extract shared primitives from `run_ci_parallel.py`: ANSI colors, progress formatting,
-   subprocess management, result summary
-2. Create a minimal shared module `tools/tests/_runner_utils.py` (or similar) with these
-   primitives
-3. Have both `run_ci_parallel.py` and `run_e2e_parallel.py` import from the shared module
-4. Remove duplicated code from `run_e2e_parallel.py`
-5. Verify both runners produce identical output format
+### F2: Consolidate test_support/ scenario builders
 
-### Step 4: Remove hash_tree if unused
-1. Verify `hash_tree()` output is not consumed by any downstream artifact
-2. If confirmed unused beyond metadata: remove `hash_tree()` from `build_ui_static.py`
-3. Keep `_needs_npm_ci()` — it's small, useful, and well-scoped
-4. If `hash_tree()` IS consumed meaningfully, leave it and document why
+**Strategy**: Merge `perturbation_scenarios.py` and `scenario_ground_truth.py` into `sample_scenarios.py`. Merge `report_analysis_integration.py` into `report_helpers.py`. Slim down `__init__.py` re-exports.
 
-### Step 5: Unified contract regeneration
-1. Add a `make regen-contracts` target that runs all contract generation steps:
-   - `sync_shared_contracts_to_ui.mjs` (existing)
-   - Any Python contract exporters
-   - WS schema generation (if still present after Chunk 5 simplification)
-2. Update documentation to reference `make regen-contracts` as the single entry point
-3. Consider having `make sync-contracts` call `make regen-contracts` or vice versa to avoid
-   confusion
+**Steps**:
+1. Move all functions from `perturbation_scenarios.py` into `sample_scenarios.py` (at the end, with a section comment)
+2. Move all functions from `scenario_ground_truth.py` into `sample_scenarios.py`
+3. Delete `perturbation_scenarios.py` and `scenario_ground_truth.py`
+4. Move all functions from `report_analysis_integration.py` into `report_helpers.py`
+5. Delete `report_analysis_integration.py`
+6. Update `__init__.py` to import from the remaining modules only (core, analysis, assertions, sample_scenarios, report_helpers)
+7. Update all test files that import from the deleted modules to use the new locations
+8. Since most tests import from `test_support` via the barrel `__init__.py`, most imports should work without changes
 
-## Dependencies on Earlier/Later Chunks
-- **No dependencies on other chunks.** This chunk is self-contained.
-- Chunk 5 may simplify the WS schema pipeline (A9-1), which affects what goes into the
-  unified `regen-contracts` command. The Make target should be designed to be easily updated
-  when Chunk 5 runs.
+### F3: Unify FakeState implementations
+
+**Strategy**: Extend the root conftest.py `FakeState` to be the single authoritative fake. Other test files use it instead of creating their own.
+
+**Steps**:
+1. Review what each FakeState variant provides that the root one doesn't
+2. Add any missing capabilities to the root `FakeState` in conftest.py (e.g., configurable `iter_run_samples`, `delete_run_if_safe`)
+3. Update `api/_history_endpoint_helpers.py` to use the root `FakeState` via the `fake_runtime` fixture or import
+4. Update `analysis/test_analysis_settings_source_of_truth.py` to use root `FakeState`
+5. Update `analysis/test_analysis_persistence.py` to use root `FakeState`
+6. Delete the local FakeState/`_State`/`_FakeState` classes
+7. Note: After Chunk 1's A2 change, `lifecycle` field is removed from RuntimeState, so FakeState loses it too
+
+### B1: Remove SignalProcessor bridge shims
+
+**Steps**:
+1. Delete the 5 private bridge methods from `SignalProcessor` in processor.py:
+   - `_get_or_create()`
+   - `_resize_buffer()`
+   - `_latest()`
+   - `_fft_params()`
+   - `_compute_fft_spectrum()`
+2. Update tests that call `proc._get_or_create(...)` to construct `SignalBufferStore` directly
+3. Update tests that call `proc._fft_params(...)` to use `SignalMetricsComputer` directly
+4. Follow the pattern already established in `test_processing_components.py`
+
+### I1: Remove Selenium dependency
+
+**Steps**:
+1. Remove `"selenium>=4.20,<5"` from `pyproject.toml` `[dev]` dependencies
+2. Delete `apps/server/tests/e2e/test_ui_selenium.py`
+3. If the `e2e/` directory is empty after deletion, remove it (check for other files first)
+
+### I2: Move pypdfium2 to optional extras
+
+**Steps**:
+1. Remove `"pypdfium2>=4.30,<5"` from the `[dev]` extras in pyproject.toml
+2. Add it to an `[ocr]` extras group (alongside `rapidocr-onnxruntime`)
+3. The `importorskip` guard in the test file already handles the case where it's not installed
+
+## Dependencies on Other Chunks
+
+- F3 depends on Chunk 1's A2 (lifecycle field removal) — FakeState should not have a lifecycle field afterwards
+- B1 must happen after Chunk 2 if any processor bridge tests are affected, but they're independent
+- F2 must happen after Chunk 3's J3 (metrics_log barrel cleanup) to avoid conflicting import updates
 
 ## Risks and Tradeoffs
-- **Config fallback removal**: If any code path runs before `deep_merge`, or if external
-  callers construct partial configs, direct access will KeyError. Need to verify all config
-  creation paths go through `load_config()`.
-- **APSelfHealConfig reduction**: The 3 removed fields effectively become hardcoded. If
-  anyone later needs to tune them, they'd need a code change. This is acceptable per the
-  repo's no-speculative-config policy.
-- **CI runner extraction**: The shared module is a new file, but it's justified by serving
-  2 consumers and eliminating ~100 lines of duplication.
-- **hash_tree removal**: Need to confirm no consumer depends on the hash before removing.
+
+1. **F2**: Merging scenario modules makes `sample_scenarios.py` larger (~700+ lines). This is acceptable for a test helper that serves as a single source of synthetic data.
+2. **F3**: The root `FakeState` may need to grow to accommodate API test needs. If it becomes too complex, we can use fixtures with different configurations rather than separate classes.
+3. **I1**: The selenium test contained some checks that Playwright doesn't. Verify Playwright coverage is adequate.
+4. **B1**: Tests that use the bridge methods must be refactored to use the sub-components directly, which may reveal that some tests were testing at the wrong level.
 
 ## Validation Steps
-1. `ruff check apps/server/` — lint passes
-2. `make typecheck-backend` — type checking passes
-3. `pytest -q apps/server/tests/config/` — config tests pass
-4. `pytest -q apps/server/tests/hotspot/` — hotspot/self-heal tests pass
-5. `python3 tools/tests/run_ci_parallel.py --help` — CI runner still works
-6. `python3 tools/tests/run_e2e_parallel.py --help` — E2E runner still works
-7. `make sync-contracts` — contract sync still works
-8. `make regen-contracts` — new unified command works
+
+1. `pytest -q apps/server/tests/` — full test suite (verify no double-runs from regression/)
+2. `pytest -q apps/server/tests/processing/` — processor tests after bridge shim removal
+3. `pytest -q apps/server/tests/api/` — API tests with unified FakeState
+4. `pytest -q apps/server/tests/analysis/` — analysis tests with unified FakeState
+5. `make lint && make typecheck-backend`
 
 ## Required Documentation Updates
-- `docs/ai/repo-map.md` — update config section if APSelfHealConfig changes
-- `docs/operational-runbooks.md` — update if contract regen workflow changes
-- `CONTRIBUTING.md` — update if `make regen-contracts` is added
+
+- `docs/testing.md` — remove regression/ from layout if mentioned, confirm integration/ as the regression home
 
 ## Required AI Instruction Updates
-- Add guidance: "After deep_merge, use direct dict access, not .get() with fallbacks"
-- Add guidance: "Do not add config fields unless at least one deployment overrides the default"
-- Add guidance: "Use `make regen-contracts` for all contract regeneration"
+
+- Add guardrail to tests.instructions.md: "Do not create local FakeState/fake runtime classes. Use the shared FakeState from conftest.py and configure it for your test's needs."
+- Add guardrail: "Do not add private bridge methods to production classes for test access. Test sub-components directly instead."
 
 ## Required Test Updates
-- Add or verify test that `load_config()` result has all expected top-level keys
-- Verify self-heal tests pass with constant access instead of config fields
-- Verify CI runner test coverage (if any) still passes
+
+- Delete 4 duplicate test files in regression/
+- Refactor tests using bridge shims to use sub-components directly
+- Update all test imports for consolidated scenario builders
+- Verify test counts are unchanged (minus the duplicates)
 
 ## Simplification Crosswalk
 
-### A8-1 → Remove redundant config fallbacks
-- Validation: CONFIRMED (9 sites, 3 default_*_cfg variables)
-- Root cause: Pre-deep_merge fallback pattern never cleaned up
-- Steps: Replace .get(key, fallback) with direct access, remove default_*_cfg vars
-- Code areas: config.py, consumer call sites
-- What can be removed: ~15-20 lines of fallback code
-- Verification: Config tests pass, no KeyError in tests
+### F1/J1: regression/ duplicate directory
+- **Validation**: Confirmed byte-for-byte via diff.
+- **Root cause**: Incomplete migration — copies left behind.
+- **Steps**: Delete entire regression/ directory.
+- **Code areas**: apps/server/tests/regression/
+- **Removed**: 4 duplicate test files, 3 subdirectories
+- **Verification**: `pytest -q apps/server/tests/ | tail -5` — verify test count
 
-### A8-3 → Collapse APSelfHealConfig to 2 fields
-- Validation: CONFIRMED (3 of 5 fields never overridden)
-- Root cause: Premature configurability
-- Steps: Move 3 fields to constants, remove from config
-- Code areas: APSelfHealConfig definition, consumers, DEFAULT_CONFIG
-- What can be removed: 3 config fields + their DEFAULT_CONFIG entries
-- Verification: Hotspot tests pass
+### F2: test_support/ over-split builders
+- **Validation**: Confirmed. perturbation_scenarios (112 lines), scenario_ground_truth (192 lines) are thin wrappers.
+- **Root cause**: Incremental splitting by semantic category with too little content per file.
+- **Steps**: Merge thin modules into sample_scenarios.py and report_helpers.py.
+- **Code areas**: test_support/
+- **Removed**: 3 thin modules (perturbation_scenarios.py, scenario_ground_truth.py, report_analysis_integration.py)
+- **Verification**: `pytest -q apps/server/tests/`
 
-### A7-1+A7-2 → Consolidate CI runner infrastructure
-- Validation: CONFIRMED (duplicated ANSI, progress, subprocess, summary code)
-- Root cause: Copy-paste development
-- Steps: Extract shared module, deduplicate
-- Code areas: run_ci_parallel.py, run_e2e_parallel.py
-- What can be removed: ~100 lines of duplicated utility code
-- Verification: Both runners produce correct output
+### F3: Four independent FakeState classes
+- **Validation**: Confirmed. 4 separate implementations tracking RuntimeState shape.
+- **Root cause**: Each test module created its own for slightly different needs.
+- **Steps**: Extend root FakeState, replace local variants.
+- **Code areas**: conftest.py, api/_history_endpoint_helpers.py, 2 analysis test files
+- **Removed**: 3 duplicate FakeState classes
+- **Verification**: `pytest -q apps/server/tests/api/ apps/server/tests/analysis/`
 
-### A7-3 → Remove hash_tree if unused
-- Validation: PARTIALLY CONFIRMED, SCALED BACK
-- Root cause: Build metadata complexity
-- Steps: Verify hash_tree consumers, remove if truly unused
-- Code areas: build_ui_static.py
-- What can be removed: hash_tree function (if unused), ~20 lines
-- Verification: UI build still works
+### B1: SignalProcessor bridge shims
+- **Validation**: Confirmed. 5 one-liners, zero production callers.
+- **Root cause**: Test access hooks from before component split.
+- **Steps**: Delete 5 methods, refactor tests to use components directly.
+- **Code areas**: processing/processor.py, affected test files
+- **Removed**: 5 methods from production class
+- **Verification**: `pytest -q apps/server/tests/processing/`
 
-### A9-3 → Unified contract regeneration command
-- Validation: CONFIRMED (no single regen command)
-- Root cause: Incremental tooling without unified entry point
-- Steps: Add make regen-contracts target
-- Code areas: Makefile, tools/config/
-- What can be removed: Nothing (additive change)
-- Verification: make regen-contracts runs all sync steps
+### I1: Selenium
+- **Validation**: Confirmed. CI permanently excludes, Playwright covers same layer.
+- **Root cause**: Written before Playwright adoption, never removed.
+- **Steps**: Remove dep, delete test file.
+- **Code areas**: pyproject.toml, tests/e2e/test_ui_selenium.py
+- **Removed**: 1 dependency, 1 test file
+- **Verification**: `pip install -e ".[dev]" && pytest -q apps/server/tests/`
+
+### I2: pypdfium2 optional
+- **Validation**: Confirmed. importorskip signals optional but dep is mandatory.
+- **Root cause**: Inconsistent dep classification.
+- **Steps**: Move from [dev] to [ocr] extras.
+- **Code areas**: pyproject.toml
+- **Removed**: 80MB from default dev install
+- **Verification**: `pip install -e ".[dev]"` — verify no pypdfium2

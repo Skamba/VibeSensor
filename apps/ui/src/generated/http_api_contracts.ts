@@ -908,8 +908,6 @@ export interface components {
      * @description Response body with aggregated diagnostic insights for a run.
      */
     HistoryInsightsResponse: {
-      /** Analysis Is Current */
-      analysis_is_current?: boolean | null;
       /** Run Id */
       run_id?: string | null;
       /** Status */

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 from ..analysis_settings import (
     engine_rpm_from_wheel_hz,
@@ -78,21 +78,21 @@ def safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None
     return _safe_float(axis_metrics, key)
 
 
+class StrengthExtraction(NamedTuple):
+    """Named result of :func:`extract_strength_data`."""
+
+    strength_metrics: dict[str, object]
+    vibration_strength_db: float | None
+    strength_bucket: str | None
+    strength_peak_amp_g: float | None
+    strength_floor_amp_g: float | None
+    top_peaks: list[dict[str, object]]
+
+
 def extract_strength_data(
     metrics: Mapping[str, object],
-) -> tuple[
-    dict[str, object],
-    float | None,
-    str | None,
-    float | None,
-    float | None,
-    list[dict[str, object]],
-]:
-    """Extract strength metrics and top peaks from client metrics.
-
-    Returns ``(strength_metrics, vibration_strength_db, strength_bucket,
-    strength_peak_amp_g, strength_floor_amp_g, top_peaks)``.
-    """
+) -> StrengthExtraction:
+    """Extract strength metrics and top peaks from client metrics."""
     strength_metrics: dict[str, object] = {}
     combined = metrics.get("combined")
     if isinstance(combined, dict):
@@ -123,13 +123,13 @@ def extract_strength_data(
                 peak_payload[_STRENGTH_BUCKET_KEY] = str(peak_bucket)
             top_peaks.append(peak_payload)
 
-    return (
-        strength_metrics,
-        vibration_strength_db,
-        strength_bucket,
-        strength_peak_amp_g,
-        strength_floor_amp_g,
-        top_peaks,
+    return StrengthExtraction(
+        strength_metrics=strength_metrics,
+        vibration_strength_db=vibration_strength_db,
+        strength_bucket=strength_bucket,
+        strength_peak_amp_g=strength_peak_amp_g,
+        strength_floor_amp_g=strength_floor_amp_g,
+        top_peaks=top_peaks,
     )
 
 
@@ -145,15 +145,20 @@ def dominant_hz_from_strength(
     return None
 
 
+class SpeedContext(NamedTuple):
+    """Named result of :func:`resolve_speed_context`."""
+
+    speed_kmh: float | None
+    gps_speed_kmh: float | None
+    speed_source: str
+    engine_rpm_estimated: float | None
+
+
 def resolve_speed_context(
     gps_monitor: GPSSpeedMonitor,
     analysis_settings_snapshot: Mapping[str, object],
-) -> tuple[float | None, float | None, str, float | None, float | None, float | None]:
-    """Resolve current speed/vehicle state into sample-record values.
-
-    Returns ``(speed_kmh, gps_speed_kmh, speed_source,
-    engine_rpm_estimated, final_drive_ratio, gear_ratio)``.
-    """
+) -> SpeedContext:
+    """Resolve current speed/vehicle state into sample-record values."""
     settings = analysis_settings_snapshot
     tire_circumference_m = tire_circumference_m_from_spec(
         _safe_float(settings, "tire_width_mm"),
@@ -189,13 +194,11 @@ def resolve_speed_context(
         if whz is not None:
             engine_rpm_estimated = engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)
 
-    return (
-        speed_kmh,
-        gps_speed_kmh,
-        speed_source,
-        engine_rpm_estimated,
-        final_drive_ratio,
-        gear_ratio,
+    return SpeedContext(
+        speed_kmh=speed_kmh,
+        gps_speed_kmh=gps_speed_kmh,
+        speed_source=speed_source,
+        engine_rpm_estimated=engine_rpm_estimated,
     )
 
 
@@ -236,9 +239,9 @@ def build_sample_records(
         gps_speed_kmh,
         speed_source,
         engine_rpm_estimated,
-        final_drive_ratio,
-        gear_ratio,
     ) = resolve_speed_context(gps_monitor, analysis_settings_snapshot)
+    final_drive_ratio = _safe_float(analysis_settings_snapshot, "final_drive_ratio")
+    gear_ratio = _safe_float(analysis_settings_snapshot, "current_gear_ratio")
 
     records: list[dict[str, object]] = []
     active_client_ids = sorted(
@@ -279,8 +282,6 @@ def build_sample_records(
             or None
         )
         frame = SensorFrame(
-            record_type="sample",
-            schema_version="v2-jsonl",
             run_id=run_id,
             timestamp_utc=timestamp_utc,
             t_s=t_s,

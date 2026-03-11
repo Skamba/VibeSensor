@@ -112,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
             [
                 str(smoke_python),
                 "-m",
-                "vibesensor.release_validation",
+                "vibesensor.update.release_validation",
                 "smoke-server",
                 "--config",
                 args.config,

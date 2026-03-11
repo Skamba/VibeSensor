@@ -201,9 +201,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e "./apps/server[dev,ocr]"
 
-      - name: Backend tests (non-selenium)
+      - name: Backend tests
         run: |
-          python -m pytest -q -m "not selenium" --tb=short apps/server/tests
+          python -m pytest -q --tb=short apps/server/tests
 
   e2e:
     name: E2E (docker)

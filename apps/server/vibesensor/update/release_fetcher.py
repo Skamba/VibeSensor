@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 from urllib.request import Request, urlopen
 
-from vibesensor.constants import GITHUB_REPO
+from ..constants import GITHUB_REPO
 
 LOGGER = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ _DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB per read()
 """Chunk size for streaming downloads.  Shared between
 :class:`ServerReleaseFetcher` and
-:class:`~vibesensor.firmware_cache.GitHubReleaseFetcher`."""
+:class:`~vibesensor.update.firmware_cache.GitHubReleaseFetcher`."""
 
 _HASH_CHUNK_BYTES = 65536  # 64 KB per hash update
 
@@ -84,7 +84,7 @@ def github_api_headers(token: str = "") -> dict[str, str]:
 
     If *token* is non-empty it is included as a Bearer authorization header.
     Used by both :class:`ServerReleaseFetcher` and
-    :class:`~vibesensor.firmware_cache.GitHubReleaseFetcher` so that the
+    :class:`~vibesensor.update.firmware_cache.GitHubReleaseFetcher` so that the
     header construction lives in one place.
     """
     headers: dict[str, str] = {"Accept": "application/vnd.github+json"}

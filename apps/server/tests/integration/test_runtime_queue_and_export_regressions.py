@@ -42,7 +42,8 @@ class TestFlushBumpsGeneration:
             waveform_display_hz=50,
             fft_n=512,
         )
-        buf = proc._get_or_create("sensor-1")
+        with proc._store.lock:
+            buf = proc._store._get_or_create_unlocked("sensor-1")
         buf.ingest_generation = 5
         buf.count = 10  # pretend some data
         proc.flush_client_buffer("sensor-1")
@@ -56,7 +57,7 @@ _DEAD_FUNCTION_CASES = [
     ("vibesensor/report/pdf_page1.py", "_measure_text_height"),
     ("vibesensor/report/pdf_diagram_render.py", "_amp_heat_color"),
     ("vibesensor/report/pdf_diagram_render.py", "def _format_db"),
-    ("vibesensor/firmware_cache.py", "def install_baseline"),
+    ("vibesensor/update/firmware_cache.py", "def install_baseline"),
 ]
 
 

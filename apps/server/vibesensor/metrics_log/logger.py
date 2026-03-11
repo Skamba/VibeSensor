@@ -73,8 +73,8 @@ class PersistenceStatusSnapshot:
 class _MetricsSessionState:
     """Owns the active recording session lifecycle and progress markers."""
 
-    def __init__(self, *, enabled: bool, no_data_timeout_s: float) -> None:
-        self._lock = RLock()
+    def __init__(self, *, enabled: bool, no_data_timeout_s: float, lock: RLock) -> None:
+        self._lock = lock
         self.enabled = bool(enabled)
         self.no_data_timeout_s = max(1.0, float(no_data_timeout_s))
         self.run_id: str | None = None
@@ -198,12 +198,13 @@ class _MetricsPersistenceCoordinator:
         history_db: HistoryDB | None,
         persist_history_db: bool,
         metadata_builder: Callable[[str, str], dict[str, object]],
+        lock: RLock,
     ) -> None:
         self._history_db = history_db
         self._persist_history_db = bool(persist_history_db)
         self._metadata_builder = metadata_builder
         self._current_run_id: str | None = None
-        self._lock = RLock()
+        self._lock = lock
         self.history_run_created = False
         self.history_create_fail_count = 0
         self._retry_cycle_count = 0
@@ -469,11 +470,13 @@ class MetricsLogger:
         self._session = _MetricsSessionState(
             enabled=False,
             no_data_timeout_s=config.no_data_timeout_s,
+            lock=self._lock,
         )
         self._persistence = _MetricsPersistenceCoordinator(
             history_db=history_db,
             persist_history_db=config.persist_history_db,
             metadata_builder=self._run_metadata_record,
+            lock=self._lock,
         )
         self._post_analysis = PostAnalysisWorker(
             history_db=history_db,

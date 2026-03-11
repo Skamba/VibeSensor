@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.esp_flash_manager import (
+from vibesensor.update.esp_flash_manager import (
     EspFlashManager,
     EspFlashState,
     EspFlashStatus,

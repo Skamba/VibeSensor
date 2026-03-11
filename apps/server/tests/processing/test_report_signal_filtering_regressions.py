@@ -77,34 +77,40 @@ class TestResizeBuffer:
 
     def _make_proc_with_buffer(self):
         proc = _make_processor(sample_rate_hz=100, waveform_seconds=1)
-        buf = proc._get_or_create("test-client")
+        store = proc._store
+        with store.lock:
+            buf = store._get_or_create_unlocked("test-client")
         samples = np.random.default_rng(42).standard_normal((10, 3)).astype(np.float32)
         proc.ingest("test-client", samples)
-        return proc, buf
+        return store, buf
 
     def test_same_size_noop(self) -> None:
-        proc, buf = self._make_proc_with_buffer()
+        store, buf = self._make_proc_with_buffer()
         count_before = buf.count
-        proc._resize_buffer(buf, 100)
+        with store.lock:
+            store._resize_buffer_unlocked(buf, 100)
         assert buf.count == count_before
         assert buf.capacity == 100
 
     def test_grow_preserves_data(self) -> None:
-        proc, buf = self._make_proc_with_buffer()
+        store, buf = self._make_proc_with_buffer()
         old_count = buf.count
-        proc._resize_buffer(buf, 200)
+        with store.lock:
+            store._resize_buffer_unlocked(buf, 200)
         assert buf.capacity == 200
         assert buf.count == old_count
 
     def test_shrink_caps_count(self) -> None:
-        proc, buf = self._make_proc_with_buffer()
-        proc._resize_buffer(buf, 5)
+        store, buf = self._make_proc_with_buffer()
+        with store.lock:
+            store._resize_buffer_unlocked(buf, 5)
         assert buf.capacity == 5
         assert buf.count <= 5
 
     @pytest.mark.parametrize("new_cap", [0, -10], ids=["zero", "negative"])
     def test_non_positive_clamped_to_one(self, new_cap: int) -> None:
-        proc, buf = self._make_proc_with_buffer()
-        proc._resize_buffer(buf, new_cap)
+        store, buf = self._make_proc_with_buffer()
+        with store.lock:
+            store._resize_buffer_unlocked(buf, new_cap)
         assert buf.capacity == 1
         assert buf.count <= 1

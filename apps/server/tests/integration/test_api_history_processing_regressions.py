@@ -110,7 +110,7 @@ class TestProcessingZeroSampleRate:
     )
     def test_fft_params(self, sr: int, *, expect_empty: bool) -> None:
         proc = self._make_processor(800)
-        freq_slice, valid_idx = proc._fft_params(sr)
+        freq_slice, valid_idx = proc._metrics.fft_params(sr)
         if expect_empty:
             assert len(freq_slice) == 0
             assert len(valid_idx) == 0

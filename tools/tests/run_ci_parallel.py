@@ -180,14 +180,12 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
         ],
         "backend-tests": [
             Step(
-                "backend tests (non-selenium)",
+                "backend tests",
                 [
                     python_cmd,
                     "-m",
                     "pytest",
                     "-q",
-                    "-m",
-                    "not selenium",
                     "--tb=short",
                     "apps/server/tests",
                 ],

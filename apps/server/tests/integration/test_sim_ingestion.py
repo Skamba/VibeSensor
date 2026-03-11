@@ -81,7 +81,7 @@ def _wait_for_analysis(run_id: str, *, timeout_s: float = 120.0) -> dict:
         try:
             data = _api_json(f"/api/history/{run_id}/insights")
             status = data.get("status", "")
-            if status == "complete" or data.get("analysis_is_current") is True:
+            if status == "complete":
                 return data
         except Exception:
             pass
@@ -179,10 +179,8 @@ class TestSimulatorIngestion:
             "findings",
             "speed_breakdown",
             "most_likely_origin",
-            "analysis_is_current",
         ):
             assert key in self.insights, f"Missing '{key}' in insights"
-        assert self.insights["analysis_is_current"] is True
 
     def test_top_cause_exists(self) -> None:
         """At least one top cause should be present."""

@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch
 
 from vibesensor.update.manager import UpdateManager
 from vibesensor.update.runner import CommandRunner
+from vibesensor.update.status import collect_runtime_details
 
 
 def _build_fake_downloaded_wheel(path: Path, *, version: str) -> None:
@@ -78,7 +79,7 @@ def seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True
     (repo / "apps" / "server" / "vibesensor" / "static" / "index.html").write_text(
         "<html>ok</html>\n",
     )
-    details = mgr._runtime_details.collect()
+    details = collect_runtime_details(repo)
     metadata = {
         "ui_source_hash": details["ui_source_hash"] if valid else "stale-source-hash",
         "static_assets_hash": details["static_assets_hash"],
@@ -122,8 +123,8 @@ async def run_update(
 def patch_release_fetcher(current_version: str = "2025.6.15") -> Iterator[MagicMock]:
     with (
         patch("shutil.which", mock_which),
-        patch("vibesensor.release_fetcher.ServerReleaseFetcher") as mock_fetcher,
-        patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+        patch("vibesensor.update.release_fetcher.ServerReleaseFetcher") as mock_fetcher,
+        patch("vibesensor.update.release_fetcher.ReleaseFetcherConfig"),
         patch("vibesensor._version.__version__", current_version),
     ):
         yield mock_fetcher

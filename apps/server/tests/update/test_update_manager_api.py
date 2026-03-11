@@ -15,8 +15,6 @@ class TestUpdateApiEndpoints:
         state = MagicMock()
         state.update_manager = UpdateManager()
         state.esp_flash_manager = MagicMock()
-        state.apply_car_settings = MagicMock()
-        state.apply_speed_source_settings = MagicMock()
         router = create_router(state)
         paths = [route.path for route in router.routes]
         assert "/api/update/status" in paths

@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from vibesensor.release_fetcher import (
+from vibesensor.update.release_fetcher import (
     ReleaseFetcherConfig,
     ReleaseInfo,
     ServerReleaseFetcher,

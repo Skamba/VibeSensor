@@ -20,7 +20,7 @@ typecheck-backend:
 typecheck: typecheck-backend ui-typecheck
 
 test:
-	python3 -m pytest -q -m "not selenium" apps/server/tests
+	python3 -m pytest -q apps/server/tests
 
 test-all:
 	python3 tools/tests/run_ci_parallel.py
@@ -35,7 +35,7 @@ regen-contracts: sync-contracts
 	python3 tools/config/generate_contract_reference_doc.py
 
 coverage:  ## COV_OPTS="--cov-report=html:../../artifacts/coverage/html" or "--cov-fail-under=80"
-	cd apps/server && python3 -m pytest -q -m "not selenium" --cov=vibesensor --cov-report=term-missing:skip-covered $(COV_OPTS) tests
+	cd apps/server && python3 -m pytest -q --cov=vibesensor --cov-report=term-missing:skip-covered $(COV_OPTS) tests
 
 smoke:
 	vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server

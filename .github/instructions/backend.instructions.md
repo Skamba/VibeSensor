@@ -15,13 +15,13 @@ Backend (python `apps/server/`)
 	- Keep transient/impact events visible in report output, but not promoted above likely persistent faults by default.
 	- Validate report-facing output (rendered/report API/PDF text and ordering), not just internal helper outputs.
 	- When user-facing report text changes, update `apps/server/data/report_i18n.json`.
-	- `apps/server/vibesensor/update/`: wheel-based updater package; `manager.py` is the public facade over focused modules for workflow, Wi-Fi, releases, install and rollback, service control, and status. Do not add backward-compatibility shims, static method passthroughs, or module-level aliases in `update/`; when methods move to sub-modules, update callers directly.
+	- `apps/server/vibesensor/update/`: wheel-based updater package; `manager.py` is the public facade with workflow orchestration and validation; other modules handle Wi-Fi, releases, ESP flash, firmware cache, release validation, install and rollback, and status. Do not add backward-compatibility shims, static method passthroughs, or module-level aliases in `update/`; when methods move to sub-modules, update callers directly.
 - Install: `python -m pip install -e "./apps/server[dev]"` (used by CI).
 - Backend type gate: `make typecheck-backend` runs the enforced mypy slice for app/bootstrap, runtime/routes, core typed-boundary modules, `history_services/`, and the high-risk `analysis/`, `processing/`, `history_db/`, `metrics_log/`, and `update/` packages.
 - Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject` aliases) over broad `Any` when shaping analysis, report, and persistence data.
 - Treat `Any` as a design smell by default: prefer `object` for untrusted inputs, shared JSON aliases for persisted payloads, `ParamSpec` for callable wrappers, and focused `TypedDict`/protocol contracts for nested state.
 - For live processing / WebSocket payloads, prefer shared contracts in `apps/server/vibesensor/payload_types.py` and `vibesensor.vibration_strength` over ad-hoc `dict[str, Any]` bags.
-- Tests: add tests in the matching `tests/<module>/` subdirectory (see `docs/testing.md`); use `tests/integration/` for cross-cutting scenarios and `tests/regression/{analysis,cross_cutting,report,runtime}/` for bug-fix regressions grouped by intent. Prefer `-m "not selenium"` for fast runs. Run a single area with `pytest -q apps/server/tests/<module>/`.
+- Tests: add tests in the matching `tests/<module>/` subdirectory (see `docs/testing.md`); use `tests/integration/` for cross-cutting scenarios and regressions. Run a single area with `pytest -q apps/server/tests/<module>/`.
 - i18n: Add/modify keys in `apps/server/data/report_i18n.json` when changing user-facing strings.
 - Styling/lint: `ruff` is enforced in CI; follow existing `ruff` conventions.
 - Documentation maintenance: when backend structure, commands, route ownership, persistence layout, report flow, or update flow changes, update `apps/server/README.md`, `docs/testing.md`, and the relevant `docs/ai/*.md` and `.github/*.instructions.md` files in the same change set.

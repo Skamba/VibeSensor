@@ -12,7 +12,6 @@ from fastapi import FastAPI, WebSocketDisconnect
 from test_support import response_payload as _response_payload
 
 from vibesensor.analysis import summarize_run_data
-from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION
 from vibesensor.history_services.exports import HistoryExportService
 from vibesensor.history_services.reports import HistoryReportService
 from vibesensor.history_services.runs import HistoryRunService
@@ -66,7 +65,7 @@ class FakeHistoryDB:
     metadata: dict[str, Any]
     samples: list[dict[str, Any]]
     analysis: dict[str, Any]
-    analysis_version: int | None = ANALYSIS_SCHEMA_VERSION
+    analysis_version: int | None = 3
     analysis_completed_at: str | None = "2026-01-01T00:01:00Z"
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:
@@ -250,8 +249,6 @@ class FakeState:
         self.processing_loop_state = ProcessingLoopState()
         self.health_state = RuntimeHealthState()
         self.health_state.mark_ready()
-        self.apply_car_settings = lambda: None
-        self.apply_speed_source_settings = lambda: None
         self.update_manager = MagicMock()
         self.esp_flash_manager = MagicMock()
         self.run_service = HistoryRunService(self.history_db, self.settings_store)

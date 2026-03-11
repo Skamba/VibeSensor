@@ -72,6 +72,21 @@ class ClientApiRow(TypedDict):
     timing_health: TimingHealthPayload
 
 
+class WsClientRow(TypedDict):
+    """Lightweight client row for WebSocket broadcast (UI-consumed fields only)."""
+
+    id: str
+    name: str
+    connected: bool
+    mac_address: str
+    location: str
+    last_seen_age_ms: int | None
+    dropped_frames: int
+    frames_total: int
+    sample_rate_hz: int
+    firmware_version: str
+
+
 class SpectrumSeriesPayload(TypedDict, total=False):
     combined_spectrum_amp_g: list[float]
     strength_metrics: VibrationStrengthMetrics
@@ -201,7 +216,7 @@ class LiveWsPayload(TypedDict, total=False):
     schema_version: str
     server_time: str
     speed_mps: float | None
-    clients: list[ClientApiRow]
+    clients: list[WsClientRow]
     selected_client_id: str | None
     rotational_speeds: RotationalSpeedsPayload | None
     spectra: SpectraPayload

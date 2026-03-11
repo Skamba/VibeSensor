@@ -465,7 +465,6 @@ class HistoryInsightsResponse(_ExtraAllowBase):
 
     run_id: str | None = None
     status: str | None = None
-    analysis_is_current: bool | None = None
     warnings: list[HistoryInsightWarningResponse] = Field(default_factory=list)
 
 

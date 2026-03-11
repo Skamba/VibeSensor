@@ -38,10 +38,13 @@ def _make_coordinator(
     run_id: str = "run-1",
 ) -> _MetricsPersistenceCoordinator:
     """Build a coordinator with minimal dependencies."""
+    from threading import RLock
+
     coord = _MetricsPersistenceCoordinator(
         history_db=history_db,
         persist_history_db=persist,
         metadata_builder=lambda _rid, _ts: {"run_id": _rid},
+        lock=RLock(),
     )
     coord.reset_for_new_session(run_id=run_id)
     return coord

@@ -275,79 +275,71 @@ def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
     return hasher.hexdigest()
 
 
-class UpdateRuntimeDetailsCollector:
-    """Collects runtime versioning and static-asset verification details."""
+def collect_runtime_details(repo: Path) -> JsonObject:
+    """Collect runtime versioning and static-asset verification details."""
+    ui_root = repo / "apps" / "ui"
+    static_root = repo / "apps" / "server" / "vibesensor" / "static"
+    metadata_path = static_root / UI_BUILD_METADATA_FILE
 
-    __slots__ = ("_repo",)
+    try:
+        from vibesensor import __version__
 
-    def __init__(self, *, repo: Path) -> None:
-        self._repo = repo
+        version = __version__
+    except ImportError:
+        LOGGER.debug("vibesensor.__version__ not available", exc_info=True)
+        version = "unknown"
 
-    def collect(self) -> JsonObject:
-        repo = self._repo
-        ui_root = repo / "apps" / "ui"
-        static_root = repo / "apps" / "server" / "vibesensor" / "static"
-        metadata_path = static_root / UI_BUILD_METADATA_FILE
-
+    commit = ""
+    if (repo / ".git").exists():
         try:
-            from vibesensor import __version__
+            proc = subprocess.run(
+                ["git", "-C", str(repo), "rev-parse", "HEAD"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if proc.returncode == 0:
+                commit = proc.stdout.strip()
+        except OSError:
+            LOGGER.debug("git rev-parse failed; commit hash unavailable", exc_info=True)
 
-            version = __version__
-        except ImportError:
-            LOGGER.debug("vibesensor.__version__ not available", exc_info=True)
-            version = "unknown"
+    has_packaged_static = (_PACKAGED_STATIC_DIR / "index.html").exists()
+    ui_source_hash = _hash_tree(
+        ui_root,
+        ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
+    )
+    static_assets_hash = _hash_tree(static_root, ignore_names={UI_BUILD_METADATA_FILE})
 
-        commit = ""
-        if (repo / ".git").exists():
-            try:
-                proc = subprocess.run(
-                    ["git", "-C", str(repo), "rev-parse", "HEAD"],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                )
-                if proc.returncode == 0:
-                    commit = proc.stdout.strip()
-            except OSError:
-                LOGGER.debug("git rev-parse failed; commit hash unavailable", exc_info=True)
+    metadata: JsonObject = {}
+    if metadata_path.is_file():
+        try:
+            loaded = json.loads(metadata_path.read_text(encoding="utf-8"))
+            metadata = loaded if is_json_object(loaded) else {}
+        except (OSError, json.JSONDecodeError):
+            metadata = {}
 
-        has_packaged_static = (_PACKAGED_STATIC_DIR / "index.html").exists()
-        ui_source_hash = _hash_tree(
-            ui_root,
-            ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
-        )
-        static_assets_hash = _hash_tree(static_root, ignore_names={UI_BUILD_METADATA_FILE})
-
-        metadata: JsonObject = {}
-        if metadata_path.is_file():
-            try:
-                loaded = json.loads(metadata_path.read_text(encoding="utf-8"))
-                metadata = loaded if is_json_object(loaded) else {}
-            except (OSError, json.JSONDecodeError):
-                metadata = {}
-
-        static_build_source_hash = str(metadata.get("ui_source_hash") or "")
-        static_build_assets_hash = str(metadata.get("static_assets_hash") or "")
-        static_build_commit = str(metadata.get("git_commit") or "")
-        has_repo_static = static_root.exists()
-        assets_verified = (
-            bool(ui_source_hash)
-            and bool(static_assets_hash)
-            and bool(static_build_source_hash)
-            and bool(static_build_assets_hash)
-            and ui_source_hash == static_build_source_hash
-            and static_assets_hash == static_build_assets_hash
-        )
-        if not has_repo_static:
-            assets_verified = has_packaged_static
-        return {
-            "version": version,
-            "commit": commit,
-            "ui_source_hash": ui_source_hash,
-            "static_assets_hash": static_assets_hash,
-            "static_build_source_hash": static_build_source_hash,
-            "static_build_commit": static_build_commit,
-            "assets_verified": assets_verified,
-            "has_packaged_static": has_packaged_static,
-        }
+    static_build_source_hash = str(metadata.get("ui_source_hash") or "")
+    static_build_assets_hash = str(metadata.get("static_assets_hash") or "")
+    static_build_commit = str(metadata.get("git_commit") or "")
+    has_repo_static = static_root.exists()
+    assets_verified = (
+        bool(ui_source_hash)
+        and bool(static_assets_hash)
+        and bool(static_build_source_hash)
+        and bool(static_build_assets_hash)
+        and ui_source_hash == static_build_source_hash
+        and static_assets_hash == static_build_assets_hash
+    )
+    if not has_repo_static:
+        assets_verified = has_packaged_static
+    return {
+        "version": version,
+        "commit": commit,
+        "ui_source_hash": ui_source_hash,
+        "static_assets_hash": static_assets_hash,
+        "static_build_source_hash": static_build_source_hash,
+        "static_build_commit": static_build_commit,
+        "assets_verified": assets_verified,
+        "has_packaged_static": has_packaged_static,
+    }

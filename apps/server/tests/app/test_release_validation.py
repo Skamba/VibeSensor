@@ -9,8 +9,8 @@ from types import SimpleNamespace
 import yaml
 from _paths import SERVER_ROOT
 
-from vibesensor import release_validation
-from vibesensor.release_validation import (
+from vibesensor.update import release_validation
+from vibesensor.update.release_validation import (
     build_release_smoke_config,
     run_server_smoke,
     validate_firmware_dist,

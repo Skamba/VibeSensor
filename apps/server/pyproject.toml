@@ -11,7 +11,6 @@ requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.111,<1",
   "uvicorn[standard]>=0.30,<1",
-  "uvloop>=0.21,<1; python_version < '3.12' and sys_platform != 'win32' and sys_platform != 'cygwin' and platform_python_implementation != 'PyPy'",
   "numpy>=1.26,<3",
   "PyYAML>=6,<7",
   "reportlab>=4,<5",
@@ -22,6 +21,7 @@ esp = [
   "esptool>=4,<5",
 ]
 ocr = [
+  "pypdfium2>=4.30,<5",
   "rapidocr-onnxruntime>=1.4,<2",
 ]
 dev = [
@@ -32,9 +32,7 @@ dev = [
   "pytest-timeout>=2,<3",
   "pytest-xdist>=3.6,<4",
   "pypdf>=5,<6",
-  "pypdfium2>=4.30,<5",
   "ruff>=0.6,<1",
-  "selenium>=4.20,<5",
   "websockets>=12,<16",
 ]
 
@@ -46,9 +44,9 @@ vibesensor-hotspot-self-heal = "vibesensor.hotspot.self_heal:main"
 vibesensor-sim = "vibesensor.simulator.sim_sender:main"
 vibesensor-ws-smoke = "vibesensor.simulator.ws_smoke:main"
 vibesensor-config-preflight = "vibesensor.config_preflight:main"
-vibesensor-fw-refresh = "vibesensor.firmware_cache:refresh_cache_cli"
-vibesensor-fw-info = "vibesensor.firmware_cache:cache_info_cli"
-vibesensor-release-fetch = "vibesensor.release_fetcher:fetch_latest_wheel_cli"
+vibesensor-fw-refresh = "vibesensor.update.firmware_cache:refresh_cache_cli"
+vibesensor-fw-info = "vibesensor.update.firmware_cache:cache_info_cli"
+vibesensor-release-fetch = "vibesensor.update.release_fetcher:fetch_latest_wheel_cli"
 
 [tool.setuptools.dynamic]
 version = {attr = "vibesensor._version.__version__"}
@@ -70,7 +68,6 @@ timeout = 120
 pythonpath = [".", "tests"]
 testpaths = ["tests"]
 markers = [
-    "selenium: browser-based UI tests",
     "e2e: docker-based end-to-end tests",
     "long_sim: longer simulated-run tests (>20 s of synthetic data)",
     "smoke: minimal critical path checks",
@@ -97,9 +94,7 @@ files = [
   "vibesensor/constants.py",
   "vibesensor/contract_reference_doc.py",
   "vibesensor/domain_models.py",
-  "vibesensor/esp_flash_manager.py",
   "vibesensor/exceptions.py",
-  "vibesensor/firmware_cache.py",
   "vibesensor/gps_speed.py",
   "vibesensor/history_services",
   "vibesensor/hotspot",
@@ -113,8 +108,6 @@ files = [
   "vibesensor/peak_classification.py",
   "vibesensor/protocol.py",
   "vibesensor/registry.py",
-  "vibesensor/release_fetcher.py",
-  "vibesensor/release_validation.py",
   "vibesensor/report",
   "vibesensor/report_cli.py",
   "vibesensor/report_i18n.py",

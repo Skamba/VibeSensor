@@ -6,8 +6,8 @@ import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..release_fetcher import ReleaseInfo
 from .installer import _sha256_file
+from .release_fetcher import ReleaseInfo
 from .status import UpdateStatusTracker
 
 
@@ -28,7 +28,7 @@ class UpdateReleaseService:
         self._rollback_dir = rollback_dir
 
     async def check_for_update(self, current_version: str) -> UpdateReleaseCheck:
-        from vibesensor.release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
+        from .release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
 
         fetcher = ServerReleaseFetcher(
             ReleaseFetcherConfig(
@@ -54,7 +54,7 @@ class UpdateReleaseService:
         return UpdateReleaseCheck(release=None, latest_tag=latest_tag)
 
     async def download(self, release: ReleaseInfo, staging_dir: Path) -> Path | None:
-        from vibesensor.release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
+        from .release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
 
         fetcher = ServerReleaseFetcher(
             ReleaseFetcherConfig(

@@ -53,6 +53,8 @@ from .exceptions import PersistenceError as PersistenceError
 from .json_types import JsonObject
 
 if TYPE_CHECKING:
+    from .analysis_settings import AnalysisSettingsStore
+    from .gps_speed import GPSSpeedMonitor
     from .history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
@@ -109,10 +111,18 @@ class SettingsStore:
     When no *db* is provided the store operates in memory only (useful for tests).
     """
 
-    def __init__(self, db: HistoryDB | None = None) -> None:
+    def __init__(
+        self,
+        db: HistoryDB | None = None,
+        *,
+        analysis_settings: AnalysisSettingsStore | None = None,
+        gps_monitor: GPSSpeedMonitor | None = None,
+    ) -> None:
         """Initialise the settings store, loading persisted settings from *db* if provided."""
         self._lock = RLock()
         self._db = db
+        self._analysis_settings = analysis_settings
+        self._gps_monitor = gps_monitor
 
         self._cars: list[CarConfig] = []
         self._active_car_id: str | None = None
@@ -179,6 +189,37 @@ class SettingsStore:
             LOGGER.error("Failed to persist settings to SQLite", exc_info=True)
             raise PersistenceError("Failed to persist settings to SQLite") from exc
 
+    def _sync_analysis_settings(self) -> None:
+        """Push active car aspects into the analysis settings store."""
+        if self._analysis_settings is None:
+            return
+        aspects = self.active_car_aspects()
+        if aspects:
+            self._analysis_settings.update(aspects)
+
+    def _sync_speed_source(self) -> None:
+        """Push current speed-source config into the GPS monitor."""
+        if self._gps_monitor is None:
+            return
+        ss = self.get_speed_source()
+        self._gps_monitor.set_manual_source_selected(ss["speedSource"] == "manual")
+        if ss["manualSpeedKph"] is not None:
+            self._gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
+        else:
+            self._gps_monitor.set_speed_override_kmh(None)
+        self._gps_monitor.set_fallback_settings(
+            stale_timeout_s=ss.get("staleTimeoutS"),
+            fallback_mode=ss.get("fallbackMode"),
+        )
+
+    def sync_all(self) -> None:
+        """Push all current settings into dependent services.
+
+        Called once at startup after all services are wired.
+        """
+        self._sync_analysis_settings()
+        self._sync_speed_source()
+
     # -- full snapshot ---------------------------------------------------------
 
     def snapshot(self) -> SettingsSnapshotPayload:
@@ -230,6 +271,7 @@ class SettingsStore:
             except PersistenceError:
                 self._active_car_id = old_active
                 raise
+            self._sync_analysis_settings()
             return self.get_cars()
 
     def add_car(self, car_data: CarConfigUpdatePayload) -> CarsPayload:
@@ -243,6 +285,7 @@ class SettingsStore:
             except PersistenceError:
                 self._cars.pop()  # rollback in-memory append
                 raise
+            self._sync_analysis_settings()
             return self.get_cars()
 
     def update_car(self, car_id: str, car_data: CarConfigUpdatePayload) -> CarsPayload:
@@ -279,6 +322,7 @@ class SettingsStore:
                 car.aspects.update(old_aspects)
                 car.variant = old_variant
                 raise
+            self._sync_analysis_settings()
             return self.get_cars()
 
     def update_active_car_aspects(
@@ -297,6 +341,7 @@ class SettingsStore:
                 car.aspects.clear()
                 car.aspects.update(old_aspects)
                 raise
+            self._sync_analysis_settings()
             return dict(car.aspects)
 
     def delete_car(self, car_id: str) -> CarsPayload:
@@ -317,6 +362,7 @@ class SettingsStore:
                 self._cars = old_cars
                 self._active_car_id = old_active
                 raise
+            self._sync_analysis_settings()
             return self.get_cars()
 
     # -- speed source ----------------------------------------------------------
@@ -334,6 +380,7 @@ class SettingsStore:
             except PersistenceError:
                 self._speed_cfg = SpeedSourceConfig.from_dict(old_dict)
                 raise
+            self._sync_speed_source()
             return self._speed_cfg.to_dict()
 
     # -- sensors ---------------------------------------------------------------

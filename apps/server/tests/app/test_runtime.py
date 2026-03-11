@@ -185,11 +185,11 @@ def _make_runtime(**overrides: Any):
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
     )
-    rt.lifecycle = LifecycleManager(runtime=rt)
+    lifecycle = LifecycleManager(runtime=rt)
     if overrides:
         for name, value in overrides.items():
             setattr(rt, name, value)
-    return rt
+    return rt, lifecycle
 
 
 # ---------------------------------------------------------------------------
@@ -224,7 +224,7 @@ async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
 @pytest.mark.asyncio
 async def test_processing_loop_runs_one_tick_and_resets_state() -> None:
     """processing_loop should call compute_all and set state to 'ok'."""
-    rt = _make_runtime()
+    rt, _ = _make_runtime()
     rt.processing_loop_state.processing_state = "degraded"
 
     await _run_processing_loop(rt, max_ticks=1)
@@ -241,7 +241,7 @@ async def test_processing_loop_handles_failure_gracefully() -> None:
         raise RuntimeError("test failure")
 
     processor.compute_all = _failing_compute
-    rt = _make_runtime(processor=processor)
+    rt, _ = _make_runtime(processor=processor)
 
     await _run_processing_loop(rt, max_ticks=1)
 
@@ -254,7 +254,7 @@ async def test_processing_loop_broadcasts_sync_clock() -> None:
     """processing_loop should periodically call broadcast_sync_clock."""
     control_plane = MagicMock()
     # fft_update_hz=1 → interval=1.0 → sync every ~5 ticks
-    rt = _make_runtime(
+    rt, _ = _make_runtime(
         config=_StubConfig(
             processing=_StubProcessingConfig(fft_update_hz=1),
         ),
@@ -293,7 +293,7 @@ async def test_start_creates_tasks(monkeypatch) -> None:
     update_manager.startup_recover = AsyncMock()
     update_manager.job_task = None
 
-    rt = _make_runtime(
+    rt, lifecycle = _make_runtime(
         control_plane=control_plane,
         ws_hub=ws_hub,
         metrics_logger=metrics_logger,
@@ -301,13 +301,13 @@ async def test_start_creates_tasks(monkeypatch) -> None:
         update_manager=update_manager,
     )
 
-    await rt.lifecycle.start()
-    assert len(rt.lifecycle.tasks) == 5
+    await lifecycle.start()
+    assert len(lifecycle.tasks) == 5
     assert control_plane.start.called
     assert rt.health_state.startup_state == "ready"
     assert rt.health_state.startup_phase == "ready"
 
-    await rt.lifecycle.stop()
+    await lifecycle.stop()
 
 
 @pytest.mark.asyncio
@@ -335,7 +335,7 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
     update_manager.startup_recover = AsyncMock()
     update_manager.job_task = None
 
-    rt = _make_runtime(
+    rt, lifecycle = _make_runtime(
         control_plane=control_plane,
         ws_hub=ws_hub,
         metrics_logger=metrics_logger,
@@ -343,13 +343,13 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
         update_manager=update_manager,
     )
 
-    await rt.lifecycle.start()
-    failed_task = next(task for task in rt.lifecycle.tasks if task.get_name() == "ws-broadcast")
+    await lifecycle.start()
+    failed_task = next(task for task in lifecycle.tasks if task.get_name() == "ws-broadcast")
     await asyncio.gather(failed_task, return_exceptions=True)
 
     assert rt.health_state.background_task_failures["ws-broadcast"] == "ws boom"
 
-    await rt.lifecycle.stop()
+    await lifecycle.stop()
 
 
 @pytest.mark.asyncio
@@ -391,7 +391,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     metrics_logger.run = AsyncMock(side_effect=asyncio.CancelledError)
     update_manager.startup_recover = AsyncMock()
 
-    rt = _make_runtime(
+    rt, lifecycle = _make_runtime(
         control_plane=control_plane,
         ws_hub=ws_hub,
         metrics_logger=metrics_logger,
@@ -402,17 +402,17 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
         worker_pool=worker_pool,
     )
 
-    await rt.lifecycle.start()
-    assert len(rt.lifecycle.tasks) > 0
+    await lifecycle.start()
+    assert len(lifecycle.tasks) > 0
 
-    await rt.lifecycle.stop()
-    assert rt.lifecycle.tasks == []
+    await lifecycle.stop()
+    assert lifecycle.tasks == []
     assert metrics_logger.shutdown_report.called
     assert worker_pool.shutdown.called
     assert history_db.close.called
 
 
-@pytest.mark.parametrize("attr", ["settings_store", "processing_loop", "ws_broadcast", "lifecycle"])
+@pytest.mark.parametrize("attr", ["settings_store", "processing_loop", "ws_broadcast"])
 def test_runtime_state_has_public_attribute(attr: str) -> None:
     """Canonical import path should expose key public attributes."""
     from vibesensor.runtime import RuntimeState

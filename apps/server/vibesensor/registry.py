@@ -14,7 +14,7 @@ from threading import RLock
 from typing import TYPE_CHECKING
 
 from .domain_models import normalize_sensor_id as _normalize_client_id
-from .payload_types import ClientApiRow, TimingHealthPayload
+from .payload_types import ClientApiRow, TimingHealthPayload, WsClientRow
 from .processing.models import ClientMetrics
 from .protocol import (
     AckMessage,
@@ -629,5 +629,58 @@ class ClientRegistry:
                             ),
                         ),
                     ),
+                )
+            return rows
+
+    def ws_snapshot(
+        self,
+        now: float | None = None,
+        *,
+        now_mono: float | None = None,
+    ) -> list[WsClientRow]:
+        """Lightweight snapshot for WebSocket broadcast (no metrics)."""
+        with self._lock:
+            now_ts = self._resolve_now_wall(now)
+            mono_now = self._resolve_now_mono(now_mono)
+            rows: list[WsClientRow] = []
+            all_client_ids = sorted(set(self._clients) | set(self._user_names))
+            for client_id in all_client_ids:
+                record = self._clients.get(client_id)
+                if record is None:
+                    rows.append(
+                        {
+                            "id": client_id,
+                            "name": self._user_names.get(client_id, f"client-{client_id[-4:]}"),
+                            "connected": False,
+                            "mac_address": client_id_mac(client_id),
+                            "location": "",
+                            "last_seen_age_ms": None,
+                            "dropped_frames": 0,
+                            "frames_total": 0,
+                            "sample_rate_hz": 0,
+                            "firmware_version": "",
+                        },
+                    )
+                    continue
+                age_ms = (
+                    int(max(0.0, now_ts - record.last_seen) * 1000) if record.last_seen else None
+                )
+                connected = bool(
+                    record.last_seen_mono
+                    and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds,
+                )
+                rows.append(
+                    {
+                        "id": record.client_id,
+                        "name": record.name,
+                        "connected": connected,
+                        "mac_address": client_id_mac(record.client_id),
+                        "location": record.location,
+                        "last_seen_age_ms": age_ms,
+                        "dropped_frames": record.frames_dropped,
+                        "frames_total": record.frames_total,
+                        "sample_rate_hz": record.sample_rate_hz,
+                        "firmware_version": record.firmware_version,
+                    },
                 )
             return rows

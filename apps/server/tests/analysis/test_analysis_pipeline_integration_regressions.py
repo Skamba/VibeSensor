@@ -14,7 +14,6 @@ import pytest
 
 from vibesensor.analysis import build_findings_for_samples, summarize_run_data
 from vibesensor.history_db import HistoryDB
-from vibesensor.history_db._schema import ANALYSIS_SCHEMA_VERSION
 from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
@@ -375,8 +374,6 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
 
     db.store_analysis(run_id, summary)
     assert db.get_run(run_id)["status"] == "complete"
-    run = db.get_run(run_id)
-    assert int(run.get("analysis_version") or 0) >= ANALYSIS_SCHEMA_VERSION
 
     run = db.get_run(run_id)
     assert run is not None
