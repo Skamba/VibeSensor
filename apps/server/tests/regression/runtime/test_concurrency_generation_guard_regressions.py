@@ -32,7 +32,6 @@ def _make_logger(tmp_path: Path, **overrides):
     _CONFIG_FIELDS = frozenset(
         {
             "enabled",
-            "log_path",
             "metrics_log_hz",
             "sensor_model",
             "default_sample_rate_hz",
@@ -47,7 +46,6 @@ def _make_logger(tmp_path: Path, **overrides):
     config_overrides = {k: overrides.pop(k) for k in list(overrides) if k in _CONFIG_FIELDS}
     config = MetricsLoggerConfig(
         enabled=config_overrides.get("enabled", False),
-        log_path=config_overrides.get("log_path", tmp_path / "metrics.jsonl"),
         metrics_log_hz=config_overrides.get("metrics_log_hz", 10),
         sensor_model=config_overrides.get("sensor_model", "ADXL345"),
         default_sample_rate_hz=config_overrides.get("default_sample_rate_hz", 800),
@@ -77,38 +75,37 @@ def _make_logger(tmp_path: Path, **overrides):
 
 
 class TestAutoStopGenerationGuard:
-    """stop_logging(_only_if_generation=N) must be a no-op when session has
-    already advanced past generation N.
+    """stop_logging(_only_if_run_id=X) must be a no-op when session has
+    already advanced past run X.
     """
 
-    def test_stale_generation_does_not_stop_new_session(self, tmp_path: Path) -> None:
+    def test_stale_run_id_does_not_stop_new_session(self, tmp_path: Path) -> None:
         logger, db = _make_logger(tmp_path)
         logger.start_logging()
-        old_gen = logger._session.session_generation
         old_run_id = logger._run_id
         assert old_run_id is not None
 
         # Simulate: user starts a brand-new session
         logger.start_logging()
-        new_gen = logger._session.session_generation
         new_run_id = logger._run_id
         assert new_run_id is not None
-        assert new_gen > old_gen
+        assert new_run_id != old_run_id
 
-        # Auto-stop fires for the *old* generation
-        logger.stop_logging(_only_if_generation=old_gen)
+        # Auto-stop fires for the *old* run_id
+        logger.stop_logging(_only_if_run_id=old_run_id)
 
         # New session must still be alive
         assert logger.enabled is True
         assert logger._run_id == new_run_id
         db.close()
 
-    def test_matching_generation_does_stop(self, tmp_path: Path) -> None:
+    def test_matching_run_id_does_stop(self, tmp_path: Path) -> None:
         logger, db = _make_logger(tmp_path)
         logger.start_logging()
-        gen = logger._session.session_generation
+        run_id = logger._run_id
+        assert run_id is not None
 
-        logger.stop_logging(_only_if_generation=gen)
+        logger.stop_logging(_only_if_run_id=run_id)
         assert logger.enabled is False
         assert logger._run_id is None
         db.close()

@@ -12,7 +12,7 @@ Module topology
 - **Engine**: ``pdf_engine.py`` (public entry, page orchestration, pagination).
 - **Pages**: ``pdf_page1.py``, ``pdf_page1_sections.py``, ``pdf_page2.py``,
   ``pdf_page2_sections.py``.
-- **Diagrams**: ``pdf_diagram_layout.py`` (planning), ``pdf_diagram_models.py``
+- **Diagrams**: ``pdf_diagram_layout.py`` (planning & models)
   (geometry), ``pdf_diagram_render.py`` (drawing).
 - **Primitives**: ``pdf_drawing.py``, ``pdf_text.py``, ``pdf_style.py``,
   ``pdf_layout.py``, ``pdf_page_layouts.py``, ``pdf_helpers.py``,

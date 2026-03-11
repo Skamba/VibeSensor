@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Protocol, TypeAlias, TypedDict, TypeGuard
+from typing import TYPE_CHECKING, TypeAlias, TypedDict, TypeGuard
 
 from ..json_types import JsonObject, JsonValue
 from ..json_types import is_json_object as is_json_object  # re-export canonical source
@@ -345,22 +345,3 @@ def is_top_cause(value: object) -> TypeGuard[TopCause]:
     which helps distinguish a TopCause from other dict-shaped objects.
     """
     return isinstance(value, dict) and ("strongest_location" in value or "source" in value)
-
-
-class FindingsBuilder(Protocol):
-    """Keyword-only callable contract for summary finding builders."""
-
-    def __call__(
-        self,
-        *,
-        metadata: MetadataDict,
-        samples: list[Sample],
-        speed_sufficient: bool,
-        steady_speed: bool,
-        speed_stddev_kmh: float | None,
-        speed_non_null_pct: float,
-        raw_sample_rate_hz: float | None,
-        lang: str = "en",
-        per_sample_phases: Sequence[DrivingPhase | str] | None = None,
-        run_noise_baseline_g: float | None = None,
-    ) -> list[Finding]: ...

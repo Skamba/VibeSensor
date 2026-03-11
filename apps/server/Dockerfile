@@ -23,7 +23,7 @@ RUN rm -rf /app/apps/server/vibesensor/static && mkdir -p /app/apps/server/vibes
 COPY --from=ui-build /app/apps/ui/dist/ /app/apps/server/vibesensor/static/
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -e /app/apps/server
+    pip install --no-cache-dir -e "/app/apps/server[esp]"
 
 EXPOSE 8000/tcp
 EXPOSE 9000/udp

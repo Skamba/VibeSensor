@@ -110,7 +110,6 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     logger = MetricsLogger(
         MetricsLoggerConfig(
             enabled=False,
-            log_path=tmp_path / "metrics.jsonl",
             metrics_log_hz=20,
             sensor_model="ADXL345",
             default_sample_rate_hz=_SAMPLE_RATE_HZ,
@@ -167,7 +166,6 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
             run_id,
             start_utc,
             start_mono,
-            session_generation=logger._session.session_generation,
         )
 
     logger.stop_logging()

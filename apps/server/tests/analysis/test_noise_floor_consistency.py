@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.processing import SignalProcessor
+from vibesensor.processing.fft import noise_floor
 from vibesensor.vibration_strength import noise_floor_amp_p20_g
 
 # ---------------------------------------------------------------------------
@@ -51,13 +51,13 @@ _SIZES = [2, 3, 5, 10, 20, 50, 100, 256, 512, 1024]
 
 @pytest.mark.parametrize("n", _SIZES, ids=[f"n={n}" for n in _SIZES])
 def test_live_matches_core_random(n: int) -> None:
-    """SignalProcessor._noise_floor must return the same value as the core lib
+    """noise_floor must return the same value as the core lib
     noise_floor_amp_p20_g for random spectra of varying length.
     """
     rng = np.random.default_rng(seed=42 + n)
     amps = rng.random(n).astype(np.float32) * 0.05  # realistic g range
 
-    live = SignalProcessor._noise_floor(amps)
+    live = noise_floor(amps)
     expected = _core_noise_floor_from_array(amps)
 
     assert live == pytest.approx(expected, abs=1e-9), f"n={n}: live={live}, core={expected}"
@@ -92,8 +92,8 @@ _EDGE_CASES: list[tuple[str, np.ndarray, bool]] = [
     ids=[c[0] for c in _EDGE_CASES],
 )
 def test_consistency_edge_cases(label: str, arr: np.ndarray, expect_zero: bool) -> None:
-    """SignalProcessor._noise_floor must agree with core lib on edge-case inputs."""
-    live = SignalProcessor._noise_floor(arr)
+    """noise_floor must agree with core lib on edge-case inputs."""
+    live = noise_floor(arr)
     expected = _core_noise_floor_from_array(arr)
     if expect_zero:
         assert live == expected == 0.0

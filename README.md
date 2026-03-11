@@ -101,7 +101,6 @@ Each component has its own README with setup instructions and details.
 - Operational runbooks: [docs/operational-runbooks.md](docs/operational-runbooks.md)
 - CI and release automation: [.github/workflows/ci.yml](.github/workflows/ci.yml), [.github/workflows/main-release.yml](.github/workflows/main-release.yml)
 - AI guidance (canonical): [docs/ai/repo-map.md](docs/ai/repo-map.md), [.github/instructions/general.instructions.md](.github/instructions/general.instructions.md), [.github/copilot-instructions.md](.github/copilot-instructions.md)
-- Historical snapshots/audits: [docs/test_coverage_audit.md](docs/test_coverage_audit.md)
 
 ## Quick Start
 

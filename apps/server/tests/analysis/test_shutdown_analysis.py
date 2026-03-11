@@ -51,7 +51,6 @@ def _make_logger(tmp_path: Path, history_db=None) -> MetricsLogger:
     return MetricsLogger(
         MetricsLoggerConfig(
             enabled=False,
-            log_path=tmp_path / "m.jsonl",
             metrics_log_hz=2,
             sensor_model="ADXL345",
             default_sample_rate_hz=800,

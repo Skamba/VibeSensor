@@ -211,8 +211,7 @@ def compute_fft_spectrum(
     Returns
     -------
     dict with keys: ``freq_slice``, ``spectrum_by_axis``,
-    ``axis_amp_slices``, ``axis_amps``, ``combined_amp``,
-    ``strength_metrics``, ``axis_peaks``.
+    ``combined_amp``, ``strength_metrics``, ``axis_peaks``.
 
     """
     if fft_block.ndim != 2 or fft_block.shape[0] != 3:
@@ -236,8 +235,6 @@ def compute_fft_spectrum(
         specs_all[:, -1] *= 0.5
 
     spectrum_by_axis: SpectrumByAxis = {}
-    axis_amp_slices: list[FloatArray] = []
-    axis_amps: dict[str, FloatArray] = {}
     axis_peaks: dict[str, list[AxisPeak]] = {}
 
     for axis_idx, axis in enumerate(AXES):
@@ -255,16 +252,15 @@ def compute_fft_spectrum(
             "freq": freq_slice,
             "amp": amp_slice,
         }
-        axis_amps[axis] = amp_slice
-        axis_amp_slices.append(amp_slice)
 
     combined_amp: FloatArray = np.empty(0, dtype=np.float32)
     strength_metrics: VibrationStrengthMetrics = empty_vibration_strength_metrics()
-    if axis_amp_slices:
+    if spectrum_by_axis:
+        amp_slices = [spectrum_by_axis[axis]["amp"] for axis in spectrum_by_axis]
         combined_amp = np.asarray(
             combined_spectrum_amp_g(
-                axis_spectra_amp_g=[float_list(amp_slice) for amp_slice in axis_amp_slices],
-                axis_count_for_mean=len(axis_amp_slices),
+                axis_spectra_amp_g=[float_list(a) for a in amp_slices],
+                axis_count_for_mean=len(amp_slices),
             ),
             dtype=np.float32,
         )
@@ -279,8 +275,6 @@ def compute_fft_spectrum(
     return {
         "freq_slice": freq_slice,
         "spectrum_by_axis": spectrum_by_axis,
-        "axis_amp_slices": axis_amp_slices,
-        "axis_amps": axis_amps,
         "combined_amp": combined_amp,
         "strength_metrics": strength_metrics,
         "axis_peaks": axis_peaks,

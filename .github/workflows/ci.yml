@@ -200,7 +200,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e "./apps/server[dev]"
+          python -m pip install -e "./apps/server[dev,ocr]"
 
       - name: Backend tests (non-selenium)
         run: |

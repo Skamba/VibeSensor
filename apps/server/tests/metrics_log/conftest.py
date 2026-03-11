@@ -247,7 +247,6 @@ def _make_logger(
         if k
         in (
             "enabled",
-            "log_path",
             "metrics_log_hz",
             "sensor_model",
             "default_sample_rate_hz",
@@ -261,7 +260,6 @@ def _make_logger(
     }
     config = MetricsLoggerConfig(
         enabled=config_fields.get("enabled", False),
-        log_path=config_fields.get("log_path", tmp_path / "metrics.jsonl"),
         metrics_log_hz=config_fields.get("metrics_log_hz", 2),
         sensor_model=config_fields.get("sensor_model", "ADXL345"),
         default_sample_rate_hz=config_fields.get("default_sample_rate_hz", 800),

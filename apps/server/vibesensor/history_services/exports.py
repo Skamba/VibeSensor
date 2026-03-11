@@ -28,8 +28,6 @@ EXPORT_SPOOL_THRESHOLD = 4 * 1024 * 1024
 EXPORT_STREAM_CHUNK = 1024 * 1024
 
 EXPORT_CSV_COLUMNS: tuple[str, ...] = (
-    "record_type",
-    "schema_version",
     "run_id",
     "timestamp_utc",
     "t_s",
@@ -81,8 +79,6 @@ def flatten_for_csv(row: JsonObject) -> CsvRow:
             extras.update(value)
         else:
             extras[key] = value
-    out.setdefault("record_type", "sample")
-    out.setdefault("schema_version", "2")
     if extras:
         out["extras"] = json.dumps(extras, ensure_ascii=False)
     return out

@@ -175,7 +175,6 @@ def _make_runtime(**overrides: Any):
             control_plane=control_plane,
         ),
         ws_hub=overrides.pop("ws_hub", MagicMock()),
-        ws_cache=ws_cache,
         ws_broadcast=WsBroadcastService(
             cache=ws_cache,
             ui_push_hz=config.processing.ui_push_hz,

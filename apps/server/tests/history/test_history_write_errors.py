@@ -117,7 +117,6 @@ def _make_logger(history_db, tmp_path: Path) -> MetricsLogger:
     return MetricsLogger(
         MetricsLoggerConfig(
             enabled=False,
-            log_path=tmp_path / "metrics.jsonl",
             metrics_log_hz=2,
             sensor_model="ADXL345",
             default_sample_rate_hz=800,
@@ -132,11 +131,11 @@ def _make_logger(history_db, tmp_path: Path) -> MetricsLogger:
 
 
 def _start_and_snapshot(logger: MetricsLogger):
-    """Start logging and return (run_id, start_utc, start_mono, generation)."""
+    """Start logging and return (run_id, start_utc, start_mono)."""
     logger.start_logging()
     snap = logger._session_snapshot()
     assert snap is not None
-    return snap.run_id, snap.start_time_utc, snap.start_mono_s, snap.generation
+    return snap.run_id, snap.start_time_utc, snap.start_mono_s
 
 
 # -- Tests -------------------------------------------------------------------
@@ -150,12 +149,11 @@ class TestCreateRunFailureExposesWriteError:
         db.create_run.side_effect = OSError("disk full")
         logger = _make_logger(db, tmp_path)
 
-        run_id, start_utc, start_mono, generation = _start_and_snapshot(logger)
+        run_id, start_utc, start_mono = _start_and_snapshot(logger)
 
         logger._persistence.ensure_history_run_created(
             run_id,
             start_utc,
-            session_generation=generation,
         )
 
         status = logger.status()
@@ -168,13 +166,12 @@ class TestCreateRunFailureExposesWriteError:
         db.create_run.side_effect = [OSError("first fail"), None]
         logger = _make_logger(db, tmp_path)
 
-        run_id, start_utc, start_mono, generation = _start_and_snapshot(logger)
+        run_id, start_utc, start_mono = _start_and_snapshot(logger)
 
         # First call fails
         logger._persistence.ensure_history_run_created(
             run_id,
             start_utc,
-            session_generation=generation,
         )
         assert logger.status()["write_error"] is not None
 
@@ -182,7 +179,6 @@ class TestCreateRunFailureExposesWriteError:
         logger._persistence.ensure_history_run_created(
             run_id,
             start_utc,
-            session_generation=generation,
         )
         assert logger._persistence.history_run_created
         assert logger.status()["write_error"] is None
@@ -196,13 +192,12 @@ class TestPersistentCreateRunFailureStopsRetrying:
         db.create_run.side_effect = OSError("persistent failure")
         logger = _make_logger(db, tmp_path)
 
-        run_id, start_utc, _start_mono, generation = _start_and_snapshot(logger)
+        run_id, start_utc, _start_mono = _start_and_snapshot(logger)
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES + 3):
             logger._persistence.ensure_history_run_created(
                 run_id,
                 start_utc,
-                session_generation=generation,
             )
 
         # Should have been called exactly _MAX_HISTORY_CREATE_RETRIES times
@@ -216,13 +211,12 @@ class TestPersistentCreateRunFailureStopsRetrying:
         db.create_run.side_effect = OSError("fail")
         logger = _make_logger(db, tmp_path)
 
-        run_id, start_utc, _, generation = _start_and_snapshot(logger)
+        run_id, start_utc, _ = _start_and_snapshot(logger)
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
             logger._persistence.ensure_history_run_created(
                 run_id,
                 start_utc,
-                session_generation=generation,
             )
 
         assert logger._persistence.history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
@@ -242,9 +236,9 @@ class TestAppendSamplesFailureExposesError:
         db.append_samples.side_effect = OSError("write error")
         logger = _make_logger(db, tmp_path)
 
-        run_id, start_utc, start_mono, generation = _start_and_snapshot(logger)
+        run_id, start_utc, start_mono = _start_and_snapshot(logger)
 
-        logger._append_records(run_id, start_utc, start_mono, session_generation=generation)
+        logger._append_records(run_id, start_utc, start_mono)
 
         status = logger.status()
         assert status["write_error"] is not None
@@ -261,19 +255,18 @@ class TestDroppedSamplesLogged:
         db.create_run.side_effect = OSError("fail")
         logger = _make_logger(db, tmp_path)
 
-        run_id, start_utc, start_mono, generation = _start_and_snapshot(logger)
+        run_id, start_utc, start_mono = _start_and_snapshot(logger)
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
             logger._persistence.ensure_history_run_created(
                 run_id,
                 start_utc,
-                session_generation=generation,
             )
 
         # Now append_records should log about dropped samples
         with patch("vibesensor.metrics_log.logger.LOGGER") as mock_logger:
-            logger._append_records(run_id, start_utc, start_mono, session_generation=generation)
+            logger._append_records(run_id, start_utc, start_mono)
             # Verify warning about dropped samples was logged
             warning_calls = [
                 call for call in mock_logger.warning.call_args_list if "Dropping" in str(call)
@@ -297,11 +290,10 @@ class TestStatusAlwaysIncludesWriteError:
         db.create_run.side_effect = OSError("boom")
         logger = _make_logger(db, tmp_path)
 
-        run_id, start_utc, _, generation = _start_and_snapshot(logger)
+        run_id, start_utc, _ = _start_and_snapshot(logger)
         logger._persistence.ensure_history_run_created(
             run_id,
             start_utc,
-            session_generation=generation,
         )
 
         # Error persists across status calls
@@ -313,11 +305,10 @@ class TestStatusAlwaysIncludesWriteError:
         db.create_run.side_effect = OSError("boom")
         logger = _make_logger(db, tmp_path)
 
-        run_id, start_utc, _, generation = _start_and_snapshot(logger)
+        run_id, start_utc, _ = _start_and_snapshot(logger)
         logger._persistence.ensure_history_run_created(
             run_id,
             start_utc,
-            session_generation=generation,
         )
         assert logger.status()["write_error"] is not None
 

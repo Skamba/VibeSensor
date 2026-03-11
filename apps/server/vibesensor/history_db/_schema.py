@@ -38,7 +38,7 @@ def can_transition_run(current_status: str | None, target_status: str) -> bool:
 
 ANALYSIS_SCHEMA_VERSION = 2
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS schema_meta (
@@ -65,8 +65,6 @@ CREATE TABLE IF NOT EXISTS runs (
 CREATE TABLE IF NOT EXISTS samples_v2 (
     id                    INTEGER PRIMARY KEY AUTOINCREMENT,
     run_id                TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
-    record_type           TEXT,
-    schema_version        TEXT,
     timestamp_utc         TEXT,
     t_s                   REAL,
     client_id             TEXT,
@@ -91,8 +89,7 @@ CREATE TABLE IF NOT EXISTS samples_v2 (
     strength_floor_amp_g  REAL,
     frames_dropped_total  INTEGER DEFAULT 0,
     queue_overflow_drops  INTEGER DEFAULT 0,
-    top_peaks             TEXT,
-    extra_json            TEXT
+    top_peaks             TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id);

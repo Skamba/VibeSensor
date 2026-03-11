@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from statistics import median as _median
 
@@ -12,7 +13,6 @@ from ..runlog import utc_now_iso
 from ._types import (
     AccelStatistics,
     Finding,
-    FindingsBuilder,
     I18nRef,
     IntensityRow,
     MetadataDict,
@@ -172,7 +172,7 @@ def build_findings_bundle(
     language: str,
     prepared: PreparedRunData,
     overall_strength_band_key: str | None,
-    findings_builder: FindingsBuilder | None = None,
+    findings_builder: Callable[..., list[Finding]] | None = None,
 ) -> tuple[list[Finding], OriginSummary, list[TestStep], list[PhaseTimelineEntry], list[TopCause]]:
     """Build findings plus derived diagnosis narrative fields."""
     builder = findings_builder or _build_findings
@@ -249,7 +249,7 @@ def summarize_run_data(
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,
-    findings_builder: FindingsBuilder | None = None,
+    findings_builder: Callable[..., list[Finding]] | None = None,
 ) -> SummaryData:
     """Analyze pre-loaded run data and return the full summary dict."""
     language = normalize_lang(lang)
@@ -329,7 +329,7 @@ def build_findings_for_samples(
     metadata: MetadataDict,
     samples: list[Sample],
     lang: str | None = None,
-    findings_builder: FindingsBuilder | None = None,
+    findings_builder: Callable[..., list[Finding]] | None = None,
 ) -> list[Finding]:
     """Build the findings list from *samples* using the full analysis pipeline."""
     language = normalize_lang(lang)
@@ -354,7 +354,7 @@ def summarize_log(
     log_path: Path,
     lang: str | None = None,
     include_samples: bool = True,
-    findings_builder: FindingsBuilder | None = None,
+    findings_builder: Callable[..., list[Finding]] | None = None,
 ) -> SummaryData:
     """Read a JSONL run file and analyse it."""
     metadata, samples, _warnings = _load_run(log_path)

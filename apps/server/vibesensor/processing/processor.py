@@ -21,7 +21,6 @@ import numpy as np
 
 from ..json_types import JsonObject
 from ..payload_types import (
-    AxisPeak,
     DebugSpectrumErrorPayload,
     DebugSpectrumPayload,
     IntakeStatsPayload,
@@ -90,32 +89,6 @@ class SignalProcessor:
         self._metrics = SignalMetricsComputer(self._config)
         self._views = SignalProcessorViews(store=self._store, metrics=self._metrics)
         self._worker_pool = worker_pool
-
-    @staticmethod
-    def _smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
-        return SignalMetricsComputer.smooth_spectrum(amps, bins=bins)
-
-    @staticmethod
-    def _noise_floor(amps: np.ndarray) -> float:
-        return SignalMetricsComputer.noise_floor(amps)
-
-    @classmethod
-    def _top_peaks(
-        cls,
-        freqs: np.ndarray,
-        amps: np.ndarray,
-        *,
-        top_n: int = 5,
-        floor_ratio: float | None = None,
-        smoothing_bins: int = 5,
-    ) -> list[AxisPeak]:
-        return SignalMetricsComputer.top_peaks(
-            freqs,
-            amps,
-            top_n=top_n,
-            floor_ratio=floor_ratio,
-            smoothing_bins=smoothing_bins,
-        )
 
     def flush_client_buffer(self, client_id: str) -> None:
         self._store.flush_client_buffer(client_id)

@@ -16,7 +16,6 @@ import sqlite3
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING, Any, TypedDict
 from uuid import uuid4
@@ -56,7 +55,7 @@ blocking the metrics-logger event loop indefinitely."""
 
 
 class LoggingStatusPayload(TypedDict):
-    """Shape of the dict returned by :meth:`_MetricsSessionState.status_payload`.
+    """Shape of the dict returned by :meth:`MetricsLogger.status`.
 
     Matches the fields of :class:`~vibesensor.api_models.LoggingStatusResponse`
     so the dict can be unpacked directly into the Pydantic model.
@@ -78,7 +77,6 @@ class MetricsSessionSnapshot:
     run_id: str
     start_time_utc: str
     start_mono_s: float
-    generation: int
 
 
 class _MetricsSessionState:
@@ -92,7 +90,6 @@ class _MetricsSessionState:
         self._run_start_utc: str | None = None
         self._run_start_mono_s: float | None = None
         self._last_data_progress_mono_s: float | None = None
-        self._session_generation = 0
         self._session_start_frames_total = 0
         self._last_active_frames_total = 0
         self._shutdown_requested = False
@@ -133,11 +130,6 @@ class _MetricsSessionState:
             self._last_data_progress_mono_s = float(value) if value is not None else None
 
     @property
-    def session_generation(self) -> int:
-        with self._lock:
-            return self._session_generation
-
-    @property
     def shutdown_requested(self) -> bool:
         with self._lock:
             return self._shutdown_requested
@@ -160,7 +152,6 @@ class _MetricsSessionState:
         current_total: int,
     ) -> MetricsSessionSnapshot:
         with self._lock:
-            self._session_generation += 1
             self._enabled = True
             self._run_id = run_id
             self._run_start_utc = start_time_utc
@@ -172,12 +163,10 @@ class _MetricsSessionState:
                 run_id=run_id,
                 start_time_utc=start_time_utc,
                 start_mono_s=start_mono_s,
-                generation=self._session_generation,
             )
 
     def stop_session(self) -> None:
         with self._lock:
-            self._session_generation += 1
             self._enabled = False
             self._run_id = None
             self._run_start_utc = None
@@ -185,10 +174,6 @@ class _MetricsSessionState:
             self._last_data_progress_mono_s = None
             self._session_start_frames_total = 0
             self._last_active_frames_total = 0
-
-    def matches_generation(self, generation: int) -> bool:
-        with self._lock:
-            return self._session_generation == generation
 
     def snapshot(self) -> MetricsSessionSnapshot | None:
         with self._lock:
@@ -203,7 +188,6 @@ class _MetricsSessionState:
                 run_id=self._run_id,
                 start_time_utc=self._run_start_utc,
                 start_mono_s=self._run_start_mono_s,
-                generation=self._session_generation,
             )
 
     def pending_flush_snapshot(
@@ -229,7 +213,6 @@ class _MetricsSessionState:
                 run_id=self._run_id,
                 start_time_utc=self._run_start_utc,
                 start_mono_s=self._run_start_mono_s,
-                generation=self._session_generation,
             )
 
     def should_drop_prebuilt_rows(self, *, current_total: int, history_run_created: bool) -> bool:
@@ -252,29 +235,6 @@ class _MetricsSessionState:
                 return False
             return (now_mono_s - self._last_data_progress_mono_s) >= self._no_data_timeout_s
 
-    def status_payload(
-        self,
-        *,
-        write_error: str | None,
-        analysis_in_progress: bool,
-        samples_written: int = 0,
-        samples_dropped: int = 0,
-        last_completed_run_id: str | None = None,
-        last_completed_run_error: str | None = None,
-    ) -> LoggingStatusPayload:
-        with self._lock:
-            return {
-                "enabled": self._enabled,
-                "current_file": None,
-                "run_id": self._run_id,
-                "write_error": write_error,
-                "analysis_in_progress": analysis_in_progress,
-                "samples_written": samples_written,
-                "samples_dropped": samples_dropped,
-                "last_completed_run_id": last_completed_run_id,
-                "last_completed_run_error": last_completed_run_error,
-            }
-
 
 # ---------------------------------------------------------------------------
 # Persistence coordination
@@ -296,12 +256,11 @@ class _MetricsPersistenceCoordinator:
         history_db: HistoryDB | None,
         persist_history_db: bool,
         metadata_builder: Callable[[str, str], dict[str, object]],
-        session: _MetricsSessionState,
     ) -> None:
         self._history_db = history_db
         self._persist_history_db = bool(persist_history_db)
         self._metadata_builder = metadata_builder
-        self._session = session
+        self._current_run_id: str | None = None
         self._lock = RLock()
         self._history_run_created = False
         self._history_create_fail_count = 0
@@ -358,8 +317,9 @@ class _MetricsPersistenceCoordinator:
         with self._lock:
             return self._max_write_duration_s
 
-    def reset_for_new_session(self) -> None:
+    def reset_for_new_session(self, run_id: str | None = None) -> None:
         with self._lock:
+            self._current_run_id = run_id
             self._history_run_created = False
             self._history_create_fail_count = 0
             self._retry_cycle_count = 0
@@ -382,18 +342,16 @@ class _MetricsPersistenceCoordinator:
                 return run_id
             return None
 
-    def _generation_matches(self, generation: int) -> bool:
-        return self._session.matches_generation(generation)
+    def _run_id_matches(self, run_id: str) -> bool:
+        return self._current_run_id is not None and self._current_run_id == run_id
 
     def ensure_history_run_created(
         self,
         run_id: str,
         start_time_utc: str,
-        *,
-        session_generation: int,
     ) -> None:
         with self._lock:
-            if not self._generation_matches(session_generation):
+            if not self._run_id_matches(run_id):
                 return
             if self._history_db is None or self._history_run_created:
                 return
@@ -412,7 +370,7 @@ class _MetricsPersistenceCoordinator:
         try:
             self._history_db.create_run(run_id, start_time_utc, metadata)  # type: ignore[arg-type]
             with self._lock:
-                if not self._generation_matches(session_generation):
+                if not self._run_id_matches(run_id):
                     return
                 self._history_run_created = True
                 self._history_create_fail_count = 0
@@ -421,7 +379,7 @@ class _MetricsPersistenceCoordinator:
             self.clear_last_write_error()
         except (sqlite3.Error, OSError) as exc:
             with self._lock:
-                if not self._generation_matches(session_generation):
+                if not self._run_id_matches(run_id):
                     return
                 self._history_create_fail_count += 1
                 fail_count = self._history_create_fail_count
@@ -458,7 +416,6 @@ class _MetricsPersistenceCoordinator:
         run_id: str,
         start_time_utc: str,
         rows: list[dict[str, object]],
-        session_generation: int,
     ) -> AppendRowsResult:
         if not rows:
             return AppendRowsResult(history_created=self.history_run_created, rows_written=0)
@@ -466,10 +423,9 @@ class _MetricsPersistenceCoordinator:
             self.ensure_history_run_created(
                 run_id,
                 start_time_utc,
-                session_generation=session_generation,
             )
             with self._lock:
-                if not self._generation_matches(session_generation):
+                if not self._run_id_matches(run_id):
                     return AppendRowsResult(history_created=False, rows_written=0)
                 history_created = self._history_run_created
             if history_created:
@@ -480,7 +436,7 @@ class _MetricsPersistenceCoordinator:
                         self._history_db.append_samples(run_id, rows)  # type: ignore[arg-type]
                         write_dur = time.monotonic() - write_start
                         with self._lock:
-                            if not self._generation_matches(session_generation):
+                            if not self._run_id_matches(run_id):
                                 return AppendRowsResult(history_created=True, rows_written=0)
                             self._written_sample_count += len(rows)
                             self._last_write_duration_s = write_dur
@@ -514,7 +470,7 @@ class _MetricsPersistenceCoordinator:
             )
             return AppendRowsResult(history_created=False, rows_written=0)
         with self._lock:
-            if not self._generation_matches(session_generation):
+            if not self._run_id_matches(run_id):
                 return AppendRowsResult(history_created=False, rows_written=0)
             self._written_sample_count += len(rows)
         return AppendRowsResult(history_created=False, rows_written=len(rows))
@@ -558,7 +514,6 @@ class MetricsLoggerConfig:
     """Static configuration bundle for :class:`MetricsLogger`."""
 
     enabled: bool
-    log_path: Path
     metrics_log_hz: int
     sensor_model: str
     default_sample_rate_hz: int
@@ -596,7 +551,6 @@ class MetricsLogger:
         settings_store: SettingsStore | None = None,
         language_provider: Callable[[], str] | None = None,
     ):
-        self.log_path = config.log_path
         self.metrics_log_hz = max(1, config.metrics_log_hz)
         self.registry = registry
         self.gps_monitor = gps_monitor
@@ -626,12 +580,11 @@ class MetricsLogger:
             history_db=history_db,
             persist_history_db=config.persist_history_db,
             metadata_builder=self._run_metadata_record,
-            session=self._session,
         )
         self._post_analysis = PostAnalysisWorker(
             history_db=history_db,
-            error_callback=self._set_last_write_error,
-            clear_error_callback=self._clear_last_write_error,
+            error_callback=self._persistence.set_last_write_error,
+            clear_error_callback=self._persistence.clear_last_write_error,
         )
 
         if config.enabled:
@@ -662,18 +615,12 @@ class MetricsLogger:
             start_mono_s=time.monotonic(),
             current_total=self._active_frames_total(),
         )
-        self._persistence.reset_for_new_session()
+        self._persistence.reset_for_new_session(run_id=snapshot.run_id)
         return snapshot
 
     def _stop_session_locked(self) -> None:
         self._session.stop_session()
         self._persistence.reset_for_new_session()
-
-    def _set_last_write_error(self, message: str) -> None:
-        self._persistence.set_last_write_error(message)
-
-    def _clear_last_write_error(self) -> None:
-        self._persistence.clear_last_write_error()
 
     def _active_frames_total(self) -> int:
         _get = self.registry.get
@@ -688,14 +635,17 @@ class MetricsLogger:
 
     def status(self) -> LoggingStatusPayload:
         post_snapshot = self._post_analysis.snapshot()
-        return self._session.status_payload(
-            write_error=self._persistence.write_error,
-            analysis_in_progress=self._post_analysis.is_active,
-            samples_written=self._persistence.written_sample_count,
-            samples_dropped=self._persistence.dropped_sample_count,
-            last_completed_run_id=post_snapshot.last_completed_run_id,
-            last_completed_run_error=post_snapshot.last_completed_error,
-        )
+        return {
+            "enabled": self.enabled,
+            "current_file": None,
+            "run_id": self._run_id,
+            "write_error": self._persistence.write_error,
+            "analysis_in_progress": self._post_analysis.is_active,
+            "samples_written": self._persistence.written_sample_count,
+            "samples_dropped": self._persistence.dropped_sample_count,
+            "last_completed_run_id": post_snapshot.last_completed_run_id,
+            "last_completed_run_error": post_snapshot.last_completed_error,
+        }
 
     def health_snapshot(self) -> dict[str, Any]:
         snapshot = self._post_analysis.snapshot()
@@ -750,7 +700,6 @@ class MetricsLogger:
                 flush_snapshot.run_id,
                 flush_snapshot.start_time_utc,
                 flush_snapshot.start_mono_s,
-                session_generation=flush_snapshot.generation,
             )
         with self._lock:
             if self.enabled and self._run_id:
@@ -767,13 +716,11 @@ class MetricsLogger:
     def stop_logging(
         self,
         *,
-        _only_if_generation: int | None = None,
+        _only_if_run_id: str | None = None,
     ) -> LoggingStatusPayload:
         flush_snapshot: MetricsSessionSnapshot | None = None
         with self._lock:
-            if _only_if_generation is not None and not self._session.matches_generation(
-                _only_if_generation,
-            ):
+            if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                 return self.status()
             flush_snapshot = self._pending_flush_snapshot_locked()
         if flush_snapshot is not None:
@@ -781,12 +728,9 @@ class MetricsLogger:
                 flush_snapshot.run_id,
                 flush_snapshot.start_time_utc,
                 flush_snapshot.start_mono_s,
-                session_generation=flush_snapshot.generation,
             )
         with self._lock:
-            if _only_if_generation is not None and not self._session.matches_generation(
-                _only_if_generation,
-            ):
+            if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                 return self.status()
             run_id_to_analyze = self._persistence.ready_for_analysis(self._run_id)
             if self._run_id and not self._finalize_run_locked():
@@ -848,11 +792,10 @@ class MetricsLogger:
         start_time_utc: str,
         run_start_mono_s: float,
         *,
-        session_generation: int,
         prebuilt_rows: list[dict[str, object]] | None = None,
     ) -> bool:
         now_mono_s = time.monotonic()
-        if not self._session.matches_generation(session_generation):
+        if self._session.run_id != run_id:
             return False
         current_total = self._active_frames_total()
         self._session.refresh_data_progress(now_mono_s=now_mono_s, current_total=current_total)
@@ -873,18 +816,17 @@ class MetricsLogger:
         ):
             rows = []
         if rows:
-            if not self._session.matches_generation(session_generation):
+            if self._session.run_id != run_id:
                 return False
             self._session.mark_rows_written(now_mono_s=now_mono_s)
             self._persistence.append_rows(
                 run_id=run_id,
                 start_time_utc=start_time_utc,
                 rows=rows,
-                session_generation=session_generation,
             )
-        return self._session.matches_generation(
-            session_generation,
-        ) and self._session.should_auto_stop(now_mono_s=now_mono_s)
+        return (self._session.run_id == run_id) and self._session.should_auto_stop(
+            now_mono_s=now_mono_s
+        )
 
     def _finalize_run_locked(self) -> bool:
         run_id = self._run_id
@@ -956,7 +898,6 @@ class MetricsLogger:
                             snapshot.run_id,
                             snapshot.start_time_utc,
                             snapshot.start_mono_s,
-                            session_generation=snapshot.generation,
                             prebuilt_rows=live_rows,
                         ),
                         timeout=_DB_THREAD_TIMEOUT_S,
@@ -967,15 +908,15 @@ class MetricsLogger:
                             snapshot.run_id,
                             self._session.no_data_timeout_s,
                         )
-                        self.stop_logging(_only_if_generation=snapshot.generation)
+                        self.stop_logging(_only_if_run_id=snapshot.run_id)
             except TimeoutError:
-                self._set_last_write_error("metrics logger DB call timed out")
+                self._persistence.set_last_write_error("metrics logger DB call timed out")
                 LOGGER.warning(
                     "Metrics logger DB call exceeded %.1fs timeout; skipping tick.",
                     _DB_THREAD_TIMEOUT_S,
                 )
             except Exception as exc:
-                self._set_last_write_error(f"metrics logger tick failed: {exc}")
+                self._persistence.set_last_write_error(f"metrics logger tick failed: {exc}")
                 LOGGER.warning(
                     "Metrics logger tick failed; will retry next interval.",
                     exc_info=True,

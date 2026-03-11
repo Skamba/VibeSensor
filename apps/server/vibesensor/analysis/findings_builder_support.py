@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
-from typing import cast
+from collections.abc import Sequence
 
 from ..constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF, SPEED_COVERAGE_MIN_PCT
 from ..domain_models import as_float_or_none as _as_float
@@ -13,15 +12,12 @@ from .helpers import _effective_engine_rpm
 from .order_analysis import _i18n_ref
 from .phase_segmentation import (
     DrivingPhase,
-    PhaseSegment,
     diagnostic_sample_mask,
     segment_run_phases,
 )
 from .ranking import finding_sort_key
 
 _MIN_DIAGNOSTIC_SAMPLES = 5
-PhaseSegmenter = Callable[[list[Sample]], tuple[list[DrivingPhase], list[PhaseSegment]]]
-_DEFAULT_PHASE_SEGMENTER = cast("PhaseSegmenter", segment_run_phases)
 
 
 def build_reference_findings(
@@ -139,7 +135,6 @@ def prepare_analysis_samples(
     samples: list[Sample],
     *,
     per_sample_phases: PhaseLabels | None,
-    phase_segmenter: PhaseSegmenter = _DEFAULT_PHASE_SEGMENTER,
 ) -> tuple[list[Sample], Sequence[DrivingPhase], list[DrivingPhase], bool]:
     """Prepare filtered samples and aligned phase labels for findings analysis."""
     if per_sample_phases is not None and len(per_sample_phases) == len(samples):
@@ -148,7 +143,7 @@ def prepare_analysis_samples(
             for phase in per_sample_phases
         ]
     else:
-        resolved_phases, _ = phase_segmenter(samples)
+        resolved_phases, _ = segment_run_phases(samples)
 
     diagnostic_mask = diagnostic_sample_mask(resolved_phases)
     diagnostic_samples = [

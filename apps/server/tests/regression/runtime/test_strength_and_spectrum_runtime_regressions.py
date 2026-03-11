@@ -17,8 +17,7 @@ import numpy as np
 import pytest
 
 from vibesensor.constants import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
-from vibesensor.processing import SignalProcessor
-from vibesensor.processing.fft import compute_fft_spectrum
+from vibesensor.processing.fft import compute_fft_spectrum, noise_floor
 from vibesensor.report.mapping import top_strength_values
 from vibesensor.strength_bands import bucket_for_strength
 
@@ -43,24 +42,21 @@ class TestBucketForStrengthNegativeDB:
 
 
 class TestCombinedSpectrumNotZeroed:
-    """Regression: axis_amp_slices must use amp_slice (original), not
+    """Regression: spectrum_by_axis must store amp_slice (original), not
     amp_for_peaks (which has DC bin zeroed). Otherwise the combined
     spectrum inherits the artificial zero.
     """
 
     def test_amp_slice_used_not_amp_for_peaks(self) -> None:
-        """Verify source code appends amp_slice (not amp_for_peaks)
-        to axis_amp_slices.
+        """Verify source code stores amp_slice (not amp_for_peaks) in
+        spectrum_by_axis.
         """
         src = inspect.getsource(compute_fft_spectrum)
-        # Find the line that appends to axis_amp_slices
-        match = re.search(r"axis_amp_slices\.append\((\w+)\)", src)
-        assert match is not None, "axis_amp_slices.append() not found"
-        appended_var = match.group(1)
-        assert appended_var == "amp_slice", (
-            f"Expected axis_amp_slices.append(amp_slice), "
-            f"got axis_amp_slices.append({appended_var})"
-        )
+        # The "amp" entry in spectrum_by_axis must use the original amp_slice
+        match = re.search(r'"amp":\s*(\w+)', src)
+        assert match is not None, '"amp": <var> assignment not found in compute_fft_spectrum'
+        stored_var = match.group(1)
+        assert stored_var == "amp_slice", f'Expected "amp": amp_slice, got "amp": {stored_var}'
 
 
 class TestNoiseFloorNoDoubleRemoval:
@@ -71,7 +67,7 @@ class TestNoiseFloorNoDoubleRemoval:
 
     def test_all_bins_included(self) -> None:
         amps = np.array([0.010, 0.012, 0.009, 0.011, 0.013], dtype=np.float32)
-        floor = SignalProcessor._noise_floor(amps)
+        floor = noise_floor(amps)
         # All 5 bins should be considered. If amps[1:] were used,
         # the first bin (0.010) would be excluded, changing the result.
         # P20 of [0.009, 0.010, 0.011, 0.012, 0.013] ≈ 0.0098
@@ -79,7 +75,7 @@ class TestNoiseFloorNoDoubleRemoval:
         # The result must include the first bin. If it were excluded,
         # P20 of [0.011, 0.012, 0.013] = 0.0114, which is higher.
         # With all 5 bins, P20 is lower because 0.009 and 0.010 pull it down.
-        floor_without_first = SignalProcessor._noise_floor(amps[1:])
+        floor_without_first = noise_floor(amps[1:])
         assert floor <= floor_without_first + 1e-6, (
             f"Floor {floor} should be ≤ floor-without-first {floor_without_first}"
         )

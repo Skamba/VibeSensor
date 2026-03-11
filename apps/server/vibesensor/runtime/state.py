@@ -23,7 +23,7 @@ from ..ws_hub import WebSocketHub
 from .health_state import RuntimeHealthState
 from .lifecycle import LifecycleManager
 from .processing_loop import ProcessingLoop, ProcessingLoopState
-from .ws_broadcast import WsBroadcastCache, WsBroadcastService
+from .ws_broadcast import WsBroadcastService
 
 
 @dataclass(slots=True)
@@ -51,7 +51,6 @@ class RuntimeState:
     processing_loop: ProcessingLoop
     # websocket
     ws_hub: WebSocketHub
-    ws_cache: WsBroadcastCache
     ws_broadcast: WsBroadcastService
     # top-level
     metrics_logger: MetricsLogger

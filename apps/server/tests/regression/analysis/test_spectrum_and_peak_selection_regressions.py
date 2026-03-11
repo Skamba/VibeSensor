@@ -12,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.processing import SignalProcessor
+from vibesensor.processing.fft import smooth_spectrum, top_peaks
 from vibesensor.vibration_strength import compute_vibration_strength_db
 
 
@@ -25,7 +25,7 @@ class TestSmoothSpectrumEdgePadding:
     def test_constant_signal_unchanged(self) -> None:
         """A constant-amplitude spectrum must be unchanged after smoothing."""
         amps = np.full(20, 0.5, dtype=np.float32)
-        smoothed = SignalProcessor._smooth_spectrum(amps, bins=5)
+        smoothed = smooth_spectrum(amps, bins=5)
         np.testing.assert_allclose(smoothed, amps, atol=1e-6)
 
     def test_edge_not_attenuated(self) -> None:
@@ -33,7 +33,7 @@ class TestSmoothSpectrumEdgePadding:
         when the signal is constant near the boundary.
         """
         amps = np.full(20, 1.0, dtype=np.float32)
-        smoothed = SignalProcessor._smooth_spectrum(amps, bins=5)
+        smoothed = smooth_spectrum(amps, bins=5)
         # With zero-padding the first bin would be ~0.6; with edge-pad it stays 1.0.
         assert smoothed[0] == pytest.approx(1.0, abs=1e-6), (
             f"First bin {smoothed[0]} should not be attenuated"
@@ -47,7 +47,7 @@ class TestSmoothSpectrumEdgePadding:
         amps = np.full(20, 0.1, dtype=np.float32)
         amps[-1] = 1.0
         amps[-2] = 0.8
-        smoothed = SignalProcessor._smooth_spectrum(amps, bins=3)
+        smoothed = smooth_spectrum(amps, bins=3)
         # With edge-padding the last bin should reflect the actual values,
         # not be dragged toward zero.
         assert smoothed[-1] > 0.85, f"Last-bin smoothed value {smoothed[-1]} should remain high"
@@ -56,7 +56,7 @@ class TestSmoothSpectrumEdgePadding:
         """Smoothed output must have the same length as the input."""
         for n in (5, 10, 50, 200):
             amps = np.random.default_rng(42).random(n).astype(np.float32)
-            smoothed = SignalProcessor._smooth_spectrum(amps, bins=5)
+            smoothed = smooth_spectrum(amps, bins=5)
             assert smoothed.shape == amps.shape, f"Shape mismatch for n={n}"
 
 
@@ -72,7 +72,7 @@ class TestTopPeaksLastBin:
         amps = np.full(n, 0.01, dtype=np.float32)
         # Place a strong peak at the last bin.
         amps[-1] = 1.0
-        peaks = SignalProcessor._top_peaks(freqs, amps, top_n=5, smoothing_bins=1)
+        peaks = top_peaks(freqs, amps, top_n=5, smoothing_bins=1)
         peak_hz = [p["hz"] for p in peaks]
         assert float(freqs[-1]) in peak_hz, (
             f"Last-bin peak at {freqs[-1]} Hz not found in {peak_hz}"
@@ -86,7 +86,7 @@ class TestTopPeaksLastBin:
         # Peak at second-to-last bin, last bin is lower.
         amps[-2] = 1.0
         amps[-1] = 0.5
-        peaks = SignalProcessor._top_peaks(freqs, amps, top_n=5, smoothing_bins=1)
+        peaks = top_peaks(freqs, amps, top_n=5, smoothing_bins=1)
         peak_hz = [p["hz"] for p in peaks]
         assert float(freqs[-2]) in peak_hz, "Penultimate peak should be found"
         # Last bin is lower than its left neighbor and not a local max.

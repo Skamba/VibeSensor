@@ -27,8 +27,6 @@ def _is_json_scalar(value: object) -> TypeGuard[JsonValue]:
 
 _V2_TYPED_COLS: tuple[str, ...] = (
     "run_id",
-    "record_type",
-    "schema_version",
     "timestamp_utc",
     "t_s",
     "client_id",
@@ -59,7 +57,7 @@ _V2_PEAK_COLS: tuple[str, ...] = ("top_peaks",)
 
 _V2_KNOWN_KEYS: frozenset[str] = frozenset(_V2_TYPED_COLS) | frozenset(_V2_PEAK_COLS)
 
-_V2_INSERT_COLS: tuple[str, ...] = _V2_TYPED_COLS + _V2_PEAK_COLS + ("extra_json",)
+_V2_INSERT_COLS: tuple[str, ...] = _V2_TYPED_COLS + _V2_PEAK_COLS
 V2_INSERT_SQL: str = (
     f"INSERT INTO samples_v2 ({', '.join(_V2_INSERT_COLS)}) "
     f"VALUES ({', '.join('?' * len(_V2_INSERT_COLS))})"
@@ -71,7 +69,6 @@ V2_SELECT_SQL_COLS: str = ", ".join(_V2_SELECT_COLS)
 # Row offsets for v2_row_to_dict (avoids len() at runtime).
 _V2_TYPED_OFFSET: int = 1  # skip autoincrement id
 _V2_PEAK_OFFSET: int = _V2_TYPED_OFFSET + len(_V2_TYPED_COLS)
-_V2_EXTRA_OFFSET: int = _V2_PEAK_OFFSET + len(_V2_PEAK_COLS)
 
 # Allowed table names for keyset pagination.
 ALLOWED_SAMPLE_TABLES: frozenset[str] = frozenset({"samples_v2"})
@@ -108,16 +105,13 @@ def sample_to_v2_row(run_id: str, item: JsonObject | SensorFrame) -> tuple[objec
         raw = _get(col)
         vals.append(safe_json_dumps(raw) if raw else None)
 
-    extra = {k: v for k, v in d.items() if k not in _V2_KNOWN_KEYS}
-    vals.append(safe_json_dumps(extra) if extra else None)
-
     return tuple(vals)
 
 
 def v2_row_to_dict(row: tuple[object, ...]) -> JsonObject:
     """Reconstruct a sample dict from a ``samples_v2`` row.
 
-    *row* layout: ``(id, <typed cols>, <peak cols>, extra_json)``.
+    *row* layout: ``(id, <typed cols>, <peak cols>)``.
     """
     d: JsonObject = {}
 
@@ -144,11 +138,5 @@ def v2_row_to_dict(row: tuple[object, ...]) -> JsonObject:
                 d[col] = []
         else:
             d[col] = []
-
-    extra_json = row[_V2_EXTRA_OFFSET]
-    if extra_json:
-        extra = safe_json_loads(extra_json, context="extra_json")  # type: ignore[arg-type]
-        if is_json_object(extra):
-            d.update(extra)
 
     return d
