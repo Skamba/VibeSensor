@@ -33,11 +33,11 @@ jobs:
 
       - name: Ruff check
         run: |
-          ruff check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
+          ruff check apps/server/vibesensor apps/server/tests tools
 
       - name: Ruff format check
         run: |
-          ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
+          ruff format --check apps/server/vibesensor apps/server/tests tools
 
       - name: Hygiene checks
         run: |
