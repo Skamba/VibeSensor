@@ -29,6 +29,7 @@ from .wifi import (
     UpdateWifiController,
     parse_wifi_diagnostics,
 )
+
 LOGGER = logging.getLogger(__name__)
 
 UPDATE_TIMEOUT_S = 600

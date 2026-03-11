@@ -6,8 +6,8 @@ import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 
-from .release_fetcher import ReleaseInfo
 from .installer import _sha256_file
+from .release_fetcher import ReleaseInfo
 from .status import UpdateStatusTracker
 
 

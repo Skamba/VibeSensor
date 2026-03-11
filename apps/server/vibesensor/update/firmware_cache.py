@@ -42,7 +42,6 @@ from typing import TypedDict
 from urllib.request import Request, urlopen
 
 from ..constants import GITHUB_REPO
-
 from ..json_types import JsonObject, is_json_array, is_json_object
 from .release_fetcher import (
     DOWNLOAD_CHUNK_BYTES,

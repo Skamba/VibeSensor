@@ -15,7 +15,6 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from vibesensor.update.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher
 from vibesensor.history_db import HistoryDB, RunStatus
 from vibesensor.protocol import DataMessage, HelloMessage
 from vibesensor.registry import (
@@ -24,6 +23,7 @@ from vibesensor.registry import (
     ClientRegistry,
     ClientSnapshot,
 )
+from vibesensor.update.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher
 from vibesensor.update.release_fetcher import (
     DOWNLOAD_CHUNK_BYTES,
     GitHubAPIClient,

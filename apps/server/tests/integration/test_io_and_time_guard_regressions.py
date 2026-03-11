@@ -20,10 +20,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.update.firmware_cache import FirmwareCache, FirmwareCacheConfig, GitHubReleaseFetcher
 from vibesensor.gps_speed import GPSSpeedMonitor
 from vibesensor.report.mapping import map_summary
 from vibesensor.report_cli import main as report_cli_main
+from vibesensor.update.firmware_cache import (
+    FirmwareCache,
+    FirmwareCacheConfig,
+    GitHubReleaseFetcher,
+)
 
 
 def _make_summary(report_date: str, **overrides: Any) -> dict[str, Any]:

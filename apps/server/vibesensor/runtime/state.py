@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from ..analysis_settings import AnalysisSettingsStore
 from ..config import AppConfig
-from ..update.esp_flash_manager import EspFlashManager
 from ..gps_speed import GPSSpeedMonitor
 from ..history_db import HistoryDB
 from ..history_services.exports import HistoryExportService
@@ -17,6 +16,7 @@ from ..processing import SignalProcessor
 from ..registry import ClientRegistry
 from ..settings_store import SettingsStore
 from ..udp_control_tx import UDPControlPlane
+from ..update.esp_flash_manager import EspFlashManager
 from ..update.manager import UpdateManager
 from ..worker_pool import WorkerPool
 from ..ws_hub import WebSocketHub

@@ -22,11 +22,11 @@ from vibesensor.analysis.top_cause_selection import confidence_label
 from vibesensor.config import _split_host_port
 from vibesensor.domain_models import VALID_SPEED_SOURCES
 from vibesensor.domain_models import as_float_or_none as runlog_as_float_or_none
-from vibesensor.update.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 from vibesensor.report.mapping import order_label_human
 from vibesensor.report.mapping import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
 from vibesensor.runlog import parse_iso8601
+from vibesensor.update.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 
 
 def _make_release_info(version: str) -> ReleaseInfo:

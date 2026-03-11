@@ -58,8 +58,9 @@ class TestUpdateManagerAsync:
             if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])
         ]
         assert_hotspot_restored(runner)
+        fw_mod = "vibesensor.update.firmware_cache"
         firmware_refresh_calls = [
-            call[0] for call in runner.calls if "vibesensor.update.firmware_cache" in " ".join(call[0])
+            call[0] for call in runner.calls if fw_mod in " ".join(call[0])
         ]
         assert firmware_refresh_calls
         restart_cmd = (

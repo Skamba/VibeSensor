@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.update.status import UpdateStateStore, UpdateStatusTracker
 from vibesensor.update.manager import (
     UpdateValidationConfig,
     validate_prerequisites,
 )
+from vibesensor.update.status import UpdateStateStore, UpdateStatusTracker
 
 
 def _mock_which(name: str) -> str | None:
