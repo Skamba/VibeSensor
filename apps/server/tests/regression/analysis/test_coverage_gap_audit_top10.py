@@ -285,7 +285,7 @@ class TestSuppressEngineAliases:
     def _make_finding(source: str, conf: float) -> dict[str, object]:
         return {
             "suspected_source": source,
-            "confidence_0_to_1": conf,
+            "confidence": conf,
             "finding_id": "F_ORDER",
         }
 
@@ -307,7 +307,7 @@ class TestSuppressEngineAliases:
         result = _suppress_engine_aliases(findings)
         engine_findings = [f for f in result if f.get("suspected_source") == "engine"]
         if engine_findings:
-            assert float(engine_findings[0]["confidence_0_to_1"]) < 0.65
+            assert float(engine_findings[0]["confidence"]) < 0.65
 
     def test_strong_engine_not_suppressed(self) -> None:
         findings = [
@@ -391,7 +391,7 @@ class TestBuildPhaseTimeline:
         findings: list[dict[str, object]] = [
             {
                 "finding_id": "F001",
-                "confidence_0_to_1": 0.60,
+                "confidence": 0.60,
                 "phase_evidence": {"phases_detected": ["cruise"]},
             },
         ]
@@ -407,7 +407,7 @@ class TestBuildPhaseTimeline:
             pytest.param(
                 {
                     "finding_id": "REF_SPEED",
-                    "confidence_0_to_1": 0.90,
+                    "confidence": 0.90,
                     "phase_evidence": {"phases_detected": ["cruise"]},
                 },
                 id="ref_finding_ignored",
@@ -415,7 +415,7 @@ class TestBuildPhaseTimeline:
             pytest.param(
                 {
                     "finding_id": "F001",
-                    "confidence_0_to_1": 0.01,
+                    "confidence": 0.01,
                     "phase_evidence": {"phases_detected": ["cruise"]},
                 },
                 id="low_confidence_ignored",
@@ -483,13 +483,13 @@ class TestPhaseRankingScore:
     """Direct unit tests for _phase_ranking_score."""
 
     def test_no_phase_evidence(self) -> None:
-        score = _phase_ranking_score({"confidence_0_to_1": 0.80})
+        score = _phase_ranking_score({"confidence": 0.80})
         # No phase_evidence → cruise_fraction=0 → multiplier=0.85
         assert score == pytest.approx(0.80 * 0.85, rel=1e-3)
 
     def test_full_cruise_phase(self) -> None:
         finding: dict[str, object] = {
-            "confidence_0_to_1": 0.80,
+            "confidence": 0.80,
             "phase_evidence": {"cruise_fraction": 1.0},
         }
         score = _phase_ranking_score(finding)
@@ -497,7 +497,7 @@ class TestPhaseRankingScore:
 
     def test_half_cruise(self) -> None:
         finding: dict[str, object] = {
-            "confidence_0_to_1": 0.80,
+            "confidence": 0.80,
             "phase_evidence": {"cruise_fraction": 0.50},
         }
         score = _phase_ranking_score(finding)
@@ -507,7 +507,7 @@ class TestPhaseRankingScore:
     @pytest.mark.parametrize(
         "finding",
         [
-            pytest.param({"confidence_0_to_1": None}, id="none_confidence"),
+            pytest.param({"confidence": None}, id="none_confidence"),
             pytest.param({}, id="missing_confidence_key"),
         ],
     )

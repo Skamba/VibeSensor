@@ -251,7 +251,7 @@ def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> 
 
     if effective_causes:
         primary = effective_causes[0]
-        conf_val = primary.get("confidence") or primary.get("confidence_0_to_1") or 0.0
+        conf_val = primary.get("confidence") or primary.get("confidence") or 0.0
         conf = float(conf_val)
     else:
         conf = 0.0

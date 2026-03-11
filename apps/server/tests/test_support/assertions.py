@@ -391,7 +391,7 @@ def assert_wheel_weak_spatial(
             continue
         if str(f.get("finding_id", "")).startswith("REF_"):
             continue
-        conf = float(f.get("confidence_0_to_1", 0))
+        conf = float(f.get("confidence", 0))
         if conf < 0.10:
             continue
         assert f.get("weak_spatial_separation"), (
@@ -435,7 +435,7 @@ def extract_top_finding(summary: dict[str, Any]) -> dict[str, Any] | None:
     ]
     if not non_ref:
         return None
-    return max(non_ref, key=lambda finding: float(finding.get("confidence_0_to_1") or 0))
+    return max(non_ref, key=lambda finding: float(finding.get("confidence") or 0))
 
 
 def assert_finding_location(

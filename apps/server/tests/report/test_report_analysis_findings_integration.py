@@ -66,7 +66,7 @@ def test_build_findings_orders_informational_transients_after_diagnostics(
                 "finding_id": "F_PEAK",
                 "severity": "diagnostic",
                 "suspected_source": "wheel/tire",
-                "confidence_0_to_1": 0.30,
+                "confidence": 0.30,
             },
         ]
 
@@ -77,7 +77,7 @@ def test_build_findings_orders_informational_transients_after_diagnostics(
                 "severity": "info",
                 "suspected_source": "transient_impact",
                 "peak_classification": "transient",
-                "confidence_0_to_1": 0.22,
+                "confidence": 0.22,
             },
         ]
 
@@ -160,7 +160,7 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
     findings = call_build_order_findings(samples)
     assert len(findings) == 1
     finding = findings[0]
-    confidence = float(finding.get("confidence_0_to_1") or 0.0)
+    confidence = float(finding.get("confidence") or 0.0)
     match_rate = float(((finding.get("evidence_metrics") or {}).get("global_match_rate")) or 0.0)
     assert match_rate == pytest.approx(0.25)
     assert confidence < 0.25

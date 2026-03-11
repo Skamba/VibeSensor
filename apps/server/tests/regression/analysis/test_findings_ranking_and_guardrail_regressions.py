@@ -36,7 +36,7 @@ class TestRankingScoreSyncAfterSuppression:
                 0.8,
                 {
                     "suspected_source": "wheel/tire",
-                    "confidence_0_to_1": 0.6,
+                    "confidence": 0.6,
                     "_ranking_score": 0.8,
                     "key": "wheel_1",
                 },
@@ -45,7 +45,7 @@ class TestRankingScoreSyncAfterSuppression:
                 0.7,
                 {
                     "suspected_source": "engine",
-                    "confidence_0_to_1": 0.5,
+                    "confidence": 0.5,
                     "_ranking_score": 0.7,
                     "key": "engine_2",
                 },
@@ -135,7 +135,7 @@ class TestSuppressEngineAliasesCapRaised:
                 0.9 - i * 0.1,
                 {
                     "suspected_source": "wheel/tire",
-                    "confidence_0_to_1": 0.8 - i * 0.1,
+                    "confidence": 0.8 - i * 0.1,
                     "_ranking_score": 0.9 - i * 0.1,
                     "key": f"wheel_{i}",
                 },

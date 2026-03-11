@@ -74,7 +74,7 @@ class TestCanonicalFindingModel:
             "evidence_summary",
             "frequency_hz_or_order",
             "amplitude_metric",
-            "confidence_0_to_1",
+            "confidence",
             "quick_checks",
             "evidence_metrics",
             "phase_evidence",
@@ -145,7 +145,7 @@ class TestReferenceMissingFinding:
         assert finding["finding_id"] == "REF_SPEED"
         assert finding["finding_type"] == "reference"
         assert finding["suspected_source"] == "unknown"
-        assert finding["confidence_0_to_1"] is None
+        assert finding["confidence"] is None
         assert len(finding["quick_checks"]) <= 3
 
     def test_quick_checks_truncated_to_3(self) -> None:
@@ -316,25 +316,25 @@ class TestSuppressEngineAliases:
 
     def test_engine_suppressed_when_wheel_stronger(self) -> None:
         input_findings = [
-            (0.5, {"suspected_source": "wheel/tire", "confidence_0_to_1": 0.60}),
-            (0.4, {"suspected_source": "engine", "confidence_0_to_1": 0.50}),
+            (0.5, {"suspected_source": "wheel/tire", "confidence": 0.60}),
+            (0.4, {"suspected_source": "engine", "confidence": 0.50}),
         ]
         result = _suppress_engine_aliases(input_findings)
         engine_results = [f for f in result if f["suspected_source"] == "engine"]
         if engine_results:
-            assert engine_results[0]["confidence_0_to_1"] < 0.50
+            assert engine_results[0]["confidence"] < 0.50
 
     def test_engine_suppression_normalizes_source_tokens(self) -> None:
         input_findings = [
-            (0.5, {"suspected_source": " Wheel/Tire ", "confidence_0_to_1": 0.60}),
-            (0.4, {"suspected_source": " ENGINE ", "confidence_0_to_1": 0.50}),
+            (0.5, {"suspected_source": " Wheel/Tire ", "confidence": 0.60}),
+            (0.4, {"suspected_source": " ENGINE ", "confidence": 0.50}),
         ]
         result = _suppress_engine_aliases(input_findings)
         engine_results = [
             f for f in result if str(f["suspected_source"]).strip().lower() == "engine"
         ]
         if engine_results:
-            assert engine_results[0]["confidence_0_to_1"] < 0.50
+            assert engine_results[0]["confidence"] < 0.50
 
 
 # -- intensity tests ----------------------------------------------------------

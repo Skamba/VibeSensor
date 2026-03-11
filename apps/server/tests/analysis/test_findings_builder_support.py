@@ -10,11 +10,11 @@ def test_collect_order_frequencies_skips_low_confidence_matches() -> None:
     frequencies = collect_order_frequencies(
         [
             {
-                "confidence_0_to_1": 0.24,
+                "confidence": 0.24,
                 "matched_points": [{"matched_hz": 11.0}],
             },
             {
-                "confidence_0_to_1": 0.5,
+                "confidence": 0.5,
                 "matched_points": [{"matched_hz": 12.0}, {"matched_hz": 13.0}],
             },
         ],
@@ -26,12 +26,12 @@ def test_collect_order_frequencies_skips_low_confidence_matches() -> None:
 def test_finalize_findings_orders_reference_diagnostic_then_info() -> None:
     findings = finalize_findings(
         [
-            {"finding_id": "F_ORDER", "confidence_0_to_1": 0.7, "_ranking_score": 2.0},
+            {"finding_id": "F_ORDER", "confidence": 0.7, "_ranking_score": 2.0},
             {"finding_id": "REF_SPEED"},
             {
                 "finding_id": "F_PEAK",
                 "severity": "info",
-                "confidence_0_to_1": 0.9,
+                "confidence": 0.9,
                 "_ranking_score": 5.0,
             },
         ],

@@ -191,8 +191,6 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
 def extract_confidence(item: Finding | TopCause) -> float:
     """Return the confidence value from a cause/finding dict."""
     value = _as_float(item.get("confidence"))
-    if value is None:
-        value = _as_float(item.get("confidence_0_to_1"))
     return value if value is not None else 0.0
 
 

@@ -59,7 +59,7 @@ class TestDualFaultTwoCorners:
             for f in summary.get("findings", [])
             if isinstance(f, dict)
             and not str(f.get("finding_id", "")).startswith("REF_")
-            and float(f.get("confidence_0_to_1") or 0) > 0.10
+            and float(f.get("confidence") or 0) > 0.10
         ]
         locations = {
             str(f.get("strongest_location") or "").lower()
@@ -156,7 +156,7 @@ class TestClippedSaturatedData:
             for f in summary.get("findings", [])
             if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
         ]:
-            assert not math.isnan(float(finding.get("confidence_0_to_1") or 0))
+            assert not math.isnan(float(finding.get("confidence") or 0))
 
     def test_clipped_waveform_still_detects_fault_location(self) -> None:
         samples: list[dict[str, Any]] = []

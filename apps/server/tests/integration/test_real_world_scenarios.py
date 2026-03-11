@@ -50,7 +50,7 @@ def _assert_no_false_positives(
         fid = str(f.get("finding_id", ""))
         if fid.startswith("REF_"):
             continue
-        conf = float(f.get("confidence_0_to_1") or 0)
+        conf = float(f.get("confidence") or 0)
         assert conf <= max_conf, f"False positive on {label}: {fid} conf={conf:.3f}"
 
 
@@ -229,7 +229,7 @@ class TestVeryShortRecording:
         # The summary must complete without crashing; any findings must be valid
         for f in summary.get("findings", []):
             if isinstance(f, dict):
-                conf = f.get("confidence_0_to_1")
+                conf = f.get("confidence")
                 if isinstance(conf, (int, float)):
                     assert not math.isnan(conf), "NaN confidence in short recording"
 
@@ -278,7 +278,7 @@ class TestGradualFaultOnset:
             for f in summary.get("findings", [])
             if isinstance(f, dict)
             and not str(f.get("finding_id", "")).startswith("REF_")
-            and float(f.get("confidence_0_to_1") or 0) > 0.10
+            and float(f.get("confidence") or 0) > 0.10
         ]
         assert len(non_ref) >= 1, "Gradual onset fault should be detected"
 
@@ -321,7 +321,7 @@ class TestBorderlineTwoSourceOverlap:
         assert_summary_sections(summary, min_findings=0)
         for f in summary.get("findings", []):
             if isinstance(f, dict):
-                conf = f.get("confidence_0_to_1")
+                conf = f.get("confidence")
                 if isinstance(conf, (int, float)):
                     assert not math.isnan(conf), "NaN confidence in overlap scenario"
 

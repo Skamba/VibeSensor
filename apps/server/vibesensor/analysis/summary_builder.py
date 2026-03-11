@@ -40,6 +40,7 @@ from ._types import (
     SummaryData,
     TestStep,
     TopCause,
+    i18n_ref,
     is_json_object,
 )
 from .diagnosis_candidates import non_reference_findings
@@ -67,7 +68,6 @@ from .helpers import (
     counter_delta,
     weak_spatial_dominance_threshold,
 )
-from .order_analysis import _i18n_ref
 from .phase_segmentation import DrivingPhase, PhaseSegment, segment_run_phases
 from .plots import _plot_data
 from .strength_labels import strength_label as _strength_label
@@ -188,9 +188,9 @@ def build_run_suitability_checks(
             "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
             "state": "pass" if speed_variation_ok else "warn",
             "explanation": (
-                _i18n_ref("SUITABILITY_SPEED_VARIATION_PASS")
+                i18n_ref("SUITABILITY_SPEED_VARIATION_PASS")
                 if speed_variation_ok
-                else _i18n_ref("SUITABILITY_SPEED_VARIATION_WARN")
+                else i18n_ref("SUITABILITY_SPEED_VARIATION_WARN")
             ),
         },
         {
@@ -198,9 +198,9 @@ def build_run_suitability_checks(
             "check_key": "SUITABILITY_CHECK_SENSOR_COVERAGE",
             "state": "pass" if sensor_count_sufficient else "warn",
             "explanation": (
-                _i18n_ref("SUITABILITY_SENSOR_COVERAGE_PASS")
+                i18n_ref("SUITABILITY_SENSOR_COVERAGE_PASS")
                 if sensor_count_sufficient
-                else _i18n_ref("SUITABILITY_SENSOR_COVERAGE_WARN")
+                else i18n_ref("SUITABILITY_SENSOR_COVERAGE_WARN")
             ),
         },
         {
@@ -208,9 +208,9 @@ def build_run_suitability_checks(
             "check_key": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
             "state": "pass" if reference_complete else "warn",
             "explanation": (
-                _i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_PASS")
+                i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_PASS")
                 if reference_complete
-                else _i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_WARN")
+                else i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_WARN")
             ),
         },
         {
@@ -218,9 +218,9 @@ def build_run_suitability_checks(
             "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
             "state": "pass" if sat_count == 0 else "warn",
             "explanation": (
-                _i18n_ref("SUITABILITY_SATURATION_PASS")
+                i18n_ref("SUITABILITY_SATURATION_PASS")
                 if sat_count == 0
-                else _i18n_ref("SUITABILITY_SATURATION_WARN", sat_count=sat_count)
+                else i18n_ref("SUITABILITY_SATURATION_WARN", sat_count=sat_count)
             ),
         },
     ]
@@ -232,9 +232,9 @@ def build_run_suitability_checks(
             "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
             "state": "pass" if frame_issues == 0 else "warn",
             "explanation": (
-                _i18n_ref("SUITABILITY_FRAME_INTEGRITY_PASS")
+                i18n_ref("SUITABILITY_FRAME_INTEGRITY_PASS")
                 if frame_issues == 0
-                else _i18n_ref(
+                else i18n_ref(
                     "SUITABILITY_FRAME_INTEGRITY_WARN",
                     total_dropped=total_dropped,
                     total_overflow=total_overflow,
@@ -313,7 +313,7 @@ def build_phase_timeline(
             continue
         if str(finding.get("finding_id", "")).startswith("REF_"):
             continue
-        conf = _as_float(finding.get("confidence_0_to_1")) or 0.0
+        conf = _as_float(finding.get("confidence")) or 0.0
         if conf < min_confidence:
             continue
         phase_ev = finding.get("phase_evidence")
@@ -459,7 +459,7 @@ def summarize_origin(findings: list[Finding]) -> OriginSummary:
             "source": "unknown",
             "dominance_ratio": None,
             "weak_spatial_separation": True,
-            "explanation": _i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
+            "explanation": i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
         }
 
     top = findings[0]
@@ -554,8 +554,8 @@ def enrich_with_second_finding(
         return weak, alternative_locations
     second = findings[1]
     second_loc = str(second.get("strongest_location") or "").strip()
-    second_conf = _as_float(second.get("confidence_0_to_1")) or 0.0
-    top_conf = _as_float(findings[0].get("confidence_0_to_1")) or 0.0
+    second_conf = _as_float(second.get("confidence")) or 0.0
+    top_conf = _as_float(findings[0].get("confidence")) or 0.0
     if (
         second_loc
         and primary_location
@@ -601,7 +601,7 @@ def build_origin_explanation(
 ) -> JsonValue:
     """Build the language-neutral origin explanation block."""
     explanation_parts: list[JsonValue] = [
-        _i18n_ref(
+        i18n_ref(
             "ORIGIN_EXPLANATION_FINDING_1",
             source=source,
             speed_band=speed_band or "unknown",
@@ -610,9 +610,9 @@ def build_origin_explanation(
         ),
     ]
     if weak:
-        explanation_parts.append(_i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
+        explanation_parts.append(i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
     if dominant_phase and dominant_phase in PHASE_I18N_KEYS:
-        explanation_parts.append(_i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
+        explanation_parts.append(i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
     return explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts
 
 
@@ -806,7 +806,7 @@ def prepare_run_data(
     speed_breakdown = _speed_breakdown(samples) if speed_sufficient else []
     speed_breakdown_skipped_reason: I18nRef | None = None
     if not speed_sufficient:
-        speed_breakdown_skipped_reason = _i18n_ref(
+        speed_breakdown_skipped_reason = i18n_ref(
             "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND",
         )
 
