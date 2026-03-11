@@ -47,7 +47,7 @@ Complexity hygiene
 - Do not create private helper classes within a module when the helper has a single consumer class in the same module. Inline the logic directly and use section comments for organization.
 - Do not create separate modules for fewer than 3 functions with fewer than 2 distinct production consumers. Merge into the consumer module instead.
 - Do not add dead re-exports or speculative private-alias re-exports to package ``__init__.py`` files. Only export symbols that are actually imported by external consumers.
-- Do not duplicate utility functions across modules. Maintain a single canonical implementation and import from it.
+- Do not duplicate utility functions across modules. Maintain a single canonical implementation and import from it. Exception: standalone tooling scripts (e.g. ``tools/build_ui_static.py``) that must run without the server package installed may carry a local copy; mark it with a comment pointing at the canonical source.
 
 Documentation maintenance (always required)
 - After every meaningful code change, check whether docs, repo maps, runbooks, READMEs, and instruction files that reference the touched area are now stale.
