@@ -450,71 +450,140 @@ def build_sensor_analysis(
     return sensor_locations, connected_locations, sensor_intensity_by_location
 
 
-def summarize_origin(findings: list[Finding]) -> OriginSummary:
-    """Build the most-likely-origin summary from ranked diagnostic findings."""
-    if not findings:
-        return {
-            "location": "unknown",
-            "alternative_locations": [],
-            "source": "unknown",
-            "dominance_ratio": None,
-            "weak_spatial_separation": True,
-            "explanation": i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
-        }
+@dataclass
+class LocalizationAssessment:
+    """Interpreted assessment of spatial/localization meaning for a finding.
 
-    top = findings[0]
-    primary_location = str(top.get("strongest_location") or "").strip() or "unknown"
-    alternative_locations = collect_alternative_locations(top, primary_location=primary_location)
-    source = str(top.get("suspected_source") or "unknown")
-    hotspot = top.get("location_hotspot")
-    dominance = _as_float(top.get("dominance_ratio"))
-    adaptive_threshold = weak_spatial_threshold(top, hotspot=hotspot)
-    weak = bool(top.get("weak_spatial_separation")) or (
-        dominance is not None and dominance < adaptive_threshold
-    )
-    weak, alternative_locations = enrich_with_second_finding(
-        findings,
-        weak=weak,
-        primary_location=primary_location,
-        alternative_locations=alternative_locations,
-    )
-    location = summarize_display_location(
-        primary_location=primary_location,
-        alternative_locations=alternative_locations,
-        weak=weak,
-        dominance=dominance,
-        adaptive_threshold=adaptive_threshold,
-    )
-    speed_band = str(top.get("strongest_speed_band") or "")
-    dominant_phase = str(top.get("dominant_phase") or "").strip()
-    explanation = build_origin_explanation(
-        source=source,
-        speed_band=speed_band,
-        location=location,
-        dominance=dominance,
-        weak=weak,
-        dominant_phase=dominant_phase,
-    )
-    return {
-        "location": location,
-        "alternative_locations": alternative_locations,
-        "source": source,
-        "dominance_ratio": dominance,
-        "weak_spatial_separation": weak,
-        "speed_band": speed_band or None,
-        "dominant_phase": dominant_phase or None,
-        "explanation": explanation,
-    }
+    Owns localized-vs-diffuse classification, separation quality,
+    primary/supporting location access, and confidence interpretation
+    so that callers no longer scatter localization reasoning across
+    procedural code.
+    """
+
+    _primary_location: str
+    _alternative_locations: list[str]
+    dominance_ratio: float | None
+    _weak_spatial: bool
+    _diffuse_excitation: bool
+    _localization_confidence: float
+    _adaptive_threshold: float
+
+    # -- construction -------------------------------------------------------
+
+    @staticmethod
+    def from_finding(finding: Finding) -> LocalizationAssessment:
+        """Build from a single Finding, extracting localization fields."""
+        hotspot = finding.get("location_hotspot")
+        primary = str(finding.get("strongest_location") or "").strip() or "unknown"
+        alternatives = _collect_alternative_locations(hotspot, primary_location=primary)
+        dominance = _as_float(finding.get("dominance_ratio"))
+        threshold = _resolve_weak_spatial_threshold(finding, hotspot=hotspot)
+        weak = bool(finding.get("weak_spatial_separation")) or (
+            dominance is not None and dominance < threshold
+        )
+        loc_conf = 0.0
+        if isinstance(hotspot, dict):
+            loc_conf = float(_as_float(hotspot.get("localization_confidence")) or 0.0)
+        return LocalizationAssessment(
+            _primary_location=primary,
+            _alternative_locations=alternatives,
+            dominance_ratio=dominance,
+            _weak_spatial=weak,
+            _diffuse_excitation=finding.get("diffuse_excitation", False),
+            _localization_confidence=loc_conf,
+            _adaptive_threshold=threshold,
+        )
+
+    # -- classification -----------------------------------------------------
+
+    @property
+    def is_localized(self) -> bool:
+        """Whether the primary location is known and actionable."""
+        return self._primary_location.lower() not in {"", "unknown"}
+
+    @property
+    def is_diffuse(self) -> bool:
+        """Whether the excitation is diffuse across locations."""
+        return self._diffuse_excitation
+
+    @property
+    def has_clear_separation(self) -> bool:
+        """Whether spatial separation between sensor locations is clear."""
+        return not self._weak_spatial
+
+    # -- location access ----------------------------------------------------
+
+    @property
+    def primary_location(self) -> str:
+        """The strongest sensor location (or ``'unknown'``)."""
+        return self._primary_location
+
+    def supporting_locations(self) -> list[str]:
+        """Alternative/corroborating locations beyond the primary."""
+        return list(self._alternative_locations)
+
+    # -- confidence interpretation ------------------------------------------
+
+    def confidence_band(self) -> str:
+        """Return ``'high'``, ``'medium'``, or ``'low'`` for localization confidence."""
+        if self._localization_confidence >= 0.7:
+            return "high"
+        if self._localization_confidence >= 0.4:
+            return "medium"
+        return "low"
+
+    # -- display helpers ----------------------------------------------------
+
+    def display_location(self) -> str:
+        """Build the display-ready location summary string."""
+        if not (
+            self._weak_spatial
+            and self.dominance_ratio is not None
+            and self.dominance_ratio < self._adaptive_threshold
+        ):
+            return self._primary_location
+        display_locations = [self._primary_location, *self._alternative_locations]
+        return " / ".join(
+            candidate
+            for idx, candidate in enumerate(display_locations)
+            if candidate and candidate not in display_locations[:idx]
+        )
+
+    # -- mutation (multi-finding enrichment) --------------------------------
+
+    def enrich_from_second_finding(
+        self,
+        second_finding: Finding,
+        *,
+        top_confidence: float,
+    ) -> None:
+        """Promote ambiguity when the second finding is close in confidence."""
+        second_loc = str(second_finding.get("strongest_location") or "").strip()
+        second_conf = _as_float(second_finding.get("confidence")) or 0.0
+        if (
+            second_loc
+            and self._primary_location
+            and second_loc != self._primary_location
+            and top_confidence > 0
+            and second_conf / top_confidence >= 0.7
+        ):
+            self._weak_spatial = True
+            if second_loc not in self._alternative_locations:
+                self._alternative_locations.append(second_loc)
 
 
-def collect_alternative_locations(
-    top_finding: Finding,
+# ---------------------------------------------------------------------------
+# LocalizationAssessment support helpers
+# ---------------------------------------------------------------------------
+
+
+def _collect_alternative_locations(
+    hotspot: object,
     *,
     primary_location: str,
 ) -> list[str]:
-    """Collect alternative hotspot locations from the strongest finding."""
+    """Collect alternative hotspot locations from the location hotspot dict."""
     alternative_locations: list[str] = []
-    hotspot = top_finding.get("location_hotspot")
     if not isinstance(hotspot, dict):
         return alternative_locations
     ambiguous_locations = hotspot.get("ambiguous_locations", [])
@@ -534,12 +603,75 @@ def collect_alternative_locations(
     return alternative_locations
 
 
-def weak_spatial_threshold(top_finding: Finding, *, hotspot: object) -> float:
+def _resolve_weak_spatial_threshold(top_finding: Finding, *, hotspot: object) -> float:
     """Resolve the adaptive weak-spatial threshold for the strongest finding."""
     location_count = _as_float(top_finding.get("location_count"))
     if location_count is None and isinstance(hotspot, dict):
         location_count = _as_float(hotspot.get("location_count"))
     return weak_spatial_dominance_threshold(int(location_count) if location_count else None)
+
+
+def summarize_origin(findings: list[Finding]) -> OriginSummary:
+    """Build the most-likely-origin summary from ranked diagnostic findings."""
+    if not findings:
+        return {
+            "location": "unknown",
+            "alternative_locations": [],
+            "source": "unknown",
+            "dominance_ratio": None,
+            "weak_spatial_separation": True,
+            "explanation": i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
+        }
+
+    top = findings[0]
+    loc = LocalizationAssessment.from_finding(top)
+    source = str(top.get("suspected_source") or "unknown")
+
+    if len(findings) >= 2:
+        loc.enrich_from_second_finding(
+            findings[1],
+            top_confidence=_as_float(top.get("confidence")) or 0.0,
+        )
+
+    location = loc.display_location()
+    speed_band = str(top.get("strongest_speed_band") or "")
+    dominant_phase = str(top.get("dominant_phase") or "").strip()
+    explanation = build_origin_explanation(
+        source=source,
+        speed_band=speed_band,
+        location=location,
+        dominance=loc.dominance_ratio,
+        weak=not loc.has_clear_separation,
+        dominant_phase=dominant_phase,
+    )
+    return {
+        "location": location,
+        "alternative_locations": loc.supporting_locations(),
+        "source": source,
+        "dominance_ratio": loc.dominance_ratio,
+        "weak_spatial_separation": not loc.has_clear_separation,
+        "speed_band": speed_band or None,
+        "dominant_phase": dominant_phase or None,
+        "explanation": explanation,
+    }
+
+
+# Backward-compatible aliases used by existing callers / tests.
+def collect_alternative_locations(
+    top_finding: Finding,
+    *,
+    primary_location: str,
+) -> list[str]:
+    """Collect alternative hotspot locations from the strongest finding."""
+    return _collect_alternative_locations(
+        top_finding.get("location_hotspot"),
+        primary_location=primary_location,
+    )
+
+
+def weak_spatial_threshold(top_finding: Finding, *, hotspot: object) -> float:
+    """Resolve the adaptive weak-spatial threshold for the strongest finding."""
+    return _resolve_weak_spatial_threshold(top_finding, hotspot=hotspot)
 
 
 def enrich_with_second_finding(

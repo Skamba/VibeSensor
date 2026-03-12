@@ -55,7 +55,12 @@ __all__ = ["map_summary"]
 
 @dataclass(frozen=True)
 class ReportMappingContext:
-    """Normalized structural context pulled from an analysis summary."""
+    """Normalized structural context pulled from an analysis summary.
+
+    Owns display-ready metadata access, primary hotspot / candidate
+    selection helpers, and report-mapping decisions that were previously
+    spread across helper functions and ``dict.get(...)`` calls.
+    """
 
     meta: MetadataDict
     car_name: str | None
@@ -68,6 +73,70 @@ class ReportMappingContext:
     origin: OriginSummary
     origin_location: str
     sensor_locations_active: list[str]
+    # Typed run metadata (replaces dict[str, object] + type: ignore).
+    duration_text: str | None
+    start_time_utc: str | None
+    end_time_utc: str | None
+    sample_rate_hz: str | None
+    tire_spec_text: str | None
+    sample_count: int
+    sensor_model: str | None
+    firmware_version: str | None
+
+    # -- candidate selection ------------------------------------------------
+
+    def top_report_candidate(self) -> CandidateFinding | None:
+        """Return the primary report candidate (first effective top cause or finding)."""
+        candidates = self.top_causes or self.findings_non_ref
+        return candidates[0] if candidates else None
+
+    def primary_hotspot(self) -> CandidateFinding | None:
+        """Return the top cause as the primary hotspot for the report."""
+        return self.top_causes[0] if self.top_causes else None
+
+    # -- display helpers ----------------------------------------------------
+
+    def display_duration(self) -> str | None:
+        """Return the formatted run duration text."""
+        return self.duration_text
+
+    def display_speed_range(self) -> str | None:
+        """Return the formatted speed range from speed stats."""
+        min_kmh = self.speed_stats.get("min_kmh")
+        max_kmh = self.speed_stats.get("max_kmh")
+        if min_kmh is not None and max_kmh is not None:
+            return f"{min_kmh:.0f}\u2013{max_kmh:.0f} km/h"
+        return None
+
+    # -- intensity queries --------------------------------------------------
+
+    def has_significant_location_intensity(
+        self,
+        sensor_intensity: list[dict[str, object]],
+    ) -> bool:
+        """Whether any sensor location shows significant above-noise intensity."""
+        for row in sensor_intensity:
+            if not isinstance(row, dict):
+                continue
+            p95 = _as_float(row.get("p95_intensity_db"))
+            if p95 is not None and p95 > 0:
+                return True
+        return False
+
+    # -- observed signature -------------------------------------------------
+
+    def observed_signature(self, primary: PrimaryCandidateContext) -> ObservedSignature:
+        """Build the observed-signature block for the report template."""
+        return ObservedSignature(
+            primary_system=primary.primary_system,
+            strongest_sensor_location=primary.primary_location,
+            speed_band=primary.primary_speed,
+            strength_label=primary.strength_text,
+            strength_peak_db=primary.strength_db,
+            certainty_label=primary.certainty_label_text,
+            certainty_pct=primary.certainty_pct,
+            certainty_reason=primary.certainty_reason,
+        )
 
 
 @dataclass(frozen=True)
@@ -693,6 +762,16 @@ def prepare_report_mapping_context(
 
     origin_location = normalized_origin_location(origin)
     sensor_locations_active = extract_sensor_locations(summary)
+
+    # Typed run metadata — resolved here so the context carries properly
+    # typed values and eliminates the dict[str, object] + type: ignore
+    # pattern that previously plagued _build_report_template_data.
+    duration_text = str(summary.get("record_length") or "") or None
+    start_time_utc = str(summary.get("start_time_utc") or "").strip() or None
+    end_time_utc = str(summary.get("end_time_utc") or "").strip() or None
+    raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
+    sample_rate_hz = f"{raw_sample_rate_hz:g}" if raw_sample_rate_hz is not None else None
+
     return ReportMappingContext(
         meta=meta,
         car_name=car_name,
@@ -705,6 +784,14 @@ def prepare_report_mapping_context(
         origin=origin,
         origin_location=origin_location,
         sensor_locations_active=sensor_locations_active,
+        duration_text=duration_text,
+        start_time_utc=start_time_utc,
+        end_time_utc=end_time_utc,
+        sample_rate_hz=sample_rate_hz,
+        tire_spec_text=tire_spec_text(meta),
+        sample_count=int(_as_float(summary.get("rows")) or 0),
+        sensor_model=str(summary.get("sensor_model") or "").strip() or None,
+        firmware_version=str(summary.get("firmware_version") or "").strip() or None,
     )
 
 
@@ -716,8 +803,7 @@ def resolve_primary_report_candidate(
     lang: str,
 ) -> PrimaryCandidateContext:
     """Resolve the primary candidate and all derived certainty fields."""
-    primary_candidates = context.top_causes or context.findings_non_ref
-    primary_candidate = primary_candidates[0] if primary_candidates else None
+    primary_candidate = context.top_report_candidate()
     if primary_candidate:
         primary_source = primary_candidate.get("source") or primary_candidate.get(
             "suspected_source"
@@ -811,7 +897,7 @@ def _build_report_template_data(
     """Map a summary dict into the final report template data structure."""
     context = prepare_report_mapping_context(summary)
     primary = resolve_primary_report_candidate(summary, context=context, tr=tr, lang=lang)
-    observed = build_observed_signature(primary)
+    observed = context.observed_signature(primary)
     system_cards = build_system_cards(
         context,
         primary,
@@ -834,7 +920,6 @@ def _build_report_template_data(
     )
     peak_rows = build_peak_rows_from_plots(summary, lang=lang, tr=tr)
     version_marker = build_version_marker()
-    run_meta = build_run_metadata_fields(summary, context.meta)
 
     raw_sensor_intensity = filter_active_sensor_intensity(
         summary.get("sensor_intensity_by_location", []),
@@ -846,16 +931,16 @@ def _build_report_template_data(
         title=tr("DIAGNOSTIC_WORKSHEET"),
         run_datetime=context.date_str,
         run_id=summary.get("run_id"),
-        duration_text=run_meta["duration_text"],  # type: ignore[arg-type]
-        start_time_utc=run_meta["start_time_utc"],  # type: ignore[arg-type]
-        end_time_utc=run_meta["end_time_utc"],  # type: ignore[arg-type]
-        sample_rate_hz=run_meta["sample_rate_hz"],  # type: ignore[arg-type]
-        tire_spec_text=run_meta["tire_spec_text"],  # type: ignore[arg-type]
-        sample_count=run_meta["sample_count"],  # type: ignore[arg-type]
+        duration_text=context.duration_text,
+        start_time_utc=context.start_time_utc,
+        end_time_utc=context.end_time_utc,
+        sample_rate_hz=context.sample_rate_hz,
+        tire_spec_text=context.tire_spec_text,
+        sample_count=context.sample_count,
         sensor_count=primary.sensor_count,
         sensor_locations=context.sensor_locations_active,
-        sensor_model=run_meta["sensor_model"],  # type: ignore[arg-type]
-        firmware_version=run_meta["firmware_version"],  # type: ignore[arg-type]
+        sensor_model=context.sensor_model,
+        firmware_version=context.firmware_version,
         car=CarMeta(name=context.car_name, car_type=context.car_type),
         observed=observed,
         system_cards=system_cards,
