@@ -38,6 +38,7 @@ from .backend_types import (
     SpeedSourceUpdatePayload,
 )
 from .constants import NUMERIC_TYPES
+from .domain.core import Car, Sensor, SensorPlacement, SpeedSource
 from .json_types import JsonObject, is_json_object
 from .protocol import parse_client_id
 
@@ -207,6 +208,18 @@ class CarConfig:
             d["variant"] = self.variant
         return d
 
+    # -- domain bridge --------------------------------------------------------
+
+    def to_car(self) -> Car:
+        """Return the domain ``Car`` value object for this config."""
+        return Car(
+            id=self.id,
+            name=self.name,
+            car_type=self.type,
+            aspects=dict(self.aspects),
+            variant=self.variant,
+        )
+
 
 # ---------------------------------------------------------------------------
 # 2) SensorConfig
@@ -235,6 +248,17 @@ class SensorConfig:
     def to_dict(self) -> SensorConfigPayload:
         """Serialise this sensor config to a plain dict."""
         return {"name": self.name, "location": self.location}
+
+    # -- domain bridge --------------------------------------------------------
+
+    def to_sensor(self) -> Sensor:
+        """Return the domain ``Sensor`` value object for this config."""
+        placement = SensorPlacement.from_code(self.location) if self.location else None
+        return Sensor(
+            sensor_id=self.sensor_id,
+            name=self.name,
+            placement=placement,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -311,6 +335,16 @@ class SpeedSourceConfig:
         raw_fallback = data.get("fallbackMode")
         if raw_fallback is not None:
             self.fallback_mode = _coerce_fallback_mode(raw_fallback)
+
+    # -- domain bridge --------------------------------------------------------
+
+    def to_speed_source(self) -> SpeedSource:
+        """Return the domain ``SpeedSource`` value object for this config."""
+        return SpeedSource(
+            kind=self.speed_source,
+            manual_speed_kmh=self.manual_speed_kph,
+            fallback_mode=self.fallback_mode,
+        )
 
 
 # ---------------------------------------------------------------------------

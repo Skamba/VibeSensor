@@ -11,7 +11,7 @@ from statistics import mean as _mean
 from .. import __version__
 from ..analysis._types import (
     CandidateFinding,
-    Finding,
+    FindingPayload,
     IntensityRow,
     JsonValue,
     MetadataDict,
@@ -70,8 +70,8 @@ class ReportMappingContext:
     car_type: str | None
     date_str: str
     top_causes: list[CandidateFinding]
-    findings_non_ref: list[Finding]
-    findings: list[Finding]
+    findings_non_ref: list[FindingPayload]
+    findings: list[FindingPayload]
     speed_stats: SpeedStats
     origin: OriginSummary
     origin_location: str
@@ -260,13 +260,13 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
     return str(value).replace("_", " ").title()
 
 
-def extract_confidence(item: Finding | TopCause) -> float:
+def extract_confidence(item: FindingPayload | TopCause) -> float:
     """Return the confidence value from a cause/finding dict."""
     value = _as_float(item.get("confidence"))
     return value if value is not None else 0.0
 
 
-def finding_strength_db(finding: Finding) -> float | None:
+def finding_strength_db(finding: FindingPayload) -> float | None:
     """Extract a finding's vibration-strength dB value if present."""
     evidence_metrics = finding.get("evidence_metrics")
     return (
@@ -361,7 +361,7 @@ class SummaryView:
     # -- collections -------------------------------------------------------
 
     @property
-    def findings(self) -> list[Finding]:
+    def findings(self) -> list[FindingPayload]:
         raw = self._d.get("findings", [])
         return list(raw) if isinstance(raw, list) else []
 
@@ -672,7 +672,7 @@ def top_strength_values(
     return max((value for value in sensor_rows if value is not None), default=None)
 
 
-def has_relevant_reference_gap(findings: list[Finding], primary_source: object) -> bool:
+def has_relevant_reference_gap(findings: list[FindingPayload], primary_source: object) -> bool:
     """Whether the report certainty should mention missing reference inputs."""
     source = str(primary_source or "").strip().lower()
     for finding in findings:

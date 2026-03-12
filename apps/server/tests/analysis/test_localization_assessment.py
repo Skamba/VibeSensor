@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.analysis._types import Finding
+from vibesensor.analysis._types import FindingPayload
 from vibesensor.analysis.summary_builder import LocalizationAssessment
 
 # ---------------------------------------------------------------------------
@@ -10,9 +10,9 @@ from vibesensor.analysis.summary_builder import LocalizationAssessment
 # ---------------------------------------------------------------------------
 
 
-def _make_finding(**overrides: object) -> Finding:
-    """Build a minimal Finding dict with location-relevant overrides."""
-    base: Finding = {
+def _make_finding(**overrides: object) -> FindingPayload:
+    """Build a minimal FindingPayload dict with location-relevant overrides."""
+    base: FindingPayload = {
         "finding_id": "F001",
         "suspected_source": "wheel/tire",
         "evidence_summary": "test",

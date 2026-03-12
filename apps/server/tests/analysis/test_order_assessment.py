@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis._types import Finding
+from vibesensor.analysis._types import FindingPayload
 from vibesensor.analysis.top_cause_selection import OrderAssessment
 
 # ---------------------------------------------------------------------------
@@ -12,9 +12,9 @@ from vibesensor.analysis.top_cause_selection import OrderAssessment
 # ---------------------------------------------------------------------------
 
 
-def _make_finding(**overrides: object) -> Finding:
-    """Build a minimal Finding dict with overrides."""
-    base: Finding = {
+def _make_finding(**overrides: object) -> FindingPayload:
+    """Build a minimal FindingPayload dict with overrides."""
+    base: FindingPayload = {
         "finding_id": "F001",
         "suspected_source": "wheel/tire",
         "evidence_summary": "test",
