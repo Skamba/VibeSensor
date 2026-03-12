@@ -153,6 +153,38 @@ class VibrationReading:
         """
         return bucket_for_strength(self.intensity_db)
 
+    # -- factory methods ----------------------------------------------------
+
+    @staticmethod
+    def compute_db(peak_amplitude_g: float, noise_floor_g: float) -> float:
+        """Compute vibration strength in dB from amplitude pair.
+
+        Uses the canonical formula:
+        ``20 × log₁₀((peak + ε) / (floor + ε))``
+        where ``ε = max(1e-9, floor × 0.05)``.
+
+        This is a convenience entry point for code that has pre-computed
+        amplitude values but does not need a full ``VibrationReading``
+        object (e.g. aggregate statistics in the analysis pipeline).
+        """
+        return vibration_strength_db_scalar(
+            peak_band_rms_amp_g=peak_amplitude_g,
+            floor_amp_g=noise_floor_g,
+        )
+
+    @staticmethod
+    def compute_db_or_none(
+        peak_amplitude_g: float | None,
+        noise_floor_g: float | None,
+    ) -> float | None:
+        """Like :meth:`compute_db` but returns ``None`` when either input is ``None``."""
+        if peak_amplitude_g is None or noise_floor_g is None:
+            return None
+        return vibration_strength_db_scalar(
+            peak_band_rms_amp_g=peak_amplitude_g,
+            floor_amp_g=noise_floor_g,
+        )
+
 
 # ---------------------------------------------------------------------------
 # Aggregate Root: DiagnosticSession

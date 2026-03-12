@@ -13,10 +13,11 @@ DiagnosticSession
     Aggregate root representing a complete diagnostic measurement session.
 """
 
-from .core import AccelerationSample, DiagnosticSession, VibrationReading
+from .core import AccelerationSample, DiagnosticSession, SessionStatus, VibrationReading
 
 __all__ = [
     "AccelerationSample",
     "DiagnosticSession",
+    "SessionStatus",
     "VibrationReading",
 ]

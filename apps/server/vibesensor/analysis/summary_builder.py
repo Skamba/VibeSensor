@@ -10,9 +10,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median as _median
 
-from vibesensor.vibration_strength import (
-    vibration_strength_db_scalar as canonical_vibration_db,
-)
+from vibesensor.domain.core import VibrationReading
 
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..domain_models import as_float_or_none as _as_float
@@ -364,11 +362,9 @@ def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
     """Convert a run noise baseline amplitude in g to dB, or return None."""
     if run_noise_baseline_g is None:
         return None
-    return float(
-        canonical_vibration_db(
-            peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
-            floor_amp_g=MEMS_NOISE_FLOOR_G,
-        ),
+    return VibrationReading.compute_db(
+        max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
+        MEMS_NOISE_FLOOR_G,
     )
 
 
