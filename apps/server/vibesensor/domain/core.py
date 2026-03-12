@@ -57,12 +57,19 @@ __all__ = [
     "Sensor",
     "SensorPlacement",
     "SpeedSource",
+    "SpeedSourceKind",
     # Existing names (kept for backward compatibility)
     "AccelerationSample",
     "DiagnosticSession",
     "SessionStatus",
     "VibrationReading",
 ]
+
+# ---------------------------------------------------------------------------
+# Type aliases
+# ---------------------------------------------------------------------------
+
+SpeedSourceKind = Literal["gps", "obd2", "manual"]
 
 
 # ---------------------------------------------------------------------------
@@ -368,8 +375,6 @@ Run = DiagnosticSession
 # ---------------------------------------------------------------------------
 # Phase 2: Enriched domain objects — Car, Sensor, SensorPlacement
 # ---------------------------------------------------------------------------
-
-SpeedSourceKind = Literal["gps", "obd2", "manual"]
 
 
 @dataclass(frozen=True, slots=True)
