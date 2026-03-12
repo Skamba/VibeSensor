@@ -1057,7 +1057,9 @@ def _build_report_template_data(
         sensor_locations=context.sensor_locations_active,
         sensor_model=context.sensor_model,
         firmware_version=context.firmware_version,
-        car=CarMeta(name=report.car_name or context.car_name, car_type=report.car_type or context.car_type),
+        car=CarMeta(
+            name=report.car_name or context.car_name, car_type=report.car_type or context.car_type
+        ),
         observed=observed,
         system_cards=system_cards,
         next_steps=next_steps,

@@ -599,6 +599,7 @@ class Finding:
         Extracts the subset of fields that the domain object cares about,
         ignoring serialization-only keys present in the full payload.
         """
+
         def _str(key: str) -> str:
             v = payload.get(key)
             return str(v) if v is not None else ""
@@ -626,8 +627,12 @@ class Finding:
             frequency_hz=frequency_hz,
             order=_str("order"),
             severity=_str("severity"),
-            strongest_location=payload.get("strongest_location") if payload.get("strongest_location") is not None else None,  # type: ignore[arg-type]
-            strongest_speed_band=payload.get("strongest_speed_band") if payload.get("strongest_speed_band") is not None else None,  # type: ignore[arg-type]
+            strongest_location=str(payload["strongest_location"])
+            if payload.get("strongest_location") is not None
+            else None,
+            strongest_speed_band=str(payload["strongest_speed_band"])
+            if payload.get("strongest_speed_band") is not None
+            else None,
             peak_classification=_str("peak_classification"),
         )
 
@@ -703,10 +708,12 @@ class Report:
         finding_count = len(findings) if isinstance(findings, list) else 0
 
         rows = summary.get("rows")
-        sample_count = int(rows) if rows is not None else 0
+        sample_count = int(rows) if isinstance(rows, (int, float, str)) else 0
 
         sensor_count_raw = summary.get("sensor_count_used")
-        sensor_count = int(sensor_count_raw) if sensor_count_raw is not None else 0
+        sensor_count = (
+            int(sensor_count_raw) if isinstance(sensor_count_raw, (int, float, str)) else 0
+        )
 
         duration_s = summary.get("duration_s")
         duration_text: str | None = None
