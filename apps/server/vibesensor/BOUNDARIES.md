@@ -2,6 +2,26 @@
 
 Use this when changing backend code without scanning the whole package.
 
+## Domain Model
+- Ten primary domain concepts live in `domain/core.py` and are re-exported
+  from `vibesensor.domain`:
+  1. `Car` – the vehicle under test.
+  2. `Sensor` – a physical accelerometer node.
+  3. `SensorPlacement` – a sensor's mounting position on the vehicle.
+  4. `Run` – one complete diagnostic measurement session (aggregate root).
+     `DiagnosticSession` is a backward-compatibility alias.
+  5. `Measurement` – a single multi-axis acceleration sample (value object).
+     `AccelerationSample` is a backward-compatibility alias.
+  6. `SpeedSource` – how vehicle speed is obtained during a run.
+  7. `AnalysisWindow` – a contiguous aligned chunk of samples for analysis.
+  8. `Finding` – one diagnostic conclusion or cause candidate.
+  9. `Report` – the assembled output of a diagnostic run.
+  10. `HistoryRecord` – a persisted run with its analysis results.
+- Prefer these simple names in domain logic; use the narrower config/payload
+  shapes (`CarConfig`, `SensorConfig`, `SpeedSourceConfig`, `RunMetadata`,
+  `SensorFrame`, `ReportTemplateData`, `HistoryRunPayload`) at persistence,
+  wire-format, and rendering boundaries.
+
 ## Analysis Pipeline
 - All post-stop analysis lives in `analysis/`. See [docs/analysis_pipeline.md](../../../docs/analysis_pipeline.md).
 - Single entrypoint: `summarize_run_data()` in `analysis/summary_builder.py`.
