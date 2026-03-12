@@ -12,11 +12,14 @@ from .. import __version__
 from ..analysis._types import (
     CandidateFinding,
     Finding,
+    IntensityRow,
     JsonValue,
     MetadataDict,
     OriginSummary,
+    RunSuitabilityCheck,
     SpeedStats,
     SummaryData,
+    TestStep,
     TopCause,
 )
 from ..analysis.diagnosis_candidates import normalize_origin_location, select_effective_top_causes
@@ -295,15 +298,121 @@ _EMPTY_ORIGIN: OriginSummary = {
 }
 
 
-def extract_sensor_locations(summary: SummaryData) -> list[str]:
-    """Return active sensor locations for report rendering."""
-    connected_locations = summary.get("sensor_locations_connected_throughout", [])
-    sensor_locations_active = [str(loc) for loc in connected_locations if str(loc).strip()]
-    if not sensor_locations_active:
-        sensor_locations_active = [
-            str(loc) for loc in summary.get("sensor_locations", []) if str(loc).strip()
+class SummaryView:
+    """Typed accessor over a ``SummaryData`` dict for report mapping.
+
+    Replaces scattered ``summary.get(...)`` chains with typed properties
+    that centralise default handling and type coercion.  The underlying
+    dict is **not** copied – mutations through the view are visible in
+    the original dict and vice-versa.
+    """
+
+    __slots__ = ("_d",)
+
+    def __init__(self, summary: SummaryData) -> None:
+        self._d = summary
+
+    @property
+    def data(self) -> SummaryData:
+        return self._d
+
+    # -- metadata ----------------------------------------------------------
+
+    @property
+    def metadata(self) -> MetadataDict:
+        return self._d.get("metadata") or {}
+
+    @property
+    def report_date(self) -> str:
+        return str(self._d.get("report_date") or "")
+
+    @property
+    def row_count(self) -> int:
+        return int(_as_float(self._d.get("rows")) or 0)
+
+    @property
+    def record_length(self) -> str | None:
+        return str(self._d.get("record_length") or "") or None
+
+    @property
+    def start_time_utc(self) -> str | None:
+        return str(self._d.get("start_time_utc") or "").strip() or None
+
+    @property
+    def end_time_utc(self) -> str | None:
+        return str(self._d.get("end_time_utc") or "").strip() or None
+
+    @property
+    def raw_sample_rate_hz(self) -> float | None:
+        return _as_float(self._d.get("raw_sample_rate_hz"))
+
+    @property
+    def sensor_model(self) -> str | None:
+        return str(self._d.get("sensor_model") or "").strip() or None
+
+    @property
+    def firmware_version(self) -> str | None:
+        return str(self._d.get("firmware_version") or "").strip() or None
+
+    @property
+    def sensor_count_used(self) -> int:
+        return int(_as_float(self._d.get("sensor_count_used")) or 0)
+
+    # -- collections -------------------------------------------------------
+
+    @property
+    def findings(self) -> list[Finding]:
+        raw = self._d.get("findings", [])
+        return list(raw) if isinstance(raw, list) else []
+
+    @property
+    def top_causes(self) -> list[TopCause]:
+        raw = self._d.get("top_causes", [])
+        return list(raw) if isinstance(raw, list) else []
+
+    @property
+    def speed_stats(self) -> SpeedStats:
+        return self._d.get("speed_stats") or _EMPTY_SPEED_STATS
+
+    @property
+    def origin(self) -> OriginSummary:
+        return self._d.get("most_likely_origin") or _EMPTY_ORIGIN
+
+    @property
+    def test_plan(self) -> list[TestStep]:
+        return [step for step in self._d.get("test_plan", []) if isinstance(step, dict)]
+
+    @property
+    def run_suitability(self) -> list[RunSuitabilityCheck]:
+        return [item for item in self._d.get("run_suitability", []) if isinstance(item, dict)]
+
+    @property
+    def warnings(self) -> list[object]:
+        return list(self._d.get("warnings", []))
+
+    @property
+    def sensor_intensity_by_location(self) -> list[IntensityRow]:
+        return [
+            row for row in self._d.get("sensor_intensity_by_location", []) if isinstance(row, dict)
         ]
-    return sensor_locations_active
+
+    # -- sensor locations --------------------------------------------------
+
+    @property
+    def sensor_locations_active(self) -> list[str]:
+        """Return active sensor locations (connected-throughout, fallback to all)."""
+        connected = self._d.get("sensor_locations_connected_throughout", [])
+        active = [str(loc) for loc in connected if str(loc).strip()]
+        if not active:
+            active = [str(loc) for loc in self._d.get("sensor_locations", []) if str(loc).strip()]
+        return active
+
+    # -- display helpers ---------------------------------------------------
+
+    @property
+    def sample_rate_hz_text(self) -> str | None:
+        rate = self.raw_sample_rate_hz
+        return f"{rate:g}" if rate is not None else None
 
 
 def normalized_origin_location(origin: OriginSummary) -> str:
@@ -315,7 +424,7 @@ def resolve_sensor_count(summary: SummaryData, sensor_locations_active: list[str
     """Resolve the effective sensor count used by report certainty logic."""
     sensor_count = len(sensor_locations_active)
     if sensor_count <= 0:
-        sensor_count = int(_as_float(summary.get("sensor_count_used")) or 0)
+        sensor_count = SummaryView(summary).sensor_count_used
     return sensor_count
 
 
@@ -450,8 +559,8 @@ def build_next_steps_from_summary(
         ]
 
     next_steps: list[NextStep] = []
-    test_plan = [step for step in summary.get("test_plan", []) if isinstance(step, dict)]
-    for step in test_plan:
+    view = SummaryView(summary)
+    for step in view.test_plan:
         next_steps.append(
             NextStep(
                 action=_resolve_step_value(step.get("what"), lang=lang, tr=tr),
@@ -487,10 +596,9 @@ def build_data_trust_from_summary(
     tr: Callable,
 ) -> list[DataTrustItem]:
     """Build the data-trust checklist from run_suitability items."""
+    view = SummaryView(summary)
     data_trust: list[DataTrustItem] = []
-    for item in summary.get("run_suitability", []):
-        if not isinstance(item, dict):
-            continue
+    for item in view.run_suitability:
         check_text = _resolve_check_text(item.get("check"), lang=lang, tr=tr)
         detail = _resolve_detail_text(item.get("explanation"), lang=lang, tr=tr)
         data_trust.append(
@@ -500,7 +608,7 @@ def build_data_trust_from_summary(
                 detail=detail,
             ),
         )
-    for warning in summary.get("warnings", []):
+    for warning in view.warnings:
         if not isinstance(warning, dict):
             continue
         data_trust.append(
@@ -745,32 +853,27 @@ def build_version_marker() -> str:
 def prepare_report_mapping_context(
     summary: SummaryData,
 ) -> ReportMappingContext:
-    """Extract structural summary context for report mapping."""
-    meta = summary.get("metadata") or {}
+    """Extract structural summary context for report mapping.
+
+    Uses :class:`SummaryView` for typed access to summary dict fields,
+    eliminating scattered ``.get()`` chains and type coercion.
+    """
+    view = SummaryView(summary)
+    meta = view.metadata
     car_name = str(meta.get("car_name") or "").strip() or None
     car_type = str(meta.get("car_type") or "").strip() or None
-    report_date = summary.get("report_date") or utc_now_iso()
+    report_date = view.report_date or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
     findings, findings_non_ref, _top_causes_all, top_causes = select_effective_top_causes(
-        summary.get("top_causes", []),
-        summary.get("findings", []),
+        view.top_causes,
+        view.findings,
     )
 
-    speed_stats: SpeedStats = summary.get("speed_stats") or _EMPTY_SPEED_STATS
-    origin: OriginSummary = summary.get("most_likely_origin") or _EMPTY_ORIGIN
-
+    speed_stats = view.speed_stats
+    origin = view.origin
     origin_location = normalized_origin_location(origin)
-    sensor_locations_active = extract_sensor_locations(summary)
-
-    # Typed run metadata — resolved here so the context carries properly
-    # typed values and eliminates the dict[str, object] + type: ignore
-    # pattern that previously plagued _build_report_template_data.
-    duration_text = str(summary.get("record_length") or "") or None
-    start_time_utc = str(summary.get("start_time_utc") or "").strip() or None
-    end_time_utc = str(summary.get("end_time_utc") or "").strip() or None
-    raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
-    sample_rate_hz = f"{raw_sample_rate_hz:g}" if raw_sample_rate_hz is not None else None
+    sensor_locations_active = view.sensor_locations_active
 
     return ReportMappingContext(
         meta=meta,
@@ -784,14 +887,14 @@ def prepare_report_mapping_context(
         origin=origin,
         origin_location=origin_location,
         sensor_locations_active=sensor_locations_active,
-        duration_text=duration_text,
-        start_time_utc=start_time_utc,
-        end_time_utc=end_time_utc,
-        sample_rate_hz=sample_rate_hz,
+        duration_text=view.record_length,
+        start_time_utc=view.start_time_utc,
+        end_time_utc=view.end_time_utc,
+        sample_rate_hz=view.sample_rate_hz_text,
         tire_spec_text=tire_spec_text(meta),
-        sample_count=int(_as_float(summary.get("rows")) or 0),
-        sensor_model=str(summary.get("sensor_model") or "").strip() or None,
-        firmware_version=str(summary.get("firmware_version") or "").strip() or None,
+        sample_count=view.row_count,
+        sensor_model=view.sensor_model,
+        firmware_version=view.firmware_version,
     )
 
 
@@ -895,6 +998,7 @@ def _build_report_template_data(
     tr: Callable[..., str],
 ) -> ReportTemplateData:
     """Map a summary dict into the final report template data structure."""
+    view = SummaryView(summary)
     context = prepare_report_mapping_context(summary)
     primary = resolve_primary_report_candidate(summary, context=context, tr=tr, lang=lang)
     observed = context.observed_signature(primary)
@@ -922,7 +1026,7 @@ def _build_report_template_data(
     version_marker = build_version_marker()
 
     raw_sensor_intensity = filter_active_sensor_intensity(
-        summary.get("sensor_intensity_by_location", []),
+        view.sensor_intensity_by_location,
         context.sensor_locations_active,
     )
     hotspot_rows = compute_location_hotspot_rows(raw_sensor_intensity)

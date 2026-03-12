@@ -12,6 +12,7 @@ from ._types import Finding, SummaryData, i18n_ref
 from .phase_segmentation import DrivingPhase, classify_sample_phase
 from .summary_builder import (
     LocalizationAssessment,
+    RunAnalysis,
     build_findings_for_samples,
     summarize_log,
     summarize_run_data,
@@ -23,6 +24,7 @@ __all__ = [
     "Finding",
     "LocalizationAssessment",
     "OrderAssessment",
+    "RunAnalysis",
     "SummaryData",
     "build_findings_for_samples",
     "classify_sample_phase",
