@@ -1,4 +1,4 @@
-"""Tests for the DDD domain models: AccelerationSample, VibrationReading, DiagnosticSession."""
+"""Tests for the DDD domain models: Measurement, VibrationReading, Run."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from datetime import UTC, datetime
 import pytest
 
 from vibesensor.domain.core import (
-    AccelerationSample,
-    DiagnosticSession,
+    Measurement,
+    Run,
     SessionStatus,
     VibrationReading,
 )
@@ -20,15 +20,15 @@ _NOW = datetime(2025, 6, 15, 12, 0, 0, tzinfo=UTC)
 
 
 # ---------------------------------------------------------------------------
-# AccelerationSample
+# Measurement
 # ---------------------------------------------------------------------------
 
 
-class TestAccelerationSample:
-    """Value-object behaviour for AccelerationSample."""
+class TestMeasurement:
+    """Value-object behaviour for Measurement."""
 
     def test_fields_are_accessible(self) -> None:
-        sample = AccelerationSample(
+        sample = Measurement(
             x=0.01, y=-0.02, z=1.0, timestamp=_NOW, sample_rate_hz=4096, sensor_id="aabb01"
         )
         assert sample.x == 0.01
@@ -39,13 +39,13 @@ class TestAccelerationSample:
         assert sample.sensor_id == "aabb01"
 
     def test_frozen(self) -> None:
-        sample = AccelerationSample(x=0.0, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        sample = Measurement(x=0.0, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         with pytest.raises(AttributeError):
             sample.x = 1.0  # type: ignore[misc]
 
     def test_to_vibration_reading_db_formula(self) -> None:
         """Verify the dB conversion matches the canonical formula."""
-        sample = AccelerationSample(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         noise_floor = 0.001
         reading = sample.to_vibration_reading(noise_floor)
 
@@ -60,32 +60,32 @@ class TestAccelerationSample:
 
     def test_to_vibration_reading_multi_axis(self) -> None:
         """Peak amplitude is the Euclidean magnitude across all three axes."""
-        sample = AccelerationSample(x=0.03, y=0.04, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        sample = Measurement(x=0.03, y=0.04, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         reading = sample.to_vibration_reading(noise_floor=0.001)
         expected_peak = math.sqrt(0.03**2 + 0.04**2)
         assert reading.peak_amplitude_g == pytest.approx(expected_peak)
 
     def test_to_vibration_reading_zero_noise_floor(self) -> None:
         """Zero noise floor should not cause a math error."""
-        sample = AccelerationSample(x=0.05, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        sample = Measurement(x=0.05, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         reading = sample.to_vibration_reading(noise_floor=0.0)
         assert math.isfinite(reading.intensity_db)
 
     def test_to_vibration_reading_frequency_is_zero(self) -> None:
         """Single-sample readings carry no spectral info → frequency_hz == 0."""
-        sample = AccelerationSample(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         reading = sample.to_vibration_reading(noise_floor=0.001)
         assert reading.frequency_hz == 0.0
 
     def test_to_vibration_reading_preserves_sensor_id(self) -> None:
-        sample = AccelerationSample(
+        sample = Measurement(
             x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096, sensor_id="abc123"
         )
         reading = sample.to_vibration_reading(noise_floor=0.001)
         assert reading.sensor_id == "abc123"
 
     def test_to_vibration_reading_preserves_timestamp(self) -> None:
-        sample = AccelerationSample(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         reading = sample.to_vibration_reading(noise_floor=0.001)
         assert reading.timestamp == _NOW
 
@@ -157,33 +157,33 @@ class TestVibrationReading:
 
 
 # ---------------------------------------------------------------------------
-# DiagnosticSession
+# Run
 # ---------------------------------------------------------------------------
 
 
-class TestDiagnosticSession:
-    """Aggregate-root behaviour for DiagnosticSession."""
+class TestRun:
+    """Aggregate-root behaviour for Run."""
 
     def test_initial_state_is_pending(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         assert session.status is SessionStatus.PENDING
         assert session.start_time is None
         assert session.stop_time is None
         assert session.reading_count == 0
 
     def test_session_id_is_unique(self) -> None:
-        s1 = DiagnosticSession()
-        s2 = DiagnosticSession()
+        s1 = Run()
+        s2 = Run()
         assert s1.session_id != s2.session_id
 
     def test_start_transitions_to_running(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         session.start()
         assert session.status is SessionStatus.RUNNING
         assert session.start_time is not None
 
     def test_stop_transitions_to_stopped(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         session.start()
         session.stop()
         assert session.status is SessionStatus.STOPPED
@@ -191,70 +191,70 @@ class TestDiagnosticSession:
         assert session.stop_time >= session.start_time  # type: ignore[operator]
 
     def test_start_when_already_running_raises(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         session.start()
         with pytest.raises(RuntimeError, match="Cannot start session"):
             session.start()
 
     def test_start_when_stopped_raises(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         session.start()
         session.stop()
         with pytest.raises(RuntimeError, match="Cannot start session"):
             session.start()
 
     def test_stop_when_pending_raises(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         with pytest.raises(RuntimeError, match="Cannot stop session"):
             session.stop()
 
     def test_stop_when_already_stopped_raises(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         session.start()
         session.stop()
         with pytest.raises(RuntimeError, match="Cannot stop session"):
             session.stop()
 
     def test_process_sample_requires_running(self) -> None:
-        session = DiagnosticSession()
-        sample = AccelerationSample(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        session = Run()
+        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         with pytest.raises(RuntimeError, match="Cannot process samples"):
             session.process_sample(sample, noise_floor=0.001)
 
     def test_process_sample_records_reading(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         session.start()
-        sample = AccelerationSample(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         reading = session.process_sample(sample, noise_floor=0.001)
         assert session.reading_count == 1
         assert session.readings[0] is reading
 
     def test_process_sample_after_stop_raises(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         session.start()
         session.stop()
-        sample = AccelerationSample(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         with pytest.raises(RuntimeError, match="Cannot process samples"):
             session.process_sample(sample, noise_floor=0.001)
 
     def test_get_peak_vibration_empty(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         session.start()
         assert session.get_peak_vibration() is None
 
     def test_get_peak_vibration_single(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         session.start()
-        sample = AccelerationSample(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         reading = session.process_sample(sample, noise_floor=0.001)
         assert session.get_peak_vibration() is reading
 
     def test_get_peak_vibration_multiple(self) -> None:
-        session = DiagnosticSession()
+        session = Run()
         session.start()
 
-        low = AccelerationSample(x=0.01, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        high = AccelerationSample(x=0.5, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        low = Measurement(x=0.01, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        high = Measurement(x=0.5, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
 
         session.process_sample(low, noise_floor=0.001)
         high_reading = session.process_sample(high, noise_floor=0.001)
@@ -265,9 +265,9 @@ class TestDiagnosticSession:
 
     def test_readings_returns_copy(self) -> None:
         """Modifying the returned list must not affect session state."""
-        session = DiagnosticSession()
+        session = Run()
         session.start()
-        sample = AccelerationSample(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
+        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         session.process_sample(sample, noise_floor=0.001)
 
         readings_copy = session.readings
@@ -276,6 +276,6 @@ class TestDiagnosticSession:
 
     def test_vehicle_id_and_settings(self) -> None:
         settings = {"tire_width_mm": 285.0, "final_drive_ratio": 3.08}
-        session = DiagnosticSession(vehicle_id="car-42", analysis_settings=settings)
+        session = Run(vehicle_id="car-42", analysis_settings=settings)
         assert session.vehicle_id == "car-42"
         assert session.analysis_settings == settings

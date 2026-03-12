@@ -26,8 +26,8 @@ from ..constants import (
 )
 from ..domain_models import as_float_or_none as _as_float
 from ._types import (
-    Finding,
     FindingEvidenceMetrics,
+    FindingPayload,
     IntensityRow,
     JsonObject,
     JsonValue,
@@ -69,7 +69,7 @@ from .top_cause_selection import finding_sort_key
 
 
 class FindingRecord:
-    """Typed accessor wrapping a ``Finding`` dict.
+    """Typed accessor wrapping a ``FindingPayload`` dict.
 
     Provides property-based access, classification predicates, and source
     normalisation so that callers no longer scatter ``.get()`` chains and
@@ -83,14 +83,14 @@ class FindingRecord:
 
     __slots__ = ("_d",)
 
-    def __init__(self, finding: Finding) -> None:
+    def __init__(self, finding: FindingPayload) -> None:
         self._d = finding
 
     # -- raw dict access ---------------------------------------------------
 
     @property
-    def data(self) -> Finding:
-        """Return the underlying ``Finding`` dict."""
+    def data(self) -> FindingPayload:
+        """Return the underlying ``FindingPayload`` dict."""
         return self._d
 
     # -- identity / classification -----------------------------------------
@@ -148,7 +148,7 @@ class FindingRecord:
 
 
 class FindingCollection:
-    """Typed operations over a ``list[Finding]``.
+    """Typed operations over a ``list[FindingPayload]``.
 
     Provides partitioning (reference / diagnostic / informational),
     sorting, stable-ID assignment, and common filtering patterns that
@@ -157,38 +157,38 @@ class FindingCollection:
 
     __slots__ = ("_items",)
 
-    def __init__(self, findings: list[Finding]) -> None:
+    def __init__(self, findings: list[FindingPayload]) -> None:
         self._items = findings
 
     # -- access ------------------------------------------------------------
 
     @property
-    def items(self) -> list[Finding]:
+    def items(self) -> list[FindingPayload]:
         return self._items
 
     def __len__(self) -> int:
         return len(self._items)
 
-    def __iter__(self) -> Iterator[Finding]:
+    def __iter__(self) -> Iterator[FindingPayload]:
         return iter(self._items)
 
     # -- filtering ---------------------------------------------------------
 
-    def references(self) -> list[Finding]:
+    def references(self) -> list[FindingPayload]:
         return [f for f in self._items if FindingRecord(f).is_reference]
 
-    def diagnostics(self) -> list[Finding]:
+    def diagnostics(self) -> list[FindingPayload]:
         return [f for f in self._items if FindingRecord(f).is_diagnostic]
 
-    def informational(self) -> list[Finding]:
+    def informational(self) -> list[FindingPayload]:
         return [f for f in self._items if FindingRecord(f).is_informational]
 
-    def non_reference(self) -> list[Finding]:
+    def non_reference(self) -> list[FindingPayload]:
         return [f for f in self._items if not FindingRecord(f).is_reference]
 
     # -- ordering and finalization -----------------------------------------
 
-    def finalize(self) -> list[Finding]:
+    def finalize(self) -> list[FindingPayload]:
         """Partition, rank by confidence, and assign stable ``F###`` IDs.
 
         Returns the ordered list: references → diagnostics → informational.
@@ -230,7 +230,7 @@ def _reference_missing_finding(
     suspected_source: str,
     evidence_summary: JsonValue,
     quick_checks: list[JsonValue],
-) -> Finding:
+) -> FindingPayload:
     return {
         "finding_id": finding_id,
         "finding_type": "reference",
@@ -256,9 +256,9 @@ def build_reference_findings(
     speed_non_null_pct: float,
     tire_circumference_m: float | None,
     raw_sample_rate_hz: float | None,
-) -> tuple[list[Finding], bool]:
+) -> tuple[list[FindingPayload], bool]:
     """Build reference-missing findings and return engine reference sufficiency."""
-    findings: list[Finding] = []
+    findings: list[FindingPayload] = []
     if not speed_sufficient:
         findings.append(
             _reference_missing_finding(
@@ -388,7 +388,7 @@ def prepare_analysis_samples(
     return analysis_samples, analysis_phases, resolved_phases, use_filtered_samples
 
 
-def collect_order_frequencies(order_findings: list[Finding]) -> set[float]:
+def collect_order_frequencies(order_findings: list[FindingPayload]) -> set[float]:
     """Collect matched order frequencies used to suppress duplicate persistent findings."""
     order_freqs: set[float] = set()
     for order_finding in order_findings:
@@ -407,7 +407,7 @@ def collect_order_frequencies(order_findings: list[Finding]) -> set[float]:
     return order_freqs
 
 
-def finalize_findings(findings: list[Finding]) -> list[Finding]:
+def finalize_findings(findings: list[FindingPayload]) -> list[FindingPayload]:
     """Partition, rank, and assign stable public finding IDs.
 
     Delegates to :class:`FindingCollection` which owns the partitioning,
@@ -635,7 +635,7 @@ def _build_persistent_peak_findings(
     freq_bin_hz: float = 2.0,
     per_sample_phases: PhaseLabels | None = None,
     run_noise_baseline_g: float | None = None,
-) -> list[Finding]:
+) -> list[FindingPayload]:
     """Build findings for non-order persistent frequency peaks.
 
     Uses the same confidence-style scoring as order findings (presence_ratio,
@@ -668,7 +668,7 @@ class PeakBin:
     """Represents a single frequency bin with accumulated peak statistics.
 
     Owns presence ratio, burstiness, SNR, spatial/speed uniformity,
-    classification, confidence computation, and export to a ``Finding`` dict.
+    classification, confidence computation, and export to a ``FindingPayload`` dict.
     Replaces the 200-line inner loop body that previously lived inside
     ``_build_persistent_peak_findings``.
     """
@@ -868,10 +868,10 @@ class PeakBin:
             floor_amp_g=self._effective_floor,
         )
 
-    # -- export to Finding dict --------------------------------------------
+    # -- export to FindingPayload dict --------------------------------------------
 
-    def to_finding(self) -> Finding:
-        """Export this bin's analysis as a canonical ``Finding`` dict."""
+    def to_finding(self) -> FindingPayload:
+        """Export this bin's analysis as a canonical ``FindingPayload`` dict."""
         peak_strength_db = self._peak_strength_db
         peak_speed_kmh, speed_window_kmh, derived_speed_band = _speed_profile_from_points(
             self._speed_amp_pairs,
@@ -935,7 +935,7 @@ class PeakBin:
             "spatial_uniformity": self._spatial_uniformity,
             "speed_uniformity": self._speed_uniformity,
         }
-        finding: Finding = {
+        finding: FindingPayload = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{self._bin_center:.0f}hz",
             "severity": "info" if self._peak_type == "transient" else "diagnostic",
@@ -1007,7 +1007,7 @@ class PeakFindingAnalyzer:
         self._per_sample_phases = per_sample_phases
         self._run_noise_baseline_g = run_noise_baseline_g
 
-    def analyze(self) -> list[Finding]:
+    def analyze(self) -> list[FindingPayload]:
         """Run the full peak-finding analysis and return ordered findings."""
         freq_bin_hz = self._freq_bin_hz
         freq_bin_hz_half = freq_bin_hz * 0.5
@@ -1067,7 +1067,7 @@ class PeakFindingAnalyzer:
         return bins
 
     @staticmethod
-    def _select_top_findings(bins: list[PeakBin], *, n_samples: int) -> list[Finding]:
+    def _select_top_findings(bins: list[PeakBin], *, n_samples: int) -> list[FindingPayload]:
         """Sort bins by ranking score and return top findings."""
         persistent: list[tuple[float, PeakBin]] = []
         transient: list[tuple[float, PeakBin]] = []
@@ -1078,7 +1078,7 @@ class PeakFindingAnalyzer:
         persistent.sort(key=lambda item: item[0], reverse=True)
         transient.sort(key=lambda item: item[0], reverse=True)
 
-        results: list[Finding] = []
+        results: list[FindingPayload] = []
         for _score, peak_bin in persistent[:PERSISTENT_PEAK_MAX_FINDINGS]:
             finding = peak_bin.to_finding()
             finding["evidence_metrics"]["total_samples"] = n_samples
@@ -1371,7 +1371,7 @@ def _build_findings(
     lang: str = "en",
     per_sample_phases: PhaseLabels | None = None,
     run_noise_baseline_g: float | None = None,
-) -> list[Finding]:
+) -> list[FindingPayload]:
     """Build and rank all findings for a completed run.
 
     Coordinates reference checks (speed, wheel, engine, sample-rate), order

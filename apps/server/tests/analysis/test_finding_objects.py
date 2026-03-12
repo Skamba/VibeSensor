@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis._types import Finding
+from vibesensor.analysis._types import FindingPayload
 from vibesensor.analysis.findings import (
     FindingCollection,
     FindingRecord,
@@ -13,11 +13,11 @@ from vibesensor.analysis.findings import (
 )
 
 # ---------------------------------------------------------------------------
-# Fixtures: minimal Finding dicts
+# Fixtures: minimal FindingPayload dicts
 # ---------------------------------------------------------------------------
 
 
-def _ref_finding(finding_id: str = "REF_SPEED") -> Finding:
+def _ref_finding(finding_id: str = "REF_SPEED") -> FindingPayload:
     return {
         "finding_id": finding_id,
         "suspected_source": "unknown",
@@ -35,7 +35,7 @@ def _diag_finding(
     source: str = "wheel/tire",
     ranking_score: float = 1.0,
     location: str = "front_left",
-) -> Finding:
+) -> FindingPayload:
     return {
         "finding_id": finding_id,
         "suspected_source": source,
@@ -54,7 +54,7 @@ def _diag_finding(
     }
 
 
-def _info_finding(finding_id: str = "F_PEAK", confidence: float = 0.10) -> Finding:
+def _info_finding(finding_id: str = "F_PEAK", confidence: float = 0.10) -> FindingPayload:
     f = _diag_finding(finding_id=finding_id, confidence=confidence)
     f["severity"] = "info"
     f["suspected_source"] = "transient_impact"

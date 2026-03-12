@@ -10,7 +10,7 @@ from typing import get_type_hints
 
 import pytest
 
-from vibesensor.analysis._types import AmplitudeMetric, Finding, MatchedPoint
+from vibesensor.analysis._types import AmplitudeMetric, FindingPayload, MatchedPoint
 from vibesensor.analysis.findings import (
     _build_findings,
     _classify_peak_type,
@@ -67,7 +67,7 @@ class TestCanonicalFindingModel:
     """Guard the canonical finding model and its main builder return types."""
 
     def test_finding_typed_dict_exposes_core_contract(self) -> None:
-        hints = get_type_hints(Finding)
+        hints = get_type_hints(FindingPayload)
         assert {
             "finding_id",
             "suspected_source",
@@ -83,8 +83,8 @@ class TestCanonicalFindingModel:
         assert hints["matched_points"] == list[MatchedPoint]
 
     def test_main_finding_builders_return_canonical_model(self) -> None:
-        assert _build_findings.__annotations__["return"] == "list[Finding]"
-        assert assemble_order_finding.__annotations__["return"] == "tuple[float, Finding]"
+        assert _build_findings.__annotations__["return"] == "list[FindingPayload]"
+        assert assemble_order_finding.__annotations__["return"] == "tuple[float, FindingPayload]"
         assert get_type_hints(OrderMatchAccumulator)["matched_points"] == list[MatchedPoint]
 
 
