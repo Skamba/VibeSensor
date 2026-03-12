@@ -372,3 +372,102 @@ class TestPackageImports:
         assert Finding is not None
         assert Report is not None
         assert HistoryRecord is not None
+
+
+# ---------------------------------------------------------------------------
+# Bridge method integration tests
+# ---------------------------------------------------------------------------
+
+
+class TestBridgeMethods:
+    """Config objects bridge to domain objects correctly."""
+
+    def test_car_config_to_car(self) -> None:
+        from vibesensor.domain_models import CarConfig
+
+        cfg = CarConfig(id="abc", name="BMW", type="suv", aspects={"rim_in": 19.0}, variant="M3")
+        car = cfg.to_car()
+        assert isinstance(car, Car)
+        assert car.id == "abc"
+        assert car.name == "BMW"
+        assert car.car_type == "suv"
+        assert car.rim_in == 19.0
+        assert car.variant == "M3"
+        assert car.display_name == "BMW (suv)"
+
+    def test_sensor_config_to_sensor(self) -> None:
+        from vibesensor.domain_models import SensorConfig
+
+        cfg = SensorConfig(sensor_id="aabb", name="FL", location="front_left_wheel")
+        sensor = cfg.to_sensor()
+        assert isinstance(sensor, Sensor)
+        assert sensor.sensor_id == "aabb"
+        assert sensor.display_name == "FL"
+        assert sensor.is_placed
+        assert sensor.placement is not None
+        assert sensor.placement.is_wheel
+        assert sensor.placement.display_name == "Front Left Wheel"
+
+    def test_sensor_config_to_sensor_empty_location(self) -> None:
+        from vibesensor.domain_models import SensorConfig
+
+        cfg = SensorConfig(sensor_id="aabb", name="Test", location="")
+        sensor = cfg.to_sensor()
+        assert not sensor.is_placed
+        assert sensor.placement is None
+
+    def test_speed_source_config_to_speed_source(self) -> None:
+        from vibesensor.domain_models import SpeedSourceConfig
+
+        cfg = SpeedSourceConfig.default()
+        speed = cfg.to_speed_source()
+        assert isinstance(speed, SpeedSource)
+        assert speed.is_gps
+        assert speed.label == "GPS"
+
+    def test_sensor_placement_from_code(self) -> None:
+        p = SensorPlacement.from_code("engine_bay")
+        assert p.code == "engine_bay"
+        assert p.label == "Engine Bay"
+        assert not p.is_wheel
+
+    def test_sensor_placement_from_code_unknown(self) -> None:
+        p = SensorPlacement.from_code("custom_spot")
+        assert p.code == "custom_spot"
+        assert p.label == "Custom Spot"
+
+    def test_phase_segment_to_analysis_window(self) -> None:
+        from vibesensor.analysis.phase_segmentation import DrivingPhase, PhaseSegment
+
+        seg = PhaseSegment(
+            phase=DrivingPhase.CRUISE,
+            start_idx=10,
+            end_idx=50,
+            start_t_s=1.0,
+            end_t_s=5.0,
+            speed_min_kmh=80.0,
+            speed_max_kmh=100.0,
+            sample_count=40,
+        )
+        aw = seg.to_analysis_window()
+        assert isinstance(aw, AnalysisWindow)
+        assert aw.phase == "cruise"
+        assert aw.sample_count == 40
+        assert aw.duration_s == pytest.approx(4.0)
+        assert aw.speed_min_kmh == 80.0
+        assert aw.speed_max_kmh == 100.0
+
+    def test_settings_store_domain_accessors(self) -> None:
+        from vibesensor.settings_store import SettingsStore
+
+        store = SettingsStore()
+        assert store.speed_source().is_gps
+        assert store.active_car() is None
+        assert store.sensors() == []
+
+    def test_finding_payload_alias(self) -> None:
+        """FindingPayload is the analysis TypedDict; Finding alias still works."""
+        from vibesensor.analysis._types import Finding as FindingAlias
+        from vibesensor.analysis._types import FindingPayload
+
+        assert FindingAlias is FindingPayload
