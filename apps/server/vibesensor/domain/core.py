@@ -679,6 +679,63 @@ class Report:
     sensor_count: int = 0
     finding_count: int = 0
 
+    # -- factories ---------------------------------------------------------
+
+    @classmethod
+    def from_summary(cls, summary: dict[str, object]) -> Report:
+        """Create a domain Report from a ``SummaryData`` dict.
+
+        Extracts the key metadata fields from the analysis summary to build
+        a high-level domain view of the report.
+        """
+        meta = summary.get("metadata") or {}
+        if not isinstance(meta, dict):
+            meta = {}
+
+        car_cfg = meta.get("car")
+        car_name: str | None = None
+        car_type: str | None = None
+        if isinstance(car_cfg, dict):
+            car_name = str(car_cfg.get("name", "")) or None
+            car_type = str(car_cfg.get("car_type", "")) or None
+
+        findings = summary.get("findings")
+        finding_count = len(findings) if isinstance(findings, list) else 0
+
+        rows = summary.get("rows")
+        sample_count = int(rows) if rows is not None else 0
+
+        sensor_count_raw = summary.get("sensor_count_used")
+        sensor_count = int(sensor_count_raw) if sensor_count_raw is not None else 0
+
+        duration_s = summary.get("duration_s")
+        duration_text: str | None = None
+        if duration_s is not None:
+            try:
+                secs = float(duration_s)  # type: ignore[arg-type]
+                mins = int(secs // 60)
+                rem = int(secs % 60)
+                duration_text = f"{mins}:{rem:02d}" if mins else f"{rem}s"
+            except (TypeError, ValueError):
+                pass
+
+        date_str = ""
+        report_date = summary.get("report_date")
+        if isinstance(report_date, str):
+            date_str = report_date
+
+        return cls(
+            run_id=str(summary.get("run_id", "")),
+            lang=str(summary.get("lang", "en")),
+            car_name=car_name,
+            car_type=car_type,
+            date_str=date_str,
+            duration_text=duration_text,
+            sample_count=sample_count,
+            sensor_count=sensor_count,
+            finding_count=finding_count,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class HistoryRecord:

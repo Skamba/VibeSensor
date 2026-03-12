@@ -337,6 +337,42 @@ class TestReport:
         with pytest.raises(AttributeError):
             r.title = "new"  # type: ignore[misc]
 
+    def test_from_summary(self) -> None:
+        summary: dict[str, object] = {
+            "run_id": "run-123",
+            "lang": "de",
+            "rows": 500,
+            "duration_s": 125.0,
+            "report_date": "2025-01-15",
+            "sensor_count_used": 3,
+            "findings": [
+                {"finding_id": "F001", "suspected_source": "bearing"},
+                {"finding_id": "F002", "suspected_source": "tire"},
+            ],
+            "metadata": {"car": {"name": "BMW 3", "car_type": "sedan"}},
+        }
+        r = Report.from_summary(summary)
+        assert r.run_id == "run-123"
+        assert r.lang == "de"
+        assert r.sample_count == 500
+        assert r.sensor_count == 3
+        assert r.finding_count == 2
+        assert r.car_name == "BMW 3"
+        assert r.car_type == "sedan"
+        assert r.date_str == "2025-01-15"
+        assert r.duration_text == "2:05"
+
+    def test_from_summary_minimal(self) -> None:
+        r = Report.from_summary({"run_id": "r1"})
+        assert r.run_id == "r1"
+        assert r.finding_count == 0
+        assert r.sample_count == 0
+        assert r.car_name is None
+
+    def test_from_summary_short_duration(self) -> None:
+        r = Report.from_summary({"run_id": "r1", "duration_s": 45.0})
+        assert r.duration_text == "45s"
+
 
 # ---------------------------------------------------------------------------
 # Phase 3: HistoryRecord
