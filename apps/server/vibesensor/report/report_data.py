@@ -38,7 +38,11 @@ class CarMeta:
 
 @dataclass
 class ObservedSignature:
-    """The dominant vibration signature observed during the run."""
+    """The dominant vibration signature observed during the run.
+
+    Owns display-ready accessors for certainty and strength rendering
+    that were previously repeated at each PDF rendering site.
+    """
 
     primary_system: str | None = None
     strongest_sensor_location: str | None = None
@@ -48,6 +52,16 @@ class ObservedSignature:
     certainty_label: str | None = None
     certainty_pct: str | None = None
     certainty_reason: str | None = None
+
+    @property
+    def has_certainty_reason(self) -> bool:
+        """Whether a human-readable certainty reason is present."""
+        return bool(self.certainty_reason)
+
+    @property
+    def observed_row_count(self) -> int:
+        """Number of rows needed to render this signature in the report."""
+        return 5 + (1 if self.has_certainty_reason else 0)
 
 
 @dataclass
@@ -92,6 +106,21 @@ class DataTrustItem:
     state: str = "warn"
     detail: str | None = None
 
+    @property
+    def is_passing(self) -> bool:
+        """Whether this check passed."""
+        return self.state == "pass"
+
+    @property
+    def is_warning(self) -> bool:
+        """Whether this check is a warning."""
+        return self.state == "warn"
+
+    @property
+    def icon(self) -> str:
+        """Unicode icon suitable for PDF/text rendering."""
+        return "\u2713" if self.is_passing else "\u26a0"
+
 
 @dataclass
 class PatternEvidence:
@@ -126,7 +155,12 @@ class PeakRow:
 
 @dataclass
 class ReportTemplateData:
-    """All data needed to render a diagnostic PDF report."""
+    """All data needed to render a diagnostic PDF report.
+
+    Owns display-ready accessors for sensor summary formatting and
+    tier-gated section visibility that were previously scattered in
+    PDF rendering code.
+    """
 
     title: str = ""
     run_datetime: str | None = None
@@ -158,3 +192,25 @@ class ReportTemplateData:
     top_causes: list[JsonObject] = field(default_factory=list)
     sensor_intensity_by_location: list[JsonObject] = field(default_factory=list)
     location_hotspot_rows: list[JsonObject] = field(default_factory=list)
+
+    # -- display helpers ----------------------------------------------------
+
+    @property
+    def sensor_summary(self) -> str:
+        """Format sensor count with location names for report display."""
+        if not self.sensor_count:
+            return ""
+        info = str(self.sensor_count)
+        if self.sensor_locations:
+            info += f" ({', '.join(self.sensor_locations[:4])})"
+        return info
+
+    @property
+    def is_tier_a(self) -> bool:
+        """Whether certainty is Tier A (very low — suppress specific diagnoses)."""
+        return self.certainty_tier_key == "A"
+
+    @property
+    def is_tier_c(self) -> bool:
+        """Whether certainty is Tier C (sufficient for full diagnostic output)."""
+        return self.certainty_tier_key == "C"

@@ -119,11 +119,8 @@ def _build_header_rows(
         right_pairs.append((tr("RUN_ID"), data.run_id))
     if data.duration_text:
         right_pairs.append((tr("DURATION"), data.duration_text))
-    if data.sensor_count:
-        sensor_info = str(data.sensor_count)
-        if data.sensor_locations:
-            sensor_info += f" ({', '.join(data.sensor_locations[:4])})"
-        right_pairs.append((tr("SENSORS_LABEL"), sensor_info))
+    if data.sensor_summary:
+        right_pairs.append((tr("SENSORS_LABEL"), data.sensor_summary))
     if data.sensor_model:
         right_pairs.append((tr("SENSOR_MODEL"), data.sensor_model))
     if data.firmware_version:
@@ -178,7 +175,7 @@ def _draw_header_panel(
         width=width,
         page_top=page_top,
         header_content_height=max(left_h, right_h),
-        observed_rows=5 + (1 if data.observed.certainty_reason else 0),
+        observed_rows=data.observed.observed_row_count,
     )
     _draw_panel(c, layout.header.x, layout.header.y, layout.header.w, layout.header.h, fill=SOFT_BG)
 
@@ -212,7 +209,7 @@ def _draw_observed_signature_panel(
     y_cursor: float,
     na: str,
 ) -> float:
-    obs_rows = 5 + (1 if data.observed.certainty_reason else 0)
+    obs_rows = data.observed.observed_row_count
     layout = build_page1_layout(
         width=width,
         page_top=PAGE_H - MARGIN,
@@ -270,7 +267,7 @@ def _draw_observed_signature_panel(
     cert_val = _cert_display(data.observed.certainty_label, data.observed.certainty_pct, na)
     _draw_kv(c, ox, oy, tr("CERTAINTY_LABEL_FULL"), cert_val, label_w=OBSERVED_LABEL_W)
     oy -= obs_step
-    if data.observed.certainty_reason:
+    if data.observed.has_certainty_reason:
         _draw_kv(
             c,
             ox,
@@ -280,7 +277,7 @@ def _draw_observed_signature_panel(
             label_w=OBSERVED_LABEL_W,
             value_w=width - 8 * mm - OBSERVED_LABEL_W,
         )
-    if data.certainty_tier_key == "A":
+    if data.is_tier_a:
         oy -= obs_step
         _draw_text(
             c,
@@ -317,7 +314,7 @@ def _draw_systems_panel(
         width=width,
         page_top=PAGE_H - MARGIN,
         header_content_height=0.0,
-        observed_rows=5 + (1 if data.observed.certainty_reason else 0),
+        observed_rows=data.observed.observed_row_count,
     )
     cards_h = layout.systems.h
     cards_y = y_cursor - cards_h
@@ -326,10 +323,10 @@ def _draw_systems_panel(
     inner_x = MARGIN + 4 * mm
     inner_w = width - 8 * mm
     inner_top = cards_y + cards_h - PANEL_HEADER_H
-    if data.certainty_tier_key == "A" or not cards:
+    if data.is_tier_a or not cards:
         msg = (
             tr("TIER_A_NO_SYSTEMS")
-            if data.certainty_tier_key == "A"
+            if data.is_tier_a
             else tr("NO_SYSTEMS_WITH_FINDINGS")
         )
         _draw_text(c, inner_x, inner_top, inner_w, msg, size=FS_BODY, color=SUB_CLR)
@@ -361,11 +358,10 @@ def _draw_data_trust_panel(
     trust_val_w = w - 8 * mm - DATA_TRUST_LABEL_W
     if data.data_trust:
         for item in data.data_trust[:6]:
-            icon = "\u2713" if item.state == "pass" else "\u26a0"
-            state_lbl = tr("PASS") if item.state == "pass" else tr("WARN_SHORT")
-            value = f"{icon} {state_lbl}"
-            if item.state != "pass" and item.detail:
-                value = f"{icon} {item.detail}"
+            state_lbl = tr("PASS") if item.is_passing else tr("WARN_SHORT")
+            value = f"{item.icon} {state_lbl}"
+            if not item.is_passing and item.detail:
+                value = f"{item.icon} {item.detail}"
             new_ty = _draw_kv(
                 c,
                 tx,
@@ -396,7 +392,7 @@ def _draw_bottom_row_panels(
         width=width,
         page_top=PAGE_H - MARGIN,
         header_content_height=0.0,
-        observed_rows=5 + (1 if data.observed.certainty_reason else 0),
+        observed_rows=data.observed.observed_row_count,
         y_after_systems_source=y_cursor,
     )
     next_panel = layout.bottom.next_steps

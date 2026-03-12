@@ -47,7 +47,11 @@ _COAST_DOWN_MAX_KMH = 15.0  # deceleration below this speed → coast-down
 
 @dataclass(slots=True)
 class PhaseSegment:
-    """One contiguous segment of a driving phase."""
+    """One contiguous segment of a driving phase.
+
+    Owns safe time-range access (NaN → ``None`` coercion) and duration
+    computation that was previously repeated at every serialisation site.
+    """
 
     phase: DrivingPhase
     start_idx: int
@@ -57,6 +61,27 @@ class PhaseSegment:
     speed_min_kmh: float | None = None
     speed_max_kmh: float | None = None
     sample_count: int = 0
+
+    # -- safe time access ---------------------------------------------------
+
+    @property
+    def safe_start_t_s(self) -> float | None:
+        """Return ``start_t_s``, coercing NaN to ``None``."""
+        return None if math.isnan(self.start_t_s) else self.start_t_s
+
+    @property
+    def safe_end_t_s(self) -> float | None:
+        """Return ``end_t_s``, coercing NaN to ``None``."""
+        return None if math.isnan(self.end_t_s) else self.end_t_s
+
+    @property
+    def duration_s(self) -> float | None:
+        """Return segment duration in seconds, or ``None`` if times are NaN."""
+        start = self.safe_start_t_s
+        end = self.safe_end_t_s
+        if start is None or end is None:
+            return None
+        return max(0.0, end - start)
 
 
 def _find_nearest_valid(

@@ -20,7 +20,7 @@ from vibesensor.analysis.order_analysis import (
 from vibesensor.analysis.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
-from vibesensor.analysis.phase_segmentation import DrivingPhase
+from vibesensor.analysis.phase_segmentation import DrivingPhase, PhaseSegment
 from vibesensor.analysis.summary_builder import build_phase_timeline as _build_phase_timeline
 from vibesensor.analysis.summary_builder import (
     build_run_suitability_checks as _build_run_suitability_checks,
@@ -39,22 +39,23 @@ from vibesensor.metrics_log.sample_builder import extract_strength_data, resolve
 # ---------------------------------------------------------------------------
 
 
-class _FakeSeg:
-    """Minimal driving-phase segment stub for timeline tests."""
-
-    def __init__(
-        self,
-        phase: DrivingPhase = DrivingPhase.CRUISE,
-        start: float = 0.0,
-        end: float = 10.0,
-        speed_min: float = 50.0,
-        speed_max: float = 60.0,
-    ) -> None:
-        self.phase = phase
-        self.start_t_s = start
-        self.end_t_s = end
-        self.speed_min_kmh = speed_min
-        self.speed_max_kmh = speed_max
+def _fake_seg(
+    phase: DrivingPhase = DrivingPhase.CRUISE,
+    start: float = 0.0,
+    end: float = 10.0,
+    speed_min: float = 50.0,
+    speed_max: float = 60.0,
+) -> PhaseSegment:
+    """Build a PhaseSegment stub for timeline tests."""
+    return PhaseSegment(
+        phase=phase,
+        start_idx=0,
+        end_idx=0,
+        start_t_s=start,
+        end_t_s=end,
+        speed_min_kmh=speed_min,
+        speed_max_kmh=speed_max,
+    )
 
 
 _SUITABILITY_DEFAULTS: dict[str, Any] = {
@@ -387,8 +388,8 @@ class TestBuildPhaseTimeline:
 
     def test_basic_segment_output(self) -> None:
         segs = [
-            _FakeSeg(DrivingPhase.CRUISE, 0.0, 30.0, speed_min=40.0, speed_max=80.0),
-            _FakeSeg(DrivingPhase.ACCELERATION, 30.0, 45.0, speed_min=40.0, speed_max=80.0),
+            _fake_seg(DrivingPhase.CRUISE, 0.0, 30.0, speed_min=40.0, speed_max=80.0),
+            _fake_seg(DrivingPhase.ACCELERATION, 30.0, 45.0, speed_min=40.0, speed_max=80.0),
         ]
         findings: list[dict[str, object]] = [
             {
@@ -426,7 +427,7 @@ class TestBuildPhaseTimeline:
     )
     def test_finding_does_not_mark_phase(self, finding: dict[str, object]) -> None:
         """REF_ findings and below-threshold findings should not contribute."""
-        entries = _build_phase_timeline([_FakeSeg()], [finding], min_confidence=0.25)
+        entries = _build_phase_timeline([_fake_seg()], [finding], min_confidence=0.25)
         assert entries[0]["has_fault_evidence"] is False
 
 

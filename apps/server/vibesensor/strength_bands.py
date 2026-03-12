@@ -1,12 +1,16 @@
 """Vibration-strength band definitions and bucket classification.
 
 ``BANDS`` defines six strength levels (l0–l5) with minimum dB thresholds.
+``StrengthBand`` is a frozen dataclass with comparison and containment
+behaviour so callers can write ``band.contains(db)`` instead of repeating
+``band["min_db"]`` dict access.
 ``bucket_for_strength`` maps a dB value to the appropriate band key.
 """
 
 from __future__ import annotations
 
-from typing import Final, TypedDict
+from dataclasses import dataclass
+from typing import Final
 
 __all__ = [
     "BANDS",
@@ -20,20 +24,52 @@ __all__ = [
 ]
 
 
-class StrengthBand(TypedDict):
-    """Typed dict for a single vibration-strength band definition."""
+@dataclass(frozen=True, slots=True)
+class StrengthBand:
+    """A single vibration-strength band definition.
+
+    Frozen value object with comparison and containment helpers so callers
+    avoid raw dict-key access.
+    """
 
     key: str
     min_db: float
 
+    # -- containment --------------------------------------------------------
+
+    def contains(self, vibration_strength_db: float) -> bool:
+        """Return ``True`` when *vibration_strength_db* falls at or above this band."""
+        return vibration_strength_db >= self.min_db
+
+    def exceeds_with_hysteresis(self, vibration_strength_db: float, hysteresis_db: float) -> bool:
+        """Return ``True`` when *vibration_strength_db* is below ``min_db - hysteresis``."""
+        return vibration_strength_db < self.min_db - hysteresis_db
+
+    # -- dict compatibility (read-only) for downstream consumers that
+    #    still index via ``band["key"]`` or ``band["min_db"]`` ---------------
+
+    def __getitem__(self, field: str) -> object:
+        if field == "key":
+            return self.key
+        if field == "min_db":
+            return self.min_db
+        raise KeyError(field)
+
+    def get(self, field: str, default: object = None) -> object:
+        """Dict-style ``.get()`` for backward compatibility."""
+        try:
+            return self[field]
+        except KeyError:
+            return default
+
 
 BANDS: Final[tuple[StrengthBand, ...]] = (
-    {"key": "l0", "min_db": 0.0},
-    {"key": "l1", "min_db": 8.0},
-    {"key": "l2", "min_db": 16.0},
-    {"key": "l3", "min_db": 26.0},
-    {"key": "l4", "min_db": 36.0},
-    {"key": "l5", "min_db": 46.0},
+    StrengthBand("l0", 0.0),
+    StrengthBand("l1", 8.0),
+    StrengthBand("l2", 16.0),
+    StrengthBand("l3", 26.0),
+    StrengthBand("l4", 36.0),
+    StrengthBand("l5", 46.0),
 )
 
 HYSTERESIS_DB: Final[float] = 2.0
@@ -41,8 +77,8 @@ PERSISTENCE_TICKS: Final[int] = 3
 DECAY_TICKS: Final[int] = 5
 
 # Pre-built lookup dicts for O(1) band access
-_BAND_BY_KEY: dict[str, StrengthBand] = {b["key"]: b for b in BANDS}
-_BAND_RANK: dict[str, int] = {b["key"]: i for i, b in enumerate(BANDS)}
+_BAND_BY_KEY: dict[str, StrengthBand] = {b.key: b for b in BANDS}
+_BAND_RANK: dict[str, int] = {b.key: i for i, b in enumerate(BANDS)}
 
 
 def bucket_for_strength(vibration_strength_db: float) -> str:
@@ -51,11 +87,10 @@ def bucket_for_strength(vibration_strength_db: float) -> str:
     Returns ``"l0"`` for sub-zero dB values (treated as negligible).
     Always returns a non-None string.
     """
-    # Reverse-iterate sorted bands; first match is the highest qualifying band.
     for band in reversed(BANDS):
-        if vibration_strength_db >= band["min_db"]:
-            return band["key"]
-    return "l0"  # sub-zero dB defaults to negligible
+        if band.contains(vibration_strength_db):
+            return band.key
+    return "l0"
 
 
 def band_by_key(key: str) -> StrengthBand | None:

@@ -327,8 +327,8 @@ def build_phase_timeline(
     return [
         {
             "phase": segment.phase.value,
-            "start_t_s": None if math.isnan(segment.start_t_s) else segment.start_t_s,
-            "end_t_s": None if math.isnan(segment.end_t_s) else segment.end_t_s,
+            "start_t_s": segment.safe_start_t_s,
+            "end_t_s": segment.safe_end_t_s,
             "speed_min_kmh": segment.speed_min_kmh,
             "speed_max_kmh": segment.speed_max_kmh,
             "has_fault_evidence": segment.phase.value in finding_phases,
@@ -344,14 +344,8 @@ def serialize_phase_segments(phase_segments: list[PhaseSegment]) -> list[PhaseSe
             "phase": seg.phase.value,
             "start_idx": seg.start_idx,
             "end_idx": seg.end_idx,
-            "start_t_s": (
-                None
-                if isinstance(seg.start_t_s, float) and math.isnan(seg.start_t_s)
-                else seg.start_t_s
-            ),
-            "end_t_s": (
-                None if isinstance(seg.end_t_s, float) and math.isnan(seg.end_t_s) else seg.end_t_s
-            ),
+            "start_t_s": seg.safe_start_t_s,
+            "end_t_s": seg.safe_end_t_s,
             "speed_min_kmh": seg.speed_min_kmh,
             "speed_max_kmh": seg.speed_max_kmh,
             "sample_count": seg.sample_count,

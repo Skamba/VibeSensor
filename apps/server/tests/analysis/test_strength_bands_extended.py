@@ -42,7 +42,7 @@ def test_bucket_returns_highest_matching() -> None:
 def test_band_by_key_valid(key: str, expected_min_db: float) -> None:
     band = band_by_key(key)
     assert band is not None
-    assert band["min_db"] == expected_min_db
+    assert band.min_db == expected_min_db
 
 
 @pytest.mark.parametrize("key", ["l99", ""], ids=["l99", "empty"])
@@ -71,8 +71,8 @@ _UI_CATALOGS_DIR = REPO_ROOT / "apps" / "ui" / "src" / "i18n" / "catalogs"
 # Build expected thresholds: each band's range is [min_db, next_band.min_db)
 _EXPECTED: dict[str, tuple[float, float | None]] = {}
 for _i, _band in enumerate(BANDS):
-    _next_min = BANDS[_i + 1]["min_db"] if _i + 1 < len(BANDS) else None
-    _EXPECTED[_band["key"]] = (_band["min_db"], _next_min)
+    _next_min = BANDS[_i + 1].min_db if _i + 1 < len(BANDS) else None
+    _EXPECTED[_band.key] = (_band.min_db, _next_min)
 
 # Regex to extract dB range from labels like "L3 Elevated (26-36 dB)" or "L5 Critical (>=46 dB)"
 _RANGE_RE = re.compile(r"\(>=?(\d+(?:\.\d+)?)\s*dB\)")
