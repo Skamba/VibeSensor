@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from vibesensor.analysis._types import SummaryData
 from vibesensor.report.mapping import SummaryView
 

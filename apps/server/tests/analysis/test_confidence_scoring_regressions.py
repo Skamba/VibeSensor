@@ -13,7 +13,6 @@ import inspect
 
 import pytest
 
-import vibesensor.analysis.findings as fmod_persistent
 from vibesensor.analysis.order_analysis import (
     compute_order_confidence as _compute_order_confidence,
 )

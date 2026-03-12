@@ -393,8 +393,7 @@ class SummaryView:
     @property
     def sensor_intensity_by_location(self) -> list[IntensityRow]:
         return [
-            row for row in self._d.get("sensor_intensity_by_location", [])
-            if isinstance(row, dict)
+            row for row in self._d.get("sensor_intensity_by_location", []) if isinstance(row, dict)
         ]
 
     # -- sensor locations --------------------------------------------------
@@ -414,11 +413,6 @@ class SummaryView:
     def sample_rate_hz_text(self) -> str | None:
         rate = self.raw_sample_rate_hz
         return f"{rate:g}" if rate is not None else None
-
-
-def extract_sensor_locations(summary: SummaryData) -> list[str]:
-    """Return active sensor locations for report rendering."""
-    return SummaryView(summary).sensor_locations_active
 
 
 def normalized_origin_location(origin: OriginSummary) -> str:

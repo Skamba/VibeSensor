@@ -730,9 +730,7 @@ class PeakBin:
             percentile(self._sorted_amps, 0.95) if self._count >= 2 else self._sorted_amps[-1]
         )
         self._max_amp = self._sorted_amps[-1]
-        self._burstiness = (
-            (self._max_amp / self._median_amp) if self._median_amp > 1e-9 else 0.0
-        )
+        self._burstiness = (self._max_amp / self._median_amp) if self._median_amp > 1e-9 else 0.0
 
         # Presence ratio with per-location rescue
         presence = self._count / max(1, n_samples)
@@ -840,9 +838,7 @@ class PeakBin:
         if self._peak_type == "baseline_noise":
             return max(0.02, min(0.12, 0.02 + 0.05 * self._presence_ratio))
         if self._peak_type == "transient":
-            return max(
-                0.05, min(0.22, 0.05 + 0.10 * self._presence_ratio + 0.07 * snr_score)
-            )
+            return max(0.05, min(0.22, 0.05 + 0.10 * self._presence_ratio + 0.07 * snr_score))
 
         base_confidence = max(
             0.10,
@@ -896,9 +892,7 @@ class PeakBin:
         _total_phase_hits = sum(self._phases_for_bin.values())
         _cruise_hits = self._phases_for_bin.get(_CRUISE_PHASE_VAL, 0)
         peak_phase_evidence: PhaseEvidence = {
-            "cruise_fraction": (
-                _cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0
-            ),
+            "cruise_fraction": (_cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0),
             "phases_detected": sorted(k for k, v in self._phases_for_bin.items() if v > 0),
         }
         phase_presence: dict[str, float] | None = None
@@ -1017,9 +1011,8 @@ class PeakFindingAnalyzer:
         """Run the full peak-finding analysis and return ordered findings."""
         freq_bin_hz = self._freq_bin_hz
         freq_bin_hz_half = freq_bin_hz * 0.5
-        has_phases = (
-            self._per_sample_phases is not None
-            and len(self._per_sample_phases) == len(self._samples)
+        has_phases = self._per_sample_phases is not None and len(self._per_sample_phases) == len(
+            self._samples
         )
 
         stats = _accumulate_peak_bin_stats(
@@ -1037,7 +1030,9 @@ class PeakFindingAnalyzer:
         if run_noise_baseline_g is None:
             run_noise_baseline_g = _run_noise_baseline_g(self._samples)
 
-        bins = self._score_bins(stats, run_noise_baseline_g=run_noise_baseline_g, has_phases=has_phases)
+        bins = self._score_bins(
+            stats, run_noise_baseline_g=run_noise_baseline_g, has_phases=has_phases
+        )
         return self._select_top_findings(bins, n_samples=stats.n_samples)
 
     def _score_bins(
