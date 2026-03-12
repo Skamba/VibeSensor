@@ -19,7 +19,7 @@ from ..run_context import build_summary_warnings, order_reference_context_comple
 from ..runlog import parse_iso8601, utc_now_iso
 from ._types import (
     AccelStatistics,
-    Finding,
+    FindingPayload,
     I18nRef,
     IntensityRow,
     JsonObject,
@@ -297,7 +297,7 @@ def build_data_quality_dict(
 
 def build_phase_timeline(
     phase_segments: list[PhaseSegment],
-    findings: list[Finding],
+    findings: list[FindingPayload],
     *,
     min_confidence: float,
 ) -> list[PhaseTimelineEntry]:
@@ -467,8 +467,8 @@ class LocalizationAssessment:
     # -- construction -------------------------------------------------------
 
     @staticmethod
-    def from_finding(finding: Finding) -> LocalizationAssessment:
-        """Build from a single Finding, extracting localization fields."""
+    def from_finding(finding: FindingPayload) -> LocalizationAssessment:
+        """Build from a single FindingPayload, extracting localization fields."""
         hotspot = finding.get("location_hotspot")
         primary = str(finding.get("strongest_location") or "").strip() or "unknown"
         alternatives = _collect_alternative_locations(hotspot, primary_location=primary)
@@ -549,7 +549,7 @@ class LocalizationAssessment:
 
     def enrich_from_second_finding(
         self,
-        second_finding: Finding,
+        second_finding: FindingPayload,
         *,
         top_confidence: float,
     ) -> None:
@@ -599,7 +599,7 @@ def _collect_alternative_locations(
     return alternative_locations
 
 
-def _resolve_weak_spatial_threshold(top_finding: Finding, *, hotspot: object) -> float:
+def _resolve_weak_spatial_threshold(top_finding: FindingPayload, *, hotspot: object) -> float:
     """Resolve the adaptive weak-spatial threshold for the strongest finding."""
     location_count = _as_float(top_finding.get("location_count"))
     if location_count is None and isinstance(hotspot, dict):
@@ -607,7 +607,7 @@ def _resolve_weak_spatial_threshold(top_finding: Finding, *, hotspot: object) ->
     return weak_spatial_dominance_threshold(int(location_count) if location_count else None)
 
 
-def summarize_origin(findings: list[Finding]) -> OriginSummary:
+def summarize_origin(findings: list[FindingPayload]) -> OriginSummary:
     """Build the most-likely-origin summary from ranked diagnostic findings."""
     if not findings:
         return {
@@ -692,7 +692,7 @@ def build_summary_payload(
     phase_segments: list[PhaseSegment],
     run_noise_baseline_g: float | None,
     speed_breakdown_skipped_reason: I18nRef | None,
-    findings: list[Finding],
+    findings: list[FindingPayload],
     top_causes: list[TopCause],
     most_likely_origin: OriginSummary,
     test_plan: list[TestStep],
@@ -918,8 +918,14 @@ def build_findings_bundle(
     language: str,
     prepared: PreparedRunData,
     overall_strength_band_key: str | None,
-    findings_builder: Callable[..., list[Finding]] | None = None,
-) -> tuple[list[Finding], OriginSummary, list[TestStep], list[PhaseTimelineEntry], list[TopCause]]:
+    findings_builder: Callable[..., list[FindingPayload]] | None = None,
+) -> tuple[
+    list[FindingPayload],
+    OriginSummary,
+    list[TestStep],
+    list[PhaseTimelineEntry],
+    list[TopCause],
+]:
     """Build findings plus derived diagnosis narrative fields."""
     builder = findings_builder or _build_findings
     findings = builder(
@@ -1019,7 +1025,7 @@ class RunAnalysis:
         file_name: str = "run",
         lang: str | None = None,
         include_samples: bool = True,
-        findings_builder: Callable[..., list[Finding]] | None = None,
+        findings_builder: Callable[..., list[FindingPayload]] | None = None,
     ) -> None:
         self._metadata = metadata
         self._samples = samples
@@ -1127,7 +1133,7 @@ def summarize_run_data(
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,
-    findings_builder: Callable[..., list[Finding]] | None = None,
+    findings_builder: Callable[..., list[FindingPayload]] | None = None,
 ) -> SummaryData:
     """Analyze pre-loaded run data and return the full summary dict.
 
@@ -1148,8 +1154,8 @@ def build_findings_for_samples(
     metadata: MetadataDict,
     samples: list[Sample],
     lang: str | None = None,
-    findings_builder: Callable[..., list[Finding]] | None = None,
-) -> list[Finding]:
+    findings_builder: Callable[..., list[FindingPayload]] | None = None,
+) -> list[FindingPayload]:
     """Build the findings list from *samples* using the full analysis pipeline."""
     language = normalize_lang(lang)
     rows = list(samples)
@@ -1173,7 +1179,7 @@ def summarize_log(
     log_path: Path,
     lang: str | None = None,
     include_samples: bool = True,
-    findings_builder: Callable[..., list[Finding]] | None = None,
+    findings_builder: Callable[..., list[FindingPayload]] | None = None,
 ) -> SummaryData:
     """Read a JSONL run file and analyse it."""
     metadata, samples, _warnings = _load_run(log_path)

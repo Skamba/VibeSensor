@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from ..constants import NUMERIC_TYPES
-from ..domain.core import DiagnosticSession, SessionStatus
+from ..domain.core import Run, SessionStatus
 from ..runlog import utc_now_iso
 from .post_analysis import PostAnalysisWorker
 from .sample_builder import (
@@ -149,11 +149,11 @@ class MetricsLogger:
         self._live_start_mono_s = time.monotonic()
 
         # --- Session state ---
-        # The DiagnosticSession domain object owns the session identity
+        # The Run domain object owns the session identity
         # (session_id) and lifecycle status (pending → running → stopped).
         # Infrastructure-level concerns (monotonic timestamps, frame counts,
         # timeout tracking) remain as standalone fields.
-        self._diagnostic_session: DiagnosticSession | None = None
+        self._diagnostic_session: Run | None = None
         self._sess_no_data_timeout_s: float = max(1.0, float(config.no_data_timeout_s))
         self._sess_run_start_utc: str | None = None
         self._sess_run_start_mono_s: float | None = None
@@ -230,7 +230,7 @@ class MetricsLogger:
         current_total: int,
     ) -> MetricsSessionSnapshot:
         with self._lock:
-            session = DiagnosticSession(
+            session = Run(
                 session_id=run_id,
                 analysis_settings=dict(self.analysis_settings.snapshot()),
             )

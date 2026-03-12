@@ -438,6 +438,21 @@ class SensorPlacement:
         """Human-readable name, falling back to the code if no label is set."""
         return self.label or self.code.replace("_", " ").title()
 
+    # -- factory methods ---------------------------------------------------
+
+    @classmethod
+    def from_code(cls, code: str) -> SensorPlacement:
+        """Create a placement from a canonical location code.
+
+        Resolves the human-readable label from the location code registry
+        (``vibesensor.locations.LOCATION_CODES``).  Falls back to a
+        title-cased version of the code if the code is not found.
+        """
+        from vibesensor.locations import LOCATION_CODES
+
+        label = LOCATION_CODES.get(code, code.replace("_", " ").title())
+        return cls(code=code, label=label)
+
 
 @dataclass(frozen=True, slots=True)
 class Sensor:

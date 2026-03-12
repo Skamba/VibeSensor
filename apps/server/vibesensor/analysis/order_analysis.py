@@ -29,7 +29,7 @@ from ..constants import (
 )
 from ..domain_models import as_float_or_none as _as_float
 from ._types import (
-    Finding,
+    FindingPayload,
     I18nRef,
     JsonValue,
     MatchedPoint,
@@ -556,7 +556,7 @@ def _mean(values: list[float]) -> float:
     return sum(values) / len(values)
 
 
-def _normalized_source(finding: Finding) -> str:
+def _normalized_source(finding: FindingPayload) -> str:
     return str(finding.get("suspected_source") or "").strip().lower()
 
 
@@ -691,10 +691,10 @@ def compute_order_confidence(
 
 
 def suppress_engine_aliases(
-    findings: list[tuple[float, Finding]],
+    findings: list[tuple[float, FindingPayload]],
     *,
     min_confidence: float = ORDER_MIN_CONFIDENCE,
-) -> list[Finding]:
+) -> list[FindingPayload]:
     """Suppress engine findings likely to be aliases of stronger wheel findings."""
     best_wheel_conf = max(
         (
@@ -881,7 +881,7 @@ def assemble_order_finding(
     match: OrderMatchAccumulator,
     *,
     context: OrderFindingBuildContext,
-) -> tuple[float, Finding]:
+) -> tuple[float, FindingPayload]:
     """Build a single order finding from a successful match result."""
     per_phase_confidence, phases_with_evidence = compute_phase_stats(
         match.has_phases,
@@ -1016,7 +1016,7 @@ def assemble_order_finding(
         weak_spatial_separation=weak_spatial_separation,
     )
     quick_checks: list[JsonValue] = [action["what"] for action in actions if action.get("what")][:3]
-    finding: Finding = {
+    finding: FindingPayload = {
         "finding_id": "F_ORDER",
         "finding_key": hypothesis.key,
         "suspected_source": hypothesis.suspected_source,
@@ -1162,12 +1162,12 @@ class OrderAnalysisSession:
             _sample_top_peaks(s) for s in samples
         ]
 
-    def analyze(self) -> list[Finding]:
+    def analyze(self) -> list[FindingPayload]:
         """Run all hypothesis tests and return suppressed, ranked findings."""
         if self._raw_sample_rate_hz is None or self._raw_sample_rate_hz <= 0:
             return []
 
-        findings: list[tuple[float, Finding]] = []
+        findings: list[tuple[float, FindingPayload]] = []
         for hypothesis in _order_hypotheses():
             if not self._should_test(hypothesis):
                 continue
@@ -1189,7 +1189,7 @@ class OrderAnalysisSession:
             return self._engine_ref_sufficient
         return True
 
-    def _test_hypothesis(self, hypothesis: OrderHypothesis) -> tuple[float, Finding] | None:
+    def _test_hypothesis(self, hypothesis: OrderHypothesis) -> tuple[float, FindingPayload] | None:
         """Match, evaluate, and assemble a finding for one hypothesis.
 
         Returns ``(ranking_score, finding)`` or ``None`` if the hypothesis
@@ -1259,7 +1259,7 @@ def _build_order_findings(
     connected_locations: set[str],
     lang: str,
     per_sample_phases: PhaseLabels | None = None,
-) -> list[Finding]:
+) -> list[FindingPayload]:
     """Build order-tracking findings by testing all hypotheses.
 
     Delegates to :class:`OrderAnalysisSession` which owns the hypothesis
