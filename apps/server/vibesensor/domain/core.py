@@ -570,10 +570,10 @@ class AnalysisWindow:
 class Finding:
     """One diagnostic conclusion or cause candidate from analysis.
 
-    This is the first-class domain object for a finding. The existing
-    ``Finding`` TypedDict in ``analysis._types`` remains as the
-    serialization/payload shape; this domain object provides typed
-    access and behavior.
+    This is the first-class domain object for a finding.
+    ``FindingPayload`` (the TypedDict in ``analysis._types``) remains as
+    the serialization/payload shape; use :meth:`from_payload` to create a
+    domain ``Finding`` from a payload dict.
 
     ``finding_id`` is assigned during finalization (``F001``, ``F002``, …).
     ``suspected_source`` identifies the mechanical component suspected of
@@ -589,6 +589,47 @@ class Finding:
     strongest_location: str | None = None
     strongest_speed_band: str | None = None
     peak_classification: str = ""
+
+    # -- factories ---------------------------------------------------------
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, object]) -> Finding:
+        """Create a domain Finding from a ``FindingPayload`` dict.
+
+        Extracts the subset of fields that the domain object cares about,
+        ignoring serialization-only keys present in the full payload.
+        """
+        def _str(key: str) -> str:
+            v = payload.get(key)
+            return str(v) if v is not None else ""
+
+        conf_raw = payload.get("confidence")
+        confidence: float | None = None
+        if conf_raw is not None:
+            try:
+                confidence = float(conf_raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                pass
+
+        freq_raw = payload.get("frequency_hz") or payload.get("frequency_hz_or_order")
+        frequency_hz: float | None = None
+        if freq_raw is not None:
+            try:
+                frequency_hz = float(freq_raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                pass
+
+        return cls(
+            finding_id=_str("finding_id"),
+            suspected_source=_str("suspected_source"),
+            confidence=confidence,
+            frequency_hz=frequency_hz,
+            order=_str("order"),
+            severity=_str("severity"),
+            strongest_location=payload.get("strongest_location") if payload.get("strongest_location") is not None else None,  # type: ignore[arg-type]
+            strongest_speed_band=payload.get("strongest_speed_band") if payload.get("strongest_speed_band") is not None else None,  # type: ignore[arg-type]
+            peak_classification=_str("peak_classification"),
+        )
 
     # -- classification ----------------------------------------------------
 
