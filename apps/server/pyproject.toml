@@ -94,6 +94,7 @@ files = [
   "vibesensor/constants.py",
   "vibesensor/contract_reference_doc.py",
   "vibesensor/domain_models.py",
+  "vibesensor/domain",
   "vibesensor/exceptions.py",
   "vibesensor/gps_speed.py",
   "vibesensor/history_services",
