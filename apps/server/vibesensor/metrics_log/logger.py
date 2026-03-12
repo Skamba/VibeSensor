@@ -197,7 +197,8 @@ class MetricsLogger:
 
     @enabled.setter
     def enabled(self, value: bool) -> None:
-        # Backward-compatible setter: when disabled, clear the session.
+        # Setting ``True`` is a no-op — use ``start_logging()`` to begin a
+        # new session.  Setting ``False`` gracefully stops any running session.
         if not value and self._diagnostic_session is not None:
             if self._diagnostic_session.status is SessionStatus.RUNNING:
                 self._diagnostic_session.stop()
