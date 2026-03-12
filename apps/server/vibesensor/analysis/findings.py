@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from math import floor as _math_floor
 from math import log1p
 
@@ -62,6 +62,154 @@ from .phase_segmentation import (
     segment_run_phases,
 )
 from .top_cause_selection import finding_sort_key
+
+# ---------------------------------------------------------------------------
+# FindingRecord & FindingCollection
+# ---------------------------------------------------------------------------
+
+
+class FindingRecord:
+    """Typed accessor wrapping a ``Finding`` dict.
+
+    Provides property-based access, classification predicates, and source
+    normalisation so that callers no longer scatter ``.get()`` chains and
+    string operations across procedural code.
+
+    The underlying dict is **not** copied – mutations through the record
+    are visible in the original dict and vice-versa.  This is intentional:
+    ``FindingRecord`` is an *internal convenience view*, not an immutable
+    value object.
+    """
+
+    __slots__ = ("_d",)
+
+    def __init__(self, finding: Finding) -> None:
+        self._d = finding
+
+    # -- raw dict access ---------------------------------------------------
+
+    @property
+    def data(self) -> Finding:
+        """Return the underlying ``Finding`` dict."""
+        return self._d
+
+    # -- identity / classification -----------------------------------------
+
+    @property
+    def finding_id(self) -> str:
+        return str(self._d.get("finding_id") or "")
+
+    @property
+    def is_reference(self) -> bool:
+        """Whether this is a reference-data finding (``REF_*``)."""
+        return self.finding_id.strip().upper().startswith("REF_")
+
+    @property
+    def is_informational(self) -> bool:
+        return str(self._d.get("severity") or "").strip().lower() == "info"
+
+    @property
+    def is_diagnostic(self) -> bool:
+        return not self.is_reference and not self.is_informational
+
+    # -- core properties ---------------------------------------------------
+
+    @property
+    def confidence(self) -> float:
+        """Numeric confidence, defaulting to ``0.0`` when absent or None."""
+        return _as_float(self._d.get("confidence")) or 0.0
+
+    @property
+    def source(self) -> str:
+        return str(self._d.get("suspected_source") or "")
+
+    @property
+    def source_normalized(self) -> str:
+        """Lower-cased, stripped source string for comparison."""
+        return self.source.strip().lower()
+
+    @property
+    def strongest_location(self) -> str:
+        return str(self._d.get("strongest_location") or "").strip()
+
+    @property
+    def strongest_speed_band(self) -> str | None:
+        return self._d.get("strongest_speed_band")
+
+    @property
+    def ranking_score(self) -> float:
+        return _as_float(self._d.get("_ranking_score")) or 0.0
+
+    # -- mutation helpers --------------------------------------------------
+
+    def assign_id(self, finding_id: str) -> None:
+        """Set the finding_id on the underlying dict."""
+        self._d["finding_id"] = finding_id
+
+
+class FindingCollection:
+    """Typed operations over a ``list[Finding]``.
+
+    Provides partitioning (reference / diagnostic / informational),
+    sorting, stable-ID assignment, and common filtering patterns that
+    were previously scattered across procedural helper functions.
+    """
+
+    __slots__ = ("_items",)
+
+    def __init__(self, findings: list[Finding]) -> None:
+        self._items = findings
+
+    # -- access ------------------------------------------------------------
+
+    @property
+    def items(self) -> list[Finding]:
+        return self._items
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def __iter__(self) -> Iterator[Finding]:
+        return iter(self._items)
+
+    # -- filtering ---------------------------------------------------------
+
+    def references(self) -> list[Finding]:
+        return [f for f in self._items if FindingRecord(f).is_reference]
+
+    def diagnostics(self) -> list[Finding]:
+        return [f for f in self._items if FindingRecord(f).is_diagnostic]
+
+    def informational(self) -> list[Finding]:
+        return [f for f in self._items if FindingRecord(f).is_informational]
+
+    def non_reference(self) -> list[Finding]:
+        return [f for f in self._items if not FindingRecord(f).is_reference]
+
+    # -- ordering and finalization -----------------------------------------
+
+    def finalize(self) -> list[Finding]:
+        """Partition, rank by confidence, and assign stable ``F###`` IDs.
+
+        Returns the ordered list: references → diagnostics → informational.
+        Diagnostic and informational findings are sorted by
+        ``finding_sort_key`` (quantised confidence + ranking score).
+        Non-reference findings receive sequential IDs ``F001``, ``F002``, …
+        """
+        refs = self.references()
+        diags = self.diagnostics()
+        infos = self.informational()
+        diags.sort(key=finding_sort_key, reverse=True)
+        infos.sort(key=finding_sort_key, reverse=True)
+        ordered = refs + diags + infos
+        counter = 0
+        for finding in ordered:
+            rec = FindingRecord(finding)
+            if not rec.is_reference:
+                counter += 1
+                rec.assign_id(f"F{counter:03d}")
+        return ordered
+
 
 # ---------------------------------------------------------------------------
 # Builder support helpers
@@ -244,7 +392,8 @@ def collect_order_frequencies(order_findings: list[Finding]) -> set[float]:
     """Collect matched order frequencies used to suppress duplicate persistent findings."""
     order_freqs: set[float] = set()
     for order_finding in order_findings:
-        if (_as_float(order_finding.get("confidence")) or 0.0) < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
+        rec = FindingRecord(order_finding)
+        if rec.confidence < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
             continue
         points = order_finding.get("matched_points")
         if not isinstance(points, list):
@@ -259,29 +408,12 @@ def collect_order_frequencies(order_findings: list[Finding]) -> set[float]:
 
 
 def finalize_findings(findings: list[Finding]) -> list[Finding]:
-    """Partition, rank, and assign stable public finding IDs."""
-    reference_findings: list[Finding] = []
-    diagnostic_findings: list[Finding] = []
-    informational_findings: list[Finding] = []
-    for item in findings:
-        finding_id = str(item.get("finding_id", ""))
-        if finding_id.startswith("REF_"):
-            reference_findings.append(item)
-        elif str(item.get("severity") or "").strip().lower() == "info":
-            informational_findings.append(item)
-        else:
-            diagnostic_findings.append(item)
+    """Partition, rank, and assign stable public finding IDs.
 
-    diagnostic_findings.sort(key=finding_sort_key, reverse=True)
-    informational_findings.sort(key=finding_sort_key, reverse=True)
-    ordered_findings = reference_findings + diagnostic_findings + informational_findings
-    diag_counter = 0
-    for finding in ordered_findings:
-        finding_id = str(finding.get("finding_id", "")).strip()
-        if not finding_id.startswith("REF_"):
-            diag_counter += 1
-            finding["finding_id"] = f"F{diag_counter:03d}"
-    return ordered_findings
+    Delegates to :class:`FindingCollection` which owns the partitioning,
+    sorting, and sequential ID-assignment logic.
+    """
+    return FindingCollection(findings).finalize()
 
 
 # ---------------------------------------------------------------------------
