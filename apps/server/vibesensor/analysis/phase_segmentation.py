@@ -24,6 +24,7 @@ from ..json_types import JsonObject
 if TYPE_CHECKING:
     from ._types import PhaseSummary
 
+from ..domain.core import AnalysisWindow
 from ..domain_models import as_float_or_none as _as_float
 
 
@@ -57,6 +58,20 @@ class PhaseSegment:
     speed_min_kmh: float | None = None
     speed_max_kmh: float | None = None
     sample_count: int = 0
+
+    # -- domain bridge --------------------------------------------------------
+
+    def to_analysis_window(self) -> AnalysisWindow:
+        """Return the domain ``AnalysisWindow`` value object for this segment."""
+        return AnalysisWindow(
+            start_idx=self.start_idx,
+            end_idx=self.end_idx,
+            phase=str(self.phase),
+            start_time_s=self.start_t_s,
+            end_time_s=self.end_t_s,
+            speed_min_kmh=self.speed_min_kmh,
+            speed_max_kmh=self.speed_max_kmh,
+        )
 
 
 def _find_nearest_valid(

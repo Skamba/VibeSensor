@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 from ..constants import ORDER_MIN_CONFIDENCE
 from ..domain_models import as_float_or_none as _as_float
-from ._types import Finding, JsonValue, PhaseEvidence, TopCause
+from ._types import FindingPayload, JsonValue, PhaseEvidence, TopCause
 from .diagnosis_candidates import _PLACEHOLDER_SOURCES, is_actionable_location
 from .strength_labels import (
     CONFIDENCE_HIGH_THRESHOLD,
@@ -62,8 +62,8 @@ class OrderAssessment:
     # -- construction -------------------------------------------------------
 
     @staticmethod
-    def from_finding(finding: Finding) -> OrderAssessment:
-        """Build an assessment from a Finding dict."""
+    def from_finding(finding: FindingPayload) -> OrderAssessment:
+        """Build an assessment from a FindingPayload dict."""
         return OrderAssessment(
             finding_id=str(finding.get("finding_id") or ""),
             source=str(finding.get("suspected_source") or ""),
@@ -192,7 +192,7 @@ class OrderAssessment:
 # ---------------------------------------------------------------------------
 
 
-def finding_sort_key(item: Finding) -> tuple[float, float]:
+def finding_sort_key(item: FindingPayload) -> tuple[float, float]:
     """Return a deterministic sort key for findings.
 
     Confidence is quantised so tiny timing/noise jitter does not reshuffle
@@ -202,19 +202,21 @@ def finding_sort_key(item: Finding) -> tuple[float, float]:
     return OrderAssessment.from_finding(item).rank_key
 
 
-def phase_adjusted_ranking_score(finding: Finding) -> float:
+def phase_adjusted_ranking_score(finding: FindingPayload) -> float:
     """Compute the phase-aware score used for top-cause selection."""
     return OrderAssessment.from_finding(finding).phase_adjusted_score
 
 
-def group_findings_by_source(diag_findings: list[Finding]) -> list[tuple[float, Finding]]:
+def group_findings_by_source(
+    diag_findings: list[FindingPayload],
+) -> list[tuple[float, FindingPayload]]:
     """Group findings by source and return ranked representatives."""
-    groups: dict[str, list[Finding]] = defaultdict(list)
+    groups: dict[str, list[FindingPayload]] = defaultdict(list)
     for finding in diag_findings:
         source = str(finding.get("suspected_source") or "unknown").strip().lower()
         groups[source].append(finding)
 
-    grouped: list[tuple[float, Finding]] = []
+    grouped: list[tuple[float, FindingPayload]] = []
     for members in groups.values():
         members_scored = sorted(
             (
@@ -224,7 +226,7 @@ def group_findings_by_source(diag_findings: list[Finding]) -> list[tuple[float, 
             key=lambda item: item[0],
             reverse=True,
         )
-        representative: Finding = {**members_scored[0][1]}
+        representative: FindingPayload = {**members_scored[0][1]}
         signatures: list[str] = []
         seen_signatures: set[str] = set()
         for _score, member in members_scored:
@@ -268,7 +270,7 @@ def confidence_label(
 
 
 def select_top_causes(
-    findings: list[Finding],
+    findings: list[FindingPayload],
     *,
     drop_off_points: float = 15.0,
     max_causes: int = 3,

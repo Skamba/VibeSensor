@@ -109,7 +109,7 @@ class FindingEvidenceMetrics(TypedDict, total=False):
     speed_uniformity: float | None
 
 
-class Finding(TypedDict, total=False):
+class FindingPayload(TypedDict, total=False):
     finding_id: Required[str]
     suspected_source: Required[str]
     evidence_summary: Required[JsonValue]
@@ -168,7 +168,7 @@ class TopCause(TypedDict, total=False):
     phase_evidence: PhaseEvidence | None
 
 
-CandidateFinding: TypeAlias = Finding | TopCause
+CandidateFinding: TypeAlias = FindingPayload | TopCause
 
 
 class SpeedStats(TypedDict):
@@ -302,7 +302,7 @@ class SummaryData(TypedDict):
     phase_segments: list[PhaseSegmentSummary]
     run_noise_baseline_db: float | None
     speed_breakdown_skipped_reason: I18nRef | None
-    findings: list[Finding]
+    findings: list[FindingPayload]
     top_causes: list[TopCause]
     most_likely_origin: OriginSummary
     test_plan: list[TestStep]
@@ -326,11 +326,11 @@ PhaseLabels: TypeAlias = Sequence[PhaseLabel]
 Translator: TypeAlias = Callable[[str], str]
 
 
-def is_finding(value: object) -> TypeGuard[Finding]:
-    """Narrow a runtime value to the canonical finding shape.
+def is_finding(value: object) -> TypeGuard[FindingPayload]:
+    """Narrow a runtime value to the canonical finding payload shape.
 
     Checks for ``isinstance(value, dict)`` *and* the presence of the
-    required ``finding_id`` key, which distinguishes a Finding from
+    required ``finding_id`` key, which distinguishes a FindingPayload from
     other dict-shaped objects.
     """
     return isinstance(value, dict) and "finding_id" in value
@@ -344,3 +344,7 @@ def is_top_cause(value: object) -> TypeGuard[TopCause]:
     which helps distinguish a TopCause from other dict-shaped objects.
     """
     return isinstance(value, dict) and ("strongest_location" in value or "source" in value)
+
+
+# Backward-compatible alias — prefer ``FindingPayload`` for new code.
+Finding = FindingPayload

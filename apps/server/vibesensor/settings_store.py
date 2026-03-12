@@ -41,6 +41,7 @@ from .backend_types import (
     SpeedSourceUpdatePayload,
     SpeedUnitCode,
 )
+from .domain.core import Car, Sensor, SpeedSource
 from .domain_models import (
     CarConfig,
     SensorConfig,
@@ -232,6 +233,24 @@ class SettingsStore:
                 "speedUnit": self._speed_unit,
                 "sensorsByMac": {sid: s.to_dict() for sid, s in self._sensors.items()},
             }
+
+    # -- domain-object accessors -----------------------------------------------
+
+    def active_car(self) -> Car | None:
+        """Return the active car as a domain ``Car`` value object."""
+        with self._lock:
+            car_cfg = self._find_car(self._active_car_id)
+            return car_cfg.to_car() if car_cfg else None
+
+    def speed_source(self) -> SpeedSource:
+        """Return the current speed source as a domain ``SpeedSource`` value object."""
+        with self._lock:
+            return self._speed_cfg.to_speed_source()
+
+    def sensors(self) -> list[Sensor]:
+        """Return all configured sensors as domain ``Sensor`` value objects."""
+        with self._lock:
+            return [cfg.to_sensor() for cfg in self._sensors.values()]
 
     # -- car operations --------------------------------------------------------
 

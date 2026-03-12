@@ -8,7 +8,7 @@ from math import ceil, floor, log1p, pow
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
 from ..domain_models import as_float_or_none as _as_float
 from ..locations import has_any_wheel_location, is_wheel_location
-from ._types import Finding, JsonObject, LocationHotspot, MatchedPoint, TestStep, i18n_ref
+from ._types import FindingPayload, JsonObject, LocationHotspot, MatchedPoint, TestStep, i18n_ref
 from .helpers import _speed_bin_label, _weighted_percentile, weak_spatial_dominance_threshold
 from .order_analysis import _finding_actions_for_source
 
@@ -88,7 +88,7 @@ def _localization_confidence(
 
 
 def _merge_test_plan(
-    findings: list[Finding],
+    findings: list[FindingPayload],
     lang: str,
 ) -> list[TestStep]:
     steps: list[TestStep] = []
