@@ -652,72 +652,6 @@ def summarize_origin(findings: list[Finding]) -> OriginSummary:
     }
 
 
-# Backward-compatible aliases used by existing callers / tests.
-def collect_alternative_locations(
-    top_finding: Finding,
-    *,
-    primary_location: str,
-) -> list[str]:
-    """Collect alternative hotspot locations from the strongest finding."""
-    return _collect_alternative_locations(
-        top_finding.get("location_hotspot"),
-        primary_location=primary_location,
-    )
-
-
-def weak_spatial_threshold(top_finding: Finding, *, hotspot: object) -> float:
-    """Resolve the adaptive weak-spatial threshold for the strongest finding."""
-    return _resolve_weak_spatial_threshold(top_finding, hotspot=hotspot)
-
-
-def enrich_with_second_finding(
-    findings: list[Finding],
-    *,
-    weak: bool,
-    primary_location: str,
-    alternative_locations: list[str],
-) -> tuple[bool, list[str]]:
-    """Promote ambiguity when the second finding is close in confidence."""
-    if len(findings) < 2:
-        return weak, alternative_locations
-    second = findings[1]
-    second_loc = str(second.get("strongest_location") or "").strip()
-    second_conf = _as_float(second.get("confidence")) or 0.0
-    top_conf = _as_float(findings[0].get("confidence")) or 0.0
-    if (
-        second_loc
-        and primary_location
-        and second_loc != primary_location
-        and top_conf > 0
-        and second_conf / top_conf >= 0.7
-    ):
-        weak = True
-        if second_loc not in alternative_locations:
-            alternative_locations.append(second_loc)
-    return weak, alternative_locations
-
-
-def summarize_display_location(
-    *,
-    primary_location: str,
-    alternative_locations: list[str],
-    weak: bool,
-    dominance: float | None,
-    adaptive_threshold: float,
-) -> str:
-    """Build the display-ready location summary string."""
-    if not (weak and dominance is not None and dominance < adaptive_threshold):
-        return primary_location
-    display_locations = [primary_location, *alternative_locations]
-    return " / ".join(
-        [
-            candidate
-            for idx, candidate in enumerate(display_locations)
-            if candidate and candidate not in display_locations[:idx]
-        ],
-    )
-
-
 def build_origin_explanation(
     *,
     source: str,
@@ -1126,22 +1060,18 @@ class RunAnalysis:
                 accel_stats=self._accel_stats,
             )
         )
-        findings, most_likely_origin, test_plan, phase_timeline, top_causes = (
-            build_findings_bundle(
-                self._metadata,
-                self._samples,
-                language=self._language,
-                prepared=self._prepared,
-                overall_strength_band_key=overall_strength_band_key,
-                findings_builder=self._findings_builder,
-            )
+        findings, most_likely_origin, test_plan, phase_timeline, top_causes = build_findings_bundle(
+            self._metadata,
+            self._samples,
+            language=self._language,
+            prepared=self._prepared,
+            overall_strength_band_key=overall_strength_band_key,
+            findings_builder=self._findings_builder,
         )
-        sensor_locations, connected_locations, sensor_intensity_by_location = (
-            build_sensor_bundle(
-                self._samples,
-                language=self._language,
-                per_sample_phases=self._prepared.per_sample_phases,
-            )
+        sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_bundle(
+            self._samples,
+            language=self._language,
+            per_sample_phases=self._prepared.per_sample_phases,
         )
 
         summary = build_summary_payload(

@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
 from vibesensor.analysis.summary_builder import PreparedRunData, RunAnalysis, prepare_run_data
-
 
 # ===========================================================================
 # PreparedRunData convenience properties
@@ -16,8 +13,7 @@ class TestPreparedRunDataProperties:
     def test_is_steady_speed_true(self) -> None:
         metadata = {"raw_sample_rate_hz": 100.0}
         samples = [
-            {"speed_kmh": 60.0, "t_s": float(i), "vibration_strength_db": 10.0}
-            for i in range(20)
+            {"speed_kmh": 60.0, "t_s": float(i), "vibration_strength_db": 10.0} for i in range(20)
         ]
         prepared = prepare_run_data(metadata, samples, file_name="test")
         # is_steady_speed delegates to speed_stats["steady_speed"]
@@ -26,8 +22,7 @@ class TestPreparedRunDataProperties:
     def test_speed_stddev_kmh(self) -> None:
         metadata = {"raw_sample_rate_hz": 100.0}
         samples = [
-            {"speed_kmh": 60.0, "t_s": float(i), "vibration_strength_db": 10.0}
-            for i in range(20)
+            {"speed_kmh": 60.0, "t_s": float(i), "vibration_strength_db": 10.0} for i in range(20)
         ]
         prepared = prepare_run_data(metadata, samples, file_name="test")
         stddev = prepared.speed_stddev_kmh
@@ -87,9 +82,7 @@ class TestRunAnalysis:
 
     def test_prepared_property(self) -> None:
         metadata = {"raw_sample_rate_hz": 100.0}
-        samples = [
-            {"speed_kmh": 60.0, "t_s": 0.0, "vibration_strength_db": 10.0}
-        ]
+        samples = [{"speed_kmh": 60.0, "t_s": 0.0, "vibration_strength_db": 10.0}]
         analysis = RunAnalysis(metadata, samples)
         assert isinstance(analysis.prepared, PreparedRunData)
 

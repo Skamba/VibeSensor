@@ -1189,9 +1189,7 @@ class OrderAnalysisSession:
             return self._engine_ref_sufficient
         return True
 
-    def _test_hypothesis(
-        self, hypothesis: OrderHypothesis
-    ) -> tuple[float, Finding] | None:
+    def _test_hypothesis(self, hypothesis: OrderHypothesis) -> tuple[float, Finding] | None:
         """Match, evaluate, and assemble a finding for one hypothesis.
 
         Returns ``(ranking_score, finding)`` or ``None`` if the hypothesis

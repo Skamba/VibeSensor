@@ -9,7 +9,6 @@ from vibesensor.analysis.order_analysis import (
     OrderMatchAccumulator,
 )
 
-
 # ===========================================================================
 # OrderMatchAccumulator computed properties
 # ===========================================================================
@@ -23,8 +22,7 @@ def _make_accumulator(
     """Build an accumulator with sensible defaults for testing."""
     if matched_points is None:
         matched_points = [
-            {"location": "front_left", "speed_kmh": 60.0, "amp": 0.05}
-            for _ in range(matched)
+            {"location": "front_left", "speed_kmh": 60.0, "amp": 0.05} for _ in range(matched)
         ]
     return OrderMatchAccumulator(
         possible=possible,

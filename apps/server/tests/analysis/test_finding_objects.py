@@ -12,7 +12,6 @@ from vibesensor.analysis.findings import (
     PeakFindingAnalyzer,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures: minimal Finding dicts
 # ---------------------------------------------------------------------------
@@ -327,7 +326,12 @@ class TestPeakBin:
             phases_for_bin={},
             n_samples=100,
             total_locations={"front_left", "front_right", "rear_left", "rear_right"},
-            total_location_sample_counts={"front_left": 25, "front_right": 25, "rear_left": 25, "rear_right": 25},
+            total_location_sample_counts={
+                "front_left": 25,
+                "front_right": 25,
+                "rear_left": 25,
+                "rear_right": 25,
+            },
             total_speed_bin_counts={"60-80": 100},
             run_noise_baseline_g=0.001,
             has_phases=False,
@@ -343,9 +347,7 @@ class TestPeakBin:
 
 class TestPeakFindingAnalyzer:
     def test_empty_samples(self) -> None:
-        analyzer = PeakFindingAnalyzer(
-            samples=[], order_finding_freqs=set(), lang="en"
-        )
+        analyzer = PeakFindingAnalyzer(samples=[], order_finding_freqs=set(), lang="en")
         assert analyzer.analyze() == []
 
     def test_returns_findings(self) -> None:
