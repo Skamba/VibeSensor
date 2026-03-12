@@ -66,8 +66,9 @@ Validation (always required)
 - Treat watcher exit `RESULT=NON_GREEN` as immediate action: inspect the latest failing run promptly, determine root cause, implement the smallest complete maintainable fix, push, and restart the watcher.
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - Test in this order: targeted tests first, then broader relevant suites.
-- CI-parity suite (same command groups as `.github/workflows/ci.yml`, run in parallel locally): `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
-- Optional CI-parity subset jobs for faster loops: `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests`.
+- CI-parity suite for fast iteration (non-containerized): `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
+- Required pre-finalization CI gate: `act -W .github/workflows/ci.yml` runs the real GitHub workflow locally in Docker. All supported jobs must pass before finalizing any task. See `docs/testing.md` for known limitations and the optional wrapper at `tools/tests/run_ci_with_act.sh`.
+- Optional focused CI subset for faster loops: `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests`.
 - Run a single feature area: `pytest -q apps/server/tests/<module>/` (e.g., `tests/analysis/`, `tests/report/`).
 - Test layout: feature-based subdirectories mirror source modules; see `docs/testing.md`.
 - If an intentional refactor changes function-level seams or helper boundaries, refactor the affected tests in the same change set so they validate current behavior instead of pinning obsolete internals.

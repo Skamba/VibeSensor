@@ -81,14 +81,17 @@ These tests run in standard CI (no special markers). They use minimal synthetic 
 
 ## Running tests
 
-Two tiers: `make test` for iteration, `make test-all` before pushing.
+Three tiers: `make test` for fast iteration, `make test-all` for non-containerized CI-parity, and `act -W .github/workflows/ci.yml` (required before finalizing) to run the real GitHub workflow locally in Docker.
 
 ```bash
 # Fast iteration — backend unit tests
 make test
 
-# Full CI-parity — all blocking CI jobs in parallel
+# Non-containerized CI-parity — all blocking CI jobs in parallel
 make test-all
+
+# Required pre-finalization gate — real GitHub workflow via act (requires Docker)
+act -W .github/workflows/ci.yml
 
 # Single feature area
 pytest -q apps/server/tests/report/
