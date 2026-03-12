@@ -312,7 +312,11 @@ def _finding_actions_for_source(
 
 @dataclass(frozen=True)
 class OrderMatchAccumulator:
-    """Accumulated statistics from matching one hypothesis across samples."""
+    """Accumulated statistics from matching one hypothesis across samples.
+
+    In addition to raw accumulation fields, provides computed properties
+    for match rate, eligibility checks, and unique match locations.
+    """
 
     possible: int
     matched: int
@@ -331,6 +335,31 @@ class OrderMatchAccumulator:
     matched_by_location: dict[str, int]
     has_phases: bool
     compliance: float
+
+    # -- computed properties -----------------------------------------------
+
+    @property
+    def match_rate(self) -> float:
+        """Global match rate (matched / possible)."""
+        return self.matched / max(1, self.possible)
+
+    @property
+    def unique_match_locations(self) -> set[str]:
+        """Set of distinct sensor locations that produced matches."""
+        return {
+            str(point.get("location") or "")
+            for point in self.matched_points
+            if point.get("location")
+        }
+
+    def is_eligible(
+        self,
+        *,
+        min_coverage: int = ORDER_MIN_COVERAGE_POINTS,
+        min_matched: int = ORDER_MIN_MATCH_POINTS,
+    ) -> bool:
+        """Whether this match has enough data to produce a finding."""
+        return self.possible >= min_coverage and self.matched >= min_matched
 
 
 @dataclass(frozen=True)
@@ -895,9 +924,7 @@ def assemble_order_finding(
         else 0.05
     )
 
-    unique_match_locations = {
-        str(point.get("location") or "") for point in match.matched_points if point.get("location")
-    }
+    unique_match_locations = match.unique_match_locations
     no_wheel_override = (
         bool(hotspot_dict.get("no_wheel_sensors")) if hotspot_dict is not None else False
     )
@@ -1082,6 +1109,145 @@ def _compute_effective_match_rate(
     return effective_match_rate, focused_speed_band, per_location_dominant
 
 
+class OrderAnalysisSession:
+    """Coordinates hypothesis testing across samples to produce order findings.
+
+    Owns the hypothesis loop, per-hypothesis matching, eligibility filtering,
+    effective-rate computation, finding assembly, and engine-alias suppression.
+    """
+
+    __slots__ = (
+        "_metadata",
+        "_samples",
+        "_speed_sufficient",
+        "_steady_speed",
+        "_speed_stddev_kmh",
+        "_tire_circumference_m",
+        "_engine_ref_sufficient",
+        "_raw_sample_rate_hz",
+        "_connected_locations",
+        "_lang",
+        "_per_sample_phases",
+        "_cached_peaks",
+    )
+
+    def __init__(
+        self,
+        *,
+        metadata: MetadataDict,
+        samples: list[Sample],
+        speed_sufficient: bool,
+        steady_speed: bool,
+        speed_stddev_kmh: float | None,
+        tire_circumference_m: float | None,
+        engine_ref_sufficient: bool,
+        raw_sample_rate_hz: float | None,
+        connected_locations: set[str],
+        lang: str,
+        per_sample_phases: PhaseLabels | None = None,
+    ) -> None:
+        self._metadata = metadata
+        self._samples = samples
+        self._speed_sufficient = speed_sufficient
+        self._steady_speed = steady_speed
+        self._speed_stddev_kmh = speed_stddev_kmh
+        self._tire_circumference_m = tire_circumference_m
+        self._engine_ref_sufficient = engine_ref_sufficient
+        self._raw_sample_rate_hz = raw_sample_rate_hz
+        self._connected_locations = connected_locations
+        self._lang = lang
+        self._per_sample_phases = per_sample_phases
+        # Pre-compute peaks once for all hypotheses
+        self._cached_peaks: list[list[tuple[float, float]]] = [
+            _sample_top_peaks(s) for s in samples
+        ]
+
+    def analyze(self) -> list[Finding]:
+        """Run all hypothesis tests and return suppressed, ranked findings."""
+        if self._raw_sample_rate_hz is None or self._raw_sample_rate_hz <= 0:
+            return []
+
+        findings: list[tuple[float, Finding]] = []
+        for hypothesis in _order_hypotheses():
+            if not self._should_test(hypothesis):
+                continue
+            result = self._test_hypothesis(hypothesis)
+            if result is not None:
+                findings.append(result)
+
+        return suppress_engine_aliases(findings, min_confidence=ORDER_MIN_CONFIDENCE)
+
+    def _should_test(self, hypothesis: OrderHypothesis) -> bool:
+        """Whether to test this hypothesis given available references."""
+        if hypothesis.key.startswith(("wheel_", "driveshaft_")):
+            return (
+                self._speed_sufficient
+                and self._tire_circumference_m is not None
+                and self._tire_circumference_m > 0
+            )
+        if hypothesis.key.startswith("engine_"):
+            return self._engine_ref_sufficient
+        return True
+
+    def _test_hypothesis(
+        self, hypothesis: OrderHypothesis
+    ) -> tuple[float, Finding] | None:
+        """Match, evaluate, and assemble a finding for one hypothesis.
+
+        Returns ``(ranking_score, finding)`` or ``None`` if the hypothesis
+        does not meet eligibility or match-rate thresholds.
+        """
+        m = match_samples_for_hypothesis(
+            self._samples,
+            self._cached_peaks,
+            hypothesis,
+            self._metadata,
+            self._tire_circumference_m,
+            self._per_sample_phases,
+            self._lang,
+        )
+        if not m.is_eligible():
+            return None
+
+        # At constant speed the predicted frequency never varies, so random
+        # broadband peaks match by chance at ~30-40%.  Require a much higher
+        # match rate before claiming a finding.
+        constant_speed = (
+            self._speed_stddev_kmh is not None
+            and self._speed_stddev_kmh < CONSTANT_SPEED_STDDEV_KMH
+        )
+        min_match_rate = ORDER_CONSTANT_SPEED_MIN_MATCH_RATE if constant_speed else 0.25
+
+        effective_match_rate, focused_speed_band, per_location_dominant = (
+            _compute_effective_match_rate(
+                m.match_rate,
+                min_match_rate,
+                m.possible_by_speed_bin,
+                m.matched_by_speed_bin,
+                m.possible_by_location,
+                m.matched_by_location,
+            )
+        )
+        if effective_match_rate < min_match_rate:
+            return None
+
+        return assemble_order_finding(
+            hypothesis,
+            m,
+            context=OrderFindingBuildContext(
+                effective_match_rate=effective_match_rate,
+                focused_speed_band=focused_speed_band,
+                per_location_dominant=per_location_dominant,
+                match_rate=m.match_rate,
+                min_match_rate=min_match_rate,
+                constant_speed=constant_speed,
+                steady_speed=self._steady_speed,
+                connected_locations=self._connected_locations,
+                lang=self._lang,
+            ),
+        )
+
+
 def _build_order_findings(
     *,
     metadata: MetadataDict,
@@ -1096,71 +1262,22 @@ def _build_order_findings(
     lang: str,
     per_sample_phases: PhaseLabels | None = None,
 ) -> list[Finding]:
-    if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
-        return []
+    """Build order-tracking findings by testing all hypotheses.
 
-    # Pre-compute peaks for every sample once so that the inner hypothesis
-    # loop does not redundantly call _sample_top_peaks() for each hypothesis.
-    cached_peaks: list[list[tuple[float, float]]] = [_sample_top_peaks(s) for s in samples]
-
-    findings: list[tuple[float, Finding]] = []
-    for hypothesis in _order_hypotheses():
-        if hypothesis.key.startswith(("wheel_", "driveshaft_")) and (
-            not speed_sufficient or tire_circumference_m is None or tire_circumference_m <= 0
-        ):
-            continue
-        if hypothesis.key.startswith("engine_") and not engine_ref_sufficient:
-            continue
-
-        m = match_samples_for_hypothesis(
-            samples,
-            cached_peaks,
-            hypothesis,
-            metadata,
-            tire_circumference_m,
-            per_sample_phases,
-            lang,
-        )
-
-        if m.possible < ORDER_MIN_COVERAGE_POINTS or m.matched < ORDER_MIN_MATCH_POINTS:
-            continue
-        match_rate = m.matched / max(1, m.possible)
-        # At constant speed the predicted frequency never varies, so random
-        # broadband peaks match by chance at ~30-40%.  A genuine order source
-        # would be present in the vast majority of samples.  Require a much
-        # higher match rate before claiming a finding.
-        constant_speed = (
-            speed_stddev_kmh is not None and speed_stddev_kmh < CONSTANT_SPEED_STDDEV_KMH
-        )
-        min_match_rate = ORDER_CONSTANT_SPEED_MIN_MATCH_RATE if constant_speed else 0.25
-        effective_match_rate, focused_speed_band, per_location_dominant = (
-            _compute_effective_match_rate(
-                match_rate,
-                min_match_rate,
-                m.possible_by_speed_bin,
-                m.matched_by_speed_bin,
-                m.possible_by_location,
-                m.matched_by_location,
-            )
-        )
-        if effective_match_rate < min_match_rate:
-            continue
-
-        ranking_score, finding = assemble_order_finding(
-            hypothesis,
-            m,
-            context=OrderFindingBuildContext(
-                effective_match_rate=effective_match_rate,
-                focused_speed_band=focused_speed_band,
-                per_location_dominant=per_location_dominant,
-                match_rate=match_rate,
-                min_match_rate=min_match_rate,
-                constant_speed=constant_speed,
-                steady_speed=steady_speed,
-                connected_locations=connected_locations,
-                lang=lang,
-            ),
-        )
-        findings.append((ranking_score, finding))
-
-    return suppress_engine_aliases(findings, min_confidence=ORDER_MIN_CONFIDENCE)
+    Delegates to :class:`OrderAnalysisSession` which owns the hypothesis
+    loop, matching, eligibility, and engine-alias suppression.
+    """
+    session = OrderAnalysisSession(
+        metadata=metadata,
+        samples=samples,
+        speed_sufficient=speed_sufficient,
+        steady_speed=steady_speed,
+        speed_stddev_kmh=speed_stddev_kmh,
+        tire_circumference_m=tire_circumference_m,
+        engine_ref_sufficient=engine_ref_sufficient,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        connected_locations=connected_locations,
+        lang=lang,
+        per_sample_phases=per_sample_phases,
+    )
+    return session.analyze()
