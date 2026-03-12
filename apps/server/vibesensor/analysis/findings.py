@@ -648,87 +648,118 @@ def _build_persistent_peak_findings(
     in (IDLE, ACCELERATION, CRUISE, DECELERATION, COAST_DOWN).
     Addresses TODO 4: ``_build_persistent_peak_findings()`` has no phase awareness.
     """
-    if freq_bin_hz <= 0:
-        freq_bin_hz = 2.0
-    freq_bin_hz_half = freq_bin_hz * 0.5
-
-    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
-    stats = _accumulate_peak_bin_stats(
-        samples,
-        freq_bin_hz=freq_bin_hz,
-        freq_bin_hz_half=freq_bin_hz_half,
+    analyzer = PeakFindingAnalyzer(
+        samples=samples,
+        order_finding_freqs=order_finding_freqs,
         lang=lang,
+        freq_bin_hz=freq_bin_hz,
         per_sample_phases=per_sample_phases,
-        has_phases=has_phases,
+        run_noise_baseline_g=run_noise_baseline_g,
     )
-    n_samples = stats.n_samples
-    bin_amps = stats.bin_amps
-    bin_floors = stats.bin_floors
-    bin_speed_amp_pairs = stats.bin_speed_amp_pairs
-    bin_location_counts = stats.bin_location_counts
-    bin_speed_bin_counts = stats.bin_speed_bin_counts
-    bin_phase_counts = stats.bin_phase_counts
-    total_speed_bin_counts = stats.total_speed_bin_counts
-    total_locations = stats.total_locations
-    total_location_sample_counts = stats.total_location_sample_counts
+    return analyzer.analyze()
 
-    if n_samples == 0:
-        return []
-    if run_noise_baseline_g is None:
-        run_noise_baseline_g = _run_noise_baseline_g(samples)
 
-    persistent_findings: list[tuple[float, Finding]] = []
-    transient_findings: list[tuple[float, Finding]] = []
+# ---------------------------------------------------------------------------
+# PeakBin – per-frequency-bin scoring and finding export
+# ---------------------------------------------------------------------------
 
-    for bin_center, amps in bin_amps.items():
-        # Skip bins already claimed by order findings.
-        # Exclusion radius = one full bin width (freq_bin_hz).  Bin centers are
-        # at multiples of freq_bin_hz offset by freq_bin_hz_half, so adjacent
-        # bins are always exactly freq_bin_hz apart; using the full width ensures
-        # the bin containing the matched order frequency is suppressed while
-        # leaving all other bins unaffected.
-        if any(abs(bin_center - of) < freq_bin_hz for of in order_finding_freqs):
-            continue
 
-        sorted_amps = sorted(amps)
-        count = len(sorted_amps)
-        presence_ratio = count / max(1, n_samples)
+class PeakBin:
+    """Represents a single frequency bin with accumulated peak statistics.
 
-        # Per-location rescue: in multi-sensor runs, a single-sensor fault's
-        # global presence_ratio is diluted by 1/n_sensors.  Compute the best
-        # per-location presence ratio and use it when higher.
-        if total_location_sample_counts and bin_location_counts.get(bin_center):
-            loc_counts = bin_location_counts[bin_center]
+    Owns presence ratio, burstiness, SNR, spatial/speed uniformity,
+    classification, confidence computation, and export to a ``Finding`` dict.
+    Replaces the 200-line inner loop body that previously lived inside
+    ``_build_persistent_peak_findings``.
+    """
+
+    __slots__ = (
+        "_bin_center",
+        "_count",
+        "_sorted_amps",
+        "_median_amp",
+        "_p95_amp",
+        "_max_amp",
+        "_burstiness",
+        "_presence_ratio",
+        "_mean_floor",
+        "_effective_floor",
+        "_raw_snr",
+        "_spatial_uniformity",
+        "_speed_uniformity",
+        "_spatial_concentration",
+        "_loc_counts_for_bin",
+        "_phases_for_bin",
+        "_speed_amp_pairs",
+        "_peak_type",
+        "_has_phases",
+        "_run_noise_baseline_g",
+    )
+
+    def __init__(
+        self,
+        *,
+        bin_center: float,
+        amps: list[float],
+        floor_vals: list[float],
+        speed_amp_pairs: list[tuple[float, float]],
+        loc_counts_for_bin: dict[str, int],
+        speed_bin_counts_for_bin: dict[str, int],
+        phases_for_bin: dict[str, int],
+        n_samples: int,
+        total_locations: set[str],
+        total_location_sample_counts: dict[str, int],
+        total_speed_bin_counts: dict[str, int],
+        run_noise_baseline_g: float | None,
+        has_phases: bool,
+    ) -> None:
+        self._bin_center = bin_center
+        self._sorted_amps = sorted(amps)
+        self._count = len(self._sorted_amps)
+        self._loc_counts_for_bin = loc_counts_for_bin
+        self._phases_for_bin = phases_for_bin
+        self._speed_amp_pairs = speed_amp_pairs
+        self._has_phases = has_phases
+        self._run_noise_baseline_g = run_noise_baseline_g
+
+        # Amplitude statistics
+        self._median_amp = (
+            percentile(self._sorted_amps, 0.50) if self._count >= 2 else self._sorted_amps[0]
+        )
+        self._p95_amp = (
+            percentile(self._sorted_amps, 0.95) if self._count >= 2 else self._sorted_amps[-1]
+        )
+        self._max_amp = self._sorted_amps[-1]
+        self._burstiness = (
+            (self._max_amp / self._median_amp) if self._median_amp > 1e-9 else 0.0
+        )
+
+        # Presence ratio with per-location rescue
+        presence = self._count / max(1, n_samples)
+        if total_location_sample_counts and loc_counts_for_bin:
             for loc in total_locations:
-                loc_hits = loc_counts.get(loc, 0)
+                loc_hits = loc_counts_for_bin.get(loc, 0)
                 loc_total = total_location_sample_counts.get(loc, 0)
                 if loc_total >= 3:
-                    loc_presence = loc_hits / loc_total
-                    presence_ratio = max(presence_ratio, loc_presence)
+                    presence = max(presence, loc_hits / loc_total)
+        self._presence_ratio = presence
 
-        median_amp = percentile(sorted_amps, 0.50) if count >= 2 else sorted_amps[0]
-        p95_amp = percentile(sorted_amps, 0.95) if count >= 2 else sorted_amps[-1]
-        max_amp = sorted_amps[-1]
-        burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
+        # Floor and SNR
+        self._mean_floor = sum(floor_vals) / len(floor_vals) if floor_vals else 0.0
+        self._effective_floor = _effective_baseline_floor(
+            run_noise_baseline_g, extra_fallback=self._mean_floor
+        )
+        self._raw_snr = self._p95_amp / self._effective_floor
 
-        mean_floor_vals = bin_floors.get(bin_center)
-        mean_floor = sum(mean_floor_vals) / len(mean_floor_vals) if mean_floor_vals else 0.0
-        effective_floor = _effective_baseline_floor(run_noise_baseline_g, extra_fallback=mean_floor)
-        raw_snr = p95_amp / effective_floor
-
-        # Cache per-bin dict lookups used multiple times below.
-        loc_counts_for_bin = bin_location_counts.get(bin_center, {})
-        speed_bin_counts_for_bin = bin_speed_bin_counts.get(bin_center, {})
-        phases_for_bin = bin_phase_counts.get(bin_center, {})
-
-        spatial_uniformity: float | None = None
+        # Spatial uniformity
         n_total_locs = len(total_locations)
-        if n_total_locs >= 2:
-            spatial_uniformity = len(loc_counts_for_bin) / n_total_locs
+        self._spatial_uniformity: float | None = (
+            len(loc_counts_for_bin) / n_total_locs if n_total_locs >= 2 else None
+        )
 
-        speed_uniformity: float | None = None
+        # Speed uniformity
+        self._speed_uniformity: float | None = None
         if len(total_speed_bin_counts) >= 2:
-            # Single-pass mean + variance to avoid two iterations.
             hr_sum = 0.0
             hr_sq_sum = 0.0
             hr_n = 0
@@ -741,136 +772,197 @@ def _build_persistent_peak_findings(
                 hr_n += 1
             if hr_n > 1:
                 hr_mean = hr_sum / hr_n
-                # Clamp before sqrt: floating-point subtraction can yield a
-                # tiny negative value (e.g. -2e-16) that would raise ValueError.
-                speed_uniformity = max(0.0, (hr_sq_sum / hr_n) - hr_mean * hr_mean) ** 0.5
+                self._speed_uniformity = max(0.0, (hr_sq_sum / hr_n) - hr_mean * hr_mean) ** 0.5
             elif hr_n == 1:
-                speed_uniformity = 0.0
+                self._speed_uniformity = 0.0
 
-        peak_type = _classify_peak_type(
-            presence_ratio,
-            burstiness,
-            snr=raw_snr,
-            spatial_uniformity=spatial_uniformity,
-            speed_uniformity=speed_uniformity,
+        # Spatial concentration
+        self._spatial_concentration = (
+            max(loc_counts_for_bin.values()) / self._count
+            if loc_counts_for_bin and self._count > 0
+            else 1.0
         )
 
-        snr_score = min(1.0, log1p(raw_snr) / SNR_LOG_DIVISOR)
-        spatial_concentration = (
-            max(loc_counts_for_bin.values()) / count if loc_counts_for_bin and count > 0 else 1.0
+        # Classification
+        self._peak_type = _classify_peak_type(
+            self._presence_ratio,
+            self._burstiness,
+            snr=self._raw_snr,
+            spatial_uniformity=self._spatial_uniformity,
+            speed_uniformity=self._speed_uniformity,
         )
-        spatial_penalty = (0.35 + 0.65 * spatial_concentration) if loc_counts_for_bin else 1.0
 
-        # Confidence for persistent/patterned peaks (analogous to order confidence)
-        peak_strength_db = canonical_vibration_db(
-            peak_band_rms_amp_g=p95_amp,
-            floor_amp_g=effective_floor,
+    # -- read-only properties -----------------------------------------------
+
+    @property
+    def bin_center(self) -> float:
+        return self._bin_center
+
+    @property
+    def presence_ratio(self) -> float:
+        return self._presence_ratio
+
+    @property
+    def burstiness(self) -> float:
+        return self._burstiness
+
+    @property
+    def snr(self) -> float:
+        return self._raw_snr
+
+    @property
+    def spatial_uniformity(self) -> float | None:
+        return self._spatial_uniformity
+
+    @property
+    def speed_uniformity(self) -> float | None:
+        return self._speed_uniformity
+
+    @property
+    def peak_type(self) -> str:
+        return self._peak_type
+
+    @property
+    def is_transient(self) -> bool:
+        return self._peak_type == "transient"
+
+    # -- scoring -----------------------------------------------------------
+
+    @property
+    def confidence(self) -> float:
+        """Compute calibrated confidence for this peak bin."""
+        snr_score = min(1.0, log1p(self._raw_snr) / SNR_LOG_DIVISOR)
+        spatial_penalty = (
+            (0.35 + 0.65 * self._spatial_concentration) if self._loc_counts_for_bin else 1.0
         )
-        if peak_type == "baseline_noise":
-            confidence = max(0.02, min(0.12, 0.02 + 0.05 * presence_ratio))
-        elif peak_type == "transient":
-            confidence = max(0.05, min(0.22, 0.05 + 0.10 * presence_ratio + 0.07 * snr_score))
-        else:
-            base_confidence = max(
-                0.10,
-                min(
-                    0.75,
-                    0.10
-                    + 0.35 * presence_ratio
-                    + 0.15 * snr_score
-                    + 0.15 * min(1.0, 1.0 - burstiness / 10.0),
-                ),
+        peak_strength_db = self._peak_strength_db
+
+        if self._peak_type == "baseline_noise":
+            return max(0.02, min(0.12, 0.02 + 0.05 * self._presence_ratio))
+        if self._peak_type == "transient":
+            return max(
+                0.05, min(0.22, 0.05 + 0.10 * self._presence_ratio + 0.07 * snr_score)
             )
-            confidence = base_confidence * spatial_penalty
-            if loc_counts_for_bin and spatial_concentration <= 0.35:
-                confidence = min(confidence, 0.35)
-            if peak_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB:
-                confidence = min(confidence, 0.40)
 
+        base_confidence = max(
+            0.10,
+            min(
+                0.75,
+                0.10
+                + 0.35 * self._presence_ratio
+                + 0.15 * snr_score
+                + 0.15 * min(1.0, 1.0 - self._burstiness / 10.0),
+            ),
+        )
+        conf = base_confidence * spatial_penalty
+        if self._loc_counts_for_bin and self._spatial_concentration <= 0.35:
+            conf = min(conf, 0.35)
+        if peak_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB:
+            conf = min(conf, 0.40)
+        return conf
+
+    @property
+    def ranking_score(self) -> float:
+        return (self._presence_ratio**2) * self._p95_amp
+
+    @property
+    def _peak_strength_db(self) -> float:
+        return canonical_vibration_db(
+            peak_band_rms_amp_g=self._p95_amp,
+            floor_amp_g=self._effective_floor,
+        )
+
+    # -- export to Finding dict --------------------------------------------
+
+    def to_finding(self) -> Finding:
+        """Export this bin's analysis as a canonical ``Finding`` dict."""
+        peak_strength_db = self._peak_strength_db
         peak_speed_kmh, speed_window_kmh, derived_speed_band = _speed_profile_from_points(
-            bin_speed_amp_pairs.get(bin_center, []),
+            self._speed_amp_pairs,
         )
         speed_band = derived_speed_band or "-"
 
         evidence = i18n_ref(
             "EVIDENCE_PEAK_PRESENT",
-            freq=bin_center,
-            pct=presence_ratio,
+            freq=self._bin_center,
+            pct=self._presence_ratio,
             p95=peak_strength_db,
             units="dB",
-            burst=burstiness,
-            cls=peak_type,
+            burst=self._burstiness,
+            cls=self._peak_type,
         )
 
-        # Compute phase evidence for this frequency bin.
-        _total_phase_hits = sum(phases_for_bin.values())
-        _cruise_hits = phases_for_bin.get(_CRUISE_PHASE_VAL, 0)
+        # Phase evidence
+        _total_phase_hits = sum(self._phases_for_bin.values())
+        _cruise_hits = self._phases_for_bin.get(_CRUISE_PHASE_VAL, 0)
         peak_phase_evidence: PhaseEvidence = {
-            "cruise_fraction": _cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0,
-            "phases_detected": sorted(k for k, v in phases_for_bin.items() if v > 0),
+            "cruise_fraction": (
+                _cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0
+            ),
+            "phases_detected": sorted(k for k, v in self._phases_for_bin.items() if v > 0),
         }
         phase_presence: dict[str, float] | None = None
-        if has_phases and _total_phase_hits > 0:
+        if self._has_phases and _total_phase_hits > 0:
             phase_presence = {
                 phase_key: phase_hits / _total_phase_hits
-                for phase_key, phase_hits in phases_for_bin.items()
+                for phase_key, phase_hits in self._phases_for_bin.items()
                 if phase_hits > 0
             }
 
         evidence_metrics: FindingEvidenceMetrics = {
-            "presence_ratio": presence_ratio,
+            "presence_ratio": self._presence_ratio,
             "median_intensity_db": canonical_vibration_db(
-                peak_band_rms_amp_g=median_amp,
-                floor_amp_g=effective_floor,
+                peak_band_rms_amp_g=self._median_amp,
+                floor_amp_g=self._effective_floor,
             ),
             "p95_intensity_db": peak_strength_db,
             "max_intensity_db": canonical_vibration_db(
-                peak_band_rms_amp_g=max_amp,
-                floor_amp_g=effective_floor,
+                peak_band_rms_amp_g=self._max_amp,
+                floor_amp_g=self._effective_floor,
             ),
-            "burstiness": burstiness,
+            "burstiness": self._burstiness,
             "mean_noise_floor_db": canonical_vibration_db(
-                peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
+                peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, self._mean_floor),
                 floor_amp_g=MEMS_NOISE_FLOOR_G,
             ),
             "run_noise_baseline_db": (
                 canonical_vibration_db(
-                    peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
+                    peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, self._run_noise_baseline_g),
                     floor_amp_g=MEMS_NOISE_FLOOR_G,
                 )
-                if run_noise_baseline_g is not None
+                if self._run_noise_baseline_g is not None
                 else None
             ),
-            "median_relative_to_run_noise": median_amp / effective_floor,
-            "p95_relative_to_run_noise": p95_amp / effective_floor,
-            "sample_count": count,
-            "total_samples": n_samples,
-            "spatial_concentration": spatial_concentration,
-            "spatial_uniformity": spatial_uniformity,
-            "speed_uniformity": speed_uniformity,
+            "median_relative_to_run_noise": self._median_amp / self._effective_floor,
+            "p95_relative_to_run_noise": self._p95_amp / self._effective_floor,
+            "sample_count": self._count,
+            "total_samples": 0,  # Filled by analyzer
+            "spatial_concentration": self._spatial_concentration,
+            "spatial_uniformity": self._spatial_uniformity,
+            "speed_uniformity": self._speed_uniformity,
         }
         finding: Finding = {
             "finding_id": "F_PEAK",
-            "finding_key": f"peak_{bin_center:.0f}hz",
-            "severity": "info" if peak_type == "transient" else "diagnostic",
+            "finding_key": f"peak_{self._bin_center:.0f}hz",
+            "severity": "info" if self._peak_type == "transient" else "diagnostic",
             "suspected_source": (
                 "baseline_noise"
-                if peak_type == "baseline_noise"
+                if self._peak_type == "baseline_noise"
                 else "transient_impact"
-                if peak_type == "transient"
+                if self._peak_type == "transient"
                 else "unknown_resonance"
             ),
             "evidence_summary": evidence,
-            "frequency_hz_or_order": f"{bin_center:.1f} Hz",
+            "frequency_hz_or_order": f"{self._bin_center:.1f} Hz",
             "amplitude_metric": {
                 "name": "vibration_strength_db",
                 "value": peak_strength_db,
                 "units": "dB",
                 "definition": i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
             },
-            "confidence": confidence,
+            "confidence": self.confidence,
             "quick_checks": [],
-            "peak_classification": peak_type,
+            "peak_classification": self._peak_type,
             "phase_evidence": peak_phase_evidence,
             "evidence_metrics": evidence_metrics,
             "peak_speed_kmh": peak_speed_kmh,
@@ -878,24 +970,129 @@ def _build_persistent_peak_findings(
             "strongest_speed_band": speed_band if speed_band != "-" else None,
             "phase_presence": phase_presence,
         }
+        finding["_ranking_score"] = self.ranking_score
+        return finding
 
-        ranking_score = (presence_ratio**2) * p95_amp
-        finding["_ranking_score"] = ranking_score
-        if peak_type == "transient":
-            transient_findings.append((ranking_score, finding))
-        else:
-            persistent_findings.append((ranking_score, finding))
 
-    # Sort persistent findings by ranking score, take top N
-    persistent_findings.sort(key=lambda item: item[0], reverse=True)
-    transient_findings.sort(key=lambda item: item[0], reverse=True)
+# ---------------------------------------------------------------------------
+# PeakFindingAnalyzer – coordinates accumulation and per-bin scoring
+# ---------------------------------------------------------------------------
 
-    results: list[Finding] = []
-    for _score, finding in persistent_findings[:PERSISTENT_PEAK_MAX_FINDINGS]:
-        results.append(finding)
-    for _score, finding in transient_findings[:PERSISTENT_PEAK_MAX_FINDINGS]:
-        results.append(finding)
-    return results
+
+class PeakFindingAnalyzer:
+    """Coordinates frequency-bin accumulation from samples and produces findings.
+
+    Wraps :class:`_PeakBinStats` accumulation and per-bin :class:`PeakBin`
+    scoring.  The ``analyze()`` method returns the final list of findings,
+    sorted and capped by :data:`PERSISTENT_PEAK_MAX_FINDINGS`.
+    """
+
+    __slots__ = (
+        "_samples",
+        "_order_finding_freqs",
+        "_lang",
+        "_freq_bin_hz",
+        "_per_sample_phases",
+        "_run_noise_baseline_g",
+    )
+
+    def __init__(
+        self,
+        *,
+        samples: list[Sample],
+        order_finding_freqs: set[float],
+        lang: str,
+        freq_bin_hz: float = 2.0,
+        per_sample_phases: PhaseLabels | None = None,
+        run_noise_baseline_g: float | None = None,
+    ) -> None:
+        self._samples = samples
+        self._order_finding_freqs = order_finding_freqs
+        self._lang = lang
+        self._freq_bin_hz = max(freq_bin_hz, 0.01)  # Guard against <= 0
+        self._per_sample_phases = per_sample_phases
+        self._run_noise_baseline_g = run_noise_baseline_g
+
+    def analyze(self) -> list[Finding]:
+        """Run the full peak-finding analysis and return ordered findings."""
+        freq_bin_hz = self._freq_bin_hz
+        freq_bin_hz_half = freq_bin_hz * 0.5
+        has_phases = (
+            self._per_sample_phases is not None
+            and len(self._per_sample_phases) == len(self._samples)
+        )
+
+        stats = _accumulate_peak_bin_stats(
+            self._samples,
+            freq_bin_hz=freq_bin_hz,
+            freq_bin_hz_half=freq_bin_hz_half,
+            lang=self._lang,
+            per_sample_phases=self._per_sample_phases,
+            has_phases=has_phases,
+        )
+        if stats.n_samples == 0:
+            return []
+
+        run_noise_baseline_g = self._run_noise_baseline_g
+        if run_noise_baseline_g is None:
+            run_noise_baseline_g = _run_noise_baseline_g(self._samples)
+
+        bins = self._score_bins(stats, run_noise_baseline_g=run_noise_baseline_g, has_phases=has_phases)
+        return self._select_top_findings(bins, n_samples=stats.n_samples)
+
+    def _score_bins(
+        self,
+        stats: _PeakBinStats,
+        *,
+        run_noise_baseline_g: float | None,
+        has_phases: bool,
+    ) -> list[PeakBin]:
+        """Build a PeakBin for each frequency bin not claimed by order findings."""
+        freq_bin_hz = self._freq_bin_hz
+        bins: list[PeakBin] = []
+        for bin_center, amps in stats.bin_amps.items():
+            if any(abs(bin_center - of) < freq_bin_hz for of in self._order_finding_freqs):
+                continue
+            peak_bin = PeakBin(
+                bin_center=bin_center,
+                amps=amps,
+                floor_vals=stats.bin_floors.get(bin_center, []),
+                speed_amp_pairs=stats.bin_speed_amp_pairs.get(bin_center, []),
+                loc_counts_for_bin=stats.bin_location_counts.get(bin_center, {}),
+                speed_bin_counts_for_bin=stats.bin_speed_bin_counts.get(bin_center, {}),
+                phases_for_bin=stats.bin_phase_counts.get(bin_center, {}),
+                n_samples=stats.n_samples,
+                total_locations=stats.total_locations,
+                total_location_sample_counts=stats.total_location_sample_counts,
+                total_speed_bin_counts=stats.total_speed_bin_counts,
+                run_noise_baseline_g=run_noise_baseline_g,
+                has_phases=has_phases,
+            )
+            bins.append(peak_bin)
+        return bins
+
+    @staticmethod
+    def _select_top_findings(bins: list[PeakBin], *, n_samples: int) -> list[Finding]:
+        """Sort bins by ranking score and return top findings."""
+        persistent: list[tuple[float, PeakBin]] = []
+        transient: list[tuple[float, PeakBin]] = []
+        for peak_bin in bins:
+            bucket = transient if peak_bin.is_transient else persistent
+            bucket.append((peak_bin.ranking_score, peak_bin))
+
+        persistent.sort(key=lambda item: item[0], reverse=True)
+        transient.sort(key=lambda item: item[0], reverse=True)
+
+        results: list[Finding] = []
+        for _score, peak_bin in persistent[:PERSISTENT_PEAK_MAX_FINDINGS]:
+            finding = peak_bin.to_finding()
+            finding["evidence_metrics"]["total_samples"] = n_samples
+            results.append(finding)
+        for _score, peak_bin in transient[:PERSISTENT_PEAK_MAX_FINDINGS]:
+            finding = peak_bin.to_finding()
+            finding["evidence_metrics"]["total_samples"] = n_samples
+            results.append(finding)
+        return results
 
 
 # ---------------------------------------------------------------------------

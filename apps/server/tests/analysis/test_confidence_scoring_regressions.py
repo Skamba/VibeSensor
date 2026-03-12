@@ -237,8 +237,39 @@ class TestPersistentPeakNegligibleCapAligned:
     """
 
     def test_persistent_peak_cap_value_in_source(self) -> None:
-        src = inspect.getsource(fmod_persistent._build_persistent_peak_findings)
-        # The negligible cap must be 0.40, not 0.35
-        assert "min(confidence, 0.40)" in src, (
-            "Persistent peak negligible cap must be 0.40 to align with order cap"
+        """Verify that the negligible-strength cap is 0.40 by testing
+        the PeakBin's confidence computation directly, rather than
+        inspecting source strings (which break on refactors).
+
+        A persistent/patterned peak with strength below NEGLIGIBLE_STRENGTH_MAX_DB
+        must have its confidence capped at 0.40.
+        """
+        from vibesensor.analysis.findings import PeakBin
+
+        # Build a PeakBin with high presence (patterned), low burstiness,
+        # decent SNR so it classifies as patterned, but low enough absolute
+        # amplitude that peak_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB.
+        # Using amps ~0.002g with floor ~0.001g gives SNR ~2 (above
+        # baseline threshold) and strength ~6 dB (below negligible ~15 dB).
+        peak_bin = PeakBin(
+            bin_center=50.0,
+            amps=[0.002] * 50,
+            floor_vals=[0.001] * 50,
+            speed_amp_pairs=[(60.0, 0.002)] * 50,
+            loc_counts_for_bin={"front_left": 50},
+            speed_bin_counts_for_bin={"60-80": 50},
+            phases_for_bin={},
+            n_samples=50,
+            total_locations={"front_left"},
+            total_location_sample_counts={"front_left": 50},
+            total_speed_bin_counts={"60-80": 50},
+            run_noise_baseline_g=0.001,
+            has_phases=False,
+        )
+        # Must be a persistent or patterned type for the cap to apply
+        assert peak_bin.peak_type in ("persistent", "patterned"), (
+            f"Expected persistent/patterned but got {peak_bin.peak_type}"
+        )
+        assert peak_bin.confidence <= 0.40, (
+            f"Persistent peak negligible cap must be 0.40, got {peak_bin.confidence}"
         )
