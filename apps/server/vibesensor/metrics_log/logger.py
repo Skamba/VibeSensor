@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from ..constants import NUMERIC_TYPES
+from ..domain.core import DiagnosticSession, SessionStatus
 from ..runlog import utc_now_iso
 from .post_analysis import PostAnalysisWorker
 from .sample_builder import (
@@ -148,9 +149,12 @@ class MetricsLogger:
         self._live_start_mono_s = time.monotonic()
 
         # --- Session state ---
-        self._sess_enabled: bool = False
+        # The DiagnosticSession domain object owns the session identity
+        # (session_id) and lifecycle status (pending → running → stopped).
+        # Infrastructure-level concerns (monotonic timestamps, frame counts,
+        # timeout tracking) remain as standalone fields.
+        self._diagnostic_session: DiagnosticSession | None = None
         self._sess_no_data_timeout_s: float = max(1.0, float(config.no_data_timeout_s))
-        self._sess_run_id: str | None = None
         self._sess_run_start_utc: str | None = None
         self._sess_run_start_mono_s: float | None = None
         self._sess_last_data_progress_mono_s: float | None = None
@@ -188,11 +192,17 @@ class MetricsLogger:
 
     @property
     def enabled(self) -> bool:
-        return self._sess_enabled
+        ds = self._diagnostic_session
+        return ds is not None and ds.status is SessionStatus.RUNNING
 
     @enabled.setter
     def enabled(self, value: bool) -> None:
-        self._sess_enabled = value
+        # Setting ``True`` is a no-op — use ``start_logging()`` to begin a
+        # new session.  Setting ``False`` gracefully stops any running session.
+        if not value and self._diagnostic_session is not None:
+            if self._diagnostic_session.status is SessionStatus.RUNNING:
+                self._diagnostic_session.stop()
+            self._diagnostic_session = None
 
     @property
     def last_write_duration_s(self) -> float:
@@ -204,7 +214,8 @@ class MetricsLogger:
 
     @property
     def _run_id(self) -> str | None:
-        return self._sess_run_id
+        ds = self._diagnostic_session
+        return ds.session_id if ds is not None else None
 
     # -----------------------------------------------------------------------
     # Session state
@@ -219,8 +230,12 @@ class MetricsLogger:
         current_total: int,
     ) -> MetricsSessionSnapshot:
         with self._lock:
-            self._sess_enabled = True
-            self._sess_run_id = run_id
+            session = DiagnosticSession(
+                session_id=run_id,
+                analysis_settings=dict(self.analysis_settings.snapshot()),
+            )
+            session.start()
+            self._diagnostic_session = session
             self._sess_run_start_utc = start_time_utc
             self._sess_run_start_mono_s = start_mono_s
             self._sess_last_data_progress_mono_s = start_mono_s
@@ -234,8 +249,12 @@ class MetricsLogger:
 
     def _sess_stop(self) -> None:
         with self._lock:
-            self._sess_enabled = False
-            self._sess_run_id = None
+            if (
+                self._diagnostic_session is not None
+                and self._diagnostic_session.status is SessionStatus.RUNNING
+            ):
+                self._diagnostic_session.stop()
+            self._diagnostic_session = None
             self._sess_run_start_utc = None
             self._sess_run_start_mono_s = None
             self._sess_last_data_progress_mono_s = None
@@ -245,14 +264,14 @@ class MetricsLogger:
     def _sess_snapshot(self) -> MetricsSessionSnapshot | None:
         with self._lock:
             if (
-                not self._sess_enabled
-                or not self._sess_run_id
+                not self.enabled
+                or not self._run_id
                 or not self._sess_run_start_utc
                 or self._sess_run_start_mono_s is None
             ):
                 return None
             return MetricsSessionSnapshot(
-                run_id=self._sess_run_id,
+                run_id=self._run_id,
                 start_time_utc=self._sess_run_start_utc,
                 start_mono_s=self._sess_run_start_mono_s,
             )
@@ -264,9 +283,10 @@ class MetricsLogger:
         history_run_created: bool,
     ) -> MetricsSessionSnapshot | None:
         with self._lock:
+            run_id = self._run_id
             if (
-                not self._sess_enabled
-                or not self._sess_run_id
+                not self.enabled
+                or not run_id
                 or not self._sess_run_start_utc
                 or self._sess_run_start_mono_s is None
             ):
@@ -277,7 +297,7 @@ class MetricsLogger:
             elif current_total <= self._sess_start_frames_total:
                 return None
             return MetricsSessionSnapshot(
-                run_id=self._sess_run_id,
+                run_id=run_id,
                 start_time_utc=self._sess_run_start_utc,
                 start_mono_s=self._sess_run_start_mono_s,
             )
@@ -703,7 +723,7 @@ class MetricsLogger:
         prebuilt_rows: list[dict[str, object]] | None = None,
     ) -> bool:
         now_mono_s = time.monotonic()
-        if self._sess_run_id != run_id:
+        if self._run_id != run_id:
             return False
         current_total = self._active_frames_total()
         self._sess_refresh_data_progress(now_mono_s=now_mono_s, current_total=current_total)
@@ -724,7 +744,7 @@ class MetricsLogger:
         ):
             rows = []
         if rows:
-            if self._sess_run_id != run_id:
+            if self._run_id != run_id:
                 return False
             self._sess_mark_rows_written(now_mono_s=now_mono_s)
             self._persist_append_rows(
@@ -732,7 +752,7 @@ class MetricsLogger:
                 start_time_utc=start_time_utc,
                 rows=rows,
             )
-        return (self._sess_run_id == run_id) and self._sess_should_auto_stop(now_mono_s=now_mono_s)
+        return (self._run_id == run_id) and self._sess_should_auto_stop(now_mono_s=now_mono_s)
 
     def _finalize_run_locked(self) -> bool:
         run_id = self._run_id

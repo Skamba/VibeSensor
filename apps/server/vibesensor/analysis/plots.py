@@ -11,10 +11,8 @@ from dataclasses import dataclass, field
 from math import floor
 from typing import Literal, Required, TypedDict
 
+from vibesensor.domain.core import VibrationReading
 from vibesensor.vibration_strength import percentile
-from vibesensor.vibration_strength import (
-    vibration_strength_db_scalar as canonical_vibration_db,
-)
 
 from ..constants import MEMS_NOISE_FLOOR_G
 from ..domain_models import as_float_or_none as _as_float
@@ -130,13 +128,6 @@ def safe_percentile(sorted_vals: list[float], q: float, *, default: float = 0.0)
     if len(sorted_vals) >= 2:
         return float(percentile(sorted_vals, q))
     return sorted_vals[-1] if sorted_vals else default
-
-
-def vibration_db_or_none(peak_amp: float | None, floor_amp: float | None) -> float | None:
-    """Return the canonical vibration dB value when both inputs are present."""
-    if peak_amp is None or floor_amp is None:
-        return None
-    return float(canonical_vibration_db(peak_band_rms_amp_g=peak_amp, floor_amp_g=floor_amp))
 
 
 def aggregate_fft_spectrum(
@@ -657,9 +648,9 @@ def top_peaks_table_rows(
                 )
 
     run_noise_baseline_db: float | None = (
-        canonical_vibration_db(
-            peak_band_rms_amp_g=_effective_baseline_floor(run_noise_baseline_g),
-            floor_amp_g=MEMS_NOISE_FLOOR_G,
+        VibrationReading.compute_db(
+            _effective_baseline_floor(run_noise_baseline_g),
+            MEMS_NOISE_FLOOR_G,
         )
         if run_noise_baseline_g is not None
         else None
@@ -674,9 +665,9 @@ def top_peaks_table_rows(
         p95_amp = safe_percentile(amps, 0.95)
         max_amp = amps[-1] if amps else 0.0
         floor_amp_val = safe_percentile(floor_amps, 0.50) if floor_amps else None
-        max_intensity_db = vibration_db_or_none(max_amp, floor_amp_val)
-        median_intensity_db = vibration_db_or_none(median_amp, floor_amp_val)
-        p95_intensity_db = vibration_db_or_none(p95_amp, floor_amp_val)
+        max_intensity_db = VibrationReading.compute_db_or_none(max_amp, floor_amp_val)
+        median_intensity_db = VibrationReading.compute_db_or_none(median_amp, floor_amp_val)
+        p95_intensity_db = VibrationReading.compute_db_or_none(p95_amp, floor_amp_val)
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
         spatial_uniformity: float | None = None
         if len(total_locations) >= 2:
@@ -703,7 +694,9 @@ def top_peaks_table_rows(
         bucket.run_noise_baseline_db = run_noise_baseline_db
         bucket.median_vs_run_noise_ratio = median_amp / baseline_floor
         bucket.p95_vs_run_noise_ratio = p95_amp / baseline_floor
-        bucket.strength_floor_db = vibration_db_or_none(floor_amp_val, MEMS_NOISE_FLOOR_G)
+        bucket.strength_floor_db = VibrationReading.compute_db_or_none(
+            floor_amp_val, MEMS_NOISE_FLOOR_G
+        )
         bucket.strength_db = p95_intensity_db
         bucket.presence_ratio = presence_ratio
         bucket.burstiness = burstiness
