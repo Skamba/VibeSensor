@@ -133,6 +133,28 @@ class TestVibrationReading:
             )
             assert reading.get_severity_level() == band["key"]
 
+    def test_compute_db_matches_scalar_function(self) -> None:
+        """VibrationReading.compute_db must match vibration_strength_db_scalar."""
+        result = VibrationReading.compute_db(0.05, 0.001)
+        expected = vibration_strength_db_scalar(peak_band_rms_amp_g=0.05, floor_amp_g=0.001)
+        assert result == pytest.approx(expected)
+
+    def test_compute_db_zero_floor(self) -> None:
+        """compute_db handles zero noise floor without error."""
+        result = VibrationReading.compute_db(0.05, 0.0)
+        assert math.isfinite(result)
+
+    def test_compute_db_or_none_returns_none_for_missing(self) -> None:
+        assert VibrationReading.compute_db_or_none(None, 0.001) is None
+        assert VibrationReading.compute_db_or_none(0.05, None) is None
+        assert VibrationReading.compute_db_or_none(None, None) is None
+
+    def test_compute_db_or_none_returns_float_for_valid(self) -> None:
+        result = VibrationReading.compute_db_or_none(0.05, 0.001)
+        assert result is not None
+        expected = VibrationReading.compute_db(0.05, 0.001)
+        assert result == pytest.approx(expected)
+
 
 # ---------------------------------------------------------------------------
 # DiagnosticSession
