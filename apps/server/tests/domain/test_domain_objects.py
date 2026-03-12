@@ -12,8 +12,11 @@ from datetime import UTC, datetime
 import pytest
 
 from vibesensor.domain.core import (
+    # Backward compatibility aliases
+    AccelerationSample,
     AnalysisWindow,
     Car,
+    DiagnosticSession,
     Finding,
     HistoryRecord,
     Measurement,
@@ -22,9 +25,6 @@ from vibesensor.domain.core import (
     Sensor,
     SensorPlacement,
     SpeedSource,
-    # Backward compatibility aliases
-    AccelerationSample,
-    DiagnosticSession,
 )
 
 _NOW = datetime(2025, 6, 15, 12, 0, 0, tzinfo=UTC)
@@ -177,13 +177,13 @@ class TestCar:
         )
         assert car.tire_width_mm == 225
         assert car.tire_aspect_pct == 45
-        assert car.rim_diameter_in == 17
+        assert car.rim_in == 17
 
     def test_missing_aspects(self) -> None:
         car = Car(name="Test")
         assert car.tire_width_mm is None
         assert car.tire_aspect_pct is None
-        assert car.rim_diameter_in is None
+        assert car.rim_in is None
 
     def test_frozen(self) -> None:
         car = Car()
@@ -266,6 +266,11 @@ class TestFindingDomainObject:
     def test_confidence_pct_none(self) -> None:
         f = Finding()
         assert f.confidence_pct is None
+
+    def test_frozen(self) -> None:
+        f = Finding(finding_id="F001")
+        with pytest.raises(AttributeError):
+            f.finding_id = "F002"  # type: ignore[misc]
 
 
 # ---------------------------------------------------------------------------

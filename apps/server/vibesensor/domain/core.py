@@ -503,7 +503,8 @@ class Car:
         return self.aspects.get("tire_aspect_pct")
 
     @property
-    def rim_diameter_in(self) -> float | None:
+    def rim_in(self) -> float | None:
+        """Rim diameter in inches (aspects key ``rim_in``)."""
         return self.aspects.get("rim_in")
 
 
@@ -545,7 +546,7 @@ class AnalysisWindow:
         return None
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class Finding:
     """One diagnostic conclusion or cause candidate from analysis.
 
@@ -555,6 +556,8 @@ class Finding:
     access and behavior.
 
     ``finding_id`` is assigned during finalization (``F001``, ``F002``, …).
+    ``suspected_source`` identifies the mechanical component suspected of
+    causing the vibration (e.g. ``"wheel_bearing"``, ``"driveshaft"``).
     """
 
     finding_id: str = ""
@@ -563,7 +566,6 @@ class Finding:
     frequency_hz: float | None = None
     order: str = ""
     severity: str = ""
-    source: str = ""
     strongest_location: str | None = None
     strongest_speed_band: str | None = None
     peak_classification: str = ""
@@ -592,8 +594,8 @@ class Finding:
 
     @property
     def source_normalized(self) -> str:
-        """Lower-cased, stripped source string for comparison."""
-        return (self.suspected_source or self.source).strip().lower()
+        """Lower-cased, stripped suspected source for comparison."""
+        return self.suspected_source.strip().lower()
 
 
 @dataclass(frozen=True, slots=True)
