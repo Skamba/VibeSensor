@@ -913,6 +913,17 @@ class PreparedRunData:
     speed_breakdown_skipped_reason: I18nRef | None
     phase_speed_breakdown: list[PhaseSpeedBreakdownRow]
 
+    # -- derived convenience ------------------------------------------------
+
+    @property
+    def is_steady_speed(self) -> bool:
+        """Whether the run had steady speed (relevant to confidence scoring)."""
+        return bool(self.speed_stats.get("steady_speed"))
+
+    @property
+    def speed_stddev_kmh(self) -> float | None:
+        return _as_float(self.speed_stats.get("stddev_kmh"))
+
 
 def prepare_run_data(
     metadata: MetadataDict,
@@ -981,8 +992,8 @@ def build_findings_bundle(
         metadata=metadata,
         samples=samples,
         speed_sufficient=prepared.speed_sufficient,
-        steady_speed=bool(prepared.speed_stats.get("steady_speed")),
-        speed_stddev_kmh=_as_float(prepared.speed_stats.get("stddev_kmh")),
+        steady_speed=prepared.is_steady_speed,
+        speed_stddev_kmh=prepared.speed_stddev_kmh,
         speed_non_null_pct=prepared.speed_non_null_pct,
         raw_sample_rate_hz=prepared.raw_sample_rate_hz,
         lang=language,
@@ -1030,7 +1041,7 @@ def build_run_suitability_bundle(
         if isinstance(sample, dict) and (cid := sample.get("client_id"))
     }
     run_suitability = build_run_suitability_checks(
-        steady_speed=bool(prepared.speed_stats.get("steady_speed")),
+        steady_speed=prepared.is_steady_speed,
         speed_sufficient=prepared.speed_sufficient,
         sensor_ids=sensor_ids,
         reference_complete=reference_complete,
@@ -1044,6 +1055,142 @@ def build_run_suitability_bundle(
     return reference_complete, run_suitability, overall_strength_band_key
 
 
+class RunAnalysis:
+    """Cohesive object around a single analyzed run.
+
+    Owns run timing, speed/phase preparation, data quality, suitability,
+    sensor bundle, findings bundle, and summary export.  Replaces the
+    procedural orchestration in ``summarize_run_data`` with a richer
+    object that keeps all derived state together.
+
+    The public ``summarize_run_data()`` function delegates here.
+    """
+
+    __slots__ = (
+        "_metadata",
+        "_samples",
+        "_file_name",
+        "_language",
+        "_include_samples",
+        "_findings_builder",
+        "_prepared",
+        "_accel_stats",
+    )
+
+    def __init__(
+        self,
+        metadata: MetadataDict,
+        samples: list[Sample],
+        *,
+        file_name: str = "run",
+        lang: str | None = None,
+        include_samples: bool = True,
+        findings_builder: Callable[..., list[Finding]] | None = None,
+    ) -> None:
+        self._metadata = metadata
+        self._samples = samples
+        self._file_name = file_name
+        self._language = normalize_lang(lang)
+        self._include_samples = include_samples
+        self._findings_builder = findings_builder
+
+        _validate_required_strength_metrics(samples)
+        self._prepared = prepare_run_data(metadata, samples, file_name=file_name)
+        self._accel_stats: AccelStatistics = compute_accel_statistics(
+            samples, metadata.get("sensor_model")
+        )
+
+    # -- read-only access --------------------------------------------------
+
+    @property
+    def prepared(self) -> PreparedRunData:
+        return self._prepared
+
+    @property
+    def accel_stats(self) -> AccelStatistics:
+        return self._accel_stats
+
+    @property
+    def language(self) -> str:
+        return self._language
+
+    # -- orchestration -----------------------------------------------------
+
+    def summarize(self) -> SummaryData:
+        """Run the full analysis pipeline and return the summary dict."""
+        reference_complete, run_suitability, overall_strength_band_key = (
+            build_run_suitability_bundle(
+                self._metadata,
+                self._samples,
+                prepared=self._prepared,
+                accel_stats=self._accel_stats,
+            )
+        )
+        findings, most_likely_origin, test_plan, phase_timeline, top_causes = (
+            build_findings_bundle(
+                self._metadata,
+                self._samples,
+                language=self._language,
+                prepared=self._prepared,
+                overall_strength_band_key=overall_strength_band_key,
+                findings_builder=self._findings_builder,
+            )
+        )
+        sensor_locations, connected_locations, sensor_intensity_by_location = (
+            build_sensor_bundle(
+                self._samples,
+                language=self._language,
+                per_sample_phases=self._prepared.per_sample_phases,
+            )
+        )
+
+        summary = build_summary_payload(
+            file_name=self._file_name,
+            run_id=self._prepared.run_id,
+            samples=self._samples,
+            duration_s=self._prepared.duration_s,
+            language=self._language,
+            metadata=self._metadata,
+            raw_sample_rate_hz=self._prepared.raw_sample_rate_hz,
+            speed_breakdown=self._prepared.speed_breakdown,
+            phase_speed_breakdown=self._prepared.phase_speed_breakdown,
+            phase_segments=self._prepared.phase_segments,
+            run_noise_baseline_g=self._prepared.run_noise_baseline_g,
+            speed_breakdown_skipped_reason=self._prepared.speed_breakdown_skipped_reason,
+            findings=findings,
+            top_causes=top_causes,
+            most_likely_origin=most_likely_origin,
+            test_plan=test_plan,
+            phase_timeline=phase_timeline,
+            speed_stats=self._prepared.speed_stats,
+            speed_stats_by_phase=self._prepared.speed_stats_by_phase,
+            phase_info=self._prepared.phase_info,
+            sensor_locations=sensor_locations,
+            connected_locations=connected_locations,
+            sensor_intensity_by_location=sensor_intensity_by_location,
+            run_suitability=run_suitability,
+            speed_values=self._prepared.speed_values,
+            speed_non_null_pct=self._prepared.speed_non_null_pct,
+            accel_stats=self._accel_stats,
+            amp_metric_values=self._accel_stats["amp_metric_values"],
+        )
+        summary["warnings"] = build_summary_warnings(
+            self._metadata,
+            reference_complete=reference_complete,
+        )
+        summary["report_date"] = self._metadata.get("end_time_utc") or utc_now_iso()
+        summary["plots"] = _plot_data(
+            summary,
+            run_noise_baseline_g=self._prepared.run_noise_baseline_g,
+            per_sample_phases=self._prepared.per_sample_phases,
+            phase_segments=self._prepared.phase_segments,
+        )
+        annotate_peaks_with_order_labels(summary)
+        if not self._include_samples:
+            summary.pop("samples", None)
+        return summary
+
+
 def summarize_run_data(
     metadata: MetadataDict,
     samples: list[Sample],
@@ -1052,77 +1199,18 @@ def summarize_run_data(
     include_samples: bool = True,
     findings_builder: Callable[..., list[Finding]] | None = None,
 ) -> SummaryData:
-    """Analyze pre-loaded run data and return the full summary dict."""
-    language = normalize_lang(lang)
-    _validate_required_strength_metrics(samples)
+    """Analyze pre-loaded run data and return the full summary dict.
 
-    prepared = prepare_run_data(metadata, samples, file_name=file_name)
-    accel_stats: AccelStatistics = compute_accel_statistics(samples, metadata.get("sensor_model"))
-    reference_complete, run_suitability, overall_strength_band_key = build_run_suitability_bundle(
+    Delegates to :class:`RunAnalysis` which owns the full orchestration.
+    """
+    return RunAnalysis(
         metadata,
         samples,
-        prepared=prepared,
-        accel_stats=accel_stats,
-    )
-    findings, most_likely_origin, test_plan, phase_timeline, top_causes = build_findings_bundle(
-        metadata,
-        samples,
-        language=language,
-        prepared=prepared,
-        overall_strength_band_key=overall_strength_band_key,
-        findings_builder=findings_builder,
-    )
-    sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_bundle(
-        samples,
-        language=language,
-        per_sample_phases=prepared.per_sample_phases,
-    )
-
-    summary = build_summary_payload(
         file_name=file_name,
-        run_id=prepared.run_id,
-        samples=samples,
-        duration_s=prepared.duration_s,
-        language=language,
-        metadata=metadata,
-        raw_sample_rate_hz=prepared.raw_sample_rate_hz,
-        speed_breakdown=prepared.speed_breakdown,
-        phase_speed_breakdown=prepared.phase_speed_breakdown,
-        phase_segments=prepared.phase_segments,
-        run_noise_baseline_g=prepared.run_noise_baseline_g,
-        speed_breakdown_skipped_reason=prepared.speed_breakdown_skipped_reason,
-        findings=findings,
-        top_causes=top_causes,
-        most_likely_origin=most_likely_origin,
-        test_plan=test_plan,
-        phase_timeline=phase_timeline,
-        speed_stats=prepared.speed_stats,
-        speed_stats_by_phase=prepared.speed_stats_by_phase,
-        phase_info=prepared.phase_info,
-        sensor_locations=sensor_locations,
-        connected_locations=connected_locations,
-        sensor_intensity_by_location=sensor_intensity_by_location,
-        run_suitability=run_suitability,
-        speed_values=prepared.speed_values,
-        speed_non_null_pct=prepared.speed_non_null_pct,
-        accel_stats=accel_stats,
-        amp_metric_values=accel_stats["amp_metric_values"],
-    )
-    summary["warnings"] = build_summary_warnings(
-        metadata,
-        reference_complete=reference_complete,
-    )
-    summary["report_date"] = metadata.get("end_time_utc") or utc_now_iso()
-    summary["plots"] = _plot_data(
-        summary,
-        run_noise_baseline_g=prepared.run_noise_baseline_g,
-        per_sample_phases=prepared.per_sample_phases,
-        phase_segments=prepared.phase_segments,
-    )
-    annotate_peaks_with_order_labels(summary)
-    if not include_samples:
-        summary.pop("samples", None)
-    return summary
+        lang=lang,
+        include_samples=include_samples,
+        findings_builder=findings_builder,
+    ).summarize()
 
 
 def build_findings_for_samples(
@@ -1142,8 +1230,8 @@ def build_findings_for_samples(
         metadata=dict(metadata),
         samples=rows,
         speed_sufficient=prepared.speed_sufficient,
-        steady_speed=bool(prepared.speed_stats.get("steady_speed")),
-        speed_stddev_kmh=_as_float(prepared.speed_stats.get("stddev_kmh")),
+        steady_speed=prepared.is_steady_speed,
+        speed_stddev_kmh=prepared.speed_stddev_kmh,
         speed_non_null_pct=prepared.speed_non_null_pct,
         raw_sample_rate_hz=prepared.raw_sample_rate_hz,
         lang=language,
