@@ -930,7 +930,7 @@ class PeakBin:
             "median_relative_to_run_noise": self._median_amp / self._effective_floor,
             "p95_relative_to_run_noise": self._p95_amp / self._effective_floor,
             "sample_count": self._count,
-            "total_samples": 0,  # Filled by analyzer
+            "total_samples": 0,  # Set by PeakFindingAnalyzer._select_top_findings()
             "spatial_concentration": self._spatial_concentration,
             "spatial_uniformity": self._spatial_uniformity,
             "speed_uniformity": self._speed_uniformity,
@@ -1003,7 +1003,7 @@ class PeakFindingAnalyzer:
         self._samples = samples
         self._order_finding_freqs = order_finding_freqs
         self._lang = lang
-        self._freq_bin_hz = max(freq_bin_hz, 0.01)  # Guard against <= 0
+        self._freq_bin_hz = max(freq_bin_hz, 0.01)  # Guard against values < 0.01
         self._per_sample_phases = per_sample_phases
         self._run_noise_baseline_g = run_noise_baseline_g
 
