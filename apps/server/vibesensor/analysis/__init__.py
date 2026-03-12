@@ -10,12 +10,19 @@ High-level analysis entry points are re-exported here so callers can use
 
 from ._types import Finding, SummaryData, i18n_ref
 from .phase_segmentation import DrivingPhase, classify_sample_phase
-from .summary_builder import build_findings_for_samples, summarize_log, summarize_run_data
-from .top_cause_selection import confidence_label, select_top_causes
+from .summary_builder import (
+    LocalizationAssessment,
+    build_findings_for_samples,
+    summarize_log,
+    summarize_run_data,
+)
+from .top_cause_selection import OrderAssessment, confidence_label, select_top_causes
 
 __all__ = [
     "DrivingPhase",
     "Finding",
+    "LocalizationAssessment",
+    "OrderAssessment",
     "SummaryData",
     "build_findings_for_samples",
     "classify_sample_phase",
