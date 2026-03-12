@@ -1046,7 +1046,7 @@ def _build_report_template_data(
     return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),
         run_datetime=context.date_str,
-        run_id=report.run_id or summary.get("run_id"),
+        run_id=report.run_id,
         duration_text=context.duration_text,
         start_time_utc=context.start_time_utc,
         end_time_utc=context.end_time_utc,

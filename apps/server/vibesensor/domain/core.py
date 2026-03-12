@@ -620,6 +620,9 @@ class Finding:
             except (TypeError, ValueError):
                 pass
 
+        loc = payload.get("strongest_location")
+        band = payload.get("strongest_speed_band")
+
         return cls(
             finding_id=_str("finding_id"),
             suspected_source=_str("suspected_source"),
@@ -627,12 +630,8 @@ class Finding:
             frequency_hz=frequency_hz,
             order=_str("order"),
             severity=_str("severity"),
-            strongest_location=str(payload["strongest_location"])
-            if payload.get("strongest_location") is not None
-            else None,
-            strongest_speed_band=str(payload["strongest_speed_band"])
-            if payload.get("strongest_speed_band") is not None
-            else None,
+            strongest_location=str(loc) if loc is not None else None,
+            strongest_speed_band=str(band) if band is not None else None,
             peak_classification=_str("peak_classification"),
         )
 
@@ -701,8 +700,10 @@ class Report:
         car_name: str | None = None
         car_type: str | None = None
         if isinstance(car_cfg, dict):
-            car_name = str(car_cfg.get("name", "")) or None
-            car_type = str(car_cfg.get("car_type", "")) or None
+            raw_name = car_cfg.get("name")
+            car_name = str(raw_name) if raw_name else None
+            raw_type = car_cfg.get("car_type")
+            car_type = str(raw_type) if raw_type else None
 
         findings = summary.get("findings")
         finding_count = len(findings) if isinstance(findings, list) else 0
