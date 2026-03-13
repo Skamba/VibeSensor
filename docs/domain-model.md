@@ -26,7 +26,7 @@ VibrationReading (dB)                  ▼
 | Object | Role | Key owned behavior |
 |--------|------|--------------------|
 | **Run** | Aggregate root | Lifecycle (start/stop/stopped), status transitions, phase tracking |
-| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence quantisation (via `ConfidenceTier`), deterministic ranking, phase-adjusted scoring (flat `cruise_fraction`), vibration-source enum (`VibrationSource`), speed-band enum (`SpeedBand`) |
+| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence thresholds, deterministic ranking, phase-adjusted scoring (flat `cruise_fraction`), vibration-source enum (`VibrationSource`), speed-band enum (`SpeedBand`) |
 | **Report** | Assembled output | Finding queries (`finding_count` property), primary-finding selection, raw temporal values (`report_date`, `duration_s`) |
 
 ### Supporting domain objects
@@ -85,7 +85,7 @@ within `apps/server/vibesensor/domain/`:
 | `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
 | `car.py` | `Car`, `TireSpec` | Vehicle geometry and tire computation |
 | `analysis_window.py` | `DrivingPhase`, `AnalysisWindow` | Driving-phase StrEnum and phase-aligned analysis chunk |
-| `finding.py` | `FindingKind`, `VibrationSource`, `ConfidenceTier`, `PhaseEvidence`, `SpeedBand`, `Finding` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band binning, flat `cruise_fraction` for phase adjustment) |
+| `finding.py` | `FindingKind`, `VibrationSource`, `PhaseEvidence`, `SpeedBand`, `Finding` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band binning, flat `cruise_fraction` for phase adjustment) |
 | `report.py` | `Report` | Assembled diagnostic output |
 | `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `transition_run` | Persisted run lifecycle state machine (enforcing) |
 

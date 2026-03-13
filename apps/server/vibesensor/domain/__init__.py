@@ -34,7 +34,6 @@ VibrationReading
 from .analysis_window import AnalysisWindow, DrivingPhase
 from .car import Car, TireSpec
 from .finding import (
-    ConfidenceTier,
     Finding,
     FindingKind,
     PhaseEvidence,
@@ -52,7 +51,6 @@ __all__ = [
     # Primary domain names (prefer these)
     "AnalysisWindow",
     "Car",
-    "ConfidenceTier",
     "DrivingPhase",
     "Finding",
     "FindingKind",
