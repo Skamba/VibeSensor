@@ -642,8 +642,6 @@ class Car:
         sidewall_mm = width * (aspect / 100.0)
         diameter_mm = (rim * 25.4) + (2.0 * sidewall_mm)
         diameter_m = diameter_mm / 1000.0
-        if diameter_m <= 0:
-            return None
         return diameter_m * math.pi
 
 

@@ -111,27 +111,13 @@ class OrderAssessment:
     @staticmethod
     def from_finding(finding: FindingPayload) -> OrderAssessment:
         """Build an assessment from a FindingPayload dict."""
+        from dataclasses import replace as _replace
+
         domain = Finding.from_payload(finding)
-        # Apply severity default: analysis payloads use "diagnostic" when absent
+        # Apply severity default and extract analysis-specific order key
         severity_raw = str(finding.get("severity") or "diagnostic").strip().lower()
-        # Also extract order from the analysis-specific key
         order_raw = str(finding.get("frequency_hz_or_order") or finding.get("order") or "")
-        domain = Finding(
-            finding_id=domain.finding_id,
-            suspected_source=domain.suspected_source,
-            confidence=domain.confidence,
-            frequency_hz=domain.frequency_hz,
-            order=order_raw,
-            severity=severity_raw,
-            strongest_location=domain.strongest_location,
-            strongest_speed_band=domain.strongest_speed_band,
-            peak_classification=domain.peak_classification,
-            ranking_score=domain.ranking_score,
-            dominance_ratio=domain.dominance_ratio,
-            diffuse_excitation=domain.diffuse_excitation,
-            weak_spatial_separation=domain.weak_spatial_separation,
-            phase_evidence=domain.phase_evidence,
-        )
+        domain = _replace(domain, severity=severity_raw, order=order_raw)
         return OrderAssessment(
             domain_finding=domain,
             signatures_observed=finding.get("signatures_observed", []),

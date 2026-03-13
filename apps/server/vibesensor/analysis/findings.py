@@ -74,25 +74,28 @@ class FindingRecord:
 
     Provides property-based access, classification predicates, and source
     normalisation.  Classification logic is delegated to the domain
-    :class:`~vibesensor.domain.core.Finding` object constructed lazily
+    :class:`~vibesensor.domain.core.Finding` object constructed eagerly
     from the underlying dict.
 
     The underlying dict is **not** copied – mutations through the record
     are visible in the original dict and vice-versa.  This is intentional:
     ``FindingRecord`` is an *internal convenience view* that bridges the
     dict-based analysis pipeline to the domain model.
+
+    .. note::
+
+       The cached domain Finding is invalidated by :meth:`assign_id`.
+       Any future mutation method must do the same.
     """
 
     __slots__ = ("_d", "_domain")
 
     def __init__(self, finding: FindingPayload) -> None:
         self._d = finding
-        self._domain: DomainFinding | None = None
+        self._domain: DomainFinding = DomainFinding.from_payload(self._d)
 
     def _as_domain(self) -> DomainFinding:
-        """Lazily construct a domain Finding from the underlying dict."""
-        if self._domain is None:
-            self._domain = DomainFinding.from_payload(self._d)
+        """Return the eagerly constructed domain Finding."""
         return self._domain
 
     # -- raw dict access ---------------------------------------------------
@@ -152,9 +155,13 @@ class FindingRecord:
     # -- mutation helpers --------------------------------------------------
 
     def assign_id(self, finding_id: str) -> None:
-        """Set the finding_id on the underlying dict."""
+        """Set the finding_id on the underlying dict.
+
+        Invalidates the cached domain Finding so that subsequent
+        property accesses reflect the new ID.
+        """
         self._d["finding_id"] = finding_id
-        self._domain = None  # invalidate cached domain object
+        self._domain = DomainFinding.from_payload(self._d)
 
 
 class FindingCollection:
