@@ -190,7 +190,7 @@ def test_integration_full_scenario() -> None:
     # --- 8. Most likely origin ---
     origin = summary["most_likely_origin"]
     assert isinstance(origin, dict)
-    assert "source" in origin
+    assert "suspected_source" in origin
 
     # --- 9. Phase timeline should exist ---
     pt = summary.get("phase_timeline")

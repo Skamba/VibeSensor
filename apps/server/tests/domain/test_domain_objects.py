@@ -37,9 +37,9 @@ class TestRunAlias:
 
     def test_run_creates_valid_session(self) -> None:
         run = Run()
-        assert run.status.value == "pending"
+        assert run.phase.value == "pending"
         run.start()
-        assert run.status.value == "running"
+        assert run.phase.value == "running"
 
 
 class TestMeasurement:
@@ -75,7 +75,7 @@ class TestSpeedSource:
     def test_label(self) -> None:
         assert SpeedSource(kind="gps").label == "GPS"
         assert SpeedSource(kind="obd2").label == "OBD-II"
-        assert SpeedSource(kind="manual").label == "Manual"
+        assert SpeedSource(kind="manual", manual_speed_kmh=0.0).label == "Manual"
 
     def test_frozen(self) -> None:
         src = SpeedSource()
@@ -566,7 +566,7 @@ class TestFindingEnrichments:
         assert f.phase_adjusted_score == pytest.approx(0.8 * 0.85)
 
     def test_phase_adjusted_score_full_cruise(self) -> None:
-        f = Finding(confidence=0.8, phase_evidence={"cruise_fraction": 1.0})
+        f = Finding(confidence=0.8, cruise_fraction=1.0)
         assert f.phase_adjusted_score == pytest.approx(0.8 * 1.0)
 
     def test_is_stronger_than(self) -> None:
@@ -598,8 +598,7 @@ class TestFindingEnrichments:
         assert f.dominance_ratio == 0.85
         assert f.diffuse_excitation is True
         assert f.weak_spatial_separation is True
-        assert f.phase_evidence is not None
-        assert f.phase_evidence.cruise_fraction == pytest.approx(0.6)
+        assert f.cruise_fraction == pytest.approx(0.6)
 
 
 class TestAnalysisWindowEnrichments:
@@ -715,9 +714,9 @@ class TestRunEnrichments:
 
     def test_lifecycle_pending_to_running(self) -> None:
         run = Run()
-        assert run.status.value == "pending"
+        assert run.phase.value == "pending"
         run.start()
-        assert run.status.value == "running"
+        assert run.phase.value == "running"
 
 
 class TestCarEnrichments:
@@ -758,7 +757,7 @@ class TestSpeedSourceEnrichments:
     def test_is_live(self) -> None:
         assert SpeedSource(kind="gps").is_live
         assert SpeedSource(kind="obd2").is_live
-        assert not SpeedSource(kind="manual").is_live
+        assert not SpeedSource(kind="manual", manual_speed_kmh=0.0).is_live
 
     def test_effective_speed_manual(self) -> None:
         ss = SpeedSource(kind="manual", manual_speed_kmh=80.0)

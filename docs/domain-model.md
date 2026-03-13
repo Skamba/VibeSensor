@@ -26,25 +26,25 @@ VibrationReading (dB)                  ▼
 | Object | Role | Key owned behavior |
 |--------|------|--------------------|
 | **Run** | Aggregate root | Lifecycle (start/stop/stopped), status transitions, phase tracking |
-| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence quantisation (via `ConfidenceTier`), deterministic ranking, phase-adjusted scoring (via `PhaseContext`), vibration-source enum (`VibrationSource`), speed-band enum (`SpeedBand`) |
+| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence quantisation (via `ConfidenceTier`), deterministic ranking, phase-adjusted scoring (flat `cruise_fraction`), vibration-source enum (`VibrationSource`), speed-band enum (`SpeedBand`) |
 | **Report** | Assembled output | Finding queries (`finding_count` property), primary-finding selection, raw temporal values (`report_date`, `duration_s`) |
 
 ### Supporting domain objects
 
 | Object | Role | Key owned behavior |
 |--------|------|--------------------|
-| **Car** | Vehicle under test | Tire-circumference computation from aspect specs (via `TireSpec`), display name (always includes type), dimension validation |
+| **Car** | Vehicle under test | Tire-circumference computation from aspect specs (via `TireSpec`), display name (always includes type), dimension validation, immutable aspects (`MappingProxyType`) |
 | **Sensor** | Accelerometer node | Display name, placement status queries |
 | **SensorPlacement** | Mounting position | Position category classification (wheel/drivetrain/body) |
 | **Measurement** | Raw sample value object | Conversion to VibrationReading (dB) |
 | **VibrationReading** | Processed dB value object | Severity level lookup, dB computation |
-| **SpeedSource** | Speed acquisition config | Source-kind classification (via `SpeedSourceKind` StrEnum), effective speed resolution |
+| **SpeedSource** | Speed acquisition config | Source-kind classification (via `SpeedSourceKind` StrEnum), effective speed resolution, cross-field invariant (MANUAL requires `manual_speed_kmh`) |
 | **AnalysisWindow** | Analysis chunk | Phase classification, speed containment, analyzability, index-range validation |
 
 ### Object containment and derivation
 
 - **Sensor** contains an optional **SensorPlacement**.
-- **Run** tracks lifecycle status (via **RunPhase**: PENDING → RUNNING → STOPPED).  Reading accumulation is handled by the recording pipeline, not the domain object.
+- **Run** tracks lifecycle phase (via **RunPhase**: PENDING → RUNNING → STOPPED).  Reading accumulation is handled by the recording pipeline, not the domain object.
 - **Report** contains a tuple of **Finding** instances.
 - **Finding** is derived from analysis of **AnalysisWindow** data.
 - **AnalysisWindow** is derived from phase segmentation of a **Run**.
@@ -64,7 +64,7 @@ These types exist only at boundaries and should not own domain behavior:
 | `RunMetadata` | `backend_types.py` | Run-level configuration snapshot |
 | `FindingPayload` | `analysis/_types.py` | Dict-based analysis pipeline payload |
 | `AnalysisSummary` | `analysis/_types.py` | Analysis summary TypedDict |
-| `SuspectedVibrationOrigin` | `analysis/_types.py` | Origin summary TypedDict |
+| `SuspectedVibrationOrigin` | `analysis/_types.py` | Origin summary TypedDict (key: `suspected_source`) |
 | `OrderAssessment` | `analysis/top_cause_selection.py` | Report-level adapter wrapping domain `Finding`, adds aggregation fields |
 | `LocalizationAssessment` | `analysis/summary_builder.py` | Spatial interpretation of finding evidence |
 | `ReportTemplateData` | `report/report_data.py` | PDF-rendering data classes |
@@ -85,7 +85,7 @@ within `apps/server/vibesensor/domain/`:
 | `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
 | `car.py` | `Car`, `TireSpec` | Vehicle geometry and tire computation |
 | `analysis_window.py` | `DrivingPhase`, `AnalysisWindow` | Driving-phase StrEnum and phase-aligned analysis chunk |
-| `finding.py` | `FindingKind`, `VibrationSource`, `ConfidenceTier`, `PhaseContext`, `PhaseEvidence`, `SpeedBand`, `Finding` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band binning, phase-context evidence) |
+| `finding.py` | `FindingKind`, `VibrationSource`, `ConfidenceTier`, `PhaseEvidence`, `SpeedBand`, `Finding` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band binning, flat `cruise_fraction` for phase adjustment) |
 | `report.py` | `Report` | Assembled diagnostic output |
 | `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `transition_run` | Persisted run lifecycle state machine (enforcing) |
 

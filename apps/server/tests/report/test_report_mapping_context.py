@@ -35,7 +35,7 @@ def _make_context(**overrides: object) -> ReportMappingContext:
         "origin": {
             "location": "unknown",
             "alternative_locations": [],
-            "source": "unknown",
+            "suspected_source": "unknown",
             "dominance_ratio": None,
             "weak_spatial_separation": True,
         },

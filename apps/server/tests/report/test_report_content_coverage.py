@@ -194,7 +194,7 @@ def test_select_top_causes_prefers_cruise_phase_evidence() -> None:
 
 
 def test_select_top_causes_phase_evidence_in_output() -> None:
-    """phase_evidence from the representative finding must be passed through."""
+    """phase_evidence cruise_fraction from the representative finding must be passed through."""
     phase_ev = {"cruise_fraction": 0.85, "phases_detected": ["cruise", "acceleration"]}
     findings = [
         {
@@ -208,7 +208,9 @@ def test_select_top_causes_phase_evidence_in_output() -> None:
     ]
     causes = select_top_causes(findings)
     assert len(causes) == 1
-    assert causes[0]["phase_evidence"] == phase_ev
+    # Domain Finding only preserves cruise_fraction; phases_detected is only
+    # consumed from raw FindingPayload dicts by summary_builder, not via TopCause.
+    assert causes[0]["phase_evidence"] == {"cruise_fraction": 0.85}
 
 
 def test_select_top_causes_no_phase_evidence_still_works() -> None:

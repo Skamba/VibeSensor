@@ -29,7 +29,7 @@ def _minimal_summary(**overrides: object) -> AnalysisSummary:
         "most_likely_origin": {
             "location": "front_left",
             "alternative_locations": [],
-            "source": "wheel/tire",
+            "suspected_source": "wheel/tire",
             "dominance_ratio": 2.0,
             "weak_spatial_separation": False,
         },

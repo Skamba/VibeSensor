@@ -231,7 +231,7 @@ class PhaseSegmentSummary(TypedDict):
 class SuspectedVibrationOrigin(TypedDict, total=False):
     location: str
     alternative_locations: list[str]
-    source: str
+    suspected_source: str
     dominance_ratio: float | None
     weak_spatial_separation: bool
     speed_band: str | None

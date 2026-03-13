@@ -319,7 +319,7 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
-    logger._sess_last_data_progress_mono_s = 0.0
+    logger._run_last_data_progress_mono_s = 0.0
 
     timed_out = logger._append_records(
         run_id,
@@ -344,7 +344,7 @@ def test_append_records_does_not_timeout_on_brief_gap(
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
     monkeypatch.setattr("vibesensor.metrics_log.logger.time.monotonic", lambda: 100.0)
-    logger._sess_last_data_progress_mono_s = 95.0
+    logger._run_last_data_progress_mono_s = 95.0
 
     timed_out = logger._append_records(
         run_id,

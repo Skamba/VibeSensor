@@ -35,7 +35,7 @@
   SensorPlacement), `measurement.py` (Measurement,
   VibrationReading), `session.py` (Run, RunPhase),
   `speed_source.py` (SpeedSource), `analysis_window.py` (DrivingPhase, AnalysisWindow),
-  `finding.py` (FindingKind, VibrationSource, ConfidenceTier, PhaseContext, PhaseEvidence, SpeedBand, Finding), `report.py` (Report),
+  `finding.py` (FindingKind, VibrationSource, ConfidenceTier, PhaseEvidence, SpeedBand, Finding), `report.py` (Report),
   `run_status.py` (RunStatus, RUN_TRANSITIONS).  All are plain frozen dataclasses with no external coupling.
   Domain objects own classification, ranking, actionability, surfacing,
   and query logic; pipeline adapters (OrderAssessment) in

@@ -10,15 +10,14 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from enum import StrEnum
-from typing import ClassVar, Final, TypedDict
+from typing import ClassVar, TypedDict
 
 __all__ = [
     "ConfidenceTier",
     "Finding",
     "FindingKind",
-    "PhaseContext",
     "PhaseEvidence",
     "SpeedBand",
     "VibrationSource",
@@ -71,40 +70,14 @@ class PhaseEvidence(TypedDict, total=False):
     phases_detected: list[str]
 
 
-@dataclass(frozen=True, slots=True)
-class PhaseContext:
-    """Parsed phase-context evidence for domain use.
-
-    Use :meth:`from_dict` to safely parse a raw dict or ``None`` value.
-    """
-
-    cruise_fraction: float = 0.0
-    phases_detected: tuple[str, ...] = ()
-
-    @classmethod
-    def from_dict(cls, raw: dict[str, object] | None) -> PhaseContext:
-        """Create from a raw dict, handling missing or malformed values."""
-        if not isinstance(raw, dict):
-            return cls()
-        try:
-            cruise = float(raw.get("cruise_fraction", 0.0))  # type: ignore[arg-type]
-        except (TypeError, ValueError):
-            cruise = 0.0
-        phases = raw.get("phases_detected", ())
-        if isinstance(phases, list):
-            phases_t = tuple(str(p) for p in phases)
-        else:
-            phases_t = ()
-        return cls(cruise_fraction=cruise, phases_detected=phases_t)
-
-    def to_dict(self) -> PhaseEvidence:
-        """Serialize to a ``PhaseEvidence`` TypedDict."""
-        result: PhaseEvidence = {}
-        if self.cruise_fraction:
-            result["cruise_fraction"] = self.cruise_fraction
-        if self.phases_detected:
-            result["phases_detected"] = list(self.phases_detected)
-        return result
+def _parse_cruise_fraction(raw: dict[str, object] | None) -> float:
+    """Extract cruise_fraction from a raw phase_evidence dict."""
+    if not isinstance(raw, dict):
+        return 0.0
+    try:
+        return float(raw.get("cruise_fraction", 0.0))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -147,11 +120,6 @@ class SpeedBand:
         return self.low_kmh
 
 
-_KIND_AUTO: Final = FindingKind.DIAGNOSTIC
-"""Sentinel: when ``kind`` is left at this default during direct construction,
-``__post_init__`` derives the actual kind from ``finding_id`` / ``severity``."""
-
-
 @dataclass(frozen=True, slots=True)
 class Finding:
     """One diagnostic conclusion or cause candidate from analysis.
@@ -190,7 +158,7 @@ class Finding:
     strongest_location: str | None = None
     strongest_speed_band: SpeedBand | None = None
     peak_classification: str = ""
-    kind: FindingKind = FindingKind.DIAGNOSTIC
+    kind: FindingKind | None = None
 
     # Evidence and ranking fields ------------------------------------------
     ranking_score: float = 0.0
@@ -198,7 +166,7 @@ class Finding:
     diffuse_excitation: bool = False
     weak_spatial_separation: bool = False
     vibration_strength_db: float | None = None
-    phase_evidence: PhaseContext | None = field(default=None, hash=False)
+    cruise_fraction: float = 0.0
 
     def __post_init__(self) -> None:
         """Auto-derive ``kind`` and validate invariants."""
@@ -210,20 +178,18 @@ class Finding:
                 object.__setattr__(self, "suspected_source", VibrationSource(normed))
             except ValueError:
                 object.__setattr__(self, "suspected_source", VibrationSource.UNKNOWN)
-        if self.kind is _KIND_AUTO:
-            derived = self._kind_from_fields(self.finding_id, self.severity)
-            if derived is not _KIND_AUTO:
-                object.__setattr__(self, "kind", derived)
+        if self.kind is None:
+            object.__setattr__(
+                self,
+                "kind",
+                self._kind_from_fields(self.finding_id, self.severity),
+            )
         if self.confidence is not None and not (0.0 <= self.confidence <= 1.0):
             raise ValueError(f"Finding.confidence must be in [0, 1], got {self.confidence}")
         # Coerce str → SpeedBand for convenience.
         sb = self.strongest_speed_band
         if isinstance(sb, str):
             object.__setattr__(self, "strongest_speed_band", SpeedBand.from_label(sb))
-        # Coerce dict → PhaseContext for convenience.
-        pe = self.phase_evidence
-        if isinstance(pe, dict):
-            object.__setattr__(self, "phase_evidence", PhaseContext.from_dict(pe))
 
     @staticmethod
     def _kind_from_fields(finding_id: str, severity: str) -> FindingKind:
@@ -310,7 +276,9 @@ class Finding:
                 pass
 
         phase_ev = payload.get("phase_evidence")
-        phase_evidence = PhaseContext.from_dict(phase_ev if isinstance(phase_ev, dict) else None)
+        cruise_fraction = _parse_cruise_fraction(
+            phase_ev if isinstance(phase_ev, dict) else None,
+        )
 
         # Extract vibration_strength_db from evidence_metrics
         vib_db: float | None = None
@@ -350,7 +318,7 @@ class Finding:
             diffuse_excitation=bool(payload.get("diffuse_excitation", False)),
             weak_spatial_separation=bool(payload.get("weak_spatial_separation", False)),
             vibration_strength_db=vib_db,
-            phase_evidence=phase_evidence,
+            cruise_fraction=cruise_fraction,
         )
 
     @staticmethod
@@ -486,7 +454,7 @@ class Finding:
         constant-speed conditions produce the most reliable spectral
         evidence.
         """
-        cf = self.phase_evidence.cruise_fraction if self.phase_evidence else 0.0
+        cf = self.cruise_fraction
         return self.effective_confidence * (0.85 + 0.15 * cf)
 
     def is_stronger_than(self, other: Finding) -> bool:
