@@ -210,7 +210,8 @@ def human_source(source: object, *, tr: Callable[[str], str]) -> str:
         key = VibrationSource(raw)
     except ValueError:
         logging.getLogger(__name__).warning(
-            "Unrecognized vibration source %r; falling back to titlecase", raw,
+            "Unrecognized vibration source %r; falling back to titlecase",
+            raw,
         )
         return raw.replace("_", " ").title() if raw else tr("UNKNOWN")
     return mapping.get(key, tr("UNKNOWN"))

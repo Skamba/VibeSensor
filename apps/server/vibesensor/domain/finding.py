@@ -120,8 +120,6 @@ class SpeedBand:
         return self.low_kmh
 
 
-
-
 @dataclass(frozen=True, slots=True)
 class Finding:
     """One diagnostic conclusion or cause candidate from analysis.
@@ -182,7 +180,9 @@ class Finding:
                 object.__setattr__(self, "suspected_source", VibrationSource.UNKNOWN)
         if self.kind is None:
             object.__setattr__(
-                self, "kind", self._kind_from_fields(self.finding_id, self.severity),
+                self,
+                "kind",
+                self._kind_from_fields(self.finding_id, self.severity),
             )
         if self.confidence is not None and not (0.0 <= self.confidence <= 1.0):
             raise ValueError(f"Finding.confidence must be in [0, 1], got {self.confidence}")
