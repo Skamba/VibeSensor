@@ -77,7 +77,7 @@ def _build_header_rows(
     right_col_w = columns.right_col_w
     left_lbl_default = 22 * mm
 
-    car_parts = [p for p in (_safe(data.car.name, ""), _safe(data.car.car_type, "")) if p]
+    car_parts = [p for p in (_safe(data.car_name, ""), _safe(data.car_type, "")) if p]
     car_text = " \u2014 ".join(car_parts) if car_parts else na
 
     left_rows: list[tuple[str, str, float]] = [

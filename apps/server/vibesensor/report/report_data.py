@@ -8,7 +8,6 @@ The ``map_summary()`` builder that populates these classes lives in
 from __future__ import annotations
 
 __all__ = [
-    "CarMeta",
     "DataTrustItem",
     "NextStep",
     "PartSuggestion",
@@ -25,14 +24,6 @@ from ..json_types import JsonObject
 # ---------------------------------------------------------------------------
 # Data model
 # ---------------------------------------------------------------------------
-
-
-@dataclass
-class CarMeta:
-    """Vehicle identification metadata (name, type) extracted from the report run."""
-
-    name: str | None = None
-    car_type: str | None = None
 
 
 @dataclass
@@ -131,7 +122,8 @@ class ReportTemplateData:
     sensor_locations: list[str] = field(default_factory=list)
     sensor_model: str | None = None
     firmware_version: str | None = None
-    car: CarMeta = field(default_factory=CarMeta)
+    car_name: str | None = None
+    car_type: str | None = None
     observed: PatternEvidence = field(default_factory=PatternEvidence)
     system_cards: list[SystemFindingCard] = field(default_factory=list)
     next_steps: list[NextStep] = field(default_factory=list)

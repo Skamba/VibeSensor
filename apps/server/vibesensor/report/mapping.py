@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from collections import defaultdict
 from collections.abc import Callable
@@ -38,7 +39,6 @@ from ..report_i18n import tr as _tr
 from ..runlog import utc_now_iso
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .report_data import (
-    CarMeta,
     DataTrustItem,
     NextStep,
     PartSuggestion,
@@ -209,6 +209,9 @@ def human_source(source: object, *, tr: Callable[[str], str]) -> str:
     try:
         key = VibrationSource(raw)
     except ValueError:
+        logging.getLogger(__name__).warning(
+            "Unrecognized vibration source %r; falling back to titlecase", raw,
+        )
         return raw.replace("_", " ").title() if raw else tr("UNKNOWN")
     return mapping.get(key, tr("UNKNOWN"))
 
@@ -1062,9 +1065,8 @@ def _build_report_template_data(
         sensor_locations=context.sensor_locations_active,
         sensor_model=context.sensor_model,
         firmware_version=context.firmware_version,
-        car=CarMeta(
-            name=report.car_name or context.car_name, car_type=report.car_type or context.car_type
-        ),
+        car_name=report.car_name or context.car_name,
+        car_type=report.car_type or context.car_type,
         observed=observed,
         system_cards=system_cards,
         next_steps=next_steps,
