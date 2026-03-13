@@ -1002,11 +1002,9 @@ def resolve_primary_report_candidate(
         has_ref_gaps = aggregate.has_relevant_reference_gap(
             str(primary_source) if primary_source else "unknown",
         )
-        weak_spatial = (
-            aggregate.primary_finding.weak_spatial_separation
-            if aggregate.primary_finding
-            else False
-        )
+        effective = aggregate.effective_top_causes()
+        domain_primary = effective[0] if effective else aggregate.primary_finding
+        weak_spatial = domain_primary.weak_spatial_separation if domain_primary else False
     else:
         strength_db = top_strength_values(summary, effective_causes=context.top_causes)
         weak_spatial = bool(

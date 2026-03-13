@@ -172,20 +172,23 @@ class RunAnalysisResult:
 
         A reference gap is relevant when the missing reference input
         would materially affect the analysis of the suspected source.
+
+        *primary_source* is compared against ``VibrationSource`` enum
+        values (which are ``StrEnum`` — compare equal to plain strings).
         """
-        source = str(primary_source).strip().lower()
+        source_str = str(primary_source).strip().lower()
         for f in self.findings:
             if not f.is_reference:
                 continue
             fid = f.finding_id.strip().upper()
             if fid in {"REF_SPEED", "REF_SAMPLE_RATE"}:
                 return True
-            if fid == "REF_WHEEL" and source in {
-                VibrationSource.WHEEL_TIRE,
-                VibrationSource.DRIVELINE,
+            if fid == "REF_WHEEL" and source_str in {
+                str(VibrationSource.WHEEL_TIRE),
+                str(VibrationSource.DRIVELINE),
             }:
                 return True
-            if fid == "REF_ENGINE" and source == VibrationSource.ENGINE:
+            if fid == "REF_ENGINE" and source_str == str(VibrationSource.ENGINE):
                 return True
         return False
 
