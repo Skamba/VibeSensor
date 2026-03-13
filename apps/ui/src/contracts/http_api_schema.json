@@ -2380,6 +2380,16 @@
         "title": "SetLocationRequest",
         "type": "object"
       },
+      "SpeedSourceKind": {
+        "description": "How vehicle speed is acquired.",
+        "enum": [
+          "gps",
+          "obd2",
+          "manual"
+        ],
+        "title": "SpeedSourceKind",
+        "type": "string"
+      },
       "SpeedSourceRequest": {
         "description": "Request body for configuring the speed source (GPS, manual, OBD2, etc.).",
         "properties": {
@@ -2411,18 +2421,12 @@
           "speedSource": {
             "anyOf": [
               {
-                "enum": [
-                  "gps",
-                  "obd2",
-                  "manual"
-                ],
-                "type": "string"
+                "$ref": "#/components/schemas/SpeedSourceKind"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Speedsource"
+            ]
           },
           "staleTimeoutS": {
             "anyOf": [
@@ -2466,13 +2470,7 @@
             "type": "object"
           },
           "speedSource": {
-            "enum": [
-              "gps",
-              "obd2",
-              "manual"
-            ],
-            "title": "Speedsource",
-            "type": "string"
+            "$ref": "#/components/schemas/SpeedSourceKind"
           },
           "staleTimeoutS": {
             "title": "Staletimeouts",
@@ -3871,9 +3869,9 @@
         "summary": "Download History Report Pdf"
       }
     },
-    "/api/logging/start": {
+    "/api/recording/start": {
       "post": {
-        "operationId": "start_logging_api_logging_start_post",
+        "operationId": "start_logging_api_recording_start_post",
         "responses": {
           "200": {
             "content": {
@@ -3889,9 +3887,9 @@
         "summary": "Start Logging"
       }
     },
-    "/api/logging/status": {
+    "/api/recording/status": {
       "get": {
-        "operationId": "get_logging_status_api_logging_status_get",
+        "operationId": "get_logging_status_api_recording_status_get",
         "responses": {
           "200": {
             "content": {
@@ -3907,9 +3905,9 @@
         "summary": "Get Logging Status"
       }
     },
-    "/api/logging/stop": {
+    "/api/recording/stop": {
       "post": {
-        "operationId": "stop_logging_api_logging_stop_post",
+        "operationId": "stop_logging_api_recording_stop_post",
         "responses": {
           "200": {
             "content": {

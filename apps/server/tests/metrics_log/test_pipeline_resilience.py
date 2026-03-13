@@ -19,6 +19,7 @@ from unittest.mock import patch
 
 import pytest
 
+from vibesensor.domain import Run
 from vibesensor.metrics_log.logger import (
     _MAX_HISTORY_CREATE_RETRIES,
     _RETRY_COOLDOWN_BASE_S,
@@ -34,7 +35,8 @@ from vibesensor.metrics_log.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysis
 def _make_persist_logger(make_logger, *, history_db: object, run_id: str = "run-1") -> RunRecorder:
     """Build a RunRecorder with the given DB and set up persistence for *run_id*."""
     logger = make_logger(history_db=history_db)
-    logger._persist_reset(run_id=run_id)
+    logger._current_run = Run(run_id=run_id)
+    logger._persist_reset()
     return logger
 
 
@@ -254,7 +256,8 @@ class TestRetryCooldown:
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
             logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        logger._persist_reset(run_id="run-2")
+        logger._current_run = Run(run_id="run-2")
+        logger._persist_reset()
         assert logger._persist_history_create_fail_count == 0
         # Should be able to retry immediately after reset
         logger._persist_ensure_history_run("run-2", "2025-01-01T00:00:00Z")

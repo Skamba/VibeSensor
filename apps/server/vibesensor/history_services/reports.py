@@ -21,7 +21,12 @@ from ..json_types import JsonObject, is_json_object
 from ..report.mapping import map_summary
 from ..report.pdf_engine import build_report_pdf
 from ..run_context import add_current_context_warnings, current_car_snapshot_token
-from .helpers import async_require_run, require_analysis_ready, safe_filename
+from .helpers import (
+    async_require_run,
+    require_analysis_ready,
+    resolve_run_language,
+    safe_filename,
+)
 
 if TYPE_CHECKING:
     from ..history_db import HistoryDB
@@ -112,9 +117,9 @@ class HistoryReportService:
 
     @staticmethod
     def _build_pdf_bytes(analysis_summary: JsonObject) -> bytes:
-        from ..analysis import SummaryData
+        from ..analysis import AnalysisSummary
 
-        mapped_summary = map_summary(cast("SummaryData", analysis_summary))
+        mapped_summary = map_summary(cast("AnalysisSummary", analysis_summary))
         return build_report_pdf(mapped_summary)
 
     @staticmethod
@@ -151,14 +156,7 @@ class HistoryReportService:
 
     @staticmethod
     def _analysis_language(run: HistoryRunPayload, requested: str | None) -> str:
-        if isinstance(requested, str) and requested.strip():
-            return requested.strip().lower()
-        metadata: object = run.get("metadata", {})
-        if is_json_object(metadata):
-            value = metadata.get("language")
-            if isinstance(value, str) and value.strip():
-                return value.strip().lower()
-        return "en"
+        return resolve_run_language(run, requested)
 
 
 class HistoryReportPdfCache:

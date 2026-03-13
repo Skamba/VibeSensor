@@ -52,6 +52,6 @@ class RuntimeState:
     ws_hub: WebSocketHub
     ws_broadcast: WsBroadcastService
     # top-level
-    metrics_logger: RunRecorder
+    run_recorder: RunRecorder
     update_manager: UpdateManager
     esp_flash_manager: EspFlashManager

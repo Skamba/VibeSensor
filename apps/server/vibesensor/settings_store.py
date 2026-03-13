@@ -26,7 +26,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 from threading import RLock
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, get_args
 
 from .backend_types import (
     AnalysisSettingsPayload,
@@ -58,11 +58,11 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
-VALID_LANGUAGES: frozenset[str] = frozenset({"en", "nl"})
-"""Supported UI languages."""
+VALID_LANGUAGES: frozenset[str] = frozenset(get_args(LanguageCode))
+"""Supported UI languages — derived from ``LanguageCode``."""
 
-VALID_SPEED_UNITS: frozenset[str] = frozenset({"kmh", "mps"})
-"""Supported speed display units."""
+VALID_SPEED_UNITS: frozenset[str] = frozenset(get_args(SpeedUnitCode))
+"""Supported speed display units — derived from ``SpeedUnitCode``."""
 
 
 def _clamp_str(value: object, maxlen: int) -> str:
@@ -309,7 +309,7 @@ class SettingsStore:
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
             # Snapshot for rollback
-            old_name, old_type = car.name, car.type
+            old_name, old_type = car.name, car.car_type
             old_aspects = dict(car.aspects)
             old_variant = car.variant
             if "name" in car_data:
@@ -323,7 +323,7 @@ class SettingsStore:
                 if isinstance(raw_type, str):
                     car_type = _clamp_str(raw_type, 32)
                     if car_type:
-                        car.type = car_type
+                        car.car_type = car_type
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
                 car.aspects.update(sanitize_aspects(car_data["aspects"]))
             if "variant" in car_data:
@@ -332,7 +332,7 @@ class SettingsStore:
             try:
                 self._persist()
             except PersistenceError:
-                car.name, car.type = old_name, old_type
+                car.name, car.car_type = old_name, old_type
                 car.aspects.clear()
                 car.aspects.update(old_aspects)
                 car.variant = old_variant

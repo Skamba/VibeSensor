@@ -142,7 +142,7 @@ def _make_runtime(**overrides: Any):
     run_service = overrides.pop("run_service", MagicMock())
     report_service = overrides.pop("report_service", MagicMock())
     export_service = overrides.pop("export_service", MagicMock())
-    diagnostics = overrides.pop("metrics_logger", MagicMock())
+    diagnostics = overrides.pop("run_recorder", MagicMock())
     update_manager = overrides.pop("update_manager", MagicMock())
     esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
     processing_state = ProcessingLoopState()
@@ -181,7 +181,7 @@ def _make_runtime(**overrides: Any):
             analysis_settings=analysis_settings,
             settings_store=settings_store,
         ),
-        metrics_logger=diagnostics,
+        run_recorder=diagnostics,
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
     )
@@ -285,8 +285,8 @@ async def test_start_creates_tasks(monkeypatch) -> None:
     control_plane.start = AsyncMock()
     ws_hub = MagicMock()
     ws_hub.run = AsyncMock(side_effect=asyncio.CancelledError)
-    metrics_logger = MagicMock()
-    metrics_logger.run = AsyncMock(side_effect=asyncio.CancelledError)
+    run_recorder = MagicMock()
+    run_recorder.run = AsyncMock(side_effect=asyncio.CancelledError)
     gps_monitor = MagicMock()
     gps_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
     update_manager = MagicMock()
@@ -296,7 +296,7 @@ async def test_start_creates_tasks(monkeypatch) -> None:
     rt, lifecycle = _make_runtime(
         control_plane=control_plane,
         ws_hub=ws_hub,
-        metrics_logger=metrics_logger,
+        run_recorder=run_recorder,
         gps_monitor=gps_monitor,
         update_manager=update_manager,
     )
@@ -327,8 +327,8 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
         raise RuntimeError("ws boom")
 
     ws_hub.run = AsyncMock(side_effect=_failing_ws)
-    metrics_logger = MagicMock()
-    metrics_logger.run = AsyncMock(side_effect=asyncio.CancelledError)
+    run_recorder = MagicMock()
+    run_recorder.run = AsyncMock(side_effect=asyncio.CancelledError)
     gps_monitor = MagicMock()
     gps_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
     update_manager = MagicMock()
@@ -338,7 +338,7 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
     rt, lifecycle = _make_runtime(
         control_plane=control_plane,
         ws_hub=ws_hub,
-        metrics_logger=metrics_logger,
+        run_recorder=run_recorder,
         gps_monitor=gps_monitor,
         update_manager=update_manager,
     )
@@ -362,8 +362,8 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
 
     monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp)
 
-    metrics_logger = MagicMock()
-    metrics_logger.shutdown_report = MagicMock(
+    run_recorder = MagicMock()
+    run_recorder.shutdown_report = MagicMock(
         return_value=MagicMock(
             completed=True,
             analysis_queue_depth=0,
@@ -388,13 +388,13 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     ws_hub.run = AsyncMock(side_effect=asyncio.CancelledError)
     gps_monitor = MagicMock()
     gps_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
-    metrics_logger.run = AsyncMock(side_effect=asyncio.CancelledError)
+    run_recorder.run = AsyncMock(side_effect=asyncio.CancelledError)
     update_manager.startup_recover = AsyncMock()
 
     rt, lifecycle = _make_runtime(
         control_plane=control_plane,
         ws_hub=ws_hub,
-        metrics_logger=metrics_logger,
+        run_recorder=run_recorder,
         gps_monitor=gps_monitor,
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
@@ -407,7 +407,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
 
     await lifecycle.stop()
     assert lifecycle.tasks == []
-    assert metrics_logger.shutdown_report.called
+    assert run_recorder.shutdown_report.called
     assert worker_pool.shutdown.called
     assert history_db.close.called
 

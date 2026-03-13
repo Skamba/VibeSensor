@@ -28,6 +28,21 @@ def safe_filename(name: str) -> str:
     return cleaned or "download"
 
 
+def resolve_run_language(run: HistoryRunPayload, requested: str | None) -> str:
+    """Resolve the effective language for a history run.
+
+    Priority: explicit *requested* lang > run metadata ``language`` > ``"en"``.
+    """
+    if isinstance(requested, str) and requested.strip():
+        return requested.strip().lower()
+    metadata: object = run.get("metadata", {})
+    if is_json_object(metadata):
+        value = metadata.get("language")
+        if isinstance(value, str) and value.strip():
+            return value.strip().lower()
+    return "en"
+
+
 async def async_require_run(history_db: HistoryDB, run_id: str) -> HistoryRunPayload:
     """Fetch a history run in a thread or raise a domain exception."""
     run = await asyncio.to_thread(history_db.get_run, run_id)

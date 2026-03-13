@@ -74,7 +74,7 @@ async def test_health_endpoint_degrades_for_data_loss_and_persistence_error(_hea
         "server_queue_drops": 1,
         "parse_errors": 0,
     }
-    state.metrics_logger.health_snapshot.return_value = {
+    state.run_recorder.health_snapshot.return_value = {
         "write_error": "history append_samples failed",
         "analysis_in_progress": True,
         "analysis_queue_depth": 2,

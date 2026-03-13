@@ -141,7 +141,7 @@ class LifecycleManager:
 
             phase = "metrics-log"
             self._health_state.set_phase(phase)
-            self.tasks.append(self._start_task(self._runtime.metrics_logger.run(), name=phase))
+            self.tasks.append(self._start_task(self._runtime.run_recorder.run(), name=phase))
 
             phase = "gps-speed"
             self._health_state.set_phase(phase)
@@ -215,7 +215,7 @@ class LifecycleManager:
 
         analysis_timeout_s = self._runtime.config.logging.shutdown_analysis_timeout_s
         shutdown_report = await asyncio.to_thread(
-            self._runtime.metrics_logger.shutdown_report,
+            self._runtime.run_recorder.shutdown_report,
             analysis_timeout_s,
         )
         if not shutdown_report.completed:

@@ -22,7 +22,7 @@ def create_health_routes(
     health_state: RuntimeHealthState,
     processor: SignalProcessor,
     registry: ClientRegistry,
-    metrics_logger: RunRecorder,
+    run_recorder: RunRecorder,
 ) -> APIRouter:
     """Create and return the health-check API routes."""
     router = APIRouter()
@@ -30,7 +30,7 @@ def create_health_routes(
     @router.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
         return HealthResponse(
-            **build_health_snapshot(loop_state, health_state, processor, registry, metrics_logger)
+            **build_health_snapshot(loop_state, health_state, processor, registry, run_recorder)
         )
 
     return router

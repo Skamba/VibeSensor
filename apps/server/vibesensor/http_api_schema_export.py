@@ -39,7 +39,7 @@ def _build_openapi_app() -> FastAPI:
         analysis_settings=placeholder,
         apply_car_settings=placeholder,
         apply_speed_source_settings=placeholder,
-        metrics_logger=placeholder,
+        run_recorder=placeholder,
         history_db=placeholder,
         run_service=placeholder,
         report_service=placeholder,

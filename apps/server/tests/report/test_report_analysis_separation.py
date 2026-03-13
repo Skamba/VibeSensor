@@ -179,7 +179,6 @@ def test_report_folder_contains_only_renderer_files() -> None:
         "helpers.py",
         "strength_labels.py",
         "test_plan.py",
-        "pattern_parts.py",
     }
     actual_files = {p.name for p in _REPORT_DIR.glob("*.py")}
     unexpected = actual_files & analysis_file_names

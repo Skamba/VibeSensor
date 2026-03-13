@@ -57,7 +57,7 @@ blocking the metrics-logger event loop indefinitely."""
 
 
 @dataclass(frozen=True, slots=True)
-class MetricsSessionSnapshot:
+class RecordingSessionSnapshot:
     run_id: str
     start_time_utc: str
     start_mono_s: float
@@ -98,7 +98,7 @@ class RunRecorderConfig:
 
 
 @dataclass(frozen=True, slots=True)
-class MetricsShutdownReport:
+class RecorderShutdownReport:
     completed: bool
     active_run_id_before_stop: str | None
     analysis_queue_depth: int
@@ -164,7 +164,6 @@ class RunRecorder:
 
         # --- Persistence coordination ---
         self._persist_history_db_enabled: bool = bool(config.persist_history_db)
-        self._persist_current_run_id: str | None = None
         self._persist_history_run_created: bool = False
         self._persist_history_create_fail_count: int = 0
         self._persist_retry_cycle_count: int = 0
@@ -219,7 +218,7 @@ class RunRecorder:
         start_time_utc: str,
         start_mono_s: float,
         current_total: int,
-    ) -> MetricsSessionSnapshot:
+    ) -> RecordingSessionSnapshot:
         with self._lock:
             session = Run(
                 run_id=run_id,
@@ -232,7 +231,7 @@ class RunRecorder:
             self._sess_last_data_progress_mono_s = start_mono_s
             self._sess_start_frames_total = current_total
             self._sess_last_active_frames_total = current_total
-            return MetricsSessionSnapshot(
+            return RecordingSessionSnapshot(
                 run_id=run_id,
                 start_time_utc=start_time_utc,
                 start_mono_s=start_mono_s,
@@ -250,7 +249,7 @@ class RunRecorder:
             self._sess_start_frames_total = 0
             self._sess_last_active_frames_total = 0
 
-    def _sess_snapshot(self) -> MetricsSessionSnapshot | None:
+    def _sess_snapshot(self) -> RecordingSessionSnapshot | None:
         with self._lock:
             if (
                 not self.enabled
@@ -259,7 +258,7 @@ class RunRecorder:
                 or self._sess_run_start_mono_s is None
             ):
                 return None
-            return MetricsSessionSnapshot(
+            return RecordingSessionSnapshot(
                 run_id=self._run_id,
                 start_time_utc=self._sess_run_start_utc,
                 start_mono_s=self._sess_run_start_mono_s,
@@ -270,7 +269,7 @@ class RunRecorder:
         *,
         current_total: int,
         history_run_created: bool,
-    ) -> MetricsSessionSnapshot | None:
+    ) -> RecordingSessionSnapshot | None:
         with self._lock:
             run_id = self._run_id
             if (
@@ -285,7 +284,7 @@ class RunRecorder:
                     return None
             elif current_total <= self._sess_start_frames_total:
                 return None
-            return MetricsSessionSnapshot(
+            return RecordingSessionSnapshot(
                 run_id=run_id,
                 start_time_utc=self._sess_run_start_utc,
                 start_mono_s=self._sess_run_start_mono_s,
@@ -327,9 +326,8 @@ class RunRecorder:
                 dropped_sample_count=self._persist_dropped_sample_count,
             )
 
-    def _persist_reset(self, run_id: str | None = None) -> None:
+    def _persist_reset(self) -> None:
         with self._lock:
-            self._persist_current_run_id = run_id
             self._persist_history_run_created = False
             self._persist_history_create_fail_count = 0
             self._persist_retry_cycle_count = 0
@@ -350,7 +348,8 @@ class RunRecorder:
             return None
 
     def _persist_run_id_matches(self, run_id: str) -> bool:
-        return self._persist_current_run_id is not None and self._persist_current_run_id == run_id
+        current = self._current_run
+        return current is not None and current.run_id == run_id
 
     def _persist_ensure_history_run(
         self,
@@ -521,14 +520,14 @@ class RunRecorder:
     # Internal helpers
     # -----------------------------------------------------------------------
 
-    def _start_new_session_locked(self) -> MetricsSessionSnapshot:
+    def _start_new_session_locked(self) -> RecordingSessionSnapshot:
         snapshot = self._sess_start_new(
             run_id=uuid4().hex,
             start_time_utc=utc_now_iso(),
             start_mono_s=time.monotonic(),
             current_total=self._active_frames_total(),
         )
-        self._persist_reset(run_id=snapshot.run_id)
+        self._persist_reset()
         return snapshot
 
     def _stop_session_locked(self) -> None:
@@ -543,7 +542,7 @@ class RunRecorder:
             if (rec := _get(cid)) is not None
         )
 
-    def _session_snapshot(self) -> MetricsSessionSnapshot | None:
+    def _session_snapshot(self) -> RecordingSessionSnapshot | None:
         return self._sess_snapshot()
 
     # -----------------------------------------------------------------------
@@ -605,7 +604,7 @@ class RunRecorder:
 
     def start_recording(self) -> dict[str, object]:
         completed_run_id: str | None = None
-        flush_snapshot: MetricsSessionSnapshot | None = None
+        flush_snapshot: RecordingSessionSnapshot | None = None
         with self._lock:
             if self._sess_shutdown_requested:
                 LOGGER.info(
@@ -637,7 +636,7 @@ class RunRecorder:
         *,
         _only_if_run_id: str | None = None,
     ) -> dict[str, object]:
-        flush_snapshot: MetricsSessionSnapshot | None = None
+        flush_snapshot: RecordingSessionSnapshot | None = None
         with self._lock:
             if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                 return self.status()
@@ -697,7 +696,7 @@ class RunRecorder:
             default_sample_rate_hz=self.default_sample_rate_hz,
         )
 
-    def _pending_flush_snapshot_locked(self) -> MetricsSessionSnapshot | None:
+    def _pending_flush_snapshot_locked(self) -> RecordingSessionSnapshot | None:
         return self._sess_pending_flush_snapshot(
             current_total=self._active_frames_total(),
             history_run_created=self._persist_history_run_created,
@@ -757,7 +756,7 @@ class RunRecorder:
     def wait_for_post_analysis(self, timeout_s: float = 30.0) -> bool:
         return self._post_analysis.wait(timeout_s)
 
-    def shutdown_report(self, timeout_s: float = 30.0) -> MetricsShutdownReport:
+    def shutdown_report(self, timeout_s: float = 30.0) -> RecorderShutdownReport:
         with self._lock:
             active_run_id_before_stop = self._run_id
         self._sess_shutdown_requested = True
@@ -765,7 +764,7 @@ class RunRecorder:
             final_status = self.stop_recording()
             analysis_completed = self.wait_for_post_analysis(timeout_s)
             health = self.health_snapshot()
-            return MetricsShutdownReport(
+            return RecorderShutdownReport(
                 completed=analysis_completed,
                 active_run_id_before_stop=active_run_id_before_stop,
                 analysis_queue_depth=health["analysis_queue_depth"],

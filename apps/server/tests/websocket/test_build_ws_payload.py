@@ -202,7 +202,7 @@ def _make_state(
             analysis_settings=analysis_settings,  # type: ignore[arg-type]
             settings_store=settings_store,  # type: ignore[arg-type]
         ),
-        metrics_logger=_StubRunRecorder(),  # type: ignore[arg-type]
+        run_recorder=_StubRunRecorder(),  # type: ignore[arg-type]
         update_manager=_SENTINEL,  # type: ignore[arg-type]
         esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
     )

@@ -136,13 +136,13 @@ class TestSelectTopCauses:
 
     def test_below_min_confidence_findings_excluded(self) -> None:
         """Findings below ORDER_MIN_CONFIDENCE (0.25) must be filtered."""
-        findings = [make_finding_payload(suspected_source="wheel", confidence=0.10)]
+        findings = [make_finding_payload(suspected_source="wheel/tire", confidence=0.10)]
         assert select_top_causes(findings) == []
 
     def test_info_severity_excluded(self) -> None:
         """Info-severity findings must not appear in top causes."""
         findings = [
-            make_finding_payload(suspected_source="wheel", confidence=0.90, severity="info"),
+            make_finding_payload(suspected_source="wheel/tire", confidence=0.90, severity="info"),
         ]
         assert select_top_causes(findings) == []
 
@@ -160,10 +160,10 @@ class TestSelectTopCauses:
     def test_respects_max_causes_limit(self) -> None:
         """At most max_causes findings are returned."""
         findings = [
-            make_finding_payload(suspected_source="wheel", confidence=0.90),
-            make_finding_payload(suspected_source="tire", confidence=0.85),
-            make_finding_payload(suspected_source="brake", confidence=0.80),
-            make_finding_payload(suspected_source="engine", confidence=0.75),
+            make_finding_payload(suspected_source="wheel/tire", confidence=0.90),
+            make_finding_payload(suspected_source="driveline", confidence=0.85),
+            make_finding_payload(suspected_source="engine", confidence=0.80),
+            make_finding_payload(suspected_source="body resonance", confidence=0.75),
         ]
         result = select_top_causes(findings, max_causes=2)
         assert len(result) <= 2
@@ -171,18 +171,18 @@ class TestSelectTopCauses:
     def test_best_per_source_group_selected(self) -> None:
         """Two findings for the same source → only the higher-confidence one."""
         findings = [
-            make_finding_payload(suspected_source="wheel", confidence=0.90),
-            make_finding_payload(suspected_source="wheel", confidence=0.60),
-            make_finding_payload(suspected_source="tire", confidence=0.80),
+            make_finding_payload(suspected_source="wheel/tire", confidence=0.90),
+            make_finding_payload(suspected_source="wheel/tire", confidence=0.60),
+            make_finding_payload(suspected_source="engine", confidence=0.80),
         ]
         result = select_top_causes(findings, max_causes=3)
         sources = [f.get("suspected_source") for f in result]
-        # "wheel" should appear exactly once (best representative)
-        assert sources.count("wheel") == 1
+        # "wheel/tire" should appear exactly once (best representative)
+        assert sources.count("wheel/tire") == 1
 
     def test_returns_list_of_dicts(self) -> None:
         """Return value must be a list of dicts."""
-        findings = [make_finding_payload(suspected_source="wheel", confidence=0.80)]
+        findings = [make_finding_payload(suspected_source="wheel/tire", confidence=0.80)]
         result = select_top_causes(findings)
         assert isinstance(result, list)
         assert all(isinstance(f, dict) for f in result)

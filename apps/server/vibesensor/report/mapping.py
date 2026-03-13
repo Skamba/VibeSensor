@@ -10,21 +10,20 @@ from statistics import mean as _mean
 
 from .. import __version__
 from ..analysis._types import (
+    AnalysisSummary,
     CandidateFinding,
     FindingPayload,
     IntensityRow,
     JsonValue,
     MetadataDict,
-    OriginSummary,
     RunSuitabilityCheck,
     SpeedStats,
-    SummaryData,
+    SuspectedVibrationOrigin,
     TestStep,
     TopCause,
 )
 from ..analysis.diagnosis_candidates import normalize_origin_location, select_effective_top_causes
 from ..analysis.helpers import PHASE_I18N_KEYS
-from ..analysis.pattern_parts import parts_for_pattern, why_parts_listed
 from ..analysis.plots import PeakTableRow
 from ..analysis.strength_labels import (
     certainty_label,
@@ -37,6 +36,7 @@ from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import utc_now_iso
+from .pattern_parts import parts_for_pattern, why_parts_listed
 from .report_data import (
     CarMeta,
     DataTrustItem,
@@ -73,7 +73,7 @@ class ReportMappingContext:
     findings_non_ref: list[FindingPayload]
     findings: list[FindingPayload]
     speed_stats: SpeedStats
-    origin: OriginSummary
+    origin: SuspectedVibrationOrigin
     origin_location: str
     sensor_locations_active: list[str]
     # Typed run metadata (replaces dict[str, object] + type: ignore).
@@ -293,7 +293,7 @@ _EMPTY_SPEED_STATS: SpeedStats = {
     "steady_speed": False,
 }
 
-_EMPTY_ORIGIN: OriginSummary = {
+_EMPTY_ORIGIN: SuspectedVibrationOrigin = {
     "location": "unknown",
     "alternative_locations": [],
     "source": "unknown",
@@ -313,11 +313,11 @@ class SummaryView:
 
     __slots__ = ("_d",)
 
-    def __init__(self, summary: SummaryData) -> None:
+    def __init__(self, summary: AnalysisSummary) -> None:
         self._d = summary
 
     @property
-    def data(self) -> SummaryData:
+    def data(self) -> AnalysisSummary:
         return self._d
 
     # -- metadata ----------------------------------------------------------
@@ -379,7 +379,7 @@ class SummaryView:
         return self._d.get("speed_stats") or _EMPTY_SPEED_STATS
 
     @property
-    def origin(self) -> OriginSummary:
+    def origin(self) -> SuspectedVibrationOrigin:
         return self._d.get("most_likely_origin") or _EMPTY_ORIGIN
 
     @property
@@ -419,12 +419,12 @@ class SummaryView:
         return f"{rate:g}" if rate is not None else None
 
 
-def normalized_origin_location(origin: OriginSummary) -> str:
+def normalized_origin_location(origin: SuspectedVibrationOrigin) -> str:
     """Return the report-ready origin location string."""
     return normalize_origin_location(origin.get("location"))
 
 
-def resolve_sensor_count(summary: SummaryData, sensor_locations_active: list[str]) -> int:
+def resolve_sensor_count(summary: AnalysisSummary, sensor_locations_active: list[str]) -> int:
     """Resolve the effective sensor count used by report certainty logic."""
     sensor_count = len(sensor_locations_active)
     if sensor_count <= 0:
@@ -438,7 +438,7 @@ def resolve_sensor_count(summary: SummaryData, sensor_locations_active: list[str
 
 
 def build_peak_rows_from_plots(
-    summary: SummaryData,
+    summary: AnalysisSummary,
     *,
     lang: str,
     tr: Callable,
@@ -548,7 +548,7 @@ def collect_location_intensity(sensor_intensity: list[dict]) -> dict[str, list[f
 
 
 def build_next_steps_from_summary(
-    summary: SummaryData,
+    summary: AnalysisSummary,
     *,
     tier: str,
     cert_reason: str,
@@ -598,7 +598,7 @@ def _resolve_optional_step_value(
 
 
 def build_data_trust_from_summary(
-    summary: SummaryData,
+    summary: AnalysisSummary,
     *,
     lang: str,
     tr: Callable,
@@ -653,7 +653,7 @@ def _resolve_detail_text(value: object, *, lang: str, tr: Callable) -> str | Non
 
 
 def top_strength_values(
-    summary: SummaryData,
+    summary: AnalysisSummary,
     *,
     effective_causes: list[CandidateFinding] | None = None,
 ) -> float | None:
@@ -774,7 +774,7 @@ def build_pattern_evidence(
     )
 
 
-def resolve_interpretation(origin: OriginSummary, *, lang: str, tr: Callable) -> str:
+def resolve_interpretation(origin: SuspectedVibrationOrigin, *, lang: str, tr: Callable) -> str:
     """Resolve the origin explanation into localized report text."""
     interpretation_raw = origin.get("explanation", "") if isinstance(origin, dict) else ""
     if is_i18n_ref(interpretation_raw) or isinstance(interpretation_raw, list):
@@ -796,7 +796,7 @@ def resolve_parts_context(
     return source_for_why, order_label
 
 
-def build_run_metadata_fields(summary: SummaryData, meta: MetadataDict) -> dict[str, object]:
+def build_run_metadata_fields(summary: AnalysisSummary, meta: MetadataDict) -> dict[str, object]:
     """Extract and format run metadata text fields for the report template."""
     duration_text = str(summary.get("record_length") or "") or None
     start_time_utc = str(summary.get("start_time_utc") or "").strip() or None
@@ -859,7 +859,7 @@ def build_version_marker() -> str:
 
 
 def prepare_report_mapping_context(
-    summary: SummaryData,
+    summary: AnalysisSummary,
 ) -> ReportMappingContext:
     """Extract structural summary context for report mapping.
 
@@ -907,7 +907,7 @@ def prepare_report_mapping_context(
 
 
 def resolve_primary_report_candidate(
-    summary: SummaryData,
+    summary: AnalysisSummary,
     *,
     context: ReportMappingContext,
     tr: Callable[..., str],
@@ -987,7 +987,7 @@ def build_observed_signature(primary: PrimaryCandidateContext) -> PatternEvidenc
     )
 
 
-def map_summary(summary: SummaryData) -> ReportTemplateData:
+def map_summary(summary: AnalysisSummary) -> ReportTemplateData:
     """Map a run summary dict into the final report template data model.
 
     Constructs a domain :class:`~vibesensor.domain.Report` as the
@@ -1004,7 +1004,7 @@ def map_summary(summary: SummaryData) -> ReportTemplateData:
 
 
 def _build_report_template_data(
-    summary: SummaryData,
+    summary: AnalysisSummary,
     *,
     report: Report,
     lang: str,

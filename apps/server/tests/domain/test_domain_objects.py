@@ -20,6 +20,7 @@ from vibesensor.domain import (
     Run,
     Sensor,
     SensorPlacement,
+    SpeedBand,
     SpeedSource,
 )
 
@@ -228,7 +229,7 @@ class TestFindingDomainObject:
     def test_diagnostic_finding(self) -> None:
         f = Finding(
             finding_id="F001",
-            suspected_source="wheel_bearing",
+            suspected_source="wheel/tire",
             confidence=0.85,
             severity="high",
         )
@@ -248,8 +249,8 @@ class TestFindingDomainObject:
         assert not f.is_diagnostic
 
     def test_source_normalized(self) -> None:
-        f = Finding(suspected_source=" Wheel Bearing ")
-        assert f.source_normalized == "wheel bearing"
+        f = Finding(suspected_source=" Wheel/Tire ")
+        assert f.source_normalized == "wheel/tire"
 
     def test_confidence_pct_none(self) -> None:
         f = Finding()
@@ -263,13 +264,13 @@ class TestFindingDomainObject:
     def test_from_payload(self) -> None:
         payload: dict[str, object] = {
             "finding_id": "F001",
-            "suspected_source": "wheel_bearing",
+            "suspected_source": "wheel/tire",
             "confidence": 0.85,
             "frequency_hz_or_order": 42.5,
             "order": "1x",
             "severity": "high",
             "strongest_location": "FL",
-            "strongest_speed_band": "80-100",
+            "strongest_speed_band": "80-100 km/h",
             "peak_classification": "harmonic",
             # Extra payload-only fields should be ignored
             "evidence_summary": "some evidence",
@@ -277,21 +278,21 @@ class TestFindingDomainObject:
         }
         f = Finding.from_payload(payload)
         assert f.finding_id == "F001"
-        assert f.suspected_source == "wheel_bearing"
+        assert f.suspected_source == "wheel/tire"
         assert f.confidence == 0.85
         assert f.frequency_hz == 42.5
         assert f.order == "1x"
         assert f.severity == "high"
         assert f.strongest_location == "FL"
-        assert f.strongest_speed_band == "80-100"
+        assert f.strongest_speed_band == SpeedBand(low_kmh=80, high_kmh=100)
         assert f.peak_classification == "harmonic"
         assert f.is_diagnostic
         assert f.confidence_pct == 85
 
     def test_from_payload_minimal(self) -> None:
-        f = Finding.from_payload({"finding_id": "F001", "suspected_source": "tire"})
+        f = Finding.from_payload({"finding_id": "F001", "suspected_source": "engine"})
         assert f.finding_id == "F001"
-        assert f.suspected_source == "tire"
+        assert f.suspected_source == "engine"
         assert f.confidence is None
         assert f.frequency_hz is None
 
@@ -347,8 +348,8 @@ class TestReport:
         assert r.finding_count == 2
         assert r.car_name == "BMW 3"
         assert r.car_type == "sedan"
-        assert r.date_str == "2025-01-15"
-        assert r.duration_text == "2:05"
+        assert r.report_date == "2025-01-15"
+        assert r.duration_s == 125.0
 
     def test_from_summary_minimal(self) -> None:
         r = Report.from_summary({"run_id": "r1"})
@@ -359,7 +360,7 @@ class TestReport:
 
     def test_from_summary_short_duration(self) -> None:
         r = Report.from_summary({"run_id": "r1", "duration_s": 45.0})
-        assert r.duration_text == "45s"
+        assert r.duration_s == 45.0
 
 
 # ---------------------------------------------------------------------------
@@ -406,7 +407,13 @@ class TestBridgeMethods:
     def test_car_config_to_car(self) -> None:
         from vibesensor.backend_types import CarConfig
 
-        cfg = CarConfig(id="abc", name="BMW", type="suv", aspects={"rim_in": 19.0}, variant="M3")
+        cfg = CarConfig(
+            id="abc",
+            name="BMW",
+            car_type="suv",
+            aspects={"rim_in": 19.0},
+            variant="M3",
+        )
         car = cfg.to_car()
         assert isinstance(car, Car)
         assert car.id == "abc"
@@ -512,7 +519,7 @@ class TestFindingEnrichments:
         assert f.effective_confidence == 0.0
 
     def test_is_actionable_known_source(self) -> None:
-        f = Finding(suspected_source="wheel_bearing")
+        f = Finding(suspected_source="wheel/tire")
         assert f.is_actionable
 
     def test_is_actionable_placeholder_source_no_location(self) -> None:
@@ -569,10 +576,10 @@ class TestFindingEnrichments:
         assert not f2.is_stronger_than(f1)
 
     def test_with_id(self) -> None:
-        f = Finding(finding_id="F001", suspected_source="tire", confidence=0.7)
+        f = Finding(finding_id="F001", suspected_source="engine", confidence=0.7)
         f2 = f.with_id("F002")
         assert f2.finding_id == "F002"
-        assert f2.suspected_source == "tire"
+        assert f2.suspected_source == "engine"
         assert f2.confidence == 0.7
         assert f.finding_id == "F001"  # original unchanged
 
@@ -580,7 +587,7 @@ class TestFindingEnrichments:
         payload: dict[str, object] = {
             "finding_id": "F001",
             "suspected_source": "bearing",
-            "_ranking_score": 1.5,
+            "ranking_score": 1.5,
             "dominance_ratio": 0.85,
             "diffuse_excitation": True,
             "weak_spatial_separation": True,

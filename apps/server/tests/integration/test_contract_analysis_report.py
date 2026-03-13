@@ -14,7 +14,7 @@ from test_support import (
     standard_metadata,
 )
 
-from vibesensor.analysis import SummaryData, summarize_run_data
+from vibesensor.analysis import AnalysisSummary, summarize_run_data
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.report_data import ReportTemplateData
 
@@ -43,7 +43,7 @@ def _make_small_dataset() -> tuple[dict, list[dict]]:
 def test_analysis_output_accepted_by_report_mapper():
     """summarize_run_data() output must be accepted by map_summary()."""
     meta, samples = _make_small_dataset()
-    summary: SummaryData = summarize_run_data(meta, samples, lang="en")
+    summary: AnalysisSummary = summarize_run_data(meta, samples, lang="en")
 
     report_data = map_summary(summary)
 

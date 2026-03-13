@@ -32,7 +32,6 @@ def make_finding_payload(
         },
         "confidence": confidence,
         "quick_checks": [],
-        "_ranking_score": ranking_score,
         "ranking_score": ranking_score,
     }
     if severity != "diagnostic":

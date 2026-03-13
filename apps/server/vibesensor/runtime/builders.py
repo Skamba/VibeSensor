@@ -129,8 +129,8 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         settings_store=settings_store,
     )
 
-    # metrics logger
-    metrics_logger = RunRecorder(
+    # run recorder
+    run_recorder = RunRecorder(
         RunRecorderConfig(
             enabled=config.logging.log_metrics,
             metrics_log_hz=config.logging.metrics_log_hz,
@@ -154,7 +154,7 @@ def build_runtime(config: AppConfig) -> RuntimeState:
     stale_analyzing = history_db.stale_analyzing_run_ids()
     for stale_run_id in stale_analyzing:
         LOGGER.info("Re-queuing stuck analyzing run %s for re-analysis", stale_run_id)
-        metrics_logger.schedule_post_analysis(stale_run_id)
+        run_recorder.schedule_post_analysis(stale_run_id)
     if stale_analyzing:
         LOGGER.info("Re-queued %d stuck analyzing run(s)", len(stale_analyzing))
 
@@ -183,7 +183,7 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         processing_loop=processing_loop,
         ws_hub=ws_hub,
         ws_broadcast=ws_broadcast,
-        metrics_logger=metrics_logger,
+        run_recorder=run_recorder,
         update_manager=update_manager,
         esp_flash_manager=EspFlashManager(),
     )

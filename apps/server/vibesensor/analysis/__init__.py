@@ -11,9 +11,10 @@ High-level analysis entry points are re-exported here so callers can use
 findings.  The domain ``Finding`` lives in ``vibesensor.domain``.
 """
 
-from ._types import FindingPayload, SummaryData, i18n_ref
+from ..domain import DrivingPhase
+from ._types import AnalysisSummary, FindingPayload, i18n_ref
 from .order_bands import build_order_bands, vehicle_orders_hz
-from .phase_segmentation import DrivingPhase, classify_sample_phase
+from .phase_segmentation import classify_sample_phase
 from .summary_builder import (
     LocalizationAssessment,
     RunAnalysis,
@@ -28,7 +29,7 @@ __all__ = [
     "FindingPayload",
     "LocalizationAssessment",
     "RunAnalysis",
-    "SummaryData",
+    "AnalysisSummary",
     "build_findings_for_samples",
     "build_order_bands",
     "classify_sample_phase",

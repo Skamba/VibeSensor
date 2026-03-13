@@ -907,7 +907,6 @@ class PeakBin:
             "phase_presence": phase_presence,
         }
         finding["ranking_score"] = self.ranking_score
-        finding["_ranking_score"] = self.ranking_score
         return finding
 
 

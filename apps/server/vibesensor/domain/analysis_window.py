@@ -42,7 +42,7 @@ class AnalysisWindow:
 
     start_idx: int
     end_idx: int
-    phase: str = ""
+    phase: DrivingPhase = DrivingPhase.SPEED_UNKNOWN
     start_time_s: float | None = None
     end_time_s: float | None = None
     speed_min_kmh: float | None = None
@@ -53,6 +53,10 @@ class AnalysisWindow:
             raise ValueError(f"start_idx must be non-negative, got {self.start_idx}")
         if self.end_idx < self.start_idx:
             raise ValueError(f"end_idx ({self.end_idx}) must be >= start_idx ({self.start_idx})")
+        if not isinstance(self.phase, DrivingPhase):
+            raw = str(self.phase).strip().lower()
+            phase = DrivingPhase(raw) if raw else DrivingPhase.SPEED_UNKNOWN
+            object.__setattr__(self, "phase", phase)
 
     # -- queries -----------------------------------------------------------
 

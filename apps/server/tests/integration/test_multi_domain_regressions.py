@@ -19,8 +19,8 @@ from vibesensor.analysis.phase_segmentation import segment_run_phases
 from vibesensor.analysis.summary_builder import compute_run_timing
 from vibesensor.analysis.test_plan import _weighted_speed_window_label
 from vibesensor.analysis.top_cause_selection import confidence_label
-from vibesensor.backend_types import VALID_SPEED_SOURCES
 from vibesensor.config import _split_host_port
+from vibesensor.domain import SpeedSourceKind
 from vibesensor.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.report.mapping import order_label_human
 from vibesensor.report.mapping import resolve_i18n as resolve_i18n_impl
@@ -150,13 +150,13 @@ class TestBug07SplitHostPort:
 
 class TestBug08SpeedSourceMapping:
     def test_speed_source_uses_valid_domain_values(self) -> None:
-        """speed_source should be from VALID_SPEED_SOURCES, not 'override' or 'missing'."""
-        # These are the only valid values for speed_source in sample records
-        assert "gps" in VALID_SPEED_SOURCES
-        assert "manual" in VALID_SPEED_SOURCES
+        """speed_source should be from SpeedSourceKind, not 'override' or 'missing'."""
+        # These are the only valid values for speed_source
+        assert "gps" in tuple(SpeedSourceKind)
+        assert "manual" in tuple(SpeedSourceKind)
         # "override" and "missing" are NOT valid
-        assert "override" not in VALID_SPEED_SOURCES
-        assert "missing" not in VALID_SPEED_SOURCES
+        assert "override" not in tuple(SpeedSourceKind)
+        assert "missing" not in tuple(SpeedSourceKind)
 
 
 # ---------------------------------------------------------------------------

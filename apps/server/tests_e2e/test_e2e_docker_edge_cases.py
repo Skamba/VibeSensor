@@ -111,7 +111,7 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
     base = e2e_env["base_url"]
     run_ids: list[str] = []
     try:
-        first = api_json(base, "/api/logging/start", method="POST")
+        first = api_json(base, "/api/recording/start", method="POST")
         run_1 = str(first["run_id"])
         run_ids.append(run_1)
         _simulate(e2e_env, duration=8.0)
@@ -121,7 +121,7 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
             message="rollover test did not observe live clients before second start",
         )
 
-        second = api_json(base, "/api/logging/start", method="POST")
+        second = api_json(base, "/api/recording/start", method="POST")
         run_2 = str(second["run_id"])
         run_ids.append(run_2)
         assert run_2 != run_1
@@ -140,7 +140,7 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
         )
 
         _simulate(e2e_env, duration=3.0)
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
 
         final_1 = _wait_complete(base, run_1)
         final_2 = _wait_complete(base, run_2)
@@ -151,7 +151,7 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
             insights = api_json(base, f"/api/history/{run_id}/insights")
             assert insights.get("findings"), f"expected findings for rollover run {run_id}"
     finally:
-        api_json(base, "/api/logging/stop", method="POST", expected_status=(200,))
+        api_json(base, "/api/recording/stop", method="POST", expected_status=(200,))
         for run_id in run_ids:
             _cleanup_run(base, run_id)
 
@@ -159,7 +159,7 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
 def test_logging_stop_when_idle_noop(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     before = history_run_ids(base)
-    stopped = api_json(base, "/api/logging/stop", method="POST")
+    stopped = api_json(base, "/api/recording/stop", method="POST")
     assert stopped["enabled"] is False, "stop-when-idle should report enabled=False"
     assert stopped["run_id"] is None, "stop-when-idle should report run_id=None"
     assert history_run_ids(base) == before, "stop-when-idle should not create a run"
@@ -169,7 +169,7 @@ def test_delete_active_run_returns_409_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     run_id = ""
     try:
-        run_id = str(api_json(base, "/api/logging/start", method="POST")["run_id"])
+        run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
         _simulate(e2e_env, duration=5.0)
         wait_for(
             lambda: api_json(base, "/api/clients").get("clients") or None,
@@ -191,7 +191,7 @@ def test_delete_active_run_returns_409_e2e(e2e_env: dict[str, str]) -> None:
         err = api_json(base, f"/api/history/{run_id}", method="DELETE", expected_status=409)
         assert "active run" in str(err.get("detail", "")).lower()
     finally:
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         if run_id:
             _wait_complete(base, run_id)
             _cleanup_run(base, run_id)
@@ -199,7 +199,7 @@ def test_delete_active_run_returns_409_e2e(e2e_env: dict[str, str]) -> None:
 
 def test_report_and_insights_not_ready_states(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
-    run_id = str(api_json(base, "/api/logging/start", method="POST")["run_id"])
+    run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
     try:
         _simulate(e2e_env, duration=2.5)
         insights_while = api_json(base, f"/api/history/{run_id}/insights", expected_status=422)
@@ -208,7 +208,7 @@ def test_report_and_insights_not_ready_states(e2e_env: dict[str, str]) -> None:
         pdf_while = api_bytes(base, f"/api/history/{run_id}/report.pdf", expected_status=422)
         assert b"analysis" in pdf_while.body.lower()
 
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         immediate = api_json(
             base, f"/api/history/{run_id}/insights", expected_status=(200, 202, 422)
         )
@@ -229,7 +229,7 @@ def test_report_and_insights_not_ready_states(e2e_env: dict[str, str]) -> None:
         else:
             assert complete.get("error_message")
     finally:
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         _cleanup_run(base, run_id)
 
 
@@ -482,9 +482,9 @@ def test_speed_source_transitions_and_invalid_values(e2e_env: dict[str, str]) ->
             method="POST",
             body={"speedSource": "manual", "manualSpeedKph": 77},
         )
-        run_id = str(api_json(base, "/api/logging/start", method="POST")["run_id"])
+        run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
         _simulate(e2e_env, duration=3.0)
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         complete = _wait_complete(base, run_id)
         assert complete["status"] == "complete"
 
@@ -507,7 +507,7 @@ def test_speed_source_transitions_and_invalid_values(e2e_env: dict[str, str]) ->
         assert still_manual["speedSource"] == "manual"
         assert float(still_manual["manualSpeedKph"]) == pytest.approx(77.0)
     finally:
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         if run_id:
             _cleanup_run(base, run_id)
         api_json(
@@ -564,9 +564,9 @@ def test_language_and_speed_unit_validation_e2e(e2e_env: dict[str, str]) -> None
             expected_status=422,
         )
 
-        run_id = str(api_json(base, "/api/logging/start", method="POST")["run_id"])
+        run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
         _simulate(e2e_env, duration=3.0)
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         _wait_complete(base, run_id)
 
         insights_en = api_json(base, f"/api/history/{run_id}/insights?lang=en")
@@ -585,7 +585,7 @@ def test_language_and_speed_unit_validation_e2e(e2e_env: dict[str, str]) -> None
                 float(nl_first.get("confidence") or 0.0), abs=1e-6
             )
     finally:
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         if run_id:
             _cleanup_run(base, run_id)
         api_json(base, "/api/settings/language", method="POST", body={"language": language_before})
@@ -603,17 +603,17 @@ def test_no_data_or_short_run_behavior_e2e(e2e_env: dict[str, str]) -> None:
     time.sleep(2.5)
     before = history_run_ids(base)
 
-    first = api_json(base, "/api/logging/start", method="POST")
+    first = api_json(base, "/api/recording/start", method="POST")
     run_empty = str(first["run_id"])
-    api_json(base, "/api/logging/stop", method="POST")
+    api_json(base, "/api/recording/stop", method="POST")
     after_empty = history_run_ids(base)
     assert run_empty not in after_empty
     assert after_empty == before
 
-    second = api_json(base, "/api/logging/start", method="POST")
+    second = api_json(base, "/api/recording/start", method="POST")
     run_short = str(second["run_id"])
     _simulate(e2e_env, duration=SHORT_RUN_DURATION_S)
-    api_json(base, "/api/logging/stop", method="POST")
+    api_json(base, "/api/recording/stop", method="POST")
 
     wait_for(
         lambda: run_short in history_run_ids(base),
@@ -630,10 +630,10 @@ def test_no_data_or_short_run_behavior_e2e(e2e_env: dict[str, str]) -> None:
 
 def test_reduced_sensor_count_run_still_reports(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
-    run_id = str(api_json(base, "/api/logging/start", method="POST")["run_id"])
+    run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
     try:
         _simulate(e2e_env, duration=3.0, count=2, names="front-left,rear-left")
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         run = _wait_complete(base, run_id)
         assert run["status"] == "complete", f"reduced-sensor run status: {run['status']}"
 
@@ -649,16 +649,16 @@ def test_reduced_sensor_count_run_still_reports(e2e_env: dict[str, str]) -> None
         assert "diagnostic worksheet" in text
         _assert_no_placeholders(text)
     finally:
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         _cleanup_run(base, run_id)
 
 
 def test_export_history_consistency_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
-    run_id = str(api_json(base, "/api/logging/start", method="POST")["run_id"])
+    run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
     try:
         _simulate(e2e_env, duration=3.0)
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         detail = _wait_complete(base, run_id)
         summary_rows = api_json(base, "/api/history")["runs"]
         summary = next(item for item in summary_rows if str(item["run_id"]) == run_id)
@@ -688,7 +688,7 @@ def test_export_history_consistency_e2e(e2e_env: dict[str, str]) -> None:
             "export timestamps are not sorted chronologically"
         )
     finally:
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         _cleanup_run(base, run_id)
 
 
@@ -696,10 +696,10 @@ def test_export_history_consistency_e2e(e2e_env: dict[str, str]) -> None:
 def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     duration_long = float(e2e_env["sim_duration_long"])
-    run_id = str(api_json(base, "/api/logging/start", method="POST")["run_id"])
+    run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
     try:
         _simulate(e2e_env, duration=duration_long, count=4)
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         run = _wait_complete(base, run_id)
         assert run["status"] == "complete"
 
@@ -783,5 +783,5 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
 
         _assert_no_placeholders(text)
     finally:
-        api_json(base, "/api/logging/stop", method="POST")
+        api_json(base, "/api/recording/stop", method="POST")
         _cleanup_run(base, run_id)
