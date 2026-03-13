@@ -340,8 +340,8 @@ def test_location_reassignment_releases_previous_slot(e2e_env: dict[str, str]) -
         assert moved["location_code"] == "front_left_wheel"
 
         sensors = api_json(base, "/api/settings/sensors")["sensorsByMac"]
-        assert sensors[mac_1.replace(":", "")]["location"] == "rear_left_wheel"
-        assert sensors[mac_2.replace(":", "")]["location"] == "front_left_wheel"
+        assert sensors[mac_1.replace(":", "")]["location_code"] == "rear_left_wheel"
+        assert sensors[mac_2.replace(":", "")]["location_code"] == "front_left_wheel"
     finally:
         for mac in (mac_1, mac_2):
             api_json(
@@ -361,11 +361,11 @@ def test_sensor_settings_crud_e2e(e2e_env: dict[str, str]) -> None:
             base,
             f"/api/settings/sensors/{mac}",
             method="POST",
-            body={"name": "E2E Sensor", "location": "rear_left_wheel"},
+            body={"name": "E2E Sensor", "location_code": "rear_left_wheel"},
         )
         sensors = api_json(base, "/api/settings/sensors")["sensorsByMac"]
         assert sensors[sid]["name"] == "E2E Sensor"
-        assert sensors[sid]["location"] == "rear_left_wheel"
+        assert sensors[sid]["location_code"] == "rear_left_wheel"
 
         api_json(base, f"/api/settings/sensors/{mac}", method="DELETE")
         api_json(base, f"/api/settings/sensors/{mac}", method="DELETE", expected_status=404)
