@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
-from ..domain_models import as_float_or_none as _as_float
+from ..json_utils import as_float_or_none as _as_float
 from .pdf_style import (
     BMW_LENGTH_MM as _BMW_LENGTH_MM,
 )

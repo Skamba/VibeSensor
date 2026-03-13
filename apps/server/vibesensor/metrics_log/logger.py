@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from ..constants import NUMERIC_TYPES
-from ..domain.core import Run, SessionStatus
+from ..domain import Run, SessionStatus
 from ..runlog import utc_now_iso
 from .post_analysis import PostAnalysisWorker
 from .sample_builder import (
@@ -509,15 +509,15 @@ class MetricsLogger:
         try:
             latest_metadata = self._run_metadata_record(run_id, start_time_utc)
             latest_metadata["end_time_utc"] = end_utc
-            finalized = self._history_db.finalize_run_with_metadata(
+            finalized = self._history_db.finalize_run(
                 run_id,
                 end_utc,
-                latest_metadata,  # type: ignore[arg-type]
+                metadata=latest_metadata,  # type: ignore[arg-type]
             )
             if finalized is False:
                 self._persist_last_write_error = "history finalize_run skipped due to invalid state"
                 LOGGER.warning(
-                    "History DB finalize_run_with_metadata skipped for run %s",
+                    "History DB finalize_run skipped for run %s",
                     run_id,
                 )
                 return False

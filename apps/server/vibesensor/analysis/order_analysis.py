@@ -27,7 +27,7 @@ from ..constants import (
     SECONDS_PER_MINUTE,
     SNR_LOG_DIVISOR,
 )
-from ..domain_models import as_float_or_none as _as_float
+from ..json_utils import as_float_or_none as _as_float
 from ._types import (
     FindingPayload,
     I18nRef,

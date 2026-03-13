@@ -11,6 +11,13 @@ format:
 lint:
 	ruff check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools
 	ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools
+	python3 tools/dev/check_hygiene.py
+	vibesensor-config-preflight apps/server/config.dev.yaml
+	vibesensor-config-preflight apps/server/config.docker.yaml
+	vibesensor-config-preflight apps/server/config.pi.yaml
+	python3 tools/dev/docs_lint.py
+	python3 -m vibesensor.ws_schema_export --check
+	python3 -m vibesensor.http_api_schema_export --check
 
 typecheck-backend:
 	PYTHON=$(CURDIR)/.venv/bin/python; \
@@ -48,4 +55,4 @@ docs-lint:
 	python3 tools/dev/docs_lint.py
 
 ui-typecheck:
-	cd apps/ui && npm run typecheck
+	cd apps/ui && npm run check:contracts && npm run typecheck

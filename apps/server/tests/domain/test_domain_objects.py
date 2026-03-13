@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from vibesensor.domain.core import (
+from vibesensor.domain import (
     # Backward compatibility aliases
     AccelerationSample,
     AnalysisWindow,
@@ -459,7 +459,7 @@ class TestBridgeMethods:
     """Config objects bridge to domain objects correctly."""
 
     def test_car_config_to_car(self) -> None:
-        from vibesensor.domain_models import CarConfig
+        from vibesensor.backend_types import CarConfig
 
         cfg = CarConfig(id="abc", name="BMW", type="suv", aspects={"rim_in": 19.0}, variant="M3")
         car = cfg.to_car()
@@ -472,9 +472,9 @@ class TestBridgeMethods:
         assert car.display_name == "BMW (suv)"
 
     def test_sensor_config_to_sensor(self) -> None:
-        from vibesensor.domain_models import SensorConfig
+        from vibesensor.backend_types import SensorConfig
 
-        cfg = SensorConfig(sensor_id="aabb", name="FL", location="front_left_wheel")
+        cfg = SensorConfig(sensor_id="aabb", name="FL", location_code="front_left_wheel")
         sensor = cfg.to_sensor()
         assert isinstance(sensor, Sensor)
         assert sensor.sensor_id == "aabb"
@@ -485,15 +485,15 @@ class TestBridgeMethods:
         assert sensor.placement.display_name == "Front Left Wheel"
 
     def test_sensor_config_to_sensor_empty_location(self) -> None:
-        from vibesensor.domain_models import SensorConfig
+        from vibesensor.backend_types import SensorConfig
 
-        cfg = SensorConfig(sensor_id="aabb", name="Test", location="")
+        cfg = SensorConfig(sensor_id="aabb", name="Test", location_code="")
         sensor = cfg.to_sensor()
         assert not sensor.is_placed
         assert sensor.placement is None
 
     def test_speed_source_config_to_speed_source(self) -> None:
-        from vibesensor.domain_models import SpeedSourceConfig
+        from vibesensor.backend_types import SpeedSourceConfig
 
         cfg = SpeedSourceConfig.default()
         speed = cfg.to_speed_source()
@@ -544,7 +544,7 @@ class TestBridgeMethods:
     def test_finding_payload_is_distinct_from_domain_finding(self) -> None:
         """FindingPayload is the analysis TypedDict; domain Finding is the dataclass."""
         from vibesensor.analysis._types import FindingPayload
-        from vibesensor.domain.core import Finding as DomainFinding
+        from vibesensor.domain import Finding as DomainFinding
 
         # They must be distinct types — no name collision
         assert DomainFinding is not FindingPayload
@@ -761,7 +761,7 @@ class TestRunEnrichments:
     """Tests for enriched Run domain object."""
 
     def test_has_readings(self) -> None:
-        from vibesensor.domain.core import VibrationReading
+        from vibesensor.domain import VibrationReading
 
         run = Run()
         assert not run.has_readings
@@ -870,8 +870,8 @@ class TestHistoryRecordEnrichments:
     """Tests for enriched HistoryRecord domain object."""
 
     def test_has_analysis(self) -> None:
-        assert HistoryRecord(run_id="r1", analysis_version=1).has_analysis
-        assert not HistoryRecord(run_id="r1").has_analysis
+        assert HistoryRecord(run_id="r1", status="complete").has_analysis
+        assert not HistoryRecord(run_id="r1", status="recording").has_analysis
 
     def test_display_status(self) -> None:
         assert HistoryRecord(run_id="r1", status="complete").display_status == "Complete"

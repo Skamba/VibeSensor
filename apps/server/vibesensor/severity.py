@@ -18,7 +18,7 @@ from vibesensor.strength_bands import (
 )
 
 from .constants import MULTI_SENSOR_CORROBORATION_DB
-from .domain_models import as_float_or_none
+from .json_utils import as_float_or_none
 
 
 class SeverityTrackerState(TypedDict):

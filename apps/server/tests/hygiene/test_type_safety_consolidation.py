@@ -66,7 +66,7 @@ class TestNormalizeLangConsolidation:
 
 
 class TestClientIdDedup:
-    """Registry must use normalize_sensor_id from domain_models, not a private copy."""
+    """Registry must use normalize_sensor_id from protocol, not a private copy."""
 
     def test_no_private_normalize_client_id(self) -> None:
         src = (_SERVER_ROOT / "vibesensor" / "registry.py").read_text()

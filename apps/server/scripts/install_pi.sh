@@ -5,7 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PI_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SERVICE_TEMPLATE="${PI_DIR}/systemd/vibesensor.service"
 HOTSPOT_SERVICE_TEMPLATE="${PI_DIR}/systemd/vibesensor-hotspot.service"
-RFKILL_SERVICE_TEMPLATE="${PI_DIR}/systemd/vibesensor-rfkill-unblock.service"
 HOTSPOT_HEAL_SERVICE_TEMPLATE="${PI_DIR}/systemd/vibesensor-hotspot-self-heal.service"
 HOTSPOT_HEAL_TIMER_TEMPLATE="${PI_DIR}/systemd/vibesensor-hotspot-self-heal.timer"
 VENV_DIR="${PI_DIR}/.venv"
@@ -99,11 +98,6 @@ sed \
 sed \
   -e "s#__PI_DIR__#${PI_DIR}#g" \
   -e "s#__VENV_DIR__#${VENV_DIR}#g" \
-  "${RFKILL_SERVICE_TEMPLATE}" | run_as_root tee /etc/systemd/system/vibesensor-rfkill-unblock.service >/dev/null
-
-sed \
-  -e "s#__PI_DIR__#${PI_DIR}#g" \
-  -e "s#__VENV_DIR__#${VENV_DIR}#g" \
   "${HOTSPOT_HEAL_SERVICE_TEMPLATE}" | run_as_root tee /etc/systemd/system/vibesensor-hotspot-self-heal.service >/dev/null
 
 sed \
@@ -125,12 +119,6 @@ if [ "${SKIP_SERVICE_START}" = "1" ]; then
       /etc/systemd/system/vibesensor-hotspot.service \
       /etc/systemd/system/multi-user.target.wants/vibesensor-hotspot.service
   fi
-  if ! run_as_root systemctl enable vibesensor-rfkill-unblock.service >/dev/null 2>&1; then
-    run_as_root install -d /etc/systemd/system/NetworkManager.service.wants
-    run_as_root ln -sf \
-      /etc/systemd/system/vibesensor-rfkill-unblock.service \
-      /etc/systemd/system/NetworkManager.service.wants/vibesensor-rfkill-unblock.service
-  fi
   if ! run_as_root systemctl enable vibesensor-hotspot-self-heal.timer >/dev/null 2>&1; then
     run_as_root install -d /etc/systemd/system/timers.target.wants
     run_as_root ln -sf \
@@ -139,7 +127,6 @@ if [ "${SKIP_SERVICE_START}" = "1" ]; then
   fi
 else
   run_as_root systemctl daemon-reload
-  run_as_root systemctl enable --now vibesensor-rfkill-unblock.service
   run_as_root systemctl enable --now vibesensor.service
   run_as_root systemctl enable --now vibesensor-hotspot.service
   run_as_root systemctl enable --now vibesensor-hotspot-self-heal.timer

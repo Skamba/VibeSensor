@@ -1,4 +1,4 @@
-"""Tests for FindingRecord, FindingCollection, PeakBin, and PeakFindingAnalyzer."""
+"""Tests for FindingCollection, PeakBin, and PeakFindingAnalyzer."""
 
 from __future__ import annotations
 
@@ -7,10 +7,10 @@ import pytest
 from vibesensor.analysis._types import FindingPayload
 from vibesensor.analysis.findings import (
     FindingCollection,
-    FindingRecord,
     PeakBin,
     PeakFindingAnalyzer,
 )
+from vibesensor.domain import Finding
 
 # ---------------------------------------------------------------------------
 # Fixtures: minimal FindingPayload dicts
@@ -62,58 +62,47 @@ def _info_finding(finding_id: str = "F_PEAK", confidence: float = 0.10) -> Findi
 
 
 # ===========================================================================
-# FindingRecord
+# Domain Finding from payload (replaces former FindingRecord tests)
 # ===========================================================================
 
 
-class TestFindingRecord:
+class TestDomainFindingFromPayload:
     def test_finding_id(self) -> None:
-        rec = FindingRecord(_diag_finding(finding_id="F_ORDER"))
-        assert rec.finding_id == "F_ORDER"
+        f = Finding.from_payload(_diag_finding(finding_id="F_ORDER"))
+        assert f.finding_id == "F_ORDER"
 
     def test_is_reference(self) -> None:
-        assert FindingRecord(_ref_finding()).is_reference is True
-        assert FindingRecord(_diag_finding()).is_reference is False
+        assert Finding.from_payload(_ref_finding()).is_reference is True
+        assert Finding.from_payload(_diag_finding()).is_reference is False
 
     def test_is_informational(self) -> None:
-        assert FindingRecord(_info_finding()).is_informational is True
-        assert FindingRecord(_diag_finding()).is_informational is False
+        assert Finding.from_payload(_info_finding()).is_informational is True
+        assert Finding.from_payload(_diag_finding()).is_informational is False
 
     def test_is_diagnostic(self) -> None:
-        assert FindingRecord(_diag_finding()).is_diagnostic is True
-        assert FindingRecord(_ref_finding()).is_diagnostic is False
-        assert FindingRecord(_info_finding()).is_diagnostic is False
+        assert Finding.from_payload(_diag_finding()).is_diagnostic is True
+        assert Finding.from_payload(_ref_finding()).is_diagnostic is False
+        assert Finding.from_payload(_info_finding()).is_diagnostic is False
 
     def test_confidence_default(self) -> None:
-        rec = FindingRecord(_ref_finding())
-        assert rec.confidence == 0.0
+        f = Finding.from_payload(_ref_finding())
+        assert f.effective_confidence == 0.0
 
     def test_confidence_value(self) -> None:
-        rec = FindingRecord(_diag_finding(confidence=0.75))
-        assert rec.confidence == 0.75
+        f = Finding.from_payload(_diag_finding(confidence=0.75))
+        assert f.effective_confidence == 0.75
 
     def test_source_normalized(self) -> None:
-        f = _diag_finding(source="  Wheel/Tire  ")
-        assert FindingRecord(f).source_normalized == "wheel/tire"
+        f = Finding.from_payload(_diag_finding(source="  Wheel/Tire  "))
+        assert f.source_normalized == "wheel/tire"
 
     def test_strongest_location(self) -> None:
-        rec = FindingRecord(_diag_finding(location="front_left"))
-        assert rec.strongest_location == "front_left"
+        f = Finding.from_payload(_diag_finding(location="front_left"))
+        assert f.strongest_location == "front_left"
 
     def test_ranking_score(self) -> None:
-        rec = FindingRecord(_diag_finding(ranking_score=2.5))
-        assert rec.ranking_score == 2.5
-
-    def test_assign_id_mutates_underlying_dict(self) -> None:
-        finding = _diag_finding()
-        rec = FindingRecord(finding)
-        rec.assign_id("F001")
-        assert finding["finding_id"] == "F001"
-
-    def test_data_returns_underlying_dict(self) -> None:
-        finding = _diag_finding()
-        rec = FindingRecord(finding)
-        assert rec.data is finding
+        f = Finding.from_payload(_diag_finding(ranking_score=2.5))
+        assert f.ranking_score == 2.5
 
 
 # ===========================================================================

@@ -33,10 +33,9 @@ Use this when changing backend code without scanning the whole package.
   shapes (`CarConfig`, `SensorConfig`, `SpeedSourceConfig`, `RunMetadata`,
   `SensorFrame`, `ReportTemplateData`, `HistoryRunPayload`) at persistence,
   wire-format, and rendering boundaries.
-- `FindingRecord` (in `analysis/findings.py`) and `OrderAssessment`
-  (in `analysis/top_cause_selection.py`) delegate classification and
-  ranking logic to the domain `Finding` and remain as pipeline adapters
-  for dict-based analysis workflows.
+- `OrderAssessment` (in `analysis/top_cause_selection.py`) delegates
+  classification and ranking logic to the domain `Finding` and remains
+  as a pipeline adapter for dict-based analysis workflows.
 - See `docs/domain-model.md` for the full domain relationship map.
 
 ## Analysis Pipeline
@@ -71,7 +70,7 @@ Use this when changing backend code without scanning the whole package.
   `UpdateError`, `RunNotFoundError`, `AnalysisNotReadyError`, `DataCorruptError`.
   Subsystem exceptions (`settings_store.PersistenceError`,
   `runtime/processing_loop.ProcessingLoopError`) inherit from domain base classes.
-- `domain_models.py`: canonical `normalize_sensor_id()` for client/sensor
+- `protocol.py`: canonical `normalize_sensor_id()` for client/sensor
   ID normalisation — all other modules delegate to it.
 - `runlog.py`: canonical `utc_now_iso()` helper — prefer over inline
   `datetime.now(UTC).isoformat()` everywhere.

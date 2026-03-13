@@ -7,7 +7,6 @@ from contextlib import contextmanager
 
 from fastapi import HTTPException
 
-from ..domain_models import normalize_sensor_id
 from ..exceptions import (
     AnalysisNotReadyError,
     DataCorruptError,
@@ -15,6 +14,7 @@ from ..exceptions import (
     RunNotFoundError,
 )
 from ..history_services.helpers import async_require_run, safe_filename
+from ..protocol import normalize_sensor_id
 
 __all__ = [
     "async_require_run",

@@ -29,7 +29,7 @@ def test_set_location_short_string_preserved(tmp_path: Path) -> None:
     """A short location label is stored verbatim."""
     registry = _make_registry(tmp_path)
     record = registry.set_location(_CLIENT_ID, "front-left")
-    assert record.location == "front-left"
+    assert record.location_code == "front-left"
 
 
 def test_set_location_exactly_64_ascii_bytes_preserved(tmp_path: Path) -> None:
@@ -37,8 +37,8 @@ def test_set_location_exactly_64_ascii_bytes_preserved(tmp_path: Path) -> None:
     label = "x" * 64  # 64 bytes in UTF-8 (all ASCII)
     registry = _make_registry(tmp_path)
     record = registry.set_location(_CLIENT_ID, label)
-    assert len(record.location.encode("utf-8")) == 64
-    assert record.location == label
+    assert len(record.location_code.encode("utf-8")) == 64
+    assert record.location_code == label
 
 
 def test_set_location_over_64_ascii_bytes_capped(tmp_path: Path) -> None:
@@ -46,7 +46,7 @@ def test_set_location_over_64_ascii_bytes_capped(tmp_path: Path) -> None:
     label = "a" * 100  # 100 bytes in UTF-8
     registry = _make_registry(tmp_path)
     record = registry.set_location(_CLIENT_ID, label)
-    encoded = record.location.encode("utf-8")
+    encoded = record.location_code.encode("utf-8")
     assert len(encoded) <= 64
 
 
@@ -61,10 +61,10 @@ def test_set_location_multibyte_truncation_safe(tmp_path: Path) -> None:
     registry = _make_registry(tmp_path)
     record = registry.set_location(_CLIENT_ID, label)
     # Must be valid UTF-8 (no UnicodeDecodeError)
-    encoded = record.location.encode("utf-8")
+    encoded = record.location_code.encode("utf-8")
     assert len(encoded) <= 64
     # Must decode cleanly (round-trip)
-    assert encoded.decode("utf-8") == record.location
+    assert encoded.decode("utf-8") == record.location_code
 
 
 def test_set_location_strips_whitespace_before_cap(tmp_path: Path) -> None:
@@ -72,14 +72,14 @@ def test_set_location_strips_whitespace_before_cap(tmp_path: Path) -> None:
     padded = "  front-left  "
     registry = _make_registry(tmp_path)
     record = registry.set_location(_CLIENT_ID, padded)
-    assert record.location == "front-left"
+    assert record.location_code == "front-left"
 
 
 def test_set_location_empty_string_stored(tmp_path: Path) -> None:
     """An empty location (after stripping) is accepted and stored."""
     registry = _make_registry(tmp_path)
     record = registry.set_location(_CLIENT_ID, "")
-    assert record.location == ""
+    assert record.location_code == ""
 
 
 def test_set_location_visible_on_snapshot(tmp_path: Path) -> None:
@@ -89,7 +89,7 @@ def test_set_location_visible_on_snapshot(tmp_path: Path) -> None:
     snapshot = registry.snapshot_for_api(now=1.0)
     matched = [s for s in snapshot if s.get("id") == _CLIENT_ID]
     assert matched, "client_id not found in snapshot"
-    assert matched[0].get("location") == "rear-right"
+    assert matched[0].get("location_code") == "rear-right"
 
 
 # ── _resolve_now_mono: provided value must not be shadowed ───────────────────

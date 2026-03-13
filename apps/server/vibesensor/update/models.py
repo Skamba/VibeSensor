@@ -6,66 +6,15 @@ import enum
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TypedDict, TypeGuard
 
 from ..json_types import JsonObject, is_json_array, is_json_object
+from ..json_utils import as_float_or_none, as_int_or_none
 
 
 @dataclass(frozen=True, slots=True)
 class UpdateValidationConfig:
     rollback_dir: Path
     min_free_disk_bytes: int
-
-
-class UpdateIssuePayload(TypedDict):
-    phase: str
-    message: str
-    detail: str
-
-
-class UpdateJobStatusPayload(TypedDict):
-    state: str
-    phase: str
-    started_at: float | None
-    finished_at: float | None
-    last_success_at: float | None
-    phase_started_at: float | None
-    phase_elapsed_s: float | None
-    updated_at: float | None
-    ssid: str
-    issues: list[UpdateIssuePayload]
-    log_tail: list[str]
-    exit_code: int | None
-    runtime: JsonObject
-
-
-def _is_number_like(value: object) -> TypeGuard[int | float | str]:
-    """Return True for scalar shapes worth attempting numeric coercion on."""
-    return isinstance(value, (int, float, str))
-
-
-def _to_float_or_none(value: object) -> float | None:
-    """Coerce *value* to float, returning None for null / unconvertible input."""
-    if value is None:
-        return None
-    if not _is_number_like(value):
-        return None
-    try:
-        return float(value)
-    except ValueError:
-        return None
-
-
-def _to_int_or_none(value: object) -> int | None:
-    """Coerce *value* to int, returning None for null / unconvertible input."""
-    if value is None:
-        return None
-    if not _is_number_like(value):
-        return None
-    try:
-        return int(value)
-    except ValueError:
-        return None
 
 
 def _coerce_update_state(value: object) -> UpdateState:
@@ -146,7 +95,7 @@ class UpdateJobStatus:
     exit_code: int | None = None
     runtime: JsonObject = field(default_factory=dict)
 
-    def to_dict(self) -> UpdateJobStatusPayload:
+    def to_dict(self) -> dict[str, object]:
         phase_elapsed_s = None
         if self.state == UpdateState.running and self.phase_started_at is not None:
             phase_elapsed_s = max(0.0, time.time() - self.phase_started_at)
@@ -194,14 +143,14 @@ class UpdateJobStatus:
         return cls(
             state=_coerce_update_state(data.get("state", "idle")),
             phase=_coerce_update_phase(data.get("phase", "idle")),
-            started_at=_to_float_or_none(data.get("started_at")),
-            finished_at=_to_float_or_none(data.get("finished_at")),
-            last_success_at=_to_float_or_none(data.get("last_success_at")),
-            phase_started_at=_to_float_or_none(data.get("phase_started_at")),
-            updated_at=_to_float_or_none(data.get("updated_at")),
+            started_at=as_float_or_none(data.get("started_at")),
+            finished_at=as_float_or_none(data.get("finished_at")),
+            last_success_at=as_float_or_none(data.get("last_success_at")),
+            phase_started_at=as_float_or_none(data.get("phase_started_at")),
+            updated_at=as_float_or_none(data.get("updated_at")),
             ssid=str(data.get("ssid") or ""),
             issues=issues,
             log_tail=log_tail,
-            exit_code=_to_int_or_none(data.get("exit_code")),
+            exit_code=as_int_or_none(data.get("exit_code")),
             runtime=runtime_raw if is_json_object(runtime_raw) else {},
         )

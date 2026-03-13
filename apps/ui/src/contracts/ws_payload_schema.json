@@ -334,8 +334,8 @@
           ],
           "title": "Last Seen Age Ms"
         },
-        "location": {
-          "title": "Location",
+        "location_code": {
+          "title": "Location Code",
           "type": "string"
         },
         "mac_address": {
@@ -356,7 +356,7 @@
         "name",
         "connected",
         "mac_address",
-        "location",
+        "location_code",
         "last_seen_age_ms",
         "dropped_frames",
         "frames_total",

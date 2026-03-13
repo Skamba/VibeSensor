@@ -107,7 +107,7 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
 
 
 @pytest.mark.asyncio
-async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis_version() -> None:
+async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> None:
     router, _ = make_router_and_state(language="en")
     endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
     call_count = 0
@@ -146,27 +146,29 @@ async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persist
 
 
 @pytest.mark.asyncio
-async def test_report_pdf_cache_invalidates_when_analysis_version_changes() -> None:
+async def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     analysis["_report_template_data"] = {"lang": "en", "title": "legacy"}
 
     @dataclass
-    class VersionFlipDB(FakeHistoryDB):
-        versions: list[int] = field(default_factory=lambda: [1, 2])
+    class TimestampFlipDB(FakeHistoryDB):
+        timestamps: list[str] = field(
+            default_factory=lambda: ["2026-01-01T00:01:00Z", "2026-01-01T00:02:00Z"]
+        )
         idx: int = 0
 
         def get_run(self, run_id: str) -> dict[str, object] | None:
             result = super().get_run(run_id)
             if result is None:
                 return None
-            version = self.versions[min(self.idx, len(self.versions) - 1)]
+            ts = self.timestamps[min(self.idx, len(self.timestamps) - 1)]
             self.idx += 1
-            result["analysis_version"] = version
+            result["analysis_completed_at"] = ts
             return result
 
-    state = FakeState(VersionFlipDB(metadata, samples, analysis), FakeWsHub())
+    state = FakeState(TimestampFlipDB(metadata, samples, analysis), FakeWsHub())
     router = create_router(state)
     endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
     call_count = 0
