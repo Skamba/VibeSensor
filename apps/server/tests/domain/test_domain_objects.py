@@ -12,8 +12,6 @@ from datetime import UTC, datetime
 import pytest
 
 from vibesensor.domain import (
-    # Backward compatibility aliases
-    AccelerationSample,
     AnalysisWindow,
     Car,
     Finding,
@@ -43,11 +41,8 @@ class TestRunAlias:
         assert run.status.value == "running"
 
 
-class TestMeasurementAlias:
-    """Measurement is the primary domain name for AccelerationSample."""
-
-    def test_measurement_is_acceleration_sample(self) -> None:
-        assert Measurement is AccelerationSample
+class TestMeasurement:
+    """Measurement domain object tests."""
 
     def test_measurement_creates_valid_sample(self) -> None:
         m = Measurement(x=0.1, y=0.2, z=0.3, timestamp=_NOW, sample_rate_hz=4096)
@@ -157,7 +152,7 @@ class TestCar:
         car = Car()
         assert car.name == "Unnamed Car"
         assert car.car_type == "sedan"
-        assert car.display_name == "Unnamed Car"
+        assert car.display_name == "Unnamed Car (sedan)"
 
     def test_car_with_type(self) -> None:
         car = Car(name="BMW 3 Series", car_type="suv")
@@ -390,7 +385,7 @@ class TestPackageImports:
 
         # Verify they are the expected types
         assert Run is not None
-        assert Measurement is AccelerationSample
+        assert Measurement is not None
         assert Car is not None
         assert Sensor is not None
         assert SensorPlacement is not None
@@ -596,7 +591,8 @@ class TestFindingEnrichments:
         assert f.dominance_ratio == 0.85
         assert f.diffuse_excitation is True
         assert f.weak_spatial_separation is True
-        assert f.phase_evidence == {"cruise_fraction": 0.6}
+        assert f.phase_evidence is not None
+        assert f.phase_evidence.cruise_fraction == pytest.approx(0.6)
 
 
 class TestAnalysisWindowEnrichments:
@@ -776,7 +772,7 @@ class TestSensorPlacementEnrichments:
         assert not sp.is_body
 
     def test_is_body(self) -> None:
-        sp = SensorPlacement(code="dashboard")
+        sp = SensorPlacement(code="driver_seat")
         assert sp.is_body
         assert not sp.is_wheel
         assert not sp.is_drivetrain
@@ -788,7 +784,7 @@ class TestSensorPlacementEnrichments:
         assert SensorPlacement(code="transmission").position_category == "drivetrain"
 
     def test_position_category_body(self) -> None:
-        assert SensorPlacement(code="dashboard").position_category == "body"
+        assert SensorPlacement(code="driver_seat").position_category == "body"
 
     def test_position_category_other(self) -> None:
         assert SensorPlacement(code="custom_location").position_category == "other"

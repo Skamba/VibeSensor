@@ -114,7 +114,7 @@ class OrderAssessment:
             "weak_spatial_separation": df.weak_spatial_separation,
             "diffuse_excitation": df.diffuse_excitation,
             "diagnostic_caveat": self.diagnostic_caveat,
-            "phase_evidence": df.phase_evidence,
+            "phase_evidence": df.phase_evidence.to_dict() or None if df.phase_evidence else None,
         }
 
 

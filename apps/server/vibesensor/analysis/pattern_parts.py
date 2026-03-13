@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from vibesensor.domain import VibrationSource
+
 # ---------------------------------------------------------------------------
 # Static mapping tables
 # ---------------------------------------------------------------------------
@@ -19,17 +21,17 @@ from functools import lru_cache
 
 _SYSTEM_PARTS: dict[tuple[str, str], list[tuple[str, str, str]]] = {
     # Wheel / Tire
-    ("wheel/tire", "1x"): [
+    (VibrationSource.WHEEL_TIRE, "1x"): [
         ("flat_spot", "Tire flat spot / out-of-round", "Band platte plek / niet-rond"),
         ("wheel_balance", "Wheel balance weights", "Wielbalanseringsgewichten"),
         ("hub_bearing", "Wheel hub bearing", "Wielnaaf-lager"),
     ],
-    ("wheel/tire", "2x"): [
+    (VibrationSource.WHEEL_TIRE, "2x"): [
         ("hub_bearing", "Wheel hub bearing", "Wielnaaf-lager"),
         ("brake_disc", "Brake disc runout / warping", "Remschijf-slingering / vervorming"),
         ("cv_joint", "CV joint / drive shaft", "Homokineet / aandrijfas"),
     ],
-    ("wheel/tire", "higher"): [
+    (VibrationSource.WHEEL_TIRE, "higher"): [
         (
             "hub_bearing",
             "Wheel hub bearing (advanced wear)",
@@ -37,44 +39,44 @@ _SYSTEM_PARTS: dict[tuple[str, str], list[tuple[str, str, str]]] = {
         ),
         ("brake_caliper", "Brake caliper / pad contact", "Remklauw / blokcontact"),
     ],
-    ("wheel/tire", "*"): [
+    (VibrationSource.WHEEL_TIRE, "*"): [
         ("flat_spot", "Tire flat spot / out-of-round", "Band platte plek / niet-rond"),
         ("wheel_balance", "Wheel balance weights", "Wielbalanseringsgewichten"),
         ("hub_bearing", "Wheel hub bearing", "Wielnaaf-lager"),
     ],
-    ("driveline", "1x"): [
+    (VibrationSource.DRIVELINE, "1x"): [
         ("center_bearing", "Center support bearing", "Middensteunlager"),
         ("u_joint", "Universal joint / flex disc", "Kruiskoppeling / flexschijf"),
         ("prop_shaft", "Propshaft imbalance", "Cardanas-onbalans"),
     ],
-    ("driveline", "2x"): [
+    (VibrationSource.DRIVELINE, "2x"): [
         ("u_joint", "Universal joint / flex disc", "Kruiskoppeling / flexschijf"),
         ("diff_mount", "Differential mount", "Differentieelophanging"),
     ],
-    ("driveline", "higher"): [
+    (VibrationSource.DRIVELINE, "higher"): [
         ("spline_wear", "Spline wear / slip joint", "Slijtage van tandkoppeling"),
         ("diff_gear", "Differential gear wear", "Slijtage differentieel-tandwiel"),
     ],
-    ("driveline", "*"): [
+    (VibrationSource.DRIVELINE, "*"): [
         ("center_bearing", "Center support bearing", "Middensteunlager"),
         ("u_joint", "Universal joint / flex disc", "Kruiskoppeling / flexschijf"),
         ("prop_shaft", "Propshaft imbalance", "Cardanas-onbalans"),
     ],
     # Engine
-    ("engine", "1x"): [
+    (VibrationSource.ENGINE, "1x"): [
         ("engine_mount", "Engine / transmission mount", "Motor- / versnellingsbaksteun"),
         ("accessory_belt", "Accessory belt / tensioner", "Hulpaandrijfriem / spanrol"),
     ],
-    ("engine", "2x"): [
+    (VibrationSource.ENGINE, "2x"): [
         ("engine_mount", "Engine / transmission mount", "Motor- / versnellingsbaksteun"),
         ("misfire", "Cylinder misfire / injector", "Cilindermisfire / injector"),
         ("exhaust_mount", "Exhaust mount / heat shield", "Uitlaatophanging / hitteschild"),
     ],
-    ("engine", "higher"): [
+    (VibrationSource.ENGINE, "higher"): [
         ("accessory_belt", "Accessory belt / tensioner", "Hulpaandrijfriem / spanrol"),
         ("valve_train", "Valve train / timing chain", "Kleppentrein / distributieketting"),
     ],
-    ("engine", "*"): [
+    (VibrationSource.ENGINE, "*"): [
         ("engine_mount", "Engine / transmission mount", "Motor- / versnellingsbaksteun"),
         ("accessory_belt", "Accessory belt / tensioner", "Hulpaandrijfriem / spanrol"),
     ],
@@ -156,9 +158,9 @@ def parts_for_pattern(
 
 _SRC_PHRASES: dict[str, tuple[str, str, str, str]] = {
     # (order_en, order_nl, general_en, general_nl_prefix)
-    "wheel/tire": ("wheel-order", "wielorde", "wheel/tire", "wiel-/band"),
-    "driveline": ("driveshaft-order", "cardanasorde", "driveline", "aandrijflijn"),
-    "engine": ("engine-order", "motororde", "engine", "motor"),
+    VibrationSource.WHEEL_TIRE: ("wheel-order", "wielorde", "wheel/tire", "wiel-/band"),
+    VibrationSource.DRIVELINE: ("driveshaft-order", "cardanasorde", "driveline", "aandrijflijn"),
+    VibrationSource.ENGINE: ("engine-order", "motororde", "engine", "motor"),
 }
 
 

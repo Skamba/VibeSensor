@@ -6,6 +6,7 @@ from collections import defaultdict
 from math import ceil, floor, log1p, pow
 
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
+from ..domain import VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..locations import has_any_wheel_location, is_wheel_location
 from ._types import FindingPayload, JsonObject, LocationHotspot, MatchedPoint, TestStep, i18n_ref
@@ -229,7 +230,7 @@ def _score_locations_in_bin(
 
     # Source-aware localization: for wheel/tire diagnoses prefer wheel
     # sensors as the fault source.
-    _prefer_wheel = (suspected_source or "").strip().lower() == "wheel/tire"
+    _prefer_wheel = (suspected_source or "").strip().lower() == VibrationSource.WHEEL_TIRE
     if _prefer_wheel:
         wheel_ranked = [item for item in ranked_for_winner if is_wheel_location(item[0])]
         if wheel_ranked:

@@ -143,7 +143,7 @@ class TestFindingCollection:
     def test_items_property(self) -> None:
         findings = [make_finding_payload(confidence=0.65)]
         coll = FindingCollection(findings)
-        assert coll.items is findings
+        assert coll.items == findings
 
 
 # ===========================================================================

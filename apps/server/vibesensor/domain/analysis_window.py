@@ -48,12 +48,18 @@ class AnalysisWindow:
     speed_min_kmh: float | None = None
     speed_max_kmh: float | None = None
 
+    def __post_init__(self) -> None:
+        if self.start_idx < 0:
+            raise ValueError(f"start_idx must be non-negative, got {self.start_idx}")
+        if self.end_idx < self.start_idx:
+            raise ValueError(f"end_idx ({self.end_idx}) must be >= start_idx ({self.start_idx})")
+
     # -- queries -----------------------------------------------------------
 
     @property
     def sample_count(self) -> int:
         """Number of samples in this window."""
-        return max(0, self.end_idx - self.start_idx)
+        return self.end_idx - self.start_idx
 
     @property
     def duration_s(self) -> float | None:

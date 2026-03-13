@@ -10,8 +10,8 @@ import pytest
 from vibesensor.domain import (
     Measurement,
     Run,
+    RunPhase,
     RunStatus,
-    SessionStatus,
     VibrationReading,
     transition_run,
 )
@@ -168,23 +168,34 @@ class TestRun:
 
     def test_initial_state_is_pending(self) -> None:
         session = Run()
-        assert session.status is SessionStatus.PENDING
+        assert session.status is RunPhase.PENDING
 
-    def test_session_id_is_unique(self) -> None:
+    def test_run_id_is_unique(self) -> None:
         s1 = Run()
         s2 = Run()
-        assert s1.session_id != s2.session_id
+        assert s1.run_id != s2.run_id
 
     def test_start_transitions_to_running(self) -> None:
         session = Run()
         session.start()
-        assert session.status is SessionStatus.RUNNING
+        assert session.status is RunPhase.RUNNING
 
     def test_start_when_already_running_raises(self) -> None:
         session = Run()
         session.start()
-        with pytest.raises(RuntimeError, match="Cannot start session"):
+        with pytest.raises(RuntimeError, match="Cannot start run"):
             session.start()
+
+    def test_stop_transitions_to_stopped(self) -> None:
+        session = Run()
+        session.start()
+        session.stop()
+        assert session.status is RunPhase.STOPPED
+
+    def test_stop_when_not_running_raises(self) -> None:
+        session = Run()
+        with pytest.raises(RuntimeError, match="Cannot stop run"):
+            session.stop()
 
     def test_analysis_settings(self) -> None:
         settings = {"tire_width_mm": 285.0, "final_drive_ratio": 3.08}
