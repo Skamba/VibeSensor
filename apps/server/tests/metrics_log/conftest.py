@@ -1,7 +1,7 @@
 """Shared fixtures for metrics_log tests.
 
 Provides a ``make_logger`` factory fixture that eliminates the ~10 repeated
-keyword arguments every MetricsLogger constructor call requires, and shared
+keyword arguments every RunRecorder constructor call requires, and shared
 fake collaborators used across multiple test modules.
 """
 
@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
+from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------
 # Fake collaborators
@@ -236,9 +236,9 @@ def _make_logger(
     analysis_settings: object | None = None,
     history_db: object | None = None,
     **extra: Any,
-) -> MetricsLogger:
-    """Build a ``MetricsLogger`` with sensible test defaults."""
-    # Separate MetricsLoggerConfig fields from runtime-collaborator overrides.
+) -> RunRecorder:
+    """Build a ``RunRecorder`` with sensible test defaults."""
+    # Separate RunRecorderConfig fields from runtime-collaborator overrides.
     config_fields = {
         k: extra.pop(k)
         for k in list(extra)
@@ -254,7 +254,7 @@ def _make_logger(
             "no_data_timeout_s",
         )
     }
-    config = MetricsLoggerConfig(
+    config = RunRecorderConfig(
         enabled=config_fields.get("enabled", False),
         metrics_log_hz=config_fields.get("metrics_log_hz", 2),
         sensor_model=config_fields.get("sensor_model", "ADXL345"),
@@ -265,7 +265,7 @@ def _make_logger(
         no_data_timeout_s=config_fields.get("no_data_timeout_s", 15.0),
     )
     reg = registry or _FakeRegistry()
-    return MetricsLogger(
+    return RunRecorder(
         config,
         registry=reg,
         gps_monitor=gps_monitor or _FakeGPSMonitor(),
@@ -278,14 +278,14 @@ def _make_logger(
 
 @pytest.fixture
 def make_logger(tmp_path: Path):
-    """Factory fixture: call ``make_logger(...)`` to get a MetricsLogger.
+    """Factory fixture: call ``make_logger(...)`` to get a RunRecorder.
 
-    Accepts the same keyword overrides as ``MetricsLogger`` (e.g.
+    Accepts the same keyword overrides as ``RunRecorder`` (e.g.
     ``make_logger(history_db=my_db, language_provider=lambda: "nl")``).
     Any dependency not supplied gets a sensible fake default.
     """
 
-    def _factory(**kwargs: Any) -> MetricsLogger:
+    def _factory(**kwargs: Any) -> RunRecorder:
         return _make_logger(tmp_path, **kwargs)
 
     return _factory

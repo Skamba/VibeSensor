@@ -141,6 +141,7 @@ class FindingPayload(TypedDict, total=False):
     next_sensor_move: JsonValue
     actions: list[TestStep]
     _ranking_score: float
+    ranking_score: float
     peak_classification: str
     phase_presence: dict[str, float] | None
     signatures_observed: list[str]
@@ -152,6 +153,7 @@ class FindingPayload(TypedDict, total=False):
 class TopCause(TypedDict, total=False):
     finding_id: str
     source: str
+    suspected_source: str
     confidence: float | None
     confidence_label_key: str
     confidence_tone: str

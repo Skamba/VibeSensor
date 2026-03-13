@@ -21,7 +21,7 @@ from ..history_db import HistoryDB
 from ..history_services.exports import HistoryExportService
 from ..history_services.reports import HistoryReportService
 from ..history_services.runs import HistoryRunService
-from ..metrics_log import MetricsLogger, MetricsLoggerConfig
+from ..metrics_log import RunRecorder, RunRecorderConfig
 from ..processing import SignalProcessor
 from ..registry import ClientRegistry
 from ..settings_store import SettingsStore
@@ -130,8 +130,8 @@ def build_runtime(config: AppConfig) -> RuntimeState:
     )
 
     # metrics logger
-    metrics_logger = MetricsLogger(
-        MetricsLoggerConfig(
+    metrics_logger = RunRecorder(
+        RunRecorderConfig(
             enabled=config.logging.log_metrics,
             metrics_log_hz=config.logging.metrics_log_hz,
             no_data_timeout_s=config.logging.no_data_timeout_s,

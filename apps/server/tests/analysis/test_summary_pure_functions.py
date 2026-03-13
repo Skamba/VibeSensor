@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import pytest
 
+from tests.test_support.findings import make_finding_payload
 from vibesensor.analysis.strength_labels import (
     CONFIDENCE_HIGH_THRESHOLD,
     CONFIDENCE_MEDIUM_THRESHOLD,
@@ -127,20 +128,6 @@ class TestNormalizeLangInSummary:
 # ---------------------------------------------------------------------------
 
 
-def _make_finding(
-    source: str,
-    confidence: float,
-    finding_id: str = "F_WHEEL",
-    severity: str = "diagnostic",
-) -> dict:
-    return {
-        "finding_id": finding_id,
-        "suspected_source": source,
-        "confidence": confidence,
-        "severity": severity,
-    }
-
-
 class TestSelectTopCauses:
     """Direct unit tests for select_top_causes grouping and drop-off."""
 
@@ -149,26 +136,34 @@ class TestSelectTopCauses:
 
     def test_below_min_confidence_findings_excluded(self) -> None:
         """Findings below ORDER_MIN_CONFIDENCE (0.25) must be filtered."""
-        findings = [_make_finding("wheel", 0.10)]
+        findings = [make_finding_payload(suspected_source="wheel", confidence=0.10)]
         assert select_top_causes(findings) == []
 
     def test_info_severity_excluded(self) -> None:
         """Info-severity findings must not appear in top causes."""
-        findings = [_make_finding("wheel", 0.90, severity="info")]
+        findings = [
+            make_finding_payload(suspected_source="wheel", confidence=0.90, severity="info"),
+        ]
         assert select_top_causes(findings) == []
 
     def test_ref_finding_excluded(self) -> None:
         """Findings whose ID starts with REF_ must be excluded."""
-        findings = [_make_finding("baseline", 0.95, finding_id="REF_BASELINE")]
+        findings = [
+            make_finding_payload(
+                suspected_source="baseline",
+                confidence=0.95,
+                finding_id="REF_BASELINE",
+            ),
+        ]
         assert select_top_causes(findings) == []
 
     def test_respects_max_causes_limit(self) -> None:
         """At most max_causes findings are returned."""
         findings = [
-            _make_finding("wheel", 0.90),
-            _make_finding("tire", 0.85),
-            _make_finding("brake", 0.80),
-            _make_finding("engine", 0.75),
+            make_finding_payload(suspected_source="wheel", confidence=0.90),
+            make_finding_payload(suspected_source="tire", confidence=0.85),
+            make_finding_payload(suspected_source="brake", confidence=0.80),
+            make_finding_payload(suspected_source="engine", confidence=0.75),
         ]
         result = select_top_causes(findings, max_causes=2)
         assert len(result) <= 2
@@ -179,9 +174,9 @@ class TestSelectTopCauses:
         select_top_causes maps suspected_source → 'source' in its output.
         """
         findings = [
-            _make_finding("wheel", 0.90),
-            _make_finding("wheel", 0.60),
-            _make_finding("tire", 0.80),
+            make_finding_payload(suspected_source="wheel", confidence=0.90),
+            make_finding_payload(suspected_source="wheel", confidence=0.60),
+            make_finding_payload(suspected_source="tire", confidence=0.80),
         ]
         result = select_top_causes(findings, max_causes=3)
         # Output uses 'source', not 'suspected_source'
@@ -191,7 +186,7 @@ class TestSelectTopCauses:
 
     def test_returns_list_of_dicts(self) -> None:
         """Return value must be a list of dicts."""
-        findings = [_make_finding("wheel", 0.80)]
+        findings = [make_finding_payload(suspected_source="wheel", confidence=0.80)]
         result = select_top_causes(findings)
         assert isinstance(result, list)
         assert all(isinstance(f, dict) for f in result)

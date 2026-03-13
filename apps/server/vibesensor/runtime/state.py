@@ -11,7 +11,7 @@ from ..history_db import HistoryDB
 from ..history_services.exports import HistoryExportService
 from ..history_services.reports import HistoryReportService
 from ..history_services.runs import HistoryRunService
-from ..metrics_log import MetricsLogger
+from ..metrics_log import RunRecorder
 from ..processing import SignalProcessor
 from ..registry import ClientRegistry
 from ..settings_store import SettingsStore
@@ -52,6 +52,6 @@ class RuntimeState:
     ws_hub: WebSocketHub
     ws_broadcast: WsBroadcastService
     # top-level
-    metrics_logger: MetricsLogger
+    metrics_logger: RunRecorder
     update_manager: UpdateManager
     esp_flash_manager: EspFlashManager

@@ -28,8 +28,8 @@ VibrationReading (dB)                  ▼
 
 | Object | Role | Key owned behavior |
 |--------|------|--------------------|
-| **Run** | Aggregate root | Lifecycle (start/stop), reading accumulation, duration |
-| **Finding** | Richest domain object | Classification, actionability, surfacing, confidence quantisation, deterministic ranking, phase-adjusted scoring |
+| **Run** | Aggregate root | Lifecycle (start/stop), status transitions |
+| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence quantisation, deterministic ranking, phase-adjusted scoring |
 | **Report** | Assembled output | Finding queries, primary-finding selection |
 
 ### Supporting domain objects
@@ -48,7 +48,7 @@ VibrationReading (dB)                  ▼
 ### Object containment and derivation
 
 - **Sensor** contains an optional **SensorPlacement**.
-- **Run** accumulates **VibrationReading** instances (produced from **Measurement** samples).
+- **Run** tracks lifecycle status (via **RunStatus**).  Reading accumulation is handled by the recording pipeline, not the domain object.
 - **Report** contains a tuple of **Finding** instances.
 - **Finding** is derived from analysis of **AnalysisWindow** data.
 - **AnalysisWindow** is derived from phase segmentation of a **Run**.
@@ -83,14 +83,15 @@ within `apps/server/vibesensor/domain/`:
 | File | Domain objects | Rationale |
 |------|---------------|-----------|
 | `measurement.py` | `AccelerationSample` (`Measurement`), `VibrationReading` | Tightly coupled raw-sample-to-reading pipeline |
-| `session.py` | `SessionStatus`, `DiagnosticSession` (`Run`) | Aggregate root with lifecycle management |
+| `session.py` | `SessionStatus`, `Run` (`DiagnosticSession` alias) | Aggregate root with lifecycle status |
 | `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | Independent speed acquisition concern |
 | `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
 | `car.py` | `Car` | Vehicle geometry and tire computation |
 | `analysis_window.py` | `AnalysisWindow` | Phase-aligned analysis chunk |
-| `finding.py` | `Finding` | Richest domain object (classification, ranking, scoring) |
+| `finding.py` | `FindingKind`, `Finding` | Richest domain object (kind, classification, ranking, scoring) |
 | `report.py` | `Report` | Assembled diagnostic output |
 | `history_record.py` | `HistoryRecord` | Persisted run with status queries |
+| `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `can_transition_run` | Run lifecycle state machine |
 
 All domain objects are re-exported from `vibesensor.domain` (the package
 `__init__.py`).  Consumers import from `vibesensor.domain`, not from
@@ -111,9 +112,8 @@ individual module files, unless they need a very specific internal symbol.
    (Sensor has SensorPlacement, Report has Findings) rather than class
    hierarchies.
 
-4. **Frozen dataclasses by default.**  Domain objects are immutable
-   (`@dataclass(frozen=True, slots=True)`), except `DiagnosticSession`
-   which manages mutable lifecycle state.
+4. **Frozen dataclasses by default.**  All domain objects are immutable
+   (`@dataclass(frozen=True, slots=True)`).
 
 5. **No framework coupling.**  Domain objects depend only on the Python
    standard library plus the shared `vibesensor.vibration_strength` and

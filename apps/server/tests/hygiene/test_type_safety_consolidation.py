@@ -15,7 +15,6 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.peak_classification import ClassificationResult, classify_peak_hz
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.settings_store import _coerce_language
 
@@ -80,34 +79,6 @@ class TestClientIdDedup:
         assert "normalize_sensor_id" in src
 
 
-# ── ClassificationResult TypedDict ────────────────────────────────────────────
-
-
-class TestClassificationResult:
-    """classify_peak_hz returns a proper ClassificationResult TypedDict."""
-
-    def test_classify_returns_typed_keys(self) -> None:
-        result = classify_peak_hz(
-            peak_hz=100.0,
-            speed_mps=16.67,
-            settings={
-                "tire_width_mm": 205,
-                "tire_aspect_pct": 55,
-                "rim_in": 16,
-                "final_drive_ratio": 3.7,
-                "current_gear_ratio": 1.0,
-            },
-        )
-        expected_keys = {"key", "matched_hz", "rel_err", "tol", "order_label", "suspected_source"}
-        assert set(result.keys()) == expected_keys
-
-    def test_classification_result_is_typed_dict(self) -> None:
-        assert hasattr(ClassificationResult, "__annotations__")
-        annotations = ClassificationResult.__annotations__
-        assert "key" in annotations
-        assert "suspected_source" in annotations
-
-
 # ── mypy enforcement expansion ────────────────────────────────────────────────
 
 
@@ -125,8 +96,6 @@ class TestMypyEnforcement:
         "module",
         [
             "vibesensor/order_bands.py",
-            "vibesensor/peak_classification.py",
-            "vibesensor/severity.py",
             "vibesensor/report_i18n.py",
             "vibesensor/analysis_settings.py",
             "vibesensor/metrics_log",

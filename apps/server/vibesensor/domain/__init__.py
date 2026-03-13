@@ -37,10 +37,11 @@ VibrationReading
 
 from .analysis_window import AnalysisWindow
 from .car import Car
-from .finding import Finding
+from .finding import Finding, FindingKind
 from .history_record import HistoryRecord
 from .measurement import AccelerationSample, Measurement, VibrationReading
 from .report import Report
+from .run_status import RUN_TRANSITIONS, RunStatus, can_transition_run
 from .sensor import Sensor, SensorPlacement
 from .session import DiagnosticSession, Run, SessionStatus
 from .speed_source import SpeedSource, SpeedSourceKind
@@ -50,14 +51,18 @@ __all__ = [
     "AnalysisWindow",
     "Car",
     "Finding",
+    "FindingKind",
     "HistoryRecord",
     "Measurement",
+    "RUN_TRANSITIONS",
     "Report",
     "Run",
+    "RunStatus",
     "Sensor",
     "SensorPlacement",
     "SpeedSource",
     "SpeedSourceKind",
+    "can_transition_run",
     # Existing names (backward compatibility)
     "AccelerationSample",
     "DiagnosticSession",

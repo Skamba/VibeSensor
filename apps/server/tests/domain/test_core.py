@@ -167,9 +167,6 @@ class TestRun:
     def test_initial_state_is_pending(self) -> None:
         session = Run()
         assert session.status is SessionStatus.PENDING
-        assert session.start_time is None
-        assert session.stop_time is None
-        assert session.reading_count == 0
 
     def test_session_id_is_unique(self) -> None:
         s1 = Run()
@@ -180,15 +177,12 @@ class TestRun:
         session = Run()
         session.start()
         assert session.status is SessionStatus.RUNNING
-        assert session.start_time is not None
 
     def test_stop_transitions_to_stopped(self) -> None:
         session = Run()
         session.start()
         session.stop()
         assert session.status is SessionStatus.STOPPED
-        assert session.stop_time is not None
-        assert session.stop_time >= session.start_time  # type: ignore[operator]
 
     def test_start_when_already_running_raises(self) -> None:
         session = Run()
@@ -215,67 +209,7 @@ class TestRun:
         with pytest.raises(RuntimeError, match="Cannot stop session"):
             session.stop()
 
-    def test_process_sample_requires_running(self) -> None:
-        session = Run()
-        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        with pytest.raises(RuntimeError, match="Cannot process samples"):
-            session.process_sample(sample, noise_floor=0.001)
-
-    def test_process_sample_records_reading(self) -> None:
-        session = Run()
-        session.start()
-        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        reading = session.process_sample(sample, noise_floor=0.001)
-        assert session.reading_count == 1
-        assert session.readings[0] is reading
-
-    def test_process_sample_after_stop_raises(self) -> None:
-        session = Run()
-        session.start()
-        session.stop()
-        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        with pytest.raises(RuntimeError, match="Cannot process samples"):
-            session.process_sample(sample, noise_floor=0.001)
-
-    def test_get_peak_vibration_empty(self) -> None:
-        session = Run()
-        session.start()
-        assert session.get_peak_vibration() is None
-
-    def test_get_peak_vibration_single(self) -> None:
-        session = Run()
-        session.start()
-        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        reading = session.process_sample(sample, noise_floor=0.001)
-        assert session.get_peak_vibration() is reading
-
-    def test_get_peak_vibration_multiple(self) -> None:
-        session = Run()
-        session.start()
-
-        low = Measurement(x=0.01, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        high = Measurement(x=0.5, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-
-        session.process_sample(low, noise_floor=0.001)
-        high_reading = session.process_sample(high, noise_floor=0.001)
-
-        peak = session.get_peak_vibration()
-        assert peak is not None
-        assert peak.intensity_db == high_reading.intensity_db
-
-    def test_readings_returns_copy(self) -> None:
-        """Modifying the returned list must not affect session state."""
-        session = Run()
-        session.start()
-        sample = Measurement(x=0.1, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
-        session.process_sample(sample, noise_floor=0.001)
-
-        readings_copy = session.readings
-        readings_copy.clear()
-        assert session.reading_count == 1
-
-    def test_vehicle_id_and_settings(self) -> None:
+    def test_analysis_settings(self) -> None:
         settings = {"tire_width_mm": 285.0, "final_drive_ratio": 3.08}
-        session = Run(vehicle_id="car-42", analysis_settings=settings)
-        assert session.vehicle_id == "car-42"
+        session = Run(analysis_settings=settings)
         assert session.analysis_settings == settings

@@ -1,7 +1,7 @@
 """Value objects for raw acceleration measurements and processed vibration readings.
 
-``AccelerationSample`` (primary name: ``Measurement``) is the raw multi-axis
-sample captured by an ESP32 sensor.
+``Measurement`` is the raw multi-axis sample captured by an ESP32 sensor.
+``AccelerationSample`` is kept as a backward-compatibility alias.
 
 ``VibrationReading`` is the dB-expressed result of processing a raw sample
 through the vibration-strength pipeline.
@@ -23,7 +23,7 @@ __all__ = [
 
 
 @dataclass(frozen=True, slots=True)
-class AccelerationSample:
+class Measurement:
     """A single multi-axis acceleration measurement from an ESP32 sensor.
 
     Fields mirror the per-sample data carried inside a ``DataMessage`` from
@@ -89,8 +89,8 @@ class AccelerationSample:
         )
 
 
-# Primary domain alias
-Measurement = AccelerationSample
+# Backward-compatibility alias
+AccelerationSample = Measurement
 
 
 @dataclass(frozen=True, slots=True)

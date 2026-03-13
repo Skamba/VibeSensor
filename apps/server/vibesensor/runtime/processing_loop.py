@@ -11,6 +11,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from ..exceptions import ProcessingError
@@ -43,6 +44,14 @@ class ProcessingLoopError(ProcessingError):
         self.cause = cause
 
 
+class ProcessingHealth(StrEnum):
+    """Health status of the processing loop."""
+
+    OK = "ok"
+    DEGRADED = "degraded"
+    FATAL = "fatal"
+
+
 @dataclass(slots=True)
 class ProcessingLoopState:
     """Mutable tracking state for the processing loop.
@@ -51,7 +60,7 @@ class ProcessingLoopState:
     narrowly-scoped unit.
     """
 
-    processing_state: str = "ok"
+    processing_state: ProcessingHealth = ProcessingHealth.OK
     processing_failure_count: int = 0
     processing_failure_categories: dict[str, int] = field(default_factory=dict)
     last_failure_category: str | None = None
@@ -202,12 +211,14 @@ class ProcessingLoop:
                     self.state.max_tick_duration_s = tick_dur
                 self.state.tick_count += 1
                 consecutive_failures = 0
-                self.state.processing_state = "ok"
+                self.state.processing_state = ProcessingHealth.OK
             except ProcessingLoopError as exc:
                 consecutive_failures += 1
                 self._record_failure(exc.category, exc.cause)
                 is_fatal = consecutive_failures >= MAX_CONSECUTIVE_FAILURES
-                self.state.processing_state = "fatal" if is_fatal else "degraded"
+                self.state.processing_state = (
+                    ProcessingHealth.FATAL if is_fatal else ProcessingHealth.DEGRADED
+                )
                 LOGGER.warning(
                     "Processing loop tick failed in %s; will retry.",
                     exc.category,
@@ -221,7 +232,7 @@ class ProcessingLoop:
                     )
                     await asyncio.sleep(FAILURE_BACKOFF_S)
                     consecutive_failures = 0
-                    self.state.processing_state = "degraded"
+                    self.state.processing_state = ProcessingHealth.DEGRADED
                     LOGGER.info(
                         "Processing loop resuming after fatal-backoff; "
                         "total failure count so far: %d",
@@ -231,7 +242,9 @@ class ProcessingLoop:
                 consecutive_failures += 1
                 self._record_failure("unexpected", exc)
                 is_fatal = consecutive_failures >= MAX_CONSECUTIVE_FAILURES
-                self.state.processing_state = "fatal" if is_fatal else "degraded"
+                self.state.processing_state = (
+                    ProcessingHealth.FATAL if is_fatal else ProcessingHealth.DEGRADED
+                )
                 LOGGER.warning(
                     "Processing loop tick failed unexpectedly; will retry.",
                     exc_info=True,
@@ -244,7 +257,7 @@ class ProcessingLoop:
                     )
                     await asyncio.sleep(FAILURE_BACKOFF_S)
                     consecutive_failures = 0
-                    self.state.processing_state = "degraded"
+                    self.state.processing_state = ProcessingHealth.DEGRADED
                     LOGGER.info(
                         "Processing loop resuming after fatal-backoff; "
                         "total failure count so far: %d",

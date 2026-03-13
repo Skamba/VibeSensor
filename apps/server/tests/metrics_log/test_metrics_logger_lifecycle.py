@@ -1,4 +1,4 @@
-"""Integration test for MetricsLogger full lifecycle with a real HistoryDB."""
+"""Integration test for RunRecorder full lifecycle with a real HistoryDB."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def test_start_append_stop_produces_complete_run_in_db(
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -35,7 +35,7 @@ def test_start_append_stop_produces_complete_run_in_db(
         return dict(fake_analysis)
 
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _fast_summary)
-    logger.stop_logging()
+    logger.stop_recording()
 
     def _status():
         return (history_db.get_run(run_id) or {}).get("status")

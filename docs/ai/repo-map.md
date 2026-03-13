@@ -35,14 +35,14 @@
   SensorPlacement), `measurement.py` (Measurement/AccelerationSample,
   VibrationReading), `session.py` (Run/DiagnosticSession, SessionStatus),
   `speed_source.py` (SpeedSource), `analysis_window.py` (AnalysisWindow),
-  `finding.py` (Finding), `report.py` (Report), `history_record.py`
-  (HistoryRecord).  All are plain dataclasses with no external coupling.
+  `finding.py` (FindingKind, Finding), `report.py` (Report), `history_record.py`
+  (HistoryRecord), `run_status.py` (RunStatus, RUN_TRANSITIONS).  All are plain dataclasses with no external coupling.
   Domain objects own classification, ranking, actionability, surfacing,
   and query logic; pipeline adapters (OrderAssessment) in
   `analysis/` delegate to them.  See `docs/domain-model.md` for the full
   relationship map and modeling rules.
-- `metrics_log/`: recording pipeline package; `logger.py` owns the `MetricsLogger` class which directly manages session state and persistence coordination (no private helper classes), enriching status/health payloads with sample counts and analysis results; `post_analysis.py` owns the background analysis queue with outcome tracking; `sample_builder.py` owns pure sample-building functions.
-- `history_db/`: SQLite-backed history and settings persistence (3 files: `__init__.py` with `HistoryDB` class consolidating connection management, settings KV, client names, and all run reads/writes; `_schema.py` with DDL, `RunStatus`, and `ANALYSIS_SCHEMA_VERSION`; `_samples.py` for v2 sample serialization). Incompatible older schemas raise a clear error directing the user to delete the DB file.
+- `metrics_log/`: recording pipeline package; `logger.py` owns the `RunRecorder` class (formerly `MetricsLogger`) which directly manages session state and persistence coordination (no private helper classes), enriching status/health payloads with sample counts and analysis results; `post_analysis.py` owns the background analysis queue with outcome tracking; `sample_builder.py` owns pure sample-building functions.
+- `history_db/`: SQLite-backed history and settings persistence (3 files: `__init__.py` with `HistoryDB` class consolidating connection management, settings KV, client names, and all run reads/writes; `_schema.py` with DDL and `ANALYSIS_SCHEMA_VERSION`; `_samples.py` for v2 sample serialization). `RunStatus` and state-transition logic live in `domain/run_status.py`. Incompatible older schemas raise a clear error directing the user to delete the DB file.
 - `history_services/`: focused history service layer (run query/delete, reports, exports, helpers) above `history_db/`.
 - `hotspot/`: Wi-Fi AP monitoring, text parsing, and self-heal logic.
 - `runlog.py`: JSONL run-file I/O and normalization.
@@ -55,7 +55,7 @@
 - `apps/server/tests/` is feature-based and mirrors backend ownership boundaries.
 - Cross-cutting coverage lives in `integration/` and `hygiene/`.
 - Regression tests live in the feature directory they primarily test, or in `integration/` for cross-cutting regressions.
-- Shared test support lives at the test root (`conftest.py`, `_paths.py`, focused helper modules, and the `test_support/` package).
+- Shared test support lives at the test root (`conftest.py`, `_paths.py`, focused helper modules, and the `test_support/` package including `findings.py` for canonical finding-payload factories).
 - Full map: `docs/testing.md`.
 
 ## Source-of-truth rule
