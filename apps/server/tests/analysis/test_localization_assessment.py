@@ -2,28 +2,8 @@
 
 from __future__ import annotations
 
-from vibesensor.analysis._types import FindingPayload
+from tests.test_support.findings import make_finding_payload
 from vibesensor.analysis.summary_builder import LocalizationAssessment
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_finding(**overrides: object) -> FindingPayload:
-    """Build a minimal FindingPayload dict with location-relevant overrides."""
-    base: FindingPayload = {
-        "finding_id": "F001",
-        "suspected_source": "wheel/tire",
-        "evidence_summary": "test",
-        "frequency_hz_or_order": "1x wheel",
-        "amplitude_metric": {"name": "rms", "value": 0.5, "units": "g", "definition": "rms"},
-        "confidence": 0.75,
-        "quick_checks": [],
-    }
-    base.update(overrides)  # type: ignore[typeddict-item]
-    return base
-
 
 # ---------------------------------------------------------------------------
 # Classification
@@ -32,32 +12,32 @@ def _make_finding(**overrides: object) -> FindingPayload:
 
 class TestClassification:
     def test_localized_with_known_location(self) -> None:
-        finding = _make_finding(strongest_location="front_left")
+        finding = make_finding_payload(strongest_location="front_left")
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.is_localized is True
 
     def test_not_localized_when_unknown(self) -> None:
-        finding = _make_finding(strongest_location="unknown")
+        finding = make_finding_payload(strongest_location="unknown")
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.is_localized is False
 
     def test_not_localized_when_empty(self) -> None:
-        finding = _make_finding(strongest_location="")
+        finding = make_finding_payload(strongest_location="")
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.is_localized is False
 
     def test_diffuse_excitation(self) -> None:
-        finding = _make_finding(diffuse_excitation=True)
+        finding = make_finding_payload(diffuse_excitation=True)
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.is_diffuse is True
 
     def test_not_diffuse_by_default(self) -> None:
-        finding = _make_finding()
+        finding = make_finding_payload()
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.is_diffuse is False
 
     def test_clear_separation_when_not_weak(self) -> None:
-        finding = _make_finding(
+        finding = make_finding_payload(
             weak_spatial_separation=False,
             dominance_ratio=3.0,
         )
@@ -65,7 +45,7 @@ class TestClassification:
         assert loc.has_clear_separation is True
 
     def test_no_clear_separation_when_weak(self) -> None:
-        finding = _make_finding(weak_spatial_separation=True)
+        finding = make_finding_payload(weak_spatial_separation=True)
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.has_clear_separation is False
 
@@ -77,17 +57,17 @@ class TestClassification:
 
 class TestLocationAccess:
     def test_primary_location(self) -> None:
-        finding = _make_finding(strongest_location="rear_right")
+        finding = make_finding_payload(strongest_location="rear_right")
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.primary_location == "rear_right"
 
     def test_primary_defaults_to_unknown(self) -> None:
-        finding = _make_finding()
+        finding = make_finding_payload()
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.primary_location == "unknown"
 
     def test_supporting_locations_from_hotspot(self) -> None:
-        finding = _make_finding(
+        finding = make_finding_payload(
             strongest_location="front_left",
             location_hotspot={
                 "ambiguous_locations": ["front_left", "front_right"],
@@ -102,7 +82,7 @@ class TestLocationAccess:
         assert "front_left" not in supporting
 
     def test_supporting_locations_empty_when_no_hotspot(self) -> None:
-        finding = _make_finding(strongest_location="front_left")
+        finding = make_finding_payload(strongest_location="front_left")
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.supporting_locations() == []
 
@@ -114,28 +94,28 @@ class TestLocationAccess:
 
 class TestConfidenceBand:
     def test_high_confidence(self) -> None:
-        finding = _make_finding(
+        finding = make_finding_payload(
             location_hotspot={"localization_confidence": 0.85},
         )
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.confidence_band() == "high"
 
     def test_medium_confidence(self) -> None:
-        finding = _make_finding(
+        finding = make_finding_payload(
             location_hotspot={"localization_confidence": 0.55},
         )
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.confidence_band() == "medium"
 
     def test_low_confidence(self) -> None:
-        finding = _make_finding(
+        finding = make_finding_payload(
             location_hotspot={"localization_confidence": 0.2},
         )
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.confidence_band() == "low"
 
     def test_no_hotspot_defaults_to_low(self) -> None:
-        finding = _make_finding()
+        finding = make_finding_payload()
         loc = LocalizationAssessment.from_finding(finding)
         assert loc.confidence_band() == "low"
 
@@ -147,7 +127,7 @@ class TestConfidenceBand:
 
 class TestDisplayLocation:
     def test_simple_location(self) -> None:
-        finding = _make_finding(
+        finding = make_finding_payload(
             strongest_location="front_left",
             dominance_ratio=3.0,
         )
@@ -155,7 +135,7 @@ class TestDisplayLocation:
         assert loc.display_location() == "front_left"
 
     def test_ambiguous_location_shows_alternatives(self) -> None:
-        finding = _make_finding(
+        finding = make_finding_payload(
             strongest_location="front_left",
             dominance_ratio=1.05,
             weak_spatial_separation=True,
@@ -179,11 +159,11 @@ class TestDisplayLocation:
 
 class TestEnrichFromSecondFinding:
     def test_close_confidence_promotes_ambiguity(self) -> None:
-        top_finding = _make_finding(
+        top_finding = make_finding_payload(
             strongest_location="front_left",
             confidence=0.80,
         )
-        second_finding = _make_finding(
+        second_finding = make_finding_payload(
             strongest_location="rear_right",
             confidence=0.60,
         )
@@ -194,12 +174,12 @@ class TestEnrichFromSecondFinding:
         assert "rear_right" in loc.supporting_locations()
 
     def test_distant_confidence_preserves_state(self) -> None:
-        top_finding = _make_finding(
+        top_finding = make_finding_payload(
             strongest_location="front_left",
             confidence=0.90,
             dominance_ratio=3.0,
         )
-        second_finding = _make_finding(
+        second_finding = make_finding_payload(
             strongest_location="rear_right",
             confidence=0.30,
         )
@@ -209,11 +189,11 @@ class TestEnrichFromSecondFinding:
         assert "rear_right" not in loc.supporting_locations()
 
     def test_same_location_no_promotion(self) -> None:
-        top_finding = _make_finding(
+        top_finding = make_finding_payload(
             strongest_location="front_left",
             confidence=0.80,
         )
-        second_finding = _make_finding(
+        second_finding = make_finding_payload(
             strongest_location="front_left",
             confidence=0.75,
         )

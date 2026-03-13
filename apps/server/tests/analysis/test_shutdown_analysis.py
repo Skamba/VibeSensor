@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
+from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
 from vibesensor.udp_control_tx import UDPControlPlane
 
 # ---------------------------------------------------------------------------
@@ -47,9 +47,9 @@ class _FakeAnalysisSettings:
         return {}
 
 
-def _make_logger(tmp_path: Path, history_db=None) -> MetricsLogger:
-    return MetricsLogger(
-        MetricsLoggerConfig(
+def _make_logger(tmp_path: Path, history_db=None) -> RunRecorder:
+    return RunRecorder(
+        RunRecorderConfig(
             enabled=False,
             metrics_log_hz=2,
             sensor_model="ADXL345",
@@ -160,7 +160,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
         events.append("db_close")
         original_close(self)
 
-    original_wait = MetricsLogger.wait_for_post_analysis
+    original_wait = RunRecorder.wait_for_post_analysis
 
     def _tracking_wait(self, timeout_s=30.0):
         result = original_wait(self, timeout_s)
@@ -170,7 +170,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
     monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp_receiver)
     monkeypatch.setattr(UDPControlPlane, "start", _fake_start)
     monkeypatch.setattr(HistoryDB, "close", _tracking_close)
-    monkeypatch.setattr(MetricsLogger, "wait_for_post_analysis", _tracking_wait)
+    monkeypatch.setattr(RunRecorder, "wait_for_post_analysis", _tracking_wait)
 
     app = app_module.create_app(config_path=cfg_path)
     async with app.router.lifespan_context(app):

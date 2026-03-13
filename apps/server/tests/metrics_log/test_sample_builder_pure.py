@@ -2,7 +2,7 @@
 
 All helpers tested here are stateless, so no async machinery or database
 fixtures are required.  This file focuses on edge cases not covered by the
-broader MetricsLogger integration tests.
+broader RunRecorder integration tests.
 """
 
 from __future__ import annotations

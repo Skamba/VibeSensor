@@ -49,7 +49,7 @@ apps/server/tests/
 | `vibesensor/processing/*` | `apps/server/tests/processing/` |
 | `vibesensor/ws_hub.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
 | `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
-| `vibesensor/order_bands.py`, `peak_classification.py`, `severity.py` | `apps/server/tests/diagnostics/` |
+| `vibesensor/order_bands.py` | `apps/server/tests/diagnostics/` |
 | `vibesensor/backend_types.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |
 | `vibesensor/gps_speed.py` | `apps/server/tests/gps/` |
 | `vibesensor/protocol.py`, `udp_*.py` | `apps/server/tests/protocol/` |
@@ -66,7 +66,7 @@ Use cross-cutting directories when a test is intentionally broader than one pack
 Regression tests live alongside the feature they primarily test. Cross-cutting
 regressions that span multiple subsystems go in `integration/`.
 
-Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `report_helpers.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
+Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `findings.py` (canonical finding-payload factories), `report_helpers.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
 
 ## Contract bridge tests
 

@@ -7,9 +7,10 @@ from typing import TYPE_CHECKING, Any
 from fastapi import APIRouter
 
 from ..api_models import HealthResponse
+from ..runtime.processing_loop import ProcessingHealth
 
 if TYPE_CHECKING:
-    from ..metrics_log import MetricsLogger
+    from ..metrics_log import RunRecorder
     from ..processing import SignalProcessor
     from ..registry import ClientRegistry
     from ..runtime.health_state import RuntimeHealthState
@@ -21,7 +22,7 @@ def _build_health_snapshot(
     health_state: RuntimeHealthState,
     processor: SignalProcessor,
     registry: ClientRegistry,
-    metrics_logger: MetricsLogger,
+    metrics_logger: RunRecorder,
 ) -> dict[str, Any]:
     """Build the health snapshot dict.  Pure business logic, no HTTP concerns."""
     failures = loop_state.processing_failure_count
@@ -43,7 +44,7 @@ def _build_health_snapshot(
         has_error = True
     if health_state.startup_warnings:
         degradation_reasons.append("startup_warnings")
-    if loop_state.processing_state != "ok":
+    if loop_state.processing_state != ProcessingHealth.OK:
         degradation_reasons.append(f"processing_state:{loop_state.processing_state}")
         has_error = True
     if failures > 0:
@@ -105,7 +106,7 @@ def create_health_routes(
     health_state: RuntimeHealthState,
     processor: SignalProcessor,
     registry: ClientRegistry,
-    metrics_logger: MetricsLogger,
+    metrics_logger: RunRecorder,
 ) -> APIRouter:
     """Create and return the health-check API routes."""
     router = APIRouter()

@@ -181,8 +181,8 @@ class FakeState:
                 )(),
                 "last_write_duration_s": 0.0,
                 "max_write_duration_s": 0.0,
-                "start_logging": lambda self: {},
-                "stop_logging": lambda self: {},
+                "start_recording": lambda self: {},
+                "stop_recording": lambda self: {},
             },
         )()
         self.registry = type(

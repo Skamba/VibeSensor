@@ -9,10 +9,11 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from ..domain import Finding as DomainFinding
 from ._types import CandidateFinding, FindingPayload, TopCause, is_finding, is_top_cause
 
-_UNKNOWN_LOCATION_VALUES = {"", "unknown", "not available", "n/a"}
-_PLACEHOLDER_SOURCES = {"unknown_resonance", "unknown"}
+_UNKNOWN_LOCATION_VALUES = DomainFinding._UNKNOWN_LOCATIONS
+_PLACEHOLDER_SOURCES = DomainFinding._PLACEHOLDER_SOURCES
 
 
 def non_reference_findings(items: Sequence[object]) -> list[FindingPayload]:

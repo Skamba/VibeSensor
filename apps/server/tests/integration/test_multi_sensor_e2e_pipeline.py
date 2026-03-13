@@ -17,7 +17,7 @@ from vibesensor.analysis_settings import (
 )
 from vibesensor.gps_speed import GPSSpeedMonitor
 from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
+from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
 from vibesensor.processing import SignalProcessor
 from vibesensor.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.registry import ClientRegistry
@@ -107,8 +107,8 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     )
     gps_monitor = GPSSpeedMonitor(gps_enabled=False)
     settings_store = AnalysisSettingsStore()
-    logger = MetricsLogger(
-        MetricsLoggerConfig(
+    logger = RunRecorder(
+        RunRecorderConfig(
             enabled=False,
             metrics_log_hz=20,
             sensor_model="ADXL345",
@@ -136,7 +136,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     )
     assert tire_circ is not None
 
-    logger.start_logging()
+    logger.start_recording()
     run_id = str(logger._run_id)
     start_utc = str(logger._sess_run_start_utc)
     start_mono = float(logger._sess_run_start_mono_s)
@@ -168,7 +168,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
             start_mono,
         )
 
-    logger.stop_logging()
+    logger.stop_recording()
     assert logger.wait_for_post_analysis(timeout_s=20.0)
 
     run = history_db.get_run(run_id)

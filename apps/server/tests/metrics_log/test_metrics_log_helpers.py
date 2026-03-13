@@ -20,7 +20,7 @@ class _NullDB:
         return {"analyzing_run_count": 0, "analyzing_oldest_age_s": None}
 
 
-# -- MetricsLogger._safe_metric ------------------------------------------------
+# -- RunRecorder._safe_metric ------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -132,8 +132,8 @@ def test_speed_source_reports(
 def test_stop_without_samples_does_not_persist_history_run(make_logger, fake_history_db) -> None:
     logger = make_logger(history_db=fake_history_db)
 
-    logger.start_logging()
-    logger.stop_logging()
+    logger.start_recording()
+    logger.stop_recording()
 
     assert fake_history_db.create_calls == []
     assert fake_history_db.append_calls == []
@@ -146,7 +146,7 @@ def test_append_records_ignores_stale_recent_metrics_without_new_frames(
 ) -> None:
     logger = make_logger(history_db=fake_history_db)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -174,7 +174,7 @@ def test_append_records_ignores_stale_recent_metrics_without_new_frames(
 def test_history_run_created_on_first_sample_append(make_logger, fake_history_db) -> None:
     logger = make_logger(history_db=fake_history_db)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -192,7 +192,7 @@ def test_history_run_created_on_first_sample_append(make_logger, fake_history_db
     assert fake_history_db.append_calls == [(run_id, 1)]
 
 
-def test_stop_logging_flushes_first_pending_sample_batch(
+def test_stop_recording_flushes_first_pending_sample_batch(
     make_logger,
     fake_history_db,
     monkeypatch: pytest.MonkeyPatch,
@@ -200,12 +200,12 @@ def test_stop_logging_flushes_first_pending_sample_batch(
     logger = make_logger(history_db=fake_history_db)
     monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
 
-    logger.start_logging()
+    logger.start_recording()
     active = logger.registry.get("active")
     assert active is not None
     active.frames_total = 1
 
-    logger.stop_logging()
+    logger.stop_recording()
 
     run_id, start_time_utc = fake_history_db.create_calls[-1]
     assert fake_history_db.create_calls == [(run_id, start_time_utc)]
@@ -213,7 +213,7 @@ def test_stop_logging_flushes_first_pending_sample_batch(
     assert fake_history_db.finalize_calls == [run_id]
 
 
-def test_start_logging_rollover_flushes_first_pending_sample_batch(
+def test_start_recording_rollover_flushes_first_pending_sample_batch(
     make_logger,
     fake_history_db,
     monkeypatch: pytest.MonkeyPatch,
@@ -222,13 +222,13 @@ def test_start_logging_rollover_flushes_first_pending_sample_batch(
     logger = make_logger(history_db=fake_history_db)
     monkeypatch.setattr(logger, "schedule_post_analysis", scheduled.append)
 
-    initial_status = logger.start_logging()
+    initial_status = logger.start_recording()
     initial_run_id = str(initial_status["run_id"])
     active = logger.registry.get("active")
     assert active is not None
     active.frames_total = 1
 
-    next_status = logger.start_logging()
+    next_status = logger.start_recording()
 
     created_run_id, start_time_utc = fake_history_db.create_calls[-1]
     assert created_run_id == initial_run_id
@@ -246,7 +246,7 @@ def test_finalize_refreshes_run_metadata_from_latest_settings(
 ) -> None:
     logger = make_logger(analysis_settings=mutable_fake_settings, history_db=fake_history_db)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -255,7 +255,7 @@ def test_finalize_refreshes_run_metadata_from_latest_settings(
     logger._append_records(run_id, start_time_utc, start_mono)
 
     mutable_fake_settings.values["tire_width_mm"] = 315.0
-    logger.stop_logging()
+    logger.stop_recording()
 
     assert fake_history_db.updated_metadata
     updated_run_id, metadata = fake_history_db.updated_metadata[-1]
@@ -269,7 +269,7 @@ def test_append_records_surfaces_create_run_failure_in_status(
 ) -> None:
     logger = make_logger(history_db=failing_create_run_db)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -290,7 +290,7 @@ def test_append_records_clears_write_error_after_successful_retry(
 ) -> None:
     logger = make_logger(history_db=failing_append_once_db)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -313,7 +313,7 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(
 ) -> None:
     logger = make_logger(registry=no_active_registry)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -337,7 +337,7 @@ def test_append_records_does_not_timeout_on_brief_gap(
 ) -> None:
     logger = make_logger(registry=no_active_registry)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -355,7 +355,7 @@ def test_append_records_does_not_timeout_on_brief_gap(
     assert timed_out is False
 
 
-def test_stop_logging_does_not_block_on_post_analysis(
+def test_stop_recording_does_not_block_on_post_analysis(
     make_logger,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -363,13 +363,13 @@ def test_stop_logging_does_not_block_on_post_analysis(
     """Stopping capture should be fast even when analysis is slow.
 
     Post-analysis belongs in background processing because users expect stop controls to respond
-    promptly. This test simulates a slow summarizer and requires stop_logging to return quickly
+    promptly. This test simulates a slow summarizer and requires stop_recording to return quickly
     while analysis completes asynchronously afterward.
     """
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -387,11 +387,11 @@ def test_stop_logging_does_not_block_on_post_analysis(
 
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _slow_summary)
     started = time.monotonic()
-    logger.stop_logging()
+    logger.stop_recording()
     elapsed = time.monotonic() - started
 
-    # stop_logging() must return quickly; summary runs in a worker thread
-    assert elapsed < 0.45, f"stop_logging() blocked for {elapsed:.2f}s (expected < 0.45s)"
+    # stop_recording() must return quickly; summary runs in a worker thread
+    assert elapsed < 0.45, f"stop_recording() blocked for {elapsed:.2f}s (expected < 0.45s)"
     assert summary_started.wait(timeout=2.0)
     allow_summary_finish.set()
 
@@ -409,7 +409,7 @@ def test_post_analysis_failure_sets_persistent_error_status(
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -421,7 +421,7 @@ def test_post_analysis_failure_sets_persistent_error_status(
         raise RuntimeError("analysis exploded")
 
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _failing_summary)
-    logger.stop_logging()
+    logger.stop_recording()
 
     def _status():
         return (history_db.get_run(run_id) or {}).get("status")
@@ -469,12 +469,12 @@ def test_post_analysis_burst_uses_single_daemon_worker(
     assert worker is None
 
 
-def test_shutdown_blocks_new_start_logging_until_wait_completes(
+def test_shutdown_blocks_new_start_recording_until_wait_completes(
     make_logger,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logger = make_logger(history_db=_NullDB())
-    logger.start_logging()
+    logger.start_recording()
     initial_run_id = logger._run_id
     assert initial_run_id is not None
 
@@ -482,7 +482,7 @@ def test_shutdown_blocks_new_start_logging_until_wait_completes(
 
     def _wait(timeout_s: float = 30.0) -> bool:
         assert timeout_s == 30.0
-        start_result = logger.start_logging()
+        start_result = logger.start_recording()
         assert start_result["enabled"] is False
         assert start_result["run_id"] is None
         # Session was stopped by shutdown
@@ -494,7 +494,7 @@ def test_shutdown_blocks_new_start_logging_until_wait_completes(
 
     assert logger.shutdown() is True
     assert allow_wait.is_set()
-    restarted = logger.start_logging()
+    restarted = logger.start_recording()
     assert restarted["enabled"] is True
     assert restarted["run_id"] is not None
     assert restarted["run_id"] != initial_run_id
@@ -505,7 +505,7 @@ def test_shutdown_report_exposes_timeout_state(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logger = make_logger()
-    logger.start_logging()
+    logger.start_recording()
 
     monkeypatch.setattr(logger._post_analysis, "wait", lambda timeout_s=30.0: False)
     monkeypatch.setattr(
@@ -539,7 +539,7 @@ def test_post_analysis_uses_run_language_from_metadata(
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db, language_provider=lambda: "nl")
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -551,7 +551,7 @@ def test_post_analysis_uses_run_language_from_metadata(
         return {"lang": lang, "row_count": len(samples)}
 
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _summary)
-    logger.stop_logging()
+    logger.stop_recording()
 
     def _status():
         return (history_db.get_run(run_id) or {}).get("status")
@@ -598,14 +598,14 @@ def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db, persist_history_db=True)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
     logger._append_records(run_id, start_time_utc, start_mono)
-    logger.stop_logging()
+    logger.stop_recording()
 
     assert history_db.get_run(run_id) is not None
     assert history_db.get_run_samples(run_id)
@@ -623,7 +623,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db)
 
-    logger.start_logging()
+    logger.start_recording()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
@@ -636,7 +636,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
         return {"row_count": len(samples), "run_suitability": []}
 
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _summary)
-    logger.stop_logging()
+    logger.stop_recording()
 
     def _status():
         return (history_db.get_run(run_id) or {}).get("status")
@@ -659,7 +659,7 @@ async def test_run_offloads_append_records_with_to_thread(
 ) -> None:
     logger = make_logger(history_db=fake_history_db)
 
-    logger.start_logging()
+    logger.start_recording()
     captured: dict[str, object] = {}
 
     async def _fake_to_thread(func, *args, **kwargs):  # type: ignore[no-untyped-def]

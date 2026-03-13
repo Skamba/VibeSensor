@@ -7,7 +7,7 @@ Tests covering:
 1. Auto-stop generation guard (prevents killing a freshly started session)
 2. Atomic delete_run_if_safe (TOCTOU fix)
 3. finalize_run with metadata atomicity
-4. stop_logging / start_logging _finalize_run_locked return-value gating
+4. stop_recording / start_recording _finalize_run_locked return-value gating
 """
 
 
@@ -19,13 +19,13 @@ import pytest
 from vibesensor.analysis_settings import AnalysisSettingsStore
 from vibesensor.gps_speed import GPSSpeedMonitor
 from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
+from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
 from vibesensor.processing import SignalProcessor
 from vibesensor.registry import ClientRegistry
 
 
 def _make_logger(tmp_path: Path, **overrides):
-    """Create a minimal MetricsLogger + HistoryDB for concurrency tests."""
+    """Create a minimal RunRecorder + HistoryDB for concurrency tests."""
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db)
     # Separate config fields from collaborator overrides.
@@ -42,7 +42,7 @@ def _make_logger(tmp_path: Path, **overrides):
         },
     )
     config_overrides = {k: overrides.pop(k) for k in list(overrides) if k in _CONFIG_FIELDS}
-    config = MetricsLoggerConfig(
+    config = RunRecorderConfig(
         enabled=config_overrides.get("enabled", False),
         metrics_log_hz=config_overrides.get("metrics_log_hz", 10),
         sensor_model=config_overrides.get("sensor_model", "ADXL345"),
@@ -64,7 +64,7 @@ def _make_logger(tmp_path: Path, **overrides):
         "history_db": db,
     }
     collab_defaults.update(overrides)
-    return MetricsLogger(config, **collab_defaults), db
+    return RunRecorder(config, **collab_defaults), db
 
 
 # ---------------------------------------------------------------------------
@@ -73,24 +73,24 @@ def _make_logger(tmp_path: Path, **overrides):
 
 
 class TestAutoStopGenerationGuard:
-    """stop_logging(_only_if_run_id=X) must be a no-op when session has
+    """stop_recording(_only_if_run_id=X) must be a no-op when session has
     already advanced past run X.
     """
 
     def test_stale_run_id_does_not_stop_new_session(self, tmp_path: Path) -> None:
         logger, db = _make_logger(tmp_path)
-        logger.start_logging()
+        logger.start_recording()
         old_run_id = logger._run_id
         assert old_run_id is not None
 
         # Simulate: user starts a brand-new session
-        logger.start_logging()
+        logger.start_recording()
         new_run_id = logger._run_id
         assert new_run_id is not None
         assert new_run_id != old_run_id
 
         # Auto-stop fires for the *old* run_id
-        logger.stop_logging(_only_if_run_id=old_run_id)
+        logger.stop_recording(_only_if_run_id=old_run_id)
 
         # New session must still be alive
         assert logger.enabled is True
@@ -99,11 +99,11 @@ class TestAutoStopGenerationGuard:
 
     def test_matching_run_id_does_stop(self, tmp_path: Path) -> None:
         logger, db = _make_logger(tmp_path)
-        logger.start_logging()
+        logger.start_recording()
         run_id = logger._run_id
         assert run_id is not None
 
-        logger.stop_logging(_only_if_run_id=run_id)
+        logger.stop_recording(_only_if_run_id=run_id)
         assert logger.enabled is False
         assert logger._run_id is None
         db.close()
@@ -199,7 +199,7 @@ class TestFinalizeRunWithMetadata:
 
 
 class TestFinalizeReturnGatesAnalysis:
-    """When _finalize_run_locked fails, stop_logging must NOT schedule analysis."""
+    """When _finalize_run_locked fails, stop_recording must NOT schedule analysis."""
 
     def test_analysis_not_scheduled_when_finalize_fails(
         self,
@@ -212,7 +212,7 @@ class TestFinalizeReturnGatesAnalysis:
             language_provider=lambda: "en",
         )
 
-        logger.start_logging()
+        logger.start_recording()
         run_id = logger._run_id
         assert run_id is not None
 
@@ -235,7 +235,7 @@ class TestFinalizeReturnGatesAnalysis:
             lambda rid: schedule_calls.append(rid),
         )
 
-        logger.stop_logging()
+        logger.stop_recording()
         # Analysis must NOT have been scheduled because finalize failed
         assert schedule_calls == [], (
             f"Expected no analysis scheduling after finalize failure, got: {schedule_calls}"

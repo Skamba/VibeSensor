@@ -10,11 +10,26 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
-from typing import ClassVar
+from enum import StrEnum
+from typing import ClassVar, Final
 
 __all__ = [
     "Finding",
+    "FindingKind",
 ]
+
+
+class FindingKind(StrEnum):
+    """Classification category of a diagnostic finding."""
+
+    REFERENCE = "reference"
+    INFORMATIONAL = "informational"
+    DIAGNOSTIC = "diagnostic"
+
+
+_KIND_AUTO: Final = FindingKind.DIAGNOSTIC
+"""Sentinel: when ``kind`` is left at this default during direct construction,
+``__post_init__`` derives the actual kind from ``finding_id`` / ``severity``."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +70,7 @@ class Finding:
     strongest_location: str | None = None
     strongest_speed_band: str | None = None
     peak_classification: str = ""
+    kind: FindingKind = FindingKind.DIAGNOSTIC
 
     # Evidence and ranking fields ------------------------------------------
     ranking_score: float = 0.0
@@ -62,6 +78,21 @@ class Finding:
     diffuse_excitation: bool = False
     weak_spatial_separation: bool = False
     phase_evidence: dict[str, float] | None = field(default=None, hash=False)
+
+    def __post_init__(self) -> None:
+        """Auto-derive ``kind`` when constructed directly without explicit kind."""
+        if self.kind is _KIND_AUTO:
+            derived = self._kind_from_fields(self.finding_id, self.severity)
+            if derived is not _KIND_AUTO:
+                object.__setattr__(self, "kind", derived)
+
+    @staticmethod
+    def _kind_from_fields(finding_id: str, severity: str) -> FindingKind:
+        if finding_id.strip().upper().startswith("REF_"):
+            return FindingKind.REFERENCE
+        if severity.strip().lower() == "info":
+            return FindingKind.INFORMATIONAL
+        return FindingKind.DIAGNOSTIC
 
     # Domain constants -----------------------------------------------------
 
@@ -89,10 +120,18 @@ class Finding:
 
         Extracts the subset of fields that the domain object cares about,
         ignoring serialization-only keys present in the full payload.
+
+        Reads ``suspected_source`` with fallback to ``source`` for backward
+        compatibility with ``TopCause`` dicts that use the ``source`` key.
         """
 
-        def _str(key: str) -> str:
+        def _str(key: str, *fallback_keys: str) -> str:
             v = payload.get(key)
+            if v is None:
+                for fk in fallback_keys:
+                    v = payload.get(fk)
+                    if v is not None:
+                        break
             return str(v) if v is not None else ""
 
         conf_raw = payload.get("confidence")
@@ -114,8 +153,8 @@ class Finding:
         loc = payload.get("strongest_location")
         band = payload.get("strongest_speed_band")
 
-        # Evidence / ranking fields
-        ranking_raw = payload.get("_ranking_score")
+        # Evidence / ranking fields (read both new and legacy key names)
+        ranking_raw = payload.get("ranking_score") or payload.get("_ranking_score")
         ranking_score = 0.0
         if ranking_raw is not None:
             try:
@@ -136,22 +175,53 @@ class Finding:
         if isinstance(phase_ev, dict):
             phase_evidence = phase_ev
 
+        finding_id = _str("finding_id")
+        severity = _str("severity")
+
+        # Derive kind from explicit finding_type or infer from fields
+        kind = cls._derive_kind(payload, finding_id=finding_id, severity=severity)
+
         return cls(
-            finding_id=_str("finding_id"),
-            suspected_source=_str("suspected_source"),
+            finding_id=finding_id,
+            suspected_source=_str("suspected_source", "source"),
             confidence=confidence,
             frequency_hz=frequency_hz,
             order=_str("order"),
-            severity=_str("severity"),
+            severity=severity,
             strongest_location=str(loc) if loc is not None else None,
             strongest_speed_band=str(band) if band is not None else None,
             peak_classification=_str("peak_classification"),
+            kind=kind,
             ranking_score=ranking_score,
             dominance_ratio=dominance_ratio,
             diffuse_excitation=bool(payload.get("diffuse_excitation", False)),
             weak_spatial_separation=bool(payload.get("weak_spatial_separation", False)),
             phase_evidence=phase_evidence,
         )
+
+    @staticmethod
+    def _derive_kind(
+        payload: Mapping[str, object],
+        *,
+        finding_id: str,
+        severity: str,
+    ) -> FindingKind:
+        """Derive FindingKind from explicit ``finding_type`` or infer from fields."""
+        explicit = payload.get("finding_type")
+        if isinstance(explicit, str):
+            normed = explicit.strip().lower()
+            if normed == "reference":
+                return FindingKind.REFERENCE
+            if normed in ("informational", "info"):
+                return FindingKind.INFORMATIONAL
+            if normed == "diagnostic":
+                return FindingKind.DIAGNOSTIC
+        # Fall back to existing string-pattern inference
+        if finding_id.strip().upper().startswith("REF_"):
+            return FindingKind.REFERENCE
+        if severity.strip().lower() == "info":
+            return FindingKind.INFORMATIONAL
+        return FindingKind.DIAGNOSTIC
 
     # -- identity mutation (frozen ⇒ returns new instance) -----------------
 
@@ -164,15 +234,15 @@ class Finding:
     @property
     def is_reference(self) -> bool:
         """Whether this is a reference-data finding (``REF_*``)."""
-        return self.finding_id.strip().upper().startswith("REF_")
+        return self.kind is FindingKind.REFERENCE
 
     @property
     def is_informational(self) -> bool:
-        return self.severity.strip().lower() == "info"
+        return self.kind is FindingKind.INFORMATIONAL
 
     @property
     def is_diagnostic(self) -> bool:
-        return not self.is_reference and not self.is_informational
+        return self.kind is FindingKind.DIAGNOSTIC
 
     @property
     def confidence_pct(self) -> int | None:

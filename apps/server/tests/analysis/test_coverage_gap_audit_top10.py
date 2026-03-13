@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from tests.test_support.findings import make_finding_payload
 from vibesensor.analysis import summarize_run_data
 from vibesensor.analysis.order_analysis import (
     compute_order_confidence as _compute_order_confidence,
@@ -31,7 +32,7 @@ from vibesensor.analysis.summary_builder import (
 from vibesensor.analysis.top_cause_selection import (
     phase_adjusted_ranking_score as _phase_ranking_score,
 )
-from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
+from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
 from vibesensor.metrics_log.sample_builder import extract_strength_data, resolve_speed_context
 
 # ---------------------------------------------------------------------------
@@ -73,8 +74,8 @@ def _suitability_checks(**overrides: Any) -> list[dict[str, Any]]:
     return _build_run_suitability_checks(**kw)
 
 
-def _make_metrics_logger() -> tuple[MetricsLogger, MagicMock]:
-    """Build a minimal MetricsLogger with mocked dependencies."""
+def _make_metrics_logger() -> tuple[RunRecorder, MagicMock]:
+    """Build a minimal RunRecorder with mocked dependencies."""
     gps_mock = MagicMock()
     gps_mock.speed_mps = None
     gps_mock.effective_speed_mps = None
@@ -94,8 +95,8 @@ def _make_metrics_logger() -> tuple[MetricsLogger, MagicMock]:
         "tire_deflection_factor": None,
     }
 
-    logger = MetricsLogger(
-        MetricsLoggerConfig(
+    logger = RunRecorder(
+        RunRecorderConfig(
             enabled=False,
             metrics_log_hz=1,
             sensor_model="test",
@@ -283,18 +284,10 @@ class TestDetectDiffuseExcitation:
 class TestSuppressEngineAliases:
     """Direct unit tests for _suppress_engine_aliases."""
 
-    @staticmethod
-    def _make_finding(source: str, conf: float) -> dict[str, object]:
-        return {
-            "suspected_source": source,
-            "confidence": conf,
-            "finding_id": "F_ORDER",
-        }
-
     def test_no_wheel_no_suppression(self) -> None:
         findings = [
-            (1.0, self._make_finding("engine", 0.60)),
-            (0.5, self._make_finding("driveshaft", 0.40)),
+            (1.0, make_finding_payload(suspected_source="engine", confidence=0.60)),
+            (0.5, make_finding_payload(suspected_source="driveshaft", confidence=0.40)),
         ]
         result = _suppress_engine_aliases(findings)
         assert any(f.get("suspected_source") == "engine" for f in result), (
@@ -303,8 +296,8 @@ class TestSuppressEngineAliases:
 
     def test_engine_suppressed_by_stronger_wheel(self) -> None:
         findings = [
-            (1.0, self._make_finding("wheel/tire", 0.70)),
-            (0.8, self._make_finding("engine", 0.65)),
+            (1.0, make_finding_payload(suspected_source="wheel/tire", confidence=0.70)),
+            (0.8, make_finding_payload(suspected_source="engine", confidence=0.65)),
         ]
         result = _suppress_engine_aliases(findings)
         engine_findings = [f for f in result if f.get("suspected_source") == "engine"]
@@ -313,8 +306,8 @@ class TestSuppressEngineAliases:
 
     def test_strong_engine_not_suppressed(self) -> None:
         findings = [
-            (0.3, self._make_finding("wheel/tire", 0.30)),
-            (1.0, self._make_finding("engine", 0.90)),
+            (0.3, make_finding_payload(suspected_source="wheel/tire", confidence=0.30)),
+            (1.0, make_finding_payload(suspected_source="engine", confidence=0.90)),
         ]
         result = _suppress_engine_aliases(findings)
         engine_findings = [f for f in result if f.get("suspected_source") == "engine"]
@@ -324,7 +317,10 @@ class TestSuppressEngineAliases:
         assert _suppress_engine_aliases([]) == []
 
     def test_output_capped_at_5(self) -> None:
-        findings = [(i, self._make_finding("wheel/tire", 0.50 + i * 0.05)) for i in range(7)]
+        findings = [
+            (i, make_finding_payload(suspected_source="wheel/tire", confidence=0.50 + i * 0.05))
+            for i in range(7)
+        ]
         result = _suppress_engine_aliases(findings)
         assert len(result) <= 5
 
@@ -518,7 +514,7 @@ class TestPhaseRankingScore:
 
 
 class TestExtractStrengthData:
-    """Direct unit tests for MetricsLogger._extract_strength_data."""
+    """Direct unit tests for RunRecorder._extract_strength_data."""
 
     def test_empty_metrics(self) -> None:
         strength, db, bucket, peak, floor, peaks = extract_strength_data({})
@@ -593,7 +589,7 @@ class TestExtractStrengthData:
 
 
 class TestResolveSpeedContext:
-    """Tests for _resolve_speed_context via a minimal MetricsLogger setup."""
+    """Tests for _resolve_speed_context via a minimal RunRecorder setup."""
 
     def test_no_speed_available(self) -> None:
         logger, _ = _make_metrics_logger()

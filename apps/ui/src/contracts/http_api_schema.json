@@ -2096,7 +2096,72 @@
         "title": "LocationOptionResponse",
         "type": "object"
       },
-      "LoggingStatusResponse": {
+      "RawSamplesErrorPayload": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "count"
+        ],
+        "title": "RawSamplesErrorPayload",
+        "type": "object"
+      },
+      "RawSamplesPayload": {
+        "properties": {
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "n_samples": {
+            "title": "N Samples",
+            "type": "integer"
+          },
+          "sample_rate_hz": {
+            "title": "Sample Rate Hz",
+            "type": "integer"
+          },
+          "x": {
+            "items": {
+              "type": "number"
+            },
+            "title": "X",
+            "type": "array"
+          },
+          "y": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Y",
+            "type": "array"
+          },
+          "z": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Z",
+            "type": "array"
+          }
+        },
+        "required": [
+          "client_id",
+          "sample_rate_hz",
+          "n_samples",
+          "x",
+          "y",
+          "z"
+        ],
+        "title": "RawSamplesPayload",
+        "type": "object"
+      },
+      "RecordingStatusResponse": {
         "description": "Response body with the current recording (run-logging) status.",
         "properties": {
           "analysis_in_progress": {
@@ -2180,72 +2245,7 @@
           "write_error",
           "analysis_in_progress"
         ],
-        "title": "LoggingStatusResponse",
-        "type": "object"
-      },
-      "RawSamplesErrorPayload": {
-        "properties": {
-          "count": {
-            "title": "Count",
-            "type": "integer"
-          },
-          "error": {
-            "title": "Error",
-            "type": "string"
-          }
-        },
-        "required": [
-          "error",
-          "count"
-        ],
-        "title": "RawSamplesErrorPayload",
-        "type": "object"
-      },
-      "RawSamplesPayload": {
-        "properties": {
-          "client_id": {
-            "title": "Client Id",
-            "type": "string"
-          },
-          "n_samples": {
-            "title": "N Samples",
-            "type": "integer"
-          },
-          "sample_rate_hz": {
-            "title": "Sample Rate Hz",
-            "type": "integer"
-          },
-          "x": {
-            "items": {
-              "type": "number"
-            },
-            "title": "X",
-            "type": "array"
-          },
-          "y": {
-            "items": {
-              "type": "number"
-            },
-            "title": "Y",
-            "type": "array"
-          },
-          "z": {
-            "items": {
-              "type": "number"
-            },
-            "title": "Z",
-            "type": "array"
-          }
-        },
-        "required": [
-          "client_id",
-          "sample_rate_hz",
-          "n_samples",
-          "x",
-          "y",
-          "z"
-        ],
-        "title": "RawSamplesPayload",
+        "title": "RecordingStatusResponse",
         "type": "object"
       },
       "RemoveClientResponse": {
@@ -3879,7 +3879,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LoggingStatusResponse"
+                  "$ref": "#/components/schemas/RecordingStatusResponse"
                 }
               }
             },
@@ -3897,7 +3897,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LoggingStatusResponse"
+                  "$ref": "#/components/schemas/RecordingStatusResponse"
                 }
               }
             },
@@ -3915,7 +3915,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LoggingStatusResponse"
+                  "$ref": "#/components/schemas/RecordingStatusResponse"
                 }
               }
             },

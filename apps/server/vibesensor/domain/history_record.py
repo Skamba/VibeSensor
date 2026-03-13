@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .run_status import RunStatus
+
 __all__ = [
     "HistoryRecord",
 ]
@@ -26,7 +28,7 @@ class HistoryRecord:
     """
 
     run_id: str
-    status: str = ""
+    status: RunStatus = RunStatus.RECORDING
     start_time_utc: str = ""
     end_time_utc: str | None = None
     sample_count: int = 0
@@ -36,34 +38,22 @@ class HistoryRecord:
 
     @property
     def is_complete(self) -> bool:
-        return self.status == "complete"
+        return self.status == RunStatus.COMPLETE
 
     @property
     def is_recording(self) -> bool:
-        return self.status == "recording"
+        return self.status == RunStatus.RECORDING
 
     @property
     def has_error(self) -> bool:
-        return self.status == "error"
+        return self.status == RunStatus.ERROR
 
     @property
     def is_analyzable(self) -> bool:
         """Whether this record can be (re)analyzed."""
-        return self.status in ("complete", "error") and self.sample_count > 0
+        return self.status in (RunStatus.COMPLETE, RunStatus.ERROR) and self.sample_count > 0
 
     @property
     def has_analysis(self) -> bool:
         """Whether analysis has been completed for this record."""
-        return self.status == "complete"
-
-    @property
-    def display_status(self) -> str:
-        """Human-readable status text."""
-        labels = {
-            "recording": "Recording",
-            "complete": "Complete",
-            "error": "Error",
-            "stopped": "Stopped",
-            "analyzing": "Analyzing",
-        }
-        return labels.get(self.status, self.status.title() if self.status else "Unknown")
+        return self.status == RunStatus.COMPLETE

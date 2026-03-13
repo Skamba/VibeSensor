@@ -17,7 +17,6 @@ from vibesensor.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.order_bands import build_order_bands
 from vibesensor.registry import _sanitize_name
 from vibesensor.runlog import bounded_sample
-from vibesensor.severity import severity_from_peak
 from vibesensor.worker_pool import WorkerPool
 
 # ---------------------------------------------------------------------------
@@ -142,32 +141,6 @@ class TestSanitizeName:
     def test_control_chars_stripped(self) -> None:
         assert _sanitize_name("hel\x00lo") == "hello"
         assert _sanitize_name("\x01\x02\x03") == ""
-
-
-# ---------------------------------------------------------------------------
-# Item 7: severity_from_peak always returns dict
-# ---------------------------------------------------------------------------
-
-
-class TestSeverityFromPeakReturnType:
-    @pytest.mark.parametrize(
-        ("db", "sensor_count", "prior_state"),
-        [
-            (-100.0, 0, None),
-            (50.0, 1, None),
-            (5.0, 1, {"current_bucket": "l2", "pending_bucket": None}),
-        ],
-    )
-    def test_returns_dict(self, db: float, sensor_count: int, prior_state) -> None:
-        result = severity_from_peak(
-            vibration_strength_db=db,
-            sensor_count=sensor_count,
-            prior_state=prior_state,
-        )
-        assert isinstance(result, dict)
-        assert "key" in result
-        assert "db" in result
-        assert "state" in result
 
 
 # ---------------------------------------------------------------------------
