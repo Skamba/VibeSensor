@@ -70,7 +70,7 @@ class TestFinalizeFindings:
         diag_high = make_finding_payload(confidence=0.80, ranking_score=2.0)
         diag_low = make_finding_payload(confidence=0.30, ranking_score=1.0)
         info = make_info_finding(confidence=0.10)
-        ordered = finalize_findings([diag_low, info, ref, diag_high])
+        ordered, domain_findings = finalize_findings([diag_low, info, ref, diag_high])
         assert len(ordered) == 4
         # Reference first
         assert str(ordered[0]["finding_id"]).startswith("REF_")
@@ -80,22 +80,33 @@ class TestFinalizeFindings:
         assert ordered[2]["confidence"] == 0.30
         # Then informational
         assert ordered[3].get("severity") == "info"
+        # Domain findings match
+        assert len(domain_findings) == 4
+        assert domain_findings[0].is_reference
+        assert domain_findings[1].is_diagnostic
+        assert domain_findings[2].is_diagnostic
+        assert domain_findings[3].is_informational
 
     def test_finalize_assigns_sequential_ids(self) -> None:
         ref = make_ref_finding("REF_SPEED")
         d1 = make_finding_payload(confidence=0.80)
         d2 = make_finding_payload(confidence=0.40)
         info = make_info_finding()
-        ordered = finalize_findings([d2, info, ref, d1])
+        ordered, domain_findings = finalize_findings([d2, info, ref, d1])
         # Reference keeps its original ID
         assert ordered[0]["finding_id"] == "REF_SPEED"
         # Non-reference findings get sequential F### IDs
         assert ordered[1]["finding_id"] == "F001"
         assert ordered[2]["finding_id"] == "F002"
         assert ordered[3]["finding_id"] == "F003"
+        # Domain findings have matching IDs
+        assert domain_findings[0].finding_id == "REF_SPEED"
+        assert domain_findings[1].finding_id == "F001"
 
     def test_finalize_empty(self) -> None:
-        assert finalize_findings([]) == []
+        payloads, domain_findings = finalize_findings([])
+        assert payloads == []
+        assert domain_findings == ()
 
 
 # ===========================================================================

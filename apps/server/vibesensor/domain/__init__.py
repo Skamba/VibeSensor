@@ -41,6 +41,7 @@ from .finding import (
 from .measurement import Measurement, VibrationReading
 from .report import Report
 from .run import Run
+from .run_analysis_result import RunAnalysisResult
 from .run_status import RUN_TRANSITIONS, RunStatus, transition_run
 from .sensor import Sensor, SensorPlacement
 from .speed_source import SpeedSource, SpeedSourceKind
@@ -55,6 +56,7 @@ __all__ = [
     "RUN_TRANSITIONS",
     "Report",
     "Run",
+    "RunAnalysisResult",
     "RunStatus",
     "Sensor",
     "SensorPlacement",
