@@ -196,7 +196,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     top_causes = analysis.get("top_causes") or []
     assert top_causes
     top = top_causes[0]
-    assert "wheel" in str(top.get("source", "")).lower()
+    assert "wheel" in str(top.get("suspected_source", "")).lower()
     assert str(top.get("strongest_location")) == "front-left"
 
     intensity_rows = analysis.get("sensor_intensity_by_location") or []

@@ -225,7 +225,7 @@ class TestSensorNameNormalization:
             file_name="case_mix_test",
         )
         assert_summary_sections(summary, min_top_causes=1)
-        assert "wheel" in str(summary["top_causes"][0].get("source", "")).lower()
+        assert "wheel" in str(summary["top_causes"][0].get("suspected_source", "")).lower()
 
 
 class TestGpsSpeedValidation:

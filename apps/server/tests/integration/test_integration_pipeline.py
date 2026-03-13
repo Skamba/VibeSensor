@@ -155,7 +155,7 @@ def test_integration_full_scenario() -> None:
     causes = summary["top_causes"]
     assert isinstance(causes, list) and len(causes) > 0, "No top causes"
     top = causes[0]
-    src = (top.get("source") or "").lower()
+    src = (top.get("suspected_source") or "").lower()
     assert "wheel" in src or "tire" in src, f"Expected wheel/tire source, got '{src}'"
 
     # --- 3. Confidence is reasonable ---

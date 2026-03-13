@@ -143,7 +143,7 @@ class TestReferenceMissingFinding:
             quick_checks=["Check GPS", "Re-run"],
         )
         assert finding["finding_id"] == "REF_SPEED"
-        assert finding["finding_type"] == "reference"
+        assert finding["finding_kind"] == "reference"
         assert finding["suspected_source"] == "unknown"
         assert finding["confidence"] is None
         assert len(finding["quick_checks"]) <= 3

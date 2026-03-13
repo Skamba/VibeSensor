@@ -18,7 +18,6 @@ from pypdf import PdfReader
 
 from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.report_data import (
-    ObservedSignature,
     PatternEvidence,
     ReportTemplateData,
     SystemFindingCard,
@@ -137,9 +136,9 @@ def test_report_output_matches_template_data() -> None:
         title="Diagnostic Worksheet",
         run_datetime="2026-01-15 10:30:00",
         sensor_count=4,
-        observed=ObservedSignature(
+        observed=PatternEvidence(
             primary_system="Wheel / Tire",
-            strongest_sensor_location="Front Left",
+            strongest_location="Front Left",
             certainty_label="High",
         ),
         system_cards=[

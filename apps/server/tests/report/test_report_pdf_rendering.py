@@ -197,7 +197,7 @@ def test_report_pdf_wraps_long_system_card_location() -> None:
 
 def test_car_diagram_wheel_labels_stay_within_bounds_without_overlap() -> None:
     diagram = car_location_diagram(
-        [{"strongest_location": "front-left wheel", "source": "wheel/tire"}],
+        [{"strongest_location": "front-left wheel", "suspected_source": "wheel/tire"}],
         {
             "sensor_locations": [
                 "front-left wheel",

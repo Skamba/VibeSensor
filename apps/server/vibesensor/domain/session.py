@@ -1,7 +1,13 @@
 """Aggregate root for a vibration-diagnostic measurement session.
 
-``Run`` tracks the lifecycle (start / stop) for one diagnostic run.
-``DiagnosticSession`` is kept as a backward-compatibility alias.
+``Run`` tracks the in-memory lifecycle of a single diagnostic session.
+``SessionStatus`` covers the in-memory states (PENDING → RUNNING).
+
+The *persisted* run lifecycle is tracked by ``RunStatus`` in
+``domain/run_status.py`` (RECORDING → ANALYZING → COMPLETE | ERROR).
+Route handlers bridge the two: ``Run.start()`` coincides with creating
+a DB row in RECORDING status, and discarding the ``Run`` object
+coincides with transitioning the DB row to ANALYZING.
 """
 
 from __future__ import annotations
@@ -11,25 +17,27 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 __all__ = [
-    "DiagnosticSession",
     "Run",
     "SessionStatus",
 ]
 
 
 class SessionStatus(StrEnum):
-    """Lifecycle states of a :class:`Run`."""
+    """Lifecycle states of a :class:`Run` (in-memory session only)."""
 
     PENDING = "pending"
     RUNNING = "running"
-    STOPPED = "stopped"
 
 
 @dataclass
 class Run:
     """Aggregate root for a vibration-diagnostic measurement session.
 
-    Tracks the lifecycle (start / stop) for one diagnostic run.
+    Tracks the in-memory lifecycle for one diagnostic run.  The ``Run``
+    object is created with status PENDING, transitioned to RUNNING via
+    :meth:`start`, and then discarded when the recording stops.  There
+    is no ``stop()`` method — the route handler simply drops the
+    reference.
 
     Parameters
     ----------
@@ -52,7 +60,7 @@ class Run:
         Raises
         ------
         RuntimeError
-            If the session has already been started or stopped.
+            If the session has already been started.
         """
         if self.status is not SessionStatus.PENDING:
             raise RuntimeError(
@@ -60,29 +68,3 @@ class Run:
                 f"expected '{SessionStatus.PENDING.value}'."
             )
         self.status = SessionStatus.RUNNING
-
-    def stop(self) -> None:
-        """Transition the session to *stopped*.
-
-        Raises
-        ------
-        RuntimeError
-            If the session is not currently running.
-        """
-        if self.status is not SessionStatus.RUNNING:
-            raise RuntimeError(
-                f"Cannot stop session in '{self.status.value}' state; "
-                f"expected '{SessionStatus.RUNNING.value}'."
-            )
-        self.status = SessionStatus.STOPPED
-
-    # -- queries ------------------------------------------------------------
-
-    @property
-    def is_complete(self) -> bool:
-        """Whether the session has been stopped."""
-        return self.status is SessionStatus.STOPPED
-
-
-# Backward-compatibility alias
-DiagnosticSession = Run

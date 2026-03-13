@@ -22,7 +22,7 @@ from threading import RLock
 
 from ..domain.run_status import (
     RunStatus,
-    can_transition_run,
+    transition_run,
 )
 from ..json_types import JsonObject, is_json_object
 from ..json_utils import safe_json_dumps, safe_json_loads
@@ -208,22 +208,6 @@ class HistoryDB:
             return None
         return str(row[0])
 
-    @staticmethod
-    def _log_transition_skip(run_id: str, current_status: str | None, target_status: str) -> None:
-        if current_status is None:
-            LOGGER.warning(
-                "Skipping run transition to %s for %s: run not found",
-                target_status,
-                run_id,
-            )
-            return
-        LOGGER.warning(
-            "Skipping run transition for %s: %s -> %s is not allowed",
-            run_id,
-            current_status,
-            target_status,
-        )
-
     def create_run(
         self,
         run_id: str,
@@ -302,8 +286,14 @@ class HistoryDB:
             if int(cur.rowcount) > 0:
                 return True
             current_status = self._run_status(cur, run_id)
-            if not can_transition_run(current_status, RunStatus.ANALYZING):
-                self._log_transition_skip(run_id, current_status, RunStatus.ANALYZING)
+            try:
+                transition_run(current_status, RunStatus.ANALYZING)
+            except ValueError:
+                LOGGER.warning(
+                    "finalize_run for run %s: invalid transition %s → analyzing",
+                    run_id,
+                    current_status,
+                )
             return False
 
     def update_run_metadata(
@@ -351,10 +341,11 @@ class HistoryDB:
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'complete', analysis_json = ?, "
-                "analysis_completed_at = ? "
+                "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
                 "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
                 (
                     safe_json_dumps(analysis),
+                    now,
                     now,
                     run_id,
                 ),
@@ -367,8 +358,15 @@ class HistoryDB:
                     "store_analysis for run %s: skipped — already complete",
                     run_id,
                 )
-            elif not can_transition_run(current_status, RunStatus.COMPLETE):
-                self._log_transition_skip(run_id, current_status, RunStatus.COMPLETE)
+                return False
+            try:
+                transition_run(current_status, RunStatus.COMPLETE)
+            except ValueError:
+                LOGGER.warning(
+                    "store_analysis for run %s: invalid transition %s → complete",
+                    run_id,
+                    current_status,
+                )
             return False
 
     def store_analysis_error(self, run_id: str, error: str) -> bool:
@@ -376,9 +374,9 @@ class HistoryDB:
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ?, "
-                "analysis_completed_at = ? "
+                "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
                 "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
-                (error, now, run_id),
+                (error, now, now, run_id),
             )
             if int(cur.rowcount) > 0:
                 return True
@@ -388,8 +386,15 @@ class HistoryDB:
                     "store_analysis_error for run %s: skipped — already complete",
                     run_id,
                 )
-            elif not can_transition_run(current_status, RunStatus.ERROR):
-                self._log_transition_skip(run_id, current_status, RunStatus.ERROR)
+                return False
+            try:
+                transition_run(current_status, RunStatus.ERROR)
+            except ValueError:
+                LOGGER.warning(
+                    "store_analysis_error for run %s: invalid transition %s → error",
+                    run_id,
+                    current_status,
+                )
             return False
 
     def delete_run(self, run_id: str) -> bool:

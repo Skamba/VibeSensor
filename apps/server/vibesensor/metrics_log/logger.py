@@ -200,8 +200,6 @@ class RunRecorder:
         # Setting ``True`` is a no-op — use ``start_recording()`` to begin a
         # new session.  Setting ``False`` gracefully stops any running session.
         if not value and self._diagnostic_session is not None:
-            if self._diagnostic_session.status is SessionStatus.RUNNING:
-                self._diagnostic_session.stop()
             self._diagnostic_session = None
 
     @property
@@ -249,11 +247,6 @@ class RunRecorder:
 
     def _sess_stop(self) -> None:
         with self._lock:
-            if (
-                self._diagnostic_session is not None
-                and self._diagnostic_session.status is SessionStatus.RUNNING
-            ):
-                self._diagnostic_session.stop()
             self._diagnostic_session = None
             self._sess_run_start_utc = None
             self._sess_run_start_mono_s = None

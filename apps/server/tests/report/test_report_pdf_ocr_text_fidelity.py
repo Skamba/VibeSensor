@@ -133,7 +133,7 @@ def test_report_pdf_ocr_text_fidelity_all_pages(tmp_path: Path) -> None:
 
     if isinstance(summary.get("findings"), list) and summary["findings"]:
         summary["findings"][0]["strongest_location"] = "front-left wheel"
-        summary["findings"][0]["source"] = "wheel/tire"
+        summary["findings"][0]["suspected_source"] = "wheel/tire"
 
     pdf_bytes = build_report_pdf(map_summary(summary))
 

@@ -95,7 +95,6 @@ class TestMypyEnforcement:
     @pytest.mark.parametrize(
         "module",
         [
-            "vibesensor/order_bands.py",
             "vibesensor/report_i18n.py",
             "vibesensor/analysis_settings.py",
             "vibesensor/metrics_log",

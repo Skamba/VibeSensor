@@ -258,7 +258,7 @@ class TestIngestionScenario:
     def test_transient_does_not_dominate(self) -> None:
         """Transient events should not override the persistent fault finding."""
         assert self.top is not None
-        src = (self.top.get("source") or "").lower()
+        src = (self.top.get("suspected_source") or "").lower()
         # The top cause should NOT be a transient/impact classification
         assert "transient" not in src, f"Transient dominated top cause: {src}"
 
@@ -385,7 +385,7 @@ class TestPdfReportValidation:
         """PDF content should be consistent with the analysis summary."""
         # Top cause source should appear in PDF text
         if self.top:
-            src = (self.top.get("source") or "").lower()
+            src = (self.top.get("suspected_source") or "").lower()
             # At least part of the source label should appear;
             # skip short tokens (e.g. single-char splits) as they cause false matches
             for token in src.split("/"):

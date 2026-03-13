@@ -191,7 +191,7 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
         lang="en",
         top_causes=[
             {
-                "source": "wheel/tire",
+                "suspected_source": "wheel/tire",
                 "strongest_location": "Rear Left",
                 "strongest_speed_band": "80-90 km/h",
                 "confidence": 0.83,
@@ -208,7 +208,7 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
     )
 
     data = map_summary(summary)
-    assert data.observed.strongest_sensor_location == "Rear Left / Front Right"
+    assert data.observed.strongest_location == "Rear Left / Front Right"
 
 
 def test_map_summary_peak_rows_use_persistence_metrics() -> None:
@@ -344,7 +344,7 @@ def test_map_summary_certainty_reason_ignores_unrelated_reference_gap() -> None:
         sensor_count_used=4,
         top_causes=[
             {
-                "source": "wheel/tire",
+                "suspected_source": "wheel/tire",
                 "strongest_location": "Front Left",
                 "strongest_speed_band": "60-80 km/h",
                 "confidence": 0.82,
@@ -363,7 +363,7 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
         sensor_count_used=4,
         top_causes=[
             {
-                "source": "engine",
+                "suspected_source": "engine",
                 "strongest_location": "Engine Bay",
                 "strongest_speed_band": "60-80 km/h",
                 "confidence": 0.82,
