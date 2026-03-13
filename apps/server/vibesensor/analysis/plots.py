@@ -11,8 +11,7 @@ from dataclasses import dataclass, field
 from math import floor
 from typing import Literal, Required, TypedDict
 
-from vibesensor.domain import VibrationReading
-from vibesensor.vibration_strength import percentile
+from vibesensor.vibration_strength import compute_db, compute_db_or_none, percentile
 
 from ..constants import MEMS_NOISE_FLOOR_G
 from ..json_utils import as_float_or_none as _as_float
@@ -648,7 +647,7 @@ def top_peaks_table_rows(
                 )
 
     run_noise_baseline_db: float | None = (
-        VibrationReading.compute_db(
+        compute_db(
             _effective_baseline_floor(run_noise_baseline_g),
             MEMS_NOISE_FLOOR_G,
         )
@@ -665,9 +664,9 @@ def top_peaks_table_rows(
         p95_amp = safe_percentile(amps, 0.95)
         max_amp = amps[-1] if amps else 0.0
         floor_amp_val = safe_percentile(floor_amps, 0.50) if floor_amps else None
-        max_intensity_db = VibrationReading.compute_db_or_none(max_amp, floor_amp_val)
-        median_intensity_db = VibrationReading.compute_db_or_none(median_amp, floor_amp_val)
-        p95_intensity_db = VibrationReading.compute_db_or_none(p95_amp, floor_amp_val)
+        max_intensity_db = compute_db_or_none(max_amp, floor_amp_val)
+        median_intensity_db = compute_db_or_none(median_amp, floor_amp_val)
+        p95_intensity_db = compute_db_or_none(p95_amp, floor_amp_val)
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
         spatial_uniformity: float | None = None
         if len(total_locations) >= 2:
@@ -694,9 +693,7 @@ def top_peaks_table_rows(
         bucket.run_noise_baseline_db = run_noise_baseline_db
         bucket.median_vs_run_noise_ratio = median_amp / baseline_floor
         bucket.p95_vs_run_noise_ratio = p95_amp / baseline_floor
-        bucket.strength_floor_db = VibrationReading.compute_db_or_none(
-            floor_amp_val, MEMS_NOISE_FLOOR_G
-        )
+        bucket.strength_floor_db = compute_db_or_none(floor_amp_val, MEMS_NOISE_FLOOR_G)
         bucket.strength_db = p95_intensity_db
         bucket.presence_ratio = presence_ratio
         bucket.burstiness = burstiness

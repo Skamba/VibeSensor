@@ -11,7 +11,7 @@ from pathlib import Path
 from statistics import median as _median
 
 from vibesensor.analysis.analysis_window import AnalysisWindow
-from vibesensor.domain import VibrationReading
+from vibesensor.vibration_strength import compute_db
 
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..json_utils import as_float_or_none as _as_float
@@ -38,7 +38,6 @@ from ._types import (
     SpeedStats,
     SuspectedVibrationOrigin,
     TestStep,
-    TopCause,
     i18n_ref,
     is_json_object,
 )
@@ -363,7 +362,7 @@ def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
     """Convert a run noise baseline amplitude in g to dB, or return None."""
     if run_noise_baseline_g is None:
         return None
-    return VibrationReading.compute_db(
+    return compute_db(
         max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
         MEMS_NOISE_FLOOR_G,
     )
@@ -694,7 +693,7 @@ def build_summary_payload(
     run_noise_baseline_g: float | None,
     speed_breakdown_skipped_reason: I18nRef | None,
     findings: list[FindingPayload],
-    top_causes: list[TopCause],
+    top_causes: list[FindingPayload],
     most_likely_origin: SuspectedVibrationOrigin,
     test_plan: list[TestStep],
     phase_timeline: list[PhaseTimelineEntry],
@@ -930,7 +929,7 @@ def build_findings_bundle(
     SuspectedVibrationOrigin,
     list[TestStep],
     list[PhaseTimelineEntry],
-    list[TopCause],
+    list[FindingPayload],
 ]:
     """Build findings plus derived diagnosis narrative fields."""
     builder = findings_builder or _build_findings

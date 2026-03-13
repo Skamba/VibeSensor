@@ -363,6 +363,7 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
         sensor_count_used=4,
         top_causes=[
             {
+                "finding_id": "F_ENGINE",
                 "suspected_source": "engine",
                 "strongest_location": "Engine Bay",
                 "strongest_speed_band": "60-80 km/h",

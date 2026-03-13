@@ -372,7 +372,6 @@ class TestReport:
         assert r.lang == "de"
         assert r.sample_count == 500
         assert r.sensor_count == 3
-        assert r.finding_count == 2
         assert r.car_name == "BMW 3"
         assert r.car_type == "sedan"
         assert r.report_date == "2025-01-15"
@@ -383,7 +382,6 @@ class TestReport:
 
         r = build_report_from_summary({"run_id": "r1"})
         assert r.run_id == "r1"
-        assert r.finding_count == 0
         assert r.sample_count == 0
         assert r.car_name is None
 
@@ -665,45 +663,28 @@ class TestAnalysisWindowEnrichments:
         assert aw.speed_range_text is None
 
 
-class TestReportEnrichments:
-    """Tests for enriched Report domain object."""
+class TestReportValidation:
+    """Tests for Report __post_init__ validation."""
 
-    def test_has_findings(self) -> None:
-        r = Report(run_id="r1", findings=(Finding(finding_id="F001"),))
-        assert r.has_findings
+    def test_empty_run_id_rejected(self) -> None:
+        with pytest.raises(ValueError, match="run_id must be non-empty"):
+            Report(run_id="")
 
-    def test_no_findings(self) -> None:
-        r = Report(run_id="r1")
-        assert not r.has_findings
-        assert r.is_empty
+    def test_negative_duration_rejected(self) -> None:
+        with pytest.raises(ValueError, match="duration_s must be non-negative"):
+            Report(run_id="r1", duration_s=-1.0)
 
-    def test_diagnostic_findings(self) -> None:
-        findings = (
-            Finding(finding_id="F001", severity="diagnostic"),
-            Finding(finding_id="REF_SPEED", severity="info"),
-            Finding(finding_id="F002", severity="high"),
-        )
-        r = Report(run_id="r1", findings=findings)
-        diags = r.diagnostic_findings
-        assert len(diags) == 2
-        assert diags[0].finding_id == "F001"
-        assert diags[1].finding_id == "F002"
+    def test_zero_duration_allowed(self) -> None:
+        r = Report(run_id="r1", duration_s=0.0)
+        assert r.duration_s == 0.0
 
-    def test_primary_finding(self) -> None:
-        findings = (
-            Finding(finding_id="F001", severity="diagnostic"),
-            Finding(finding_id="F002", severity="diagnostic"),
-        )
-        r = Report(run_id="r1", findings=findings)
-        assert r.primary_finding is not None
-        assert r.primary_finding.finding_id == "F001"
+    def test_from_summary_empty_run_id_gets_fallback(self) -> None:
+        from vibesensor.report.mapping import build_report_from_summary
 
-    def test_primary_finding_none(self) -> None:
-        r = Report(run_id="r1", findings=(Finding(finding_id="REF_SPEED"),))
-        assert r.primary_finding is None
-        assert r.is_empty
+        r = build_report_from_summary({"run_id": ""})
+        assert r.run_id == "unknown"
 
-    def test_from_summary_creates_domain_findings(self) -> None:
+    def test_from_summary_creates_metadata(self) -> None:
         from vibesensor.report.mapping import build_report_from_summary
 
         summary: dict[str, object] = {
@@ -714,18 +695,11 @@ class TestReportEnrichments:
                     "suspected_source": "bearing",
                     "confidence": 0.8,
                 },
-                {
-                    "finding_id": "REF_SPEED",
-                    "suspected_source": "speed",
-                    "confidence": None,
-                },
             ],
         }
         r = build_report_from_summary(summary)
-        assert len(r.findings) == 2
-        assert r.findings[0].finding_id == "F001"
-        assert r.findings[0].confidence == 0.8
-        assert r.findings[1].is_reference
+        assert r.run_id == "run-1"
+        assert r.lang == "en"
 
 
 class TestRunEnrichments:
