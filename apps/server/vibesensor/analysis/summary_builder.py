@@ -13,9 +13,9 @@ from statistics import median as _median
 from vibesensor.analysis.analysis_window import AnalysisWindow
 from vibesensor.vibration_strength import compute_db
 
+from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..domain import Finding as DomainFinding
 from ..domain import RunAnalysisResult
-from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..run_context import build_summary_warnings, order_reference_context_complete
@@ -966,12 +966,18 @@ def build_findings_bundle(
         min_confidence=0.25,
     )
     top_causes, domain_top_causes = select_top_causes(
-        findings, domain_findings=domain_findings,
+        findings,
+        domain_findings=domain_findings,
         strength_band_key=overall_strength_band_key,
     )
     return (
-        findings, most_likely_origin, test_plan, phase_timeline,
-        top_causes, domain_findings, domain_top_causes,
+        findings,
+        most_likely_origin,
+        test_plan,
+        phase_timeline,
+        top_causes,
+        domain_findings,
+        domain_top_causes,
     )
 
 
@@ -1101,8 +1107,13 @@ class RunAnalysis:
             )
         )
         (
-            findings, most_likely_origin, test_plan, phase_timeline,
-            top_causes, domain_findings, domain_top_causes,
+            findings,
+            most_likely_origin,
+            test_plan,
+            phase_timeline,
+            top_causes,
+            domain_findings,
+            domain_top_causes,
         ) = build_findings_bundle(
             self._metadata,
             self._samples,

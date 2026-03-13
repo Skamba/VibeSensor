@@ -99,9 +99,7 @@ class RunAnalysisResult:
         3. Non-reference top causes
         4. All top causes
         """
-        actionable_tc = tuple(
-            f for f in self.top_causes if not f.is_reference and f.is_actionable
-        )
+        actionable_tc = tuple(f for f in self.top_causes if not f.is_reference and f.is_actionable)
         if actionable_tc:
             return actionable_tc
         non_ref = self.non_reference_findings

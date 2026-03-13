@@ -69,9 +69,7 @@ class TestEnrichTopCausePayload:
     def test_negligible_strength_caps_high_confidence(self) -> None:
         finding = make_finding_payload(confidence=0.80)
         domain = Finding.from_payload(finding)
-        top_cause = _enrich_top_cause_payload(
-            finding, domain, strength_band_key="negligible"
-        )
+        top_cause = _enrich_top_cause_payload(finding, domain, strength_band_key="negligible")
         assert top_cause["confidence_label_key"] == "CONFIDENCE_MEDIUM"
         assert top_cause["confidence_tone"] == "warn"
 

@@ -43,9 +43,7 @@ def _enrich_top_cause_payload(
     result["confidence_tone"] = tone
     result["confidence_pct"] = pct_text
     # Normalize order: prefer domain.order, fall back to payload's frequency field
-    order = domain.order or str(
-        finding.get("frequency_hz_or_order") or finding.get("order") or ""
-    )
+    order = domain.order or str(finding.get("frequency_hz_or_order") or finding.get("order") or "")
     result["order"] = order
     result["phase_evidence"] = (
         {"cruise_fraction": domain.cruise_fraction} if domain.cruise_fraction else None
@@ -73,7 +71,7 @@ def group_findings_by_source(
     """
     # Pair payloads with domain objects
     if domain_findings is not None and len(domain_findings) == len(diag_findings):
-        pairs = list(zip(diag_findings, domain_findings))
+        pairs = list(zip(diag_findings, domain_findings, strict=True))
     else:
         pairs = [(f, Finding.from_payload(f)) for f in diag_findings]
 
@@ -149,22 +147,18 @@ def select_top_causes(
     """
     # Pair payloads with domain objects
     if domain_findings is not None and len(domain_findings) == len(findings):
-        pairs = list(zip(findings, domain_findings))
+        pairs = list(zip(findings, domain_findings, strict=True))
     else:
         pairs = [(f, Finding.from_payload(f)) for f in findings if isinstance(f, dict)]
 
-    surfaceable = [
-        (payload, domain) for payload, domain in pairs if domain.should_surface
-    ]
+    surfaceable = [(payload, domain) for payload, domain in pairs if domain.should_surface]
     if not surfaceable:
         return [], ()
 
     surfaceable_payloads = [p for p, _d in surfaceable]
     surfaceable_domains = tuple(d for _p, d in surfaceable)
 
-    grouped = group_findings_by_source(
-        surfaceable_payloads, domain_findings=surfaceable_domains
-    )
+    grouped = group_findings_by_source(surfaceable_payloads, domain_findings=surfaceable_domains)
     best_score_pct = grouped[0][0] * 100.0
     threshold_pct = best_score_pct - drop_off_points
 
@@ -179,7 +173,6 @@ def select_top_causes(
 
     enriched = [
         _enrich_top_cause_payload(f, d, strength_band_key=strength_band_key)
-        for f, d in zip(selected_payloads, selected_domains)
+        for f, d in zip(selected_payloads, selected_domains, strict=True)
     ]
     return enriched, tuple(selected_domains)
-
