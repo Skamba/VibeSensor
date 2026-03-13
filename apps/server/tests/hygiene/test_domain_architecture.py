@@ -219,6 +219,12 @@ def test_run_analysis_result_reference_gap_detection() -> None:
     ref_engine = Finding(finding_id="REF_ENGINE", suspected_source="unknown")
     diag = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
 
+    # Precondition: verify classification
+    assert ref_speed.is_reference
+    assert ref_wheel.is_reference
+    assert ref_engine.is_reference
+    assert not diag.is_reference
+
     # REF_SPEED is relevant for any source
     result = RunAnalysisResult(run_id="test", findings=(ref_speed, diag), top_causes=(diag,))
     assert result.has_relevant_reference_gap(VibrationSource.WHEEL_TIRE)

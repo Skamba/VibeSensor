@@ -1009,10 +1009,10 @@ def build_findings_bundle(
     domain_findings = domain_findings_from_payloads(findings)
     diagnostic_findings = non_reference_findings(findings)
     # Filter domain findings to match the diagnostic payload subset
-    diagnostic_domain = tuple(f for f in domain_findings if not f.is_reference)
+    domain_diagnostic_findings = tuple(f for f in domain_findings if not f.is_reference)
     most_likely_origin = summarize_origin(
         diagnostic_findings,
-        domain_findings=diagnostic_domain,
+        domain_findings=domain_diagnostic_findings,
     )
     test_plan = _merge_test_plan(findings, language)
     phase_timeline = build_phase_timeline(
