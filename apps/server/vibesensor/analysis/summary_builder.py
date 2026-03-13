@@ -470,16 +470,33 @@ class LocalizationAssessment:
     # -- construction -------------------------------------------------------
 
     @staticmethod
-    def from_finding(finding: FindingPayload) -> LocalizationAssessment:
-        """Build from a single FindingPayload, extracting localization fields."""
+    def from_finding(
+        finding: FindingPayload,
+        *,
+        domain: DomainFinding | None = None,
+    ) -> LocalizationAssessment:
+        """Build from a finding, using domain object for classification fields.
+
+        When *domain* is provided, uses its properties for
+        ``strongest_location``, ``dominance_ratio``,
+        ``weak_spatial_separation``, and ``diffuse_excitation``.
+        Evidence-level nested structures (``location_hotspot``) are
+        still read from the payload dict.
+        """
         hotspot = finding.get("location_hotspot")
-        primary = str(finding.get("strongest_location") or "").strip() or "unknown"
+        if domain is not None:
+            primary = (domain.strongest_location or "").strip() or "unknown"
+            dominance = domain.dominance_ratio
+            diffuse = domain.diffuse_excitation
+            weak_flag = domain.weak_spatial_separation
+        else:
+            primary = str(finding.get("strongest_location") or "").strip() or "unknown"
+            dominance = _as_float(finding.get("dominance_ratio"))
+            diffuse = bool(finding.get("diffuse_excitation", False))
+            weak_flag = bool(finding.get("weak_spatial_separation"))
         alternatives = _collect_alternative_locations(hotspot, primary_location=primary)
-        dominance = _as_float(finding.get("dominance_ratio"))
         threshold = _resolve_weak_spatial_threshold(finding, hotspot=hotspot)
-        weak = bool(finding.get("weak_spatial_separation")) or (
-            dominance is not None and dominance < threshold
-        )
+        weak = weak_flag or (dominance is not None and dominance < threshold)
         loc_conf = 0.0
         if isinstance(hotspot, dict):
             loc_conf = float(_as_float(hotspot.get("localization_confidence")) or 0.0)
@@ -488,7 +505,7 @@ class LocalizationAssessment:
             _alternative_locations=alternatives,
             dominance_ratio=dominance,
             _weak_spatial=weak,
-            _diffuse_excitation=finding.get("diffuse_excitation", False),
+            _diffuse_excitation=diffuse,
             _localization_confidence=loc_conf,
             _adaptive_threshold=threshold,
         )
@@ -555,10 +572,15 @@ class LocalizationAssessment:
         second_finding: FindingPayload,
         *,
         top_confidence: float,
+        domain: DomainFinding | None = None,
     ) -> None:
         """Promote ambiguity when the second finding is close in confidence."""
-        second_loc = str(second_finding.get("strongest_location") or "").strip()
-        second_conf = _as_float(second_finding.get("confidence")) or 0.0
+        if domain is not None:
+            second_loc = (domain.strongest_location or "").strip()
+            second_conf = domain.effective_confidence
+        else:
+            second_loc = str(second_finding.get("strongest_location") or "").strip()
+            second_conf = _as_float(second_finding.get("confidence")) or 0.0
         if (
             second_loc
             and self._primary_location
@@ -610,8 +632,17 @@ def _resolve_weak_spatial_threshold(top_finding: FindingPayload, *, hotspot: obj
     return weak_spatial_dominance_threshold(int(location_count) if location_count else None)
 
 
-def summarize_origin(findings: list[FindingPayload]) -> SuspectedVibrationOrigin:
-    """Build the most-likely-origin summary from ranked diagnostic findings."""
+def summarize_origin(
+    findings: list[FindingPayload],
+    *,
+    domain_findings: tuple[DomainFinding, ...] | None = None,
+) -> SuspectedVibrationOrigin:
+    """Build the most-likely-origin summary from ranked diagnostic findings.
+
+    When *domain_findings* is provided, uses domain ``Finding`` properties
+    for classification fields (suspected_source, confidence, speed_band).
+    Evidence-level details (location_hotspot) are read from the payloads.
+    """
     if not findings:
         return {
             "location": "unknown",
@@ -623,17 +654,27 @@ def summarize_origin(findings: list[FindingPayload]) -> SuspectedVibrationOrigin
         }
 
     top = findings[0]
-    loc = LocalizationAssessment.from_finding(top)
-    source = str(top.get("suspected_source") or "unknown")
+    # Resolve domain objects (match by index if available)
+    domain_top: DomainFinding | None = None
+    domain_second: DomainFinding | None = None
+    if domain_findings is not None and len(domain_findings) >= 1:
+        domain_top = domain_findings[0]
+    if domain_findings is not None and len(domain_findings) >= 2:
+        domain_second = domain_findings[1]
+
+    loc = LocalizationAssessment.from_finding(top, domain=domain_top)
+    source = str(domain_top.suspected_source) if domain_top else str(top.get("suspected_source") or "unknown")
 
     if len(findings) >= 2:
+        top_conf = domain_top.effective_confidence if domain_top else (_as_float(top.get("confidence")) or 0.0)
         loc.enrich_from_second_finding(
             findings[1],
-            top_confidence=_as_float(top.get("confidence")) or 0.0,
+            top_confidence=top_conf,
+            domain=domain_second,
         )
 
     location = loc.display_location()
-    speed_band = str(top.get("strongest_speed_band") or "")
+    speed_band = str(domain_top.strongest_speed_band or "") if domain_top else str(top.get("strongest_speed_band") or "")
     dominant_phase = str(top.get("dominant_phase") or "").strip()
     explanation = build_origin_explanation(
         source=source,
@@ -958,7 +999,12 @@ def build_findings_bundle(
     # Create domain findings from finalized payloads
     domain_findings = domain_findings_from_payloads(findings)
     diagnostic_findings = non_reference_findings(findings)
-    most_likely_origin = summarize_origin(diagnostic_findings)
+    # Filter domain findings to match the diagnostic payload subset
+    diagnostic_domain = tuple(f for f in domain_findings if not f.is_reference)
+    most_likely_origin = summarize_origin(
+        diagnostic_findings,
+        domain_findings=diagnostic_domain,
+    )
     test_plan = _merge_test_plan(findings, language)
     phase_timeline = build_phase_timeline(
         prepared.phase_segments,
