@@ -11,8 +11,8 @@ Use this when changing backend code without scanning the whole package.
   3. `SensorPlacement` (`sensor.py`) – a sensor's mounting position on the
      vehicle.  Owns position category classification (wheel/drivetrain/body).
   4. `Run` (`session.py`) – one complete diagnostic measurement session
-     (aggregate root).  Owns lifecycle (start/stop), duration, reading
-     accumulation.  `DiagnosticSession` is a backward-compatibility alias.
+     (aggregate root).  Owns in-memory lifecycle (pending → running).
+     The persisted lifecycle is tracked by `RunStatus` in `run_status.py`.
   5. `Measurement` (`measurement.py`) – a single multi-axis acceleration
      sample (value object).  `AccelerationSample` is a backward-compatibility
      alias.
@@ -27,8 +27,6 @@ Use this when changing backend code without scanning the whole package.
      deterministic ranking, and phase-adjusted scoring.
   9. `Report` (`report.py`) – the assembled output of a diagnostic run.
      Owns finding accessors and primary-finding selection.
-  10. `HistoryRecord` (`history_record.py`) – a persisted run with its
-      analysis results.  Owns status queries and display helpers.
 - Prefer these simple names in domain logic; use the narrower config/payload
   shapes (`CarConfig`, `SensorConfig`, `SpeedSourceConfig`, `RunMetadata`,
   `SensorFrame`, `ReportTemplateData`, `HistoryRunPayload`) at persistence,

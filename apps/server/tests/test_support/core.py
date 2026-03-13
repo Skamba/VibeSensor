@@ -354,7 +354,7 @@ _FINDING_REQUIRED_FIELDS = (
 
 _TOP_CAUSE_REQUIRED_FIELDS = (
     "finding_id",
-    "source",
+    "suspected_source",
     "confidence",
     "strongest_location",
     "strongest_speed_band",
@@ -462,7 +462,7 @@ def assert_top_cause_contract(
     _assert_confidence_valid(top_cause, "confidence", confidence_range)
 
     if expected_source is not None:
-        _assert_source_contains(top_cause, "source", expected_source)
+        _assert_source_contains(top_cause, "suspected_source", expected_source)
 
     if expected_location is not None:
         _assert_location_contains(top_cause, expected_location)

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from vibesensor.json_utils import as_float_or_none
-from vibesensor.order_bands import (
+from vibesensor.analysis.order_bands import (
     build_diagnostic_settings,
     combined_relative_uncertainty,
     tolerance_for_order,
     vehicle_orders_hz,
 )
+from vibesensor.json_utils import as_float_or_none
 
 # -- _as_float NaN/edge cases -------------------------------------------------
 

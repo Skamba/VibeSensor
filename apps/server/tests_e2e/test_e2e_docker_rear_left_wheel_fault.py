@@ -567,7 +567,7 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
     assert "rear left" in primary_location or "rear-left" in primary_location
     top_causes = [item for item in insights.get("top_causes", []) if isinstance(item, dict)]
     assert top_causes, "Expected ranked top causes"
-    assert top_causes[0].get("source") == "wheel/tire"
+    assert top_causes[0].get("suspected_source") == "wheel/tire"
 
     pdf_resp = api_bytes(base_url, f"/api/history/{run_id}/report.pdf?lang=en")
     assert str(pdf_resp.headers.get("content-type", "")).startswith("application/pdf")

@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from vibesensor.locations import WHEEL_LOCATION_CODES
+
 __all__ = [
     "Sensor",
     "SensorPlacement",
@@ -33,14 +35,7 @@ class SensorPlacement:
 
     # -- classification ----------------------------------------------------
 
-    _WHEEL_CODES: frozenset[str] = frozenset(
-        {
-            "front_left_wheel",
-            "front_right_wheel",
-            "rear_left_wheel",
-            "rear_right_wheel",
-        },
-    )
+    _WHEEL_CODES: frozenset[str] = WHEEL_LOCATION_CODES
 
     _DRIVETRAIN_CODES: frozenset[str] = frozenset(
         {

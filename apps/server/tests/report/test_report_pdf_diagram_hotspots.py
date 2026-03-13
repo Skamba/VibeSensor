@@ -117,7 +117,7 @@ def test_sparse_layout_renders_only_connected_sensor_labels() -> None:
         ],
     }
     diagram = car_location_diagram(
-        [{"strongest_location": "front-left wheel", "source": "wheel/tire"}],
+        [{"strongest_location": "front-left wheel", "suspected_source": "wheel/tire"}],
         summary,
         [],
         content_width=300.0,
@@ -167,7 +167,7 @@ def test_legend_shows_diagnostic_source_only_and_source_labels_do_not_overlap() 
         ],
     }
     diagram = car_location_diagram(
-        [{"strongest_location": "front-right wheel", "source": "wheel/tire"}],
+        [{"strongest_location": "front-right wheel", "suspected_source": "wheel/tire"}],
         summary,
         [],
         content_width=300.0,

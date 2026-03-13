@@ -169,18 +169,14 @@ class TestSelectTopCauses:
         assert len(result) <= 2
 
     def test_best_per_source_group_selected(self) -> None:
-        """Two findings for the same source → only the higher-confidence one.
-
-        select_top_causes maps suspected_source → 'source' in its output.
-        """
+        """Two findings for the same source → only the higher-confidence one."""
         findings = [
             make_finding_payload(suspected_source="wheel", confidence=0.90),
             make_finding_payload(suspected_source="wheel", confidence=0.60),
             make_finding_payload(suspected_source="tire", confidence=0.80),
         ]
         result = select_top_causes(findings, max_causes=3)
-        # Output uses 'source', not 'suspected_source'
-        sources = [f.get("source") for f in result]
+        sources = [f.get("suspected_source") for f in result]
         # "wheel" should appear exactly once (best representative)
         assert sources.count("wheel") == 1
 

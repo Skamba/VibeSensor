@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, NotRequired, Required, TypeAlias, TypedDict, TypeGuard
 
+from ..domain.finding import PhaseEvidence as PhaseEvidence  # re-export from domain
 from ..json_types import JsonObject, JsonValue
 from ..json_types import is_json_object as is_json_object  # re-export canonical source
 from .phase_segmentation import DrivingPhase
@@ -43,11 +44,6 @@ class AmplitudeMetric(TypedDict):
     value: float | None
     units: str
     definition: JsonValue
-
-
-class PhaseEvidence(TypedDict, total=False):
-    cruise_fraction: float
-    phases_detected: list[str]
 
 
 class MatchedPoint(TypedDict, total=False):
@@ -117,10 +113,9 @@ class FindingPayload(TypedDict, total=False):
     amplitude_metric: Required[AmplitudeMetric]
     confidence: Required[float | None]
     quick_checks: Required[list[JsonValue]]
-    finding_type: str
+    finding_kind: str
     finding_key: str
     severity: str
-    source: str
     confidence_label_key: str
     confidence_tone: str
     confidence_pct: str
@@ -152,7 +147,6 @@ class FindingPayload(TypedDict, total=False):
 
 class TopCause(TypedDict, total=False):
     finding_id: str
-    source: str
     suspected_source: str
     confidence: float | None
     confidence_label_key: str

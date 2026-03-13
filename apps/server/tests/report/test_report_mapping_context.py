@@ -58,7 +58,7 @@ def _make_cause(**overrides: object) -> dict:
     """Build a minimal cause dict."""
     base = {
         "finding_id": "F001",
-        "source": "wheel/tire",
+        "suspected_source": "wheel/tire",
         "confidence": 0.75,
         "strongest_location": "front_left",
     }
@@ -195,7 +195,7 @@ class TestObservedSignature:
         )
         sig = context.observed_signature(primary)
         assert sig.primary_system == "Wheel / Tire"
-        assert sig.strongest_sensor_location == "front_left"
+        assert sig.strongest_location == "front_left"
         assert sig.speed_band == "80-100 km/h"
         assert sig.strength_label == "Moderate (22.0 dB)"
         assert sig.strength_peak_db == pytest.approx(22.0)

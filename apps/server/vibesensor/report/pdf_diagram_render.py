@@ -355,7 +355,7 @@ def _highlight_map(top_findings: list[dict[str, object]]) -> dict[str, str]:
             continue
         loc = _canonical_location(finding.get("strongest_location"))
         if loc:
-            highlight[loc] = _source_color(finding.get("source") or finding.get("suspected_source"))
+            highlight[loc] = _source_color(finding.get("suspected_source"))
     return highlight
 
 

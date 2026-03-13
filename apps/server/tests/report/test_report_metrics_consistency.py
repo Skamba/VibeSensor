@@ -164,7 +164,7 @@ _CROSS_SECTION_FIELDS: list[tuple[str, str, str]] = [
     ("certainty_label", "certainty_label", "Certainty label"),
     ("certainty_pct", "certainty_pct", "Certainty pct"),
     ("certainty_reason", "certainty_reason", "Certainty reason"),
-    ("strongest_sensor_location", "strongest_location", "Location"),
+    ("strongest_location", "strongest_location", "Location"),
     ("speed_band", "speed_band", "Speed band"),
 ]
 
@@ -235,7 +235,7 @@ def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> 
     top_causes_actionable = [
         c
         for c in top_causes_non_ref
-        if str(c.get("source") or c.get("suspected_source") or "").strip().lower()
+        if str(c.get("suspected_source") or "").strip().lower()
         not in {"unknown_resonance", "unknown"}
         or str(c.get("strongest_location") or "").strip().lower()
         not in {"", "unknown", "not available", "n/a"}
@@ -347,9 +347,9 @@ class TestScenario2SingleWheelFault:
 
     def test_fl_localisation(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
-        loc = (rd.observed.strongest_sensor_location or "").lower()
+        loc = (rd.observed.strongest_location or "").lower()
         assert "front" in loc and "left" in loc, (
-            f"Expected front-left localisation, got '{rd.observed.strongest_sensor_location}'"
+            f"Expected front-left localisation, got '{rd.observed.strongest_location}'"
         )
 
     def test_wheel_source_identified(self, scenario: ScenarioPair) -> None:
@@ -395,9 +395,9 @@ class TestScenario3HighSpeedFault:
 
     def test_fr_localisation(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
-        loc = (rd.observed.strongest_sensor_location or "").lower()
+        loc = (rd.observed.strongest_location or "").lower()
         assert "front" in loc and "right" in loc, (
-            f"Expected front-right localisation, got '{rd.observed.strongest_sensor_location}'"
+            f"Expected front-right localisation, got '{rd.observed.strongest_location}'"
         )
 
 

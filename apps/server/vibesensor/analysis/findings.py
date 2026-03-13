@@ -62,7 +62,6 @@ from .phase_segmentation import (
     diagnostic_sample_mask,
     segment_run_phases,
 )
-from .top_cause_selection import finding_sort_key
 
 # ---------------------------------------------------------------------------
 # FindingCollection
@@ -126,19 +125,27 @@ class FindingCollection:
         ``finding_sort_key`` (quantised confidence + ranking score).
         Non-reference findings receive sequential IDs ``F001``, ``F002``, …
         """
-        refs = self.references()
-        diags = self.diagnostics()
-        infos = self.informational()
-        diags.sort(key=finding_sort_key, reverse=True)
-        infos.sort(key=finding_sort_key, reverse=True)
-        ordered = refs + diags + infos
+        paired = list(zip(self._items, self._domain_cache, strict=True))
+        refs = [(f, d) for f, d in paired if d.is_reference]
+        diags = [(f, d) for f, d in paired if d.is_diagnostic]
+        infos = [(f, d) for f, d in paired if d.is_informational]
+        diags.sort(key=lambda pair: pair[1].rank_key, reverse=True)
+        infos.sort(key=lambda pair: pair[1].rank_key, reverse=True)
+        ordered_pairs = refs + diags + infos
         counter = 0
-        for finding in ordered:
-            df = DomainFinding.from_payload(finding)
-            if not df.is_reference:
+        result: list[FindingPayload] = []
+        new_cache: list[DomainFinding] = []
+        for finding, domain_obj in ordered_pairs:
+            if not domain_obj.is_reference:
                 counter += 1
-                finding["finding_id"] = f"F{counter:03d}"
-        return ordered
+                new_id = f"F{counter:03d}"
+                finding = {**finding, "finding_id": new_id}
+                domain_obj = domain_obj.with_id(new_id)
+            result.append(finding)
+            new_cache.append(domain_obj)
+        self._items = result
+        self._domain_cache = new_cache
+        return result
 
 
 # ---------------------------------------------------------------------------
@@ -163,7 +170,7 @@ def _reference_missing_finding(
 ) -> FindingPayload:
     return {
         "finding_id": finding_id,
-        "finding_type": "reference",
+        "finding_kind": "reference",
         "suspected_source": suspected_source,
         "evidence_summary": evidence_summary,
         "frequency_hz_or_order": {**_REF_MISSING},
@@ -868,7 +875,7 @@ class PeakBin:
         finding: FindingPayload = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{self._bin_center:.0f}hz",
-            "finding_type": "informational" if self._peak_type == "transient" else "diagnostic",
+            "finding_kind": "informational" if self._peak_type == "transient" else "diagnostic",
             "severity": "info" if self._peak_type == "transient" else "diagnostic",
             "suspected_source": (
                 "baseline_noise"

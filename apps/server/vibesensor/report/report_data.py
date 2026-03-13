@@ -11,7 +11,6 @@ __all__ = [
     "CarMeta",
     "DataTrustItem",
     "NextStep",
-    "ObservedSignature",
     "PartSuggestion",
     "PatternEvidence",
     "PeakRow",
@@ -34,20 +33,6 @@ class CarMeta:
 
     name: str | None = None
     car_type: str | None = None
-
-
-@dataclass
-class ObservedSignature:
-    """The dominant vibration signature observed during the run."""
-
-    primary_system: str | None = None
-    strongest_sensor_location: str | None = None
-    speed_band: str | None = None
-    strength_label: str | None = None
-    strength_peak_db: float | None = None
-    certainty_label: str | None = None
-    certainty_pct: str | None = None
-    certainty_reason: str | None = None
 
 
 @dataclass
@@ -95,8 +80,13 @@ class DataTrustItem:
 
 @dataclass
 class PatternEvidence:
-    """Evidence summary for the dominant vibration pattern from post-analysis."""
+    """Evidence summary for the dominant vibration pattern from post-analysis.
 
+    This class also serves as the observed-signature block for the report
+    template (the ``observed`` field on :class:`ReportTemplateData`).
+    """
+
+    primary_system: str | None = None
     matched_systems: list[str] = field(default_factory=list)
     strongest_location: str | None = None
     speed_band: str | None = None
@@ -142,7 +132,7 @@ class ReportTemplateData:
     sensor_model: str | None = None
     firmware_version: str | None = None
     car: CarMeta = field(default_factory=CarMeta)
-    observed: ObservedSignature = field(default_factory=ObservedSignature)
+    observed: PatternEvidence = field(default_factory=PatternEvidence)
     system_cards: list[SystemFindingCard] = field(default_factory=list)
     next_steps: list[NextStep] = field(default_factory=list)
     data_trust: list[DataTrustItem] = field(default_factory=list)

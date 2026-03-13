@@ -12,40 +12,33 @@ from collections.abc import Sequence
 from ..domain import Finding as DomainFinding
 from ._types import CandidateFinding, FindingPayload, TopCause, is_finding, is_top_cause
 
-_UNKNOWN_LOCATION_VALUES = DomainFinding._UNKNOWN_LOCATIONS
-_PLACEHOLDER_SOURCES = DomainFinding._PLACEHOLDER_SOURCES
-
 
 def non_reference_findings(items: Sequence[object]) -> list[FindingPayload]:
     """Return well-formed finding dicts excluding ``REF_*`` entries."""
-    findings = [item for item in items if is_finding(item)]
     return [
-        finding
-        for finding in findings
-        if not str(finding.get("finding_id") or "").strip().upper().startswith("REF_")
+        item
+        for item in items
+        if is_finding(item) and not DomainFinding.from_payload(item).is_reference
     ]
 
 
 def non_reference_top_causes(items: Sequence[object]) -> list[TopCause]:
     """Return well-formed top-cause dicts excluding ``REF_*`` entries."""
     return [
-        cause
-        for cause in (item for item in items if is_top_cause(item))
-        if not str(cause.get("finding_id") or "").strip().upper().startswith("REF_")
+        item
+        for item in items
+        if is_top_cause(item) and not DomainFinding.from_payload(item).is_reference
     ]
 
 
 def is_actionable_location(location: object) -> bool:
     """Whether a strongest-location value contains actionable location data."""
-    return str(location or "").strip().lower() not in _UNKNOWN_LOCATION_VALUES
+    return str(location or "").strip().lower() not in DomainFinding._UNKNOWN_LOCATIONS
 
 
 def is_actionable_cause(cause: TopCause) -> bool:
     """Whether a cause is actionable enough to prefer in report rendering."""
-    source = str(cause.get("source") or cause.get("suspected_source") or "").strip().lower()
-    return source not in _PLACEHOLDER_SOURCES or is_actionable_location(
-        cause.get("strongest_location"),
-    )
+    return DomainFinding.from_payload(cause).is_actionable
 
 
 def select_effective_top_causes(

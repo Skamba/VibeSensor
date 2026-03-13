@@ -17,7 +17,6 @@ SensorPlacement
     A sensor's mounting position on the vehicle.
 Run
     Aggregate root representing a complete diagnostic measurement session.
-    (``DiagnosticSession`` is kept as a compatibility alias.)
 Measurement
     Value object representing a single multi-axis acceleration sample.
     (``AccelerationSample`` is kept as a compatibility alias.)
@@ -29,31 +28,29 @@ Finding
     One diagnostic conclusion or cause candidate.
 Report
     The assembled output of a diagnostic run.
-HistoryRecord
-    A persisted run with its analysis results.
 VibrationReading
     Value object representing a processed vibration measurement in dB.
 """
 
-from .analysis_window import AnalysisWindow
-from .car import Car
-from .finding import Finding, FindingKind
-from .history_record import HistoryRecord
+from .analysis_window import AnalysisWindow, DrivingPhase
+from .car import Car, TireSpec
+from .finding import Finding, FindingKind, PhaseEvidence
 from .measurement import AccelerationSample, Measurement, VibrationReading
 from .report import Report
-from .run_status import RUN_TRANSITIONS, RunStatus, can_transition_run
+from .run_status import RUN_TRANSITIONS, RunStatus, transition_run
 from .sensor import Sensor, SensorPlacement
-from .session import DiagnosticSession, Run, SessionStatus
+from .session import Run, SessionStatus
 from .speed_source import SpeedSource, SpeedSourceKind
 
 __all__ = [
     # Primary domain names (prefer these)
     "AnalysisWindow",
     "Car",
+    "DrivingPhase",
     "Finding",
     "FindingKind",
-    "HistoryRecord",
     "Measurement",
+    "PhaseEvidence",
     "RUN_TRANSITIONS",
     "Report",
     "Run",
@@ -62,10 +59,10 @@ __all__ = [
     "SensorPlacement",
     "SpeedSource",
     "SpeedSourceKind",
-    "can_transition_run",
+    "TireSpec",
+    "transition_run",
     # Existing names (backward compatibility)
     "AccelerationSample",
-    "DiagnosticSession",
     "SessionStatus",
     "VibrationReading",
 ]

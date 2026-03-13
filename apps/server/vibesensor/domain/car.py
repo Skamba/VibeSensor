@@ -1,8 +1,9 @@
 """The vehicle under test.
 
 ``Car`` owns identity, user-facing name, vehicle type, and geometry aspects
-(tire dimensions, gear ratios) that drive order analysis.  Configuration
-and persistence details remain in ``CarConfig``.
+(tire dimensions, gear ratios) that drive order analysis.  ``TireSpec``
+encapsulates the three standard tire dimensions and derived geometry.
+Configuration and persistence details remain in ``CarConfig``.
 """
 
 from __future__ import annotations
@@ -13,7 +14,51 @@ from dataclasses import dataclass, field
 
 __all__ = [
     "Car",
+    "TireSpec",
 ]
+
+
+@dataclass(frozen=True, slots=True)
+class TireSpec:
+    """Validated tire dimensions with derived geometry.
+
+    Create via :meth:`from_aspects` when reading from a ``Car.aspects``
+    dict; use the constructor directly when the three values are already
+    known and validated.
+    """
+
+    width_mm: float
+    aspect_pct: float
+    rim_in: float
+
+    @classmethod
+    def from_aspects(cls, aspects: dict[str, float]) -> TireSpec | None:
+        """Return a ``TireSpec`` if all three dimensions are present and valid."""
+        width = aspects.get("tire_width_mm")
+        aspect = aspects.get("tire_aspect_pct")
+        rim = aspects.get("rim_in")
+        if width is None or aspect is None or rim is None:
+            return None
+        if not (math.isfinite(width) and math.isfinite(aspect) and math.isfinite(rim)):
+            return None
+        if width <= 0 or aspect <= 0 or rim <= 0:
+            return None
+        return cls(width_mm=width, aspect_pct=aspect, rim_in=rim)
+
+    @property
+    def sidewall_mm(self) -> float:
+        """Tire sidewall height in millimetres."""
+        return self.width_mm * (self.aspect_pct / 100.0)
+
+    @property
+    def diameter_mm(self) -> float:
+        """Overall tire diameter in millimetres."""
+        return (self.rim_in * 25.4) + (2.0 * self.sidewall_mm)
+
+    @property
+    def circumference_m(self) -> float:
+        """Tire circumference in metres."""
+        return self.diameter_mm / 1000.0 * math.pi
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +86,11 @@ class Car:
         return self.name
 
     @property
+    def tire_spec(self) -> TireSpec | None:
+        """Parsed tire dimensions, or ``None`` if incomplete."""
+        return TireSpec.from_aspects(self.aspects)
+
+    @property
     def tire_width_mm(self) -> float | None:
         return self.aspects.get("tire_width_mm")
 
@@ -57,22 +107,7 @@ class Car:
     def tire_circumference_m(self) -> float | None:
         """Compute tire circumference in metres from aspect specs.
 
-        Uses the standard sidewall/diameter formula:
-        ``diameter = (rim_in × 25.4) + 2 × (width_mm × aspect_pct / 100)``
-        ``circumference = π × diameter``
-
         Returns ``None`` if any required dimension is missing or invalid.
         """
-        width = self.tire_width_mm
-        aspect = self.tire_aspect_pct
-        rim = self.rim_in
-        if width is None or aspect is None or rim is None:
-            return None
-        if not (math.isfinite(width) and math.isfinite(aspect) and math.isfinite(rim)):
-            return None
-        if width <= 0 or aspect <= 0 or rim <= 0:
-            return None
-        sidewall_mm = width * (aspect / 100.0)
-        diameter_mm = (rim * 25.4) + (2.0 * sidewall_mm)
-        diameter_m = diameter_mm / 1000.0
-        return diameter_m * math.pi
+        spec = self.tire_spec
+        return spec.circumference_m if spec else None

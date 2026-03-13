@@ -1,5 +1,5 @@
 """Tests for the primary domain objects: Car, Sensor, SensorPlacement, Run,
-Measurement, SpeedSource, AnalysisWindow, Finding, Report, HistoryRecord.
+Measurement, SpeedSource, AnalysisWindow, Finding, Report.
 
 Validates that the simple domain names are properly defined, importable,
 and carry the expected behavior.
@@ -16,9 +16,7 @@ from vibesensor.domain import (
     AccelerationSample,
     AnalysisWindow,
     Car,
-    DiagnosticSession,
     Finding,
-    HistoryRecord,
     Measurement,
     Report,
     Run,
@@ -36,18 +34,13 @@ _NOW = datetime(2025, 6, 15, 12, 0, 0, tzinfo=UTC)
 
 
 class TestRunAlias:
-    """Run is the primary domain name for DiagnosticSession."""
-
-    def test_run_is_diagnostic_session(self) -> None:
-        assert Run is DiagnosticSession
+    """Run is the primary domain name for a diagnostic session."""
 
     def test_run_creates_valid_session(self) -> None:
         run = Run()
         assert run.status.value == "pending"
         run.start()
         assert run.status.value == "running"
-        run.stop()
-        assert run.status.value == "stopped"
 
 
 class TestMeasurementAlias:
@@ -375,60 +368,18 @@ class TestReport:
 
 
 # ---------------------------------------------------------------------------
-# Phase 3: HistoryRecord
-# ---------------------------------------------------------------------------
-
-
-class TestHistoryRecord:
-    """HistoryRecord domain object."""
-
-    def test_complete_record(self) -> None:
-        rec = HistoryRecord(run_id="r1", status="complete", sample_count=500)
-        assert rec.is_complete
-        assert not rec.is_recording
-        assert not rec.has_error
-        assert rec.is_analyzable
-
-    def test_recording_record(self) -> None:
-        rec = HistoryRecord(run_id="r2", status="recording")
-        assert rec.is_recording
-        assert not rec.is_complete
-        assert not rec.is_analyzable
-
-    def test_error_record(self) -> None:
-        rec = HistoryRecord(
-            run_id="r3",
-            status="error",
-            sample_count=100,
-            error_message="timeout",
-        )
-        assert rec.has_error
-        assert rec.is_analyzable
-
-    def test_error_record_no_samples(self) -> None:
-        rec = HistoryRecord(run_id="r4", status="error", sample_count=0)
-        assert not rec.is_analyzable
-
-    def test_frozen(self) -> None:
-        rec = HistoryRecord(run_id="r1")
-        with pytest.raises(AttributeError):
-            rec.status = "complete"  # type: ignore[misc]
-
-
-# ---------------------------------------------------------------------------
 # Package-level imports
 # ---------------------------------------------------------------------------
 
 
 class TestPackageImports:
-    """All 10 domain objects must be importable from vibesensor.domain."""
+    """All primary domain objects must be importable from vibesensor.domain."""
 
     def test_all_ten_importable(self) -> None:
         from vibesensor.domain import (
             AnalysisWindow,
             Car,
             Finding,
-            HistoryRecord,
             Measurement,
             Report,
             Run,
@@ -438,7 +389,7 @@ class TestPackageImports:
         )
 
         # Verify they are the expected types
-        assert Run is DiagnosticSession
+        assert Run is not None
         assert Measurement is AccelerationSample
         assert Car is not None
         assert Sensor is not None
@@ -447,7 +398,6 @@ class TestPackageImports:
         assert AnalysisWindow is not None
         assert Finding is not None
         assert Report is not None
-        assert HistoryRecord is not None
 
 
 # ---------------------------------------------------------------------------
@@ -760,13 +710,11 @@ class TestReportEnrichments:
 class TestRunEnrichments:
     """Tests for enriched Run domain object."""
 
-    def test_is_complete(self) -> None:
+    def test_lifecycle_pending_to_running(self) -> None:
         run = Run()
-        assert not run.is_complete
+        assert run.status.value == "pending"
         run.start()
-        assert not run.is_complete
-        run.stop()
-        assert run.is_complete
+        assert run.status.value == "running"
 
 
 class TestCarEnrichments:
@@ -844,11 +792,3 @@ class TestSensorPlacementEnrichments:
 
     def test_position_category_other(self) -> None:
         assert SensorPlacement(code="custom_location").position_category == "other"
-
-
-class TestHistoryRecordEnrichments:
-    """Tests for enriched HistoryRecord domain object."""
-
-    def test_has_analysis(self) -> None:
-        assert HistoryRecord(run_id="r1", status="complete").has_analysis
-        assert not HistoryRecord(run_id="r1", status="recording").has_analysis

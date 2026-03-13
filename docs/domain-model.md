@@ -19,9 +19,6 @@ Measurement ──recorded in──▶ Run       ▼
   ▼                                    │ collected by
 VibrationReading (dB)                  ▼
                                  Report (assembled output)
-                                       │ persisted as
-                                       ▼
-                                 HistoryRecord
 ```
 
 ### Central objects in the workflow
@@ -43,7 +40,6 @@ VibrationReading (dB)                  ▼
 | **VibrationReading** | Processed dB value object | Severity level lookup, dB computation |
 | **SpeedSource** | Speed acquisition config | Source-kind classification, effective speed resolution |
 | **AnalysisWindow** | Analysis chunk | Phase classification, speed containment, analyzability |
-| **HistoryRecord** | Persisted run | Status queries, display helpers |
 
 ### Object containment and derivation
 
@@ -54,7 +50,6 @@ VibrationReading (dB)                  ▼
 - **AnalysisWindow** is derived from phase segmentation of a **Run**.
 - **Car** aspects (tire dimensions) drive order-analysis hypothesis generation.
 - **SpeedSource** configures how speed is obtained during a **Run**.
-- **HistoryRecord** is the persistence form of a completed **Run** with its analysis results.
 
 ## Edge adapters (not domain objects)
 
@@ -83,15 +78,14 @@ within `apps/server/vibesensor/domain/`:
 | File | Domain objects | Rationale |
 |------|---------------|-----------|
 | `measurement.py` | `AccelerationSample` (`Measurement`), `VibrationReading` | Tightly coupled raw-sample-to-reading pipeline |
-| `session.py` | `SessionStatus`, `Run` (`DiagnosticSession` alias) | Aggregate root with lifecycle status |
+| `session.py` | `SessionStatus`, `Run` | Aggregate root with in-memory lifecycle (PENDING → RUNNING) |
 | `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | Independent speed acquisition concern |
 | `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
-| `car.py` | `Car` | Vehicle geometry and tire computation |
-| `analysis_window.py` | `AnalysisWindow` | Phase-aligned analysis chunk |
-| `finding.py` | `FindingKind`, `Finding` | Richest domain object (kind, classification, ranking, scoring) |
+| `car.py` | `Car`, `TireSpec` | Vehicle geometry and tire computation |
+| `analysis_window.py` | `DrivingPhase`, `AnalysisWindow` | Driving-phase enum and phase-aligned analysis chunk |
+| `finding.py` | `FindingKind`, `PhaseEvidence`, `Finding` | Richest domain object (kind, classification, ranking, scoring, dB strength) |
 | `report.py` | `Report` | Assembled diagnostic output |
-| `history_record.py` | `HistoryRecord` | Persisted run with status queries |
-| `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `can_transition_run` | Run lifecycle state machine |
+| `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `transition_run` | Persisted run lifecycle state machine (enforcing) |
 
 All domain objects are re-exported from `vibesensor.domain` (the package
 `__init__.py`).  Consumers import from `vibesensor.domain`, not from

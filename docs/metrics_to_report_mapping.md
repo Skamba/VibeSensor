@@ -46,7 +46,7 @@ report rendering can localize them at read time.
 | Report field             | ReportTemplateData field                        | Analysis source                             | Unit / format                |
 |--------------------------|-------------------------------------------------|---------------------------------------------|------------------------------|
 | Primary system           | `observed.primary_system`                       | `top_causes[0].source` → `_human_source()`  | i18n string                  |
-| Strongest sensor         | `observed.strongest_sensor_location`            | `most_likely_origin.location` or `top_causes[0].strongest_location` | string |
+| Strongest sensor         | `observed.strongest_location`                   | `most_likely_origin.location` or `top_causes[0].strongest_location` | string |
 | Speed band               | `observed.speed_band`                           | `top_causes[0].strongest_speed_band`         | string (e.g. "80–100 km/h") |
 | Strength                 | `observed.strength_label`, `observed.strength_peak_db` | `_top_strength_values()` → `strength_text()` | `"{Label} ({db:.1f} dB)"` |
 | Certainty                | `observed.certainty_label`, `observed.certainty_pct` | `certainty_label(conf)` | `"{Label} ({pct}%)"` |
@@ -105,7 +105,7 @@ report rendering can localize them at read time.
 | Report field         | ReportTemplateData field                        | Analysis source                        | Unit / format |
 |----------------------|-------------------------------------------------|----------------------------------------|---------------|
 | Matched systems      | `pattern_evidence.matched_systems`              | `top_causes[:3].source` → `_human_source()` | list[str] |
-| Strongest location   | `pattern_evidence.strongest_location`           | Same as `observed.strongest_sensor_location` | string |
+| Strongest location   | `pattern_evidence.strongest_location`           | Same as `observed.strongest_location` | string |
 | Speed band           | `pattern_evidence.speed_band`                   | Same as `observed.speed_band`          | string        |
 | Strength             | `pattern_evidence.strength_label`, `.strength_peak_db` | Same as `observed.strength_*` | same format |
 | Certainty            | `pattern_evidence.certainty_label`, `.certainty_pct` | Same as `observed.certainty_*` | same format |
@@ -130,8 +130,9 @@ report rendering can localize them at read time.
 ## Cross-section consistency rules
 
 1. **Observed ↔ Pattern Evidence**: `strength_label`, `strength_peak_db`,
-   `certainty_label`, `certainty_pct`, `certainty_reason`, `strongest_sensor_location`,
+   `certainty_label`, `certainty_pct`, `certainty_reason`, `strongest_location`,
    and `speed_band` must be identical between `observed` and `pattern_evidence`.
+   Both fields are typed as ``PatternEvidence``.
 
 2. **Tier gating**: `certainty_tier_key` controls which sections are shown/suppressed.
    The tier is derived from the same confidence value used for `certainty_label`.

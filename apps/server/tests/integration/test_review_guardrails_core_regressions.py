@@ -12,9 +12,9 @@ import time
 
 import pytest
 
+from vibesensor.analysis.order_bands import build_order_bands
 from vibesensor.backend_types import new_car_id, sanitize_aspects
 from vibesensor.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.order_bands import build_order_bands
 from vibesensor.registry import _sanitize_name
 from vibesensor.runlog import bounded_sample
 from vibesensor.worker_pool import WorkerPool

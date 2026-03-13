@@ -10,8 +10,10 @@ import pytest
 from vibesensor.domain import (
     Measurement,
     Run,
+    RunStatus,
     SessionStatus,
     VibrationReading,
+    transition_run,
 )
 from vibesensor.strength_bands import BANDS
 from vibesensor.vibration_strength import vibration_strength_db_scalar
@@ -178,38 +180,62 @@ class TestRun:
         session.start()
         assert session.status is SessionStatus.RUNNING
 
-    def test_stop_transitions_to_stopped(self) -> None:
-        session = Run()
-        session.start()
-        session.stop()
-        assert session.status is SessionStatus.STOPPED
-
     def test_start_when_already_running_raises(self) -> None:
         session = Run()
         session.start()
         with pytest.raises(RuntimeError, match="Cannot start session"):
             session.start()
 
-    def test_start_when_stopped_raises(self) -> None:
-        session = Run()
-        session.start()
-        session.stop()
-        with pytest.raises(RuntimeError, match="Cannot start session"):
-            session.start()
-
-    def test_stop_when_pending_raises(self) -> None:
-        session = Run()
-        with pytest.raises(RuntimeError, match="Cannot stop session"):
-            session.stop()
-
-    def test_stop_when_already_stopped_raises(self) -> None:
-        session = Run()
-        session.start()
-        session.stop()
-        with pytest.raises(RuntimeError, match="Cannot stop session"):
-            session.stop()
-
     def test_analysis_settings(self) -> None:
         settings = {"tire_width_mm": 285.0, "final_drive_ratio": 3.08}
         session = Run(analysis_settings=settings)
         assert session.analysis_settings == settings
+
+
+# ---------------------------------------------------------------------------
+# transition_run
+# ---------------------------------------------------------------------------
+
+
+class TestTransitionRun:
+    """Enforcing run-status transition function."""
+
+    def test_valid_recording_to_analyzing(self) -> None:
+        result = transition_run(RunStatus.RECORDING, RunStatus.ANALYZING)
+        assert result is RunStatus.ANALYZING
+
+    def test_valid_recording_to_complete(self) -> None:
+        result = transition_run(RunStatus.RECORDING, RunStatus.COMPLETE)
+        assert result is RunStatus.COMPLETE
+
+    def test_valid_recording_to_error(self) -> None:
+        result = transition_run(RunStatus.RECORDING, RunStatus.ERROR)
+        assert result is RunStatus.ERROR
+
+    def test_valid_analyzing_to_complete(self) -> None:
+        result = transition_run(RunStatus.ANALYZING, RunStatus.COMPLETE)
+        assert result is RunStatus.COMPLETE
+
+    def test_valid_analyzing_to_error(self) -> None:
+        result = transition_run(RunStatus.ANALYZING, RunStatus.ERROR)
+        assert result is RunStatus.ERROR
+
+    def test_valid_none_to_recording(self) -> None:
+        result = transition_run(None, RunStatus.RECORDING)
+        assert result is RunStatus.RECORDING
+
+    def test_invalid_complete_to_recording_raises(self) -> None:
+        with pytest.raises(ValueError, match="Invalid run transition"):
+            transition_run(RunStatus.COMPLETE, RunStatus.RECORDING)
+
+    def test_invalid_error_to_recording_raises(self) -> None:
+        with pytest.raises(ValueError, match="Invalid run transition"):
+            transition_run(RunStatus.ERROR, RunStatus.RECORDING)
+
+    def test_invalid_none_to_analyzing_raises(self) -> None:
+        with pytest.raises(ValueError, match="Invalid run transition"):
+            transition_run(None, RunStatus.ANALYZING)
+
+    def test_accepts_plain_strings(self) -> None:
+        result = transition_run("recording", "analyzing")
+        assert result is RunStatus.ANALYZING

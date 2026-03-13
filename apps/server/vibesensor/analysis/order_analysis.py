@@ -1020,7 +1020,7 @@ def assemble_order_finding(
     finding: FindingPayload = {
         "finding_id": "F_ORDER",
         "finding_key": hypothesis.key,
-        "finding_type": "diagnostic",
+        "finding_kind": "diagnostic",
         "suspected_source": hypothesis.suspected_source,
         "evidence_summary": evidence,
         "frequency_hz_or_order": _order_label(hypothesis.order, hypothesis.order_label_base),

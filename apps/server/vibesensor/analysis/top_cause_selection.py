@@ -22,6 +22,7 @@ from ._types import FindingPayload, JsonValue, TopCause
 from .strength_labels import (
     CONFIDENCE_HIGH_THRESHOLD,
     CONFIDENCE_MEDIUM_THRESHOLD,
+    _is_negligible_band,
 )
 
 # ---------------------------------------------------------------------------
@@ -99,7 +100,6 @@ class OrderAssessment:
         df = self.domain_finding
         return {
             "finding_id": df.finding_id,
-            "source": df.suspected_source,
             "suspected_source": df.suspected_source,
             "confidence": df.confidence,
             "confidence_label_key": label_key,
@@ -114,7 +114,7 @@ class OrderAssessment:
             "weak_spatial_separation": df.weak_spatial_separation,
             "diffuse_excitation": df.diffuse_excitation,
             "diagnostic_caveat": self.diagnostic_caveat,
-            "phase_evidence": df.phase_evidence,  # type: ignore[typeddict-item]
+            "phase_evidence": df.phase_evidence,
         }
 
 
@@ -192,7 +192,7 @@ def confidence_label(
         label_key, tone = "CONFIDENCE_MEDIUM", "warn"
     else:
         label_key, tone = "CONFIDENCE_LOW", "neutral"
-    if (strength_band_key or "").strip().lower() == "negligible" and label_key == "CONFIDENCE_HIGH":
+    if _is_negligible_band(strength_band_key) and label_key == "CONFIDENCE_HIGH":
         label_key, tone = "CONFIDENCE_MEDIUM", "warn"
     return label_key, tone, pct_text
 

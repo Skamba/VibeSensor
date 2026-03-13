@@ -61,7 +61,7 @@ def test_map_summary_prefers_non_ref_top_cause_for_observed_location() -> None:
 
     data = map_summary(summary)
 
-    assert data.observed.strongest_sensor_location.lower() == "rear-left"
+    assert data.observed.strongest_location.lower() == "rear-left"
 
 
 def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeholder() -> None:
@@ -75,7 +75,7 @@ def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeho
     )
     summary["top_causes"] = [
         {
-            "source": "unknown_resonance",
+            "suspected_source": "unknown_resonance",
             "strongest_location": "unknown",
             "strongest_speed_band": "100-110 km/h",
             "confidence": 0.95,
@@ -84,14 +84,14 @@ def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeho
 
     data = map_summary(summary)
 
-    assert data.observed.strongest_sensor_location.lower() == "rear-left"
+    assert data.observed.strongest_location.lower() == "rear-left"
 
 
 def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() -> None:
     summary = _summary_with_top_order(
         {
             **_BASE_ORDER_FINDING,
-            "source": "wheel/tire",
+            "suspected_source": "wheel/tire",
             "strongest_location": "rear-left",
             "strongest_speed_band": "40-60 km/h",
             "signatures_observed": ["1x wheel order"],
@@ -99,7 +99,7 @@ def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() 
     )
     summary["top_causes"] = [
         {
-            "source": "unknown_resonance",
+            "suspected_source": "unknown_resonance",
             "strongest_location": "unknown",
             "strongest_speed_band": "100-110 km/h",
             "confidence": 0.95,
@@ -110,7 +110,7 @@ def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() 
 
     data = map_summary(summary)
 
-    assert data.observed.strongest_sensor_location.lower() == "rear-left"
+    assert data.observed.strongest_location.lower() == "rear-left"
     assert data.observed.speed_band == "40-60 km/h"
     assert data.pattern_evidence.strongest_location.lower() == "rear-left"
     assert data.pattern_evidence.speed_band == "40-60 km/h"

@@ -141,7 +141,7 @@ class TestNextStepFieldsNotRendered:
         }
         top_cause = {
             "finding_id": "F_ORDER",
-            "source": "wheel/tire",
+            "suspected_source": "wheel/tire",
             "confidence": 0.85,
             "confidence_tone": "success",
             "signatures_observed": ["1x wheel"],
@@ -252,7 +252,7 @@ class TestSystemFindingCardToneUnused:
                 "top_causes": [
                     {
                         "finding_id": "F_ORDER",
-                        "source": "wheel/tire",
+                        "suspected_source": "wheel/tire",
                         "confidence": 0.8,
                         "confidence_tone": "success",
                         "signatures_observed": ["1x wheel"],

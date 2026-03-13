@@ -103,7 +103,6 @@ files = [
   "vibesensor/json_utils.py",
   "vibesensor/locations.py",
   "vibesensor/worker_pool.py",
-  "vibesensor/order_bands.py",
   "vibesensor/payload_types.py",
   "vibesensor/protocol.py",
   "vibesensor/registry.py",
