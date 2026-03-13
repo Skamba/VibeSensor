@@ -22,6 +22,8 @@ from ..analysis._types import (
     TestStep,
 )
 from ..analysis.diagnosis_candidates import normalize_origin_location, select_effective_top_causes
+from ..domain import Finding as DomainFinding
+from ..domain import RunAnalysisResult
 from ..analysis.helpers import PHASE_I18N_KEYS
 from ..analysis.plots import PeakTableRow
 from ..analysis.strength_labels import (
@@ -61,6 +63,11 @@ class ReportMappingContext:
     Owns display-ready metadata access, primary hotspot / candidate
     selection helpers, and report-mapping decisions that were previously
     spread across helper functions and ``dict.get(...)`` calls.
+
+    Domain ``Finding`` objects are available alongside payload dicts so
+    that business decisions (classification, ranking, actionability) use
+    the domain model while rendering-level evidence detail comes from
+    the payloads.
     """
 
     meta: MetadataDict
@@ -83,6 +90,8 @@ class ReportMappingContext:
     sample_count: int
     sensor_model: str | None
     firmware_version: str | None
+    # Domain aggregate for domain-first decisions.
+    domain_aggregate: RunAnalysisResult | None = None
 
     # -- candidate selection ------------------------------------------------
 
@@ -651,7 +660,13 @@ def top_strength_values(
     *,
     effective_causes: list[FindingPayload] | None = None,
 ) -> float | None:
-    """Return the best available vibration strength in dB for report text."""
+    """Return the best available vibration strength in dB for report text.
+
+    .. deprecated::
+        Prefer ``RunAnalysisResult.top_strength_db()`` when a domain
+        aggregate is available.  This function remains as a fallback for
+        boundary paths where only the raw summary dict is available.
+    """
     causes = effective_causes if effective_causes is not None else summary.get("top_causes", [])
     all_findings = summary.get("findings", [])
     for cause in causes:
@@ -666,6 +681,11 @@ def top_strength_values(
             db = finding_strength_db(finding)
             if db is not None:
                 return db
+    return _sensor_fallback_strength_db(summary)
+
+
+def _sensor_fallback_strength_db(summary: AnalysisSummary) -> float | None:
+    """Return the best sensor-intensity dB as a last-resort fallback."""
     sensor_rows = [
         _as_float(row.get("p95_intensity_db"))
         for row in summary.get("sensor_intensity_by_location", [])
@@ -675,7 +695,13 @@ def top_strength_values(
 
 
 def has_relevant_reference_gap(findings: list[FindingPayload], primary_source: object) -> bool:
-    """Whether the report certainty should mention missing reference inputs."""
+    """Whether the report certainty should mention missing reference inputs.
+
+    .. deprecated::
+        Prefer ``RunAnalysisResult.has_relevant_reference_gap()`` when a
+        domain aggregate is available.  This function remains as a
+        boundary fallback for paths where only payload dicts exist.
+    """
     source = str(primary_source or "").strip().lower()
     for finding in findings:
         finding_id = str(finding.get("finding_id") or "").strip().upper()
@@ -857,8 +883,9 @@ def prepare_report_mapping_context(
 ) -> ReportMappingContext:
     """Extract structural summary context for report mapping.
 
-    Uses :class:`SummaryView` for typed access to summary dict fields,
-    eliminating scattered ``.get()`` chains and type coercion.
+    Builds a domain ``RunAnalysisResult`` aggregate from the summary dict
+    so that downstream business decisions (effective-cause selection,
+    reference-gap detection, strength lookup) are domain-first.
     """
     view = SummaryView(summary)
     meta = view.metadata
@@ -876,6 +903,9 @@ def prepare_report_mapping_context(
     origin = view.origin
     origin_location = normalized_origin_location(origin)
     sensor_locations_active = view.sensor_locations_active
+
+    # Build domain aggregate for domain-first decisions downstream
+    domain_aggregate = RunAnalysisResult.from_summary(summary)
 
     return ReportMappingContext(
         meta=meta,
@@ -897,6 +927,7 @@ def prepare_report_mapping_context(
         sample_count=view.row_count,
         sensor_model=view.sensor_model,
         firmware_version=view.firmware_version,
+        domain_aggregate=domain_aggregate,
     )
 
 
@@ -907,9 +938,44 @@ def resolve_primary_report_candidate(
     tr: Callable[..., str],
     lang: str,
 ) -> PrimaryCandidateContext:
-    """Resolve the primary candidate and all derived certainty fields."""
+    """Resolve the primary candidate and all derived certainty fields.
+
+    Uses domain ``Finding`` objects for classification and ranking
+    decisions, falling back to payload dicts only for rendering-level
+    evidence detail.
+    """
     primary_candidate = context.top_report_candidate()
-    if primary_candidate:
+    aggregate = context.domain_aggregate
+
+    if primary_candidate and aggregate:
+        # Domain-first: use the aggregate's effective top causes
+        effective = aggregate.effective_top_causes()
+        domain_primary = effective[0] if effective else aggregate.primary_finding
+        if domain_primary:
+            primary_source = domain_primary.suspected_source
+            primary_system = human_source(primary_source, tr=tr)
+            primary_location = context.origin_location or (
+                domain_primary.strongest_location or tr("UNKNOWN")
+            )
+            primary_speed = str(
+                domain_primary.strongest_speed_band
+                or primary_candidate.get("speed_band")
+                or tr("UNKNOWN"),
+            )
+            confidence = domain_primary.effective_confidence
+        else:
+            primary_source = primary_candidate.get("suspected_source")
+            primary_system = human_source(primary_source, tr=tr)
+            primary_location = context.origin_location or str(
+                primary_candidate.get("strongest_location") or tr("UNKNOWN"),
+            )
+            primary_speed = str(
+                primary_candidate.get("strongest_speed_band")
+                or primary_candidate.get("speed_band")
+                or tr("UNKNOWN"),
+            )
+            confidence = extract_confidence(primary_candidate)
+    elif primary_candidate:
         primary_source = primary_candidate.get("suspected_source")
         primary_system = human_source(primary_source, tr=tr)
         primary_location = context.origin_location or str(
@@ -928,13 +994,29 @@ def resolve_primary_report_candidate(
         primary_speed = tr("UNKNOWN")
         confidence = 0.0
 
-    strength_db = top_strength_values(summary, effective_causes=context.top_causes)
+    # Domain-first strength and reference gap detection
+    if aggregate:
+        strength_db = aggregate.top_strength_db()
+        # Fall back to sensor intensity if domain aggregate has no strength
+        if strength_db is None:
+            strength_db = _sensor_fallback_strength_db(summary)
+        has_ref_gaps = aggregate.has_relevant_reference_gap(
+            str(primary_source) if primary_source else "unknown",
+        )
+        weak_spatial = (
+            aggregate.primary_finding.weak_spatial_separation
+            if aggregate.primary_finding
+            else False
+        )
+    else:
+        strength_db = top_strength_values(summary, effective_causes=context.top_causes)
+        weak_spatial = bool(
+            primary_candidate.get("weak_spatial_separation") if primary_candidate else False,
+        )
+        has_ref_gaps = has_relevant_reference_gap(context.findings, primary_source)
+
     strength_text_value = strength_text(strength_db, lang=lang)
-    weak_spatial = bool(
-        primary_candidate.get("weak_spatial_separation") if primary_candidate else False,
-    )
     sensor_count = resolve_sensor_count(summary, context.sensor_locations_active)
-    has_ref_gaps = has_relevant_reference_gap(context.findings, primary_source)
     strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
     certainty_key, certainty_label_text, certainty_pct, certainty_reason = certainty_label(
         confidence,
