@@ -570,10 +570,10 @@ class AnalysisWindow:
 class Finding:
     """One diagnostic conclusion or cause candidate from analysis.
 
-    This is the first-class domain object for a finding. The existing
-    ``Finding`` TypedDict in ``analysis._types`` remains as the
-    serialization/payload shape; this domain object provides typed
-    access and behavior.
+    This is the first-class domain object for a finding.
+    ``FindingPayload`` (the TypedDict in ``analysis._types``) remains as
+    the serialization/payload shape; use :meth:`from_payload` to create a
+    domain ``Finding`` from a payload dict.
 
     ``finding_id`` is assigned during finalization (``F001``, ``F002``, …).
     ``suspected_source`` identifies the mechanical component suspected of
@@ -589,6 +589,51 @@ class Finding:
     strongest_location: str | None = None
     strongest_speed_band: str | None = None
     peak_classification: str = ""
+
+    # -- factories ---------------------------------------------------------
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, object]) -> Finding:
+        """Create a domain Finding from a ``FindingPayload`` dict.
+
+        Extracts the subset of fields that the domain object cares about,
+        ignoring serialization-only keys present in the full payload.
+        """
+
+        def _str(key: str) -> str:
+            v = payload.get(key)
+            return str(v) if v is not None else ""
+
+        conf_raw = payload.get("confidence")
+        confidence: float | None = None
+        if conf_raw is not None:
+            try:
+                confidence = float(conf_raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                pass
+
+        freq_raw = payload.get("frequency_hz") or payload.get("frequency_hz_or_order")
+        frequency_hz: float | None = None
+        if freq_raw is not None:
+            try:
+                frequency_hz = float(freq_raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                pass
+
+        loc = payload.get("strongest_location")
+        band = payload.get("strongest_speed_band")
+
+        return cls(
+            finding_id=_str("finding_id"),
+            suspected_source=_str("suspected_source"),
+            confidence=confidence,
+            frequency_hz=frequency_hz,
+            order=_str("order"),
+            severity=_str("severity"),
+            strongest_location=str(loc) if loc is not None else None,
+            strongest_speed_band=str(band) if band is not None else None,
+            peak_classification=_str("peak_classification"),
+        )
 
     # -- classification ----------------------------------------------------
 
@@ -637,6 +682,67 @@ class Report:
     sample_count: int = 0
     sensor_count: int = 0
     finding_count: int = 0
+
+    # -- factories ---------------------------------------------------------
+
+    @classmethod
+    def from_summary(cls, summary: dict[str, object]) -> Report:
+        """Create a domain Report from a ``SummaryData`` dict.
+
+        Extracts the key metadata fields from the analysis summary to build
+        a high-level domain view of the report.
+        """
+        meta = summary.get("metadata") or {}
+        if not isinstance(meta, dict):
+            meta = {}
+
+        car_cfg = meta.get("car")
+        car_name: str | None = None
+        car_type: str | None = None
+        if isinstance(car_cfg, dict):
+            raw_name = car_cfg.get("name")
+            car_name = str(raw_name) if raw_name else None
+            raw_type = car_cfg.get("car_type")
+            car_type = str(raw_type) if raw_type else None
+
+        findings = summary.get("findings")
+        finding_count = len(findings) if isinstance(findings, list) else 0
+
+        rows = summary.get("rows")
+        sample_count = int(rows) if isinstance(rows, (int, float, str)) else 0
+
+        sensor_count_raw = summary.get("sensor_count_used")
+        sensor_count = (
+            int(sensor_count_raw) if isinstance(sensor_count_raw, (int, float, str)) else 0
+        )
+
+        duration_s = summary.get("duration_s")
+        duration_text: str | None = None
+        if duration_s is not None:
+            try:
+                secs = float(duration_s)  # type: ignore[arg-type]
+                mins = int(secs // 60)
+                rem = int(secs % 60)
+                duration_text = f"{mins}:{rem:02d}" if mins else f"{rem}s"
+            except (TypeError, ValueError):
+                pass
+
+        date_str = ""
+        report_date = summary.get("report_date")
+        if isinstance(report_date, str):
+            date_str = report_date
+
+        return cls(
+            run_id=str(summary.get("run_id", "")),
+            lang=str(summary.get("lang", "en")),
+            car_name=car_name,
+            car_type=car_type,
+            date_str=date_str,
+            duration_text=duration_text,
+            sample_count=sample_count,
+            sensor_count=sensor_count,
+            finding_count=finding_count,
+        )
 
 
 @dataclass(frozen=True, slots=True)
