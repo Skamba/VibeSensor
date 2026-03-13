@@ -11,12 +11,20 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
-from typing import ClassVar, Final
+from typing import ClassVar, Final, TypedDict
 
 __all__ = [
     "Finding",
     "FindingKind",
+    "PhaseEvidence",
 ]
+
+
+class PhaseEvidence(TypedDict, total=False):
+    """Phase context evidence attached to a finding."""
+
+    cruise_fraction: float
+    phases_detected: list[str]
 
 
 class FindingKind(StrEnum):
@@ -77,7 +85,8 @@ class Finding:
     dominance_ratio: float | None = None
     diffuse_excitation: bool = False
     weak_spatial_separation: bool = False
-    phase_evidence: dict[str, float] | None = field(default=None, hash=False)
+    vibration_strength_db: float | None = None
+    phase_evidence: PhaseEvidence | None = field(default=None, hash=False)
 
     def __post_init__(self) -> None:
         """Auto-derive ``kind`` when constructed directly without explicit kind."""
@@ -171,9 +180,20 @@ class Finding:
                 pass
 
         phase_ev = payload.get("phase_evidence")
-        phase_evidence: dict[str, float] | None = None
+        phase_evidence: PhaseEvidence | None = None
         if isinstance(phase_ev, dict):
-            phase_evidence = phase_ev
+            phase_evidence = phase_ev  # type: ignore[assignment]
+
+        # Extract vibration_strength_db from evidence_metrics
+        vib_db: float | None = None
+        ev_metrics = payload.get("evidence_metrics")
+        if isinstance(ev_metrics, dict):
+            raw_db = ev_metrics.get("vibration_strength_db")
+            if raw_db is not None:
+                try:
+                    vib_db = float(raw_db)
+                except (TypeError, ValueError):
+                    pass
 
         finding_id = _str("finding_id")
         severity = _str("severity")
@@ -196,6 +216,7 @@ class Finding:
             dominance_ratio=dominance_ratio,
             diffuse_excitation=bool(payload.get("diffuse_excitation", False)),
             weak_spatial_separation=bool(payload.get("weak_spatial_separation", False)),
+            vibration_strength_db=vib_db,
             phase_evidence=phase_evidence,
         )
 
@@ -207,7 +228,7 @@ class Finding:
         severity: str,
     ) -> FindingKind:
         """Derive FindingKind from explicit ``finding_type`` or infer from fields."""
-        explicit = payload.get("finding_type")
+        explicit = payload.get("finding_kind") or payload.get("finding_type")
         if isinstance(explicit, str):
             normed = explicit.strip().lower()
             if normed == "reference":

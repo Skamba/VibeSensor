@@ -16,11 +16,11 @@ import pytest
 
 import vibesensor.locations as locations_mod
 import vibesensor.udp_control_tx as udp_control_tx_mod
+from vibesensor.analysis.order_bands import as_float_or_none as order_bands_as_float_or_none
 from vibesensor.analysis_settings import sanitize_settings
 from vibesensor.car_library import CAR_LIBRARY, get_models_for_brand_type, get_variants_for_model
 from vibesensor.gps_speed import GPSSpeedMonitor
 from vibesensor.locations import is_wheel_location
-from vibesensor.order_bands import as_float_or_none as order_bands_as_float_or_none
 from vibesensor.registry import ClientRegistry
 from vibesensor.settings_store import PersistenceError, SettingsStore
 from vibesensor.udp_control_tx import UDPControlPlane

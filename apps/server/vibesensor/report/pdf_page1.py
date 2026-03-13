@@ -240,7 +240,7 @@ def _draw_observed_signature_panel(
         ox,
         oy,
         tr("STRONGEST_SENSOR"),
-        _safe(data.observed.strongest_sensor_location, na),
+        _safe(data.observed.strongest_location, na),
         label_w=OBSERVED_LABEL_W,
     )
     oy -= obs_step

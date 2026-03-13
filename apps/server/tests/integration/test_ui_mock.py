@@ -51,7 +51,7 @@ def test_ui_analysis_fields() -> None:
     causes = summary["top_causes"]
     assert isinstance(causes, list) and len(causes) > 0, "No top causes found"
     top = causes[0]
-    assert "source" in top, "Missing 'source' in top cause"
+    assert "suspected_source" in top, "Missing 'suspected_source' in top cause"
     assert "confidence" in top, "Missing 'confidence' in top cause"
     assert isinstance(top["confidence"], (int, float)), "Confidence must be numeric"
     assert 0 <= top["confidence"] <= 1, f"Confidence out of range: {top['confidence']}"

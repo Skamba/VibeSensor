@@ -3,6 +3,11 @@
 ``RunStatus`` is a ``StrEnum`` so its members compare equal to plain
 strings (``RunStatus.COMPLETE == "complete"``), preserving backward
 compatibility with SQLite storage and existing dict-based code paths.
+
+This tracks the *persisted* run lifecycle in the database.  The
+*in-memory* session lifecycle is tracked by ``SessionStatus`` in
+``domain/session.py`` (PENDING → RUNNING).  Route handlers bridge the
+two models; see ``session.py`` module docstring for details.
 """
 
 from __future__ import annotations
@@ -13,7 +18,7 @@ from typing import Final
 __all__ = [
     "RunStatus",
     "RUN_TRANSITIONS",
-    "can_transition_run",
+    "transition_run",
 ]
 
 
@@ -35,9 +40,18 @@ RUN_TRANSITIONS: Final[dict[RunStatus | None, frozenset[RunStatus]]] = {
 }
 
 
-def can_transition_run(
+def transition_run(
     current_status: RunStatus | str | None,
     target_status: RunStatus | str,
-) -> bool:
-    """Return whether a run can legally move from *current_status* to *target_status*."""
-    return target_status in RUN_TRANSITIONS.get(current_status, frozenset())  # type: ignore[arg-type]
+) -> RunStatus:
+    """Validate and return *target_status* if the transition is legal.
+
+    Raises
+    ------
+    ValueError
+        If *current_status* → *target_status* is not a valid transition
+        according to :data:`RUN_TRANSITIONS`.
+    """
+    if target_status in RUN_TRANSITIONS.get(current_status, frozenset()):  # type: ignore[arg-type]
+        return RunStatus(target_status)
+    raise ValueError(f"Invalid run transition: {current_status!r} → {target_status!r}")

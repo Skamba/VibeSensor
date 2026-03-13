@@ -94,14 +94,14 @@ class TestReportMetadataCompleteness:
 class TestReferenceFindingDistinguishability:
     """Reference-gap findings must remain distinct from diagnostic findings."""
 
-    def test_reference_finding_has_finding_type_field(self) -> None:
+    def test_reference_finding_has_finding_kind_field(self) -> None:
         reference = _reference_missing_finding(
             finding_id="REF_SPEED",
             suspected_source="unknown",
             evidence_summary="Speed data missing",
             quick_checks=["Check GPS"],
         )
-        assert reference.get("finding_type") == "reference"
+        assert reference.get("finding_kind") == "reference"
 
     def test_reference_findings_excluded_from_top_causes(self) -> None:
         reference = _reference_missing_finding(
@@ -130,7 +130,7 @@ class TestReferenceFindingDistinguishability:
                 evidence_summary="missing",
                 quick_checks=[],
             )
-            assert reference.get("finding_type") == "reference"
+            assert reference.get("finding_kind") == "reference"
 
     def test_reference_finding_confidence_is_none(self) -> None:
         reference = _reference_missing_finding(

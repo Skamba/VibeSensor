@@ -6,7 +6,6 @@ import asyncio
 from typing import TYPE_CHECKING, Never, cast
 
 from ..backend_types import HistoryRunListEntryPayload, HistoryRunPayload
-from ..domain import HistoryRecord
 from ..exceptions import AnalysisNotReadyError, RunNotFoundError
 from ..history_db import RunStatus
 from ..json_types import JsonObject, is_json_object
@@ -32,11 +31,6 @@ class HistoryRunService:
             "list[HistoryRunListEntryPayload]",
             await asyncio.to_thread(self._history_db.list_runs),
         )
-
-    async def list_history_records(self) -> list[HistoryRecord]:
-        """Return all runs as domain ``HistoryRecord`` value objects."""
-        raw_runs = await asyncio.to_thread(self._history_db.list_runs)
-        return [_to_history_record(r) for r in raw_runs]
 
     async def get_run(self, run_id: str) -> HistoryRunPayload:
         run = await async_require_run(self._history_db, run_id)
@@ -105,19 +99,3 @@ def raise_delete_run_error(reason: str | None) -> Never:
             status="in_progress",
         )
     raise AnalysisNotReadyError("Cannot delete run at this time", status="active")
-
-
-def _to_history_record(raw: JsonObject) -> HistoryRecord:
-    """Convert a raw history DB dict to a domain ``HistoryRecord``."""
-    end_time = raw.get("end_time_utc")
-    error_msg = raw.get("error_message")
-    raw_count = raw.get("sample_count")
-    status_str = str(raw.get("status", ""))
-    return HistoryRecord(
-        run_id=str(raw.get("run_id", "")),
-        status=RunStatus(status_str) if status_str else RunStatus.RECORDING,
-        start_time_utc=str(raw.get("start_time_utc", "")),
-        end_time_utc=str(end_time) if isinstance(end_time, str) else None,
-        sample_count=int(raw_count) if isinstance(raw_count, int) else 0,
-        error_message=str(error_msg) if error_msg else None,
-    )

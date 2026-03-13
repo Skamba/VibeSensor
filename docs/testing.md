@@ -49,7 +49,7 @@ apps/server/tests/
 | `vibesensor/processing/*` | `apps/server/tests/processing/` |
 | `vibesensor/ws_hub.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
 | `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
-| `vibesensor/order_bands.py` | `apps/server/tests/diagnostics/` |
+| `vibesensor/analysis/order_bands.py` | `apps/server/tests/diagnostics/` |
 | `vibesensor/backend_types.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |
 | `vibesensor/gps_speed.py` | `apps/server/tests/gps/` |
 | `vibesensor/protocol.py`, `udp_*.py` | `apps/server/tests/protocol/` |

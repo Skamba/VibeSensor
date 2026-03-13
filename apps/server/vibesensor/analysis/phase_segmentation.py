@@ -16,27 +16,15 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from enum import StrEnum
 from typing import TYPE_CHECKING
 
+from ..domain import AnalysisWindow
+from ..domain.analysis_window import DrivingPhase
 from ..json_types import JsonObject
+from ..json_utils import as_float_or_none as _as_float
 
 if TYPE_CHECKING:
     from ._types import PhaseSummary
-
-from ..domain import AnalysisWindow
-from ..json_utils import as_float_or_none as _as_float
-
-
-class DrivingPhase(StrEnum):
-    """Canonical driving-phase labels."""
-
-    IDLE = "idle"
-    ACCELERATION = "acceleration"
-    CRUISE = "cruise"
-    DECELERATION = "deceleration"
-    COAST_DOWN = "coast_down"
-    SPEED_UNKNOWN = "speed_unknown"
 
 
 # Thresholds (tuneable)

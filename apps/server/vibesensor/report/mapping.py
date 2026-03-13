@@ -41,7 +41,6 @@ from .report_data import (
     CarMeta,
     DataTrustItem,
     NextStep,
-    ObservedSignature,
     PartSuggestion,
     PatternEvidence,
     PeakRow,
@@ -129,11 +128,11 @@ class ReportMappingContext:
 
     # -- observed signature -------------------------------------------------
 
-    def observed_signature(self, primary: PrimaryCandidateContext) -> ObservedSignature:
+    def observed_signature(self, primary: PrimaryCandidateContext) -> PatternEvidence:
         """Build the observed-signature block for the report template."""
-        return ObservedSignature(
+        return PatternEvidence(
             primary_system=primary.primary_system,
-            strongest_sensor_location=primary.primary_location,
+            strongest_location=primary.primary_location,
             speed_band=primary.primary_speed,
             strength_label=primary.strength_text,
             strength_peak_db=primary.strength_db,
@@ -484,7 +483,7 @@ def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable) -> PeakRow:
 def peak_row_system_label(row: PeakTableRow, *, order: str, tr: Callable[..., str]) -> str:
     """Resolve the system label shown for one peak row."""
     order_lower = order.lower()
-    source_hint = str(row.get("source") or row.get("suspected_source") or "").strip().lower()
+    source_hint = str(row.get("source") or "").strip().lower()
     if source_hint == "wheel/tire" or "wheel" in order_lower:
         return str(tr("SOURCE_WHEEL_TIRE"))
     if source_hint == "engine" or "engine" in order_lower:
@@ -700,7 +699,7 @@ def build_system_cards(
     card_sources = context.top_causes or context.findings_non_ref or context.findings
     cards: list[SystemFindingCard] = []
     for cause in card_sources[:2]:
-        source = cause.get("source") or cause.get("suspected_source") or "unknown"
+        source = cause.get("suspected_source") or "unknown"
         source_human = human_source(source, tr=tr)
         location = str(cause.get("strongest_location") or tr("UNKNOWN"))
         signatures_human = humanize_signatures(cause.get("signatures_observed", []), lang=lang)
@@ -741,8 +740,7 @@ def build_pattern_evidence(
 ) -> PatternEvidence:
     """Build the pattern-evidence block for the report template."""
     systems_raw = [
-        human_source(cause.get("source") or cause.get("suspected_source"), tr=tr)
-        for cause in context.top_causes[:3]
+        human_source(cause.get("suspected_source"), tr=tr) for cause in context.top_causes[:3]
     ]
     systems = list(dict.fromkeys(systems_raw))
     interpretation = resolve_interpretation(context.origin, lang=lang, tr=tr)
@@ -780,9 +778,7 @@ def resolve_parts_context(
 ) -> tuple[str, str | None]:
     """Resolve source/order context used for why-parts-listed text."""
     source_for_why = str(
-        (primary_candidate.get("source") or primary_candidate.get("suspected_source"))
-        if primary_candidate
-        else "",
+        primary_candidate.get("suspected_source", "") if primary_candidate else "",
     )
     signatures = primary_candidate.get("signatures_observed", []) if primary_candidate else []
     order_label = order_label_human(lang, str(signatures[0])) if signatures else None
@@ -909,9 +905,7 @@ def resolve_primary_report_candidate(
     """Resolve the primary candidate and all derived certainty fields."""
     primary_candidate = context.top_report_candidate()
     if primary_candidate:
-        primary_source = primary_candidate.get("source") or primary_candidate.get(
-            "suspected_source"
-        )
+        primary_source = primary_candidate.get("suspected_source")
         primary_system = human_source(primary_source, tr=tr)
         primary_location = context.origin_location or str(
             primary_candidate.get("strongest_location") or tr("UNKNOWN"),
@@ -968,11 +962,11 @@ def resolve_primary_report_candidate(
     )
 
 
-def build_observed_signature(primary: PrimaryCandidateContext) -> ObservedSignature:
+def build_observed_signature(primary: PrimaryCandidateContext) -> PatternEvidence:
     """Build the observed-signature block for the report template."""
-    return ObservedSignature(
+    return PatternEvidence(
         primary_system=primary.primary_system,
-        strongest_sensor_location=primary.primary_location,
+        strongest_location=primary.primary_location,
         speed_band=primary.primary_speed,
         strength_label=primary.strength_text,
         strength_peak_db=primary.strength_db,

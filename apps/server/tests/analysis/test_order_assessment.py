@@ -164,7 +164,7 @@ class TestToTopCause:
         )
         assessment = OrderAssessment.from_finding(finding)
         top_cause = assessment.to_top_cause()
-        assert top_cause["source"] == "engine"
+        assert top_cause["suspected_source"] == "engine"
         assert top_cause["confidence"] == pytest.approx(0.75)
         assert top_cause["strongest_location"] == "front_left"
         assert top_cause["dominance_ratio"] == pytest.approx(2.5)

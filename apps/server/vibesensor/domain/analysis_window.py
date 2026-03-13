@@ -8,10 +8,23 @@ uniform for meaningful spectral and order analysis.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import StrEnum
 
 __all__ = [
     "AnalysisWindow",
+    "DrivingPhase",
 ]
+
+
+class DrivingPhase(StrEnum):
+    """Canonical driving-phase labels."""
+
+    IDLE = "idle"
+    ACCELERATION = "acceleration"
+    CRUISE = "cruise"
+    DECELERATION = "deceleration"
+    COAST_DOWN = "coast_down"
+    SPEED_UNKNOWN = "speed_unknown"
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,8 +37,7 @@ class AnalysisWindow:
 
     Phase classification
     --------------------
-    Phase strings follow the ``DrivingPhase`` enum values: ``"cruise"``,
-    ``"acceleration"``, ``"deceleration"``, ``"idle"``, ``"unknown"``.
+    Phase values follow the ``DrivingPhase`` enum.
     """
 
     start_idx: int
@@ -55,19 +67,19 @@ class AnalysisWindow:
     @property
     def is_cruising(self) -> bool:
         """Whether this window represents a constant-speed cruise phase."""
-        return self.phase.strip().lower() == "cruise"
+        return self.phase == DrivingPhase.CRUISE
 
     @property
     def is_acceleration(self) -> bool:
-        return self.phase.strip().lower() == "acceleration"
+        return self.phase == DrivingPhase.ACCELERATION
 
     @property
     def is_deceleration(self) -> bool:
-        return self.phase.strip().lower() == "deceleration"
+        return self.phase == DrivingPhase.DECELERATION
 
     @property
     def is_idle(self) -> bool:
-        return self.phase.strip().lower() == "idle"
+        return self.phase == DrivingPhase.IDLE
 
     # -- validity / filtering ----------------------------------------------
 

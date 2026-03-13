@@ -77,11 +77,11 @@ def test_select_top_causes_groups_by_source() -> None:
         },
     ]
     causes = select_top_causes(findings)
-    sources = [c["source"] for c in causes]
+    sources = [c["suspected_source"] for c in causes]
     # Two wheel/tire findings should be grouped into one cause
     assert sources.count("wheel/tire") == 1
     # The wheel/tire group representative should carry both signatures
-    wheel_cause = [c for c in causes if c["source"] == "wheel/tire"][0]
+    wheel_cause = [c for c in causes if c["suspected_source"] == "wheel/tire"][0]
     assert wheel_cause["grouped_count"] == 2
     assert len(wheel_cause["signatures_observed"]) == 2
 
@@ -160,7 +160,7 @@ def test_select_top_causes_prefers_diagnostic_over_info() -> None:
     ]
     causes = select_top_causes(findings)
     assert len(causes) == 1
-    assert causes[0]["source"] == "wheel/tire"
+    assert causes[0]["suspected_source"] == "wheel/tire"
 
 
 def test_select_top_causes_prefers_cruise_phase_evidence() -> None:
@@ -189,8 +189,8 @@ def test_select_top_causes_prefers_cruise_phase_evidence() -> None:
     causes = select_top_causes(findings)
     # Both qualify; wheel/tire (cruise dominant) should come first
     assert len(causes) == 2
-    assert causes[0]["source"] == "wheel/tire"
-    assert causes[1]["source"] == "driveline"
+    assert causes[0]["suspected_source"] == "wheel/tire"
+    assert causes[1]["suspected_source"] == "driveline"
 
 
 def test_select_top_causes_phase_evidence_in_output() -> None:
@@ -224,7 +224,7 @@ def test_select_top_causes_no_phase_evidence_still_works() -> None:
     ]
     causes = select_top_causes(findings)
     assert len(causes) == 1
-    assert causes[0]["source"] == "engine"
+    assert causes[0]["suspected_source"] == "engine"
     assert causes[0]["phase_evidence"] is None
 
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..analysis import build_order_bands, vehicle_orders_hz
 from ..constants import SECONDS_PER_MINUTE
-from ..order_bands import build_order_bands, vehicle_orders_hz
 from ..payload_types import (
     RotationalSpeedsPayload,
     RotationalSpeedValuePayload,

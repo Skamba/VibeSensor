@@ -187,11 +187,11 @@ class TestSimulatorIngestion:
         causes = self.insights.get("top_causes") or []
         assert len(causes) > 0, "No top causes in insights"
         top = causes[0]
-        assert "source" in top, "Top cause missing 'source'"
+        assert "suspected_source" in top, "Top cause missing 'suspected_source'"
         assert "confidence" in top, "Top cause missing 'confidence'"
         conf = float(top["confidence"])
         assert 0.0 <= conf <= 1.0, f"Confidence out of range: {conf}"
-        src = str(top.get("source") or "").lower()
+        src = str(top.get("suspected_source") or "").lower()
         assert "wheel" in src or "tire" in src, (
             f"Unexpected top source for one-wheel scenario: {src}"
         )

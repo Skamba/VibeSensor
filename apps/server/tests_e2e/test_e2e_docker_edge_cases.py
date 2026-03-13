@@ -754,7 +754,7 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
 
         top_causes = [c for c in insights.get("top_causes", []) if isinstance(c, dict)]
         assert top_causes, "20s run produced no top_causes"
-        top_source = str(top_causes[0].get("source") or "").lower()
+        top_source = str(top_causes[0].get("suspected_source") or "").lower()
         top_source_label = {
             "wheel/tire": "wheel / tire",
             "driveline": "driveline",

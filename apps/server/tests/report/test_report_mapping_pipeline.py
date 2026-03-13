@@ -46,7 +46,7 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
             "top_causes": [
                 {
                     "finding_id": "F001",
-                    "source": "wheel/tire",
+                    "suspected_source": "wheel/tire",
                     "strongest_location": "front-left",
                     "strongest_speed_band": "50-80 km/h",
                     "confidence": 0.71,
