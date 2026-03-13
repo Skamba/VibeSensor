@@ -26,7 +26,7 @@ VibrationReading (dB)                  ▼
 | Object | Role | Key owned behavior |
 |--------|------|--------------------|
 | **Run** | Aggregate root | Lifecycle (start/stop/stopped), status transitions, phase tracking |
-| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence thresholds, deterministic ranking, phase-adjusted scoring (flat `cruise_fraction`), vibration-source enum (`VibrationSource`), speed-band enum (`SpeedBand`), REF_ prefix cross-check warning |
+| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence thresholds, deterministic ranking, phase-adjusted scoring (flat `cruise_fraction`), vibration-source enum (`VibrationSource`), speed-band helper functions (`speed_bin_label`, `speed_band_sort_key`), REF_ prefix cross-check warning |
 | **Report** | Assembled output | Finding queries (`finding_count` property), primary-finding selection, raw temporal values (`report_date`, `duration_s`); construction from analysis summary delegated to `report/mapping.py` |
 
 ### Supporting domain objects
@@ -79,12 +79,12 @@ within `apps/server/vibesensor/domain/`:
 | File | Domain objects | Rationale |
 |------|---------------|-----------|
 | `measurement.py` | `Measurement`, `VibrationReading` | Tightly coupled raw-sample-to-reading pipeline |
-| `session.py` | `Run` | Aggregate root with in-memory lifecycle (start/stop guards, ``is_recording`` property) |
+| `run.py` | `Run` | Aggregate root with in-memory lifecycle (start/stop guards, ``is_recording`` property) |
 | `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | SpeedSourceKind StrEnum and speed acquisition concern |
 | `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
 | `car.py` | `Car`, `TireSpec` | Vehicle geometry and tire computation |
-| `analysis_window.py` | `DrivingPhase` | Driving-phase StrEnum (the `AnalysisWindow` class itself lives in `analysis/analysis_window.py`) |
-| `finding.py` | `FindingKind`, `VibrationSource`, `SpeedBand`, `Finding` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band binning, flat `cruise_fraction` for phase adjustment) |
+| `driving_phase.py` | `DrivingPhase` | Driving-phase StrEnum (the `AnalysisWindow` class itself lives in `analysis/analysis_window.py`) |
+| `finding.py` | `FindingKind`, `VibrationSource`, `Finding`, `speed_bin_label`, `speed_band_sort_key` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band helper functions, flat `cruise_fraction` for phase adjustment) |
 | `report.py` | `Report` | Assembled diagnostic output (construction from analysis summary lives in `report/mapping.py::build_report_from_summary()`) |
 | `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `transition_run` | Persisted run lifecycle state machine (enforcing) |
 

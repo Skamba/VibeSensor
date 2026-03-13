@@ -623,7 +623,13 @@ class RunRecorder:
             if self.enabled and self._run_id:
                 completed_run_id = self._persist_ready_for_analysis(self._run_id)
                 if not self._finalize_run_locked():
-                    completed_run_id = None
+                    # finalize_run may fail (e.g. DB unavailable), but
+                    # store_analysis handles the RECORDING→COMPLETE bypass
+                    # path, so schedule analysis anyway.
+                    LOGGER.warning(
+                        "finalize_run failed for %s; scheduling analysis anyway",
+                        completed_run_id,
+                    )
             snapshot = self._start_new_run_locked()
             self._live_start_mono_s = snapshot.start_mono_s
             result = self.status()
@@ -652,7 +658,13 @@ class RunRecorder:
                 return self.status()
             run_id_to_analyze = self._persist_ready_for_analysis(self._run_id)
             if self._run_id and not self._finalize_run_locked():
-                run_id_to_analyze = None
+                # finalize_run may fail (e.g. DB unavailable), but
+                # store_analysis handles the RECORDING→COMPLETE bypass
+                # path, so schedule analysis anyway.
+                LOGGER.warning(
+                    "finalize_run failed for %s; scheduling analysis anyway",
+                    self._run_id,
+                )
             self._stop_session_locked()
             result = self.status()
         if run_id_to_analyze and self._history_db is not None:

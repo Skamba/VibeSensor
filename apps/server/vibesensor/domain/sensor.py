@@ -1,7 +1,6 @@
 """Sensor identity and mounting-position domain objects.
 
-``SensorPlacement`` is a sensor's mounting position on the vehicle, owning
-position category classification (wheel, drivetrain, body).
+``SensorPlacement`` is a sensor's mounting position on the vehicle.
 
 ``Sensor`` is a physical accelerometer node, owning identity, user-assigned
 name, and its optional placement.
@@ -10,9 +9,6 @@ name, and its optional placement.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar
-
-from vibesensor.locations import WHEEL_LOCATION_CODES
 
 __all__ = [
     "Sensor",
@@ -24,9 +20,6 @@ __all__ = [
 class SensorPlacement:
     """A sensor's mounting position on the vehicle.
 
-    Replaces stringly-typed location handling with a first-class value
-    object that carries identity, classification, and display helpers.
-
     ``code`` is the canonical location code (e.g. ``"front_left_wheel"``).
     ``label`` is the human-readable display name (e.g. ``"Front Left Wheel"``).
     """
@@ -34,53 +27,9 @@ class SensorPlacement:
     code: str
     label: str = ""
 
-    # -- classification ----------------------------------------------------
-
-    _WHEEL_CODES: ClassVar[frozenset[str]] = WHEEL_LOCATION_CODES
-
-    _DRIVETRAIN_CODES: ClassVar[frozenset[str]] = frozenset(
-        {
-            "transmission",
-            "driveshaft_tunnel",
-        },
-    )
-
-    _BODY_CODES: ClassVar[frozenset[str]] = frozenset(
-        {
-            "driver_seat",
-            "front_passenger_seat",
-            "rear_left_seat",
-            "rear_center_seat",
-            "rear_right_seat",
-            "trunk",
-        },
-    )
-
-    @property
-    def is_wheel(self) -> bool:
-        """Whether this placement is on a wheel/corner position."""
-        return self.code in self._WHEEL_CODES
-
-    @property
-    def is_drivetrain(self) -> bool:
-        """Whether this placement is on a drivetrain component."""
-        return self.code in self._DRIVETRAIN_CODES
-
-    @property
-    def is_body(self) -> bool:
-        """Whether this placement is on a body/cabin position."""
-        return self.code in self._BODY_CODES
-
-    @property
-    def position_category(self) -> str:
-        """Return a broad category: ``'wheel'``, ``'drivetrain'``, ``'body'``, or ``'other'``."""
-        if self.is_wheel:
-            return "wheel"
-        if self.is_drivetrain:
-            return "drivetrain"
-        if self.is_body:
-            return "body"
-        return "other"
+    def __post_init__(self) -> None:
+        if not self.code or not self.code.strip():
+            raise ValueError("SensorPlacement.code must be a non-empty string")
 
     @property
     def display_name(self) -> str:

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable, Mapping
-from datetime import datetime
 from typing import TYPE_CHECKING, NamedTuple
 
 from ..analysis_settings import (
@@ -17,13 +16,13 @@ from ..analysis_settings import (
     wheel_hz_from_speed_kmh,
 )
 from ..constants import MPS_TO_KMH, NUMERIC_TYPES
-from ..domain import VibrationReading
 from ..protocol import SensorFrame
 from ..run_context import (
     ANALYSIS_SETTINGS_SNAPSHOT_KEYS,
     apply_run_context_snapshot,
     order_reference_context_complete,
 )
+from ..strength_bands import bucket_for_strength
 
 if TYPE_CHECKING:
     from ..gps_speed import GPSSpeedMonitor
@@ -277,20 +276,11 @@ def build_sample_records(
         ) = extract_strength_data(metrics)
         dominant_hz = dominant_hz_from_strength(strength_metrics)
 
-        # Derive severity bucket from VibrationReading domain object to
-        # ensure the band classification is always consistent with the dB
-        # value (single source of truth via bucket_for_strength).
+        # Derive severity bucket directly from the dB value via the
+        # canonical bucket_for_strength() function (single source of truth).
         strength_bucket: str | None = None
         if vibration_strength_db is not None:
-            reading = VibrationReading(
-                timestamp=datetime.fromisoformat(timestamp_utc),
-                intensity_db=vibration_strength_db,
-                frequency_hz=dominant_hz or 0.0,
-                peak_amplitude_g=strength_peak_amp_g or 0.0,
-                noise_floor_g=strength_floor_amp_g or 0.0,
-                sensor_id=client_id,
-            )
-            strength_bucket = reading.get_severity_level()
+            strength_bucket = bucket_for_strength(vibration_strength_db)
 
         sample_rate_hz = (
             processor.latest_sample_rate_hz(record.client_id)

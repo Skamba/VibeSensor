@@ -18,8 +18,9 @@ from typing import ClassVar
 __all__ = [
     "Finding",
     "FindingKind",
-    "SpeedBand",
     "VibrationSource",
+    "speed_band_sort_key",
+    "speed_bin_label",
 ]
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,53 +54,28 @@ class FindingKind(StrEnum):
     DIAGNOSTIC = "diagnostic"
 
 
-# ── Value objects ─────────────────────────────────────────────────────────────
+# ── Speed-band helpers ────────────────────────────────────────────────────────
 
 
-@dataclass(frozen=True, slots=True)
-class SpeedBand:
-    """A speed-range bin used for amplitude-weighted matching.
+def speed_bin_label(kmh: float, bin_width: int = 10) -> str:
+    """Return a human-readable speed-bin label like ``'80-90 km/h'``."""
+    if not math.isfinite(kmh) or kmh < 0:
+        kmh = 0.0
+    low = int(kmh // bin_width) * bin_width
+    return f"{low}-{low + bin_width} km/h"
 
-    Encapsulates the encode/decode round-trip that previously lived in
-    ``_speed_bin_label`` / ``_speed_bin_sort_key`` helper functions.
-    """
 
-    low_kmh: int
-    high_kmh: int
+def speed_band_sort_key(label: str) -> int:
+    """Return an integer sort key from a label like ``'80-90 km/h'``."""
+    head = label.split(" ", 1)[0]
+    parts = head.split("-", 1)
+    try:
+        return int(parts[0])
+    except (ValueError, IndexError):
+        return 0
 
-    def __post_init__(self) -> None:
-        if self.low_kmh > self.high_kmh:
-            raise ValueError(
-                f"SpeedBand low_kmh ({self.low_kmh}) must be <= high_kmh ({self.high_kmh})"
-            )
 
-    @classmethod
-    def from_speed_kmh(cls, kmh: float, bin_width: int = 10) -> SpeedBand:
-        """Create a speed band from a speed value."""
-        if not math.isfinite(kmh) or kmh < 0:
-            kmh = 0.0
-        low = int(kmh // bin_width) * bin_width
-        return cls(low_kmh=low, high_kmh=low + bin_width)
-
-    @classmethod
-    def from_label(cls, label: str) -> SpeedBand | None:
-        """Parse a label like ``'80-100 km/h'`` back to a SpeedBand."""
-        head = label.split(" ", 1)[0]
-        parts = head.split("-", 1)
-        try:
-            return cls(low_kmh=int(parts[0]), high_kmh=int(parts[1]))
-        except (ValueError, IndexError):
-            return None
-
-    @property
-    def label(self) -> str:
-        """Human-readable speed range label."""
-        return f"{self.low_kmh}-{self.high_kmh} km/h"
-
-    @property
-    def sort_key(self) -> int:
-        """Integer sort key for ordering speed bands."""
-        return self.low_kmh
+# ── Finding ───────────────────────────────────────────────────────────────────
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,7 +114,7 @@ class Finding:
     order: str = ""
     severity: str = ""
     strongest_location: str | None = None
-    strongest_speed_band: SpeedBand | None = None
+    strongest_speed_band: str | None = None
     peak_classification: str = ""
     kind: FindingKind | None = None
 
@@ -168,10 +144,12 @@ class Finding:
             )
         if self.confidence is not None and not (0.0 <= self.confidence <= 1.0):
             raise ValueError(f"Finding.confidence must be in [0, 1], got {self.confidence}")
-        # Coerce str → SpeedBand for convenience.
-        sb = self.strongest_speed_band
-        if isinstance(sb, str):
-            object.__setattr__(self, "strongest_speed_band", SpeedBand.from_label(sb))
+        if not (0.0 <= self.cruise_fraction <= 1.0):
+            raise ValueError(
+                f"Finding.cruise_fraction must be in [0, 1], got {self.cruise_fraction}"
+            )
+        if not math.isfinite(self.ranking_score):
+            raise ValueError(f"Finding.ranking_score must be finite, got {self.ranking_score}")
 
     @staticmethod
     def _derive_kind_from_fields(
@@ -332,7 +310,7 @@ class Finding:
             order=_str("order"),
             severity=severity,
             strongest_location=str(loc) if loc is not None else None,
-            strongest_speed_band=SpeedBand.from_label(str(band)) if band is not None else None,
+            strongest_speed_band=str(band) if band is not None else None,
             peak_classification=_str("peak_classification"),
             kind=kind,
             ranking_score=ranking_score,

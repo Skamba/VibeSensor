@@ -3,9 +3,15 @@
 ``Run`` tracks the in-memory lifecycle of a single diagnostic run
 through start/stop guards.  The *persisted* run lifecycle is tracked by
 ``RunStatus`` in ``domain/run_status.py`` (RECORDING → ANALYZING →
-COMPLETE | ERROR).  Route handlers bridge the two: ``Run.start()``
-coincides with creating a DB row in RECORDING status, and ``Run.stop()``
-coincides with transitioning the DB row to ANALYZING.
+COMPLETE | ERROR).  ``RunRecorder`` (in ``metrics_log/logger.py``)
+bridges the two: ``_run_start_new()`` calls ``Run.start()`` and lazily
+creates a DB row in RECORDING status, while ``_persist_finalize_run()``
+transitions the DB row to ANALYZING when recording ends.
+
+The ``Run`` object is live only while actively recording
+(``is_recording is True``).  Once stopped, it is discarded; the
+persisted lifecycle continues via ``RunStatus`` in the database
+(ANALYZING → COMPLETE | ERROR).
 """
 
 from __future__ import annotations
@@ -25,6 +31,10 @@ class Run:
     Tracks the in-memory lifecycle for one diagnostic run.  A ``Run``
     is created, started via :meth:`start`, then ended via :meth:`stop`.
     Use the :attr:`is_recording` property to query active state.
+
+    This object is live ONLY while recording.  After ``stop()``, it is
+    discarded by ``RunRecorder``; all further lifecycle tracking is owned
+    by ``RunStatus`` (persisted in the database).
 
     Parameters
     ----------
