@@ -35,7 +35,7 @@ class Run:
     """Aggregate root for a vibration-diagnostic measurement run.
 
     Tracks the in-memory lifecycle for one diagnostic run.  The ``Run``
-    object is created with status PENDING, transitioned to RUNNING via
+    object is created in PENDING phase, transitioned to RUNNING via
     :meth:`start`, and then to STOPPED via :meth:`stop`.
 
     Parameters
@@ -49,7 +49,7 @@ class Run:
     run_id: str = field(default_factory=lambda: uuid.uuid4().hex)
     analysis_settings: dict[str, float] = field(default_factory=dict)
 
-    status: RunPhase = field(default=RunPhase.PENDING, init=False)
+    phase: RunPhase = field(default=RunPhase.PENDING, init=False)
 
     # -- lifecycle ----------------------------------------------------------
 
@@ -61,12 +61,12 @@ class Run:
         RuntimeError
             If the run has already been started.
         """
-        if self.status is not RunPhase.PENDING:
+        if self.phase is not RunPhase.PENDING:
             raise RuntimeError(
-                f"Cannot start run in '{self.status.value}' state; "
+                f"Cannot start run in '{self.phase.value}' phase; "
                 f"expected '{RunPhase.PENDING.value}'."
             )
-        self.status = RunPhase.RUNNING
+        self.phase = RunPhase.RUNNING
 
     def stop(self) -> None:
         """Transition the run to *stopped*.
@@ -76,9 +76,9 @@ class Run:
         RuntimeError
             If the run is not currently running.
         """
-        if self.status is not RunPhase.RUNNING:
+        if self.phase is not RunPhase.RUNNING:
             raise RuntimeError(
-                f"Cannot stop run in '{self.status.value}' state; "
+                f"Cannot stop run in '{self.phase.value}' phase; "
                 f"expected '{RunPhase.RUNNING.value}'."
             )
-        self.status = RunPhase.STOPPED
+        self.phase = RunPhase.STOPPED
