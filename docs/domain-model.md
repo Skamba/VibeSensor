@@ -44,7 +44,7 @@ VibrationReading (dB)                  ▼
 ### Object containment and derivation
 
 - **Sensor** contains an optional **SensorPlacement**.
-- **Run** tracks lifecycle phase (via **RunPhase**: PENDING → RUNNING → STOPPED).  Reading accumulation is handled by the recording pipeline, not the domain object.
+- **Run** tracks lifecycle via ``start()``/``stop()`` guards and an ``is_recording`` property.  Reading accumulation is handled by the recording pipeline, not the domain object.
 - **Report** contains a tuple of **Finding** instances.
 - **Finding** is derived from analysis of **AnalysisWindow** data.
 - **AnalysisWindow** is derived from phase segmentation of a **Run**.
@@ -79,7 +79,7 @@ within `apps/server/vibesensor/domain/`:
 | File | Domain objects | Rationale |
 |------|---------------|-----------|
 | `measurement.py` | `Measurement`, `VibrationReading` | Tightly coupled raw-sample-to-reading pipeline |
-| `session.py` | `RunPhase`, `Run` | Aggregate root with in-memory lifecycle (PENDING → RUNNING → STOPPED) |
+| `session.py` | `Run` | Aggregate root with in-memory lifecycle (start/stop guards, ``is_recording`` property) |
 | `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | SpeedSourceKind StrEnum and speed acquisition concern |
 | `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
 | `car.py` | `Car`, `TireSpec` | Vehicle geometry and tire computation |

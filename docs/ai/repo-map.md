@@ -33,7 +33,7 @@
 - `domain/`: DDD-aligned domain model package.  Each primary domain object
   lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
   SensorPlacement), `measurement.py` (Measurement,
-  VibrationReading), `session.py` (Run, RunPhase),
+  VibrationReading), `session.py` (Run),
   `speed_source.py` (SpeedSource), `analysis_window.py` (DrivingPhase, AnalysisWindow),
   `finding.py` (FindingKind, VibrationSource, PhaseEvidence, SpeedBand, Finding), `report.py` (Report),
   `run_status.py` (RunStatus, RUN_TRANSITIONS).  All are plain frozen dataclasses with no external coupling.
