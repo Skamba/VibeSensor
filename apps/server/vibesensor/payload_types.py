@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TypeAlias, TypedDict
+from typing import TypeAlias
+
+from typing_extensions import TypedDict
 
 from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 
