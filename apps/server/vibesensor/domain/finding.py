@@ -12,7 +12,7 @@ import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
-from typing import ClassVar, Final, TypedDict
+from typing import ClassVar, TypedDict
 
 __all__ = [
     "ConfidenceTier",
@@ -147,9 +147,6 @@ class SpeedBand:
         return self.low_kmh
 
 
-_KIND_AUTO: Final = FindingKind.DIAGNOSTIC
-"""Sentinel: when ``kind`` is left at this default during direct construction,
-``__post_init__`` derives the actual kind from ``finding_id`` / ``severity``."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -190,7 +187,7 @@ class Finding:
     strongest_location: str | None = None
     strongest_speed_band: SpeedBand | None = None
     peak_classification: str = ""
-    kind: FindingKind = FindingKind.DIAGNOSTIC
+    kind: FindingKind | None = None
 
     # Evidence and ranking fields ------------------------------------------
     ranking_score: float = 0.0
@@ -210,10 +207,10 @@ class Finding:
                 object.__setattr__(self, "suspected_source", VibrationSource(normed))
             except ValueError:
                 object.__setattr__(self, "suspected_source", VibrationSource.UNKNOWN)
-        if self.kind is _KIND_AUTO:
-            derived = self._kind_from_fields(self.finding_id, self.severity)
-            if derived is not _KIND_AUTO:
-                object.__setattr__(self, "kind", derived)
+        if self.kind is None:
+            object.__setattr__(
+                self, "kind", self._kind_from_fields(self.finding_id, self.severity),
+            )
         if self.confidence is not None and not (0.0 <= self.confidence <= 1.0):
             raise ValueError(f"Finding.confidence must be in [0, 1], got {self.confidence}")
         # Coerce str → SpeedBand for convenience.

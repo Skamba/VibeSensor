@@ -390,7 +390,6 @@ class SpeedSourceConfig:
         return SpeedSource(
             kind=self.speed_source,
             manual_speed_kmh=self.manual_speed_kph,
-            fallback_mode=self.fallback_mode,
         )
 
 

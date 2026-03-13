@@ -75,7 +75,7 @@ class TestSpeedSource:
     def test_label(self) -> None:
         assert SpeedSource(kind="gps").label == "GPS"
         assert SpeedSource(kind="obd2").label == "OBD-II"
-        assert SpeedSource(kind="manual").label == "Manual"
+        assert SpeedSource(kind="manual", manual_speed_kmh=0.0).label == "Manual"
 
     def test_frozen(self) -> None:
         src = SpeedSource()
@@ -758,7 +758,7 @@ class TestSpeedSourceEnrichments:
     def test_is_live(self) -> None:
         assert SpeedSource(kind="gps").is_live
         assert SpeedSource(kind="obd2").is_live
-        assert not SpeedSource(kind="manual").is_live
+        assert not SpeedSource(kind="manual", manual_speed_kmh=0.0).is_live
 
     def test_effective_speed_manual(self) -> None:
         ss = SpeedSource(kind="manual", manual_speed_kmh=80.0)

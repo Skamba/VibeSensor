@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import math
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 
 __all__ = [
     "Car",
@@ -35,7 +37,7 @@ class TireSpec:
     @classmethod
     def from_aspects(
         cls,
-        aspects: dict[str, float],
+        aspects: Mapping[str, float],
         *,
         deflection_factor: float = 1.0,
     ) -> TireSpec | None:
@@ -82,12 +84,15 @@ class Car:
     id: str = field(default_factory=lambda: uuid.uuid4().hex)
     name: str = "Unnamed Car"
     car_type: str = "sedan"
-    aspects: dict[str, float] = field(default_factory=dict)
+    aspects: Mapping[str, float] = field(default_factory=dict)
     variant: str | None = None
 
     def __post_init__(self) -> None:
         if not self.name or not self.name.strip():
             object.__setattr__(self, "name", "Unnamed Car")
+        # Freeze aspects to enforce immutability of the domain object.
+        if not isinstance(self.aspects, MappingProxyType):
+            object.__setattr__(self, "aspects", MappingProxyType(dict(self.aspects)))
         for key in ("tire_width_mm", "tire_aspect_pct", "rim_in"):
             val = self.aspects.get(key)
             if val is not None and (not math.isfinite(val) or val < 0):
