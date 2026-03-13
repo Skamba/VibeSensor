@@ -42,7 +42,9 @@ def _enrich_top_cause_payload(
     result["confidence_label_key"] = label_key
     result["confidence_tone"] = tone
     result["confidence_pct"] = pct_text
-    # Normalize order: prefer domain.order, fall back to payload's frequency field
+    # Normalize order: prefer domain.order, fall back to payload's
+    # frequency_hz_or_order — the payload may carry the order text there
+    # while Finding.from_payload only reads from the ``order`` key.
     order = domain.order or str(finding.get("frequency_hz_or_order") or finding.get("order") or "")
     result["order"] = order
     result["phase_evidence"] = (
