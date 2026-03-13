@@ -68,13 +68,19 @@ from .phase_segmentation import (
 # ---------------------------------------------------------------------------
 
 
-def finalize_findings(findings: list[FindingPayload]) -> list[FindingPayload]:
+def finalize_findings(
+    findings: list[FindingPayload],
+) -> tuple[list[FindingPayload], tuple[DomainFinding, ...]]:
     """Partition, rank by confidence, and assign stable ``F###`` IDs.
 
-    Returns the ordered list: references → diagnostics → informational.
-    Diagnostic and informational findings are sorted by domain rank key
-    (quantised confidence + ranking score).  Non-reference findings
-    receive sequential IDs ``F001``, ``F002``, …
+    Returns ``(payloads, domain_findings)``:
+
+    * **payloads** – the ordered list (references → diagnostics →
+      informational) with sequential ``F###`` IDs on non-reference items.
+    * **domain_findings** – corresponding domain ``Finding`` objects in
+      the same order, with updated ``finding_id`` values.
+
+    Callers that only need the payloads can ignore the second element.
     """
     pairs = [(f, DomainFinding.from_payload(f)) for f in findings]
     refs = [(f, d) for f, d in pairs if d.is_reference]
@@ -89,13 +95,28 @@ def finalize_findings(findings: list[FindingPayload]) -> list[FindingPayload]:
         reverse=True,
     )
     counter = 0
-    result: list[FindingPayload] = []
+    payload_result: list[FindingPayload] = []
+    domain_result: list[DomainFinding] = []
     for payload, domain_obj in refs + diags + infos:
         if not domain_obj.is_reference:
             counter += 1
-            payload = {**payload, "finding_id": f"F{counter:03d}"}
-        result.append(payload)
-    return result
+            new_id = f"F{counter:03d}"
+            payload = {**payload, "finding_id": new_id}
+            domain_obj = domain_obj.with_id(new_id)
+        payload_result.append(payload)
+        domain_result.append(domain_obj)
+    return payload_result, tuple(domain_result)
+
+
+def domain_findings_from_payloads(
+    payloads: list[FindingPayload],
+) -> tuple[DomainFinding, ...]:
+    """Convert finalized finding payloads to domain ``Finding`` objects.
+
+    Use when the payloads are already finalized (ranked, with ``F###``
+    IDs assigned) and domain objects are needed for core selection logic.
+    """
+    return tuple(DomainFinding.from_payload(p) for p in payloads)
 
 
 # ---------------------------------------------------------------------------
@@ -1317,4 +1338,4 @@ def _build_findings(
             run_noise_baseline_g=(run_noise_baseline_g if not use_filtered_samples else None),
         ),
     )
-    return finalize_findings(findings)
+    return finalize_findings(findings)[0]

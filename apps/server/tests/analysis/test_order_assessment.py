@@ -1,18 +1,19 @@
-"""Tests for top-cause building (_build_top_cause) and confidence_label."""
+"""Tests for top-cause enrichment and confidence_label."""
 
 from __future__ import annotations
 
 import pytest
 
 from tests.test_support.findings import make_finding_payload
-from vibesensor.analysis.top_cause_selection import _build_top_cause, confidence_label
+from vibesensor.analysis.top_cause_selection import _enrich_top_cause_payload, confidence_label
+from vibesensor.domain import Finding
 
 # ---------------------------------------------------------------------------
-# Top-cause building
+# Top-cause enrichment (boundary adapter for presentation fields)
 # ---------------------------------------------------------------------------
 
 
-class TestBuildTopCause:
+class TestEnrichTopCausePayload:
     def test_round_trip_preserves_fields(self) -> None:
         finding = make_finding_payload(
             confidence=0.75,
@@ -24,7 +25,8 @@ class TestBuildTopCause:
             diffuse_excitation=False,
             phase_evidence={"cruise_fraction": 0.8},
         )
-        top_cause = _build_top_cause(finding)
+        domain = Finding.from_payload(finding)
+        top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["suspected_source"] == "engine"
         assert top_cause["confidence"] == pytest.approx(0.75)
         assert top_cause["strongest_location"] == "front_left"
@@ -33,17 +35,22 @@ class TestBuildTopCause:
         assert top_cause["confidence_tone"] == "success"
 
     def test_none_confidence_in_top_cause(self) -> None:
-        top_cause = _build_top_cause(make_finding_payload(confidence=None))
+        finding = make_finding_payload(confidence=None)
+        domain = Finding.from_payload(finding)
+        top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["confidence"] is None
 
     def test_severity_defaults_to_diagnostic(self) -> None:
-        top_cause = _build_top_cause(make_finding_payload())
+        finding = make_finding_payload()
+        domain = Finding.from_payload(finding)
+        top_cause = _enrich_top_cause_payload(finding, domain)
         # The finding's order field should be populated without error
         assert "order" in top_cause
 
     def test_order_from_frequency_hz_or_order(self) -> None:
         finding = make_finding_payload(frequency_hz_or_order="2x engine")
-        top_cause = _build_top_cause(finding)
+        domain = Finding.from_payload(finding)
+        top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["order"] == "2x engine"
 
     def test_grouping_fields_from_payload(self) -> None:
@@ -53,25 +60,29 @@ class TestBuildTopCause:
             "grouped_count": 3,
             "diagnostic_caveat": {"_i18n_key": "SOME_CAVEAT"},
         }
-        top_cause = _build_top_cause(finding)
+        domain = Finding.from_payload(finding)
+        top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["signatures_observed"] == ["1x", "2x"]
         assert top_cause["grouped_count"] == 3
         assert top_cause["diagnostic_caveat"] == {"_i18n_key": "SOME_CAVEAT"}
 
     def test_negligible_strength_caps_high_confidence(self) -> None:
         finding = make_finding_payload(confidence=0.80)
-        top_cause = _build_top_cause(finding, strength_band_key="negligible")
+        domain = Finding.from_payload(finding)
+        top_cause = _enrich_top_cause_payload(finding, domain, strength_band_key="negligible")
         assert top_cause["confidence_label_key"] == "CONFIDENCE_MEDIUM"
         assert top_cause["confidence_tone"] == "warn"
 
     def test_phase_evidence_in_output(self) -> None:
         finding = make_finding_payload(phase_evidence={"cruise_fraction": 0.9})
-        top_cause = _build_top_cause(finding)
+        domain = Finding.from_payload(finding)
+        top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["phase_evidence"] == {"cruise_fraction": 0.9}
 
     def test_no_phase_evidence(self) -> None:
         finding = make_finding_payload(phase_evidence=None)
-        top_cause = _build_top_cause(finding)
+        domain = Finding.from_payload(finding)
+        top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["phase_evidence"] is None
 
 

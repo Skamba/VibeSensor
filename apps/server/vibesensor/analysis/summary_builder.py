@@ -14,6 +14,8 @@ from vibesensor.analysis.analysis_window import AnalysisWindow
 from vibesensor.vibration_strength import compute_db
 
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
+from ..domain import Finding as DomainFinding
+from ..domain import RunAnalysisResult
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..run_context import build_summary_warnings, order_reference_context_complete
@@ -47,6 +49,7 @@ from .findings import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
     _speed_breakdown,
+    domain_findings_from_payloads,
 )
 from .helpers import (
     PHASE_I18N_KEYS,
@@ -930,8 +933,15 @@ def build_findings_bundle(
     list[TestStep],
     list[PhaseTimelineEntry],
     list[FindingPayload],
+    tuple[DomainFinding, ...],
+    tuple[DomainFinding, ...],
 ]:
-    """Build findings plus derived diagnosis narrative fields."""
+    """Build findings plus derived diagnosis narrative fields.
+
+    Returns ``(findings, origin, test_plan, timeline, top_causes_payloads,
+    domain_findings, domain_top_causes)``.  The last two elements are the
+    domain ``Finding`` objects for consumption by ``RunAnalysisResult``.
+    """
     builder = findings_builder or _build_findings
     findings = builder(
         metadata=metadata,
@@ -945,6 +955,8 @@ def build_findings_bundle(
         per_sample_phases=prepared.per_sample_phases,
         run_noise_baseline_g=prepared.run_noise_baseline_g,
     )
+    # Create domain findings from finalized payloads
+    domain_findings = domain_findings_from_payloads(findings)
     diagnostic_findings = non_reference_findings(findings)
     most_likely_origin = summarize_origin(diagnostic_findings)
     test_plan = _merge_test_plan(findings, language)
@@ -953,8 +965,20 @@ def build_findings_bundle(
         findings,
         min_confidence=0.25,
     )
-    top_causes = select_top_causes(findings, strength_band_key=overall_strength_band_key)
-    return findings, most_likely_origin, test_plan, phase_timeline, top_causes
+    top_causes, domain_top_causes = select_top_causes(
+        findings,
+        domain_findings=domain_findings,
+        strength_band_key=overall_strength_band_key,
+    )
+    return (
+        findings,
+        most_likely_origin,
+        test_plan,
+        phase_timeline,
+        top_causes,
+        domain_findings,
+        domain_top_causes,
+    )
 
 
 def build_sensor_bundle(
@@ -1020,6 +1044,7 @@ class RunAnalysis:
         "_findings_builder",
         "_prepared",
         "_accel_stats",
+        "_analysis_result",
     )
 
     def __init__(
@@ -1038,6 +1063,7 @@ class RunAnalysis:
         self._language = normalize_lang(lang)
         self._include_samples = include_samples
         self._findings_builder = findings_builder
+        self._analysis_result: RunAnalysisResult | None = None
 
         _validate_required_strength_metrics(samples)
         self._prepared = prepare_run_data(metadata, samples, file_name=file_name)
@@ -1059,10 +1085,19 @@ class RunAnalysis:
     def language(self) -> str:
         return self._language
 
+    @property
+    def analysis_result(self) -> RunAnalysisResult | None:
+        """Domain aggregate produced by :meth:`summarize`, or ``None``."""
+        return self._analysis_result
+
     # -- orchestration -----------------------------------------------------
 
     def summarize(self) -> AnalysisSummary:
-        """Run the full analysis pipeline and return the summary dict."""
+        """Run the full analysis pipeline and return the summary dict.
+
+        Also builds a :class:`RunAnalysisResult` domain aggregate
+        accessible via :attr:`analysis_result`.
+        """
         reference_complete, run_suitability, overall_strength_band_key = (
             build_run_suitability_bundle(
                 self._metadata,
@@ -1071,7 +1106,15 @@ class RunAnalysis:
                 accel_stats=self._accel_stats,
             )
         )
-        findings, most_likely_origin, test_plan, phase_timeline, top_causes = build_findings_bundle(
+        (
+            findings,
+            most_likely_origin,
+            test_plan,
+            phase_timeline,
+            top_causes,
+            domain_findings,
+            domain_top_causes,
+        ) = build_findings_bundle(
             self._metadata,
             self._samples,
             language=self._language,
@@ -1083,6 +1126,17 @@ class RunAnalysis:
             self._samples,
             language=self._language,
             per_sample_phases=self._prepared.per_sample_phases,
+        )
+
+        # Build the domain aggregate
+        self._analysis_result = RunAnalysisResult(
+            run_id=self._prepared.run_id,
+            findings=domain_findings,
+            top_causes=domain_top_causes,
+            duration_s=self._prepared.duration_s,
+            sample_count=len(self._samples),
+            sensor_count=len(sensor_locations),
+            lang=self._language,
         )
 
         summary = build_summary_payload(
