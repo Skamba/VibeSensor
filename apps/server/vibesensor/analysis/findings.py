@@ -24,6 +24,7 @@ from ..constants import (
     SNR_LOG_DIVISOR,
     SPEED_COVERAGE_MIN_PCT,
 )
+from ..domain.core import Finding as DomainFinding
 from ..domain_models import as_float_or_none as _as_float
 from ._types import (
     FindingEvidenceMetrics,
@@ -72,19 +73,27 @@ class FindingRecord:
     """Typed accessor wrapping a ``FindingPayload`` dict.
 
     Provides property-based access, classification predicates, and source
-    normalisation so that callers no longer scatter ``.get()`` chains and
-    string operations across procedural code.
+    normalisation.  Classification logic is delegated to the domain
+    :class:`~vibesensor.domain.core.Finding` object constructed lazily
+    from the underlying dict.
 
     The underlying dict is **not** copied – mutations through the record
     are visible in the original dict and vice-versa.  This is intentional:
-    ``FindingRecord`` is an *internal convenience view*, not an immutable
-    value object.
+    ``FindingRecord`` is an *internal convenience view* that bridges the
+    dict-based analysis pipeline to the domain model.
     """
 
-    __slots__ = ("_d",)
+    __slots__ = ("_d", "_domain")
 
     def __init__(self, finding: FindingPayload) -> None:
         self._d = finding
+        self._domain: DomainFinding | None = None
+
+    def _as_domain(self) -> DomainFinding:
+        """Lazily construct a domain Finding from the underlying dict."""
+        if self._domain is None:
+            self._domain = DomainFinding.from_payload(self._d)
+        return self._domain
 
     # -- raw dict access ---------------------------------------------------
 
@@ -93,7 +102,7 @@ class FindingRecord:
         """Return the underlying ``FindingPayload`` dict."""
         return self._d
 
-    # -- identity / classification -----------------------------------------
+    # -- identity / classification (delegated to domain) -------------------
 
     @property
     def finding_id(self) -> str:
@@ -102,22 +111,22 @@ class FindingRecord:
     @property
     def is_reference(self) -> bool:
         """Whether this is a reference-data finding (``REF_*``)."""
-        return self.finding_id.strip().upper().startswith("REF_")
+        return self._as_domain().is_reference
 
     @property
     def is_informational(self) -> bool:
-        return str(self._d.get("severity") or "").strip().lower() == "info"
+        return self._as_domain().is_informational
 
     @property
     def is_diagnostic(self) -> bool:
-        return not self.is_reference and not self.is_informational
+        return self._as_domain().is_diagnostic
 
     # -- core properties ---------------------------------------------------
 
     @property
     def confidence(self) -> float:
         """Numeric confidence, defaulting to ``0.0`` when absent or None."""
-        return _as_float(self._d.get("confidence")) or 0.0
+        return self._as_domain().effective_confidence
 
     @property
     def source(self) -> str:
@@ -126,7 +135,7 @@ class FindingRecord:
     @property
     def source_normalized(self) -> str:
         """Lower-cased, stripped source string for comparison."""
-        return self.source.strip().lower()
+        return self._as_domain().source_normalized
 
     @property
     def strongest_location(self) -> str:
@@ -145,6 +154,7 @@ class FindingRecord:
     def assign_id(self, finding_id: str) -> None:
         """Set the finding_id on the underlying dict."""
         self._d["finding_id"] = finding_id
+        self._domain = None  # invalidate cached domain object
 
 
 class FindingCollection:
