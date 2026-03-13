@@ -566,7 +566,7 @@ class TestFindingEnrichments:
         assert f.phase_adjusted_score == pytest.approx(0.8 * 0.85)
 
     def test_phase_adjusted_score_full_cruise(self) -> None:
-        f = Finding(confidence=0.8, phase_evidence={"cruise_fraction": 1.0})
+        f = Finding(confidence=0.8, cruise_fraction=1.0)
         assert f.phase_adjusted_score == pytest.approx(0.8 * 1.0)
 
     def test_is_stronger_than(self) -> None:
@@ -598,8 +598,7 @@ class TestFindingEnrichments:
         assert f.dominance_ratio == 0.85
         assert f.diffuse_excitation is True
         assert f.weak_spatial_separation is True
-        assert f.phase_evidence is not None
-        assert f.phase_evidence.cruise_fraction == pytest.approx(0.6)
+        assert f.cruise_fraction == pytest.approx(0.6)
 
 
 class TestAnalysisWindowEnrichments:

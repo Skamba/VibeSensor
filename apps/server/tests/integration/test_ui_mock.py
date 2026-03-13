@@ -92,7 +92,7 @@ def test_ui_analysis_fields() -> None:
     origin = summary.get("most_likely_origin")
     assert origin is not None, "Missing 'most_likely_origin' in summary"
     assert isinstance(origin, dict)
-    assert "source" in origin, "most_likely_origin must have 'source'"
+    assert "suspected_source" in origin, "most_likely_origin must have 'suspected_source'"
     assert "location" in origin, "most_likely_origin must have 'location'"
 
     # --- Warnings (may be empty) ---

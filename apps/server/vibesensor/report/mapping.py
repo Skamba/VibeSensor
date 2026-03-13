@@ -299,7 +299,7 @@ _EMPTY_SPEED_STATS: SpeedStats = {
 _EMPTY_ORIGIN: SuspectedVibrationOrigin = {
     "location": "unknown",
     "alternative_locations": [],
-    "source": "unknown",
+    "suspected_source": "unknown",
     "dominance_ratio": None,
     "weak_spatial_separation": True,
 }
