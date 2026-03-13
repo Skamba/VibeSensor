@@ -38,8 +38,7 @@
   `finding.py` (FindingKind, VibrationSource, PhaseEvidence, SpeedBand, Finding), `report.py` (Report),
   `run_status.py` (RunStatus, RUN_TRANSITIONS).  All are plain frozen dataclasses with no external coupling.
   Domain objects own classification, ranking, actionability, surfacing,
-  and query logic; pipeline adapters (OrderAssessment) in
-  `analysis/` delegate to them.  See `docs/domain-model.md` for the full
+  and query logic; pipeline adapters in `analysis/` delegate to them.  See `docs/domain-model.md` for the full
   relationship map and modeling rules.
 - `metrics_log/`: recording pipeline package; `logger.py` owns the `RunRecorder` class (formerly `MetricsLogger`) which directly manages session state and persistence coordination (no private helper classes), enriching status/health payloads with sample counts and analysis results; `post_analysis.py` owns the background analysis queue with outcome tracking; `sample_builder.py` owns pure sample-building functions.
 - `history_db/`: SQLite-backed history and settings persistence (3 files: `__init__.py` with `HistoryDB` class consolidating connection management, settings KV, client names, and all run reads/writes; `_schema.py` with DDL and `ANALYSIS_SCHEMA_VERSION`; `_samples.py` for v2 sample serialization). `RunStatus` and state-transition logic live in `domain/run_status.py`. Incompatible older schemas raise a clear error directing the user to delete the DB file.

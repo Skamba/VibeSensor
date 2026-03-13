@@ -65,7 +65,6 @@ These types exist only at boundaries and should not own domain behavior:
 | `FindingPayload` | `analysis/_types.py` | Dict-based analysis pipeline payload |
 | `AnalysisSummary` | `analysis/_types.py` | Analysis summary TypedDict |
 | `SuspectedVibrationOrigin` | `analysis/_types.py` | Origin summary TypedDict (key: `suspected_source`) |
-| `OrderAssessment` | `analysis/top_cause_selection.py` | Report-level adapter wrapping domain `Finding`, adds aggregation fields |
 | `LocalizationAssessment` | `analysis/summary_builder.py` | Spatial interpretation of finding evidence |
 | `ReportTemplateData` | `report/report_data.py` | PDF-rendering data classes |
 | `ReportMappingContext` | `report/mapping.py` | Template mapping adapter |
@@ -101,7 +100,7 @@ individual module files, unless they need a very specific internal symbol.
 
 2. **Adapters bridge, they do not own.**  Config, payload, export, and
    persistence types convert to/from domain objects but do not duplicate
-   domain logic.  `OrderAssessment` and `LocalizationAssessment` delegate
+   domain logic.  `LocalizationAssessment` delegates
    classification and ranking to domain `Finding`.
 
 3. **Composition over inheritance.**  Domain objects compose via containment
