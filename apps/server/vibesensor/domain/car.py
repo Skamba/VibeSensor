@@ -95,7 +95,7 @@ class Car:
             object.__setattr__(self, "aspects", MappingProxyType(dict(self.aspects)))
         for key in ("tire_width_mm", "tire_aspect_pct", "rim_in"):
             val = self.aspects.get(key)
-            if val is not None and (not math.isfinite(val) or val < 0):
+            if val is not None and (not math.isfinite(val) or val <= 0):
                 raise ValueError(
                     f"Car.aspects[{key!r}] must be a positive finite number, got {val}"
                 )

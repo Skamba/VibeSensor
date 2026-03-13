@@ -21,8 +21,6 @@ Measurement
     Value object representing a single multi-axis acceleration sample.
 SpeedSource
     How vehicle speed is obtained during a run.
-AnalysisWindow
-    A contiguous aligned chunk of samples for analysis.
 Finding
     One diagnostic conclusion or cause candidate.
 Report
@@ -31,12 +29,11 @@ VibrationReading
     Value object representing a processed vibration measurement in dB.
 """
 
-from .analysis_window import AnalysisWindow, DrivingPhase
+from .analysis_window import DrivingPhase
 from .car import Car, TireSpec
 from .finding import (
     Finding,
     FindingKind,
-    PhaseEvidence,
     SpeedBand,
     VibrationSource,
 )
@@ -49,13 +46,11 @@ from .speed_source import SpeedSource, SpeedSourceKind
 
 __all__ = [
     # Primary domain names (prefer these)
-    "AnalysisWindow",
     "Car",
     "DrivingPhase",
     "Finding",
     "FindingKind",
     "Measurement",
-    "PhaseEvidence",
     "RUN_TRANSITIONS",
     "Report",
     "Run",

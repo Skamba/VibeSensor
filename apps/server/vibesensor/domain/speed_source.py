@@ -40,8 +40,14 @@ class SpeedSource:
     def __post_init__(self) -> None:
         if not isinstance(self.kind, SpeedSourceKind):
             object.__setattr__(self, "kind", SpeedSourceKind(self.kind))
-        if self.kind is SpeedSourceKind.MANUAL and self.manual_speed_kmh is None:
-            raise ValueError("SpeedSource with kind=MANUAL requires a manual_speed_kmh value")
+        if self.kind is SpeedSourceKind.MANUAL:
+            if self.manual_speed_kmh is None:
+                raise ValueError("SpeedSource with kind=MANUAL requires a manual_speed_kmh value")
+            if self.manual_speed_kmh <= 0:
+                raise ValueError(
+                    f"SpeedSource with kind=MANUAL requires a positive manual_speed_kmh, "
+                    f"got {self.manual_speed_kmh}"
+                )
 
     # -- queries -----------------------------------------------------------
 
