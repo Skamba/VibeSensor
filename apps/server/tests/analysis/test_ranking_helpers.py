@@ -28,6 +28,6 @@ def test_group_findings_by_source_preserves_ranked_signatures() -> None:
         ],
     )
 
-    assert [rep["suspected_source"] for _score, rep in grouped] == ["wheel/tire", "engine"]
+    assert [rep["suspected_source"] for _score, rep, _domain in grouped] == ["wheel/tire", "engine"]
     assert grouped[0][1]["signatures_observed"] == ["1x wheel order", "2x wheel order"]
     assert grouped[0][1]["grouped_count"] == 2

@@ -119,7 +119,7 @@ class TestReferenceFindingDistinguishability:
                 "severity": "diagnostic",
             },
         ]
-        for cause in select_top_causes(findings):
+        for cause in select_top_causes(findings)[0]:
             assert not str(cause.get("finding_id") or "").startswith("REF_")
 
     def test_all_ref_variants_have_reference_type(self) -> None:

@@ -2,7 +2,9 @@
 
 These utilities are used by both the analysis summary path and the report
 mapping path so the same non-reference/actionable selection rules stay in one
-place.
+place.  Core selection logic (``effective_top_causes``) lives on the domain
+aggregate ``RunAnalysisResult``; this module provides boundary-level helpers
+that operate on ``FindingPayload`` dicts.
 """
 
 from __future__ import annotations
@@ -14,11 +16,17 @@ from ._types import FindingPayload, is_finding
 
 
 def non_reference_findings(items: Sequence[object]) -> list[FindingPayload]:
-    """Return well-formed finding dicts excluding ``REF_*`` entries."""
+    """Return well-formed finding dicts excluding ``REF_*`` entries.
+
+    Uses a direct string prefix check on ``finding_id`` rather than domain
+    object conversion — this is intentional for boundary-level operations
+    where avoiding the overhead of ``Finding.from_payload()`` is preferred.
+    The reference-detection logic mirrors ``Finding.is_reference``.
+    """
     return [
         item
         for item in items
-        if is_finding(item) and not DomainFinding.from_payload(item).is_reference
+        if is_finding(item) and not str(item.get("finding_id", "")).upper().startswith("REF_")
     ]
 
 
@@ -29,9 +37,10 @@ def select_effective_top_causes(
     """Return report-ready cause/finding collections.
 
     Returns ``(all_findings, findings_non_ref, top_causes_all, effective_top_causes)``.
-    The effective top-cause list preserves the current preference order:
-    actionable non-reference top-causes, then non-reference findings, then
-    non-reference top-causes, then all top-causes.
+
+    The effective top-cause selection mirrors the domain logic on
+    ``RunAnalysisResult.effective_top_causes()``, applied to
+    ``FindingPayload`` dicts at the serialization boundary.
     """
     all_findings = [item for item in findings if is_finding(item)]
     findings_non_ref = non_reference_findings(all_findings)
