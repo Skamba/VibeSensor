@@ -136,7 +136,6 @@ class FindingPayload(TypedDict, total=False):
     evidence_metrics: FindingEvidenceMetrics
     next_sensor_move: JsonValue
     actions: list[TestStep]
-    _ranking_score: float
     ranking_score: float
     peak_classification: str
     phase_presence: dict[str, float] | None
@@ -229,7 +228,7 @@ class PhaseSegmentSummary(TypedDict):
     sample_count: int
 
 
-class OriginSummary(TypedDict, total=False):
+class SuspectedVibrationOrigin(TypedDict, total=False):
     location: str
     alternative_locations: list[str]
     source: str
@@ -263,7 +262,7 @@ class RunSuitabilityCheck(TypedDict):
     explanation: JsonValue
 
 
-class SummaryData(TypedDict):
+class AnalysisSummary(TypedDict):
     """Full analysis summary payload.
 
     Required fields are always set by :func:`build_summary_payload`.
@@ -301,7 +300,7 @@ class SummaryData(TypedDict):
     speed_breakdown_skipped_reason: I18nRef | None
     findings: list[FindingPayload]
     top_causes: list[TopCause]
-    most_likely_origin: OriginSummary
+    most_likely_origin: SuspectedVibrationOrigin
     test_plan: list[TestStep]
     phase_timeline: list[PhaseTimelineEntry]
     speed_stats: SpeedStats

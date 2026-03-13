@@ -54,7 +54,7 @@ class PhaseSegment:
         return AnalysisWindow(
             start_idx=self.start_idx,
             end_idx=self.end_idx,
-            phase=str(self.phase),
+            phase=self.phase,
             start_time_s=self.start_t_s,
             end_time_s=self.end_t_s,
             speed_min_kmh=self.speed_min_kmh,

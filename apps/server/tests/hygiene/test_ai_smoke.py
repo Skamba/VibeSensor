@@ -42,7 +42,7 @@ def test_smoke_health_route_registered() -> None:
     state.settings_store = MagicMock()
     state.analysis_settings = MagicMock()
     state.gps_monitor = MagicMock()
-    state.metrics_logger = MagicMock()
+    state.run_recorder = MagicMock()
     state.history_db = MagicMock()
     state.run_service = MagicMock()
     state.report_service = MagicMock()

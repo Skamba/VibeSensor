@@ -26,17 +26,17 @@ def test_collect_order_frequencies_skips_low_confidence_matches() -> None:
 def test_finalize_findings_orders_reference_diagnostic_then_info() -> None:
     findings = finalize_findings(
         [
-            {"finding_id": "F_ORDER", "confidence": 0.7, "_ranking_score": 2.0},
+            {"finding_id": "F_ORDER", "confidence": 0.7, "ranking_score": 2.0},
             {"finding_id": "REF_SPEED"},
             {
                 "finding_id": "F_PEAK",
                 "severity": "info",
                 "confidence": 0.9,
-                "_ranking_score": 5.0,
+                "ranking_score": 5.0,
             },
         ],
     )
 
     assert [finding["finding_id"] for finding in findings] == ["REF_SPEED", "F001", "F002"]
-    assert findings[1]["_ranking_score"] == 2.0
+    assert findings[1]["ranking_score"] == 2.0
     assert findings[2]["severity"] == "info"

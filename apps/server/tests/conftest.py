@@ -40,7 +40,7 @@ class FakeState:
     ws_hub: object = field(default_factory=MagicMock)
     gps_monitor: object = field(default_factory=MagicMock)
     analysis_settings: object = field(default_factory=MagicMock)
-    metrics_logger: object = field(default_factory=MagicMock)
+    run_recorder: object = field(default_factory=MagicMock)
     settings_store: object = field(default_factory=MagicMock)
     history_db: object = field(default_factory=MagicMock)
     update_manager: object = field(default_factory=MagicMock)
@@ -82,7 +82,7 @@ def fake_state() -> FakeState:
         "server_queue_drops": 0,
         "parse_errors": 0,
     }
-    state.metrics_logger.health_snapshot.return_value = {
+    state.run_recorder.health_snapshot.return_value = {
         "write_error": None,
         "analysis_in_progress": False,
         "analysis_queue_depth": 0,

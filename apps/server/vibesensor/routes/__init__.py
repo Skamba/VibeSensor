@@ -40,7 +40,7 @@ def create_router(services: RuntimeState) -> APIRouter:
             services.health_state,
             services.processor,
             services.registry,
-            services.metrics_logger,
+            services.run_recorder,
         ),
     )
     router.include_router(
@@ -60,7 +60,7 @@ def create_router(services: RuntimeState) -> APIRouter:
     )
     router.include_router(
         create_recording_routes(
-            services.metrics_logger,
+            services.run_recorder,
         ),
     )
     router.include_router(

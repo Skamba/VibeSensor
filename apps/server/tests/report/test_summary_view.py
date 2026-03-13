@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from vibesensor.analysis._types import SummaryData
+from vibesensor.analysis._types import AnalysisSummary
 from vibesensor.report.mapping import SummaryView
 
 
-def _minimal_summary(**overrides: object) -> SummaryData:
+def _minimal_summary(**overrides: object) -> AnalysisSummary:
     """Build a minimal SummaryData dict with overrides."""
     base: dict = {
         "file_name": "test",

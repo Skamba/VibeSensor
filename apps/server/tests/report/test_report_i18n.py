@@ -9,8 +9,8 @@ import pytest
 from _paths import SERVER_ROOT
 
 from vibesensor import report_i18n
-from vibesensor.analysis.pattern_parts import _DEFAULT_PARTS, why_parts_listed
 from vibesensor.analysis.strength_labels import _CERTAINTY_REASONS
+from vibesensor.report.pattern_parts import _DEFAULT_PARTS, why_parts_listed
 
 _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
 _SOURCE_ROOT = SERVER_ROOT / "vibesensor"

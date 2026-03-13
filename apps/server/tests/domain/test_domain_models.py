@@ -60,13 +60,13 @@ class TestCarConfig:
         car = CarConfig.from_dict({"id": "c1", "name": "MyCar", "type": "sedan"})
         assert car.id == "c1"
         assert car.name == "MyCar"
-        assert car.type == "sedan"
+        assert car.car_type == "sedan"
         assert isinstance(car.aspects, dict)
 
     def test_from_dict_defaults(self) -> None:
         car = CarConfig.from_dict({})
         assert car.name == "Unnamed Car"
-        assert car.type == "sedan"
+        assert car.car_type == "sedan"
 
     def test_name_truncated_at_64(self) -> None:
         long = "A" * 100
@@ -95,7 +95,7 @@ class TestCarConfig:
         [
             ({"name": "   "}, "name", "Unnamed Car"),
             ({"name": ""}, "name", "Unnamed Car"),
-            ({"type": "   "}, "type", "sedan"),
+            ({"type": "   "}, "car_type", "sedan"),
         ],
         ids=["whitespace-name", "empty-name", "whitespace-type"],
     )

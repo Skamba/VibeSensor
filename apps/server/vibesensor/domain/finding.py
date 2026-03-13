@@ -182,13 +182,13 @@ class Finding:
     """
 
     finding_id: str = ""
-    suspected_source: str = ""
+    suspected_source: VibrationSource = VibrationSource.UNKNOWN
     confidence: float | None = None
     frequency_hz: float | None = None
     order: str = ""
     severity: str = ""
     strongest_location: str | None = None
-    strongest_speed_band: str | None = None
+    strongest_speed_band: SpeedBand | None = None
     peak_classification: str = ""
     kind: FindingKind = FindingKind.DIAGNOSTIC
 
@@ -202,12 +202,24 @@ class Finding:
 
     def __post_init__(self) -> None:
         """Auto-derive ``kind`` and validate invariants."""
+        # Coerce str → VibrationSource for convenience (tests, direct construction).
+        src = self.suspected_source
+        if not isinstance(src, VibrationSource):
+            normed = str(src).strip().lower()
+            try:
+                object.__setattr__(self, "suspected_source", VibrationSource(normed))
+            except ValueError:
+                object.__setattr__(self, "suspected_source", VibrationSource.UNKNOWN)
         if self.kind is _KIND_AUTO:
             derived = self._kind_from_fields(self.finding_id, self.severity)
             if derived is not _KIND_AUTO:
                 object.__setattr__(self, "kind", derived)
         if self.confidence is not None and not (0.0 <= self.confidence <= 1.0):
             raise ValueError(f"Finding.confidence must be in [0, 1], got {self.confidence}")
+        # Coerce str → SpeedBand for convenience.
+        sb = self.strongest_speed_band
+        if isinstance(sb, str):
+            object.__setattr__(self, "strongest_speed_band", SpeedBand.from_label(sb))
         # Coerce dict → PhaseContext for convenience.
         pe = self.phase_evidence
         if isinstance(pe, dict):
@@ -229,7 +241,7 @@ class Finding:
     _QUANTISE_STEP: ClassVar[float] = 0.02
     """Confidence quantisation step to prevent jitter-driven reordering."""
 
-    _PLACEHOLDER_SOURCES: ClassVar[frozenset[str]] = frozenset(
+    _PLACEHOLDER_SOURCES: ClassVar[frozenset[VibrationSource]] = frozenset(
         {VibrationSource.UNKNOWN_RESONANCE, VibrationSource.UNKNOWN},
     )
     """Suspected sources that are considered placeholder / unresolved."""
@@ -280,8 +292,8 @@ class Finding:
         loc = payload.get("strongest_location")
         band = payload.get("strongest_speed_band")
 
-        # Evidence / ranking fields (read both new and legacy key names)
-        ranking_raw = payload.get("ranking_score") or payload.get("_ranking_score")
+        # Evidence / ranking fields
+        ranking_raw = payload.get("ranking_score")
         ranking_score = 0.0
         if ranking_raw is not None:
             try:
@@ -313,19 +325,24 @@ class Finding:
 
         finding_id = _str("finding_id")
         severity = _str("severity")
+        raw_source = _str("suspected_source", "source").strip().lower()
+        try:
+            source = VibrationSource(raw_source)
+        except ValueError:
+            source = VibrationSource.UNKNOWN
 
         # Derive kind from explicit finding_type or infer from fields
         kind = cls._derive_kind(payload, finding_id=finding_id, severity=severity)
 
         return cls(
             finding_id=finding_id,
-            suspected_source=_str("suspected_source", "source"),
+            suspected_source=source,
             confidence=confidence,
             frequency_hz=frequency_hz,
             order=_str("order"),
             severity=severity,
             strongest_location=str(loc) if loc is not None else None,
-            strongest_speed_band=str(band) if band is not None else None,
+            strongest_speed_band=SpeedBand.from_label(str(band)) if band is not None else None,
             peak_classification=_str("peak_classification"),
             kind=kind,
             ranking_score=ranking_score,
@@ -415,7 +432,7 @@ class Finding:
         placeholder value, **or** when it has a specific (non-unknown)
         location even if the source is a placeholder.
         """
-        if self.source_normalized not in self._PLACEHOLDER_SOURCES:
+        if self.suspected_source not in self._PLACEHOLDER_SOURCES:
             return True
         return not self.is_unknown_location(self.strongest_location)
 
@@ -448,16 +465,16 @@ class Finding:
 
     # -- confidence classification ------------------------------------------
 
-    _CONFIDENCE_HIGH_THRESHOLD: ClassVar[float] = 0.70
-    _CONFIDENCE_MEDIUM_THRESHOLD: ClassVar[float] = 0.40
+    CONFIDENCE_HIGH_THRESHOLD: ClassVar[float] = 0.70
+    CONFIDENCE_MEDIUM_THRESHOLD: ClassVar[float] = 0.40
 
     @property
     def confidence_tier(self) -> ConfidenceTier:
         """Classify confidence into HIGH / MEDIUM / LOW tier."""
         conf = self.effective_confidence
-        if conf >= self._CONFIDENCE_HIGH_THRESHOLD:
+        if conf >= self.CONFIDENCE_HIGH_THRESHOLD:
             return ConfidenceTier.HIGH
-        if conf >= self._CONFIDENCE_MEDIUM_THRESHOLD:
+        if conf >= self.CONFIDENCE_MEDIUM_THRESHOLD:
             return ConfidenceTier.MEDIUM
         return ConfidenceTier.LOW
 

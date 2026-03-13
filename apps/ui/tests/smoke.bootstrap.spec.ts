@@ -23,11 +23,11 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
       await fulfillJson(route, {});
     },
   });
-  await page.route("**/api/logging/start", async (route) => {
+  await page.route("**/api/recording/start", async (route) => {
     startCalls += 1;
     await fulfillJson(route, { enabled: true, current_file: "run-001.jsonl" });
   });
-  await page.route("**/api/logging/stop", async (route) => {
+  await page.route("**/api/recording/stop", async (route) => {
     stopCalls += 1;
     await fulfillJson(route, { enabled: false, current_file: null });
   });

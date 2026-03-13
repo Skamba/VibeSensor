@@ -110,7 +110,9 @@ class OrderAssessment:
             "grouped_count": self.grouped_count,
             "strongest_location": df.strongest_location,
             "dominance_ratio": df.dominance_ratio,
-            "strongest_speed_band": df.strongest_speed_band,
+            "strongest_speed_band": (
+                df.strongest_speed_band.label if df.strongest_speed_band else None
+            ),
             "weak_spatial_separation": df.weak_spatial_separation,
             "diffuse_excitation": df.diffuse_excitation,
             "diagnostic_caveat": self.diagnostic_caveat,

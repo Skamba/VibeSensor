@@ -19,13 +19,13 @@ from ..run_context import build_summary_warnings, order_reference_context_comple
 from ..runlog import parse_iso8601, utc_now_iso
 from ._types import (
     AccelStatistics,
+    AnalysisSummary,
     FindingPayload,
     I18nRef,
     IntensityRow,
     JsonObject,
     JsonValue,
     MetadataDict,
-    OriginSummary,
     PhaseSegmentSummary,
     PhaseSpeedBreakdownRow,
     PhaseSpeedStats,
@@ -35,7 +35,7 @@ from ._types import (
     Sample,
     SpeedBreakdownRow,
     SpeedStats,
-    SummaryData,
+    SuspectedVibrationOrigin,
     TestStep,
     TopCause,
     i18n_ref,
@@ -607,7 +607,7 @@ def _resolve_weak_spatial_threshold(top_finding: FindingPayload, *, hotspot: obj
     return weak_spatial_dominance_threshold(int(location_count) if location_count else None)
 
 
-def summarize_origin(findings: list[FindingPayload]) -> OriginSummary:
+def summarize_origin(findings: list[FindingPayload]) -> SuspectedVibrationOrigin:
     """Build the most-likely-origin summary from ranked diagnostic findings."""
     if not findings:
         return {
@@ -694,7 +694,7 @@ def build_summary_payload(
     speed_breakdown_skipped_reason: I18nRef | None,
     findings: list[FindingPayload],
     top_causes: list[TopCause],
-    most_likely_origin: OriginSummary,
+    most_likely_origin: SuspectedVibrationOrigin,
     test_plan: list[TestStep],
     phase_timeline: list[PhaseTimelineEntry],
     speed_stats: SpeedStats,
@@ -708,7 +708,7 @@ def build_summary_payload(
     speed_non_null_pct: float,
     accel_stats: AccelStatistics,
     amp_metric_values: list[float],
-) -> SummaryData:
+) -> AnalysisSummary:
     """Assemble the final summary payload from already-computed artifacts."""
     return {
         "file_name": file_name,
@@ -766,7 +766,7 @@ def build_summary_payload(
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-def annotate_peaks_with_order_labels(summary: SummaryData) -> None:
+def annotate_peaks_with_order_labels(summary: AnalysisSummary) -> None:
     """Back-fill peak-table order labels by matching order findings to peak rows."""
     plots = summary.get("plots")
     if not is_json_object(plots):
@@ -926,7 +926,7 @@ def build_findings_bundle(
     findings_builder: Callable[..., list[FindingPayload]] | None = None,
 ) -> tuple[
     list[FindingPayload],
-    OriginSummary,
+    SuspectedVibrationOrigin,
     list[TestStep],
     list[PhaseTimelineEntry],
     list[TopCause],
@@ -1061,7 +1061,7 @@ class RunAnalysis:
 
     # -- orchestration -----------------------------------------------------
 
-    def summarize(self) -> SummaryData:
+    def summarize(self) -> AnalysisSummary:
         """Run the full analysis pipeline and return the summary dict."""
         reference_complete, run_suitability, overall_strength_band_key = (
             build_run_suitability_bundle(
@@ -1139,7 +1139,7 @@ def summarize_run_data(
     file_name: str = "run",
     include_samples: bool = True,
     findings_builder: Callable[..., list[FindingPayload]] | None = None,
-) -> SummaryData:
+) -> AnalysisSummary:
     """Analyze pre-loaded run data and return the full summary dict.
 
     Delegates to :class:`RunAnalysis` which owns the full orchestration.
@@ -1185,7 +1185,7 @@ def summarize_log(
     lang: str | None = None,
     include_samples: bool = True,
     findings_builder: Callable[..., list[FindingPayload]] | None = None,
-) -> SummaryData:
+) -> AnalysisSummary:
     """Read a JSONL run file and analyse it."""
     metadata, samples, _warnings = _load_run(log_path)
     return summarize_run_data(

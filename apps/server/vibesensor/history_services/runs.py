@@ -10,7 +10,12 @@ from ..exceptions import AnalysisNotReadyError, RunNotFoundError
 from ..history_db import RunStatus
 from ..json_types import JsonObject, is_json_object
 from ..run_context import add_current_context_warnings, localize_warning_list
-from .helpers import async_require_run, require_analysis_ready, strip_internal_fields
+from .helpers import (
+    async_require_run,
+    require_analysis_ready,
+    resolve_run_language,
+    strip_internal_fields,
+)
 
 if TYPE_CHECKING:
     from ..history_db import HistoryDB
@@ -63,15 +68,10 @@ class HistoryRunService:
             analysis,
             current_active_car_snapshot=current_active_car_snapshot,
         )
-        metadata: object = run.get("metadata")
-        response_lang = requested_lang if isinstance(requested_lang, str) else None
-        if response_lang is None and is_json_object(metadata):
-            raw_lang = metadata.get("language")
-            if isinstance(raw_lang, str) and raw_lang.strip():
-                response_lang = raw_lang.strip().lower()
+        response_lang = resolve_run_language(run, requested_lang)
         localized_warnings = localize_warning_list(
             analysis.get("warnings"),
-            lang=response_lang or "en",
+            lang=response_lang,
         )
         analysis["warnings"] = list(localized_warnings)
 

@@ -33,7 +33,7 @@ def non_reference_top_causes(items: Sequence[object]) -> list[TopCause]:
 
 def is_actionable_location(location: object) -> bool:
     """Whether a strongest-location value contains actionable location data."""
-    return str(location or "").strip().lower() not in DomainFinding._UNKNOWN_LOCATIONS
+    return not DomainFinding.is_unknown_location(location)
 
 
 def is_actionable_cause(cause: TopCause) -> bool:

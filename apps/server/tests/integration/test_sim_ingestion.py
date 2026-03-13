@@ -115,11 +115,11 @@ class TestSimulatorIngestion:
 
         # Reset any stale active recording session first so this test controls
         # the run lifecycle deterministically.
-        _api_post_json("/api/logging/stop")
+        _api_post_json("/api/recording/stop")
         time.sleep(0.5)
 
         pre_runs = _history_run_ids()
-        start_status = _api_post_json("/api/logging/start")
+        start_status = _api_post_json("/api/recording/start")
         started_run_id = str(start_status.get("run_id") or "").strip()
         assert started_run_id, f"Logging start did not return run_id: {start_status}"
 
@@ -150,7 +150,7 @@ class TestSimulatorIngestion:
         subprocess.run(sim_cmd, cwd=str(ROOT), check=True, timeout=90)
 
         # Finalize immediately so analysis can start without waiting for no-data timeout.
-        _api_post_json("/api/logging/stop")
+        _api_post_json("/api/recording/stop")
 
         # Wait for server to persist the run ID before continuing.
         persisted = _wait_for_run_persisted(started_run_id)

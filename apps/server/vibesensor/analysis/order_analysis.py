@@ -726,7 +726,6 @@ def suppress_engine_aliases(
                 finding["confidence"] = suppressed
                 new_ranking_score = ranking_score * _ENGINE_ALIAS_SUPPRESSION
                 finding["ranking_score"] = new_ranking_score
-                finding["_ranking_score"] = new_ranking_score
                 findings[index] = (new_ranking_score, finding)
     findings.sort(key=lambda item: item[0], reverse=True)
     valid = [
@@ -1078,7 +1077,6 @@ def assemble_order_finding(
         ),
         "actions": actions,
         "ranking_score": ranking_score,
-        "_ranking_score": ranking_score,
     }
     return ranking_score, finding
 
