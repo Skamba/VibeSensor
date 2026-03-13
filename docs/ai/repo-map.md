@@ -29,13 +29,18 @@
 - `runtime/`: flat `RuntimeState` (`state.py`), service builders (`builders.py`), lifecycle management (`lifecycle.py`), processing loop (`processing_loop.py`), and websocket broadcast (`ws_broadcast.py`); `builders.py::build_runtime()` constructs the flat `RuntimeState` directly; routes receive `RuntimeState` (no intermediate route-service assembly); the websocket broadcaster reuses shared per-tick payload state and only layers in recipient-specific selection at the end.
 - `processing/`, `analysis/`: signal processing and findings logic.
   `analysis/findings.py` and `analysis/top_cause_selection.py` delegate
-  classification and ranking logic to the domain `Finding` in `domain/core.py`.
-- `domain/`: DDD-aligned domain model package.  `core.py` defines ten
-  primary domain objects (Car, Sensor, SensorPlacement, Run, Measurement,
-  SpeedSource, AnalysisWindow, Finding, Report, HistoryRecord) as plain
-  dataclasses with no external coupling.  Domain objects own classification,
-  ranking, actionability, surfacing, and query logic; pipeline adapters
-  (FindingRecord, OrderAssessment) in `analysis/` delegate to them.
+  classification and ranking logic to the domain `Finding`.
+- `domain/`: DDD-aligned domain model package.  Each primary domain object
+  lives in its own dedicated file: `car.py` (Car), `sensor.py` (Sensor,
+  SensorPlacement), `measurement.py` (Measurement/AccelerationSample,
+  VibrationReading), `session.py` (Run/DiagnosticSession, SessionStatus),
+  `speed_source.py` (SpeedSource), `analysis_window.py` (AnalysisWindow),
+  `finding.py` (Finding), `report.py` (Report), `history_record.py`
+  (HistoryRecord).  All are plain dataclasses with no external coupling.
+  Domain objects own classification, ranking, actionability, surfacing,
+  and query logic; pipeline adapters (FindingRecord, OrderAssessment) in
+  `analysis/` delegate to them.  See `docs/domain-model.md` for the full
+  relationship map and modeling rules.
 - `metrics_log/`: recording pipeline package; `logger.py` owns the `MetricsLogger` class which directly manages session state and persistence coordination (no private helper classes), enriching status/health payloads with sample counts and analysis results; `post_analysis.py` owns the background analysis queue with outcome tracking; `sample_builder.py` owns pure sample-building functions.
 - `history_db/`: SQLite-backed history and settings persistence (3 files: `__init__.py` with `HistoryDB` class consolidating connection management, settings KV, client names, and all run reads/writes; `_schema.py` with DDL, `RunStatus`, and `ANALYSIS_SCHEMA_VERSION`; `_samples.py` for v2 sample serialization). Incompatible older schemas raise a clear error directing the user to delete the DB file.
 - `history_services/`: focused history service layer (run query/delete, reports, exports, helpers) above `history_db/`.

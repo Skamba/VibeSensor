@@ -10,6 +10,13 @@ Backend (python `apps/server/`)
 	- `apps/server/vibesensor/runtime/`: subsystem ownership, lifecycle coordination, processing loop, and websocket broadcast state; routes receive `RuntimeState` directly.
 	- `apps/server/vibesensor/history_db/`: SQLite-backed history and settings persistence.
 	- `apps/server/vibesensor/report/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
+	- `apps/server/vibesensor/domain/`: DDD-aligned domain model package. Each primary domain object has its own file; see `docs/domain-model.md` for the full relationship map and file layout.
+- Domain-first modeling rules:
+	- Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
+	- Each primary domain object lives in its own file under `vibesensor/domain/`. Consumers import from `vibesensor.domain`, not from individual module files.
+	- Analysis pipeline adapters (`FindingRecord`, `OrderAssessment`, `LocalizationAssessment`) delegate classification and ranking to domain `Finding`.
+	- Keep pure math, DSP, FFT, and signal-processing transforms functional; do not wrap them in classes unless a domain reason exists.
+	- See `docs/domain-model.md` for the full domain object graph and modeling rules.
 - Report generation rules:
 	- Preserve persistence-aware diagnostics and ranking behavior; do not regress report ranking to max-only peak selection.
 	- Keep transient/impact events visible in report output, but not promoted above likely persistent faults by default.
