@@ -37,9 +37,9 @@ class TestRunAlias:
 
     def test_run_creates_valid_session(self) -> None:
         run = Run()
-        assert run.phase.value == "pending"
+        assert not run.is_recording
         run.start()
-        assert run.phase.value == "running"
+        assert run.is_recording
 
 
 class TestMeasurement:
@@ -714,9 +714,9 @@ class TestRunEnrichments:
 
     def test_lifecycle_pending_to_running(self) -> None:
         run = Run()
-        assert run.phase.value == "pending"
+        assert not run.is_recording
         run.start()
-        assert run.phase.value == "running"
+        assert run.is_recording
 
 
 class TestCarEnrichments:

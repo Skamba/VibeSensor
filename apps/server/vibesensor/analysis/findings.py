@@ -8,10 +8,9 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from collections.abc import Iterator, Sequence
+from collections.abc import Sequence
 from math import floor as _math_floor
 from math import log1p
-from typing import NamedTuple
 
 from vibesensor.vibration_strength import percentile
 from vibesensor.vibration_strength import (
@@ -65,91 +64,38 @@ from .phase_segmentation import (
 )
 
 # ---------------------------------------------------------------------------
-# FindingCollection
+# Finding finalization
 # ---------------------------------------------------------------------------
 
 
-class AnnotatedFinding(NamedTuple):
-    """A finding payload paired with its eagerly-built domain object."""
+def finalize_findings(findings: list[FindingPayload]) -> list[FindingPayload]:
+    """Partition, rank by confidence, and assign stable ``F###`` IDs.
 
-    payload: FindingPayload
-    domain: DomainFinding
-
-
-class FindingCollection:
-    """Typed operations over a ``list[FindingPayload]``.
-
-    Provides partitioning (reference / diagnostic / informational),
-    sorting, stable-ID assignment, and common filtering patterns that
-    were previously scattered across procedural helper functions.
-
-    Domain ``Finding`` objects are built eagerly at construction to avoid
-    redundant ``from_payload()`` calls on every filter pass.
+    Returns the ordered list: references → diagnostics → informational.
+    Diagnostic and informational findings are sorted by domain rank key
+    (quantised confidence + ranking score).  Non-reference findings
+    receive sequential IDs ``F001``, ``F002``, …
     """
-
-    __slots__ = ("_pairs",)
-
-    def __init__(self, findings: list[FindingPayload]) -> None:
-        self._pairs: list[AnnotatedFinding] = [
-            AnnotatedFinding(f, DomainFinding.from_payload(f)) for f in findings
-        ]
-
-    # -- access ------------------------------------------------------------
-
-    @property
-    def items(self) -> list[FindingPayload]:
-        return [p.payload for p in self._pairs]
-
-    def __len__(self) -> int:
-        return len(self._pairs)
-
-    def __iter__(self) -> Iterator[FindingPayload]:
-        return iter(p.payload for p in self._pairs)
-
-    # -- filtering ---------------------------------------------------------
-
-    def references(self) -> list[FindingPayload]:
-        return [p.payload for p in self._pairs if p.domain.is_reference]
-
-    def diagnostics(self) -> list[FindingPayload]:
-        return [p.payload for p in self._pairs if p.domain.is_diagnostic]
-
-    def informational(self) -> list[FindingPayload]:
-        return [p.payload for p in self._pairs if p.domain.is_informational]
-
-    def non_reference(self) -> list[FindingPayload]:
-        return [p.payload for p in self._pairs if not p.domain.is_reference]
-
-    # -- ordering and finalization -----------------------------------------
-
-    def finalize(self) -> list[FindingPayload]:
-        """Partition, rank by confidence, and assign stable ``F###`` IDs.
-
-        Returns the ordered list: references → diagnostics → informational.
-        Diagnostic and informational findings are sorted by
-        ``finding_sort_key`` (quantised confidence + ranking score).
-        Non-reference findings receive sequential IDs ``F001``, ``F002``, …
-        """
-        refs = [p for p in self._pairs if p.domain.is_reference]
-        diags = [p for p in self._pairs if p.domain.is_diagnostic]
-        infos = [p for p in self._pairs if p.domain.is_informational]
-        diags.sort(key=lambda p: p.domain.rank_key, reverse=True)
-        infos.sort(key=lambda p: p.domain.rank_key, reverse=True)
-        ordered = refs + diags + infos
-        counter = 0
-        new_pairs: list[AnnotatedFinding] = []
-        result: list[FindingPayload] = []
-        for pair in ordered:
-            payload, domain_obj = pair
-            if not domain_obj.is_reference:
-                counter += 1
-                new_id = f"F{counter:03d}"
-                payload = {**payload, "finding_id": new_id}
-                domain_obj = domain_obj.with_id(new_id)
-            new_pairs.append(AnnotatedFinding(payload, domain_obj))
-            result.append(payload)
-        self._pairs = new_pairs
-        return result
+    pairs = [(f, DomainFinding.from_payload(f)) for f in findings]
+    refs = [(f, d) for f, d in pairs if d.is_reference]
+    diags = sorted(
+        [(f, d) for f, d in pairs if d.is_diagnostic],
+        key=lambda p: p[1].rank_key,
+        reverse=True,
+    )
+    infos = sorted(
+        [(f, d) for f, d in pairs if d.is_informational],
+        key=lambda p: p[1].rank_key,
+        reverse=True,
+    )
+    counter = 0
+    result: list[FindingPayload] = []
+    for payload, domain_obj in refs + diags + infos:
+        if not domain_obj.is_reference:
+            counter += 1
+            payload = {**payload, "finding_id": f"F{counter:03d}"}
+        result.append(payload)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -346,15 +292,6 @@ def collect_order_frequencies(order_findings: list[FindingPayload]) -> set[float
             if matched_hz is not None and matched_hz > 0:
                 order_freqs.add(matched_hz)
     return order_freqs
-
-
-def finalize_findings(findings: list[FindingPayload]) -> list[FindingPayload]:
-    """Partition, rank, and assign stable public finding IDs.
-
-    Delegates to :class:`FindingCollection` which owns the partitioning,
-    sorting, and sequential ID-assignment logic.
-    """
-    return FindingCollection(findings).finalize()
 
 
 # ---------------------------------------------------------------------------

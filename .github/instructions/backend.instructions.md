@@ -14,7 +14,7 @@ Backend (python `apps/server/`)
 - Domain-first modeling rules:
 	- Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
 	- Each primary domain object lives in its own file under `vibesensor/domain/`. Consumers import from `vibesensor.domain`, not from individual module files.
-	- Analysis pipeline adapters (`OrderAssessment`, `LocalizationAssessment`) delegate classification and ranking to domain `Finding`.
+	- Analysis pipeline adapters (e.g. `LocalizationAssessment`) delegate classification and ranking to domain `Finding`.
 	- Keep pure math, DSP, FFT, and signal-processing transforms functional; do not wrap them in classes unless a domain reason exists.
 	- See `docs/domain-model.md` for the full domain object graph and modeling rules.
 - Report generation rules:

@@ -1,42 +1,30 @@
 """Aggregate root for a vibration-diagnostic measurement run.
 
-``Run`` tracks the in-memory lifecycle of a single diagnostic run.
-``RunPhase`` covers the in-memory states (PENDING → RUNNING → STOPPED).
-
-The *persisted* run lifecycle is tracked by ``RunStatus`` in
-``domain/run_status.py`` (RECORDING → ANALYZING → COMPLETE | ERROR).
-Route handlers bridge the two: ``Run.start()`` coincides with creating
-a DB row in RECORDING status, and ``Run.stop()`` coincides with
-transitioning the DB row to ANALYZING.
+``Run`` tracks the in-memory lifecycle of a single diagnostic run
+through start/stop guards.  The *persisted* run lifecycle is tracked by
+``RunStatus`` in ``domain/run_status.py`` (RECORDING → ANALYZING →
+COMPLETE | ERROR).  Route handlers bridge the two: ``Run.start()``
+coincides with creating a DB row in RECORDING status, and ``Run.stop()``
+coincides with transitioning the DB row to ANALYZING.
 """
 
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from enum import StrEnum
 
 __all__ = [
     "Run",
-    "RunPhase",
 ]
-
-
-class RunPhase(StrEnum):
-    """Lifecycle states of a :class:`Run` (in-memory session only)."""
-
-    PENDING = "pending"
-    RUNNING = "running"
-    STOPPED = "stopped"
 
 
 @dataclass
 class Run:
     """Aggregate root for a vibration-diagnostic measurement run.
 
-    Tracks the in-memory lifecycle for one diagnostic run.  The ``Run``
-    object is created in PENDING phase, transitioned to RUNNING via
-    :meth:`start`, and then to STOPPED via :meth:`stop`.
+    Tracks the in-memory lifecycle for one diagnostic run.  A ``Run``
+    is created, started via :meth:`start`, then ended via :meth:`stop`.
+    Use the :attr:`is_recording` property to query active state.
 
     Parameters
     ----------
@@ -49,36 +37,40 @@ class Run:
     run_id: str = field(default_factory=lambda: uuid.uuid4().hex)
     analysis_settings: dict[str, float] = field(default_factory=dict)
 
-    phase: RunPhase = field(default=RunPhase.PENDING, init=False)
+    _started: bool = field(default=False, init=False, repr=False)
+    _stopped: bool = field(default=False, init=False, repr=False)
+
+    # -- queries ------------------------------------------------------------
+
+    @property
+    def is_recording(self) -> bool:
+        """``True`` while the run is actively recording (started, not stopped)."""
+        return self._started and not self._stopped
 
     # -- lifecycle ----------------------------------------------------------
 
     def start(self) -> None:
-        """Transition the run to *running*.
+        """Mark the run as actively recording.
 
         Raises
         ------
         RuntimeError
             If the run has already been started.
         """
-        if self.phase is not RunPhase.PENDING:
-            raise RuntimeError(
-                f"Cannot start run in '{self.phase.value}' phase; "
-                f"expected '{RunPhase.PENDING.value}'."
-            )
-        self.phase = RunPhase.RUNNING
+        if self._started:
+            raise RuntimeError("Cannot start run: already started.")
+        self._started = True
 
     def stop(self) -> None:
-        """Transition the run to *stopped*.
+        """Mark the run as stopped (no longer recording).
 
         Raises
         ------
         RuntimeError
-            If the run is not currently running.
+            If the run has not been started or has already been stopped.
         """
-        if self.phase is not RunPhase.RUNNING:
-            raise RuntimeError(
-                f"Cannot stop run in '{self.phase.value}' phase; "
-                f"expected '{RunPhase.RUNNING.value}'."
-            )
-        self.phase = RunPhase.STOPPED
+        if not self._started:
+            raise RuntimeError("Cannot stop run: not yet started.")
+        if self._stopped:
+            raise RuntimeError("Cannot stop run: already stopped.")
+        self._stopped = True

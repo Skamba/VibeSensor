@@ -57,6 +57,23 @@ class AnalysisWindow:
             raw = str(self.phase).strip().lower()
             phase = DrivingPhase(raw) if raw else DrivingPhase.SPEED_UNKNOWN
             object.__setattr__(self, "phase", phase)
+        if (
+            self.start_time_s is not None
+            and self.end_time_s is not None
+            and self.end_time_s < self.start_time_s
+        ):
+            raise ValueError(
+                f"end_time_s ({self.end_time_s}) must be >= start_time_s ({self.start_time_s})"
+            )
+        if (
+            self.speed_min_kmh is not None
+            and self.speed_max_kmh is not None
+            and self.speed_max_kmh < self.speed_min_kmh
+        ):
+            raise ValueError(
+                f"speed_max_kmh ({self.speed_max_kmh}) must be "
+                f">= speed_min_kmh ({self.speed_min_kmh})"
+            )
 
     # -- queries -----------------------------------------------------------
 

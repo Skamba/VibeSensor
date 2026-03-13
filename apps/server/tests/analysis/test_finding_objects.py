@@ -1,4 +1,4 @@
-"""Tests for FindingCollection, PeakBin, and PeakFindingAnalyzer."""
+"""Tests for finalize_findings, PeakBin, and PeakFindingAnalyzer."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ import pytest
 
 from tests.test_support.findings import make_finding_payload, make_info_finding, make_ref_finding
 from vibesensor.analysis.findings import (
-    FindingCollection,
     PeakBin,
     PeakFindingAnalyzer,
+    finalize_findings,
 )
 from vibesensor.domain import Finding
 
@@ -59,59 +59,18 @@ class TestDomainFindingFromPayload:
 
 
 # ===========================================================================
-# FindingCollection
+# finalize_findings
 # ===========================================================================
 
 
-class TestFindingCollection:
-    def test_len(self) -> None:
-        coll = FindingCollection([make_finding_payload(confidence=0.65), make_ref_finding()])
-        assert len(coll) == 2
-
-    def test_iter(self) -> None:
-        findings = [make_finding_payload(confidence=0.65), make_ref_finding()]
-        coll = FindingCollection(findings)
-        assert list(coll) == findings
-
-    def test_references(self) -> None:
-        findings = [
-            make_ref_finding("REF_SPEED"),
-            make_finding_payload(confidence=0.65),
-            make_ref_finding("REF_ENGINE"),
-        ]
-        coll = FindingCollection(findings)
-        refs = coll.references()
-        assert len(refs) == 2
-        assert all(str(f["finding_id"]).startswith("REF_") for f in refs)
-
-    def test_diagnostics(self) -> None:
-        findings = [make_ref_finding(), make_finding_payload(confidence=0.65), make_info_finding()]
-        coll = FindingCollection(findings)
-        diags = coll.diagnostics()
-        assert len(diags) == 1
-        assert diags[0]["suspected_source"] == "wheel/tire"
-
-    def test_informational(self) -> None:
-        findings = [make_ref_finding(), make_finding_payload(confidence=0.65), make_info_finding()]
-        coll = FindingCollection(findings)
-        infos = coll.informational()
-        assert len(infos) == 1
-        assert infos[0].get("severity") == "info"
-
-    def test_non_reference(self) -> None:
-        findings = [make_ref_finding(), make_finding_payload(confidence=0.65), make_info_finding()]
-        coll = FindingCollection(findings)
-        non_ref = coll.non_reference()
-        assert len(non_ref) == 2
-
+class TestFinalizeFindings:
     def test_finalize_ordering(self) -> None:
         """References come first, then diagnostics by confidence, then informational."""
         ref = make_ref_finding()
         diag_high = make_finding_payload(confidence=0.80, ranking_score=2.0)
         diag_low = make_finding_payload(confidence=0.30, ranking_score=1.0)
         info = make_info_finding(confidence=0.10)
-        coll = FindingCollection([diag_low, info, ref, diag_high])
-        ordered = coll.finalize()
+        ordered = finalize_findings([diag_low, info, ref, diag_high])
         assert len(ordered) == 4
         # Reference first
         assert str(ordered[0]["finding_id"]).startswith("REF_")
@@ -127,8 +86,7 @@ class TestFindingCollection:
         d1 = make_finding_payload(confidence=0.80)
         d2 = make_finding_payload(confidence=0.40)
         info = make_info_finding()
-        coll = FindingCollection([d2, info, ref, d1])
-        ordered = coll.finalize()
+        ordered = finalize_findings([d2, info, ref, d1])
         # Reference keeps its original ID
         assert ordered[0]["finding_id"] == "REF_SPEED"
         # Non-reference findings get sequential F### IDs
@@ -137,13 +95,7 @@ class TestFindingCollection:
         assert ordered[3]["finding_id"] == "F003"
 
     def test_finalize_empty(self) -> None:
-        coll = FindingCollection([])
-        assert coll.finalize() == []
-
-    def test_items_property(self) -> None:
-        findings = [make_finding_payload(confidence=0.65)]
-        coll = FindingCollection(findings)
-        assert coll.items == findings
+        assert finalize_findings([]) == []
 
 
 # ===========================================================================
