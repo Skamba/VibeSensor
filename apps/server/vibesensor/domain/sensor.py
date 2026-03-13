@@ -40,19 +40,18 @@ class SensorPlacement:
     _DRIVETRAIN_CODES: frozenset[str] = frozenset(
         {
             "transmission",
-            "transfer_case",
-            "rear_differential",
-            "front_differential",
-            "driveshaft",
+            "driveshaft_tunnel",
         },
     )
 
     _BODY_CODES: frozenset[str] = frozenset(
         {
-            "steering_column",
-            "dashboard",
-            "seat_rail",
-            "floor_center",
+            "driver_seat",
+            "front_passenger_seat",
+            "rear_left_seat",
+            "rear_center_seat",
+            "rear_right_seat",
+            "trunk",
         },
     )
 

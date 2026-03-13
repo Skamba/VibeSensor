@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from ..constants import NUMERIC_TYPES
-from ..domain import Run, SessionStatus
+from ..domain import Run, RunPhase
 from ..runlog import utc_now_iso
 from .post_analysis import PostAnalysisWorker
 from .sample_builder import (
@@ -149,11 +149,11 @@ class RunRecorder:
         self._live_start_mono_s = time.monotonic()
 
         # --- Session state ---
-        # The Run domain object owns the session identity
-        # (session_id) and lifecycle status (pending → running → stopped).
+        # The Run domain object owns run identity
+        # (run_id) and lifecycle status (pending → running → stopped).
         # Infrastructure-level concerns (monotonic timestamps, frame counts,
         # timeout tracking) remain as standalone fields.
-        self._diagnostic_session: Run | None = None
+        self._current_run: Run | None = None
         self._sess_no_data_timeout_s: float = max(1.0, float(config.no_data_timeout_s))
         self._sess_run_start_utc: str | None = None
         self._sess_run_start_mono_s: float | None = None
@@ -192,15 +192,8 @@ class RunRecorder:
 
     @property
     def enabled(self) -> bool:
-        ds = self._diagnostic_session
-        return ds is not None and ds.status is SessionStatus.RUNNING
-
-    @enabled.setter
-    def enabled(self, value: bool) -> None:
-        # Setting ``True`` is a no-op — use ``start_recording()`` to begin a
-        # new session.  Setting ``False`` gracefully stops any running session.
-        if not value and self._diagnostic_session is not None:
-            self._diagnostic_session = None
+        run = self._current_run
+        return run is not None and run.status is RunPhase.RUNNING
 
     @property
     def last_write_duration_s(self) -> float:
@@ -212,8 +205,8 @@ class RunRecorder:
 
     @property
     def _run_id(self) -> str | None:
-        ds = self._diagnostic_session
-        return ds.session_id if ds is not None else None
+        run = self._current_run
+        return run.run_id if run is not None else None
 
     # -----------------------------------------------------------------------
     # Session state
@@ -229,11 +222,11 @@ class RunRecorder:
     ) -> MetricsSessionSnapshot:
         with self._lock:
             session = Run(
-                session_id=run_id,
+                run_id=run_id,
                 analysis_settings=dict(self.analysis_settings.snapshot()),
             )
             session.start()
-            self._diagnostic_session = session
+            self._current_run = session
             self._sess_run_start_utc = start_time_utc
             self._sess_run_start_mono_s = start_mono_s
             self._sess_last_data_progress_mono_s = start_mono_s
@@ -247,7 +240,10 @@ class RunRecorder:
 
     def _sess_stop(self) -> None:
         with self._lock:
-            self._diagnostic_session = None
+            run = self._current_run
+            if run is not None and run.status is RunPhase.RUNNING:
+                run.stop()
+            self._current_run = None
             self._sess_run_start_utc = None
             self._sess_run_start_mono_s = None
             self._sess_last_data_progress_mono_s = None

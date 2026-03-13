@@ -23,6 +23,7 @@ from ..constants import (
     STEADY_SPEED_STDDEV_KMH,
     WEAK_SPATIAL_DOMINANCE_THRESHOLD,
 )
+from ..domain import SpeedBand
 from ..json_types import JsonObject
 from ..json_utils import as_float_or_none as _as_float
 from ..locations import label_for_code as _label_for_code
@@ -132,20 +133,12 @@ def _outlier_summary(values: list[float]) -> _OutlierSummary:
 
 
 def _speed_bin_label(kmh: float) -> str:
-    if not isfinite(kmh) or kmh < 0:
-        kmh = 0.0
-    low = int(kmh // SPEED_BIN_WIDTH_KMH) * SPEED_BIN_WIDTH_KMH
-    high = low + SPEED_BIN_WIDTH_KMH
-    return f"{low}-{high} km/h"
+    return SpeedBand.from_speed_kmh(kmh, bin_width=SPEED_BIN_WIDTH_KMH).label
 
 
 def _speed_bin_sort_key(label: str) -> int:
-    head = label.split(" ", 1)[0]
-    low_text = head.split("-", 1)[0]
-    try:
-        return int(low_text)
-    except ValueError:
-        return 0
+    band = SpeedBand.from_label(label)
+    return band.sort_key if band is not None else 0
 
 
 def _amplitude_weighted_speed_window(

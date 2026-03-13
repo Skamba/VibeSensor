@@ -219,17 +219,8 @@ def _resolve_optional_i18n(lang: str, value: object) -> str | None:
 
 
 def _resolve_i18n(lang: str, value: object) -> str:
-    if isinstance(value, list):
-        return " ".join(_resolve_i18n(lang, item) for item in value if item)
-    if not isinstance(value, dict) or "_i18n_key" not in value:
-        return str(value or "")
-    key = str(value.get("_i18n_key") or "")
-    params: dict[str, object] = {}
-    for param_key, param_value in value.items():
-        if param_key == "_i18n_key":
-            continue
-        if isinstance(param_value, (dict, list)):
-            params[param_key] = _resolve_i18n(lang, param_value)
-        else:
-            params[param_key] = param_value
-    return str(_tr(lang, key, **params))
+    from functools import partial
+
+    from .report.mapping import resolve_i18n
+
+    return resolve_i18n(lang, value, tr=partial(_tr, lang))

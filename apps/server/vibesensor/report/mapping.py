@@ -32,7 +32,7 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..domain import Report
+from ..domain import Report, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
@@ -196,17 +196,21 @@ def is_i18n_ref(value: object) -> bool:
 def human_source(source: object, *, tr: Callable[[str], str]) -> str:
     """Resolve a source code to its user-facing label."""
     raw = str(source or "").strip().lower()
-    mapping = {
-        "wheel/tire": tr("SOURCE_WHEEL_TIRE"),
-        "driveline": tr("SOURCE_DRIVELINE"),
-        "engine": tr("SOURCE_ENGINE"),
-        "body resonance": tr("SOURCE_BODY_RESONANCE"),
-        "transient_impact": tr("SOURCE_TRANSIENT_IMPACT"),
-        "baseline_noise": tr("SOURCE_BASELINE_NOISE"),
-        "unknown_resonance": tr("SOURCE_UNKNOWN_RESONANCE"),
-        "unknown": tr("UNKNOWN"),
+    mapping: dict[VibrationSource, str] = {
+        VibrationSource.WHEEL_TIRE: tr("SOURCE_WHEEL_TIRE"),
+        VibrationSource.DRIVELINE: tr("SOURCE_DRIVELINE"),
+        VibrationSource.ENGINE: tr("SOURCE_ENGINE"),
+        VibrationSource.BODY_RESONANCE: tr("SOURCE_BODY_RESONANCE"),
+        VibrationSource.TRANSIENT_IMPACT: tr("SOURCE_TRANSIENT_IMPACT"),
+        VibrationSource.BASELINE_NOISE: tr("SOURCE_BASELINE_NOISE"),
+        VibrationSource.UNKNOWN_RESONANCE: tr("SOURCE_UNKNOWN_RESONANCE"),
+        VibrationSource.UNKNOWN: tr("UNKNOWN"),
     }
-    return mapping.get(raw, raw.replace("_", " ").title() if raw else tr("UNKNOWN"))
+    try:
+        key = VibrationSource(raw)
+    except ValueError:
+        return raw.replace("_", " ").title() if raw else tr("UNKNOWN")
+    return mapping.get(key, tr("UNKNOWN"))
 
 
 def resolve_i18n(
@@ -484,11 +488,15 @@ def peak_row_system_label(row: PeakTableRow, *, order: str, tr: Callable[..., st
     """Resolve the system label shown for one peak row."""
     order_lower = order.lower()
     source_hint = str(row.get("source") or "").strip().lower()
-    if source_hint == "wheel/tire" or "wheel" in order_lower:
+    if source_hint == VibrationSource.WHEEL_TIRE or "wheel" in order_lower:
         return str(tr("SOURCE_WHEEL_TIRE"))
-    if source_hint == "engine" or "engine" in order_lower:
+    if source_hint == VibrationSource.ENGINE or "engine" in order_lower:
         return str(tr("SOURCE_ENGINE"))
-    if source_hint == "driveline" or "driveshaft" in order_lower or "drive" in order_lower:
+    if (
+        source_hint == VibrationSource.DRIVELINE
+        or "driveshaft" in order_lower
+        or "drive" in order_lower
+    ):
         return str(tr("SOURCE_DRIVELINE"))
     if "transient" in order_lower:
         return str(tr("SOURCE_TRANSIENT_IMPACT"))
@@ -679,9 +687,12 @@ def has_relevant_reference_gap(findings: list[FindingPayload], primary_source: o
         finding_id = str(finding.get("finding_id") or "").strip().upper()
         if finding_id in {"REF_SPEED", "REF_SAMPLE_RATE"}:
             return True
-        if finding_id == "REF_WHEEL" and source in {"wheel/tire", "driveline"}:
+        if finding_id == "REF_WHEEL" and source in {
+            VibrationSource.WHEEL_TIRE,
+            VibrationSource.DRIVELINE,
+        }:
             return True
-        if finding_id == "REF_ENGINE" and source == "engine":
+        if finding_id == "REF_ENGINE" and source == VibrationSource.ENGINE:
             return True
     return False
 

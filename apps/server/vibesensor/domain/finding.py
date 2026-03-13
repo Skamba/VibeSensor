@@ -8,23 +8,41 @@ phase-adjusted scoring.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from typing import ClassVar, Final, TypedDict
 
 __all__ = [
+    "ConfidenceTier",
     "Finding",
     "FindingKind",
+    "PhaseContext",
     "PhaseEvidence",
+    "SpeedBand",
+    "VibrationSource",
 ]
 
 
-class PhaseEvidence(TypedDict, total=False):
-    """Phase context evidence attached to a finding."""
+# ── Enums ─────────────────────────────────────────────────────────────────────
 
-    cruise_fraction: float
-    phases_detected: list[str]
+
+class VibrationSource(StrEnum):
+    """Canonical mechanical vibration source categories.
+
+    Compares equal to plain strings (``VibrationSource.ENGINE == "engine"``),
+    so serialised payloads and dict-keyed lookups work without migration.
+    """
+
+    WHEEL_TIRE = "wheel/tire"
+    DRIVELINE = "driveline"
+    ENGINE = "engine"
+    BODY_RESONANCE = "body resonance"
+    TRANSIENT_IMPACT = "transient_impact"
+    BASELINE_NOISE = "baseline_noise"
+    UNKNOWN_RESONANCE = "unknown_resonance"
+    UNKNOWN = "unknown"
 
 
 class FindingKind(StrEnum):
@@ -33,6 +51,100 @@ class FindingKind(StrEnum):
     REFERENCE = "reference"
     INFORMATIONAL = "informational"
     DIAGNOSTIC = "diagnostic"
+
+
+class ConfidenceTier(StrEnum):
+    """Confidence classification tier for findings."""
+
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+# ── Value objects ─────────────────────────────────────────────────────────────
+
+
+class PhaseEvidence(TypedDict, total=False):
+    """Phase context evidence attached to a finding (serialization shape)."""
+
+    cruise_fraction: float
+    phases_detected: list[str]
+
+
+@dataclass(frozen=True, slots=True)
+class PhaseContext:
+    """Parsed phase-context evidence for domain use.
+
+    Use :meth:`from_dict` to safely parse a raw dict or ``None`` value.
+    """
+
+    cruise_fraction: float = 0.0
+    phases_detected: tuple[str, ...] = ()
+
+    @classmethod
+    def from_dict(cls, raw: dict[str, object] | None) -> PhaseContext:
+        """Create from a raw dict, handling missing or malformed values."""
+        if not isinstance(raw, dict):
+            return cls()
+        try:
+            cruise = float(raw.get("cruise_fraction", 0.0))  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            cruise = 0.0
+        phases = raw.get("phases_detected", ())
+        if isinstance(phases, list):
+            phases_t = tuple(str(p) for p in phases)
+        else:
+            phases_t = ()
+        return cls(cruise_fraction=cruise, phases_detected=phases_t)
+
+    def to_dict(self) -> PhaseEvidence:
+        """Serialize to a ``PhaseEvidence`` TypedDict."""
+        result: PhaseEvidence = {}
+        if self.cruise_fraction:
+            result["cruise_fraction"] = self.cruise_fraction
+        if self.phases_detected:
+            result["phases_detected"] = list(self.phases_detected)
+        return result
+
+
+@dataclass(frozen=True, slots=True)
+class SpeedBand:
+    """A speed-range bin used for amplitude-weighted matching.
+
+    Encapsulates the encode/decode round-trip that previously lived in
+    ``_speed_bin_label`` / ``_speed_bin_sort_key`` helper functions.
+    """
+
+    low_kmh: int
+    high_kmh: int
+
+    @classmethod
+    def from_speed_kmh(cls, kmh: float, bin_width: int = 10) -> SpeedBand:
+        """Create a speed band from a speed value."""
+        if not math.isfinite(kmh) or kmh < 0:
+            kmh = 0.0
+        low = int(kmh // bin_width) * bin_width
+        return cls(low_kmh=low, high_kmh=low + bin_width)
+
+    @classmethod
+    def from_label(cls, label: str) -> SpeedBand | None:
+        """Parse a label like ``'80-100 km/h'`` back to a SpeedBand."""
+        head = label.split(" ", 1)[0]
+        parts = head.split("-", 1)
+        try:
+            return cls(low_kmh=int(parts[0]), high_kmh=int(parts[1]))
+        except (ValueError, IndexError):
+            return None
+
+    @property
+    def label(self) -> str:
+        """Human-readable speed range label."""
+        return f"{self.low_kmh}-{self.high_kmh} km/h"
+
+    @property
+    def sort_key(self) -> int:
+        """Integer sort key for ordering speed bands."""
+        return self.low_kmh
 
 
 _KIND_AUTO: Final = FindingKind.DIAGNOSTIC
@@ -86,14 +198,20 @@ class Finding:
     diffuse_excitation: bool = False
     weak_spatial_separation: bool = False
     vibration_strength_db: float | None = None
-    phase_evidence: PhaseEvidence | None = field(default=None, hash=False)
+    phase_evidence: PhaseContext | None = field(default=None, hash=False)
 
     def __post_init__(self) -> None:
-        """Auto-derive ``kind`` when constructed directly without explicit kind."""
+        """Auto-derive ``kind`` and validate invariants."""
         if self.kind is _KIND_AUTO:
             derived = self._kind_from_fields(self.finding_id, self.severity)
             if derived is not _KIND_AUTO:
                 object.__setattr__(self, "kind", derived)
+        if self.confidence is not None and not (0.0 <= self.confidence <= 1.0):
+            raise ValueError(f"Finding.confidence must be in [0, 1], got {self.confidence}")
+        # Coerce dict → PhaseContext for convenience.
+        pe = self.phase_evidence
+        if isinstance(pe, dict):
+            object.__setattr__(self, "phase_evidence", PhaseContext.from_dict(pe))
 
     @staticmethod
     def _kind_from_fields(finding_id: str, severity: str) -> FindingKind:
@@ -112,7 +230,7 @@ class Finding:
     """Confidence quantisation step to prevent jitter-driven reordering."""
 
     _PLACEHOLDER_SOURCES: ClassVar[frozenset[str]] = frozenset(
-        {"unknown_resonance", "unknown"},
+        {VibrationSource.UNKNOWN_RESONANCE, VibrationSource.UNKNOWN},
     )
     """Suspected sources that are considered placeholder / unresolved."""
 
@@ -180,9 +298,7 @@ class Finding:
                 pass
 
         phase_ev = payload.get("phase_evidence")
-        phase_evidence: PhaseEvidence | None = None
-        if isinstance(phase_ev, dict):
-            phase_evidence = phase_ev  # type: ignore[assignment]
+        phase_evidence = PhaseContext.from_dict(phase_ev if isinstance(phase_ev, dict) else None)
 
         # Extract vibration_strength_db from evidence_metrics
         vib_db: float | None = None
@@ -286,6 +402,11 @@ class Finding:
 
     # -- actionability / surfacing ------------------------------------------
 
+    @classmethod
+    def is_unknown_location(cls, location: object) -> bool:
+        """Whether a location value carries no actionable spatial information."""
+        return str(location or "").strip().lower() in cls._UNKNOWN_LOCATIONS
+
     @property
     def is_actionable(self) -> bool:
         """Whether this finding identifies a meaningful mechanical component.
@@ -296,8 +417,7 @@ class Finding:
         """
         if self.source_normalized not in self._PLACEHOLDER_SOURCES:
             return True
-        location = (self.strongest_location or "").strip().lower()
-        return location not in self._UNKNOWN_LOCATIONS
+        return not self.is_unknown_location(self.strongest_location)
 
     @property
     def should_surface(self) -> bool:
@@ -326,6 +446,21 @@ class Finding:
         quantised = round(self.effective_confidence / step) * step
         return (quantised, self.ranking_score)
 
+    # -- confidence classification ------------------------------------------
+
+    _CONFIDENCE_HIGH_THRESHOLD: ClassVar[float] = 0.70
+    _CONFIDENCE_MEDIUM_THRESHOLD: ClassVar[float] = 0.40
+
+    @property
+    def confidence_tier(self) -> ConfidenceTier:
+        """Classify confidence into HIGH / MEDIUM / LOW tier."""
+        conf = self.effective_confidence
+        if conf >= self._CONFIDENCE_HIGH_THRESHOLD:
+            return ConfidenceTier.HIGH
+        if conf >= self._CONFIDENCE_MEDIUM_THRESHOLD:
+            return ConfidenceTier.MEDIUM
+        return ConfidenceTier.LOW
+
     @property
     def phase_adjusted_score(self) -> float:
         """Phase-aware ranking score used for top-cause selection.
@@ -334,14 +469,8 @@ class Finding:
         constant-speed conditions produce the most reliable spectral
         evidence.
         """
-        cruise_fraction = 0.0
-        if isinstance(self.phase_evidence, dict):
-            raw = self.phase_evidence.get("cruise_fraction", 0.0)
-            try:
-                cruise_fraction = float(raw)
-            except (TypeError, ValueError):
-                pass
-        return self.effective_confidence * (0.85 + 0.15 * cruise_fraction)
+        cf = self.phase_evidence.cruise_fraction if self.phase_evidence else 0.0
+        return self.effective_confidence * (0.85 + 0.15 * cf)
 
     def is_stronger_than(self, other: Finding) -> bool:
         """Whether this finding ranks higher than *other*."""

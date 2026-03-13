@@ -20,10 +20,11 @@ __all__ = [
 
 import logging
 from collections.abc import Mapping
-from math import isfinite, pi
+from math import isfinite
 from threading import RLock
 
 from .constants import KMH_TO_MPS, SECONDS_PER_MINUTE
+from .domain import TireSpec
 
 LOGGER = logging.getLogger(__name__)
 
@@ -146,27 +147,15 @@ def tire_circumference_m_from_spec(
     """Compute tire circumference in metres from width/aspect/rim spec."""
     if tire_width_mm is None or tire_aspect_pct is None or rim_in is None:
         return None
-    if not isfinite(tire_width_mm) or not isfinite(tire_aspect_pct) or not isfinite(rim_in):
-        return None
-    if tire_width_mm <= 0 or tire_aspect_pct <= 0 or rim_in <= 0:
-        return None
-    sidewall_mm = tire_width_mm * (tire_aspect_pct / 100.0)
-    diameter_mm = (rim_in * 25.4) + (2.0 * sidewall_mm)
-    diameter_m = diameter_mm / 1000.0
-    if diameter_m <= 0:
-        return None
-    circumference = diameter_m * pi
-    # Apply loaded rolling-radius deflection factor (default ~3%).
-    # Under vehicle weight the effective rolling circumference is shorter
-    # than the unloaded specification diameter, which shifts all predicted
-    # rotational-order frequencies upward to match reality.
-    if (
-        deflection_factor is not None
-        and isfinite(deflection_factor)
-        and 0 < deflection_factor <= 1.0
-    ):
-        circumference *= deflection_factor
-    return circumference
+    spec = TireSpec.from_aspects(
+        {
+            "tire_width_mm": tire_width_mm,
+            "tire_aspect_pct": tire_aspect_pct,
+            "rim_in": rim_in,
+        },
+        deflection_factor=deflection_factor if deflection_factor is not None else 1.0,
+    )
+    return spec.circumference_m if spec is not None else None
 
 
 def wheel_hz_from_speed_kmh(speed_kmh: float, tire_circumference_m: float) -> float | None:

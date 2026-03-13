@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 
+from ..domain import VibrationSource
 from ..report_i18n import tr as _tr
 from .report_data import ReportTemplateData
 
@@ -40,10 +41,10 @@ REPORT_COLORS = {
 }
 
 FINDING_SOURCE_COLORS = {
-    "wheel/tire": "#0f9d58",
-    "driveline": "#7c3aed",
-    "engine": "#c5221f",
-    "unknown": "#52555e",
+    VibrationSource.WHEEL_TIRE: "#0f9d58",
+    VibrationSource.DRIVELINE: "#7c3aed",
+    VibrationSource.ENGINE: "#c5221f",
+    VibrationSource.UNKNOWN: "#52555e",
 }
 
 # ── Style Constants ──────────────────────────────────────────────────────────

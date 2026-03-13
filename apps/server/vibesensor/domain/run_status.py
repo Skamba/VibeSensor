@@ -5,8 +5,8 @@ strings (``RunStatus.COMPLETE == "complete"``), preserving backward
 compatibility with SQLite storage and existing dict-based code paths.
 
 This tracks the *persisted* run lifecycle in the database.  The
-*in-memory* session lifecycle is tracked by ``SessionStatus`` in
-``domain/session.py`` (PENDING → RUNNING).  Route handlers bridge the
+*in-memory* run phase is tracked by ``RunPhase`` in
+``domain/session.py`` (PENDING → RUNNING → STOPPED).  Route handlers bridge the
 two models; see ``session.py`` module docstring for details.
 """
 

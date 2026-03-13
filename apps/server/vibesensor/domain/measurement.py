@@ -16,7 +16,6 @@ from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 __all__ = [
-    "AccelerationSample",
     "Measurement",
     "VibrationReading",
 ]
@@ -87,10 +86,6 @@ class Measurement:
             noise_floor_g=noise_floor,
             sensor_id=self.sensor_id,
         )
-
-
-# Backward-compatibility alias
-AccelerationSample = Measurement
 
 
 @dataclass(frozen=True, slots=True)

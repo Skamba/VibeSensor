@@ -26,7 +26,9 @@ from ..constants import (
     ORDER_TOLERANCE_REL,
     SECONDS_PER_MINUTE,
     SNR_LOG_DIVISOR,
+    SPEED_BIN_WIDTH_KMH,
 )
+from ..domain.finding import SpeedBand, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ._types import (
     FindingPayload,
@@ -47,8 +49,6 @@ from .helpers import (
     _location_label,
     _phase_to_str,
     _sample_top_peaks,
-    _speed_bin_label,
-    _speed_bin_sort_key,
     _speed_profile_from_points,
 )
 from .phase_segmentation import DrivingPhase
@@ -115,15 +115,15 @@ class OrderHypothesis:
         metadata: MetadataDict,
         tire_circumference_m: float | None,
     ) -> tuple[float | None, str]:
-        if self.key.startswith("wheel_"):
+        if self.order_label_base == "wheel":
             base = _wheel_hz(sample, tire_circumference_m)
             return (base * self.order, "speed+tire") if base is not None else (None, "missing")
-        if self.key.startswith("driveshaft_"):
+        if self.order_label_base == "driveshaft":
             base = _driveshaft_hz(sample, metadata, tire_circumference_m)
             if base is None:
                 return None, "missing"
             return base * self.order, "speed+tire+final_drive"
-        if self.key.startswith("engine_"):
+        if self.order_label_base == "engine":
             base, src = _engine_hz(sample, metadata, tire_circumference_m)
             return (base * self.order, src) if base is not None else (None, "missing")
         return None, "missing"
@@ -136,14 +136,26 @@ _ORDER_HYPOTHESES: tuple[OrderHypothesis, ...] = (
     # Wheel orders travel through tire sidewall → hub → knuckle → control
     # arms → bushings → subframe → body → sensor.  Each rubber component
     # broadens the peak and reduces tracking precision.
-    OrderHypothesis("wheel_1x", "wheel/tire", "wheel", 1, path_compliance=1.5),
-    OrderHypothesis("wheel_2x", "wheel/tire", "wheel", 2, path_compliance=1.5),
+    OrderHypothesis("wheel_1x", VibrationSource.WHEEL_TIRE, "wheel", 1, path_compliance=1.5),
+    OrderHypothesis("wheel_2x", VibrationSource.WHEEL_TIRE, "wheel", 2, path_compliance=1.5),
     # Driveshaft has a shorter, stiffer path: shaft → diff → subframe → body.
-    OrderHypothesis("driveshaft_1x", "driveline", "driveshaft", 1, path_compliance=1.0),
-    OrderHypothesis("driveshaft_2x", "driveline", "driveshaft", 2, path_compliance=1.0),
+    OrderHypothesis(
+        "driveshaft_1x",
+        VibrationSource.DRIVELINE,
+        "driveshaft",
+        1,
+        path_compliance=1.0,
+    ),
+    OrderHypothesis(
+        "driveshaft_2x",
+        VibrationSource.DRIVELINE,
+        "driveshaft",
+        2,
+        path_compliance=1.0,
+    ),
     # Engine is stiffly mounted on most vehicles.
-    OrderHypothesis("engine_1x", "engine", "engine", 1, path_compliance=1.0),
-    OrderHypothesis("engine_2x", "engine", "engine", 2, path_compliance=1.0),
+    OrderHypothesis("engine_1x", VibrationSource.ENGINE, "engine", 1, path_compliance=1.0),
+    OrderHypothesis("engine_2x", VibrationSource.ENGINE, "engine", 2, path_compliance=1.0),
 )
 
 
@@ -215,7 +227,7 @@ def _finding_actions_for_source(
     _speed_hint_param: I18nRef = (
         {"speed_hint": i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band)} if speed_band else {}
     )
-    if source == "wheel/tire":
+    if source == VibrationSource.WHEEL_TIRE:
         wheel_focus = _wheel_focus_from_location(location)
         location_hint = (
             i18n_ref("LOCATION_HINT_NEAR", location=location)
@@ -244,7 +256,7 @@ def _finding_actions_for_source(
                 "eta": "10-20 min",
             },
         ]
-    if source == "driveline":
+    if source == VibrationSource.DRIVELINE:
         driveline_focus = (
             i18n_ref("LOCATION_HINT_NEAR_SHORT", location=location)
             if location
@@ -271,7 +283,7 @@ def _finding_actions_for_source(
                 "eta": "10-20 min",
             },
         ]
-    if source == "engine":
+    if source == VibrationSource.ENGINE:
         return [
             {
                 "action_id": "engine_mounts_and_accessories",
@@ -426,7 +438,7 @@ def match_samples_for_hypothesis(
             possible_by_location[sample_location] += 1
         sample_speed = _as_float(sample.get("speed_kmh"))
         sample_speed_bin = (
-            _speed_bin_label(sample_speed)
+            SpeedBand.from_speed_kmh(sample_speed, bin_width=SPEED_BIN_WIDTH_KMH).label
             if sample_speed is not None and sample_speed > 0
             else None
         )
@@ -700,13 +712,13 @@ def suppress_engine_aliases(
         (
             _as_float(finding.get("confidence")) or 0.0
             for _, finding in findings
-            if _normalized_source(finding) == "wheel/tire"
+            if _normalized_source(finding) == VibrationSource.WHEEL_TIRE
         ),
         default=0.0,
     )
     if best_wheel_conf > 0:
         for index, (ranking_score, finding) in enumerate(findings):
-            if _normalized_source(finding) != "engine":
+            if _normalized_source(finding) != VibrationSource.ENGINE:
                 continue
             eng_conf = _as_float(finding.get("confidence")) or 0.0
             if eng_conf <= best_wheel_conf * _HARMONIC_ALIAS_RATIO:
@@ -1086,7 +1098,10 @@ def _compute_effective_match_rate(
     effective_match_rate = match_rate
     focused_speed_band: str | None = None
     if match_rate < min_match_rate and possible_by_speed_bin:
-        highest_speed_bin = max(possible_by_speed_bin.keys(), key=_speed_bin_sort_key)
+        highest_speed_bin = max(
+            possible_by_speed_bin.keys(),
+            key=lambda k: b.sort_key if (b := SpeedBand.from_label(k)) else 0,
+        )
         focused_possible = int(possible_by_speed_bin[highest_speed_bin])
         focused_matched = int(matched_by_speed_bin.get(highest_speed_bin, 0))
         focused_rate = focused_matched / max(1, focused_possible)

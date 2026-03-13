@@ -25,26 +25,26 @@ VibrationReading (dB)                  ▼
 
 | Object | Role | Key owned behavior |
 |--------|------|--------------------|
-| **Run** | Aggregate root | Lifecycle (start/stop), status transitions |
-| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence quantisation, deterministic ranking, phase-adjusted scoring |
-| **Report** | Assembled output | Finding queries, primary-finding selection |
+| **Run** | Aggregate root | Lifecycle (start/stop/stopped), status transitions, phase tracking |
+| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence quantisation (via `ConfidenceTier`), deterministic ranking, phase-adjusted scoring (via `PhaseContext`), vibration-source classification (via `VibrationSource`) |
+| **Report** | Assembled output | Finding queries (`finding_count` property), primary-finding selection |
 
 ### Supporting domain objects
 
 | Object | Role | Key owned behavior |
 |--------|------|--------------------|
-| **Car** | Vehicle under test | Tire-circumference computation from aspect specs |
+| **Car** | Vehicle under test | Tire-circumference computation from aspect specs (via `TireSpec`), display name (always includes type), dimension validation |
 | **Sensor** | Accelerometer node | Display name, placement status queries |
 | **SensorPlacement** | Mounting position | Position category classification (wheel/drivetrain/body) |
 | **Measurement** | Raw sample value object | Conversion to VibrationReading (dB) |
 | **VibrationReading** | Processed dB value object | Severity level lookup, dB computation |
 | **SpeedSource** | Speed acquisition config | Source-kind classification, effective speed resolution |
-| **AnalysisWindow** | Analysis chunk | Phase classification, speed containment, analyzability |
+| **AnalysisWindow** | Analysis chunk | Phase classification, speed containment, analyzability, index-range validation |
 
 ### Object containment and derivation
 
 - **Sensor** contains an optional **SensorPlacement**.
-- **Run** tracks lifecycle status (via **RunStatus**).  Reading accumulation is handled by the recording pipeline, not the domain object.
+- **Run** tracks lifecycle status (via **RunPhase**: PENDING → RUNNING → STOPPED).  Reading accumulation is handled by the recording pipeline, not the domain object.
 - **Report** contains a tuple of **Finding** instances.
 - **Finding** is derived from analysis of **AnalysisWindow** data.
 - **AnalysisWindow** is derived from phase segmentation of a **Run**.
@@ -77,13 +77,13 @@ within `apps/server/vibesensor/domain/`:
 
 | File | Domain objects | Rationale |
 |------|---------------|-----------|
-| `measurement.py` | `AccelerationSample` (`Measurement`), `VibrationReading` | Tightly coupled raw-sample-to-reading pipeline |
-| `session.py` | `SessionStatus`, `Run` | Aggregate root with in-memory lifecycle (PENDING → RUNNING) |
+| `measurement.py` | `Measurement`, `VibrationReading` | Tightly coupled raw-sample-to-reading pipeline |
+| `session.py` | `RunPhase`, `Run` | Aggregate root with in-memory lifecycle (PENDING → RUNNING → STOPPED) |
 | `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | Independent speed acquisition concern |
 | `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
 | `car.py` | `Car`, `TireSpec` | Vehicle geometry and tire computation |
 | `analysis_window.py` | `DrivingPhase`, `AnalysisWindow` | Driving-phase enum and phase-aligned analysis chunk |
-| `finding.py` | `FindingKind`, `PhaseEvidence`, `Finding` | Richest domain object (kind, classification, ranking, scoring, dB strength) |
+| `finding.py` | `FindingKind`, `VibrationSource`, `ConfidenceTier`, `PhaseContext`, `PhaseEvidence`, `SpeedBand`, `Finding` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band binning, phase-context evidence) |
 | `report.py` | `Report` | Assembled diagnostic output |
 | `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `transition_run` | Persisted run lifecycle state machine (enforcing) |
 

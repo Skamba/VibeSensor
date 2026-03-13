@@ -421,6 +421,11 @@ class ClientRegistry:
         The value is stripped of leading/trailing whitespace and capped at
         64 UTF-8 bytes to bound stored string size (consistent with the
         32-byte cap applied to client names).
+
+        Raises
+        ------
+        ValueError
+            If the location is already assigned to a different client.
         """
         clean = location.strip()
         # Cap at 64 UTF-8 bytes without splitting multi-byte characters.
@@ -428,6 +433,18 @@ class ClientRegistry:
         if len(encoded) > 64:
             clean = encoded[:64].decode("utf-8", errors="ignore")
         with self._lock:
+            if clean:
+                conflict = next(
+                    (
+                        cid
+                        for cid, rec in self._clients.items()
+                        if cid != _normalize_client_id(client_id) and rec.location_code == clean
+                    ),
+                    None,
+                )
+                if conflict is not None:
+                    conflict_name = self._clients[conflict].name or conflict
+                    raise ValueError(f"Location '{clean}' already assigned to {conflict_name}")
             record = self._get_or_create(client_id)
             record.location_code = clean
             return record
