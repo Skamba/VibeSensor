@@ -408,8 +408,11 @@ class TestBridgeMethods:
         from vibesensor.backend_types import CarConfig
 
         cfg = CarConfig(
-            id="abc", name="BMW", car_type="suv",
-            aspects={"rim_in": 19.0}, variant="M3",
+            id="abc",
+            name="BMW",
+            car_type="suv",
+            aspects={"rim_in": 19.0},
+            variant="M3",
         )
         car = cfg.to_car()
         assert isinstance(car, Car)
