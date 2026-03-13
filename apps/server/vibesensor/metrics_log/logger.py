@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from ..constants import NUMERIC_TYPES
-from ..domain import Run, RunPhase
+from ..domain import Run
 from ..runlog import utc_now_iso
 from .post_analysis import PostAnalysisWorker
 from .sample_builder import (
@@ -192,7 +192,7 @@ class RunRecorder:
     @property
     def enabled(self) -> bool:
         run = self._current_run
-        return run is not None and run.phase is RunPhase.RUNNING
+        return run is not None and run.is_recording
 
     @property
     def last_write_duration_s(self) -> float:
@@ -240,7 +240,7 @@ class RunRecorder:
     def _run_stop(self) -> None:
         with self._lock:
             run = self._current_run
-            if run is not None and run.phase is RunPhase.RUNNING:
+            if run is not None and run.is_recording:
                 run.stop()
             self._current_run = None
             self._run_start_utc = None

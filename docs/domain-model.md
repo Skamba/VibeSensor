@@ -26,7 +26,7 @@ VibrationReading (dB)                  ▼
 | Object | Role | Key owned behavior |
 |--------|------|--------------------|
 | **Run** | Aggregate root | Lifecycle (start/stop/stopped), status transitions, phase tracking |
-| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence quantisation (via `ConfidenceTier`), deterministic ranking, phase-adjusted scoring (flat `cruise_fraction`), vibration-source enum (`VibrationSource`), speed-band enum (`SpeedBand`) |
+| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence thresholds, deterministic ranking, phase-adjusted scoring (flat `cruise_fraction`), vibration-source enum (`VibrationSource`), speed-band enum (`SpeedBand`) |
 | **Report** | Assembled output | Finding queries (`finding_count` property), primary-finding selection, raw temporal values (`report_date`, `duration_s`) |
 
 ### Supporting domain objects
@@ -44,7 +44,7 @@ VibrationReading (dB)                  ▼
 ### Object containment and derivation
 
 - **Sensor** contains an optional **SensorPlacement**.
-- **Run** tracks lifecycle phase (via **RunPhase**: PENDING → RUNNING → STOPPED).  Reading accumulation is handled by the recording pipeline, not the domain object.
+- **Run** tracks lifecycle via ``start()``/``stop()`` guards and an ``is_recording`` property.  Reading accumulation is handled by the recording pipeline, not the domain object.
 - **Report** contains a tuple of **Finding** instances.
 - **Finding** is derived from analysis of **AnalysisWindow** data.
 - **AnalysisWindow** is derived from phase segmentation of a **Run**.
@@ -65,7 +65,6 @@ These types exist only at boundaries and should not own domain behavior:
 | `FindingPayload` | `analysis/_types.py` | Dict-based analysis pipeline payload |
 | `AnalysisSummary` | `analysis/_types.py` | Analysis summary TypedDict |
 | `SuspectedVibrationOrigin` | `analysis/_types.py` | Origin summary TypedDict (key: `suspected_source`) |
-| `OrderAssessment` | `analysis/top_cause_selection.py` | Report-level adapter wrapping domain `Finding`, adds aggregation fields |
 | `LocalizationAssessment` | `analysis/summary_builder.py` | Spatial interpretation of finding evidence |
 | `ReportTemplateData` | `report/report_data.py` | PDF-rendering data classes |
 | `ReportMappingContext` | `report/mapping.py` | Template mapping adapter |
@@ -80,12 +79,12 @@ within `apps/server/vibesensor/domain/`:
 | File | Domain objects | Rationale |
 |------|---------------|-----------|
 | `measurement.py` | `Measurement`, `VibrationReading` | Tightly coupled raw-sample-to-reading pipeline |
-| `session.py` | `RunPhase`, `Run` | Aggregate root with in-memory lifecycle (PENDING → RUNNING → STOPPED) |
+| `session.py` | `Run` | Aggregate root with in-memory lifecycle (start/stop guards, ``is_recording`` property) |
 | `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | SpeedSourceKind StrEnum and speed acquisition concern |
 | `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
 | `car.py` | `Car`, `TireSpec` | Vehicle geometry and tire computation |
 | `analysis_window.py` | `DrivingPhase`, `AnalysisWindow` | Driving-phase StrEnum and phase-aligned analysis chunk |
-| `finding.py` | `FindingKind`, `VibrationSource`, `ConfidenceTier`, `PhaseEvidence`, `SpeedBand`, `Finding` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band binning, flat `cruise_fraction` for phase adjustment) |
+| `finding.py` | `FindingKind`, `VibrationSource`, `PhaseEvidence`, `SpeedBand`, `Finding` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band binning, flat `cruise_fraction` for phase adjustment) |
 | `report.py` | `Report` | Assembled diagnostic output |
 | `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `transition_run` | Persisted run lifecycle state machine (enforcing) |
 
@@ -101,7 +100,7 @@ individual module files, unless they need a very specific internal symbol.
 
 2. **Adapters bridge, they do not own.**  Config, payload, export, and
    persistence types convert to/from domain objects but do not duplicate
-   domain logic.  `OrderAssessment` and `LocalizationAssessment` delegate
+   domain logic.  `LocalizationAssessment` delegates
    classification and ranking to domain `Finding`.
 
 3. **Composition over inheritance.**  Domain objects compose via containment

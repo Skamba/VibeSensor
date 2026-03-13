@@ -10,7 +10,6 @@ import pytest
 from vibesensor.domain import (
     Measurement,
     Run,
-    RunPhase,
     RunStatus,
     VibrationReading,
     transition_run,
@@ -166,19 +165,19 @@ class TestVibrationReading:
 class TestRun:
     """Aggregate-root behaviour for Run."""
 
-    def test_initial_state_is_pending(self) -> None:
+    def test_initial_state_is_not_recording(self) -> None:
         session = Run()
-        assert session.phase is RunPhase.PENDING
+        assert not session.is_recording
 
     def test_run_id_is_unique(self) -> None:
         s1 = Run()
         s2 = Run()
         assert s1.run_id != s2.run_id
 
-    def test_start_transitions_to_running(self) -> None:
+    def test_start_transitions_to_recording(self) -> None:
         session = Run()
         session.start()
-        assert session.phase is RunPhase.RUNNING
+        assert session.is_recording
 
     def test_start_when_already_running_raises(self) -> None:
         session = Run()
@@ -186,11 +185,11 @@ class TestRun:
         with pytest.raises(RuntimeError, match="Cannot start run"):
             session.start()
 
-    def test_stop_transitions_to_stopped(self) -> None:
+    def test_stop_transitions_to_not_recording(self) -> None:
         session = Run()
         session.start()
         session.stop()
-        assert session.phase is RunPhase.STOPPED
+        assert not session.is_recording
 
     def test_stop_when_not_running_raises(self) -> None:
         session = Run()

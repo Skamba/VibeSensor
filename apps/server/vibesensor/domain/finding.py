@@ -15,7 +15,6 @@ from enum import StrEnum
 from typing import ClassVar, TypedDict
 
 __all__ = [
-    "ConfidenceTier",
     "Finding",
     "FindingKind",
     "PhaseEvidence",
@@ -52,14 +51,6 @@ class FindingKind(StrEnum):
     DIAGNOSTIC = "diagnostic"
 
 
-class ConfidenceTier(StrEnum):
-    """Confidence classification tier for findings."""
-
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-
 # ── Value objects ─────────────────────────────────────────────────────────────
 
 
@@ -90,6 +81,12 @@ class SpeedBand:
 
     low_kmh: int
     high_kmh: int
+
+    def __post_init__(self) -> None:
+        if self.low_kmh > self.high_kmh:
+            raise ValueError(
+                f"SpeedBand low_kmh ({self.low_kmh}) must be <= high_kmh ({self.high_kmh})"
+            )
 
     @classmethod
     def from_speed_kmh(cls, kmh: float, bin_width: int = 10) -> SpeedBand:
@@ -182,7 +179,7 @@ class Finding:
             object.__setattr__(
                 self,
                 "kind",
-                self._kind_from_fields(self.finding_id, self.severity),
+                self._derive_kind_from_fields(self.finding_id, self.severity),
             )
         if self.confidence is not None and not (0.0 <= self.confidence <= 1.0):
             raise ValueError(f"Finding.confidence must be in [0, 1], got {self.confidence}")
@@ -192,7 +189,26 @@ class Finding:
             object.__setattr__(self, "strongest_speed_band", SpeedBand.from_label(sb))
 
     @staticmethod
-    def _kind_from_fields(finding_id: str, severity: str) -> FindingKind:
+    def _derive_kind_from_fields(
+        finding_id: str,
+        severity: str,
+        *,
+        explicit_kind: str | None = None,
+    ) -> FindingKind:
+        """Single derivation path for FindingKind.
+
+        Checks ``explicit_kind`` first (from payload ``finding_kind`` /
+        ``finding_type`` fields), then falls back to string-pattern
+        inference from ``finding_id`` and ``severity``.
+        """
+        if explicit_kind is not None:
+            normed = explicit_kind.strip().lower()
+            if normed == "reference":
+                return FindingKind.REFERENCE
+            if normed in ("informational", "info"):
+                return FindingKind.INFORMATIONAL
+            if normed == "diagnostic":
+                return FindingKind.DIAGNOSTIC
         if finding_id.strip().upper().startswith("REF_"):
             return FindingKind.REFERENCE
         if severity.strip().lower() == "info":
@@ -300,7 +316,12 @@ class Finding:
             source = VibrationSource.UNKNOWN
 
         # Derive kind from explicit finding_type or infer from fields
-        kind = cls._derive_kind(payload, finding_id=finding_id, severity=severity)
+        explicit = payload.get("finding_kind") or payload.get("finding_type")
+        kind = cls._derive_kind_from_fields(
+            finding_id,
+            severity,
+            explicit_kind=str(explicit) if isinstance(explicit, str) else None,
+        )
 
         return cls(
             finding_id=finding_id,
@@ -320,30 +341,6 @@ class Finding:
             vibration_strength_db=vib_db,
             cruise_fraction=cruise_fraction,
         )
-
-    @staticmethod
-    def _derive_kind(
-        payload: Mapping[str, object],
-        *,
-        finding_id: str,
-        severity: str,
-    ) -> FindingKind:
-        """Derive FindingKind from explicit ``finding_type`` or infer from fields."""
-        explicit = payload.get("finding_kind") or payload.get("finding_type")
-        if isinstance(explicit, str):
-            normed = explicit.strip().lower()
-            if normed == "reference":
-                return FindingKind.REFERENCE
-            if normed in ("informational", "info"):
-                return FindingKind.INFORMATIONAL
-            if normed == "diagnostic":
-                return FindingKind.DIAGNOSTIC
-        # Fall back to existing string-pattern inference
-        if finding_id.strip().upper().startswith("REF_"):
-            return FindingKind.REFERENCE
-        if severity.strip().lower() == "info":
-            return FindingKind.INFORMATIONAL
-        return FindingKind.DIAGNOSTIC
 
     # -- identity mutation (frozen ⇒ returns new instance) -----------------
 
@@ -431,20 +428,10 @@ class Finding:
         quantised = round(self.effective_confidence / step) * step
         return (quantised, self.ranking_score)
 
-    # -- confidence classification ------------------------------------------
+    # -- confidence thresholds (used by analysis/strength_labels.py) ---------
 
     CONFIDENCE_HIGH_THRESHOLD: ClassVar[float] = 0.70
     CONFIDENCE_MEDIUM_THRESHOLD: ClassVar[float] = 0.40
-
-    @property
-    def confidence_tier(self) -> ConfidenceTier:
-        """Classify confidence into HIGH / MEDIUM / LOW tier."""
-        conf = self.effective_confidence
-        if conf >= self.CONFIDENCE_HIGH_THRESHOLD:
-            return ConfidenceTier.HIGH
-        if conf >= self.CONFIDENCE_MEDIUM_THRESHOLD:
-            return ConfidenceTier.MEDIUM
-        return ConfidenceTier.LOW
 
     @property
     def phase_adjusted_score(self) -> float:

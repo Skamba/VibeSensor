@@ -10,6 +10,7 @@ name, and its optional placement.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import ClassVar
 
 from vibesensor.locations import WHEEL_LOCATION_CODES
 
@@ -35,16 +36,16 @@ class SensorPlacement:
 
     # -- classification ----------------------------------------------------
 
-    _WHEEL_CODES: frozenset[str] = WHEEL_LOCATION_CODES
+    _WHEEL_CODES: ClassVar[frozenset[str]] = WHEEL_LOCATION_CODES
 
-    _DRIVETRAIN_CODES: frozenset[str] = frozenset(
+    _DRIVETRAIN_CODES: ClassVar[frozenset[str]] = frozenset(
         {
             "transmission",
             "driveshaft_tunnel",
         },
     )
 
-    _BODY_CODES: frozenset[str] = frozenset(
+    _BODY_CODES: ClassVar[frozenset[str]] = frozenset(
         {
             "driver_seat",
             "front_passenger_seat",

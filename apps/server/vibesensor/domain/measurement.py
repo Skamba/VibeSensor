@@ -42,6 +42,10 @@ class Measurement:
     sample_rate_hz: int
     sensor_id: str = ""
 
+    def __post_init__(self) -> None:
+        if self.sample_rate_hz <= 0:
+            raise ValueError(f"sample_rate_hz must be positive, got {self.sample_rate_hz}")
+
     # -- behaviour ----------------------------------------------------------
 
     def to_vibration_reading(self, noise_floor: float) -> VibrationReading:

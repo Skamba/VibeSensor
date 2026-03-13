@@ -31,9 +31,6 @@ Use this when changing backend code without scanning the whole package.
   shapes (`CarConfig`, `SensorConfig`, `SpeedSourceConfig`, `RunMetadata`,
   `SensorFrame`, `ReportTemplateData`, `HistoryRunPayload`) at persistence,
   wire-format, and rendering boundaries.
-- `OrderAssessment` (in `analysis/top_cause_selection.py`) delegates
-  classification and ranking logic to the domain `Finding` and remains
-  as a pipeline adapter for dict-based analysis workflows.
 - See `docs/domain-model.md` for the full domain relationship map.
 
 ## Analysis Pipeline

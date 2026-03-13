@@ -4,21 +4,16 @@ Ranking helpers (``finding_sort_key``, ``phase_adjusted_ranking_score``,
 ``group_findings_by_source``) were previously in a separate ``ranking``
 module but merged here because this module is their primary consumer and
 no other production module needs them independently.
-
-``OrderAssessment`` is a rich internal object that represents the
-interpreted result of evaluating one order candidate.  It owns
-actionability, severity/certainty banding, ranking/comparison, and
-surfacing decisions that were previously re-derived in multiple places.
 """
 
 from __future__ import annotations
 
 import math
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import replace as _replace
 
 from ..domain import Finding
-from ._types import FindingPayload, JsonValue, TopCause
+from ._types import FindingPayload, TopCause
 from .strength_labels import (
     CONFIDENCE_HIGH_THRESHOLD,
     CONFIDENCE_MEDIUM_THRESHOLD,
@@ -26,104 +21,52 @@ from .strength_labels import (
 )
 
 # ---------------------------------------------------------------------------
-# OrderAssessment
+# Top-cause building
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True)
-class OrderAssessment:
-    """Interpreted assessment of a single order-tracking candidate.
+def _build_top_cause(
+    finding: FindingPayload,
+    *,
+    strength_band_key: str | None = None,
+) -> TopCause:
+    """Build a ``TopCause`` dict from a (grouped) FindingPayload."""
+    domain = Finding.from_payload(finding)
+    # Apply severity default and extract analysis-specific order key
+    severity_raw = str(finding.get("severity") or "diagnostic").strip().lower()
+    order_raw = str(finding.get("frequency_hz_or_order") or finding.get("order") or "")
+    domain = _replace(domain, severity=severity_raw, order=order_raw)
 
-    Core classification and ranking logic is delegated to the domain
-    :class:`~vibesensor.domain.Finding` object held in
-    :attr:`domain_finding`.  Report-level aggregation fields
-    (``signatures_observed``, ``grouped_count``, ``diagnostic_caveat``)
-    remain on this class because they are grouping artifacts created
-    during top-cause selection, not intrinsic finding properties.
-    """
-
-    # Domain finding (carries classification, ranking, actionability)
-    domain_finding: Finding
-
-    # Report-level aggregation fields (not intrinsic to a finding)
-    signatures_observed: list[str]
-    grouped_count: int
-    diagnostic_caveat: JsonValue
-
-    # -- construction -------------------------------------------------------
-
-    @staticmethod
-    def from_finding(finding: FindingPayload) -> OrderAssessment:
-        """Build an assessment from a FindingPayload dict."""
-        from dataclasses import replace as _replace
-
-        domain = Finding.from_payload(finding)
-        # Apply severity default and extract analysis-specific order key
-        severity_raw = str(finding.get("severity") or "diagnostic").strip().lower()
-        order_raw = str(finding.get("frequency_hz_or_order") or finding.get("order") or "")
-        domain = _replace(domain, severity=severity_raw, order=order_raw)
-        return OrderAssessment(
-            domain_finding=domain,
-            signatures_observed=finding.get("signatures_observed", []),
-            grouped_count=finding.get("grouped_count", 1),
-            diagnostic_caveat=finding.get("diagnostic_caveat"),
-        )
-
-    # -- severity / certainty banding ----------------------------------------
-
-    def severity_band(self) -> str:
-        """Return the severity classification (e.g. ``'diagnostic'``, ``'info'``)."""
-        return self.domain_finding.severity
-
-    def certainty_band(
-        self,
-        *,
-        strength_band_key: str | None = None,
-    ) -> tuple[str, str, str]:
-        """Return ``(label_key, tone, pct_text)`` for this assessment."""
-        return confidence_label(
-            self.domain_finding.effective_confidence,
-            strength_band_key=strength_band_key,
-        )
-
-    # -- serialisation helpers -----------------------------------------------
-
-    def to_top_cause(
-        self,
-        *,
-        strength_band_key: str | None = None,
-    ) -> TopCause:
-        """Build a ``TopCause`` dict from this assessment."""
-        label_key, tone, pct_text = self.certainty_band(
-            strength_band_key=strength_band_key,
-        )
-        df = self.domain_finding
-        return {
-            "finding_id": df.finding_id,
-            "suspected_source": df.suspected_source,
-            "confidence": df.confidence,
-            "confidence_label_key": label_key,
-            "confidence_tone": tone,
-            "confidence_pct": pct_text,
-            "order": df.order,
-            "signatures_observed": self.signatures_observed,
-            "grouped_count": self.grouped_count,
-            "strongest_location": df.strongest_location,
-            "dominance_ratio": df.dominance_ratio,
-            "strongest_speed_band": (
-                df.strongest_speed_band.label if df.strongest_speed_band else None
-            ),
-            "weak_spatial_separation": df.weak_spatial_separation,
-            "diffuse_excitation": df.diffuse_excitation,
-            "diagnostic_caveat": self.diagnostic_caveat,
-            "phase_evidence": (
-                {"cruise_fraction": df.cruise_fraction} if df.cruise_fraction else None
-            ),
-        }
+    label_key, tone, pct_text = confidence_label(
+        domain.effective_confidence,
+        strength_band_key=strength_band_key,
+    )
+    return {
+        "finding_id": domain.finding_id,
+        "suspected_source": domain.suspected_source,
+        "confidence": domain.confidence,
+        "confidence_label_key": label_key,
+        "confidence_tone": tone,
+        "confidence_pct": pct_text,
+        "order": domain.order,
+        "signatures_observed": finding.get("signatures_observed", []),
+        "grouped_count": finding.get("grouped_count", 1),
+        "strongest_location": domain.strongest_location,
+        "dominance_ratio": domain.dominance_ratio,
+        "strongest_speed_band": (
+            domain.strongest_speed_band.label if domain.strongest_speed_band else None
+        ),
+        "weak_spatial_separation": domain.weak_spatial_separation,
+        "diffuse_excitation": domain.diffuse_excitation,
+        "diagnostic_caveat": finding.get("diagnostic_caveat"),
+        "phase_evidence": (
+            {"cruise_fraction": domain.cruise_fraction} if domain.cruise_fraction else None
+        ),
+    }
 
 
 # ---------------------------------------------------------------------------
-# Standalone ranking helpers (thin delegates to OrderAssessment)
+# Standalone ranking helpers
 # ---------------------------------------------------------------------------
 
 
@@ -221,11 +164,11 @@ def select_top_causes(
     best_score_pct = grouped[0][0] * 100.0
     threshold_pct = best_score_pct - drop_off_points
 
-    selected: list[OrderAssessment] = []
+    selected: list[FindingPayload] = []
     for score, representative in grouped:
         if (score * 100.0) >= threshold_pct or not selected:
-            selected.append(OrderAssessment.from_finding(representative))
+            selected.append(representative)
         if len(selected) >= max_causes:
             break
 
-    return [assessment.to_top_cause(strength_band_key=strength_band_key) for assessment in selected]
+    return [_build_top_cause(f, strength_band_key=strength_band_key) for f in selected]
