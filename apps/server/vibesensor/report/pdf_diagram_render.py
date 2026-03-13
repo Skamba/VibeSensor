@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
+from ..domain import VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from .pdf_style import (
     BMW_LENGTH_MM as _BMW_LENGTH_MM,
@@ -288,7 +289,11 @@ def _canonical_location(raw: object) -> str:
 
 def _source_color(source: object) -> str:
     src = str(source or "unknown").strip().lower()
-    return FINDING_SOURCE_COLORS.get(src, FINDING_SOURCE_COLORS["unknown"])
+    try:
+        key = VibrationSource(src)
+    except ValueError:
+        key = VibrationSource.UNKNOWN
+    return FINDING_SOURCE_COLORS.get(key, FINDING_SOURCE_COLORS[VibrationSource.UNKNOWN])
 
 
 def _location_points(
@@ -500,9 +505,9 @@ def _draw_source_legend(
     from reportlab.graphics.shapes import Circle, String
 
     legend_items = [
-        (tr("SOURCE_WHEEL_TIRE"), FINDING_SOURCE_COLORS["wheel/tire"]),
-        (tr("SOURCE_DRIVELINE"), FINDING_SOURCE_COLORS["driveline"]),
-        (tr("SOURCE_ENGINE"), FINDING_SOURCE_COLORS["engine"]),
+        (tr("SOURCE_WHEEL_TIRE"), FINDING_SOURCE_COLORS[VibrationSource.WHEEL_TIRE]),
+        (tr("SOURCE_DRIVELINE"), FINDING_SOURCE_COLORS[VibrationSource.DRIVELINE]),
+        (tr("SOURCE_ENGINE"), FINDING_SOURCE_COLORS[VibrationSource.ENGINE]),
     ]
     legend_x = 8.0
     title_y = 30.0

@@ -30,9 +30,15 @@ class TireSpec:
     width_mm: float
     aspect_pct: float
     rim_in: float
+    deflection_factor: float = 1.0
 
     @classmethod
-    def from_aspects(cls, aspects: dict[str, float]) -> TireSpec | None:
+    def from_aspects(
+        cls,
+        aspects: dict[str, float],
+        *,
+        deflection_factor: float = 1.0,
+    ) -> TireSpec | None:
         """Return a ``TireSpec`` if all three dimensions are present and valid."""
         width = aspects.get("tire_width_mm")
         aspect = aspects.get("tire_aspect_pct")
@@ -43,7 +49,10 @@ class TireSpec:
             return None
         if width <= 0 or aspect <= 0 or rim <= 0:
             return None
-        return cls(width_mm=width, aspect_pct=aspect, rim_in=rim)
+        df = float(deflection_factor) if math.isfinite(deflection_factor) else 1.0
+        if df <= 0 or df > 1.0:
+            df = 1.0
+        return cls(width_mm=width, aspect_pct=aspect, rim_in=rim, deflection_factor=df)
 
     @property
     def sidewall_mm(self) -> float:
@@ -57,8 +66,8 @@ class TireSpec:
 
     @property
     def circumference_m(self) -> float:
-        """Tire circumference in metres."""
-        return self.diameter_mm / 1000.0 * math.pi
+        """Tire circumference in metres (deflection-adjusted)."""
+        return self.diameter_mm / 1000.0 * math.pi * self.deflection_factor
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,12 +85,22 @@ class Car:
     aspects: dict[str, float] = field(default_factory=dict)
     variant: str | None = None
 
+    def __post_init__(self) -> None:
+        if not self.name or not self.name.strip():
+            object.__setattr__(self, "name", "Unnamed Car")
+        for key in ("tire_width_mm", "tire_aspect_pct", "rim_in"):
+            val = self.aspects.get(key)
+            if val is not None and (not math.isfinite(val) or val < 0):
+                raise ValueError(
+                    f"Car.aspects[{key!r}] must be a positive finite number, got {val}"
+                )
+
     # -- queries -----------------------------------------------------------
 
     @property
     def display_name(self) -> str:
-        """Human-readable name with optional type suffix."""
-        if self.car_type and self.car_type != "sedan":
+        """Human-readable name with type suffix."""
+        if self.car_type:
             return f"{self.name} ({self.car_type})"
         return self.name
 

@@ -77,34 +77,26 @@ def create_client_routes(
             if label is None:
                 raise HTTPException(status_code=400, detail="Unknown location_code")
 
-            conflict = next(
-                (
-                    row
-                    for row in registry.snapshot_for_api()
-                    if row["id"] != normalized_client_id and row.get("location_code") == code
-                ),
-                None,
-            )
-            if conflict is not None:
-                other_name = conflict.get("name") or "another sensor"
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Location already assigned to {other_name}",
-                )
+            try:
+                registry.set_location(normalized_client_id, code)
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-            updated = registry.set_name(normalized_client_id, label)
+            registry.set_name(normalized_client_id, label)
         else:
             # Empty location_code → clear the assignment
-            updated = registry.clear_name(normalized_client_id)
+            registry.set_location(normalized_client_id, code)
+            registry.clear_name(normalized_client_id)
 
-        registry.set_location(normalized_client_id, code)
-        mac = client_id_mac(updated.client_id)
+        updated = registry.get(normalized_client_id)
+        name = updated.name if updated else None
+        mac = client_id_mac(normalized_client_id)
         await asyncio.to_thread(settings_store.set_sensor, mac, {"location_code": code})
         return SetClientLocationResponse(
-            id=updated.client_id,
+            id=normalized_client_id,
             mac_address=mac,
             location_code=code,
-            name=updated.name,
+            name=name,
         )
 
     @router.delete("/api/clients/{client_id}", response_model=RemoveClientResponse)

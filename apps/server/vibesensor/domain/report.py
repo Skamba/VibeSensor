@@ -38,8 +38,14 @@ class Report:
     duration_text: str | None = None
     sample_count: int = 0
     sensor_count: int = 0
-    finding_count: int = 0
     findings: tuple[Finding, ...] = ()
+
+    # -- queries -----------------------------------------------------------
+
+    @property
+    def finding_count(self) -> int:
+        """Total number of findings (derived from findings tuple)."""
+        return len(self.findings)
 
     # -- queries -----------------------------------------------------------
 
@@ -93,7 +99,6 @@ class Report:
             for item in raw_findings:
                 if isinstance(item, dict):
                     finding_list.append(Finding.from_payload(item))
-        finding_count = len(raw_findings) if isinstance(raw_findings, list) else 0
 
         rows = summary.get("rows")
         sample_count = int(rows) if isinstance(rows, (int, float, str)) else 0
@@ -128,6 +133,5 @@ class Report:
             duration_text=duration_text,
             sample_count=sample_count,
             sensor_count=sensor_count,
-            finding_count=finding_count,
             findings=tuple(finding_list),
         )

@@ -31,12 +31,12 @@
   `analysis/findings.py` and `analysis/top_cause_selection.py` delegate
   classification and ranking logic to the domain `Finding`.
 - `domain/`: DDD-aligned domain model package.  Each primary domain object
-  lives in its own dedicated file: `car.py` (Car), `sensor.py` (Sensor,
-  SensorPlacement), `measurement.py` (Measurement/AccelerationSample,
-  VibrationReading), `session.py` (Run, SessionStatus),
+  lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
+  SensorPlacement), `measurement.py` (Measurement,
+  VibrationReading), `session.py` (Run, RunPhase),
   `speed_source.py` (SpeedSource), `analysis_window.py` (DrivingPhase, AnalysisWindow),
-  `finding.py` (FindingKind, PhaseEvidence, Finding), `report.py` (Report),
-  `run_status.py` (RunStatus, RUN_TRANSITIONS).  All are plain dataclasses with no external coupling.
+  `finding.py` (FindingKind, VibrationSource, ConfidenceTier, PhaseContext, PhaseEvidence, SpeedBand, Finding), `report.py` (Report),
+  `run_status.py` (RunStatus, RUN_TRANSITIONS).  All are plain frozen dataclasses with no external coupling.
   Domain objects own classification, ranking, actionability, surfacing,
   and query logic; pipeline adapters (OrderAssessment) in
   `analysis/` delegate to them.  See `docs/domain-model.md` for the full
