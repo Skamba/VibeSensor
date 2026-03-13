@@ -18,10 +18,10 @@ import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from ..domain import AnalysisWindow
-from ..domain.analysis_window import DrivingPhase
+from ..domain import DrivingPhase
 from ..json_types import JsonObject
 from ..json_utils import as_float_or_none as _as_float
+from .analysis_window import AnalysisWindow
 
 if TYPE_CHECKING:
     from ._types import PhaseSummary

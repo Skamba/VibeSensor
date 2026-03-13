@@ -10,7 +10,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median as _median
 
-from vibesensor.domain import AnalysisWindow, VibrationReading
+from vibesensor.analysis.analysis_window import AnalysisWindow
+from vibesensor.domain import VibrationReading
 
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..json_utils import as_float_or_none as _as_float

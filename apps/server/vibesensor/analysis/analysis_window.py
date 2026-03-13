@@ -1,0 +1,108 @@
+"""A contiguous aligned chunk of samples used by the analysis pipeline.
+
+``AnalysisWindow`` represents the temporal and phase context of one analysis
+unit — a segment of the run where driving conditions are sufficiently
+uniform for meaningful spectral and order analysis.
+
+This type lives in the analysis layer (not domain) because its fields
+(``start_idx``/``end_idx``) are array-index implementation details of the
+analysis pipeline.  The ``DrivingPhase`` enum it references is a genuine
+domain concept and remains in ``vibesensor.domain``.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from vibesensor.domain import DrivingPhase
+
+__all__ = [
+    "AnalysisWindow",
+]
+
+
+@dataclass(frozen=True, slots=True)
+class AnalysisWindow:
+    """A contiguous aligned chunk of samples used by the analysis pipeline.
+
+    Represents the temporal and phase context of one analysis unit —
+    a segment of the run where driving conditions are sufficiently
+    uniform for meaningful spectral and order analysis.
+
+    Phase classification
+    --------------------
+    Phase values follow the ``DrivingPhase`` enum from the domain layer.
+    """
+
+    start_idx: int
+    end_idx: int
+    phase: DrivingPhase = DrivingPhase.SPEED_UNKNOWN
+    start_time_s: float | None = None
+    end_time_s: float | None = None
+    speed_min_kmh: float | None = None
+    speed_max_kmh: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.start_idx < 0:
+            raise ValueError(f"start_idx must be non-negative, got {self.start_idx}")
+        if self.end_idx < self.start_idx:
+            raise ValueError(f"end_idx ({self.end_idx}) must be >= start_idx ({self.start_idx})")
+        if not isinstance(self.phase, DrivingPhase):
+            raw = str(self.phase).strip().lower()
+            phase = DrivingPhase(raw) if raw else DrivingPhase.SPEED_UNKNOWN
+            object.__setattr__(self, "phase", phase)
+        if (
+            self.start_time_s is not None
+            and self.end_time_s is not None
+            and self.end_time_s < self.start_time_s
+        ):
+            raise ValueError(
+                f"end_time_s ({self.end_time_s}) must be >= start_time_s ({self.start_time_s})"
+            )
+        if (
+            self.speed_min_kmh is not None
+            and self.speed_max_kmh is not None
+            and self.speed_max_kmh < self.speed_min_kmh
+        ):
+            raise ValueError(
+                f"speed_max_kmh ({self.speed_max_kmh}) must be "
+                f">= speed_min_kmh ({self.speed_min_kmh})"
+            )
+
+    # -- queries -----------------------------------------------------------
+
+    @property
+    def sample_count(self) -> int:
+        """Number of samples in this window."""
+        return self.end_idx - self.start_idx
+
+    @property
+    def duration_s(self) -> float | None:
+        """Duration of the window in seconds, or None if timestamps are missing."""
+        if self.start_time_s is not None and self.end_time_s is not None:
+            return self.end_time_s - self.start_time_s
+        return None
+
+    # -- validity / filtering ----------------------------------------------
+
+    @property
+    def is_analyzable(self) -> bool:
+        """Whether this window has enough samples for meaningful analysis."""
+        return self.sample_count > 0
+
+    def contains_speed(self, speed_kmh: float) -> bool:
+        """Whether *speed_kmh* falls within this window's speed range."""
+        lo = self.speed_min_kmh
+        hi = self.speed_max_kmh
+        if lo is None or hi is None:
+            return False
+        return lo <= speed_kmh <= hi
+
+    # -- display -----------------------------------------------------------
+
+    @property
+    def speed_range_text(self) -> str | None:
+        """Formatted speed range, e.g. ``'80–100 km/h'``, or ``None``."""
+        if self.speed_min_kmh is not None and self.speed_max_kmh is not None:
+            return f"{self.speed_min_kmh:.0f}\u2013{self.speed_max_kmh:.0f} km/h"
+        return None
