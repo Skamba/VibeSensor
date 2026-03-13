@@ -42,7 +42,11 @@ def _enrich_top_cause_payload(
     result["confidence_label_key"] = label_key
     result["confidence_tone"] = tone
     result["confidence_pct"] = pct_text
-    result["order"] = domain.order
+    # Normalize order: prefer domain.order, fall back to payload's frequency field
+    order = domain.order or str(
+        finding.get("frequency_hz_or_order") or finding.get("order") or ""
+    )
+    result["order"] = order
     result["phase_evidence"] = (
         {"cruise_fraction": domain.cruise_fraction} if domain.cruise_fraction else None
     )
