@@ -7,55 +7,21 @@ exist only at persistence/transport/rendering boundaries.
 ## Domain object relationship map
 
 ```
-                     ┌──────────┐
-                     │   Car    │
-                     │ (vehicle │
-                     │  under   │
-                     │  test)   │
-                     └────┬─────┘
-                          │ aspects drive
-                          │ order analysis
-                          ▼
-┌──────────┐       ┌─────────────┐       ┌──────────────┐
-│  Sensor  │──has──▶│SensorPlace- │       │ SpeedSource  │
-│ (accel.  │       │   ment      │       │ (GPS/OBD2/   │
-│  node)   │       │ (mounting   │       │  manual)     │
-└────┬─────┘       │  position)  │       └──────┬───────┘
-     │             └─────────────┘              │
-     │ produces                       configures │
-     ▼                                          ▼
-┌────────────┐          ┌─────────────────────────────────┐
-│Measurement │─────────▶│          Run                    │
-│ (raw       │ recorded │  (diagnostic session,           │
-│  sample)   │   in     │   aggregate root — lifecycle,   │
-│            │          │   readings, duration)           │
-└────┬───────┘          └──────────────┬──────────────────┘
-     │ converts to                     │ produces
-     ▼                                 ▼
-┌─────────────┐         ┌──────────────────┐
-│ Vibration-  │         │ AnalysisWindow   │
-│  Reading    │         │ (phase-aligned   │
-│ (dB value   │         │  sample chunk)   │
-│  object)    │         └────────┬─────────┘
-└─────────────┘                  │ analyzed into
-                                 ▼
-                          ┌────────────┐
-                          │  Finding   │
-                          │ (cause     │──────┐
-                          │  candidate,│      │ collected by
-                          │  richest   │      │
-                          │  domain    │      ▼
-                          │  object)   │  ┌────────┐
-                          └────────────┘  │ Report │
-                                          │(output)│
-                                          └───┬────┘
-                                              │ persisted as
-                                              ▼
-                                       ┌──────────────┐
-                                       │HistoryRecord │
-                                       │ (persisted   │
-                                       │  run + result)│
-                                       └──────────────┘
+Car ──aspects──▶ Run (aggregate root: lifecycle, readings, duration)
+                  ▲                    │
+Sensor ──has──▶ SensorPlacement        │ produces
+                  │                    ▼
+SpeedSource ──configures──▶ Run   AnalysisWindow (phase-aligned chunk)
+                                       │ analyzed into
+Measurement ──recorded in──▶ Run       ▼
+  │                              Finding (richest: classification,
+  │ converts to                   ranking, actionability, scoring)
+  ▼                                    │ collected by
+VibrationReading (dB)                  ▼
+                                 Report (assembled output)
+                                       │ persisted as
+                                       ▼
+                                 HistoryRecord
 ```
 
 ### Central objects in the workflow
