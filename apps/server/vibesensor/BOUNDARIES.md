@@ -5,22 +5,37 @@ Use this when changing backend code without scanning the whole package.
 ## Domain Model
 - Ten primary domain concepts live in `domain/core.py` and are re-exported
   from `vibesensor.domain`:
-  1. `Car` – the vehicle under test.
+  1. `Car` – the vehicle under test.  Owns tire-circumference computation
+     from aspect specs.
   2. `Sensor` – a physical accelerometer node.
   3. `SensorPlacement` – a sensor's mounting position on the vehicle.
+     Owns position category classification (wheel/drivetrain/body).
   4. `Run` – one complete diagnostic measurement session (aggregate root).
+     Owns lifecycle (start/stop), duration, reading accumulation.
      `DiagnosticSession` is a backward-compatibility alias.
   5. `Measurement` – a single multi-axis acceleration sample (value object).
      `AccelerationSample` is a backward-compatibility alias.
   6. `SpeedSource` – how vehicle speed is obtained during a run.
+     Owns source-kind classification and effective-speed resolution.
   7. `AnalysisWindow` – a contiguous aligned chunk of samples for analysis.
+     Owns phase classification (cruise/accel/idle), speed containment,
+     and analyzability checks.
   8. `Finding` – one diagnostic conclusion or cause candidate.
+     Owns classification (reference/informational/diagnostic),
+     actionability, surfacing decisions, confidence normalisation,
+     deterministic ranking, and phase-adjusted scoring.
   9. `Report` – the assembled output of a diagnostic run.
+     Owns finding accessors and primary-finding selection.
   10. `HistoryRecord` – a persisted run with its analysis results.
+      Owns status queries and display helpers.
 - Prefer these simple names in domain logic; use the narrower config/payload
   shapes (`CarConfig`, `SensorConfig`, `SpeedSourceConfig`, `RunMetadata`,
   `SensorFrame`, `ReportTemplateData`, `HistoryRunPayload`) at persistence,
   wire-format, and rendering boundaries.
+- `FindingRecord` (in `analysis/findings.py`) and `OrderAssessment`
+  (in `analysis/top_cause_selection.py`) delegate classification and
+  ranking logic to the domain `Finding` and remain as pipeline adapters
+  for dict-based analysis workflows.
 
 ## Analysis Pipeline
 - All post-stop analysis lives in `analysis/`. See [docs/analysis_pipeline.md](../../../docs/analysis_pipeline.md).

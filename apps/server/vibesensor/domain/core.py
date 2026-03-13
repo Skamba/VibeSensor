@@ -8,16 +8,24 @@ Primary domain concepts
 -----------------------
 The ten foundational domain objects are:
 
-1. ``Car`` – the vehicle under test.
+1. ``Car`` – the vehicle under test.  Owns tire-circumference computation.
 2. ``Sensor`` – a physical accelerometer node.
 3. ``SensorPlacement`` – a sensor's mounting position on the vehicle.
+   Owns position category classification (wheel/drivetrain/body).
 4. ``Run`` – one complete diagnostic measurement session (aggregate root).
+   Owns lifecycle, duration, and reading accumulation.
 5. ``Measurement`` – a single multi-axis acceleration sample (value object).
 6. ``SpeedSource`` – how vehicle speed is obtained during a run.
+   Owns source-kind classification and effective-speed resolution.
 7. ``AnalysisWindow`` – a contiguous aligned chunk of samples for analysis.
+   Owns phase classification, speed containment, and analyzability.
 8. ``Finding`` – one diagnostic conclusion or cause candidate.
+   Owns classification, actionability, surfacing, confidence normalisation,
+   deterministic ranking, and phase-adjusted scoring.
 9. ``Report`` – the assembled output of a diagnostic run.
+   Owns finding accessors and primary-finding selection.
 10. ``HistoryRecord`` – a persisted run with its analysis results.
+    Owns status queries and display helpers.
 
 ``DiagnosticSession`` and ``AccelerationSample`` remain as compatibility
 aliases for ``Run`` and ``Measurement`` respectively.
@@ -32,15 +40,21 @@ Mathematical contracts
 * Severity classification delegates to
   ``vibesensor.strength_bands.bucket_for_strength`` so that threshold
   changes (l0–l5 band boundaries) remain in a single place.
+
+* Confidence quantisation step is 0.02; findings whose confidence differs
+  by less than one step share the same rank bucket, leaving the explicit
+  ranking score to break ties.
 """
 
 from __future__ import annotations
 
+import math
 import uuid
-from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from collections.abc import Mapping
+from dataclasses import dataclass, field, replace
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from typing import Literal
+from typing import ClassVar, Literal
 
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.vibration_strength import vibration_strength_db_scalar
@@ -346,6 +360,29 @@ class DiagnosticSession:
         """Return the number of recorded readings."""
         return len(self._readings)
 
+    @property
+    def has_readings(self) -> bool:
+        """Whether any readings have been recorded."""
+        return bool(self._readings)
+
+    @property
+    def duration(self) -> timedelta | None:
+        """Elapsed time between start and stop, or ``None`` if incomplete."""
+        if self.start_time is not None and self.stop_time is not None:
+            return self.stop_time - self.start_time
+        return None
+
+    @property
+    def duration_s(self) -> float | None:
+        """Duration in seconds, or ``None`` if incomplete."""
+        d = self.duration
+        return d.total_seconds() if d is not None else None
+
+    @property
+    def is_complete(self) -> bool:
+        """Whether the session has been stopped."""
+        return self.status is SessionStatus.STOPPED
+
     def get_peak_vibration(self) -> VibrationReading | None:
         """Return the reading with the highest ``intensity_db``, or ``None``.
 
@@ -402,6 +439,22 @@ class SpeedSource:
         return self.kind == "gps"
 
     @property
+    def is_obd2(self) -> bool:
+        return self.kind == "obd2"
+
+    @property
+    def is_live(self) -> bool:
+        """Whether speed data comes from a live source (GPS or OBD-II)."""
+        return self.kind in ("gps", "obd2")
+
+    @property
+    def effective_speed_kmh(self) -> float | None:
+        """The manually configured speed, or ``None`` for live sources."""
+        if self.is_manual:
+            return self.manual_speed_kmh
+        return None
+
+    @property
     def label(self) -> str:
         """Human-readable label for this speed source."""
         labels = {"gps": "GPS", "obd2": "OBD-II", "manual": "Manual"}
@@ -433,10 +486,50 @@ class SensorPlacement:
         },
     )
 
+    _DRIVETRAIN_CODES: frozenset[str] = frozenset(
+        {
+            "transmission",
+            "transfer_case",
+            "rear_differential",
+            "front_differential",
+            "driveshaft",
+        },
+    )
+
+    _BODY_CODES: frozenset[str] = frozenset(
+        {
+            "steering_column",
+            "dashboard",
+            "seat_rail",
+            "floor_center",
+        },
+    )
+
     @property
     def is_wheel(self) -> bool:
         """Whether this placement is on a wheel/corner position."""
         return self.code in self._WHEEL_CODES
+
+    @property
+    def is_drivetrain(self) -> bool:
+        """Whether this placement is on a drivetrain component."""
+        return self.code in self._DRIVETRAIN_CODES
+
+    @property
+    def is_body(self) -> bool:
+        """Whether this placement is on a body/cabin position."""
+        return self.code in self._BODY_CODES
+
+    @property
+    def position_category(self) -> str:
+        """Return a broad category: ``'wheel'``, ``'drivetrain'``, ``'body'``, or ``'other'``."""
+        if self.is_wheel:
+            return "wheel"
+        if self.is_drivetrain:
+            return "drivetrain"
+        if self.is_body:
+            return "body"
+        return "other"
 
     @property
     def display_name(self) -> str:
@@ -527,6 +620,30 @@ class Car:
         """Rim diameter in inches (aspects key ``rim_in``)."""
         return self.aspects.get("rim_in")
 
+    @property
+    def tire_circumference_m(self) -> float | None:
+        """Compute tire circumference in metres from aspect specs.
+
+        Uses the standard sidewall/diameter formula:
+        ``diameter = (rim_in × 25.4) + 2 × (width_mm × aspect_pct / 100)``
+        ``circumference = π × diameter``
+
+        Returns ``None`` if any required dimension is missing or invalid.
+        """
+        width = self.tire_width_mm
+        aspect = self.tire_aspect_pct
+        rim = self.rim_in
+        if width is None or aspect is None or rim is None:
+            return None
+        if not (math.isfinite(width) and math.isfinite(aspect) and math.isfinite(rim)):
+            return None
+        if width <= 0 or aspect <= 0 or rim <= 0:
+            return None
+        sidewall_mm = width * (aspect / 100.0)
+        diameter_mm = (rim * 25.4) + (2.0 * sidewall_mm)
+        diameter_m = diameter_mm / 1000.0
+        return diameter_m * math.pi
+
 
 # ---------------------------------------------------------------------------
 # Phase 3: Introduced domain objects — AnalysisWindow, Finding, Report,
@@ -541,6 +658,11 @@ class AnalysisWindow:
     Represents the temporal and phase context of one analysis unit —
     a segment of the run where driving conditions are sufficiently
     uniform for meaningful spectral and order analysis.
+
+    Phase classification
+    --------------------
+    Phase strings follow the ``DrivingPhase`` enum values: ``"cruise"``,
+    ``"acceleration"``, ``"deceleration"``, ``"idle"``, ``"unknown"``.
     """
 
     start_idx: int
@@ -565,6 +687,49 @@ class AnalysisWindow:
             return self.end_time_s - self.start_time_s
         return None
 
+    # -- phase classification ----------------------------------------------
+
+    @property
+    def is_cruising(self) -> bool:
+        """Whether this window represents a constant-speed cruise phase."""
+        return self.phase.strip().lower() == "cruise"
+
+    @property
+    def is_acceleration(self) -> bool:
+        return self.phase.strip().lower() == "acceleration"
+
+    @property
+    def is_deceleration(self) -> bool:
+        return self.phase.strip().lower() == "deceleration"
+
+    @property
+    def is_idle(self) -> bool:
+        return self.phase.strip().lower() == "idle"
+
+    # -- validity / filtering ----------------------------------------------
+
+    @property
+    def is_analyzable(self) -> bool:
+        """Whether this window has enough samples for meaningful analysis."""
+        return self.sample_count > 0
+
+    def contains_speed(self, speed_kmh: float) -> bool:
+        """Whether *speed_kmh* falls within this window's speed range."""
+        lo = self.speed_min_kmh
+        hi = self.speed_max_kmh
+        if lo is None or hi is None:
+            return False
+        return lo <= speed_kmh <= hi
+
+    # -- display -----------------------------------------------------------
+
+    @property
+    def speed_range_text(self) -> str | None:
+        """Formatted speed range, e.g. ``'80–100 km/h'``, or ``None``."""
+        if self.speed_min_kmh is not None and self.speed_max_kmh is not None:
+            return f"{self.speed_min_kmh:.0f}\u2013{self.speed_max_kmh:.0f} km/h"
+        return None
+
 
 @dataclass(frozen=True, slots=True)
 class Finding:
@@ -578,6 +743,21 @@ class Finding:
     ``finding_id`` is assigned during finalization (``F001``, ``F002``, …).
     ``suspected_source`` identifies the mechanical component suspected of
     causing the vibration (e.g. ``"wheel_bearing"``, ``"driveshaft"``).
+
+    Classification
+    --------------
+    Findings are partitioned into three categories:
+
+    * **Reference** findings (``REF_*``) carry data-quality metadata.
+    * **Informational** findings carry context without a specific diagnosis.
+    * **Diagnostic** findings identify a suspected cause with a confidence.
+
+    Actionability and surfacing
+    ---------------------------
+    :attr:`is_actionable` indicates whether the finding identifies a
+    meaningful component (not a placeholder "unknown" source).
+    :attr:`should_surface` indicates whether the finding is suitable for
+    display to the end-user in a report or UI.
     """
 
     finding_id: str = ""
@@ -590,10 +770,35 @@ class Finding:
     strongest_speed_band: str | None = None
     peak_classification: str = ""
 
+    # Evidence and ranking fields ------------------------------------------
+    ranking_score: float = 0.0
+    dominance_ratio: float | None = None
+    diffuse_excitation: bool = False
+    weak_spatial_separation: bool = False
+    phase_evidence: dict[str, float] | None = field(default=None, hash=False)
+
+    # Domain constants -----------------------------------------------------
+
+    _MIN_SURFACING_CONFIDENCE: ClassVar[float] = 0.25
+    """Findings below this confidence are not surfaced in user-facing output."""
+
+    _QUANTISE_STEP: ClassVar[float] = 0.02
+    """Confidence quantisation step to prevent jitter-driven reordering."""
+
+    _PLACEHOLDER_SOURCES: ClassVar[frozenset[str]] = frozenset(
+        {"unknown_resonance", "unknown"},
+    )
+    """Suspected sources that are considered placeholder / unresolved."""
+
+    _UNKNOWN_LOCATIONS: ClassVar[frozenset[str]] = frozenset(
+        {"", "unknown", "not available", "n/a"},
+    )
+    """Location values that carry no actionable spatial information."""
+
     # -- factories ---------------------------------------------------------
 
     @classmethod
-    def from_payload(cls, payload: dict[str, object]) -> Finding:
+    def from_payload(cls, payload: Mapping[str, object]) -> Finding:
         """Create a domain Finding from a ``FindingPayload`` dict.
 
         Extracts the subset of fields that the domain object cares about,
@@ -623,6 +828,28 @@ class Finding:
         loc = payload.get("strongest_location")
         band = payload.get("strongest_speed_band")
 
+        # Evidence / ranking fields
+        ranking_raw = payload.get("_ranking_score")
+        ranking_score = 0.0
+        if ranking_raw is not None:
+            try:
+                ranking_score = float(ranking_raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                pass
+
+        dominance_raw = payload.get("dominance_ratio")
+        dominance_ratio: float | None = None
+        if dominance_raw is not None:
+            try:
+                dominance_ratio = float(dominance_raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                pass
+
+        phase_ev = payload.get("phase_evidence")
+        phase_evidence: dict[str, float] | None = None
+        if isinstance(phase_ev, dict):
+            phase_evidence = phase_ev
+
         return cls(
             finding_id=_str("finding_id"),
             suspected_source=_str("suspected_source"),
@@ -633,7 +860,18 @@ class Finding:
             strongest_location=str(loc) if loc is not None else None,
             strongest_speed_band=str(band) if band is not None else None,
             peak_classification=_str("peak_classification"),
+            ranking_score=ranking_score,
+            dominance_ratio=dominance_ratio,
+            diffuse_excitation=bool(payload.get("diffuse_excitation", False)),
+            weak_spatial_separation=bool(payload.get("weak_spatial_separation", False)),
+            phase_evidence=phase_evidence,
         )
+
+    # -- identity mutation (frozen ⇒ returns new instance) -----------------
+
+    def with_id(self, finding_id: str) -> Finding:
+        """Return a copy of this finding with a new ``finding_id``."""
+        return replace(self, finding_id=finding_id)
 
     # -- classification ----------------------------------------------------
 
@@ -662,6 +900,76 @@ class Finding:
         """Lower-cased, stripped suspected source for comparison."""
         return self.suspected_source.strip().lower()
 
+    # -- effective confidence -----------------------------------------------
+
+    @property
+    def effective_confidence(self) -> float:
+        """Confidence normalised for computation (``None`` → ``0.0``)."""
+        return float(self.confidence) if self.confidence is not None else 0.0
+
+    # -- actionability / surfacing ------------------------------------------
+
+    @property
+    def is_actionable(self) -> bool:
+        """Whether this finding identifies a meaningful mechanical component.
+
+        A finding is actionable when its suspected source is not a
+        placeholder value, **or** when it has a specific (non-unknown)
+        location even if the source is a placeholder.
+        """
+        if self.source_normalized not in self._PLACEHOLDER_SOURCES:
+            return True
+        location = (self.strongest_location or "").strip().lower()
+        return location not in self._UNKNOWN_LOCATIONS
+
+    @property
+    def should_surface(self) -> bool:
+        """Whether this finding should appear in user-facing report output.
+
+        Filters out reference findings, informational findings, and those
+        below the minimum confidence floor.
+        """
+        if self.is_reference:
+            return False
+        if self.is_informational:
+            return False
+        return self.effective_confidence >= self._MIN_SURFACING_CONFIDENCE
+
+    # -- ranking / comparison ------------------------------------------------
+
+    @property
+    def rank_key(self) -> tuple[float, float]:
+        """Deterministic sort key for stable finding ordering.
+
+        Confidence is quantised so tiny timing/noise jitter does not
+        reshuffle otherwise-equivalent findings, leaving the explicit
+        ranking score to break ties consistently.
+        """
+        step = self._QUANTISE_STEP
+        quantised = round(self.effective_confidence / step) * step
+        return (quantised, self.ranking_score)
+
+    @property
+    def phase_adjusted_score(self) -> float:
+        """Phase-aware ranking score used for top-cause selection.
+
+        Cruise-heavy findings receive a modest score boost because
+        constant-speed conditions produce the most reliable spectral
+        evidence.
+        """
+        cruise_fraction = 0.0
+        if isinstance(self.phase_evidence, dict):
+            raw = self.phase_evidence.get("cruise_fraction", 0.0)
+            try:
+                cruise_fraction = float(raw)
+            except (TypeError, ValueError):
+                pass
+        return self.effective_confidence * (0.85 + 0.15 * cruise_fraction)
+
+    def is_stronger_than(self, other: Finding) -> bool:
+        """Whether this finding ranks higher than *other*."""
+        return self.phase_adjusted_score > other.phase_adjusted_score
+
 
 @dataclass(frozen=True, slots=True)
 class Report:
@@ -670,6 +978,10 @@ class Report:
     This is the primary domain object for a rendered or ready-to-render
     report.  ``ReportTemplateData`` in ``report.report_data`` remains as
     the PDF-rendering adapter.
+
+    The :attr:`findings` tuple holds domain :class:`Finding` objects
+    extracted from the analysis summary, giving the report first-class
+    access to its diagnostic conclusions.
     """
 
     run_id: str
@@ -682,6 +994,30 @@ class Report:
     sample_count: int = 0
     sensor_count: int = 0
     finding_count: int = 0
+    findings: tuple[Finding, ...] = ()
+
+    # -- queries -----------------------------------------------------------
+
+    @property
+    def has_findings(self) -> bool:
+        """Whether this report contains any findings."""
+        return bool(self.findings)
+
+    @property
+    def diagnostic_findings(self) -> list[Finding]:
+        """Return only diagnostic (non-reference, non-info) findings."""
+        return [f for f in self.findings if f.is_diagnostic]
+
+    @property
+    def primary_finding(self) -> Finding | None:
+        """The top-ranked diagnostic finding, or ``None``."""
+        diags = self.diagnostic_findings
+        return diags[0] if diags else None
+
+    @property
+    def is_empty(self) -> bool:
+        """Whether the report has no diagnostic content."""
+        return not self.diagnostic_findings
 
     # -- factories ---------------------------------------------------------
 
@@ -690,7 +1026,8 @@ class Report:
         """Create a domain Report from a ``SummaryData`` dict.
 
         Extracts the key metadata fields from the analysis summary to build
-        a high-level domain view of the report.
+        a high-level domain view of the report, including domain
+        :class:`Finding` objects for each finding in the summary.
         """
         meta = summary.get("metadata") or {}
         if not isinstance(meta, dict):
@@ -705,8 +1042,13 @@ class Report:
             raw_type = car_cfg.get("car_type")
             car_type = str(raw_type) if raw_type else None
 
-        findings = summary.get("findings")
-        finding_count = len(findings) if isinstance(findings, list) else 0
+        raw_findings = summary.get("findings")
+        finding_list: list[Finding] = []
+        if isinstance(raw_findings, list):
+            for item in raw_findings:
+                if isinstance(item, dict):
+                    finding_list.append(Finding.from_payload(item))
+        finding_count = len(raw_findings) if isinstance(raw_findings, list) else 0
 
         rows = summary.get("rows")
         sample_count = int(rows) if isinstance(rows, (int, float, str)) else 0
@@ -742,6 +1084,7 @@ class Report:
             sample_count=sample_count,
             sensor_count=sensor_count,
             finding_count=finding_count,
+            findings=tuple(finding_list),
         )
 
 
@@ -781,3 +1124,20 @@ class HistoryRecord:
     def is_analyzable(self) -> bool:
         """Whether this record can be (re)analyzed."""
         return self.status in ("complete", "error") and self.sample_count > 0
+
+    @property
+    def has_analysis(self) -> bool:
+        """Whether analysis has been completed for this record."""
+        return self.analysis_version is not None
+
+    @property
+    def display_status(self) -> str:
+        """Human-readable status text."""
+        labels = {
+            "recording": "Recording",
+            "complete": "Complete",
+            "error": "Error",
+            "stopped": "Stopped",
+            "analyzing": "Analyzing",
+        }
+        return labels.get(self.status, self.status.title() if self.status else "Unknown")
