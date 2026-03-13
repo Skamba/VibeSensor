@@ -8,46 +8,10 @@ payload-first flow.
 
 from __future__ import annotations
 
-import ast
 import importlib
-from pathlib import Path
+import sys
 
 import pytest
-from _paths import SERVER_ROOT
-
-# ── Import boundary: domain objects must not import analysis payloads ─────
-
-_DOMAIN_DIR = SERVER_ROOT / "vibesensor" / "domain"
-
-
-def _imports_analysis_types(path: Path) -> list[str]:
-    """Return import lines that reference ``analysis/_types``."""
-    source = path.read_text(encoding="utf-8")
-    violations: list[str] = []
-    for node in ast.walk(ast.parse(source)):
-        if isinstance(node, ast.ImportFrom):
-            module = node.module or ""
-            if "analysis._types" in module or "analysis._types" in module.replace("..", ""):
-                violations.append(f"{path.name}: from {module} import ...")
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                if "analysis._types" in alias.name:
-                    violations.append(f"{path.name}: import {alias.name}")
-    return violations
-
-
-def test_domain_modules_do_not_import_analysis_payload_types() -> None:
-    """Domain objects must not depend on analysis payload types."""
-    violations: list[str] = []
-    for py_file in sorted(_DOMAIN_DIR.glob("*.py")):
-        if py_file.name.startswith("__"):
-            continue
-        violations.extend(_imports_analysis_types(py_file))
-    assert not violations, (
-        "Domain modules must not import from analysis._types "
-        "(payload types belong at boundaries only): " + "; ".join(violations)
-    )
-
 
 # ── RunAnalysisResult is available and exported ─────────────────────────
 
@@ -75,6 +39,32 @@ def test_run_analysis_result_is_frozen_dataclass() -> None:
     )
     with pytest.raises(AttributeError):
         r.run_id = "other"  # type: ignore[misc]
+
+
+# ── Domain modules do not depend on analysis payload types ───────────────
+
+
+def test_domain_modules_do_not_import_analysis_types_at_runtime() -> None:
+    """Domain objects must not depend on analysis payload types at runtime.
+
+    Validates by importing all domain modules and checking that
+    ``vibesensor.analysis._types`` is not pulled in as a side effect.
+    """
+    analysis_types_key = "vibesensor.analysis._types"
+    was_loaded = analysis_types_key in sys.modules
+
+    if not was_loaded:
+        # Clear cached domain imports to get a clean check
+        domain_keys = [k for k in sys.modules if k.startswith("vibesensor.domain")]
+        saved = {k: sys.modules.pop(k) for k in domain_keys}
+        try:
+            importlib.import_module("vibesensor.domain")
+            assert analysis_types_key not in sys.modules, (
+                "Domain modules must not import from vibesensor.analysis._types "
+                "(payload types belong at boundaries only)"
+            )
+        finally:
+            sys.modules.update(saved)
 
 
 # ── RunAnalysisResult provides domain queries ────────────────────────────

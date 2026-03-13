@@ -16,7 +16,13 @@ from ._types import FindingPayload, is_finding
 
 
 def non_reference_findings(items: Sequence[object]) -> list[FindingPayload]:
-    """Return well-formed finding dicts excluding ``REF_*`` entries."""
+    """Return well-formed finding dicts excluding ``REF_*`` entries.
+
+    Uses a direct string prefix check on ``finding_id`` rather than domain
+    object conversion — this is intentional for boundary-level operations
+    where avoiding the overhead of ``Finding.from_payload()`` is preferred.
+    The reference-detection logic mirrors ``Finding.is_reference``.
+    """
     return [
         item
         for item in items
