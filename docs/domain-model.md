@@ -16,9 +16,8 @@ SpeedSource ──configures──▶ Run   [AnalysisWindow] (analysis-layer typ
 Measurement ──recorded in──▶ Run       ▼
   │                              Finding (richest: classification,
   │ converts to                   ranking, actionability, scoring)
-  ▼                                    │ collected by
-VibrationReading (dB)                  ▼
-                                 Report (assembled output)
+  ▼
+VibrationReading (dB)            Report (metadata carrier)
 ```
 
 ### Central objects in the workflow
@@ -27,7 +26,7 @@ VibrationReading (dB)                  ▼
 |--------|------|--------------------|
 | **Run** | Aggregate root | Lifecycle (start/stop/stopped), status transitions, phase tracking |
 | **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence thresholds, deterministic ranking, phase-adjusted scoring (flat `cruise_fraction`), vibration-source enum (`VibrationSource`), speed-band helper functions (`speed_bin_label`, `speed_band_sort_key`), REF_ prefix cross-check warning |
-| **Report** | Assembled output | Finding queries (`finding_count` property), primary-finding selection, raw temporal values (`report_date`, `duration_s`); construction from analysis summary delegated to `report/mapping.py` |
+| **Report** | Metadata carrier | Run identity, language, car info, temporal metadata; finding-level data flows through `ReportMappingContext` (raw analysis dicts), not this object.  Construction from analysis summary delegated to `report/mapping.py` |
 
 ### Supporting domain objects
 
@@ -37,14 +36,14 @@ VibrationReading (dB)                  ▼
 | **Sensor** | Accelerometer node | Display name, placement status queries |
 | **SensorPlacement** | Mounting position | Position category classification (wheel/drivetrain/body) |
 | **Measurement** | Raw sample value object | Conversion to VibrationReading (dB) |
-| **VibrationReading** | Processed dB value object | Severity level lookup, dB computation |
+| **VibrationReading** | Processed dB value object | Severity level lookup.  dB computation entry points are the free functions `compute_db()` / `compute_db_or_none()` in `vibration_strength.py` |
 | **SpeedSource** | Speed acquisition config | Source-kind classification (via `SpeedSourceKind` StrEnum), effective speed resolution, cross-field invariant (MANUAL requires `manual_speed_kmh > 0`) |
 
 ### Object containment and derivation
 
 - **Sensor** contains an optional **SensorPlacement**.
 - **Run** tracks lifecycle via ``start()``/``stop()`` guards and an ``is_recording`` property.  Reading accumulation is handled by the recording pipeline, not the domain object.
-- **Report** contains a tuple of **Finding** instances.
+- **Report** is a metadata carrier; finding-level data flows through `ReportMappingContext`.
 - **Finding** is derived from analysis of **AnalysisWindow** data (analysis-layer type, not a domain object).
 - **Car** aspects (tire dimensions) drive order-analysis hypothesis generation.
 - **SpeedSource** configures how speed is obtained during a **Run**.
@@ -61,8 +60,8 @@ These types exist only at boundaries and should not own domain behavior:
 | `SensorFrame` | `protocol.py` | Binary protocol → raw sample data |
 | `RunMetadata` | `backend_types.py` | Run-level configuration snapshot |
 | `PhaseEvidence` | `analysis/_types.py` | Phase evidence TypedDict for pipeline serialization |
-| `FindingPayload` | `analysis/_types.py` | Dict-based analysis pipeline payload |
-| `AnalysisSummary` | `analysis/_types.py` | Analysis summary TypedDict |
+| `FindingPayload` | `analysis/_types.py` | Dict-based analysis pipeline payload (also used for top causes after TopCause TypedDict removal) |
+| `AnalysisSummary` | `analysis/_types.py` | Analysis summary TypedDict (`.top_causes` is `list[FindingPayload]`) |
 | `SuspectedVibrationOrigin` | `analysis/_types.py` | Origin summary TypedDict (key: `suspected_source`) |
 | `LocalizationAssessment` | `analysis/summary_builder.py` | Spatial interpretation of finding evidence |
 | `ReportTemplateData` | `report/report_data.py` | PDF-rendering data classes |
@@ -85,7 +84,7 @@ within `apps/server/vibesensor/domain/`:
 | `car.py` | `Car`, `TireSpec` | Vehicle geometry and tire computation |
 | `driving_phase.py` | `DrivingPhase` | Driving-phase StrEnum (the `AnalysisWindow` class itself lives in `analysis/analysis_window.py`) |
 | `finding.py` | `FindingKind`, `VibrationSource`, `Finding`, `speed_bin_label`, `speed_band_sort_key` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band helper functions, flat `cruise_fraction` for phase adjustment) |
-| `report.py` | `Report` | Assembled diagnostic output (construction from analysis summary lives in `report/mapping.py::build_report_from_summary()`) |
+| `report.py` | `Report` | Metadata carrier for run identity and rendering context (construction from analysis summary lives in `report/mapping.py::build_report_from_summary()`) |
 | `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `transition_run` | Persisted run lifecycle state machine (enforcing) |
 
 All domain objects are re-exported from `vibesensor.domain` (the package

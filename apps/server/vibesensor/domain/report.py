@@ -1,15 +1,15 @@
-"""The assembled output of a diagnostic run.
+"""Report metadata carrier for a diagnostic run.
 
-``Report`` is the primary domain object for a rendered or ready-to-render
-report.  ``ReportTemplateData`` in ``report.report_data`` remains as the
-PDF-rendering adapter.
+``Report`` holds run-level identity and metadata used by the rendering
+pipeline.  Finding-level data flows through the raw analysis summary
+dicts (``ReportMappingContext``) rather than through this object.
+``ReportTemplateData`` in ``report.report_data`` is the PDF-rendering
+adapter.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-
-from .finding import Finding
 
 __all__ = [
     "Report",
@@ -18,15 +18,11 @@ __all__ = [
 
 @dataclass(frozen=True, slots=True)
 class Report:
-    """The assembled output of a diagnostic run.
+    """Run-level metadata carrier consumed by the report rendering pipeline.
 
-    This is the primary domain object for a rendered or ready-to-render
-    report.  ``ReportTemplateData`` in ``report.report_data`` remains as
-    the PDF-rendering adapter.
-
-    The :attr:`findings` tuple holds domain :class:`Finding` objects
-    extracted from the analysis summary, giving the report first-class
-    access to its diagnostic conclusions.
+    Finding-level data flows through the analysis summary dicts and
+    :class:`~vibesensor.report.mapping.ReportMappingContext`, not
+    through this object.
     """
 
     run_id: str
@@ -38,34 +34,9 @@ class Report:
     duration_s: float | None = None
     sample_count: int = 0
     sensor_count: int = 0
-    findings: tuple[Finding, ...] = ()
 
-    # -- queries -----------------------------------------------------------
-
-    @property
-    def finding_count(self) -> int:
-        """Total number of findings (derived from findings tuple)."""
-        return len(self.findings)
-
-    # -- queries -----------------------------------------------------------
-
-    @property
-    def has_findings(self) -> bool:
-        """Whether this report contains any findings."""
-        return bool(self.findings)
-
-    @property
-    def diagnostic_findings(self) -> list[Finding]:
-        """Return only diagnostic (non-reference, non-info) findings."""
-        return [f for f in self.findings if f.is_diagnostic]
-
-    @property
-    def primary_finding(self) -> Finding | None:
-        """The top-ranked diagnostic finding, or ``None``."""
-        diags = self.diagnostic_findings
-        return diags[0] if diags else None
-
-    @property
-    def is_empty(self) -> bool:
-        """Whether the report has no diagnostic content."""
-        return not self.diagnostic_findings
+    def __post_init__(self) -> None:
+        if not self.run_id:
+            raise ValueError("run_id must be non-empty")
+        if self.duration_s is not None and self.duration_s < 0:
+            raise ValueError("duration_s must be non-negative")
