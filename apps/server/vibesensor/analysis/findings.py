@@ -75,12 +75,16 @@ class FindingCollection:
     Provides partitioning (reference / diagnostic / informational),
     sorting, stable-ID assignment, and common filtering patterns that
     were previously scattered across procedural helper functions.
+
+    Domain ``Finding`` objects are built eagerly at construction to avoid
+    redundant ``from_payload()`` calls on every filter pass.
     """
 
-    __slots__ = ("_items",)
+    __slots__ = ("_items", "_domain_cache")
 
     def __init__(self, findings: list[FindingPayload]) -> None:
         self._items = findings
+        self._domain_cache: list[DomainFinding] = [DomainFinding.from_payload(f) for f in findings]
 
     # -- access ------------------------------------------------------------
 
@@ -97,16 +101,20 @@ class FindingCollection:
     # -- filtering ---------------------------------------------------------
 
     def references(self) -> list[FindingPayload]:
-        return [f for f in self._items if DomainFinding.from_payload(f).is_reference]
+        return [f for f, d in zip(self._items, self._domain_cache, strict=True) if d.is_reference]
 
     def diagnostics(self) -> list[FindingPayload]:
-        return [f for f in self._items if DomainFinding.from_payload(f).is_diagnostic]
+        return [f for f, d in zip(self._items, self._domain_cache, strict=True) if d.is_diagnostic]
 
     def informational(self) -> list[FindingPayload]:
-        return [f for f in self._items if DomainFinding.from_payload(f).is_informational]
+        return [
+            f for f, d in zip(self._items, self._domain_cache, strict=True) if d.is_informational
+        ]
 
     def non_reference(self) -> list[FindingPayload]:
-        return [f for f in self._items if not DomainFinding.from_payload(f).is_reference]
+        return [
+            f for f, d in zip(self._items, self._domain_cache, strict=True) if not d.is_reference
+        ]
 
     # -- ordering and finalization -----------------------------------------
 
@@ -126,7 +134,8 @@ class FindingCollection:
         ordered = refs + diags + infos
         counter = 0
         for finding in ordered:
-            if not DomainFinding.from_payload(finding).is_reference:
+            df = DomainFinding.from_payload(finding)
+            if not df.is_reference:
                 counter += 1
                 finding["finding_id"] = f"F{counter:03d}"
         return ordered
@@ -859,6 +868,7 @@ class PeakBin:
         finding: FindingPayload = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{self._bin_center:.0f}hz",
+            "finding_type": "informational" if self._peak_type == "transient" else "diagnostic",
             "severity": "info" if self._peak_type == "transient" else "diagnostic",
             "suspected_source": (
                 "baseline_noise"
@@ -885,6 +895,7 @@ class PeakBin:
             "strongest_speed_band": speed_band if speed_band != "-" else None,
             "phase_presence": phase_presence,
         }
+        finding["ranking_score"] = self.ranking_score
         finding["_ranking_score"] = self.ranking_score
         return finding
 

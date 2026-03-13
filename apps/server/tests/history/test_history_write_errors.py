@@ -1,4 +1,4 @@
-"""Tests for history DB write-failure handling in MetricsLogger (issue #296).
+"""Tests for history DB write-failure handling in RunRecorder (issue #296).
 
 Verifies that DB write failures are:
 1. Exposed via status()['write_error']
@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
+from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
 from vibesensor.metrics_log.logger import _MAX_HISTORY_CREATE_RETRIES
 
 # -- Minimal fakes -----------------------------------------------------------
@@ -112,10 +112,10 @@ class _FakeAnalysisSettings:
         }
 
 
-def _make_logger(history_db, tmp_path: Path) -> MetricsLogger:
+def _make_logger(history_db, tmp_path: Path) -> RunRecorder:
     reg = _FakeRegistry()
-    return MetricsLogger(
-        MetricsLoggerConfig(
+    return RunRecorder(
+        RunRecorderConfig(
             enabled=False,
             metrics_log_hz=2,
             sensor_model="ADXL345",
@@ -130,9 +130,9 @@ def _make_logger(history_db, tmp_path: Path) -> MetricsLogger:
     )
 
 
-def _start_and_snapshot(logger: MetricsLogger):
+def _start_and_snapshot(logger: RunRecorder):
     """Start logging and return (run_id, start_utc, start_mono)."""
-    logger.start_logging()
+    logger.start_recording()
     snap = logger._session_snapshot()
     assert snap is not None
     return snap.run_id, snap.start_time_utc, snap.start_mono_s
@@ -223,7 +223,7 @@ class TestPersistentCreateRunFailureStopsRetrying:
 
         # Starting a new session resets the counter
         db.create_run.side_effect = None  # Next call succeeds
-        logger.start_logging()
+        logger.start_recording()
         assert logger._persist_history_create_fail_count == 0
 
 
@@ -300,7 +300,7 @@ class TestStatusAlwaysIncludesWriteError:
         assert logger.status()["write_error"] is not None
         assert logger.status()["write_error"] is not None
 
-    def test_stop_logging_resets_write_error(self, tmp_path: Path) -> None:
+    def test_stop_recording_resets_write_error(self, tmp_path: Path) -> None:
         db = MagicMock()
         db.create_run.side_effect = OSError("boom")
         logger = _make_logger(db, tmp_path)
@@ -312,5 +312,5 @@ class TestStatusAlwaysIncludesWriteError:
         )
         assert logger.status()["write_error"] is not None
 
-        logger.stop_logging()
+        logger.stop_recording()
         assert logger.status()["write_error"] is None

@@ -713,6 +713,7 @@ def suppress_engine_aliases(
                 suppressed = eng_conf * _ENGINE_ALIAS_SUPPRESSION
                 finding["confidence"] = suppressed
                 new_ranking_score = ranking_score * _ENGINE_ALIAS_SUPPRESSION
+                finding["ranking_score"] = new_ranking_score
                 finding["_ranking_score"] = new_ranking_score
                 findings[index] = (new_ranking_score, finding)
     findings.sort(key=lambda item: item[0], reverse=True)
@@ -1019,6 +1020,7 @@ def assemble_order_finding(
     finding: FindingPayload = {
         "finding_id": "F_ORDER",
         "finding_key": hypothesis.key,
+        "finding_type": "diagnostic",
         "suspected_source": hypothesis.suspected_source,
         "evidence_summary": evidence,
         "frequency_hz_or_order": _order_label(hypothesis.order, hypothesis.order_label_base),
@@ -1063,6 +1065,7 @@ def assemble_order_finding(
             actions[0].get("what") if actions else i18n_ref("NEXT_SENSOR_MOVE_DEFAULT")
         ),
         "actions": actions,
+        "ranking_score": ranking_score,
         "_ranking_score": ranking_score,
     }
     return ranking_score, finding

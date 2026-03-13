@@ -6,7 +6,6 @@ import pytest
 
 from vibesensor.analysis.findings import _classify_peak_type
 from vibesensor.analysis.helpers import _location_label
-from vibesensor.peak_classification import classify_peak_hz
 from vibesensor.strength_bands import bucket_for_strength
 
 
@@ -76,34 +75,6 @@ class TestPeakClassification:
         expected: str,
     ) -> None:
         assert _classify_peak_type(presence, burstiness, **kwargs) == expected
-
-
-class TestOverlapDetection:
-    """Wheel and engine overlap labeling should remain stable."""
-
-    def test_wheel2_eng1_overlap_detection(self) -> None:
-        result = classify_peak_hz(
-            peak_hz=20.0,
-            speed_mps=80.0 / 3.6,
-            settings={
-                "tire_width_mm": 285.0,
-                "tire_aspect_pct": 30.0,
-                "rim_in": 21.0,
-                "tire_deflection_factor": 1.0,
-                "final_drive_ratio": 3.08,
-                "current_gear_ratio": 0.64,
-                "wheel_bandwidth_pct": 5.0,
-                "driveshaft_bandwidth_pct": 4.5,
-                "engine_bandwidth_pct": 5.2,
-                "speed_uncertainty_pct": 1.0,
-                "tire_diameter_uncertainty_pct": 1.0,
-                "final_drive_uncertainty_pct": 0.1,
-                "gear_uncertainty_pct": 0.2,
-                "min_abs_band_hz": 0.2,
-                "max_band_half_width_pct": 6.0,
-            },
-        )
-        assert result.get("key") == "wheel2_eng1"
 
 
 class TestLocationLabel:

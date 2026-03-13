@@ -1,7 +1,7 @@
 """Unit tests for vibesensor.metrics_log.post_analysis.PostAnalysisWorker.
 
 These tests exercise the background analysis worker independently of
-MetricsLogger, validating queue management, threading, and error handling.
+RunRecorder, validating queue management, threading, and error handling.
 """
 
 from __future__ import annotations

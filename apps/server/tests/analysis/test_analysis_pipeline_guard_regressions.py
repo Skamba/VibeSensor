@@ -22,7 +22,7 @@ import pytest
 
 from vibesensor.analysis.helpers import _speed_bin_label
 from vibesensor.analysis.order_analysis import _compute_effective_match_rate
-from vibesensor.metrics_log import MetricsLogger
+from vibesensor.metrics_log import RunRecorder
 from vibesensor.update.status import hash_tree
 
 # ------------------------------------------------------------------
@@ -168,7 +168,7 @@ class TestMetricsLogLockSnapshot:
     """
 
     def test_live_start_read_is_under_lock(self) -> None:
-        source = inspect.getsource(MetricsLogger.run)
+        source = inspect.getsource(RunRecorder.run)
         assert "with self._lock:" in source
         lock_idx = source.index("with self._lock:")
         live_start_idx = source.index("_live_start_mono_s")

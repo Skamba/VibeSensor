@@ -178,10 +178,10 @@ def _find_endpoint(router, path: str):
 
 
 def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) -> None:
-    """Integration: stop_logging → post-analysis → analysis persisted in DB."""
+    """Integration: stop_recording → post-analysis → analysis persisted in DB."""
     from vibesensor.analysis_settings import AnalysisSettingsStore
     from vibesensor.gps_speed import GPSSpeedMonitor
-    from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
+    from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
     from vibesensor.processing import SignalProcessor
     from vibesensor.registry import ClientRegistry
 
@@ -197,8 +197,8 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     )
     analysis_settings = AnalysisSettingsStore()
 
-    logger = MetricsLogger(
-        MetricsLoggerConfig(
+    logger = RunRecorder(
+        RunRecorderConfig(
             enabled=False,
             metrics_log_hz=10,
             sensor_model="ADXL345",
@@ -215,7 +215,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     )
 
     # Start logging and simulate some data
-    logger.start_logging()
+    logger.start_recording()
     run_id = logger._run_id
     assert run_id is not None
 
@@ -238,7 +238,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _fake_summarize)
 
     # Stop logging - should trigger post-analysis
-    logger.stop_logging()
+    logger.stop_recording()
     logger.wait_for_post_analysis(timeout_s=5.0)
 
     # Verify analysis is persisted

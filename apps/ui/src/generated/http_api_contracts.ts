@@ -996,11 +996,33 @@ export interface components {
       /** Label */
       label: string;
     };
+    /** RawSamplesErrorPayload */
+    RawSamplesErrorPayload: {
+      /** Count */
+      count: number;
+      /** Error */
+      error: string;
+    };
+    /** RawSamplesPayload */
+    RawSamplesPayload: {
+      /** Client Id */
+      client_id: string;
+      /** N Samples */
+      n_samples: number;
+      /** Sample Rate Hz */
+      sample_rate_hz: number;
+      /** X */
+      x: number[];
+      /** Y */
+      y: number[];
+      /** Z */
+      z: number[];
+    };
     /**
-     * LoggingStatusResponse
+     * RecordingStatusResponse
      * @description Response body with the current recording (run-logging) status.
      */
-    LoggingStatusResponse: {
+    RecordingStatusResponse: {
       /** Analysis In Progress */
       analysis_in_progress: boolean;
       /** Current File */
@@ -1025,28 +1047,6 @@ export interface components {
       samples_written?: number;
       /** Write Error */
       write_error: string | null;
-    };
-    /** RawSamplesErrorPayload */
-    RawSamplesErrorPayload: {
-      /** Count */
-      count: number;
-      /** Error */
-      error: string;
-    };
-    /** RawSamplesPayload */
-    RawSamplesPayload: {
-      /** Client Id */
-      client_id: string;
-      /** N Samples */
-      n_samples: number;
-      /** Sample Rate Hz */
-      sample_rate_hz: number;
-      /** X */
-      x: number[];
-      /** Y */
-      y: number[];
-      /** Z */
-      z: number[];
     };
     /**
      * RemoveClientResponse
@@ -1812,7 +1812,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["LoggingStatusResponse"];
+          "application/json": components["schemas"]["RecordingStatusResponse"];
         };
       };
     };
@@ -1823,7 +1823,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["LoggingStatusResponse"];
+          "application/json": components["schemas"]["RecordingStatusResponse"];
         };
       };
     };
@@ -1834,7 +1834,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["LoggingStatusResponse"];
+          "application/json": components["schemas"]["RecordingStatusResponse"];
         };
       };
     };

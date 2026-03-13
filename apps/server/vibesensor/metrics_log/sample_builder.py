@@ -1,7 +1,7 @@
 """Pure functions for building sample records from sensor metrics.
 
 All functions in this module are stateless and can be tested independently
-of ``MetricsLogger`` or any async / threading machinery.
+of ``RunRecorder`` or any async / threading machinery.
 """
 
 from __future__ import annotations

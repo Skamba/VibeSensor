@@ -1070,7 +1070,7 @@ def _build_report_template_data(
         lang=report.lang,
         certainty_tier_key=primary.tier,
         findings=context.findings,  # type: ignore[arg-type]
-        top_causes=context.top_causes,  # type: ignore[arg-type]
+        top_causes=context.top_causes,  # type: ignore[arg-type]  # context union type
         sensor_intensity_by_location=raw_sensor_intensity,
         location_hotspot_rows=hotspot_rows,
     )

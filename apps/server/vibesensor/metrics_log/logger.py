@@ -1,6 +1,6 @@
 """Metrics recording orchestrator.
 
-``MetricsLogger`` coordinates recording lifecycle, session state, and
+``RunRecorder`` coordinates recording lifecycle, session state, and
 history-DB persistence in a single class.  Focused helpers live in:
 
 - :mod:`vibesensor.metrics_log.sample_builder` — pure sample record
@@ -84,8 +84,8 @@ class AppendRowsResult:
 
 
 @dataclass
-class MetricsLoggerConfig:
-    """Static configuration bundle for :class:`MetricsLogger`."""
+class RunRecorderConfig:
+    """Static configuration bundle for :class:`RunRecorder`."""
 
     enabled: bool
     metrics_log_hz: int
@@ -109,7 +109,7 @@ class MetricsShutdownReport:
     final_status: dict[str, object]
 
 
-class MetricsLogger:
+class RunRecorder:
     """Manages recording of runs, post-analysis, and history persistence.
 
     Session lifecycle and persistence coordination are handled inline;
@@ -119,7 +119,7 @@ class MetricsLogger:
 
     def __init__(
         self,
-        config: MetricsLoggerConfig,
+        config: RunRecorderConfig,
         registry: ClientRegistry,
         gps_monitor: GPSSpeedMonitor,
         processor: SignalProcessor,
@@ -197,7 +197,7 @@ class MetricsLogger:
 
     @enabled.setter
     def enabled(self, value: bool) -> None:
-        # Setting ``True`` is a no-op — use ``start_logging()`` to begin a
+        # Setting ``True`` is a no-op — use ``start_recording()`` to begin a
         # new session.  Setting ``False`` gracefully stops any running session.
         if not value and self._diagnostic_session is not None:
             if self._diagnostic_session.status is SessionStatus.RUNNING:
@@ -614,13 +614,13 @@ class MetricsLogger:
             "last_completed_run_error": snapshot.last_completed_error,
         }
 
-    def start_logging(self) -> dict[str, object]:
+    def start_recording(self) -> dict[str, object]:
         completed_run_id: str | None = None
         flush_snapshot: MetricsSessionSnapshot | None = None
         with self._lock:
             if self._sess_shutdown_requested:
                 LOGGER.info(
-                    "Ignoring start_logging() while metrics logger shutdown is in progress.",
+                    "Ignoring start_recording() while metrics logger shutdown is in progress.",
                 )
                 return self.status()
             if self.enabled and self._run_id:
@@ -643,7 +643,7 @@ class MetricsLogger:
             self.schedule_post_analysis(completed_run_id)
         return result
 
-    def stop_logging(
+    def stop_recording(
         self,
         *,
         _only_if_run_id: str | None = None,
@@ -773,7 +773,7 @@ class MetricsLogger:
             active_run_id_before_stop = self._run_id
         self._sess_shutdown_requested = True
         try:
-            final_status = self.stop_logging()
+            final_status = self.stop_recording()
             analysis_completed = self.wait_for_post_analysis(timeout_s)
             health = self.health_snapshot()
             return MetricsShutdownReport(
@@ -834,7 +834,7 @@ class MetricsLogger:
                             snapshot.run_id,
                             self._sess_no_data_timeout_s,
                         )
-                        self.stop_logging(_only_if_run_id=snapshot.run_id)
+                        self.stop_recording(_only_if_run_id=snapshot.run_id)
             except TimeoutError:
                 self._persist_last_write_error = "metrics logger DB call timed out"
                 LOGGER.warning(

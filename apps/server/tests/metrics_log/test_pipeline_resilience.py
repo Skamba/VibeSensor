@@ -1,11 +1,11 @@
 """Tests for recording pipeline error visibility and resilience.
 
 Covers:
-- Drop counting in MetricsLogger persistence coordination
+- Drop counting in RunRecorder persistence coordination
 - Retry cooldown after max DB create failures
 - Last analysis outcome tracking in PostAnalysisWorker
 - Queue depth warning in PostAnalysisWorker
-- Enriched LoggingStatusResponse fields
+- Enriched RecordingStatusResponse fields
 - Health endpoint degradation reasons for dropped samples and analysis errors
 """
 
@@ -22,7 +22,7 @@ import pytest
 from vibesensor.metrics_log.logger import (
     _MAX_HISTORY_CREATE_RETRIES,
     _RETRY_COOLDOWN_BASE_S,
-    MetricsLogger,
+    RunRecorder,
 )
 from vibesensor.metrics_log.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysisWorker
 
@@ -31,10 +31,8 @@ from vibesensor.metrics_log.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysis
 # ---------------------------------------------------------------------------
 
 
-def _make_persist_logger(
-    make_logger, *, history_db: object, run_id: str = "run-1"
-) -> MetricsLogger:
-    """Build a MetricsLogger with the given DB and set up persistence for *run_id*."""
+def _make_persist_logger(make_logger, *, history_db: object, run_id: str = "run-1") -> RunRecorder:
+    """Build a RunRecorder with the given DB and set up persistence for *run_id*."""
     logger = make_logger(history_db=history_db)
     logger._persist_reset(run_id=run_id)
     return logger
@@ -433,7 +431,7 @@ class TestQueueDepthWarning:
 
 
 # ---------------------------------------------------------------------------
-# LoggingStatusResponse enrichment
+# RecordingStatusResponse enrichment
 # ---------------------------------------------------------------------------
 
 
@@ -493,7 +491,7 @@ class TestHealthSnapshotEnrichment:
         db = _FailingAppendOnceHistoryDB()
         logger = make_logger(history_db=db)
 
-        logger.start_logging()
+        logger.start_recording()
         snapshot = logger._session_snapshot()
         assert snapshot is not None
 

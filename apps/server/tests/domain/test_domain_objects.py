@@ -760,26 +760,6 @@ class TestReportEnrichments:
 class TestRunEnrichments:
     """Tests for enriched Run domain object."""
 
-    def test_has_readings(self) -> None:
-        from vibesensor.domain import VibrationReading
-
-        run = Run()
-        assert not run.has_readings
-        run.start()
-        reading = VibrationReading(timestamp=_NOW, intensity_db=10.0, frequency_hz=50.0)
-        run._readings.append(reading)
-        assert run.has_readings
-
-    def test_duration(self) -> None:
-        run = Run()
-        assert run.duration is None
-        run.start()
-        assert run.duration is None  # not stopped yet
-        run.stop()
-        assert run.duration is not None
-        assert run.duration_s is not None
-        assert run.duration_s >= 0.0
-
     def test_is_complete(self) -> None:
         run = Run()
         assert not run.is_complete
@@ -872,14 +852,3 @@ class TestHistoryRecordEnrichments:
     def test_has_analysis(self) -> None:
         assert HistoryRecord(run_id="r1", status="complete").has_analysis
         assert not HistoryRecord(run_id="r1", status="recording").has_analysis
-
-    def test_display_status(self) -> None:
-        assert HistoryRecord(run_id="r1", status="complete").display_status == "Complete"
-        assert HistoryRecord(run_id="r1", status="recording").display_status == "Recording"
-        assert HistoryRecord(run_id="r1", status="error").display_status == "Error"
-        assert HistoryRecord(run_id="r1", status="analyzing").display_status == "Analyzing"
-
-    def test_display_status_unknown(self) -> None:
-        assert HistoryRecord(run_id="r1", status="").display_status == "Unknown"
-        rec = HistoryRecord(run_id="r1", status="custom_status")
-        assert rec.display_status == "Custom_Status"

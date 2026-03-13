@@ -14,7 +14,7 @@ import pytest
 
 from vibesensor.analysis import build_findings_for_samples, summarize_run_data
 from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
+from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.runlog import bounded_sample, normalize_sample_record
@@ -154,8 +154,8 @@ class TestWorkerThreadRace:
             def snapshot(self):
                 return {}
 
-        logger = MetricsLogger(
-            MetricsLoggerConfig(
+        logger = RunRecorder(
+            RunRecorderConfig(
                 enabled=False,
                 metrics_log_hz=2,
                 sensor_model="test",

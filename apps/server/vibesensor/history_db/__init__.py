@@ -20,6 +20,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from threading import RLock
 
+from ..domain.run_status import (
+    RunStatus,
+    can_transition_run,
+)
 from ..json_types import JsonObject, is_json_object
 from ..json_utils import safe_json_dumps, safe_json_loads
 from ..protocol import SensorFrame
@@ -34,8 +38,6 @@ from ._samples import (
 from ._schema import (
     SCHEMA_SQL,
     SCHEMA_VERSION,
-    RunStatus,
-    can_transition_run,
 )
 
 # Re-export for public API.

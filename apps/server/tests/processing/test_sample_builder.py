@@ -1,6 +1,6 @@
 """Unit tests for vibesensor.metrics_log.sample_builder.
 
-These tests exercise the pure functions extracted from MetricsLogger,
+These tests exercise the pure functions extracted from RunRecorder,
 validating that they work independently of any session lifecycle or
 threading machinery.
 """

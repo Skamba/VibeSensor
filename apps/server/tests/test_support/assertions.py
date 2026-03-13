@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Any
 
+from vibesensor.domain import Finding
+
 from .analysis import extract_top, top_confidence, top_corner_label
 
 _CORNER_LABEL_TOKENS: dict[str, tuple[str, ...]] = {
@@ -34,8 +36,8 @@ def assert_corner_detected(summary: dict[str, Any], expected_corner: str, msg: s
 
 
 def _cause_source(cause: dict[str, Any]) -> str:
-    """Get the source field from a top-cause dict (handles both field names)."""
-    return (cause.get("source") or cause.get("suspected_source") or "").lower()
+    """Get the normalized source from a top-cause or finding dict."""
+    return Finding.from_payload(cause).source_normalized
 
 
 def _cause_confidence(cause: dict[str, Any]) -> float:
@@ -431,11 +433,11 @@ def extract_top_finding(summary: dict[str, Any]) -> dict[str, Any] | None:
     non_ref = [
         finding
         for finding in findings
-        if isinstance(finding, dict) and not str(finding.get("finding_id", "")).startswith("REF_")
+        if isinstance(finding, dict) and not Finding.from_payload(finding).is_reference
     ]
     if not non_ref:
         return None
-    return max(non_ref, key=lambda finding: float(finding.get("confidence") or 0))
+    return max(non_ref, key=lambda finding: Finding.from_payload(finding).effective_confidence)
 
 
 def assert_finding_location(

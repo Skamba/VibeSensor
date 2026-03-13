@@ -3,37 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Final
 
 LOGGER = logging.getLogger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Run-status constants (previously _run_common.py)
-# ---------------------------------------------------------------------------
-
-
-class RunStatus:
-    """String constants for the ``runs.status`` column."""
-
-    RECORDING: str = "recording"
-    ANALYZING: str = "analyzing"
-    COMPLETE: str = "complete"
-    ERROR: str = "error"
-
-
-RUN_TRANSITIONS: Final[dict[str | None, frozenset[str]]] = {
-    None: frozenset({RunStatus.RECORDING}),
-    RunStatus.RECORDING: frozenset({RunStatus.ANALYZING, RunStatus.COMPLETE, RunStatus.ERROR}),
-    RunStatus.ANALYZING: frozenset({RunStatus.COMPLETE, RunStatus.ERROR}),
-    RunStatus.COMPLETE: frozenset(),
-    RunStatus.ERROR: frozenset(),
-}
-
-
-def can_transition_run(current_status: str | None, target_status: str) -> bool:
-    """Return whether a run can legally move from ``current_status`` to ``target_status``."""
-    return target_status in RUN_TRANSITIONS.get(current_status, frozenset())
 
 
 SCHEMA_VERSION = 8

@@ -100,6 +100,7 @@ class OrderAssessment:
         return {
             "finding_id": df.finding_id,
             "source": df.suspected_source,
+            "suspected_source": df.suspected_source,
             "confidence": df.confidence,
             "confidence_label_key": label_key,
             "confidence_tone": tone,

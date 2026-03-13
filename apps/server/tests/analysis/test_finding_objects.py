@@ -4,62 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis._types import FindingPayload
+from tests.test_support.findings import make_finding_payload, make_info_finding, make_ref_finding
 from vibesensor.analysis.findings import (
     FindingCollection,
     PeakBin,
     PeakFindingAnalyzer,
 )
 from vibesensor.domain import Finding
-
-# ---------------------------------------------------------------------------
-# Fixtures: minimal FindingPayload dicts
-# ---------------------------------------------------------------------------
-
-
-def _ref_finding(finding_id: str = "REF_SPEED") -> FindingPayload:
-    return {
-        "finding_id": finding_id,
-        "suspected_source": "unknown",
-        "evidence_summary": {"_i18n_key": "TEST"},
-        "frequency_hz_or_order": "n/a",
-        "amplitude_metric": {"name": "n/a", "value": None, "units": "n/a", "definition": "n/a"},
-        "confidence": None,
-        "quick_checks": [],
-    }
-
-
-def _diag_finding(
-    finding_id: str = "F_ORDER",
-    confidence: float = 0.65,
-    source: str = "wheel/tire",
-    ranking_score: float = 1.0,
-    location: str = "front_left",
-) -> FindingPayload:
-    return {
-        "finding_id": finding_id,
-        "suspected_source": source,
-        "evidence_summary": {"_i18n_key": "TEST"},
-        "frequency_hz_or_order": "1x wheel",
-        "amplitude_metric": {
-            "name": "vibration_strength_db",
-            "value": 25.0,
-            "units": "dB",
-            "definition": {"_i18n_key": "METRIC"},
-        },
-        "confidence": confidence,
-        "quick_checks": [],
-        "_ranking_score": ranking_score,
-        "strongest_location": location,
-    }
-
-
-def _info_finding(finding_id: str = "F_PEAK", confidence: float = 0.10) -> FindingPayload:
-    f = _diag_finding(finding_id=finding_id, confidence=confidence)
-    f["severity"] = "info"
-    f["suspected_source"] = "transient_impact"
-    return f
-
 
 # ===========================================================================
 # Domain Finding from payload (replaces former FindingRecord tests)
@@ -68,40 +19,42 @@ def _info_finding(finding_id: str = "F_PEAK", confidence: float = 0.10) -> Findi
 
 class TestDomainFindingFromPayload:
     def test_finding_id(self) -> None:
-        f = Finding.from_payload(_diag_finding(finding_id="F_ORDER"))
+        f = Finding.from_payload(make_finding_payload(confidence=0.65))
         assert f.finding_id == "F_ORDER"
 
     def test_is_reference(self) -> None:
-        assert Finding.from_payload(_ref_finding()).is_reference is True
-        assert Finding.from_payload(_diag_finding()).is_reference is False
+        assert Finding.from_payload(make_ref_finding()).is_reference is True
+        assert Finding.from_payload(make_finding_payload(confidence=0.65)).is_reference is False
 
     def test_is_informational(self) -> None:
-        assert Finding.from_payload(_info_finding()).is_informational is True
-        assert Finding.from_payload(_diag_finding()).is_informational is False
+        assert Finding.from_payload(make_info_finding()).is_informational is True
+        assert Finding.from_payload(make_finding_payload(confidence=0.65)).is_informational is False
 
     def test_is_diagnostic(self) -> None:
-        assert Finding.from_payload(_diag_finding()).is_diagnostic is True
-        assert Finding.from_payload(_ref_finding()).is_diagnostic is False
-        assert Finding.from_payload(_info_finding()).is_diagnostic is False
+        assert Finding.from_payload(make_finding_payload(confidence=0.65)).is_diagnostic is True
+        assert Finding.from_payload(make_ref_finding()).is_diagnostic is False
+        assert Finding.from_payload(make_info_finding()).is_diagnostic is False
 
     def test_confidence_default(self) -> None:
-        f = Finding.from_payload(_ref_finding())
+        f = Finding.from_payload(make_ref_finding())
         assert f.effective_confidence == 0.0
 
     def test_confidence_value(self) -> None:
-        f = Finding.from_payload(_diag_finding(confidence=0.75))
+        f = Finding.from_payload(make_finding_payload(confidence=0.75))
         assert f.effective_confidence == 0.75
 
     def test_source_normalized(self) -> None:
-        f = Finding.from_payload(_diag_finding(source="  Wheel/Tire  "))
+        payload = make_finding_payload(confidence=0.65, suspected_source="  Wheel/Tire  ")
+        f = Finding.from_payload(payload)
         assert f.source_normalized == "wheel/tire"
 
     def test_strongest_location(self) -> None:
-        f = Finding.from_payload(_diag_finding(location="front_left"))
+        payload = make_finding_payload(confidence=0.65, strongest_location="front_left")
+        f = Finding.from_payload(payload)
         assert f.strongest_location == "front_left"
 
     def test_ranking_score(self) -> None:
-        f = Finding.from_payload(_diag_finding(ranking_score=2.5))
+        f = Finding.from_payload(make_finding_payload(confidence=0.65, ranking_score=2.5))
         assert f.ranking_score == 2.5
 
 
@@ -112,47 +65,51 @@ class TestDomainFindingFromPayload:
 
 class TestFindingCollection:
     def test_len(self) -> None:
-        coll = FindingCollection([_diag_finding(), _ref_finding()])
+        coll = FindingCollection([make_finding_payload(confidence=0.65), make_ref_finding()])
         assert len(coll) == 2
 
     def test_iter(self) -> None:
-        findings = [_diag_finding(), _ref_finding()]
+        findings = [make_finding_payload(confidence=0.65), make_ref_finding()]
         coll = FindingCollection(findings)
         assert list(coll) == findings
 
     def test_references(self) -> None:
-        findings = [_ref_finding("REF_SPEED"), _diag_finding(), _ref_finding("REF_ENGINE")]
+        findings = [
+            make_ref_finding("REF_SPEED"),
+            make_finding_payload(confidence=0.65),
+            make_ref_finding("REF_ENGINE"),
+        ]
         coll = FindingCollection(findings)
         refs = coll.references()
         assert len(refs) == 2
         assert all(str(f["finding_id"]).startswith("REF_") for f in refs)
 
     def test_diagnostics(self) -> None:
-        findings = [_ref_finding(), _diag_finding(), _info_finding()]
+        findings = [make_ref_finding(), make_finding_payload(confidence=0.65), make_info_finding()]
         coll = FindingCollection(findings)
         diags = coll.diagnostics()
         assert len(diags) == 1
         assert diags[0]["suspected_source"] == "wheel/tire"
 
     def test_informational(self) -> None:
-        findings = [_ref_finding(), _diag_finding(), _info_finding()]
+        findings = [make_ref_finding(), make_finding_payload(confidence=0.65), make_info_finding()]
         coll = FindingCollection(findings)
         infos = coll.informational()
         assert len(infos) == 1
         assert infos[0].get("severity") == "info"
 
     def test_non_reference(self) -> None:
-        findings = [_ref_finding(), _diag_finding(), _info_finding()]
+        findings = [make_ref_finding(), make_finding_payload(confidence=0.65), make_info_finding()]
         coll = FindingCollection(findings)
         non_ref = coll.non_reference()
         assert len(non_ref) == 2
 
     def test_finalize_ordering(self) -> None:
         """References come first, then diagnostics by confidence, then informational."""
-        ref = _ref_finding()
-        diag_high = _diag_finding(confidence=0.80, ranking_score=2.0)
-        diag_low = _diag_finding(confidence=0.30, ranking_score=1.0)
-        info = _info_finding(confidence=0.10)
+        ref = make_ref_finding()
+        diag_high = make_finding_payload(confidence=0.80, ranking_score=2.0)
+        diag_low = make_finding_payload(confidence=0.30, ranking_score=1.0)
+        info = make_info_finding(confidence=0.10)
         coll = FindingCollection([diag_low, info, ref, diag_high])
         ordered = coll.finalize()
         assert len(ordered) == 4
@@ -166,10 +123,10 @@ class TestFindingCollection:
         assert ordered[3].get("severity") == "info"
 
     def test_finalize_assigns_sequential_ids(self) -> None:
-        ref = _ref_finding("REF_SPEED")
-        d1 = _diag_finding(confidence=0.80)
-        d2 = _diag_finding(confidence=0.40)
-        info = _info_finding()
+        ref = make_ref_finding("REF_SPEED")
+        d1 = make_finding_payload(confidence=0.80)
+        d2 = make_finding_payload(confidence=0.40)
+        info = make_info_finding()
         coll = FindingCollection([d2, info, ref, d1])
         ordered = coll.finalize()
         # Reference keeps its original ID
@@ -184,7 +141,7 @@ class TestFindingCollection:
         assert coll.finalize() == []
 
     def test_items_property(self) -> None:
-        findings = [_diag_finding()]
+        findings = [make_finding_payload(confidence=0.65)]
         coll = FindingCollection(findings)
         assert coll.items is findings
 

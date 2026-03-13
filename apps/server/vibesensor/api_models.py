@@ -51,7 +51,7 @@ __all__ = [
     "IdentifyResponse",
     "SetClientLocationResponse",
     "RemoveClientResponse",
-    "LoggingStatusResponse",
+    "RecordingStatusResponse",
     "HistoryListEntryResponse",
     "HistoryListResponse",
     "HistoryRunResponse",
@@ -408,7 +408,7 @@ class RemoveClientResponse(BaseModel):
     status: str
 
 
-class LoggingStatusResponse(BaseModel):
+class RecordingStatusResponse(BaseModel):
     """Response body with the current recording (run-logging) status."""
 
     enabled: bool

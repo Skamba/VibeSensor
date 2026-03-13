@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Final, Literal, NotRequired, TypeAlias, TypedD
 
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
 from .constants import NUMERIC_TYPES
+from .domain.speed_source import SpeedSourceKind as SpeedSourceKind
 from .json_types import JsonObject, is_json_object
 
 if TYPE_CHECKING:
@@ -49,7 +50,6 @@ __all__ = [
 AnalysisSettingsPayload: TypeAlias = dict[str, float]
 LanguageCode: TypeAlias = Literal["en", "nl"]
 SpeedUnitCode: TypeAlias = Literal["kmh", "mps"]
-SpeedSourceKind: TypeAlias = Literal["gps", "obd2", "manual"]
 FallbackMode: TypeAlias = Literal["manual"]
 ResolvedSpeedSource: TypeAlias = Literal["gps", "manual", "fallback_manual", "none"]
 
