@@ -15,21 +15,21 @@ __all__ = ["create_recording_routes"]
 
 
 def create_recording_routes(
-    metrics_logger: RunRecorder,
+    run_recorder: RunRecorder,
 ) -> APIRouter:
     """Create and return the run-recording / logging API routes."""
     router = APIRouter()
 
-    @router.get("/api/logging/status", response_model=RecordingStatusResponse)
+    @router.get("/api/recording/status", response_model=RecordingStatusResponse)
     async def get_logging_status() -> RecordingStatusResponse:
-        return RecordingStatusResponse(**metrics_logger.status())
+        return RecordingStatusResponse(**run_recorder.status())
 
-    @router.post("/api/logging/start", response_model=RecordingStatusResponse)
+    @router.post("/api/recording/start", response_model=RecordingStatusResponse)
     async def start_logging() -> RecordingStatusResponse:
-        return RecordingStatusResponse(**metrics_logger.start_recording())
+        return RecordingStatusResponse(**run_recorder.start_recording())
 
-    @router.post("/api/logging/stop", response_model=RecordingStatusResponse)
+    @router.post("/api/recording/stop", response_model=RecordingStatusResponse)
     async def stop_logging() -> RecordingStatusResponse:
-        return RecordingStatusResponse(**metrics_logger.stop_recording())
+        return RecordingStatusResponse(**run_recorder.stop_recording())
 
     return router

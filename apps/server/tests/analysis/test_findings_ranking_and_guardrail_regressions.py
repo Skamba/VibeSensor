@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 """Findings ranking and analysis guardrail regressions:
-- _ranking_score synced after engine alias suppression
+- ranking_score synced after engine alias suppression
 - negligible confidence cap aligned with TIER_B_CEILING (0.40)
 - steady_speed uses AND (not OR) for stddev and range
 - HistoryDB.close() acquires lock
@@ -26,7 +26,7 @@ from vibesensor.runlog import append_jsonl_records
 
 
 class TestRankingScoreSyncAfterSuppression:
-    """Regression: _suppress_engine_aliases must update _ranking_score
+    """Regression: _suppress_engine_aliases must update ranking_score
     in the finding dict when suppressing confidence.
     """
 
@@ -37,7 +37,7 @@ class TestRankingScoreSyncAfterSuppression:
                 {
                     "suspected_source": "wheel/tire",
                     "confidence": 0.6,
-                    "_ranking_score": 0.8,
+                    "ranking_score": 0.8,
                     "key": "wheel_1",
                 },
             ),
@@ -46,7 +46,7 @@ class TestRankingScoreSyncAfterSuppression:
                 {
                     "suspected_source": "engine",
                     "confidence": 0.5,
-                    "_ranking_score": 0.7,
+                    "ranking_score": 0.7,
                     "key": "engine_2",
                 },
             ),
@@ -54,8 +54,8 @@ class TestRankingScoreSyncAfterSuppression:
         result = _suppress_engine_aliases(findings)
         engine_findings = [f for f in result if f.get("suspected_source") == "engine"]
         for f in engine_findings:
-            assert f["_ranking_score"] == pytest.approx(0.7 * 0.60, abs=1e-9), (
-                "_ranking_score must be updated after suppression"
+            assert f["ranking_score"] == pytest.approx(0.7 * 0.60, abs=1e-9), (
+                "ranking_score must be updated after suppression"
             )
 
 
@@ -136,7 +136,7 @@ class TestSuppressEngineAliasesCapRaised:
                 {
                     "suspected_source": "wheel/tire",
                     "confidence": 0.8 - i * 0.1,
-                    "_ranking_score": 0.9 - i * 0.1,
+                    "ranking_score": 0.9 - i * 0.1,
                     "key": f"wheel_{i}",
                 },
             )

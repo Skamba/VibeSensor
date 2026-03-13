@@ -34,8 +34,8 @@ class Report:
     lang: str = "en"
     car_name: str | None = None
     car_type: str | None = None
-    date_str: str = ""
-    duration_text: str | None = None
+    report_date: str | None = None
+    duration_s: float | None = None
     sample_count: int = 0
     sensor_count: int = 0
     findings: tuple[Finding, ...] = ()
@@ -108,29 +108,24 @@ class Report:
             int(sensor_count_raw) if isinstance(sensor_count_raw, (int, float, str)) else 0
         )
 
-        duration_s = summary.get("duration_s")
-        duration_text: str | None = None
-        if duration_s is not None:
+        duration_s_raw = summary.get("duration_s")
+        duration_s: float | None = None
+        if duration_s_raw is not None:
             try:
-                secs = float(duration_s)  # type: ignore[arg-type]
-                mins = int(secs // 60)
-                rem = int(secs % 60)
-                duration_text = f"{mins}:{rem:02d}" if mins else f"{rem}s"
+                duration_s = float(duration_s_raw)  # type: ignore[arg-type]
             except (TypeError, ValueError):
                 pass
 
-        date_str = ""
         report_date = summary.get("report_date")
-        if isinstance(report_date, str):
-            date_str = report_date
+        report_date_str = str(report_date) if isinstance(report_date, str) else None
 
         return cls(
             run_id=str(summary.get("run_id", "")),
             lang=str(summary.get("lang", "en")),
             car_name=car_name,
             car_type=car_type,
-            date_str=date_str,
-            duration_text=duration_text,
+            report_date=report_date_str,
+            duration_s=duration_s,
             sample_count=sample_count,
             sensor_count=sensor_count,
             findings=tuple(finding_list),

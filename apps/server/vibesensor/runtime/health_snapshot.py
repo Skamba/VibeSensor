@@ -19,12 +19,12 @@ def build_health_snapshot(
     health_state: RuntimeHealthState,
     processor: SignalProcessor,
     registry: ClientRegistry,
-    metrics_logger: RunRecorder,
+    run_recorder: RunRecorder,
 ) -> dict[str, Any]:
     """Build the health snapshot dict."""
     failures = loop_state.processing_failure_count
     data_loss = registry.data_loss_snapshot()
-    persistence = metrics_logger.health_snapshot()
+    persistence = run_recorder.health_snapshot()
     failure_categories = dict(loop_state.processing_failure_categories)
     sample_rate_mismatch_count = len(loop_state.sample_rate_mismatch_logged)
     frame_size_mismatch_count = len(loop_state.frame_size_mismatch_logged)
@@ -93,6 +93,6 @@ def build_health_snapshot(
         "tick_duration_s": loop_state.last_tick_duration_s,
         "max_tick_duration_s": loop_state.max_tick_duration_s,
         "tick_count": loop_state.tick_count,
-        "db_last_write_duration_s": metrics_logger.last_write_duration_s,
-        "db_max_write_duration_s": metrics_logger.max_write_duration_s,
+        "db_last_write_duration_s": run_recorder.last_write_duration_s,
+        "db_max_write_duration_s": run_recorder.max_write_duration_s,
     }

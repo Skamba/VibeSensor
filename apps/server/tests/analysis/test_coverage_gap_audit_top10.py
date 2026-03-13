@@ -74,7 +74,7 @@ def _suitability_checks(**overrides: Any) -> list[dict[str, Any]]:
     return _build_run_suitability_checks(**kw)
 
 
-def _make_metrics_logger() -> tuple[RunRecorder, MagicMock]:
+def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
     """Build a minimal RunRecorder with mocked dependencies."""
     gps_mock = MagicMock()
     gps_mock.speed_mps = None
@@ -592,7 +592,7 @@ class TestResolveSpeedContext:
     """Tests for _resolve_speed_context via a minimal RunRecorder setup."""
 
     def test_no_speed_available(self) -> None:
-        logger, _ = _make_metrics_logger()
+        logger, _ = _make_run_recorder()
         speed_kmh, gps_speed, source, rpm = resolve_speed_context(
             logger.gps_monitor,
             logger.analysis_settings.snapshot(),
@@ -601,7 +601,7 @@ class TestResolveSpeedContext:
         assert rpm is None
 
     def test_gps_speed_available(self) -> None:
-        logger, gps_mock = _make_metrics_logger()
+        logger, gps_mock = _make_run_recorder()
         gps_mock.speed_mps = 10.0  # 36 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
         speed_kmh, gps_speed, source, rpm = resolve_speed_context(
@@ -614,7 +614,7 @@ class TestResolveSpeedContext:
         assert rpm is not None and rpm > 0
 
     def test_manual_override(self) -> None:
-        logger, gps_mock = _make_metrics_logger()
+        logger, gps_mock = _make_run_recorder()
         gps_mock.override_speed_mps = 20.0  # 72 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="manual", speed_mps=20.0)
         speed_kmh, _, source, _ = resolve_speed_context(
@@ -625,7 +625,7 @@ class TestResolveSpeedContext:
         assert source == "manual"
 
     def test_no_gear_ratio_skips_rpm(self) -> None:
-        logger, gps_mock = _make_metrics_logger()
+        logger, gps_mock = _make_run_recorder()
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=15.0)
         # Remove gear ratio from settings
         logger.analysis_settings.snapshot.return_value = {

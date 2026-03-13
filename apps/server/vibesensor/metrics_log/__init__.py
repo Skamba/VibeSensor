@@ -10,7 +10,7 @@
 """
 
 from .logger import (
-    MetricsShutdownReport,
+    RecorderShutdownReport,
     RunRecorder,
     RunRecorderConfig,
 )
@@ -18,5 +18,5 @@ from .logger import (
 __all__ = [
     "RunRecorder",
     "RunRecorderConfig",
-    "MetricsShutdownReport",
+    "RecorderShutdownReport",
 ]

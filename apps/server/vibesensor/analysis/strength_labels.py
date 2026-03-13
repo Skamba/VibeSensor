@@ -9,12 +9,13 @@ from __future__ import annotations
 
 import math
 
+from vibesensor.domain import Finding
 from vibesensor.strength_bands import BANDS
 
 _isfinite = math.isfinite  # local bind avoids repeated attribute lookup
 
-CONFIDENCE_HIGH_THRESHOLD = 0.70
-CONFIDENCE_MEDIUM_THRESHOLD = 0.40
+CONFIDENCE_HIGH_THRESHOLD: float = Finding.CONFIDENCE_HIGH_THRESHOLD
+CONFIDENCE_MEDIUM_THRESHOLD: float = Finding.CONFIDENCE_MEDIUM_THRESHOLD
 
 # ---------------------------------------------------------------------------
 # Strength labels  (vibration_strength_db → natural-language band)

@@ -67,7 +67,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 {
                     "suspected_source": "wheel/tire",
                     "confidence": 0.80,
-                    "_ranking_score": 1.0,
+                    "ranking_score": 1.0,
                 },
             ),
             (
@@ -75,7 +75,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 {
                     "suspected_source": "wheel/tire",
                     "confidence": 0.70,
-                    "_ranking_score": 0.9,
+                    "ranking_score": 0.9,
                 },
             ),
             # These 3 engine findings will be suppressed below threshold
@@ -84,7 +84,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 {
                     "suspected_source": "engine",
                     "confidence": 0.40,
-                    "_ranking_score": 0.7,
+                    "ranking_score": 0.7,
                 },
             ),
             (
@@ -92,7 +92,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 {
                     "suspected_source": "engine",
                     "confidence": 0.38,
-                    "_ranking_score": 0.6,
+                    "ranking_score": 0.6,
                 },
             ),
             (
@@ -100,7 +100,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 {
                     "suspected_source": "engine",
                     "confidence": 0.35,
-                    "_ranking_score": 0.5,
+                    "ranking_score": 0.5,
                 },
             ),
             # These valid findings must NOT be lost
@@ -109,7 +109,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 {
                     "suspected_source": "driveline",
                     "confidence": 0.55,
-                    "_ranking_score": 0.4,
+                    "ranking_score": 0.4,
                 },
             ),
             (
@@ -117,7 +117,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 {
                     "suspected_source": "driveline",
                     "confidence": 0.50,
-                    "_ranking_score": 0.3,
+                    "ranking_score": 0.3,
                 },
             ),
         ]
@@ -134,7 +134,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 {
                     "suspected_source": "wheel/tire",
                     "confidence": 0.80,
-                    "_ranking_score": 1.0,
+                    "ranking_score": 1.0,
                 },
             ),
             (
@@ -142,7 +142,7 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
                 {
                     "suspected_source": "engine",
                     "confidence": 0.30,
-                    "_ranking_score": 0.5,
+                    "ranking_score": 0.5,
                 },
             ),
         ]

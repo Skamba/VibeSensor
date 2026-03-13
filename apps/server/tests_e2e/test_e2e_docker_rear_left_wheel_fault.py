@@ -526,7 +526,7 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
         method="POST",
         body={"speedSource": "manual", "manualSpeedKph": 100.0},
     )
-    start = api_json(base_url, "/api/logging/start", method="POST")
+    start = api_json(base_url, "/api/recording/start", method="POST")
     assert start["enabled"] is True
     run_id = str(start["run_id"])
     run_simulator(
@@ -538,7 +538,7 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
         count=4,
     )
 
-    api_json(base_url, "/api/logging/stop", method="POST")
+    api_json(base_url, "/api/recording/stop", method="POST")
     run = wait_for(
         lambda: api_json(base_url, f"/api/history/{run_id}") if run_id not in before_ids else None,
         timeout_s=5.0,

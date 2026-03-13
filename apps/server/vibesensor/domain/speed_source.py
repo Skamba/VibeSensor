@@ -8,14 +8,20 @@ resolution.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from enum import StrEnum
 
 __all__ = [
     "SpeedSource",
     "SpeedSourceKind",
 ]
 
-SpeedSourceKind = Literal["gps", "obd2", "manual"]
+
+class SpeedSourceKind(StrEnum):
+    """How vehicle speed is acquired."""
+
+    GPS = "gps"
+    OBD2 = "obd2"
+    MANUAL = "manual"
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,28 +34,32 @@ class SpeedSource:
     persistence/config adapter.
     """
 
-    kind: SpeedSourceKind = "gps"
+    kind: SpeedSourceKind = SpeedSourceKind.GPS
     manual_speed_kmh: float | None = None
     fallback_mode: str = "manual"
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.kind, SpeedSourceKind):
+            object.__setattr__(self, "kind", SpeedSourceKind(self.kind))
 
     # -- queries -----------------------------------------------------------
 
     @property
     def is_manual(self) -> bool:
-        return self.kind == "manual"
+        return self.kind is SpeedSourceKind.MANUAL
 
     @property
     def is_gps(self) -> bool:
-        return self.kind == "gps"
+        return self.kind is SpeedSourceKind.GPS
 
     @property
     def is_obd2(self) -> bool:
-        return self.kind == "obd2"
+        return self.kind is SpeedSourceKind.OBD2
 
     @property
     def is_live(self) -> bool:
         """Whether speed data comes from a live source (GPS or OBD-II)."""
-        return self.kind in ("gps", "obd2")
+        return self.kind in (SpeedSourceKind.GPS, SpeedSourceKind.OBD2)
 
     @property
     def effective_speed_kmh(self) -> float | None:
@@ -61,5 +71,9 @@ class SpeedSource:
     @property
     def label(self) -> str:
         """Human-readable label for this speed source."""
-        labels = {"gps": "GPS", "obd2": "OBD-II", "manual": "Manual"}
+        labels = {
+            SpeedSourceKind.GPS: "GPS",
+            SpeedSourceKind.OBD2: "OBD-II",
+            SpeedSourceKind.MANUAL: "Manual",
+        }
         return labels.get(self.kind, self.kind.upper())

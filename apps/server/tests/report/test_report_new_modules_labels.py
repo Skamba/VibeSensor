@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis.pattern_parts import parts_for_pattern, why_parts_listed
 from vibesensor.analysis.strength_labels import certainty_label, strength_label, strength_text
+from vibesensor.report.pattern_parts import parts_for_pattern, why_parts_listed
 
 
 @pytest.mark.parametrize(

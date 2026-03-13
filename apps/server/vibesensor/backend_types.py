@@ -146,7 +146,7 @@ RUN_METADATA_TYPE: Final[str] = "run_metadata"
 RUN_SAMPLE_TYPE: Final[str] = "sample"
 RUN_END_TYPE: Final[str] = "run_end"
 
-VALID_SPEED_SOURCES: tuple[str, ...] = ("gps", "obd2", "manual")
+VALID_SPEED_SOURCES: tuple[str, ...] = tuple(SpeedSourceKind)
 VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
 
 DEFAULT_CAR_ASPECTS: Final[MappingProxyType[str, float]] = MappingProxyType(
@@ -189,12 +189,12 @@ def _as_str_or_none(value: object) -> str | None:
 
 
 def _coerce_speed_source(value: object) -> SpeedSourceKind:
-    if isinstance(value, str) and value in VALID_SPEED_SOURCES:
-        if value == "obd2":
-            return "obd2"
-        if value == "manual":
-            return "manual"
-    return "gps"
+    if isinstance(value, str):
+        try:
+            return SpeedSourceKind(value)
+        except ValueError:
+            pass
+    return SpeedSourceKind.GPS
 
 
 def _coerce_fallback_mode(value: object) -> FallbackMode:
@@ -217,7 +217,7 @@ class CarConfig:
 
     id: str
     name: str
-    type: str
+    car_type: str
     aspects: dict[str, float]
     variant: str | None
 
@@ -238,7 +238,7 @@ class CarConfig:
         return cls(
             id=car_id,
             name=name,
-            type=car_type,
+            car_type=car_type,
             aspects=aspects,
             variant=variant or None,
         )
@@ -248,7 +248,7 @@ class CarConfig:
         d: CarConfigPayload = {
             "id": self.id,
             "name": self.name,
-            "type": self.type,
+            "type": self.car_type,
             "aspects": dict(self.aspects),
         }
         if self.variant:
@@ -262,7 +262,7 @@ class CarConfig:
         return Car(
             id=self.id,
             name=self.name,
-            car_type=self.type,
+            car_type=self.car_type,
             aspects=dict(self.aspects),
             variant=self.variant,
         )
@@ -327,7 +327,7 @@ class SpeedSourceConfig:
     def default(cls) -> SpeedSourceConfig:
         """Return a GPS-based default speed source config."""
         return cls(
-            speed_source="gps",
+            speed_source=SpeedSourceKind.GPS,
             manual_speed_kph=None,
             obd2_config={},
             stale_timeout_s=10.0,

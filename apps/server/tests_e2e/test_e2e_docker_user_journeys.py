@@ -158,7 +158,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 method="PUT",
                 body={"aspects": updated_tire},
             )
-            start_1 = api_json(base_url, "/api/logging/start", method="POST")
+            start_1 = api_json(base_url, "/api/recording/start", method="POST")
             run_id_1 = str(start_1["run_id"])
             run_simulator(
                 base_url=base_url,
@@ -168,7 +168,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 duration_s=sim_duration,
                 count=4,
             )
-            api_json(base_url, "/api/logging/stop", method="POST")
+            api_json(base_url, "/api/recording/stop", method="POST")
             wait_run_status(base_url, run_id_1)
             created_run_ids.append(run_id_1)
             run_1 = api_json(base_url, f"/api/history/{run_id_1}")
@@ -195,7 +195,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             speed_now = api_json(base_url, "/api/settings/speed-source")
             assert float(speed_now["manualSpeedKph"]) == pytest.approx(80.0)
 
-            start_2 = api_json(base_url, "/api/logging/start", method="POST")
+            start_2 = api_json(base_url, "/api/recording/start", method="POST")
             run_id_2 = str(start_2["run_id"])
             run_simulator(
                 base_url=base_url,
@@ -205,7 +205,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 duration_s=sim_duration,
                 count=4,
             )
-            api_json(base_url, "/api/logging/stop", method="POST")
+            api_json(base_url, "/api/recording/stop", method="POST")
             wait_run_status(base_url, run_id_2)
             created_run_ids.append(run_id_2)
 
@@ -234,7 +234,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
         if journey_group == "language_pdf":
             # E2E-8: Language differences in insights and PDF report.
             api_json(base_url, "/api/settings/language", method="POST", body={"language": "nl"})
-            start_3 = api_json(base_url, "/api/logging/start", method="POST")
+            start_3 = api_json(base_url, "/api/recording/start", method="POST")
             run_id_3 = str(start_3["run_id"])
             run_simulator(
                 base_url=base_url,
@@ -244,7 +244,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 duration_s=sim_duration,
                 count=4,
             )
-            api_json(base_url, "/api/logging/stop", method="POST")
+            api_json(base_url, "/api/recording/stop", method="POST")
             wait_run_status(base_url, run_id_3)
             created_run_ids.append(run_id_3)
 

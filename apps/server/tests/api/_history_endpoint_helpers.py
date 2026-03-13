@@ -150,7 +150,7 @@ class FakeState:
                 "active_car_snapshot": lambda self: None,
             },
         )()
-        self.metrics_logger = type(
+        self.run_recorder = type(
             "M",
             (),
             {

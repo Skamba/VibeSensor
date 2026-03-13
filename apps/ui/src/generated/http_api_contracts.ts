@@ -113,17 +113,17 @@ export interface paths {
     /** Download History Report Pdf */
     get: operations["download_history_report_pdf_api_history__run_id__report_pdf_get"];
   };
-  "/api/logging/start": {
+  "/api/recording/start": {
     /** Start Logging */
-    post: operations["start_logging_api_logging_start_post"];
+    post: operations["start_logging_api_recording_start_post"];
   };
-  "/api/logging/status": {
+  "/api/recording/status": {
     /** Get Logging Status */
-    get: operations["get_logging_status_api_logging_status_get"];
+    get: operations["get_logging_status_api_recording_status_get"];
   };
-  "/api/logging/stop": {
+  "/api/recording/stop": {
     /** Stop Logging */
-    post: operations["stop_logging_api_logging_stop_post"];
+    post: operations["stop_logging_api_recording_stop_post"];
   };
   "/api/settings/analysis": {
     /** Get Analysis Settings */
@@ -1111,6 +1111,12 @@ export interface components {
       location_code: string;
     };
     /**
+     * SpeedSourceKind
+     * @description How vehicle speed is acquired.
+     * @enum {string}
+     */
+    SpeedSourceKind: "gps" | "obd2" | "manual";
+    /**
      * SpeedSourceRequest
      * @description Request body for configuring the speed source (GPS, manual, OBD2, etc.).
      */
@@ -1119,8 +1125,7 @@ export interface components {
       fallbackMode?: "manual" | null;
       /** Manualspeedkph */
       manualSpeedKph?: number | null;
-      /** Speedsource */
-      speedSource?: ("gps" | "obd2" | "manual") | null;
+      speedSource?: components["schemas"]["SpeedSourceKind"] | null;
       /** Staletimeouts */
       staleTimeoutS?: number | null;
     };
@@ -1140,11 +1145,7 @@ export interface components {
       obd2Config?: {
         [key: string]: unknown;
       };
-      /**
-       * Speedsource
-       * @enum {string}
-       */
-      speedSource: "gps" | "obd2" | "manual";
+      speedSource: components["schemas"]["SpeedSourceKind"];
       /** Staletimeouts */
       staleTimeoutS: number;
     };
@@ -1807,7 +1808,7 @@ export interface operations {
     };
   };
   /** Start Logging */
-  start_logging_api_logging_start_post: {
+  start_logging_api_recording_start_post: {
     responses: {
       /** @description Successful Response */
       200: {
@@ -1818,7 +1819,7 @@ export interface operations {
     };
   };
   /** Get Logging Status */
-  get_logging_status_api_logging_status_get: {
+  get_logging_status_api_recording_status_get: {
     responses: {
       /** @description Successful Response */
       200: {
@@ -1829,7 +1830,7 @@ export interface operations {
     };
   };
   /** Stop Logging */
-  stop_logging_api_logging_stop_post: {
+  stop_logging_api_recording_stop_post: {
     responses: {
       /** @description Successful Response */
       200: {
