@@ -663,10 +663,16 @@ def summarize_origin(
         domain_second = domain_findings[1]
 
     loc = LocalizationAssessment.from_finding(top, domain=domain_top)
-    source = str(domain_top.suspected_source) if domain_top else str(top.get("suspected_source") or "unknown")
+    if domain_top:
+        source = str(domain_top.suspected_source)
+    else:
+        source = str(top.get("suspected_source") or "unknown")
 
     if len(findings) >= 2:
-        top_conf = domain_top.effective_confidence if domain_top else (_as_float(top.get("confidence")) or 0.0)
+        if domain_top:
+            top_conf = domain_top.effective_confidence
+        else:
+            top_conf = _as_float(top.get("confidence")) or 0.0
         loc.enrich_from_second_finding(
             findings[1],
             top_confidence=top_conf,
@@ -674,7 +680,10 @@ def summarize_origin(
         )
 
     location = loc.display_location()
-    speed_band = str(domain_top.strongest_speed_band or "") if domain_top else str(top.get("strongest_speed_band") or "")
+    if domain_top:
+        speed_band = str(domain_top.strongest_speed_band or "")
+    else:
+        speed_band = str(top.get("strongest_speed_band") or "")
     dominant_phase = str(top.get("dominant_phase") or "").strip()
     explanation = build_origin_explanation(
         source=source,
