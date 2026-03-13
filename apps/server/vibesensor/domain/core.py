@@ -8,16 +8,24 @@ Primary domain concepts
 -----------------------
 The ten foundational domain objects are:
 
-1. ``Car`` – the vehicle under test.
+1. ``Car`` – the vehicle under test.  Owns tire-circumference computation.
 2. ``Sensor`` – a physical accelerometer node.
 3. ``SensorPlacement`` – a sensor's mounting position on the vehicle.
+   Owns position category classification (wheel/drivetrain/body).
 4. ``Run`` – one complete diagnostic measurement session (aggregate root).
+   Owns lifecycle, duration, and reading accumulation.
 5. ``Measurement`` – a single multi-axis acceleration sample (value object).
 6. ``SpeedSource`` – how vehicle speed is obtained during a run.
+   Owns source-kind classification and effective-speed resolution.
 7. ``AnalysisWindow`` – a contiguous aligned chunk of samples for analysis.
+   Owns phase classification, speed containment, and analyzability.
 8. ``Finding`` – one diagnostic conclusion or cause candidate.
+   Owns classification, actionability, surfacing, confidence normalisation,
+   deterministic ranking, and phase-adjusted scoring.
 9. ``Report`` – the assembled output of a diagnostic run.
+   Owns finding accessors and primary-finding selection.
 10. ``HistoryRecord`` – a persisted run with its analysis results.
+    Owns status queries and display helpers.
 
 ``DiagnosticSession`` and ``AccelerationSample`` remain as compatibility
 aliases for ``Run`` and ``Measurement`` respectively.
@@ -32,6 +40,10 @@ Mathematical contracts
 * Severity classification delegates to
   ``vibesensor.strength_bands.bucket_for_strength`` so that threshold
   changes (l0–l5 band boundaries) remain in a single place.
+
+* Confidence quantisation step is 0.02; findings whose confidence differs
+  by less than one step share the same rank bucket, leaving the explicit
+  ranking score to break ties.
 """
 
 from __future__ import annotations

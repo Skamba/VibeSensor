@@ -548,3 +548,338 @@ class TestBridgeMethods:
 
         # They must be distinct types — no name collision
         assert DomainFinding is not FindingPayload
+
+
+# ---------------------------------------------------------------------------
+# New enrichment tests
+# ---------------------------------------------------------------------------
+
+
+class TestFindingEnrichments:
+    """Tests for enriched Finding domain object behaviour."""
+
+    def test_effective_confidence(self) -> None:
+        f = Finding(confidence=0.75)
+        assert f.effective_confidence == 0.75
+
+    def test_effective_confidence_none(self) -> None:
+        f = Finding(confidence=None)
+        assert f.effective_confidence == 0.0
+
+    def test_is_actionable_known_source(self) -> None:
+        f = Finding(suspected_source="wheel_bearing")
+        assert f.is_actionable
+
+    def test_is_actionable_placeholder_source_no_location(self) -> None:
+        f = Finding(suspected_source="unknown")
+        assert not f.is_actionable
+
+    def test_is_actionable_placeholder_source_with_location(self) -> None:
+        f = Finding(suspected_source="unknown", strongest_location="front_left_wheel")
+        assert f.is_actionable
+
+    def test_is_actionable_unknown_resonance(self) -> None:
+        f = Finding(suspected_source="unknown_resonance")
+        assert not f.is_actionable
+
+    def test_should_surface_diagnostic(self) -> None:
+        f = Finding(confidence=0.5, severity="diagnostic")
+        assert f.should_surface
+
+    def test_should_surface_low_confidence(self) -> None:
+        f = Finding(confidence=0.1, severity="diagnostic")
+        assert not f.should_surface
+
+    def test_should_surface_reference(self) -> None:
+        f = Finding(finding_id="REF_SPEED", confidence=0.9)
+        assert not f.should_surface
+
+    def test_should_surface_informational(self) -> None:
+        f = Finding(confidence=0.8, severity="info")
+        assert not f.should_surface
+
+    def test_rank_key_quantised(self) -> None:
+        f1 = Finding(confidence=0.751, ranking_score=1.0)
+        f2 = Finding(confidence=0.759, ranking_score=1.0)
+        # Both should quantise to 0.76 (step=0.02)
+        assert f1.rank_key == f2.rank_key
+
+    def test_rank_key_different_scores(self) -> None:
+        f1 = Finding(confidence=0.5, ranking_score=2.0)
+        f2 = Finding(confidence=0.5, ranking_score=1.0)
+        assert f1.rank_key > f2.rank_key
+
+    def test_phase_adjusted_score_no_phase(self) -> None:
+        f = Finding(confidence=0.8)
+        assert f.phase_adjusted_score == pytest.approx(0.8 * 0.85)
+
+    def test_phase_adjusted_score_full_cruise(self) -> None:
+        f = Finding(confidence=0.8, phase_evidence={"cruise_fraction": 1.0})
+        assert f.phase_adjusted_score == pytest.approx(0.8 * 1.0)
+
+    def test_is_stronger_than(self) -> None:
+        f1 = Finding(confidence=0.8, ranking_score=1.0)
+        f2 = Finding(confidence=0.5, ranking_score=1.0)
+        assert f1.is_stronger_than(f2)
+        assert not f2.is_stronger_than(f1)
+
+    def test_with_id(self) -> None:
+        f = Finding(finding_id="F001", suspected_source="tire", confidence=0.7)
+        f2 = f.with_id("F002")
+        assert f2.finding_id == "F002"
+        assert f2.suspected_source == "tire"
+        assert f2.confidence == 0.7
+        assert f.finding_id == "F001"  # original unchanged
+
+    def test_from_payload_extracts_evidence_fields(self) -> None:
+        payload: dict[str, object] = {
+            "finding_id": "F001",
+            "suspected_source": "bearing",
+            "_ranking_score": 1.5,
+            "dominance_ratio": 0.85,
+            "diffuse_excitation": True,
+            "weak_spatial_separation": True,
+            "phase_evidence": {"cruise_fraction": 0.6},
+        }
+        f = Finding.from_payload(payload)
+        assert f.ranking_score == 1.5
+        assert f.dominance_ratio == 0.85
+        assert f.diffuse_excitation is True
+        assert f.weak_spatial_separation is True
+        assert f.phase_evidence == {"cruise_fraction": 0.6}
+
+
+class TestAnalysisWindowEnrichments:
+    """Tests for enriched AnalysisWindow domain object."""
+
+    def test_is_cruising(self) -> None:
+        aw = AnalysisWindow(start_idx=0, end_idx=100, phase="cruise")
+        assert aw.is_cruising
+        assert not aw.is_idle
+        assert not aw.is_acceleration
+
+    def test_is_idle(self) -> None:
+        aw = AnalysisWindow(start_idx=0, end_idx=100, phase="idle")
+        assert aw.is_idle
+        assert not aw.is_cruising
+
+    def test_is_acceleration(self) -> None:
+        aw = AnalysisWindow(start_idx=0, end_idx=100, phase="acceleration")
+        assert aw.is_acceleration
+
+    def test_is_deceleration(self) -> None:
+        aw = AnalysisWindow(start_idx=0, end_idx=100, phase="deceleration")
+        assert aw.is_deceleration
+
+    def test_is_analyzable(self) -> None:
+        assert AnalysisWindow(start_idx=0, end_idx=100).is_analyzable
+        assert not AnalysisWindow(start_idx=0, end_idx=0).is_analyzable
+
+    def test_contains_speed(self) -> None:
+        aw = AnalysisWindow(start_idx=0, end_idx=100, speed_min_kmh=80.0, speed_max_kmh=100.0)
+        assert aw.contains_speed(90.0)
+        assert aw.contains_speed(80.0)  # boundary
+        assert aw.contains_speed(100.0)  # boundary
+        assert not aw.contains_speed(120.0)
+        assert not aw.contains_speed(60.0)
+
+    def test_contains_speed_missing(self) -> None:
+        aw = AnalysisWindow(start_idx=0, end_idx=100)
+        assert not aw.contains_speed(90.0)
+
+    def test_speed_range_text(self) -> None:
+        aw = AnalysisWindow(start_idx=0, end_idx=100, speed_min_kmh=80.0, speed_max_kmh=100.0)
+        assert aw.speed_range_text == "80\u2013100 km/h"
+
+    def test_speed_range_text_missing(self) -> None:
+        aw = AnalysisWindow(start_idx=0, end_idx=100)
+        assert aw.speed_range_text is None
+
+
+class TestReportEnrichments:
+    """Tests for enriched Report domain object."""
+
+    def test_has_findings(self) -> None:
+        r = Report(run_id="r1", findings=(Finding(finding_id="F001"),))
+        assert r.has_findings
+
+    def test_no_findings(self) -> None:
+        r = Report(run_id="r1")
+        assert not r.has_findings
+        assert r.is_empty
+
+    def test_diagnostic_findings(self) -> None:
+        findings = (
+            Finding(finding_id="F001", severity="diagnostic"),
+            Finding(finding_id="REF_SPEED", severity="info"),
+            Finding(finding_id="F002", severity="high"),
+        )
+        r = Report(run_id="r1", findings=findings)
+        diags = r.diagnostic_findings
+        assert len(diags) == 2
+        assert diags[0].finding_id == "F001"
+        assert diags[1].finding_id == "F002"
+
+    def test_primary_finding(self) -> None:
+        findings = (
+            Finding(finding_id="F001", severity="diagnostic"),
+            Finding(finding_id="F002", severity="diagnostic"),
+        )
+        r = Report(run_id="r1", findings=findings)
+        assert r.primary_finding is not None
+        assert r.primary_finding.finding_id == "F001"
+
+    def test_primary_finding_none(self) -> None:
+        r = Report(run_id="r1", findings=(Finding(finding_id="REF_SPEED"),))
+        assert r.primary_finding is None
+        assert r.is_empty
+
+    def test_from_summary_creates_domain_findings(self) -> None:
+        summary: dict[str, object] = {
+            "run_id": "run-1",
+            "findings": [
+                {
+                    "finding_id": "F001",
+                    "suspected_source": "bearing",
+                    "confidence": 0.8,
+                },
+                {
+                    "finding_id": "REF_SPEED",
+                    "suspected_source": "speed",
+                    "confidence": None,
+                },
+            ],
+        }
+        r = Report.from_summary(summary)
+        assert len(r.findings) == 2
+        assert r.findings[0].finding_id == "F001"
+        assert r.findings[0].confidence == 0.8
+        assert r.findings[1].is_reference
+
+
+class TestRunEnrichments:
+    """Tests for enriched Run domain object."""
+
+    def test_has_readings(self) -> None:
+        from vibesensor.domain.core import VibrationReading
+
+        run = Run()
+        assert not run.has_readings
+        run.start()
+        reading = VibrationReading(timestamp=_NOW, intensity_db=10.0, frequency_hz=50.0)
+        run._readings.append(reading)
+        assert run.has_readings
+
+    def test_duration(self) -> None:
+        run = Run()
+        assert run.duration is None
+        run.start()
+        assert run.duration is None  # not stopped yet
+        run.stop()
+        assert run.duration is not None
+        assert run.duration_s is not None
+        assert run.duration_s >= 0.0
+
+    def test_is_complete(self) -> None:
+        run = Run()
+        assert not run.is_complete
+        run.start()
+        assert not run.is_complete
+        run.stop()
+        assert run.is_complete
+
+
+class TestCarEnrichments:
+    """Tests for enriched Car domain object."""
+
+    def test_tire_circumference_full_spec(self) -> None:
+        car = Car(
+            name="Test",
+            aspects={"tire_width_mm": 205, "tire_aspect_pct": 55, "rim_in": 16},
+        )
+        circ = car.tire_circumference_m
+        assert circ is not None
+        # 205/55 R16: diameter ≈ 632mm → circumference ≈ 1.985m
+        assert 1.9 < circ < 2.1
+
+    def test_tire_circumference_missing_aspect(self) -> None:
+        car = Car(name="Test", aspects={"tire_width_mm": 205})
+        assert car.tire_circumference_m is None
+
+    def test_tire_circumference_zero_value(self) -> None:
+        car = Car(aspects={"tire_width_mm": 0, "tire_aspect_pct": 55, "rim_in": 16})
+        assert car.tire_circumference_m is None
+
+    def test_tire_circumference_no_aspects(self) -> None:
+        car = Car(name="No Tires")
+        assert car.tire_circumference_m is None
+
+
+class TestSpeedSourceEnrichments:
+    """Tests for enriched SpeedSource domain object."""
+
+    def test_is_obd2(self) -> None:
+        ss = SpeedSource(kind="obd2")
+        assert ss.is_obd2
+        assert not ss.is_gps
+        assert not ss.is_manual
+
+    def test_is_live(self) -> None:
+        assert SpeedSource(kind="gps").is_live
+        assert SpeedSource(kind="obd2").is_live
+        assert not SpeedSource(kind="manual").is_live
+
+    def test_effective_speed_manual(self) -> None:
+        ss = SpeedSource(kind="manual", manual_speed_kmh=80.0)
+        assert ss.effective_speed_kmh == 80.0
+
+    def test_effective_speed_gps(self) -> None:
+        ss = SpeedSource(kind="gps")
+        assert ss.effective_speed_kmh is None
+
+
+class TestSensorPlacementEnrichments:
+    """Tests for enriched SensorPlacement domain object."""
+
+    def test_is_drivetrain(self) -> None:
+        sp = SensorPlacement(code="transmission")
+        assert sp.is_drivetrain
+        assert not sp.is_wheel
+        assert not sp.is_body
+
+    def test_is_body(self) -> None:
+        sp = SensorPlacement(code="dashboard")
+        assert sp.is_body
+        assert not sp.is_wheel
+        assert not sp.is_drivetrain
+
+    def test_position_category_wheel(self) -> None:
+        assert SensorPlacement(code="front_left_wheel").position_category == "wheel"
+
+    def test_position_category_drivetrain(self) -> None:
+        assert SensorPlacement(code="transmission").position_category == "drivetrain"
+
+    def test_position_category_body(self) -> None:
+        assert SensorPlacement(code="dashboard").position_category == "body"
+
+    def test_position_category_other(self) -> None:
+        assert SensorPlacement(code="custom_location").position_category == "other"
+
+
+class TestHistoryRecordEnrichments:
+    """Tests for enriched HistoryRecord domain object."""
+
+    def test_has_analysis(self) -> None:
+        assert HistoryRecord(run_id="r1", analysis_version=1).has_analysis
+        assert not HistoryRecord(run_id="r1").has_analysis
+
+    def test_display_status(self) -> None:
+        assert HistoryRecord(run_id="r1", status="complete").display_status == "Complete"
+        assert HistoryRecord(run_id="r1", status="recording").display_status == "Recording"
+        assert HistoryRecord(run_id="r1", status="error").display_status == "Error"
+        assert HistoryRecord(run_id="r1", status="analyzing").display_status == "Analyzing"
+
+    def test_display_status_unknown(self) -> None:
+        assert HistoryRecord(run_id="r1", status="").display_status == "Unknown"
+        rec = HistoryRecord(run_id="r1", status="custom_status")
+        assert rec.display_status == "Custom_Status"
