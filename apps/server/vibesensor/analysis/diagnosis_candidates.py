@@ -1,10 +1,10 @@
-"""Shared helpers for filtering and selecting diagnosis candidates.
+"""Boundary helpers for filtering and selecting diagnosis candidates.
 
-These utilities are used by both the analysis summary path and the report
-mapping path so the same non-reference/actionable selection rules stay in one
-place.  Core selection logic (``effective_top_causes``) lives on the domain
-aggregate ``RunAnalysisResult``; this module provides boundary-level helpers
-that operate on ``FindingPayload`` dicts.
+These utilities bridge between the serialization-oriented
+``FindingPayload`` dicts and the domain aggregate
+``RunAnalysisResult``.  All selection logic is **delegated** to the
+domain aggregate's ``effective_top_causes()`` method — this module
+does not duplicate the selection rules.
 """
 
 from __future__ import annotations
@@ -12,21 +12,20 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from ..domain import Finding as DomainFinding
+from ..domain import RunAnalysisResult
 from ._types import FindingPayload, is_finding
 
 
 def non_reference_findings(items: Sequence[object]) -> list[FindingPayload]:
-    """Return well-formed finding dicts excluding ``REF_*`` entries.
+    """Return well-formed finding dicts excluding reference entries.
 
-    Uses a direct string prefix check on ``finding_id`` rather than domain
-    object conversion — this is intentional for boundary-level operations
-    where avoiding the overhead of ``Finding.from_payload()`` is preferred.
-    The reference-detection logic mirrors ``Finding.is_reference``.
+    Delegates classification to domain ``Finding.is_reference`` so the
+    reference-detection rule has a single source of truth.
     """
     return [
         item
         for item in items
-        if is_finding(item) and not str(item.get("finding_id", "")).upper().startswith("REF_")
+        if is_finding(item) and not DomainFinding.from_payload(item).is_reference
     ]
 
 
@@ -38,31 +37,43 @@ def select_effective_top_causes(
 
     Returns ``(all_findings, findings_non_ref, top_causes_all, effective_top_causes)``.
 
-    The effective top-cause selection mirrors the domain logic on
-    ``RunAnalysisResult.effective_top_causes()``, applied to
-    ``FindingPayload`` dicts at the serialization boundary.
+    Selection logic delegates to ``RunAnalysisResult.effective_top_causes()``
+    so the decision rules have a single source of truth in the domain
+    aggregate.
     """
     all_findings = [item for item in findings if is_finding(item)]
     findings_non_ref = non_reference_findings(all_findings)
     top_causes_all = [item for item in top_causes if is_finding(item)]
 
-    # Materialize domain objects once to avoid repeated from_payload calls
-    top_cause_pairs = [(tc, DomainFinding.from_payload(tc)) for tc in top_causes_all]
-    top_causes_non_ref = [tc for tc, d in top_cause_pairs if not d.is_reference]
-    top_causes_actionable = [
-        tc for tc, d in top_cause_pairs if not d.is_reference and d.is_actionable
-    ]
+    # Build domain objects and delegate selection to the domain aggregate
+    domain_findings = tuple(DomainFinding.from_payload(f) for f in all_findings)
+    domain_top_causes = tuple(DomainFinding.from_payload(tc) for tc in top_causes_all)
 
-    effective_top_causes: list[FindingPayload]
-    if top_causes_actionable:
-        effective_top_causes = list(top_causes_actionable)
-    elif findings_non_ref:
-        effective_top_causes = list(findings_non_ref)
-    elif top_causes_non_ref:
-        effective_top_causes = list(top_causes_non_ref)
-    else:
-        effective_top_causes = list(top_causes_all)
-    return all_findings, findings_non_ref, top_causes_all, effective_top_causes
+    aggregate = RunAnalysisResult(
+        run_id="boundary",
+        findings=domain_findings,
+        top_causes=domain_top_causes,
+    )
+    effective_domain = aggregate.effective_top_causes()
+    effective_ids = {f.finding_id for f in effective_domain}
+
+    # Map the domain selection back to payloads, preserving order.
+    # effective_top_causes may return items from top_causes or findings,
+    # so check both sources.
+    effective: list[FindingPayload] = []
+    seen: set[str] = set()
+    for tc in top_causes_all:
+        fid = str(tc.get("finding_id", ""))
+        if fid in effective_ids and fid not in seen:
+            effective.append(tc)
+            seen.add(fid)
+    for f in all_findings:
+        fid = str(f.get("finding_id", ""))
+        if fid in effective_ids and fid not in seen:
+            effective.append(f)
+            seen.add(fid)
+
+    return all_findings, findings_non_ref, top_causes_all, effective
 
 
 def normalize_origin_location(location: object) -> str:
