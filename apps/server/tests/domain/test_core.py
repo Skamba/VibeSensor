@@ -168,7 +168,7 @@ class TestRun:
 
     def test_initial_state_is_pending(self) -> None:
         session = Run()
-        assert session.status is RunPhase.PENDING
+        assert session.phase is RunPhase.PENDING
 
     def test_run_id_is_unique(self) -> None:
         s1 = Run()
@@ -178,7 +178,7 @@ class TestRun:
     def test_start_transitions_to_running(self) -> None:
         session = Run()
         session.start()
-        assert session.status is RunPhase.RUNNING
+        assert session.phase is RunPhase.RUNNING
 
     def test_start_when_already_running_raises(self) -> None:
         session = Run()
@@ -190,7 +190,7 @@ class TestRun:
         session = Run()
         session.start()
         session.stop()
-        assert session.status is RunPhase.STOPPED
+        assert session.phase is RunPhase.STOPPED
 
     def test_stop_when_not_running_raises(self) -> None:
         session = Run()

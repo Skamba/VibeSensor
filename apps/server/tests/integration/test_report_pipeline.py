@@ -241,8 +241,8 @@ class TestIngestionScenario:
         """Most likely origin should reference wheel/tire."""
         origin = self.summary["most_likely_origin"]
         assert isinstance(origin, dict)
-        assert "source" in origin
-        src = origin["source"].lower()
+        assert "suspected_source" in origin
+        src = origin["suspected_source"].lower()
         assert "wheel" in src or "tire" in src, f"Origin source: {src}"
 
     def test_phase_timeline_has_entries(self) -> None:

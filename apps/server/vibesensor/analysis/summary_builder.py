@@ -613,7 +613,7 @@ def summarize_origin(findings: list[FindingPayload]) -> SuspectedVibrationOrigin
         return {
             "location": "unknown",
             "alternative_locations": [],
-            "source": "unknown",
+            "suspected_source": "unknown",
             "dominance_ratio": None,
             "weak_spatial_separation": True,
             "explanation": i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
@@ -643,7 +643,7 @@ def summarize_origin(findings: list[FindingPayload]) -> SuspectedVibrationOrigin
     return {
         "location": location,
         "alternative_locations": loc.supporting_locations(),
-        "source": source,
+        "suspected_source": source,
         "dominance_ratio": loc.dominance_ratio,
         "weak_spatial_separation": not loc.has_clear_separation,
         "speed_band": speed_band or None,

@@ -206,7 +206,7 @@ class SettingsStore:
         self._gps_monitor.set_speed_override_kmh(ss.effective_speed_kmh)
         self._gps_monitor.set_fallback_settings(
             stale_timeout_s=raw.get("staleTimeoutS"),
-            fallback_mode=ss.fallback_mode,
+            fallback_mode=self._speed_cfg.fallback_mode,
         )
 
     def sync_all(self) -> None:
