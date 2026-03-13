@@ -56,13 +56,8 @@ class HistoryRunService:
             return None
 
         analysis = require_analysis_ready(run)
-        active_car_snapshot = (
-            getattr(self._settings_store, "active_car_snapshot", None)
-            if self._settings_store is not None
-            else None
-        )
         current_active_car_snapshot = (
-            active_car_snapshot() if callable(active_car_snapshot) else None
+            self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )
         analysis = add_current_context_warnings(
             analysis,

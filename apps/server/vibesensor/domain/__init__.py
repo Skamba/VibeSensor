@@ -29,19 +29,20 @@ VibrationReading
     Value object representing a processed vibration measurement in dB.
 """
 
-from .analysis_window import DrivingPhase
 from .car import Car, TireSpec
+from .driving_phase import DrivingPhase
 from .finding import (
     Finding,
     FindingKind,
-    SpeedBand,
     VibrationSource,
+    speed_band_sort_key,
+    speed_bin_label,
 )
 from .measurement import Measurement, VibrationReading
 from .report import Report
+from .run import Run
 from .run_status import RUN_TRANSITIONS, RunStatus, transition_run
 from .sensor import Sensor, SensorPlacement
-from .session import Run
 from .speed_source import SpeedSource, SpeedSourceKind
 
 __all__ = [
@@ -57,7 +58,8 @@ __all__ = [
     "RunStatus",
     "Sensor",
     "SensorPlacement",
-    "SpeedBand",
+    "speed_band_sort_key",
+    "speed_bin_label",
     "SpeedSource",
     "SpeedSourceKind",
     "TireSpec",

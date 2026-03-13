@@ -93,15 +93,7 @@ class ReportMappingContext:
         candidates = self.top_causes or self.findings_non_ref
         return candidates[0] if candidates else None
 
-    def primary_hotspot(self) -> CandidateFinding | None:
-        """Return the top cause as the primary hotspot for the report."""
-        return self.top_causes[0] if self.top_causes else None
-
     # -- display helpers ----------------------------------------------------
-
-    def display_duration(self) -> str | None:
-        """Return the formatted run duration text."""
-        return self.duration_text
 
     def display_speed_range(self) -> str | None:
         """Return the formatted speed range from speed stats."""
@@ -974,20 +966,6 @@ def resolve_primary_report_candidate(
         certainty_pct=certainty_pct,
         certainty_reason=certainty_reason,
         tier=tier,
-    )
-
-
-def build_observed_signature(primary: PrimaryCandidateContext) -> PatternEvidence:
-    """Build the observed-signature block for the report template."""
-    return PatternEvidence(
-        primary_system=primary.primary_system,
-        strongest_location=primary.primary_location,
-        speed_band=primary.primary_speed,
-        strength_label=primary.strength_text,
-        strength_peak_db=primary.strength_db,
-        certainty_label=primary.certainty_label_text,
-        certainty_pct=primary.certainty_pct,
-        certainty_reason=primary.certainty_reason,
     )
 
 

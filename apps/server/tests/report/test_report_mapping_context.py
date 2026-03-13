@@ -87,30 +87,9 @@ class TestTopReportCandidate:
         assert context.top_report_candidate() is None
 
 
-class TestPrimaryHotspot:
-    def test_returns_first_cause(self) -> None:
-        cause = _make_cause()
-        context = _make_context(top_causes=[cause])
-        assert context.primary_hotspot() is cause
-
-    def test_returns_none_when_no_causes(self) -> None:
-        context = _make_context()
-        assert context.primary_hotspot() is None
-
-
 # ---------------------------------------------------------------------------
 # Display helpers
 # ---------------------------------------------------------------------------
-
-
-class TestDisplayDuration:
-    def test_with_duration(self) -> None:
-        context = _make_context(duration_text="2m 30s")
-        assert context.display_duration() == "2m 30s"
-
-    def test_none_duration(self) -> None:
-        context = _make_context(duration_text=None)
-        assert context.display_duration() is None
 
 
 class TestDisplaySpeedRange:

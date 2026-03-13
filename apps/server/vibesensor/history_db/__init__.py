@@ -339,6 +339,10 @@ class HistoryDB:
             )
         now = utc_now_iso()
         with self._cursor() as cur:
+            # Include 'recording' to handle the case where finalize_run()
+            # failed (e.g. DB unavailable at that moment).  store_analysis
+            # still succeeds via the RECORDING → COMPLETE shortcut path
+            # defined in RUN_TRANSITIONS.
             cur.execute(
                 "UPDATE runs SET status = 'complete', analysis_json = ?, "
                 "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
@@ -432,7 +436,8 @@ class HistoryDB:
             rows = cur.fetchall()
         result: list[JsonObject] = []
         for row in rows:
-            run_id, status, start, end, created, error, sample_count = row
+            run_id, status_raw, start, end, created, error, sample_count = row
+            status = RunStatus(status_raw)
             entry: JsonObject = {
                 "run_id": run_id,
                 "status": status,
@@ -460,7 +465,7 @@ class HistoryDB:
             return None
         (
             rid,
-            status,
+            status_raw,
             start,
             end,
             meta_json,
@@ -471,6 +476,7 @@ class HistoryDB:
             analysis_started,
             analysis_completed,
         ) = row
+        status = RunStatus(status_raw)
         entry: JsonObject = {
             "run_id": rid,
             "status": status,

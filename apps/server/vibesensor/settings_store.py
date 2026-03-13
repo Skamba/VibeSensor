@@ -258,10 +258,17 @@ class SettingsStore:
             }
 
     def active_car_aspects(self) -> dict[str, float] | None:
-        """Return the active car's aspects as a flat analysis-settings dict."""
+        """Return the active car's aspects as a flat analysis-settings dict.
+
+        Routes through the domain ``Car`` object so dimension validation
+        (rejecting zero and negative values) fires on the hot path.
+        """
         with self._lock:
-            car = self._find_car(self._active_car_id)
-            return dict(car.aspects) if car else None
+            car_cfg = self._find_car(self._active_car_id)
+            if car_cfg is None:
+                return None
+            car = car_cfg.to_car()
+            return dict(car.aspects)
 
     def active_car_snapshot(self) -> CarConfigPayload | None:
         """Return the active car profile as a plain dict snapshot."""
