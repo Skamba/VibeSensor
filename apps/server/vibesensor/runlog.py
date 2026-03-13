@@ -17,15 +17,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict
 
-from .domain_models import (
+from .backend_types import (
     RUN_END_TYPE,
     RUN_METADATA_TYPE,
     RUN_SAMPLE_TYPE,
     RUN_SCHEMA_VERSION,
     RunMetadata,
-    SensorFrame,
 )
 from .json_types import JsonObject, JsonValue
+from .protocol import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
 

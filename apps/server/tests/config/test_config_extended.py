@@ -106,7 +106,6 @@ def test_load_config_ap_self_heal_defaults(tmp_path: Path) -> None:
     result = load_config(config_path)
 
     assert result.ap.self_heal.enabled is True
-    assert result.ap.self_heal.allow_disable_resolved_stub_listener is False
 
 
 def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
@@ -119,7 +118,6 @@ def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
                     "enabled": True,
                     "diagnostics_lookback_minutes": 7,
                     "min_restart_interval_seconds": 240,
-                    "allow_disable_resolved_stub_listener": True,
                     "state_file": "/tmp/hotspot-heal-state.json",
                 },
             },
@@ -130,5 +128,4 @@ def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
 
     assert result.ap.self_heal.diagnostics_lookback_minutes == 7
     assert result.ap.self_heal.min_restart_interval_seconds == 240
-    assert result.ap.self_heal.allow_disable_resolved_stub_listener is True
     assert result.ap.self_heal.state_file == Path("/tmp/hotspot-heal-state.json")

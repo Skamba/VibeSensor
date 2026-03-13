@@ -51,25 +51,16 @@ class ClientApiRow(TypedDict):
     mac_address: str
     name: str
     connected: bool
-    location: str
+    location_code: str
     firmware_version: str
     sample_rate_hz: int
     frame_samples: int
     last_seen_age_ms: int | None
-    data_addr: tuple[str, int] | None
-    control_addr: tuple[str, int] | None
     frames_total: int
     dropped_frames: int
-    duplicates_received: int
-    queue_overflow_drops: int
-    parse_errors: int
-    server_queue_drops: int
     latest_metrics: ClientMetrics
-    last_ack_cmd_seq: int | None
-    last_ack_status: int | None
     reset_count: int
     last_reset_time: float | None
-    timing_health: TimingHealthPayload
 
 
 class WsClientRow(TypedDict):
@@ -79,7 +70,7 @@ class WsClientRow(TypedDict):
     name: str
     connected: bool
     mac_address: str
-    location: str
+    location_code: str
     last_seen_age_ms: int | None
     dropped_frames: int
     frames_total: int

@@ -81,7 +81,7 @@ def create_client_routes(
                 (
                     row
                     for row in registry.snapshot_for_api()
-                    if row["id"] != normalized_client_id and row.get("location") == code
+                    if row["id"] != normalized_client_id and row.get("location_code") == code
                 ),
                 None,
             )
@@ -99,7 +99,7 @@ def create_client_routes(
 
         registry.set_location(normalized_client_id, code)
         mac = client_id_mac(updated.client_id)
-        await asyncio.to_thread(settings_store.set_sensor, mac, {"location": code})
+        await asyncio.to_thread(settings_store.set_sensor, mac, {"location_code": code})
         return SetClientLocationResponse(
             id=updated.client_id,
             mac_address=mac,

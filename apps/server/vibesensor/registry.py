@@ -13,8 +13,7 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import TYPE_CHECKING
 
-from .domain_models import normalize_sensor_id as _normalize_client_id
-from .payload_types import ClientApiRow, TimingHealthPayload, WsClientRow
+from .payload_types import ClientApiRow, WsClientRow
 from .processing.models import ClientMetrics
 from .protocol import (
     AckMessage,
@@ -23,6 +22,7 @@ from .protocol import (
     client_id_hex,
     client_id_mac,
 )
+from .protocol import normalize_sensor_id as _normalize_client_id
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB
@@ -89,30 +89,21 @@ class ClientSnapshot:
     Collected by :meth:`ClientRegistry.snapshot_for_api` from a
     :class:`ClientRecord` and passed to :meth:`ClientRegistry._client_api_row`
     so that the row-builder receives a single structured argument instead of
-    22 keyword parameters.
+    many keyword parameters.
     """
 
     name: str
     connected: bool
-    location: str = ""
+    location_code: str = ""
     firmware_version: str = ""
     sample_rate_hz: int = 0
     frame_samples: int = 0
     last_seen_age_ms: int | None = None
-    data_addr: tuple[str, int] | None = None
-    control_addr: tuple[str, int] | None = None
     frames_total: int = 0
     dropped_frames: int = 0
-    duplicates_received: int = 0
-    queue_overflow_drops: int = 0
-    parse_errors: int = 0
-    server_queue_drops: int = 0
     latest_metrics: ClientMetrics | None = None
-    last_ack_cmd_seq: int | None = None
-    last_ack_status: int | None = None
     reset_count: int = 0
     last_reset_time: float | None = None
-    timing_health: TimingHealthPayload | None = None
 
 
 @dataclass(slots=True)
@@ -126,7 +117,7 @@ class ClientRecord:
     frame_samples: int = 0
     last_seen: float = 0.0
     last_seen_mono: float = 0.0
-    location: str = ""
+    location_code: str = ""
     data_addr: tuple[str, int] | None = None
     control_addr: tuple[str, int] | None = None
     frames_total: int = 0
@@ -438,7 +429,7 @@ class ClientRegistry:
             clean = encoded[:64].decode("utf-8", errors="ignore")
         with self._lock:
             record = self._get_or_create(client_id)
-            record.location = clean
+            record.location_code = clean
             return record
 
     def remove_client(self, client_id: str) -> bool:
@@ -532,27 +523,18 @@ class ClientRegistry:
             "mac_address": client_id_mac(client_id),
             "name": snapshot.name,
             "connected": snapshot.connected,
-            "location": snapshot.location,
+            "location_code": snapshot.location_code,
             "firmware_version": snapshot.firmware_version,
             "sample_rate_hz": snapshot.sample_rate_hz,
             "frame_samples": snapshot.frame_samples,
             "last_seen_age_ms": snapshot.last_seen_age_ms,
-            "data_addr": snapshot.data_addr,
-            "control_addr": snapshot.control_addr,
             "frames_total": snapshot.frames_total,
             "dropped_frames": snapshot.dropped_frames,
-            "duplicates_received": snapshot.duplicates_received,
-            "queue_overflow_drops": snapshot.queue_overflow_drops,
-            "parse_errors": snapshot.parse_errors,
-            "server_queue_drops": snapshot.server_queue_drops,
             "latest_metrics": snapshot.latest_metrics
             if snapshot.latest_metrics is not None
             else {},
-            "last_ack_cmd_seq": snapshot.last_ack_cmd_seq,
-            "last_ack_status": snapshot.last_ack_status,
             "reset_count": snapshot.reset_count,
             "last_reset_time": snapshot.last_reset_time,
-            "timing_health": snapshot.timing_health if snapshot.timing_health is not None else {},
         }
 
     def snapshot_for_api(
@@ -593,40 +575,20 @@ class ClientRegistry:
                         ClientSnapshot(
                             name=record.name,
                             connected=connected,
-                            location=record.location,
+                            location_code=record.location_code,
                             firmware_version=record.firmware_version,
                             sample_rate_hz=record.sample_rate_hz,
                             frame_samples=record.frame_samples,
                             last_seen_age_ms=age_ms,
-                            data_addr=record.data_addr,
-                            control_addr=record.control_addr,
                             frames_total=record.frames_total,
                             dropped_frames=record.frames_dropped,
-                            duplicates_received=record.duplicates_received,
-                            queue_overflow_drops=record.queue_overflow_drops,
-                            parse_errors=record.parse_errors,
-                            server_queue_drops=record.server_queue_drops,
                             latest_metrics=(
                                 metrics_by_client.get(record.client_id, {})
                                 if metrics_by_client is not None
                                 else {}
                             ),
-                            last_ack_cmd_seq=record.last_ack_cmd_seq,
-                            last_ack_status=record.last_ack_status,
                             reset_count=record.reset_count,
                             last_reset_time=record.last_reset_time,
-                            timing_health=(
-                                {
-                                    "jitter_us_ema": record.timing_jitter_us_ema,
-                                    "drift_us_total": record.timing_drift_us_total,
-                                    "last_t0_us": record.last_t0_us,
-                                }
-                                if record.last_t0_us is not None
-                                else {
-                                    "jitter_us_ema": record.timing_jitter_us_ema,
-                                    "drift_us_total": record.timing_drift_us_total,
-                                }
-                            ),
                         ),
                     ),
                 )
@@ -653,7 +615,7 @@ class ClientRegistry:
                             "name": self._user_names.get(client_id, f"client-{client_id[-4:]}"),
                             "connected": False,
                             "mac_address": client_id_mac(client_id),
-                            "location": "",
+                            "location_code": "",
                             "last_seen_age_ms": None,
                             "dropped_frames": 0,
                             "frames_total": 0,
@@ -675,7 +637,7 @@ class ClientRegistry:
                         "name": record.name,
                         "connected": connected,
                         "mac_address": client_id_mac(record.client_id),
-                        "location": record.location,
+                        "location_code": record.location_code,
                         "last_seen_age_ms": age_ms,
                         "dropped_frames": record.frames_dropped,
                         "frames_total": record.frames_total,

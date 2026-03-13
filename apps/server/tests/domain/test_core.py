@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from vibesensor.domain.core import (
+from vibesensor.domain import (
     Measurement,
     Run,
     SessionStatus,

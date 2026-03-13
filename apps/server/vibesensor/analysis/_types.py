@@ -347,5 +347,5 @@ def is_top_cause(value: object) -> TypeGuard[TopCause]:
 
 
 # NOTE: The backward-compatible ``Finding = FindingPayload`` alias has been
-# removed.  The domain ``Finding`` lives in ``vibesensor.domain.core``; use
+# removed.  The domain ``Finding`` lives in ``vibesensor.domain``; use
 # ``FindingPayload`` for serialisation/payload dicts.

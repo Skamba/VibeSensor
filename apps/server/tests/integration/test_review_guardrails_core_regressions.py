@@ -12,12 +12,8 @@ import time
 
 import pytest
 
-from vibesensor.domain_models import (
-    as_float_or_none,
-    as_int_or_none,
-    new_car_id,
-    sanitize_aspects,
-)
+from vibesensor.backend_types import new_car_id, sanitize_aspects
+from vibesensor.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.order_bands import build_order_bands
 from vibesensor.registry import _sanitize_name
 from vibesensor.runlog import bounded_sample
@@ -51,16 +47,9 @@ class TestDomainModelsPublicAPI:
         car_id = new_car_id()
         assert isinstance(car_id, str) and len(car_id) > 0
 
-    def test_domain_models_has_all(self) -> None:
-        import vibesensor.domain_models as dm
-
-        assert hasattr(dm, "__all__")
-        assert "as_float_or_none" in dm.__all__
-        assert "CarConfig" in dm.__all__
-
     def test_runlog_re_exports(self) -> None:
         """runlog.as_float_or_none still works as before."""
-        from vibesensor.domain_models import as_float_or_none as runlog_as_float
+        from vibesensor.json_utils import as_float_or_none as runlog_as_float
 
         assert runlog_as_float(42) == 42.0
 
@@ -213,7 +202,7 @@ class TestModuleAllExports:
     @pytest.mark.parametrize(
         "module_path",
         [
-            "vibesensor.domain_models",
+            "vibesensor.backend_types",
             "vibesensor.protocol",
             "vibesensor.worker_pool",
             "vibesensor.car_library",

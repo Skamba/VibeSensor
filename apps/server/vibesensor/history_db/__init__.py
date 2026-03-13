@@ -20,9 +20,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from threading import RLock
 
-from ..domain_models import SensorFrame
 from ..json_types import JsonObject, is_json_object
 from ..json_utils import safe_json_dumps, safe_json_loads
+from ..protocol import SensorFrame
 from ..runlog import utc_now_iso
 from ._samples import (
     ALLOWED_SAMPLE_TABLES,
@@ -276,14 +276,27 @@ class HistoryDB:
                 (len(samples), run_id),
             )
 
-    def finalize_run(self, run_id: str, end_time_utc: str) -> bool:
+    def finalize_run(
+        self,
+        run_id: str,
+        end_time_utc: str,
+        metadata: JsonObject | None = None,
+    ) -> bool:
         now = utc_now_iso()
         with self._cursor() as cur:
-            cur.execute(
-                "UPDATE runs SET status = 'analyzing', end_time_utc = ?, "
-                "analysis_started_at = ? WHERE run_id = ? AND status = 'recording'",
-                (end_time_utc, now, run_id),
-            )
+            if metadata is not None:
+                cur.execute(
+                    "UPDATE runs SET metadata_json = ?, status = 'analyzing', "
+                    "end_time_utc = ?, analysis_started_at = ? "
+                    "WHERE run_id = ? AND status = 'recording'",
+                    (safe_json_dumps(metadata), end_time_utc, now, run_id),
+                )
+            else:
+                cur.execute(
+                    "UPDATE runs SET status = 'analyzing', end_time_utc = ?, "
+                    "analysis_started_at = ? WHERE run_id = ? AND status = 'recording'",
+                    (end_time_utc, now, run_id),
+                )
             if int(cur.rowcount) > 0:
                 return True
             current_status = self._run_status(cur, run_id)
@@ -302,27 +315,6 @@ class HistoryDB:
                 (safe_json_dumps(metadata), run_id),
             )
             return bool(int(cur.rowcount) > 0)
-
-    def finalize_run_with_metadata(
-        self,
-        run_id: str,
-        end_time_utc: str,
-        metadata: JsonObject,
-    ) -> bool:
-        now = utc_now_iso()
-        with self._cursor() as cur:
-            cur.execute(
-                "UPDATE runs SET metadata_json = ?, status = 'analyzing', "
-                "end_time_utc = ?, analysis_started_at = ? "
-                "WHERE run_id = ? AND status = 'recording'",
-                (safe_json_dumps(metadata), end_time_utc, now, run_id),
-            )
-            if int(cur.rowcount) > 0:
-                return True
-            current_status = self._run_status(cur, run_id)
-            if not can_transition_run(current_status, RunStatus.ANALYZING):
-                self._log_transition_skip(run_id, current_status, RunStatus.ANALYZING)
-            return False
 
     def delete_run_if_safe(
         self,
@@ -420,20 +412,20 @@ class HistoryDB:
             if limit > 0:
                 cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                    "r.created_at, r.error_message, r.sample_count, r.analysis_version "
+                    "r.created_at, r.error_message, r.sample_count "
                     "FROM runs r ORDER BY r.created_at DESC LIMIT ?",
                     (limit,),
                 )
             else:
                 cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                    "r.created_at, r.error_message, r.sample_count, r.analysis_version "
+                    "r.created_at, r.error_message, r.sample_count "
                     "FROM runs r ORDER BY r.created_at DESC",
                 )
             rows = cur.fetchall()
         result: list[JsonObject] = []
         for row in rows:
-            run_id, status, start, end, created, error, sample_count, analysis_ver = row
+            run_id, status, start, end, created, error, sample_count = row
             entry: JsonObject = {
                 "run_id": run_id,
                 "status": status,
@@ -444,8 +436,6 @@ class HistoryDB:
             }
             if error:
                 entry["error_message"] = error
-            if analysis_ver is not None:
-                entry["analysis_version"] = analysis_ver
             result.append(entry)
         return result
 
@@ -454,7 +444,7 @@ class HistoryDB:
             cur.execute(
                 "SELECT run_id, status, start_time_utc, end_time_utc, "
                 "metadata_json, analysis_json, error_message, created_at, "
-                "sample_count, analysis_version, analysis_started_at, analysis_completed_at "
+                "sample_count, analysis_started_at, analysis_completed_at "
                 "FROM runs WHERE run_id = ?",
                 (run_id,),
             )
@@ -471,7 +461,6 @@ class HistoryDB:
             error,
             created,
             sample_count,
-            analysis_ver,
             analysis_started,
             analysis_completed,
         ) = row
@@ -492,8 +481,6 @@ class HistoryDB:
                 entry["analysis_corrupt"] = True
         if error:
             entry["error_message"] = error
-        if analysis_ver is not None:
-            entry["analysis_version"] = analysis_ver
         if analysis_started:
             entry["analysis_started_at"] = analysis_started
         if analysis_completed:

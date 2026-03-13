@@ -125,7 +125,7 @@ _VALIDATION_REJECT_CASES = [
     pytest.param(SpeedSourceRequest, {"manualSpeedKph": 501}, id="speed_too_high"),
     pytest.param(SpeedSourceRequest, {"staleTimeoutS": 301}, id="stale_timeout_too_high"),
     pytest.param(SensorRequest, {"name": "x" * 65}, id="sensor_name_too_long"),
-    pytest.param(SensorRequest, {"location": "x" * 65}, id="sensor_location_too_long"),
+    pytest.param(SensorRequest, {"location_code": "x" * 65}, id="sensor_location_too_long"),
 ]
 
 
@@ -146,9 +146,9 @@ class TestApiModelValidationBounds:
         assert req.manualSpeedKph == 120
 
     def test_sensor_request_valid_ok(self) -> None:
-        req = SensorRequest(name="MySensor", location="front_left")
+        req = SensorRequest(name="MySensor", location_code="front_left")
         assert req.name == "MySensor"
-        assert req.location == "front_left"
+        assert req.location_code == "front_left"
 
 
 # ------------------------------------------------------------------

@@ -14,6 +14,7 @@ dependencies = [
   "numpy>=1.26,<3",
   "PyYAML>=6,<7",
   "reportlab>=4,<5",
+  "websockets>=12,<16",
 ]
 
 [project.optional-dependencies]
@@ -33,7 +34,6 @@ dev = [
   "pytest-xdist>=3.6,<4",
   "pypdf>=5,<6",
   "ruff>=0.6,<1",
-  "websockets>=12,<16",
 ]
 
 [project.scripts]
@@ -93,7 +93,6 @@ files = [
   "vibesensor/config.py",
   "vibesensor/constants.py",
   "vibesensor/contract_reference_doc.py",
-  "vibesensor/domain_models.py",
   "vibesensor/domain",
   "vibesensor/exceptions.py",
   "vibesensor/gps_speed.py",

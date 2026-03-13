@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .installer import UpdateInstaller, UpdateInstallerConfig
 from .models import UpdateJobStatus, UpdatePhase, UpdateRequest, UpdateState, UpdateValidationConfig
-from .releases import UpdateReleaseService
+from .releases import check_for_update, download_release, verify_download
 from .runner import CommandRunner, UpdateCommandExecutor
 from .status import UpdateStateStore, UpdateStatusTracker, collect_runtime_details
 from .wifi import (
@@ -196,10 +196,6 @@ class UpdateManager:
         commands = self._build_command_executor()
         tracker = self._tracker
         wifi = self._build_wifi_controller(commands=commands)
-        releases = UpdateReleaseService(
-            tracker=tracker,
-            rollback_dir=self._rollback_dir,
-        )
         installer = UpdateInstaller(
             commands=commands,
             tracker=tracker,
@@ -233,7 +229,7 @@ class UpdateManager:
         tracker.log("Checking for available updates...")
         from vibesensor import __version__ as current_version
 
-        release_check = await releases.check_for_update(current_version)
+        release_check = await check_for_update(tracker, self._rollback_dir, current_version)
         if release_check.failed:
             return
         if release_check.release is None:
@@ -256,7 +252,12 @@ class UpdateManager:
         tracker.log(f"Downloading release {release_check.release.tag}...")
         staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
         try:
-            wheel_path = await releases.download(release_check.release, staging_dir)
+            wheel_path = await download_release(
+                tracker,
+                self._rollback_dir,
+                release_check.release,
+                staging_dir,
+            )
             if wheel_path is None:
                 return
             tracker.log(
@@ -264,7 +265,7 @@ class UpdateManager:
                 f"{wheel_path.name} "
                 f"(sha256={getattr(release_check.release, 'sha256', '')})",
             )
-            if not await releases.verify_download(release_check.release, wheel_path):
+            if not await verify_download(tracker, release_check.release, wheel_path):
                 return
             await installer.refresh_esp_firmware(pinned_tag=release_check.release.tag)
             if cancel_requested():

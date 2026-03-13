@@ -19,7 +19,7 @@ from .constants import (
     HARMONIC_2X,
     MIN_OVERLAP_TOLERANCE,
 )
-from .domain_models import as_float_or_none
+from .json_utils import as_float_or_none
 from .payload_types import OrderBandPayload
 
 DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS

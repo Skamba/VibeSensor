@@ -32,8 +32,8 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..domain.core import Report
-from ..domain_models import as_float_or_none as _as_float
+from ..domain import Report
+from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import utc_now_iso
@@ -985,7 +985,7 @@ def build_observed_signature(primary: PrimaryCandidateContext) -> ObservedSignat
 def map_summary(summary: SummaryData) -> ReportTemplateData:
     """Map a run summary dict into the final report template data model.
 
-    Constructs a domain :class:`~vibesensor.domain.core.Report` as the
+    Constructs a domain :class:`~vibesensor.domain.Report` as the
     high-level entry point, then delegates to the template-data builder
     for PDF-specific rendering fields.
     """

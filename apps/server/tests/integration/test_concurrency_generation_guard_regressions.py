@@ -6,7 +6,7 @@ from __future__ import annotations
 Tests covering:
 1. Auto-stop generation guard (prevents killing a freshly started session)
 2. Atomic delete_run_if_safe (TOCTOU fix)
-3. finalize_run_with_metadata atomicity
+3. finalize_run with metadata atomicity
 4. stop_logging / start_logging _finalize_run_locked return-value gating
 """
 
@@ -162,7 +162,7 @@ class TestDeleteRunIfSafe:
 
 
 # ---------------------------------------------------------------------------
-# 3. finalize_run_with_metadata atomicity
+# 3. finalize_run with metadata atomicity
 # ---------------------------------------------------------------------------
 
 
@@ -171,7 +171,7 @@ class TestFinalizeRunWithMetadata:
         db = HistoryDB(tmp_path / "h.db")
         db.create_run("r1", "2026-01-01T00:00:00Z", {"run_id": "r1"})
         new_meta = {"run_id": "r1", "end_time_utc": "2026-01-01T00:05:00Z", "extra": "val"}
-        db.finalize_run_with_metadata("r1", "2026-01-01T00:05:00Z", new_meta)
+        db.finalize_run("r1", "2026-01-01T00:05:00Z", metadata=new_meta)
         run = db.get_run("r1")
         assert run is not None
         assert run["status"] == "analyzing"
@@ -184,8 +184,8 @@ class TestFinalizeRunWithMetadata:
         db = HistoryDB(tmp_path / "h.db")
         db.create_run("r1", "2026-01-01T00:00:00Z", {"run_id": "r1"})
         db.finalize_run("r1", "2026-01-01T00:05:00Z")
-        # Already analyzing — second finalize_with_metadata should be no-op
-        db.finalize_run_with_metadata("r1", "2026-01-01T00:10:00Z", {"extra": "v2"})
+        # Already analyzing — second finalize with metadata should be no-op
+        db.finalize_run("r1", "2026-01-01T00:10:00Z", metadata={"extra": "v2"})
         run = db.get_run("r1")
         assert run is not None
         assert run["status"] == "analyzing"
@@ -221,10 +221,10 @@ class TestFinalizeReturnGatesAnalysis:
         logger._persist_history_run_created = True
         logger._persist_written_sample_count = 5
 
-        # Sabotage finalize_run_with_metadata to simulate a DB crash
+        # Sabotage finalize_run to simulate a DB crash
         monkeypatch.setattr(
             db,
-            "finalize_run_with_metadata",
+            "finalize_run",
             lambda *a, **kw: (_ for _ in ()).throw(sqlite3.OperationalError("disk gone")),
         )
 

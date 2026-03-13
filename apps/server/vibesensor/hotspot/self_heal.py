@@ -314,7 +314,6 @@ def _recreate_connection(ap: APConfig, runner: CommandRunner) -> bool:
 
 def _handle_port53_conflict(
     conflict: str,
-    self_heal: APSelfHealConfig,
     runner: CommandRunner,
 ) -> str:
     lowered = conflict.lower()
@@ -323,24 +322,18 @@ def _handle_port53_conflict(
         return "stopped standalone dnsmasq service"
 
     if "systemd-resolve" in lowered:
-        if self_heal.allow_disable_resolved_stub_listener:
-            runner.run(
-                [
-                    "/bin/sh",
-                    "-c",
-                    "mkdir -p /etc/systemd/resolved.conf.d && "
-                    "printf '[Resolve]\\nDNSStubListener=no\\n' > "
-                    "/etc/systemd/resolved.conf.d/vibesensor-no-stub.conf",
-                ],
-                timeout_s=10,
-            )
-            runner.run(["systemctl", "restart", "systemd-resolved"], timeout_s=10)
-            return "disabled systemd-resolved DNS stub listener"
-        return (
-            "detected systemd-resolved :53 conflict; set "
-            "ap.self_heal.allow_disable_resolved_stub_listener=true"
-            " to allow automated resolved reconfiguration"
+        runner.run(
+            [
+                "/bin/sh",
+                "-c",
+                "mkdir -p /etc/systemd/resolved.conf.d && "
+                "printf '[Resolve]\\nDNSStubListener=no\\n' > "
+                "/etc/systemd/resolved.conf.d/vibesensor-no-stub.conf",
+            ],
+            timeout_s=10,
         )
+        runner.run(["systemctl", "restart", "systemd-resolved"], timeout_s=10)
+        return "disabled systemd-resolved DNS stub listener"
 
     return f"detected :53 conflict owner={conflict}; no automatic disruptive action taken"
 
@@ -504,7 +497,7 @@ def run_self_heal_once(
 
     if not health.dhcp_ok:
         if health.port53_conflict:
-            message = _handle_port53_conflict(health.port53_conflict, self_heal, runner)
+            message = _handle_port53_conflict(health.port53_conflict, runner)
             actions.append(
                 HealAction(
                     name="port53_conflict",

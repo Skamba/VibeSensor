@@ -195,7 +195,7 @@ class SensorRequest(_FrozenBase):
     """Request body for updating sensor name and location."""
 
     name: str | None = Field(default=None, min_length=1, max_length=64)
-    location: str | None = Field(default=None, max_length=64)
+    location_code: str | None = Field(default=None, max_length=64)
 
 
 # ---------------------------------------------------------------------------
@@ -322,10 +322,10 @@ class SpeedSourceStatusResponse(BaseModel):
 
 
 class SensorConfigResponse(BaseModel):
-    """Response body with persisted config for a single sensor (name, location)."""
+    """Response body with persisted config for a single sensor (name, location_code)."""
 
     name: str
-    location: str
+    location_code: str
 
 
 class SensorsResponse(BaseModel):
@@ -432,7 +432,6 @@ class HistoryListEntryResponse(BaseModel):
     created_at: str
     sample_count: int
     error_message: str | None = None
-    analysis_version: int | None = None
 
 
 class HistoryListResponse(BaseModel):

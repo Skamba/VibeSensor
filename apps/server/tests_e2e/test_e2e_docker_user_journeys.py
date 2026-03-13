@@ -112,7 +112,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             sensors_by_mac = api_json(base_url, "/api/settings/sensors")["sensorsByMac"]
             for mac, code in zip(seen_sensor_macs, LOCATION_CODES, strict=True):
                 normalized = mac.replace(":", "").lower()
-                assert sensors_by_mac[normalized]["location"] == code
+                assert sensors_by_mac[normalized]["location_code"] == code
 
             # E2E-3: Create a car profile and make it active.
             baseline_car_ids = {str(car["id"]) for car in cars_before["cars"]}

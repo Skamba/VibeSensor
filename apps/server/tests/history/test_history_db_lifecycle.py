@@ -209,23 +209,23 @@ def test_append_samples_rolls_back_when_metadata_update_fails(tmp_path: Path) ->
     assert db.get_run_samples("run-rollback") == []
 
 
-def test_finalize_run_with_metadata_returns_false_when_already_analyzing(tmp_path: Path) -> None:
+def test_finalize_run_returns_false_when_already_analyzing(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-finalize", "2026-01-01T00:00:00Z", {"source": "test"})
 
     assert (
-        db.finalize_run_with_metadata(
+        db.finalize_run(
             "run-finalize",
             "2026-01-01T00:05:00Z",
-            {"source": "test", "step": 1},
+            metadata={"source": "test", "step": 1},
         )
         is True
     )
     assert (
-        db.finalize_run_with_metadata(
+        db.finalize_run(
             "run-finalize",
             "2026-01-01T00:06:00Z",
-            {"source": "test", "step": 2},
+            metadata={"source": "test", "step": 2},
         )
         is False
     )

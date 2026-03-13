@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.domain_models import as_float_or_none
+from vibesensor.json_utils import as_float_or_none
 from vibesensor.order_bands import (
     build_diagnostic_settings,
     combined_relative_uncertainty,

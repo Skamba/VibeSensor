@@ -38,7 +38,7 @@
   `finding.py` (Finding), `report.py` (Report), `history_record.py`
   (HistoryRecord).  All are plain dataclasses with no external coupling.
   Domain objects own classification, ranking, actionability, surfacing,
-  and query logic; pipeline adapters (FindingRecord, OrderAssessment) in
+  and query logic; pipeline adapters (OrderAssessment) in
   `analysis/` delegate to them.  See `docs/domain-model.md` for the full
   relationship map and modeling rules.
 - `metrics_log/`: recording pipeline package; `logger.py` owns the `MetricsLogger` class which directly manages session state and persistence coordination (no private helper classes), enriching status/health payloads with sample counts and analysis results; `post_analysis.py` owns the background analysis queue with outcome tracking; `sample_builder.py` owns pure sample-building functions.

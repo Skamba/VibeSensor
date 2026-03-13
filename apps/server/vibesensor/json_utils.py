@@ -1,4 +1,4 @@
-"""Shared JSON sanitisation and merging utilities.
+"""Shared JSON sanitisation, merging, and coercion utilities.
 
 Provides numpy-aware non-finite-float sanitisation and recursive
 dict-merge used across config loading, WebSocket hub, and history.
@@ -13,12 +13,38 @@ import math
 from .json_types import JsonObject, JsonValue, is_json_object
 
 __all__ = [
+    "as_float_or_none",
+    "as_int_or_none",
     "deep_merge",
     "safe_json_dumps",
     "safe_json_loads",
     "sanitize_for_json",
     "sanitize_value",
 ]
+
+_isfinite = math.isfinite
+
+
+def as_float_or_none(value: object) -> float | None:
+    """Return *value* as a finite float, or ``None`` for non-numeric / non-finite input."""
+    if value in (None, "") or isinstance(value, bool):
+        return None
+    try:
+        out = float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if not _isfinite(out):
+        return None
+    return out
+
+
+def as_int_or_none(value: object) -> int | None:
+    """Return *value* as a rounded int, or ``None`` for non-numeric / non-finite input."""
+    out = as_float_or_none(value)
+    if out is None:
+        return None
+    return round(out)
+
 
 LOGGER = logging.getLogger(__name__)
 

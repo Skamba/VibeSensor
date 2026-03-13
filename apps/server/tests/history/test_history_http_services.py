@@ -150,4 +150,5 @@ def test_export_archive_builder_creates_csv_and_json_entries() -> None:
         rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
 
     assert exported["analysis"] == {"score": 1}
-    assert json.loads(rows[0]["extras"]) == {"custom": "x"}
+    assert "extras" not in rows[0]
+    assert "custom" not in rows[0]

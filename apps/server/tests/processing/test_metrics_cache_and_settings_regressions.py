@@ -189,16 +189,16 @@ class TestSettingsStoreRollbackDbFailure:
     def test_set_sensor_rollback_existing_sensor(self, store: Any) -> None:
         mac = "11:22:33:44:55:66"
         # First create a sensor successfully
-        store.set_sensor(mac, {"name": "Original", "location": "rear"})
+        store.set_sensor(mac, {"name": "Original", "location_code": "rear"})
 
         with (
             patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
             pytest.raises(PersistenceError),
         ):
-            store.set_sensor(mac, {"name": "Updated", "location": "front"})
+            store.set_sensor(mac, {"name": "Updated", "location_code": "front"})
 
         # Should have original values
         sensors = store.get_sensors()
         normalized = mac.upper().replace(":", "")
         assert sensors[normalized]["name"] == "Original"
-        assert sensors[normalized]["location"] == "rear"
+        assert sensors[normalized]["location_code"] == "rear"

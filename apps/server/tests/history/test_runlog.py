@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.domain_models import as_float_or_none, as_int_or_none
+from vibesensor.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.runlog import (
     RUN_METADATA_TYPE,
     RUN_SAMPLE_TYPE,

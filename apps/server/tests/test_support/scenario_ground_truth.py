@@ -8,13 +8,11 @@ from typing import Any
 
 from test_support import standard_metadata as standard_metadata
 from test_support import wheel_hz as wheel_hz
+from test_support.fault_scenarios import make_fault_samples
 from test_support.sample_scenarios import (
     make_idle_samples,
     make_noise_samples,
     make_ramp_samples,
-)
-from test_support.sample_scenarios import (
-    make_sample as _make_sample,
 )
 from vibesensor.analysis import summarize_run_data
 
@@ -103,45 +101,20 @@ def fault_phase(
     transfer_fraction: float = 0.20,
 ) -> list[dict[str, Any]]:
     """Generate constant-speed wheel-fault samples with one dominant sensor."""
-    samples: list[dict[str, Any]] = []
-    whz = wheel_hz(speed_kmh)
-    n = max(1, int(duration_s / dt_s))
-    for idx in range(n):
-        t = start_t_s + idx * dt_s
-        for sensor in sensors:
-            if sensor == fault_sensor:
-                peaks = [{"hz": whz, "amp": fault_amp}]
-                if add_wheel_2x:
-                    peaks.append({"hz": whz * 2, "amp": fault_amp * 0.4})
-                peaks.append({"hz": 142.5, "amp": noise_amp})
-                samples.append(
-                    _make_sample(
-                        t_s=t,
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=fault_vib_db,
-                        strength_floor_amp_g=noise_amp,
-                    ),
-                )
-                continue
-
-            peaks = [{"hz": 142.5, "amp": noise_amp}, {"hz": 87.3, "amp": noise_amp * 0.8}]
-            if transfer_fraction > 0:
-                peaks.insert(0, {"hz": whz, "amp": fault_amp * transfer_fraction})
-                if add_wheel_2x:
-                    peaks.insert(1, {"hz": whz * 2, "amp": fault_amp * transfer_fraction * 0.24})
-            samples.append(
-                _make_sample(
-                    t_s=t,
-                    speed_kmh=speed_kmh,
-                    client_name=sensor,
-                    top_peaks=peaks,
-                    vibration_strength_db=noise_vib_db,
-                    strength_floor_amp_g=noise_amp,
-                ),
-            )
-    return samples
+    return make_fault_samples(
+        fault_sensor=fault_sensor,
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=max(1, int(duration_s / dt_s)),
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        fault_amp=fault_amp,
+        noise_amp=noise_amp,
+        fault_vib_db=fault_vib_db,
+        noise_vib_db=noise_vib_db,
+        add_wheel_2x=add_wheel_2x,
+        transfer_fraction=transfer_fraction,
+    )
 
 
 def get_top_cause(summary: dict[str, Any]) -> dict[str, Any]:

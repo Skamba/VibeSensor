@@ -30,28 +30,26 @@ from typing import TYPE_CHECKING, cast
 
 from .backend_types import (
     AnalysisSettingsPayload,
+    CarConfig,
     CarConfigPayload,
     CarConfigUpdatePayload,
     CarsPayload,
     LanguageCode,
+    SensorConfig,
     SensorConfigUpdatePayload,
     SensorsByMacPayload,
     SettingsSnapshotPayload,
+    SpeedSourceConfig,
     SpeedSourcePayload,
     SpeedSourceUpdatePayload,
     SpeedUnitCode,
-)
-from .domain.core import Car, Sensor, SpeedSource
-from .domain_models import (
-    CarConfig,
-    SensorConfig,
-    SpeedSourceConfig,
     new_car_id,
-    normalize_sensor_id,
     sanitize_aspects,
 )
+from .domain import Car, Sensor, SpeedSource
 from .exceptions import PersistenceError as PersistenceError
 from .json_types import JsonObject
+from .protocol import normalize_sensor_id
 
 if TYPE_CHECKING:
     from .analysis_settings import AnalysisSettingsStore
@@ -414,13 +412,13 @@ class SettingsStore:
             existing = self._sensors.get(sensor_id)
             is_new = existing is None
             if existing is None:
-                existing = SensorConfig(sensor_id=sensor_id, name=sensor_id, location="")
-            old_name, old_location = existing.name, existing.location
+                existing = SensorConfig(sensor_id=sensor_id, name=sensor_id, location_code="")
+            old_name, old_location = existing.name, existing.location_code
             if "name" in data:
                 name = _clamp_str(data["name"], 64)
                 existing.name = name or sensor_id
-            if "location" in data:
-                existing.location = _clamp_str(data["location"], 64)
+            if "location_code" in data:
+                existing.location_code = _clamp_str(data["location_code"], 64)
             self._sensors[sensor_id] = existing
             try:
                 self._persist()
@@ -428,7 +426,7 @@ class SettingsStore:
                 if is_new:
                     self._sensors.pop(sensor_id, None)
                 else:
-                    existing.name, existing.location = old_name, old_location
+                    existing.name, existing.location_code = old_name, old_location
                 raise
             return {sensor_id: existing.to_dict()}
 

@@ -11,11 +11,11 @@ from dataclasses import dataclass, field
 from math import floor
 from typing import Literal, Required, TypedDict
 
-from vibesensor.domain.core import VibrationReading
+from vibesensor.domain import VibrationReading
 from vibesensor.vibration_strength import percentile
 
 from ..constants import MEMS_NOISE_FLOOR_G
-from ..domain_models import as_float_or_none as _as_float
+from ..json_utils import as_float_or_none as _as_float
 from ._types import Sample, SummaryData
 from .findings import _classify_peak_type
 from .helpers import (

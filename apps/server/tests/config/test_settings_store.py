@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.domain_models import (
+from vibesensor.backend_types import (
     DEFAULT_CAR_ASPECTS,
     CarConfig,
     SensorConfig,
@@ -88,7 +88,7 @@ def test_validate_car_truncates_name() -> None:
 def test_validate_sensor_defaults_name_to_mac() -> None:
     sensor = SensorConfig.from_dict("aa:bb:cc:dd:ee:ff", {}).to_dict()
     assert sensor["name"] == "aa:bb:cc:dd:ee:ff"
-    assert sensor["location"] == ""
+    assert sensor["location_code"] == ""
 
 
 def test_validate_sensor_uses_provided_name() -> None:
@@ -212,11 +212,11 @@ def test_store_invalid_speed_source_defaults_to_gps() -> None:
 
 def test_store_set_and_get_sensor() -> None:
     store = SettingsStore()
-    store.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "FL Wheel", "location": "front_left_wheel"})
+    store.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "FL Wheel", "location_code": "front_left_wheel"})
     sensors = store.get_sensors()
     assert "aabbccddeeff" in sensors
     assert sensors["aabbccddeeff"]["name"] == "FL Wheel"
-    assert sensors["aabbccddeeff"]["location"] == "front_left_wheel"
+    assert sensors["aabbccddeeff"]["location_code"] == "front_left_wheel"
 
 
 def test_store_remove_sensor() -> None:
@@ -252,7 +252,7 @@ def test_store_persists_and_loads(tmp_path: Path) -> None:
     added = store1.add_car({"name": "Persisted Car", "type": "suv"})
     store1.set_active_car(added["cars"][0]["id"])
     store1.update_speed_source({"speedSource": "manual", "manualSpeedKph": 60})
-    store1.set_sensor("11:22:33:44:55:66", {"name": "Rear", "location": "rear_left_wheel"})
+    store1.set_sensor("11:22:33:44:55:66", {"name": "Rear", "location_code": "rear_left_wheel"})
 
     store2 = SettingsStore(db=db)
     snap = store2.snapshot()

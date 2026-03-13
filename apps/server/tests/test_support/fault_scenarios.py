@@ -214,7 +214,10 @@ def make_dual_fault_samples(
     transfer_fraction: float | None = None,
     _wheel_hz_override: float | None = None,
 ) -> list[dict[str, Any]]:
-    """Generate samples with two simultaneous wheel-order faults."""
+    """Generate samples with two simultaneous wheel-order faults.
+
+    TODO: merge into make_fault_samples with multi-sensor support.
+    """
     samples: list[dict[str, Any]] = []
     whz = _wheel_hz_override if _wheel_hz_override is not None else wheel_hz(speed_kmh)
     for i in range(n_samples):

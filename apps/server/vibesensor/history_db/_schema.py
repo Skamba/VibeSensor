@@ -36,7 +36,7 @@ def can_transition_run(current_status: str | None, target_status: str) -> bool:
     return target_status in RUN_TRANSITIONS.get(current_status, frozenset())
 
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS runs (
@@ -50,7 +50,6 @@ CREATE TABLE IF NOT EXISTS runs (
     error_message           TEXT,
     sample_count            INTEGER NOT NULL DEFAULT 0,
     created_at              TEXT NOT NULL,
-    analysis_version        INTEGER,
     analysis_started_at     TEXT,
     analysis_completed_at   TEXT
 );

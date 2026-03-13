@@ -7,8 +7,8 @@ from collections.abc import Mapping
 
 from .analysis import i18n_ref
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, tire_circumference_m_from_spec
-from .domain_models import as_float_or_none as _as_float
 from .json_types import JsonObject, JsonValue, is_json_object
+from .json_utils import as_float_or_none as _as_float
 from .report_i18n import tr as _tr
 
 ANALYSIS_SETTINGS_SNAPSHOT_KEYS: tuple[str, ...] = tuple(DEFAULT_ANALYSIS_SETTINGS.keys())

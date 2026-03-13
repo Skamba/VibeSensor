@@ -27,7 +27,7 @@ class _FakeRecord:
     name: str
     sample_rate_hz: int
     latest_metrics: dict
-    location: str = ""
+    location_code: str = ""
     frames_total: int = 0
     frames_dropped: int = 0
     queue_overflow_drops: int = 0
@@ -41,7 +41,7 @@ class _FakeRegistry:
             "active": _FakeRecord(
                 client_id="active",
                 name="front-left wheel",
-                location="front_left_wheel",
+                location_code="front_left_wheel",
                 sample_rate_hz=800,
                 latest_metrics={
                     "combined": {
@@ -69,7 +69,7 @@ class _FakeRegistry:
             "stale": _FakeRecord(
                 client_id="stale",
                 name="rear-right wheel",
-                location="rear_right_wheel",
+                location_code="rear_right_wheel",
                 sample_rate_hz=800,
                 latest_metrics={
                     "combined": {
@@ -187,16 +187,14 @@ class _FakeHistoryDB:
     def append_samples(self, run_id: str, samples: list[dict]) -> None:
         self.append_calls.append((run_id, len(samples)))
 
-    def finalize_run(self, run_id: str, end_time_utc: str) -> None:
+    def finalize_run(self, run_id: str, end_time_utc: str, metadata: dict | None = None) -> None:
+        if metadata is not None:
+            self.updated_metadata.append((run_id, metadata))
         self.finalize_calls.append(run_id)
 
     def update_run_metadata(self, run_id: str, metadata: dict) -> bool:
         self.updated_metadata.append((run_id, metadata))
         return True
-
-    def finalize_run_with_metadata(self, run_id: str, end_time_utc: str, metadata: dict) -> None:
-        self.updated_metadata.append((run_id, metadata))
-        self.finalize_calls.append(run_id)
 
     def analyzing_run_health(self) -> dict:
         return {"analyzing_run_count": 0, "analyzing_oldest_age_s": None}

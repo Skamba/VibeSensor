@@ -130,8 +130,11 @@ def test_registry_hello_uses_advertised_control_port(tmp_path: Path) -> None:
     )
     registry.update_from_hello(hello, ("10.4.0.2", 54321), now=1.0)
 
+    record = registry.get("aabbccddeeff")
+    assert record is not None
+    assert record.control_addr == ("10.4.0.2", 9010)
+
     row = registry.snapshot_for_api(now=1.0)[0]
-    assert row["control_addr"] == ("10.4.0.2", 9010)
     assert row["frame_samples"] == 200
 
 
@@ -270,9 +273,10 @@ def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
         ("10.4.0.2", 50000),
         now=3.0,
     )
-    timing = registry.snapshot_for_api(now=3.0)[0]["timing_health"]
-    assert timing["last_t0_us"] == 1_105_000
-    assert isinstance(timing["jitter_us_ema"], float)
+    record = registry.get(client_id.hex())
+    assert record is not None
+    assert record.last_t0_us == 1_105_000
+    assert isinstance(record.timing_jitter_us_ema, float)
 
 
 def test_registry_clear_name_reverts_to_default(tmp_path: Path) -> None:
@@ -334,15 +338,15 @@ def test_set_location_populates_client_record(tmp_path: Path) -> None:
     hex_id = "aabbccddeeff"
     # Before assignment: location should be empty
     row_before = registry.snapshot_for_api(now=1.0)[0]
-    assert row_before["location"] == ""
+    assert row_before["location_code"] == ""
 
     # Assign location
     record = registry.set_location(hex_id, "front_left_wheel")
-    assert record.location == "front_left_wheel"
+    assert record.location_code == "front_left_wheel"
 
     # After assignment: snapshot must expose the location
     row_after = registry.snapshot_for_api(now=2.0)[0]
-    assert row_after["location"] == "front_left_wheel"
+    assert row_after["location_code"] == "front_left_wheel"
 
 
 def test_set_location_trims_whitespace(tmp_path: Path) -> None:
@@ -351,7 +355,7 @@ def test_set_location_trims_whitespace(tmp_path: Path) -> None:
     hex_id = "001122334455"
     registry.set_location(hex_id, "  rear_axle  ")
     row = registry.snapshot_for_api(now=1.0)[0]
-    assert row["location"] == "rear_axle"
+    assert row["location_code"] == "rear_axle"
 
 
 # ---------------------------------------------------------------------------
@@ -405,7 +409,7 @@ def test_duplicate_seq_is_detected(tmp_path: Path) -> None:
 
     row = registry.snapshot_for_api(now=3.0)[0]
     assert row["frames_total"] == 1
-    assert row["duplicates_received"] == 1
+    assert registry.get(client_id.hex()).duplicates_received == 1
 
 
 def test_duplicate_does_not_inflate_frames_total(tmp_path: Path) -> None:
@@ -423,7 +427,7 @@ def test_duplicate_does_not_inflate_frames_total(tmp_path: Path) -> None:
 
     row = registry.snapshot_for_api(now=15.0)[0]
     assert row["frames_total"] == 5
-    assert row["duplicates_received"] == 2
+    assert registry.get(client_id.hex()).duplicates_received == 2
     assert row["dropped_frames"] == 0
 
 
@@ -442,7 +446,7 @@ def test_out_of_order_not_flagged_as_duplicate(tmp_path: Path) -> None:
 
     row = registry.snapshot_for_api(now=5.0)[0]
     assert row["frames_total"] == 3
-    assert row["duplicates_received"] == 0
+    assert registry.get(client_id.hex()).duplicates_received == 0
 
 
 def test_reset_clears_seen_seqs(tmp_path: Path) -> None:
@@ -466,7 +470,7 @@ def test_reset_clears_seen_seqs(tmp_path: Path) -> None:
 
     row = registry.snapshot_for_api(now=4.0)[0]
     assert row["frames_total"] == 3
-    assert row["duplicates_received"] == 0
+    assert registry.get(client_id.hex()).duplicates_received == 0
 
 
 def test_short_session_restart_not_flagged_as_duplicate(tmp_path: Path) -> None:
@@ -484,7 +488,7 @@ def test_short_session_restart_not_flagged_as_duplicate(tmp_path: Path) -> None:
 
     row = registry.snapshot_for_api(now=3.0)[0]
     assert row["frames_total"] == 50
-    assert row["duplicates_received"] == 0
+    assert registry.get(client_id.hex()).duplicates_received == 0
 
     # Second session: simulator restarts, seq goes back to 0
     for seq in range(50):
@@ -494,4 +498,4 @@ def test_short_session_restart_not_flagged_as_duplicate(tmp_path: Path) -> None:
 
     row2 = registry.snapshot_for_api(now=6.0)[0]
     assert row2["frames_total"] == 100
-    assert row2["duplicates_received"] == 0
+    assert registry.get(client_id.hex()).duplicates_received == 0

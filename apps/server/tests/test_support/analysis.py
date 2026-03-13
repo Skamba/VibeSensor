@@ -25,11 +25,6 @@ def extract_top(summary: dict[str, Any]) -> dict[str, Any] | None:
     return causes[0] if causes else None
 
 
-def extract_top_n(summary: dict[str, Any], n: int = 3) -> list[dict[str, Any]]:
-    """Return up to *n* top-cause dicts from a summary."""
-    return (summary.get("top_causes") or [])[:n]
-
-
 def top_corner_label(summary: dict[str, Any]) -> str | None:
     """Return the human-readable location/corner from the top cause."""
     top = extract_top(summary)
@@ -44,12 +39,3 @@ def top_confidence(summary: dict[str, Any]) -> float:
     """Return the confidence (0–1) of the top cause, or 0.0 if none."""
     top = extract_top(summary)
     return float(top.get("confidence", 0.0)) if top else 0.0
-
-
-def has_no_fault(summary: dict[str, Any]) -> bool:
-    """Return True if analysis found no significant fault."""
-    causes = summary.get("top_causes") or []
-    if not causes:
-        return True
-    # All causes have very low confidence
-    return all(float(c.get("confidence", 0)) < 0.15 for c in causes)

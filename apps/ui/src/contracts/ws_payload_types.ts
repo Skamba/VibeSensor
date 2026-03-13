@@ -138,8 +138,8 @@ export interface components {
       id: string;
       /** Last Seen Age Ms */
       last_seen_age_ms: number | null;
-      /** Location */
-      location: string;
+      /** Location Code */
+      location_code: string;
       /** Mac Address */
       mac_address: string;
       /** Name */

@@ -10,10 +10,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median as _median
 
-from vibesensor.domain.core import AnalysisWindow, VibrationReading
+from vibesensor.domain import AnalysisWindow, VibrationReading
 
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
-from ..domain_models import as_float_or_none as _as_float
+from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..run_context import build_summary_warnings, order_reference_context_complete
 from ..runlog import parse_iso8601, utc_now_iso

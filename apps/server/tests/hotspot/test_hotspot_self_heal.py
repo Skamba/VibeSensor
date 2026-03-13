@@ -90,22 +90,18 @@ def _resolved_stub_write_cmd() -> tuple[str, ...]:
 
 def _self_heal_cfg(
     tmp_path: Path,
-    *,
-    allow_disable_resolved_stub_listener: bool = False,
 ) -> APSelfHealConfig:
     return APSelfHealConfig(
         enabled=True,
         diagnostics_lookback_minutes=5,
         min_restart_interval_seconds=0,
-        allow_disable_resolved_stub_listener=allow_disable_resolved_stub_listener,
         state_file=tmp_path / "hotspot-self-heal-state.json",
     )
 
 
-def _ap_cfg(tmp_path: Path, *, allow_disable_resolved_stub_listener: bool = False) -> APConfig:
+def _ap_cfg(tmp_path: Path) -> APConfig:
     self_heal = _self_heal_cfg(
         tmp_path,
-        allow_disable_resolved_stub_listener=allow_disable_resolved_stub_listener,
     )
     return APConfig(
         ssid="VibeSensor",
@@ -336,36 +332,8 @@ def test_ensure_ap_connection_open_mode_recreates_without_security_keys(tmp_path
     assert "802-11-wireless-security.key-mgmt" not in _nmcli_modify_cmd(ap)
 
 
-def test_run_self_heal_port53_conflict_opt_in_gating(tmp_path: Path) -> None:
-    ap = _ap_cfg(tmp_path, allow_disable_resolved_stub_listener=False)
-    responses = _healthy_responses(ap)
-    responses[("pgrep", "-af", "dnsmasq")] = [
-        _err(stderr="not found"),
-        _err(stderr="not found"),
-    ]
-    responses[("ss", "-ltnup", "sport", "=", ":53")] = [
-        _ok('udp   UNCONN 0 0 127.0.0.53:53 0.0.0.0:* users:("systemd-resolved",pid=123,fd=12)'),
-        _ok('udp   UNCONN 0 0 127.0.0.53:53 0.0.0.0:* users:("systemd-resolved",pid=123,fd=12)'),
-    ]
-    responses[("systemctl", "restart", "NetworkManager")] = [_ok(""), _ok("")]
-    responses[_nmcli_modify_cmd(ap)] = [_ok("")]
-    responses[("nmcli", "--wait", "12", "connection", "up", ap.con_name)] = [_ok(""), _ok("")]
-    runner = _FakeRunner(responses)
-
-    result = run_self_heal_once(
-        ap,
-        ap.self_heal,
-        runner,
-        HealStateStore(ap.self_heal.state_file),
-        diagnostics_only=False,
-    )
-
-    assert result == 2
-    assert ("systemctl", "restart", "systemd-resolved") not in runner.commands
-
-
-def test_run_self_heal_port53_conflict_allows_resolved_fix_when_opted_in(tmp_path: Path) -> None:
-    ap = _ap_cfg(tmp_path, allow_disable_resolved_stub_listener=True)
+def test_run_self_heal_port53_conflict_disables_resolved_stub(tmp_path: Path) -> None:
+    ap = _ap_cfg(tmp_path)
     responses = _healthy_responses(ap)
     responses[("pgrep", "-af", "dnsmasq")] = [
         _err(stderr="not found"),

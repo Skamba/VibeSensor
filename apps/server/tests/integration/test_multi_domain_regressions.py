@@ -19,9 +19,9 @@ from vibesensor.analysis.phase_segmentation import segment_run_phases
 from vibesensor.analysis.summary_builder import compute_run_timing
 from vibesensor.analysis.test_plan import _weighted_speed_window_label
 from vibesensor.analysis.top_cause_selection import confidence_label
+from vibesensor.backend_types import VALID_SPEED_SOURCES
 from vibesensor.config import _split_host_port
-from vibesensor.domain_models import VALID_SPEED_SOURCES
-from vibesensor.domain_models import as_float_or_none as runlog_as_float_or_none
+from vibesensor.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.report.mapping import order_label_human
 from vibesensor.report.mapping import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr

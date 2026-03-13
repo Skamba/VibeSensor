@@ -38,7 +38,6 @@ One row per recording session.
 | `error_message` | TEXT | Error description when status = `error` |
 | `sample_count` | INTEGER | Running count of appended samples |
 | `created_at` | TEXT | Row creation timestamp |
-| `analysis_version` | INTEGER | Schema version of the analysis result |
 | `analysis_started_at` | TEXT | When analysis started |
 | `analysis_completed_at` | TEXT | When analysis finished |
 

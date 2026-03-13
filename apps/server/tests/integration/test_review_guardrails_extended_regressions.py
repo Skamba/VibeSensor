@@ -31,7 +31,7 @@ from vibesensor.ws_hub import _ws_debug_enabled
 def _make_store_with_sensor() -> SettingsStore:
     """Create a SettingsStore with one pre-registered sensor."""
     store = SettingsStore(db=None)
-    store.set_sensor("aabbccddeeff", {"name": "Test", "location": "trunk"})
+    store.set_sensor("aabbccddeeff", {"name": "Test", "location_code": "trunk"})
     return store
 
 

@@ -17,11 +17,10 @@ from vibesensor.history_db import HistoryDB
 
 
 def test_fresh_db_has_analysis_columns(tmp_path: Path) -> None:
-    """Fresh DB should have analysis_version, analysis_started_at, analysis_completed_at."""
+    """Fresh DB should have analysis_started_at, analysis_completed_at."""
     db = HistoryDB(tmp_path / "history.db")
     cursor = db._conn.execute("PRAGMA table_info(runs)")
     columns = {row[1] for row in cursor.fetchall()}
-    assert "analysis_version" in columns
     assert "analysis_started_at" in columns
     assert "analysis_completed_at" in columns
     db.close()

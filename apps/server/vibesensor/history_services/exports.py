@@ -54,10 +54,9 @@ EXPORT_CSV_COLUMNS: tuple[str, ...] = (
     "strength_floor_amp_g",
     "frames_dropped_total",
     "queue_overflow_drops",
-    "extras",
 )
 
-EXPORT_CSV_COLUMN_SET: frozenset[str] = frozenset(EXPORT_CSV_COLUMNS) - {"extras"}
+EXPORT_CSV_COLUMN_SET: frozenset[str] = frozenset(EXPORT_CSV_COLUMNS)
 CsvCell = str | int | float | None
 CsvRow = dict[str, CsvCell]
 
@@ -69,18 +68,11 @@ def _is_json_value(value: object) -> TypeGuard[JsonValue]:
 def flatten_for_csv(row: JsonObject) -> CsvRow:
     """Convert nested/complex values to JSON strings for CSV export."""
     out: CsvRow = {}
-    extras: JsonObject = {}
     for key, value in row.items():
         if key in EXPORT_CSV_COLUMN_SET:
             out[key] = (
                 json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else value
             )
-        elif key == "extras" and is_json_object(value):
-            extras.update(value)
-        else:
-            extras[key] = value
-    if extras:
-        out["extras"] = json.dumps(extras, ensure_ascii=False)
     return out
 
 

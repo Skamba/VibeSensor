@@ -81,7 +81,7 @@ def test_as_float_single_source_of_truth() -> None:
     """order_bands.as_float_or_none must be the canonical as_float_or_none
     from runlog, not a local re-definition.
     """
-    from vibesensor.domain_models import as_float_or_none
+    from vibesensor.json_utils import as_float_or_none
     from vibesensor.order_bands import as_float_or_none as ob_as_float
 
     assert ob_as_float is as_float_or_none, (
@@ -346,7 +346,7 @@ def test_sanitize_settings_is_single_source() -> None:
     import inspect
 
     from vibesensor.analysis_settings import sanitize_settings
-    from vibesensor.domain_models import sanitize_aspects
+    from vibesensor.backend_types import sanitize_aspects
 
     # The function should delegate to sanitize_settings (check source contains the call)
     source = inspect.getsource(sanitize_aspects)
@@ -400,8 +400,7 @@ def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -
     import re
     import sys
 
-    from vibesensor._config_defaults import NETWORK_PORTS
-    from vibesensor.config import DEFAULT_CONFIG
+    from vibesensor.config import DEFAULT_CONFIG, NETWORK_PORTS
     from vibesensor.simulator.sim_sender import parse_args
 
     root = REPO_ROOT

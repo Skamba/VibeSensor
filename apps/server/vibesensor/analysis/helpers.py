@@ -23,8 +23,8 @@ from ..constants import (
     STEADY_SPEED_STDDEV_KMH,
     WEAK_SPATIAL_DOMINANCE_THRESHOLD,
 )
-from ..domain_models import as_float_or_none as _as_float
 from ..json_types import JsonObject
+from ..json_utils import as_float_or_none as _as_float
 from ..locations import label_for_code as _label_for_code
 from ..runlog import read_jsonl_run
 from ._types import MetadataDict, PhaseLabel, PhaseSpeedStats, Sample, SpeedStats

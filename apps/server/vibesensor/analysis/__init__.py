@@ -20,13 +20,12 @@ from .summary_builder import (
     summarize_log,
     summarize_run_data,
 )
-from .top_cause_selection import OrderAssessment, confidence_label, select_top_causes
+from .top_cause_selection import confidence_label, select_top_causes
 
 __all__ = [
     "DrivingPhase",
     "FindingPayload",
     "LocalizationAssessment",
-    "OrderAssessment",
     "RunAnalysis",
     "SummaryData",
     "build_findings_for_samples",

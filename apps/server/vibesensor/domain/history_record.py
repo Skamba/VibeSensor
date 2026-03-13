@@ -31,7 +31,6 @@ class HistoryRecord:
     end_time_utc: str | None = None
     sample_count: int = 0
     error_message: str | None = None
-    analysis_version: int | None = None
 
     # -- queries -----------------------------------------------------------
 
@@ -55,7 +54,7 @@ class HistoryRecord:
     @property
     def has_analysis(self) -> bool:
         """Whether analysis has been completed for this record."""
-        return self.analysis_version is not None
+        return self.status == "complete"
 
     @property
     def display_status(self) -> str:
