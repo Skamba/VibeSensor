@@ -17,7 +17,7 @@ import math
 from collections import defaultdict
 from dataclasses import dataclass
 
-from ..domain.core import Finding
+from ..domain import Finding
 from ._types import FindingPayload, JsonValue, TopCause
 from .strength_labels import (
     CONFIDENCE_HIGH_THRESHOLD,
@@ -28,20 +28,13 @@ from .strength_labels import (
 # OrderAssessment
 # ---------------------------------------------------------------------------
 
-_QUANTISE_STEP = 0.02
-_QUANTISE_INV = 1.0 / _QUANTISE_STEP
-
 
 @dataclass(frozen=True)
 class OrderAssessment:
     """Interpreted assessment of a single order-tracking candidate.
 
-    Owns actionability, severity/certainty banding, ranking/comparison
-    helpers, and surfacing decisions so that callers no longer need to
-    re-derive these from raw dict fields.
-
     Core classification and ranking logic is delegated to the domain
-    :class:`~vibesensor.domain.core.Finding` object held in
+    :class:`~vibesensor.domain.Finding` object held in
     :attr:`domain_finding`.  Report-level aggregation fields
     (``signatures_observed``, ``grouped_count``, ``diagnostic_caveat``)
     remain on this class because they are grouping artifacts created
@@ -55,56 +48,6 @@ class OrderAssessment:
     signatures_observed: list[str]
     grouped_count: int
     diagnostic_caveat: JsonValue
-
-    # -- delegated properties -----------------------------------------------
-
-    @property
-    def finding_id(self) -> str:
-        return self.domain_finding.finding_id
-
-    @property
-    def source(self) -> str:
-        return self.domain_finding.suspected_source
-
-    @property
-    def confidence(self) -> float | None:
-        return self.domain_finding.confidence
-
-    @property
-    def ranking_score(self) -> float:
-        return self.domain_finding.ranking_score
-
-    @property
-    def severity(self) -> str:
-        return self.domain_finding.severity
-
-    @property
-    def strongest_location(self) -> str | None:
-        return self.domain_finding.strongest_location
-
-    @property
-    def strongest_speed_band(self) -> str | None:
-        return self.domain_finding.strongest_speed_band
-
-    @property
-    def phase_evidence(self) -> dict[str, float] | None:
-        return self.domain_finding.phase_evidence
-
-    @property
-    def diffuse_excitation(self) -> bool:
-        return self.domain_finding.diffuse_excitation
-
-    @property
-    def weak_spatial_separation(self) -> bool:
-        return self.domain_finding.weak_spatial_separation
-
-    @property
-    def dominance_ratio(self) -> float | None:
-        return self.domain_finding.dominance_ratio
-
-    @property
-    def order(self) -> str:
-        return self.domain_finding.order
 
     # -- construction -------------------------------------------------------
 
@@ -125,33 +68,11 @@ class OrderAssessment:
             diagnostic_caveat=finding.get("diagnostic_caveat"),
         )
 
-    # -- delegated classification -------------------------------------------
-
-    @property
-    def effective_confidence(self) -> float:
-        """Confidence normalised for computation (``None`` → ``0.0``)."""
-        return self.domain_finding.effective_confidence
-
-    @property
-    def is_reference(self) -> bool:
-        """Whether this is a reference-data finding (``REF_*``)."""
-        return self.domain_finding.is_reference
-
-    @property
-    def is_actionable(self) -> bool:
-        """Whether this candidate is actionable enough for report rendering."""
-        return self.domain_finding.is_actionable
-
-    @property
-    def should_surface(self) -> bool:
-        """Whether this finding should appear in report output."""
-        return self.domain_finding.should_surface
-
     # -- severity / certainty banding ----------------------------------------
 
     def severity_band(self) -> str:
         """Return the severity classification (e.g. ``'diagnostic'``, ``'info'``)."""
-        return self.severity
+        return self.domain_finding.severity
 
     def certainty_band(
         self,
@@ -160,25 +81,9 @@ class OrderAssessment:
     ) -> tuple[str, str, str]:
         """Return ``(label_key, tone, pct_text)`` for this assessment."""
         return confidence_label(
-            self.effective_confidence,
+            self.domain_finding.effective_confidence,
             strength_band_key=strength_band_key,
         )
-
-    # -- ranking / comparison ------------------------------------------------
-
-    @property
-    def rank_key(self) -> tuple[float, float]:
-        """Deterministic sort key for stable finding ordering."""
-        return self.domain_finding.rank_key
-
-    @property
-    def phase_adjusted_score(self) -> float:
-        """Phase-aware ranking score used for top-cause selection."""
-        return self.domain_finding.phase_adjusted_score
-
-    def is_stronger_than(self, other: OrderAssessment) -> bool:
-        """Whether this assessment ranks higher than *other*."""
-        return self.phase_adjusted_score > other.phase_adjusted_score
 
     # -- serialisation helpers -----------------------------------------------
 
@@ -191,23 +96,24 @@ class OrderAssessment:
         label_key, tone, pct_text = self.certainty_band(
             strength_band_key=strength_band_key,
         )
+        df = self.domain_finding
         return {
-            "finding_id": self.finding_id,
-            "source": self.source,
-            "confidence": self.confidence,
+            "finding_id": df.finding_id,
+            "source": df.suspected_source,
+            "confidence": df.confidence,
             "confidence_label_key": label_key,
             "confidence_tone": tone,
             "confidence_pct": pct_text,
-            "order": self.order,
+            "order": df.order,
             "signatures_observed": self.signatures_observed,
             "grouped_count": self.grouped_count,
-            "strongest_location": self.strongest_location,
-            "dominance_ratio": self.dominance_ratio,
-            "strongest_speed_band": self.strongest_speed_band,
-            "weak_spatial_separation": self.weak_spatial_separation,
-            "diffuse_excitation": self.diffuse_excitation,
+            "strongest_location": df.strongest_location,
+            "dominance_ratio": df.dominance_ratio,
+            "strongest_speed_band": df.strongest_speed_band,
+            "weak_spatial_separation": df.weak_spatial_separation,
+            "diffuse_excitation": df.diffuse_excitation,
             "diagnostic_caveat": self.diagnostic_caveat,
-            "phase_evidence": self.phase_evidence,  # type: ignore[typeddict-item]
+            "phase_evidence": df.phase_evidence,  # type: ignore[typeddict-item]
         }
 
 
@@ -223,12 +129,12 @@ def finding_sort_key(item: FindingPayload) -> tuple[float, float]:
     otherwise equivalent findings, leaving the explicit ranking score to break
     ties consistently.
     """
-    return OrderAssessment.from_finding(item).rank_key
+    return Finding.from_payload(item).rank_key
 
 
 def phase_adjusted_ranking_score(finding: FindingPayload) -> float:
     """Compute the phase-aware score used for top-cause selection."""
-    return OrderAssessment.from_finding(finding).phase_adjusted_score
+    return Finding.from_payload(finding).phase_adjusted_score
 
 
 def group_findings_by_source(
@@ -243,10 +149,7 @@ def group_findings_by_source(
     grouped: list[tuple[float, FindingPayload]] = []
     for members in groups.values():
         members_scored = sorted(
-            (
-                (OrderAssessment.from_finding(member).phase_adjusted_score, member)
-                for member in members
-            ),
+            ((Finding.from_payload(member).phase_adjusted_score, member) for member in members),
             key=lambda item: item[0],
             reverse=True,
         )
@@ -304,7 +207,7 @@ def select_top_causes(
     diagnostic_findings = [
         finding
         for finding in findings
-        if isinstance(finding, dict) and OrderAssessment.from_finding(finding).should_surface
+        if isinstance(finding, dict) and Finding.from_payload(finding).should_surface
     ]
     if not diagnostic_findings:
         return []

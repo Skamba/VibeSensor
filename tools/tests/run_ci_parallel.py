@@ -115,7 +115,7 @@ def _bootstrap_steps(python_cmd: str, run_npm_ci: bool) -> list[Step]:
         ),
         Step(
             "python deps: editable install",
-            [python_cmd, "-m", "pip", "install", "-e", "./apps/server[dev]"],
+            [python_cmd, "-m", "pip", "install", "-e", "./apps/server[dev,ocr]"],
         ),
     ]
     if run_npm_ci:
@@ -126,43 +126,13 @@ def _bootstrap_steps(python_cmd: str, run_npm_ci: bool) -> list[Step]:
 def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
     return {
         "backend-quality": [
-            Step("lint (ruff check + format)", ["make", "lint"]),
-            Step("hygiene checks", [python_cmd, "tools/dev/check_hygiene.py"]),
-            Step(
-                "config preflight (dev)",
-                ["vibesensor-config-preflight", "apps/server/config.dev.yaml"],
-            ),
-            Step(
-                "config preflight (docker)",
-                ["vibesensor-config-preflight", "apps/server/config.docker.yaml"],
-            ),
-            Step(
-                "config preflight (pi)",
-                ["vibesensor-config-preflight", "apps/server/config.pi.yaml"],
-            ),
-            Step(
-                "docs lint",
-                [python_cmd, "tools/dev/docs_lint.py"],
-            ),
-            Step(
-                "ws payload schema sync check",
-                [python_cmd, "-m", "vibesensor.ws_schema_export", "--check"],
-            ),
-            Step(
-                "http api schema sync check",
-                [python_cmd, "-m", "vibesensor.http_api_schema_export", "--check"],
-            ),
+            Step("lint + quality checks", ["make", "lint"]),
         ],
         "backend-typecheck": [
             Step("mypy", ["make", "typecheck-backend"]),
         ],
         "frontend-typecheck": [
-            Step(
-                "ui contract sync check",
-                ["npm", "run", "check:contracts"],
-                cwd=ROOT / "apps" / "ui",
-            ),
-            Step("ui typecheck", ["npm", "run", "typecheck"], cwd=ROOT / "apps" / "ui"),
+            Step("ui contract sync + typecheck", ["make", "ui-typecheck"]),
         ],
         "ui-smoke": [
             Step(

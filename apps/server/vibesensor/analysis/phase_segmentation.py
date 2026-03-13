@@ -24,8 +24,8 @@ from ..json_types import JsonObject
 if TYPE_CHECKING:
     from ._types import PhaseSummary
 
-from ..domain.core import AnalysisWindow
-from ..domain_models import as_float_or_none as _as_float
+from ..domain import AnalysisWindow
+from ..json_utils import as_float_or_none as _as_float
 
 
 class DrivingPhase(StrEnum):

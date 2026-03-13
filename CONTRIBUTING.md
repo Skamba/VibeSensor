@@ -61,9 +61,9 @@ Two tiers: use `make test` during iteration, `make test-all` before pushing.
 
 | Goal | Command |
 |---|---|
-| Backend lint | `make lint` |
+| Backend lint + quality | `make lint` |
 | Backend typing | `make typecheck-backend` |
-| Frontend typing | `make ui-typecheck` |
+| Frontend contracts + typing | `make ui-typecheck` |
 | Fast backend tests | `make test` |
 | Focused backend tests | `pytest -q apps/server/tests/<area>/` |
 | Coverage view | `make coverage` |

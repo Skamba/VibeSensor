@@ -9,6 +9,7 @@ from __future__ import annotations
 __all__ = ["render_contract_reference_markdown"]
 
 from vibesensor.config import DEFAULT_CONFIG
+from vibesensor.json_types import JsonObject
 from vibesensor.protocol import (
     ACK_BYTES,
     CMD_HEADER_BYTES,
@@ -32,9 +33,11 @@ def _port(value: str) -> int:
 
 def render_contract_reference_markdown() -> str:
     """Render the public API contract reference as a Markdown string."""
-    data_port = _port(str(DEFAULT_CONFIG["udp"]["data_listen"]))
-    control_port = _port(str(DEFAULT_CONFIG["udp"]["control_listen"]))
-    server_http_port = int(DEFAULT_CONFIG["server"]["port"])
+    udp: JsonObject = DEFAULT_CONFIG["udp"]  # type: ignore[assignment]
+    srv: JsonObject = DEFAULT_CONFIG["server"]  # type: ignore[assignment]
+    data_port = _port(str(udp["data_listen"]))
+    control_port = _port(str(udp["control_listen"]))
+    server_http_port = int(str(srv["port"]))
 
     # Canonical metric/report field names
     _metric_field_names = ["vibration_strength_db", "strength_bucket"]

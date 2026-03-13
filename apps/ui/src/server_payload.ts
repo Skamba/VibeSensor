@@ -140,9 +140,7 @@ function parseClient(value: unknown): AdaptedClient | null {
   const id = getString(record, "id");
   const name = getString(record, "name");
   if (id === null || name === null) return null;
-  const locationCode = getString(record, "location_code")
-    ?? getString(record, "location")
-    ?? "";
+  const locationCode = getString(record, "location_code") ?? "";
   return {
     id,
     name,

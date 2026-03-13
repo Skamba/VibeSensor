@@ -466,8 +466,8 @@ class TestHistoryDBFinalizeNoOp:
     ) -> None:
         history_db.create_run("r1", "2026-01-01T00:00:00Z", {"v": 1})
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
-        # Now analyzing — finalize_run_with_metadata should no-op
-        history_db.finalize_run_with_metadata("r1", "2026-01-01T00:10:00Z", {"v": 2})
+        # Now analyzing — finalize_run with metadata should no-op
+        history_db.finalize_run("r1", "2026-01-01T00:10:00Z", metadata={"v": 2})
         run = history_db.get_run("r1")
         # Metadata should still be the original if the call didn't match status
         assert run["status"] == "analyzing"
@@ -499,13 +499,12 @@ class TestFlattenForCSV:
         # Scalar values are kept as-is
         assert flat["accel_x_g"] == 0.5
 
-    def test_extras_column_collects_unknown_keys(self) -> None:
+    def test_unknown_keys_are_dropped(self) -> None:
         row = {"accel_x_g": 1.0, "custom_field": "hello", "another": 42}
         flat = _flatten_for_csv(row)
-        extras = json.loads(flat["extras"])
-        assert extras["custom_field"] == "hello"
-        assert extras["another"] == 42
-        assert "accel_x_g" not in extras
+        assert "custom_field" not in flat
+        assert "another" not in flat
+        assert "extras" not in flat
 
     def test_no_extras_when_all_known(self) -> None:
         row = {"accel_x_g": 1.0, "speed_kmh": 80.0}

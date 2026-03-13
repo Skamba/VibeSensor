@@ -135,7 +135,7 @@ def test_v4_db_rejected(tmp_path: Path) -> None:
 
 
 def test_v2_sensor_frame_objects(tmp_path: Path) -> None:
-    from vibesensor.domain_models import SensorFrame
+    from vibesensor.protocol import SensorFrame
 
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-sf", "2026-01-01T00:00:00Z", {"source": "test"})

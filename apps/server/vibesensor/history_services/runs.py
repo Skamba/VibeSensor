@@ -6,7 +6,7 @@ import asyncio
 from typing import TYPE_CHECKING, Never, cast
 
 from ..backend_types import HistoryRunListEntryPayload, HistoryRunPayload
-from ..domain.core import HistoryRecord
+from ..domain import HistoryRecord
 from ..exceptions import AnalysisNotReadyError, RunNotFoundError
 from ..history_db import RunStatus
 from ..json_types import JsonObject, is_json_object
@@ -111,7 +111,6 @@ def _to_history_record(raw: JsonObject) -> HistoryRecord:
     """Convert a raw history DB dict to a domain ``HistoryRecord``."""
     end_time = raw.get("end_time_utc")
     error_msg = raw.get("error_message")
-    analysis_ver = raw.get("analysis_version")
     raw_count = raw.get("sample_count")
     return HistoryRecord(
         run_id=str(raw.get("run_id", "")),
@@ -120,5 +119,4 @@ def _to_history_record(raw: JsonObject) -> HistoryRecord:
         end_time_utc=str(end_time) if isinstance(end_time, str) else None,
         sample_count=int(raw_count) if isinstance(raw_count, int) else 0,
         error_message=str(error_msg) if error_msg else None,
-        analysis_version=int(analysis_ver) if isinstance(analysis_ver, int) else None,
     )

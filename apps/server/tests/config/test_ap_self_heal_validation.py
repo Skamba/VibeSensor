@@ -22,7 +22,6 @@ def _make_self_heal(**overrides) -> APSelfHealConfig:
         "enabled": True,
         "diagnostics_lookback_minutes": 5,
         "min_restart_interval_seconds": 120,
-        "allow_disable_resolved_stub_listener": False,
         "state_file": Path("/tmp/vibesensor_ap_state.json"),
     }
     defaults.update(overrides)

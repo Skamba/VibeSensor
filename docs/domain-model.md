@@ -62,13 +62,12 @@ These types exist only at boundaries and should not own domain behavior:
 
 | Type | Location | Boundary |
 |------|----------|----------|
-| `CarConfig` | `domain_models.py` | Persistence/config → domain `Car` |
-| `SensorConfig` | `domain_models.py` | Persistence/config → domain `Sensor` |
-| `SpeedSourceConfig` | `domain_models.py` | Persistence/config → domain `SpeedSource` |
-| `SensorFrame` | `domain_models.py` | Binary protocol → raw sample data |
-| `RunMetadata` | `domain_models.py` | Run-level configuration snapshot |
+| `CarConfig` | `backend_types.py` | Persistence/config → domain `Car` |
+| `SensorConfig` | `backend_types.py` | Persistence/config → domain `Sensor` |
+| `SpeedSourceConfig` | `backend_types.py` | Persistence/config → domain `SpeedSource` |
+| `SensorFrame` | `protocol.py` | Binary protocol → raw sample data |
+| `RunMetadata` | `backend_types.py` | Run-level configuration snapshot |
 | `FindingPayload` | `analysis/_types.py` | Dict-based analysis pipeline payload |
-| `FindingRecord` | `analysis/findings.py` | Pipeline adapter wrapping `FindingPayload`, delegates to domain `Finding` |
 | `OrderAssessment` | `analysis/top_cause_selection.py` | Report-level adapter wrapping domain `Finding`, adds aggregation fields |
 | `LocalizationAssessment` | `analysis/summary_builder.py` | Spatial interpretation of finding evidence |
 | `ReportTemplateData` | `report/report_data.py` | PDF-rendering data classes |
@@ -105,9 +104,8 @@ individual module files, unless they need a very specific internal symbol.
 
 2. **Adapters bridge, they do not own.**  Config, payload, export, and
    persistence types convert to/from domain objects but do not duplicate
-   domain logic.  `FindingRecord`, `OrderAssessment`, and
-   `LocalizationAssessment` delegate classification and ranking to domain
-   `Finding`.
+   domain logic.  `OrderAssessment` and `LocalizationAssessment` delegate
+   classification and ranking to domain `Finding`.
 
 3. **Composition over inheritance.**  Domain objects compose via containment
    (Sensor has SensorPlacement, Report has Findings) rather than class

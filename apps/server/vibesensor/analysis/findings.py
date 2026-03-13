@@ -24,8 +24,8 @@ from ..constants import (
     SNR_LOG_DIVISOR,
     SPEED_COVERAGE_MIN_PCT,
 )
-from ..domain.core import Finding as DomainFinding
-from ..domain_models import as_float_or_none as _as_float
+from ..domain import Finding as DomainFinding
+from ..json_utils import as_float_or_none as _as_float
 from ._types import (
     FindingEvidenceMetrics,
     FindingPayload,
@@ -65,103 +65,8 @@ from .phase_segmentation import (
 from .top_cause_selection import finding_sort_key
 
 # ---------------------------------------------------------------------------
-# FindingRecord & FindingCollection
+# FindingCollection
 # ---------------------------------------------------------------------------
-
-
-class FindingRecord:
-    """Typed accessor wrapping a ``FindingPayload`` dict.
-
-    Provides property-based access, classification predicates, and source
-    normalisation.  Classification logic is delegated to the domain
-    :class:`~vibesensor.domain.core.Finding` object constructed eagerly
-    from the underlying dict.
-
-    The underlying dict is **not** copied – mutations through the record
-    are visible in the original dict and vice-versa.  This is intentional:
-    ``FindingRecord`` is an *internal convenience view* that bridges the
-    dict-based analysis pipeline to the domain model.
-
-    .. note::
-
-       The cached domain Finding is invalidated by :meth:`assign_id`.
-       Any future mutation method must do the same.
-    """
-
-    __slots__ = ("_d", "_domain")
-
-    def __init__(self, finding: FindingPayload) -> None:
-        self._d = finding
-        self._domain: DomainFinding = DomainFinding.from_payload(self._d)
-
-    def _as_domain(self) -> DomainFinding:
-        """Return the eagerly constructed domain Finding."""
-        return self._domain
-
-    # -- raw dict access ---------------------------------------------------
-
-    @property
-    def data(self) -> FindingPayload:
-        """Return the underlying ``FindingPayload`` dict."""
-        return self._d
-
-    # -- identity / classification (delegated to domain) -------------------
-
-    @property
-    def finding_id(self) -> str:
-        return str(self._d.get("finding_id") or "")
-
-    @property
-    def is_reference(self) -> bool:
-        """Whether this is a reference-data finding (``REF_*``)."""
-        return self._as_domain().is_reference
-
-    @property
-    def is_informational(self) -> bool:
-        return self._as_domain().is_informational
-
-    @property
-    def is_diagnostic(self) -> bool:
-        return self._as_domain().is_diagnostic
-
-    # -- core properties ---------------------------------------------------
-
-    @property
-    def confidence(self) -> float:
-        """Numeric confidence, defaulting to ``0.0`` when absent or None."""
-        return self._as_domain().effective_confidence
-
-    @property
-    def source(self) -> str:
-        return str(self._d.get("suspected_source") or "")
-
-    @property
-    def source_normalized(self) -> str:
-        """Lower-cased, stripped source string for comparison."""
-        return self._as_domain().source_normalized
-
-    @property
-    def strongest_location(self) -> str:
-        return str(self._d.get("strongest_location") or "").strip()
-
-    @property
-    def strongest_speed_band(self) -> str | None:
-        return self._d.get("strongest_speed_band")
-
-    @property
-    def ranking_score(self) -> float:
-        return _as_float(self._d.get("_ranking_score")) or 0.0
-
-    # -- mutation helpers --------------------------------------------------
-
-    def assign_id(self, finding_id: str) -> None:
-        """Set the finding_id on the underlying dict.
-
-        Invalidates the cached domain Finding so that subsequent
-        property accesses reflect the new ID.
-        """
-        self._d["finding_id"] = finding_id
-        self._domain = DomainFinding.from_payload(self._d)
 
 
 class FindingCollection:
@@ -192,16 +97,16 @@ class FindingCollection:
     # -- filtering ---------------------------------------------------------
 
     def references(self) -> list[FindingPayload]:
-        return [f for f in self._items if FindingRecord(f).is_reference]
+        return [f for f in self._items if DomainFinding.from_payload(f).is_reference]
 
     def diagnostics(self) -> list[FindingPayload]:
-        return [f for f in self._items if FindingRecord(f).is_diagnostic]
+        return [f for f in self._items if DomainFinding.from_payload(f).is_diagnostic]
 
     def informational(self) -> list[FindingPayload]:
-        return [f for f in self._items if FindingRecord(f).is_informational]
+        return [f for f in self._items if DomainFinding.from_payload(f).is_informational]
 
     def non_reference(self) -> list[FindingPayload]:
-        return [f for f in self._items if not FindingRecord(f).is_reference]
+        return [f for f in self._items if not DomainFinding.from_payload(f).is_reference]
 
     # -- ordering and finalization -----------------------------------------
 
@@ -221,10 +126,9 @@ class FindingCollection:
         ordered = refs + diags + infos
         counter = 0
         for finding in ordered:
-            rec = FindingRecord(finding)
-            if not rec.is_reference:
+            if not DomainFinding.from_payload(finding).is_reference:
                 counter += 1
-                rec.assign_id(f"F{counter:03d}")
+                finding["finding_id"] = f"F{counter:03d}"
         return ordered
 
 
@@ -409,8 +313,8 @@ def collect_order_frequencies(order_findings: list[FindingPayload]) -> set[float
     """Collect matched order frequencies used to suppress duplicate persistent findings."""
     order_freqs: set[float] = set()
     for order_finding in order_findings:
-        rec = FindingRecord(order_finding)
-        if rec.confidence < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
+        conf = DomainFinding.from_payload(order_finding).effective_confidence
+        if conf < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
             continue
         points = order_finding.get("matched_points")
         if not isinstance(points, list):

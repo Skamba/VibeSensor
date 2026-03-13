@@ -446,14 +446,8 @@ export interface components {
     ClientApiRow: {
       /** Connected */
       connected: boolean;
-      /** Control Addr */
-      control_addr: [string, number] | null;
-      /** Data Addr */
-      data_addr: [string, number] | null;
       /** Dropped Frames */
       dropped_frames: number;
-      /** Duplicates Received */
-      duplicates_received: number;
       /** Firmware Version */
       firmware_version: string;
       /** Frame Samples */
@@ -462,32 +456,21 @@ export interface components {
       frames_total: number;
       /** Id */
       id: string;
-      /** Last Ack Cmd Seq */
-      last_ack_cmd_seq: number | null;
-      /** Last Ack Status */
-      last_ack_status: number | null;
       /** Last Reset Time */
       last_reset_time: number | null;
       /** Last Seen Age Ms */
       last_seen_age_ms: number | null;
       latest_metrics: components["schemas"]["ClientMetrics"];
-      /** Location */
-      location: string;
+      /** Location Code */
+      location_code: string;
       /** Mac Address */
       mac_address: string;
       /** Name */
       name: string;
-      /** Parse Errors */
-      parse_errors: number;
-      /** Queue Overflow Drops */
-      queue_overflow_drops: number;
       /** Reset Count */
       reset_count: number;
       /** Sample Rate Hz */
       sample_rate_hz: number;
-      /** Server Queue Drops */
-      server_queue_drops: number;
-      timing_health: components["schemas"]["TimingHealthPayload"];
     };
     /**
      * ClientLocationsResponse
@@ -921,8 +904,6 @@ export interface components {
      * @description Response body for a single history-run list row.
      */
     HistoryListEntryResponse: {
-      /** Analysis Version */
-      analysis_version?: number | null;
       /** Created At */
       created_at: string;
       /** End Time Utc */
@@ -1079,11 +1060,11 @@ export interface components {
     };
     /**
      * SensorConfigResponse
-     * @description Response body with persisted config for a single sensor (name, location).
+     * @description Response body with persisted config for a single sensor (name, location_code).
      */
     SensorConfigResponse: {
-      /** Location */
-      location: string;
+      /** Location Code */
+      location_code: string;
       /** Name */
       name: string;
     };
@@ -1092,8 +1073,8 @@ export interface components {
      * @description Request body for updating sensor name and location.
      */
     SensorRequest: {
-      /** Location */
-      location?: string | null;
+      /** Location Code */
+      location_code?: string | null;
       /** Name */
       name?: string | null;
     };
@@ -1250,15 +1231,6 @@ export interface components {
       strength_bucket: string | null;
       /** Vibration Strength Db */
       vibration_strength_db: number;
-    };
-    /** TimingHealthPayload */
-    TimingHealthPayload: {
-      /** Drift Us Total */
-      drift_us_total?: number;
-      /** Jitter Us Ema */
-      jitter_us_ema?: number;
-      /** Last T0 Us */
-      last_t0_us?: number;
     };
     /**
      * UpdateCancelResponse

@@ -65,7 +65,6 @@ class FakeHistoryDB:
     metadata: dict[str, Any]
     samples: list[dict[str, Any]]
     analysis: dict[str, Any]
-    analysis_version: int | None = 3
     analysis_completed_at: str | None = "2026-01-01T00:01:00Z"
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:
@@ -77,8 +76,6 @@ class FakeHistoryDB:
             "metadata": self.metadata,
             "analysis": self.analysis,
         }
-        if self.analysis_version is not None:
-            result["analysis_version"] = self.analysis_version
         if self.analysis_completed_at is not None:
             result["analysis_completed_at"] = self.analysis_completed_at
         result["sample_count"] = len(self.samples)
@@ -317,7 +314,6 @@ def make_status_router(
                 "run_id": run_id,
                 "status": self.run_status,
                 "analysis": self.run_analysis,
-                "analysis_version": 1,
             }
             if include_error_message and self.run_status == "error":
                 payload["error_message"] = "Analysis failed"

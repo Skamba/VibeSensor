@@ -12,9 +12,9 @@ import logging
 import math
 from typing import TypeGuard
 
-from ..domain_models import SensorFrame
 from ..json_types import JsonObject, JsonValue, is_json_array, is_json_object
 from ..json_utils import safe_json_dumps, safe_json_loads
+from ..protocol import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,8 +54,6 @@ _V2_TYPED_COLS: tuple[str, ...] = (
 )
 
 _V2_PEAK_COLS: tuple[str, ...] = ("top_peaks",)
-
-_V2_KNOWN_KEYS: frozenset[str] = frozenset(_V2_TYPED_COLS) | frozenset(_V2_PEAK_COLS)
 
 _V2_INSERT_COLS: tuple[str, ...] = _V2_TYPED_COLS + _V2_PEAK_COLS
 V2_INSERT_SQL: str = (

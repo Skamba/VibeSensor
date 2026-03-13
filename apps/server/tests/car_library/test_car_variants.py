@@ -6,13 +6,13 @@ import json
 
 import pytest
 
+from vibesensor.backend_types import CarConfig
 from vibesensor.car_library import (
     CAR_LIBRARY,
     get_models_for_brand_type,
     get_variants_for_model,
     resolve_variant,
 )
-from vibesensor.domain_models import CarConfig
 
 
 def _variant_label(entry: dict, variant: dict) -> str:

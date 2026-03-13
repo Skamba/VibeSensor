@@ -17,8 +17,8 @@ from ..analysis_settings import (
     wheel_hz_from_speed_kmh,
 )
 from ..constants import MPS_TO_KMH, NUMERIC_TYPES
-from ..domain.core import VibrationReading
-from ..domain_models import SensorFrame
+from ..domain import VibrationReading
+from ..protocol import SensorFrame
 from ..run_context import (
     ANALYSIS_SETTINGS_SNAPSHOT_KEYS,
     apply_run_context_snapshot,
@@ -304,7 +304,7 @@ def build_sample_records(
             t_s=t_s,
             client_id=client_id,
             client_name=record.name,
-            location=str(getattr(record, "location", "") or ""),
+            location=str(getattr(record, "location_code", "") or ""),
             sample_rate_hz=int(sample_rate_hz) if sample_rate_hz else None,
             speed_kmh=speed_kmh,
             gps_speed_kmh=gps_speed_kmh,

@@ -36,15 +36,15 @@ class TestFromFinding:
     def test_extracts_basic_fields(self) -> None:
         finding = _make_finding(confidence=0.82, suspected_source="engine")
         assessment = OrderAssessment.from_finding(finding)
-        assert assessment.finding_id == "F001"
-        assert assessment.source == "engine"
-        assert assessment.confidence == pytest.approx(0.82)
+        assert assessment.domain_finding.finding_id == "F001"
+        assert assessment.domain_finding.suspected_source == "engine"
+        assert assessment.domain_finding.confidence == pytest.approx(0.82)
 
     def test_none_confidence_preserved(self) -> None:
         finding = _make_finding(confidence=None)
         assessment = OrderAssessment.from_finding(finding)
-        assert assessment.confidence is None
-        assert assessment.effective_confidence == 0.0
+        assert assessment.domain_finding.confidence is None
+        assert assessment.domain_finding.effective_confidence == 0.0
 
     def test_severity_defaults_to_diagnostic(self) -> None:
         finding = _make_finding()
@@ -54,7 +54,7 @@ class TestFromFinding:
     def test_order_extracted(self) -> None:
         finding = _make_finding(frequency_hz_or_order="2x engine")
         assessment = OrderAssessment.from_finding(finding)
-        assert assessment.order == "2x engine"
+        assert assessment.domain_finding.order == "2x engine"
 
 
 # ---------------------------------------------------------------------------
@@ -65,28 +65,28 @@ class TestFromFinding:
 class TestActionability:
     def test_reference_finding(self) -> None:
         assessment = OrderAssessment.from_finding(_make_finding(finding_id="REF_SPEED"))
-        assert assessment.is_reference is True
-        assert assessment.should_surface is False
+        assert assessment.domain_finding.is_reference is True
+        assert assessment.domain_finding.should_surface is False
 
     def test_info_severity_does_not_surface(self) -> None:
         assessment = OrderAssessment.from_finding(_make_finding(severity="info"))
-        assert assessment.should_surface is False
+        assert assessment.domain_finding.should_surface is False
 
     def test_low_confidence_does_not_surface(self) -> None:
         assessment = OrderAssessment.from_finding(_make_finding(confidence=0.10))
-        assert assessment.should_surface is False
+        assert assessment.domain_finding.should_surface is False
 
     def test_actionable_wheel_tire(self) -> None:
         assessment = OrderAssessment.from_finding(
             _make_finding(suspected_source="wheel/tire"),
         )
-        assert assessment.is_actionable is True
+        assert assessment.domain_finding.is_actionable is True
 
     def test_placeholder_source_without_location_not_actionable(self) -> None:
         assessment = OrderAssessment.from_finding(
             _make_finding(suspected_source="unknown_resonance", strongest_location=""),
         )
-        assert assessment.is_actionable is False
+        assert assessment.domain_finding.is_actionable is False
 
     def test_placeholder_source_with_location_is_actionable(self) -> None:
         assessment = OrderAssessment.from_finding(
@@ -95,13 +95,13 @@ class TestActionability:
                 strongest_location="front_left",
             ),
         )
-        assert assessment.is_actionable is True
+        assert assessment.domain_finding.is_actionable is True
 
     def test_normal_diagnostic_surfaces(self) -> None:
         assessment = OrderAssessment.from_finding(
             _make_finding(confidence=0.55, severity="diagnostic"),
         )
-        assert assessment.should_surface is True
+        assert assessment.domain_finding.should_surface is True
 
 
 # ---------------------------------------------------------------------------
@@ -113,10 +113,7 @@ class TestRanking:
     def test_rank_key_quantised(self) -> None:
         a = OrderAssessment.from_finding(_make_finding(confidence=0.751))
         b = OrderAssessment.from_finding(_make_finding(confidence=0.749))
-        # Confidence is quantised in 0.02 steps, so 0.751 and 0.749
-        # should round to the same quantised value (0.76 and 0.74).
-        # They differ — the test shows quantisation works.
-        assert a.rank_key >= b.rank_key
+        assert a.domain_finding.rank_key >= b.domain_finding.rank_key
 
     def test_phase_adjusted_score_with_cruise(self) -> None:
         finding = _make_finding(
@@ -124,14 +121,12 @@ class TestRanking:
             phase_evidence={"cruise_fraction": 1.0},
         )
         assessment = OrderAssessment.from_finding(finding)
-        # 0.80 * (0.85 + 0.15 * 1.0) = 0.80
-        assert assessment.phase_adjusted_score == pytest.approx(0.80)
+        assert assessment.domain_finding.phase_adjusted_score == pytest.approx(0.80)
 
     def test_phase_adjusted_score_without_cruise(self) -> None:
         finding = _make_finding(confidence=0.80, phase_evidence=None)
         assessment = OrderAssessment.from_finding(finding)
-        # 0.80 * (0.85 + 0.15 * 0.0) = 0.68
-        assert assessment.phase_adjusted_score == pytest.approx(0.68)
+        assert assessment.domain_finding.phase_adjusted_score == pytest.approx(0.68)
 
     def test_is_stronger_than(self) -> None:
         strong = OrderAssessment.from_finding(
@@ -140,8 +135,8 @@ class TestRanking:
         weak = OrderAssessment.from_finding(
             _make_finding(confidence=0.30, phase_evidence=None),
         )
-        assert strong.is_stronger_than(weak)
-        assert not weak.is_stronger_than(strong)
+        assert strong.domain_finding.is_stronger_than(weak.domain_finding)
+        assert not weak.domain_finding.is_stronger_than(strong.domain_finding)
 
 
 # ---------------------------------------------------------------------------

@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 REPORT_PDF_CACHE_MAX_ENTRIES = 16
-ReportPdfCacheKey = tuple[str, str, int | None, str | None, int, str, str]
+ReportPdfCacheKey = tuple[str, str, str | None, int, str, str]
 
 
 @dataclass(frozen=True)
@@ -134,7 +134,6 @@ class HistoryReportService:
         return (
             run_id,
             requested_lang,
-            int(run["analysis_version"]) if "analysis_version" in run else None,
             str(run["analysis_completed_at"]) if "analysis_completed_at" in run else None,
             int(run.get("sample_count", 0)),
             self._metadata_cache_token(run.get("metadata", {})),

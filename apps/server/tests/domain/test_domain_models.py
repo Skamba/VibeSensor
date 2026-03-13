@@ -8,15 +8,9 @@ from typing import Any
 
 import pytest
 
-from vibesensor.domain_models import (
-    CarConfig,
-    RunMetadata,
-    SensorConfig,
-    SensorFrame,
-    SpeedSourceConfig,
-    as_float_or_none,
-    as_int_or_none,
-)
+from vibesensor.backend_types import CarConfig, RunMetadata, SensorConfig, SpeedSourceConfig
+from vibesensor.json_utils import as_float_or_none, as_int_or_none
+from vibesensor.protocol import SensorFrame
 
 # ---------------------------------------------------------------------------
 # Helper parsers
@@ -122,25 +116,25 @@ class TestCarConfig:
 
 class TestSensorConfig:
     def test_from_dict_basic(self) -> None:
-        sc = SensorConfig.from_dict("abc123", {"name": "FL", "location": "front-left"})
+        sc = SensorConfig.from_dict("abc123", {"name": "FL", "location_code": "front-left"})
         assert sc.sensor_id == "abc123"
         assert sc.name == "FL"
-        assert sc.location == "front-left"
+        assert sc.location_code == "front-left"
 
     def test_from_dict_defaults(self) -> None:
         sc = SensorConfig.from_dict("abc123", {})
         assert sc.name == "abc123"
-        assert sc.location == ""
+        assert sc.location_code == ""
 
     def test_name_truncated(self) -> None:
         sc = SensorConfig.from_dict("id", {"name": "X" * 100})
         assert len(sc.name) <= 64
 
     def test_roundtrip(self) -> None:
-        sc = SensorConfig.from_dict("id1", {"name": "Test", "location": "rear"})
+        sc = SensorConfig.from_dict("id1", {"name": "Test", "location_code": "rear"})
         d = sc.to_dict()
         assert d["name"] == "Test"
-        assert d["location"] == "rear"
+        assert d["location_code"] == "rear"
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +277,7 @@ class TestSensorFrame:
             "t_s": 0.0,
             "client_id": "aabb",
             "client_name": "front-left",
-            "location": "front-left",
+            "location_code": "front-left",
             "speed_kmh": 80.0,
             "accel_x_g": 0.02,
             "accel_y_g": 0.01,

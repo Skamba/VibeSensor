@@ -229,25 +229,16 @@ _EXPECTED_ROW_KEYS = {
     "mac_address",
     "name",
     "connected",
-    "location",
+    "location_code",
     "firmware_version",
     "sample_rate_hz",
     "frame_samples",
     "last_seen_age_ms",
-    "data_addr",
-    "control_addr",
     "frames_total",
     "dropped_frames",
-    "duplicates_received",
-    "queue_overflow_drops",
-    "parse_errors",
-    "server_queue_drops",
     "latest_metrics",
-    "last_ack_cmd_seq",
-    "last_ack_status",
     "reset_count",
     "last_reset_time",
-    "timing_health",
 }
 
 
@@ -271,7 +262,7 @@ class TestClientApiRow:
             ClientSnapshot(
                 name="b",
                 connected=True,
-                location="front-left",
+                location_code="front-left",
                 firmware_version="1.0",
                 sample_rate_hz=800,
             ),
@@ -285,12 +276,11 @@ class TestClientApiRow:
             ClientSnapshot(name="test", connected=False),
         )
         assert row["connected"] is False
-        assert row["location"] == ""
+        assert row["location_code"] == ""
         assert row["firmware_version"] == ""
         assert row["sample_rate_hz"] == 0
         assert row["frames_total"] == 0
         assert row["latest_metrics"] == {}
-        assert row["timing_health"] == {}
 
     def test_snapshot_uses_helper(self, registry: ClientRegistry) -> None:
         """Verify snapshot_for_api returns rows with the same keys as _client_api_row."""
