@@ -22,8 +22,6 @@ from ..analysis._types import (
     TestStep,
 )
 from ..analysis.diagnosis_candidates import normalize_origin_location, select_effective_top_causes
-from ..domain import Finding as DomainFinding
-from ..domain import RunAnalysisResult
 from ..analysis.helpers import PHASE_I18N_KEYS
 from ..analysis.plots import PeakTableRow
 from ..analysis.strength_labels import (
@@ -32,7 +30,7 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..domain import Report, VibrationSource
+from ..domain import Report, RunAnalysisResult, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
@@ -947,6 +945,7 @@ def resolve_primary_report_candidate(
     primary_candidate = context.top_report_candidate()
     aggregate = context.domain_aggregate
 
+    primary_source: object = None
     if primary_candidate and aggregate:
         # Domain-first: use the aggregate's effective top causes
         effective = aggregate.effective_top_causes()

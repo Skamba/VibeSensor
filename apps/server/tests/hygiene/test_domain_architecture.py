@@ -220,24 +220,18 @@ def test_run_analysis_result_reference_gap_detection() -> None:
     diag = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
 
     # REF_SPEED is relevant for any source
-    result = RunAnalysisResult(
-        run_id="test", findings=(ref_speed, diag), top_causes=(diag,)
-    )
+    result = RunAnalysisResult(run_id="test", findings=(ref_speed, diag), top_causes=(diag,))
     assert result.has_relevant_reference_gap(VibrationSource.WHEEL_TIRE)
     assert result.has_relevant_reference_gap(VibrationSource.ENGINE)
 
     # REF_WHEEL is relevant for wheel/tire and driveline
-    result2 = RunAnalysisResult(
-        run_id="test", findings=(ref_wheel, diag), top_causes=(diag,)
-    )
+    result2 = RunAnalysisResult(run_id="test", findings=(ref_wheel, diag), top_causes=(diag,))
     assert result2.has_relevant_reference_gap(VibrationSource.WHEEL_TIRE)
     assert result2.has_relevant_reference_gap(VibrationSource.DRIVELINE)
     assert not result2.has_relevant_reference_gap(VibrationSource.ENGINE)
 
     # REF_ENGINE is relevant for engine only
-    result3 = RunAnalysisResult(
-        run_id="test", findings=(ref_engine, diag), top_causes=(diag,)
-    )
+    result3 = RunAnalysisResult(run_id="test", findings=(ref_engine, diag), top_causes=(diag,))
     assert result3.has_relevant_reference_gap(VibrationSource.ENGINE)
     assert not result3.has_relevant_reference_gap(VibrationSource.WHEEL_TIRE)
 
@@ -250,23 +244,23 @@ def test_run_analysis_result_top_strength_db() -> None:
     from vibesensor.domain import Finding, RunAnalysisResult
 
     f1 = Finding(
-        finding_id="F001", confidence=0.80,
-        suspected_source="wheel/tire", vibration_strength_db=12.5,
+        finding_id="F001",
+        confidence=0.80,
+        suspected_source="wheel/tire",
+        vibration_strength_db=12.5,
     )
     f2 = Finding(
-        finding_id="F002", confidence=0.60,
-        suspected_source="engine", vibration_strength_db=8.0,
+        finding_id="F002",
+        confidence=0.60,
+        suspected_source="engine",
+        vibration_strength_db=8.0,
     )
-    result = RunAnalysisResult(
-        run_id="test", findings=(f1, f2), top_causes=(f1,)
-    )
+    result = RunAnalysisResult(run_id="test", findings=(f1, f2), top_causes=(f1,))
     assert result.top_strength_db() == 12.5
 
     # No strength → None
     f3 = Finding(finding_id="F003", confidence=0.50, suspected_source="engine")
-    result2 = RunAnalysisResult(
-        run_id="test", findings=(f3,), top_causes=(f3,)
-    )
+    result2 = RunAnalysisResult(run_id="test", findings=(f3,), top_causes=(f3,))
     assert result2.top_strength_db() is None
 
 
@@ -287,15 +281,11 @@ def test_diagnosis_candidates_delegates_to_domain_aggregate() -> None:
     # Build domain aggregate for comparison
     domain_findings = tuple(Finding.from_payload(f) for f in [diag1, diag2, ref])
     domain_tc = tuple(Finding.from_payload(f) for f in [diag1])
-    aggregate = RunAnalysisResult(
-        run_id="test", findings=domain_findings, top_causes=domain_tc
-    )
+    aggregate = RunAnalysisResult(run_id="test", findings=domain_findings, top_causes=domain_tc)
     domain_effective_ids = {f.finding_id for f in aggregate.effective_top_causes()}
 
     # Run boundary function
-    _all, _non_ref, _tc_all, effective = select_effective_top_causes(
-        [diag1], [diag1, diag2, ref]
-    )
+    _all, _non_ref, _tc_all, effective = select_effective_top_causes([diag1], [diag1, diag2, ref])
     boundary_effective_ids = {str(f.get("finding_id", "")) for f in effective}
 
     assert boundary_effective_ids == domain_effective_ids
