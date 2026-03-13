@@ -21,7 +21,6 @@ from vibesensor.domain import (
     Run,
     Sensor,
     SensorPlacement,
-    SpeedBand,
     SpeedSource,
 )
 
@@ -102,12 +101,10 @@ class TestSensorPlacement:
 
     def test_wheel_location(self) -> None:
         p = SensorPlacement(code="front_left_wheel", label="Front Left Wheel")
-        assert p.is_wheel
         assert p.display_name == "Front Left Wheel"
 
     def test_non_wheel_location(self) -> None:
         p = SensorPlacement(code="engine_bay", label="Engine Bay")
-        assert not p.is_wheel
         assert p.display_name == "Engine Bay"
 
     def test_display_name_fallback(self) -> None:
@@ -312,7 +309,7 @@ class TestFindingDomainObject:
         assert f.order == "1x"
         assert f.severity == "high"
         assert f.strongest_location == "FL"
-        assert f.strongest_speed_band == SpeedBand(low_kmh=80, high_kmh=100)
+        assert f.strongest_speed_band == "80-100 km/h"
         assert f.peak_classification == "harmonic"
         assert f.is_diagnostic
         assert f.confidence_pct == 85
@@ -467,7 +464,6 @@ class TestBridgeMethods:
         assert sensor.display_name == "FL"
         assert sensor.is_placed
         assert sensor.placement is not None
-        assert sensor.placement.is_wheel
         assert sensor.placement.display_name == "Front Left Wheel"
 
     def test_sensor_config_to_sensor_empty_location(self) -> None:
@@ -491,7 +487,6 @@ class TestBridgeMethods:
         p = SensorPlacement.from_code("engine_bay")
         assert p.code == "engine_bay"
         assert p.label == "Engine Bay"
-        assert not p.is_wheel
 
     def test_sensor_placement_from_code_unknown(self) -> None:
         p = SensorPlacement.from_code("custom_spot")
@@ -791,31 +786,3 @@ class TestSpeedSourceEnrichments:
     def test_effective_speed_gps(self) -> None:
         ss = SpeedSource(kind="gps")
         assert ss.effective_speed_kmh is None
-
-
-class TestSensorPlacementEnrichments:
-    """Tests for enriched SensorPlacement domain object."""
-
-    def test_is_drivetrain(self) -> None:
-        sp = SensorPlacement(code="transmission")
-        assert sp.is_drivetrain
-        assert not sp.is_wheel
-        assert not sp.is_body
-
-    def test_is_body(self) -> None:
-        sp = SensorPlacement(code="driver_seat")
-        assert sp.is_body
-        assert not sp.is_wheel
-        assert not sp.is_drivetrain
-
-    def test_position_category_wheel(self) -> None:
-        assert SensorPlacement(code="front_left_wheel").position_category == "wheel"
-
-    def test_position_category_drivetrain(self) -> None:
-        assert SensorPlacement(code="transmission").position_category == "drivetrain"
-
-    def test_position_category_body(self) -> None:
-        assert SensorPlacement(code="driver_seat").position_category == "body"
-
-    def test_position_category_other(self) -> None:
-        assert SensorPlacement(code="custom_location").position_category == "other"

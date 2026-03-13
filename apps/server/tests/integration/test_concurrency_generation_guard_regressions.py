@@ -199,9 +199,13 @@ class TestFinalizeRunWithMetadata:
 
 
 class TestFinalizeReturnGatesAnalysis:
-    """When _finalize_run_locked fails, stop_recording must NOT schedule analysis."""
+    """When _finalize_run_locked fails, stop_recording still schedules analysis.
 
-    def test_analysis_not_scheduled_when_finalize_fails(
+    store_analysis handles the RECORDING→COMPLETE bypass path, so analysis
+    should proceed even if the RECORDING→ANALYZING transition fails.
+    """
+
+    def test_analysis_scheduled_despite_finalize_failure(
         self,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
@@ -236,8 +240,9 @@ class TestFinalizeReturnGatesAnalysis:
         )
 
         logger.stop_recording()
-        # Analysis must NOT have been scheduled because finalize failed
-        assert schedule_calls == [], (
-            f"Expected no analysis scheduling after finalize failure, got: {schedule_calls}"
+        # Analysis IS scheduled despite finalize failure — store_analysis
+        # handles the RECORDING → COMPLETE bypass.
+        assert schedule_calls == [run_id], (
+            f"Expected analysis to be scheduled for {run_id}, got: {schedule_calls}"
         )
         db.close()

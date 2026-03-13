@@ -1,9 +1,8 @@
 """Top-cause selection, ranking helpers, and confidence presentation.
 
-Ranking helpers (``finding_sort_key``, ``phase_adjusted_ranking_score``,
-``group_findings_by_source``) were previously in a separate ``ranking``
-module but merged here because this module is their primary consumer and
-no other production module needs them independently.
+Ranking helper ``group_findings_by_source`` was previously in a separate
+``ranking`` module but merged here because this module is its primary
+consumer and no other production module needs it independently.
 """
 
 from __future__ import annotations
@@ -53,9 +52,7 @@ def _build_top_cause(
         "grouped_count": finding.get("grouped_count", 1),
         "strongest_location": domain.strongest_location,
         "dominance_ratio": domain.dominance_ratio,
-        "strongest_speed_band": (
-            domain.strongest_speed_band.label if domain.strongest_speed_band else None
-        ),
+        "strongest_speed_band": domain.strongest_speed_band,
         "weak_spatial_separation": domain.weak_spatial_separation,
         "diffuse_excitation": domain.diffuse_excitation,
         "diagnostic_caveat": finding.get("diagnostic_caveat"),
@@ -66,23 +63,8 @@ def _build_top_cause(
 
 
 # ---------------------------------------------------------------------------
-# Standalone ranking helpers
+# Source grouping
 # ---------------------------------------------------------------------------
-
-
-def finding_sort_key(item: FindingPayload) -> tuple[float, float]:
-    """Return a deterministic sort key for findings.
-
-    Confidence is quantised so tiny timing/noise jitter does not reshuffle
-    otherwise equivalent findings, leaving the explicit ranking score to break
-    ties consistently.
-    """
-    return Finding.from_payload(item).rank_key
-
-
-def phase_adjusted_ranking_score(finding: FindingPayload) -> float:
-    """Compute the phase-aware score used for top-cause selection."""
-    return Finding.from_payload(finding).phase_adjusted_score
 
 
 def group_findings_by_source(

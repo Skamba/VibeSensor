@@ -31,16 +31,6 @@ def non_reference_top_causes(items: Sequence[object]) -> list[TopCause]:
     ]
 
 
-def is_actionable_location(location: object) -> bool:
-    """Whether a strongest-location value contains actionable location data."""
-    return not DomainFinding.is_unknown_location(location)
-
-
-def is_actionable_cause(cause: TopCause) -> bool:
-    """Whether a cause is actionable enough to prefer in report rendering."""
-    return DomainFinding.from_payload(cause).is_actionable
-
-
 def select_effective_top_causes(
     top_causes: Sequence[object],
     findings: Sequence[object],
@@ -56,7 +46,9 @@ def select_effective_top_causes(
     findings_non_ref = non_reference_findings(all_findings)
     top_causes_all = [item for item in top_causes if is_top_cause(item)]
     top_causes_non_ref = non_reference_top_causes(top_causes_all)
-    top_causes_actionable = [cause for cause in top_causes_non_ref if is_actionable_cause(cause)]
+    top_causes_actionable = [
+        cause for cause in top_causes_non_ref if DomainFinding.from_payload(cause).is_actionable
+    ]
     effective_top_causes: list[CandidateFinding]
     if top_causes_actionable:
         effective_top_causes = [candidate for candidate in top_causes_actionable]

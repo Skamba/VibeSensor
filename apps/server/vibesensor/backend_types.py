@@ -382,6 +382,9 @@ class SpeedSourceConfig:
         raw_fallback = data.get("fallbackMode")
         if raw_fallback is not None:
             self.fallback_mode = _coerce_fallback_mode(raw_fallback)
+        # Validate cross-field invariant early instead of deferring to to_speed_source().
+        if self.speed_source == SpeedSourceKind.MANUAL and self.manual_speed_kph is None:
+            raise ValueError("SpeedSourceConfig with speed_source=MANUAL requires manual_speed_kph")
 
     def to_speed_source(self) -> SpeedSource:
         """Return the domain ``SpeedSource`` value object for this config."""

@@ -28,7 +28,7 @@ from ..constants import (
     SNR_LOG_DIVISOR,
     SPEED_BIN_WIDTH_KMH,
 )
-from ..domain.finding import SpeedBand, VibrationSource
+from ..domain.finding import VibrationSource, speed_band_sort_key, speed_bin_label
 from ..json_utils import as_float_or_none as _as_float
 from ._types import (
     FindingPayload,
@@ -438,7 +438,7 @@ def match_samples_for_hypothesis(
             possible_by_location[sample_location] += 1
         sample_speed = _as_float(sample.get("speed_kmh"))
         sample_speed_bin = (
-            SpeedBand.from_speed_kmh(sample_speed, bin_width=SPEED_BIN_WIDTH_KMH).label
+            speed_bin_label(sample_speed, bin_width=SPEED_BIN_WIDTH_KMH)
             if sample_speed is not None and sample_speed > 0
             else None
         )
@@ -1098,7 +1098,7 @@ def _compute_effective_match_rate(
     if match_rate < min_match_rate and possible_by_speed_bin:
         highest_speed_bin = max(
             possible_by_speed_bin.keys(),
-            key=lambda k: b.sort_key if (b := SpeedBand.from_label(k)) else 0,
+            key=lambda k: speed_band_sort_key(k),
         )
         focused_possible = int(possible_by_speed_bin[highest_speed_bin])
         focused_matched = int(matched_by_speed_bin.get(highest_speed_bin, 0))
