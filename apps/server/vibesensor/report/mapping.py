@@ -32,7 +32,7 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..domain import Report, VibrationSource
+from ..domain import Finding, Report, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
@@ -991,6 +991,64 @@ def build_observed_signature(primary: PrimaryCandidateContext) -> PatternEvidenc
     )
 
 
+def build_report_from_summary(summary: dict[str, object]) -> Report:
+    """Create a domain Report from a ``SummaryData`` dict.
+
+    This is the adapter bridge between the raw analysis-summary JSON
+    shape and the typed domain ``Report``.  It extracts key metadata
+    fields and constructs domain :class:`Finding` objects from the
+    ``findings`` list.
+    """
+    meta = summary.get("metadata") or {}
+    if not isinstance(meta, dict):
+        meta = {}
+
+    car_cfg = meta.get("car")
+    car_name: str | None = None
+    car_type: str | None = None
+    if isinstance(car_cfg, dict):
+        raw_name = car_cfg.get("name")
+        car_name = str(raw_name) if raw_name else None
+        raw_type = car_cfg.get("car_type")
+        car_type = str(raw_type) if raw_type else None
+
+    raw_findings = summary.get("findings")
+    finding_list: list[Finding] = []
+    if isinstance(raw_findings, list):
+        for item in raw_findings:
+            if isinstance(item, dict):
+                finding_list.append(Finding.from_payload(item))
+
+    rows = summary.get("rows")
+    sample_count = int(rows) if isinstance(rows, (int, float, str)) else 0
+
+    sensor_count_raw = summary.get("sensor_count_used")
+    sensor_count = int(sensor_count_raw) if isinstance(sensor_count_raw, (int, float, str)) else 0
+
+    duration_s_raw = summary.get("duration_s")
+    duration_s: float | None = None
+    if duration_s_raw is not None:
+        try:
+            duration_s = float(duration_s_raw)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            pass
+
+    report_date = summary.get("report_date")
+    report_date_str = str(report_date) if isinstance(report_date, str) else None
+
+    return Report(
+        run_id=str(summary.get("run_id", "")),
+        lang=str(summary.get("lang", "en")),
+        car_name=car_name,
+        car_type=car_type,
+        report_date=report_date_str,
+        duration_s=duration_s,
+        sample_count=sample_count,
+        sensor_count=sensor_count,
+        findings=tuple(finding_list),
+    )
+
+
 def map_summary(summary: AnalysisSummary) -> ReportTemplateData:
     """Map a run summary dict into the final report template data model.
 
@@ -999,7 +1057,7 @@ def map_summary(summary: AnalysisSummary) -> ReportTemplateData:
     for PDF-specific rendering fields.
     """
     lang = str(normalize_lang(summary.get("lang")))
-    report = Report.from_summary(summary)  # type: ignore[arg-type]
+    report = build_report_from_summary(summary)  # type: ignore[arg-type]
 
     def tr(key: str, **kw: object) -> str:
         return str(_tr(lang, key, **kw))

@@ -30,12 +30,16 @@
 - `processing/`, `analysis/`: signal processing and findings logic.
   `analysis/findings.py` and `analysis/top_cause_selection.py` delegate
   classification and ranking logic to the domain `Finding`.
+  `analysis/analysis_window.py` owns the `AnalysisWindow` frozen dataclass
+  (phase-aligned analysis chunk) and `analysis/_types.py` owns
+  `PhaseEvidence`, `FindingPayload`, `AnalysisSummary`, and
+  `SuspectedVibrationOrigin` TypedDicts.
 - `domain/`: DDD-aligned domain model package.  Each primary domain object
   lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
   SensorPlacement), `measurement.py` (Measurement,
   VibrationReading), `session.py` (Run),
-  `speed_source.py` (SpeedSource), `analysis_window.py` (DrivingPhase, AnalysisWindow),
-  `finding.py` (FindingKind, VibrationSource, PhaseEvidence, SpeedBand, Finding), `report.py` (Report),
+  `speed_source.py` (SpeedSource), `analysis_window.py` (DrivingPhase),
+  `finding.py` (FindingKind, VibrationSource, SpeedBand, Finding), `report.py` (Report),
   `run_status.py` (RunStatus, RUN_TRANSITIONS).  All are plain frozen dataclasses with no external coupling.
   Domain objects own classification, ranking, actionability, surfacing,
   and query logic; pipeline adapters in `analysis/` delegate to them.  See `docs/domain-model.md` for the full
@@ -45,7 +49,7 @@
 - `history_services/`: focused history service layer (run query/delete, reports, exports, helpers) above `history_db/`.
 - `hotspot/`: Wi-Fi AP monitoring, text parsing, and self-heal logic.
 - `runlog.py`: JSONL run-file I/O and normalization.
-- `report/`: PDF renderer, report-template builders, and pattern-to-parts mapping (`pattern_parts.py`).
+- `report/`: PDF renderer, report-template builders, pattern-to-parts mapping (`pattern_parts.py`), and analysis-summary-to-domain-Report factory (`mapping.py::build_report_from_summary()`).
 - `update/`: public update manager facade (`manager.py`) with workflow orchestration, validation, and models (`models.py`); Wi-Fi control and diagnostics (`wifi.py`), release discovery (`releases.py`), ESP flash management, firmware cache, release validation, install and rollback, command execution, and status tracking with runtime detail collection (`status.py`); workflow validation and rollback snapshot creation must both succeed before a live install begins.
 - `apps/ui/src/app/runtime/`: explicit UI runtime owners for shell/chrome state, live transport/payload application, and spectrum/chart orchestration beneath the `UiAppRuntime` composition root.
 

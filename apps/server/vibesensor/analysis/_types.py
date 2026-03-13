@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, NotRequired, Required, TypeAlias, TypedDict, TypeGuard
 
-from ..domain.finding import PhaseEvidence as PhaseEvidence  # re-export from domain
 from ..domain.finding import VibrationSource as VibrationSource  # re-export from domain
 from ..json_types import JsonObject, JsonValue
 from ..json_types import is_json_object as is_json_object  # re-export canonical source
@@ -13,6 +12,14 @@ from .phase_segmentation import DrivingPhase
 
 if TYPE_CHECKING:
     from .plots import PlotDataResult
+
+
+class PhaseEvidence(TypedDict, total=False):
+    """Phase context evidence attached to a finding (serialization shape)."""
+
+    cruise_fraction: float
+    phases_detected: list[str]
+
 
 Sample: TypeAlias = JsonObject
 """A single recorded sample row.  Alias for ``JsonObject``; used for

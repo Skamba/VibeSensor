@@ -1,8 +1,9 @@
 """Tests for the primary domain objects: Car, Sensor, SensorPlacement, Run,
-Measurement, SpeedSource, AnalysisWindow, Finding, Report.
+Measurement, SpeedSource, Finding, Report.
 
 Validates that the simple domain names are properly defined, importable,
-and carry the expected behavior.
+and carry the expected behavior. AnalysisWindow lives in the analysis
+layer and is tested in tests/analysis/.
 """
 
 from __future__ import annotations
@@ -11,8 +12,8 @@ from datetime import UTC, datetime
 
 import pytest
 
+from vibesensor.analysis.analysis_window import AnalysisWindow
 from vibesensor.domain import (
-    AnalysisWindow,
     Car,
     Finding,
     Measurement,
@@ -75,12 +76,20 @@ class TestSpeedSource:
     def test_label(self) -> None:
         assert SpeedSource(kind="gps").label == "GPS"
         assert SpeedSource(kind="obd2").label == "OBD-II"
-        assert SpeedSource(kind="manual", manual_speed_kmh=0.0).label == "Manual"
+        assert SpeedSource(kind="manual", manual_speed_kmh=1.0).label == "Manual"
 
     def test_frozen(self) -> None:
         src = SpeedSource()
         with pytest.raises(AttributeError):
             src.kind = "manual"  # type: ignore[misc]
+
+    def test_rejects_zero_manual_speed(self) -> None:
+        with pytest.raises(ValueError, match="positive manual_speed_kmh"):
+            SpeedSource(kind="manual", manual_speed_kmh=0.0)
+
+    def test_rejects_negative_manual_speed(self) -> None:
+        with pytest.raises(ValueError, match="positive manual_speed_kmh"):
+            SpeedSource(kind="manual", manual_speed_kmh=-10.0)
 
 
 # ---------------------------------------------------------------------------
@@ -179,6 +188,14 @@ class TestCar:
         with pytest.raises(AttributeError):
             car.name = "new"  # type: ignore[misc]
 
+    def test_rejects_zero_tire_dimension(self) -> None:
+        with pytest.raises(ValueError, match="positive finite"):
+            Car(aspects={"tire_width_mm": 0.0})
+        with pytest.raises(ValueError, match="positive finite"):
+            Car(aspects={"tire_aspect_pct": 0.0})
+        with pytest.raises(ValueError, match="positive finite"):
+            Car(aspects={"rim_in": 0.0})
+
 
 # ---------------------------------------------------------------------------
 # Phase 3: AnalysisWindow
@@ -261,6 +278,17 @@ class TestFindingDomainObject:
         with pytest.raises(AttributeError):
             f.finding_id = "F002"  # type: ignore[misc]
 
+    def test_ref_prefix_override_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+        """When explicit kind overrides REF_ prefix, a warning is logged."""
+        payload: dict[str, object] = {
+            "finding_id": "REF_SPEED",
+            "suspected_source": "engine",
+            "finding_kind": "diagnostic",
+        }
+        f = Finding.from_payload(payload)
+        assert f.is_diagnostic  # explicit kind wins
+        assert "REF_ prefix" in caplog.text
+
     def test_from_payload(self) -> None:
         payload: dict[str, object] = {
             "finding_id": "F001",
@@ -327,6 +355,8 @@ class TestReport:
             r.title = "new"  # type: ignore[misc]
 
     def test_from_summary(self) -> None:
+        from vibesensor.report.mapping import build_report_from_summary
+
         summary: dict[str, object] = {
             "run_id": "run-123",
             "lang": "de",
@@ -340,7 +370,7 @@ class TestReport:
             ],
             "metadata": {"car": {"name": "BMW 3", "car_type": "sedan"}},
         }
-        r = Report.from_summary(summary)
+        r = build_report_from_summary(summary)
         assert r.run_id == "run-123"
         assert r.lang == "de"
         assert r.sample_count == 500
@@ -352,14 +382,18 @@ class TestReport:
         assert r.duration_s == 125.0
 
     def test_from_summary_minimal(self) -> None:
-        r = Report.from_summary({"run_id": "r1"})
+        from vibesensor.report.mapping import build_report_from_summary
+
+        r = build_report_from_summary({"run_id": "r1"})
         assert r.run_id == "r1"
         assert r.finding_count == 0
         assert r.sample_count == 0
         assert r.car_name is None
 
     def test_from_summary_short_duration(self) -> None:
-        r = Report.from_summary({"run_id": "r1", "duration_s": 45.0})
+        from vibesensor.report.mapping import build_report_from_summary
+
+        r = build_report_from_summary({"run_id": "r1", "duration_s": 45.0})
         assert r.duration_s == 45.0
 
 
@@ -373,8 +407,8 @@ class TestPackageImports:
 
     def test_all_ten_importable(self) -> None:
         from vibesensor.domain import (
-            AnalysisWindow,
             Car,
+            DrivingPhase,
             Finding,
             Measurement,
             Report,
@@ -391,7 +425,7 @@ class TestPackageImports:
         assert Sensor is not None
         assert SensorPlacement is not None
         assert SpeedSource is not None
-        assert AnalysisWindow is not None
+        assert DrivingPhase is not None
         assert Finding is not None
         assert Report is not None
 
@@ -602,26 +636,14 @@ class TestFindingEnrichments:
 
 
 class TestAnalysisWindowEnrichments:
-    """Tests for enriched AnalysisWindow domain object."""
+    """Tests for AnalysisWindow (now in analysis layer)."""
 
-    def test_is_cruising(self) -> None:
+    def test_phase_comparison(self) -> None:
+        from vibesensor.domain import DrivingPhase
+
         aw = AnalysisWindow(start_idx=0, end_idx=100, phase="cruise")
-        assert aw.is_cruising
-        assert not aw.is_idle
-        assert not aw.is_acceleration
-
-    def test_is_idle(self) -> None:
-        aw = AnalysisWindow(start_idx=0, end_idx=100, phase="idle")
-        assert aw.is_idle
-        assert not aw.is_cruising
-
-    def test_is_acceleration(self) -> None:
-        aw = AnalysisWindow(start_idx=0, end_idx=100, phase="acceleration")
-        assert aw.is_acceleration
-
-    def test_is_deceleration(self) -> None:
-        aw = AnalysisWindow(start_idx=0, end_idx=100, phase="deceleration")
-        assert aw.is_deceleration
+        assert aw.phase == DrivingPhase.CRUISE
+        assert aw.phase != DrivingPhase.IDLE
 
     def test_is_analyzable(self) -> None:
         assert AnalysisWindow(start_idx=0, end_idx=100).is_analyzable
@@ -687,6 +709,8 @@ class TestReportEnrichments:
         assert r.is_empty
 
     def test_from_summary_creates_domain_findings(self) -> None:
+        from vibesensor.report.mapping import build_report_from_summary
+
         summary: dict[str, object] = {
             "run_id": "run-1",
             "findings": [
@@ -702,7 +726,7 @@ class TestReportEnrichments:
                 },
             ],
         }
-        r = Report.from_summary(summary)
+        r = build_report_from_summary(summary)
         assert len(r.findings) == 2
         assert r.findings[0].finding_id == "F001"
         assert r.findings[0].confidence == 0.8
@@ -736,9 +760,10 @@ class TestCarEnrichments:
         car = Car(name="Test", aspects={"tire_width_mm": 205})
         assert car.tire_circumference_m is None
 
-    def test_tire_circumference_zero_value(self) -> None:
-        car = Car(aspects={"tire_width_mm": 0, "tire_aspect_pct": 55, "rim_in": 16})
-        assert car.tire_circumference_m is None
+    def test_tire_circumference_zero_value_rejected(self) -> None:
+        """Zero tire dimensions are now rejected at construction time."""
+        with pytest.raises(ValueError, match="positive finite"):
+            Car(aspects={"tire_width_mm": 0, "tire_aspect_pct": 55, "rim_in": 16})
 
     def test_tire_circumference_no_aspects(self) -> None:
         car = Car(name="No Tires")
@@ -757,7 +782,7 @@ class TestSpeedSourceEnrichments:
     def test_is_live(self) -> None:
         assert SpeedSource(kind="gps").is_live
         assert SpeedSource(kind="obd2").is_live
-        assert not SpeedSource(kind="manual", manual_speed_kmh=0.0).is_live
+        assert not SpeedSource(kind="manual", manual_speed_kmh=1.0).is_live
 
     def test_effective_speed_manual(self) -> None:
         ss = SpeedSource(kind="manual", manual_speed_kmh=80.0)

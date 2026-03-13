@@ -8,19 +8,21 @@ phase-adjusted scoring.
 
 from __future__ import annotations
 
+import logging
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from enum import StrEnum
-from typing import ClassVar, TypedDict
+from typing import ClassVar
 
 __all__ = [
     "Finding",
     "FindingKind",
-    "PhaseEvidence",
     "SpeedBand",
     "VibrationSource",
 ]
+
+_LOGGER = logging.getLogger(__name__)
 
 
 # ── Enums ─────────────────────────────────────────────────────────────────────
@@ -52,23 +54,6 @@ class FindingKind(StrEnum):
 
 
 # ── Value objects ─────────────────────────────────────────────────────────────
-
-
-class PhaseEvidence(TypedDict, total=False):
-    """Phase context evidence attached to a finding (serialization shape)."""
-
-    cruise_fraction: float
-    phases_detected: list[str]
-
-
-def _parse_cruise_fraction(raw: dict[str, object] | None) -> float:
-    """Extract cruise_fraction from a raw phase_evidence dict."""
-    if not isinstance(raw, dict):
-        return 0.0
-    try:
-        return float(raw.get("cruise_fraction", 0.0))  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        return 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -203,12 +188,25 @@ class Finding:
         """
         if explicit_kind is not None:
             normed = explicit_kind.strip().lower()
+            derived: FindingKind | None = None
             if normed == "reference":
-                return FindingKind.REFERENCE
-            if normed in ("informational", "info"):
-                return FindingKind.INFORMATIONAL
-            if normed == "diagnostic":
-                return FindingKind.DIAGNOSTIC
+                derived = FindingKind.REFERENCE
+            elif normed in ("informational", "info"):
+                derived = FindingKind.INFORMATIONAL
+            elif normed == "diagnostic":
+                derived = FindingKind.DIAGNOSTIC
+            if derived is not None:
+                if (
+                    finding_id.strip().upper().startswith("REF_")
+                    and derived is not FindingKind.REFERENCE
+                ):
+                    _LOGGER.warning(
+                        "Finding %r has REF_ prefix but explicit kind %r overrides to %s",
+                        finding_id,
+                        explicit_kind,
+                        derived,
+                    )
+                return derived
         if finding_id.strip().upper().startswith("REF_"):
             return FindingKind.REFERENCE
         if severity.strip().lower() == "info":
@@ -292,9 +290,12 @@ class Finding:
                 pass
 
         phase_ev = payload.get("phase_evidence")
-        cruise_fraction = _parse_cruise_fraction(
-            phase_ev if isinstance(phase_ev, dict) else None,
-        )
+        cruise_fraction = 0.0
+        if isinstance(phase_ev, dict):
+            try:
+                cruise_fraction = float(phase_ev.get("cruise_fraction", 0.0))
+            except (TypeError, ValueError):
+                pass
 
         # Extract vibration_strength_db from evidence_metrics
         vib_db: float | None = None
