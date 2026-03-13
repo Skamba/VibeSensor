@@ -1,0 +1,131 @@
+# Domain model
+
+This document describes the vibration-diagnostics domain model: the primary
+domain objects, the relationships between them, and the adapter types that
+exist only at persistence/transport/rendering boundaries.
+
+## Domain object relationship map
+
+```
+Car ──aspects──▶ Run (aggregate root: lifecycle, readings, duration)
+                  ▲                    │
+Sensor ──has──▶ SensorPlacement        │ produces
+                  │                    ▼
+SpeedSource ──configures──▶ Run   AnalysisWindow (phase-aligned chunk)
+                                       │ analyzed into
+Measurement ──recorded in──▶ Run       ▼
+  │                              Finding (richest: classification,
+  │ converts to                   ranking, actionability, scoring)
+  ▼                                    │ collected by
+VibrationReading (dB)                  ▼
+                                 Report (assembled output)
+                                       │ persisted as
+                                       ▼
+                                 HistoryRecord
+```
+
+### Central objects in the workflow
+
+| Object | Role | Key owned behavior |
+|--------|------|--------------------|
+| **Run** | Aggregate root | Lifecycle (start/stop), reading accumulation, duration |
+| **Finding** | Richest domain object | Classification, actionability, surfacing, confidence quantisation, deterministic ranking, phase-adjusted scoring |
+| **Report** | Assembled output | Finding queries, primary-finding selection |
+
+### Supporting domain objects
+
+| Object | Role | Key owned behavior |
+|--------|------|--------------------|
+| **Car** | Vehicle under test | Tire-circumference computation from aspect specs |
+| **Sensor** | Accelerometer node | Display name, placement status queries |
+| **SensorPlacement** | Mounting position | Position category classification (wheel/drivetrain/body) |
+| **Measurement** | Raw sample value object | Conversion to VibrationReading (dB) |
+| **VibrationReading** | Processed dB value object | Severity level lookup, dB computation |
+| **SpeedSource** | Speed acquisition config | Source-kind classification, effective speed resolution |
+| **AnalysisWindow** | Analysis chunk | Phase classification, speed containment, analyzability |
+| **HistoryRecord** | Persisted run | Status queries, display helpers |
+
+### Object containment and derivation
+
+- **Sensor** contains an optional **SensorPlacement**.
+- **Run** accumulates **VibrationReading** instances (produced from **Measurement** samples).
+- **Report** contains a tuple of **Finding** instances.
+- **Finding** is derived from analysis of **AnalysisWindow** data.
+- **AnalysisWindow** is derived from phase segmentation of a **Run**.
+- **Car** aspects (tire dimensions) drive order-analysis hypothesis generation.
+- **SpeedSource** configures how speed is obtained during a **Run**.
+- **HistoryRecord** is the persistence form of a completed **Run** with its analysis results.
+
+## Edge adapters (not domain objects)
+
+These types exist only at boundaries and should not own domain behavior:
+
+| Type | Location | Boundary |
+|------|----------|----------|
+| `CarConfig` | `domain_models.py` | Persistence/config → domain `Car` |
+| `SensorConfig` | `domain_models.py` | Persistence/config → domain `Sensor` |
+| `SpeedSourceConfig` | `domain_models.py` | Persistence/config → domain `SpeedSource` |
+| `SensorFrame` | `domain_models.py` | Binary protocol → raw sample data |
+| `RunMetadata` | `domain_models.py` | Run-level configuration snapshot |
+| `FindingPayload` | `analysis/_types.py` | Dict-based analysis pipeline payload |
+| `FindingRecord` | `analysis/findings.py` | Pipeline adapter wrapping `FindingPayload`, delegates to domain `Finding` |
+| `OrderAssessment` | `analysis/top_cause_selection.py` | Report-level adapter wrapping domain `Finding`, adds aggregation fields |
+| `LocalizationAssessment` | `analysis/summary_builder.py` | Spatial interpretation of finding evidence |
+| `ReportTemplateData` | `report/report_data.py` | PDF-rendering data classes |
+| `ReportMappingContext` | `report/mapping.py` | Template mapping adapter |
+| `SummaryView` | `report/mapping.py` | Typed read accessor over `SummaryData` dict |
+| `HistoryRunPayload` | `backend_types.py` | API transport TypedDict for history runs |
+
+## File layout
+
+Each main behavior-owning domain object lives in its own dedicated file
+within `apps/server/vibesensor/domain/`:
+
+| File | Domain objects | Rationale |
+|------|---------------|-----------|
+| `measurement.py` | `AccelerationSample` (`Measurement`), `VibrationReading` | Tightly coupled raw-sample-to-reading pipeline |
+| `session.py` | `SessionStatus`, `DiagnosticSession` (`Run`) | Aggregate root with lifecycle management |
+| `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | Independent speed acquisition concern |
+| `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
+| `car.py` | `Car` | Vehicle geometry and tire computation |
+| `analysis_window.py` | `AnalysisWindow` | Phase-aligned analysis chunk |
+| `finding.py` | `Finding` | Richest domain object (classification, ranking, scoring) |
+| `report.py` | `Report` | Assembled diagnostic output |
+| `history_record.py` | `HistoryRecord` | Persisted run with status queries |
+
+All domain objects are re-exported from `vibesensor.domain` (the package
+`__init__.py`).  Consumers import from `vibesensor.domain`, not from
+individual module files, unless they need a very specific internal symbol.
+
+## Modeling rules
+
+1. **Domain objects own behavior.**  Classification, ranking, actionability,
+   surfacing, lifecycle, and computation logic live on the domain objects —
+   not in helper modules, pipeline stages, or route handlers.
+
+2. **Adapters bridge, they do not own.**  Config, payload, export, and
+   persistence types convert to/from domain objects but do not duplicate
+   domain logic.  `FindingRecord`, `OrderAssessment`, and
+   `LocalizationAssessment` delegate classification and ranking to domain
+   `Finding`.
+
+3. **Composition over inheritance.**  Domain objects compose via containment
+   (Sensor has SensorPlacement, Report has Findings) rather than class
+   hierarchies.
+
+4. **Frozen dataclasses by default.**  Domain objects are immutable
+   (`@dataclass(frozen=True, slots=True)`), except `DiagnosticSession`
+   which manages mutable lifecycle state.
+
+5. **No framework coupling.**  Domain objects depend only on the Python
+   standard library plus the shared `vibesensor.vibration_strength` and
+   `vibesensor.strength_bands` modules.
+
+6. **Stateless transforms stay functional.**  Pure math, DSP, FFT, and
+   signal-processing functions remain as plain functions in `processing/`
+   and `analysis/` — they are not wrapped in classes unless there is a
+   strong domain reason.
+
+7. **Naming convention.**  Use simple domain names (`Car`, `Sensor`, `Run`,
+   `Finding`) in domain logic.  Use narrower names (`CarConfig`,
+   `FindingPayload`, `ReportTemplateData`) only at boundaries.

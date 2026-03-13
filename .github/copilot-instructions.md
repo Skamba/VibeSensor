@@ -20,6 +20,11 @@ Architectural constraints
 - Internal shared logic belongs in the server package (`vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`, `vibesensor/contracts.py`), not in separate packages. Shared TS constants live directly in `apps/ui/src/constants.ts`.
 - Do not create runtime file-loading mechanisms for static configuration data. Use Python constants for values that don't change between deployments.
 
+Domain model
+- Domain objects own behavior (classification, ranking, lifecycle, computation).  Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
+- Each primary domain object lives in its own file under `vibesensor/domain/`.  Consumers import from `vibesensor.domain`, not from individual module files.
+- See `docs/domain-model.md` for the full relationship map, adapter inventory, and modeling rules.
+
 Common commands
 - `python -m pip install -e "./apps/server[dev]"`
 - `make lint`

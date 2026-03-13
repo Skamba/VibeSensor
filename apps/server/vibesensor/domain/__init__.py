@@ -3,6 +3,10 @@
 This package exposes the core domain types for vibration diagnostics,
 strictly decoupled from FastAPI, UDP transport, or persistence concerns.
 
+Each primary domain object lives in its own dedicated file.  Consumers
+should import from ``vibesensor.domain`` rather than from individual
+module files.
+
 Primary domain concepts
 -----------------------
 Car
@@ -31,22 +35,15 @@ VibrationReading
     Value object representing a processed vibration measurement in dB.
 """
 
-from .core import (
-    AccelerationSample,
-    AnalysisWindow,
-    Car,
-    DiagnosticSession,
-    Finding,
-    HistoryRecord,
-    Measurement,
-    Report,
-    Run,
-    Sensor,
-    SensorPlacement,
-    SessionStatus,
-    SpeedSource,
-    VibrationReading,
-)
+from .analysis_window import AnalysisWindow
+from .car import Car
+from .finding import Finding
+from .history_record import HistoryRecord
+from .measurement import AccelerationSample, Measurement, VibrationReading
+from .report import Report
+from .sensor import Sensor, SensorPlacement
+from .session import DiagnosticSession, Run, SessionStatus
+from .speed_source import SpeedSource, SpeedSourceKind
 
 __all__ = [
     # Primary domain names (prefer these)
@@ -60,6 +57,7 @@ __all__ = [
     "Sensor",
     "SensorPlacement",
     "SpeedSource",
+    "SpeedSourceKind",
     # Existing names (backward compatibility)
     "AccelerationSample",
     "DiagnosticSession",
