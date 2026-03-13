@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median as _median
 
-from vibesensor.domain.core import VibrationReading
+from vibesensor.domain.core import AnalysisWindow, VibrationReading
 
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..domain_models import as_float_or_none as _as_float
@@ -857,6 +857,11 @@ class PreparedRunData:
     @property
     def speed_stddev_kmh(self) -> float | None:
         return _as_float(self.speed_stats.get("stddev_kmh"))
+
+    @property
+    def analysis_windows(self) -> list[AnalysisWindow]:
+        """Domain-level view of phase segments as :class:`AnalysisWindow` objects."""
+        return [seg.to_analysis_window() for seg in self.phase_segments]
 
 
 def prepare_run_data(

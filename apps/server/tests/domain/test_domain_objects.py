@@ -272,6 +272,46 @@ class TestFindingDomainObject:
         with pytest.raises(AttributeError):
             f.finding_id = "F002"  # type: ignore[misc]
 
+    def test_from_payload(self) -> None:
+        payload: dict[str, object] = {
+            "finding_id": "F001",
+            "suspected_source": "wheel_bearing",
+            "confidence": 0.85,
+            "frequency_hz_or_order": 42.5,
+            "order": "1x",
+            "severity": "high",
+            "strongest_location": "FL",
+            "strongest_speed_band": "80-100",
+            "peak_classification": "harmonic",
+            # Extra payload-only fields should be ignored
+            "evidence_summary": "some evidence",
+            "quick_checks": [],
+        }
+        f = Finding.from_payload(payload)
+        assert f.finding_id == "F001"
+        assert f.suspected_source == "wheel_bearing"
+        assert f.confidence == 0.85
+        assert f.frequency_hz == 42.5
+        assert f.order == "1x"
+        assert f.severity == "high"
+        assert f.strongest_location == "FL"
+        assert f.strongest_speed_band == "80-100"
+        assert f.peak_classification == "harmonic"
+        assert f.is_diagnostic
+        assert f.confidence_pct == 85
+
+    def test_from_payload_minimal(self) -> None:
+        f = Finding.from_payload({"finding_id": "F001", "suspected_source": "tire"})
+        assert f.finding_id == "F001"
+        assert f.suspected_source == "tire"
+        assert f.confidence is None
+        assert f.frequency_hz is None
+
+    def test_from_payload_reference(self) -> None:
+        f = Finding.from_payload({"finding_id": "REF_SPEED", "suspected_source": ""})
+        assert f.is_reference
+        assert not f.is_diagnostic
+
 
 # ---------------------------------------------------------------------------
 # Phase 3: Report
@@ -296,6 +336,42 @@ class TestReport:
         r = Report(run_id="abc")
         with pytest.raises(AttributeError):
             r.title = "new"  # type: ignore[misc]
+
+    def test_from_summary(self) -> None:
+        summary: dict[str, object] = {
+            "run_id": "run-123",
+            "lang": "de",
+            "rows": 500,
+            "duration_s": 125.0,
+            "report_date": "2025-01-15",
+            "sensor_count_used": 3,
+            "findings": [
+                {"finding_id": "F001", "suspected_source": "bearing"},
+                {"finding_id": "F002", "suspected_source": "tire"},
+            ],
+            "metadata": {"car": {"name": "BMW 3", "car_type": "sedan"}},
+        }
+        r = Report.from_summary(summary)
+        assert r.run_id == "run-123"
+        assert r.lang == "de"
+        assert r.sample_count == 500
+        assert r.sensor_count == 3
+        assert r.finding_count == 2
+        assert r.car_name == "BMW 3"
+        assert r.car_type == "sedan"
+        assert r.date_str == "2025-01-15"
+        assert r.duration_text == "2:05"
+
+    def test_from_summary_minimal(self) -> None:
+        r = Report.from_summary({"run_id": "r1"})
+        assert r.run_id == "r1"
+        assert r.finding_count == 0
+        assert r.sample_count == 0
+        assert r.car_name is None
+
+    def test_from_summary_short_duration(self) -> None:
+        r = Report.from_summary({"run_id": "r1", "duration_s": 45.0})
+        assert r.duration_text == "45s"
 
 
 # ---------------------------------------------------------------------------
@@ -465,9 +541,10 @@ class TestBridgeMethods:
         assert store.active_car() is None
         assert store.sensors() == []
 
-    def test_finding_payload_alias(self) -> None:
-        """FindingPayload is the analysis TypedDict; Finding alias still works."""
-        from vibesensor.analysis._types import Finding as FindingAlias
+    def test_finding_payload_is_distinct_from_domain_finding(self) -> None:
+        """FindingPayload is the analysis TypedDict; domain Finding is the dataclass."""
         from vibesensor.analysis._types import FindingPayload
+        from vibesensor.domain.core import Finding as DomainFinding
 
-        assert FindingAlias is FindingPayload
+        # They must be distinct types — no name collision
+        assert DomainFinding is not FindingPayload

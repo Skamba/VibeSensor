@@ -346,5 +346,6 @@ def is_top_cause(value: object) -> TypeGuard[TopCause]:
     return isinstance(value, dict) and ("strongest_location" in value or "source" in value)
 
 
-# Backward-compatible alias — prefer ``FindingPayload`` for new code.
-Finding = FindingPayload
+# NOTE: The backward-compatible ``Finding = FindingPayload`` alias has been
+# removed.  The domain ``Finding`` lives in ``vibesensor.domain.core``; use
+# ``FindingPayload`` for serialisation/payload dicts.

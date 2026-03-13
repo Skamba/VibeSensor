@@ -32,6 +32,7 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
+from ..domain.core import Report
 from ..domain_models import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
@@ -982,22 +983,33 @@ def build_observed_signature(primary: PrimaryCandidateContext) -> ObservedSignat
 
 
 def map_summary(summary: SummaryData) -> ReportTemplateData:
-    """Map a run summary dict into the final report template data model."""
+    """Map a run summary dict into the final report template data model.
+
+    Constructs a domain :class:`~vibesensor.domain.core.Report` as the
+    high-level entry point, then delegates to the template-data builder
+    for PDF-specific rendering fields.
+    """
     lang = str(normalize_lang(summary.get("lang")))
+    report = Report.from_summary(summary)  # type: ignore[arg-type]
 
     def tr(key: str, **kw: object) -> str:
         return str(_tr(lang, key, **kw))
 
-    return _build_report_template_data(summary, lang=lang, tr=tr)
+    return _build_report_template_data(summary, report=report, lang=lang, tr=tr)
 
 
 def _build_report_template_data(
     summary: SummaryData,
     *,
+    report: Report,
     lang: str,
     tr: Callable[..., str],
 ) -> ReportTemplateData:
-    """Map a summary dict into the final report template data structure."""
+    """Map a summary dict into the final report template data structure.
+
+    The *report* domain object provides high-level metadata; rendering-
+    specific fields are resolved from the full *summary* dict.
+    """
     view = SummaryView(summary)
     context = prepare_report_mapping_context(summary)
     primary = resolve_primary_report_candidate(summary, context=context, tr=tr, lang=lang)
@@ -1034,7 +1046,7 @@ def _build_report_template_data(
     return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),
         run_datetime=context.date_str,
-        run_id=summary.get("run_id"),
+        run_id=report.run_id,
         duration_text=context.duration_text,
         start_time_utc=context.start_time_utc,
         end_time_utc=context.end_time_utc,
@@ -1045,7 +1057,9 @@ def _build_report_template_data(
         sensor_locations=context.sensor_locations_active,
         sensor_model=context.sensor_model,
         firmware_version=context.firmware_version,
-        car=CarMeta(name=context.car_name, car_type=context.car_type),
+        car=CarMeta(
+            name=report.car_name or context.car_name, car_type=report.car_type or context.car_type
+        ),
         observed=observed,
         system_cards=system_cards,
         next_steps=next_steps,
@@ -1053,7 +1067,7 @@ def _build_report_template_data(
         pattern_evidence=pattern_evidence,
         peak_rows=peak_rows,
         version_marker=version_marker,
-        lang=lang,
+        lang=report.lang,
         certainty_tier_key=primary.tier,
         findings=context.findings,  # type: ignore[arg-type]
         top_causes=context.top_causes,  # type: ignore[arg-type]
