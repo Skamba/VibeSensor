@@ -24,7 +24,7 @@ def test_collect_order_frequencies_skips_low_confidence_matches() -> None:
 
 
 def test_finalize_findings_orders_reference_diagnostic_then_info() -> None:
-    findings = finalize_findings(
+    findings, domain_findings = finalize_findings(
         [
             {"finding_id": "F_ORDER", "confidence": 0.7, "ranking_score": 2.0},
             {"finding_id": "REF_SPEED"},
@@ -40,3 +40,8 @@ def test_finalize_findings_orders_reference_diagnostic_then_info() -> None:
     assert [finding["finding_id"] for finding in findings] == ["REF_SPEED", "F001", "F002"]
     assert findings[1]["ranking_score"] == 2.0
     assert findings[2]["severity"] == "info"
+    # Domain objects match payloads
+    assert len(domain_findings) == 3
+    assert domain_findings[0].is_reference
+    assert domain_findings[1].finding_id == "F001"
+    assert domain_findings[2].finding_id == "F002"
