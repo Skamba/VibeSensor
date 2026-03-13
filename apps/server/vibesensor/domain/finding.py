@@ -219,7 +219,7 @@ class Finding:
         ignoring serialization-only keys present in the full payload.
 
         Reads ``suspected_source`` with fallback to ``source`` for backward
-        compatibility with ``TopCause`` dicts that use the ``source`` key.
+        compatibility with legacy dicts that used the ``source`` key.
         """
 
         def _str(key: str, *fallback_keys: str) -> str:

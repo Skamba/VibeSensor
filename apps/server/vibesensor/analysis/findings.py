@@ -279,7 +279,8 @@ def collect_order_frequencies(order_findings: list[FindingPayload]) -> set[float
     """Collect matched order frequencies used to suppress duplicate persistent findings."""
     order_freqs: set[float] = set()
     for order_finding in order_findings:
-        conf = DomainFinding.from_payload(order_finding).effective_confidence
+        raw_conf = order_finding.get("confidence")
+        conf = float(raw_conf) if raw_conf is not None else 0.0
         if conf < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
             continue
         points = order_finding.get("matched_points")

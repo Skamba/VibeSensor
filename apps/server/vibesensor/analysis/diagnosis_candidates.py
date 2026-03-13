@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from ..domain import Finding as DomainFinding
-from ._types import CandidateFinding, FindingPayload, TopCause, is_finding, is_top_cause
+from ._types import FindingPayload, is_finding
 
 
 def non_reference_findings(items: Sequence[object]) -> list[FindingPayload]:
@@ -22,19 +22,10 @@ def non_reference_findings(items: Sequence[object]) -> list[FindingPayload]:
     ]
 
 
-def non_reference_top_causes(items: Sequence[object]) -> list[TopCause]:
-    """Return well-formed top-cause dicts excluding ``REF_*`` entries."""
-    return [
-        item
-        for item in items
-        if is_top_cause(item) and not DomainFinding.from_payload(item).is_reference
-    ]
-
-
 def select_effective_top_causes(
     top_causes: Sequence[object],
     findings: Sequence[object],
-) -> tuple[list[FindingPayload], list[FindingPayload], list[TopCause], list[CandidateFinding]]:
+) -> tuple[list[FindingPayload], list[FindingPayload], list[FindingPayload], list[FindingPayload]]:
     """Return report-ready cause/finding collections.
 
     Returns ``(all_findings, findings_non_ref, top_causes_all, effective_top_causes)``.
@@ -44,20 +35,24 @@ def select_effective_top_causes(
     """
     all_findings = [item for item in findings if is_finding(item)]
     findings_non_ref = non_reference_findings(all_findings)
-    top_causes_all = [item for item in top_causes if is_top_cause(item)]
-    top_causes_non_ref = non_reference_top_causes(top_causes_all)
+    top_causes_all = [item for item in top_causes if is_finding(item)]
+
+    # Materialize domain objects once to avoid repeated from_payload calls
+    top_cause_pairs = [(tc, DomainFinding.from_payload(tc)) for tc in top_causes_all]
+    top_causes_non_ref = [tc for tc, d in top_cause_pairs if not d.is_reference]
     top_causes_actionable = [
-        cause for cause in top_causes_non_ref if DomainFinding.from_payload(cause).is_actionable
+        tc for tc, d in top_cause_pairs if not d.is_reference and d.is_actionable
     ]
-    effective_top_causes: list[CandidateFinding]
+
+    effective_top_causes: list[FindingPayload]
     if top_causes_actionable:
-        effective_top_causes = [candidate for candidate in top_causes_actionable]
+        effective_top_causes = list(top_causes_actionable)
     elif findings_non_ref:
-        effective_top_causes = [candidate for candidate in findings_non_ref]
+        effective_top_causes = list(findings_non_ref)
     elif top_causes_non_ref:
-        effective_top_causes = [candidate for candidate in top_causes_non_ref]
+        effective_top_causes = list(top_causes_non_ref)
     else:
-        effective_top_causes = [candidate for candidate in top_causes_all]
+        effective_top_causes = list(top_causes_all)
     return all_findings, findings_non_ref, top_causes_all, effective_top_causes
 
 

@@ -152,28 +152,6 @@ class FindingPayload(TypedDict, total=False):
     diagnostic_caveat: JsonValue
 
 
-class TopCause(TypedDict, total=False):
-    finding_id: str
-    suspected_source: str
-    confidence: float | None
-    confidence_label_key: str
-    confidence_tone: str
-    confidence_pct: str
-    order: str
-    signatures_observed: list[str]
-    grouped_count: int
-    strongest_location: str | None
-    dominance_ratio: float | None
-    strongest_speed_band: str | None
-    weak_spatial_separation: bool
-    diffuse_excitation: bool
-    diagnostic_caveat: JsonValue
-    phase_evidence: PhaseEvidence | None
-
-
-CandidateFinding: TypeAlias = FindingPayload | TopCause
-
-
 class SpeedStats(TypedDict):
     min_kmh: float | None
     max_kmh: float | None
@@ -306,7 +284,7 @@ class AnalysisSummary(TypedDict):
     run_noise_baseline_db: float | None
     speed_breakdown_skipped_reason: I18nRef | None
     findings: list[FindingPayload]
-    top_causes: list[TopCause]
+    top_causes: list[FindingPayload]
     most_likely_origin: SuspectedVibrationOrigin
     test_plan: list[TestStep]
     phase_timeline: list[PhaseTimelineEntry]
@@ -337,16 +315,6 @@ def is_finding(value: object) -> TypeGuard[FindingPayload]:
     other dict-shaped objects.
     """
     return isinstance(value, dict) and "finding_id" in value
-
-
-def is_top_cause(value: object) -> TypeGuard[TopCause]:
-    """Narrow a runtime value to the top-cause summary shape.
-
-    Checks for ``isinstance(value, dict)`` *and* the presence of a key
-    characteristic of top-cause entries (``strongest_location`` or ``source``),
-    which helps distinguish a TopCause from other dict-shaped objects.
-    """
-    return isinstance(value, dict) and ("strongest_location" in value or "source" in value)
 
 
 # NOTE: The backward-compatible ``Finding = FindingPayload`` alias has been

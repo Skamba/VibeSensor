@@ -12,7 +12,6 @@ from statistics import mean as _mean
 from .. import __version__
 from ..analysis._types import (
     AnalysisSummary,
-    CandidateFinding,
     FindingPayload,
     IntensityRow,
     JsonValue,
@@ -21,7 +20,6 @@ from ..analysis._types import (
     SpeedStats,
     SuspectedVibrationOrigin,
     TestStep,
-    TopCause,
 )
 from ..analysis.diagnosis_candidates import normalize_origin_location, select_effective_top_causes
 from ..analysis.helpers import PHASE_I18N_KEYS
@@ -32,7 +30,7 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..domain import Finding, Report, VibrationSource
+from ..domain import Report, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
@@ -69,7 +67,7 @@ class ReportMappingContext:
     car_name: str | None
     car_type: str | None
     date_str: str
-    top_causes: list[CandidateFinding]
+    top_causes: list[FindingPayload]
     findings_non_ref: list[FindingPayload]
     findings: list[FindingPayload]
     speed_stats: SpeedStats
@@ -88,7 +86,7 @@ class ReportMappingContext:
 
     # -- candidate selection ------------------------------------------------
 
-    def top_report_candidate(self) -> CandidateFinding | None:
+    def top_report_candidate(self) -> FindingPayload | None:
         """Return the primary report candidate (first effective top cause or finding)."""
         candidates = self.top_causes or self.findings_non_ref
         return candidates[0] if candidates else None
@@ -138,7 +136,7 @@ class ReportMappingContext:
 class PrimaryCandidateContext:
     """Primary report candidate resolved from top causes or findings."""
 
-    primary_candidate: CandidateFinding | None
+    primary_candidate: FindingPayload | None
     primary_source: object
     primary_system: str
     primary_location: str
@@ -260,7 +258,7 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
     return str(value).replace("_", " ").title()
 
 
-def extract_confidence(item: FindingPayload | TopCause) -> float:
+def extract_confidence(item: FindingPayload) -> float:
     """Return the confidence value from a cause/finding dict."""
     value = _as_float(item.get("confidence"))
     return value if value is not None else 0.0
@@ -366,7 +364,7 @@ class SummaryView:
         return list(raw) if isinstance(raw, list) else []
 
     @property
-    def top_causes(self) -> list[TopCause]:
+    def top_causes(self) -> list[FindingPayload]:
         raw = self._d.get("top_causes", [])
         return list(raw) if isinstance(raw, list) else []
 
@@ -651,7 +649,7 @@ def _resolve_detail_text(value: object, *, lang: str, tr: Callable) -> str | Non
 def top_strength_values(
     summary: AnalysisSummary,
     *,
-    effective_causes: list[CandidateFinding] | None = None,
+    effective_causes: list[FindingPayload] | None = None,
 ) -> float | None:
     """Return the best available vibration strength in dB for report text."""
     causes = effective_causes if effective_causes is not None else summary.get("top_causes", [])
@@ -779,7 +777,7 @@ def resolve_interpretation(origin: SuspectedVibrationOrigin, *, lang: str, tr: C
 
 
 def resolve_parts_context(
-    primary_candidate: CandidateFinding | None,
+    primary_candidate: FindingPayload | None,
     *,
     lang: str,
 ) -> tuple[str, str | None]:
@@ -972,10 +970,8 @@ def resolve_primary_report_candidate(
 def build_report_from_summary(summary: dict[str, object]) -> Report:
     """Create a domain Report from a ``SummaryData`` dict.
 
-    This is the adapter bridge between the raw analysis-summary JSON
-    shape and the typed domain ``Report``.  It extracts key metadata
-    fields and constructs domain :class:`Finding` objects from the
-    ``findings`` list.
+    Extracts run-level metadata.  Finding-level data is handled
+    separately by :func:`prepare_report_mapping_context`.
     """
     meta = summary.get("metadata") or {}
     if not isinstance(meta, dict):
@@ -989,13 +985,6 @@ def build_report_from_summary(summary: dict[str, object]) -> Report:
         car_name = str(raw_name) if raw_name else None
         raw_type = car_cfg.get("car_type")
         car_type = str(raw_type) if raw_type else None
-
-    raw_findings = summary.get("findings")
-    finding_list: list[Finding] = []
-    if isinstance(raw_findings, list):
-        for item in raw_findings:
-            if isinstance(item, dict):
-                finding_list.append(Finding.from_payload(item))
 
     rows = summary.get("rows")
     sample_count = int(rows) if isinstance(rows, (int, float, str)) else 0
@@ -1014,8 +1003,10 @@ def build_report_from_summary(summary: dict[str, object]) -> Report:
     report_date = summary.get("report_date")
     report_date_str = str(report_date) if isinstance(report_date, str) else None
 
+    run_id = str(summary.get("run_id", ""))
+
     return Report(
-        run_id=str(summary.get("run_id", "")),
+        run_id=run_id or "unknown",
         lang=str(summary.get("lang", "en")),
         car_name=car_name,
         car_type=car_type,
@@ -1023,7 +1014,6 @@ def build_report_from_summary(summary: dict[str, object]) -> Report:
         duration_s=duration_s,
         sample_count=sample_count,
         sensor_count=sensor_count,
-        findings=tuple(finding_list),
     )
 
 

@@ -25,6 +25,8 @@ from typing_extensions import TypedDict
 from .strength_bands import bucket_for_strength
 
 __all__ = [
+    "compute_db",
+    "compute_db_or_none",
     "empty_vibration_strength_metrics",
     "PEAK_BANDWIDTH_HZ",
     "PEAK_SEPARATION_HZ",
@@ -374,3 +376,34 @@ def compute_vibration_strength_db(
         "strength_bucket": bucket_for_strength(top_db),
         "top_peaks": list(chosen),
     }
+
+
+# ---------------------------------------------------------------------------
+# Convenience wrappers for callers that already have amplitude pairs
+# ---------------------------------------------------------------------------
+
+
+def compute_db(peak_amplitude_g: float, noise_floor_g: float) -> float:
+    """Compute vibration strength in dB from an amplitude pair.
+
+    Uses the canonical formula:
+    ``20 × log₁₀((peak + ε) / (floor + ε))``
+    where ``ε = max(1e-9, floor × 0.05)``.
+    """
+    return vibration_strength_db_scalar(
+        peak_band_rms_amp_g=peak_amplitude_g,
+        floor_amp_g=noise_floor_g,
+    )
+
+
+def compute_db_or_none(
+    peak_amplitude_g: float | None,
+    noise_floor_g: float | None,
+) -> float | None:
+    """Like :func:`compute_db` but returns ``None`` when either input is ``None``."""
+    if peak_amplitude_g is None or noise_floor_g is None:
+        return None
+    return vibration_strength_db_scalar(
+        peak_band_rms_amp_g=peak_amplitude_g,
+        floor_amp_g=noise_floor_g,
+    )
