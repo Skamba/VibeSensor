@@ -1651,3 +1651,97 @@ class TestDiagnosticCaseCompleteness:
         )
         assert case.is_complete is False
         assert "additional_data_required" in case.evidence_gaps
+
+
+class TestConfigurationSnapshot:
+    """Tests for ConfigurationSnapshot construction, freezing, and case attachment."""
+
+    def test_from_metadata_extracts_typed_fields(self) -> None:
+        md = {
+            "sensor_model": "MPU6050",
+            "firmware_version": "1.2.3",
+            "raw_sample_rate_hz": 100.0,
+            "feature_interval_s": 0.5,
+            "final_drive_ratio": 3.73,
+            "tire_width_mm": 205,
+            "tire_aspect_pct": 55,
+            "rim_in": 16,
+        }
+        snap = ConfigurationSnapshot.from_metadata(md)
+        assert snap.sensor_model == "MPU6050"
+        assert snap.firmware_version == "1.2.3"
+        assert snap.raw_sample_rate_hz == 100.0
+        assert snap.feature_interval_s == 0.5
+        assert snap.final_drive_ratio == 3.73
+        assert snap.tire_spec is not None
+
+    def test_from_metadata_with_empty_dict(self) -> None:
+        snap = ConfigurationSnapshot.from_metadata({})
+        assert snap.sensor_model is None
+        assert snap.firmware_version is None
+        assert snap.raw_sample_rate_hz is None
+        assert snap.feature_interval_s is None
+        assert snap.final_drive_ratio is None
+
+    def test_from_metadata_coerces_string_floats(self) -> None:
+        md = {
+            "raw_sample_rate_hz": "100.0",
+            "feature_interval_s": "0.5",
+            "final_drive_ratio": "3.73",
+        }
+        snap = ConfigurationSnapshot.from_metadata(md)
+        assert snap.raw_sample_rate_hz == 100.0
+        assert snap.feature_interval_s == 0.5
+        assert snap.final_drive_ratio == 3.73
+
+    def test_metadata_is_frozen(self) -> None:
+        from types import MappingProxyType
+
+        snap = ConfigurationSnapshot.from_metadata({"sensor_model": "MPU6050"})
+        assert isinstance(snap.metadata, MappingProxyType)
+        with pytest.raises(TypeError):
+            snap.metadata["new_key"] = "value"  # type: ignore[index]
+
+    def test_empty_snapshot_equality(self) -> None:
+        assert ConfigurationSnapshot() == ConfigurationSnapshot()
+
+    def test_from_metadata_preserves_raw_metadata(self) -> None:
+        md = {"sensor_model": "MPU6050", "custom_key": "custom_value"}
+        snap = ConfigurationSnapshot.from_metadata(md)
+        assert snap.metadata["sensor_model"] == "MPU6050"
+        assert snap.metadata["custom_key"] == "custom_value"
+
+    def test_case_dedup_appends_unique_snapshots(self) -> None:
+        snap_a = ConfigurationSnapshot.from_metadata({"sensor_model": "MPU6050"})
+        snap_b = ConfigurationSnapshot.from_metadata({"sensor_model": "BMI270"})
+
+        finding = Finding(suspected_source="wheel/tire", confidence=0.8)
+        case = DiagnosticCase(case_id="case-snap")
+        case = case.add_run(
+            TestRun(
+                run=Run(run_id="r1"),
+                configuration_snapshot=snap_a,
+                findings=(finding,),
+                top_causes=(finding,),
+            )
+        )
+        case = case.add_run(
+            TestRun(
+                run=Run(run_id="r2"),
+                configuration_snapshot=snap_b,
+                findings=(finding,),
+                top_causes=(finding,),
+            )
+        )
+        assert len(case.configuration_snapshots) == 2
+
+        # Third run reuses snap_a — dedup should keep count at 2
+        case = case.add_run(
+            TestRun(
+                run=Run(run_id="r3"),
+                configuration_snapshot=snap_a,
+                findings=(finding,),
+                top_causes=(finding,),
+            )
+        )
+        assert len(case.configuration_snapshots) == 2
