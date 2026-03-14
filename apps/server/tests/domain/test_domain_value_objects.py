@@ -23,8 +23,11 @@ from vibesensor.domain import (
     ConfidenceAssessment,
     ConfigurationSnapshot,
     DiagnosticCase,
+    DiagnosticCaseEpistemicRule,
     Finding,
     FindingEvidence,
+    Hypothesis,
+    HypothesisStatus,
     LocationHotspot,
     Run,
     RunAnalysisResult,
@@ -46,25 +49,48 @@ def _make_test_run_finding(
     finding_id: str,
     *,
     suspected_source: str = "wheel/tire",
+    confidence: float = 0.82,
+    strongest_location: str | None = "front_left",
 ) -> Finding:
     return Finding(
         finding_id=finding_id,
         suspected_source=suspected_source,
-        confidence=0.82,
-        strongest_location="front_left",
+        confidence=confidence,
+        strongest_location=strongest_location,
     )
 
 
 def _make_test_run(
     *,
+    run_id: str = "run-1",
+    hypotheses: tuple[Hypothesis, ...] = (),
     findings: tuple[Finding, ...],
     top_causes: tuple[Finding, ...],
 ) -> TestRun:
     return TestRun(
-        run=Run(run_id="run-1"),
+        run=Run(run_id=run_id),
         configuration_snapshot=ConfigurationSnapshot(),
+        hypotheses=hypotheses,
         findings=findings,
         top_causes=top_causes,
+    )
+
+
+def _make_hypothesis(
+    hypothesis_id: str,
+    *,
+    support_score: float,
+    contradiction_score: float = 0.0,
+    status: HypothesisStatus = HypothesisStatus.SUPPORTED,
+    signature_keys: tuple[str, ...] = (),
+) -> Hypothesis:
+    return Hypothesis(
+        hypothesis_id=hypothesis_id,
+        source="engine",
+        support_score=support_score,
+        contradiction_score=contradiction_score,
+        status=status,
+        signature_keys=signature_keys,
     )
 
 # ── FindingEvidence ──────────────────────────────────────────────────────────
@@ -602,6 +628,207 @@ class TestDiagnosticCase:
 
         assert case.is_complete is False
         assert case.needs_more_data is True
+
+    def test_hypothesis_epistemic_rules_mark_strengthening(self) -> None:
+        case = DiagnosticCase(
+            case_id="case-strengthening",
+            test_runs=(
+                _make_test_run(
+                    run_id="run-1",
+                    hypotheses=(
+                        _make_hypothesis("hyp-engine", support_score=0.42),
+                    ),
+                    findings=(),
+                    top_causes=(),
+                ),
+                _make_test_run(
+                    run_id="run-2",
+                    hypotheses=(
+                        _make_hypothesis("hyp-engine", support_score=0.76),
+                    ),
+                    findings=(),
+                    top_causes=(),
+                ),
+            ),
+        )
+
+        assert (
+            case.hypothesis_epistemic_rules()["hyp-engine"]
+            is DiagnosticCaseEpistemicRule.STRENGTHENING
+        )
+
+    def test_hypothesis_epistemic_rules_mark_weakening(self) -> None:
+        case = DiagnosticCase(
+            case_id="case-weakening",
+            test_runs=(
+                _make_test_run(
+                    run_id="run-1",
+                    hypotheses=(
+                        _make_hypothesis("hyp-engine", support_score=0.83),
+                    ),
+                    findings=(),
+                    top_causes=(),
+                ),
+                _make_test_run(
+                    run_id="run-2",
+                    hypotheses=(
+                        _make_hypothesis("hyp-engine", support_score=0.51),
+                    ),
+                    findings=(),
+                    top_causes=(),
+                ),
+            ),
+        )
+
+        assert (
+            case.hypothesis_epistemic_rules()["hyp-engine"]
+            is DiagnosticCaseEpistemicRule.WEAKENING
+        )
+
+    def test_hypothesis_epistemic_rules_mark_contradiction(self) -> None:
+        case = DiagnosticCase(
+            case_id="case-contradiction",
+            test_runs=(
+                _make_test_run(
+                    run_id="run-1",
+                    hypotheses=(
+                        _make_hypothesis("hyp-engine", support_score=0.74),
+                    ),
+                    findings=(),
+                    top_causes=(),
+                ),
+                _make_test_run(
+                    run_id="run-2",
+                    hypotheses=(
+                        _make_hypothesis(
+                            "hyp-engine",
+                            support_score=0.15,
+                            contradiction_score=0.82,
+                            status=HypothesisStatus.REJECTED,
+                        ),
+                    ),
+                    findings=(),
+                    top_causes=(),
+                ),
+            ),
+        )
+
+        assert (
+            case.hypothesis_epistemic_rules()["hyp-engine"]
+            is DiagnosticCaseEpistemicRule.CONTRADICTION
+        )
+
+    def test_hypothesis_epistemic_rules_mark_retirement(self) -> None:
+        case = DiagnosticCase(
+            case_id="case-retirement",
+            test_runs=(
+                _make_test_run(
+                    run_id="run-1",
+                    hypotheses=(
+                        _make_hypothesis("hyp-engine", support_score=0.69),
+                    ),
+                    findings=(),
+                    top_causes=(),
+                ),
+                _make_test_run(
+                    run_id="run-2",
+                    hypotheses=(
+                        _make_hypothesis(
+                            "hyp-engine",
+                            support_score=0.0,
+                            status=HypothesisStatus.RETIRED,
+                        ),
+                    ),
+                    findings=(),
+                    top_causes=(),
+                ),
+            ),
+        )
+
+        assert (
+            case.hypothesis_epistemic_rules()["hyp-engine"]
+            is DiagnosticCaseEpistemicRule.RETIREMENT
+        )
+
+    def test_hypothesis_epistemic_rules_mark_unresolved_support(self) -> None:
+        case = DiagnosticCase(
+            case_id="case-unresolved",
+            test_runs=(
+                _make_test_run(
+                    run_id="run-1",
+                    hypotheses=(
+                        _make_hypothesis(
+                            "hyp-engine",
+                            support_score=0.18,
+                            status=HypothesisStatus.CANDIDATE,
+                            signature_keys=("order-1",),
+                        ),
+                    ),
+                    findings=(),
+                    top_causes=(),
+                ),
+                _make_test_run(
+                    run_id="run-2",
+                    hypotheses=(
+                        _make_hypothesis(
+                            "hyp-engine",
+                            support_score=0.24,
+                            status=HypothesisStatus.INCONCLUSIVE,
+                            signature_keys=("order-1", "phase-cruise"),
+                        ),
+                    ),
+                    findings=(),
+                    top_causes=(),
+                ),
+            ),
+        )
+
+        assert (
+            case.hypothesis_epistemic_rules()["hyp-engine"]
+            is DiagnosticCaseEpistemicRule.UNRESOLVED_SUPPORT
+        )
+
+    def test_classify_finding_sequence_marks_strengthening(self) -> None:
+        rule = DiagnosticCase.classify_finding_sequence(
+            (
+                _make_test_run_finding("F001", confidence=0.44),
+                _make_test_run_finding("F002", confidence=0.79),
+            )
+        )
+
+        assert rule is DiagnosticCaseEpistemicRule.STRENGTHENING
+
+    def test_classify_finding_sequence_marks_contradiction(self) -> None:
+        rule = DiagnosticCase.classify_finding_sequence(
+            (
+                _make_test_run_finding("F001", suspected_source="wheel/tire"),
+                _make_test_run_finding(
+                    "F002",
+                    suspected_source="driveline",
+                    strongest_location="center",
+                ),
+            )
+        )
+
+        assert rule is DiagnosticCaseEpistemicRule.CONTRADICTION
+
+    def test_classify_finding_sequence_marks_unresolved_support(self) -> None:
+        rule = DiagnosticCase.classify_finding_sequence(
+            (
+                _make_test_run_finding(
+                    "F001",
+                    suspected_source="unknown",
+                    strongest_location="unknown",
+                ),
+                _make_test_run_finding(
+                    "F002",
+                    suspected_source="unknown",
+                    strongest_location="unknown",
+                ),
+            )
+        )
+
+        assert rule is DiagnosticCaseEpistemicRule.UNRESOLVED_SUPPORT
 
 
 # ── SpeedProfile ─────────────────────────────────────────────────────────────
