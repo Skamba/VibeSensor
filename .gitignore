@@ -59,6 +59,7 @@ apps/server/wifi-secrets.env
 
 # act (local GitHub Actions runner) secrets
 .secrets.act
+.tools/act/
 
 # Firmware build artifacts
 firmware/esp/.pio/
