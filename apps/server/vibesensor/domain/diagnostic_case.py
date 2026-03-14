@@ -105,7 +105,7 @@ class DiagnosticCase:
 
     @property
     def is_complete(self) -> bool:
-        return bool(self.findings) and not self.test_plan.needs_more_data()
+        return bool(self.findings) and self.test_plan.supports_case_completion
 
     @property
     def needs_more_data(self) -> bool:

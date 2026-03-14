@@ -585,11 +585,19 @@ def build_next_steps_from_summary(
         for action in aggregate.test_run.recommended_actions:
             next_steps.append(
                 NextStep(
-                    action=_resolve_step_value(action.what, lang=lang, tr=tr),
-                    why=_resolve_optional_step_value(action.why, lang=lang, tr=tr),
-                    confirm=_resolve_optional_step_value(action.confirm, lang=lang, tr=tr),
-                    falsify=_resolve_optional_step_value(action.falsify, lang=lang, tr=tr),
-                    eta=action.eta,
+                    action=_resolve_step_value(action.instruction, lang=lang, tr=tr),
+                    why=_resolve_optional_step_value(action.rationale, lang=lang, tr=tr),
+                    confirm=_resolve_optional_step_value(
+                        action.confirmation_signal,
+                        lang=lang,
+                        tr=tr,
+                    ),
+                    falsify=_resolve_optional_step_value(
+                        action.falsification_signal,
+                        lang=lang,
+                        tr=tr,
+                    ),
+                    eta=action.estimated_duration,
                 ),
             )
         if next_steps:
