@@ -65,7 +65,7 @@ class MatchedPoint(TypedDict, total=False):
     phase: str | None
 
 
-class LocationHotspot(TypedDict, total=False):
+class LocationHotspotPayload(TypedDict, total=False):
     speed_range: str
     location: str
     mean_amp: float
@@ -83,7 +83,7 @@ class LocationHotspot(TypedDict, total=False):
     localization_confidence: float
     weak_spatial_separation: bool
     no_wheel_sensors: bool
-    per_bin_results: list[LocationHotspot]
+    per_bin_results: list[LocationHotspotPayload]
 
 
 class FindingEvidenceMetrics(TypedDict, total=False):
@@ -128,7 +128,7 @@ class FindingPayload(TypedDict, total=False):
     confidence_tone: str
     confidence_pct: str
     matched_points: list[MatchedPoint]
-    location_hotspot: LocationHotspot | None
+    location_hotspot: LocationHotspotPayload | None
     strongest_location: str | None
     strongest_speed_band: str | None
     dominant_phase: str | None

@@ -4,6 +4,11 @@
 (reference / informational / diagnostic), actionability, surfacing
 decisions, confidence normalisation, deterministic ranking, and
 phase-adjusted scoring.
+
+Optionally carries structured domain value objects for evidence
+(:class:`FindingEvidence`), spatial localisation
+(:class:`LocationHotspot`), and confidence rationale
+(:class:`ConfidenceAssessment`).
 """
 
 from __future__ import annotations
@@ -13,7 +18,12 @@ import math
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from enum import StrEnum
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
+
+if TYPE_CHECKING:
+    from .confidence_assessment import ConfidenceAssessment
+    from .finding_evidence import FindingEvidence
+    from .location_hotspot import LocationHotspot
 
 __all__ = [
     "Finding",
@@ -125,6 +135,11 @@ class Finding:
     weak_spatial_separation: bool = False
     vibration_strength_db: float | None = None
     cruise_fraction: float = 0.0
+
+    # Structured domain value objects (optional — populated when available)
+    evidence: FindingEvidence | None = None
+    location: LocationHotspot | None = None
+    confidence_assessment: ConfidenceAssessment | None = None
 
     def __post_init__(self) -> None:
         """Auto-derive ``kind`` and validate invariants."""
@@ -286,6 +301,14 @@ class Finding:
                 except (TypeError, ValueError):
                     pass
 
+        # Build domain value objects from nested dicts when available
+        from .finding_evidence import FindingEvidence as _FE
+        from .location_hotspot import LocationHotspot as _LH
+
+        evidence = _FE.from_metrics_dict(ev_metrics) if isinstance(ev_metrics, dict) else None
+        hotspot_raw = payload.get("location_hotspot")
+        location = _LH.from_hotspot_dict(hotspot_raw) if isinstance(hotspot_raw, dict) else None
+
         finding_id = _str("finding_id")
         severity = _str("severity")
         raw_source = _str("suspected_source", "source").strip().lower()
@@ -319,6 +342,8 @@ class Finding:
             weak_spatial_separation=bool(payload.get("weak_spatial_separation", False)),
             vibration_strength_db=vib_db,
             cruise_fraction=cruise_fraction,
+            evidence=evidence,
+            location=location,
         )
 
     # -- identity mutation (frozen ⇒ returns new instance) -----------------
