@@ -8,6 +8,7 @@ name, and its optional placement.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 __all__ = [
@@ -81,3 +82,16 @@ class Sensor:
     def is_placed(self) -> bool:
         """Whether this sensor has an assigned placement."""
         return self.placement is not None and bool(self.placement.code)
+
+    # -- factory methods ---------------------------------------------------
+
+    @classmethod
+    def from_location_codes(cls, location_codes: Sequence[str]) -> tuple[Sensor, ...]:
+        """Build sensors from location codes available during analysis."""
+        return tuple(
+            cls(
+                sensor_id=code,
+                placement=SensorPlacement.from_code(code),
+            )
+            for code in location_codes
+        )

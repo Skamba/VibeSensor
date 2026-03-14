@@ -12,6 +12,7 @@ from .observation import Observation
 from .recommended_action import RecommendedAction
 from .run import Run
 from .run_suitability import RunSuitability
+from .sensor import Sensor
 from .signature import Signature
 from .speed_profile import SpeedProfile
 from .test_plan import TestPlan
@@ -34,6 +35,7 @@ class TestRun:
     speed_profile: SpeedProfile | None = None
     suitability: RunSuitability | None = None
     test_plan: TestPlan = TestPlan()
+    sensors: tuple[Sensor, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.top_causes:
@@ -70,6 +72,10 @@ class TestRun:
     @property
     def run_id(self) -> str:
         return self.run.run_id
+
+    @property
+    def sensor_count(self) -> int:
+        return len(self.sensors)
 
     @property
     def diagnostic_findings(self) -> tuple[Finding, ...]:
