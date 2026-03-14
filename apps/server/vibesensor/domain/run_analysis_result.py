@@ -25,6 +25,7 @@ from .finding import Finding, VibrationSource
 if TYPE_CHECKING:
     from .run_suitability import RunSuitability
     from .speed_profile import SpeedProfile
+    from .test_run import TestRun
 
 __all__ = ["RunAnalysisResult"]
 
@@ -51,6 +52,7 @@ class RunAnalysisResult:
     # Run-level domain value objects (optional — populated when available)
     speed_profile: SpeedProfile | None = None
     suitability: RunSuitability | None = None
+    test_run: TestRun | None = None
 
     def __post_init__(self) -> None:
         if not self.run_id:
@@ -69,18 +71,9 @@ class RunAnalysisResult:
         work identically whether the analysis was just run in-process or
         loaded from history.
         """
-        raw_findings = summary.get("findings")
-        raw_top_causes = summary.get("top_causes")
+        from ..boundaries.diagnostic_case import test_run_from_summary
 
-        findings_list = list(raw_findings) if isinstance(raw_findings, list) else []
-        top_causes_list = list(raw_top_causes) if isinstance(raw_top_causes, list) else []
-
-        domain_findings = tuple(
-            Finding.from_payload(f) for f in findings_list if isinstance(f, dict)
-        )
-        domain_top_causes = tuple(
-            Finding.from_payload(tc) for tc in top_causes_list if isinstance(tc, dict)
-        )
+        projected_test_run = test_run_from_summary(summary)
 
         run_id = str(summary.get("run_id", "")) or "unknown"
 
@@ -100,36 +93,33 @@ class RunAnalysisResult:
 
         lang = str(summary.get("lang", "en"))
 
-        # Build run-level domain value objects from summary dicts
-        from .run_suitability import RunSuitability as _RS
-        from .speed_profile import SpeedProfile as _SP
-
-        speed_stats_raw = summary.get("speed_stats")
-        phase_summary_raw = summary.get("phase_summary")
-        speed_profile = (
-            _SP.from_stats(
-                speed_stats_raw,
-                phase_summary_raw if isinstance(phase_summary_raw, dict) else None,
-            )
-            if isinstance(speed_stats_raw, dict)
-            else None
-        )
-
-        suitability_raw = summary.get("run_suitability")
-        suitability = (
-            _RS.from_checks(suitability_raw) if isinstance(suitability_raw, list) else None
-        )
-
         return cls(
             run_id=run_id,
-            findings=domain_findings,
-            top_causes=domain_top_causes,
+            findings=projected_test_run.findings,
+            top_causes=projected_test_run.top_causes,
             duration_s=duration_s,
-            sample_count=sample_count,
+            sample_count=(
+                sample_count
+                or sum(segment.sample_count for segment in projected_test_run.driving_segments)
+            ),
             sensor_count=sensor_count,
             lang=lang,
-            speed_profile=speed_profile,
-            suitability=suitability,
+            speed_profile=projected_test_run.speed_profile,
+            suitability=projected_test_run.suitability,
+            test_run=projected_test_run,
+        )
+
+    @classmethod
+    def from_test_run(cls, test_run: TestRun, *, lang: str = "en") -> RunAnalysisResult:
+        return cls(
+            run_id=test_run.run_id,
+            findings=test_run.findings,
+            top_causes=test_run.top_causes,
+            sample_count=sum(segment.sample_count for segment in test_run.driving_segments),
+            lang=lang,
+            speed_profile=test_run.speed_profile,
+            suitability=test_run.suitability,
+            test_run=test_run,
         )
 
     # -- finding queries ---------------------------------------------------

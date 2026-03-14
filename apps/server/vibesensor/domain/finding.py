@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     from .confidence_assessment import ConfidenceAssessment
     from .finding_evidence import FindingEvidence
     from .location_hotspot import LocationHotspot
+    from .signature import Signature
+    from .vibration_origin import VibrationOrigin
 
 __all__ = [
     "Finding",
@@ -140,6 +142,8 @@ class Finding:
     evidence: FindingEvidence | None = None
     location: LocationHotspot | None = None
     confidence_assessment: ConfidenceAssessment | None = None
+    origin: VibrationOrigin | None = None
+    signatures: tuple[Signature, ...] = ()
 
     def __post_init__(self) -> None:
         """Auto-derive ``kind`` and validate invariants."""
@@ -304,6 +308,8 @@ class Finding:
         # Build domain value objects from nested dicts when available
         from .finding_evidence import FindingEvidence as _FE
         from .location_hotspot import LocationHotspot as _LH
+        from .signature import Signature as _Signature
+        from .vibration_origin import VibrationOrigin as _Origin
 
         evidence = _FE.from_metrics_dict(ev_metrics) if isinstance(ev_metrics, dict) else None
         hotspot_raw = payload.get("location_hotspot")
@@ -323,6 +329,29 @@ class Finding:
             finding_id,
             severity,
             explicit_kind=str(explicit) if isinstance(explicit, str) else None,
+        )
+        raw_signatures = payload.get("signatures_observed")
+        signatures = (
+            tuple(
+                _Signature.from_label(
+                    str(label),
+                    source=source,
+                    support_score=confidence or 0.0,
+                )
+                for label in raw_signatures[:3]
+                if str(label).strip()
+            )
+            if isinstance(raw_signatures, list)
+            else ()
+        )
+        dominant_phase = str(payload.get("dominant_phase") or "").strip() or None
+        origin = _Origin(
+            suspected_source=source,
+            hotspot=location,
+            dominance_ratio=dominance_ratio,
+            speed_band=str(band) if band is not None else None,
+            dominant_phase=dominant_phase,
+            reason=_str("evidence_summary"),
         )
 
         return cls(
@@ -344,6 +373,8 @@ class Finding:
             cruise_fraction=cruise_fraction,
             evidence=evidence,
             location=location,
+            origin=origin,
+            signatures=signatures,
         )
 
     # -- identity mutation (frozen ⇒ returns new instance) -----------------
@@ -351,6 +382,15 @@ class Finding:
     def with_id(self, finding_id: str) -> Finding:
         """Return a copy of this finding with a new ``finding_id``."""
         return replace(self, finding_id=finding_id)
+
+    def with_origin_and_signatures(
+        self,
+        *,
+        origin: VibrationOrigin | None,
+        signatures: tuple[Signature, ...],
+    ) -> Finding:
+        """Return a copy enriched with explicit origin and signatures."""
+        return replace(self, origin=origin, signatures=signatures)
 
     # -- classification ----------------------------------------------------
 
@@ -378,6 +418,10 @@ class Finding:
     def source_normalized(self) -> str:
         """Lower-cased, stripped suspected source for comparison."""
         return self.suspected_source.strip().lower()
+
+    @property
+    def signature_labels(self) -> tuple[str, ...]:
+        return tuple(signature.label for signature in self.signatures)
 
     # -- effective confidence -----------------------------------------------
 

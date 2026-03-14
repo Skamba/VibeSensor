@@ -211,6 +211,7 @@ class PostAnalysisWorker:
         LOGGER.info("Analysis started for run %s", run_id)
         try:
             from ..analysis import summarize_run_data
+            from ..boundaries.diagnostic_case import project_summary_through_domain
 
             metadata = db.get_run_metadata(run_id)
             if metadata is None:
@@ -274,7 +275,8 @@ class PostAnalysisWorker:
                         "explanation": explanation,
                     },
                 )
-            db.store_analysis(run_id, summary)  # type: ignore[arg-type]
+            summary = project_summary_through_domain(summary)
+            db.store_analysis(run_id, summary)
 
             duration_s = time.monotonic() - analysis_start
             LOGGER.info(

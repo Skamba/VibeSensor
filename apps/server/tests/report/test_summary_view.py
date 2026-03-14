@@ -1,9 +1,29 @@
-"""Tests for SummaryView typed accessor."""
+"""Tests for explicit summary boundary helper functions."""
 
 from __future__ import annotations
 
 from vibesensor.analysis._types import AnalysisSummary
-from vibesensor.report.mapping import SummaryView
+from vibesensor.report.mapping import (
+    summary_end_time_utc,
+    summary_findings,
+    summary_firmware_version,
+    summary_metadata,
+    summary_origin,
+    summary_raw_sample_rate_hz,
+    summary_record_length,
+    summary_row_count,
+    summary_run_suitability,
+    summary_sample_rate_hz_text,
+    summary_sensor_count_used,
+    summary_sensor_intensity_by_location,
+    summary_sensor_locations_active,
+    summary_sensor_model,
+    summary_speed_stats,
+    summary_start_time_utc,
+    summary_test_plan,
+    summary_top_causes,
+    summary_warnings,
+)
 
 
 def _minimal_summary(**overrides: object) -> AnalysisSummary:
@@ -50,100 +70,82 @@ def _minimal_summary(**overrides: object) -> AnalysisSummary:
     return base  # type: ignore[return-value]
 
 
-class TestSummaryView:
+class TestSummaryHelpers:
     def test_metadata(self) -> None:
-        view = SummaryView(_minimal_summary())
-        assert view.metadata["car_name"] == "Test Car"
+        assert summary_metadata(_minimal_summary())["car_name"] == "Test Car"
 
     def test_row_count(self) -> None:
-        view = SummaryView(_minimal_summary(rows=42))
-        assert view.row_count == 42
+        assert summary_row_count(_minimal_summary(rows=42)) == 42
 
     def test_record_length(self) -> None:
-        view = SummaryView(_minimal_summary(record_length="1:30"))
-        assert view.record_length == "1:30"
+        assert summary_record_length(_minimal_summary(record_length="1:30")) == "1:30"
 
     def test_record_length_none(self) -> None:
-        view = SummaryView(_minimal_summary(record_length=None))
-        assert view.record_length is None
+        assert summary_record_length(_minimal_summary(record_length=None)) is None
 
     def test_start_time_utc(self) -> None:
-        view = SummaryView(_minimal_summary())
-        assert view.start_time_utc == "2025-01-01T10:00:00Z"
+        assert summary_start_time_utc(_minimal_summary()) == "2025-01-01T10:00:00Z"
 
     def test_end_time_utc(self) -> None:
-        view = SummaryView(_minimal_summary())
-        assert view.end_time_utc == "2025-01-01T10:00:05Z"
+        assert summary_end_time_utc(_minimal_summary()) == "2025-01-01T10:00:05Z"
 
     def test_raw_sample_rate_hz(self) -> None:
-        view = SummaryView(_minimal_summary(raw_sample_rate_hz=200.0))
-        assert view.raw_sample_rate_hz == 200.0
+        assert summary_raw_sample_rate_hz(_minimal_summary(raw_sample_rate_hz=200.0)) == 200.0
 
     def test_sensor_model(self) -> None:
-        view = SummaryView(_minimal_summary())
-        assert view.sensor_model == "MPU6050"
+        assert summary_sensor_model(_minimal_summary()) == "MPU6050"
 
     def test_firmware_version(self) -> None:
-        view = SummaryView(_minimal_summary())
-        assert view.firmware_version == "1.0.0"
+        assert summary_firmware_version(_minimal_summary()) == "1.0.0"
 
     def test_sensor_count_used(self) -> None:
-        view = SummaryView(_minimal_summary(sensor_count_used=3))
-        assert view.sensor_count_used == 3
+        assert summary_sensor_count_used(_minimal_summary(sensor_count_used=3)) == 3
 
     def test_findings_empty(self) -> None:
-        view = SummaryView(_minimal_summary())
-        assert view.findings == []
+        assert summary_findings(_minimal_summary()) == []
 
     def test_top_causes_empty(self) -> None:
-        view = SummaryView(_minimal_summary())
-        assert view.top_causes == []
+        assert summary_top_causes(_minimal_summary()) == []
 
     def test_speed_stats(self) -> None:
-        view = SummaryView(_minimal_summary())
-        assert view.speed_stats["min_kmh"] == 50.0
+        assert summary_speed_stats(_minimal_summary())["min_kmh"] == 50.0
 
     def test_origin(self) -> None:
-        view = SummaryView(_minimal_summary())
-        assert view.origin["location"] == "front_left"
+        assert summary_origin(_minimal_summary())["location"] == "front_left"
 
     def test_sensor_locations_active_prefers_connected(self) -> None:
-        view = SummaryView(_minimal_summary())
-        assert view.sensor_locations_active == ["front_left"]
+        assert summary_sensor_locations_active(_minimal_summary()) == ["front_left"]
 
     def test_sensor_locations_active_fallback(self) -> None:
-        view = SummaryView(_minimal_summary(sensor_locations_connected_throughout=[]))
-        assert "front_left" in view.sensor_locations_active
+        assert "front_left" in summary_sensor_locations_active(
+            _minimal_summary(sensor_locations_connected_throughout=[])
+        )
 
     def test_sample_rate_hz_text(self) -> None:
-        view = SummaryView(_minimal_summary(raw_sample_rate_hz=100.0))
-        assert view.sample_rate_hz_text == "100"
+        assert summary_sample_rate_hz_text(_minimal_summary(raw_sample_rate_hz=100.0)) == "100"
 
     def test_sample_rate_hz_text_none(self) -> None:
-        view = SummaryView(_minimal_summary(raw_sample_rate_hz=None))
-        assert view.sample_rate_hz_text is None
-
-    def test_data_returns_underlying_dict(self) -> None:
-        summary = _minimal_summary()
-        view = SummaryView(summary)
-        assert view.data is summary
+        assert summary_sample_rate_hz_text(_minimal_summary(raw_sample_rate_hz=None)) is None
 
     def test_test_plan(self) -> None:
         plan = [{"what": "test something", "why": "to verify"}]
-        view = SummaryView(_minimal_summary(test_plan=plan))
-        assert len(view.test_plan) == 1
+        assert len(summary_test_plan(_minimal_summary(test_plan=plan))) == 1
 
     def test_run_suitability(self) -> None:
         checks = [{"check": "SPEED", "state": "pass", "explanation": "ok"}]
-        view = SummaryView(_minimal_summary(run_suitability=checks))
-        assert len(view.run_suitability) == 1
+        assert len(summary_run_suitability(_minimal_summary(run_suitability=checks))) == 1
 
     def test_warnings(self) -> None:
         warns = [{"title": "Low data", "severity": "warn"}]
-        view = SummaryView(_minimal_summary(warnings=warns))
-        assert len(view.warnings) == 1
+        assert len(summary_warnings(_minimal_summary(warnings=warns))) == 1
 
     def test_sensor_intensity_by_location(self) -> None:
         intensity = [{"location": "front_left", "p95_intensity_db": 25.0}]
-        view = SummaryView(_minimal_summary(sensor_intensity_by_location=intensity))
-        assert len(view.sensor_intensity_by_location) == 1
+        assert (
+            len(
+                summary_sensor_intensity_by_location(
+                    _minimal_summary(sensor_intensity_by_location=intensity)
+                )
+            )
+            == 1
+        )
