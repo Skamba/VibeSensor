@@ -10,7 +10,7 @@ import pytest
 from _paths import SERVER_ROOT
 
 from vibesensor.analysis.helpers import _weighted_percentile
-from vibesensor.analysis.test_plan import _weighted_percentile_speed
+from vibesensor.analysis.location_analysis import _weighted_percentile_speed
 from vibesensor.history_db import HistoryDB
 from vibesensor.processing import SignalProcessor
 
