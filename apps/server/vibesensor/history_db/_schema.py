@@ -7,7 +7,7 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 
 SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS runs (
