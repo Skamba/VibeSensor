@@ -484,7 +484,10 @@ class TestSpeedProfile:
         assert sp.max_kmh == 0.0
         assert not sp.steady_speed
         assert not sp.has_cruise
+        assert not sp.has_acceleration
         assert sp.cruise_fraction == 0.0
+        assert sp.idle_fraction == 0.0
+        assert sp.speed_unknown_fraction == 0.0
 
     def test_speed_range_kmh(self) -> None:
         sp = SpeedProfile(min_kmh=40.0, max_kmh=80.0)
@@ -500,6 +503,49 @@ class TestSpeedProfile:
         assert not SpeedProfile(has_cruise=True, cruise_fraction=0.1).has_steady_cruise
         assert not SpeedProfile(has_cruise=False, cruise_fraction=0.5).has_steady_cruise
 
+    def test_known_speed_fraction(self) -> None:
+        assert SpeedProfile(speed_unknown_fraction=0.25).known_speed_fraction == pytest.approx(0.75)
+
+    def test_driving_fraction(self) -> None:
+        assert SpeedProfile(idle_fraction=0.2).driving_fraction == pytest.approx(0.8)
+
+    def test_has_speed_variation_uses_acceleration_or_nonsteady_range(self) -> None:
+        assert SpeedProfile(has_acceleration=True, steady_speed=True).has_speed_variation
+        assert SpeedProfile(min_kmh=40.0, max_kmh=80.0, steady_speed=False).has_speed_variation
+        assert not SpeedProfile(min_kmh=40.0, max_kmh=80.0, steady_speed=True).has_speed_variation
+
+    def test_supports_variable_speed_diagnosis_requires_adequate_data(self) -> None:
+        assert SpeedProfile(
+            sample_count=100,
+            max_kmh=80.0,
+            has_acceleration=True,
+        ).supports_variable_speed_diagnosis
+        assert not SpeedProfile(
+            sample_count=5,
+            max_kmh=80.0,
+            has_acceleration=True,
+        ).supports_variable_speed_diagnosis
+
+    def test_supports_steady_state_diagnosis_uses_cruise_or_steady_motion(self) -> None:
+        assert SpeedProfile(
+            sample_count=100,
+            max_kmh=80.0,
+            has_cruise=True,
+            cruise_fraction=0.4,
+        ).supports_steady_state_diagnosis
+        assert SpeedProfile(
+            sample_count=100,
+            max_kmh=80.0,
+            steady_speed=True,
+            idle_fraction=0.1,
+        ).supports_steady_state_diagnosis
+        assert not SpeedProfile(
+            sample_count=5,
+            max_kmh=80.0,
+            steady_speed=True,
+            idle_fraction=0.1,
+        ).supports_steady_state_diagnosis
+
     def test_from_stats_full(self) -> None:
         speed_stats = {
             "min_kmh": 30.0,
@@ -509,14 +555,27 @@ class TestSpeedProfile:
             "steady_speed": True,
             "sample_count": 500,
         }
-        phase_summary = {"has_cruise": True, "cruise_pct": 65.0}
+        phase_summary = {
+            "has_cruise": True,
+            "has_acceleration": True,
+            "cruise_pct": 65.0,
+            "idle_pct": 10.0,
+            "speed_unknown_pct": 5.0,
+        }
         sp = SpeedProfile.from_stats(speed_stats, phase_summary)
         assert sp.min_kmh == 30.0
         assert sp.max_kmh == 90.0
         assert sp.mean_kmh == 60.0
         assert sp.steady_speed is True
         assert sp.has_cruise is True
+        assert sp.has_acceleration is True
         assert sp.cruise_fraction == pytest.approx(0.65)
+        assert sp.idle_fraction == pytest.approx(0.10)
+        assert sp.speed_unknown_fraction == pytest.approx(0.05)
+        assert sp.known_speed_fraction == pytest.approx(0.95)
+        assert sp.driving_fraction == pytest.approx(0.90)
+        assert sp.supports_variable_speed_diagnosis
+        assert sp.supports_steady_state_diagnosis
         assert sp.sample_count == 500
 
     def test_from_stats_empty(self) -> None:
@@ -524,11 +583,32 @@ class TestSpeedProfile:
         assert sp.min_kmh == 0.0
         assert sp.max_kmh == 0.0
         assert not sp.steady_speed
+        assert not sp.has_acceleration
+        assert sp.known_speed_fraction == 1.0
+        assert sp.driving_fraction == 1.0
 
     def test_from_stats_no_phase(self) -> None:
         sp = SpeedProfile.from_stats({"min_kmh": 10, "max_kmh": 50})
         assert sp.has_cruise is False
         assert sp.cruise_fraction == 0.0
+
+    def test_from_stats_reads_phase_fallbacks_from_nested_phase_maps(self) -> None:
+        sp = SpeedProfile.from_stats(
+            {
+                "min_kmh": 20,
+                "max_kmh": 60,
+                "sample_count": 50,
+            },
+            {
+                "phase_counts": {"acceleration": 5, "cruise": 20},
+                "phase_pcts": {"cruise": 40.0, "idle": 15.0, "speed_unknown": 20.0},
+            },
+        )
+        assert sp.has_cruise is True
+        assert sp.has_acceleration is True
+        assert sp.cruise_fraction == pytest.approx(0.40)
+        assert sp.idle_fraction == pytest.approx(0.15)
+        assert sp.speed_unknown_fraction == pytest.approx(0.20)
 
 
 # ── RunSuitability ───────────────────────────────────────────────────────────

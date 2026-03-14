@@ -206,7 +206,7 @@ Interpretation rules:
 | **FindingEvidence** | ✅ Implemented | Structured support for a finding | evidence quality (is_strong, is_consistent, is_well_localized), match_rate, SNR, presence_ratio, burstiness, spatial_concentration |
 | **LocationHotspot** | ✅ Implemented | Spatial concentration of evidence | is_well_localized, is_actionable, display_location, dominance_ratio, alternative_locations |
 | **ConfidenceAssessment** | ✅ Implemented | Why confidence is high, low, or withheld | tier (A/B/C), is_conclusive, needs_more_data, reason, downgraded |
-| **SpeedProfile** | ✅ Implemented | Run speed behavior as a diagnostic concept | is_adequate_for_diagnosis, has_steady_cruise, speed_range_kmh, cruise_fraction |
+| **SpeedProfile** | ✅ Implemented | Run speed behavior as a diagnostic concept | is_adequate_for_diagnosis, known_speed_fraction, driving_fraction, has_speed_variation, supports_variable_speed_diagnosis, supports_steady_state_diagnosis |
 | **RunSuitability** | ✅ Implemented | Whether a run is trustworthy enough | overall (pass/caution/fail), is_usable, failed_checks, warning_checks |
 | **ConfigurationSnapshot** | ✅ Implemented | Vehicle/setup state at a specific moment | immutable diagnostic context for interpreting a run |
 | **VibrationOrigin** | ✅ Implemented | Suspected source/origin conclusion | source semantics, dominance, ambiguity |
