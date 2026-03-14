@@ -1,53 +1,110 @@
-"""Tests for LocalizationAssessment – rich object for localization reasoning."""
+"""Tests for LocationHotspot – domain object for spatial vibration reasoning.
+
+Covers: from_analysis_inputs construction, promote_near_tie enrichment,
+with_adaptive_weak_spatial threshold logic, classification queries,
+summary_location display, and edge cases.
+"""
 
 from __future__ import annotations
 
-from tests.test_support.findings import make_finding_payload
-from vibesensor.analysis.summary_builder import LocalizationAssessment
+from vibesensor.domain.location_hotspot import LocationHotspot
 
 # ---------------------------------------------------------------------------
-# Classification
+# Construction via from_analysis_inputs
+# ---------------------------------------------------------------------------
+
+
+class TestFromAnalysisInputs:
+    def test_basic_construction(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+        assert h.strongest_location == "front_left"
+        assert h.dominance_ratio is None
+        assert h.weak_spatial_separation is False
+        assert h.ambiguous is False
+        assert h.alternative_locations == ()
+
+    def test_with_alternatives(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            alternative_locations=["front_right", "rear_left"],
+        )
+        assert h.alternative_locations == ("front_right", "rear_left")
+
+    def test_filters_empty_alternatives(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            alternative_locations=["front_right", "", "rear_left"],
+        )
+        assert h.alternative_locations == ("front_right", "rear_left")
+
+    def test_all_fields(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            dominance_ratio=2.5,
+            localization_confidence=0.85,
+            weak_spatial_separation=True,
+            ambiguous=True,
+            alternative_locations=["rear_right"],
+        )
+        assert h.dominance_ratio == 2.5
+        assert h.localization_confidence == 0.85
+        assert h.weak_spatial_separation is True
+        assert h.ambiguous is True
+
+
+# ---------------------------------------------------------------------------
+# Classification queries
 # ---------------------------------------------------------------------------
 
 
 class TestClassification:
-    def test_localized_with_known_location(self) -> None:
-        finding = make_finding_payload(strongest_location="front_left")
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.is_localized is True
+    def test_well_localized_with_known_location(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            dominance_ratio=2.0,
+        )
+        assert h.is_well_localized is True
 
-    def test_not_localized_when_unknown(self) -> None:
-        finding = make_finding_payload(strongest_location="unknown")
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.is_localized is False
+    def test_not_well_localized_when_unknown(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(strongest_location="unknown")
+        assert h.is_well_localized is False
 
-    def test_not_localized_when_empty(self) -> None:
-        finding = make_finding_payload(strongest_location="")
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.is_localized is False
+    def test_not_well_localized_when_empty(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(strongest_location="")
+        assert h.is_well_localized is False
 
-    def test_diffuse_excitation(self) -> None:
-        finding = make_finding_payload(diffuse_excitation=True)
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.is_diffuse is True
+    def test_actionable_with_known_location(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+        assert h.is_actionable is True
 
-    def test_not_diffuse_by_default(self) -> None:
-        finding = make_finding_payload()
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.is_diffuse is False
+    def test_not_actionable_when_ambiguous(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            ambiguous=True,
+        )
+        assert h.is_actionable is False
 
     def test_clear_separation_when_not_weak(self) -> None:
-        finding = make_finding_payload(
-            weak_spatial_separation=False,
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
             dominance_ratio=3.0,
+            weak_spatial_separation=False,
         )
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.has_clear_separation is True
+        assert h.has_clear_separation is True
 
     def test_no_clear_separation_when_weak(self) -> None:
-        finding = make_finding_payload(weak_spatial_separation=True)
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.has_clear_separation is False
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            weak_spatial_separation=True,
+        )
+        assert h.has_clear_separation is False
+
+    def test_no_clear_separation_when_ambiguous(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            ambiguous=True,
+        )
+        assert h.has_clear_separation is False
 
 
 # ---------------------------------------------------------------------------
@@ -56,35 +113,19 @@ class TestClassification:
 
 
 class TestLocationAccess:
-    def test_primary_location(self) -> None:
-        finding = make_finding_payload(strongest_location="rear_right")
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.primary_location == "rear_right"
-
-    def test_primary_defaults_to_unknown(self) -> None:
-        finding = make_finding_payload()
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.primary_location == "unknown"
-
-    def test_supporting_locations_from_hotspot(self) -> None:
-        finding = make_finding_payload(
+    def test_supporting_locations_excludes_primary(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
             strongest_location="front_left",
-            location_hotspot={
-                "ambiguous_locations": ["front_left", "front_right"],
-                "second_location": "rear_left",
-            },
+            alternative_locations=["front_left", "front_right", "rear_left"],
         )
-        loc = LocalizationAssessment.from_finding(finding)
-        supporting = loc.supporting_locations()
+        supporting = h.supporting_locations
         assert "front_right" in supporting
         assert "rear_left" in supporting
-        # primary should not be in supporting
         assert "front_left" not in supporting
 
-    def test_supporting_locations_empty_when_no_hotspot(self) -> None:
-        finding = make_finding_payload(strongest_location="front_left")
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.supporting_locations() == []
+    def test_supporting_locations_empty_when_no_alternatives(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+        assert h.supporting_locations == ()
 
 
 # ---------------------------------------------------------------------------
@@ -94,110 +135,166 @@ class TestLocationAccess:
 
 class TestConfidenceBand:
     def test_high_confidence(self) -> None:
-        finding = make_finding_payload(
-            location_hotspot={"localization_confidence": 0.85},
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            localization_confidence=0.85,
         )
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.confidence_band() == "high"
+        assert h.confidence_band == "high"
 
     def test_medium_confidence(self) -> None:
-        finding = make_finding_payload(
-            location_hotspot={"localization_confidence": 0.55},
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            localization_confidence=0.55,
         )
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.confidence_band() == "medium"
+        assert h.confidence_band == "medium"
 
     def test_low_confidence(self) -> None:
-        finding = make_finding_payload(
-            location_hotspot={"localization_confidence": 0.2},
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            localization_confidence=0.2,
         )
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.confidence_band() == "low"
+        assert h.confidence_band == "low"
 
-    def test_no_hotspot_defaults_to_low(self) -> None:
-        finding = make_finding_payload()
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.confidence_band() == "low"
+    def test_no_confidence_defaults_to_low(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+        assert h.confidence_band == "low"
 
 
 # ---------------------------------------------------------------------------
-# Display helpers
+# summary_location display
 # ---------------------------------------------------------------------------
 
 
-class TestDisplayLocation:
-    def test_simple_location(self) -> None:
-        finding = make_finding_payload(
+class TestSummaryLocation:
+    def test_simple_location_with_clear_separation(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
             strongest_location="front_left",
             dominance_ratio=3.0,
         )
-        loc = LocalizationAssessment.from_finding(finding)
-        assert loc.display_location() == "front_left"
+        assert h.summary_location == "front_left"
 
     def test_ambiguous_location_shows_alternatives(self) -> None:
-        finding = make_finding_payload(
+        h = LocationHotspot.from_analysis_inputs(
             strongest_location="front_left",
-            dominance_ratio=1.05,
             weak_spatial_separation=True,
-            location_hotspot={
-                "ambiguous_locations": ["front_left", "front_right"],
-                "second_location": "",
-                "location_count": 2,
-            },
+            alternative_locations=["front_right"],
         )
-        loc = LocalizationAssessment.from_finding(finding)
-        display = loc.display_location()
-        assert "front_left" in display
-        assert "front_right" in display
-        assert " / " in display
+        location = h.summary_location
+        assert "front_left" in location
+        assert "front_right" in location
+        assert " / " in location
+
+    def test_defaults_to_unknown_when_empty(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(strongest_location="")
+        assert h.summary_location == "unknown"
 
 
 # ---------------------------------------------------------------------------
-# Multi-finding enrichment
+# promote_near_tie
 # ---------------------------------------------------------------------------
 
 
-class TestEnrichFromSecondFinding:
+class TestPromoteNearTie:
     def test_close_confidence_promotes_ambiguity(self) -> None:
-        top_finding = make_finding_payload(
+        h = LocationHotspot.from_analysis_inputs(
             strongest_location="front_left",
-            confidence=0.80,
+            dominance_ratio=2.0,
         )
-        second_finding = make_finding_payload(
-            strongest_location="rear_right",
-            confidence=0.60,
+        promoted = h.promote_near_tie(
+            alternative_location="rear_right",
+            top_confidence=0.80,
+            alternative_confidence=0.60,  # 0.75 >= 0.7 threshold
         )
-        loc = LocalizationAssessment.from_finding(top_finding)
-        loc.enrich_from_second_finding(second_finding, top_confidence=0.80)
-        # 0.60 / 0.80 = 0.75 >= 0.7 → promotes ambiguity
-        assert loc.has_clear_separation is False
-        assert "rear_right" in loc.supporting_locations()
+        assert promoted.weak_spatial_separation is True
+        assert promoted.ambiguous is True
+        assert "rear_right" in promoted.alternative_locations
 
     def test_distant_confidence_preserves_state(self) -> None:
-        top_finding = make_finding_payload(
+        h = LocationHotspot.from_analysis_inputs(
             strongest_location="front_left",
-            confidence=0.90,
             dominance_ratio=3.0,
         )
-        second_finding = make_finding_payload(
-            strongest_location="rear_right",
-            confidence=0.30,
+        result = h.promote_near_tie(
+            alternative_location="rear_right",
+            top_confidence=0.90,
+            alternative_confidence=0.30,  # 0.33 < 0.7 threshold
         )
-        loc = LocalizationAssessment.from_finding(top_finding)
-        loc.enrich_from_second_finding(second_finding, top_confidence=0.90)
-        # 0.30 / 0.90 = 0.33 < 0.7 → no change
-        assert "rear_right" not in loc.supporting_locations()
+        assert result is h  # unchanged — returns same object
 
     def test_same_location_no_promotion(self) -> None:
-        top_finding = make_finding_payload(
+        h = LocationHotspot.from_analysis_inputs(
             strongest_location="front_left",
-            confidence=0.80,
         )
-        second_finding = make_finding_payload(
+        result = h.promote_near_tie(
+            alternative_location="front_left",
+            top_confidence=0.80,
+            alternative_confidence=0.75,
+        )
+        assert result is h
+
+    def test_empty_alternative_no_promotion(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+        result = h.promote_near_tie(
+            alternative_location="",
+            top_confidence=0.80,
+            alternative_confidence=0.75,
+        )
+        assert result is h
+
+    def test_zero_top_confidence_no_promotion(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+        result = h.promote_near_tie(
+            alternative_location="rear_right",
+            top_confidence=0.0,
+            alternative_confidence=0.75,
+        )
+        assert result is h
+
+
+# ---------------------------------------------------------------------------
+# with_adaptive_weak_spatial
+# ---------------------------------------------------------------------------
+
+
+class TestAdaptiveWeakSpatial:
+    def test_low_dominance_becomes_weak(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
             strongest_location="front_left",
-            confidence=0.75,
+            dominance_ratio=1.05,
         )
-        loc = LocalizationAssessment.from_finding(top_finding)
-        loc.enrich_from_second_finding(second_finding, top_confidence=0.80)
-        # Same location — no promotion
-        assert loc.supporting_locations() == []
+        result = h.with_adaptive_weak_spatial(location_count=2)
+        assert result.weak_spatial_separation is True
+
+    def test_high_dominance_stays_strong(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            dominance_ratio=3.0,
+        )
+        result = h.with_adaptive_weak_spatial(location_count=2)
+        assert result.weak_spatial_separation is False
+
+    def test_none_dominance_unchanged(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+        )
+        result = h.with_adaptive_weak_spatial(location_count=2)
+        assert result is h
+
+    def test_already_weak_stays_weak(self) -> None:
+        h = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            dominance_ratio=3.0,
+            weak_spatial_separation=True,
+        )
+        result = h.with_adaptive_weak_spatial(location_count=2)
+        assert result.weak_spatial_separation is True
+
+    def test_threshold_scales_with_location_count(self) -> None:
+        baseline = LocationHotspot.weak_spatial_threshold(2)
+        three = LocationHotspot.weak_spatial_threshold(3)
+        five = LocationHotspot.weak_spatial_threshold(5)
+        assert three > baseline
+        assert five > three
+
+    def test_none_location_count_uses_baseline(self) -> None:
+        assert LocationHotspot.weak_spatial_threshold(None) == LocationHotspot.WEAK_SPATIAL_BASELINE

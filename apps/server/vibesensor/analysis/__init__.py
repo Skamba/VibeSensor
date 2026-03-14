@@ -16,7 +16,6 @@ from ._types import AnalysisSummary, FindingPayload, SuspectedVibrationOrigin, i
 from .order_bands import build_order_bands, vehicle_orders_hz
 from .phase_segmentation import classify_sample_phase
 from .summary_builder import (
-    LocalizationAssessment,
     RunAnalysis,
     build_findings_for_samples,
     summarize_log,
@@ -27,7 +26,6 @@ from .top_cause_selection import confidence_label, select_top_causes
 __all__ = [
     "DrivingPhase",
     "FindingPayload",
-    "LocalizationAssessment",
     "RunAnalysis",
     "AnalysisSummary",
     "SuspectedVibrationOrigin",
