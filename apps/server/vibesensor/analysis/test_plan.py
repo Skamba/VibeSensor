@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Sequence
 from math import ceil, floor, log1p, pow
 
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
-from ..domain import LocationHotspot, RecommendedAction, TestPlan, VibrationSource
+from ..domain import Finding, LocationHotspot, RecommendedAction, TestPlan, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..locations import has_any_wheel_location, is_wheel_location
 from ._types import (
@@ -137,6 +138,43 @@ def _merge_test_plan(
                 ),
             )
 
+    return _prioritize_test_steps(steps)
+
+
+def _domain_finding_frequency(finding: Finding) -> str:
+    if finding.order.strip():
+        return finding.order.strip()
+    if finding.frequency_hz is None:
+        return ""
+    return f"{finding.frequency_hz:g} Hz"
+
+
+def _merge_domain_test_plan(
+    findings: Sequence[Finding],
+    lang: str,
+) -> list[TestStep]:
+    steps: list[TestStep] = []
+    for finding in findings:
+        generated_steps = _finding_actions_for_source(
+            finding.source_normalized,
+            strongest_location=_normalized_text(finding.strongest_location),
+            strongest_speed_band=_normalized_text(finding.strongest_speed_band),
+            weak_spatial_separation=finding.weak_spatial_separation,
+        )
+        for step in generated_steps:
+            steps.append(
+                _enrich_test_step(
+                    step,
+                    finding_confidence=finding.confidence,
+                    finding_speed_band=_normalized_text(finding.strongest_speed_band),
+                    finding_frequency=_domain_finding_frequency(finding),
+                )
+            )
+
+    return _prioritize_test_steps(steps)
+
+
+def _prioritize_test_steps(steps: list[TestStep]) -> list[TestStep]:
     dedup: dict[str, TestStep] = {}
     ordered: list[TestStep] = []
     for step in steps:
@@ -179,6 +217,30 @@ def _step_text(value: object) -> str:
 
 def build_domain_test_plan(findings: list[FindingPayload], lang: str) -> TestPlan:
     steps = _merge_test_plan(findings, lang)
+    actions: list[RecommendedAction] = []
+    for priority, step in enumerate(steps, start=1):
+        action_id = _normalized_lower_text(step.get("action_id"))
+        if not action_id:
+            continue
+        actions.append(
+            RecommendedAction(
+                action_id=action_id,
+                what=_step_text(step.get("what")),
+                why=_step_text(step.get("why")),
+                confirm=_step_text(step.get("confirm")),
+                falsify=_step_text(step.get("falsify")),
+                eta=_normalized_text(step.get("eta")) or None,
+                priority=priority,
+            )
+        )
+    return TestPlan(
+        actions=tuple(actions),
+        requires_additional_data=not bool(findings),
+    )
+
+
+def build_domain_test_plan_from_findings(findings: Sequence[Finding], lang: str) -> TestPlan:
+    steps = _merge_domain_test_plan(findings, lang)
     actions: list[RecommendedAction] = []
     for priority, step in enumerate(steps, start=1):
         action_id = _normalized_lower_text(step.get("action_id"))

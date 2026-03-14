@@ -5,6 +5,7 @@ from .finding_synthesis import synthesize_origin
 from .hypothesis_evaluation import evaluate_hypotheses
 from .observation_extraction import extract_observations_from_findings
 from .signature_recognition import recognize_signatures
+from .test_planning import plan_test_actions
 
 __all__ = [
     "extract_observations_from_findings",
@@ -12,4 +13,5 @@ __all__ = [
     "evaluate_hypotheses",
     "synthesize_origin",
     "reconcile_case",
+    "plan_test_actions",
 ]

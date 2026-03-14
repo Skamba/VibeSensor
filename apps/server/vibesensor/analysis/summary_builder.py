@@ -37,6 +37,7 @@ from ..domain import (
 from ..domain.services import (
     evaluate_hypotheses,
     extract_observations_from_findings,
+    plan_test_actions,
     recognize_signatures,
 )
 from ..json_utils import as_float_or_none as _as_float
@@ -94,7 +95,7 @@ from .helpers import (
 from .phase_segmentation import DrivingPhase, PhaseSegment, segment_run_phases
 from .plots import _plot_data
 from .strength_labels import strength_label as _strength_label
-from .test_plan import _merge_test_plan, build_domain_test_plan
+from .test_plan import _merge_test_plan
 from .top_cause_selection import select_top_causes
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1297,7 +1298,11 @@ class RunAnalysis:
         hypotheses = evaluate_hypotheses(signatures)
         configuration_snapshot = ConfigurationSnapshot.from_metadata(self._metadata)
         driving_segments = build_domain_driving_segments(self._prepared.phase_segments)
-        domain_test_plan = build_domain_test_plan(findings, self._language)
+        domain_test_plan = plan_test_actions(
+            domain_findings,
+            hypotheses,
+            lang=self._language,
+        )
         self._test_run = TestRun(
             run=Run(run_id=self._prepared.run_id, analysis_settings={}),
             configuration_snapshot=configuration_snapshot,
