@@ -444,9 +444,8 @@ class Finding:
         else:
             label_key, tone = "CONFIDENCE_LOW", "neutral"
         if (
-            (strength_band_key or "").strip().lower() == "negligible"
-            and label_key == "CONFIDENCE_HIGH"
-        ):
+            strength_band_key or ""
+        ).strip().lower() == "negligible" and label_key == "CONFIDENCE_HIGH":
             label_key, tone = "CONFIDENCE_MEDIUM", "warn"
         return label_key, tone, pct_text
 

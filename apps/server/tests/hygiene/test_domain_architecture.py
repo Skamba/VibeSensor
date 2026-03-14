@@ -336,3 +336,228 @@ def test_non_reference_findings_uses_domain_classification() -> None:
     assert "F001" in ids
     assert "F002" in ids
     assert "REF_SPEED" not in ids
+
+
+# ── Finding owns confidence presentation ─────────────────────────────────
+
+
+def test_finding_owns_confidence_label() -> None:
+    """Finding must own confidence-tier classification (label, tone, pct)."""
+    from vibesensor.domain import Finding
+
+    high = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
+    label_key, tone, pct_text = high.confidence_label()
+    assert label_key == "CONFIDENCE_HIGH"
+    assert tone == "success"
+    assert pct_text == "80%"
+
+    medium = Finding(finding_id="F002", confidence=0.55, suspected_source="engine")
+    label_key, tone, _ = medium.confidence_label()
+    assert label_key == "CONFIDENCE_MEDIUM"
+    assert tone == "warn"
+
+    low = Finding(finding_id="F003", confidence=0.20, suspected_source="unknown")
+    label_key, tone, _ = low.confidence_label()
+    assert label_key == "CONFIDENCE_LOW"
+    assert tone == "neutral"
+
+
+def test_finding_confidence_negligible_strength_downgrade() -> None:
+    """Finding with negligible strength should downgrade HIGH → MEDIUM."""
+    from vibesensor.domain import Finding
+
+    high = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
+    label_key, tone, _ = high.confidence_label(strength_band_key="negligible")
+    assert label_key == "CONFIDENCE_MEDIUM"
+    assert tone == "warn"
+
+
+def test_confidence_label_delegates_to_domain() -> None:
+    """top_cause_selection.confidence_label must agree with Finding.confidence_label."""
+    from vibesensor.analysis.top_cause_selection import confidence_label
+    from vibesensor.domain import Finding
+
+    for conf in (0.80, 0.55, 0.20, 0.0, None):
+        expected = Finding(confidence=float(conf) if conf is not None else 0.0).confidence_label()
+        actual = confidence_label(conf)
+        assert actual == expected, f"Mismatch for confidence={conf}: {actual} != {expected}"
+
+
+# ── RunAnalysisResult owns primary source/location queries ───────────────
+
+
+def test_run_analysis_result_primary_source_and_location() -> None:
+    """``primary_source`` and ``primary_location`` are domain queries."""
+    from vibesensor.domain import Finding, RunAnalysisResult, VibrationSource
+
+    f = Finding(
+        finding_id="F001",
+        confidence=0.80,
+        suspected_source="wheel/tire",
+        strongest_location="Left Front",
+    )
+    result = RunAnalysisResult(run_id="test", findings=(f,), top_causes=(f,))
+    assert result.primary_source == VibrationSource.WHEEL_TIRE
+    assert result.primary_location == "Left Front"
+
+    # No findings → None
+    empty = RunAnalysisResult(run_id="test", findings=(), top_causes=())
+    assert empty.primary_source is None
+    assert empty.primary_location is None
+
+
+# ── Domain objects are immutable ──────────────────────────────────────────
+
+
+def test_finding_is_frozen_dataclass() -> None:
+    """Finding must be a frozen dataclass — mutation raises."""
+    import dataclasses
+
+    from vibesensor.domain import Finding
+
+    assert dataclasses.is_dataclass(Finding)
+    f = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
+    with pytest.raises(AttributeError):
+        f.confidence = 0.50  # type: ignore[misc]
+
+
+def test_finding_tuples_are_immutable() -> None:
+    """RunAnalysisResult findings must be tuples (not mutable lists)."""
+    from vibesensor.domain import Finding, RunAnalysisResult
+
+    f = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
+    result = RunAnalysisResult(run_id="test", findings=(f,), top_causes=(f,))
+    assert isinstance(result.findings, tuple)
+    assert isinstance(result.top_causes, tuple)
+
+
+# ── Report mapping uses domain aggregate ─────────────────────────────────
+
+
+def test_build_system_cards_uses_domain_findings() -> None:
+    """build_system_cards must read confidence tone from domain, not dict."""
+    from vibesensor.domain import Finding, RunAnalysisResult
+    from vibesensor.report.mapping import (
+        PrimaryCandidateContext,
+        ReportMappingContext,
+        build_system_cards,
+    )
+    from vibesensor.report_i18n import tr
+
+    lang = "en"
+    domain_f = Finding(
+        finding_id="F001",
+        confidence=0.80,
+        suspected_source="wheel/tire",
+        strongest_location="Left Front",
+    )
+    aggregate = RunAnalysisResult(
+        run_id="test",
+        findings=(domain_f,),
+        top_causes=(domain_f,),
+    )
+    # Build a context with the aggregate and matching payload top_causes
+    cause_payload = {
+        "finding_id": "F001",
+        "suspected_source": "wheel/tire",
+        "confidence": 0.80,
+        "strongest_location": "Left Front",
+        "confidence_tone": "WRONG_TONE",  # Intentionally wrong
+    }
+    context = ReportMappingContext(
+        meta={},
+        car_name=None,
+        car_type=None,
+        date_str="",
+        top_causes=[cause_payload],  # type: ignore[list-item]
+        findings_non_ref=[],
+        findings=[],
+        speed_stats={},  # type: ignore[typeddict-item]
+        origin={},  # type: ignore[typeddict-item]
+        origin_location="",
+        sensor_locations_active=[],
+        duration_text=None,
+        start_time_utc=None,
+        end_time_utc=None,
+        sample_rate_hz=None,
+        tire_spec_text=None,
+        sample_count=0,
+        sensor_model=None,
+        firmware_version=None,
+        domain_aggregate=aggregate,
+    )
+    primary = PrimaryCandidateContext(
+        primary_candidate=cause_payload,  # type: ignore[arg-type]
+        primary_source="wheel/tire",
+        primary_system="Wheel/Tire",
+        primary_location="Left Front",
+        primary_speed="80-90 km/h",
+        confidence=0.80,
+        sensor_count=2,
+        weak_spatial=False,
+        has_reference_gaps=False,
+        strength_db=12.0,
+        strength_text="Moderate (12.0 dB)",
+        strength_band_key="moderate",
+        certainty_key="high",
+        certainty_label_text="High",
+        certainty_pct="80%",
+        certainty_reason="Consistent order-tracking match",
+        tier="C",
+    )
+    cards = build_system_cards(context, primary, lang, lambda key, **kw: tr(lang, key, **kw))
+    assert len(cards) == 1
+    # The tone should come from domain Finding, not the payload's "WRONG_TONE"
+    assert cards[0].tone != "WRONG_TONE"
+    assert cards[0].tone == "success"  # HIGH confidence → success
+
+
+# ── Pipeline produces domain aggregate for report ─────────────────────────
+
+
+def test_map_summary_produces_report_with_domain_findings() -> None:
+    """map_summary must produce report data using domain-first pipeline."""
+    from tests.test_support.findings import make_finding_payload
+    from vibesensor.report.mapping import map_summary
+
+    summary = {
+        "run_id": "test-map",
+        "file_name": "test.csv",
+        "rows": 100,
+        "duration_s": 60.0,
+        "lang": "en",
+        "findings": [make_finding_payload(finding_id="F001", confidence=0.80)],
+        "top_causes": [make_finding_payload(finding_id="F001", confidence=0.80)],
+        "sensor_count_used": 2,
+    }
+    template = map_summary(summary)  # type: ignore[arg-type]
+    assert template.run_id == "test-map"
+
+
+# ── Domain modules do not import boundary payload types ──────────────────
+
+
+def test_domain_package_has_no_payload_type_imports() -> None:
+    """No domain module may import FindingPayload or AnalysisSummary.
+
+    These are boundary types that belong in adapter layers.
+    """
+    import ast
+    from pathlib import Path
+
+    domain_dir = Path("apps/server/vibesensor/domain")
+    violations: list[str] = []
+    forbidden = {"FindingPayload", "AnalysisSummary"}
+    for py_file in domain_dir.glob("*.py"):
+        source = py_file.read_text()
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                names = [alias.name for alias in node.names]
+                for name in names:
+                    if name in forbidden:
+                        violations.append(f"{py_file.name} imports {name}")
+    assert not violations, f"Domain modules must not import boundary types: {violations}"
