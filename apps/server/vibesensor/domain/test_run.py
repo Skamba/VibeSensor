@@ -140,5 +140,15 @@ class TestRun:
         return None
 
     @property
+    def usable_segments(self) -> tuple[DrivingSegment, ...]:
+        """Segments that can contribute to diagnostic conclusions."""
+        return tuple(s for s in self.driving_segments if s.is_diagnostically_usable)
+
+    @property
+    def total_usable_samples(self) -> int:
+        """Total sample count across diagnostically usable segments."""
+        return sum(s.sample_count for s in self.usable_segments)
+
+    @property
     def recommended_actions(self) -> tuple[RecommendedAction, ...]:
         return self.test_plan.prioritized_actions
