@@ -29,6 +29,7 @@ from ..domain import (
     SpeedProfile,
     Symptom,
     TestRun,
+    VibrationSource,
 )
 from ..domain import (
     DrivingSegment as DomainDrivingSegment,
@@ -37,8 +38,9 @@ from ..domain import (
     Finding as DomainFinding,
 )
 from ..domain.services import (
+    ObservationEvidence,
     evaluate_hypotheses,
-    extract_observations_from_findings,
+    extract_observations,
     plan_test_actions,
     recognize_signatures,
 )
@@ -986,6 +988,49 @@ class AnalysisResult:
     summary: AnalysisSummary
 
 
+def _extract_magnitude_db(payload: FindingPayload) -> float | None:
+    metrics = payload.get("evidence_metrics")
+    if isinstance(metrics, dict):
+        val = metrics.get("vibration_strength_db")
+        if val is not None:
+            try:
+                return float(val)  # type: ignore[arg-type]
+            except (ValueError, TypeError):
+                pass
+    return None
+
+
+def _build_observation_evidence(
+    findings: list[FindingPayload],
+) -> list[ObservationEvidence]:
+    evidence_items: list[ObservationEvidence] = []
+    for payload in findings:
+        sig_labels: tuple[str, ...] = ()
+        freq_or_order = str(payload.get("frequency_hz_or_order") or "")
+        sigs = payload.get("signatures_observed")
+        if isinstance(sigs, list) and sigs:
+            sig_labels = tuple(str(s) for s in sigs)
+        if not sig_labels and freq_or_order:
+            sig_labels = (freq_or_order,)
+        raw_source = str(payload.get("suspected_source") or payload.get("source") or "unknown")
+        try:
+            source = VibrationSource(raw_source.strip().lower())
+        except ValueError:
+            source = VibrationSource.UNKNOWN
+        evidence_items.append(
+            ObservationEvidence(
+                source=source,
+                signature_labels=sig_labels,
+                magnitude_db=_extract_magnitude_db(payload),
+                speed_band=payload.get("strongest_speed_band"),  # type: ignore[arg-type]
+                dominant_phase=payload.get("dominant_phase"),  # type: ignore[arg-type]
+                location=payload.get("strongest_location"),  # type: ignore[arg-type]
+                confidence=float(payload.get("confidence") or 0.0),  # type: ignore[arg-type]
+            )
+        )
+    return evidence_items
+
+
 class RunAnalysis:
     """Cohesive object around a single analyzed run.
 
@@ -1127,7 +1172,8 @@ class RunAnalysis:
             tuple(enriched_domain_top_causes) if enriched_domain_top_causes else domain_top_causes
         )
 
-        observations = extract_observations_from_findings(domain_findings, findings)
+        evidence_items = _build_observation_evidence(findings)
+        observations = extract_observations(evidence_items)
         signatures = recognize_signatures(observations)
         hypotheses = evaluate_hypotheses(signatures)
         configuration_snapshot = ConfigurationSnapshot.from_metadata(self._metadata)
