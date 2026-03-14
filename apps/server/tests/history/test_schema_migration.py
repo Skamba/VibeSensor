@@ -209,6 +209,64 @@ def test_historydb_migrates_v8_database_backfills_case_id_from_analysis_summary(
     db.close()
 
 
+def test_historydb_migrated_v8_case_id_supports_forward_only_followup_attachment(
+    tmp_path: Path,
+) -> None:
+    from vibesensor.boundaries import diagnostic_case_from_summary
+
+    db_path = tmp_path / "history.db"
+    _create_v8_database(
+        db_path,
+        analysis_json='{"case_id": "case-from-summary", "findings": [], "top_causes": [], "warnings": []}',
+    )
+
+    db = HistoryDB(db_path)
+
+    legacy_run = db.get_run("legacy-run")
+
+    assert legacy_run is not None
+    assert legacy_run["case_id"] == "case-from-summary"
+    assert diagnostic_case_from_summary(legacy_run["analysis"]).case_id == "case-from-summary"
+
+    db.create_run(
+        "followup-run",
+        "2026-01-02T00:00:00Z",
+        {
+            "source": "followup",
+            "sensor_model": "fixture-sensor",
+            "sample_rate_hz": 400,
+        },
+    )
+
+    assert (
+        db.finalize_run(
+            "followup-run",
+            "2026-01-02T00:05:00Z",
+            metadata={
+                "source": "followup",
+                "sensor_model": "fixture-sensor",
+                "sample_rate_hz": 400,
+                "step": 2,
+            },
+            case_id=legacy_run["case_id"],
+        )
+        is True
+    )
+    db.close()
+
+    reopened_db = HistoryDB(db_path)
+    try:
+        migrated_legacy_run = reopened_db.get_run("legacy-run")
+        followup_run = reopened_db.get_run("followup-run")
+    finally:
+        reopened_db.close()
+
+    assert migrated_legacy_run is not None
+    assert migrated_legacy_run["case_id"] == "case-from-summary"
+    assert followup_run is not None
+    assert followup_run["case_id"] == "case-from-summary"
+
+
 def test_historydb_newer_version_raises(tmp_path: Path) -> None:
     """HistoryDB should refuse to open a database with a newer schema version."""
     db_path = tmp_path / "history.db"
