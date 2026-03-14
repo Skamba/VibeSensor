@@ -21,6 +21,7 @@ from ..domain.symptom import Symptom
 from ..domain.test_plan import TestPlan
 from ..domain.test_run import TestRun
 from .run_suitability import run_suitability_from_payload, run_suitability_payload
+from .test_steps import step_payloads_from_plan
 from .vibration_origin import origin_payload_from_finding, vibration_origin_from_payload
 
 
@@ -185,20 +186,6 @@ def _origin_payload_from_aggregate(
         return fallback_payload
 
     return origin_payload_from_finding(primary, fallback_payload)
-
-
-def _steps_from_test_plan(test_plan: TestPlan) -> list[dict[str, object]]:
-    return [
-        {
-            "action_id": action.action_id,
-            "what": action.what,
-            "why": action.why,
-            "confirm": action.confirm,
-            "falsify": action.falsify,
-            "eta": action.eta,
-        }
-        for action in test_plan.prioritized_actions
-    ]
 
 
 def _has_structured_step_content(steps: object) -> bool:
@@ -366,7 +353,7 @@ def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, o
     )
     if test_run is not None:
         if not _has_structured_step_content(summary.get("test_plan")):
-            projected["test_plan"] = _steps_from_test_plan(test_run.test_plan)
+            projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
         projected["run_suitability"] = _checks_from_suitability(test_run.suitability)
 
     return projected
