@@ -210,7 +210,7 @@ class PostAnalysisWorker:
         analysis_start = time.monotonic()
         LOGGER.info("Analysis started for run %s", run_id)
         try:
-            from ..analysis import summarize_run_data
+            from ..analysis import RunAnalysis
             from ..boundaries.diagnostic_case import project_summary_through_domain
 
             metadata = db.get_run_metadata(run_id)
@@ -246,13 +246,14 @@ class PostAnalysisWorker:
                     self._last_completed_error = error_msg
                 db.store_analysis_error(run_id, error_msg)
                 return
-            summary = summarize_run_data(
+            result = RunAnalysis(
                 metadata,
                 samples,
                 lang=language,
                 file_name=run_id,
                 include_samples=False,
-            )
+            ).summarize()
+            summary = result.summary
             summary["analysis_metadata"] = {
                 "analyzed_sample_count": len(samples),
                 "total_sample_count": total_sample_count,

@@ -118,7 +118,8 @@ def test_report_certainty_smoke_uses_speed_profile_over_raw_speed_stats() -> Non
     """Report certainty should follow the live aggregate speed profile, not raw speed_stats."""
     meta, samples = _make_steady_speed_fault_dataset()
     analysis = RunAnalysis(meta, samples, lang="en", file_name="steady-speed-proof")
-    summary = analysis.summarize()
+    result = analysis.summarize()
+    summary = result.summary
 
     assert analysis.analysis_result is not None
     assert analysis.analysis_result.speed_profile is not None

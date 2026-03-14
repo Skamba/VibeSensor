@@ -31,10 +31,16 @@ def test_start_append_stop_produces_complete_run_in_db(
 
     fake_analysis = {"score": 42, "details": "looks good"}
 
-    def _fast_summary(metadata, samples, lang=None, file_name="run", include_samples=False):
-        return dict(fake_analysis)
+    class _FakeRunAnalysis:
+        def __init__(self, *args, **kwargs):
+            pass
 
-    monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _fast_summary)
+        def summarize(self):
+            from types import SimpleNamespace
+
+            return SimpleNamespace(summary=dict(fake_analysis))
+
+    monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _FakeRunAnalysis)
     logger.stop_recording()
 
     def _status():
