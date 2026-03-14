@@ -6,6 +6,7 @@ import asyncio
 from typing import TYPE_CHECKING, Never, cast
 
 from ..backend_types import HistoryRunListEntryPayload, HistoryRunPayload
+from ..boundaries.diagnostic_case import project_summary_through_domain
 from ..exceptions import AnalysisNotReadyError, RunNotFoundError
 from ..history_db import RunStatus
 from ..json_types import JsonObject, is_json_object
@@ -41,7 +42,11 @@ class HistoryRunService:
         run = await async_require_run(self._history_db, run_id)
         analysis = run.get("analysis")
         if is_json_object(analysis):
-            updated_run: HistoryRunPayload = {**run, "analysis": strip_internal_fields(analysis)}
+            projected_analysis = project_summary_through_domain(analysis)
+            updated_run: HistoryRunPayload = {
+                **run,
+                "analysis": strip_internal_fields(projected_analysis),
+            }
             return updated_run
         return run
 
@@ -55,7 +60,7 @@ class HistoryRunService:
         if run["status"] == RunStatus.ANALYZING:
             return None
 
-        analysis = require_analysis_ready(run)
+        analysis = project_summary_through_domain(require_analysis_ready(run))
         current_active_car_snapshot = (
             self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )
