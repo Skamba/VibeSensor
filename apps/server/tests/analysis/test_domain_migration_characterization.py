@@ -4,8 +4,14 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_support import make_diffuse_samples, make_engine_order_samples, make_sample, standard_metadata
+from test_support import (
+    make_diffuse_samples,
+    make_engine_order_samples,
+    make_sample,
+    standard_metadata,
+)
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
+
 from vibesensor.analysis import RunAnalysis, summarize_run_data
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
@@ -42,6 +48,22 @@ def _first_action_id(summary: dict[str, Any]) -> str | None:
         return None
     action_id = first.get("action_id")
     return str(action_id) if action_id is not None else None
+
+
+def _action_ids(summary: dict[str, Any]) -> list[str]:
+    test_plan = summary.get("test_plan")
+    if not isinstance(test_plan, list):
+        return []
+
+    action_ids: list[str] = []
+    for step in test_plan:
+        if not isinstance(step, dict):
+            continue
+        action_id = step.get("action_id")
+        if action_id is None:
+            continue
+        action_ids.append(str(action_id))
+    return action_ids
 
 
 def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict[str, Any]:
@@ -141,6 +163,35 @@ def test_characterization_wheel_fault_summary_contract() -> None:
     assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
     assert _run_suitability_state(summary, "SUITABILITY_CHECK_SENSOR_COVERAGE") == "pass"
     assert _first_action_id(summary) == "wheel_tire_condition"
+
+
+def test_characterization_live_analysis_surfaces_domain_plan_ordering() -> None:
+    analysis = RunAnalysis(
+        standard_metadata(),
+        fault_phase(
+            speed_kmh=80.0,
+            duration_s=20.0,
+            fault_sensor="front-right",
+            sensors=ALL_SENSORS,
+        ),
+        lang="en",
+        file_name="characterization-wheel-planning",
+    )
+
+    summary = analysis.summarize()
+    test_run = analysis.test_run
+
+    assert test_run is not None
+    action_ids = [action.action_id for action in test_run.test_plan.prioritized_actions]
+    assert action_ids[:2] == [
+        "wheel_tire_condition",
+        "wheel_balance_and_runout",
+    ]
+    assert test_run.test_plan.needs_more_data() is False
+    assert _action_ids(summary)[:2] == [
+        "wheel_tire_condition",
+        "wheel_balance_and_runout",
+    ]
 
 
 def test_characterization_wheel_fault_persist_reload_round_trip(tmp_path: Path) -> None:
