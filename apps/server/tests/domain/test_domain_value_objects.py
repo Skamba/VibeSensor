@@ -24,6 +24,8 @@ from vibesensor.domain import (
     ConfigurationSnapshot,
     DiagnosticCase,
     DiagnosticCaseEpistemicRule,
+    DrivingPhase,
+    DrivingSegment,
     Finding,
     FindingEvidence,
     Hypothesis,
@@ -1804,3 +1806,91 @@ class TestTestRunSensors:
             sensors=sensors,
         )
         assert tr.sensor_count == len(sensors)
+
+
+class TestDrivingSegment:
+    """Tests for DrivingSegment diagnostic-usability semantics."""
+
+    def test_cruise_segment_is_usable(self) -> None:
+        seg = DrivingSegment(
+            phase=DrivingPhase.CRUISE, start_idx=0, end_idx=99, sample_count=100
+        )
+        assert seg.is_diagnostically_usable is True
+
+    def test_idle_segment_is_not_usable(self) -> None:
+        seg = DrivingSegment(
+            phase=DrivingPhase.IDLE, start_idx=0, end_idx=99, sample_count=100
+        )
+        assert seg.is_diagnostically_usable is False
+
+    def test_segment_with_few_samples_is_not_usable(self) -> None:
+        seg = DrivingSegment(
+            phase=DrivingPhase.CRUISE, start_idx=0, end_idx=4, sample_count=5
+        )
+        assert seg.is_diagnostically_usable is False
+
+    def test_duration_with_timestamps(self) -> None:
+        seg = DrivingSegment(
+            phase=DrivingPhase.CRUISE,
+            start_idx=0,
+            end_idx=10,
+            start_t_s=1.0,
+            end_t_s=3.5,
+        )
+        assert seg.duration_s == pytest.approx(2.5)
+
+    def test_duration_without_timestamps(self) -> None:
+        seg = DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=10)
+        assert seg.duration_s is None
+
+    def test_is_cruise_property(self) -> None:
+        cruise = DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=10)
+        accel = DrivingSegment(phase=DrivingPhase.ACCELERATION, start_idx=0, end_idx=10)
+        idle = DrivingSegment(phase=DrivingPhase.IDLE, start_idx=0, end_idx=10)
+        assert cruise.is_cruise is True
+        assert accel.is_cruise is False
+        assert idle.is_cruise is False
+
+
+class TestTestRunSegments:
+    """Tests for TestRun segment aggregate queries."""
+
+    def test_usable_segments_filters_idle(self) -> None:
+        segments = (
+            DrivingSegment(
+                phase=DrivingPhase.CRUISE, start_idx=0, end_idx=49, sample_count=50
+            ),
+            DrivingSegment(
+                phase=DrivingPhase.IDLE, start_idx=50, end_idx=99, sample_count=50
+            ),
+            DrivingSegment(
+                phase=DrivingPhase.ACCELERATION, start_idx=100, end_idx=119, sample_count=20
+            ),
+        )
+        tr = TestRun(
+            run=Run(run_id="r1"),
+            configuration_snapshot=ConfigurationSnapshot(),
+            driving_segments=segments,
+        )
+        usable = tr.usable_segments
+        assert len(usable) == 2
+        assert all(s.phase is not DrivingPhase.IDLE for s in usable)
+
+    def test_total_usable_samples(self) -> None:
+        segments = (
+            DrivingSegment(
+                phase=DrivingPhase.CRUISE, start_idx=0, end_idx=49, sample_count=50
+            ),
+            DrivingSegment(
+                phase=DrivingPhase.IDLE, start_idx=50, end_idx=99, sample_count=50
+            ),
+            DrivingSegment(
+                phase=DrivingPhase.CRUISE, start_idx=100, end_idx=129, sample_count=30
+            ),
+        )
+        tr = TestRun(
+            run=Run(run_id="r1"),
+            configuration_snapshot=ConfigurationSnapshot(),
+            driving_segments=segments,
+        )
+        assert tr.total_usable_samples == 80
