@@ -213,6 +213,7 @@ class HistoryDB:
         run_id: str,
         start_time_utc: str,
         metadata: JsonObject,
+        case_id: str | None = None,
     ) -> None:
         missing = _RECOMMENDED_METADATA_KEYS - metadata.keys()
         if missing:
@@ -234,9 +235,9 @@ class HistoryDB:
                     run_id,
                 )
             cur.execute(
-                "INSERT INTO runs (run_id, status, start_time_utc, metadata_json, created_at) "
-                "VALUES (?, 'recording', ?, ?, ?)",
-                (run_id, start_time_utc, safe_json_dumps(metadata), now),
+                "INSERT INTO runs (run_id, case_id, status, start_time_utc, metadata_json, "
+                "created_at) VALUES (?, ?, 'recording', ?, ?, ?)",
+                (run_id, case_id, start_time_utc, safe_json_dumps(metadata), now),
             )
 
     def append_samples(
@@ -267,22 +268,24 @@ class HistoryDB:
         run_id: str,
         end_time_utc: str,
         metadata: JsonObject | None = None,
+        case_id: str | None = None,
     ) -> bool:
         now = utc_now_iso()
         with self._cursor() as cur:
+            assignments = ["status = 'analyzing'", "end_time_utc = ?", "analysis_started_at = ?"]
+            params: list[object] = [end_time_utc, now]
             if metadata is not None:
-                cur.execute(
-                    "UPDATE runs SET metadata_json = ?, status = 'analyzing', "
-                    "end_time_utc = ?, analysis_started_at = ? "
-                    "WHERE run_id = ? AND status = 'recording'",
-                    (safe_json_dumps(metadata), end_time_utc, now, run_id),
-                )
-            else:
-                cur.execute(
-                    "UPDATE runs SET status = 'analyzing', end_time_utc = ?, "
-                    "analysis_started_at = ? WHERE run_id = ? AND status = 'recording'",
-                    (end_time_utc, now, run_id),
-                )
+                assignments.insert(0, "metadata_json = ?")
+                params.insert(0, safe_json_dumps(metadata))
+            if case_id is not None:
+                assignments.insert(0, "case_id = ?")
+                params.insert(0, case_id)
+            params.append(run_id)
+            cur.execute(
+                f"UPDATE runs SET {', '.join(assignments)} "
+                "WHERE run_id = ? AND status = 'recording'",
+                params,
+            )
             if int(cur.rowcount) > 0:
                 return True
             current_status = self._run_status(cur, run_id)
@@ -454,7 +457,7 @@ class HistoryDB:
     def get_run(self, run_id: str) -> JsonObject | None:
         with self._cursor(commit=False) as cur:
             cur.execute(
-                "SELECT run_id, status, start_time_utc, end_time_utc, "
+                "SELECT run_id, case_id, status, start_time_utc, end_time_utc, "
                 "metadata_json, analysis_json, error_message, created_at, "
                 "sample_count, analysis_started_at, analysis_completed_at "
                 "FROM runs WHERE run_id = ?",
@@ -465,6 +468,7 @@ class HistoryDB:
             return None
         (
             rid,
+            case_id,
             status_raw,
             start,
             end,
@@ -486,6 +490,8 @@ class HistoryDB:
             "created_at": created,
             "sample_count": sample_count,
         }
+        if case_id is not None:
+            entry["case_id"] = case_id
         if analysis_json:
             parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
             if is_json_object(parsed_analysis):

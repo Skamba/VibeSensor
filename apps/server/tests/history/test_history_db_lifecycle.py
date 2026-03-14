@@ -123,6 +123,21 @@ def test_create_run_recovers_previous_recording(tmp_path: Path) -> None:
     assert new_run is not None and new_run["status"] == "recording"
 
 
+def test_create_run_persists_case_id(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+
+    db.create_run(
+        "run-case-create",
+        "2026-01-01T00:00:00Z",
+        {"source": "test"},
+        case_id="case-123",
+    )
+
+    run = db.get_run("run-case-create")
+    assert run is not None
+    assert run["case_id"] == "case-123"
+
+
 def test_create_run_logs_stale_recovery(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-old", "2026-01-01T00:00:00Z", {"source": "test"})
@@ -229,6 +244,27 @@ def test_finalize_run_returns_false_when_already_analyzing(tmp_path: Path) -> No
         )
         is False
     )
+
+
+def test_finalize_run_persists_case_id(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-case-finalize", "2026-01-01T00:00:00Z", {"source": "test"})
+
+    assert (
+        db.finalize_run(
+            "run-case-finalize",
+            "2026-01-01T00:05:00Z",
+            metadata={"source": "test", "step": 1},
+            case_id="case-456",
+        )
+        is True
+    )
+
+    run = db.get_run("run-case-finalize")
+    assert run is not None
+    assert run["status"] == "analyzing"
+    assert run["metadata"]["step"] == 1
+    assert run["case_id"] == "case-456"
 
 
 def test_analyzing_run_health_reports_oldest_age(tmp_path: Path) -> None:
