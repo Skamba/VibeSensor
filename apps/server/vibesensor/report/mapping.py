@@ -736,14 +736,17 @@ def build_system_cards(
     aggregate = context.domain_aggregate
     domain_map: dict[str, Finding] = {}
     if aggregate:
-        for f in (*aggregate.effective_top_causes(), *aggregate.findings):
+        from itertools import chain
+
+        for f in chain(aggregate.effective_top_causes(), aggregate.findings):
             if f.finding_id and f.finding_id not in domain_map:
                 domain_map[f.finding_id] = f
 
     cards: list[SystemFindingCard] = []
     for cause in card_sources[:2]:
-        finding_id = str(cause.get("finding_id") or "")
-        domain_finding = domain_map.get(finding_id)
+        raw_id = cause.get("finding_id")
+        finding_id = str(raw_id) if raw_id is not None else ""
+        domain_finding = domain_map.get(finding_id) if finding_id else None
 
         # Business decisions: prefer domain Finding, fall back to payload
         if domain_finding:
