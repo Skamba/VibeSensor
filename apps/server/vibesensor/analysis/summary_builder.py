@@ -14,8 +14,26 @@ from vibesensor.analysis.analysis_window import AnalysisWindow
 from vibesensor.vibration_strength import compute_db
 
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
-from ..domain import Finding as DomainFinding
-from ..domain import RunAnalysisResult
+from ..domain import (
+    Car,
+    ConfigurationSnapshot,
+    DiagnosticCase,
+    Run,
+    RunAnalysisResult,
+    Symptom,
+    TestRun,
+)
+from ..domain import (
+    DrivingSegment as DomainDrivingSegment,
+)
+from ..domain import (
+    Finding as DomainFinding,
+)
+from ..domain.services import (
+    evaluate_hypotheses,
+    extract_observations_from_findings,
+    recognize_signatures,
+)
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..run_context import build_summary_warnings, order_reference_context_complete
@@ -72,7 +90,7 @@ from .helpers import (
 from .phase_segmentation import DrivingPhase, PhaseSegment, segment_run_phases
 from .plots import _plot_data
 from .strength_labels import strength_label as _strength_label
-from .test_plan import _merge_test_plan
+from .test_plan import _merge_test_plan, build_domain_test_plan
 from .top_cause_selection import select_top_causes
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -359,6 +377,63 @@ def serialize_phase_segments(phase_segments: list[PhaseSegment]) -> list[PhaseSe
         }
         for seg in phase_segments
     ]
+
+
+def build_domain_driving_segments(
+    phase_segments: list[PhaseSegment],
+) -> tuple[DomainDrivingSegment, ...]:
+    return tuple(
+        DomainDrivingSegment(
+            phase=segment.phase,
+            start_idx=segment.start_idx,
+            end_idx=segment.end_idx,
+            start_t_s=(
+                None
+                if isinstance(segment.start_t_s, float) and math.isnan(segment.start_t_s)
+                else segment.start_t_s
+            ),
+            end_t_s=(
+                None
+                if isinstance(segment.end_t_s, float) and math.isnan(segment.end_t_s)
+                else segment.end_t_s
+            ),
+            speed_min_kmh=segment.speed_min_kmh,
+            speed_max_kmh=segment.speed_max_kmh,
+            sample_count=segment.sample_count,
+        )
+        for segment in phase_segments
+    )
+
+
+def build_domain_car(metadata: MetadataDict) -> Car | None:
+    car_name = str(metadata.get("car_name") or "").strip()
+    car_type = str(metadata.get("car_type") or "").strip()
+    aspects = {
+        key: value
+        for key in ("tire_width_mm", "tire_aspect_pct", "rim_in")
+        if isinstance((value := _as_float(metadata.get(key))), float)
+    }
+    if not car_name and not car_type and not aspects:
+        return None
+    return Car(
+        name=car_name or "Unnamed Car",
+        car_type=car_type or "sedan",
+        aspects=aspects,
+        variant=str(metadata.get("car_variant") or "").strip() or None,
+    )
+
+
+def build_domain_symptoms(metadata: MetadataDict) -> tuple[Symptom, ...]:
+    complaint = str(metadata.get("symptom") or metadata.get("complaint") or "").strip()
+    if not complaint:
+        return (Symptom.unspecified(),)
+    return (
+        Symptom(
+            description=complaint,
+            onset=str(metadata.get("symptom_onset") or "").strip(),
+            context=str(metadata.get("symptom_context") or "").strip(),
+        ),
+    )
 
 
 def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
@@ -1100,6 +1175,8 @@ class RunAnalysis:
         "_prepared",
         "_accel_stats",
         "_analysis_result",
+        "_test_run",
+        "_diagnostic_case",
     )
 
     def __init__(
@@ -1119,6 +1196,8 @@ class RunAnalysis:
         self._include_samples = include_samples
         self._findings_builder = findings_builder
         self._analysis_result: RunAnalysisResult | None = None
+        self._test_run: TestRun | None = None
+        self._diagnostic_case: DiagnosticCase | None = None
 
         _validate_required_strength_metrics(samples)
         self._prepared = prepare_run_data(metadata, samples, file_name=file_name)
@@ -1144,6 +1223,14 @@ class RunAnalysis:
     def analysis_result(self) -> RunAnalysisResult | None:
         """Domain aggregate produced by :meth:`summarize`, or ``None``."""
         return self._analysis_result
+
+    @property
+    def test_run(self) -> TestRun | None:
+        return self._test_run
+
+    @property
+    def diagnostic_case(self) -> DiagnosticCase | None:
+        return self._diagnostic_case
 
     # -- orchestration -----------------------------------------------------
 
@@ -1222,16 +1309,35 @@ class RunAnalysis:
             tuple(enriched_domain_top_causes) if enriched_domain_top_causes else domain_top_causes
         )
 
-        self._analysis_result = RunAnalysisResult(
-            run_id=self._prepared.run_id,
+        observations = extract_observations_from_findings(domain_findings, findings)
+        signatures = recognize_signatures(observations)
+        hypotheses = evaluate_hypotheses(signatures)
+        configuration_snapshot = ConfigurationSnapshot.from_metadata(self._metadata)
+        driving_segments = build_domain_driving_segments(self._prepared.phase_segments)
+        domain_test_plan = build_domain_test_plan(findings, self._language)
+        self._test_run = TestRun(
+            run=Run(run_id=self._prepared.run_id, analysis_settings={}),
+            configuration_snapshot=configuration_snapshot,
+            driving_segments=driving_segments,
+            observations=observations,
+            signatures=signatures,
+            hypotheses=hypotheses,
             findings=domain_findings,
             top_causes=final_top_causes,
-            duration_s=self._prepared.duration_s,
-            sample_count=len(self._samples),
-            sensor_count=len(sensor_locations),
-            lang=self._language,
             speed_profile=speed_profile,
             suitability=domain_suitability,
+            test_plan=domain_test_plan,
+        )
+        self._diagnostic_case = DiagnosticCase.start(
+            car=build_domain_car(self._metadata),
+            symptoms=build_domain_symptoms(self._metadata),
+            configuration_snapshots=(configuration_snapshot,),
+            test_plan=domain_test_plan,
+        ).add_run(self._test_run)
+
+        self._analysis_result = RunAnalysisResult.from_test_run(
+            self._test_run,
+            lang=self._language,
         )
 
         summary = build_summary_payload(

@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 from ..backend_types import CarConfigPayload, HistoryRunPayload
+from ..boundaries.diagnostic_case import project_summary_through_domain
 from ..exceptions import AnalysisNotReadyError, ProcessingError
 from ..json_types import JsonObject, is_json_object
 from ..report.mapping import map_summary
@@ -98,6 +99,7 @@ class HistoryReportService:
             analysis,
             current_active_car_snapshot=current_active_car_snapshot,
         )
+        analysis_summary = project_summary_through_domain(analysis_summary)
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,

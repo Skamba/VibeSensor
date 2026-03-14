@@ -96,7 +96,7 @@ class TestExportZipFiltersInternals:
         helper_text = (SERVER_ROOT / "vibesensor" / "history_services" / "helpers.py").read_text()
         export_text = (SERVER_ROOT / "vibesensor" / "history_services" / "exports.py").read_text()
         assert 'if not key.startswith("_")' in helper_text
-        assert "strip_internal_fields(analysis)" in export_text
+        assert "strip_internal_fields(project_summary_through_domain(analysis))" in export_text
 
 
 # ---------------------------------------------------------------------------
@@ -126,3 +126,9 @@ class TestAnalysisQueueContract:
         text = (SERVER_ROOT / "vibesensor" / "metrics_log" / "post_analysis.py").read_text()
         assert "self._analysis_queue: deque[_QueuedRun] = deque()" in text
         assert "evicting run" not in text
+
+    def test_post_analysis_projects_summary_through_domain(self) -> None:
+        """Post-analysis must canonicalize persisted summaries via the shared boundary helper."""
+        text = (SERVER_ROOT / "vibesensor" / "metrics_log" / "post_analysis.py").read_text()
+        assert "from ..boundaries.diagnostic_case import project_summary_through_domain" in text
+        assert "summary = project_summary_through_domain(summary)" in text

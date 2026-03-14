@@ -23,6 +23,8 @@ Architectural constraints
 Domain model
 - Domain objects own behavior (classification, ranking, lifecycle, computation).  Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
 - Each primary domain object lives in its own file under `vibesensor/domain/`.  Consumers import from `vibesensor.domain`, not from individual module files.
+- The core diagnostic aggregates are `DiagnosticCase` and `TestRun`; `RunAnalysisResult` is retained as a run-focused projection for boundary consumers.
+- Boundary decoders/serializers live under `apps/server/vibesensor/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.
 - See `docs/domain-model.md` for the full relationship map, adapter inventory, and modeling rules.
 
 Common commands
