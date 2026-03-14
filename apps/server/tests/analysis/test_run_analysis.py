@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.analysis.summary_builder import PreparedRunData, RunAnalysis, prepare_run_data
+from vibesensor.domain import SpeedProfile
 
 # ===========================================================================
 # PreparedRunData convenience properties
@@ -27,6 +30,26 @@ class TestPreparedRunDataProperties:
         prepared = prepare_run_data(metadata, samples, file_name="test")
         stddev = prepared.speed_stddev_kmh
         assert stddev is None or isinstance(stddev, float)
+
+    def test_speed_profile_exposed_with_phase_aware_content(self) -> None:
+        metadata = {"raw_sample_rate_hz": 100.0}
+        speeds = [0.0, 0.0, 0.0, 10.0, 20.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0]
+        samples = [
+            {"speed_kmh": speed_kmh, "t_s": float(index), "vibration_strength_db": 10.0}
+            for index, speed_kmh in enumerate(speeds)
+        ]
+
+        prepared = prepare_run_data(metadata, samples, file_name="test")
+
+        assert prepared.speed_profile == SpeedProfile.from_stats(
+            prepared.speed_stats,
+            prepared.phase_info,
+        )
+        assert prepared.speed_profile.min_kmh == pytest.approx(prepared.speed_stats["min_kmh"])
+        assert prepared.speed_profile.max_kmh == pytest.approx(prepared.speed_stats["max_kmh"])
+        assert prepared.speed_profile.has_acceleration is True
+        assert prepared.speed_profile.has_cruise is True
+        assert prepared.speed_profile.idle_fraction > 0.0
 
 
 # ===========================================================================
@@ -85,6 +108,7 @@ class TestRunAnalysis:
         samples = [{"speed_kmh": 60.0, "t_s": 0.0, "vibration_strength_db": 10.0}]
         analysis = RunAnalysis(metadata, samples)
         assert isinstance(analysis.prepared, PreparedRunData)
+        assert isinstance(analysis.prepared.speed_profile, SpeedProfile)
 
     def test_language_property(self) -> None:
         metadata = {}

@@ -24,6 +24,7 @@ from ..domain import (
     Run,
     RunAnalysisResult,
     RunSuitability,
+    SpeedProfile,
     Symptom,
     TestRun,
 )
@@ -965,6 +966,7 @@ class PreparedRunData:
     phase_segments: list[PhaseSegment]
     run_noise_baseline_g: float | None
     phase_info: PhaseSummary
+    speed_profile: SpeedProfile
     speed_stats_by_phase: dict[str, PhaseSpeedStats]
     speed_breakdown: list[SpeedBreakdownRow]
     speed_breakdown_skipped_reason: I18nRef | None
@@ -1010,6 +1012,7 @@ def prepare_run_data(
         speed_breakdown_skipped_reason = i18n_ref(
             "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND",
         )
+    phase_info = build_phase_summary(phase_segments)
 
     return PreparedRunData(
         run_id=run_id,
@@ -1024,7 +1027,8 @@ def prepare_run_data(
         per_sample_phases=per_sample_phases,
         phase_segments=phase_segments,
         run_noise_baseline_g=run_noise_baseline_g,
-        phase_info=build_phase_summary(phase_segments),
+        phase_info=phase_info,
+        speed_profile=SpeedProfile.from_stats(speed_stats, phase_info),
         speed_stats_by_phase=_speed_stats_by_phase(samples, per_sample_phases),
         speed_breakdown=speed_breakdown,
         speed_breakdown_skipped_reason=speed_breakdown_skipped_reason,
@@ -1269,13 +1273,9 @@ class RunAnalysis:
 
         # Build the domain aggregate with run-level value objects
         from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-        from vibesensor.domain.speed_profile import SpeedProfile
 
         speed_profile = (
-            SpeedProfile.from_stats(
-                self._prepared.speed_stats,
-                self._prepared.phase_info,
-            )
+            self._prepared.speed_profile
             if self._prepared.speed_stats
             else None
         )
