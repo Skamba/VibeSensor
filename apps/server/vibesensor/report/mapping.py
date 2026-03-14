@@ -752,10 +752,18 @@ def build_system_cards(
         if domain_finding:
             source = str(domain_finding.suspected_source)
             source_human = human_source(source, tr=tr)
-            location = str(domain_finding.strongest_location or tr("UNKNOWN"))
-            tone = domain_finding.confidence_label(
-                strength_band_key=primary.strength_band_key,
-            )[1]
+            # Use domain LocationHotspot for location when available
+            if domain_finding.location and domain_finding.location.is_actionable:
+                location = domain_finding.location.display_location
+            else:
+                location = str(domain_finding.strongest_location or tr("UNKNOWN"))
+            # Use domain ConfidenceAssessment for tone when available
+            if domain_finding.confidence_assessment:
+                tone = domain_finding.confidence_assessment.tone
+            else:
+                tone = domain_finding.confidence_label(
+                    strength_band_key=primary.strength_band_key,
+                )[1]
         else:
             source = cause.get("suspected_source") or "unknown"
             source_human = human_source(source, tr=tr)
@@ -1063,16 +1071,32 @@ def resolve_primary_report_candidate(
     strength_text_value = strength_text(strength_db, lang=lang)
     sensor_count = resolve_sensor_count(summary, context.sensor_locations_active)
     strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
-    certainty_key, certainty_label_text, certainty_pct, certainty_reason = certainty_label(
-        confidence,
-        lang=lang,
-        steady_speed=bool(context.speed_stats.get("steady_speed")),
-        weak_spatial=weak_spatial,
-        sensor_count=sensor_count,
-        has_reference_gaps=has_ref_gaps,
-        strength_band_key=strength_band_key,
-    )
-    tier = certainty_tier(confidence, strength_band_key=strength_band_key)
+
+    # Use domain ConfidenceAssessment when available on the primary finding
+    if aggregate:
+        effective = aggregate.effective_top_causes()
+        domain_primary = effective[0] if effective else aggregate.primary_finding
+    else:
+        domain_primary = None
+
+    if domain_primary and domain_primary.confidence_assessment:
+        ca = domain_primary.confidence_assessment
+        certainty_key = ca.label_key
+        certainty_label_text = tr(ca.label_key)
+        certainty_pct = ca.pct_text
+        certainty_reason = ca.reason
+        tier = ca.tier
+    else:
+        certainty_key, certainty_label_text, certainty_pct, certainty_reason = certainty_label(
+            confidence,
+            lang=lang,
+            steady_speed=bool(context.speed_stats.get("steady_speed")),
+            weak_spatial=weak_spatial,
+            sensor_count=sensor_count,
+            has_reference_gaps=has_ref_gaps,
+            strength_band_key=strength_band_key,
+        )
+        tier = certainty_tier(confidence, strength_band_key=strength_band_key)
     return PrimaryCandidateContext(
         primary_candidate=primary_candidate,
         primary_source=primary_source,
