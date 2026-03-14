@@ -240,27 +240,9 @@ def build_domain_test_plan(findings: list[FindingPayload], lang: str) -> TestPla
 
 
 def build_domain_test_plan_from_findings(findings: Sequence[Finding], lang: str) -> TestPlan:
-    steps = _merge_domain_test_plan(findings, lang)
-    actions: list[RecommendedAction] = []
-    for priority, step in enumerate(steps, start=1):
-        action_id = _normalized_lower_text(step.get("action_id"))
-        if not action_id:
-            continue
-        actions.append(
-            RecommendedAction(
-                action_id=action_id,
-                what=_step_text(step.get("what")),
-                why=_step_text(step.get("why")),
-                confirm=_step_text(step.get("confirm")),
-                falsify=_step_text(step.get("falsify")),
-                eta=_normalized_text(step.get("eta")) or None,
-                priority=priority,
-            )
-        )
-    return TestPlan(
-        actions=tuple(actions),
-        requires_additional_data=not bool(findings),
-    )
+    from ..domain.services.test_planning import plan_test_actions
+
+    return plan_test_actions(findings, (), lang=lang)
 
 
 def _score_locations_in_bin(
