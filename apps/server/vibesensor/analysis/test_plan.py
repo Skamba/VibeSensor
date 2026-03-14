@@ -6,7 +6,7 @@ from collections import defaultdict
 from math import ceil, floor, log1p, pow
 
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
-from ..domain import VibrationSource
+from ..domain import RecommendedAction, TestPlan, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..locations import has_any_wheel_location, is_wheel_location
 from ._types import (
@@ -167,6 +167,38 @@ def _merge_test_plan(
             "eta": "20-35 min",
         },
     ]
+
+
+def _step_text(value: object) -> str:
+    if isinstance(value, dict):
+        key = value.get("_i18n_key")
+        if key is not None:
+            return str(key)
+    return _normalized_text(value)
+
+
+def build_domain_test_plan(findings: list[FindingPayload], lang: str) -> TestPlan:
+    steps = _merge_test_plan(findings, lang)
+    actions: list[RecommendedAction] = []
+    for priority, step in enumerate(steps, start=1):
+        action_id = _normalized_lower_text(step.get("action_id"))
+        if not action_id:
+            continue
+        actions.append(
+            RecommendedAction(
+                action_id=action_id,
+                what=_step_text(step.get("what")),
+                why=_step_text(step.get("why")),
+                confirm=_step_text(step.get("confirm")),
+                falsify=_step_text(step.get("falsify")),
+                eta=_normalized_text(step.get("eta")) or None,
+                priority=priority,
+            )
+        )
+    return TestPlan(
+        actions=tuple(actions),
+        requires_additional_data=not bool(findings),
+    )
 
 
 def _score_locations_in_bin(

@@ -692,3 +692,99 @@ def test_confidence_assessment_tier_matches_domain_finding() -> None:
             f"ConfidenceAssessment.assess({conf}).label_key must match "
             f"Finding.classify_confidence({conf})[0]"
         )
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "ConfigurationSnapshot",
+        "DiagnosticCase",
+        "DrivingSegment",
+        "Hypothesis",
+        "Observation",
+        "RecommendedAction",
+        "Signature",
+        "Symptom",
+        "TestPlan",
+        "TestRun",
+        "VibrationOrigin",
+    ],
+)
+def test_new_domain_objects_are_exported(name: str) -> None:
+    import importlib
+
+    mod = importlib.import_module("vibesensor.domain")
+    assert hasattr(mod, name), f"{name} must be exported from vibesensor.domain"
+
+
+def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
+    from vibesensor.analysis.summary_builder import RunAnalysis
+    from vibesensor.domain import DiagnosticCase, TestRun
+
+    metadata = {
+        "run_id": "domain-case-guard",
+        "car_name": "Guard Car",
+        "car_type": "sedan",
+        "language": "en",
+    }
+    samples = [
+        {
+            "t_s": float(i),
+            "accel_x": 0.01,
+            "accel_y": 0.01,
+            "accel_z": 1.0,
+            "accel_mag": 1.0,
+            "speed_kmh": 80.0,
+            "vibration_strength_db": 5.0,
+        }
+        for i in range(30)
+    ]
+    analysis = RunAnalysis(metadata, samples)
+    analysis.summarize()
+
+    assert analysis.test_run is not None
+    assert analysis.diagnostic_case is not None
+    assert isinstance(analysis.test_run, TestRun)
+    assert isinstance(analysis.diagnostic_case, DiagnosticCase)
+    assert analysis.diagnostic_case.primary_run is not None
+    assert analysis.diagnostic_case.primary_run.run_id == analysis.test_run.run_id
+
+
+def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
+    from tests.test_support.findings import make_finding_payload
+    from vibesensor.boundaries import diagnostic_case_from_summary
+
+    summary = {
+        "run_id": "summary-case-guard",
+        "metadata": {"car_name": "Guard Car", "car_type": "sedan"},
+        "findings": [make_finding_payload(finding_id="F001", confidence=0.80)],
+        "top_causes": [make_finding_payload(finding_id="F001", confidence=0.80)],
+        "test_plan": [
+            {
+                "action_id": "check-wheel",
+                "what": {"_i18n_key": "ACTION_WHEEL_BALANCE_WHAT"},
+                "why": {"_i18n_key": "ACTION_WHEEL_BALANCE_WHY"},
+            }
+        ],
+    }
+    diagnostic_case = diagnostic_case_from_summary(summary)
+    assert diagnostic_case.test_runs
+    assert diagnostic_case.findings
+    assert diagnostic_case.primary_run is not None
+
+
+def test_finding_from_payload_populates_origin_and_signatures() -> None:
+    from vibesensor.domain import Finding
+
+    payload = {
+        "finding_id": "F001",
+        "suspected_source": "wheel/tire",
+        "confidence": 0.85,
+        "strongest_speed_band": "80-90 km/h",
+        "signatures_observed": ["1x wheel order", "2x wheel order"],
+        "location_hotspot": {"location": "FL wheel", "dominance_ratio": 0.75},
+    }
+    finding = Finding.from_payload(payload)
+    assert finding.origin is not None
+    assert len(finding.signatures) == 2
+    assert finding.origin.display_location == "Fl Wheel"

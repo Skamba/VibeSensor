@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeGuard
 
 from ..backend_types import HistoryRunPayload
+from ..boundaries.diagnostic_case import project_summary_through_domain
 from ..json_types import JsonObject, JsonValue, is_json_object
 from ..json_utils import sanitize_for_json
 from .helpers import async_require_run, safe_filename, strip_internal_fields
@@ -168,7 +169,7 @@ def build_run_details_json(
     run_details["sample_count"] = sample_count
     analysis = run_details.get("analysis")
     if is_json_object(analysis):
-        run_details["analysis"] = strip_internal_fields(analysis)
+        run_details["analysis"] = strip_internal_fields(project_summary_through_domain(analysis))
     sanitized, had_non_finite = sanitize_for_json(run_details)
     if had_non_finite:
         LOGGER.warning("Export run %s: sanitized non-finite floats in analysis data", run_id)

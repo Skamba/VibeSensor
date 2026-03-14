@@ -71,6 +71,43 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
 
 
 @pytest.mark.asyncio
+async def test_run_service_projects_persisted_summary_through_domain() -> None:
+    service = HistoryRunService(
+        _HistoryDbStub(
+            run={
+                "run_id": "run-1",
+                "status": "complete",
+                "analysis": {
+                    "lang": "en",
+                    "findings": [
+                        {
+                            "finding_id": "F001",
+                            "suspected_source": "wheel/tire",
+                            "strongest_location": "front-left",
+                            "strongest_speed_band": "50-80 km/h",
+                            "confidence": 0.71,
+                            "evidence_metrics": {"vibration_strength_db": 21.0},
+                        },
+                    ],
+                    "top_causes": [],
+                    "test_plan": [],
+                    "run_suitability": [],
+                    "most_likely_origin": {},
+                    "_internal": {"secret": True},
+                },
+            },
+        ),
+    )
+
+    run = await service.get_run("run-1")
+
+    analysis = run["analysis"]
+    assert analysis["top_causes"][0]["finding_id"] == "F001"
+    assert analysis["most_likely_origin"]["suspected_source"] == "wheel/tire"
+    assert "_internal" not in analysis
+
+
+@pytest.mark.asyncio
 async def test_report_pdf_cache_builds_once_per_key() -> None:
     cache = HistoryReportPdfCache()
     calls = 0
@@ -101,6 +138,35 @@ def test_build_run_details_json_strips_internal_analysis_fields() -> None:
 
     assert payload["sample_count"] == 5
     assert payload["analysis"] == {"visible": 1}
+
+
+def test_build_run_details_json_projects_analysis_through_domain() -> None:
+    payload = json.loads(
+        build_run_details_json(
+            {
+                "run_id": "run-1",
+                "analysis": {
+                    "findings": [
+                        {
+                            "finding_id": "F001",
+                            "suspected_source": "wheel/tire",
+                            "strongest_location": "front-left",
+                            "confidence": 0.71,
+                        },
+                    ],
+                    "top_causes": [],
+                    "most_likely_origin": {},
+                    "test_plan": [],
+                    "run_suitability": [],
+                },
+            },
+            sample_count=5,
+            run_id="run-1",
+        ),
+    )
+
+    assert payload["analysis"]["top_causes"][0]["finding_id"] == "F001"
+    assert payload["analysis"]["most_likely_origin"]["suspected_source"] == "wheel/tire"
 
 
 def test_build_run_details_json_sanitizes_non_finite_floats() -> None:

@@ -12,9 +12,16 @@ summary payloads, report templates, API shapes, or persistence rows.
 
 ## Implementation status
 
-The model below describes the **current** implemented state.  Where a concept
-is aspirational (not yet in code), it is marked as **(planned)**.  The
-implemented subset is production-ready and enforced by architecture tests.
+The model below describes the target architecture and the **currently landed**
+subset. The backend now creates a canonical `DiagnosticCase` and `TestRun`
+during run analysis, and `RunAnalysisResult` has been reduced toward a
+run-focused projection over that run aggregate. Report mapping, history
+services, history exports, and post-analysis persistence now reconstruct that
+projection and re-project canonical report/history fields from the domain model
+before storing, rendering, or returning payloads. Raw summary payloads remain
+at transport and rendering boundaries, but backend business decisions in those
+paths now flow through reconstructed domain aggregates rather than treating the
+payloads as the primary model.
 
 ## Purpose
 
@@ -64,7 +71,7 @@ objects are derived edge forms of these concepts.
 
 ## Top-level aggregate
 
-The natural top-level aggregate is **`DiagnosticCase`** **(planned)**.
+The natural top-level aggregate is **`DiagnosticCase`**.
 
 `DiagnosticCase` represents the complete diagnostic problem—spanning one or
 more runs and their conclusions—rather than a single run or report. It owns the
@@ -81,24 +88,25 @@ case-level identity and consistency boundaries for:
 
 ### Current implementation
 
-The system currently operates with a single-run focus.  The primary domain
-aggregate is **`RunAnalysisResult`** (`domain/run_analysis_result.py`), which
-represents the finalized output of analyzing one diagnostic run.
+`RunAnalysis.summarize()` now builds a `DiagnosticCase` and a canonical
+`TestRun` during analysis orchestration without reconstructing those objects
+from a temporary summary payload. `DiagnosticCase` reconciles case-level
+findings and actions from the contributing runs, and `TestRun` owns the
+run-contained observations, signatures, hypotheses, findings, `SpeedProfile`,
+and `RunSuitability`.
 
-`RunAnalysisResult` owns:
+`RunAnalysisResult` (`domain/run_analysis_result.py`) remains implemented as a
+run-focused projection for downstream consumers that still expect a run-level
+aggregate. Report/history code paths, exports, and post-analysis persistence
+now reconstruct that projection at the boundary and derive canonical
+`top_causes`, `most_likely_origin`, `test_plan`, and `run_suitability` fields
+from it, so persisted payloads are no longer the business truth in those
+areas. Remaining raw payload handling in the repo is transport/rendering detail
+rather than business-truth ownership.
 
-- the ranked domain `Finding` objects
-- the selected top causes
-- core queries for downstream ranking, selection, and report generation
-  (`effective_top_causes`, `has_relevant_reference_gap`, `top_strength_db`,
-  `primary_source`, `primary_location`, `primary_finding`)
-
-The run-level lifecycle object is **`Run`** (`domain/run.py`), which tracks
-recording state transitions (start → stop) and holds run identity.
-
-In refactoring terms, today's `Run` should evolve toward a `TestRun` that
-lives inside a `DiagnosticCase` aggregate when multi-run analysis is
-implemented.
+The lifecycle object **`Run`** (`domain/run.py`) remains the recording-time
+identity/lifecycle component. `TestRun` composes that lifecycle object rather
+than replacing it with raw ids.
 
 What belongs on `DiagnosticCase`:
 
@@ -164,10 +172,11 @@ Interpretation rules:
 
 | Object | Status | What it represents | What it owns | What it does **not** own |
 |---|---|---|---|---|
-| **RunAnalysisResult** | ✅ Implemented | Finalized analysis result for one run | ranked domain `Finding` objects, top causes, core queries (effective_top_causes, primary_finding, primary_source, primary_location, has_relevant_reference_gap, top_strength_db); optionally `SpeedProfile` and `RunSuitability` | rendering, transport schemas, signal-processing algorithms |
-| **Run** | ✅ Implemented | Run lifecycle and identity | start/stop state transitions, run_id, analysis_settings | analysis results, report rendering |
-| **DiagnosticCase** | 🔮 Planned | One diagnostic problem for one vehicle | case lifecycle, hypothesis set, run set, findings, actions, cross-run consistency | rendering, transport schemas, signal-processing algorithms |
-| **TestPlan** | 🔮 Planned | The intended diagnostic approach | planned runs, comparison strategy, required evidence, next-step intent | execution telemetry, report layout |
+| **RunAnalysisResult** | ✅ Implemented | Run-focused projection over a `TestRun` | run-level finding queries used by legacy/report/history boundaries | case reconciliation, rendering, transport schemas, signal-processing algorithms |
+| **Run** | ✅ Implemented | Recording-time run lifecycle and identity | start/stop state transitions, run_id, analysis_settings | findings, reports, case reconciliation |
+| **DiagnosticCase** | ✅ Implemented | One diagnostic problem for one vehicle | case lifecycle, run set, reconciled hypotheses/findings, recommended actions, cross-run consistency | rendering, transport schemas, signal-processing algorithms |
+| **TestRun** | ✅ Implemented | Run-level aggregate inside the case boundary | configuration snapshot, segments, observations, signatures, hypotheses, findings, speed profile, suitability, actions | rendering, transport schemas, signal-processing algorithms |
+| **TestPlan** | ✅ Implemented | The intended diagnostic approach | prioritized next actions and whether more data is required | execution telemetry, report layout |
 
 ### Entities
 
@@ -177,12 +186,12 @@ Interpretation rules:
 | **Sensor** | ✅ Implemented | A physical measurement source | owns identity, placement, availability, and suitability for evidence interpretation |
 | **Finding** | ✅ Implemented | A justified conclusion | owns finding identity, kind, severity, actionability, confidence classification (label/tone/pct), surfacing, ranking, phase-adjusted scoring; optionally carries `FindingEvidence`, `LocationHotspot`, and `ConfidenceAssessment` domain value objects |
 | **Report** | ✅ Implemented | Run-level metadata for rendering | owns run_id, lang, car info, dates, counts (thin metadata, not business logic) |
-| **Symptom** | 🔮 Planned | A complaint or observed problem | owns symptom wording, onset/context, and diagnostic framing |
-| **DrivingSegment** | 🔮 Planned | A meaningful portion of a run | owns segment boundaries, maneuver/phase meaning |
-| **Observation** | 🔮 Planned | A notable fact extracted from run data | owns observation type, magnitude, conditions |
-| **Signature** | 🔮 Planned | A coherent vibration pattern built from observations | owns pattern identity, pattern-level consistency |
-| **Hypothesis** | 🔮 Planned | A possible explanation of the complaint | owns support/contradiction state, status, and rationale |
-| **RecommendedAction** | 🔮 Planned | A next diagnostic or repair step | owns action intent, priority |
+| **Symptom** | ✅ Implemented | A complaint or observed problem | owns symptom wording, onset/context, and diagnostic framing |
+| **DrivingSegment** | ✅ Implemented | A meaningful portion of a run | owns segment boundaries, maneuver/phase meaning, and diagnostic usability |
+| **Observation** | ✅ Implemented | A notable fact extracted from run data | owns observation type, magnitude, conditions, and signature support semantics |
+| **Signature** | ✅ Implemented | A coherent vibration pattern built from observations | owns pattern identity and pattern-level consistency |
+| **Hypothesis** | ✅ Implemented | A possible explanation of the complaint | owns support/contradiction state, status, and rationale |
+| **RecommendedAction** | ✅ Implemented | A next diagnostic or repair step | owns action intent and priority |
 
 ### Value objects
 
@@ -199,8 +208,8 @@ Interpretation rules:
 | **ConfidenceAssessment** | ✅ Implemented | Why confidence is high, low, or withheld | tier (A/B/C), is_conclusive, needs_more_data, reason, downgraded |
 | **SpeedProfile** | ✅ Implemented | Run speed behavior as a diagnostic concept | is_adequate_for_diagnosis, has_steady_cruise, speed_range_kmh, cruise_fraction |
 | **RunSuitability** | ✅ Implemented | Whether a run is trustworthy enough | overall (pass/caution/fail), is_usable, failed_checks, warning_checks |
-| **ConfigurationSnapshot** | 🔮 Planned | Vehicle/setup state at a specific moment | immutable diagnostic context for interpreting a run |
-| **VibrationOrigin** | 🔮 Planned | Suspected source/origin conclusion | source semantics, dominance, ambiguity |
+| **ConfigurationSnapshot** | ✅ Implemented | Vehicle/setup state at a specific moment | immutable diagnostic context for interpreting a run |
+| **VibrationOrigin** | ✅ Implemented | Suspected source/origin conclusion | source semantics, dominance, ambiguity |
 
 ## Domain services
 
@@ -436,7 +445,14 @@ The following guardrails are enforced by tests in
 - `select_top_causes()` returns domain `Finding` objects
 - `RunAnalysis.summarize()` populates `analysis_result` as `RunAnalysisResult`
   with `speed_profile`, `suitability`, and `ConfidenceAssessment` on top causes
+- `RunAnalysis.summarize()` also publishes canonical `test_run` and
+  `diagnostic_case` aggregates
 - Report mapping context builds a domain aggregate
+- history run/report services and exports project persisted summaries through
+  reconstructed domain aggregates before returning API payloads, building PDFs,
+  or emitting ZIP/JSON exports
+- post-analysis canonicalizes summaries through the shared domain projection
+  helper before storing them in history
 - `non_reference_findings()` uses domain classification
 - `build_system_cards()` reads confidence tone from domain `Finding`, not
   from enriched payload dicts
@@ -444,6 +460,14 @@ The following guardrails are enforced by tests in
   `RunSuitability`, and `SuitabilityCheck` are frozen dataclasses exported
   from `vibesensor.domain`
 - `ConfidenceAssessment.tier` is consistent with `Finding.classify_confidence()`
+- `DiagnosticCase`, `TestRun`, `ConfigurationSnapshot`, `Symptom`,
+  `DrivingSegment`, `Observation`, `Signature`, `Hypothesis`,
+  `RecommendedAction`, and `VibrationOrigin` are exported from
+  `vibesensor.domain`
+- explicit boundary decoders reconstruct `DiagnosticCase` / `TestRun` from
+  persisted or transported summary payloads
+- remaining raw payload handling is transport/rendering detail, not business
+  decision-making
 
 ## Current package layout
 
@@ -462,25 +486,24 @@ The domain package (`vibesensor/domain/`) mirrors the human concepts above:
 | `run_suitability.py` | `RunSuitability`, `SuitabilityCheck` | ✅ |
 | `speed_profile.py` | `SpeedProfile` | ✅ |
 | `car.py` | `Car`, `TireSpec` | ✅ |
+| `configuration_snapshot.py` | `ConfigurationSnapshot` | ✅ |
+| `diagnostic_case.py` | `DiagnosticCase` | ✅ |
+| `driving_segment.py` | `DrivingSegment` | ✅ |
+| `hypothesis.py` | `Hypothesis`, `HypothesisStatus` | ✅ |
 | `sensor.py` | `Sensor`, `SensorPlacement` | ✅ |
+| `observation.py` | `Observation` | ✅ |
+| `recommended_action.py` | `RecommendedAction` | ✅ |
+| `signature.py` | `Signature` | ✅ |
 | `speed_source.py` | `SpeedSource`, `SpeedSourceKind` | ✅ |
+| `symptom.py` | `Symptom` | ✅ |
+| `test_plan.py` | `TestPlan` | ✅ |
+| `test_run.py` | `TestRun` | ✅ |
+| `vibration_origin.py` | `VibrationOrigin` | ✅ |
 | `driving_phase.py` | `DrivingPhase` | ✅ |
 | `measurement.py` | `Measurement`, `VibrationReading` | ✅ |
 | `report.py` | `Report` | ✅ |
-
-### Target additions (planned)
-
-| File | Primary object(s) |
-|---|---|
-| `diagnostic_case.py` | `DiagnosticCase` |
-| `configuration_snapshot.py` | `ConfigurationSnapshot` |
-| `symptom.py` | `Symptom` |
-| `test_plan.py` | `TestPlan`, `RecommendedAction` |
-| `observation.py` | `Observation` |
-| `signature.py` | `Signature` |
-| `hypothesis.py` | `Hypothesis` |
-| `vibration_origin.py` | `VibrationOrigin` |
-| `services/` | domain services for observation extraction, signature recognition, hypothesis evaluation, finding synthesis, case reconciliation |
+| `services/` | observation extraction, signature recognition, hypothesis evaluation, finding synthesis, case reconciliation | ✅ |
+| `boundaries/` | explicit summary decoders / projections between domain and payload shapes | ✅ |
 
 The exact file split may change, but the conceptual split should not: the model
 must be built around the human diagnostic concepts, not around transport or

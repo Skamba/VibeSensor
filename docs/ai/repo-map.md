@@ -37,16 +37,30 @@
 - `domain/`: DDD-aligned domain model package.  Each primary domain object
   lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
   SensorPlacement), `measurement.py` (Measurement,
-  VibrationReading), `run.py` (Run),
+  VibrationReading), `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
+  `diagnostic_case.py` (DiagnosticCase aggregate),
+  `configuration_snapshot.py`, `symptom.py`, `test_plan.py`,
+  `recommended_action.py`, `driving_segment.py`, `observation.py`,
+  `signature.py`, `hypothesis.py`, and `vibration_origin.py`,
   `speed_source.py` (SpeedSource), `driving_phase.py` (DrivingPhase),
   `finding.py` (FindingKind, VibrationSource, Finding, speed_bin_label, speed_band_sort_key), `report.py` (Report),
-  `run_status.py` (RunStatus, RUN_TRANSITIONS).  All are plain frozen dataclasses with no external coupling.
-  Domain objects own classification, ranking, actionability, surfacing,
-  and query logic; pipeline adapters in `analysis/` delegate to them.  See `docs/domain-model.md` for the full
-  relationship map and modeling rules.
+  `run_status.py` (RunStatus, RUN_TRANSITIONS). `domain/services/` owns
+  observation extraction, signature recognition, hypothesis evaluation,
+  finding synthesis, and case reconciliation. Domain objects own
+  classification, ranking, actionability, surfacing, lifecycle, and
+  query logic; pipeline adapters in `analysis/` delegate to them. See
+  `docs/domain-model.md` for the full relationship map and modeling rules.
+- `boundaries/`: explicit ingress/egress decoders and serializers between
+  domain aggregates (`DiagnosticCase`, `TestRun`, `RunAnalysisResult`) and
+  summary/persistence/report payload shapes, including the shared
+  `diagnostic_case.py::project_summary_through_domain()` projection helper
+  used by report/history/export/post-analysis boundaries.
 - `metrics_log/`: recording pipeline package; `logger.py` owns the `RunRecorder` class (formerly `MetricsLogger`) which directly manages session state and persistence coordination (no private helper classes), enriching status/health payloads with sample counts and analysis results; `post_analysis.py` owns the background analysis queue with outcome tracking; `sample_builder.py` owns pure sample-building functions.
 - `history_db/`: SQLite-backed history and settings persistence (3 files: `__init__.py` with `HistoryDB` class consolidating connection management, settings KV, client names, and all run reads/writes; `_schema.py` with DDL and `ANALYSIS_SCHEMA_VERSION`; `_samples.py` for v2 sample serialization). `RunStatus` and state-transition logic live in `domain/run_status.py`. Incompatible older schemas raise a clear error directing the user to delete the DB file.
-- `history_services/`: focused history service layer (run query/delete, reports, exports, helpers) above `history_db/`.
+- `history_services/`: focused history service layer (run query/delete,
+  reports, exports, helpers) above `history_db/`; run/report services project
+  persisted analyses through reconstructed domain aggregates before returning
+  API payloads, building PDFs, or emitting exports.
 - `hotspot/`: Wi-Fi AP monitoring, text parsing, and self-heal logic.
 - `runlog.py`: JSONL run-file I/O and normalization.
 - `report/`: PDF renderer, report-template builders, pattern-to-parts mapping (`pattern_parts.py`), and analysis-summary-to-domain-Report factory (`mapping.py::build_report_from_summary()`).
