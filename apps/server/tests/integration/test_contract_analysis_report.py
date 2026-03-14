@@ -7,6 +7,9 @@ standard CI so that schema drift between the two subsystems is caught early.
 
 from __future__ import annotations
 
+from copy import deepcopy
+from dataclasses import replace
+
 from test_support import (
     ALL_WHEEL_SENSORS,
     make_fault_samples,
@@ -14,8 +17,12 @@ from test_support import (
     standard_metadata,
 )
 
-from vibesensor.analysis import AnalysisSummary, summarize_run_data
-from vibesensor.report.mapping import map_summary
+from vibesensor.analysis import AnalysisSummary, RunAnalysis, summarize_run_data
+from vibesensor.report.mapping import (
+    map_summary,
+    prepare_report_mapping_context,
+    resolve_primary_report_candidate,
+)
 from vibesensor.report.report_data import ReportTemplateData
 
 
@@ -31,6 +38,21 @@ def _make_small_dataset() -> tuple[dict, list[dict]]:
             speed_kmh=80.0,
             n_samples=20,
         )
+    )
+    return meta, samples
+
+
+def _make_steady_speed_fault_dataset() -> tuple[dict, list[dict]]:
+    """Return a steady-speed dataset with a clear wheel fault."""
+    meta = standard_metadata(language="en")
+    samples = make_fault_samples(
+        fault_sensor="front-left",
+        sensors=ALL_WHEEL_SENSORS,
+        speed_kmh=80.0,
+        n_samples=20,
+        fault_amp=0.07,
+        fault_vib_db=28.0,
+        noise_vib_db=8.0,
     )
     return meta, samples
 
@@ -90,3 +112,44 @@ def test_multilingual_mapping():
 
     assert isinstance(report_data, ReportTemplateData)
     assert report_data.lang == "nl"
+
+
+def test_report_certainty_smoke_uses_speed_profile_over_raw_speed_stats() -> None:
+    """Report certainty should follow the live aggregate speed profile, not raw speed_stats."""
+    meta, samples = _make_steady_speed_fault_dataset()
+    analysis = RunAnalysis(meta, samples, lang="en", file_name="steady-speed-proof")
+    summary = analysis.summarize()
+
+    assert analysis.analysis_result is not None
+    assert analysis.analysis_result.speed_profile is not None
+    assert analysis.analysis_result.speed_profile.steady_speed is True
+
+    stripped_findings = tuple(
+        replace(finding, confidence_assessment=None)
+        for finding in analysis.analysis_result.findings
+    )
+    stripped_top_causes = tuple(
+        replace(finding, confidence_assessment=None)
+        for finding in analysis.analysis_result.top_causes
+    )
+    stripped_aggregate = replace(
+        analysis.analysis_result,
+        findings=stripped_findings,
+        top_causes=stripped_top_causes,
+    )
+
+    corrupted_summary = deepcopy(summary)
+    corrupted_summary["speed_stats"]["steady_speed"] = False
+
+    context = prepare_report_mapping_context(corrupted_summary)
+    context = replace(context, domain_aggregate=stripped_aggregate)
+
+    primary = resolve_primary_report_candidate(
+        corrupted_summary,
+        context=context,
+        tr=lambda key, **_kw: key,
+        lang="en",
+    )
+
+    assert context.speed_stats["steady_speed"] is False
+    assert primary.certainty_reason == "Limited speed variation reduces tracking confidence"
