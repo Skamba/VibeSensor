@@ -2,41 +2,47 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
+from dataclasses import dataclass
 
 from ..driving_phase import DrivingPhase
-from ..finding import Finding
+from ..finding import VibrationSource
 from ..observation import Observation
 
 
-def extract_observations_from_findings(
-    findings: Sequence[Finding],
-    payloads: Sequence[Mapping[str, object]] | None = None,
-) -> tuple[Observation, ...]:
-    """Derive diagnostically meaningful observations from finding evidence."""
-    payload_map = list(payloads or ())
+@dataclass(frozen=True, slots=True)
+class ObservationEvidence:
+    """Pre-finding evidence needed for observation extraction."""
+
+    source: VibrationSource
+    signature_labels: tuple[str, ...]
+    magnitude_db: float | None
+    speed_band: str | None
+    dominant_phase: str | None
+    location: str | None
+    confidence: float
+
+
+def extract_observations(evidence: Sequence[ObservationEvidence]) -> tuple[Observation, ...]:
+    """Derive diagnostically meaningful observations from pre-finding evidence."""
     observations: list[Observation] = []
-    for idx, finding in enumerate(findings, start=1):
-        payload = payload_map[idx - 1] if idx - 1 < len(payload_map) else {}
-        dominant_phase = str(payload.get("dominant_phase") or "").upper() if payload else ""
+    for ev_idx, ev in enumerate(evidence, start=1):
+        dominant_phase = (ev.dominant_phase or "").upper()
         phase = DrivingPhase[dominant_phase] if dominant_phase in DrivingPhase.__members__ else None
-        signature_labels = finding.signature_labels or (
-            str(payload.get("frequency_hz_or_order") or ""),
-        )
-        for sig_idx, signature_label in enumerate(signature_labels, start=1):
-            if not signature_label.strip():
+        for sig_idx, label in enumerate(ev.signature_labels, start=1):
+            if not label.strip():
                 continue
             observations.append(
                 Observation(
-                    observation_id=f"{finding.finding_id or idx}-obs-{sig_idx}",
+                    observation_id=f"obs-{ev_idx}-{sig_idx}",
                     kind="signature-support",
-                    source=finding.suspected_source,
-                    signature_key=signature_label.strip().lower().replace(" ", "_"),
-                    magnitude_db=finding.vibration_strength_db,
-                    speed_band=finding.strongest_speed_band,
+                    source=ev.source,
+                    signature_key=label.strip().lower().replace(" ", "_"),
+                    magnitude_db=ev.magnitude_db,
+                    speed_band=ev.speed_band,
                     phase=phase,
-                    location=finding.strongest_location,
-                    support_score=finding.effective_confidence,
+                    location=ev.location,
+                    support_score=ev.confidence,
                 )
             )
     return tuple(observations)
