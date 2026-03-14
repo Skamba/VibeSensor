@@ -16,11 +16,6 @@ from collections import defaultdict
 
 from ..domain import Finding
 from ._types import FindingPayload
-from .strength_labels import (
-    CONFIDENCE_HIGH_THRESHOLD,
-    CONFIDENCE_MEDIUM_THRESHOLD,
-    _is_negligible_band,
-)
 
 # ---------------------------------------------------------------------------
 # Top-cause building (payload enrichment for serialization boundary)
@@ -34,8 +29,7 @@ def _enrich_top_cause_payload(
     strength_band_key: str | None = None,
 ) -> FindingPayload:
     """Enrich a finding payload with confidence presentation fields for serialization."""
-    label_key, tone, pct_text = confidence_label(
-        domain.effective_confidence,
+    label_key, tone, pct_text = domain.confidence_label(
         strength_band_key=strength_band_key,
     )
     result: FindingPayload = {**finding}
@@ -115,21 +109,15 @@ def confidence_label(
     *,
     strength_band_key: str | None = None,
 ) -> tuple[str, str, str]:
-    """Return ``(label_key, tone, pct_text)`` for a 0–1 confidence value."""
-    conf = float(conf_0_to_1) if conf_0_to_1 is not None else 0.0
-    if not math.isfinite(conf):
-        conf = 0.0
-    pct = max(0.0, min(100.0, conf * 100.0))
-    pct_text = f"{pct:.0f}%"
-    if conf >= CONFIDENCE_HIGH_THRESHOLD:
-        label_key, tone = "CONFIDENCE_HIGH", "success"
-    elif conf >= CONFIDENCE_MEDIUM_THRESHOLD:
-        label_key, tone = "CONFIDENCE_MEDIUM", "warn"
-    else:
-        label_key, tone = "CONFIDENCE_LOW", "neutral"
-    if _is_negligible_band(strength_band_key) and label_key == "CONFIDENCE_HIGH":
-        label_key, tone = "CONFIDENCE_MEDIUM", "warn"
-    return label_key, tone, pct_text
+    """Return ``(label_key, tone, pct_text)`` for a 0–1 confidence value.
+
+    Delegates to :meth:`Finding.classify_confidence` so the threshold
+    rules have a single source of truth in the domain model.
+    """
+    raw = float(conf_0_to_1) if conf_0_to_1 is not None else 0.0
+    # Clamp to valid range; Finding validates [0, 1].
+    clamped = max(0.0, min(1.0, raw)) if math.isfinite(raw) else 0.0
+    return Finding.classify_confidence(clamped, strength_band_key=strength_band_key)
 
 
 def select_top_causes(

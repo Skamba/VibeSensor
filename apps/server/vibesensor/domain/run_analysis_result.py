@@ -204,3 +204,15 @@ class RunAnalysisResult:
             if f.vibration_strength_db is not None:
                 return f.vibration_strength_db
         return None
+
+    @property
+    def primary_source(self) -> VibrationSource | None:
+        """The suspected source of the primary finding, or *None*."""
+        pf = self.primary_finding
+        return pf.suspected_source if pf else None
+
+    @property
+    def primary_location(self) -> str | None:
+        """The strongest location of the primary finding, or *None*."""
+        pf = self.primary_finding
+        return pf.strongest_location if pf else None

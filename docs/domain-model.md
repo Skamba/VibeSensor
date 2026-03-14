@@ -1,6 +1,6 @@
 # Domain model
 
-This document defines the **target** domain model for VibeSensor.
+This document defines the domain model for VibeSensor.
 
 It is intentionally written from first principles. The model should reflect how a
 human diagnostician thinks about vibration diagnosis:
@@ -10,8 +10,11 @@ human diagnostician thinks about vibration diagnosis:
 The domain model is therefore built around the **diagnostic case**, not around
 summary payloads, report templates, API shapes, or persistence rows.
 
-If current code differs, this document is the architectural target for later
-refactoring.
+## Implementation status
+
+The model below describes the **current** implemented state.  Where a concept
+is aspirational (not yet in code), it is marked as **(planned)**.  The
+implemented subset is production-ready and enforced by architecture tests.
 
 ## Purpose
 
@@ -61,7 +64,7 @@ objects are derived edge forms of these concepts.
 
 ## Top-level aggregate
 
-The natural top-level aggregate is **`DiagnosticCase`**.
+The natural top-level aggregate is **`DiagnosticCase`** **(planned)**.
 
 `DiagnosticCase` represents the complete diagnostic problem—spanning one or
 more runs and their conclusions—rather than a single run or report. It owns the
@@ -76,12 +79,26 @@ case-level identity and consistency boundaries for:
 - the finalized findings
 - the recommended actions and next steps
 
-Current code may still use narrower names such as `Run` for part of this space.
-This document intentionally uses `DiagnosticCase` and `TestRun` as the target
-concepts: a case contains one or more runs, and a run is not itself the
-top-level diagnostic problem.
-In refactoring terms, today's `Run`-shaped core object should evolve toward a
-`TestRun` that lives inside a `DiagnosticCase` aggregate.
+### Current implementation
+
+The system currently operates with a single-run focus.  The primary domain
+aggregate is **`RunAnalysisResult`** (`domain/run_analysis_result.py`), which
+represents the finalized output of analyzing one diagnostic run.
+
+`RunAnalysisResult` owns:
+
+- the ranked domain `Finding` objects
+- the selected top causes
+- core queries for downstream ranking, selection, and report generation
+  (`effective_top_causes`, `has_relevant_reference_gap`, `top_strength_db`,
+  `primary_source`, `primary_location`, `primary_finding`)
+
+The run-level lifecycle object is **`Run`** (`domain/run.py`), which tracks
+recording state transitions (start → stop) and holds run identity.
+
+In refactoring terms, today's `Run` should evolve toward a `TestRun` that
+lives inside a `DiagnosticCase` aggregate when multi-run analysis is
+implemented.
 
 What belongs on `DiagnosticCase`:
 
@@ -145,38 +162,45 @@ Interpretation rules:
 
 ### Aggregates
 
-| Object | What it represents | What it owns | What it does **not** own |
-|---|---|---|---|
-| **DiagnosticCase** | One diagnostic problem for one vehicle | case lifecycle, hypothesis set, run set, findings, actions, cross-run consistency | rendering, transport schemas, signal-processing algorithms |
-| **TestRun** | One executed test attempt within a case | run lifecycle, captured context, segments, observations, signatures, speed profile, suitability result | case-level conclusion reconciliation, rendering DTOs |
-| **TestPlan** | The intended diagnostic approach | planned runs, comparison strategy, required evidence, next-step intent | execution telemetry, report layout |
+| Object | Status | What it represents | What it owns | What it does **not** own |
+|---|---|---|---|---|
+| **RunAnalysisResult** | ✅ Implemented | Finalized analysis result for one run | ranked domain `Finding` objects, top causes, core queries (effective_top_causes, primary_finding, primary_source, primary_location, has_relevant_reference_gap, top_strength_db) | rendering, transport schemas, signal-processing algorithms |
+| **Run** | ✅ Implemented | Run lifecycle and identity | start/stop state transitions, run_id, analysis_settings | analysis results, report rendering |
+| **DiagnosticCase** | 🔮 Planned | One diagnostic problem for one vehicle | case lifecycle, hypothesis set, run set, findings, actions, cross-run consistency | rendering, transport schemas, signal-processing algorithms |
+| **TestPlan** | 🔮 Planned | The intended diagnostic approach | planned runs, comparison strategy, required evidence, next-step intent | execution telemetry, report layout |
 
 ### Entities
 
-| Object | What it represents | Core behavior |
-|---|---|---|
-| **Vehicle** | The vehicle under diagnosis | owns stable vehicle identity and diagnostic-relevant physical characteristics |
-| **Sensor** | A physical measurement source | owns identity, placement, availability, and suitability for evidence interpretation |
-| **Symptom** | A complaint or observed problem | owns symptom wording, onset/context, and diagnostic framing |
-| **DrivingSegment** | A meaningful portion of a run | owns segment boundaries, maneuver/phase meaning, and whether it is fit for a given interpretation |
-| **Observation** | A notable fact extracted from run data | owns observation type, magnitude, conditions, and traceability to source measurements |
-| **Signature** | A coherent vibration pattern built from observations | owns pattern identity, pattern-level consistency, and the conditions where it appears |
-| **Hypothesis** | A possible explanation of the complaint | owns support/contradiction state, status, and rationale |
-| **Finding** | A justified conclusion | owns finding identity, kind, severity, actionability, and conclusion wording |
-| **RecommendedAction** | A next diagnostic or repair step | owns action intent, priority, and why the action follows from the findings |
+| Object | Status | What it represents | Core behavior |
+|---|---|---|---|
+| **Car** | ✅ Implemented | The vehicle under diagnosis (as `Car`) | owns stable vehicle identity, tire spec, display name |
+| **Sensor** | ✅ Implemented | A physical measurement source | owns identity, placement, availability, and suitability for evidence interpretation |
+| **Finding** | ✅ Implemented | A justified conclusion | owns finding identity, kind, severity, actionability, confidence classification (label/tone/pct), surfacing, ranking, phase-adjusted scoring |
+| **Report** | ✅ Implemented | Run-level metadata for rendering | owns run_id, lang, car info, dates, counts (thin metadata, not business logic) |
+| **Symptom** | 🔮 Planned | A complaint or observed problem | owns symptom wording, onset/context, and diagnostic framing |
+| **DrivingSegment** | 🔮 Planned | A meaningful portion of a run | owns segment boundaries, maneuver/phase meaning |
+| **Observation** | 🔮 Planned | A notable fact extracted from run data | owns observation type, magnitude, conditions |
+| **Signature** | 🔮 Planned | A coherent vibration pattern built from observations | owns pattern identity, pattern-level consistency |
+| **Hypothesis** | 🔮 Planned | A possible explanation of the complaint | owns support/contradiction state, status, and rationale |
+| **RecommendedAction** | 🔮 Planned | A next diagnostic or repair step | owns action intent, priority |
 
 ### Value objects
 
-| Object | What it represents | Core behavior |
-|---|---|---|
-| **TireSpec** | Tire geometry relevant to diagnosis | dimensional consistency and derived geometry |
-| **ConfigurationSnapshot** | Vehicle/setup state at a specific moment | immutable diagnostic context for interpreting a run |
-| **SpeedProfile** | Run speed behavior as a diagnostic concept | coverage, steadiness, usable range, and speed-related fitness signals |
-| **RunSuitability** | Whether a run is trustworthy enough for analysis | pass/caution/fail outcome, suitability reasons, and structured gating semantics |
-| **FindingEvidence** | Structured support for a finding | evidence quality, consistency, strength, and matched supporting evidence |
-| **VibrationOrigin** | Suspected source/origin conclusion | source semantics, dominance, ambiguity, and origin-level support |
-| **LocationHotspot** | Spatial concentration of evidence | strongest location, alternatives, ambiguity, confidence, and whether localization is strong enough to conclude |
-| **ConfidenceAssessment** | Why confidence is high, low, or withheld | confidence level, confidence drivers, missing evidence, and caveats |
+| Object | Status | What it represents | Core behavior |
+|---|---|---|---|
+| **TireSpec** | ✅ Implemented | Tire geometry relevant to diagnosis | dimensional consistency and derived geometry |
+| **VibrationSource** | ✅ Implemented (StrEnum) | Canonical mechanical vibration source categories | WHEEL_TIRE, DRIVELINE, ENGINE, BODY_RESONANCE, TRANSIENT_IMPACT, BASELINE_NOISE, UNKNOWN_RESONANCE, UNKNOWN |
+| **FindingKind** | ✅ Implemented (StrEnum) | Finding classification category | REFERENCE, INFORMATIONAL, DIAGNOSTIC |
+| **SpeedSource** | ✅ Implemented | How vehicle speed is obtained | kind (GPS/OBD2/MANUAL), effective_speed_kmh, is_live |
+| **DrivingPhase** | ✅ Implemented (StrEnum) | Phase of a driving segment | CRUISE, ACCEL, DECEL, IDLE |
+| **Measurement** | ✅ Implemented | A single acceleration sample | timestamp, acceleration components, vibration reading |
+| **ConfigurationSnapshot** | 🔮 Planned | Vehicle/setup state at a specific moment | immutable diagnostic context for interpreting a run |
+| **SpeedProfile** | 🔮 Planned | Run speed behavior as a diagnostic concept | coverage, steadiness, usable range |
+| **RunSuitability** | 🔮 Planned | Whether a run is trustworthy enough | pass/caution/fail outcome, suitability reasons |
+| **FindingEvidence** | 🔮 Planned | Structured support for a finding | evidence quality, consistency, strength |
+| **VibrationOrigin** | 🔮 Planned | Suspected source/origin conclusion | source semantics, dominance, ambiguity |
+| **LocationHotspot** | 🔮 Planned | Spatial concentration of evidence | strongest location, alternatives, ambiguity |
+| **ConfidenceAssessment** | 🔮 Planned | Why confidence is high, low, or withheld | confidence level, drivers, caveats |
 
 ## Domain services
 
@@ -388,36 +412,67 @@ The following are architecture violations:
   `Observation`, `Signature`, `Hypothesis`, and `Finding` concepts
 - rendering/export needs dictating the shape of the core model
 
-## Target package shape
+## Architecture enforcement
 
-The target domain package should mirror the human concepts above. A clean-sheet
-layout would look like this:
+The following guardrails are enforced by tests in
+`tests/hygiene/test_domain_architecture.py`:
+
+- `RunAnalysisResult` is a frozen dataclass exported from `vibesensor.domain`
+- Domain modules do not import boundary payload types (`FindingPayload`,
+  `AnalysisSummary`) at runtime
+- `RunAnalysisResult` provides finding classification queries (diagnostic,
+  reference, informational, surfaceable, actionable, effective top causes)
+- `RunAnalysisResult.from_summary()` constructs a valid aggregate from
+  persisted dicts (boundary adapter)
+- `Finding` is a frozen dataclass with immutable collections
+- `Finding` owns confidence presentation (label_key, tone, pct_text)
+- `confidence_label()` in `top_cause_selection` delegates to
+  `Finding.confidence_label()` — single source of truth
+- `RunAnalysisResult` owns primary source/location queries
+- `finalize_findings()` returns domain `Finding` objects
+- `select_top_causes()` returns domain `Finding` objects
+- `RunAnalysis.summarize()` populates `analysis_result` as `RunAnalysisResult`
+- Report mapping context builds a domain aggregate
+- `non_reference_findings()` uses domain classification
+- `build_system_cards()` reads confidence tone from domain `Finding`, not
+  from enriched payload dicts
+
+## Current package layout
+
+The domain package (`vibesensor/domain/`) mirrors the human concepts above:
+
+| File | Primary object(s) | Status |
+|---|---|---|
+| `__init__.py` | re-exports all domain symbols | ✅ |
+| `finding.py` | `Finding`, `FindingKind`, `VibrationSource`, `speed_band_sort_key`, `speed_bin_label` | ✅ |
+| `run_analysis_result.py` | `RunAnalysisResult` | ✅ |
+| `run.py` | `Run` | ✅ |
+| `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `transition_run` | ✅ |
+| `car.py` | `Car`, `TireSpec` | ✅ |
+| `sensor.py` | `Sensor`, `SensorPlacement` | ✅ |
+| `speed_source.py` | `SpeedSource`, `SpeedSourceKind` | ✅ |
+| `driving_phase.py` | `DrivingPhase` | ✅ |
+| `measurement.py` | `Measurement`, `VibrationReading` | ✅ |
+| `report.py` | `Report` | ✅ |
+
+### Target additions (planned)
 
 | File | Primary object(s) |
 |---|---|
 | `diagnostic_case.py` | `DiagnosticCase` |
-| `vehicle.py` | `Vehicle`, `TireSpec` |
 | `configuration_snapshot.py` | `ConfigurationSnapshot` |
 | `symptom.py` | `Symptom` |
 | `test_plan.py` | `TestPlan`, `RecommendedAction` |
-| `test_run.py` | `TestRun` |
-| `driving_segment.py` | `DrivingSegment` |
-| `sensor.py` | `Sensor` |
 | `observation.py` | `Observation` |
 | `signature.py` | `Signature` |
 | `hypothesis.py` | `Hypothesis` |
-| `finding.py` | `Finding` |
 | `finding_evidence.py` | `FindingEvidence` |
 | `vibration_origin.py` | `VibrationOrigin` |
 | `location_hotspot.py` | `LocationHotspot` |
 | `confidence_assessment.py` | `ConfidenceAssessment` |
 | `speed_profile.py` | `SpeedProfile` |
 | `run_suitability.py` | `RunSuitability` |
-| `services/observation_extraction.py` | observation-extraction service |
-| `services/signature_recognition.py` | signature-recognition service |
-| `services/hypothesis_evaluation.py` | hypothesis-evaluation service |
-| `services/finding_synthesis.py` | finding-synthesis service |
-| `services/case_reconciliation.py` | case-reconciliation service |
+| `services/` | domain services for observation extraction, signature recognition, hypothesis evaluation, finding synthesis, case reconciliation |
 
 The exact file split may change, but the conceptual split should not: the model
 must be built around the human diagnostic concepts, not around transport or
