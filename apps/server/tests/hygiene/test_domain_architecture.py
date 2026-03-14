@@ -563,3 +563,132 @@ def test_domain_package_has_no_payload_type_imports() -> None:
                     if name in forbidden:
                         violations.append(f"{py_file.name} imports {name}")
     assert not violations, f"Domain modules must not import boundary types: {violations}"
+
+
+# ── Domain value objects are exported and frozen ────────────────────────
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "FindingEvidence",
+        "LocationHotspot",
+        "ConfidenceAssessment",
+        "SpeedProfile",
+        "RunSuitability",
+        "SuitabilityCheck",
+    ],
+)
+def test_domain_value_objects_are_exported(name: str) -> None:
+    """New domain value objects must be importable from ``vibesensor.domain``."""
+    import importlib
+
+    mod = importlib.import_module("vibesensor.domain")
+    assert hasattr(mod, name), f"{name} must be exported from vibesensor.domain"
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "FindingEvidence",
+        "LocationHotspot",
+        "ConfidenceAssessment",
+        "SpeedProfile",
+        "RunSuitability",
+        "SuitabilityCheck",
+    ],
+)
+def test_domain_value_objects_are_frozen_dataclasses(name: str) -> None:
+    """Domain value objects must be frozen dataclasses."""
+    import dataclasses
+    import importlib
+
+    mod = importlib.import_module("vibesensor.domain")
+    cls = getattr(mod, name)
+    assert dataclasses.is_dataclass(cls), f"{name} must be a dataclass"
+
+
+def test_finding_from_payload_populates_evidence() -> None:
+    """Finding.from_payload extracts FindingEvidence when evidence_metrics is present."""
+    from vibesensor.domain import Finding
+
+    payload = {
+        "finding_id": "F001",
+        "suspected_source": "wheel/tire",
+        "confidence": 0.85,
+        "evidence_metrics": {
+            "match_rate": 0.9,
+            "snr_db": 12.0,
+            "vibration_strength_db": 25.0,
+        },
+    }
+    f = Finding.from_payload(payload)
+    assert f.evidence is not None, "from_payload must populate evidence"
+    assert f.evidence.match_rate == 0.9
+
+
+def test_finding_from_payload_populates_location() -> None:
+    """Finding.from_payload extracts LocationHotspot when location_hotspot is present."""
+    from vibesensor.domain import Finding
+
+    payload = {
+        "finding_id": "F001",
+        "suspected_source": "wheel/tire",
+        "confidence": 0.85,
+        "location_hotspot": {
+            "location": "FL wheel",
+            "dominance_ratio": 0.75,
+        },
+    }
+    f = Finding.from_payload(payload)
+    assert f.location is not None, "from_payload must populate location"
+    assert f.location.strongest_location == "FL wheel"
+
+
+def test_run_analysis_result_from_summary_populates_speed_profile() -> None:
+    """from_summary extracts SpeedProfile when speed_stats is present."""
+    from vibesensor.domain import RunAnalysisResult
+
+    summary = {
+        "run_id": "test-123",
+        "findings": [],
+        "top_causes": [],
+        "speed_stats": {
+            "min_kmh": 30.0,
+            "max_kmh": 90.0,
+            "steady_speed": True,
+        },
+    }
+    result = RunAnalysisResult.from_summary(summary)
+    assert result.speed_profile is not None, "from_summary must populate speed_profile"
+    assert result.speed_profile.steady_speed
+
+
+def test_run_analysis_result_from_summary_populates_suitability() -> None:
+    """from_summary extracts RunSuitability when run_suitability is present."""
+    from vibesensor.domain import RunAnalysisResult
+
+    summary = {
+        "run_id": "test-123",
+        "findings": [],
+        "top_causes": [],
+        "run_suitability": [
+            {"check_key": "speed", "state": "pass", "explanation": "OK"},
+        ],
+    }
+    result = RunAnalysisResult.from_summary(summary)
+    assert result.suitability is not None, "from_summary must populate suitability"
+    assert result.suitability.is_usable
+
+
+def test_confidence_assessment_tier_matches_domain_finding() -> None:
+    """ConfidenceAssessment.tier must be consistent with Finding.classify_confidence."""
+    from vibesensor.domain import ConfidenceAssessment, Finding
+
+    for conf in [0.1, 0.3, 0.5, 0.7, 0.9]:
+        label_key, _tone, _pct = Finding.classify_confidence(conf)
+        ca = ConfidenceAssessment.assess(conf)
+        assert ca.label_key == label_key, (
+            f"ConfidenceAssessment.assess({conf}).label_key must match "
+            f"Finding.classify_confidence({conf})[0]"
+        )

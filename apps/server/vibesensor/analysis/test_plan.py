@@ -9,7 +9,7 @@ from ..constants import MULTI_SENSOR_CORROBORATION_DB
 from ..domain import VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..locations import has_any_wheel_location, is_wheel_location
-from ._types import FindingPayload, JsonObject, LocationHotspot, MatchedPoint, TestStep, i18n_ref
+from ._types import FindingPayload, JsonObject, LocationHotspotPayload, MatchedPoint, TestStep, i18n_ref
 from .helpers import _speed_bin_label, _weighted_percentile, weak_spatial_dominance_threshold
 from .order_analysis import _finding_actions_for_source
 
@@ -169,7 +169,7 @@ def _score_locations_in_bin(
     corroboration_amp_multiplier: float,
     connected_locations: set[str] | None,
     suspected_source: str | None,
-) -> LocationHotspot | None:
+) -> LocationHotspotPayload | None:
     """Score and rank sensor locations within a single speed-bin.
 
     Returns a candidate dict summarising the strongest location in this bin,
@@ -286,7 +286,7 @@ def _location_speedbin_summary(
     relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
     connected_locations: set[str] | None = None,
     suspected_source: str | None = None,
-) -> tuple[object, LocationHotspot | None]:
+) -> tuple[object, LocationHotspotPayload | None]:
     """Return strongest location summary, optionally restricted to specific speed bins.
 
     When ``relevant_speed_bins`` is provided, location ranking is computed only
@@ -327,8 +327,8 @@ def _location_speedbin_summary(
     if not grouped:
         return "", None
 
-    per_bin_results: list[LocationHotspot] = []
-    best: LocationHotspot | None = None
+    per_bin_results: list[LocationHotspotPayload] = []
+    best: LocationHotspotPayload | None = None
     corroboration_amp_multiplier = pow(10.0, MULTI_SENSOR_CORROBORATION_DB / 20.0)
     for bin_label, rows in grouped.items():
         if not rows:
@@ -394,7 +394,7 @@ def _location_speedbin_summary(
     # rankings instead of only getting the global winner.
     # Use detached copies to avoid self-referential structures when `best`
     # points to one of the dicts in `per_bin_results`.
-    best_out: LocationHotspot = {**best}
+    best_out: LocationHotspotPayload = {**best}
     best_out["per_bin_results"] = [{**item} for item in per_bin_results]
 
     sentence = i18n_ref(
