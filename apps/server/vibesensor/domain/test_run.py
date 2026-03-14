@@ -35,6 +35,38 @@ class TestRun:
     suitability: RunSuitability | None = None
     test_plan: TestPlan = TestPlan()
 
+    def __post_init__(self) -> None:
+        if not self.top_causes:
+            return
+        if not self.findings:
+            raise ValueError("TestRun.top_causes must be drawn from findings when present")
+        unmatched = tuple(
+            top_cause
+            for top_cause in self.top_causes
+            if not self._matches_top_cause_to_findings(top_cause, self.findings)
+        )
+        if unmatched:
+            detail = ", ".join(
+                top_cause.finding_id or str(top_cause.suspected_source) for top_cause in unmatched
+            )
+            raise ValueError(
+                "TestRun.top_causes must be a subset or derivation of findings; "
+                f"unmatched top causes: {detail}"
+            )
+
+    @staticmethod
+    def _matches_top_cause_to_findings(
+        top_cause: Finding,
+        findings: tuple[Finding, ...],
+    ) -> bool:
+        for finding in findings:
+            if top_cause == finding:
+                return True
+            if not top_cause.finding_id or top_cause.finding_id != finding.finding_id:
+                continue
+            return top_cause.suspected_source == finding.suspected_source
+        return False
+
     @property
     def run_id(self) -> str:
         return self.run.run_id
