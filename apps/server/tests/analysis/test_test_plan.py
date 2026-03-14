@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from vibesensor.analysis.test_plan import _merge_test_plan, build_domain_test_plan
+from vibesensor.analysis.test_plan import (
+    _merge_test_plan,
+    build_domain_test_plan,
+    build_domain_test_plan_from_findings,
+)
+from vibesensor.domain import Finding
 
 
 def test_merge_test_plan_deduplicates_action_ids_case_insensitively() -> None:
@@ -63,4 +68,23 @@ def test_build_domain_test_plan_normalizes_boundary_step_values() -> None:
     assert action.confirm == "ACTION_WHEEL_BALANCE_CONFIRM"
     assert action.falsify == "ACTION_WHEEL_BALANCE_FALSIFY"
     assert action.eta == "10 min"
+    assert plan.requires_additional_data is False
+
+
+def test_build_domain_test_plan_from_findings_uses_domain_fields() -> None:
+    findings = [
+        Finding(
+            suspected_source="wheel/tire",
+            strongest_location="front-left wheel",
+            strongest_speed_band="90-100 km/h",
+            order="1x wheel",
+            confidence=0.82,
+            weak_spatial_separation=True,
+        )
+    ]
+
+    plan = build_domain_test_plan_from_findings(findings, "en")
+
+    assert len(plan.actions) > 0
+    assert plan.actions[0].action_id == "wheel_tire_condition"
     assert plan.requires_additional_data is False
