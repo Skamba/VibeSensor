@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 from test_support import make_diffuse_samples, make_engine_order_samples, make_sample, standard_metadata
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
-from vibesensor.analysis import summarize_run_data
+from vibesensor.analysis import RunAnalysis, summarize_run_data
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
 
@@ -83,7 +83,7 @@ def _short_run_samples() -> list[dict[str, Any]]:
 
 
 def test_characterization_wheel_fault_summary_contract() -> None:
-    summary = summarize_run_data(
+    analysis = RunAnalysis(
         standard_metadata(),
         fault_phase(
             speed_kmh=80.0,
@@ -94,16 +94,21 @@ def test_characterization_wheel_fault_summary_contract() -> None:
         lang="en",
         file_name="characterization-wheel",
     )
+    summary = analysis.summarize()
 
     top_cause = _top_cause(summary)
     origin = summary["most_likely_origin"]
+    test_run = analysis.test_run
 
     assert top_cause is not None
+    assert test_run is not None
     assert top_cause["finding_key"] == "wheel_1x"
     assert top_cause["suspected_source"] == "wheel/tire"
     assert top_cause["confidence"] == pytest.approx(0.5028523562048559)
     assert top_cause["confidence_tone"] == "warn"
     assert top_cause["strongest_speed_band"] == "80-90 km/h"
+    assert test_run.hypotheses[0].hypothesis_id == "hyp-1x_wheel"
+    assert test_run.hypotheses[0].is_supported is True
     assert origin["location"] == "front-right"
     assert origin["alternative_locations"] == ["front-left"]
     assert origin["suspected_source"] == "wheel/tire"
