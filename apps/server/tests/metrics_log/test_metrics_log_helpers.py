@@ -389,7 +389,10 @@ def test_stop_recording_does_not_block_on_post_analysis(
             assert allow_summary_finish.wait(timeout=5.0)
             from types import SimpleNamespace
 
-            return SimpleNamespace(summary={"findings": [], "top_causes": []})
+            return SimpleNamespace(
+                summary={"findings": [], "top_causes": []},
+                diagnostic_case=SimpleNamespace(case_id="mock-case"),
+            )
 
     monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _SlowRunAnalysis)
     started = time.monotonic()
@@ -646,7 +649,8 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
             from types import SimpleNamespace
 
             return SimpleNamespace(
-                summary={"row_count": self._sample_count, "run_suitability": []}
+                summary={"row_count": self._sample_count, "run_suitability": []},
+                diagnostic_case=SimpleNamespace(case_id="mock-case"),
             )
 
     monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _FakeRunAnalysis)

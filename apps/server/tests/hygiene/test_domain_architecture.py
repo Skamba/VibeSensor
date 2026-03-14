@@ -911,3 +911,25 @@ def test_finding_projector_in_finding_boundary_module() -> None:
     from vibesensor.boundaries.finding import finding_payload_from_domain
 
     assert callable(finding_payload_from_domain)
+
+
+def test_post_analysis_does_not_import_project_summary() -> None:
+    """Fresh summaries should not round-trip through domain decode/re-project."""
+    import ast
+    from pathlib import Path
+
+    source = (
+        Path(__file__).resolve().parents[2]
+        / "vibesensor"
+        / "metrics_log"
+        / "post_analysis.py"
+    ).read_text()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            names = [alias.name for alias in node.names]
+            if "project_summary_through_domain" in names:
+                pytest.fail(
+                    "post_analysis.py should not import project_summary_through_domain; "
+                    "fresh summaries from summarize() are already domain-canonical"
+                )

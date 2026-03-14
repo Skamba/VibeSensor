@@ -127,8 +127,7 @@ class TestAnalysisQueueContract:
         assert "self._analysis_queue: deque[_QueuedRun] = deque()" in text
         assert "evicting run" not in text
 
-    def test_post_analysis_projects_summary_through_domain(self) -> None:
-        """Post-analysis must canonicalize persisted summaries via the shared boundary helper."""
+    def test_post_analysis_does_not_round_trip_through_domain(self) -> None:
+        """Fresh summaries from summarize() must not re-project through domain decode."""
         text = (SERVER_ROOT / "vibesensor" / "metrics_log" / "post_analysis.py").read_text()
-        assert "from ..boundaries.diagnostic_case import project_summary_through_domain" in text
-        assert "summary = project_summary_through_domain(summary)" in text
+        assert "project_summary_through_domain" not in text
