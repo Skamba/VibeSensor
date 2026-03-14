@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median as _median
@@ -1183,15 +1183,55 @@ class RunAnalysis:
             per_sample_phases=self._prepared.per_sample_phases,
         )
 
-        # Build the domain aggregate
+        # Build the domain aggregate with run-level value objects
+        from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+        from vibesensor.domain.run_suitability import RunSuitability
+        from vibesensor.domain.speed_profile import SpeedProfile
+
+        speed_profile = (
+            SpeedProfile.from_stats(
+                self._prepared.speed_stats,
+                self._prepared.phase_info,
+            )
+            if self._prepared.speed_stats
+            else None
+        )
+        domain_suitability = (
+            RunSuitability.from_checks(run_suitability) if run_suitability else None
+        )
+
+        # Enrich top-cause domain Findings with ConfidenceAssessment
+        has_ref_gaps = not reference_complete
+        enriched_domain_top_causes: list[DomainFinding] = []
+        for f in domain_top_causes:
+            ca = ConfidenceAssessment.assess(
+                f.effective_confidence,
+                strength_band_key=overall_strength_band_key,
+                steady_speed=bool(
+                    self._prepared.speed_stats.get("steady_speed", True)
+                    if self._prepared.speed_stats
+                    else True
+                ),
+                has_reference_gaps=has_ref_gaps,
+                weak_spatial=f.weak_spatial_separation,
+                sensor_count=len(sensor_locations),
+            )
+            enriched_domain_top_causes.append(replace(f, confidence_assessment=ca))
+
+        final_top_causes = (
+            tuple(enriched_domain_top_causes) if enriched_domain_top_causes else domain_top_causes
+        )
+
         self._analysis_result = RunAnalysisResult(
             run_id=self._prepared.run_id,
             findings=domain_findings,
-            top_causes=domain_top_causes,
+            top_causes=final_top_causes,
             duration_s=self._prepared.duration_s,
             sample_count=len(self._samples),
             sensor_count=len(sensor_locations),
             lang=self._language,
+            speed_profile=speed_profile,
+            suitability=domain_suitability,
         )
 
         summary = build_summary_payload(

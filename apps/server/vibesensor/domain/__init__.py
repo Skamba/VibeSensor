@@ -23,13 +23,26 @@ SpeedSource
     How vehicle speed is obtained during a run.
 Finding
     One diagnostic conclusion or cause candidate.
+FindingEvidence
+    Structured evidence supporting a finding.
+LocationHotspot
+    Where vibration evidence is spatially concentrated.
+ConfidenceAssessment
+    Why confidence in a finding is high, low, or withheld.
 Report
     The assembled output of a diagnostic run.
+RunAnalysisResult
+    Finalized analysis result — the domain aggregate.
+SpeedProfile
+    Run speed behaviour as a diagnostic concept.
+RunSuitability
+    Whether a run is trustworthy enough for diagnosis.
 VibrationReading
     Value object representing a processed vibration measurement in dB.
 """
 
 from .car import Car, TireSpec
+from .confidence_assessment import ConfidenceAssessment
 from .driving_phase import DrivingPhase
 from .finding import (
     Finding,
@@ -38,32 +51,42 @@ from .finding import (
     speed_band_sort_key,
     speed_bin_label,
 )
+from .finding_evidence import FindingEvidence
+from .location_hotspot import LocationHotspot
 from .measurement import Measurement, VibrationReading
 from .report import Report
 from .run import Run
 from .run_analysis_result import RunAnalysisResult
 from .run_status import RUN_TRANSITIONS, RunStatus, transition_run
+from .run_suitability import RunSuitability, SuitabilityCheck
 from .sensor import Sensor, SensorPlacement
+from .speed_profile import SpeedProfile
 from .speed_source import SpeedSource, SpeedSourceKind
 
 __all__ = [
     # Primary domain names (prefer these)
     "Car",
+    "ConfidenceAssessment",
     "DrivingPhase",
     "Finding",
+    "FindingEvidence",
     "FindingKind",
+    "LocationHotspot",
     "Measurement",
     "RUN_TRANSITIONS",
     "Report",
     "Run",
     "RunAnalysisResult",
     "RunStatus",
+    "RunSuitability",
     "Sensor",
     "SensorPlacement",
+    "SpeedProfile",
     "speed_band_sort_key",
     "speed_bin_label",
     "SpeedSource",
     "SpeedSourceKind",
+    "SuitabilityCheck",
     "TireSpec",
     "VibrationSource",
     "transition_run",
