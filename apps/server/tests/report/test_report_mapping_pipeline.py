@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from vibesensor.domain import Finding, RunAnalysisResult, SpeedProfile
+from vibesensor.domain import ConfigurationSnapshot, Finding, Run, SpeedProfile, TestRun
 from vibesensor.report.mapping import (
     prepare_report_mapping_context,
     resolve_primary_report_candidate,
@@ -113,8 +113,9 @@ def test_resolve_primary_report_candidate_uses_speed_profile_for_certainty_fallb
     )
     context = replace(
         context,
-        domain_aggregate=RunAnalysisResult(
-            run_id="run-1",
+        domain_aggregate=TestRun(
+            run=Run(run_id="run-1"),
+            configuration_snapshot=ConfigurationSnapshot(),
             findings=(domain_finding,),
             top_causes=(domain_finding,),
             speed_profile=SpeedProfile(steady_speed=True),

@@ -2,7 +2,7 @@
 
 These utilities bridge between the serialization-oriented
 ``FindingPayload`` dicts and the domain aggregate
-``RunAnalysisResult``.  All selection logic is **delegated** to the
+``TestRun``.  All selection logic is **delegated** to the
 domain aggregate's ``effective_top_causes()`` method — this module
 does not duplicate the selection rules.
 """
@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from ..boundaries.finding import finding_from_payload
-from ..domain import RunAnalysisResult
+from ..domain import ConfigurationSnapshot, Run, TestRun
 from ._types import FindingPayload, is_finding
 
 
@@ -37,7 +37,7 @@ def select_effective_top_causes(
 
     Returns ``(all_findings, findings_non_ref, top_causes_all, effective_top_causes)``.
 
-    Selection logic delegates to ``RunAnalysisResult.effective_top_causes()``
+    Selection logic delegates to ``TestRun.effective_top_causes()``
     so the decision rules have a single source of truth in the domain
     aggregate.
     """
@@ -49,8 +49,9 @@ def select_effective_top_causes(
     domain_findings = tuple(finding_from_payload(f) for f in all_findings)
     domain_top_causes = tuple(finding_from_payload(tc) for tc in top_causes_all)
 
-    aggregate = RunAnalysisResult(
-        run_id="boundary",
+    aggregate = TestRun(
+        run=Run(run_id="boundary"),
+        configuration_snapshot=ConfigurationSnapshot(),
         findings=domain_findings,
         top_causes=domain_top_causes,
     )

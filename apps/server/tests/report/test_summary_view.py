@@ -6,10 +6,12 @@ from vibesensor.analysis._types import AnalysisSummary
 from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
 from vibesensor.boundaries.test_steps import step_payloads_from_plan
 from vibesensor.domain import (
+    ConfigurationSnapshot,
     Finding,
     LocationHotspot,
     RecommendedAction,
-    RunAnalysisResult,
+    Run,
+    TestRun,
     VibrationOrigin,
 )
 from vibesensor.domain import (
@@ -154,7 +156,12 @@ class TestSummaryHelpers:
                 reason="domain rationale",
             ),
         )
-        aggregate = RunAnalysisResult(run_id="run-1", findings=(primary,), top_causes=(primary,))
+        aggregate = TestRun(
+            run=Run(run_id="run-1"),
+            configuration_snapshot=ConfigurationSnapshot(),
+            findings=(primary,),
+            top_causes=(primary,),
+        )
         origin = _origin_from_aggregate(aggregate, _minimal_summary()["most_likely_origin"])
         assert origin["location"] == "Front Left / Front Right"
         assert origin["alternative_locations"] == ["front_right"]

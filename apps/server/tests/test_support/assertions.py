@@ -6,7 +6,6 @@ from collections.abc import Iterator
 from typing import Any
 
 from vibesensor.boundaries.finding import finding_from_payload
-from vibesensor.domain import Finding
 
 from .analysis import extract_top, top_confidence, top_corner_label
 

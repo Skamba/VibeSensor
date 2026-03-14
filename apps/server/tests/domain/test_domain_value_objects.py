@@ -33,7 +33,6 @@ from vibesensor.domain import (
     HypothesisStatus,
     LocationHotspot,
     Run,
-    RunAnalysisResult,
     RunSuitability,
     Sensor,
     SensorPlacement,
@@ -1441,7 +1440,7 @@ class TestFindingWithValueObjects:
         assert f.confidence_assessment is None
 
 
-# ── Integration: RunAnalysisResult with SpeedProfile/Suitability ────────────
+# ── Integration: TestRun with SpeedProfile/Suitability ──────────────────────
 
 
 class TestTestRunTopCauseInvariant:
@@ -1484,11 +1483,12 @@ class TestTestRunTopCauseInvariant:
             _make_test_run(findings=(), top_causes=(top_cause,))
 
 
-class TestRunAnalysisResultWithValueObjects:
+class TestTestRunWithValueObjects:
     def test_result_with_speed_profile(self) -> None:
         sp = SpeedProfile(min_kmh=40, max_kmh=80, steady_speed=True)
-        result = RunAnalysisResult(
-            run_id="test",
+        result = TestRun(
+            run=Run(run_id="test"),
+            configuration_snapshot=ConfigurationSnapshot(),
             findings=(),
             top_causes=(),
             speed_profile=sp,
@@ -1498,8 +1498,9 @@ class TestRunAnalysisResultWithValueObjects:
 
     def test_result_with_suitability(self) -> None:
         rs = RunSuitability(checks=(SuitabilityCheck(check_key="test", state="pass"),))
-        result = RunAnalysisResult(
-            run_id="test",
+        result = TestRun(
+            run=Run(run_id="test"),
+            configuration_snapshot=ConfigurationSnapshot(),
             findings=(),
             top_causes=(),
             suitability=rs,
@@ -1508,6 +1509,8 @@ class TestRunAnalysisResultWithValueObjects:
         assert result.suitability.is_usable
 
     def test_from_summary_extracts_speed_profile(self) -> None:
+        from vibesensor.boundaries.diagnostic_case import test_run_from_summary
+
         summary = {
             "run_id": "test-123",
             "findings": [],
@@ -1521,7 +1524,7 @@ class TestRunAnalysisResultWithValueObjects:
             },
             "phase_summary": {"has_cruise": True, "cruise_pct": 65.0},
         }
-        result = RunAnalysisResult.from_summary(summary)
+        result = test_run_from_summary(summary)
         assert result.speed_profile is not None
         assert result.speed_profile.min_kmh == 30.0
         assert result.speed_profile.steady_speed
@@ -1529,6 +1532,8 @@ class TestRunAnalysisResultWithValueObjects:
         assert result.speed_profile.cruise_fraction == pytest.approx(0.65)
 
     def test_from_summary_extracts_suitability(self) -> None:
+        from vibesensor.boundaries.diagnostic_case import test_run_from_summary
+
         summary = {
             "run_id": "test-123",
             "findings": [],
@@ -1538,20 +1543,23 @@ class TestRunAnalysisResultWithValueObjects:
                 {"check_key": "noise", "state": "warn", "explanation": "Marginal"},
             ],
         }
-        result = RunAnalysisResult.from_summary(summary)
+        result = test_run_from_summary(summary)
         assert result.suitability is not None
         assert result.suitability.overall == "caution"
         assert len(result.suitability.checks) == 2
 
     def test_from_summary_no_speed_stats(self) -> None:
+        from vibesensor.boundaries.diagnostic_case import test_run_from_summary
+
         summary = {"run_id": "test-123", "findings": [], "top_causes": []}
-        result = RunAnalysisResult.from_summary(summary)
+        result = test_run_from_summary(summary)
         assert result.speed_profile is None
         assert result.suitability is None
 
     def test_defaults_none(self) -> None:
-        result = RunAnalysisResult(
-            run_id="test",
+        result = TestRun(
+            run=Run(run_id="test"),
+            configuration_snapshot=ConfigurationSnapshot(),
             findings=(),
             top_causes=(),
         )
