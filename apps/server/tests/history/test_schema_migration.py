@@ -155,6 +155,8 @@ def test_historydb_rejects_v4_database(tmp_path: Path) -> None:
 
 
 def test_historydb_migrates_v8_database_without_manufacturing_case_id(tmp_path: Path) -> None:
+    from vibesensor.boundaries import diagnostic_case_from_summary
+
     db_path = tmp_path / "history.db"
     _create_v8_database(db_path, analysis_json='{"findings": [], "top_causes": [], "warnings": []}')
 
@@ -181,6 +183,11 @@ def test_historydb_migrates_v8_database_without_manufacturing_case_id(tmp_path: 
     assert case_id is None
     assert run is not None
     assert "case_id" not in run
+    with pytest.raises(
+        ValueError,
+        match="legacy summary without authoritative case_id",
+    ):
+        diagnostic_case_from_summary(run["analysis"])
     db.close()
 
 
