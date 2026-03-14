@@ -1,63 +1,23 @@
-"""Test-plan merging and location/speed-bin summary helpers."""
+"""Location and speed-bin summary helpers for analysis findings."""
 
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Sequence
 from math import ceil, floor, log1p, pow
 
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
-from ..domain import Finding, LocationHotspot, RecommendedAction, TestPlan, VibrationSource
+from ..domain import LocationHotspot, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..locations import has_any_wheel_location, is_wheel_location
 from ._types import (
-    FindingPayload,
     JsonObject,
     LocationHotspotPayload,
     MatchedPoint,
-    TestStep,
     i18n_ref,
 )
 from .helpers import _speed_bin_label, _weighted_percentile
-from .order_analysis import _finding_actions_for_source
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
-
-# Least-invasive-first action priority (module-level to avoid per-call rebuild).
-_ACTION_PRIORITY: dict[str, int] = {
-    "wheel_tire_condition": 1,
-    "wheel_balance_and_runout": 2,
-    "engine_mounts_and_accessories": 3,
-    "driveline_mounts_and_fasteners": 3,
-    "driveline_inspection": 4,
-    "engine_combustion_quality": 5,
-    "general_mechanical_inspection": 6,
-}
-
-
-def _normalized_text(value: object) -> str:
-    return str(value or "").strip()
-
-
-def _normalized_lower_text(value: object) -> str:
-    return _normalized_text(value).lower()
-
-
-def _enrich_test_step(
-    step: TestStep,
-    *,
-    finding_confidence: float | None,
-    finding_speed_band: str,
-    finding_frequency: str,
-) -> TestStep:
-    enriched_step = dict(step)
-    if finding_confidence is not None:
-        enriched_step.setdefault("certainty_0_to_1", f"{finding_confidence:.4f}")
-    if finding_speed_band:
-        enriched_step.setdefault("speed_band", finding_speed_band)
-    if finding_frequency:
-        enriched_step.setdefault("frequency_hz_or_order", finding_frequency)
-    return enriched_step
 
 
 def _weighted_percentile_speed(
@@ -94,155 +54,6 @@ def _localization_confidence(
     sample_component = min(1.0, max(0.0, total_samples / 10.0))
     confidence = dominance_component * location_component * (0.6 + 0.4 * sample_component)
     return max(0.05, min(1.0, confidence))
-
-
-def _merge_test_plan(
-    findings: list[FindingPayload],
-    lang: str,
-) -> list[TestStep]:
-    steps: list[TestStep] = []
-    for finding in findings:
-        if not isinstance(finding, dict):
-            continue
-        finding_confidence = _as_float(finding.get("confidence"))
-        finding_speed_band = _normalized_text(finding.get("strongest_speed_band"))
-        finding_frequency = _normalized_text(finding.get("frequency_hz_or_order"))
-        actions = finding.get("actions")
-        if isinstance(actions, list) and actions:
-            for step in actions:
-                if not isinstance(step, dict):
-                    continue
-                steps.append(
-                    _enrich_test_step(
-                        step,
-                        finding_confidence=finding_confidence,
-                        finding_speed_band=finding_speed_band,
-                        finding_frequency=finding_frequency,
-                    ),
-                )
-            continue
-        source = _normalized_lower_text(finding.get("suspected_source"))
-        generated_steps = _finding_actions_for_source(
-            source,
-            strongest_location=_normalized_text(finding.get("strongest_location")),
-            strongest_speed_band=finding_speed_band,
-            weak_spatial_separation=bool(finding.get("weak_spatial_separation")),
-        )
-        for step in generated_steps:
-            steps.append(
-                _enrich_test_step(
-                    step,
-                    finding_confidence=finding_confidence,
-                    finding_speed_band=finding_speed_band,
-                    finding_frequency=finding_frequency,
-                ),
-            )
-
-    return _prioritize_test_steps(steps)
-
-
-def _domain_finding_frequency(finding: Finding) -> str:
-    if finding.order.strip():
-        return finding.order.strip()
-    if finding.frequency_hz is None:
-        return ""
-    return f"{finding.frequency_hz:g} Hz"
-
-
-def _merge_domain_test_plan(
-    findings: Sequence[Finding],
-    lang: str,
-) -> list[TestStep]:
-    steps: list[TestStep] = []
-    for finding in findings:
-        generated_steps = _finding_actions_for_source(
-            finding.source_normalized,
-            strongest_location=_normalized_text(finding.strongest_location),
-            strongest_speed_band=_normalized_text(finding.strongest_speed_band),
-            weak_spatial_separation=finding.weak_spatial_separation,
-        )
-        for step in generated_steps:
-            steps.append(
-                _enrich_test_step(
-                    step,
-                    finding_confidence=finding.confidence,
-                    finding_speed_band=_normalized_text(finding.strongest_speed_band),
-                    finding_frequency=_domain_finding_frequency(finding),
-                )
-            )
-
-    return _prioritize_test_steps(steps)
-
-
-def _prioritize_test_steps(steps: list[TestStep]) -> list[TestStep]:
-    dedup: dict[str, TestStep] = {}
-    ordered: list[TestStep] = []
-    for step in steps:
-        action_id = _normalized_lower_text(step.get("action_id"))
-        if not action_id:
-            continue
-        if action_id in dedup:
-            continue
-        dedup[action_id] = step
-        ordered.append(step)
-
-    # Sort by priority (least-invasive first), then preserve original order as tiebreak
-    ordered.sort(key=lambda s: _ACTION_PRIORITY.get(_normalized_lower_text(s.get("action_id")), 99))
-
-    if ordered:
-        return ordered[:5]
-    return [
-        {
-            "action_id": "general_mechanical_inspection",
-            "what": i18n_ref("COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS"),
-            "why": i18n_ref("NO_ACTIONABLE_FINDINGS_WERE_GENERATED_FROM_CURRENT_DATA"),
-            "confirm": i18n_ref(
-                "CONFIRM_CONCRETE_MECHANICAL_ISSUE_IDENTIFIED",
-            ),
-            "falsify": i18n_ref(
-                "FALSIFY_NO_ABNORMAL_PLAY_WEAR_OR_LOOSENESS",
-            ),
-            "eta": "20-35 min",
-        },
-    ]
-
-
-def _step_text(value: object) -> str:
-    if isinstance(value, dict):
-        key = value.get("_i18n_key")
-        if key is not None:
-            return str(key)
-    return _normalized_text(value)
-
-
-def build_domain_test_plan(findings: list[FindingPayload], lang: str) -> TestPlan:
-    steps = _merge_test_plan(findings, lang)
-    actions: list[RecommendedAction] = []
-    for priority, step in enumerate(steps, start=1):
-        action_id = _normalized_lower_text(step.get("action_id"))
-        if not action_id:
-            continue
-        actions.append(
-            RecommendedAction(
-                action_id=action_id,
-                what=_step_text(step.get("what")),
-                why=_step_text(step.get("why")),
-                confirm=_step_text(step.get("confirm")),
-                falsify=_step_text(step.get("falsify")),
-                eta=_normalized_text(step.get("eta")) or None,
-                priority=priority,
-            )
-        )
-    return TestPlan(
-        actions=tuple(actions),
-        requires_additional_data=not bool(findings),
-    )
-
-
-def build_domain_test_plan_from_findings(findings: Sequence[Finding], lang: str) -> TestPlan:
-    from ..domain.services.test_planning import plan_test_actions
-
-    return plan_test_actions(findings, (), lang=lang)
 
 
 def _score_locations_in_bin(
