@@ -34,8 +34,14 @@ Domain construction
   (create Finding objects and the canonical RunAnalysisResult aggregate)
             │
             ▼
-Canonical domain aggregate
-  RunAnalysisResult
+Report-domain construction
+  (derive the domain Report from RunAnalysisResult and report context)
+            │
+            ▼
+Canonical report-domain objects
+  RunAnalysisResult ──▶ Report
+            │
+            └── analysis truth feeds reportable state
             │
             ▼
 Egress adapters
@@ -51,25 +57,25 @@ Canonical flow rules:
    measurements but does not own business decisions.
 4. Core analysis decisions are made on `Finding` objects and on the
    `RunAnalysisResult` aggregate.
-5. `RunAnalysisResult` is the canonical post-analysis state for downstream
-   decisions such as classification, surfacing, ranking, and reportable
-   selection.
-6. Serialization shapes are derived from domain state for persistence,
+5. `RunAnalysisResult` is the canonical post-analysis aggregate for finalized
+   diagnostic truth.
+6. `Report` is the canonical report-domain object derived from
+   `RunAnalysisResult` plus report context. It owns reportable state for
+   downstream presentation decisions before any rendering DTOs are created.
+7. Serialization shapes are derived from domain state for persistence,
    transport, and rendering. They are outputs of the core, not peer models.
 
 ## Core domain relationship map
 
 ```text
-Car ───────▶ Run ───────▶ Finding ───────▶ RunAnalysisResult
-             ▲                               │
-Sensor ──────┘                               │ provides
-  │                                          ▼
-  └────▶ SensorPlacement               reportable diagnostic state
+Car ───────▶ Run ───────▶ Finding ───────▶ RunAnalysisResult ───────▶ Report
+             ▲                               │                            │
+Sensor ──────┘                               │ analysis truth             │ rendered by
+  │                                          ▼                            ▼
+  └────▶ SensorPlacement               reportable state          report mapping adapters
 
 Measurement ─────▶ VibrationReading
 SpeedSource ────▶ Run
-
-Report (metadata only) ───────────────▶ report mapping adapters
 ```
 
 Interpretation:
@@ -78,11 +84,13 @@ Interpretation:
   diagnostic run.
 - `Finding` is the behavior-owning diagnostic object for classification,
   actionability, surfacing, and ranking semantics.
-- `RunAnalysisResult` is the **only** canonical post-analysis aggregate.
-- `Report` is **not** the analyzed aggregate. In this repository it is a
-  metadata/context object for report generation.
+- `RunAnalysisResult` is the canonical post-analysis aggregate for finalized
+  diagnostic truth.
+- `Report` is a real domain object. It is the canonical report-domain object
+  built from `RunAnalysisResult` and report context, and it owns reportable
+  state before rendering.
 - Rendering DTOs such as `ReportTemplateData` are egress models derived from
-  the aggregate and metadata; they are never internal truth.
+  `Report`; they are never internal truth.
 
 ## Architectural layers
 
@@ -102,7 +110,7 @@ Interpretation:
 | **Run** | Aggregate root for diagnostic run lifecycle | start/stop guards, phase tracking, run-state invariants |
 | **Finding** | Primary diagnostic entity/value-rich object | kind, classification, actionability, surfacing, confidence interpretation, deterministic ranking, phase-adjusted scoring, source and speed-band semantics |
 | **RunAnalysisResult** | Canonical post-analysis aggregate | owns finalized `Finding` objects and top-cause selection state; exposes aggregate queries used for downstream business decisions |
-| **Report** | Report metadata context only | run identity, language, car/display context, timing/report metadata; no finding selection or diagnostic ownership |
+| **Report** | Canonical report-domain object | owns reportable state derived from `RunAnalysisResult`, report context, surfaced findings, report-facing ordering/sections, and domain report queries prior to rendering |
 
 ### Supporting objects
 
@@ -122,15 +130,17 @@ three separate concepts:
 
 1. **`RunAnalysisResult`** — the canonical analyzed aggregate. This owns the
    finalized diagnostic truth after analysis.
-2. **`Report`** — metadata/context for a reportable run. This is effectively
-   report metadata, not the diagnostic aggregate.
+2. **`Report`** — a domain object derived from `RunAnalysisResult` and report
+   context. This owns the canonical reportable state before any rendering
+   adapter runs.
 3. **Rendering DTOs** such as `ReportTemplateData` — egress-only structures
    shaped for template rendering and PDF generation.
 
 Rule: if a decision changes what findings are shown, ranked, grouped,
-actionable, or emphasized, that decision belongs to `Finding` or
-`RunAnalysisResult`, not to `Report`, not to `ReportTemplateData`, and not to
-report mapping adapters.
+actionable, or emphasized at the analysis level, that decision belongs to
+`Finding` or `RunAnalysisResult`. If a decision shapes reportable composition
+without changing diagnostic truth, it belongs to `Report`. It does not belong
+to `ReportTemplateData` or report mapping adapters.
 
 ## Behavior ownership
 
@@ -140,7 +150,7 @@ report mapping adapters.
 | Finding classification (`diagnostic/reference/informational`) | `Finding` |
 | Actionability, surfacing, and per-finding ranking semantics | `Finding` |
 | Aggregate-level ranking, top-cause selection, and cross-finding queries | `RunAnalysisResult` |
-| Report metadata and display context | `Report` |
+| Report-domain composition, surfaced finding set, report sections, and report queries | `Report` |
 | Serialization to history/API/rendering shapes | adapters and mappers |
 | Template shaping and PDF rendering | report adapters / rendering layer |
 | Pure math, DSP, FFT, signal transforms | functional code in `processing/` and `analysis/` |
@@ -150,6 +160,7 @@ Ownership rules:
 - lifecycle and state transitions belong to the owning entity or aggregate
 - classification, actionability, ranking, grouping, and surfacing belong to
   the owning domain object or aggregate
+- reportable composition belongs to `Report`
 - serialization belongs to adapters
 - rendering belongs to adapters
 - pure stateless transforms stay functional and are not forced into classes
@@ -181,7 +192,7 @@ These types exist only at ingress/egress boundaries:
 | `RunMetadata` | `backend_types.py` | run-level boundary/config snapshot |
 | `PhaseEvidence`, `FindingPayload`, `AnalysisSummary`, `SuspectedVibrationOrigin` | `analysis/_types.py` | serialization-oriented analysis payloads and summaries |
 | `ReportTemplateData` | `report/report_data.py` | rendering DTOs for templates/PDF |
-| `ReportMappingContext`, summary readers, mapper functions | `report/mapping.py` | egress adapters from domain/report metadata to rendering data |
+| `ReportMappingContext`, summary readers, mapper functions | `report/mapping.py` | egress adapters from domain report objects to rendering data |
 | `HistoryRunPayload` and similar transport shapes | `backend_types.py` and API modules | API/history transport forms |
 
 Boundary rules:
@@ -210,8 +221,9 @@ These rules are meant to be testable and enforceable in code review:
    adapters, but they do not own rendering payload schemas as business truth.
 4. Adapter modules may depend on domain and application outputs; domain and
    processing modules must not depend on adapter DTOs.
-5. Report rendering modules may read aggregate outputs, but must not own
-   finding selection, ranking, or business prioritization rules.
+5. Report rendering modules may read `Report` and upstream aggregate outputs,
+   but must not own finding selection, ranking, or business prioritization
+   rules.
 6. Persistence and transport schemas are derived shapes. They must not become a
    second internal model for the core.
 
@@ -227,6 +239,8 @@ The following patterns are architecture violations:
   transport, or rendering payloads as a normal design pattern
 - rendering adapters or template builders owning selection, prioritization, or
   diagnostic interpretation rules
+- treating `Report` as a mere metadata bag while report-domain behavior lives in
+  mappers or template DTOs
 - duplicate business rules split across domain and adapter layers
 - keeping parallel internal "domain" and "summary payload" truth models inside
   the core and treating them as peers
@@ -259,7 +273,7 @@ Each primary behavior-owning domain object lives in its own file under
 | `car.py` | `Car`, `TireSpec` | vehicle and tire geometry |
 | `driving_phase.py` | `DrivingPhase` | driving phase enum used by analysis/domain decisions |
 | `finding.py` | `FindingKind`, `VibrationSource`, `Finding` | finding behavior, ranking, and classification |
-| `report.py` | `Report` | report metadata context only; not the analyzed aggregate |
+| `report.py` | `Report` | report-domain object derived from `RunAnalysisResult`; rendering DTOs remain adapter concerns |
 | `run_status.py` | `RunStatus`, transitions | persisted run lifecycle state machine |
 
 Consumers import public domain symbols from `vibesensor.domain`, not from
@@ -279,5 +293,6 @@ boundary modules.
    functions unless a true domain aggregate is needed.
 6. **Use one canonical aggregate after analysis.** That aggregate is
    `RunAnalysisResult`.
-7. **Treat `Report` precisely.** It is report metadata/context, not the
-   diagnostic source of truth.
+7. **Treat `Report` precisely.** It is a real domain object for reportable
+   state derived from `RunAnalysisResult`; it is not a mere metadata bag and it
+   is not a rendering DTO.
