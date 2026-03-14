@@ -80,6 +80,8 @@ Current code may still use narrower names such as `Run` for part of this space.
 This document intentionally uses `DiagnosticCase` and `TestRun` as the target
 concepts: a case contains one or more runs, and a run is not itself the
 top-level diagnostic problem.
+In refactoring terms, today's `Run`-shaped core object should evolve toward a
+`TestRun` that lives inside a `DiagnosticCase` aggregate.
 
 What belongs on `DiagnosticCase`:
 
@@ -409,7 +411,11 @@ layout would look like this:
 | `confidence_assessment.py` | `ConfidenceAssessment` |
 | `speed_profile.py` | `SpeedProfile` |
 | `run_suitability.py` | `RunSuitability` |
-| `services/` | domain services such as signature recognition, hypothesis evaluation, and finding synthesis |
+| `services/observation_extraction.py` | observation-extraction service |
+| `services/signature_recognition.py` | signature-recognition service |
+| `services/hypothesis_evaluation.py` | hypothesis-evaluation service |
+| `services/finding_synthesis.py` | finding-synthesis service |
+| `services/case_reconciliation.py` | case-reconciliation service |
 
 The exact file split may change, but the conceptual split should not: the model
 must be built around the human diagnostic concepts, not around transport or
