@@ -407,10 +407,63 @@ class Finding:
         quantised = round(self.effective_confidence / step) * step
         return (quantised, self.ranking_score)
 
-    # -- confidence thresholds (used by analysis/strength_labels.py) ---------
+    # -- confidence thresholds ------------------------------------------------
 
     CONFIDENCE_HIGH_THRESHOLD: ClassVar[float] = 0.70
     CONFIDENCE_MEDIUM_THRESHOLD: ClassVar[float] = 0.40
+
+    # -- confidence presentation (domain-owned) ----------------------------
+
+    def confidence_label(
+        self,
+        *,
+        strength_band_key: str | None = None,
+    ) -> tuple[str, str, str]:
+        """Return ``(label_key, tone, pct_text)`` for this finding's confidence.
+
+        Classifies the finding's confidence into a presentation tier:
+
+        * **HIGH** (≥ 0.70): ``("CONFIDENCE_HIGH", "success", "…%")``
+        * **MEDIUM** (0.40–0.70): ``("CONFIDENCE_MEDIUM", "warn", "…%")``
+        * **LOW** (< 0.40): ``("CONFIDENCE_LOW", "neutral", "…%")``
+
+        When *strength_band_key* is ``"negligible"`` and the raw tier
+        would be HIGH, the result is downgraded to MEDIUM because
+        recommending specific repairs for a barely-detectable vibration
+        is misleading.
+        """
+        conf = self.effective_confidence
+        if not math.isfinite(conf):
+            conf = 0.0
+        pct = max(0.0, min(100.0, conf * 100.0))
+        pct_text = f"{pct:.0f}%"
+        if conf >= self.CONFIDENCE_HIGH_THRESHOLD:
+            label_key, tone = "CONFIDENCE_HIGH", "success"
+        elif conf >= self.CONFIDENCE_MEDIUM_THRESHOLD:
+            label_key, tone = "CONFIDENCE_MEDIUM", "warn"
+        else:
+            label_key, tone = "CONFIDENCE_LOW", "neutral"
+        if (
+            (strength_band_key or "").strip().lower() == "negligible"
+            and label_key == "CONFIDENCE_HIGH"
+        ):
+            label_key, tone = "CONFIDENCE_MEDIUM", "warn"
+        return label_key, tone, pct_text
+
+    @property
+    def confidence_label_key(self) -> str:
+        """The i18n key for this finding's confidence tier (no strength override)."""
+        return self.confidence_label()[0]
+
+    @property
+    def confidence_tone(self) -> str:
+        """The display tone for this finding's confidence tier (no strength override)."""
+        return self.confidence_label()[1]
+
+    @property
+    def confidence_pct_text(self) -> str:
+        """Confidence as percentage text (e.g. ``'75%'``)."""
+        return self.confidence_label()[2]
 
     @property
     def phase_adjusted_score(self) -> float:
