@@ -1,9 +1,8 @@
 """Architecture guardrails: domain-first pipeline boundaries.
 
 Ensures that core analysis modules operate on domain ``Finding`` objects
-(not raw dicts) and that the ``RunAnalysisResult`` aggregate is the
-canonical post-analysis result.  Prevents regression to the previous
-payload-first flow.
+(not raw dicts) and that ``TestRun`` is the canonical post-analysis
+aggregate.  Prevents regression to the previous payload-first flow.
 """
 
 from __future__ import annotations
@@ -13,32 +12,30 @@ import sys
 
 import pytest
 
-# ── RunAnalysisResult is available and exported ─────────────────────────
+# ── RunAnalysisResult has been deleted ──────────────────────────────────
 
 
-def test_run_analysis_result_is_exported_from_domain() -> None:
-    """``RunAnalysisResult`` must be importable from ``vibesensor.domain``."""
+def test_domain_does_not_export_run_analysis_result() -> None:
+    """RunAnalysisResult has been deleted; TestRun is the canonical aggregate."""
     mod = importlib.import_module("vibesensor.domain")
-    assert hasattr(mod, "RunAnalysisResult"), (
-        "RunAnalysisResult must be exported from vibesensor.domain"
-    )
+    assert not hasattr(mod, "RunAnalysisResult")
 
 
-def test_run_analysis_result_is_frozen_dataclass() -> None:
-    """``RunAnalysisResult`` must be a frozen dataclass."""
+def test_test_run_is_frozen_dataclass() -> None:
+    """``TestRun`` must be a frozen dataclass."""
     import dataclasses
 
-    from vibesensor.domain import RunAnalysisResult
+    from vibesensor.domain import ConfigurationSnapshot, Run, TestRun
 
-    assert dataclasses.is_dataclass(RunAnalysisResult)
-    # Frozen check: assignment should raise
-    r = RunAnalysisResult(
-        run_id="test-123",
+    assert dataclasses.is_dataclass(TestRun)
+    r = TestRun(
+        run=Run(run_id="test-123"),
+        configuration_snapshot=ConfigurationSnapshot(),
         findings=(),
         top_causes=(),
     )
     with pytest.raises(AttributeError):
-        r.run_id = "other"  # type: ignore[misc]
+        r.findings = ()  # type: ignore[misc]
 
 
 # ── Domain modules do not depend on analysis payload types ───────────────
@@ -67,40 +64,37 @@ def test_domain_modules_do_not_import_analysis_types_at_runtime() -> None:
             sys.modules.update(saved)
 
 
-# ── RunAnalysisResult provides domain queries ────────────────────────────
+# ── TestRun provides domain queries ──────────────────────────────────────
 
 
-def test_run_analysis_result_provides_finding_queries() -> None:
-    """``RunAnalysisResult`` must own finding classification queries."""
-    from vibesensor.domain import Finding, RunAnalysisResult
+def test_test_run_provides_finding_queries() -> None:
+    """``TestRun`` must own finding classification queries."""
+    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
 
     diag = Finding(finding_id="F001", confidence=0.75, suspected_source="wheel/tire")
     ref = Finding(finding_id="REF_SPEED", confidence=1.0, suspected_source="unknown")
     info = Finding(finding_id="F002", confidence=0.10, severity="info", suspected_source="unknown")
 
-    result = RunAnalysisResult(
-        run_id="test-123",
+    result = TestRun(
+        run=Run(run_id="test-123"),
+        configuration_snapshot=ConfigurationSnapshot(),
         findings=(ref, diag, info),
         top_causes=(diag,),
     )
 
     assert result.primary_finding == diag
-    assert result.has_findings
-    assert result.has_diagnostic_findings
     assert result.diagnostic_findings == (diag,)
-    assert result.reference_findings == (ref,)
-    assert result.informational_findings == (info,)
     assert result.non_reference_findings == (diag, info)
-    assert diag in result.surfaceable_findings
 
 
-def test_run_analysis_result_effective_top_causes() -> None:
+def test_test_run_effective_top_causes() -> None:
     """``effective_top_causes()`` mirrors diagnosis_candidates logic."""
-    from vibesensor.domain import Finding, RunAnalysisResult
+    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
 
     actionable = Finding(finding_id="F001", confidence=0.75, suspected_source="wheel/tire")
-    result = RunAnalysisResult(
-        run_id="test",
+    result = TestRun(
+        run=Run(run_id="test"),
+        configuration_snapshot=ConfigurationSnapshot(),
         findings=(actionable,),
         top_causes=(actionable,),
     )
@@ -143,13 +137,13 @@ def test_select_top_causes_returns_domain_findings() -> None:
     assert isinstance(domain_findings[0], Finding)
 
 
-# ── RunAnalysis.summarize() produces RunAnalysisResult ───────────────────
+# ── RunAnalysis.summarize() produces TestRun ─────────────────────────────
 
 
-def test_run_analysis_produces_analysis_result() -> None:
-    """``RunAnalysis.summarize()`` must populate ``analysis_result``."""
+def test_run_analysis_produces_test_run() -> None:
+    """``RunAnalysis.summarize()`` must populate ``test_run``."""
     from vibesensor.analysis.summary_builder import RunAnalysis
-    from vibesensor.domain import RunAnalysisResult
+    from vibesensor.domain import TestRun
 
     metadata = {"run_id": "test-guard", "car_type": "sedan"}
     samples = [
@@ -166,88 +160,57 @@ def test_run_analysis_produces_analysis_result() -> None:
     ]
     analysis = RunAnalysis(metadata, samples)
     result = analysis.summarize()
-    assert analysis.analysis_result is not None
-    assert isinstance(analysis.analysis_result, RunAnalysisResult)
-    assert analysis.analysis_result.run_id == result.summary["run_id"]
-    assert len(analysis.analysis_result.findings) == len(result.summary["findings"])
+    assert analysis.test_run is not None
+    assert isinstance(analysis.test_run, TestRun)
+    assert analysis.test_run.run_id == result.summary["run_id"]
+    assert len(analysis.test_run.findings) == len(result.summary["findings"])
 
 
-# ── RunAnalysisResult.from_summary() factory ─────────────────────────────
+# ── TestRun.has_relevant_reference_gap() ─────────────────────────────────
 
 
-def test_run_analysis_result_from_summary_factory() -> None:
-    """``from_summary()`` must construct a valid aggregate from a dict."""
-    from tests.test_support.findings import make_finding_payload
-    from vibesensor.domain import Finding, RunAnalysisResult
-
-    summary = {
-        "run_id": "test-from-summary",
-        "findings": [
-            make_finding_payload(finding_id="F001", confidence=0.80),
-            make_finding_payload(finding_id="REF_SPEED", severity="reference", confidence=1.0),
-        ],
-        "top_causes": [
-            make_finding_payload(finding_id="F001", confidence=0.80),
-        ],
-        "duration_s": 120.0,
-        "rows": 500,
-        "sensor_count_used": 3,
-        "lang": "nl",
-    }
-    result = RunAnalysisResult.from_summary(summary)
-    assert result.run_id == "test-from-summary"
-    assert len(result.findings) == 2
-    assert len(result.top_causes) == 1
-    assert result.duration_s == 120.0
-    assert result.sample_count == 500
-    assert result.sensor_count == 3
-    assert result.lang == "nl"
-    assert all(isinstance(f, Finding) for f in result.findings)
-    assert result.has_diagnostic_findings
-    assert len(result.reference_findings) == 1
-
-
-# ── RunAnalysisResult.has_relevant_reference_gap() ───────────────────────
-
-
-def test_run_analysis_result_reference_gap_detection() -> None:
+def test_test_run_reference_gap_detection() -> None:
     """``has_relevant_reference_gap()`` detects source-relevant gaps."""
-    from vibesensor.domain import Finding, RunAnalysisResult, VibrationSource
+    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun, VibrationSource
 
     ref_speed = Finding(finding_id="REF_SPEED", suspected_source="unknown")
     ref_wheel = Finding(finding_id="REF_WHEEL", suspected_source="unknown")
     ref_engine = Finding(finding_id="REF_ENGINE", suspected_source="unknown")
     diag = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
 
-    # Precondition: verify classification
     assert ref_speed.is_reference
     assert ref_wheel.is_reference
     assert ref_engine.is_reference
     assert not diag.is_reference
 
-    # REF_SPEED is relevant for any source
-    result = RunAnalysisResult(run_id="test", findings=(ref_speed, diag), top_causes=(diag,))
+    def _make(findings: tuple[Finding, ...]) -> TestRun:
+        return TestRun(
+            run=Run(run_id="test"),
+            configuration_snapshot=ConfigurationSnapshot(),
+            findings=findings + (diag,),
+            top_causes=(diag,),
+        )
+
+    result = _make((ref_speed,))
     assert result.has_relevant_reference_gap(VibrationSource.WHEEL_TIRE)
     assert result.has_relevant_reference_gap(VibrationSource.ENGINE)
 
-    # REF_WHEEL is relevant for wheel/tire and driveline
-    result2 = RunAnalysisResult(run_id="test", findings=(ref_wheel, diag), top_causes=(diag,))
+    result2 = _make((ref_wheel,))
     assert result2.has_relevant_reference_gap(VibrationSource.WHEEL_TIRE)
     assert result2.has_relevant_reference_gap(VibrationSource.DRIVELINE)
     assert not result2.has_relevant_reference_gap(VibrationSource.ENGINE)
 
-    # REF_ENGINE is relevant for engine only
-    result3 = RunAnalysisResult(run_id="test", findings=(ref_engine, diag), top_causes=(diag,))
+    result3 = _make((ref_engine,))
     assert result3.has_relevant_reference_gap(VibrationSource.ENGINE)
     assert not result3.has_relevant_reference_gap(VibrationSource.WHEEL_TIRE)
 
 
-# ── RunAnalysisResult.top_strength_db() ──────────────────────────────────
+# ── TestRun.top_strength_db() ────────────────────────────────────────────
 
 
-def test_run_analysis_result_top_strength_db() -> None:
+def test_test_run_top_strength_db() -> None:
     """``top_strength_db()`` finds the best strength from findings."""
-    from vibesensor.domain import Finding, RunAnalysisResult
+    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
 
     f1 = Finding(
         finding_id="F001",
@@ -261,25 +224,35 @@ def test_run_analysis_result_top_strength_db() -> None:
         suspected_source="engine",
         vibration_strength_db=8.0,
     )
-    result = RunAnalysisResult(run_id="test", findings=(f1, f2), top_causes=(f1,))
+    result = TestRun(
+        run=Run(run_id="test"),
+        configuration_snapshot=ConfigurationSnapshot(),
+        findings=(f1, f2),
+        top_causes=(f1,),
+    )
     assert result.top_strength_db() == 12.5
 
     # No strength → None
     f3 = Finding(finding_id="F003", confidence=0.50, suspected_source="engine")
-    result2 = RunAnalysisResult(run_id="test", findings=(f3,), top_causes=(f3,))
+    result2 = TestRun(
+        run=Run(run_id="test"),
+        configuration_snapshot=ConfigurationSnapshot(),
+        findings=(f3,),
+        top_causes=(f3,),
+    )
     assert result2.top_strength_db() is None
 
 
-# ── diagnosis_candidates delegates to RunAnalysisResult ──────────────────
+# ── diagnosis_candidates delegates to TestRun ────────────────────────────
 
 
 def test_diagnosis_candidates_delegates_to_domain_aggregate() -> None:
     """``select_effective_top_causes`` must produce identical results to
-    ``RunAnalysisResult.effective_top_causes()`` for the same data."""
+    ``TestRun.effective_top_causes()`` for the same data."""
     from tests.test_support.findings import make_finding_payload, make_ref_finding
     from vibesensor.analysis.diagnosis_candidates import select_effective_top_causes
     from vibesensor.boundaries.finding import finding_from_payload
-    from vibesensor.domain import Finding, RunAnalysisResult
+    from vibesensor.domain import ConfigurationSnapshot, Run, TestRun
 
     diag1 = make_finding_payload(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
     diag2 = make_finding_payload(finding_id="F002", confidence=0.60, suspected_source="engine")
@@ -288,7 +261,12 @@ def test_diagnosis_candidates_delegates_to_domain_aggregate() -> None:
     # Build domain aggregate for comparison
     domain_findings = tuple(finding_from_payload(f) for f in [diag1, diag2, ref])
     domain_tc = tuple(finding_from_payload(f) for f in [diag1])
-    aggregate = RunAnalysisResult(run_id="test", findings=domain_findings, top_causes=domain_tc)
+    aggregate = TestRun(
+        run=Run(run_id="test"),
+        configuration_snapshot=ConfigurationSnapshot(),
+        findings=domain_findings,
+        top_causes=domain_tc,
+    )
     domain_effective_ids = {f.finding_id for f in aggregate.effective_top_causes()}
 
     # Run boundary function
@@ -304,7 +282,7 @@ def test_diagnosis_candidates_delegates_to_domain_aggregate() -> None:
 def test_report_mapping_context_has_domain_aggregate() -> None:
     """``prepare_report_mapping_context`` must build a domain aggregate."""
     from tests.test_support.findings import make_finding_payload
-    from vibesensor.domain import RunAnalysisResult
+    from vibesensor.domain import TestRun
     from vibesensor.report.mapping import prepare_report_mapping_context
 
     summary = {
@@ -315,7 +293,7 @@ def test_report_mapping_context_has_domain_aggregate() -> None:
     }
     context = prepare_report_mapping_context(summary)
     assert context.domain_aggregate is not None
-    assert isinstance(context.domain_aggregate, RunAnalysisResult)
+    assert isinstance(context.domain_aggregate, TestRun)
     assert len(context.domain_aggregate.findings) == 1
 
 
@@ -385,12 +363,12 @@ def test_confidence_label_delegates_to_domain() -> None:
         assert actual == expected, f"Mismatch for confidence={conf}: {actual} != {expected}"
 
 
-# ── RunAnalysisResult owns primary source/location queries ───────────────
+# ── TestRun owns primary source/location queries ─────────────────────────
 
 
-def test_run_analysis_result_primary_source_and_location() -> None:
+def test_test_run_primary_source_and_location() -> None:
     """``primary_source`` and ``primary_location`` are domain queries."""
-    from vibesensor.domain import Finding, RunAnalysisResult, VibrationSource
+    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun, VibrationSource
 
     f = Finding(
         finding_id="F001",
@@ -398,12 +376,22 @@ def test_run_analysis_result_primary_source_and_location() -> None:
         suspected_source="wheel/tire",
         strongest_location="Left Front",
     )
-    result = RunAnalysisResult(run_id="test", findings=(f,), top_causes=(f,))
+    result = TestRun(
+        run=Run(run_id="test"),
+        configuration_snapshot=ConfigurationSnapshot(),
+        findings=(f,),
+        top_causes=(f,),
+    )
     assert result.primary_source == VibrationSource.WHEEL_TIRE
     assert result.primary_location == "Left Front"
 
     # No findings → None
-    empty = RunAnalysisResult(run_id="test", findings=(), top_causes=())
+    empty = TestRun(
+        run=Run(run_id="test"),
+        configuration_snapshot=ConfigurationSnapshot(),
+        findings=(),
+        top_causes=(),
+    )
     assert empty.primary_source is None
     assert empty.primary_location is None
 
@@ -424,11 +412,16 @@ def test_finding_is_frozen_dataclass() -> None:
 
 
 def test_finding_tuples_are_immutable() -> None:
-    """RunAnalysisResult findings must be tuples (not mutable lists)."""
-    from vibesensor.domain import Finding, RunAnalysisResult
+    """TestRun findings must be tuples (not mutable lists)."""
+    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
 
     f = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
-    result = RunAnalysisResult(run_id="test", findings=(f,), top_causes=(f,))
+    result = TestRun(
+        run=Run(run_id="test"),
+        configuration_snapshot=ConfigurationSnapshot(),
+        findings=(f,),
+        top_causes=(f,),
+    )
     assert isinstance(result.findings, tuple)
     assert isinstance(result.top_causes, tuple)
 
@@ -438,7 +431,7 @@ def test_finding_tuples_are_immutable() -> None:
 
 def test_build_system_cards_uses_domain_findings() -> None:
     """build_system_cards must read confidence tone from domain, not dict."""
-    from vibesensor.domain import Finding, RunAnalysisResult
+    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
     from vibesensor.report.mapping import (
         PrimaryCandidateContext,
         ReportMappingContext,
@@ -453,8 +446,9 @@ def test_build_system_cards_uses_domain_findings() -> None:
         suspected_source="wheel/tire",
         strongest_location="Left Front",
     )
-    aggregate = RunAnalysisResult(
-        run_id="test",
+    aggregate = TestRun(
+        run=Run(run_id="test"),
+        configuration_snapshot=ConfigurationSnapshot(),
         findings=(domain_f,),
         top_causes=(domain_f,),
     )
@@ -666,9 +660,9 @@ def test_finding_from_payload_prefers_top_location_over_display_string() -> None
     assert finding.location.strongest_location == "Front Left"
 
 
-def test_run_analysis_result_from_summary_populates_speed_profile() -> None:
-    """from_summary extracts SpeedProfile when speed_stats is present."""
-    from vibesensor.domain import RunAnalysisResult
+def test_test_run_from_summary_populates_speed_profile() -> None:
+    """test_run_from_summary extracts SpeedProfile when speed_stats is present."""
+    from vibesensor.boundaries.diagnostic_case import test_run_from_summary
 
     summary = {
         "run_id": "test-123",
@@ -680,14 +674,14 @@ def test_run_analysis_result_from_summary_populates_speed_profile() -> None:
             "steady_speed": True,
         },
     }
-    result = RunAnalysisResult.from_summary(summary)
-    assert result.speed_profile is not None, "from_summary must populate speed_profile"
+    result = test_run_from_summary(summary)
+    assert result.speed_profile is not None, "test_run_from_summary must populate speed_profile"
     assert result.speed_profile.steady_speed
 
 
-def test_run_analysis_result_from_summary_populates_suitability() -> None:
-    """from_summary extracts RunSuitability when run_suitability is present."""
-    from vibesensor.domain import RunAnalysisResult
+def test_test_run_from_summary_populates_suitability() -> None:
+    """test_run_from_summary extracts RunSuitability when run_suitability is present."""
+    from vibesensor.boundaries.diagnostic_case import test_run_from_summary
 
     summary = {
         "run_id": "test-123",
@@ -697,8 +691,8 @@ def test_run_analysis_result_from_summary_populates_suitability() -> None:
             {"check_key": "speed", "state": "pass", "explanation": "OK"},
         ],
     }
-    result = RunAnalysisResult.from_summary(summary)
-    assert result.suitability is not None, "from_summary must populate suitability"
+    result = test_run_from_summary(summary)
+    assert result.suitability is not None, "test_run_from_summary must populate suitability"
     assert result.suitability.is_usable
 
 

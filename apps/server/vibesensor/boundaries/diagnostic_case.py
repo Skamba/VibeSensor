@@ -13,16 +13,15 @@ from ..domain.finding import Finding
 from ..domain.hypothesis import Hypothesis, HypothesisStatus
 from ..domain.recommended_action import RecommendedAction
 from ..domain.run import Run
-from ..domain.run_analysis_result import RunAnalysisResult
 from ..domain.run_suitability import RunSuitability
 from ..domain.signature import Signature
 from ..domain.speed_profile import SpeedProfile
 from ..domain.symptom import Symptom
 from ..domain.test_plan import TestPlan
 from ..domain.test_run import TestRun
+from .finding import finding_from_payload
 from .run_suitability import run_suitability_from_payload, run_suitability_payload
 from .test_steps import step_payloads_from_plan
-from .finding import finding_from_payload
 from .vibration_origin import origin_payload_from_finding, vibration_origin_from_payload
 
 
@@ -174,7 +173,7 @@ def finding_payload_from_domain(
 
 
 def _origin_payload_from_aggregate(
-    aggregate: RunAnalysisResult,
+    aggregate: TestRun,
     fallback: object,
 ) -> dict[str, object]:
     if not isinstance(fallback, Mapping):
@@ -336,10 +335,6 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
     return case.add_run(test_run)
 
 
-def run_analysis_result_from_summary(summary: Mapping[str, object]) -> RunAnalysisResult:
-    return RunAnalysisResult.from_test_run(test_run_from_summary(summary))
-
-
 def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, object]:
     """Return *summary* with domain-owned fields rebuilt from aggregates."""
     projected = dict(summary)
@@ -348,8 +343,7 @@ def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, o
     if not isinstance(raw_findings, list) and not isinstance(raw_top_causes, list):
         return projected
 
-    aggregate = run_analysis_result_from_summary(summary)
-    test_run = aggregate.test_run
+    test_run = test_run_from_summary(summary)
 
     findings_by_id = _payloads_by_id(summary.get("findings"))
     top_causes_by_id = _payloads_by_id(summary.get("top_causes"))
@@ -360,7 +354,7 @@ def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, o
             primary=findings_by_id,
             secondary=top_causes_by_id,
         )
-        for finding in aggregate.findings
+        for finding in test_run.findings
     ]
     projected["top_causes"] = [
         finding_payload_from_domain(
@@ -368,15 +362,14 @@ def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, o
             primary=top_causes_by_id,
             secondary=findings_by_id,
         )
-        for finding in aggregate.effective_top_causes()
+        for finding in test_run.effective_top_causes()
     ]
     projected["most_likely_origin"] = _origin_payload_from_aggregate(
-        aggregate,
+        test_run,
         summary.get("most_likely_origin"),
     )
-    if test_run is not None:
-        if not _has_structured_step_content(summary.get("test_plan")):
-            projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
-        projected["run_suitability"] = _checks_from_suitability(test_run.suitability)
+    if not _has_structured_step_content(summary.get("test_plan")):
+        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
+    projected["run_suitability"] = _checks_from_suitability(test_run.suitability)
 
     return projected

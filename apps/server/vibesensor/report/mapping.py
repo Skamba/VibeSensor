@@ -32,7 +32,7 @@ from ..analysis.strength_labels import (
 from ..boundaries.diagnostic_case import finding_payload_from_domain
 from ..boundaries.run_suitability import run_suitability_payload
 from ..boundaries.vibration_origin import SuspectedVibrationOrigin, origin_payload_from_finding
-from ..domain import Finding, Report, RunAnalysisResult, VibrationSource
+from ..domain import Finding, Report, TestRun, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
@@ -91,7 +91,7 @@ class ReportMappingContext:
     sensor_model: str | None
     firmware_version: str | None
     # Domain aggregate for domain-first decisions.
-    domain_aggregate: RunAnalysisResult | None = None
+    domain_aggregate: TestRun | None = None
     finding_payloads_by_id: dict[str, FindingPayload] = field(default_factory=dict)
     top_cause_payloads_by_id: dict[str, FindingPayload] = field(default_factory=dict)
 
@@ -418,7 +418,7 @@ def _payloads_by_id(items: list[FindingPayload]) -> dict[str, FindingPayload]:
 
 
 def _origin_from_aggregate(
-    aggregate: RunAnalysisResult | None,
+    aggregate: TestRun | None,
     fallback: SuspectedVibrationOrigin,
 ) -> SuspectedVibrationOrigin:
     if aggregate is None or aggregate.primary_finding is None:
@@ -558,7 +558,7 @@ def collect_location_intensity(sensor_intensity: list[dict]) -> dict[str, list[f
 def build_next_steps_from_summary(
     summary: AnalysisSummary,
     *,
-    aggregate: RunAnalysisResult | None,
+    aggregate: TestRun | None,
     tier: str,
     cert_reason: str,
     lang: str,
@@ -579,10 +579,9 @@ def build_next_steps_from_summary(
     summary_steps = summary_test_plan(summary)
     if (
         aggregate is not None
-        and aggregate.test_run is not None
         and not _summary_has_structured_step_content(summary_steps)
     ):
-        for action in aggregate.test_run.recommended_actions:
+        for action in aggregate.recommended_actions:
             next_steps.append(
                 NextStep(
                     action=_resolve_step_value(action.instruction, lang=lang, tr=tr),
@@ -647,7 +646,7 @@ def _resolve_optional_step_value(
 def build_data_trust_from_summary(
     summary: AnalysisSummary,
     *,
-    aggregate: RunAnalysisResult | None,
+    aggregate: TestRun | None,
     lang: str,
     tr: Callable,
 ) -> list[DataTrustItem]:
@@ -721,7 +720,7 @@ def top_strength_values(
     """Return the best available vibration strength in dB for report text.
 
     .. deprecated::
-        Prefer ``RunAnalysisResult.top_strength_db()`` when a domain
+        Prefer ``TestRun.top_strength_db()`` when a domain
         aggregate is available.  This function remains as a fallback for
         boundary paths where only the raw summary dict is available.
     """
@@ -756,7 +755,7 @@ def has_relevant_reference_gap(findings: list[FindingPayload], primary_source: o
     """Whether the report certainty should mention missing reference inputs.
 
     .. deprecated::
-        Prefer ``RunAnalysisResult.has_relevant_reference_gap()`` when a
+        Prefer ``TestRun.has_relevant_reference_gap()`` when a
         domain aggregate is available.  This function remains as a
         boundary fallback for paths where only payload dicts exist.
     """
@@ -1006,7 +1005,7 @@ def prepare_report_mapping_context(
 ) -> ReportMappingContext:
     """Extract structural summary context for report mapping.
 
-    Builds a domain ``RunAnalysisResult`` aggregate from the summary dict
+    Builds a domain ``TestRun`` aggregate from the summary dict
     so that downstream business decisions (effective-cause selection,
     reference-gap detection, strength lookup) are domain-first.
     """
@@ -1026,7 +1025,9 @@ def prepare_report_mapping_context(
     sensor_locations_active = summary_sensor_locations_active(summary)
 
     # Build domain aggregate for domain-first decisions downstream
-    domain_aggregate = RunAnalysisResult.from_summary(summary)
+    from ..boundaries.diagnostic_case import test_run_from_summary
+
+    domain_aggregate = test_run_from_summary(summary)
 
     if domain_aggregate is not None:
         findings = [

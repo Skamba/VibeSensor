@@ -24,7 +24,6 @@ from ..domain import (
     DiagnosticCase,
     LocationHotspot,
     Run,
-    RunAnalysisResult,
     RunSuitability,
     SpeedProfile,
     Symptom,
@@ -883,7 +882,7 @@ def build_findings_bundle(
 
     Returns ``(findings, origin, timeline, top_causes_payloads,
     domain_findings, domain_top_causes)``.  The last two elements are the
-    domain ``Finding`` objects for consumption by ``RunAnalysisResult``.
+    domain ``Finding`` objects for consumption by ``TestRun``.
     """
     builder = findings_builder or _build_findings
     findings = builder(
@@ -1051,7 +1050,6 @@ class RunAnalysis:
         "_findings_builder",
         "_prepared",
         "_accel_stats",
-        "_analysis_result",
         "_test_run",
         "_diagnostic_case",
     )
@@ -1072,7 +1070,6 @@ class RunAnalysis:
         self._language = normalize_lang(lang)
         self._include_samples = include_samples
         self._findings_builder = findings_builder
-        self._analysis_result: RunAnalysisResult | None = None
         self._test_run: TestRun | None = None
         self._diagnostic_case: DiagnosticCase | None = None
 
@@ -1095,11 +1092,6 @@ class RunAnalysis:
     @property
     def language(self) -> str:
         return self._language
-
-    @property
-    def analysis_result(self) -> RunAnalysisResult | None:
-        """Domain aggregate produced by :meth:`summarize`, or ``None``."""
-        return self._analysis_result
 
     @property
     def test_run(self) -> TestRun | None:
@@ -1203,11 +1195,6 @@ class RunAnalysis:
             configuration_snapshots=(configuration_snapshot,),
             test_plan=domain_test_plan,
         ).add_run(self._test_run)
-
-        self._analysis_result = RunAnalysisResult.from_test_run(
-            self._test_run,
-            lang=self._language,
-        )
 
         summary_speed_stats = _speed_stats(self._prepared.speed_values)
         summary_phase_info = build_phase_summary(self._prepared.phase_segments)
