@@ -86,6 +86,22 @@ def test_historydb_fresh_db_works_normally(tmp_path: Path) -> None:
     db.close()
 
 
+def test_historydb_fresh_db_includes_case_id_column(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+
+    conn = sqlite3.connect(str(tmp_path / "history.db"))
+    try:
+        columns = {
+            str(row[1]): str(row[2])
+            for row in conn.execute("PRAGMA table_info(runs)").fetchall()
+        }
+    finally:
+        conn.close()
+
+    assert columns["case_id"] == "TEXT"
+    db.close()
+
+
 def test_historydb_current_version_no_migration(tmp_path: Path) -> None:
     """An existing current-version database should not trigger migration or backup."""
     db = HistoryDB(tmp_path / "history.db")
