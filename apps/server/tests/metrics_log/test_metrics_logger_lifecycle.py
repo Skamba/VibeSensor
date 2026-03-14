@@ -38,7 +38,10 @@ def test_start_append_stop_produces_complete_run_in_db(
         def summarize(self):
             from types import SimpleNamespace
 
-            return SimpleNamespace(summary=dict(fake_analysis))
+            return SimpleNamespace(
+                summary=dict(fake_analysis),
+                diagnostic_case=SimpleNamespace(case_id="mock-case"),
+            )
 
     monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _FakeRunAnalysis)
     logger.stop_recording()

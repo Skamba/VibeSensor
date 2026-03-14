@@ -211,7 +211,6 @@ class PostAnalysisWorker:
         LOGGER.info("Analysis started for run %s", run_id)
         try:
             from ..analysis import RunAnalysis
-            from ..boundaries.diagnostic_case import project_summary_through_domain
 
             metadata = db.get_run_metadata(run_id)
             if metadata is None:
@@ -254,6 +253,7 @@ class PostAnalysisWorker:
                 include_samples=False,
             ).summarize()
             summary = result.summary
+            summary["case_id"] = result.diagnostic_case.case_id
             summary["analysis_metadata"] = {
                 "analyzed_sample_count": len(samples),
                 "total_sample_count": total_sample_count,
@@ -276,7 +276,6 @@ class PostAnalysisWorker:
                         "explanation": explanation,
                     },
                 )
-            summary = project_summary_through_domain(summary)
             db.store_analysis(run_id, summary)
 
             duration_s = time.monotonic() - analysis_start
