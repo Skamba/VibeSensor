@@ -3,6 +3,8 @@
 This document is the implementation spec for the backend's domain-first
 architecture. The rule is strict:
 
+- the **core** means business logic, analysis decision-making, and domain
+  operations after boundary inputs have been decoded
 - the **core** uses domain objects and domain aggregates as its only source
   of truth
 - payloads, TypedDicts, DTOs, and rendering data structures exist only at
@@ -84,7 +86,7 @@ Interpretation:
 
 ## Architectural layers
 
-| Layer | What belongs here | What does **not** belong here | Allowed dependencies |
+| Layer | What belongs here | What does **not** belong here | May depend on |
 |---|---|---|---|
 | **Domain layer** | `vibesensor/domain/` objects, domain queries, invariants, lifecycle rules, classification/ranking/actionability logic | DTOs, TypedDict payloads, route models, persistence row shapes, PDF/template classes | Python stdlib plus shared math/unit helpers such as `vibration_strength` and `strength_bands` |
 | **Application / orchestration layer** | workflow coordination, run orchestration, analysis sequencing, mapper invocation, persistence/report orchestration | raw dict-driven business rules, rendering-specific selection logic, duplicate domain rules | may depend on domain, processing, and adapters; domain must not depend on it |
@@ -162,7 +164,8 @@ Ownership rules:
   construction-time helpers, not the canonical domain model.
 - **Frozen shells around mutable internals are discouraged.** If an object is
   declared frozen, its owned state should also behave immutably unless there is
-  a clearly documented reason.
+  a clearly documented reason. Example: avoid a frozen dataclass that still
+  owns a mutable `list` or `dict` used as live business state.
 - Mutation that exists only to accumulate intermediate evidence belongs in
   builders, orchestrators, or processing helpers, not in finalized domain
   snapshots.
@@ -236,7 +239,8 @@ These are narrow exceptions, not alternate architecture styles:
 
 - pure math, DSP, FFT, and other stateless transforms may remain functional
 - mutable builders may exist while assembling evidence or snapshots, but the
-  finalized canonical domain model must not depend on them
+  finalized canonical domain model must be immutable once finalized and builder
+  objects must not leak into it
 - temporary compatibility mappers may exist during refactors, but they belong
   at boundaries and must not become a precedent for core payload-driven design
 
