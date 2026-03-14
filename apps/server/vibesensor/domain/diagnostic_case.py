@@ -187,44 +187,58 @@ class DiagnosticCase:
     def reconcile(self) -> DiagnosticCase:
         """Produce case-level conclusions from the contributing runs.
 
-        The current implementation still uses the legacy best-score merge.
-        ``classify_hypothesis_sequence()`` and ``classify_finding_sequence()``
-        define the explicit epistemic rule contract that the later reconcile
-        rewrite should apply across runs.
+        Uses ``classify_hypothesis_sequence()`` and
+        ``classify_finding_sequence()`` to apply epistemic rules across runs.
+        Retired hypotheses are excluded. Latest-run evidence is preferred over
+        best-ever-score for both hypotheses and findings.
         """
-        hypotheses: dict[str, Hypothesis] = {}
-        findings: dict[tuple[str, str | None], Finding] = {}
+        # ── Hypotheses: group by id, classify, keep latest (exclude retired) ──
+        hyp_sequences: dict[str, list[Hypothesis]] = {}
+        for test_run in self.test_runs:
+            for hypothesis in test_run.hypotheses:
+                hyp_sequences.setdefault(hypothesis.hypothesis_id, []).append(hypothesis)
+
+        kept_hypotheses: dict[str, Hypothesis] = {}
+        for hyp_id, sequence in hyp_sequences.items():
+            rule = self.classify_hypothesis_sequence(tuple(sequence))
+            if rule is DiagnosticCaseEpistemicRule.RETIREMENT:
+                continue
+            kept_hypotheses[hyp_id] = sequence[-1]
+
+        # ── Findings: group by _finding_identity, keep latest ──
+        finding_sequences: dict[tuple[str, str | None], list[Finding]] = {}
+        for test_run in self.test_runs:
+            for finding in test_run.effective_top_causes():
+                key = self._finding_identity(finding)
+                finding_sequences.setdefault(key, []).append(finding)
+
+        kept_findings: dict[tuple[str, str | None], Finding] = {}
+        for key, sequence in finding_sequences.items():
+            kept_findings[key] = sequence[-1]
+
+        # ── Actions: lowest priority wins (unchanged) ──
         actions: dict[str, RecommendedAction] = {
             action.action_id: action for action in self.test_plan.prioritized_actions
         }
         for test_run in self.test_runs:
-            for hypothesis in test_run.hypotheses:
-                existing = hypotheses.get(hypothesis.hypothesis_id)
-                if existing is None or hypothesis.support_score > existing.support_score:
-                    hypotheses[hypothesis.hypothesis_id] = hypothesis
-            for finding in test_run.effective_top_causes():
-                key = (str(finding.suspected_source), finding.strongest_location)
-                existing_finding = findings.get(key)
-                if (
-                    existing_finding is None
-                    or finding.phase_adjusted_score > existing_finding.phase_adjusted_score
-                ):
-                    findings[key] = finding
             for action in test_run.recommended_actions:
                 if (
                     action.action_id not in actions
                     or action.priority < actions[action.action_id].priority
                 ):
                     actions[action.action_id] = action
+
         return replace(
             self,
             hypotheses=tuple(
                 sorted(
-                    hypotheses.values(),
+                    kept_hypotheses.values(),
                     key=lambda item: (-item.support_score, item.hypothesis_id),
                 )
             ),
-            findings=tuple(sorted(findings.values(), key=lambda item: item.rank_key, reverse=True)),
+            findings=tuple(
+                sorted(kept_findings.values(), key=lambda item: item.rank_key, reverse=True)
+            ),
             recommended_actions=tuple(sorted(actions.values(), key=RecommendedAction.sort_key)),
         )
 

@@ -831,6 +831,197 @@ class TestDiagnosticCase:
         assert rule is DiagnosticCaseEpistemicRule.UNRESOLVED_SUPPORT
 
 
+class TestDiagnosticCaseReconcile:
+    def test_reconcile_latest_wins_over_best_score(self) -> None:
+        """Latest run's hypothesis is kept, even if an earlier run had higher support_score."""
+        case = DiagnosticCase.start()
+        case = case.add_run(
+            _make_test_run(
+                run_id="run-1",
+                hypotheses=(_make_hypothesis("hyp-engine", support_score=0.90),),
+                findings=(),
+                top_causes=(),
+            ),
+        )
+        case = case.add_run(
+            _make_test_run(
+                run_id="run-2",
+                hypotheses=(_make_hypothesis("hyp-engine", support_score=0.45),),
+                findings=(),
+                top_causes=(),
+            ),
+        )
+
+        assert len(case.hypotheses) == 1
+        assert case.hypotheses[0].support_score == 0.45
+
+    def test_reconcile_excludes_retired_hypotheses(self) -> None:
+        """A hypothesis RETIRED in the latest run must be absent from case.hypotheses."""
+        case = DiagnosticCase.start()
+        case = case.add_run(
+            _make_test_run(
+                run_id="run-1",
+                hypotheses=(_make_hypothesis("hyp-engine", support_score=0.72),),
+                findings=(),
+                top_causes=(),
+            ),
+        )
+        case = case.add_run(
+            _make_test_run(
+                run_id="run-2",
+                hypotheses=(
+                    _make_hypothesis(
+                        "hyp-engine",
+                        support_score=0.0,
+                        status=HypothesisStatus.RETIRED,
+                    ),
+                ),
+                findings=(),
+                top_causes=(),
+            ),
+        )
+
+        assert len(case.hypotheses) == 0
+
+    def test_reconcile_finding_latest_wins(self) -> None:
+        """Latest run's finding is kept, even if an earlier run had higher confidence."""
+        high_finding = _make_test_run_finding("F001", confidence=0.95)
+        low_finding = _make_test_run_finding("F002", confidence=0.40)
+        case = DiagnosticCase.start()
+        case = case.add_run(
+            _make_test_run(
+                run_id="run-1",
+                findings=(high_finding,),
+                top_causes=(high_finding,),
+            ),
+        )
+        case = case.add_run(
+            _make_test_run(
+                run_id="run-2",
+                findings=(low_finding,),
+                top_causes=(low_finding,),
+            ),
+        )
+
+        assert len(case.findings) == 1
+        assert case.findings[0].finding_id == "F002"
+        assert case.findings[0].confidence == 0.40
+
+    def test_reconcile_action_lowest_priority_wins(self) -> None:
+        """Action merge picks the lowest priority for a given action_id."""
+        action_high = DomainRecommendedAction(
+            action_id="inspect_tires", what="Inspect tires", priority=50
+        )
+        action_low = DomainRecommendedAction(
+            action_id="inspect_tires", what="Inspect tires v2", priority=10
+        )
+        plan = DomainTestPlan(actions=(action_high,))
+
+        case = DiagnosticCase.start(test_plan=plan)
+        case = case.add_run(
+            _make_test_run(
+                run_id="run-1",
+                hypotheses=(),
+                findings=(),
+                top_causes=(),
+            ),
+        )
+        case = case.add_run(
+            TestRun(
+                run=Run(run_id="run-2"),
+                configuration_snapshot=ConfigurationSnapshot(),
+                hypotheses=(),
+                findings=(),
+                top_causes=(),
+                test_plan=DomainTestPlan(actions=(action_low,)),
+            ),
+        )
+
+        matching = [a for a in case.recommended_actions if a.action_id == "inspect_tires"]
+        assert len(matching) == 1
+        assert matching[0].priority == 10
+
+    def test_reconcile_multi_run_integration(self) -> None:
+        """Three-run scenario: retired hypothesis excluded, latest findings kept, actions merged."""
+        hyp_engine_r1 = _make_hypothesis("hyp-engine", support_score=0.60)
+        hyp_tire_r1 = _make_hypothesis("hyp-tire", support_score=0.40)
+        finding_tire_r1 = _make_test_run_finding(
+            "F001", suspected_source="wheel/tire", confidence=0.80
+        )
+        action_r1 = DomainRecommendedAction(
+            action_id="check_tires", what="Check tires", priority=30
+        )
+
+        hyp_engine_r2 = _make_hypothesis(
+            "hyp-engine", support_score=0.0, status=HypothesisStatus.RETIRED
+        )
+        hyp_tire_r2 = _make_hypothesis("hyp-tire", support_score=0.65)
+        finding_tire_r2 = _make_test_run_finding(
+            "F002", suspected_source="wheel/tire", confidence=0.55
+        )
+        action_r2 = DomainRecommendedAction(
+            action_id="check_tires", what="Check tires", priority=20
+        )
+
+        hyp_tire_r3 = _make_hypothesis("hyp-tire", support_score=0.78)
+        finding_tire_r3 = _make_test_run_finding(
+            "F003", suspected_source="wheel/tire", confidence=0.70
+        )
+        action_r3 = DomainRecommendedAction(
+            action_id="rotate_wheels", what="Rotate wheels", priority=40
+        )
+
+        case = DiagnosticCase.start()
+        case = case.add_run(
+            TestRun(
+                run=Run(run_id="run-1"),
+                configuration_snapshot=ConfigurationSnapshot(),
+                hypotheses=(hyp_engine_r1, hyp_tire_r1),
+                findings=(finding_tire_r1,),
+                top_causes=(finding_tire_r1,),
+                test_plan=DomainTestPlan(actions=(action_r1,)),
+            ),
+        )
+        case = case.add_run(
+            TestRun(
+                run=Run(run_id="run-2"),
+                configuration_snapshot=ConfigurationSnapshot(),
+                hypotheses=(hyp_engine_r2, hyp_tire_r2),
+                findings=(finding_tire_r2,),
+                top_causes=(finding_tire_r2,),
+                test_plan=DomainTestPlan(actions=(action_r2,)),
+            ),
+        )
+        case = case.add_run(
+            TestRun(
+                run=Run(run_id="run-3"),
+                configuration_snapshot=ConfigurationSnapshot(),
+                hypotheses=(hyp_tire_r3,),
+                findings=(finding_tire_r3,),
+                top_causes=(finding_tire_r3,),
+                test_plan=DomainTestPlan(actions=(action_r3,)),
+            ),
+        )
+
+        # hyp-engine is RETIRED → excluded; only hyp-tire remains
+        hyp_ids = [h.hypothesis_id for h in case.hypotheses]
+        assert "hyp-engine" not in hyp_ids
+        assert "hyp-tire" in hyp_ids
+        assert case.hypotheses[0].support_score == 0.78  # latest run
+
+        # Finding: latest run's finding kept (F003, confidence=0.70)
+        assert len(case.findings) == 1
+        assert case.findings[0].finding_id == "F003"
+        assert case.findings[0].confidence == 0.70
+
+        # Actions: check_tires picks lowest priority (20), rotate_wheels (40) also present
+        action_ids = {a.action_id for a in case.recommended_actions}
+        assert "check_tires" in action_ids
+        assert "rotate_wheels" in action_ids
+        check_tires = next(a for a in case.recommended_actions if a.action_id == "check_tires")
+        assert check_tires.priority == 20
+
+
 # ── SpeedProfile ─────────────────────────────────────────────────────────────
 
 
