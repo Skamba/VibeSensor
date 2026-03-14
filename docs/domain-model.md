@@ -76,6 +76,11 @@ boundaries for:
 - the finalized findings
 - the recommended actions and next steps
 
+Current code may still use narrower names such as `Run` for part of this space.
+This document intentionally uses `DiagnosticCase` and `TestRun` as the target
+concepts: a case contains one or more runs, and a run is not itself the
+top-level diagnostic problem.
+
 What belongs on `DiagnosticCase`:
 
 - case lifecycle and state transitions
@@ -265,7 +270,9 @@ Pure algorithms are not domain objects just because they are important.
 
 FFT, DSP, filtering, order extraction, statistical transforms, and other
 stateless computations may remain functional or service-style. Their job is to
-produce usable inputs for the domain. They do **not** own:
+produce usable inputs for the domain.
+
+They do **not** own:
 
 - case conclusions
 - hypothesis status
@@ -395,7 +402,11 @@ layout would look like this:
 | `observation.py` | `Observation` |
 | `signature.py` | `Signature` |
 | `hypothesis.py` | `Hypothesis` |
-| `finding.py` | `Finding`, `FindingEvidence`, `VibrationOrigin`, `LocationHotspot`, `ConfidenceAssessment` |
+| `finding.py` | `Finding` |
+| `finding_evidence.py` | `FindingEvidence` |
+| `vibration_origin.py` | `VibrationOrigin` |
+| `location_hotspot.py` | `LocationHotspot` |
+| `confidence_assessment.py` | `ConfidenceAssessment` |
 | `speed_profile.py` | `SpeedProfile` |
 | `run_suitability.py` | `RunSuitability` |
 | `services/` | domain services such as signature recognition, hypothesis evaluation, and finding synthesis |
