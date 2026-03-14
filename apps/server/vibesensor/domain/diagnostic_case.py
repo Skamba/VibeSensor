@@ -247,8 +247,35 @@ class DiagnosticCase:
         return self.test_runs[-1] if self.test_runs else None
 
     @property
+    def has_usable_evidence(self) -> bool:
+        """Whether the case has genuinely usable diagnostic evidence."""
+        if not any(f.is_actionable for f in self.findings):
+            return False
+        primary = self.primary_run
+        if primary is not None and primary.suitability is not None:
+            if not primary.suitability.is_usable:
+                return False
+        return True
+
+    @property
     def is_complete(self) -> bool:
-        return bool(self.findings) and self.test_plan.supports_case_completion
+        return self.has_usable_evidence and self.test_plan.supports_case_completion
+
+    @property
+    def evidence_gaps(self) -> tuple[str, ...]:
+        """Descriptions of what evidence is missing or weak."""
+        gaps: list[str] = []
+        if not self.findings:
+            gaps.append("no_findings")
+        elif not any(f.is_actionable for f in self.findings):
+            gaps.append("no_actionable_findings")
+        primary = self.primary_run
+        if primary is not None and primary.suitability is not None:
+            if not primary.suitability.is_usable:
+                gaps.append("primary_run_unusable")
+        if self.test_plan.requires_additional_data:
+            gaps.append("additional_data_required")
+        return tuple(gaps)
 
     @property
     def needs_more_data(self) -> bool:
