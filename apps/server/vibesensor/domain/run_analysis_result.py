@@ -5,6 +5,10 @@ finalized output of analyzing a diagnostic run.  It owns the ranked
 domain ``Finding`` objects and provides core queries for downstream
 ranking, selection, and report generation.
 
+Optionally carries run-level domain value objects for speed behaviour
+(:class:`SpeedProfile`) and data-quality assessment
+(:class:`RunSuitability`).
+
 Boundary types (``AnalysisSummary``, ``FindingPayload``) remain for
 serialization and persistence; this aggregate is the domain-first
 source of truth inside the core pipeline.
@@ -14,8 +18,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from .finding import Finding, VibrationSource
+
+if TYPE_CHECKING:
+    from .run_suitability import RunSuitability
+    from .speed_profile import SpeedProfile
 
 __all__ = ["RunAnalysisResult"]
 
@@ -38,6 +47,10 @@ class RunAnalysisResult:
     sample_count: int = 0
     sensor_count: int = 0
     lang: str = "en"
+
+    # Run-level domain value objects (optional — populated when available)
+    speed_profile: SpeedProfile | None = None
+    suitability: RunSuitability | None = None
 
     def __post_init__(self) -> None:
         if not self.run_id:
@@ -87,6 +100,25 @@ class RunAnalysisResult:
 
         lang = str(summary.get("lang", "en"))
 
+        # Build run-level domain value objects from summary dicts
+        from .run_suitability import RunSuitability as _RS
+        from .speed_profile import SpeedProfile as _SP
+
+        speed_stats_raw = summary.get("speed_stats")
+        phase_summary_raw = summary.get("phase_summary")
+        speed_profile = (
+            _SP.from_stats(speed_stats_raw, phase_summary_raw)  # type: ignore[arg-type]
+            if isinstance(speed_stats_raw, dict)
+            else None
+        )
+
+        suitability_raw = summary.get("run_suitability")
+        suitability = (
+            _RS.from_checks(suitability_raw)  # type: ignore[arg-type]
+            if isinstance(suitability_raw, list)
+            else None
+        )
+
         return cls(
             run_id=run_id,
             findings=domain_findings,
@@ -95,6 +127,8 @@ class RunAnalysisResult:
             sample_count=sample_count,
             sensor_count=sensor_count,
             lang=lang,
+            speed_profile=speed_profile,
+            suitability=suitability,
         )
 
     # -- finding queries ---------------------------------------------------
