@@ -47,6 +47,7 @@ LOGGER = logging.getLogger(__name__)
 
 _RECOMMENDED_METADATA_KEYS: frozenset[str] = frozenset({"sensor_model", "sample_rate_hz"})
 _EXPECTED_ANALYSIS_KEYS: frozenset[str] = frozenset({"findings", "top_causes", "warnings"})
+_CASE_ID_MIGRATION_SOURCE_VERSION = 8
 
 
 class HistoryDB:
@@ -142,12 +143,50 @@ class HistoryDB:
                 f"History DB schema version {version} is newer than "
                 f"supported {SCHEMA_VERSION}. Cannot downgrade.",
             )
+        if version == _CASE_ID_MIGRATION_SOURCE_VERSION:
+            self._migrate_v8_to_v9_case_id()
+            return
         msg = (
             f"Database schema v{version} is incompatible with "
             f"current v{SCHEMA_VERSION}. "
             f"Delete the database file at {self.db_path} to recreate it."
         )
         raise RuntimeError(msg)
+
+    @staticmethod
+    def _has_runs_column(cur: sqlite3.Cursor, column_name: str) -> bool:
+        cur.execute("PRAGMA table_info(runs)")
+        return any(str(row[1]) == column_name for row in cur.fetchall())
+
+    def _migrate_v8_to_v9_case_id(self) -> None:
+        LOGGER.info("Migrating history DB at %s from schema v8 to v9", self.db_path)
+        with self._cursor() as cur:
+            if not self._has_runs_column(cur, "case_id"):
+                cur.execute("ALTER TABLE runs ADD COLUMN case_id TEXT")
+
+            cur.execute(
+                "SELECT run_id, analysis_json FROM runs "
+                "WHERE case_id IS NULL AND analysis_json IS NOT NULL"
+            )
+            updates: list[tuple[str, str]] = []
+            for run_id, analysis_json in cur.fetchall():
+                parsed_analysis = safe_json_loads(
+                    analysis_json,
+                    context=f"run {run_id} analysis during schema migration",
+                )
+                if not is_json_object(parsed_analysis):
+                    continue
+                case_id = parsed_analysis.get("case_id")
+                if isinstance(case_id, str) and case_id.strip():
+                    updates.append((case_id, str(run_id)))
+
+            if updates:
+                cur.executemany(
+                    "UPDATE runs SET case_id = ? WHERE run_id = ? AND case_id IS NULL",
+                    updates,
+                )
+
+            cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 
     # -- settings_kv persistence ----------------------------------------------
 
