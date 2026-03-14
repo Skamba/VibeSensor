@@ -63,9 +63,9 @@ objects are derived edge forms of these concepts.
 
 The natural top-level aggregate is **`DiagnosticCase`**.
 
-`DiagnosticCase` represents the whole diagnostic problem, not just one run and
-not just one rendered report. It owns the case-level identity and consistency
-boundaries for:
+`DiagnosticCase` represents the complete diagnostic problem—spanning one or
+more runs and their conclusions—rather than a single run or report. It owns the
+case-level identity and consistency boundaries for:
 
 - the vehicle under diagnosis
 - the complaint or symptoms being investigated
@@ -185,7 +185,7 @@ cross-object reasoning belongs in domain services.
 
 | Service concern | Responsibility |
 |---|---|
-| **Observation extraction** | Turn processed signals into domain `Observation` objects without making business conclusions |
+| **Observation extraction** | Turn processed signals (FFT outputs, filtered waveforms, statistical measures, and similar algorithm outputs) into domain `Observation` objects without making business conclusions |
 | **Signature recognition** | Group observations into meaningful `Signature` objects |
 | **Hypothesis evaluation** | Compare signatures and evidence against possible causes and update/support `Hypothesis` objects |
 | **Finding synthesis** | Turn supported hypotheses into `Finding` objects with structured evidence, origin, localization, and confidence |
@@ -299,7 +299,9 @@ objects.**
   `FindingEvidence`, `VibrationOrigin`, `LocationHotspot`,
   `ConfidenceAssessment`, `TireSpec`) should be immutable snapshots.
 - Avoid "frozen outside, mutable inside" designs where live business state is
-  hidden inside lists or dicts attached to an allegedly immutable object.
+  hidden inside lists or dicts attached to an allegedly immutable object; for
+  example, a frozen dataclass that still exposes a mutable list updated after
+  construction.
 
 ## Boundary and dependency rules
 
@@ -370,7 +372,7 @@ belongs at the edge.
 The following are architecture violations:
 
 - business logic driven by summary, payload, or dict shapes
-- generic `summary`, `context`, or `data` objects replacing real domain
+- generic summary, context, or data objects replacing real domain
   concepts such as `Observation`, `Hypothesis`, or `FindingEvidence`
 - "report" objects that are really metadata bags but are treated as aggregates
 - duplicate diagnostic rules split across domain objects and mapping/rendering
@@ -425,8 +427,8 @@ reporting artifacts.
 
 The core of VibeSensor should answer one question:
 
-**Given this complaint, this vehicle, and these test runs, what do we believe,
-why do we believe it, and what should happen next?**
+**Given this complaint, this vehicle, and these test runs, what does the system
+believe, why does it believe it, and what should happen next?**
 
 Any object that does not help answer that question in domain terms belongs at
 the edge, not at the center.
