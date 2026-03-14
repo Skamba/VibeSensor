@@ -31,6 +31,7 @@ from ..analysis.strength_labels import (
     strength_text,
 )
 from ..boundaries.diagnostic_case import finding_payload_from_domain
+from ..boundaries.run_suitability import run_suitability_payload
 from ..boundaries.vibration_origin import origin_payload_from_finding
 from ..domain import Finding, Report, RunAnalysisResult, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
@@ -654,12 +655,16 @@ def build_data_trust_from_summary(
     """Build the data-trust checklist from run_suitability items."""
     data_trust: list[DataTrustItem] = []
     if aggregate is not None and aggregate.suitability is not None:
-        for item in aggregate.suitability.checks:
+        projected = run_suitability_payload(
+            aggregate.suitability,
+            fallback=summary_run_suitability(summary),
+        )
+        for proj in projected:
             data_trust.append(
                 DataTrustItem(
-                    check=_resolve_check_text(item.check_key, lang=lang, tr=tr),
-                    state=item.state,
-                    detail=_resolve_detail_text(item.explanation, lang=lang, tr=tr),
+                    check=_resolve_check_text(proj.get("check_key"), lang=lang, tr=tr),
+                    state=str(proj.get("state") or "warn"),
+                    detail=_resolve_detail_text(proj.get("explanation"), lang=lang, tr=tr),
                 ),
             )
     else:

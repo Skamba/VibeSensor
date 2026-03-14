@@ -64,9 +64,8 @@ class TestRun:
         for finding in findings:
             if top_cause == finding:
                 return True
-            if not top_cause.finding_id or top_cause.finding_id != finding.finding_id:
-                continue
-            return top_cause.suspected_source == finding.suspected_source
+            if top_cause.finding_id and top_cause.finding_id == finding.finding_id:
+                return True
         return False
 
     @property

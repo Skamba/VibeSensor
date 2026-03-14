@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from ..analysis._types import SuspectedVibrationOrigin
+from ..analysis import SuspectedVibrationOrigin
 from ..domain.finding import Finding, VibrationSource
 from ..domain.location_hotspot import LocationHotspot
 from ..domain.vibration_origin import VibrationOrigin
