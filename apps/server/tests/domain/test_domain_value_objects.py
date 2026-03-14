@@ -21,6 +21,7 @@ from vibesensor.boundaries.vibration_origin import (
 )
 from vibesensor.domain import (
     ConfidenceAssessment,
+    DiagnosticCase,
     Finding,
     FindingEvidence,
     LocationHotspot,
@@ -29,6 +30,12 @@ from vibesensor.domain import (
     SpeedProfile,
     SuitabilityCheck,
     VibrationOrigin,
+)
+from vibesensor.domain import (
+    RecommendedAction as DomainRecommendedAction,
+)
+from vibesensor.domain import (
+    TestPlan as DomainTestPlan,
 )
 
 # ── FindingEvidence ──────────────────────────────────────────────────────────
@@ -467,6 +474,105 @@ class TestConfidenceAssessment:
     def test_no_reasons_when_all_good(self) -> None:
         ca = ConfidenceAssessment.assess(0.85, sensor_count=4)
         assert ca.reason == ""
+
+
+class TestRecommendedAction:
+    def test_render_queries_normalize_blank_optional_fields(self) -> None:
+        action = DomainRecommendedAction(
+            action_id="inspect_mount",
+            what="  ACTION_ENGINE_MOUNTS_WHAT  ",
+            why="   ",
+            confirm=" movement increases ",
+            falsify="  ",
+            eta=" 15-30 min ",
+        )
+
+        assert action.instruction == "ACTION_ENGINE_MOUNTS_WHAT"
+        assert action.rationale is None
+        assert action.confirmation_signal == "movement increases"
+        assert action.falsification_signal is None
+        assert action.estimated_duration == "15-30 min"
+        assert action.has_supporting_detail is True
+
+    def test_render_queries_report_no_supporting_detail(self) -> None:
+        action = DomainRecommendedAction(
+            action_id="inspect_mount",
+            what="ACTION_ENGINE_MOUNTS_WHAT",
+        )
+
+        assert action.rationale is None
+        assert action.confirmation_signal is None
+        assert action.falsification_signal is None
+        assert action.estimated_duration is None
+        assert action.has_supporting_detail is False
+
+
+class TestTestPlan:
+    def test_supports_case_completion_without_pending_actions(self) -> None:
+        plan = DomainTestPlan()
+
+        assert plan.has_actions is False
+        assert plan.supports_case_completion is True
+        assert plan.is_complete is True
+        assert plan.needs_more_data() is False
+
+    def test_pending_actions_do_not_imply_more_data(self) -> None:
+        plan = DomainTestPlan(
+            actions=(
+                DomainRecommendedAction(
+                    action_id="wheel_balance_and_runout",
+                    what="ACTION_WHEEL_BALANCE_WHAT",
+                ),
+            ),
+        )
+
+        assert plan.has_actions is True
+        assert plan.supports_case_completion is True
+        assert plan.is_complete is False
+        assert plan.needs_more_data() is False
+
+    def test_requires_additional_data_blocks_case_completion(self) -> None:
+        plan = DomainTestPlan(
+            actions=(
+                DomainRecommendedAction(
+                    action_id="general_mechanical_inspection",
+                    what="COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS",
+                ),
+            ),
+            requires_additional_data=True,
+        )
+
+        assert plan.supports_case_completion is False
+        assert plan.needs_more_data() is True
+
+
+class TestDiagnosticCase:
+    def test_case_complete_when_findings_exist_and_plan_supports_completion(self) -> None:
+        case = DiagnosticCase(
+            case_id="case-1",
+            findings=(Finding(suspected_source="engine", confidence=0.74),),
+            test_plan=DomainTestPlan(
+                actions=(
+                    DomainRecommendedAction(
+                        action_id="engine_mounts_and_accessories",
+                        what="ACTION_ENGINE_MOUNTS_WHAT",
+                    ),
+                ),
+            ),
+        )
+
+        assert case.is_complete is True
+        assert case.needs_more_data is False
+
+    def test_case_incomplete_when_test_plan_requires_more_data(self) -> None:
+        case = DiagnosticCase(
+            case_id="case-2",
+            findings=(Finding(suspected_source="wheel/tire", confidence=0.81),),
+            test_plan=DomainTestPlan(requires_additional_data=True),
+        )
+
+        assert case.is_complete is False
+        assert case.needs_more_data is True
 
 
 # ── SpeedProfile ─────────────────────────────────────────────────────────────
