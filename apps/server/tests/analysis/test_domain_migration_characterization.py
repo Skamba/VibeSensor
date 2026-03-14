@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -7,6 +8,8 @@ from test_support import make_diffuse_samples, make_engine_order_samples, make_s
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 from vibesensor.analysis import RunAnalysis, summarize_run_data
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
+from vibesensor.history_db import HistoryDB
 
 
 def _run_suitability_state(summary: dict[str, Any], check_key: str) -> str | None:
@@ -39,6 +42,27 @@ def _first_action_id(summary: dict[str, Any]) -> str | None:
         return None
     action_id = first.get("action_id")
     return str(action_id) if action_id is not None else None
+
+
+def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict[str, Any]:
+    db = HistoryDB(tmp_path / "history.db")
+    run: dict[str, Any] | None = None
+    try:
+        db.create_run(
+            "characterization-roundtrip",
+            "2026-01-01T00:00:00Z",
+            standard_metadata(),
+        )
+        db.finalize_run("characterization-roundtrip", "2026-01-01T00:01:00Z")
+        db.store_analysis("characterization-roundtrip", summary)
+        run = db.get_run("characterization-roundtrip")
+    finally:
+        db.close()
+
+    assert run is not None
+    analysis = run.get("analysis")
+    assert isinstance(analysis, dict)
+    return project_summary_through_domain(analysis)
 
 
 def _driveline_samples() -> list[dict[str, Any]]:
@@ -117,6 +141,35 @@ def test_characterization_wheel_fault_summary_contract() -> None:
     assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
     assert _run_suitability_state(summary, "SUITABILITY_CHECK_SENSOR_COVERAGE") == "pass"
     assert _first_action_id(summary) == "wheel_tire_condition"
+
+
+def test_characterization_wheel_fault_persist_reload_round_trip(tmp_path: Path) -> None:
+    analysis = RunAnalysis(
+        standard_metadata(),
+        fault_phase(
+            speed_kmh=80.0,
+            duration_s=20.0,
+            fault_sensor="front-right",
+            sensors=ALL_SENSORS,
+        ),
+        lang="en",
+        file_name="characterization-wheel-roundtrip",
+    )
+
+    round_trip_summary = _persist_and_reload_summary(tmp_path, analysis.summarize())
+    top_cause = _top_cause(round_trip_summary)
+    origin = round_trip_summary["most_likely_origin"]
+
+    assert top_cause is not None
+    assert top_cause["finding_key"] == "wheel_1x"
+    assert top_cause["suspected_source"] == "wheel/tire"
+    assert top_cause["confidence"] == pytest.approx(0.5028523562048559)
+    assert origin["location"] == "Front-Right"
+    assert origin["alternative_locations"] == []
+    assert origin["suspected_source"] == "wheel/tire"
+    assert origin["weak_spatial_separation"] is False
+    assert _run_suitability_state(round_trip_summary, "SUITABILITY_CHECK_SENSOR_COVERAGE") == "pass"
+    assert _first_action_id(round_trip_summary) == "wheel_tire_condition"
 
 
 def test_characterization_driveline_summary_contract() -> None:
