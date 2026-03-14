@@ -914,8 +914,8 @@ def assemble_order_finding(
 
     relevant_speed_bins = [context.focused_speed_band] if context.focused_speed_band else None
 
-    # Lazy import to avoid circular dependency (test_plan imports from this module).
-    from .test_plan import _location_speedbin_summary
+    # Lazy import to avoid circular dependency (location_analysis imports from this module).
+    from .location_analysis import _location_speedbin_summary
 
     location_line, location_hotspot = _location_speedbin_summary(
         match.matched_points,

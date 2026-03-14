@@ -5,9 +5,9 @@ from test_support.report_helpers import analysis_sample as _make_sample
 from test_support.report_helpers import max_non_ref_confidence, wheel_metadata
 
 from vibesensor.analysis import build_findings_for_samples
-from vibesensor.analysis import test_plan as _test_plan_module
+from vibesensor.analysis import location_analysis as _test_plan_module
+from vibesensor.analysis.location_analysis import _location_speedbin_summary
 from vibesensor.analysis.summary_builder import summarize_origin
-from vibesensor.analysis.test_plan import _location_speedbin_summary
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
 

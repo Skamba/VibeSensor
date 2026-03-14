@@ -868,3 +868,39 @@ def test_boundary_and_report_modules_do_not_import_analysis_coordinator() -> Non
     assert not violations, (
         "Boundary/report modules must not import AnalysisResult:\n" + "\n".join(violations)
     )
+
+
+# ── T6 planning service and file rename guardrails ────────────────────────────
+
+
+def test_planning_service_has_no_payload_imports() -> None:
+    """Domain planning service must not import payload types."""
+    import ast
+    from pathlib import Path
+
+    planning_path = (
+        Path(__file__).resolve().parents[2]
+        / "vibesensor" / "domain" / "services" / "test_planning.py"
+    )
+    tree = ast.parse(planning_path.read_text())
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            module = getattr(node, "module", "") or ""
+            names = [alias.name for alias in node.names]
+            all_refs = module + " ".join(names)
+            assert "FindingPayload" not in all_refs, (
+                "domain/services/test_planning.py must not import FindingPayload"
+            )
+            assert "AnalysisSummary" not in all_refs, (
+                "domain/services/test_planning.py must not import AnalysisSummary"
+            )
+
+
+def test_analysis_test_plan_renamed() -> None:
+    """analysis/test_plan.py was renamed to location_analysis.py."""
+    from pathlib import Path
+
+    old = Path(__file__).resolve().parents[2] / "vibesensor" / "analysis" / "test_plan.py"
+    new = Path(__file__).resolve().parents[2] / "vibesensor" / "analysis" / "location_analysis.py"
+    assert not old.exists(), f"{old} should have been renamed"
+    assert new.exists(), f"{new} must exist after rename"
