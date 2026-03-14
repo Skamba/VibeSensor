@@ -15,6 +15,7 @@ from vibesensor.vibration_strength import compute_db
 
 from ..boundaries.location_hotspot import location_hotspot_from_payload
 from ..boundaries.run_suitability import run_suitability_payload
+from ..boundaries.test_steps import step_payloads_from_plan
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..domain import (
     Car,
@@ -95,7 +96,6 @@ from .helpers import (
 from .phase_segmentation import DrivingPhase, PhaseSegment, segment_run_phases
 from .plots import _plot_data
 from .strength_labels import strength_label as _strength_label
-from .test_plan import _merge_test_plan
 from .top_cause_selection import select_top_causes
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1051,7 +1051,6 @@ def build_findings_bundle(
 ) -> tuple[
     list[FindingPayload],
     SuspectedVibrationOrigin,
-    list[TestStep],
     list[PhaseTimelineEntry],
     list[FindingPayload],
     tuple[DomainFinding, ...],
@@ -1059,7 +1058,7 @@ def build_findings_bundle(
 ]:
     """Build findings plus derived diagnosis narrative fields.
 
-    Returns ``(findings, origin, test_plan, timeline, top_causes_payloads,
+    Returns ``(findings, origin, timeline, top_causes_payloads,
     domain_findings, domain_top_causes)``.  The last two elements are the
     domain ``Finding`` objects for consumption by ``RunAnalysisResult``.
     """
@@ -1085,7 +1084,6 @@ def build_findings_bundle(
         diagnostic_findings,
         domain_findings=domain_diagnostic_findings,
     )
-    test_plan = _merge_test_plan(findings, language)
     phase_timeline = build_phase_timeline(
         prepared.phase_segments,
         findings,
@@ -1099,7 +1097,6 @@ def build_findings_bundle(
     return (
         findings,
         most_likely_origin,
-        test_plan,
         phase_timeline,
         top_causes,
         domain_findings,
@@ -1249,7 +1246,6 @@ class RunAnalysis:
         (
             findings,
             most_likely_origin,
-            test_plan,
             phase_timeline,
             top_causes,
             domain_findings,
@@ -1303,6 +1299,7 @@ class RunAnalysis:
             hypotheses,
             lang=self._language,
         )
+        summary_test_plan = step_payloads_from_plan(domain_test_plan)
         self._test_run = TestRun(
             run=Run(run_id=self._prepared.run_id, analysis_settings={}),
             configuration_snapshot=configuration_snapshot,
@@ -1347,7 +1344,7 @@ class RunAnalysis:
             findings=findings,
             top_causes=top_causes,
             most_likely_origin=most_likely_origin,
-            test_plan=test_plan,
+            test_plan=summary_test_plan,
             phase_timeline=phase_timeline,
             speed_stats=summary_speed_stats,
             speed_stats_by_phase=self._prepared.speed_stats_by_phase,
