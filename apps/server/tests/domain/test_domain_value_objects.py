@@ -32,6 +32,8 @@ from vibesensor.domain import (
     Run,
     RunAnalysisResult,
     RunSuitability,
+    Sensor,
+    SensorPlacement,
     SpeedProfile,
     SuitabilityCheck,
     TestRun,
@@ -1745,3 +1747,60 @@ class TestConfigurationSnapshot:
             )
         )
         assert len(case.configuration_snapshots) == 2
+
+
+# ── Sensor ───────────────────────────────────────────────────────────────────
+
+
+class TestSensor:
+    def test_from_location_codes_creates_sensors(self) -> None:
+        sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle"])
+        assert len(sensors) == 2
+        assert sensors[0].sensor_id == "front_left_wheel"
+        assert sensors[0].placement is not None
+        assert sensors[0].placement.code == "front_left_wheel"
+        assert sensors[1].sensor_id == "rear_axle"
+        assert sensors[1].placement is not None
+        assert sensors[1].placement.code == "rear_axle"
+
+    def test_from_location_codes_empty(self) -> None:
+        sensors = Sensor.from_location_codes([])
+        assert sensors == ()
+
+    def test_sensor_equality(self) -> None:
+        placement = SensorPlacement.from_code("front_left_wheel")
+        a = Sensor(sensor_id="front_left_wheel", placement=placement)
+        b = Sensor(sensor_id="front_left_wheel", placement=placement)
+        assert a == b
+
+
+# ── TestRun sensors ──────────────────────────────────────────────────────────
+
+
+class TestTestRunSensors:
+    def test_test_run_default_sensors_empty(self) -> None:
+        tr = TestRun(
+            run=Run(run_id="r1"),
+            configuration_snapshot=ConfigurationSnapshot(),
+        )
+        assert tr.sensors == ()
+        assert tr.sensor_count == 0
+
+    def test_test_run_with_sensors(self) -> None:
+        sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle"])
+        tr = TestRun(
+            run=Run(run_id="r1"),
+            configuration_snapshot=ConfigurationSnapshot(),
+            sensors=sensors,
+        )
+        assert len(tr.sensors) == 2
+        assert tr.sensor_count == 2
+
+    def test_test_run_sensor_count_property(self) -> None:
+        sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle", "dashboard"])
+        tr = TestRun(
+            run=Run(run_id="r1"),
+            configuration_snapshot=ConfigurationSnapshot(),
+            sensors=sensors,
+        )
+        assert tr.sensor_count == len(sensors)
