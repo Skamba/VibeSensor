@@ -272,6 +272,17 @@ def _enrich_findings(raw_findings: object) -> tuple[Finding, ...]:
     return tuple(enriched)
 
 
+def _require_authoritative_case_id(summary: Mapping[str, object]) -> str:
+    case_id = summary.get("case_id")
+    if isinstance(case_id, str):
+        normalized_case_id = case_id.strip()
+        if normalized_case_id:
+            return normalized_case_id
+    raise ValueError(
+        "Cannot decode DiagnosticCase from legacy summary without authoritative case_id"
+    )
+
+
 def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     metadata = summary.get("metadata")
     meta = metadata if isinstance(metadata, Mapping) else {}
@@ -337,7 +348,8 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
     symptom_text = str(meta.get("symptom") or meta.get("complaint") or "").strip()
     symptom = Symptom(description=symptom_text) if symptom_text else Symptom.unspecified()
     test_run = test_run_from_summary(summary)
-    case = DiagnosticCase.start(
+    case = DiagnosticCase(
+        case_id=_require_authoritative_case_id(summary),
         car=car,
         symptoms=(symptom,),
         configuration_snapshots=(test_run.configuration_snapshot,),

@@ -755,6 +755,7 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     from vibesensor.boundaries import diagnostic_case_from_summary
 
     summary = {
+        "case_id": "summary-case-guard-id",
         "run_id": "summary-case-guard",
         "metadata": {"car_name": "Guard Car", "car_type": "sedan"},
         "findings": [make_finding_payload(finding_id="F001", confidence=0.80)],
@@ -768,6 +769,7 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
         ],
     }
     diagnostic_case = diagnostic_case_from_summary(summary)
+    assert diagnostic_case.case_id == "summary-case-guard-id"
     assert diagnostic_case.test_runs
     assert diagnostic_case.findings
     assert diagnostic_case.primary_run is not None
