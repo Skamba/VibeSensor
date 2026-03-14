@@ -306,14 +306,18 @@ class Finding:
                     pass
 
         # Build domain value objects from nested dicts when available
+        from ..boundaries.location_hotspot import location_hotspot_from_payload
+        from ..boundaries.vibration_origin import vibration_origin_from_payload
         from .finding_evidence import FindingEvidence as _FE
-        from .location_hotspot import LocationHotspot as _LH
         from .signature import Signature as _Signature
-        from .vibration_origin import VibrationOrigin as _Origin
 
         evidence = _FE.from_metrics_dict(ev_metrics) if isinstance(ev_metrics, dict) else None
         hotspot_raw = payload.get("location_hotspot")
-        location = _LH.from_hotspot_dict(hotspot_raw) if isinstance(hotspot_raw, dict) else None
+        location = (
+            location_hotspot_from_payload(hotspot_raw)
+            if isinstance(hotspot_raw, dict)
+            else None
+        )
 
         finding_id = _str("finding_id")
         severity = _str("severity")
@@ -344,14 +348,12 @@ class Finding:
             if isinstance(raw_signatures, list)
             else ()
         )
-        dominant_phase = str(payload.get("dominant_phase") or "").strip() or None
-        origin = _Origin(
-            suspected_source=source,
+        origin = vibration_origin_from_payload(
+            payload,
             hotspot=location,
+            suspected_source=source,
             dominance_ratio=dominance_ratio,
             speed_band=str(band) if band is not None else None,
-            dominant_phase=dominant_phase,
-            reason=_str("evidence_summary"),
         )
 
         return cls(

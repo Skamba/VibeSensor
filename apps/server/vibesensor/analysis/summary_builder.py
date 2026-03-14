@@ -13,13 +13,17 @@ from statistics import median as _median
 from vibesensor.analysis.analysis_window import AnalysisWindow
 from vibesensor.vibration_strength import compute_db
 
+from ..boundaries.location_hotspot import location_hotspot_from_payload
+from ..boundaries.run_suitability import run_suitability_payload
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..domain import (
     Car,
     ConfigurationSnapshot,
     DiagnosticCase,
+    LocationHotspot,
     Run,
     RunAnalysisResult,
+    RunSuitability,
     Symptom,
     TestRun,
 )
@@ -85,7 +89,6 @@ from .helpers import (
     _speed_stats_by_phase,
     _validate_required_strength_metrics,
     counter_delta,
-    weak_spatial_dominance_threshold,
 )
 from .phase_segmentation import DrivingPhase, PhaseSegment, segment_run_phases
 from .plots import _plot_data
@@ -187,81 +190,6 @@ def compute_frame_integrity_counts(samples: list[Sample]) -> tuple[int, int]:
     total_dropped = sum(counter_delta(values) for values in per_client_dropped.values())
     total_overflow = sum(counter_delta(values) for values in per_client_overflow.values())
     return total_dropped, total_overflow
-
-
-def build_run_suitability_checks(
-    *,
-    steady_speed: bool,
-    speed_sufficient: bool,
-    sensor_ids: set[str],
-    reference_complete: bool,
-    sat_count: int,
-    samples: list[Sample],
-) -> list[RunSuitabilityCheck]:
-    """Construct the language-neutral run-suitability checklist."""
-    sensor_count_sufficient = len(sensor_ids) >= 3
-    speed_variation_ok = speed_sufficient and not steady_speed
-    run_suitability: list[RunSuitabilityCheck] = [
-        {
-            "check": "SUITABILITY_CHECK_SPEED_VARIATION",
-            "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
-            "state": "pass" if speed_variation_ok else "warn",
-            "explanation": (
-                i18n_ref("SUITABILITY_SPEED_VARIATION_PASS")
-                if speed_variation_ok
-                else i18n_ref("SUITABILITY_SPEED_VARIATION_WARN")
-            ),
-        },
-        {
-            "check": "SUITABILITY_CHECK_SENSOR_COVERAGE",
-            "check_key": "SUITABILITY_CHECK_SENSOR_COVERAGE",
-            "state": "pass" if sensor_count_sufficient else "warn",
-            "explanation": (
-                i18n_ref("SUITABILITY_SENSOR_COVERAGE_PASS")
-                if sensor_count_sufficient
-                else i18n_ref("SUITABILITY_SENSOR_COVERAGE_WARN")
-            ),
-        },
-        {
-            "check": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
-            "check_key": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
-            "state": "pass" if reference_complete else "warn",
-            "explanation": (
-                i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_PASS")
-                if reference_complete
-                else i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_WARN")
-            ),
-        },
-        {
-            "check": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
-            "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
-            "state": "pass" if sat_count == 0 else "warn",
-            "explanation": (
-                i18n_ref("SUITABILITY_SATURATION_PASS")
-                if sat_count == 0
-                else i18n_ref("SUITABILITY_SATURATION_WARN", sat_count=sat_count)
-            ),
-        },
-    ]
-    total_dropped, total_overflow = compute_frame_integrity_counts(samples)
-    frame_issues = total_dropped + total_overflow
-    run_suitability.append(
-        {
-            "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
-            "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
-            "state": "pass" if frame_issues == 0 else "warn",
-            "explanation": (
-                i18n_ref("SUITABILITY_FRAME_INTEGRITY_PASS")
-                if frame_issues == 0
-                else i18n_ref(
-                    "SUITABILITY_FRAME_INTEGRITY_WARN",
-                    total_dropped=total_dropped,
-                    total_overflow=total_overflow,
-                )
-            ),
-        },
-    )
-    return run_suitability
 
 
 def compute_reference_completeness(metadata: MetadataDict) -> bool:
@@ -704,7 +632,9 @@ def _resolve_weak_spatial_threshold(top_finding: FindingPayload, *, hotspot: obj
     location_count = _as_float(top_finding.get("location_count"))
     if location_count is None and isinstance(hotspot, dict):
         location_count = _as_float(hotspot.get("location_count"))
-    return weak_spatial_dominance_threshold(int(location_count) if location_count else None)
+    return LocationHotspot.weak_spatial_threshold(
+        int(location_count) if location_count else None
+    )
 
 
 def summarize_origin(
@@ -737,7 +667,62 @@ def summarize_origin(
     if domain_findings is not None and len(domain_findings) >= 2:
         domain_second = domain_findings[1]
 
-    loc = LocalizationAssessment.from_finding(top, domain=domain_top)
+    hotspot_raw = top.get("location_hotspot")
+    location_count: int | None = None
+    raw_alternatives: list[str] = []
+    if isinstance(hotspot_raw, dict):
+        decoded = location_hotspot_from_payload(hotspot_raw)
+        raw_alternatives = list(decoded.alternative_locations)
+        second_location = str(hotspot_raw.get("second_location") or "").strip()
+        if second_location and second_location not in raw_alternatives:
+            raw_alternatives.append(second_location)
+        raw_location_count = _as_float(top.get("location_count"))
+        if raw_location_count is None:
+            raw_location_count = _as_float(hotspot_raw.get("location_count"))
+        location_count = int(raw_location_count) if raw_location_count else None
+    else:
+        decoded = None
+        raw_location_count = _as_float(top.get("location_count"))
+        location_count = int(raw_location_count) if raw_location_count else None
+
+    if domain_top is not None and domain_top.location is not None:
+        loc = LocationHotspot.from_analysis_inputs(
+            strongest_location=(
+                domain_top.location.strongest_location or domain_top.strongest_location
+            ),
+            dominance_ratio=domain_top.location.dominance_ratio,
+            localization_confidence=domain_top.location.localization_confidence,
+            weak_spatial_separation=domain_top.location.weak_spatial_separation,
+            ambiguous=domain_top.location.ambiguous,
+            alternative_locations=(*domain_top.location.alternative_locations, *raw_alternatives),
+        )
+    elif decoded is not None:
+        loc = LocationHotspot.from_analysis_inputs(
+            strongest_location=(
+                decoded.strongest_location
+                or str(top.get("strongest_location") or "").strip()
+                or "unknown"
+            ),
+            dominance_ratio=(
+                decoded.dominance_ratio
+                if decoded.dominance_ratio is not None
+                else _as_float(top.get("dominance_ratio"))
+            ),
+            localization_confidence=decoded.localization_confidence,
+            weak_spatial_separation=(
+                decoded.weak_spatial_separation
+                or bool(top.get("weak_spatial_separation"))
+            ),
+            ambiguous=decoded.ambiguous,
+            alternative_locations=raw_alternatives,
+        )
+    else:
+        loc = LocationHotspot.from_analysis_inputs(
+            strongest_location=str(top.get("strongest_location") or "").strip() or "unknown",
+            dominance_ratio=_as_float(top.get("dominance_ratio")),
+            weak_spatial_separation=bool(top.get("weak_spatial_separation")),
+        )
+    loc = loc.with_adaptive_weak_spatial(location_count)
     if domain_top:
         source = str(domain_top.suspected_source)
     else:
@@ -748,13 +733,23 @@ def summarize_origin(
             top_conf = domain_top.effective_confidence
         else:
             top_conf = _as_float(top.get("confidence")) or 0.0
-        loc.enrich_from_second_finding(
-            findings[1],
+        if domain_second is not None:
+            second_location = (
+                (domain_second.location.strongest_location if domain_second.location else "")
+                or domain_second.strongest_location
+                or str(findings[1].get("strongest_location") or "")
+            ).strip()
+            second_conf = domain_second.effective_confidence
+        else:
+            second_location = str(findings[1].get("strongest_location") or "").strip()
+            second_conf = _as_float(findings[1].get("confidence")) or 0.0
+        loc = loc.promote_near_tie(
+            alternative_location=second_location,
             top_confidence=top_conf,
-            domain=domain_second,
+            alternative_confidence=second_conf,
         )
 
-    location = loc.display_location()
+    location = loc.summary_location
     if domain_top:
         speed_band = str(domain_top.strongest_speed_band or "")
     else:
@@ -770,7 +765,7 @@ def summarize_origin(
     )
     return {
         "location": location,
-        "alternative_locations": loc.supporting_locations(),
+        "alternative_locations": list(loc.supporting_locations),
         "suspected_source": source,
         "dominance_ratio": loc.dominance_ratio,
         "weak_spatial_separation": not loc.has_clear_separation,
@@ -1131,7 +1126,7 @@ def build_run_suitability_bundle(
     *,
     prepared: PreparedRunData,
     accel_stats: AccelStatistics,
-) -> tuple[bool, list[RunSuitabilityCheck], str | None]:
+) -> tuple[bool, RunSuitability | None, str | None]:
     """Build run-suitability checks and related confidence context."""
     reference_complete = compute_reference_completeness(metadata)
     sensor_ids = {
@@ -1139,13 +1134,15 @@ def build_run_suitability_bundle(
         for sample in samples
         if isinstance(sample, dict) and (cid := sample.get("client_id"))
     }
-    run_suitability = build_run_suitability_checks(
+    total_dropped, total_overflow = compute_frame_integrity_counts(samples)
+    run_suitability = RunSuitability.evaluate(
         steady_speed=prepared.is_steady_speed,
         speed_sufficient=prepared.speed_sufficient,
-        sensor_ids=sensor_ids,
+        sensor_count=len(sensor_ids),
         reference_complete=reference_complete,
         sat_count=accel_stats["sat_count"],
-        samples=samples,
+        total_dropped=total_dropped,
+        total_overflow=total_overflow,
     )
     amp_metric_values = accel_stats["amp_metric_values"]
     overall_strength_band_key = (
@@ -1272,7 +1269,6 @@ class RunAnalysis:
 
         # Build the domain aggregate with run-level value objects
         from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-        from vibesensor.domain.run_suitability import RunSuitability
         from vibesensor.domain.speed_profile import SpeedProfile
 
         speed_profile = (
@@ -1283,9 +1279,8 @@ class RunAnalysis:
             if self._prepared.speed_stats
             else None
         )
-        domain_suitability = (
-            RunSuitability.from_checks(run_suitability) if run_suitability else None
-        )
+        domain_suitability = run_suitability
+        run_suitability_checks = run_suitability_payload(domain_suitability)
 
         # Enrich top-cause domain Findings with ConfidenceAssessment
         has_ref_gaps = not reference_complete
@@ -1364,7 +1359,7 @@ class RunAnalysis:
             sensor_locations=sensor_locations,
             connected_locations=connected_locations,
             sensor_intensity_by_location=sensor_intensity_by_location,
-            run_suitability=run_suitability,
+            run_suitability=run_suitability_checks,
             speed_values=self._prepared.speed_values,
             speed_non_null_pct=self._prepared.speed_non_null_pct,
             accel_stats=self._accel_stats,

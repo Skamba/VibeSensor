@@ -1,63 +1,17 @@
 """Unit tests for under-tested helpers in vibesensor.analysis.helpers.
 
 Covers:
-- weak_spatial_dominance_threshold (adaptive dominance ratio)
 - _amplitude_weighted_speed_window (dominant-bin speed finder)
 
-Neither function had a direct unit test; they were only exercised
-indirectly through the full analysis pipeline.
+The weak-spatial threshold rule now lives on LocationHotspot and is
+tested in the domain value-object suite.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis.helpers import (
-    WEAK_SPATIAL_DOMINANCE_THRESHOLD,
-    _amplitude_weighted_speed_window,
-    weak_spatial_dominance_threshold,
-)
-
-# ---------------------------------------------------------------------------
-# weak_spatial_dominance_threshold
-# ---------------------------------------------------------------------------
-
-
-class TestWeakSpatialDominanceThreshold:
-    """Adaptive dominance threshold for weak spatial separation."""
-
-    def test_returns_baseline_for_none(self) -> None:
-        """None location count falls back to the global baseline constant."""
-        result = weak_spatial_dominance_threshold(None)
-        assert result == WEAK_SPATIAL_DOMINANCE_THRESHOLD
-
-    def test_returns_baseline_for_two_locations(self) -> None:
-        """Two locations is the canonical baseline case — no extra scaling."""
-        result = weak_spatial_dominance_threshold(2)
-        assert result == pytest.approx(WEAK_SPATIAL_DOMINANCE_THRESHOLD)
-
-    def test_scales_up_per_additional_location(self) -> None:
-        """Each extra sensor beyond 2 adds 10% of the baseline."""
-        baseline = WEAK_SPATIAL_DOMINANCE_THRESHOLD
-        result_3 = weak_spatial_dominance_threshold(3)
-        result_4 = weak_spatial_dominance_threshold(4)
-        assert result_3 == pytest.approx(baseline * 1.1, rel=1e-6)
-        assert result_4 == pytest.approx(baseline * 1.2, rel=1e-6)
-
-    def test_clamps_to_minimum_of_two_for_one_or_zero(self) -> None:
-        """Fewer than 2 sensors are clamped to 2 to avoid under-threshold."""
-        result_one = weak_spatial_dominance_threshold(1)
-        result_zero = weak_spatial_dominance_threshold(0)
-        baseline = WEAK_SPATIAL_DOMINANCE_THRESHOLD
-        assert result_one == pytest.approx(baseline)
-        assert result_zero == pytest.approx(baseline)
-
-    def test_monotonically_increasing_with_location_count(self) -> None:
-        """More sensors → higher threshold (stricter spatial separation)."""
-        thresholds = [weak_spatial_dominance_threshold(n) for n in range(2, 8)]
-        for low, high in zip(thresholds, thresholds[1:], strict=False):
-            assert high > low, f"Expected monotonic increase but {high} <= {low}"
-
+from vibesensor.analysis.helpers import _amplitude_weighted_speed_window
 
 # ---------------------------------------------------------------------------
 # _amplitude_weighted_speed_window

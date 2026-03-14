@@ -20,7 +20,8 @@ from ..domain.speed_profile import SpeedProfile
 from ..domain.symptom import Symptom
 from ..domain.test_plan import TestPlan
 from ..domain.test_run import TestRun
-from ..domain.vibration_origin import VibrationOrigin
+from .run_suitability import run_suitability_from_payload, run_suitability_payload
+from .vibration_origin import origin_payload_from_finding, vibration_origin_from_payload
 
 
 def _as_float(value: object) -> float | None:
@@ -183,31 +184,7 @@ def _origin_payload_from_aggregate(
     if primary is None:
         return fallback_payload
 
-    origin = primary.origin
-    hotspot = primary.location
-    fallback_location = str(fallback_payload.get("location") or "").strip()
-    fallback_explanation = str(fallback_payload.get("explanation") or "").strip()
-    if origin is None and hotspot is None:
-        return fallback_payload
-    if hotspot is None and fallback_location and fallback_location.lower() != "unknown":
-        return fallback_payload
-    if origin is not None and not origin.reason and fallback_explanation:
-        return fallback_payload
-
-    return {
-        "location": (
-            origin.display_location
-            if origin is not None
-            else str(primary.strongest_location or "unknown")
-        ),
-        "alternative_locations": (
-            list(hotspot.alternative_locations) if hotspot is not None else []
-        ),
-        "suspected_source": str(primary.suspected_source),
-        "dominance_ratio": primary.dominance_ratio,
-        "weak_spatial_separation": primary.weak_spatial_separation,
-        "explanation": origin.explanation if origin is not None else "",
-    }
+    return origin_payload_from_finding(primary, fallback_payload)
 
 
 def _steps_from_test_plan(test_plan: TestPlan) -> list[dict[str, object]]:
@@ -238,17 +215,7 @@ def _has_structured_step_content(steps: object) -> bool:
 
 
 def _checks_from_suitability(suitability: RunSuitability | None) -> list[dict[str, object]]:
-    if suitability is None:
-        return []
-    return [
-        {
-            "check": check.check_key,
-            "check_key": check.check_key,
-            "state": check.state,
-            "explanation": check.explanation,
-        }
-        for check in suitability.checks
-    ]
+    return run_suitability_payload(suitability)
 
 
 def _enrich_findings(raw_findings: object) -> tuple[Finding, ...]:
@@ -260,13 +227,12 @@ def _enrich_findings(raw_findings: object) -> tuple[Finding, ...]:
             continue
         finding = Finding.from_payload(payload)
         signatures = _signatures_from_finding(finding, payload)
-        origin = VibrationOrigin(
-            suspected_source=finding.suspected_source,
+        origin = vibration_origin_from_payload(
+            payload,
             hotspot=finding.location,
+            suspected_source=finding.suspected_source,
             dominance_ratio=finding.dominance_ratio,
             speed_band=finding.strongest_speed_band,
-            dominant_phase=str(payload.get("dominant_phase") or "") or None,
-            reason=str(payload.get("evidence_summary") or ""),
         )
         enriched.append(finding.with_origin_and_signatures(origin=origin, signatures=signatures))
     return tuple(enriched)
@@ -303,7 +269,9 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     )
     run_suitability = summary.get("run_suitability")
     suitability = (
-        RunSuitability.from_checks(run_suitability) if isinstance(run_suitability, list) else None
+        run_suitability_from_payload(run_suitability)
+        if isinstance(run_suitability, list)
+        else None
     )
 
     signatures: list[Signature] = []

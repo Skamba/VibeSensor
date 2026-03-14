@@ -14,6 +14,11 @@ import dataclasses
 
 import pytest
 
+from vibesensor.boundaries.location_hotspot import location_hotspot_from_payload
+from vibesensor.boundaries.vibration_origin import (
+    origin_payload_from_finding,
+    vibration_origin_from_payload,
+)
 from vibesensor.domain import (
     ConfidenceAssessment,
     Finding,
@@ -23,6 +28,7 @@ from vibesensor.domain import (
     RunSuitability,
     SpeedProfile,
     SuitabilityCheck,
+    VibrationOrigin,
 )
 
 # ── FindingEvidence ──────────────────────────────────────────────────────────
@@ -150,7 +156,31 @@ class TestLocationHotspot:
         assert LocationHotspot(strongest_location="").display_location == "Unknown"
         assert LocationHotspot(strongest_location="unknown").display_location == "Unknown"
 
-    def test_from_hotspot_dict_full(self) -> None:
+    def test_has_clear_separation_false_for_ambiguous_hotspot(self) -> None:
+        hotspot = LocationHotspot(strongest_location="front_left", ambiguous=True)
+        assert hotspot.has_clear_separation is False
+
+    def test_confidence_band_uses_domain_thresholds(self) -> None:
+        assert LocationHotspot(localization_confidence=0.8).confidence_band == "high"
+        assert LocationHotspot(localization_confidence=0.55).confidence_band == "medium"
+        assert LocationHotspot(localization_confidence=0.2).confidence_band == "low"
+
+    def test_supporting_locations_excludes_primary_and_dedupes(self) -> None:
+        hotspot = LocationHotspot(
+            strongest_location="front_left",
+            alternative_locations=("front_left", "front_right", "front_right", "rear_left"),
+        )
+        assert hotspot.supporting_locations == ("front_right", "rear_left")
+
+    def test_summary_location_joins_supporting_locations_when_ambiguous(self) -> None:
+        hotspot = LocationHotspot(
+            strongest_location="front_left",
+            ambiguous=True,
+            alternative_locations=("front_right",),
+        )
+        assert hotspot.summary_location == "front_left / front_right"
+
+    def test_location_hotspot_from_payload_full(self) -> None:
         d = {
             "location": "FL wheel",
             "dominance_ratio": 0.75,
@@ -159,7 +189,7 @@ class TestLocationHotspot:
             "ambiguous_location": False,
             "alternative_locations": ["FR wheel", "RL wheel"],
         }
-        h = LocationHotspot.from_hotspot_dict(d)
+        h = location_hotspot_from_payload(d)
         assert h.strongest_location == "FL wheel"
         assert h.dominance_ratio == 0.75
         assert h.localization_confidence == 0.9
@@ -167,17 +197,216 @@ class TestLocationHotspot:
         assert h.ambiguous is False
         assert h.alternative_locations == ("FR wheel", "RL wheel")
 
-    def test_from_hotspot_dict_empty(self) -> None:
-        h = LocationHotspot.from_hotspot_dict({})
+    def test_location_hotspot_from_payload_empty(self) -> None:
+        h = location_hotspot_from_payload({})
         assert h.strongest_location == ""
         assert h.dominance_ratio is None
 
-    def test_from_hotspot_dict_top_location_fallback(self) -> None:
-        h = LocationHotspot.from_hotspot_dict({"top_location": "center"})
+    def test_location_hotspot_from_payload_top_location_fallback(self) -> None:
+        h = location_hotspot_from_payload({"top_location": "center"})
         assert h.strongest_location == "center"
+
+    def test_location_hotspot_from_payload_prefers_top_location_identity(self) -> None:
+        hotspot = location_hotspot_from_payload(
+            {
+                "location": "ambiguous location: Front Left / Front Right",
+                "top_location": "Front Left",
+                "ambiguous_location": True,
+                "ambiguous_locations": ["Front Left", "Front Right"],
+            }
+        )
+        assert hotspot.strongest_location == "Front Left"
+        assert hotspot.ambiguous is True
+        assert hotspot.alternative_locations == ("Front Left", "Front Right")
+        assert not hotspot.is_actionable
+        assert not hotspot.is_well_localized
+
+    def test_weak_spatial_threshold_baseline_for_none(self) -> None:
+        assert LocationHotspot.weak_spatial_threshold(None) == LocationHotspot.WEAK_SPATIAL_BASELINE
+
+    def test_weak_spatial_threshold_baseline_for_two_locations(self) -> None:
+        assert LocationHotspot.weak_spatial_threshold(2) == pytest.approx(
+            LocationHotspot.WEAK_SPATIAL_BASELINE
+        )
+
+    def test_weak_spatial_threshold_scales_up_per_additional_location(self) -> None:
+        baseline = LocationHotspot.WEAK_SPATIAL_BASELINE
+        assert LocationHotspot.weak_spatial_threshold(3) == pytest.approx(
+            baseline * 1.1,
+            rel=1e-6,
+        )
+        assert LocationHotspot.weak_spatial_threshold(4) == pytest.approx(
+            baseline * 1.2,
+            rel=1e-6,
+        )
+
+    def test_weak_spatial_threshold_clamps_below_two(self) -> None:
+        baseline = LocationHotspot.WEAK_SPATIAL_BASELINE
+        assert LocationHotspot.weak_spatial_threshold(1) == pytest.approx(baseline)
+        assert LocationHotspot.weak_spatial_threshold(0) == pytest.approx(baseline)
+
+    def test_weak_spatial_threshold_monotonically_increasing(self) -> None:
+        thresholds = [LocationHotspot.weak_spatial_threshold(n) for n in range(2, 8)]
+        for low, high in zip(thresholds, thresholds[1:], strict=False):
+            assert high > low
+
+    def test_from_analysis_inputs_full(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            dominance_ratio=2.5,
+            localization_confidence=0.8,
+            weak_spatial_separation=False,
+            ambiguous=False,
+            alternative_locations=["front_right"],
+        )
+        assert hotspot.strongest_location == "front_left"
+        assert hotspot.dominance_ratio == pytest.approx(2.5)
+        assert hotspot.localization_confidence == pytest.approx(0.8)
+        assert hotspot.alternative_locations == ("front_right",)
+
+    def test_from_analysis_inputs_defaults(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(strongest_location="rear_left")
+        assert hotspot.strongest_location == "rear_left"
+        assert hotspot.dominance_ratio is None
+        assert hotspot.localization_confidence is None
+        assert hotspot.alternative_locations == ()
+
+    def test_from_analysis_inputs_filters_empty_alternatives(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(
+            strongest_location="rear_right",
+            alternative_locations=["rear_left", "", "front_left"],
+        )
+        assert hotspot.alternative_locations == ("rear_left", "front_left")
+
+    def test_from_analysis_inputs_matches_direct_construction(self) -> None:
+        direct = LocationHotspot(
+            strongest_location="rear_right",
+            dominance_ratio=1.8,
+            localization_confidence=0.6,
+            weak_spatial_separation=False,
+            ambiguous=False,
+            alternative_locations=("rear_left",),
+        )
+        via_factory = LocationHotspot.from_analysis_inputs(
+            strongest_location="rear_right",
+            dominance_ratio=1.8,
+            localization_confidence=0.6,
+            weak_spatial_separation=False,
+            ambiguous=False,
+            alternative_locations=["rear_left"],
+        )
+        assert via_factory == direct
+
+    def test_from_analysis_inputs_near_tie_is_domain_owned(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            dominance_ratio=1.05,
+            localization_confidence=0.35,
+            weak_spatial_separation=True,
+            ambiguous=True,
+            alternative_locations=["front_right"],
+        )
+        assert hotspot.strongest_location == "front_left"
+        assert hotspot.ambiguous is True
+        assert hotspot.alternative_locations == ("front_right",)
+        assert not hotspot.is_actionable
+        assert not hotspot.is_well_localized
+
+    def test_from_analysis_inputs_actionable_when_clear_and_known(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(
+            strongest_location="rear_left",
+            dominance_ratio=2.0,
+            localization_confidence=0.9,
+            weak_spatial_separation=False,
+            ambiguous=False,
+        )
+        assert hotspot.is_actionable
+        assert hotspot.is_well_localized
 
 
 # ── ConfidenceAssessment ─────────────────────────────────────────────────────
+
+
+# ── VibrationOrigin ──────────────────────────────────────────────────────────
+
+
+class TestVibrationOrigin:
+    def test_from_analysis_inputs_preserves_typed_contract(self) -> None:
+        hotspot = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            ambiguous=True,
+            alternative_locations=["front_right"],
+        )
+        origin = VibrationOrigin.from_analysis_inputs(
+            suspected_source=Finding(suspected_source="wheel/tire").suspected_source,
+            hotspot=hotspot,
+            dominance_ratio=1.05,
+            speed_band="80-90 km/h",
+            dominant_phase="acceleration",
+            reason="ranked from wheel order evidence",
+        )
+        assert origin.is_ambiguous is True
+        assert origin.summary_location == "front_left / front_right"
+        assert origin.alternative_locations == ("front_right",)
+        assert origin.weak_spatial_separation is True
+
+    def test_vibration_origin_from_payload_uses_boundary_decode(self) -> None:
+        origin = vibration_origin_from_payload(
+            {
+                "suspected_source": "wheel/tire",
+                "strongest_speed_band": "80-90 km/h",
+                "dominant_phase": "acceleration",
+                "evidence_summary": "payload rationale",
+                "dominance_ratio": 1.1,
+                "location_hotspot": {
+                    "top_location": "rear_left",
+                    "ambiguous_location": True,
+                    "ambiguous_locations": ["rear_left", "rear_right"],
+                },
+            }
+        )
+        assert origin.summary_location == "rear_left / rear_right"
+        assert origin.alternative_locations == ("rear_right",)
+        assert origin.speed_band == "80-90 km/h"
+        assert origin.reason == "payload rationale"
+
+    def test_origin_payload_from_finding_projects_canonical_boundary_shape(self) -> None:
+        finding = Finding(
+            finding_id="F001",
+            suspected_source="wheel/tire",
+            strongest_location="front_left",
+            strongest_speed_band="80-90 km/h",
+            dominance_ratio=1.05,
+            weak_spatial_separation=True,
+            location=LocationHotspot.from_analysis_inputs(
+                strongest_location="front_left",
+                ambiguous=True,
+                alternative_locations=["front_right"],
+                dominance_ratio=1.05,
+            ),
+            origin=VibrationOrigin.from_analysis_inputs(
+                suspected_source=Finding(suspected_source="wheel/tire").suspected_source,
+                hotspot=LocationHotspot.from_analysis_inputs(
+                    strongest_location="front_left",
+                    ambiguous=True,
+                    alternative_locations=["front_right"],
+                    dominance_ratio=1.05,
+                ),
+                dominance_ratio=1.05,
+                speed_band="80-90 km/h",
+                dominant_phase="acceleration",
+                reason="domain rationale",
+            ),
+        )
+        payload = origin_payload_from_finding(finding)
+        assert payload["location"] == "Front Left / Front Right"
+        assert payload["alternative_locations"] == ["front_right"]
+        assert payload["suspected_source"] == "wheel/tire"
+        assert payload["speed_band"] == "80-90 km/h"
+        assert payload["dominant_phase"] == "acceleration"
+        assert payload["explanation"] == (
+            "domain rationale; speed band 80-90 km/h; dominant phase acceleration"
+        )
 
 
 class TestConfidenceAssessment:
@@ -350,13 +579,13 @@ class TestRunSuitability:
         rs = RunSuitability(
             checks=(
                 SuitabilityCheck(check_key="a", state="pass"),
-                SuitabilityCheck(check_key="b", state="fail", explanation="Too few samples"),
+                SuitabilityCheck(check_key="b", state="fail"),
             )
         )
         assert rs.overall == "fail"
         assert not rs.is_usable
         assert len(rs.failed_checks) == 1
-        assert rs.failed_checks[0].explanation == "Too few samples"
+        assert rs.failed_checks[0].check_key == "b"
 
     def test_empty_checks(self) -> None:
         rs = RunSuitability()
@@ -375,6 +604,31 @@ class TestRunSuitability:
         assert rs.checks[0].check_key == "speed_variation"
         assert rs.checks[1].state == "warn"
         assert rs.checks[2].failed
+
+    def test_evaluate_owns_thresholds_and_semantic_details(self) -> None:
+        rs = RunSuitability.evaluate(
+            steady_speed=True,
+            speed_sufficient=True,
+            sensor_count=2,
+            reference_complete=False,
+            sat_count=3,
+            total_dropped=5,
+            total_overflow=1,
+        )
+        states = {check.check_key: check.state for check in rs.checks}
+        assert states == {
+            "SUITABILITY_CHECK_SPEED_VARIATION": "warn",
+            "SUITABILITY_CHECK_SENSOR_COVERAGE": "warn",
+            "SUITABILITY_CHECK_REFERENCE_COMPLETENESS": "warn",
+            "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS": "warn",
+            "SUITABILITY_CHECK_FRAME_INTEGRITY": "warn",
+        }
+        details = {check.check_key: check.details_dict for check in rs.checks}
+        assert details["SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"] == {"sat_count": 3}
+        assert details["SUITABILITY_CHECK_FRAME_INTEGRITY"] == {
+            "total_dropped": 5,
+            "total_overflow": 1,
+        }
 
     def test_from_checks_empty(self) -> None:
         rs = RunSuitability.from_checks([])
@@ -445,6 +699,42 @@ class TestFindingWithValueObjects:
         assert f.evidence.match_rate == 0.9
         assert f.evidence.snr_db == 15.0
         assert f.evidence.vibration_strength_db == 25.3
+
+        def test_promote_near_tie_marks_hotspot_ambiguous(self) -> None:
+            hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+            promoted = hotspot.promote_near_tie(
+                alternative_location="rear_right",
+                top_confidence=0.8,
+                alternative_confidence=0.6,
+            )
+            assert promoted.ambiguous is True
+            assert promoted.weak_spatial_separation is True
+            assert promoted.supporting_locations == ("rear_right",)
+
+        def test_promote_near_tie_ignores_distant_second_finding(self) -> None:
+            hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
+            promoted = hotspot.promote_near_tie(
+                alternative_location="rear_right",
+                top_confidence=0.9,
+                alternative_confidence=0.3,
+            )
+            assert promoted == hotspot
+
+        def test_with_adaptive_weak_spatial_promotes_below_threshold(self) -> None:
+            hotspot = LocationHotspot.from_analysis_inputs(
+                strongest_location="front_left",
+                dominance_ratio=1.3,
+            )
+            promoted = hotspot.with_adaptive_weak_spatial(3)
+            assert promoted.weak_spatial_separation is True
+
+        def test_with_adaptive_weak_spatial_leaves_strong_separation_unchanged(self) -> None:
+            hotspot = LocationHotspot.from_analysis_inputs(
+                strongest_location="front_left",
+                dominance_ratio=1.5,
+            )
+            promoted = hotspot.with_adaptive_weak_spatial(3)
+            assert promoted == hotspot
         assert f.vibration_strength_db == 25.3  # still extracted directly too
 
     def test_finding_from_payload_extracts_location(self) -> None:
@@ -462,6 +752,24 @@ class TestFindingWithValueObjects:
         assert f.location is not None
         assert f.location.strongest_location == "FL wheel"
         assert f.location.dominance_ratio == 0.75
+
+    def test_finding_from_payload_preserves_top_location_identity(self) -> None:
+        payload = {
+            "finding_id": "F001",
+            "suspected_source": "wheel/tire",
+            "confidence": 0.85,
+            "location_hotspot": {
+                "location": "ambiguous location: Front Left / Front Right",
+                "top_location": "Front Left",
+                "ambiguous_location": True,
+                "ambiguous_locations": ["Front Left", "Front Right"],
+                "weak_spatial_separation": True,
+            },
+        }
+        finding = Finding.from_payload(payload)
+        assert finding.location is not None
+        assert finding.location.strongest_location == "Front Left"
+        assert not finding.location.is_actionable
 
     def test_finding_from_payload_no_evidence(self) -> None:
         payload = {"finding_id": "REF_SPEED", "severity": "reference"}

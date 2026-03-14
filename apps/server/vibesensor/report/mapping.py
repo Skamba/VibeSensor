@@ -31,6 +31,7 @@ from ..analysis.strength_labels import (
     strength_text,
 )
 from ..boundaries.diagnostic_case import finding_payload_from_domain
+from ..boundaries.vibration_origin import origin_payload_from_finding
 from ..domain import Finding, Report, RunAnalysisResult, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
@@ -423,32 +424,7 @@ def _origin_from_aggregate(
     if aggregate is None or aggregate.primary_finding is None:
         return fallback
 
-    primary = aggregate.primary_finding
-    origin = primary.origin
-    hotspot = primary.location
-    fallback_location = str(fallback.get("location") or "").strip()
-    fallback_explanation = str(fallback.get("explanation") or "").strip()
-    if origin is None and hotspot is None:
-        return fallback
-    if hotspot is None and fallback_location and fallback_location.lower() != "unknown":
-        return fallback
-    if origin is not None and not origin.reason and fallback_explanation:
-        return fallback
-
-    return {
-        "location": (
-            origin.display_location
-            if origin is not None
-            else str(primary.strongest_location or "unknown")
-        ),
-        "alternative_locations": (
-            list(hotspot.alternative_locations) if hotspot is not None else []
-        ),
-        "suspected_source": str(primary.suspected_source),
-        "dominance_ratio": primary.dominance_ratio,
-        "weak_spatial_separation": primary.weak_spatial_separation,
-        "explanation": origin.explanation if origin is not None else "",
-    }
+    return origin_payload_from_finding(aggregate.primary_finding, fallback)
 
 
 def normalized_origin_location(origin: SuspectedVibrationOrigin) -> str:

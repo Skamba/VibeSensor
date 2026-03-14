@@ -645,6 +645,26 @@ def test_finding_from_payload_populates_location() -> None:
     assert f.location.strongest_location == "FL wheel"
 
 
+def test_finding_from_payload_prefers_top_location_over_display_string() -> None:
+    """Location identity should use top_location, not the ambiguous display string."""
+    from vibesensor.domain import Finding
+
+    payload = {
+        "finding_id": "F001",
+        "suspected_source": "wheel/tire",
+        "confidence": 0.85,
+        "location_hotspot": {
+            "location": "ambiguous location: Front Left / Front Right",
+            "top_location": "Front Left",
+            "ambiguous_location": True,
+            "ambiguous_locations": ["Front Left", "Front Right"],
+        },
+    }
+    finding = Finding.from_payload(payload)
+    assert finding.location is not None
+    assert finding.location.strongest_location == "Front Left"
+
+
 def test_run_analysis_result_from_summary_populates_speed_profile() -> None:
     """from_summary extracts SpeedProfile when speed_stats is present."""
     from vibesensor.domain import RunAnalysisResult
