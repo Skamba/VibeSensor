@@ -475,6 +475,24 @@ class TestVibrationOrigin:
             "domain rationale; speed band 80-90 km/h; dominant phase acceleration"
         )
 
+    def test_origin_payload_from_finding_uses_fallback_when_no_origin(self) -> None:
+        """When a Finding has no origin or location, the fallback payload is returned."""
+        finding = Finding(finding_id="F002", suspected_source="unknown")
+        fallback = {"location": "rear_right", "suspected_source": "suspension"}
+        payload = origin_payload_from_finding(finding, fallback)
+        assert payload["location"] == "rear_right"
+        assert payload["suspected_source"] == "suspension"
+
+    def test_suspected_vibration_origin_is_boundary_type(self) -> None:
+        """SuspectedVibrationOrigin is importable from boundaries, not analysis."""
+        from vibesensor.boundaries.vibration_origin import SuspectedVibrationOrigin
+
+        origin: SuspectedVibrationOrigin = {
+            "location": "front_left",
+            "suspected_source": "wheel/tire",
+        }
+        assert origin["location"] == "front_left"
+
 
 class TestConfidenceAssessment:
     def test_frozen(self) -> None:

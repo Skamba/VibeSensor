@@ -18,7 +18,6 @@ from ..analysis._types import (
     MetadataDict,
     RunSuitabilityCheck,
     SpeedStats,
-    SuspectedVibrationOrigin,
     TestStep,
 )
 from ..analysis.diagnosis_candidates import normalize_origin_location, select_effective_top_causes
@@ -32,7 +31,7 @@ from ..analysis.strength_labels import (
 )
 from ..boundaries.diagnostic_case import finding_payload_from_domain
 from ..boundaries.run_suitability import run_suitability_payload
-from ..boundaries.vibration_origin import origin_payload_from_finding
+from ..boundaries.vibration_origin import SuspectedVibrationOrigin, origin_payload_from_finding
 from ..domain import Finding, Report, RunAnalysisResult, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang

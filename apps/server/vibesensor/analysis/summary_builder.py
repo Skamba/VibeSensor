@@ -16,6 +16,7 @@ from vibesensor.vibration_strength import compute_db
 from ..boundaries.location_hotspot import location_hotspot_from_payload
 from ..boundaries.run_suitability import run_suitability_payload
 from ..boundaries.test_steps import step_payloads_from_plan
+from ..boundaries.vibration_origin import SuspectedVibrationOrigin
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..domain import (
     Car,
@@ -63,7 +64,6 @@ from ._types import (
     Sample,
     SpeedBreakdownRow,
     SpeedStats,
-    SuspectedVibrationOrigin,
     TestStep,
     i18n_ref,
     is_json_object,

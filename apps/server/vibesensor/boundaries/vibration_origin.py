@@ -3,14 +3,30 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import TypedDict
 
-from ..analysis import SuspectedVibrationOrigin
 from ..domain.finding import Finding, VibrationSource
 from ..domain.location_hotspot import LocationHotspot
 from ..domain.vibration_origin import VibrationOrigin
+from ..json_types import JsonValue
 from .location_hotspot import location_hotspot_from_payload
 
-__all__ = ["origin_payload_from_finding", "vibration_origin_from_payload"]
+__all__ = [
+    "SuspectedVibrationOrigin",
+    "origin_payload_from_finding",
+    "vibration_origin_from_payload",
+]
+
+
+class SuspectedVibrationOrigin(TypedDict, total=False):
+    location: str
+    alternative_locations: list[str]
+    suspected_source: str
+    dominance_ratio: float | None
+    weak_spatial_separation: bool
+    speed_band: str | None
+    dominant_phase: str | None
+    explanation: JsonValue
 
 
 def _as_float(value: object) -> float | None:
