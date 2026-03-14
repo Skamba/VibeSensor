@@ -36,6 +36,7 @@ from vibesensor.domain import (
     SuitabilityCheck,
     TestRun,
     VibrationOrigin,
+    VibrationSource,
 )
 from vibesensor.domain import (
     RecommendedAction as DomainRecommendedAction,
@@ -1533,3 +1534,120 @@ class TestRunAnalysisResultWithValueObjects:
         )
         assert result.speed_profile is None
         assert result.suitability is None
+
+
+class TestDiagnosticCaseCompleteness:
+    """Tests for strengthened is_complete, has_usable_evidence, evidence_gaps."""
+
+    @staticmethod
+    def _actionable_finding() -> Finding:
+        return Finding(
+            finding_id="F001",
+            suspected_source=VibrationSource.WHEEL_TIRE,
+            confidence=0.82,
+            strongest_location="front_left",
+        )
+
+    @staticmethod
+    def _non_actionable_finding() -> Finding:
+        return Finding(
+            finding_id="F002",
+            suspected_source=VibrationSource.UNKNOWN,
+            confidence=0.50,
+        )
+
+    @staticmethod
+    def _passing_suitability() -> RunSuitability:
+        return RunSuitability(
+            checks=(
+                SuitabilityCheck(check_key="SUITABILITY_CHECK_SPEED_VARIATION", state="pass"),
+            )
+        )
+
+    @staticmethod
+    def _failing_suitability() -> RunSuitability:
+        return RunSuitability(
+            checks=(
+                SuitabilityCheck(check_key="SUITABILITY_CHECK_SPEED_VARIATION", state="fail"),
+            )
+        )
+
+    def _make_case(
+        self,
+        *,
+        findings: tuple[Finding, ...] = (),
+        suitability: RunSuitability | None = None,
+        test_plan: DomainTestPlan | None = None,
+        include_run: bool = True,
+    ) -> DiagnosticCase:
+        runs: tuple[TestRun, ...] = ()
+        if include_run:
+            runs = (
+                TestRun(
+                    run=Run(run_id="run-1"),
+                    configuration_snapshot=ConfigurationSnapshot(),
+                    findings=findings,
+                    top_causes=tuple(f for f in findings if f.is_actionable),
+                    suitability=suitability,
+                ),
+            )
+        return DiagnosticCase(
+            case_id="case-1",
+            findings=findings,
+            test_runs=runs,
+            test_plan=test_plan or DomainTestPlan(),
+        )
+
+    def test_complete_with_actionable_findings(self) -> None:
+        case = self._make_case(
+            findings=(self._actionable_finding(),),
+            suitability=self._passing_suitability(),
+        )
+        assert case.is_complete is True
+        assert case.has_usable_evidence is True
+        assert case.evidence_gaps == ()
+
+    def test_incomplete_without_findings(self) -> None:
+        case = self._make_case(
+            findings=(),
+            suitability=self._passing_suitability(),
+        )
+        assert case.is_complete is False
+        assert case.has_usable_evidence is False
+        assert "no_findings" in case.evidence_gaps
+
+    def test_incomplete_with_non_actionable_findings_only(self) -> None:
+        case = self._make_case(
+            findings=(self._non_actionable_finding(),),
+            suitability=self._passing_suitability(),
+        )
+        assert case.is_complete is False
+        assert case.has_usable_evidence is False
+        assert "no_actionable_findings" in case.evidence_gaps
+
+    def test_incomplete_when_primary_run_unusable(self) -> None:
+        case = self._make_case(
+            findings=(self._actionable_finding(),),
+            suitability=self._failing_suitability(),
+        )
+        assert case.is_complete is False
+        assert case.has_usable_evidence is False
+        assert "primary_run_unusable" in case.evidence_gaps
+
+    def test_complete_when_suitability_absent(self) -> None:
+        case = self._make_case(
+            findings=(self._actionable_finding(),),
+            suitability=None,
+        )
+        assert case.is_complete is True
+        assert case.has_usable_evidence is True
+        assert case.evidence_gaps == ()
+
+    def test_evidence_gaps_includes_additional_data(self) -> None:
+        case = self._make_case(
+            findings=(self._actionable_finding(),),
+            suitability=self._passing_suitability(),
+            test_plan=DomainTestPlan(requires_additional_data=True),
+        )
+        assert case.is_complete is False
+        assert "additional_data_required" in case.evidence_gaps
