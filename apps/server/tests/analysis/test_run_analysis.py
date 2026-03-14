@@ -6,14 +6,19 @@ from datetime import UTC, datetime
 
 import pytest
 
-from vibesensor.analysis.summary_builder import PreparedRunData, RunAnalysis, prepare_run_data
+from vibesensor.analysis.helpers import _speed_stats
+from vibesensor.analysis.summary_builder import (
+    PreparedRunData,
+    RunAnalysis,
+    build_phase_summary,
+    prepare_run_data,
+)
 from vibesensor.domain import SpeedProfile
 
 
 def _prepared_with_speed_profile(
     *,
     speed_profile: SpeedProfile,
-    speed_stats: dict[str, object] | None = None,
     speed_values: list[float] | None = None,
 ) -> PreparedRunData:
     return PreparedRunData(
@@ -23,13 +28,11 @@ def _prepared_with_speed_profile(
         duration_s=10.0,
         raw_sample_rate_hz=100.0,
         speed_values=list(speed_values or []),
-        speed_stats=speed_stats or {},
         speed_non_null_pct=100.0,
         speed_sufficient=True,
         per_sample_phases=[],
         phase_segments=[],
         run_noise_baseline_g=None,
-        phase_info={},
         speed_profile=speed_profile,
         speed_stats_by_phase={},
         speed_breakdown=[],
@@ -46,7 +49,6 @@ class TestPreparedRunDataProperties:
     def test_is_steady_speed_reads_speed_profile(self) -> None:
         prepared = _prepared_with_speed_profile(
             speed_profile=SpeedProfile(steady_speed=True),
-            speed_stats={"steady_speed": False},
             speed_values=[60.0, 60.0],
         )
 
@@ -55,7 +57,6 @@ class TestPreparedRunDataProperties:
     def test_speed_stddev_kmh_reads_speed_profile(self) -> None:
         prepared = _prepared_with_speed_profile(
             speed_profile=SpeedProfile(stddev_kmh=1.25),
-            speed_stats={"stddev_kmh": 9.5},
             speed_values=[58.0, 60.0, 62.0],
         )
 
@@ -64,7 +65,6 @@ class TestPreparedRunDataProperties:
     def test_speed_stddev_kmh_none_without_speed_values(self) -> None:
         prepared = _prepared_with_speed_profile(
             speed_profile=SpeedProfile(stddev_kmh=1.25),
-            speed_stats={"stddev_kmh": 9.5},
             speed_values=[],
         )
 
@@ -79,13 +79,12 @@ class TestPreparedRunDataProperties:
         ]
 
         prepared = prepare_run_data(metadata, samples, file_name="test")
+        speed_stats = _speed_stats(prepared.speed_values)
+        phase_info = build_phase_summary(prepared.phase_segments)
 
-        assert prepared.speed_profile == SpeedProfile.from_stats(
-            prepared.speed_stats,
-            prepared.phase_info,
-        )
-        assert prepared.speed_profile.min_kmh == pytest.approx(prepared.speed_stats["min_kmh"])
-        assert prepared.speed_profile.max_kmh == pytest.approx(prepared.speed_stats["max_kmh"])
+        assert prepared.speed_profile == SpeedProfile.from_stats(speed_stats, phase_info)
+        assert prepared.speed_profile.min_kmh == pytest.approx(speed_stats["min_kmh"])
+        assert prepared.speed_profile.max_kmh == pytest.approx(speed_stats["max_kmh"])
         assert prepared.speed_profile.has_acceleration is True
         assert prepared.speed_profile.has_cruise is True
         assert prepared.speed_profile.idle_fraction > 0.0

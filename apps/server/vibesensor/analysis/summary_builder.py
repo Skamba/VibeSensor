@@ -959,13 +959,11 @@ class PreparedRunData:
     duration_s: float
     raw_sample_rate_hz: float | None
     speed_values: list[float]
-    speed_stats: SpeedStats
     speed_non_null_pct: float
     speed_sufficient: bool
     per_sample_phases: list[DrivingPhase]
     phase_segments: list[PhaseSegment]
     run_noise_baseline_g: float | None
-    phase_info: PhaseSummary
     speed_profile: SpeedProfile
     speed_stats_by_phase: dict[str, PhaseSpeedStats]
     speed_breakdown: list[SpeedBreakdownRow]
@@ -1021,13 +1019,11 @@ def prepare_run_data(
         duration_s=duration_s,
         raw_sample_rate_hz=_as_float(metadata.get("raw_sample_rate_hz")),
         speed_values=speed_values,
-        speed_stats=speed_stats,
         speed_non_null_pct=speed_non_null_pct,
         speed_sufficient=speed_sufficient,
         per_sample_phases=per_sample_phases,
         phase_segments=phase_segments,
         run_noise_baseline_g=run_noise_baseline_g,
-        phase_info=phase_info,
         speed_profile=SpeedProfile.from_stats(speed_stats, phase_info),
         speed_stats_by_phase=_speed_stats_by_phase(samples, per_sample_phases),
         speed_breakdown=speed_breakdown,
@@ -1327,6 +1323,9 @@ class RunAnalysis:
             lang=self._language,
         )
 
+        summary_speed_stats = _speed_stats(self._prepared.speed_values)
+        summary_phase_info = build_phase_summary(self._prepared.phase_segments)
+
         summary = build_summary_payload(
             file_name=self._file_name,
             run_id=self._prepared.run_id,
@@ -1345,9 +1344,9 @@ class RunAnalysis:
             most_likely_origin=most_likely_origin,
             test_plan=test_plan,
             phase_timeline=phase_timeline,
-            speed_stats=self._prepared.speed_stats,
+            speed_stats=summary_speed_stats,
             speed_stats_by_phase=self._prepared.speed_stats_by_phase,
-            phase_info=self._prepared.phase_info,
+            phase_info=summary_phase_info,
             sensor_locations=sensor_locations,
             connected_locations=connected_locations,
             sensor_intensity_by_location=sensor_intensity_by_location,
