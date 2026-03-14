@@ -29,7 +29,7 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..boundaries.diagnostic_case import finding_payload_from_domain
+from ..boundaries.finding import finding_payload_from_domain
 from ..boundaries.run_suitability import run_suitability_payload
 from ..boundaries.vibration_origin import SuspectedVibrationOrigin, origin_payload_from_finding
 from ..domain import Finding, Report, TestRun, VibrationSource

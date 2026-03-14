@@ -19,7 +19,7 @@ from ..domain.speed_profile import SpeedProfile
 from ..domain.symptom import Symptom
 from ..domain.test_plan import TestPlan
 from ..domain.test_run import TestRun
-from .finding import finding_from_payload
+from .finding import finding_from_payload, finding_payload_from_domain
 from .run_suitability import run_suitability_from_payload, run_suitability_payload
 from .test_steps import step_payloads_from_plan
 from .vibration_origin import origin_payload_from_finding, vibration_origin_from_payload
@@ -133,59 +133,6 @@ def _payloads_by_id(items: object) -> dict[str, Mapping[str, object]]:
         if finding_id and finding_id not in payloads:
             payloads[finding_id] = item
     return payloads
-
-
-def finding_payload_from_domain(
-    finding: Finding,
-    *,
-    primary: Mapping[str, Mapping[str, object]],
-    secondary: Mapping[str, Mapping[str, object]],
-) -> dict[str, object]:
-    if finding.finding_id:
-        payload = primary.get(finding.finding_id) or secondary.get(finding.finding_id)
-        if payload is not None:
-            return dict(payload)
-
-    payload: dict[str, object] = {
-        "finding_id": finding.finding_id,
-        "suspected_source": str(finding.suspected_source),
-        "confidence": finding.confidence,
-        "strongest_location": finding.strongest_location,
-        "strongest_speed_band": finding.strongest_speed_band,
-        "weak_spatial_separation": finding.weak_spatial_separation,
-        "dominance_ratio": finding.dominance_ratio,
-        "signatures_observed": list(finding.signature_labels),
-    }
-    if finding.vibration_strength_db is not None:
-        payload["evidence_metrics"] = {"vibration_strength_db": finding.vibration_strength_db}
-    if finding.location is not None:
-        payload["location_hotspot"] = {
-            "best_location": finding.location.best_location,
-            "alternative_locations": list(finding.location.alternative_locations),
-            "dominance_ratio": finding.location.dominance_ratio,
-            "weak_spatial_separation": not finding.location.is_well_localized,
-        }
-    if finding.origin is not None:
-        payload["evidence_summary"] = finding.origin.reason
-        if finding.origin.dominant_phase is not None:
-            payload["dominant_phase"] = finding.origin.dominant_phase
-    return payload
-
-
-def _origin_payload_from_aggregate(
-    aggregate: TestRun,
-    fallback: object,
-) -> dict[str, object]:
-    if not isinstance(fallback, Mapping):
-        fallback_payload: dict[str, object] = {}
-    else:
-        fallback_payload = dict(fallback)
-
-    primary = aggregate.primary_finding
-    if primary is None:
-        return fallback_payload
-
-    return origin_payload_from_finding(primary, fallback_payload)
 
 
 def _has_structured_step_content(steps: object) -> bool:
@@ -364,9 +311,16 @@ def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, o
         )
         for finding in test_run.effective_top_causes()
     ]
-    projected["most_likely_origin"] = _origin_payload_from_aggregate(
-        test_run,
-        summary.get("most_likely_origin"),
+    _origin_fallback = summary.get("most_likely_origin")
+    if not isinstance(_origin_fallback, Mapping):
+        _origin_fallback_payload: dict[str, object] = {}
+    else:
+        _origin_fallback_payload = dict(_origin_fallback)
+    _primary = test_run.primary_finding
+    projected["most_likely_origin"] = (
+        origin_payload_from_finding(_primary, _origin_fallback_payload)
+        if _primary is not None
+        else _origin_fallback_payload
     )
     if not _has_structured_step_content(summary.get("test_plan")):
         projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)

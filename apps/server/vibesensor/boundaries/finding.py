@@ -155,3 +155,46 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         origin=origin,
         signatures=signatures,
     )
+
+
+def finding_payload_from_domain(
+    finding: Finding,
+    *,
+    primary: Mapping[str, Mapping[str, object]],
+    secondary: Mapping[str, Mapping[str, object]],
+) -> dict[str, object]:
+    """Project a domain Finding back to a payload dict.
+
+    If the finding's ``finding_id`` matches a key in *primary* or
+    *secondary*, the original payload dict is returned as-is (pass-through).
+    Otherwise a minimal payload is synthesised from the domain object.
+    """
+    if finding.finding_id:
+        payload = primary.get(finding.finding_id) or secondary.get(finding.finding_id)
+        if payload is not None:
+            return dict(payload)
+
+    payload: dict[str, object] = {
+        "finding_id": finding.finding_id,
+        "suspected_source": str(finding.suspected_source),
+        "confidence": finding.confidence,
+        "strongest_location": finding.strongest_location,
+        "strongest_speed_band": finding.strongest_speed_band,
+        "weak_spatial_separation": finding.weak_spatial_separation,
+        "dominance_ratio": finding.dominance_ratio,
+        "signatures_observed": list(finding.signature_labels),
+    }
+    if finding.vibration_strength_db is not None:
+        payload["evidence_metrics"] = {"vibration_strength_db": finding.vibration_strength_db}
+    if finding.location is not None:
+        payload["location_hotspot"] = {
+            "best_location": finding.location.best_location,
+            "alternative_locations": list(finding.location.alternative_locations),
+            "dominance_ratio": finding.location.dominance_ratio,
+            "weak_spatial_separation": not finding.location.is_well_localized,
+        }
+    if finding.origin is not None:
+        payload["evidence_summary"] = finding.origin.reason
+        if finding.origin.dominant_phase is not None:
+            payload["dominant_phase"] = finding.origin.dominant_phase
+    return payload

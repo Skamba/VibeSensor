@@ -904,3 +904,10 @@ def test_analysis_test_plan_renamed() -> None:
     new = Path(__file__).resolve().parents[2] / "vibesensor" / "analysis" / "location_analysis.py"
     assert not old.exists(), f"{old} should have been renamed"
     assert new.exists(), f"{new} must exist after rename"
+
+
+def test_finding_projector_in_finding_boundary_module() -> None:
+    """Finding payload projector should live in boundaries/finding.py."""
+    from vibesensor.boundaries.finding import finding_payload_from_domain
+
+    assert callable(finding_payload_from_domain)
