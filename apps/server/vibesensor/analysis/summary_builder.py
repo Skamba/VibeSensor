@@ -977,11 +977,11 @@ class PreparedRunData:
     @property
     def is_steady_speed(self) -> bool:
         """Whether the run had steady speed (relevant to confidence scoring)."""
-        return bool(self.speed_stats.get("steady_speed"))
+        return self.speed_profile.steady_speed
 
     @property
     def speed_stddev_kmh(self) -> float | None:
-        return _as_float(self.speed_stats.get("stddev_kmh"))
+        return self.speed_profile.stddev_kmh if self.speed_values else None
 
     @property
     def analysis_windows(self) -> list[AnalysisWindow]:
@@ -1274,11 +1274,7 @@ class RunAnalysis:
         # Build the domain aggregate with run-level value objects
         from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 
-        speed_profile = (
-            self._prepared.speed_profile
-            if self._prepared.speed_stats
-            else None
-        )
+        speed_profile = self._prepared.speed_profile if self._prepared.speed_values else None
         domain_suitability = run_suitability
         run_suitability_checks = run_suitability_payload(domain_suitability)
 
@@ -1289,11 +1285,7 @@ class RunAnalysis:
             ca = ConfidenceAssessment.assess(
                 f.effective_confidence,
                 strength_band_key=overall_strength_band_key,
-                steady_speed=bool(
-                    self._prepared.speed_stats.get("steady_speed", True)
-                    if self._prepared.speed_stats
-                    else True
-                ),
+                steady_speed=speed_profile.steady_speed if speed_profile is not None else False,
                 has_reference_gaps=has_ref_gaps,
                 weak_spatial=f.weak_spatial_separation,
                 sensor_count=len(sensor_locations),

@@ -1185,10 +1185,11 @@ def resolve_primary_report_candidate(
         certainty_reason = ca.reason
         tier = ca.tier
     else:
+        steady_speed = aggregate.speed_profile.steady_speed if aggregate and aggregate.speed_profile else False
         certainty_key, certainty_label_text, certainty_pct, certainty_reason = certainty_label(
             confidence,
             lang=lang,
-            steady_speed=bool(context.speed_stats.get("steady_speed")),
+            steady_speed=steady_speed,
             weak_spatial=weak_spatial,
             sensor_count=sensor_count,
             has_reference_gaps=has_ref_gaps,
