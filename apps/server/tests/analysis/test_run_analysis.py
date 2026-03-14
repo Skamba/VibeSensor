@@ -2,10 +2,40 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
 
 from vibesensor.analysis.summary_builder import PreparedRunData, RunAnalysis, prepare_run_data
 from vibesensor.domain import SpeedProfile
+
+
+def _prepared_with_speed_profile(
+    *,
+    speed_profile: SpeedProfile,
+    speed_stats: dict[str, object] | None = None,
+    speed_values: list[float] | None = None,
+) -> PreparedRunData:
+    return PreparedRunData(
+        run_id="run-1",
+        start_ts=datetime.now(UTC),
+        end_ts=datetime.now(UTC),
+        duration_s=10.0,
+        raw_sample_rate_hz=100.0,
+        speed_values=list(speed_values or []),
+        speed_stats=speed_stats or {},
+        speed_non_null_pct=100.0,
+        speed_sufficient=True,
+        per_sample_phases=[],
+        phase_segments=[],
+        run_noise_baseline_g=None,
+        phase_info={},
+        speed_profile=speed_profile,
+        speed_stats_by_phase={},
+        speed_breakdown=[],
+        speed_breakdown_skipped_reason=None,
+        phase_speed_breakdown=[],
+    )
 
 # ===========================================================================
 # PreparedRunData convenience properties
@@ -13,23 +43,32 @@ from vibesensor.domain import SpeedProfile
 
 
 class TestPreparedRunDataProperties:
-    def test_is_steady_speed_true(self) -> None:
-        metadata = {"raw_sample_rate_hz": 100.0}
-        samples = [
-            {"speed_kmh": 60.0, "t_s": float(i), "vibration_strength_db": 10.0} for i in range(20)
-        ]
-        prepared = prepare_run_data(metadata, samples, file_name="test")
-        # is_steady_speed delegates to speed_stats["steady_speed"]
-        assert isinstance(prepared.is_steady_speed, bool)
+    def test_is_steady_speed_reads_speed_profile(self) -> None:
+        prepared = _prepared_with_speed_profile(
+            speed_profile=SpeedProfile(steady_speed=True),
+            speed_stats={"steady_speed": False},
+            speed_values=[60.0, 60.0],
+        )
 
-    def test_speed_stddev_kmh(self) -> None:
-        metadata = {"raw_sample_rate_hz": 100.0}
-        samples = [
-            {"speed_kmh": 60.0, "t_s": float(i), "vibration_strength_db": 10.0} for i in range(20)
-        ]
-        prepared = prepare_run_data(metadata, samples, file_name="test")
-        stddev = prepared.speed_stddev_kmh
-        assert stddev is None or isinstance(stddev, float)
+        assert prepared.is_steady_speed is True
+
+    def test_speed_stddev_kmh_reads_speed_profile(self) -> None:
+        prepared = _prepared_with_speed_profile(
+            speed_profile=SpeedProfile(stddev_kmh=1.25),
+            speed_stats={"stddev_kmh": 9.5},
+            speed_values=[58.0, 60.0, 62.0],
+        )
+
+        assert prepared.speed_stddev_kmh == pytest.approx(1.25)
+
+    def test_speed_stddev_kmh_none_without_speed_values(self) -> None:
+        prepared = _prepared_with_speed_profile(
+            speed_profile=SpeedProfile(stddev_kmh=1.25),
+            speed_stats={"stddev_kmh": 9.5},
+            speed_values=[],
+        )
+
+        assert prepared.speed_stddev_kmh is None
 
     def test_speed_profile_exposed_with_phase_aware_content(self) -> None:
         metadata = {"raw_sample_rate_hz": 100.0}
