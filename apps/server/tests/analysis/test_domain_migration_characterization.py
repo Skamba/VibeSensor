@@ -102,10 +102,13 @@ def test_characterization_wheel_fault_summary_contract() -> None:
     assert top_cause["finding_key"] == "wheel_1x"
     assert top_cause["suspected_source"] == "wheel/tire"
     assert top_cause["confidence"] == pytest.approx(0.5028523562048559)
+    assert top_cause["confidence_tone"] == "warn"
     assert top_cause["strongest_speed_band"] == "80-90 km/h"
     assert origin["location"] == "front-right"
+    assert origin["alternative_locations"] == ["front-left"]
     assert origin["suspected_source"] == "wheel/tire"
     assert origin["weak_spatial_separation"] is False
+    assert origin["dominant_phase"] is None
     assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
     assert _run_suitability_state(summary, "SUITABILITY_CHECK_SENSOR_COVERAGE") == "pass"
     assert _first_action_id(summary) == "wheel_tire_condition"
@@ -126,8 +129,10 @@ def test_characterization_driveline_summary_contract() -> None:
     assert top_cause["finding_key"] == "driveshaft_2x"
     assert top_cause["suspected_source"] == "driveline"
     assert top_cause["confidence"] == pytest.approx(0.45373427721763776)
+    assert top_cause["confidence_tone"] == "warn"
     assert top_cause["strongest_speed_band"] == "90-100 km/h"
     assert origin["location"] == "front-right"
+    assert origin["alternative_locations"] == []
     assert origin["suspected_source"] == "driveline"
     assert origin["weak_spatial_separation"] is True
     assert origin["dominant_phase"] == "acceleration"
@@ -148,7 +153,10 @@ def test_characterization_engine_order_currently_falls_back_to_baseline_noise() 
 
     assert summary["top_causes"] == []
     assert origin["location"] == "unknown"
+    assert origin["alternative_locations"] == []
     assert origin["suspected_source"] == "baseline_noise"
+    assert origin["weak_spatial_separation"] is False
+    assert origin["dominant_phase"] is None
     assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
     assert _first_action_id(summary) == "general_mechanical_inspection"
 
@@ -172,7 +180,10 @@ def test_characterization_diffuse_uniform_excitation_stays_unlocalized() -> None
 
     assert summary["top_causes"] == []
     assert origin["location"] == "unknown"
+    assert origin["alternative_locations"] == []
     assert origin["suspected_source"] == "baseline_noise"
+    assert origin["weak_spatial_separation"] is False
+    assert origin["dominant_phase"] is None
     assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
     assert _first_action_id(summary) == "general_mechanical_inspection"
 
@@ -192,8 +203,12 @@ def test_characterization_short_run_contract() -> None:
     assert top_cause["finding_key"] == "peak_11hz"
     assert top_cause["suspected_source"] == "unknown_resonance"
     assert top_cause["confidence"] == pytest.approx(0.735)
+    assert top_cause["confidence_tone"] == "success"
     assert top_cause["strongest_speed_band"] == "80-90 km/h"
     assert origin["location"] == "unknown"
+    assert origin["alternative_locations"] == []
     assert origin["suspected_source"] == "unknown_resonance"
+    assert origin["weak_spatial_separation"] is False
+    assert origin["dominant_phase"] is None
     assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
     assert _first_action_id(summary) == "general_mechanical_inspection"
