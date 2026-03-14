@@ -12,7 +12,7 @@ findings.  The domain ``Finding`` lives in ``vibesensor.domain``.
 """
 
 from ..domain import DrivingPhase
-from ._types import AnalysisSummary, FindingPayload, SuspectedVibrationOrigin, i18n_ref
+from ._types import AnalysisSummary, FindingPayload, i18n_ref
 from .order_bands import build_order_bands, vehicle_orders_hz
 from .phase_segmentation import classify_sample_phase
 from .summary_builder import (
@@ -28,7 +28,6 @@ __all__ = [
     "FindingPayload",
     "RunAnalysis",
     "AnalysisSummary",
-    "SuspectedVibrationOrigin",
     "build_findings_for_samples",
     "build_order_bands",
     "classify_sample_phase",

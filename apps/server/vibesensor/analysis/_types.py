@@ -11,6 +11,7 @@ from ..json_types import is_json_object as is_json_object  # re-export canonical
 from .phase_segmentation import DrivingPhase
 
 if TYPE_CHECKING:
+    from ..boundaries.vibration_origin import SuspectedVibrationOrigin
     from .plots import PlotDataResult
 
 
@@ -211,17 +212,6 @@ class PhaseSegmentSummary(TypedDict):
     speed_min_kmh: float | None
     speed_max_kmh: float | None
     sample_count: int
-
-
-class SuspectedVibrationOrigin(TypedDict, total=False):
-    location: str
-    alternative_locations: list[str]
-    suspected_source: str
-    dominance_ratio: float | None
-    weak_spatial_separation: bool
-    speed_band: str | None
-    dominant_phase: str | None
-    explanation: JsonValue
 
 
 class AccelStatistics(TypedDict):
