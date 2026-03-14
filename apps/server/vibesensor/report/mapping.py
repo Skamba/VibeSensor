@@ -804,13 +804,10 @@ def build_pattern_evidence(
     aggregate = context.domain_aggregate
     if aggregate:
         effective = aggregate.effective_top_causes()
-        systems_raw = [
-            human_source(str(f.suspected_source), tr=tr) for f in effective[:3]
-        ]
+        systems_raw = [human_source(str(f.suspected_source), tr=tr) for f in effective[:3]]
     else:
         systems_raw = [
-            human_source(cause.get("suspected_source"), tr=tr)
-            for cause in context.top_causes[:3]
+            human_source(cause.get("suspected_source"), tr=tr) for cause in context.top_causes[:3]
         ]
     systems = list(dict.fromkeys(systems_raw))
     interpretation = resolve_interpretation(context.origin, lang=lang, tr=tr)
