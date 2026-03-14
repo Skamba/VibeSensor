@@ -30,7 +30,7 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..domain import Report, RunAnalysisResult, VibrationSource
+from ..domain import Finding, Report, RunAnalysisResult, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
@@ -721,16 +721,45 @@ def build_system_cards(
     lang: str,
     tr: Callable,
 ) -> list[SystemFindingCard]:
-    """Build system finding cards for the report template."""
+    """Build system finding cards for the report template.
+
+    Uses domain ``Finding`` objects from the aggregate for business
+    decisions (source classification, confidence tone).  Rendering-only
+    detail (signatures text) is still read from the payload dicts.
+    """
     tier = primary.tier
     if tier == "A":
         return []
     card_sources = context.top_causes or context.findings_non_ref or context.findings
+
+    # Build a lookup from finding_id → domain Finding for business queries.
+    aggregate = context.domain_aggregate
+    domain_map: dict[str, Finding] = {}
+    if aggregate:
+        for f in (*aggregate.effective_top_causes(), *aggregate.findings):
+            if f.finding_id and f.finding_id not in domain_map:
+                domain_map[f.finding_id] = f
+
     cards: list[SystemFindingCard] = []
     for cause in card_sources[:2]:
-        source = cause.get("suspected_source") or "unknown"
-        source_human = human_source(source, tr=tr)
-        location = str(cause.get("strongest_location") or tr("UNKNOWN"))
+        finding_id = str(cause.get("finding_id") or "")
+        domain_finding = domain_map.get(finding_id)
+
+        # Business decisions: prefer domain Finding, fall back to payload
+        if domain_finding:
+            source = str(domain_finding.suspected_source)
+            source_human = human_source(source, tr=tr)
+            location = str(domain_finding.strongest_location or tr("UNKNOWN"))
+            tone = domain_finding.confidence_label(
+                strength_band_key=primary.strength_band_key,
+            )[1]
+        else:
+            source = cause.get("suspected_source") or "unknown"
+            source_human = human_source(source, tr=tr)
+            location = str(cause.get("strongest_location") or tr("UNKNOWN"))
+            tone = cause.get("confidence_tone", "neutral")
+
+        # Rendering detail: signatures come from payload (enriched during top-cause selection)
         signatures_human = humanize_signatures(cause.get("signatures_observed", []), lang=lang)
         pattern_text = ", ".join(signatures_human) if signatures_human else tr("UNKNOWN")
         order_label = signatures_human[0] if signatures_human else None
@@ -748,7 +777,7 @@ def build_system_cards(
                 strongest_location=location,
                 pattern_summary=pattern_text,
                 parts=card_parts,
-                tone=cause.get("confidence_tone", "neutral"),
+                tone=tone,
             ),
         )
     return cards
@@ -767,10 +796,22 @@ def build_pattern_evidence(
     lang: str,
     tr: Callable,
 ) -> PatternEvidence:
-    """Build the pattern-evidence block for the report template."""
-    systems_raw = [
-        human_source(cause.get("suspected_source"), tr=tr) for cause in context.top_causes[:3]
-    ]
+    """Build the pattern-evidence block for the report template.
+
+    Uses the domain aggregate for system classification when available.
+    """
+    # Domain-first: use aggregate effective top causes for matched systems
+    aggregate = context.domain_aggregate
+    if aggregate:
+        effective = aggregate.effective_top_causes()
+        systems_raw = [
+            human_source(str(f.suspected_source), tr=tr) for f in effective[:3]
+        ]
+    else:
+        systems_raw = [
+            human_source(cause.get("suspected_source"), tr=tr)
+            for cause in context.top_causes[:3]
+        ]
     systems = list(dict.fromkeys(systems_raw))
     interpretation = resolve_interpretation(context.origin, lang=lang, tr=tr)
     source_for_why, order_label_for_why = resolve_parts_context(
@@ -938,16 +979,16 @@ def resolve_primary_report_candidate(
 ) -> PrimaryCandidateContext:
     """Resolve the primary candidate and all derived certainty fields.
 
-    Uses domain ``Finding`` objects for classification and ranking
-    decisions, falling back to payload dicts only for rendering-level
-    evidence detail.
+    Uses domain ``Finding`` objects from the aggregate for all business
+    decisions (classification, ranking, confidence, source, location).
+    Payload dicts supply rendering-level evidence detail only.
     """
     primary_candidate = context.top_report_candidate()
     aggregate = context.domain_aggregate
 
     primary_source: object = None
-    if primary_candidate and aggregate:
-        # Domain-first: use the aggregate's effective top causes
+    if aggregate:
+        # Domain-first: derive all business fields from the aggregate
         effective = aggregate.effective_top_causes()
         domain_primary = effective[0] if effective else aggregate.primary_finding
         if domain_primary:
@@ -958,11 +999,12 @@ def resolve_primary_report_candidate(
             )
             primary_speed = str(
                 domain_primary.strongest_speed_band
-                or primary_candidate.get("speed_band")
+                or (primary_candidate.get("speed_band") if primary_candidate else None)
                 or tr("UNKNOWN"),
             )
             confidence = domain_primary.effective_confidence
-        else:
+        elif primary_candidate:
+            # Aggregate exists but has no findings; fall back to payload
             primary_source = primary_candidate.get("suspected_source")
             primary_system = human_source(primary_source, tr=tr)
             primary_location = context.origin_location or str(
@@ -974,7 +1016,13 @@ def resolve_primary_report_candidate(
                 or tr("UNKNOWN"),
             )
             confidence = extract_confidence(primary_candidate)
+        else:
+            primary_system = tr("UNKNOWN")
+            primary_location = context.origin_location or tr("UNKNOWN")
+            primary_speed = tr("UNKNOWN")
+            confidence = 0.0
     elif primary_candidate:
+        # Safety fallback: no aggregate available
         primary_source = primary_candidate.get("suspected_source")
         primary_system = human_source(primary_source, tr=tr)
         primary_location = context.origin_location or str(
