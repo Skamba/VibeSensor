@@ -1,0 +1,199 @@
+from __future__ import annotations
+
+from typing import Any
+
+import pytest
+from test_support import make_diffuse_samples, make_engine_order_samples, make_sample, standard_metadata
+from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
+from vibesensor.analysis import summarize_run_data
+from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+
+
+def _run_suitability_state(summary: dict[str, Any], check_key: str) -> str | None:
+    suitability = summary.get("run_suitability")
+    if not isinstance(suitability, list):
+        return None
+    for check in suitability:
+        if not isinstance(check, dict):
+            continue
+        if check.get("check_key") == check_key:
+            state = check.get("state")
+            return str(state) if state is not None else None
+    return None
+
+
+def _top_cause(summary: dict[str, Any]) -> dict[str, Any] | None:
+    top_causes = summary.get("top_causes")
+    if not isinstance(top_causes, list) or not top_causes:
+        return None
+    top_cause = top_causes[0]
+    return top_cause if isinstance(top_cause, dict) else None
+
+
+def _first_action_id(summary: dict[str, Any]) -> str | None:
+    test_plan = summary.get("test_plan")
+    if not isinstance(test_plan, list) or not test_plan:
+        return None
+    first = test_plan[0]
+    if not isinstance(first, dict):
+        return None
+    action_id = first.get("action_id")
+    return str(action_id) if action_id is not None else None
+
+
+def _driveline_samples() -> list[dict[str, Any]]:
+    samples: list[dict[str, Any]] = []
+    for idx in range(24):
+        speed_kmh = 55.0 + (2.0 * idx)
+        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        samples.append(
+            make_sample(
+                t_s=float(idx),
+                speed_kmh=speed_kmh,
+                client_name="front-right",
+                top_peaks=[{"hz": wheel_hz * 3.08 * 2.0, "amp": 0.04}],
+                vibration_strength_db=20.0,
+                strength_floor_amp_g=0.002,
+            )
+        )
+    return samples
+
+
+def _short_run_samples() -> list[dict[str, Any]]:
+    samples: list[dict[str, Any]] = []
+    for idx in range(5):
+        for sensor in ALL_SENSORS:
+            if sensor == "front-right":
+                peaks = [{"hz": 11.0, "amp": 0.06}]
+                vibration_db = 26.0
+            else:
+                peaks = [{"hz": 142.5, "amp": 0.003}]
+                vibration_db = 8.0
+            samples.append(
+                make_sample(
+                    t_s=float(idx),
+                    speed_kmh=80.0,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=vibration_db,
+                    strength_floor_amp_g=0.003,
+                )
+            )
+    return samples
+
+
+def test_characterization_wheel_fault_summary_contract() -> None:
+    summary = summarize_run_data(
+        standard_metadata(),
+        fault_phase(
+            speed_kmh=80.0,
+            duration_s=20.0,
+            fault_sensor="front-right",
+            sensors=ALL_SENSORS,
+        ),
+        lang="en",
+        file_name="characterization-wheel",
+    )
+
+    top_cause = _top_cause(summary)
+    origin = summary["most_likely_origin"]
+
+    assert top_cause is not None
+    assert top_cause["finding_key"] == "wheel_1x"
+    assert top_cause["suspected_source"] == "wheel/tire"
+    assert top_cause["confidence"] == pytest.approx(0.5028523562048559)
+    assert top_cause["strongest_speed_band"] == "80-90 km/h"
+    assert origin["location"] == "front-right"
+    assert origin["suspected_source"] == "wheel/tire"
+    assert origin["weak_spatial_separation"] is False
+    assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
+    assert _run_suitability_state(summary, "SUITABILITY_CHECK_SENSOR_COVERAGE") == "pass"
+    assert _first_action_id(summary) == "wheel_tire_condition"
+
+
+def test_characterization_driveline_summary_contract() -> None:
+    summary = summarize_run_data(
+        standard_metadata(),
+        _driveline_samples(),
+        lang="en",
+        file_name="characterization-driveline",
+    )
+
+    top_cause = _top_cause(summary)
+    origin = summary["most_likely_origin"]
+
+    assert top_cause is not None
+    assert top_cause["finding_key"] == "driveshaft_2x"
+    assert top_cause["suspected_source"] == "driveline"
+    assert top_cause["confidence"] == pytest.approx(0.45373427721763776)
+    assert top_cause["strongest_speed_band"] == "90-100 km/h"
+    assert origin["location"] == "front-right"
+    assert origin["suspected_source"] == "driveline"
+    assert origin["weak_spatial_separation"] is True
+    assert origin["dominant_phase"] == "acceleration"
+    assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "pass"
+    assert _run_suitability_state(summary, "SUITABILITY_CHECK_SENSOR_COVERAGE") == "warn"
+    assert _first_action_id(summary) == "driveline_mounts_and_fasteners"
+
+
+def test_characterization_engine_order_currently_falls_back_to_baseline_noise() -> None:
+    summary = summarize_run_data(
+        standard_metadata(),
+        make_engine_order_samples(sensors=ALL_SENSORS, speed_kmh=80.0, n_samples=30),
+        lang="en",
+        file_name="characterization-engine-order",
+    )
+
+    origin = summary["most_likely_origin"]
+
+    assert summary["top_causes"] == []
+    assert origin["location"] == "unknown"
+    assert origin["suspected_source"] == "baseline_noise"
+    assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
+    assert _first_action_id(summary) == "general_mechanical_inspection"
+
+
+def test_characterization_diffuse_uniform_excitation_stays_unlocalized() -> None:
+    summary = summarize_run_data(
+        standard_metadata(),
+        make_diffuse_samples(
+            sensors=ALL_SENSORS,
+            speed_kmh=80.0,
+            n_samples=30,
+            amp=0.01,
+            vib_db=12.0,
+            freq_hz=11.0,
+        ),
+        lang="en",
+        file_name="characterization-diffuse",
+    )
+
+    origin = summary["most_likely_origin"]
+
+    assert summary["top_causes"] == []
+    assert origin["location"] == "unknown"
+    assert origin["suspected_source"] == "baseline_noise"
+    assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
+    assert _first_action_id(summary) == "general_mechanical_inspection"
+
+
+def test_characterization_short_run_contract() -> None:
+    summary = summarize_run_data(
+        standard_metadata(),
+        _short_run_samples(),
+        lang="en",
+        file_name="characterization-short-run",
+    )
+
+    top_cause = _top_cause(summary)
+    origin = summary["most_likely_origin"]
+
+    assert top_cause is not None
+    assert top_cause["finding_key"] == "peak_11hz"
+    assert top_cause["suspected_source"] == "unknown_resonance"
+    assert top_cause["confidence"] == pytest.approx(0.735)
+    assert top_cause["strongest_speed_band"] == "80-90 km/h"
+    assert origin["location"] == "unknown"
+    assert origin["suspected_source"] == "unknown_resonance"
+    assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
+    assert _first_action_id(summary) == "general_mechanical_inspection"
