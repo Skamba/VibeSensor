@@ -4,7 +4,17 @@ from __future__ import annotations
 
 from vibesensor.analysis._types import AnalysisSummary
 from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
-from vibesensor.domain import Finding, LocationHotspot, RunAnalysisResult, VibrationOrigin
+from vibesensor.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.domain import (
+    Finding,
+    LocationHotspot,
+    RecommendedAction,
+    RunAnalysisResult,
+    VibrationOrigin,
+)
+from vibesensor.domain import (
+    TestPlan as DomainTestPlan,
+)
 from vibesensor.report.mapping import (
     _origin_from_aggregate,
     summary_end_time_utc,
@@ -213,6 +223,77 @@ class TestSummaryHelpers:
     def test_test_plan(self) -> None:
         plan = [{"what": "test something", "why": "to verify"}]
         assert len(summary_test_plan(_minimal_summary(test_plan=plan))) == 1
+
+    def test_boundary_test_plan_payload_projects_semantic_action_fields(self) -> None:
+        projected = step_payloads_from_plan(
+            DomainTestPlan(
+                actions=(
+                    RecommendedAction(
+                        action_id=" wheel_balance_and_runout ".strip(),
+                        what="  ACTION_WHEEL_BALANCE_WHAT  ",
+                        why="   ",
+                        confirm=" vibration drops ",
+                        falsify="  no change  ",
+                        eta=" 10-20 min ",
+                        priority=2,
+                    ),
+                    RecommendedAction(
+                        action_id="wheel_tire_condition",
+                        what="ACTION_TIRE_CONDITION_WHAT",
+                        why="ACTION_TIRE_CONDITION_WHY",
+                        priority=1,
+                    ),
+                )
+            )
+        )
+
+        assert projected == [
+            {
+                "action_id": "wheel_tire_condition",
+                "what": "ACTION_TIRE_CONDITION_WHAT",
+                "why": "ACTION_TIRE_CONDITION_WHY",
+                "confirm": None,
+                "falsify": None,
+                "eta": None,
+            },
+            {
+                "action_id": "wheel_balance_and_runout",
+                "what": "ACTION_WHEEL_BALANCE_WHAT",
+                "why": None,
+                "confirm": "vibration drops",
+                "falsify": "no change",
+                "eta": "10-20 min",
+            },
+        ]
+
+    def test_history_projection_uses_canonical_test_plan_payload(self) -> None:
+        summary = _minimal_summary(
+            findings=[{"finding_id": "F001", "suspected_source": "engine"}],
+            top_causes=[{"finding_id": "F001", "suspected_source": "engine"}],
+            test_plan=[
+                {
+                    "action_id": "engine_mounts_and_accessories",
+                    "what": "  ACTION_ENGINE_MOUNTS_WHAT  ",
+                    "why": "   ",
+                    "confirm": " movement changes ",
+                    "falsify": " no change ",
+                    "eta": " 15-30 min ",
+                }
+            ],
+        )
+
+        projected = project_summary_through_domain(summary)
+
+        assert projected["test_plan"] == [
+            {
+                "action_id": "engine_mounts_and_accessories",
+                "what": "ACTION_ENGINE_MOUNTS_WHAT",
+                "why": None,
+                "confirm": "movement changes",
+                "falsify": "no change",
+                "eta": "15-30 min",
+            }
+        ]
 
     def test_run_suitability(self) -> None:
         checks = [{"check": "SPEED", "state": "pass", "explanation": "ok"}]
