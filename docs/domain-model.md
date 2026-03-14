@@ -1,175 +1,279 @@
 # Domain model
 
-This document describes the vibration-diagnostics domain model: the primary
-domain objects, the relationships between them, and the adapter types that
-exist only at persistence/transport/rendering boundaries.
+This document is the implementation spec for the backend's domain-first
+architecture. The rule is strict:
 
-## Domain object relationship map
+- the **core** uses domain objects and domain aggregates as its only source
+  of truth
+- payloads, TypedDicts, DTOs, and rendering data structures exist only at
+  ingress and egress boundaries
+- business decisions in the core must not depend on raw dict access,
+  payload helper types, or rendering models
 
+If code currently violates these rules, treat this document as the target
+architecture for refactoring toward a strict OOP design.
+
+## Canonical pipeline flow
+
+```text
+Ingress adapters
+  (API payloads, protocol frames, config rows, persisted summaries)
+            │
+            ▼
+Application / orchestration layer
+  (load inputs, coordinate analysis, call mappers)
+            │
+            ▼
+Processing / algorithm layer
+  (pure math, DSP, FFT, stateless transforms)
+            │
+            ▼
+Domain construction
+  (create Finding objects and the canonical RunAnalysisResult aggregate)
+            │
+            ▼
+Canonical domain aggregate
+  RunAnalysisResult
+            │
+            ▼
+Egress adapters
+  (history serialization, API DTOs, report mapping, PDF template data)
 ```
-Car ──aspects──▶ Run (aggregate root: lifecycle, readings, duration)
-                  ▲                    │
-Sensor ──has──▶ SensorPlacement        │ produces
-                  │                    ▼
-SpeedSource ──configures──▶ Run   [AnalysisWindow] (analysis-layer type)
-                                       │ analyzed into
-Measurement ──recorded in──▶ Run       ▼
-  │                              Finding (richest: classification,
-  │ converts to                   ranking, actionability, scoring)
-  ▼                                    │
-VibrationReading (dB)                  │ collected into
-                                       ▼
-                               RunAnalysisResult (post-analysis aggregate)
-                                       │
-                               Report (metadata carrier)
+
+Canonical flow rules:
+
+1. Ingress adapters decode boundary data into domain inputs.
+2. Application/orchestration code coordinates processing and domain
+   construction, but does not replace domain behavior with payload logic.
+3. Processing code stays functional and stateless; it computes evidence and
+   measurements but does not own business decisions.
+4. Core analysis decisions are made on `Finding` objects and on the
+   `RunAnalysisResult` aggregate.
+5. `RunAnalysisResult` is the canonical post-analysis state for downstream
+   decisions such as classification, surfacing, ranking, and reportable
+   selection.
+6. Serialization shapes are derived from domain state for persistence,
+   transport, and rendering. They are outputs of the core, not peer models.
+
+## Core domain relationship map
+
+```text
+Car ───────▶ Run ───────▶ Finding ───────▶ RunAnalysisResult
+             ▲                               │
+Sensor ──────┘                               │ provides
+  │                                          ▼
+  └────▶ SensorPlacement               reportable diagnostic state
+
+Measurement ─────▶ VibrationReading
+SpeedSource ────▶ Run
+
+Report (metadata only) ───────────────▶ report mapping adapters
 ```
 
-### Central objects in the workflow
+Interpretation:
 
-| Object | Role | Key owned behavior |
-|--------|------|--------------------|
-| **Run** | Aggregate root | Lifecycle (start/stop/stopped), status transitions, phase tracking |
-| **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence thresholds, deterministic ranking, phase-adjusted scoring (flat `cruise_fraction`), vibration-source enum (`VibrationSource`), speed-band helper functions (`speed_bin_label`, `speed_band_sort_key`), REF_ prefix cross-check warning |
-| **RunAnalysisResult** | Post-analysis aggregate | Owns finalized domain `Finding` objects and top causes; provides finding classification queries (`diagnostic_findings`, `reference_findings`, `non_reference_findings`, `surfaceable_findings`, `actionable_findings`, `primary_finding`), effective top-cause selection (`effective_top_causes()`), reference-gap detection (`has_relevant_reference_gap()`), strength lookup (`top_strength_db()`), boundary factory (`from_summary()`); immutable snapshot of analysis output |
-| **Report** | Metadata carrier | Run identity, language, car info, temporal metadata; finding-level data flows through `ReportMappingContext` (which carries a domain `RunAnalysisResult` aggregate for domain decisions), not this object.  Construction from analysis summary delegated to `report/mapping.py` |
+- `Run` is the lifecycle-oriented aggregate root for an in-memory or persisted
+  diagnostic run.
+- `Finding` is the behavior-owning diagnostic object for classification,
+  actionability, surfacing, and ranking semantics.
+- `RunAnalysisResult` is the **only** canonical post-analysis aggregate.
+- `Report` is **not** the analyzed aggregate. In this repository it is a
+  metadata/context object for report generation.
+- Rendering DTOs such as `ReportTemplateData` are egress models derived from
+  the aggregate and metadata; they are never internal truth.
 
-### Supporting domain objects
+## Architectural layers
 
-| Object | Role | Key owned behavior |
-|--------|------|--------------------|
-| **Car** | Vehicle under test | Tire-circumference computation from aspect specs (via `TireSpec`), display name (always includes type), dimension validation (rejects zero and negative values), immutable aspects (`MappingProxyType`) |
-| **Sensor** | Accelerometer node | Display name, placement status queries |
-| **SensorPlacement** | Mounting position | Position category classification (wheel/drivetrain/body) |
-| **Measurement** | Raw sample value object | Conversion to VibrationReading (dB) |
-| **VibrationReading** | Processed dB value object | Severity level lookup.  dB computation entry points are the free functions `compute_db()` / `compute_db_or_none()` in `vibration_strength.py` |
-| **SpeedSource** | Speed acquisition config | Source-kind classification (via `SpeedSourceKind` StrEnum), effective speed resolution, cross-field invariant (MANUAL requires `manual_speed_kmh > 0`) |
+| Layer | What belongs here | What does **not** belong here | Allowed dependencies |
+|---|---|---|---|
+| **Domain layer** | `vibesensor/domain/` objects, domain queries, invariants, lifecycle rules, classification/ranking/actionability logic | DTOs, TypedDict payloads, route models, persistence row shapes, PDF/template classes | Python stdlib plus shared math/unit helpers such as `vibration_strength` and `strength_bands` |
+| **Application / orchestration layer** | workflow coordination, run orchestration, analysis sequencing, mapper invocation, persistence/report orchestration | raw dict-driven business rules, rendering-specific selection logic, duplicate domain rules | may depend on domain, processing, and adapters; domain must not depend on it |
+| **Processing / algorithm layer** | FFT, DSP, statistical transforms, order-analysis math, phase segmentation, pure evidence generation | API DTOs, persistence DTOs, rendering models, business ownership of ranking/surfacing/classification | may depend on pure helpers and domain value types when useful; should remain stateless and adapter-free |
+| **Adapter layer** | API/request/response models, TypedDict payloads, history/persistence mappers, protocol decoding, report mapping, template DTOs | canonical business truth, ranking/grouping/classification ownership | may depend on domain and application outputs; core layers must not depend on adapter DTOs |
 
-### Object containment and derivation
+## Canonical domain objects
 
-- **Sensor** contains an optional **SensorPlacement**.
-- **Run** tracks lifecycle via ``start()``/``stop()`` guards and an ``is_recording`` property.  Reading accumulation is handled by the recording pipeline, not the domain object.
-- **RunAnalysisResult** is the canonical post-analysis aggregate.  It holds finalized domain ``Finding`` objects and domain-level top causes.  ``RunAnalysis.summarize()`` builds it alongside the serialization-oriented ``AnalysisSummary`` dict.  The aggregate also provides a ``from_summary()`` factory so that the report pipeline and other downstream consumers can construct it from a persisted summary dict.
-- **Report** is a metadata carrier; finding-level data flows through `ReportMappingContext` which carries the domain aggregate.
-- **Finding** is derived from analysis of **AnalysisWindow** data (analysis-layer type, not a domain object).
-- **Car** aspects (tire dimensions) drive order-analysis hypothesis generation.
-- **SpeedSource** configures how speed is obtained during a **Run**.
+### Central objects
 
-## Edge adapters (not domain objects)
+| Object | Role | Owned behavior |
+|---|---|---|
+| **Run** | Aggregate root for diagnostic run lifecycle | start/stop guards, phase tracking, run-state invariants |
+| **Finding** | Primary diagnostic entity/value-rich object | kind, classification, actionability, surfacing, confidence interpretation, deterministic ranking, phase-adjusted scoring, source and speed-band semantics |
+| **RunAnalysisResult** | Canonical post-analysis aggregate | owns finalized `Finding` objects and top-cause selection state; exposes aggregate queries used for downstream business decisions |
+| **Report** | Report metadata context only | run identity, language, car/display context, timing/report metadata; no finding selection or diagnostic ownership |
 
-These types exist only at boundaries and should not own domain behavior:
+### Supporting objects
 
-| Type | Location | Boundary |
-|------|----------|----------|
-| `CarConfig` | `backend_types.py` | Persistence/config → domain `Car` |
-| `SensorConfig` | `backend_types.py` | Persistence/config → domain `Sensor` |
-| `SpeedSourceConfig` | `backend_types.py` | Persistence/config → domain `SpeedSource` |
-| `SensorFrame` | `protocol.py` | Binary protocol → raw sample data |
-| `RunMetadata` | `backend_types.py` | Run-level configuration snapshot |
-| `PhaseEvidence` | `analysis/_types.py` | Phase evidence TypedDict for pipeline serialization |
-| `FindingPayload` | `analysis/_types.py` | Dict-based analysis pipeline payload (also used for top causes after TopCause TypedDict removal) |
-| `AnalysisSummary` | `analysis/_types.py` | Analysis summary TypedDict (`.top_causes` is `list[FindingPayload]`) |
-| `SuspectedVibrationOrigin` | `analysis/_types.py` | Origin summary TypedDict (key: `suspected_source`) |
-| `LocalizationAssessment` | `analysis/summary_builder.py` | Spatial interpretation of finding evidence; accepts domain `Finding` for classification fields and payload dicts for evidence-level detail |
-| `ReportTemplateData` | `report/report_data.py` | PDF-rendering data classes |
-| `ReportMappingContext` | `report/mapping.py` | Template mapping adapter; carries domain `RunAnalysisResult` aggregate for domain-first decisions |
-| `build_report_from_summary()` | `report/mapping.py` | Factory: analysis summary dict → domain `Report` |
-| `SummaryView` | `report/mapping.py` | Typed read accessor over `AnalysisSummary` dict |
-| `HistoryRunPayload` | `backend_types.py` | API transport TypedDict for history runs |
+| Object | Role | Owned behavior |
+|---|---|---|
+| **Car** | Vehicle under test | tire geometry, circumference calculation, immutable vehicle aspects |
+| **Sensor** | Accelerometer node | naming, placement presence/status |
+| **SensorPlacement** | Mounting position value object | wheel/drivetrain/body categorization |
+| **Measurement** | Raw sample value object | conversion to `VibrationReading` |
+| **VibrationReading** | Processed vibration-strength value object | dB-oriented reading semantics and severity lookup |
+| **SpeedSource** | Speed acquisition configuration | source-kind classification and speed-resolution invariants |
 
-## Domain-first pipeline flow
+## Report model clarification
 
-The analysis pipeline produces domain objects as the primary internal model:
+The word **Report** is overloaded in normal language, so this repository uses
+three separate concepts:
 
-1. **Build** — `_build_findings()` constructs evidence-rich `FindingPayload`
-   dicts (TypedDicts carrying detailed evidence metrics, matched points, etc.).
-2. **Finalize** — `finalize_findings()` partitions, ranks, assigns stable
-   `F###` IDs, and returns both `list[FindingPayload]` (for serialization)
-   and `tuple[Finding, ...]` (domain objects for core logic).
-3. **Select** — `select_top_causes()` operates on domain `Finding` objects
-   for filtering (`should_surface`), grouping (`source_normalized`), and
-   ranking (`phase_adjusted_score`).  Returns both enriched payloads and
-   domain top-cause findings.
-4. **Origin** — `summarize_origin()` accepts domain `Finding` objects
-   alongside payloads, using domain properties for suspected source,
-   confidence, and speed band.  Evidence-level localization detail
-   (location hotspots) is read from the payload.
-5. **Aggregate** — `RunAnalysis.summarize()` builds a `RunAnalysisResult`
-   domain aggregate alongside the `AnalysisSummary` dict.  The aggregate
-   owns the finalized domain findings and top causes.
-6. **Serialize** — `AnalysisSummary` TypedDict is the serialization/persistence
-   boundary form.  Downstream consumers (API, history, report CLI) use it.
-7. **Report** — `map_summary()` in `report/mapping.py` is a boundary adapter
-   that maps `AnalysisSummary` to `ReportTemplateData` for PDF rendering.
-   It constructs a domain `RunAnalysisResult` via `from_summary()` and uses
-   it for all domain decisions: effective-cause selection (delegates to
-   `RunAnalysisResult.effective_top_causes()` via `diagnosis_candidates`),
-   reference-gap detection (`has_relevant_reference_gap()`), and strength
-   lookup (`top_strength_db()`).  `FindingPayload` dicts are used only for
-   rendering-level evidence detail (signatures, order labels, confidence
-   tones).
+1. **`RunAnalysisResult`** — the canonical analyzed aggregate. This owns the
+   finalized diagnostic truth after analysis.
+2. **`Report`** — metadata/context for a reportable run. This is effectively
+   report metadata, not the diagnostic aggregate.
+3. **Rendering DTOs** such as `ReportTemplateData` — egress-only structures
+   shaped for template rendering and PDF generation.
+
+Rule: if a decision changes what findings are shown, ranked, grouped,
+actionable, or emphasized, that decision belongs to `Finding` or
+`RunAnalysisResult`, not to `Report`, not to `ReportTemplateData`, and not to
+report mapping adapters.
+
+## Behavior ownership
+
+| Concern | Owner |
+|---|---|
+| Run lifecycle and state transitions | `Run` or the relevant lifecycle aggregate/state machine in the domain |
+| Finding classification (`diagnostic/reference/informational`) | `Finding` |
+| Actionability, surfacing, and per-finding ranking semantics | `Finding` |
+| Aggregate-level ranking, top-cause selection, and cross-finding queries | `RunAnalysisResult` |
+| Report metadata and display context | `Report` |
+| Serialization to history/API/rendering shapes | adapters and mappers |
+| Template shaping and PDF rendering | report adapters / rendering layer |
+| Pure math, DSP, FFT, signal transforms | functional code in `processing/` and `analysis/` |
+
+Ownership rules:
+
+- lifecycle and state transitions belong to the owning entity or aggregate
+- classification, actionability, ranking, grouping, and surfacing belong to
+  the owning domain object or aggregate
+- serialization belongs to adapters
+- rendering belongs to adapters
+- pure stateless transforms stay functional and are not forced into classes
+
+## Mutability rules
+
+- **Value objects are immutable.**
+- **Finalized domain snapshots and aggregates should be immutable where
+  practical.** `Finding`, `RunAnalysisResult`, and similar finalized analysis
+  outputs should behave as immutable snapshots.
+- **Mutable draft/build objects may exist during construction**, but they are
+  construction-time helpers, not the canonical domain model.
+- **Frozen shells around mutable internals are discouraged.** If an object is
+  declared frozen, its owned state should also behave immutably unless there is
+  a clearly documented reason.
+- Mutation that exists only to accumulate intermediate evidence belongs in
+  builders, orchestrators, or processing helpers, not in finalized domain
+  snapshots.
+
+## Edge adapters and boundary types
+
+These types exist only at ingress/egress boundaries:
+
+| Type | Location | Purpose |
+|---|---|---|
+| `CarConfig`, `SensorConfig`, `SpeedSourceConfig` | `backend_types.py` | config/persistence DTOs mapped into domain objects |
+| `SensorFrame` | `protocol.py` | protocol frame decoded before domain construction |
+| `RunMetadata` | `backend_types.py` | run-level boundary/config snapshot |
+| `PhaseEvidence`, `FindingPayload`, `AnalysisSummary`, `SuspectedVibrationOrigin` | `analysis/_types.py` | serialization-oriented analysis payloads and summaries |
+| `ReportTemplateData` | `report/report_data.py` | rendering DTOs for templates/PDF |
+| `ReportMappingContext`, summary readers, mapper functions | `report/mapping.py` | egress adapters from domain/report metadata to rendering data |
+| `HistoryRunPayload` and similar transport shapes | `backend_types.py` and API modules | API/history transport forms |
+
+Boundary rules:
+
+- boundary payloads are decoded into domain objects on ingress
+- boundary payloads are produced from domain state on egress
+- boundary shapes may carry extra rendering or storage detail, but they do not
+  own business decisions
+- reconstruction from persistence, transport, or rendering payloads belongs in
+  adapters and mappers, not on domain entities or aggregates
+
+If a temporary compatibility constructor exists on a domain type today, treat it
+as a refactoring seam to move outward, not as the desired architecture.
+
+## Dependency rules
+
+These rules are meant to be testable and enforceable in code review:
+
+1. Domain modules must not import API, rendering, transport, or persistence DTO
+   modules such as `backend_types.py`, `analysis/_types.py`,
+   `report/report_data.py`, route payload modules, or history row/DTO helpers.
+2. Core business-decision modules must not depend on boundary payload modules.
+   If a module decides ranking, grouping, classification, surfacing, or
+   actionability, it is core and must use domain objects.
+3. Application/orchestration modules may coordinate domain objects and
+   adapters, but they do not own rendering payload schemas as business truth.
+4. Adapter modules may depend on domain and application outputs; domain and
+   processing modules must not depend on adapter DTOs.
+5. Report rendering modules may read aggregate outputs, but must not own
+   finding selection, ranking, or business prioritization rules.
+6. Persistence and transport schemas are derived shapes. They must not become a
+   second internal model for the core.
+
+## Forbidden patterns
+
+The following patterns are architecture violations:
+
+- business logic driven by repeated `.get(...)` access on dict payloads
+- payload/TypedDict/helper structures used as the primary inputs to ranking,
+  grouping, classification, surfacing, or actionability decisions
+- rehydrating domain objects from payloads inside core business logic
+- domain entities or aggregates reconstructing themselves from persistence,
+  transport, or rendering payloads as a normal design pattern
+- rendering adapters or template builders owning selection, prioritization, or
+  diagnostic interpretation rules
+- duplicate business rules split across domain and adapter layers
+- keeping parallel internal "domain" and "summary payload" truth models inside
+  the core and treating them as peers
+- using report DTOs, API payloads, or history rows as the source of truth for
+  post-analysis behavior
+
+## Allowed exceptions
+
+These are narrow exceptions, not alternate architecture styles:
+
+- pure math, DSP, FFT, and other stateless transforms may remain functional
+- mutable builders may exist while assembling evidence or snapshots, but the
+  finalized canonical domain model must not depend on them
+- temporary compatibility mappers may exist during refactors, but they belong
+  at boundaries and must not become a precedent for core payload-driven design
 
 ## File layout
 
-Each main behavior-owning domain object lives in its own dedicated file
-within `apps/server/vibesensor/domain/`:
+Each primary behavior-owning domain object lives in its own file under
+`apps/server/vibesensor/domain/`:
 
-| File | Domain objects | Rationale |
-|------|---------------|-----------|
-| `measurement.py` | `Measurement`, `VibrationReading` | Tightly coupled raw-sample-to-reading pipeline |
-| `run.py` | `Run` | Aggregate root with in-memory lifecycle (start/stop guards, ``is_recording`` property) |
-| `run_analysis_result.py` | `RunAnalysisResult` | Post-analysis aggregate; owns finalized findings and top causes; provides domain queries for downstream ranking/selection/report generation; ``from_summary()`` factory for boundary construction |
-| `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | SpeedSourceKind StrEnum and speed acquisition concern |
-| `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
-| `car.py` | `Car`, `TireSpec` | Vehicle geometry and tire computation |
-| `driving_phase.py` | `DrivingPhase` | Driving-phase StrEnum (the `AnalysisWindow` class itself lives in `analysis/analysis_window.py`) |
-| `finding.py` | `FindingKind`, `VibrationSource`, `Finding`, `speed_bin_label`, `speed_band_sort_key` | Richest domain object (kind, classification, ranking, scoring, dB strength, vibration-source enum, speed-band helper functions, flat `cruise_fraction` for phase adjustment) |
-| `report.py` | `Report` | Metadata carrier for run identity and rendering context (construction from analysis summary lives in `report/mapping.py::build_report_from_summary()`) |
-| `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `transition_run` | Persisted run lifecycle state machine (enforcing) |
+| File | Main objects | Notes |
+|---|---|---|
+| `measurement.py` | `Measurement`, `VibrationReading` | raw sample and derived reading value objects |
+| `run.py` | `Run` | run lifecycle aggregate root |
+| `run_analysis_result.py` | `RunAnalysisResult` | canonical post-analysis aggregate |
+| `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | speed acquisition domain config |
+| `sensor.py` | `SensorPlacement`, `Sensor` | sensor and mount semantics |
+| `car.py` | `Car`, `TireSpec` | vehicle and tire geometry |
+| `driving_phase.py` | `DrivingPhase` | driving phase enum used by analysis/domain decisions |
+| `finding.py` | `FindingKind`, `VibrationSource`, `Finding` | finding behavior, ranking, and classification |
+| `report.py` | `Report` | report metadata context only; not the analyzed aggregate |
+| `run_status.py` | `RunStatus`, transitions | persisted run lifecycle state machine |
 
-All domain objects are re-exported from `vibesensor.domain` (the package
-`__init__.py`).  Consumers import from `vibesensor.domain`, not from
-individual module files, unless they need a very specific internal symbol.
+Consumers import public domain symbols from `vibesensor.domain`, not from
+boundary modules.
 
 ## Modeling rules
 
-1. **Domain objects own behavior.**  Classification, ranking, actionability,
-   surfacing, lifecycle, and computation logic live on the domain objects —
-   not in helper modules, pipeline stages, or route handlers.
-
-2. **Adapters bridge, they do not own.**  Config, payload, export, and
-   persistence types convert to/from domain objects but do not duplicate
-   domain logic.  `LocalizationAssessment` delegates
-   classification and ranking to domain `Finding`.
-   `diagnosis_candidates.select_effective_top_causes()` delegates selection
-   to `RunAnalysisResult.effective_top_causes()`.
-
-3. **Composition over inheritance.**  Domain objects compose via containment
-   (Sensor has SensorPlacement, RunAnalysisResult has Findings) rather than
-   class hierarchies.
-
-4. **Frozen dataclasses by default.**  All domain objects are immutable
-   (`@dataclass(frozen=True, slots=True)`).
-
-5. **No framework coupling.**  Domain objects depend only on the Python
-   standard library plus the shared `vibesensor.vibration_strength` and
-   `vibesensor.strength_bands` modules.
-
-6. **Stateless transforms stay functional.**  Pure math, DSP, FFT, and
-   signal-processing functions remain as plain functions in `processing/`
-   and `analysis/` — they are not wrapped in classes unless there is a
-   strong domain reason.
-
-7. **Naming convention.**  Use simple domain names (`Car`, `Sensor`, `Run`,
-   `Finding`, `RunAnalysisResult`) in domain logic.  Use narrower names
-   (`CarConfig`, `FindingPayload`, `ReportTemplateData`) only at boundaries.
-
-8. **Domain-first pipeline.**  The analysis pipeline produces domain
-   `Finding` objects alongside serialization payloads.  Core selection,
-   ranking, and filtering operate on domain objects.  Payload-level
-   enrichment (confidence labels, phase evidence) is applied only at
-   serialization boundaries.
-
-9. **Single source of truth for selection.**  Effective top-cause selection
-   logic lives on `RunAnalysisResult.effective_top_causes()`.  Boundary
-   helpers delegate to this method rather than reimplementing the rules.
-   Reference-gap detection and strength lookup also live on the aggregate.
+1. **The core is domain-only.** Core decision-making uses domain objects and
+   aggregates only.
+2. **Serialization is derived.** Summary payloads, DTOs, and template data are
+   derived from domain state and exist at the edges.
+3. **Domain objects own behavior.** Do not split classification, ranking,
+   selection, or lifecycle logic across helpers and adapters.
+4. **Adapters translate; they do not decide.** They map, serialize, decode, and
+   render.
+5. **Stateless math stays functional.** Keep DSP/FFT/signal transforms as pure
+   functions unless a true domain aggregate is needed.
+6. **Use one canonical aggregate after analysis.** That aggregate is
+   `RunAnalysisResult`.
+7. **Treat `Report` precisely.** It is report metadata/context, not the
+   diagnostic source of truth.
