@@ -30,10 +30,11 @@
 - `processing/`, `analysis/`: signal processing and findings logic.
   `analysis/findings.py` and `analysis/top_cause_selection.py` delegate
   classification and ranking logic to the domain `Finding`.
+  `analysis/location_analysis.py` owns the location-analysis pipeline.
   `analysis/analysis_window.py` owns the `AnalysisWindow` frozen dataclass
   (phase-aligned analysis chunk) and `analysis/_types.py` owns
-  `PhaseEvidence`, `FindingPayload`, `AnalysisSummary`, and
-  `SuspectedVibrationOrigin` TypedDicts.
+  `PhaseEvidence`, `FindingPayload`, and `AnalysisSummary` TypedDicts;
+  `SuspectedVibrationOrigin` is defined in `boundaries/vibration_origin.py`.
 - `domain/`: DDD-aligned domain model package.  Each primary domain object
   lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
   SensorPlacement), `measurement.py` (Measurement,
@@ -46,12 +47,12 @@
   `finding.py` (FindingKind, VibrationSource, Finding, speed_bin_label, speed_band_sort_key), `report.py` (Report),
   `run_status.py` (RunStatus, RUN_TRANSITIONS). `domain/services/` owns
   observation extraction, signature recognition, hypothesis evaluation,
-  finding synthesis, and case reconciliation. Domain objects own
+  finding synthesis, and test planning. Domain objects own
   classification, ranking, actionability, surfacing, lifecycle, and
   query logic; pipeline adapters in `analysis/` delegate to them. See
   `docs/domain-model.md` for the full relationship map and modeling rules.
 - `boundaries/`: explicit ingress/egress decoders and serializers between
-  domain aggregates (`DiagnosticCase`, `TestRun`, `RunAnalysisResult`) and
+  domain aggregates (`DiagnosticCase`, `TestRun`) and
   summary/persistence/report payload shapes, including the shared
   `diagnostic_case.py::project_summary_through_domain()` projection helper
   used by report/history/export/post-analysis boundaries.

@@ -46,7 +46,7 @@ with explicit drop logging.
 |-----------|--------|
 | `worker_pool.py` | Bounded worker pool wrapper: caps running + queued tasks, applies caller backpressure, isolates task failures, exposes metrics, supports clean shutdown |
 | `processing/` | `compute_all()` dispatches per-client FFT in parallel; ingest/compute timing counters added |
-| `bootstrap.py` | Creates shared `WorkerPool(max_workers=4)`, injects into `SignalProcessor`, runtime shuts it down on stop |
+| `runtime/builders.py` | Creates shared `WorkerPool(max_workers=4)`, injects into `SignalProcessor`, runtime shuts it down on stop |
 | Tests | 14 new tests: pool correctness, parallel/sequential equivalence, concurrent ingest+compute safety |
 | Benchmark | `tools/tests/benchmark_pipeline.py` — repeatable throughput measurement |
 
