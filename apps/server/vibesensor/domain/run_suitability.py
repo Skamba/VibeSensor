@@ -8,6 +8,7 @@ variation, enough samples, acceptable noise floor).
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 __all__ = ["RunSuitability", "SuitabilityCheck"]
@@ -71,7 +72,7 @@ class RunSuitability:
     # -- boundary adapter --------------------------------------------------
 
     @staticmethod
-    def from_checks(checks: list[dict[str, object]]) -> RunSuitability:
+    def from_checks(checks: Sequence[Mapping[str, object]]) -> RunSuitability:
         """Construct from a list of ``RunSuitabilityCheck`` dicts (boundary adapter)."""
         domain_checks = tuple(
             SuitabilityCheck(
@@ -80,6 +81,6 @@ class RunSuitability:
                 explanation=str(c.get("explanation", "")),
             )
             for c in checks
-            if isinstance(c, dict)
+            if isinstance(c, Mapping)
         )
         return RunSuitability(checks=domain_checks)
