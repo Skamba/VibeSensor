@@ -933,3 +933,78 @@ def test_post_analysis_does_not_import_project_summary() -> None:
                     "post_analysis.py should not import project_summary_through_domain; "
                     "fresh summaries from summarize() are already domain-canonical"
                 )
+
+
+# ── T7.27: Report mapping rendering-boundary guardrails ──────────────────
+
+
+def test_report_mapping_business_functions_use_domain_objects() -> None:
+    """Key business-decision functions derive values from the domain aggregate.
+
+    When ``prepare_report_mapping_context`` produces a domain aggregate,
+    ``resolve_primary_report_candidate`` must derive primary source,
+    strength, and reference-gap status from domain objects — not from
+    raw payload dict traversal.
+    """
+    from tests.test_support.findings import make_finding_payload
+    from vibesensor.domain import TestRun, VibrationSource
+    from vibesensor.report.mapping import (
+        prepare_report_mapping_context,
+        resolve_primary_report_candidate,
+    )
+    from vibesensor.report_i18n import tr
+
+    lang = "en"
+    finding = make_finding_payload(
+        finding_id="F001",
+        confidence=0.80,
+        suspected_source="wheel_tire",
+    )
+    summary = {
+        "run_id": "guard-biz",
+        "findings": [finding],
+        "top_causes": [finding],
+        "lang": lang,
+    }
+
+    context = prepare_report_mapping_context(summary)
+    assert context.domain_aggregate is not None
+    assert isinstance(context.domain_aggregate, TestRun)
+
+    primary = resolve_primary_report_candidate(
+        summary,
+        context=context,
+        tr=lambda key, **kw: tr(lang, key, **kw),
+        lang=lang,
+    )
+
+    # primary_source must be a VibrationSource enum (domain-first derivation)
+    assert isinstance(primary.primary_source, VibrationSource), (
+        "primary_source must be a VibrationSource enum when domain aggregate is present"
+    )
+
+
+def test_report_mapping_does_not_import_finding_from_payload_decoder() -> None:
+    """Report mapping must not import the finding boundary decoder.
+
+    It receives domain objects from ``test_run_from_summary()`` and should
+    not be re-decoding payloads.  Only boundary *projectors* (domain →
+    payload) are allowed.
+    """
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    mapping_path = SERVER_ROOT / "vibesensor" / "report" / "mapping.py"
+    source = mapping_path.read_text()
+    tree = ast.parse(source)
+    forbidden = {"finding_from_payload"}
+    violations: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                if alias.name in forbidden:
+                    violations.append(f"imports {alias.name}")
+    assert not violations, (
+        f"report/mapping.py must not import boundary decoders: {violations}"
+    )

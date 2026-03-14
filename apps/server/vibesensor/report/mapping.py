@@ -719,10 +719,10 @@ def top_strength_values(
 ) -> float | None:
     """Return the best available vibration strength in dB for report text.
 
-    .. deprecated::
-        Prefer ``TestRun.top_strength_db()`` when a domain
-        aggregate is available.  This function remains as a fallback for
-        boundary paths where only the raw summary dict is available.
+    Aggregate-absent safety fallback.  When a ``TestRun`` domain
+    aggregate is available, callers use ``TestRun.top_strength_db()``
+    instead.  This function remains only for the defensive path where
+    summary decoding fails to produce an aggregate.
     """
     causes = effective_causes if effective_causes is not None else summary.get("top_causes", [])
     all_findings = summary.get("findings", [])
@@ -754,10 +754,11 @@ def _sensor_fallback_strength_db(summary: AnalysisSummary) -> float | None:
 def has_relevant_reference_gap(findings: list[FindingPayload], primary_source: object) -> bool:
     """Whether the report certainty should mention missing reference inputs.
 
-    .. deprecated::
-        Prefer ``TestRun.has_relevant_reference_gap()`` when a
-        domain aggregate is available.  This function remains as a
-        boundary fallback for paths where only payload dicts exist.
+    Aggregate-absent safety fallback.  When a ``TestRun`` domain
+    aggregate is available, callers use
+    ``TestRun.has_relevant_reference_gap()`` instead.  This function
+    remains only for the defensive path where summary decoding fails to
+    produce an aggregate.
     """
     source = str(primary_source or "").strip().lower()
     for finding in findings:
@@ -940,20 +941,15 @@ def resolve_parts_context(
 
 def build_run_metadata_fields(summary: AnalysisSummary, meta: MetadataDict) -> dict[str, object]:
     """Extract and format run metadata text fields for the report template."""
-    duration_text = str(summary.get("record_length") or "") or None
-    start_time_utc = str(summary.get("start_time_utc") or "").strip() or None
-    end_time_utc = str(summary.get("end_time_utc") or "").strip() or None
-    raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
-    sample_rate_hz = f"{raw_sample_rate_hz:g}" if raw_sample_rate_hz is not None else None
     return {
-        "duration_text": duration_text,
-        "start_time_utc": start_time_utc,
-        "end_time_utc": end_time_utc,
-        "sample_rate_hz": sample_rate_hz,
+        "duration_text": summary_record_length(summary),
+        "start_time_utc": summary_start_time_utc(summary),
+        "end_time_utc": summary_end_time_utc(summary),
+        "sample_rate_hz": summary_sample_rate_hz_text(summary),
         "tire_spec_text": tire_spec_text(meta),
-        "sample_count": int(_as_float(summary.get("rows")) or 0),
-        "sensor_model": str(summary.get("sensor_model") or "").strip() or None,
-        "firmware_version": str(summary.get("firmware_version") or "").strip() or None,
+        "sample_count": summary_row_count(summary),
+        "sensor_model": summary_sensor_model(summary),
+        "firmware_version": summary_firmware_version(summary),
     }
 
 
