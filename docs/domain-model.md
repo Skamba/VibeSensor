@@ -164,7 +164,7 @@ Interpretation rules:
 
 | Object | Status | What it represents | What it owns | What it does **not** own |
 |---|---|---|---|---|
-| **RunAnalysisResult** | ✅ Implemented | Finalized analysis result for one run | ranked domain `Finding` objects, top causes, core queries (effective_top_causes, primary_finding, primary_source, primary_location, has_relevant_reference_gap, top_strength_db) | rendering, transport schemas, signal-processing algorithms |
+| **RunAnalysisResult** | ✅ Implemented | Finalized analysis result for one run | ranked domain `Finding` objects, top causes, core queries (effective_top_causes, primary_finding, primary_source, primary_location, has_relevant_reference_gap, top_strength_db); optionally `SpeedProfile` and `RunSuitability` | rendering, transport schemas, signal-processing algorithms |
 | **Run** | ✅ Implemented | Run lifecycle and identity | start/stop state transitions, run_id, analysis_settings | analysis results, report rendering |
 | **DiagnosticCase** | 🔮 Planned | One diagnostic problem for one vehicle | case lifecycle, hypothesis set, run set, findings, actions, cross-run consistency | rendering, transport schemas, signal-processing algorithms |
 | **TestPlan** | 🔮 Planned | The intended diagnostic approach | planned runs, comparison strategy, required evidence, next-step intent | execution telemetry, report layout |
@@ -175,7 +175,7 @@ Interpretation rules:
 |---|---|---|---|
 | **Car** | ✅ Implemented | The vehicle under diagnosis (as `Car`) | owns stable vehicle identity, tire spec, display name |
 | **Sensor** | ✅ Implemented | A physical measurement source | owns identity, placement, availability, and suitability for evidence interpretation |
-| **Finding** | ✅ Implemented | A justified conclusion | owns finding identity, kind, severity, actionability, confidence classification (label/tone/pct), surfacing, ranking, phase-adjusted scoring |
+| **Finding** | ✅ Implemented | A justified conclusion | owns finding identity, kind, severity, actionability, confidence classification (label/tone/pct), surfacing, ranking, phase-adjusted scoring; optionally carries `FindingEvidence`, `LocationHotspot`, and `ConfidenceAssessment` domain value objects |
 | **Report** | ✅ Implemented | Run-level metadata for rendering | owns run_id, lang, car info, dates, counts (thin metadata, not business logic) |
 | **Symptom** | 🔮 Planned | A complaint or observed problem | owns symptom wording, onset/context, and diagnostic framing |
 | **DrivingSegment** | 🔮 Planned | A meaningful portion of a run | owns segment boundaries, maneuver/phase meaning |
@@ -194,13 +194,13 @@ Interpretation rules:
 | **SpeedSource** | ✅ Implemented | How vehicle speed is obtained | kind (GPS/OBD2/MANUAL), effective_speed_kmh, is_live |
 | **DrivingPhase** | ✅ Implemented (StrEnum) | Phase of a driving segment | CRUISE, ACCEL, DECEL, IDLE |
 | **Measurement** | ✅ Implemented | A single acceleration sample | timestamp, acceleration components, vibration reading |
+| **FindingEvidence** | ✅ Implemented | Structured support for a finding | evidence quality (is_strong, is_consistent, is_well_localized), match_rate, SNR, presence_ratio, burstiness, spatial_concentration |
+| **LocationHotspot** | ✅ Implemented | Spatial concentration of evidence | is_well_localized, is_actionable, display_location, dominance_ratio, alternative_locations |
+| **ConfidenceAssessment** | ✅ Implemented | Why confidence is high, low, or withheld | tier (A/B/C), is_conclusive, needs_more_data, reason, downgraded |
+| **SpeedProfile** | ✅ Implemented | Run speed behavior as a diagnostic concept | is_adequate_for_diagnosis, has_steady_cruise, speed_range_kmh, cruise_fraction |
+| **RunSuitability** | ✅ Implemented | Whether a run is trustworthy enough | overall (pass/caution/fail), is_usable, failed_checks, warning_checks |
 | **ConfigurationSnapshot** | 🔮 Planned | Vehicle/setup state at a specific moment | immutable diagnostic context for interpreting a run |
-| **SpeedProfile** | 🔮 Planned | Run speed behavior as a diagnostic concept | coverage, steadiness, usable range |
-| **RunSuitability** | 🔮 Planned | Whether a run is trustworthy enough | pass/caution/fail outcome, suitability reasons |
-| **FindingEvidence** | 🔮 Planned | Structured support for a finding | evidence quality, consistency, strength |
 | **VibrationOrigin** | 🔮 Planned | Suspected source/origin conclusion | source semantics, dominance, ambiguity |
-| **LocationHotspot** | 🔮 Planned | Spatial concentration of evidence | strongest location, alternatives, ambiguity |
-| **ConfidenceAssessment** | 🔮 Planned | Why confidence is high, low, or withheld | confidence level, drivers, caveats |
 
 ## Domain services
 
@@ -423,19 +423,27 @@ The following guardrails are enforced by tests in
 - `RunAnalysisResult` provides finding classification queries (diagnostic,
   reference, informational, surfaceable, actionable, effective top causes)
 - `RunAnalysisResult.from_summary()` constructs a valid aggregate from
-  persisted dicts (boundary adapter)
+  persisted dicts (boundary adapter), including `speed_profile` and `suitability`
 - `Finding` is a frozen dataclass with immutable collections
 - `Finding` owns confidence presentation (label_key, tone, pct_text)
+- `Finding.from_payload()` populates `evidence` (`FindingEvidence`) and
+  `location` (`LocationHotspot`) when the payload contains evidence_metrics
+  and location_hotspot dicts
 - `confidence_label()` in `top_cause_selection` delegates to
   `Finding.confidence_label()` — single source of truth
 - `RunAnalysisResult` owns primary source/location queries
 - `finalize_findings()` returns domain `Finding` objects
 - `select_top_causes()` returns domain `Finding` objects
 - `RunAnalysis.summarize()` populates `analysis_result` as `RunAnalysisResult`
+  with `speed_profile`, `suitability`, and `ConfidenceAssessment` on top causes
 - Report mapping context builds a domain aggregate
 - `non_reference_findings()` uses domain classification
 - `build_system_cards()` reads confidence tone from domain `Finding`, not
   from enriched payload dicts
+- `FindingEvidence`, `LocationHotspot`, `ConfidenceAssessment`, `SpeedProfile`,
+  `RunSuitability`, and `SuitabilityCheck` are frozen dataclasses exported
+  from `vibesensor.domain`
+- `ConfidenceAssessment.tier` is consistent with `Finding.classify_confidence()`
 
 ## Current package layout
 
@@ -445,9 +453,14 @@ The domain package (`vibesensor/domain/`) mirrors the human concepts above:
 |---|---|---|
 | `__init__.py` | re-exports all domain symbols | ✅ |
 | `finding.py` | `Finding`, `FindingKind`, `VibrationSource`, `speed_band_sort_key`, `speed_bin_label` | ✅ |
+| `finding_evidence.py` | `FindingEvidence` | ✅ |
+| `location_hotspot.py` | `LocationHotspot` | ✅ |
+| `confidence_assessment.py` | `ConfidenceAssessment` | ✅ |
 | `run_analysis_result.py` | `RunAnalysisResult` | ✅ |
 | `run.py` | `Run` | ✅ |
 | `run_status.py` | `RunStatus`, `RUN_TRANSITIONS`, `transition_run` | ✅ |
+| `run_suitability.py` | `RunSuitability`, `SuitabilityCheck` | ✅ |
+| `speed_profile.py` | `SpeedProfile` | ✅ |
 | `car.py` | `Car`, `TireSpec` | ✅ |
 | `sensor.py` | `Sensor`, `SensorPlacement` | ✅ |
 | `speed_source.py` | `SpeedSource`, `SpeedSourceKind` | ✅ |
@@ -466,12 +479,7 @@ The domain package (`vibesensor/domain/`) mirrors the human concepts above:
 | `observation.py` | `Observation` |
 | `signature.py` | `Signature` |
 | `hypothesis.py` | `Hypothesis` |
-| `finding_evidence.py` | `FindingEvidence` |
 | `vibration_origin.py` | `VibrationOrigin` |
-| `location_hotspot.py` | `LocationHotspot` |
-| `confidence_assessment.py` | `ConfidenceAssessment` |
-| `speed_profile.py` | `SpeedProfile` |
-| `run_suitability.py` | `RunSuitability` |
 | `services/` | domain services for observation extraction, signature recognition, hypothesis evaluation, finding synthesis, case reconciliation |
 
 The exact file split may change, but the conceptual split should not: the model

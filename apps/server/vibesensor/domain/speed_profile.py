@@ -8,6 +8,7 @@ finding confidence.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 __all__ = ["SpeedProfile"]
@@ -47,13 +48,13 @@ class SpeedProfile:
 
     @staticmethod
     def from_stats(
-        speed_stats: dict[str, object],
-        phase_summary: dict[str, object] | None = None,
+        speed_stats: Mapping[str, object],
+        phase_summary: Mapping[str, object] | None = None,
     ) -> SpeedProfile:
         """Construct from speed-stats and phase-summary dicts (boundary adapter)."""
-        ps = phase_summary or {}
+        ps: Mapping[str, object] = phase_summary or {}
 
-        def _f(d: dict[str, object], key: str, default: float = 0.0) -> float:
+        def _f(d: Mapping[str, object], key: str, default: float = 0.0) -> float:
             raw = d.get(key)
             if raw is not None:
                 try:

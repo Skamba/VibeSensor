@@ -88,14 +88,10 @@ class LocationHotspot:
                 pass
 
         return LocationHotspot(
-            strongest_location=str(
-                d.get("location", d.get("top_location", "")) or ""
-            ),
+            strongest_location=str(d.get("location", d.get("top_location", "")) or ""),
             dominance_ratio=dom,
             localization_confidence=loc_conf,
-            weak_spatial_separation=bool(
-                d.get("weak_spatial_separation", False)
-            ),
+            weak_spatial_separation=bool(d.get("weak_spatial_separation", False)),
             ambiguous=bool(d.get("ambiguous_location", d.get("ambiguous", False))),
             alternative_locations=tuple(str(a) for a in alts) if alts else (),
         )

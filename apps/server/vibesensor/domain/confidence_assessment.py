@@ -39,11 +39,7 @@ class ConfidenceAssessment:
         """Certainty tier: ``'A'`` (inconclusive), ``'B'`` (hypothesis), ``'C'`` (conclusion)."""
         if self.raw_confidence < self._TIER_MEDIUM or self.label_key == "CONFIDENCE_LOW":
             return "A"
-        if (
-            self.raw_confidence < self._TIER_HIGH
-            or self.has_reference_gaps
-            or self.downgraded
-        ):
+        if self.raw_confidence < self._TIER_HIGH or self.has_reference_gaps or self.downgraded:
             return "B"
         return "C"
 
@@ -84,9 +80,8 @@ class ConfidenceAssessment:
             conf, strength_band_key=strength_band_key
         )
         downgraded = (
-            (strength_band_key or "").strip().lower() == "negligible"
-            and conf >= Finding.CONFIDENCE_HIGH_THRESHOLD
-        )
+            strength_band_key or ""
+        ).strip().lower() == "negligible" and conf >= Finding.CONFIDENCE_HIGH_THRESHOLD
 
         reasons: list[str] = []
         if has_reference_gaps:
@@ -98,9 +93,7 @@ class ConfidenceAssessment:
         if sensor_count < 2:
             reasons.append("Single sensor limits spatial analysis")
         if downgraded:
-            reasons.append(
-                "Confidence downgraded due to negligible vibration strength"
-            )
+            reasons.append("Confidence downgraded due to negligible vibration strength")
 
         return cls(
             raw_confidence=conf,

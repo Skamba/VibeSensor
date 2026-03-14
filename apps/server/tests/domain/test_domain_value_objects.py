@@ -25,7 +25,6 @@ from vibesensor.domain import (
     SuitabilityCheck,
 )
 
-
 # ── FindingEvidence ──────────────────────────────────────────────────────────
 
 
@@ -144,9 +143,7 @@ class TestLocationHotspot:
         assert LocationHotspot(strongest_location="FL wheel").is_actionable
         assert not LocationHotspot(strongest_location="").is_actionable
         assert not LocationHotspot(strongest_location="unknown").is_actionable
-        assert not LocationHotspot(
-            strongest_location="FL wheel", ambiguous=True
-        ).is_actionable
+        assert not LocationHotspot(strongest_location="FL wheel", ambiguous=True).is_actionable
 
     def test_display_location(self) -> None:
         assert LocationHotspot(strongest_location="front_left").display_location == "Front Left"
@@ -495,9 +492,7 @@ class TestRunAnalysisResultWithValueObjects:
         assert result.speed_profile.steady_speed
 
     def test_result_with_suitability(self) -> None:
-        rs = RunSuitability(
-            checks=(SuitabilityCheck(check_key="test", state="pass"),)
-        )
+        rs = RunSuitability(checks=(SuitabilityCheck(check_key="test", state="pass"),))
         result = RunAnalysisResult(
             run_id="test",
             findings=(),

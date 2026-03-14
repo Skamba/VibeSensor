@@ -107,16 +107,17 @@ class RunAnalysisResult:
         speed_stats_raw = summary.get("speed_stats")
         phase_summary_raw = summary.get("phase_summary")
         speed_profile = (
-            _SP.from_stats(speed_stats_raw, phase_summary_raw)  # type: ignore[arg-type]
+            _SP.from_stats(
+                speed_stats_raw,
+                phase_summary_raw if isinstance(phase_summary_raw, dict) else None,
+            )
             if isinstance(speed_stats_raw, dict)
             else None
         )
 
         suitability_raw = summary.get("run_suitability")
         suitability = (
-            _RS.from_checks(suitability_raw)  # type: ignore[arg-type]
-            if isinstance(suitability_raw, list)
-            else None
+            _RS.from_checks(suitability_raw) if isinstance(suitability_raw, list) else None
         )
 
         return cls(

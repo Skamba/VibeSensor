@@ -1197,9 +1197,7 @@ class RunAnalysis:
             else None
         )
         domain_suitability = (
-            RunSuitability.from_checks(run_suitability)
-            if run_suitability
-            else None
+            RunSuitability.from_checks(run_suitability) if run_suitability else None
         )
 
         # Enrich top-cause domain Findings with ConfidenceAssessment
@@ -1220,10 +1218,14 @@ class RunAnalysis:
             )
             enriched_domain_top_causes.append(replace(f, confidence_assessment=ca))
 
+        final_top_causes = (
+            tuple(enriched_domain_top_causes) if enriched_domain_top_causes else domain_top_causes
+        )
+
         self._analysis_result = RunAnalysisResult(
             run_id=self._prepared.run_id,
             findings=domain_findings,
-            top_causes=tuple(enriched_domain_top_causes) if enriched_domain_top_causes else domain_top_causes,
+            top_causes=final_top_causes,
             duration_s=self._prepared.duration_s,
             sample_count=len(self._samples),
             sensor_count=len(sensor_locations),
