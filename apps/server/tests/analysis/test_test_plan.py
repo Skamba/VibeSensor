@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import vibesensor.domain.services.test_planning as domain_test_planning
 from vibesensor.analysis.test_plan import (
     _merge_test_plan,
     build_domain_test_plan,
     build_domain_test_plan_from_findings,
 )
 from vibesensor.domain import Finding
+from vibesensor.domain import TestPlan as DomainTestPlan
 
 
 def test_merge_test_plan_deduplicates_action_ids_case_insensitively() -> None:
@@ -71,7 +73,9 @@ def test_build_domain_test_plan_normalizes_boundary_step_values() -> None:
     assert plan.requires_additional_data is False
 
 
-def test_build_domain_test_plan_from_findings_uses_domain_fields() -> None:
+def test_build_domain_test_plan_from_findings_delegates_to_domain_service(
+    monkeypatch,
+) -> None:
     findings = [
         Finding(
             suspected_source="wheel/tire",
@@ -83,8 +87,18 @@ def test_build_domain_test_plan_from_findings_uses_domain_fields() -> None:
         )
     ]
 
+    delegated_plan = DomainTestPlan()
+
+    def _fake_plan_test_actions(
+        domain_findings: list[Finding], hypotheses: object, *, lang: str
+    ) -> DomainTestPlan:
+        assert domain_findings == findings
+        assert hypotheses == ()
+        assert lang == "en"
+        return delegated_plan
+
+    monkeypatch.setattr(domain_test_planning, "plan_test_actions", _fake_plan_test_actions)
+
     plan = build_domain_test_plan_from_findings(findings, "en")
 
-    assert len(plan.actions) > 0
-    assert plan.actions[0].action_id == "wheel_tire_condition"
-    assert plan.requires_additional_data is False
+    assert plan is delegated_plan
