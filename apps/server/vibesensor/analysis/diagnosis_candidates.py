@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from ..domain import Finding as DomainFinding
+from ..boundaries.finding import finding_from_payload
 from ..domain import RunAnalysisResult
 from ._types import FindingPayload, is_finding
 
@@ -25,7 +25,7 @@ def non_reference_findings(items: Sequence[object]) -> list[FindingPayload]:
     return [
         item
         for item in items
-        if is_finding(item) and not DomainFinding.from_payload(item).is_reference
+        if is_finding(item) and not finding_from_payload(item).is_reference
     ]
 
 
@@ -46,8 +46,8 @@ def select_effective_top_causes(
     top_causes_all = [item for item in top_causes if is_finding(item)]
 
     # Build domain objects and delegate selection to the domain aggregate
-    domain_findings = tuple(DomainFinding.from_payload(f) for f in all_findings)
-    domain_top_causes = tuple(DomainFinding.from_payload(tc) for tc in top_causes_all)
+    domain_findings = tuple(finding_from_payload(f) for f in all_findings)
+    domain_top_causes = tuple(finding_from_payload(tc) for tc in top_causes_all)
 
     aggregate = RunAnalysisResult(
         run_id="boundary",

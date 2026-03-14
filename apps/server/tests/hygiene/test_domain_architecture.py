@@ -278,6 +278,7 @@ def test_diagnosis_candidates_delegates_to_domain_aggregate() -> None:
     ``RunAnalysisResult.effective_top_causes()`` for the same data."""
     from tests.test_support.findings import make_finding_payload, make_ref_finding
     from vibesensor.analysis.diagnosis_candidates import select_effective_top_causes
+    from vibesensor.boundaries.finding import finding_from_payload
     from vibesensor.domain import Finding, RunAnalysisResult
 
     diag1 = make_finding_payload(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
@@ -285,8 +286,8 @@ def test_diagnosis_candidates_delegates_to_domain_aggregate() -> None:
     ref = make_ref_finding(finding_id="REF_SPEED")
 
     # Build domain aggregate for comparison
-    domain_findings = tuple(Finding.from_payload(f) for f in [diag1, diag2, ref])
-    domain_tc = tuple(Finding.from_payload(f) for f in [diag1])
+    domain_findings = tuple(finding_from_payload(f) for f in [diag1, diag2, ref])
+    domain_tc = tuple(finding_from_payload(f) for f in [diag1])
     aggregate = RunAnalysisResult(run_id="test", findings=domain_findings, top_causes=domain_tc)
     domain_effective_ids = {f.finding_id for f in aggregate.effective_top_causes()}
 
@@ -609,8 +610,8 @@ def test_domain_value_objects_are_frozen_dataclasses(name: str) -> None:
 
 
 def test_finding_from_payload_populates_evidence() -> None:
-    """Finding.from_payload extracts FindingEvidence when evidence_metrics is present."""
-    from vibesensor.domain import Finding
+    """finding_from_payload extracts FindingEvidence when evidence_metrics is present."""
+    from vibesensor.boundaries.finding import finding_from_payload
 
     payload = {
         "finding_id": "F001",
@@ -622,14 +623,14 @@ def test_finding_from_payload_populates_evidence() -> None:
             "vibration_strength_db": 25.0,
         },
     }
-    f = Finding.from_payload(payload)
-    assert f.evidence is not None, "from_payload must populate evidence"
+    f = finding_from_payload(payload)
+    assert f.evidence is not None, "finding_from_payload must populate evidence"
     assert f.evidence.match_rate == 0.9
 
 
 def test_finding_from_payload_populates_location() -> None:
-    """Finding.from_payload extracts LocationHotspot when location_hotspot is present."""
-    from vibesensor.domain import Finding
+    """finding_from_payload extracts LocationHotspot when location_hotspot is present."""
+    from vibesensor.boundaries.finding import finding_from_payload
 
     payload = {
         "finding_id": "F001",
@@ -640,14 +641,14 @@ def test_finding_from_payload_populates_location() -> None:
             "dominance_ratio": 0.75,
         },
     }
-    f = Finding.from_payload(payload)
-    assert f.location is not None, "from_payload must populate location"
+    f = finding_from_payload(payload)
+    assert f.location is not None, "finding_from_payload must populate location"
     assert f.location.strongest_location == "FL wheel"
 
 
 def test_finding_from_payload_prefers_top_location_over_display_string() -> None:
     """Location identity should use top_location, not the ambiguous display string."""
-    from vibesensor.domain import Finding
+    from vibesensor.boundaries.finding import finding_from_payload
 
     payload = {
         "finding_id": "F001",
@@ -660,7 +661,7 @@ def test_finding_from_payload_prefers_top_location_over_display_string() -> None
             "ambiguous_locations": ["Front Left", "Front Right"],
         },
     }
-    finding = Finding.from_payload(payload)
+    finding = finding_from_payload(payload)
     assert finding.location is not None
     assert finding.location.strongest_location == "Front Left"
 
@@ -796,7 +797,7 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
 
 
 def test_finding_from_payload_populates_origin_and_signatures() -> None:
-    from vibesensor.domain import Finding
+    from vibesensor.boundaries.finding import finding_from_payload
 
     payload = {
         "finding_id": "F001",
@@ -806,10 +807,22 @@ def test_finding_from_payload_populates_origin_and_signatures() -> None:
         "signatures_observed": ["1x wheel order", "2x wheel order"],
         "location_hotspot": {"location": "FL wheel", "dominance_ratio": 0.75},
     }
-    finding = Finding.from_payload(payload)
+    finding = finding_from_payload(payload)
     assert finding.origin is not None
     assert len(finding.signatures) == 2
     assert finding.origin.display_location == "Fl Wheel"
+
+
+# ── Finding boundary separation ──────────────────────────────────────────
+
+
+def test_finding_has_no_from_payload_method() -> None:
+    """Finding domain class should not own payload decode logic."""
+    from vibesensor.domain import Finding
+
+    assert not hasattr(Finding, "from_payload"), (
+        "Finding.from_payload should live in boundaries/finding.py, not on the domain class"
+    )
 
 
 # ── AnalysisResult coordinator isolation ─────────────────────────────────
