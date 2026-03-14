@@ -407,10 +407,76 @@ class Finding:
         quantised = round(self.effective_confidence / step) * step
         return (quantised, self.ranking_score)
 
-    # -- confidence thresholds (used by analysis/strength_labels.py) ---------
+    # -- confidence thresholds ------------------------------------------------
 
     CONFIDENCE_HIGH_THRESHOLD: ClassVar[float] = 0.70
     CONFIDENCE_MEDIUM_THRESHOLD: ClassVar[float] = 0.40
+
+    # -- confidence presentation (domain-owned) ----------------------------
+
+    @staticmethod
+    def classify_confidence(
+        conf_0_to_1: float,
+        *,
+        strength_band_key: str | None = None,
+    ) -> tuple[str, str, str]:
+        """Classify a 0–1 confidence into ``(label_key, tone, pct_text)``.
+
+        Pure classification logic shared by the instance method
+        :meth:`confidence_label` and by boundary helpers that operate on
+        raw confidence values without a full ``Finding`` object.
+
+        * **HIGH** (≥ 0.70): ``("CONFIDENCE_HIGH", "success", "…%")``
+        * **MEDIUM** (0.40–0.70): ``("CONFIDENCE_MEDIUM", "warn", "…%")``
+        * **LOW** (< 0.40): ``("CONFIDENCE_LOW", "neutral", "…%")``
+
+        When *strength_band_key* is ``"negligible"`` and the raw tier
+        would be HIGH, the result is downgraded to MEDIUM.
+        """
+        conf = float(conf_0_to_1) if math.isfinite(conf_0_to_1) else 0.0
+        pct = max(0.0, min(100.0, conf * 100.0))
+        pct_text = f"{pct:.0f}%"
+        if conf >= Finding.CONFIDENCE_HIGH_THRESHOLD:
+            label_key, tone = "CONFIDENCE_HIGH", "success"
+        elif conf >= Finding.CONFIDENCE_MEDIUM_THRESHOLD:
+            label_key, tone = "CONFIDENCE_MEDIUM", "warn"
+        else:
+            label_key, tone = "CONFIDENCE_LOW", "neutral"
+        if (
+            strength_band_key or ""
+        ).strip().lower() == "negligible" and label_key == "CONFIDENCE_HIGH":
+            label_key, tone = "CONFIDENCE_MEDIUM", "warn"
+        return label_key, tone, pct_text
+
+    def confidence_label(
+        self,
+        *,
+        strength_band_key: str | None = None,
+    ) -> tuple[str, str, str]:
+        """Return ``(label_key, tone, pct_text)`` for this finding's confidence.
+
+        Convenience wrapper around :meth:`classify_confidence` that uses
+        the finding's own :attr:`effective_confidence`.
+        """
+        return self.classify_confidence(
+            self.effective_confidence,
+            strength_band_key=strength_band_key,
+        )
+
+    @property
+    def confidence_label_key(self) -> str:
+        """The i18n key for this finding's confidence tier (no strength override)."""
+        return self.confidence_label()[0]
+
+    @property
+    def confidence_tone(self) -> str:
+        """The display tone for this finding's confidence tier (no strength override)."""
+        return self.confidence_label()[1]
+
+    @property
+    def confidence_pct_text(self) -> str:
+        """Confidence as percentage text (e.g. ``'75%'``)."""
+        return self.confidence_label()[2]
 
     @property
     def phase_adjusted_score(self) -> float:
