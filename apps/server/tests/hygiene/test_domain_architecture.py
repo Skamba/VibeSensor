@@ -1008,3 +1008,117 @@ def test_report_mapping_does_not_import_finding_from_payload_decoder() -> None:
     assert not violations, (
         f"report/mapping.py must not import boundary decoders: {violations}"
     )
+
+
+# ── T9.1-T9.6: Workstream 8 architecture guardrails ──────────────────
+
+
+def test_observation_extraction_does_not_accept_findings() -> None:
+    """Observation extraction must not accept Finding objects."""
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    obs_path = SERVER_ROOT / "vibesensor" / "domain" / "services" / "observation_extraction.py"
+    source = obs_path.read_text()
+    tree = ast.parse(source)
+
+    # Collect all runtime import names (outside TYPE_CHECKING blocks)
+    runtime_imports: list[str] = []
+    type_checking_nodes: set[int] = set()
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.If)
+            and isinstance(node.test, ast.Name)
+            and node.test.id == "TYPE_CHECKING"
+        ):
+            for child in ast.walk(node):
+                type_checking_nodes.add(id(child))
+
+    for node in ast.walk(tree):
+        if id(node) in type_checking_nodes:
+            continue
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                runtime_imports.append(alias.name)
+
+    assert "Finding" not in runtime_imports, (
+        "observation_extraction.py must not import Finding at runtime; "
+        "observations are extracted from raw evidence before findings exist"
+    )
+
+
+def test_localization_assessment_does_not_exist() -> None:
+    """LocalizationAssessment must not exist in the codebase.
+
+    It was deleted in Workstream 3 (T4.1-T4.8).  LocationHotspot is the
+    canonical owner of localization semantics.
+    """
+    # Must not be importable from analysis
+    mod = importlib.import_module("vibesensor.analysis")
+    assert not hasattr(mod, "LocalizationAssessment"), (
+        "LocalizationAssessment must not exist in vibesensor.analysis"
+    )
+    # Must not exist as a class in summary_builder
+    mod2 = importlib.import_module("vibesensor.analysis.summary_builder")
+    for name in dir(mod2):
+        assert name != "LocalizationAssessment", (
+            "LocalizationAssessment class must not exist in summary_builder"
+        )
+
+
+def test_suspected_vibration_origin_is_boundary_only() -> None:
+    """SuspectedVibrationOrigin must not be imported in domain modules.
+
+    It is a boundary TypedDict that lives in ``boundaries/vibration_origin.py``.
+    Domain modules must use ``VibrationOrigin`` instead.
+    """
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    domain_dir = SERVER_ROOT / "vibesensor" / "domain"
+    violations: list[str] = []
+    for py_file in domain_dir.rglob("*.py"):
+        source = py_file.read_text()
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                for alias in node.names:
+                    if alias.name == "SuspectedVibrationOrigin":
+                        violations.append(f"{py_file.name} imports SuspectedVibrationOrigin")
+    assert not violations, (
+        f"Domain modules must not import SuspectedVibrationOrigin (boundary type): {violations}"
+    )
+
+
+def test_build_run_suitability_checks_does_not_exist() -> None:
+    """``build_run_suitability_checks`` must not exist in summary_builder.
+
+    It was deleted in Workstream 2 (T3.21).  ``RunSuitability.evaluate()``
+    is the canonical owner of suitability evaluation.
+    """
+    from vibesensor.analysis import summary_builder
+
+    assert not hasattr(summary_builder, "build_run_suitability_checks"), (
+        "build_run_suitability_checks was deleted; use RunSuitability.evaluate()"
+    )
+
+
+def test_speed_profile_used_by_certainty_label() -> None:
+    """Certainty label must receive steady_speed from SpeedProfile.
+
+    When a domain aggregate is available, the report mapping must derive
+    ``steady_speed`` from ``aggregate.speed_profile`` rather than from
+    raw ``speed_stats`` dict.
+    """
+    from tests._paths import SERVER_ROOT
+
+    mapping_path = SERVER_ROOT / "vibesensor" / "report" / "mapping.py"
+    source = mapping_path.read_text()
+    assert "speed_profile.steady_speed" in source, (
+        "report mapping must derive steady_speed from SpeedProfile domain object"
+    )
