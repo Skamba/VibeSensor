@@ -165,11 +165,11 @@ def test_run_analysis_produces_analysis_result() -> None:
         for i in range(30)
     ]
     analysis = RunAnalysis(metadata, samples)
-    summary = analysis.summarize()
+    result = analysis.summarize()
     assert analysis.analysis_result is not None
     assert isinstance(analysis.analysis_result, RunAnalysisResult)
-    assert analysis.analysis_result.run_id == summary["run_id"]
-    assert len(analysis.analysis_result.findings) == len(summary["findings"])
+    assert analysis.analysis_result.run_id == result.summary["run_id"]
+    assert len(analysis.analysis_result.findings) == len(result.summary["findings"])
 
 
 # ── RunAnalysisResult.from_summary() factory ─────────────────────────────
@@ -810,3 +810,54 @@ def test_finding_from_payload_populates_origin_and_signatures() -> None:
     assert finding.origin is not None
     assert len(finding.signatures) == 2
     assert finding.origin.display_location == "Fl Wheel"
+
+
+# ── AnalysisResult coordinator isolation ─────────────────────────────────
+
+
+def test_domain_modules_do_not_import_analysis_coordinator() -> None:
+    """Domain modules must not depend on the analysis coordinator type."""
+    import ast
+    from pathlib import Path
+
+    domain_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "domain"
+    violations: list[str] = []
+    for py in domain_dir.rglob("*.py"):
+        source = py.read_text()
+        tree = ast.parse(source, filename=str(py))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                if "analysis" in node.module and any(
+                    alias.name == "AnalysisResult" for alias in node.names
+                ):
+                    violations.append(f"{py.relative_to(domain_dir)}: imports AnalysisResult")
+    assert not violations, "Domain modules must not import AnalysisResult:\n" + "\n".join(
+        violations
+    )
+
+
+def test_boundary_and_report_modules_do_not_import_analysis_coordinator() -> None:
+    """Boundary and report modules must not depend on the analysis coordinator type."""
+    import ast
+    from pathlib import Path
+
+    pkg_dir = Path(__file__).resolve().parents[2] / "vibesensor"
+    violations: list[str] = []
+    for subdir_name in ("boundaries", "report"):
+        subdir = pkg_dir / subdir_name
+        if not subdir.is_dir():
+            continue
+        for py in subdir.rglob("*.py"):
+            source = py.read_text()
+            tree = ast.parse(source, filename=str(py))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom) and node.module:
+                    if "analysis" in node.module and any(
+                        alias.name == "AnalysisResult" for alias in node.names
+                    ):
+                        violations.append(
+                            f"{subdir_name}/{py.relative_to(subdir)}: imports AnalysisResult"
+                        )
+    assert not violations, (
+        "Boundary/report modules must not import AnalysisResult:\n" + "\n".join(violations)
+    )

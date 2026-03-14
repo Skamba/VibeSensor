@@ -767,7 +767,13 @@ def annotate_peaks_with_order_labels(summary: AnalysisSummary) -> None:
 
 @dataclass(frozen=True)
 class PreparedRunData:
-    """Shared timing, speed, and phase context for summary generation."""
+    """Input coordinator: shared timing, speed, and phase context for summary generation.
+
+    Retained as the canonical input coordinator for the analysis pipeline.
+    Computed once by :func:`prepare_run_data` and consumed by
+    :func:`build_findings_bundle`, :func:`build_run_suitability_bundle`,
+    and :class:`RunAnalysis`.
+    """
 
     run_id: str
     start_ts: datetime | None
@@ -964,6 +970,22 @@ def build_run_suitability_bundle(
     return reference_complete, run_suitability, overall_strength_band_key
 
 
+@dataclass(frozen=True, slots=True)
+class AnalysisResult:
+    """Output coordinator: carries domain aggregates alongside the legacy summary dict.
+
+    Returned by :meth:`RunAnalysis.summarize`.  The ``summary`` dict is
+    still needed for persistence (SQLite stores it as JSON) and many
+    existing boundary consumers.  ``test_run`` and ``diagnostic_case``
+    expose the fully-constructed domain aggregates so that callers no
+    longer need to discard them.
+    """
+
+    test_run: TestRun
+    diagnostic_case: DiagnosticCase
+    summary: AnalysisSummary
+
+
 class RunAnalysis:
     """Cohesive object around a single analyzed run.
 
@@ -1044,11 +1066,12 @@ class RunAnalysis:
 
     # -- orchestration -----------------------------------------------------
 
-    def summarize(self) -> AnalysisSummary:
-        """Run the full analysis pipeline and return the summary dict.
+    def summarize(self) -> AnalysisResult:
+        """Run the full analysis pipeline and return the output coordinator.
 
-        Also builds a :class:`RunAnalysisResult` domain aggregate
-        accessible via :attr:`analysis_result`.
+        Returns an :class:`AnalysisResult` carrying the domain aggregates
+        (``test_run``, ``diagnostic_case``) alongside the legacy
+        ``summary`` dict.
         """
         reference_complete, run_suitability, overall_strength_band_key = (
             build_run_suitability_bundle(
@@ -1187,7 +1210,11 @@ class RunAnalysis:
         annotate_peaks_with_order_labels(summary)
         if not self._include_samples:
             summary.pop("samples", None)
-        return summary
+        return AnalysisResult(
+            test_run=self._test_run,
+            diagnostic_case=self._diagnostic_case,
+            summary=summary,
+        )
 
 
 def summarize_run_data(
@@ -1209,7 +1236,7 @@ def summarize_run_data(
         lang=lang,
         include_samples=include_samples,
         findings_builder=findings_builder,
-    ).summarize()
+    ).summarize().summary
 
 
 def build_findings_for_samples(

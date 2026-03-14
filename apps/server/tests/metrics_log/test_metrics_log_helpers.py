@@ -380,12 +380,18 @@ def test_stop_recording_does_not_block_on_post_analysis(
     summary_started = threading.Event()
     allow_summary_finish = threading.Event()
 
-    def _slow_summary(*args, **kwargs):
-        summary_started.set()
-        assert allow_summary_finish.wait(timeout=5.0)
-        return {"summary": "ok"}
+    class _SlowRunAnalysis:
+        def __init__(self, *args, **kwargs):
+            pass
 
-    monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _slow_summary)
+        def summarize(self):
+            summary_started.set()
+            assert allow_summary_finish.wait(timeout=5.0)
+            from types import SimpleNamespace
+
+            return SimpleNamespace(summary={"findings": [], "top_causes": []})
+
+    monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _SlowRunAnalysis)
     started = time.monotonic()
     logger.stop_recording()
     elapsed = time.monotonic() - started
@@ -417,10 +423,10 @@ def test_post_analysis_failure_sets_persistent_error_status(
     start_mono = snapshot.start_mono_s
     logger._append_records(run_id, start_time_utc, start_mono)
 
-    def _failing_summary(*args, **kwargs):
+    def _failing_init(*args, **kwargs):
         raise RuntimeError("analysis exploded")
 
-    monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _failing_summary)
+    monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _failing_init)
     logger.stop_recording()
 
     def _status():
@@ -632,10 +638,18 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     for _ in range(cap + 50):
         logger._append_records(run_id, start_time_utc, start_mono)
 
-    def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
-        return {"row_count": len(samples), "run_suitability": []}
+    class _FakeRunAnalysis:
+        def __init__(self, metadata, samples, **kwargs):
+            self._sample_count = len(samples)
 
-    monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _summary)
+        def summarize(self):
+            from types import SimpleNamespace
+
+            return SimpleNamespace(
+                summary={"row_count": self._sample_count, "run_suitability": []}
+            )
+
+    monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _FakeRunAnalysis)
     logger.stop_recording()
 
     def _status():

@@ -97,7 +97,7 @@ class TestPreparedRunDataProperties:
 
 class TestRunAnalysis:
     def test_summarize_returns_summary_data(self) -> None:
-        """Minimal smoke test: RunAnalysis.summarize() produces a summary dict."""
+        """Minimal smoke test: RunAnalysis.summarize() produces an AnalysisResult."""
         metadata = {"raw_sample_rate_hz": 100.0}
         samples = [
             {
@@ -111,11 +111,14 @@ class TestRunAnalysis:
             for i in range(20)
         ]
         analysis = RunAnalysis(metadata, samples, file_name="test_run")
-        summary = analysis.summarize()
+        result = analysis.summarize()
+        summary = result.summary
         assert isinstance(summary, dict)
         assert "findings" in summary
         assert "run_id" in summary
         assert summary["file_name"] == "test_run"
+        assert result.test_run is not None
+        assert result.diagnostic_case is not None
 
     def test_summarize_matches_function_api(self) -> None:
         """RunAnalysis.summarize() should produce identical output to summarize_run_data()."""
@@ -135,7 +138,7 @@ class TestRunAnalysis:
         ]
         # The function API delegates to RunAnalysis, so they should be equivalent
         summary_via_function = summarize_run_data(metadata, samples, file_name="f")
-        summary_via_class = RunAnalysis(metadata, samples, file_name="f").summarize()
+        summary_via_class = RunAnalysis(metadata, samples, file_name="f").summarize().summary
         # Key structural fields should match
         assert summary_via_function["run_id"] == summary_via_class["run_id"]
         assert summary_via_function["rows"] == summary_via_class["rows"]
@@ -167,5 +170,5 @@ class TestRunAnalysis:
             }
         ]
         analysis = RunAnalysis(metadata, samples, include_samples=False)
-        summary = analysis.summarize()
-        assert "samples" not in summary
+        result = analysis.summarize()
+        assert "samples" not in result.summary
