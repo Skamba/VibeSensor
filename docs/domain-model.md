@@ -110,7 +110,7 @@ Interpretation:
 | **Run** | Aggregate root for diagnostic run lifecycle | start/stop guards, phase tracking, run-state invariants |
 | **Finding** | Primary diagnostic entity/value-rich object | kind, classification, actionability, surfacing, confidence interpretation, deterministic ranking, phase-adjusted scoring, source and speed-band semantics |
 | **RunAnalysisResult** | Canonical post-analysis aggregate | owns finalized `Finding` objects and top-cause selection state; exposes aggregate queries used for downstream business decisions |
-| **Report** | Canonical report-domain object | owns reportable state derived from `RunAnalysisResult`, report context, surfaced findings, report-facing ordering/sections, and domain report queries prior to rendering |
+| **Report** | Canonical report-domain object | owns reportable state derived from `RunAnalysisResult`, report context, surfaced findings, report-facing ordering/sections, and domain report queries prior to rendering; see [Report model clarification](#report-model-clarification) |
 
 ### Supporting objects
 
@@ -125,14 +125,16 @@ Interpretation:
 
 ## Report model clarification
 
-The word **Report** is overloaded in normal language, so this repository uses
+The term **Report** is used in multiple distinct senses across the codebase, so
+this repository uses
 three separate concepts:
 
 1. **`RunAnalysisResult`** — the canonical analyzed aggregate. This owns the
    finalized diagnostic truth after analysis.
 2. **`Report`** — a domain object derived from `RunAnalysisResult` and report
    context. This owns the canonical reportable state before any rendering
-   adapter runs.
+   adapter runs. Where current code still treats `Report` more narrowly, that
+   is a legacy structure to refactor away rather than the desired model.
 3. **Rendering DTOs** such as `ReportTemplateData` — egress-only structures
    shaped for template rendering and PDF generation.
 
@@ -168,9 +170,9 @@ Ownership rules:
 ## Mutability rules
 
 - **Value objects are immutable.**
-- **Finalized domain snapshots and aggregates should be immutable where
-  practical.** `Finding`, `RunAnalysisResult`, and similar finalized analysis
-  outputs should behave as immutable snapshots.
+- **Finalized domain snapshots and aggregates must be immutable once
+  published.** `Finding`, `RunAnalysisResult`, `Report`, and similar finalized
+  outputs must not expose mutable business state after construction.
 - **Mutable draft/build objects may exist during construction**, but they are
   construction-time helpers, not the canonical domain model.
 - **Frozen shells around mutable internals are discouraged.** If an object is
@@ -203,6 +205,10 @@ Boundary rules:
   own business decisions
 - reconstruction from persistence, transport, or rendering payloads belongs in
   adapters and mappers, not on domain entities or aggregates
+- if a legacy factory such as `RunAnalysisResult.from_summary()` still exists,
+  treat it as a boundary compatibility shim only; core business-decision code
+  must not rely on payload-driven reconstruction as a standard architectural
+  pattern
 
 If a temporary compatibility constructor exists on a domain type today, treat it
 as a refactoring seam to move outward, not as the desired architecture.
