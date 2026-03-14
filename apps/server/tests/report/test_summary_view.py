@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from vibesensor.analysis._types import AnalysisSummary
+from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
+from vibesensor.domain import Finding, LocationHotspot, RunAnalysisResult, VibrationOrigin
 from vibesensor.report.mapping import (
+    _origin_from_aggregate,
     summary_end_time_utc,
     summary_findings,
     summary_firmware_version,
@@ -112,6 +115,86 @@ class TestSummaryHelpers:
 
     def test_origin(self) -> None:
         assert summary_origin(_minimal_summary())["location"] == "front_left"
+
+    def test_report_origin_projection_reads_domain_vibration_origin(self) -> None:
+        primary = Finding(
+            finding_id="F001",
+            suspected_source="wheel/tire",
+            strongest_location="front_left",
+            strongest_speed_band="80-90 km/h",
+            dominance_ratio=1.05,
+            weak_spatial_separation=True,
+            location=LocationHotspot.from_analysis_inputs(
+                strongest_location="front_left",
+                ambiguous=True,
+                alternative_locations=["front_right"],
+                dominance_ratio=1.05,
+            ),
+            origin=VibrationOrigin.from_analysis_inputs(
+                suspected_source=Finding(suspected_source="wheel/tire").suspected_source,
+                hotspot=LocationHotspot.from_analysis_inputs(
+                    strongest_location="front_left",
+                    ambiguous=True,
+                    alternative_locations=["front_right"],
+                    dominance_ratio=1.05,
+                ),
+                dominance_ratio=1.05,
+                speed_band="80-90 km/h",
+                dominant_phase="acceleration",
+                reason="domain rationale",
+            ),
+        )
+        aggregate = RunAnalysisResult(run_id="run-1", findings=(primary,), top_causes=(primary,))
+        origin = _origin_from_aggregate(aggregate, _minimal_summary()["most_likely_origin"])
+        assert origin["location"] == "Front Left / Front Right"
+        assert origin["alternative_locations"] == ["front_right"]
+        assert origin["dominant_phase"] == "acceleration"
+        assert origin["speed_band"] == "80-90 km/h"
+
+    def test_history_projection_reads_domain_vibration_origin(self) -> None:
+        summary = _minimal_summary(
+            findings=[
+                {
+                    "finding_id": "F001",
+                    "suspected_source": "wheel/tire",
+                    "strongest_location": "front_left",
+                    "strongest_speed_band": "80-90 km/h",
+                    "dominance_ratio": 1.05,
+                    "weak_spatial_separation": True,
+                    "dominant_phase": "acceleration",
+                    "evidence_summary": "payload rationale",
+                    "location_hotspot": {
+                        "top_location": "front_left",
+                        "ambiguous_location": True,
+                        "ambiguous_locations": ["front_left", "front_right"],
+                    },
+                }
+            ],
+            top_causes=[
+                {
+                    "finding_id": "F001",
+                    "suspected_source": "wheel/tire",
+                    "strongest_location": "front_left",
+                    "strongest_speed_band": "80-90 km/h",
+                    "dominance_ratio": 1.05,
+                    "weak_spatial_separation": True,
+                    "dominant_phase": "acceleration",
+                    "evidence_summary": "payload rationale",
+                    "location_hotspot": {
+                        "top_location": "front_left",
+                        "ambiguous_location": True,
+                        "ambiguous_locations": ["front_left", "front_right"],
+                    },
+                }
+            ],
+            most_likely_origin={},
+        )
+        projected = project_summary_through_domain(summary)
+        origin = projected["most_likely_origin"]
+        assert origin["location"] == "Front Left / Front Right"
+        assert origin["alternative_locations"] == ["front_right"]
+        assert origin["dominant_phase"] == "acceleration"
+        assert origin["speed_band"] == "80-90 km/h"
 
     def test_sensor_locations_active_prefers_connected(self) -> None:
         assert summary_sensor_locations_active(_minimal_summary()) == ["front_left"]

@@ -6,7 +6,7 @@ from collections import defaultdict
 from math import ceil, floor, log1p, pow
 
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
-from ..domain import RecommendedAction, TestPlan, VibrationSource
+from ..domain import LocationHotspot, RecommendedAction, TestPlan, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..locations import has_any_wheel_location, is_wheel_location
 from ._types import (
@@ -17,7 +17,7 @@ from ._types import (
     TestStep,
     i18n_ref,
 )
-from .helpers import _speed_bin_label, _weighted_percentile, weak_spatial_dominance_threshold
+from .helpers import _speed_bin_label, _weighted_percentile
 from .order_analysis import _finding_actions_for_source
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
@@ -297,7 +297,9 @@ def _score_locations_in_bin(
         total_samples=total_samples,
     )
     _loc_conf = min(_raw_loc_conf, 0.30) if _no_wheel_sensors else _raw_loc_conf
-    _raw_weak_spatial = dominance < weak_spatial_dominance_threshold(len(ranked_for_winner))
+    _raw_weak_spatial = dominance < LocationHotspot.weak_spatial_threshold(
+        len(ranked_for_winner)
+    )
     return {
         "speed_range": bin_label,
         "location": display_location,
