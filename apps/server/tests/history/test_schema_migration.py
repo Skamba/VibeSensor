@@ -87,12 +87,20 @@ def test_historydb_fresh_db_works_normally(tmp_path: Path) -> None:
 
 
 def test_historydb_current_version_no_migration(tmp_path: Path) -> None:
-    """An existing v5 database should not trigger migration or backup."""
+    """An existing current-version database should not trigger migration or backup."""
     db = HistoryDB(tmp_path / "history.db")
     db.close()
 
     db2 = HistoryDB(tmp_path / "history.db")
     db2.close()
 
-    backup = tmp_path / "history.bak-v5"
+    conn = sqlite3.connect(str(tmp_path / "history.db"))
+    try:
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+    finally:
+        conn.close()
+
+    assert version == SCHEMA_VERSION
+
+    backup = tmp_path / f"history.bak-v{SCHEMA_VERSION}"
     assert not backup.exists()
