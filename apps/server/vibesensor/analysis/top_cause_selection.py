@@ -111,14 +111,13 @@ def confidence_label(
 ) -> tuple[str, str, str]:
     """Return ``(label_key, tone, pct_text)`` for a 0–1 confidence value.
 
-    Delegates to :meth:`Finding.confidence_label` so the threshold
+    Delegates to :meth:`Finding.classify_confidence` so the threshold
     rules have a single source of truth in the domain model.
     """
     raw = float(conf_0_to_1) if conf_0_to_1 is not None else 0.0
-    # Clamp to valid Finding range; Finding validates [0, 1].
+    # Clamp to valid range; Finding validates [0, 1].
     clamped = max(0.0, min(1.0, raw)) if math.isfinite(raw) else 0.0
-    f = Finding(confidence=clamped)
-    return f.confidence_label(strength_band_key=strength_band_key)
+    return Finding.classify_confidence(clamped, strength_band_key=strength_band_key)
 
 
 def select_top_causes(

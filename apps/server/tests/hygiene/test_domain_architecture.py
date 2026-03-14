@@ -373,12 +373,13 @@ def test_finding_confidence_negligible_strength_downgrade() -> None:
 
 
 def test_confidence_label_delegates_to_domain() -> None:
-    """top_cause_selection.confidence_label must agree with Finding.confidence_label."""
+    """top_cause_selection.confidence_label must agree with Finding.classify_confidence."""
     from vibesensor.analysis.top_cause_selection import confidence_label
     from vibesensor.domain import Finding
 
     for conf in (0.80, 0.55, 0.20, 0.0, None):
-        expected = Finding(confidence=float(conf) if conf is not None else 0.0).confidence_label()
+        clamped = float(conf) if conf is not None else 0.0
+        expected = Finding.classify_confidence(clamped)
         actual = confidence_label(conf)
         assert actual == expected, f"Mismatch for confidence={conf}: {actual} != {expected}"
 
@@ -543,9 +544,10 @@ def test_domain_package_has_no_payload_type_imports() -> None:
     These are boundary types that belong in adapter layers.
     """
     import ast
-    from pathlib import Path
 
-    domain_dir = Path("apps/server/vibesensor/domain")
+    from tests._paths import SERVER_ROOT
+
+    domain_dir = SERVER_ROOT / "vibesensor" / "domain"
     violations: list[str] = []
     forbidden = {"FindingPayload", "AnalysisSummary"}
     for py_file in domain_dir.glob("*.py"):
