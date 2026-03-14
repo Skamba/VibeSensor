@@ -30,8 +30,8 @@ VibrationReading (dB)                  │ collected into
 |--------|------|--------------------|
 | **Run** | Aggregate root | Lifecycle (start/stop/stopped), status transitions, phase tracking |
 | **Finding** | Richest domain object | Kind (diagnostic/reference/informational), classification, actionability, surfacing, confidence thresholds, deterministic ranking, phase-adjusted scoring (flat `cruise_fraction`), vibration-source enum (`VibrationSource`), speed-band helper functions (`speed_bin_label`, `speed_band_sort_key`), REF_ prefix cross-check warning |
-| **RunAnalysisResult** | Post-analysis aggregate | Owns finalized domain `Finding` objects and top causes; provides finding classification queries (`diagnostic_findings`, `reference_findings`, `non_reference_findings`, `surfaceable_findings`, `actionable_findings`, `primary_finding`), effective top-cause selection (`effective_top_causes()`); immutable snapshot of analysis output |
-| **Report** | Metadata carrier | Run identity, language, car info, temporal metadata; finding-level data flows through `ReportMappingContext` (raw analysis dicts), not this object.  Construction from analysis summary delegated to `report/mapping.py` |
+| **RunAnalysisResult** | Post-analysis aggregate | Owns finalized domain `Finding` objects and top causes; provides finding classification queries (`diagnostic_findings`, `reference_findings`, `non_reference_findings`, `surfaceable_findings`, `actionable_findings`, `primary_finding`), effective top-cause selection (`effective_top_causes()`), reference-gap detection (`has_relevant_reference_gap()`), strength lookup (`top_strength_db()`), boundary factory (`from_summary()`); immutable snapshot of analysis output |
+| **Report** | Metadata carrier | Run identity, language, car info, temporal metadata; finding-level data flows through `ReportMappingContext` (which carries a domain `RunAnalysisResult` aggregate for domain decisions), not this object.  Construction from analysis summary delegated to `report/mapping.py` |
 
 ### Supporting domain objects
 
@@ -48,8 +48,8 @@ VibrationReading (dB)                  │ collected into
 
 - **Sensor** contains an optional **SensorPlacement**.
 - **Run** tracks lifecycle via ``start()``/``stop()`` guards and an ``is_recording`` property.  Reading accumulation is handled by the recording pipeline, not the domain object.
-- **RunAnalysisResult** is the canonical post-analysis aggregate.  It holds finalized domain ``Finding`` objects and domain-level top causes.  ``RunAnalysis.summarize()`` builds it alongside the serialization-oriented ``AnalysisSummary`` dict.
-- **Report** is a metadata carrier; finding-level data flows through `ReportMappingContext`.
+- **RunAnalysisResult** is the canonical post-analysis aggregate.  It holds finalized domain ``Finding`` objects and domain-level top causes.  ``RunAnalysis.summarize()`` builds it alongside the serialization-oriented ``AnalysisSummary`` dict.  The aggregate also provides a ``from_summary()`` factory so that the report pipeline and other downstream consumers can construct it from a persisted summary dict.
+- **Report** is a metadata carrier; finding-level data flows through `ReportMappingContext` which carries the domain aggregate.
 - **Finding** is derived from analysis of **AnalysisWindow** data (analysis-layer type, not a domain object).
 - **Car** aspects (tire dimensions) drive order-analysis hypothesis generation.
 - **SpeedSource** configures how speed is obtained during a **Run**.
@@ -69,9 +69,9 @@ These types exist only at boundaries and should not own domain behavior:
 | `FindingPayload` | `analysis/_types.py` | Dict-based analysis pipeline payload (also used for top causes after TopCause TypedDict removal) |
 | `AnalysisSummary` | `analysis/_types.py` | Analysis summary TypedDict (`.top_causes` is `list[FindingPayload]`) |
 | `SuspectedVibrationOrigin` | `analysis/_types.py` | Origin summary TypedDict (key: `suspected_source`) |
-| `LocalizationAssessment` | `analysis/summary_builder.py` | Spatial interpretation of finding evidence |
+| `LocalizationAssessment` | `analysis/summary_builder.py` | Spatial interpretation of finding evidence; accepts domain `Finding` for classification fields and payload dicts for evidence-level detail |
 | `ReportTemplateData` | `report/report_data.py` | PDF-rendering data classes |
-| `ReportMappingContext` | `report/mapping.py` | Template mapping adapter |
+| `ReportMappingContext` | `report/mapping.py` | Template mapping adapter; carries domain `RunAnalysisResult` aggregate for domain-first decisions |
 | `build_report_from_summary()` | `report/mapping.py` | Factory: analysis summary dict → domain `Report` |
 | `SummaryView` | `report/mapping.py` | Typed read accessor over `AnalysisSummary` dict |
 | `HistoryRunPayload` | `backend_types.py` | API transport TypedDict for history runs |
@@ -89,15 +89,24 @@ The analysis pipeline produces domain objects as the primary internal model:
    for filtering (`should_surface`), grouping (`source_normalized`), and
    ranking (`phase_adjusted_score`).  Returns both enriched payloads and
    domain top-cause findings.
-4. **Aggregate** — `RunAnalysis.summarize()` builds a `RunAnalysisResult`
+4. **Origin** — `summarize_origin()` accepts domain `Finding` objects
+   alongside payloads, using domain properties for suspected source,
+   confidence, and speed band.  Evidence-level localization detail
+   (location hotspots) is read from the payload.
+5. **Aggregate** — `RunAnalysis.summarize()` builds a `RunAnalysisResult`
    domain aggregate alongside the `AnalysisSummary` dict.  The aggregate
    owns the finalized domain findings and top causes.
-5. **Serialize** — `AnalysisSummary` TypedDict is the serialization/persistence
+6. **Serialize** — `AnalysisSummary` TypedDict is the serialization/persistence
    boundary form.  Downstream consumers (API, history, report CLI) use it.
-6. **Report** — `map_summary()` in `report/mapping.py` is a boundary adapter
+7. **Report** — `map_summary()` in `report/mapping.py` is a boundary adapter
    that maps `AnalysisSummary` to `ReportTemplateData` for PDF rendering.
-   Selection decisions use `select_effective_top_causes()` which applies
-   the same domain logic via `Finding.from_payload()`.
+   It constructs a domain `RunAnalysisResult` via `from_summary()` and uses
+   it for all domain decisions: effective-cause selection (delegates to
+   `RunAnalysisResult.effective_top_causes()` via `diagnosis_candidates`),
+   reference-gap detection (`has_relevant_reference_gap()`), and strength
+   lookup (`top_strength_db()`).  `FindingPayload` dicts are used only for
+   rendering-level evidence detail (signatures, order labels, confidence
+   tones).
 
 ## File layout
 
@@ -108,7 +117,7 @@ within `apps/server/vibesensor/domain/`:
 |------|---------------|-----------|
 | `measurement.py` | `Measurement`, `VibrationReading` | Tightly coupled raw-sample-to-reading pipeline |
 | `run.py` | `Run` | Aggregate root with in-memory lifecycle (start/stop guards, ``is_recording`` property) |
-| `run_analysis_result.py` | `RunAnalysisResult` | Post-analysis aggregate; owns finalized findings and top causes; canonical source of truth for downstream ranking/selection/report generation |
+| `run_analysis_result.py` | `RunAnalysisResult` | Post-analysis aggregate; owns finalized findings and top causes; provides domain queries for downstream ranking/selection/report generation; ``from_summary()`` factory for boundary construction |
 | `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | SpeedSourceKind StrEnum and speed acquisition concern |
 | `sensor.py` | `SensorPlacement`, `Sensor` | Tightly coupled sensor-and-position pair |
 | `car.py` | `Car`, `TireSpec` | Vehicle geometry and tire computation |
@@ -131,6 +140,8 @@ individual module files, unless they need a very specific internal symbol.
    persistence types convert to/from domain objects but do not duplicate
    domain logic.  `LocalizationAssessment` delegates
    classification and ranking to domain `Finding`.
+   `diagnosis_candidates.select_effective_top_causes()` delegates selection
+   to `RunAnalysisResult.effective_top_causes()`.
 
 3. **Composition over inheritance.**  Domain objects compose via containment
    (Sensor has SensorPlacement, RunAnalysisResult has Findings) rather than
@@ -157,3 +168,8 @@ individual module files, unless they need a very specific internal symbol.
    ranking, and filtering operate on domain objects.  Payload-level
    enrichment (confidence labels, phase evidence) is applied only at
    serialization boundaries.
+
+9. **Single source of truth for selection.**  Effective top-cause selection
+   logic lives on `RunAnalysisResult.effective_top_causes()`.  Boundary
+   helpers delegate to this method rather than reimplementing the rules.
+   Reference-gap detection and strength lookup also live on the aggregate.

@@ -12,9 +12,10 @@ source of truth inside the core pipeline.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
-from .finding import Finding
+from .finding import Finding, VibrationSource
 
 __all__ = ["RunAnalysisResult"]
 
@@ -41,6 +42,60 @@ class RunAnalysisResult:
     def __post_init__(self) -> None:
         if not self.run_id:
             raise ValueError("run_id must be non-empty")
+
+    # -- factories ---------------------------------------------------------
+
+    @classmethod
+    def from_summary(cls, summary: Mapping[str, object]) -> RunAnalysisResult:
+        """Construct from an ``AnalysisSummary`` dict (boundary adapter).
+
+        This factory allows the report pipeline and other downstream
+        consumers to obtain a domain aggregate from a persisted or
+        transported summary dict, so that domain queries
+        (``effective_top_causes``, ``has_relevant_reference_gap``, etc.)
+        work identically whether the analysis was just run in-process or
+        loaded from history.
+        """
+        raw_findings = summary.get("findings")
+        raw_top_causes = summary.get("top_causes")
+
+        findings_list = list(raw_findings) if isinstance(raw_findings, list) else []
+        top_causes_list = list(raw_top_causes) if isinstance(raw_top_causes, list) else []
+
+        domain_findings = tuple(
+            Finding.from_payload(f) for f in findings_list if isinstance(f, dict)
+        )
+        domain_top_causes = tuple(
+            Finding.from_payload(tc) for tc in top_causes_list if isinstance(tc, dict)
+        )
+
+        run_id = str(summary.get("run_id", "")) or "unknown"
+
+        duration_raw = summary.get("duration_s")
+        duration_s = 0.0
+        if duration_raw is not None:
+            try:
+                duration_s = float(duration_raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                pass
+
+        rows_raw = summary.get("rows")
+        sample_count = int(rows_raw) if isinstance(rows_raw, (int, float, str)) else 0
+
+        sensor_raw = summary.get("sensor_count_used")
+        sensor_count = int(sensor_raw) if isinstance(sensor_raw, (int, float, str)) else 0
+
+        lang = str(summary.get("lang", "en"))
+
+        return cls(
+            run_id=run_id,
+            findings=domain_findings,
+            top_causes=domain_top_causes,
+            duration_s=duration_s,
+            sample_count=sample_count,
+            sensor_count=sensor_count,
+            lang=lang,
+        )
 
     # -- finding queries ---------------------------------------------------
 
@@ -93,7 +148,7 @@ class RunAnalysisResult:
     def effective_top_causes(self) -> tuple[Finding, ...]:
         """Return the most useful cause list for reporting.
 
-        Preference order (matches ``diagnosis_candidates`` logic):
+        Preference order:
         1. Actionable non-reference top causes
         2. Non-reference findings
         3. Non-reference top causes
@@ -109,3 +164,43 @@ class RunAnalysisResult:
         if non_ref_tc:
             return non_ref_tc
         return self.top_causes
+
+    # -- domain queries ----------------------------------------------------
+
+    def has_relevant_reference_gap(self, primary_source: VibrationSource | str) -> bool:
+        """Whether relevant reference data is missing for *primary_source*.
+
+        A reference gap is relevant when the missing reference input
+        would materially affect the analysis of the suspected source.
+
+        *primary_source* is compared against ``VibrationSource`` enum
+        values (which are ``StrEnum`` — compare equal to plain strings).
+        """
+        source_str = str(primary_source).strip().lower()
+        for f in self.findings:
+            if not f.is_reference:
+                continue
+            fid = f.finding_id.strip().upper()
+            if fid in {"REF_SPEED", "REF_SAMPLE_RATE"}:
+                return True
+            if fid == "REF_WHEEL" and source_str in {
+                str(VibrationSource.WHEEL_TIRE),
+                str(VibrationSource.DRIVELINE),
+            }:
+                return True
+            if fid == "REF_ENGINE" and source_str == str(VibrationSource.ENGINE):
+                return True
+        return False
+
+    def top_strength_db(self) -> float | None:
+        """Return the best available vibration strength (dB) from findings.
+
+        Checks effective top causes first, then all findings.
+        """
+        for f in self.effective_top_causes():
+            if f.vibration_strength_db is not None:
+                return f.vibration_strength_db
+        for f in self.findings:
+            if f.vibration_strength_db is not None:
+                return f.vibration_strength_db
+        return None
