@@ -21,14 +21,17 @@ from vibesensor.boundaries.vibration_origin import (
 )
 from vibesensor.domain import (
     ConfidenceAssessment,
+    ConfigurationSnapshot,
     DiagnosticCase,
     Finding,
     FindingEvidence,
     LocationHotspot,
+    Run,
     RunAnalysisResult,
     RunSuitability,
     SpeedProfile,
     SuitabilityCheck,
+    TestRun,
     VibrationOrigin,
 )
 from vibesensor.domain import (
@@ -37,6 +40,32 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     TestPlan as DomainTestPlan,
 )
+
+
+def _make_test_run_finding(
+    finding_id: str,
+    *,
+    suspected_source: str = "wheel/tire",
+) -> Finding:
+    return Finding(
+        finding_id=finding_id,
+        suspected_source=suspected_source,
+        confidence=0.82,
+        strongest_location="front_left",
+    )
+
+
+def _make_test_run(
+    *,
+    findings: tuple[Finding, ...],
+    top_causes: tuple[Finding, ...],
+) -> TestRun:
+    return TestRun(
+        run=Run(run_id="run-1"),
+        configuration_snapshot=ConfigurationSnapshot(),
+        findings=findings,
+        top_causes=top_causes,
+    )
 
 # ── FindingEvidence ──────────────────────────────────────────────────────────
 
@@ -971,6 +1000,46 @@ class TestFindingWithValueObjects:
 
 
 # ── Integration: RunAnalysisResult with SpeedProfile/Suitability ────────────
+
+
+class TestTestRunTopCauseInvariant:
+    def test_allows_exact_top_cause_subset(self) -> None:
+        primary = _make_test_run_finding("F001")
+        secondary = _make_test_run_finding("F002", suspected_source="engine")
+
+        test_run = _make_test_run(
+            findings=(primary, secondary),
+            top_causes=(primary,),
+        )
+
+        assert test_run.top_causes == (primary,)
+
+    def test_allows_derived_top_cause_with_same_identity(self) -> None:
+        primary = _make_test_run_finding("F001")
+        derived_top_cause = dataclasses.replace(
+            primary,
+            confidence_assessment=ConfidenceAssessment.assess(0.82),
+        )
+
+        test_run = _make_test_run(
+            findings=(primary,),
+            top_causes=(derived_top_cause,),
+        )
+
+        assert test_run.top_causes == (derived_top_cause,)
+
+    def test_rejects_top_cause_without_matching_finding(self) -> None:
+        finding = _make_test_run_finding("F001")
+        unrelated = _make_test_run_finding("F999", suspected_source="engine")
+
+        with pytest.raises(ValueError, match="subset or derivation of findings"):
+            _make_test_run(findings=(finding,), top_causes=(unrelated,))
+
+    def test_rejects_top_cause_when_findings_are_empty(self) -> None:
+        top_cause = _make_test_run_finding("F001")
+
+        with pytest.raises(ValueError, match="must be drawn from findings"):
+            _make_test_run(findings=(), top_causes=(top_cause,))
 
 
 class TestRunAnalysisResultWithValueObjects:
