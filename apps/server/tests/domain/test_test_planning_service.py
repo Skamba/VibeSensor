@@ -1,6 +1,17 @@
 from __future__ import annotations
 
-from vibesensor.domain import Finding, Hypothesis, HypothesisStatus, VibrationSource
+from vibesensor.domain import (
+    Finding,
+    Hypothesis,
+    HypothesisStatus,
+    VibrationSource,
+)
+from vibesensor.domain import (
+    RecommendedAction as DomainRecommendedAction,
+)
+from vibesensor.domain import (
+    TestPlan as DomainTestPlan,
+)
 from vibesensor.domain.services import plan_test_actions
 
 
@@ -61,12 +72,15 @@ def test_plan_test_actions_prioritizes_and_deduplicates_domain_actions() -> None
         "driveline_inspection",
     ]
     assert [action.priority for action in plan.actions] == [1, 2, 3, 4]
+    assert plan.prioritized_actions == plan.actions
 
 
 def test_plan_test_actions_returns_fallback_when_no_findings_exist() -> None:
     plan = plan_test_actions((), (), lang="en")
 
     assert plan.requires_additional_data is True
+    assert plan.supports_case_completion is False
+    assert plan.needs_more_data() is True
     assert [action.action_id for action in plan.actions] == ["general_mechanical_inspection"]
     fallback = plan.actions[0]
     assert fallback.what == "COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS"
@@ -88,3 +102,31 @@ def test_plan_test_actions_uses_weak_spatial_fallback_for_unknown_findings() -> 
 
     assert [action.action_id for action in plan.actions] == ["general_mechanical_inspection"]
     assert plan.actions[0].why == "ACTION_GENERAL_WEAK_SPATIAL_WHY"
+
+
+def test_domain_test_plan_needs_more_data_semantics_are_flag_driven() -> None:
+    actionable_plan = DomainTestPlan(
+        actions=(
+            DomainRecommendedAction(
+                action_id="wheel_tire_condition",
+                what="ACTION_TIRE_CONDITION_WHAT",
+                priority=1,
+            ),
+        ),
+        requires_additional_data=False,
+    )
+    needs_data_plan = DomainTestPlan(
+        actions=(
+            DomainRecommendedAction(
+                action_id="general_mechanical_inspection",
+                what="COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS",
+                priority=1,
+            ),
+        ),
+        requires_additional_data=True,
+    )
+
+    assert actionable_plan.needs_more_data() is False
+    assert actionable_plan.supports_case_completion is True
+    assert needs_data_plan.needs_more_data() is True
+    assert needs_data_plan.supports_case_completion is False
