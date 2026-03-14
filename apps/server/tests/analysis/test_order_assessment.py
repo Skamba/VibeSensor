@@ -6,7 +6,7 @@ import pytest
 
 from tests.test_support.findings import make_finding_payload
 from vibesensor.analysis.top_cause_selection import _enrich_top_cause_payload, confidence_label
-from vibesensor.domain import Finding
+from vibesensor.boundaries.finding import finding_from_payload
 
 # ---------------------------------------------------------------------------
 # Top-cause enrichment (boundary adapter for presentation fields)
@@ -25,7 +25,7 @@ class TestEnrichTopCausePayload:
             diffuse_excitation=False,
             phase_evidence={"cruise_fraction": 0.8},
         )
-        domain = Finding.from_payload(finding)
+        domain = finding_from_payload(finding)
         top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["suspected_source"] == "engine"
         assert top_cause["confidence"] == pytest.approx(0.75)
@@ -36,20 +36,20 @@ class TestEnrichTopCausePayload:
 
     def test_none_confidence_in_top_cause(self) -> None:
         finding = make_finding_payload(confidence=None)
-        domain = Finding.from_payload(finding)
+        domain = finding_from_payload(finding)
         top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["confidence"] is None
 
     def test_severity_defaults_to_diagnostic(self) -> None:
         finding = make_finding_payload()
-        domain = Finding.from_payload(finding)
+        domain = finding_from_payload(finding)
         top_cause = _enrich_top_cause_payload(finding, domain)
         # The finding's order field should be populated without error
         assert "order" in top_cause
 
     def test_order_from_frequency_hz_or_order(self) -> None:
         finding = make_finding_payload(frequency_hz_or_order="2x engine")
-        domain = Finding.from_payload(finding)
+        domain = finding_from_payload(finding)
         top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["order"] == "2x engine"
 
@@ -60,7 +60,7 @@ class TestEnrichTopCausePayload:
             "grouped_count": 3,
             "diagnostic_caveat": {"_i18n_key": "SOME_CAVEAT"},
         }
-        domain = Finding.from_payload(finding)
+        domain = finding_from_payload(finding)
         top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["signatures_observed"] == ["1x", "2x"]
         assert top_cause["grouped_count"] == 3
@@ -68,20 +68,20 @@ class TestEnrichTopCausePayload:
 
     def test_negligible_strength_caps_high_confidence(self) -> None:
         finding = make_finding_payload(confidence=0.80)
-        domain = Finding.from_payload(finding)
+        domain = finding_from_payload(finding)
         top_cause = _enrich_top_cause_payload(finding, domain, strength_band_key="negligible")
         assert top_cause["confidence_label_key"] == "CONFIDENCE_MEDIUM"
         assert top_cause["confidence_tone"] == "warn"
 
     def test_phase_evidence_in_output(self) -> None:
         finding = make_finding_payload(phase_evidence={"cruise_fraction": 0.9})
-        domain = Finding.from_payload(finding)
+        domain = finding_from_payload(finding)
         top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["phase_evidence"] == {"cruise_fraction": 0.9}
 
     def test_no_phase_evidence(self) -> None:
         finding = make_finding_payload(phase_evidence=None)
-        domain = Finding.from_payload(finding)
+        domain = finding_from_payload(finding)
         top_cause = _enrich_top_cause_payload(finding, domain)
         assert top_cause["phase_evidence"] is None
 

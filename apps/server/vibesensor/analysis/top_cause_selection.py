@@ -14,6 +14,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 
+from ..boundaries.finding import finding_from_payload
 from ..domain import Finding
 from ._types import FindingPayload
 
@@ -69,7 +70,7 @@ def group_findings_by_source(
     if domain_findings is not None and len(domain_findings) == len(diag_findings):
         pairs = list(zip(diag_findings, domain_findings, strict=True))
     else:
-        pairs = [(f, Finding.from_payload(f)) for f in diag_findings]
+        pairs = [(f, finding_from_payload(f)) for f in diag_findings]
 
     groups: dict[str, list[tuple[FindingPayload, Finding]]] = defaultdict(list)
     for payload, domain in pairs:
@@ -139,7 +140,7 @@ def select_top_causes(
     if domain_findings is not None and len(domain_findings) == len(findings):
         pairs = list(zip(findings, domain_findings, strict=True))
     else:
-        pairs = [(f, Finding.from_payload(f)) for f in findings if isinstance(f, dict)]
+        pairs = [(f, finding_from_payload(f)) for f in findings if isinstance(f, dict)]
 
     surfaceable = [(payload, domain) for payload, domain in pairs if domain.should_surface]
     if not surfaceable:

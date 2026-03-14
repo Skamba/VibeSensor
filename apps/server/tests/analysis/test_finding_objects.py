@@ -10,7 +10,7 @@ from vibesensor.analysis.findings import (
     PeakFindingAnalyzer,
     finalize_findings,
 )
-from vibesensor.domain import Finding
+from vibesensor.boundaries.finding import finding_from_payload
 
 # ===========================================================================
 # Domain Finding from payload (replaces former FindingRecord tests)
@@ -19,42 +19,42 @@ from vibesensor.domain import Finding
 
 class TestDomainFindingFromPayload:
     def test_finding_id(self) -> None:
-        f = Finding.from_payload(make_finding_payload(confidence=0.65))
+        f = finding_from_payload(make_finding_payload(confidence=0.65))
         assert f.finding_id == "F_ORDER"
 
     def test_is_reference(self) -> None:
-        assert Finding.from_payload(make_ref_finding()).is_reference is True
-        assert Finding.from_payload(make_finding_payload(confidence=0.65)).is_reference is False
+        assert finding_from_payload(make_ref_finding()).is_reference is True
+        assert finding_from_payload(make_finding_payload(confidence=0.65)).is_reference is False
 
     def test_is_informational(self) -> None:
-        assert Finding.from_payload(make_info_finding()).is_informational is True
-        assert Finding.from_payload(make_finding_payload(confidence=0.65)).is_informational is False
+        assert finding_from_payload(make_info_finding()).is_informational is True
+        assert finding_from_payload(make_finding_payload(confidence=0.65)).is_informational is False
 
     def test_is_diagnostic(self) -> None:
-        assert Finding.from_payload(make_finding_payload(confidence=0.65)).is_diagnostic is True
-        assert Finding.from_payload(make_ref_finding()).is_diagnostic is False
-        assert Finding.from_payload(make_info_finding()).is_diagnostic is False
+        assert finding_from_payload(make_finding_payload(confidence=0.65)).is_diagnostic is True
+        assert finding_from_payload(make_ref_finding()).is_diagnostic is False
+        assert finding_from_payload(make_info_finding()).is_diagnostic is False
 
     def test_confidence_default(self) -> None:
-        f = Finding.from_payload(make_ref_finding())
+        f = finding_from_payload(make_ref_finding())
         assert f.effective_confidence == 0.0
 
     def test_confidence_value(self) -> None:
-        f = Finding.from_payload(make_finding_payload(confidence=0.75))
+        f = finding_from_payload(make_finding_payload(confidence=0.75))
         assert f.effective_confidence == 0.75
 
     def test_source_normalized(self) -> None:
         payload = make_finding_payload(confidence=0.65, suspected_source="  Wheel/Tire  ")
-        f = Finding.from_payload(payload)
+        f = finding_from_payload(payload)
         assert f.source_normalized == "wheel/tire"
 
     def test_strongest_location(self) -> None:
         payload = make_finding_payload(confidence=0.65, strongest_location="front_left")
-        f = Finding.from_payload(payload)
+        f = finding_from_payload(payload)
         assert f.strongest_location == "front_left"
 
     def test_ranking_score(self) -> None:
-        f = Finding.from_payload(make_finding_payload(confidence=0.65, ranking_score=2.5))
+        f = finding_from_payload(make_finding_payload(confidence=0.65, ranking_score=2.5))
         assert f.ranking_score == 2.5
 
 

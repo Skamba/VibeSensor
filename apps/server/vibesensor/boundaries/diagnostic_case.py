@@ -22,6 +22,7 @@ from ..domain.test_plan import TestPlan
 from ..domain.test_run import TestRun
 from .run_suitability import run_suitability_from_payload, run_suitability_payload
 from .test_steps import step_payloads_from_plan
+from .finding import finding_from_payload
 from .vibration_origin import origin_payload_from_finding, vibration_origin_from_payload
 
 
@@ -212,7 +213,7 @@ def _enrich_findings(raw_findings: object) -> tuple[Finding, ...]:
     for payload in raw_findings:
         if not isinstance(payload, Mapping):
             continue
-        finding = Finding.from_payload(payload)
+        finding = finding_from_payload(payload)
         signatures = _signatures_from_finding(finding, payload)
         origin = vibration_origin_from_payload(
             payload,

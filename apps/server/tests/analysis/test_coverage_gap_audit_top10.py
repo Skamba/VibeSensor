@@ -26,7 +26,8 @@ from vibesensor.analysis.summary_builder import build_phase_timeline as _build_p
 from vibesensor.analysis.summary_builder import (
     compute_accel_statistics as _compute_accel_statistics,
 )
-from vibesensor.domain import Finding, RunSuitability
+from vibesensor.boundaries.finding import finding_from_payload
+from vibesensor.domain import RunSuitability
 from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
 from vibesensor.metrics_log.sample_builder import extract_strength_data, resolve_speed_context
 
@@ -475,7 +476,7 @@ class TestPhaseRankingScore:
     """Direct unit tests for Finding.phase_adjusted_score."""
 
     def test_no_phase_evidence(self) -> None:
-        score = Finding.from_payload({"confidence": 0.80}).phase_adjusted_score
+        score = finding_from_payload({"confidence": 0.80}).phase_adjusted_score
         # No phase_evidence → cruise_fraction=0 → multiplier=0.85
         assert score == pytest.approx(0.80 * 0.85, rel=1e-3)
 
@@ -484,7 +485,7 @@ class TestPhaseRankingScore:
             "confidence": 0.80,
             "phase_evidence": {"cruise_fraction": 1.0},
         }
-        score = Finding.from_payload(finding).phase_adjusted_score
+        score = finding_from_payload(finding).phase_adjusted_score
         assert score == pytest.approx(0.80 * 1.0, rel=1e-3)
 
     def test_half_cruise(self) -> None:
@@ -492,7 +493,7 @@ class TestPhaseRankingScore:
             "confidence": 0.80,
             "phase_evidence": {"cruise_fraction": 0.50},
         }
-        score = Finding.from_payload(finding).phase_adjusted_score
+        score = finding_from_payload(finding).phase_adjusted_score
         expected = 0.80 * (0.85 + 0.15 * 0.50)
         assert score == pytest.approx(expected, rel=1e-3)
 
@@ -504,7 +505,7 @@ class TestPhaseRankingScore:
         ],
     )
     def test_degenerate_confidence_returns_zero(self, finding: dict[str, object]) -> None:
-        assert Finding.from_payload(finding).phase_adjusted_score == 0.0
+        assert finding_from_payload(finding).phase_adjusted_score == 0.0
 
 
 class TestExtractStrengthData:

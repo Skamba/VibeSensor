@@ -14,6 +14,7 @@ import dataclasses
 
 import pytest
 
+from vibesensor.boundaries.finding import finding_from_payload
 from vibesensor.boundaries.location_hotspot import location_hotspot_from_payload
 from vibesensor.boundaries.vibration_origin import (
     origin_payload_from_finding,
@@ -1350,7 +1351,7 @@ class TestFindingWithValueObjects:
                 "vibration_strength_db": 25.3,
             },
         }
-        f = Finding.from_payload(payload)
+        f = finding_from_payload(payload)
         assert f.evidence is not None
         assert f.evidence.match_rate == 0.9
         assert f.evidence.snr_db == 15.0
@@ -1404,7 +1405,7 @@ class TestFindingWithValueObjects:
                 "weak_spatial_separation": False,
             },
         }
-        f = Finding.from_payload(payload)
+        f = finding_from_payload(payload)
         assert f.location is not None
         assert f.location.strongest_location == "FL wheel"
         assert f.location.dominance_ratio == 0.75
@@ -1422,14 +1423,14 @@ class TestFindingWithValueObjects:
                 "weak_spatial_separation": True,
             },
         }
-        finding = Finding.from_payload(payload)
+        finding = finding_from_payload(payload)
         assert finding.location is not None
         assert finding.location.strongest_location == "Front Left"
         assert not finding.location.is_actionable
 
     def test_finding_from_payload_no_evidence(self) -> None:
         payload = {"finding_id": "REF_SPEED", "severity": "reference"}
-        f = Finding.from_payload(payload)
+        f = finding_from_payload(payload)
         assert f.evidence is None
         assert f.location is None
 
