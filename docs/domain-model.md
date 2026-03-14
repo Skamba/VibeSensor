@@ -31,7 +31,8 @@ Processing / algorithm layer
             │
             ▼
 Domain construction
-  (create Finding objects and the canonical RunAnalysisResult aggregate)
+  (create SpeedProfile, RunSuitability, LocationHotspot,
+   FindingEvidence, VibrationOrigin, Finding, and RunAnalysisResult)
             │
             ▼
 Report-domain construction
@@ -55,33 +56,58 @@ Canonical flow rules:
    construction, but does not replace domain behavior with payload logic.
 3. Processing code stays functional and stateless; it computes evidence and
    measurements but does not own business decisions.
-4. Core analysis decisions are made on `Finding` objects and on the
-   `RunAnalysisResult` aggregate.
-5. `RunAnalysisResult` is the canonical post-analysis aggregate for finalized
+4. Domain construction produces first-class domain/value objects for origin,
+   localization, finding evidence, run suitability, and speed behavior before
+   those concepts are serialized into payloads.
+5. Core analysis decisions are made on `Finding`, `FindingEvidence`,
+   `VibrationOrigin`, `LocationHotspot`, `RunSuitability`, `SpeedProfile`, and
+   on the `RunAnalysisResult` aggregate.
+6. `RunAnalysisResult` is the canonical post-analysis aggregate for finalized
    diagnostic truth.
-6. `Report` is the canonical report-domain object derived from
+7. `Report` is the canonical report-domain object derived from
    `RunAnalysisResult` plus report context. It owns reportable state for
    downstream presentation decisions before any rendering DTOs are created.
-7. Serialization shapes are derived from domain state for persistence,
+8. Serialization shapes are derived from domain state for persistence,
    transport, and rendering. They are outputs of the core, not peer models.
 
 ## Core domain relationship map
 
 ```text
-Car ───────▶ Run ───────▶ Finding ───────▶ RunAnalysisResult ───────▶ Report
-             ▲                               │                            │
-Sensor ──────┘                               │ analysis truth             │ rendered by
-  │                                          ▼                            ▼
-  └────▶ SensorPlacement               reportable state          report mapping adapters
+Car ───────▶ Run ───────────────▶ SpeedProfile ───────▶ RunSuitability
+             ▲                          │                     │
+Sensor ──────┘                          │ supports            │ gates / contextualizes
+  │                                     ▼                     ▼
+  └────▶ SensorPlacement         LocationHotspot ───▶ VibrationOrigin
 
-Measurement ─────▶ VibrationReading
-SpeedSource ────▶ Run
+Measurement ─────▶ VibrationReading                 │
+SpeedSource ────▶ Run                              │ informs
+                                                   ▼
+                                             FindingEvidence ───▶ Finding
+                                                                      │
+                                                                      ▼
+                                                             RunAnalysisResult
+                                                                      │
+                                                                      ▼
+                                                                    Report
+                                                                      │
+                                                                      ▼
+                                                           report mapping adapters
 ```
 
 Interpretation:
 
 - `Run` is the lifecycle-oriented aggregate root for an in-memory or persisted
-  diagnostic run.
+   diagnostic run.
+- `SpeedProfile` captures the run's speed behavior as a domain concept rather
+  than a loose stats bag.
+- `RunSuitability` captures whether the run is trustworthy and fit for
+  analysis; it is not merely a reporting checklist.
+- `LocationHotspot` captures localized concentration and ambiguity of vibration
+  evidence.
+- `VibrationOrigin` captures source-level diagnostic meaning and origin
+  ambiguity.
+- `FindingEvidence` is the structured evidence owned by or attached to a
+  `Finding`; it is not just a nested payload fragment.
 - `Finding` is the behavior-owning diagnostic object for classification,
   actionability, surfacing, and ranking semantics.
 - `RunAnalysisResult` is the canonical post-analysis aggregate for finalized
@@ -108,7 +134,11 @@ Interpretation:
 | Object | Role | Owned behavior |
 |---|---|---|
 | **Run** | Aggregate root for diagnostic run lifecycle | start/stop guards, phase tracking, run-state invariants |
+| **SpeedProfile** | Canonical speed-behavior snapshot for a run | speed coverage, steadiness, usable-range semantics, speed-related fitness signals for analysis decisions |
+| **RunSuitability** | Canonical run-fitness decision object | whether the run is usable/trustworthy enough for analysis, structured suitability outcomes, blocking vs. cautionary checks, overall readiness semantics |
 | **Finding** | Primary diagnostic entity/value-rich object | kind, classification, actionability, surfacing, confidence interpretation, deterministic ranking, phase-adjusted scoring, source and speed-band semantics |
+| **VibrationOrigin** | Canonical origin-level conclusion | suspected vibration source, ambiguity between competing sources, dominance semantics, support for origin-level conclusions, origin-level confidence context |
+| **FindingEvidence** | Canonical structured evidence for a finding | evidence quality, consistency, strength, matched-support semantics, confidence-support inputs, and evidence-level normalization before rendering/serialization |
 | **RunAnalysisResult** | Canonical post-analysis aggregate | owns finalized `Finding` objects and top-cause selection state; exposes aggregate queries used for downstream business decisions |
 | **Report** | Canonical report-domain object | owns reportable state derived from `RunAnalysisResult`, report context, surfaced findings, report-facing ordering/sections, and domain report queries prior to rendering; see [Report model clarification](#report-model-clarification) |
 
@@ -122,6 +152,27 @@ Interpretation:
 | **Measurement** | Raw sample value object | conversion to `VibrationReading` |
 | **VibrationReading** | Processed vibration-strength value object | dB-oriented reading semantics and severity lookup |
 | **SpeedSource** | Speed acquisition configuration | source-kind classification and speed-resolution invariants |
+| **LocationHotspot** | Localized concentration of vibration evidence | strongest location, alternative locations, localization ambiguity, localization confidence, and whether location evidence is strong enough to support a conclusion |
+
+### Core composition rules for the new analysis-domain objects
+
+- `SpeedProfile` is created from aligned speed samples and phase-aware speed
+  context. It is a core input into suitability, confidence, and analysis
+  gating decisions.
+- `RunSuitability` is derived from `SpeedProfile`, reference completeness, data
+  quality, and other analysis-readiness checks. It owns the structured outcome
+  of those checks.
+- `LocationHotspot` is derived from localization evidence such as
+  sensor-intensity concentration and matched evidence, but it owns the
+  localization conclusion used by the core.
+- `VibrationOrigin` is derived from ranked findings plus localization context;
+  it owns the source-level conclusion, alternative source ambiguity, and
+  origin-level support semantics.
+- `FindingEvidence` is owned by or tightly attached to `Finding`. It carries
+  structured evidence needed for confidence, consistency, and support queries.
+- `RunAnalysisResult` aggregates finalized `Finding` objects together with the
+  analysis-domain context needed for downstream report and orchestration
+  decisions. `Report` derives from that aggregate and report context.
 
 ## Report model clarification
 
@@ -149,6 +200,11 @@ to `ReportTemplateData` or report mapping adapters.
 | Concern | Owner |
 |---|---|
 | Run lifecycle and state transitions | `Run` or the relevant lifecycle aggregate/state machine in the domain |
+| Speed coverage, steadiness, and speed-related analysis fitness | `SpeedProfile` |
+| Run trustworthiness/readiness and structured suitability outcomes | `RunSuitability` |
+| Localization strength, strongest location, and localization ambiguity | `LocationHotspot` |
+| Source-level vibration conclusion, dominance, and origin ambiguity | `VibrationOrigin` |
+| Structured evidence strength, consistency, matched support, and evidence quality | `FindingEvidence` |
 | Finding classification (`diagnostic/reference/informational`) | `Finding` |
 | Actionability, surfacing, and per-finding ranking semantics | `Finding` |
 | Aggregate-level ranking, top-cause selection, and cross-finding queries | `RunAnalysisResult` |
@@ -160,6 +216,11 @@ to `ReportTemplateData` or report mapping adapters.
 Ownership rules:
 
 - lifecycle and state transitions belong to the owning entity or aggregate
+- speed-behavior semantics belong to `SpeedProfile`
+- analysis readiness and trust decisions belong to `RunSuitability`
+- localization semantics belong to `LocationHotspot`
+- origin semantics belong to `VibrationOrigin`
+- structured evidence semantics belong to `FindingEvidence`
 - classification, actionability, ranking, grouping, and surfacing belong to
   the owning domain object or aggregate
 - reportable composition belongs to `Report`
@@ -171,8 +232,10 @@ Ownership rules:
 
 - **Value objects are immutable.**
 - **Finalized domain snapshots and aggregates must be immutable once
-  published.** `Finding`, `RunAnalysisResult`, `Report`, and similar finalized
-  outputs must not expose mutable business state after construction.
+  published.** `SpeedProfile`, `RunSuitability`, `LocationHotspot`,
+  `VibrationOrigin`, `FindingEvidence`, `Finding`, `RunAnalysisResult`,
+  `Report`, and similar finalized outputs must not expose mutable business
+  state after construction.
 - **Mutable draft/build objects may exist during construction**, but they are
   construction-time helpers, not the canonical domain model.
 - **Frozen shells around mutable internals are discouraged.** If an object is
@@ -192,7 +255,7 @@ These types exist only at ingress/egress boundaries:
 | `CarConfig`, `SensorConfig`, `SpeedSourceConfig` | `backend_types.py` | config/persistence DTOs mapped into domain objects |
 | `SensorFrame` | `protocol.py` | protocol frame decoded before domain construction |
 | `RunMetadata` | `backend_types.py` | run-level boundary/config snapshot |
-| `PhaseEvidence`, `FindingPayload`, `AnalysisSummary`, `SuspectedVibrationOrigin` | `analysis/_types.py` | serialization-oriented analysis payloads and summaries |
+| `PhaseEvidence`, `FindingPayload`, `AnalysisSummary`, `SuspectedVibrationOrigin`, `RunSuitabilityCheck`, `SpeedStats`, and payload-level location/evidence fragments | `analysis/_types.py` | serialization-oriented analysis payloads and summaries derived from domain state; not primary business truth |
 | `ReportTemplateData` | `report/report_data.py` | rendering DTOs for templates/PDF |
 | `ReportMappingContext`, summary readers, mapper functions | `report/mapping.py` | egress adapters from domain report objects to rendering data |
 | `HistoryRunPayload` and similar transport shapes | `backend_types.py` and API modules | API/history transport forms |
@@ -203,6 +266,10 @@ Boundary rules:
 - boundary payloads are produced from domain state on egress
 - boundary shapes may carry extra rendering or storage detail, but they do not
   own business decisions
+- payload forms such as `SuspectedVibrationOrigin`, `RunSuitabilityCheck`,
+  `SpeedStats`, nested `location_hotspot`, or finding evidence dict fragments
+  are edge representations of `VibrationOrigin`, `RunSuitability`,
+  `SpeedProfile`, `LocationHotspot`, and `FindingEvidence`
 - reconstruction from persistence, transport, or rendering payloads belongs in
   adapters and mappers, not on domain entities or aggregates
 - if a legacy factory such as `RunAnalysisResult.from_summary()` still exists,
@@ -240,6 +307,8 @@ The following patterns are architecture violations:
 - business logic driven by repeated `.get(...)` access on dict payloads
 - payload/TypedDict/helper structures used as the primary inputs to ranking,
   grouping, classification, surfacing, or actionability decisions
+- leaving origin, localization, evidence, suitability, or speed behavior as
+  loose dict-driven business logic instead of first-class domain/value objects
 - rehydrating domain objects from payloads inside core business logic
 - domain entities or aggregates reconstructing themselves from persistence,
   transport, or rendering payloads as a normal design pattern
@@ -252,6 +321,9 @@ The following patterns are architecture violations:
   the core and treating them as peers
 - using report DTOs, API payloads, or history rows as the source of truth for
   post-analysis behavior
+- treating `SuspectedVibrationOrigin`, `RunSuitabilityCheck`, `SpeedStats`,
+  payload `location_hotspot`, or nested finding-evidence dicts as the canonical
+  internal model after domain construction
 
 ## Allowed exceptions
 
@@ -274,11 +346,16 @@ Each primary behavior-owning domain object lives in its own file under
 | `measurement.py` | `Measurement`, `VibrationReading` | raw sample and derived reading value objects |
 | `run.py` | `Run` | run lifecycle aggregate root |
 | `run_analysis_result.py` | `RunAnalysisResult` | canonical post-analysis aggregate |
+| `speed_profile.py` | `SpeedProfile` | canonical speed-behavior object for coverage, steadiness, and speed fitness |
+| `run_suitability.py` | `RunSuitability` | canonical run-readiness and trust object |
 | `speed_source.py` | `SpeedSourceKind`, `SpeedSource` | speed acquisition domain config |
 | `sensor.py` | `SensorPlacement`, `Sensor` | sensor and mount semantics |
 | `car.py` | `Car`, `TireSpec` | vehicle and tire geometry |
 | `driving_phase.py` | `DrivingPhase` | driving phase enum used by analysis/domain decisions |
-| `finding.py` | `FindingKind`, `VibrationSource`, `Finding` | finding behavior, ranking, and classification |
+| `location_hotspot.py` | `LocationHotspot` | localization-domain object for strongest location and ambiguity |
+| `vibration_origin.py` | `VibrationOrigin` | source/origin-domain object for origin-level conclusions |
+| `finding_evidence.py` | `FindingEvidence` | structured evidence object associated with `Finding` |
+| `finding.py` | `FindingKind`, `VibrationSource`, `Finding` | finding behavior, ranking, classification, and ownership of `FindingEvidence` |
 | `report.py` | `Report` | report-domain object derived from `RunAnalysisResult`; rendering DTOs remain adapter concerns |
 | `run_status.py` | `RunStatus`, transitions | persisted run lifecycle state machine |
 
@@ -293,6 +370,8 @@ boundary modules.
    derived from domain state and exist at the edges.
 3. **Domain objects own behavior.** Do not split classification, ranking,
    selection, or lifecycle logic across helpers and adapters.
+   Do not leave source/origin, localization, evidence-quality, run-suitability,
+   or speed-profile logic in payload readers.
 4. **Adapters translate; they do not decide.** They map, serialize, decode, and
    render.
 5. **Stateless math stays functional.** Keep DSP/FFT/signal transforms as pure
@@ -302,3 +381,7 @@ boundary modules.
 7. **Treat `Report` precisely.** It is a real domain object for reportable
    state derived from `RunAnalysisResult`; it is not a mere metadata bag and it
    is not a rendering DTO.
+8. **Model analysis context explicitly.** `VibrationOrigin`, `LocationHotspot`,
+   `FindingEvidence`, `RunSuitability`, and `SpeedProfile` are first-class
+   domain/value objects in the target architecture, not convenience wrappers
+   around summary payload fields.
