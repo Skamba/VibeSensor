@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.domain import Finding, TestRun
+from vibesensor.domain.run_capture import RunCapture
 from vibesensor.report.mapping import (
     PrimaryCandidateContext,
     ReportMappingContext,
@@ -13,17 +15,38 @@ from vibesensor.report.mapping import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+_EMPTY_CAPTURE = RunCapture(run_id="test-run")
+
+
+def _make_finding(**overrides: object) -> Finding:
+    """Build a minimal domain Finding."""
+    defaults: dict[str, object] = {
+        "finding_id": "F001",
+        "suspected_source": "wheel/tire",
+        "confidence": 0.75,
+        "strongest_location": "front_left",
+    }
+    defaults.update(overrides)
+    return Finding(**defaults)  # type: ignore[arg-type]
+
+
+def _make_test_run(
+    findings: tuple[Finding, ...] = (),
+    top_causes: tuple[Finding, ...] = (),
+) -> TestRun:
+    """Build a TestRun with the given findings."""
+    return TestRun(capture=_EMPTY_CAPTURE, findings=findings, top_causes=top_causes)
+
 
 def _make_context(**overrides: object) -> ReportMappingContext:
     """Build a minimal ReportMappingContext with overrides."""
+    if "domain_aggregate" not in overrides:
+        overrides["domain_aggregate"] = _make_test_run()
     defaults: dict[str, object] = {
         "meta": {},
         "car_name": None,
         "car_type": None,
         "date_str": "2025-01-01 12:00:00 UTC",
-        "top_causes": [],
-        "findings_non_ref": [],
-        "findings": [],
         "speed_stats": {
             "min_kmh": None,
             "max_kmh": None,
@@ -54,18 +77,6 @@ def _make_context(**overrides: object) -> ReportMappingContext:
     return ReportMappingContext(**defaults)  # type: ignore[arg-type]
 
 
-def _make_cause(**overrides: object) -> dict:
-    """Build a minimal cause dict."""
-    base = {
-        "finding_id": "F001",
-        "suspected_source": "wheel/tire",
-        "confidence": 0.75,
-        "strongest_location": "front_left",
-    }
-    base.update(overrides)
-    return base
-
-
 # ---------------------------------------------------------------------------
 # Candidate selection
 # ---------------------------------------------------------------------------
@@ -73,14 +84,21 @@ def _make_cause(**overrides: object) -> dict:
 
 class TestTopReportCandidate:
     def test_returns_first_top_cause(self) -> None:
-        cause = _make_cause(finding_id="F001")
-        context = _make_context(top_causes=[cause, _make_cause(finding_id="F002")])
-        assert context.top_report_candidate() is cause
+        f1 = _make_finding(finding_id="F001")
+        f2 = _make_finding(finding_id="F002")
+        aggregate = _make_test_run(findings=(f1, f2), top_causes=(f1,))
+        context = _make_context(domain_aggregate=aggregate)
+        result = context.top_report_candidate()
+        assert result is not None
+        assert result.finding_id == "F001"
 
     def test_falls_back_to_first_non_ref_finding(self) -> None:
-        finding = _make_cause(finding_id="F001")
-        context = _make_context(top_causes=[], findings_non_ref=[finding])
-        assert context.top_report_candidate() is finding
+        f1 = _make_finding(finding_id="F001")
+        aggregate = _make_test_run(findings=(f1,))
+        context = _make_context(domain_aggregate=aggregate)
+        result = context.top_report_candidate()
+        assert result is not None
+        assert result.finding_id == "F001"
 
     def test_returns_none_when_empty(self) -> None:
         context = _make_context()
@@ -121,7 +139,7 @@ class TestObservedSignature:
     def test_builds_from_primary(self) -> None:
         context = _make_context()
         primary = PrimaryCandidateContext(
-            primary_candidate=_make_cause(),
+            primary_candidate=_make_finding(),
             primary_source="wheel/tire",
             primary_system="Wheel / Tire",
             primary_location="front_left",

@@ -6,7 +6,7 @@ import logging
 import os
 from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from statistics import mean as _mean
 
 from .. import __version__
@@ -28,7 +28,6 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..boundaries._helpers import _payloads_by_id
 from ..boundaries.finding import finding_payload_from_domain
 from ..boundaries.run_suitability import run_suitability_payload
 from ..boundaries.vibration_origin import SuspectedVibrationOrigin, origin_payload_from_finding
@@ -76,9 +75,6 @@ class ReportMappingContext:
     car_name: str | None
     car_type: str | None
     date_str: str
-    top_causes: list[FindingPayload]
-    findings_non_ref: list[FindingPayload]
-    findings: list[FindingPayload]
     speed_stats: SpeedStats
     origin: SuspectedVibrationOrigin
     origin_location: str
@@ -92,31 +88,21 @@ class ReportMappingContext:
     sample_count: int
     sensor_model: str | None
     firmware_version: str | None
-    # Domain aggregate for domain-first decisions.
-    domain_aggregate: TestRun | None = None
-    finding_payloads_by_id: dict[str, FindingPayload] = field(default_factory=dict)
-    top_cause_payloads_by_id: dict[str, FindingPayload] = field(default_factory=dict)
+    # Domain aggregate — the primary data source for business decisions.
+    domain_aggregate: TestRun
 
     # -- candidate selection ------------------------------------------------
 
-    def top_report_candidate(self) -> FindingPayload | None:
+    def top_report_candidate(self) -> Finding | None:
         """Return the primary report candidate (first effective top cause or finding)."""
-        if self.domain_aggregate is not None:
-            effective = self.domain_aggregate.effective_top_causes()
-            if effective:
-                payload = self.payload_for_finding(effective[0])
-                if payload is not None:
-                    return payload
-        candidates = self.top_causes or self.findings_non_ref
-        return candidates[0] if candidates else None
-
-    def payload_for_finding(self, finding: Finding) -> FindingPayload | None:
-        if finding.finding_id:
-            payload = self.top_cause_payloads_by_id.get(finding.finding_id)
-            if payload is not None:
-                return payload
-            return self.finding_payloads_by_id.get(finding.finding_id)
-        return None
+        effective = self.domain_aggregate.effective_top_causes()
+        if effective:
+            return effective[0]
+        non_ref = self.domain_aggregate.non_reference_findings
+        if non_ref:
+            return non_ref[0]
+        all_findings = self.domain_aggregate.findings
+        return all_findings[0] if all_findings else None
 
     # -- intensity queries --------------------------------------------------
 
@@ -153,7 +139,7 @@ class ReportMappingContext:
 class PrimaryCandidateContext:
     """Primary report candidate resolved from top causes or findings."""
 
-    primary_candidate: FindingPayload | None
+    primary_candidate: Finding | None
     primary_source: object
     primary_system: str
     primary_location: str
@@ -698,55 +684,36 @@ def build_system_cards(
     tier = primary.tier
     if tier == "A":
         return []
-    card_sources = context.top_causes or context.findings_non_ref or context.findings
-
-    # Build a lookup from finding_id → domain Finding for business queries.
     aggregate = context.domain_aggregate
-    domain_map: dict[str, Finding] = {}
-    if aggregate:
-        from itertools import chain
-
-        for f in chain(aggregate.effective_top_causes(), aggregate.findings):
-            if f.finding_id and f.finding_id not in domain_map:
-                domain_map[f.finding_id] = f
+    card_sources = (
+        aggregate.effective_top_causes()
+        or aggregate.non_reference_findings
+        or aggregate.findings
+    )
 
     cards: list[SystemFindingCard] = []
-    for cause in card_sources[:2]:
-        raw_id = cause.get("finding_id")
-        finding_id = str(raw_id) if raw_id is not None else ""
-        domain_finding = domain_map.get(finding_id) if finding_id else None
-
-        # Business decisions: prefer domain Finding, fall back to payload
-        if domain_finding:
-            source = str(domain_finding.suspected_source)
-            source_human = human_source(source, tr=tr)
-            # Use domain LocationHotspot for location when available
-            if domain_finding.location and domain_finding.location.is_actionable:
-                location = domain_finding.location.display_location
-            else:
-                location = str(domain_finding.strongest_location or tr("UNKNOWN"))
-            # Use domain ConfidenceAssessment for tone when available
-            if domain_finding.confidence_assessment:
-                tone = domain_finding.confidence_assessment.tone
-            else:
-                tone = domain_finding.confidence_label(
-                    strength_band_key=primary.strength_band_key,
-                )[1]
+    for domain_finding in card_sources[:2]:
+        source = str(domain_finding.suspected_source)
+        source_human = human_source(source, tr=tr)
+        # Use domain LocationHotspot for location when available
+        if domain_finding.location and domain_finding.location.is_actionable:
+            location = domain_finding.location.display_location
         else:
-            logger.warning(
-                "build_system_cards: domain aggregate not available, falling back to raw summary",
-            )
-            source = cause.get("suspected_source") or "unknown"
-            source_human = human_source(source, tr=tr)
-            location = str(cause.get("strongest_location") or tr("UNKNOWN"))
-            tone = cause.get("confidence_tone", "neutral")
+            location = str(domain_finding.strongest_location or tr("UNKNOWN"))
+        # Use domain ConfidenceAssessment for tone when available
+        if domain_finding.confidence_assessment:
+            tone = domain_finding.confidence_assessment.tone
+        else:
+            tone = domain_finding.confidence_label(
+                strength_band_key=primary.strength_band_key,
+            )[1]
 
-        # Rendering detail: prefer domain signatures, fall back to payload enrichment.
+        # Rendering detail from domain signatures.
         signature_values: object
-        if domain_finding and domain_finding.signature_labels:
+        if domain_finding.signature_labels:
             signature_values = list(domain_finding.signature_labels)
         else:
-            signature_values = cause.get("signatures_observed", [])
+            signature_values = []
         signatures_human = humanize_signatures(signature_values, lang=lang)
         pattern_text = ", ".join(signatures_human) if signatures_human else tr("UNKNOWN")
         order_label = signatures_human[0] if signatures_human else None
@@ -825,20 +792,19 @@ def resolve_interpretation(origin: SuspectedVibrationOrigin, *, lang: str, tr: C
 
 
 def resolve_parts_context(
-    primary_candidate: FindingPayload | None,
+    primary_candidate: Finding | None,
     *,
     domain_finding: Finding | None = None,
     lang: str,
 ) -> tuple[str, str | None]:
     """Resolve source/order context used for why-parts-listed text."""
-    if domain_finding is not None:
-        source_for_why = str(domain_finding.suspected_source)
-        signatures: object = list(domain_finding.signature_labels)
+    finding = domain_finding or primary_candidate
+    if finding is not None:
+        source_for_why = str(finding.suspected_source)
+        signatures: object = list(finding.signature_labels)
     else:
-        source_for_why = str(
-            primary_candidate.get("suspected_source", "") if primary_candidate else "",
-        )
-        signatures = primary_candidate.get("signatures_observed", []) if primary_candidate else []
+        source_for_why = ""
+        signatures = []
     if isinstance(signatures, list) and signatures:
         order_label = order_label_human(lang, str(signatures[0]))
     else:
@@ -924,11 +890,6 @@ def prepare_report_mapping_context(
     report_date = summary_report_date(summary) or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
-    summary_findings_all = summary_findings(summary)
-    summary_top_causes_all = summary_top_causes(summary)
-    summary_findings_by_id = _payloads_by_id(summary_findings_all)
-    summary_top_causes_by_id = _payloads_by_id(summary_top_causes_all)
-
     speed_stats = summary_speed_stats(summary)
     origin = summary_origin(summary)
     sensor_locations_active = summary_sensor_locations_active(summary)
@@ -941,18 +902,6 @@ def prepare_report_mapping_context(
     else:
         domain_aggregate = test_run
 
-    findings = [
-        finding_payload_from_domain(finding)
-        for finding in domain_aggregate.findings
-    ]
-    findings_non_ref = [
-        finding_payload_from_domain(finding)
-        for finding in domain_aggregate.non_reference_findings
-    ]
-    top_causes = [
-        finding_payload_from_domain(finding)
-        for finding in domain_aggregate.effective_top_causes()
-    ]
     origin = _origin_from_aggregate(domain_aggregate, origin)
 
     origin_location = normalized_origin_location(origin)
@@ -962,9 +911,6 @@ def prepare_report_mapping_context(
         car_name=car_name,
         car_type=car_type,
         date_str=date_str,
-        top_causes=top_causes,
-        findings_non_ref=findings_non_ref,
-        findings=findings,
         speed_stats=speed_stats,
         origin=origin,
         origin_location=origin_location,
@@ -978,8 +924,6 @@ def prepare_report_mapping_context(
         sensor_model=summary_sensor_model(summary),
         firmware_version=summary_firmware_version(summary),
         domain_aggregate=domain_aggregate,
-        finding_payloads_by_id=summary_findings_by_id,
-        top_cause_payloads_by_id=summary_top_causes_by_id,
     )
 
 
@@ -998,7 +942,6 @@ def resolve_primary_report_candidate(
     """
     primary_candidate = context.top_report_candidate()
     aggregate = context.domain_aggregate
-    assert aggregate is not None
 
     primary_source: object = None
     # Domain-first: derive all business fields from the aggregate
@@ -1012,23 +955,9 @@ def resolve_primary_report_candidate(
         )
         primary_speed = str(
             domain_primary.strongest_speed_band
-            or (primary_candidate.get("speed_band") if primary_candidate else None)
             or tr("UNKNOWN"),
         )
         confidence = domain_primary.effective_confidence
-    elif primary_candidate:
-        # Aggregate exists but has no findings; fall back to payload
-        primary_source = primary_candidate.get("suspected_source")
-        primary_system = human_source(primary_source, tr=tr)
-        primary_location = context.origin_location or str(
-            primary_candidate.get("strongest_location") or tr("UNKNOWN"),
-        )
-        primary_speed = str(
-            primary_candidate.get("strongest_speed_band")
-            or primary_candidate.get("speed_band")
-            or tr("UNKNOWN"),
-        )
-        confidence = extract_confidence(primary_candidate)
     else:
         primary_system = tr("UNKNOWN")
         primary_location = context.origin_location or tr("UNKNOWN")
@@ -1232,8 +1161,14 @@ def _build_report_template_data(
         version_marker=version_marker,
         lang=report.lang,
         certainty_tier_key=primary.tier,
-        findings=context.findings,  # type: ignore[arg-type]
-        top_causes=context.top_causes,  # type: ignore[arg-type]  # context union type
+        findings=[
+            finding_payload_from_domain(f)
+            for f in context.domain_aggregate.findings
+        ],
+        top_causes=[
+            finding_payload_from_domain(f)
+            for f in context.domain_aggregate.effective_top_causes()
+        ],
         sensor_intensity_by_location=raw_sensor_intensity,
         location_hotspot_rows=hotspot_rows,
     )

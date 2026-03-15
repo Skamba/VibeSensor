@@ -390,22 +390,12 @@ def test_build_system_cards_uses_domain_findings() -> None:
         findings=(domain_f,),
         top_causes=(domain_f,),
     )
-    # Build a context with the aggregate and matching payload top_causes
-    cause_payload = {
-        "finding_id": "F001",
-        "suspected_source": "wheel/tire",
-        "confidence": 0.80,
-        "strongest_location": "Left Front",
-        "confidence_tone": "WRONG_TONE",  # Intentionally wrong
-    }
+    # Build a context with the aggregate (payloads no longer stored on context)
     context = ReportMappingContext(
         meta={},
         car_name=None,
         car_type=None,
         date_str="",
-        top_causes=[cause_payload],  # type: ignore[list-item]
-        findings_non_ref=[],
-        findings=[],
         speed_stats={},  # type: ignore[typeddict-item]
         origin={},  # type: ignore[typeddict-item]
         origin_location="",
@@ -421,7 +411,7 @@ def test_build_system_cards_uses_domain_findings() -> None:
         domain_aggregate=aggregate,
     )
     primary = PrimaryCandidateContext(
-        primary_candidate=cause_payload,  # type: ignore[arg-type]
+        primary_candidate=domain_f,
         primary_source="wheel/tire",
         primary_system="Wheel/Tire",
         primary_location="Left Front",
