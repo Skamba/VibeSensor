@@ -1,4 +1,9 @@
-"""Boundary decoder: payload dict → domain Finding."""
+"""Boundary decoder and projector for domain Finding.
+
+``finding_from_payload``  — payload → domain (history reconstruction and
+analysis finalization).
+``finding_payload_from_domain`` — domain → payload (persistence serialization).
+"""
 
 from __future__ import annotations
 
@@ -15,6 +20,13 @@ _MAX_SIGNATURES_PER_FINDING: int = 3
 
 def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     """Create a domain Finding from a ``FindingPayload`` dict.
+
+    Used at two boundary points:
+
+    * **history reconstruction** — decoding persisted summaries via
+      ``test_run_from_summary()``.
+    * **analysis finalization** — converting analysis-pipeline dicts into
+      domain objects at the end of ``finalize_findings()``.
 
     Extracts the subset of fields that the domain object cares about,
     ignoring serialization-only keys present in the full payload.
