@@ -1135,7 +1135,6 @@ def test_domain_vos_have_no_dict_accepting_factory_methods() -> None:
     boundary adapter migration.
     """
     import inspect
-    from collections.abc import Mapping
 
     from tests._paths import SERVER_ROOT
 
@@ -1178,7 +1177,8 @@ def test_domain_vos_have_no_dict_accepting_factory_methods() -> None:
                 ):
                     continue
                 try:
-                    hints = inspect.get_annotations(method.__func__ if hasattr(method, "__func__") else method)
+                    raw = method.__func__ if hasattr(method, "__func__") else method
+                    hints = inspect.get_annotations(raw)
                 except Exception:
                     continue
                 for param_name, annotation in hints.items():
@@ -1260,8 +1260,17 @@ def test_f_order_finding_id_normalization() -> None:
     # Reference findings keep their original IDs
     payloads_ref, domain_ref = finalize_findings(
         [
-            {"finding_id": "REF_SPEED", "finding_kind": "reference", "confidence": None, "suspected_source": "unknown"},
-            {"finding_id": "F_ORDER", "confidence": 0.7, "suspected_source": "wheel/tire"},
+            {
+                "finding_id": "REF_SPEED",
+                "finding_kind": "reference",
+                "confidence": None,
+                "suspected_source": "unknown",
+            },
+            {
+                "finding_id": "F_ORDER",
+                "confidence": 0.7,
+                "suspected_source": "wheel/tire",
+            },
         ]
     )
     assert domain_ref[0].finding_id == "REF_SPEED"
@@ -1297,9 +1306,7 @@ def test_next_steps_domain_path_is_primary() -> None:
     assert domain_guard != -1, (
         "build_next_steps_from_summary must check aggregate.recommended_actions"
     )
-    assert payload_loop != -1, (
-        "build_next_steps_from_summary must have payload fallback loop"
-    )
+    assert payload_loop != -1, "build_next_steps_from_summary must have payload fallback loop"
     assert domain_guard < payload_loop, (
         "Domain aggregate if-guard must appear BEFORE the payload fallback loop "
         f"(domain at pos {domain_guard}, payload loop at pos {payload_loop})"
@@ -1335,8 +1342,7 @@ def test_report_mapping_fallback_not_primary_path() -> None:
     # Verify domain-first path exists: aggregate.top_strength_db() and
     # aggregate.has_relevant_reference_gap()
     assert "aggregate.top_strength_db()" in func_body, (
-        "resolve_primary_report_candidate must use aggregate.top_strength_db() "
-        "as primary path"
+        "resolve_primary_report_candidate must use aggregate.top_strength_db() as primary path"
     )
     assert "aggregate.has_relevant_reference_gap(" in func_body, (
         "resolve_primary_report_candidate must use aggregate.has_relevant_reference_gap() "

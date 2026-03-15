@@ -86,9 +86,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
                 pass
 
     # Build domain value objects from nested dicts when available
-    evidence = (
-        finding_evidence_from_metrics(ev_metrics) if isinstance(ev_metrics, dict) else None
-    )
+    evidence = finding_evidence_from_metrics(ev_metrics) if isinstance(ev_metrics, dict) else None
     hotspot_raw = payload.get("location_hotspot")
     location = location_hotspot_from_payload(hotspot_raw) if isinstance(hotspot_raw, dict) else None
 

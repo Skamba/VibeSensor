@@ -11,9 +11,7 @@ def finding_evidence_from_metrics(d: dict[str, object]) -> FindingEvidence:
     phase_items: tuple[tuple[str, float], ...] = ()
     if isinstance(phase_conf, dict):
         phase_items = tuple(
-            (str(k), float(v))
-            for k, v in sorted(phase_conf.items())
-            if isinstance(v, (int, float))
+            (str(k), float(v)) for k, v in sorted(phase_conf.items()) if isinstance(v, (int, float))
         )
 
     def _float(key: str, *fallbacks: str) -> float:

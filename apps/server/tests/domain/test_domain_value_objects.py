@@ -17,6 +17,7 @@ import pytest
 from vibesensor.boundaries.finding import finding_from_payload
 from vibesensor.boundaries.finding_evidence import finding_evidence_from_metrics
 from vibesensor.boundaries.location_hotspot import location_hotspot_from_payload
+from vibesensor.boundaries.run_suitability import run_suitability_from_payload
 from vibesensor.boundaries.speed_profile import speed_profile_from_stats
 from vibesensor.boundaries.vibration_origin import (
     origin_payload_from_finding,
@@ -1191,9 +1192,6 @@ class TestSuitabilityCheck:
         assert not SuitabilityCheck(check_key="a", state="pass").failed
         assert SuitabilityCheck(check_key="a", state="fail").failed
         assert SuitabilityCheck(check_key="a", state="warn").is_warning
-
-
-from vibesensor.boundaries.run_suitability import run_suitability_from_payload
 
 
 class TestRunSuitability:

@@ -114,7 +114,6 @@ def _hypothesis_from_finding(finding: Finding, signatures: tuple[Signature, ...]
     )
 
 
-
 def _checks_from_suitability(suitability: RunSuitability | None) -> list[dict[str, object]]:
     return run_suitability_payload(suitability)
 
