@@ -42,6 +42,7 @@ VibrationReading
 from .car import Car, TireSpec
 from .confidence_assessment import ConfidenceAssessment
 from .configuration_snapshot import ConfigurationSnapshot
+from .diagnosis import Diagnosis
 from .diagnostic_case import DiagnosticCase, DiagnosticCaseEpistemicRule
 from .driving_phase import DrivingPhase
 from .driving_segment import DrivingSegment
@@ -76,6 +77,7 @@ __all__ = [
     "Car",
     "ConfigurationSnapshot",
     "ConfidenceAssessment",
+    "Diagnosis",
     "DiagnosticCase",
     "DiagnosticCaseEpistemicRule",
     "DrivingSegment",

@@ -26,6 +26,7 @@ from vibesensor.boundaries.vibration_origin import (
 from vibesensor.domain import (
     ConfidenceAssessment,
     ConfigurationSnapshot,
+    Diagnosis,
     DiagnosticCase,
     DiagnosticCaseEpistemicRule,
     DrivingPhase,
@@ -630,9 +631,16 @@ class TestTestPlan:
 
 class TestDiagnosticCase:
     def test_case_complete_when_findings_exist_and_plan_supports_completion(self) -> None:
+        f = Finding(suspected_source="engine", confidence=0.74)
         case = DiagnosticCase(
             case_id="case-1",
-            findings=(Finding(suspected_source="engine", confidence=0.74),),
+            diagnoses=(
+                Diagnosis.from_finding_group(
+                    ("engine", None),
+                    (f,),
+                    DiagnosticCaseEpistemicRule.UNRESOLVED_SUPPORT,
+                ),
+            ),
             test_plan=DomainTestPlan(
                 actions=(
                     DomainRecommendedAction(
@@ -647,9 +655,16 @@ class TestDiagnosticCase:
         assert case.needs_more_data is False
 
     def test_case_incomplete_when_test_plan_requires_more_data(self) -> None:
+        f = Finding(suspected_source="wheel/tire", confidence=0.81)
         case = DiagnosticCase(
             case_id="case-2",
-            findings=(Finding(suspected_source="wheel/tire", confidence=0.81),),
+            diagnoses=(
+                Diagnosis.from_finding_group(
+                    ("wheel/tire", None),
+                    (f,),
+                    DiagnosticCaseEpistemicRule.UNRESOLVED_SUPPORT,
+                ),
+            ),
             test_plan=DomainTestPlan(requires_additional_data=True),
         )
 
@@ -917,9 +932,9 @@ class TestDiagnosticCaseReconcile:
             ),
         )
 
-        assert len(case.findings) == 1
-        assert case.findings[0].finding_id == "F002"
-        assert case.findings[0].confidence == 0.40
+        assert len(case.diagnoses) == 1
+        assert case.diagnoses[0].representative_finding.finding_id == "F002"
+        assert case.diagnoses[0].representative_finding.confidence == 0.40
 
     def test_reconcile_action_lowest_priority_wins(self) -> None:
         """Action merge picks the lowest priority for a given action_id."""
@@ -1024,9 +1039,9 @@ class TestDiagnosticCaseReconcile:
         assert case.hypotheses[0].support_score == 0.78  # latest run
 
         # Finding: latest run's finding kept (F003, confidence=0.70)
-        assert len(case.findings) == 1
-        assert case.findings[0].finding_id == "F003"
-        assert case.findings[0].confidence == 0.70
+        assert len(case.diagnoses) == 1
+        assert case.diagnoses[0].representative_finding.finding_id == "F003"
+        assert case.diagnoses[0].representative_finding.confidence == 0.70
 
         # Actions: check_tires picks lowest priority (20), rotate_wheels (40) also present
         action_ids = {a.action_id for a in case.recommended_actions}
@@ -1612,7 +1627,19 @@ class TestDiagnosticCaseCompleteness:
             )
         return DiagnosticCase(
             case_id="case-1",
-            findings=findings,
+            diagnoses=tuple(
+                Diagnosis.from_finding_group(
+                    (
+                        f.source_normalized,
+                        f.strongest_location
+                        if not Finding.is_unknown_location(f.strongest_location)
+                        else None,
+                    ),
+                    (f,),
+                    DiagnosticCaseEpistemicRule.UNRESOLVED_SUPPORT,
+                )
+                for f in findings
+            ),
             test_runs=runs,
             test_plan=test_plan or DomainTestPlan(),
         )

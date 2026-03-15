@@ -734,7 +734,7 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     diagnostic_case = diagnostic_case_from_summary(summary)
     assert diagnostic_case.case_id == "summary-case-guard-id"
     assert diagnostic_case.test_runs
-    assert diagnostic_case.findings
+    assert diagnostic_case.diagnoses
     assert diagnostic_case.primary_run is not None
 
 

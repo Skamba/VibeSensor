@@ -190,8 +190,8 @@ class TestMultiRunReconciliation:
         case = case.add_run(_run("run-2", findings=(f2,), top_causes=(f2,)))
 
         # The two are treated as same identity → latest kept
-        assert len(case.findings) == 1
-        assert case.findings[0].finding_id == "F002"
+        assert len(case.diagnoses) == 1
+        assert case.diagnoses[0].representative_finding.finding_id == "F002"
 
     def test_reconcile_preserves_action_priority_ordering(self) -> None:
         """Multiple runs with overlapping actions — lowest priority wins and sorted."""
@@ -254,8 +254,11 @@ class TestMultiRunReconciliation:
         assert hyp_map["hyp-B"].support_score == 0.6
 
         # Finding X (same source+location) → latest = 0.6; Finding Y → 0.7
-        assert len(case.findings) == 2
-        confidence_map = {f.source_normalized: f.confidence for f in case.findings}
+        assert len(case.diagnoses) == 2
+        confidence_map = {
+            d.representative_finding.source_normalized: d.representative_finding.confidence
+            for d in case.diagnoses
+        }
         assert confidence_map["wheel/tire"] == 0.6
         assert confidence_map["driveline"] == 0.7
 
@@ -544,7 +547,7 @@ class TestMultiRunReconciliationEdgeCases:
         case = DiagnosticCase.start()
         case = case.add_run(_run("run-1"))
 
-        assert case.findings == ()
+        assert case.diagnoses == ()
         assert case.hypotheses == ()
         assert len(case.test_runs) == 1
 
@@ -553,7 +556,7 @@ class TestMultiRunReconciliationEdgeCases:
         case = case.add_run(_run("run-1"))
         case = case.add_run(_run("run-2"))
 
-        assert case.findings == ()
+        assert case.diagnoses == ()
         assert case.hypotheses == ()
         assert len(case.test_runs) == 2
 
@@ -567,8 +570,8 @@ class TestMultiRunReconciliationEdgeCases:
         case = case.add_run(_run("run-2", findings=(f2,), top_causes=(f2,)))
 
         # Same source+location identity → latest kept
-        assert len(case.findings) == 1
-        assert case.findings[0].confidence == 0.9
+        assert len(case.diagnoses) == 1
+        assert case.diagnoses[0].representative_finding.confidence == 0.9
 
     def test_contradictory_findings_across_runs(self) -> None:
         """Two runs point to different actionable sources → CONTRADICTION."""
@@ -633,7 +636,7 @@ class TestMultiRunReconciliationEdgeCases:
             _run("run-2", findings=(non_actionable,), top_causes=(non_actionable,)),
         )
         # Both are kept since they have distinct identity
-        sources = {f.source_normalized for f in case.findings}
+        sources = {d.representative_finding.source_normalized for d in case.diagnoses}
         assert "wheel/tire" in sources
 
     def test_reconcile_with_real_world_three_run_progression(self) -> None:
@@ -678,9 +681,11 @@ class TestMultiRunReconciliationEdgeCases:
         )
 
         # wheel/tire finding should be latest (0.9)
-        wt = [f for f in case.findings if f.source_normalized == "wheel/tire"]
+        wt = [
+            d for d in case.diagnoses if d.representative_finding.source_normalized == "wheel/tire"
+        ]
         assert len(wt) == 1
-        assert wt[0].confidence == 0.9
+        assert wt[0].representative_finding.confidence == 0.9
 
         # hyp-B kept with latest support, hyp-A also kept (not retired)
         hyp_map = {h.hypothesis_id: h for h in case.hypotheses}
