@@ -113,6 +113,11 @@ class SettingsSnapshotPayload(SpeedSourcePayload):
 
 
 class HistoryRunListEntryPayload(TypedDict, total=False):
+    """Typed record returned by :meth:`HistoryRunService.list_runs`.
+
+    Subset of :class:`HistoryRunPayload` without ``metadata``/``analysis``.
+    """
+
     run_id: str
     status: str
     start_time_utc: str
@@ -123,6 +128,13 @@ class HistoryRunListEntryPayload(TypedDict, total=False):
 
 
 class HistoryRunPayload(TypedDict, total=False):
+    """Typed record returned by :meth:`HistoryRunService.get_run`.
+
+    Acts as the history-record boundary type used throughout the service
+    layer.  All ``history_services/`` methods return this (or its list
+    subset) instead of raw dicts.
+    """
+
     run_id: str
     status: str
     start_time_utc: str
