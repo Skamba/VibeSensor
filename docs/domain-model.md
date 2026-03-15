@@ -305,10 +305,25 @@ The concept categories in this repo are:
 - `Diagnosis`
 - `Finding`
 - `DrivingSegment`
+- `DrivingPhase`
 - `Car`
 - `Sensor`
 - `SensorPlacement`
 - `SpeedSource`
+- `Symptom`
+- `TestPlan`
+- `RecommendedAction`
+- `SpeedProfile`
+- `RunSuitability`
+- `SuitabilityCheck`
+- `ConfigurationSnapshot`
+
+### Finding-scoped value objects
+
+- `ConfidenceAssessment`
+- `FindingEvidence`
+- `LocationHotspot`
+- `VibrationOrigin`
 
 ### Capture and evidence domain objects
 
@@ -412,6 +427,7 @@ Domain concepts are the diagnostic source of truth:
 - `Diagnosis`
 - `Finding`
 - `DrivingSegment`
+- `DrivingPhase`
 - `Measurement`
 - `Car`
 - `Sensor`
@@ -423,6 +439,17 @@ Domain concepts are the diagnostic source of truth:
 - `Observation`
 - `Signature`
 - `Hypothesis`
+- `Symptom`
+- `TestPlan`
+- `RecommendedAction`
+- `SpeedProfile`
+- `RunSuitability`
+- `SuitabilityCheck`
+- `ConfigurationSnapshot`
+- `ConfidenceAssessment`
+- `FindingEvidence`
+- `LocationHotspot`
+- `VibrationOrigin`
 
 ### Lifecycle domain object
 
@@ -433,12 +460,16 @@ boundary representation, and not the analyzed run aggregate.
 
 Within the domain, scope still matters:
 
-- case-scoped: `DiagnosticCase`, `Diagnosis`, `Car`
+- case-scoped: `DiagnosticCase`, `Diagnosis`, `Car`, `Symptom`
 - run-scoped diagnostic: `TestRun`, `DiagnosticReasoning`, `Finding`,
-  `DrivingSegment`, `Observation`, `Signature`, `Hypothesis`
-- capture-scoped lifecycle: `Run`
+  `DrivingSegment`, `DrivingPhase`, `Observation`, `Signature`, `Hypothesis`,
+  `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
+  `TestPlan`
+- finding-scoped value objects: `ConfidenceAssessment`, `FindingEvidence`,
+  `LocationHotspot`, `VibrationOrigin`
+- capture-scoped lifecycle: `Run`, `RunStatus`
 - capture and evidence derived from completed capture: `RunCapture`,
-  `RunSetup`, `Measurement`
+  `RunSetup`, `Measurement`, `ConfigurationSnapshot`
 - run setup and evidence context: `Sensor`, `SensorPlacement`, `SpeedSource`
 
 `RunSetup` belongs to setup and evidence interpretation. `Sensor`,
