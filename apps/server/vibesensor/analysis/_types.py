@@ -1,11 +1,17 @@
-"""Shared lightweight typing aliases for the analysis package."""
+"""Shared lightweight typing aliases for the analysis package.
+
+Serialization TypedDicts (``FindingPayload``, ``FindingEvidenceMetrics``,
+``LocationHotspotPayload``, ``AnalysisSummary``, ``RunSuitabilityCheck``)
+are intentionally co-located here — the analysis pipeline constructs
+the dicts that conform to these shapes, while boundary decoders accept
+the broader ``Mapping[str, object]`` type for flexibility.
+"""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, NotRequired, Required, TypeAlias, TypedDict
 
-from ..domain.finding import VibrationSource as VibrationSource  # re-export from domain
 from ..json_types import JsonObject, JsonValue
 from ..json_types import is_json_object as is_json_object  # re-export canonical source
 from .phase_segmentation import DrivingPhase

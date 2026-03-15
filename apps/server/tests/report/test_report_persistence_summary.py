@@ -160,4 +160,4 @@ class TestRobustness:
             samples=uniform_samples(15, 15.0, 0.02),
             lang="en",
         )
-        assert isinstance(findings, list)
+        assert isinstance(findings, tuple)

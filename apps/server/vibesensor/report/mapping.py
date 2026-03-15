@@ -5,14 +5,13 @@ from __future__ import annotations
 import logging
 import os
 from collections import defaultdict
-from collections.abc import Callable
-from dataclasses import dataclass, field
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from statistics import mean as _mean
+from typing import Any
 
 from .. import __version__
 from ..analysis._types import (
-    AnalysisSummary,
-    FindingPayload,
     IntensityRow,
     JsonValue,
     MetadataDict,
@@ -28,7 +27,6 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..boundaries._helpers import _payloads_by_id
 from ..boundaries.finding import finding_payload_from_domain
 from ..boundaries.run_suitability import run_suitability_payload
 from ..boundaries.vibration_origin import SuspectedVibrationOrigin, origin_payload_from_finding
@@ -76,9 +74,6 @@ class ReportMappingContext:
     car_name: str | None
     car_type: str | None
     date_str: str
-    top_causes: list[FindingPayload]
-    findings_non_ref: list[FindingPayload]
-    findings: list[FindingPayload]
     speed_stats: SpeedStats
     origin: SuspectedVibrationOrigin
     origin_location: str
@@ -92,31 +87,21 @@ class ReportMappingContext:
     sample_count: int
     sensor_model: str | None
     firmware_version: str | None
-    # Domain aggregate for domain-first decisions.
-    domain_aggregate: TestRun | None = None
-    finding_payloads_by_id: dict[str, FindingPayload] = field(default_factory=dict)
-    top_cause_payloads_by_id: dict[str, FindingPayload] = field(default_factory=dict)
+    # Domain aggregate — the primary data source for business decisions.
+    domain_aggregate: TestRun
 
     # -- candidate selection ------------------------------------------------
 
-    def top_report_candidate(self) -> FindingPayload | None:
+    def top_report_candidate(self) -> Finding | None:
         """Return the primary report candidate (first effective top cause or finding)."""
-        if self.domain_aggregate is not None:
-            effective = self.domain_aggregate.effective_top_causes()
-            if effective:
-                payload = self.payload_for_finding(effective[0])
-                if payload is not None:
-                    return payload
-        candidates = self.top_causes or self.findings_non_ref
-        return candidates[0] if candidates else None
-
-    def payload_for_finding(self, finding: Finding) -> FindingPayload | None:
-        if finding.finding_id:
-            payload = self.top_cause_payloads_by_id.get(finding.finding_id)
-            if payload is not None:
-                return payload
-            return self.finding_payloads_by_id.get(finding.finding_id)
-        return None
+        effective = self.domain_aggregate.effective_top_causes()
+        if effective:
+            return effective[0]
+        non_ref = self.domain_aggregate.non_reference_findings
+        if non_ref:
+            return non_ref[0]
+        all_findings = self.domain_aggregate.findings
+        return all_findings[0] if all_findings else None
 
     # -- intensity queries --------------------------------------------------
 
@@ -153,7 +138,7 @@ class ReportMappingContext:
 class PrimaryCandidateContext:
     """Primary report candidate resolved from top causes or findings."""
 
-    primary_candidate: FindingPayload | None
+    primary_candidate: Finding | None
     primary_source: object
     primary_system: str
     primary_location: str
@@ -275,12 +260,6 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
     return str(value).replace("_", " ").title()
 
 
-def extract_confidence(item: FindingPayload) -> float:
-    """Return the confidence value from a cause/finding dict."""
-    value = _as_float(item.get("confidence"))
-    return value if value is not None else 0.0
-
-
 # ---------------------------------------------------------------------------
 # Context extraction
 # ---------------------------------------------------------------------------
@@ -303,81 +282,71 @@ _EMPTY_ORIGIN: SuspectedVibrationOrigin = {
 }
 
 
-def summary_metadata(summary: AnalysisSummary) -> MetadataDict:
+def summary_metadata(summary: Mapping[str, Any]) -> MetadataDict:
     return summary.get("metadata") or {}
 
 
-def summary_report_date(summary: AnalysisSummary) -> str:
+def summary_report_date(summary: Mapping[str, Any]) -> str:
     return str(summary.get("report_date") or "")
 
 
-def summary_row_count(summary: AnalysisSummary) -> int:
+def summary_row_count(summary: Mapping[str, Any]) -> int:
     return int(_as_float(summary.get("rows")) or 0)
 
 
-def summary_record_length(summary: AnalysisSummary) -> str | None:
+def summary_record_length(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("record_length") or "") or None
 
 
-def summary_start_time_utc(summary: AnalysisSummary) -> str | None:
+def summary_start_time_utc(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("start_time_utc") or "").strip() or None
 
 
-def summary_end_time_utc(summary: AnalysisSummary) -> str | None:
+def summary_end_time_utc(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("end_time_utc") or "").strip() or None
 
 
-def summary_raw_sample_rate_hz(summary: AnalysisSummary) -> float | None:
+def summary_raw_sample_rate_hz(summary: Mapping[str, Any]) -> float | None:
     return _as_float(summary.get("raw_sample_rate_hz"))
 
 
-def summary_sensor_model(summary: AnalysisSummary) -> str | None:
+def summary_sensor_model(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("sensor_model") or "").strip() or None
 
 
-def summary_firmware_version(summary: AnalysisSummary) -> str | None:
+def summary_firmware_version(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("firmware_version") or "").strip() or None
 
 
-def summary_sensor_count_used(summary: AnalysisSummary) -> int:
+def summary_sensor_count_used(summary: Mapping[str, Any]) -> int:
     return int(_as_float(summary.get("sensor_count_used")) or 0)
 
 
-def summary_findings(summary: AnalysisSummary) -> list[FindingPayload]:
-    raw = summary.get("findings", [])
-    return list(raw) if isinstance(raw, list) else []
-
-
-def summary_top_causes(summary: AnalysisSummary) -> list[FindingPayload]:
-    raw = summary.get("top_causes", [])
-    return list(raw) if isinstance(raw, list) else []
-
-
-def summary_speed_stats(summary: AnalysisSummary) -> SpeedStats:
+def summary_speed_stats(summary: Mapping[str, Any]) -> SpeedStats:
     return summary.get("speed_stats") or _EMPTY_SPEED_STATS
 
 
-def summary_origin(summary: AnalysisSummary) -> SuspectedVibrationOrigin:
+def summary_origin(summary: Mapping[str, Any]) -> SuspectedVibrationOrigin:
     return summary.get("most_likely_origin") or _EMPTY_ORIGIN
 
 
-def summary_test_plan(summary: AnalysisSummary) -> list[TestStep]:
+def summary_test_plan(summary: Mapping[str, Any]) -> list[TestStep]:
     return [step for step in summary.get("test_plan", []) if isinstance(step, dict)]
 
 
-def summary_run_suitability(summary: AnalysisSummary) -> list[RunSuitabilityCheck]:
-    return [item for item in summary.get("run_suitability", []) if isinstance(item, dict)]
+def summary_run_suitability(summary: Mapping[str, Any]) -> list[RunSuitabilityCheck]:
+    return [item for item in summary.get("run_suitability", []) if isinstance(item, dict)]  # type: ignore[misc]
 
 
-def summary_warnings(summary: AnalysisSummary) -> list[object]:
+def summary_warnings(summary: Mapping[str, Any]) -> list[object]:
     return list(summary.get("warnings", []))
 
 
-def summary_sensor_intensity_by_location(summary: AnalysisSummary) -> list[IntensityRow]:
+def summary_sensor_intensity_by_location(summary: Mapping[str, Any]) -> list[IntensityRow]:
     return [row for row in summary.get("sensor_intensity_by_location", []) if isinstance(row, dict)]
 
 
-def summary_sensor_locations_active(summary: AnalysisSummary) -> list[str]:
+def summary_sensor_locations_active(summary: Mapping[str, Any]) -> list[str]:
     connected = summary.get("sensor_locations_connected_throughout", [])
     active = [str(loc) for loc in connected if str(loc).strip()]
     if not active:
@@ -385,7 +354,7 @@ def summary_sensor_locations_active(summary: AnalysisSummary) -> list[str]:
     return active
 
 
-def summary_sample_rate_hz_text(summary: AnalysisSummary) -> str | None:
+def summary_sample_rate_hz_text(summary: Mapping[str, Any]) -> str | None:
     rate = summary_raw_sample_rate_hz(summary)
     return f"{rate:g}" if rate is not None else None
 
@@ -405,21 +374,13 @@ def normalized_origin_location(origin: SuspectedVibrationOrigin) -> str:
     return normalize_origin_location(origin.get("location"))
 
 
-def resolve_sensor_count(summary: AnalysisSummary, sensor_locations_active: list[str]) -> int:
-    """Resolve the effective sensor count used by report certainty logic."""
-    sensor_count = len(sensor_locations_active)
-    if sensor_count <= 0:
-        sensor_count = summary_sensor_count_used(summary)
-    return sensor_count
-
-
 # ---------------------------------------------------------------------------
 # Peak-row and location-hotspot shaping
 # ---------------------------------------------------------------------------
 
 
 def build_peak_rows_from_plots(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     lang: str,
     tr: Callable,
@@ -434,7 +395,7 @@ def build_peak_rows_from_plots(
         for row in raw_peaks
         if ((_strength_db := _as_float(row.get("strength_db"))) is None or _strength_db > 0)
     ]
-    return [build_peak_row(row, lang=lang, tr=tr) for row in above_noise[:8]]
+    return [build_peak_row(row, lang=lang, tr=tr) for row in above_noise[:8]]  # type: ignore[arg-type]
 
 
 def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable) -> PeakRow:
@@ -529,7 +490,7 @@ def collect_location_intensity(sensor_intensity: list[dict]) -> dict[str, list[f
 
 
 def build_next_steps_from_summary(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     aggregate: TestRun | None,
     tier: str,
@@ -605,7 +566,7 @@ def _resolve_optional_step_value(
 
 
 def build_data_trust_from_summary(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     aggregate: TestRun | None,
     lang: str,
@@ -616,7 +577,6 @@ def build_data_trust_from_summary(
     if aggregate is not None and aggregate.suitability is not None:
         projected = run_suitability_payload(
             aggregate.suitability,
-            fallback=summary_run_suitability(summary),
         )
         for proj in projected:
             data_trust.append(
@@ -673,12 +633,10 @@ def _resolve_detail_text(value: object, *, lang: str, tr: Callable) -> str | Non
 # ---------------------------------------------------------------------------
 
 
-def _sensor_fallback_strength_db(summary: AnalysisSummary) -> float | None:
+def _sensor_fallback_strength_db(sensor_intensity: list[IntensityRow]) -> float | None:
     """Return the best sensor-intensity dB as a last-resort fallback."""
     sensor_rows = [
-        _as_float(row.get("p95_intensity_db"))
-        for row in summary.get("sensor_intensity_by_location", [])
-        if isinstance(row, dict)
+        _as_float(row.get("p95_intensity_db")) for row in sensor_intensity if isinstance(row, dict)
     ]
     return max((value for value in sensor_rows if value is not None), default=None)
 
@@ -698,55 +656,34 @@ def build_system_cards(
     tier = primary.tier
     if tier == "A":
         return []
-    card_sources = context.top_causes or context.findings_non_ref or context.findings
-
-    # Build a lookup from finding_id → domain Finding for business queries.
     aggregate = context.domain_aggregate
-    domain_map: dict[str, Finding] = {}
-    if aggregate:
-        from itertools import chain
-
-        for f in chain(aggregate.effective_top_causes(), aggregate.findings):
-            if f.finding_id and f.finding_id not in domain_map:
-                domain_map[f.finding_id] = f
+    card_sources = (
+        aggregate.effective_top_causes() or aggregate.non_reference_findings or aggregate.findings
+    )
 
     cards: list[SystemFindingCard] = []
-    for cause in card_sources[:2]:
-        raw_id = cause.get("finding_id")
-        finding_id = str(raw_id) if raw_id is not None else ""
-        domain_finding = domain_map.get(finding_id) if finding_id else None
-
-        # Business decisions: prefer domain Finding, fall back to payload
-        if domain_finding:
-            source = str(domain_finding.suspected_source)
-            source_human = human_source(source, tr=tr)
-            # Use domain LocationHotspot for location when available
-            if domain_finding.location and domain_finding.location.is_actionable:
-                location = domain_finding.location.display_location
-            else:
-                location = str(domain_finding.strongest_location or tr("UNKNOWN"))
-            # Use domain ConfidenceAssessment for tone when available
-            if domain_finding.confidence_assessment:
-                tone = domain_finding.confidence_assessment.tone
-            else:
-                tone = domain_finding.confidence_label(
-                    strength_band_key=primary.strength_band_key,
-                )[1]
+    for domain_finding in card_sources[:2]:
+        source = str(domain_finding.suspected_source)
+        source_human = human_source(source, tr=tr)
+        # Use domain LocationHotspot for location when available
+        if domain_finding.location and domain_finding.location.is_actionable:
+            location = domain_finding.location.display_location
         else:
-            logger.warning(
-                "build_system_cards: domain aggregate not available, falling back to raw summary",
-            )
-            source = cause.get("suspected_source") or "unknown"
-            source_human = human_source(source, tr=tr)
-            location = str(cause.get("strongest_location") or tr("UNKNOWN"))
-            tone = cause.get("confidence_tone", "neutral")
+            location = str(domain_finding.strongest_location or tr("UNKNOWN"))
+        # Use domain ConfidenceAssessment for tone when available
+        if domain_finding.confidence_assessment:
+            tone = domain_finding.confidence_assessment.tone
+        else:
+            tone = domain_finding.confidence_label(
+                strength_band_key=primary.strength_band_key,
+            )[1]
 
-        # Rendering detail: prefer domain signatures, fall back to payload enrichment.
+        # Rendering detail from domain signatures.
         signature_values: object
-        if domain_finding and domain_finding.signature_labels:
+        if domain_finding.signature_labels:
             signature_values = list(domain_finding.signature_labels)
         else:
-            signature_values = cause.get("signatures_observed", [])
+            signature_values = []
         signatures_human = humanize_signatures(signature_values, lang=lang)
         pattern_text = ", ".join(signatures_human) if signatures_human else tr("UNKNOWN")
         order_label = signatures_human[0] if signatures_human else None
@@ -825,39 +762,24 @@ def resolve_interpretation(origin: SuspectedVibrationOrigin, *, lang: str, tr: C
 
 
 def resolve_parts_context(
-    primary_candidate: FindingPayload | None,
+    primary_candidate: Finding | None,
     *,
     domain_finding: Finding | None = None,
     lang: str,
 ) -> tuple[str, str | None]:
     """Resolve source/order context used for why-parts-listed text."""
-    if domain_finding is not None:
-        source_for_why = str(domain_finding.suspected_source)
-        signatures: object = list(domain_finding.signature_labels)
+    finding = domain_finding or primary_candidate
+    if finding is not None:
+        source_for_why = str(finding.suspected_source)
+        signatures: object = list(finding.signature_labels)
     else:
-        source_for_why = str(
-            primary_candidate.get("suspected_source", "") if primary_candidate else "",
-        )
-        signatures = primary_candidate.get("signatures_observed", []) if primary_candidate else []
+        source_for_why = ""
+        signatures = []
     if isinstance(signatures, list) and signatures:
         order_label = order_label_human(lang, str(signatures[0]))
     else:
         order_label = None
     return source_for_why, order_label
-
-
-def build_run_metadata_fields(summary: AnalysisSummary, meta: MetadataDict) -> dict[str, object]:
-    """Extract and format run metadata text fields for the report template."""
-    return {
-        "duration_text": summary_record_length(summary),
-        "start_time_utc": summary_start_time_utc(summary),
-        "end_time_utc": summary_end_time_utc(summary),
-        "sample_rate_hz": summary_sample_rate_hz_text(summary),
-        "tire_spec_text": tire_spec_text(meta),
-        "sample_count": summary_row_count(summary),
-        "sensor_model": summary_sensor_model(summary),
-        "firmware_version": summary_firmware_version(summary),
-    }
 
 
 def tire_spec_text(meta: dict) -> str | None:
@@ -904,13 +826,19 @@ def build_version_marker() -> str:
 
 
 def prepare_report_mapping_context(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
+    *,
+    test_run: TestRun | None = None,
 ) -> ReportMappingContext:
     """Extract structural summary context for report mapping.
 
     Builds a domain ``TestRun`` aggregate from the summary dict
     so that downstream business decisions (effective-cause selection,
     reference-gap detection, strength lookup) are domain-first.
+
+    When *test_run* is supplied, reconstruction is skipped and the
+    caller-provided aggregate is used directly (avoids double
+    reconstruction when the caller already holds a ``TestRun``).
     """
     meta = summary_metadata(summary)
     car_name = str(meta.get("car_name") or "").strip() or None
@@ -918,44 +846,18 @@ def prepare_report_mapping_context(
     report_date = summary_report_date(summary) or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
-    summary_findings_all = summary_findings(summary)
-    summary_top_causes_all = summary_top_causes(summary)
-    summary_findings_by_id = _payloads_by_id(summary_findings_all)
-    summary_top_causes_by_id = _payloads_by_id(summary_top_causes_all)
-
     speed_stats = summary_speed_stats(summary)
     origin = summary_origin(summary)
     sensor_locations_active = summary_sensor_locations_active(summary)
 
     # Build domain aggregate for domain-first decisions downstream
-    from ..boundaries.diagnostic_case import test_run_from_summary
+    if test_run is None:
+        from ..boundaries.diagnostic_case import test_run_from_summary
 
-    domain_aggregate = test_run_from_summary(summary)
+        domain_aggregate = test_run_from_summary(summary)
+    else:
+        domain_aggregate = test_run
 
-    findings = [
-        finding_payload_from_domain(
-            finding,
-            primary=summary_findings_by_id,
-            secondary=summary_top_causes_by_id,
-        )
-        for finding in domain_aggregate.findings
-    ]
-    findings_non_ref = [
-        finding_payload_from_domain(
-            finding,
-            primary=summary_findings_by_id,
-            secondary=summary_top_causes_by_id,
-        )
-        for finding in domain_aggregate.non_reference_findings
-    ]
-    top_causes = [
-        finding_payload_from_domain(
-            finding,
-            primary=summary_top_causes_by_id,
-            secondary=summary_findings_by_id,
-        )
-        for finding in domain_aggregate.effective_top_causes()
-    ]
     origin = _origin_from_aggregate(domain_aggregate, origin)
 
     origin_location = normalized_origin_location(origin)
@@ -965,9 +867,6 @@ def prepare_report_mapping_context(
         car_name=car_name,
         car_type=car_type,
         date_str=date_str,
-        top_causes=top_causes,
-        findings_non_ref=findings_non_ref,
-        findings=findings,
         speed_stats=speed_stats,
         origin=origin,
         origin_location=origin_location,
@@ -981,15 +880,13 @@ def prepare_report_mapping_context(
         sensor_model=summary_sensor_model(summary),
         firmware_version=summary_firmware_version(summary),
         domain_aggregate=domain_aggregate,
-        finding_payloads_by_id=summary_findings_by_id,
-        top_cause_payloads_by_id=summary_top_causes_by_id,
     )
 
 
 def resolve_primary_report_candidate(
-    summary: AnalysisSummary,
     *,
     context: ReportMappingContext,
+    sensor_intensity: list[IntensityRow],
     tr: Callable[..., str],
     lang: str,
 ) -> PrimaryCandidateContext:
@@ -1001,7 +898,6 @@ def resolve_primary_report_candidate(
     """
     primary_candidate = context.top_report_candidate()
     aggregate = context.domain_aggregate
-    assert aggregate is not None
 
     primary_source: object = None
     # Domain-first: derive all business fields from the aggregate
@@ -1014,24 +910,9 @@ def resolve_primary_report_candidate(
             domain_primary.strongest_location or tr("UNKNOWN")
         )
         primary_speed = str(
-            domain_primary.strongest_speed_band
-            or (primary_candidate.get("speed_band") if primary_candidate else None)
-            or tr("UNKNOWN"),
+            domain_primary.strongest_speed_band or tr("UNKNOWN"),
         )
         confidence = domain_primary.effective_confidence
-    elif primary_candidate:
-        # Aggregate exists but has no findings; fall back to payload
-        primary_source = primary_candidate.get("suspected_source")
-        primary_system = human_source(primary_source, tr=tr)
-        primary_location = context.origin_location or str(
-            primary_candidate.get("strongest_location") or tr("UNKNOWN"),
-        )
-        primary_speed = str(
-            primary_candidate.get("strongest_speed_band")
-            or primary_candidate.get("speed_band")
-            or tr("UNKNOWN"),
-        )
-        confidence = extract_confidence(primary_candidate)
     else:
         primary_system = tr("UNKNOWN")
         primary_location = context.origin_location or tr("UNKNOWN")
@@ -1042,7 +923,7 @@ def resolve_primary_report_candidate(
     strength_db = aggregate.top_strength_db()
     # Fall back to sensor intensity if domain aggregate has no strength
     if strength_db is None:
-        strength_db = _sensor_fallback_strength_db(summary)
+        strength_db = _sensor_fallback_strength_db(sensor_intensity)
     has_ref_gaps = aggregate.has_relevant_reference_gap(
         str(primary_source) if primary_source else "unknown",
     )
@@ -1051,7 +932,9 @@ def resolve_primary_report_candidate(
     weak_spatial = domain_primary.weak_spatial_separation if domain_primary else False
 
     strength_text_value = strength_text(strength_db, lang=lang)
-    sensor_count = resolve_sensor_count(summary, context.sensor_locations_active)
+    sensor_count = len(context.sensor_locations_active) or len(
+        context.domain_aggregate.capture.setup.sensors
+    )
     strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
 
     # Use domain ConfidenceAssessment when available on the primary finding
@@ -1136,12 +1019,19 @@ def build_report_from_summary(summary: dict[str, object]) -> Report:
     )
 
 
-def map_summary(summary: AnalysisSummary) -> ReportTemplateData:
+def map_summary(
+    summary: Mapping[str, Any],
+    *,
+    test_run: TestRun | None = None,
+) -> ReportTemplateData:
     """Map a run summary dict into the final report template data model.
 
     Constructs a domain :class:`~vibesensor.domain.Report` as the
     high-level entry point, then delegates to the template-data builder
     for PDF-specific rendering fields.
+
+    When *test_run* is supplied, reconstruction from the summary dict is
+    skipped and the caller-provided aggregate is used directly.
     """
     lang = str(normalize_lang(summary.get("lang")))
     report = build_report_from_summary(summary)  # type: ignore[arg-type]
@@ -1149,23 +1039,33 @@ def map_summary(summary: AnalysisSummary) -> ReportTemplateData:
     def tr(key: str, **kw: object) -> str:
         return str(_tr(lang, key, **kw))
 
-    return _build_report_template_data(summary, report=report, lang=lang, tr=tr)
+    return _build_report_template_data(summary, report=report, lang=lang, tr=tr, test_run=test_run)
 
 
 def _build_report_template_data(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     report: Report,
     lang: str,
     tr: Callable[..., str],
+    test_run: TestRun | None = None,
 ) -> ReportTemplateData:
     """Map a summary dict into the final report template data structure.
 
     The *report* domain object provides high-level metadata; rendering-
     specific fields are resolved from the full *summary* dict.
     """
-    context = prepare_report_mapping_context(summary)
-    primary = resolve_primary_report_candidate(summary, context=context, tr=tr, lang=lang)
+    context = prepare_report_mapping_context(summary, test_run=test_run)
+    raw_sensor_intensity = filter_active_sensor_intensity(
+        summary_sensor_intensity_by_location(summary),
+        context.sensor_locations_active,
+    )
+    primary = resolve_primary_report_candidate(
+        context=context,
+        sensor_intensity=raw_sensor_intensity,
+        tr=tr,
+        lang=lang,
+    )
     observed = context.observed_signature(primary)
     system_cards = build_system_cards(
         context,
@@ -1196,10 +1096,6 @@ def _build_report_template_data(
     peak_rows = build_peak_rows_from_plots(summary, lang=lang, tr=tr)
     version_marker = build_version_marker()
 
-    raw_sensor_intensity = filter_active_sensor_intensity(
-        summary_sensor_intensity_by_location(summary),
-        context.sensor_locations_active,
-    )
     hotspot_rows = compute_location_hotspot_rows(raw_sensor_intensity)
 
     return ReportTemplateData(
@@ -1227,8 +1123,10 @@ def _build_report_template_data(
         version_marker=version_marker,
         lang=report.lang,
         certainty_tier_key=primary.tier,
-        findings=context.findings,  # type: ignore[arg-type]
-        top_causes=context.top_causes,  # type: ignore[arg-type]  # context union type
+        findings=[finding_payload_from_domain(f) for f in context.domain_aggregate.findings],
+        top_causes=[
+            finding_payload_from_domain(f) for f in context.domain_aggregate.effective_top_causes()
+        ],
         sensor_intensity_by_location=raw_sensor_intensity,
         location_hotspot_rows=hotspot_rows,
     )

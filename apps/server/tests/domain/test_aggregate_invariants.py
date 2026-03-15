@@ -15,12 +15,13 @@ from vibesensor.domain import (
     ConfigurationSnapshot,
     DiagnosticCase,
     DiagnosticCaseEpistemicRule,
+    DiagnosticReasoning,
     Finding,
     FindingKind,
     Hypothesis,
     HypothesisStatus,
     RecommendedAction,
-    Run,
+    RunCapture,
     RunSuitability,
     SuitabilityCheck,
     TestPlan,
@@ -77,10 +78,12 @@ def _run(
 ) -> TestRun:
     if top_causes is None:
         top_causes = findings
+    from vibesensor.domain import RunSetup
+
+    setup = RunSetup(configuration_snapshot=snapshot) if snapshot else RunSetup()
     return TestRun(
-        run=Run(run_id=run_id),
-        configuration_snapshot=snapshot or ConfigurationSnapshot(),
-        hypotheses=hypotheses,
+        capture=RunCapture(run_id=run_id, setup=setup),
+        reasoning=DiagnosticReasoning(hypotheses=hypotheses),
         findings=findings,
         top_causes=top_causes,
         suitability=suitability,
@@ -190,8 +193,8 @@ class TestMultiRunReconciliation:
         case = case.add_run(_run("run-2", findings=(f2,), top_causes=(f2,)))
 
         # The two are treated as same identity → latest kept
-        assert len(case.findings) == 1
-        assert case.findings[0].finding_id == "F002"
+        assert len(case.diagnoses) == 1
+        assert case.diagnoses[0].representative_finding.finding_id == "F002"
 
     def test_reconcile_preserves_action_priority_ordering(self) -> None:
         """Multiple runs with overlapping actions — lowest priority wins and sorted."""
@@ -254,8 +257,11 @@ class TestMultiRunReconciliation:
         assert hyp_map["hyp-B"].support_score == 0.6
 
         # Finding X (same source+location) → latest = 0.6; Finding Y → 0.7
-        assert len(case.findings) == 2
-        confidence_map = {f.source_normalized: f.confidence for f in case.findings}
+        assert len(case.diagnoses) == 2
+        confidence_map = {
+            d.representative_finding.source_normalized: d.representative_finding.confidence
+            for d in case.diagnoses
+        }
         assert confidence_map["wheel/tire"] == 0.6
         assert confidence_map["driveline"] == 0.7
 
@@ -270,8 +276,8 @@ class TestCaseLifecycle:
         assert len(case.symptoms) == 1
         assert case.symptoms[0].is_unspecified
 
-    def test_add_run_accumulates_snapshots(self) -> None:
-        """Two distinct snapshots → 2 accumulated. Third duplicate → still 2."""
+    def test_add_run_snapshots_accessible_via_capture(self) -> None:
+        """Snapshots are accessible via capture.setup.configuration_snapshot."""
         snap_a = ConfigurationSnapshot(sensor_model="MPU6050")
         snap_b = ConfigurationSnapshot(sensor_model="ADXL345")
 
@@ -279,11 +285,8 @@ class TestCaseLifecycle:
         case = case.add_run(_run("run-1", snapshot=snap_a))
         case = case.add_run(_run("run-2", snapshot=snap_b))
 
-        assert len(case.configuration_snapshots) == 2
-
-        # Third run with same snapshot as first → no new accumulation
-        case = case.add_run(_run("run-3", snapshot=snap_a))
-        assert len(case.configuration_snapshots) == 2
+        assert case.test_runs[0].capture.setup.configuration_snapshot == snap_a
+        assert case.test_runs[1].capture.setup.configuration_snapshot == snap_b
 
     def test_case_completeness_with_usable_evidence(self) -> None:
         """Complete case: actionable findings + usable suitability + plan done."""
@@ -332,8 +335,7 @@ class TestImpossibleTestRunStates:
         tc = _finding("F001")
         with pytest.raises(ValueError, match="top_causes must be drawn from findings"):
             TestRun(
-                run=Run(run_id="r1"),
-                configuration_snapshot=ConfigurationSnapshot(),
+                capture=RunCapture(run_id="r1"),
                 findings=(),
                 top_causes=(tc,),
             )
@@ -344,8 +346,7 @@ class TestImpossibleTestRunStates:
         orphan = _finding("F099", source="driveline", location="center")
         with pytest.raises(ValueError, match="unmatched top causes"):
             TestRun(
-                run=Run(run_id="r1"),
-                configuration_snapshot=ConfigurationSnapshot(),
+                capture=RunCapture(run_id="r1"),
                 findings=(f1,),
                 top_causes=(orphan,),
             )
@@ -355,8 +356,7 @@ class TestImpossibleTestRunStates:
         f1 = _finding("F001")
         f2 = _finding("F002", source="driveline", location="center")
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="r1"),
             findings=(f1, f2),
             top_causes=(f1,),
         )
@@ -365,8 +365,7 @@ class TestImpossibleTestRunStates:
     def test_empty_top_causes_with_empty_findings_ok(self) -> None:
         """Both empty → valid (no-evidence run)."""
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="r1"),
             findings=(),
             top_causes=(),
         )
@@ -378,8 +377,7 @@ class TestImpossibleTestRunStates:
         f1 = _finding("F001", confidence=0.9)
         tc = _finding("F001", confidence=0.5)  # same id, different confidence
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="r1"),
             findings=(f1,),
             top_causes=(tc,),
         )
@@ -392,8 +390,7 @@ class TestImpossibleTestRunStates:
         orphan_b = _finding("F999", source="engine")
         with pytest.raises(ValueError, match="F888") as exc_info:
             TestRun(
-                run=Run(run_id="r1"),
-                configuration_snapshot=ConfigurationSnapshot(),
+                capture=RunCapture(run_id="r1"),
                 findings=(f_real,),
                 top_causes=(orphan_a, orphan_b),
             )
@@ -544,7 +541,7 @@ class TestMultiRunReconciliationEdgeCases:
         case = DiagnosticCase.start()
         case = case.add_run(_run("run-1"))
 
-        assert case.findings == ()
+        assert case.diagnoses == ()
         assert case.hypotheses == ()
         assert len(case.test_runs) == 1
 
@@ -553,7 +550,7 @@ class TestMultiRunReconciliationEdgeCases:
         case = case.add_run(_run("run-1"))
         case = case.add_run(_run("run-2"))
 
-        assert case.findings == ()
+        assert case.diagnoses == ()
         assert case.hypotheses == ()
         assert len(case.test_runs) == 2
 
@@ -567,8 +564,8 @@ class TestMultiRunReconciliationEdgeCases:
         case = case.add_run(_run("run-2", findings=(f2,), top_causes=(f2,)))
 
         # Same source+location identity → latest kept
-        assert len(case.findings) == 1
-        assert case.findings[0].confidence == 0.9
+        assert len(case.diagnoses) == 1
+        assert case.diagnoses[0].representative_finding.confidence == 0.9
 
     def test_contradictory_findings_across_runs(self) -> None:
         """Two runs point to different actionable sources → CONTRADICTION."""
@@ -633,7 +630,7 @@ class TestMultiRunReconciliationEdgeCases:
             _run("run-2", findings=(non_actionable,), top_causes=(non_actionable,)),
         )
         # Both are kept since they have distinct identity
-        sources = {f.source_normalized for f in case.findings}
+        sources = {d.representative_finding.source_normalized for d in case.diagnoses}
         assert "wheel/tire" in sources
 
     def test_reconcile_with_real_world_three_run_progression(self) -> None:
@@ -678,9 +675,11 @@ class TestMultiRunReconciliationEdgeCases:
         )
 
         # wheel/tire finding should be latest (0.9)
-        wt = [f for f in case.findings if f.source_normalized == "wheel/tire"]
+        wt = [
+            d for d in case.diagnoses if d.representative_finding.source_normalized == "wheel/tire"
+        ]
         assert len(wt) == 1
-        assert wt[0].confidence == 0.9
+        assert wt[0].representative_finding.confidence == 0.9
 
         # hyp-B kept with latest support, hyp-A also kept (not retired)
         hyp_map = {h.hypothesis_id: h for h in case.hypotheses}

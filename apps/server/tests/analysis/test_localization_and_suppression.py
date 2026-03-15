@@ -52,16 +52,16 @@ def _build_fault_samples(
 
 
 def _wheel_findings(
-    findings: list[dict[str, Any]],
+    findings: tuple | list,
     *,
     exclude_ref: bool = False,
-) -> list[dict[str, Any]]:
+) -> list:
     """Return findings whose *finding_key* starts with ``wheel_``."""
     return [
         f
         for f in findings
-        if (not exclude_ref or not str(f.get("finding_id", "")).startswith("REF_"))
-        and str(f.get("finding_key", "")).startswith("wheel_")
+        if (not exclude_ref or not f.finding_id.startswith("REF_"))
+        and f.finding_key.startswith("wheel_")
     ]
 
 
@@ -285,8 +285,8 @@ class TestDiffuseExcitationDetection:
         order_findings = _wheel_findings(findings, exclude_ref=True)
         # If any order finding exists, it should be flagged as diffuse
         for f in order_findings:
-            assert f.get("diffuse_excitation") is True, (
-                f"Expected diffuse_excitation flag for uniform-amplitude finding: {f.get('finding_key')}"
+            assert f.diffuse_excitation is True, (
+                f"Expected diffuse_excitation flag for uniform-amplitude finding: {f.finding_key}"
             )
 
     def test_single_sensor_fault_not_flagged_diffuse(self) -> None:
@@ -296,7 +296,7 @@ class TestDiffuseExcitationDetection:
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
         order_findings = _wheel_findings(findings, exclude_ref=True)
         for f in order_findings:
-            assert f.get("diffuse_excitation") is not True, (
+            assert f.diffuse_excitation is not True, (
                 "Single-sensor fault should NOT be flagged as diffuse"
             )
 
@@ -384,7 +384,7 @@ class TestConfidenceCalibration:
         wf = _wheel_findings(findings)
         assert len(wf) > 0, "4-sensor setup should produce a wheel finding"
         top = wf[0]
-        strongest = str(top.get("strongest_location", "")).lower()
+        strongest = (top.strongest_location or "").lower()
         assert "right" in strongest or "fr" in strongest, f"Expected front-right, got {strongest}"
 
     def test_eight_sensor_mixed_clear_fault(self) -> None:
@@ -405,7 +405,7 @@ class TestConfidenceCalibration:
         wf = _wheel_findings(findings)
         assert len(wf) > 0, "8-sensor setup should produce a wheel finding"
         top = wf[0]
-        strongest = str(top.get("strongest_location", "")).lower()
+        strongest = (top.strongest_location or "").lower()
         assert "rear" in strongest and "left" in strongest, f"Expected rear-left, got {strongest}"
 
 
@@ -418,30 +418,26 @@ class TestUnitConsistency:
     """Amplitude units must be consistent end-to-end."""
 
     @pytest.fixture
-    def fault_findings(self) -> list[dict[str, Any]]:
+    def fault_findings(self) -> tuple:
         """Shared findings from a single-sensor (front-right) fault scenario."""
         samples = _build_fault_samples(_ALL_WHEEL_SENSORS, "front-right")
         metadata = _standard_metadata()
         return build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
 
-    def test_findings_amplitude_units_are_db(self, fault_findings: list[dict[str, Any]]) -> None:
-        """All finding amplitude_metric.units must be 'dB'."""
+    def test_findings_amplitude_units_are_db(self, fault_findings: tuple) -> None:
+        """All finding vibration_strength_db must be present when non-None."""
         for f in fault_findings:
-            amp_metric = f.get("amplitude_metric")
-            if isinstance(amp_metric, dict) and amp_metric.get("value") is not None:
-                assert amp_metric.get("units") == "dB", (
-                    f"Expected 'dB' units, got {amp_metric.get('units')}"
-                )
+            if f.vibration_strength_db is not None:
+                assert isinstance(f.vibration_strength_db, float)
 
     def test_evidence_metrics_include_strength_db(
         self,
-        fault_findings: list[dict[str, Any]],
+        fault_findings: tuple,
     ) -> None:
-        """Evidence metrics should include vibration_strength_db."""
+        """Evidence should include vibration_strength_db."""
         for f in fault_findings:
-            ev = f.get("evidence_metrics")
-            if isinstance(ev, dict) and "vibration_strength_db" in ev:
-                db_val = ev["vibration_strength_db"]
+            if f.evidence is not None and f.evidence.vibration_strength_db is not None:
+                db_val = f.evidence.vibration_strength_db
                 assert isinstance(db_val, (int, float)), "strength_db should be numeric"
                 assert db_val >= 0, "strength_db should be non-negative"
 
@@ -597,7 +593,7 @@ class TestPhasedScenarios:
         metadata = _standard_metadata()
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
         for f in _wheel_findings(findings):
-            strongest = str(f.get("strongest_location", ""))
+            strongest = f.strongest_location or ""
             if strongest:
                 assert is_wheel_location(strongest), (
                     f"Wheel finding assigned to non-wheel sensor: {strongest}"

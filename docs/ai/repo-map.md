@@ -37,17 +37,22 @@
   `SuspectedVibrationOrigin` is defined in `boundaries/vibration_origin.py`.
 - `domain/`: DDD-aligned domain model package.  Each primary domain object
   lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
-  SensorPlacement), `measurement.py` (Measurement,
-  VibrationReading), `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
-  `diagnostic_case.py` (DiagnosticCase aggregate),
+  SensorPlacement), `measurement.py` (Measurement, VibrationReading),
+  `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
+  `diagnostic_case.py` (DiagnosticCase aggregate), `diagnosis.py` (Diagnosis),
+  `diagnostic_reasoning.py` (DiagnosticReasoning),
+  `run_capture.py` (RunCapture), `run_setup.py` (RunSetup),
   `configuration_snapshot.py`, `symptom.py`, `test_plan.py`,
   `recommended_action.py`, `driving_segment.py`, `observation.py`,
-  `signature.py`, `hypothesis.py`, and `vibration_origin.py`,
+  `signature.py`, `hypothesis.py`, `vibration_origin.py`,
   `speed_source.py` (SpeedSource), `driving_phase.py` (DrivingPhase),
-  `finding.py` (FindingKind, VibrationSource, Finding, speed_bin_label, speed_band_sort_key), `report.py` (Report),
-  `run_status.py` (RunStatus, RUN_TRANSITIONS).
-  Notable factory/static methods: `Hypothesis.from_finding()`,
-  `LocationHotspot.compute_confidence()`.
+  `finding.py` (FindingKind, VibrationSource, Finding),
+  `finding_evidence.py` (FindingEvidence),
+  `confidence_assessment.py` (ConfidenceAssessment),
+  `location_hotspot.py` (LocationHotspot),
+  `speed_profile.py` (SpeedProfile),
+  `run_suitability.py` (RunSuitability, SuitabilityCheck),
+  `report.py` (Report), `run_status.py` (RunStatus, RUN_TRANSITIONS).
   `domain/services/` owns
   observation extraction, signature recognition, hypothesis evaluation,
   and test planning. Domain objects own
@@ -56,9 +61,10 @@
   `docs/domain-model.md` for the full relationship map and modeling rules.
 - `boundaries/`: explicit ingress/egress decoders and serializers between
   domain aggregates (`DiagnosticCase`, `TestRun`) and
-  summary/persistence/report payload shapes, including the shared
-  `diagnostic_case.py::project_summary_through_domain()` projection helper
-  used by report/history/export/post-analysis boundaries.
+  summary/persistence/report payload shapes; `diagnostic_case.py::test_run_from_summary()`
+  reconstructs domain aggregates, and individual boundary serializers
+  (`finding_payload_from_domain`, `origin_payload_from_finding`, etc.) handle
+  re-serialization at history/export/report call sites.
 - `metrics_log/`: recording pipeline package; `logger.py` owns the `RunRecorder` class (formerly `MetricsLogger`) which directly manages session state and persistence coordination (no private helper classes), enriching status/health payloads with sample counts and analysis results; `post_analysis.py` owns the background analysis queue with outcome tracking; `sample_builder.py` owns pure sample-building functions.
 - `history_db/`: SQLite-backed history and settings persistence (3 files: `__init__.py` with `HistoryDB` class consolidating connection management, settings KV, client names, and all run reads/writes; `_schema.py` with DDL and `ANALYSIS_SCHEMA_VERSION`; `_samples.py` for v2 sample serialization). `RunStatus` and state-transition logic live in `domain/run_status.py`. Incompatible older schemas raise a clear error directing the user to delete the DB file.
 - `history_services/`: focused history service layer (run query/delete,

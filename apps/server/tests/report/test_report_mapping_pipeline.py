@@ -24,13 +24,11 @@ def test_prepare_report_mapping_context_prefers_connected_sensor_locations() -> 
 
 
 def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> None:
-    summary = {
-        "sensor_count_used": 0,
-        "sensor_intensity_by_location": [{"p95_intensity_db": 21.0}],
-    }
+    sensor_intensity = [{"p95_intensity_db": 21.0}]
     context = prepare_report_mapping_context(
         {
-            **summary,
+            "sensor_count_used": 0,
+            "sensor_intensity_by_location": [{"p95_intensity_db": 21.0}],
             "lang": "en",
             "metadata": {},
             "findings": [
@@ -60,7 +58,12 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
     def tr(key: str, **_kw: object) -> str:
         return key
 
-    primary = resolve_primary_report_candidate(summary, context=context, tr=tr, lang="en")
+    primary = resolve_primary_report_candidate(
+        context=context,
+        sensor_intensity=sensor_intensity,
+        tr=tr,
+        lang="en",
+    )
 
     assert primary.primary_system
     assert primary.primary_location == "front-left"

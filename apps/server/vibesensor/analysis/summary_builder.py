@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median as _median
+from typing import Any
 
 from vibesensor.analysis.analysis_window import AnalysisWindow
 from vibesensor.vibration_strength import compute_db
@@ -22,10 +23,14 @@ from ..domain import (
     Car,
     ConfigurationSnapshot,
     DiagnosticCase,
+    DiagnosticReasoning,
     LocationHotspot,
-    Run,
+    RunCapture,
+    RunSetup,
     RunSuitability,
+    Sensor,
     SpeedProfile,
+    SpeedSource,
     Symptom,
     TestRun,
 )
@@ -73,7 +78,6 @@ from .findings import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
     _speed_breakdown,
-    domain_findings_from_payloads,
 )
 from .helpers import (
     PHASE_I18N_KEYS,
@@ -654,7 +658,7 @@ def build_summary_payload(
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-def annotate_peaks_with_order_labels(summary: AnalysisSummary) -> None:
+def annotate_peaks_with_order_labels(summary: Mapping[str, Any]) -> None:
     """Back-fill peak-table order labels by matching order findings to peak rows."""
     plots = summary.get("plots")
     if not is_json_object(plots):
@@ -816,23 +820,19 @@ def build_findings_bundle(
     language: str,
     prepared: PreparedRunData,
     overall_strength_band_key: str | None,
-    findings_builder: Callable[..., list[FindingPayload]] | None = None,
+    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
 ) -> tuple[
-    list[FindingPayload],
     SuspectedVibrationOrigin,
     list[PhaseTimelineEntry],
-    list[FindingPayload],
     tuple[DomainFinding, ...],
     tuple[DomainFinding, ...],
 ]:
     """Build findings plus derived diagnosis narrative fields.
 
-    Returns ``(findings, origin, timeline, top_causes_payloads,
-    domain_findings, domain_top_causes)``.  The last two elements are the
-    domain ``Finding`` objects for consumption by ``TestRun``.
+    Returns ``(origin, timeline, domain_findings, domain_top_causes)``.
     """
     builder = findings_builder or _build_findings
-    findings = builder(
+    domain_findings = builder(
         metadata=metadata,
         samples=samples,
         speed_sufficient=prepared.speed_sufficient,
@@ -844,28 +844,25 @@ def build_findings_bundle(
         per_sample_phases=prepared.per_sample_phases,
         run_noise_baseline_g=prepared.run_noise_baseline_g,
     )
-    # Create domain findings from finalized payloads
-    domain_findings = domain_findings_from_payloads(findings)
-    # Filter domain findings to match the diagnostic payload subset
     domain_diagnostic_findings = tuple(f for f in domain_findings if not f.is_reference)
     most_likely_origin = summarize_origin(
         domain_diagnostic_findings,
     )
+    # build_phase_timeline needs FindingPayload dicts
+    from vibesensor.boundaries.finding import finding_payload_from_domain
+
+    finding_payloads = [finding_payload_from_domain(f) for f in domain_findings]
     phase_timeline = build_phase_timeline(
         prepared.phase_segments,
-        findings,
+        finding_payloads,
         min_confidence=0.25,
     )
-    top_causes, domain_top_causes = select_top_causes(
-        findings,
-        domain_findings=domain_findings,
-        strength_band_key=overall_strength_band_key,
+    domain_top_causes = select_top_causes(
+        domain_findings,
     )
     return (
-        findings,
         most_likely_origin,
         phase_timeline,
-        top_causes,
         domain_findings,
         domain_top_causes,
     )
@@ -990,7 +987,7 @@ class RunAnalysis:
         file_name: str = "run",
         lang: str | None = None,
         include_samples: bool = True,
-        findings_builder: Callable[..., list[FindingPayload]] | None = None,
+        findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
     ) -> None:
         self._metadata = metadata
         self._samples = samples
@@ -1047,10 +1044,8 @@ class RunAnalysis:
             )
         )
         (
-            findings,
             most_likely_origin,
             phase_timeline,
-            top_causes,
             domain_findings,
             domain_top_causes,
         ) = build_findings_bundle(
@@ -1094,9 +1089,16 @@ class RunAnalysis:
             enriched_domain_findings.append(replace(f, confidence_assessment=ca))
         domain_findings = tuple(enriched_domain_findings)
 
-        # Derive top_causes as a subset of the enriched findings
+        # Derive top_causes as a subset of the enriched findings,
+        # preserving signatures collected by group_findings_by_source
         top_cause_ids = {f.finding_id for f in domain_top_causes if f.finding_id}
-        final_top_causes = tuple(f for f in domain_findings if f.finding_id in top_cause_ids)
+        top_cause_sigs = {f.finding_id: f.signatures for f in domain_top_causes if f.signatures}
+        final_top_causes_list: list[DomainFinding] = []
+        for f in domain_findings:
+            if f.finding_id in top_cause_ids:
+                sigs = top_cause_sigs.get(f.finding_id)
+                final_top_causes_list.append(replace(f, signatures=sigs) if sigs else f)
+        final_top_causes = tuple(final_top_causes_list)
 
         evidence_items = _build_observation_evidence(domain_findings)
         observations = extract_observations(evidence_items)
@@ -1106,13 +1108,32 @@ class RunAnalysis:
         driving_segments = build_domain_driving_segments(self._prepared.phase_segments)
         domain_test_plan = plan_test_actions(domain_findings)
         summary_test_plan = step_payloads_from_plan(domain_test_plan)
-        self._test_run = TestRun(
-            run=Run(run_id=self._prepared.run_id, analysis_settings={}),
-            configuration_snapshot=configuration_snapshot,
-            driving_segments=driving_segments,
+        _raw_settings = self._metadata.get("analysis_settings")
+        _scalar_settings: list[tuple[str, int | float | bool | str]] = []
+        if isinstance(_raw_settings, dict):
+            for _k, _v in sorted(_raw_settings.items()):
+                if isinstance(_v, (int, float, bool, str)):
+                    _scalar_settings.append((_k, _v))
+        capture = RunCapture(
+            run_id=self._prepared.run_id,
+            setup=RunSetup(
+                sensors=Sensor.from_location_codes(sensor_locations) if sensor_locations else (),
+                speed_source=SpeedSource(),
+                configuration_snapshot=configuration_snapshot,
+            ),
+            analysis_settings=tuple(_scalar_settings),
+            sample_count=len(self._samples),
+            duration_s=self._prepared.duration_s,
+        )
+        reasoning = DiagnosticReasoning(
             observations=observations,
             signatures=signatures,
             hypotheses=hypotheses,
+        )
+        self._test_run = TestRun(
+            capture=capture,
+            reasoning=reasoning,
+            driving_segments=driving_segments,
             findings=domain_findings,
             top_causes=final_top_causes,
             speed_profile=speed_profile,
@@ -1122,12 +1143,17 @@ class RunAnalysis:
         self._diagnostic_case = DiagnosticCase.start(
             car=build_domain_car(self._metadata),
             symptoms=build_domain_symptoms(self._metadata),
-            configuration_snapshots=(configuration_snapshot,),
             test_plan=domain_test_plan,
         ).add_run(self._test_run)
 
         summary_speed_stats = _speed_stats(self._prepared.speed_values)
         summary_phase_info = build_phase_summary(self._prepared.phase_segments)
+
+        # Serialize domain findings to payloads for the summary
+        from vibesensor.boundaries.finding import finding_payload_from_domain
+
+        findings = [finding_payload_from_domain(f) for f in domain_findings]
+        top_causes = [finding_payload_from_domain(f) for f in final_top_causes]
 
         summary = build_summary_payload(
             file_name=self._file_name,
@@ -1186,8 +1212,8 @@ def summarize_run_data(
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,
-    findings_builder: Callable[..., list[FindingPayload]] | None = None,
-) -> AnalysisSummary:
+    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+) -> dict[str, Any]:
     """Analyze pre-loaded run data and return the full summary dict.
 
     Delegates to :class:`RunAnalysis` which owns the full orchestration.
@@ -1202,7 +1228,7 @@ def summarize_run_data(
             findings_builder=findings_builder,
         )
         .summarize()
-        .summary
+        .summary  # type: ignore[return-value]
     )
 
 
@@ -1211,8 +1237,8 @@ def build_findings_for_samples(
     metadata: MetadataDict,
     samples: list[Sample],
     lang: str | None = None,
-    findings_builder: Callable[..., list[FindingPayload]] | None = None,
-) -> list[FindingPayload]:
+    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+) -> tuple[DomainFinding, ...]:
     """Build the findings list from *samples* using the full analysis pipeline."""
     language = normalize_lang(lang)
     rows = list(samples)
@@ -1236,8 +1262,8 @@ def summarize_log(
     log_path: Path,
     lang: str | None = None,
     include_samples: bool = True,
-    findings_builder: Callable[..., list[FindingPayload]] | None = None,
-) -> AnalysisSummary:
+    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+) -> dict[str, Any]:
     """Read a JSONL run file and analyse it."""
     metadata, samples, _warnings = _load_run(log_path)
     return summarize_run_data(

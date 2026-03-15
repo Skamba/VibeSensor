@@ -26,12 +26,11 @@ def test_test_run_is_frozen_dataclass() -> None:
     """``TestRun`` must be a frozen dataclass."""
     import dataclasses
 
-    from vibesensor.domain import ConfigurationSnapshot, Run, TestRun
+    from vibesensor.domain import RunCapture, TestRun
 
     assert dataclasses.is_dataclass(TestRun)
     r = TestRun(
-        run=Run(run_id="test-123"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test-123"),
         findings=(),
         top_causes=(),
     )
@@ -70,15 +69,14 @@ def test_domain_modules_do_not_import_analysis_types_at_runtime() -> None:
 
 def test_test_run_provides_finding_queries() -> None:
     """``TestRun`` must own finding classification queries."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
+    from vibesensor.domain import Finding, RunCapture, TestRun
 
     diag = Finding(finding_id="F001", confidence=0.75, suspected_source="wheel/tire")
     ref = Finding(finding_id="REF_SPEED", confidence=1.0, suspected_source="unknown")
     info = Finding(finding_id="F002", confidence=0.10, severity="info", suspected_source="unknown")
 
     result = TestRun(
-        run=Run(run_id="test-123"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test-123"),
         findings=(ref, diag, info),
         top_causes=(diag,),
     )
@@ -90,12 +88,11 @@ def test_test_run_provides_finding_queries() -> None:
 
 def test_test_run_effective_top_causes() -> None:
     """``effective_top_causes()`` mirrors diagnosis_candidates logic."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
+    from vibesensor.domain import Finding, RunCapture, TestRun
 
     actionable = Finding(finding_id="F001", confidence=0.75, suspected_source="wheel/tire")
     result = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(actionable,),
         top_causes=(actionable,),
     )
@@ -111,12 +108,11 @@ def test_finalize_findings_returns_domain_findings() -> None:
     from vibesensor.analysis.findings import finalize_findings
     from vibesensor.domain import Finding
 
-    payloads, domain_findings = finalize_findings(
+    domain_findings = finalize_findings(
         [
             {"finding_id": "F_ORDER", "confidence": 0.7, "suspected_source": "wheel/tire"},
         ]
     )
-    assert len(payloads) == 1
     assert len(domain_findings) == 1
     assert isinstance(domain_findings[0], Finding)
     assert domain_findings[0].finding_id == "F001"
@@ -129,11 +125,14 @@ def test_select_top_causes_returns_domain_findings() -> None:
     """``select_top_causes`` must return domain ``Finding`` objects."""
     from tests.test_support.findings import make_finding_payload
     from vibesensor.analysis.top_cause_selection import select_top_causes
+    from vibesensor.boundaries.finding import finding_from_payload
     from vibesensor.domain import Finding
 
-    findings = [make_finding_payload(confidence=0.80, suspected_source="wheel/tire")]
-    payloads, domain_findings = select_top_causes(findings)
-    assert len(payloads) == 1
+    findings = tuple(
+        finding_from_payload(f)
+        for f in [make_finding_payload(confidence=0.80, suspected_source="wheel/tire")]
+    )
+    domain_findings = select_top_causes(findings)
     assert len(domain_findings) == 1
     assert isinstance(domain_findings[0], Finding)
 
@@ -172,7 +171,7 @@ def test_run_analysis_produces_test_run() -> None:
 
 def test_test_run_reference_gap_detection() -> None:
     """``has_relevant_reference_gap()`` detects source-relevant gaps."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun, VibrationSource
+    from vibesensor.domain import Finding, RunCapture, TestRun, VibrationSource
 
     ref_speed = Finding(finding_id="REF_SPEED", suspected_source="unknown")
     ref_wheel = Finding(finding_id="REF_WHEEL", suspected_source="unknown")
@@ -186,8 +185,7 @@ def test_test_run_reference_gap_detection() -> None:
 
     def _make(findings: tuple[Finding, ...]) -> TestRun:
         return TestRun(
-            run=Run(run_id="test"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="test"),
             findings=findings + (diag,),
             top_causes=(diag,),
         )
@@ -211,7 +209,7 @@ def test_test_run_reference_gap_detection() -> None:
 
 def test_test_run_top_strength_db() -> None:
     """``top_strength_db()`` finds the best strength from findings."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
+    from vibesensor.domain import Finding, RunCapture, TestRun
 
     f1 = Finding(
         finding_id="F001",
@@ -226,8 +224,7 @@ def test_test_run_top_strength_db() -> None:
         vibration_strength_db=8.0,
     )
     result = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(f1, f2),
         top_causes=(f1,),
     )
@@ -236,8 +233,7 @@ def test_test_run_top_strength_db() -> None:
     # No strength → None
     f3 = Finding(finding_id="F003", confidence=0.50, suspected_source="engine")
     result2 = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(f3,),
         top_causes=(f3,),
     )
@@ -299,16 +295,14 @@ def test_finding_confidence_negligible_strength_downgrade() -> None:
     assert tone == "warn"
 
 
-def test_confidence_label_delegates_to_domain() -> None:
-    """top_cause_selection.confidence_label must agree with Finding.classify_confidence."""
-    from vibesensor.analysis.top_cause_selection import confidence_label
+def test_classify_confidence_is_domain_owned() -> None:
+    """Finding.classify_confidence is the canonical source of truth for confidence presentation."""
     from vibesensor.domain import Finding
 
-    for conf in (0.80, 0.55, 0.20, 0.0, None):
-        clamped = float(conf) if conf is not None else 0.0
-        expected = Finding.classify_confidence(clamped)
-        actual = confidence_label(conf)
-        assert actual == expected, f"Mismatch for confidence={conf}: {actual} != {expected}"
+    for conf in (0.80, 0.55, 0.20, 0.0):
+        result = Finding.classify_confidence(conf)
+        assert len(result) == 3
+        assert all(isinstance(v, str) for v in result)
 
 
 # ── TestRun owns primary source/location queries ─────────────────────────
@@ -316,7 +310,7 @@ def test_confidence_label_delegates_to_domain() -> None:
 
 def test_test_run_primary_source_and_location() -> None:
     """``primary_source`` and ``primary_location`` are domain queries."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun, VibrationSource
+    from vibesensor.domain import Finding, RunCapture, TestRun, VibrationSource
 
     f = Finding(
         finding_id="F001",
@@ -325,8 +319,7 @@ def test_test_run_primary_source_and_location() -> None:
         strongest_location="Left Front",
     )
     result = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(f,),
         top_causes=(f,),
     )
@@ -335,8 +328,7 @@ def test_test_run_primary_source_and_location() -> None:
 
     # No findings → None
     empty = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(),
         top_causes=(),
     )
@@ -361,12 +353,11 @@ def test_finding_is_frozen_dataclass() -> None:
 
 def test_finding_tuples_are_immutable() -> None:
     """TestRun findings must be tuples (not mutable lists)."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
+    from vibesensor.domain import Finding, RunCapture, TestRun
 
     f = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
     result = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(f,),
         top_causes=(f,),
     )
@@ -379,7 +370,7 @@ def test_finding_tuples_are_immutable() -> None:
 
 def test_build_system_cards_uses_domain_findings() -> None:
     """build_system_cards must read confidence tone from domain, not dict."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
+    from vibesensor.domain import Finding, RunCapture, TestRun
     from vibesensor.report.mapping import (
         PrimaryCandidateContext,
         ReportMappingContext,
@@ -395,27 +386,16 @@ def test_build_system_cards_uses_domain_findings() -> None:
         strongest_location="Left Front",
     )
     aggregate = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(domain_f,),
         top_causes=(domain_f,),
     )
-    # Build a context with the aggregate and matching payload top_causes
-    cause_payload = {
-        "finding_id": "F001",
-        "suspected_source": "wheel/tire",
-        "confidence": 0.80,
-        "strongest_location": "Left Front",
-        "confidence_tone": "WRONG_TONE",  # Intentionally wrong
-    }
+    # Build a context with the aggregate (payloads no longer stored on context)
     context = ReportMappingContext(
         meta={},
         car_name=None,
         car_type=None,
         date_str="",
-        top_causes=[cause_payload],  # type: ignore[list-item]
-        findings_non_ref=[],
-        findings=[],
         speed_stats={},  # type: ignore[typeddict-item]
         origin={},  # type: ignore[typeddict-item]
         origin_location="",
@@ -431,7 +411,7 @@ def test_build_system_cards_uses_domain_findings() -> None:
         domain_aggregate=aggregate,
     )
     primary = PrimaryCandidateContext(
-        primary_candidate=cause_payload,  # type: ignore[arg-type]
+        primary_candidate=domain_f,
         primary_source="wheel/tire",
         primary_system="Wheel/Tire",
         primary_location="Left Front",
@@ -715,7 +695,7 @@ def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
 
 def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     from tests.test_support.findings import make_finding_payload
-    from vibesensor.boundaries import diagnostic_case_from_summary
+    from vibesensor.boundaries.diagnostic_case import diagnostic_case_from_summary
 
     summary = {
         "case_id": "summary-case-guard-id",
@@ -734,7 +714,7 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     diagnostic_case = diagnostic_case_from_summary(summary)
     assert diagnostic_case.case_id == "summary-case-guard-id"
     assert diagnostic_case.test_runs
-    assert diagnostic_case.findings
+    assert diagnostic_case.diagnoses
     assert diagnostic_case.primary_run is not None
 
 
@@ -971,8 +951,8 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     assert isinstance(context.domain_aggregate, TestRun)
 
     primary = resolve_primary_report_candidate(
-        summary,
         context=context,
+        sensor_intensity=[],
         tr=lambda key, **kw: tr(lang, key, **kw),
         lang=lang,
     )
@@ -1212,26 +1192,6 @@ def test_post_analysis_does_not_construct_raw_suitability_dicts() -> None:
     )
 
 
-def test_exports_project_through_domain() -> None:
-    """``build_run_details_json`` must call ``project_summary_through_domain``.
-
-    Prevents regression: export payloads must go through domain
-    projection before output.
-    """
-    from tests._paths import SERVER_ROOT
-
-    exports_path = SERVER_ROOT / "vibesensor" / "history_services" / "exports.py"
-    source = exports_path.read_text()
-    assert "project_summary_through_domain" in source, (
-        "history_services/exports.py must call project_summary_through_domain "
-        "before outputting run details"
-    )
-    # Verify it's actually imported (not just in a comment)
-    assert "from" in source and "project_summary_through_domain" in source, (
-        "project_summary_through_domain must be imported, not just mentioned"
-    )
-
-
 def test_f_order_finding_id_normalization() -> None:
     """``finalize_findings`` normalises arbitrary IDs to sequential ``F###``.
 
@@ -1244,7 +1204,7 @@ def test_f_order_finding_id_normalization() -> None:
     from vibesensor.analysis.findings import finalize_findings
     from vibesensor.domain import Finding
 
-    payloads, domain_findings = finalize_findings(
+    domain_findings = finalize_findings(
         [
             {"finding_id": "F_ORDER", "confidence": 0.7, "suspected_source": "wheel/tire"},
             {"finding_id": "F_PERSISTENT", "confidence": 0.4, "suspected_source": "engine"},
@@ -1256,7 +1216,7 @@ def test_f_order_finding_id_normalization() -> None:
     assert all(isinstance(f, Finding) for f in domain_findings)
 
     # Reference findings keep their original IDs
-    payloads_ref, domain_ref = finalize_findings(
+    domain_ref = finalize_findings(
         [
             {
                 "finding_id": "REF_SPEED",
@@ -1323,3 +1283,184 @@ def test_fallback_payload_functions_removed() -> None:
 
     assert not hasattr(mapping, "top_strength_values")
     assert not hasattr(mapping, "has_relevant_reference_gap")
+
+
+# ── TODO-20: Layer import guardrails ─────────────────────────────────────
+
+
+def test_domain_does_not_import_outer_packages() -> None:
+    """domain/ must not import from boundaries/, report/, routes/, etc.
+
+    Relative intra-package imports (level >= 1) are excluded because
+    ``from .report import Report`` refers to ``domain/report.py``, not the
+    outer ``vibesensor/report/`` package.
+    """
+    import ast
+    from pathlib import Path
+
+    domain_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "domain"
+    forbidden = {
+        "boundaries",
+        "report",
+        "routes",
+        "history",
+        "history_services",
+        "history_db",
+        "runtime",
+        "metrics_log",
+    }
+    violations: list[str] = []
+    for py in sorted(domain_dir.rglob("*.py")):
+        tree = ast.parse(py.read_text(), filename=str(py))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                # Skip relative imports — they resolve within domain/ itself
+                if node.level >= 1:
+                    continue
+                for part in forbidden:
+                    if part in node.module.split("."):
+                        violations.append(f"{py.name}: imports from {node.module}")
+    assert not violations, "domain/ must not import outer packages:\n" + "\n".join(violations)
+
+
+def test_boundaries_do_not_import_outer_layers() -> None:
+    """boundaries/ must not import from report/, routes/, history_services/,
+    history_db/, runtime/, or metrics_log/.
+
+    boundaries/ sits between domain/ and the rest of the application; it must
+    not depend on higher-level adapter packages.
+    """
+    import ast
+    from pathlib import Path
+
+    boundaries_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "boundaries"
+    forbidden = {
+        "report",
+        "routes",
+        "history",
+        "history_services",
+        "history_db",
+        "runtime",
+        "metrics_log",
+    }
+    violations: list[str] = []
+    for py in sorted(boundaries_dir.rglob("*.py")):
+        tree = ast.parse(py.read_text(), filename=str(py))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                if node.level >= 1:
+                    continue
+                for part in forbidden:
+                    if part in node.module.split("."):
+                        violations.append(f"{py.name}: imports from {node.module}")
+    assert not violations, "boundaries/ must not import outer layers:\n" + "\n".join(violations)
+
+
+def test_boundaries_do_not_import_analysis() -> None:
+    """boundaries/ must not import from analysis/.
+
+    Boundary modules decode/project between persistence payloads and domain
+    objects.  They must not reach into analysis internals.
+    """
+    import ast
+    from pathlib import Path
+
+    boundaries_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "boundaries"
+    violations: list[str] = []
+    for py in sorted(boundaries_dir.rglob("*.py")):
+        tree = ast.parse(py.read_text(), filename=str(py))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                if node.level >= 1:
+                    continue
+                if "analysis" in node.module.split("."):
+                    violations.append(f"{py.name}: imports from {node.module}")
+    assert not violations, "boundaries/ must not import analysis/:\n" + "\n".join(violations)
+
+
+# ── TODO-22: Canonical domain graph structural verification ──────────────
+
+
+def test_canonical_domain_graph_relationships() -> None:
+    """Verify all canonical domain graph relationships exist as typed fields."""
+    import dataclasses
+
+    from vibesensor.domain import (
+        Car,
+        Diagnosis,
+        DiagnosticCase,
+        DiagnosticReasoning,
+        DrivingSegment,
+        Finding,
+        Hypothesis,
+        Measurement,
+        Observation,
+        RunCapture,
+        RunSetup,
+        Sensor,
+        SensorPlacement,
+        Signature,
+        SpeedSource,
+        TestRun,
+    )
+
+    def field_type(cls: type, name: str) -> type:
+        """Return the raw annotation for a dataclass field."""
+        hints = {f.name: f for f in dataclasses.fields(cls)}
+        assert name in hints, f"{cls.__name__} missing field {name}"
+        return hints[name]
+
+    # DiagnosticCase
+    field_type(DiagnosticCase, "car")  # Car | None
+    field_type(DiagnosticCase, "test_runs")  # tuple[TestRun, ...]
+    field_type(DiagnosticCase, "diagnoses")  # tuple[Diagnosis, ...]
+
+    # TestRun
+    field_type(TestRun, "capture")  # RunCapture
+    field_type(TestRun, "reasoning")  # DiagnosticReasoning
+    field_type(TestRun, "findings")  # tuple[Finding, ...]
+    field_type(TestRun, "driving_segments")  # tuple[DrivingSegment, ...]
+
+    # RunCapture
+    field_type(RunCapture, "run_id")  # str (not a Run object — known deviation)
+    field_type(RunCapture, "setup")  # RunSetup
+    field_type(RunCapture, "measurements")  # tuple[Measurement, ...]
+    assert not any(f.name == "run" for f in dataclasses.fields(RunCapture)), (
+        "RunCapture must not hold a Run object reference (uses run_id: str)"
+    )
+
+    # RunSetup
+    field_type(RunSetup, "sensors")  # tuple[Sensor, ...]
+    field_type(RunSetup, "speed_source")  # SpeedSource
+
+    # Sensor
+    field_type(Sensor, "placement")  # SensorPlacement | None
+
+    # Measurement
+    field_type(Measurement, "sensor_id")  # str
+
+    # DiagnosticReasoning
+    field_type(DiagnosticReasoning, "observations")  # tuple[Observation, ...]
+    field_type(DiagnosticReasoning, "signatures")  # tuple[Signature, ...]
+    field_type(DiagnosticReasoning, "hypotheses")  # tuple[Hypothesis, ...]
+
+    # Verify all imports are real classes (not just string names)
+    for cls in (
+        Car,
+        Diagnosis,
+        DiagnosticCase,
+        DiagnosticReasoning,
+        DrivingSegment,
+        Finding,
+        Hypothesis,
+        Measurement,
+        Observation,
+        RunCapture,
+        RunSetup,
+        Sensor,
+        SensorPlacement,
+        Signature,
+        SpeedSource,
+        TestRun,
+    ):
+        assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"

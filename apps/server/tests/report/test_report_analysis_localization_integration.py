@@ -343,12 +343,9 @@ def test_build_findings_excludes_partial_coverage_sensor_from_strongest_location
 
     findings = build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
     wheel_finding = next(
-        (finding for finding in findings if str(finding.get("finding_key") or "") == "wheel_1x"),
+        (finding for finding in findings if finding.finding_key == "wheel_1x"),
         None,
     )
 
     assert wheel_finding is not None
-    assert wheel_finding.get("strongest_location") == "Front Left"
-    hotspot = wheel_finding.get("location_hotspot")
-    assert isinstance(hotspot, dict)
-    assert bool(hotspot.get("partial_coverage")) is False
+    assert wheel_finding.strongest_location == "Front Left"

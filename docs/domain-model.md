@@ -73,12 +73,16 @@ not a conclusion object and not a boundary shape.
 
 The model uses explicit scope and lifetime boundaries:
 
-- case-scoped concepts: `DiagnosticCase`, `Diagnosis`, and `Car`
+- case-scoped concepts: `DiagnosticCase`, `Diagnosis`, `Car`, and `Symptom`
 - run-scoped diagnostic concepts: `TestRun`, `DiagnosticReasoning`, `Finding`,
-  `DrivingSegment`, `Observation`, `Signature`, and `Hypothesis`
-- capture-scoped lifecycle concepts: `Run`
+  `DrivingSegment`, `DrivingPhase`, `Observation`, `Signature`, `Hypothesis`,
+  `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
+  and `TestPlan`
+- finding-scoped value objects: `ConfidenceAssessment`, `FindingEvidence`,
+  `LocationHotspot`, and `VibrationOrigin`
+- capture-scoped lifecycle concepts: `Run`, `RunStatus`
 - capture and evidence concepts derived from completed capture: `RunCapture`,
-  `RunSetup`, and `Measurement`
+  `RunSetup`, `Measurement`, and `ConfigurationSnapshot`
 - run setup and evidence-context concepts: `Sensor`, `SensorPlacement`, and
   `SpeedSource`
 - analysis-machinery concepts: `PhaseSegment` and `AnalysisWindow`
@@ -185,7 +189,10 @@ cases. It is not the primary source of diagnostic truth.
 
 ## Canonical domain graph
 
-The canonical domain graph is:
+The canonical domain graph has two parts: the **aggregates and containment**
+graph, and the **reasoning chain**.
+
+### Aggregates and containment
 
 ```text
 DiagnosticCase
@@ -203,67 +210,45 @@ TestRun
   is interpreted within the case-scoped Car context
 
 RunCapture
-  references one Run
+  references one Run (via run_id: str — no embedded Run object)
   contains one RunSetup
-  contains Measurement*
+  contains Measurement* (structurally present, never populated in
+    production — DSP pipeline operates on numpy arrays for performance)
   is interpreted within the case-scoped Car context
 
 RunSetup
   contains Sensor*
   references one SpeedSource
   is shared interpretive context for one RunCapture and one derived TestRun
-  contains setup context, not diagnostic conclusions
-
-Sensor
-  may have one SensorPlacement
-
-SensorPlacement
-  qualifies sensor mounting and location meaning
-
-SpeedSource
-  qualifies speed interpretation for the run
-
-Measurement
-  belongs to one RunCapture
-  comes from one Sensor
-  is evidence material, not diagnostic conclusion content
-
-DiagnosticReasoning
-  contains Observation*
-  contains Signature*
-  contains Hypothesis*
-
-DrivingSegment
-  is the canonical domain segmentation concept
-  covers meaningful portions of run evidence
-
-Observation
-  is a diagnostic intermediate derived from run evidence
-
-Signature
-  organizes or characterizes observed patterns in evidence
-
-Hypothesis
-  interprets observations and signatures toward possible explanations
-
-Finding
-  belongs to one TestRun
-  is the surfaced run-level diagnostic conclusion
-
-Diagnosis
-  belongs to one DiagnosticCase
-  is derived from one or more Finding across one or more TestRun
-
-Report
-  is derived from DiagnosticCase, Diagnosis, and TestRun
-
-HistoryRecord
-  archives run or case state at the boundary
-  is not core diagnostic truth
-
-Measurement -> Observation -> Signature -> Hypothesis -> Finding -> Diagnosis -> Report
-  is the canonical reasoning chain from evidence to explanation
 ```
+
+### Evidence, reasoning intermediates, and conclusions
+
+```text
+Sensor → may have one SensorPlacement
+SpeedSource → qualifies speed interpretation for the run
+Measurement → belongs to one RunCapture, comes from one Sensor
+DiagnosticReasoning → contains Observation*, Signature*, Hypothesis*
+DrivingSegment → canonical domain segmentation concept
+Observation → diagnostic intermediate derived from run evidence
+Signature → organizes observed patterns in evidence
+Hypothesis → interprets observations and signatures
+Finding → belongs to one TestRun, surfaced run-level conclusion
+Diagnosis → belongs to one DiagnosticCase, derived from Finding*
+Report → derived from DiagnosticCase, Diagnosis, and TestRun
+HistoryRecord → archives run or case state at the boundary
+```
+
+### Canonical reasoning chain
+
+```text
+Measurement -> Observation -> Signature -> Hypothesis -> Finding -> Diagnosis -> Report
+```
+
+In practice, findings are built first by the analysis pipeline and
+observations/signatures/hypotheses are retroactively derived from finding
+evidence — a known inversion that preserves the structural relationships while
+reflecting the actual computation order.
 
 The intended meaningful flow is:
 
@@ -320,10 +305,25 @@ The concept categories in this repo are:
 - `Diagnosis`
 - `Finding`
 - `DrivingSegment`
+- `DrivingPhase`
 - `Car`
 - `Sensor`
 - `SensorPlacement`
 - `SpeedSource`
+- `Symptom`
+- `TestPlan`
+- `RecommendedAction`
+- `SpeedProfile`
+- `RunSuitability`
+- `SuitabilityCheck`
+- `ConfigurationSnapshot`
+
+### Finding-scoped value objects
+
+- `ConfidenceAssessment`
+- `FindingEvidence`
+- `LocationHotspot`
+- `VibrationOrigin`
 
 ### Capture and evidence domain objects
 
@@ -427,6 +427,7 @@ Domain concepts are the diagnostic source of truth:
 - `Diagnosis`
 - `Finding`
 - `DrivingSegment`
+- `DrivingPhase`
 - `Measurement`
 - `Car`
 - `Sensor`
@@ -438,6 +439,17 @@ Domain concepts are the diagnostic source of truth:
 - `Observation`
 - `Signature`
 - `Hypothesis`
+- `Symptom`
+- `TestPlan`
+- `RecommendedAction`
+- `SpeedProfile`
+- `RunSuitability`
+- `SuitabilityCheck`
+- `ConfigurationSnapshot`
+- `ConfidenceAssessment`
+- `FindingEvidence`
+- `LocationHotspot`
+- `VibrationOrigin`
 
 ### Lifecycle domain object
 
@@ -448,12 +460,16 @@ boundary representation, and not the analyzed run aggregate.
 
 Within the domain, scope still matters:
 
-- case-scoped: `DiagnosticCase`, `Diagnosis`, `Car`
+- case-scoped: `DiagnosticCase`, `Diagnosis`, `Car`, `Symptom`
 - run-scoped diagnostic: `TestRun`, `DiagnosticReasoning`, `Finding`,
-  `DrivingSegment`, `Observation`, `Signature`, `Hypothesis`
-- capture-scoped lifecycle: `Run`
+  `DrivingSegment`, `DrivingPhase`, `Observation`, `Signature`, `Hypothesis`,
+  `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
+  `TestPlan`
+- finding-scoped value objects: `ConfidenceAssessment`, `FindingEvidence`,
+  `LocationHotspot`, `VibrationOrigin`
+- capture-scoped lifecycle: `Run`, `RunStatus`
 - capture and evidence derived from completed capture: `RunCapture`,
-  `RunSetup`, `Measurement`
+  `RunSetup`, `Measurement`, `ConfigurationSnapshot`
 - run setup and evidence context: `Sensor`, `SensorPlacement`, `SpeedSource`
 
 `RunSetup` belongs to setup and evidence interpretation. `Sensor`,
