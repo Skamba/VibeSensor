@@ -15,13 +15,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.analysis.helpers import _corr_abs_clamped, _weighted_percentile
-from vibesensor.report.pdf_diagram_render import _canonical_location
-from vibesensor.report.pdf_drawing import _strength_with_peak
-from vibesensor.report_i18n import normalize_lang, tr
-from vibesensor.settings_store import PersistenceError, SettingsStore
-from vibesensor.update.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher, _dir_sha256
-from vibesensor.update.manager import UpdateManager, UpdateState
+from vibesensor.use_cases.diagnostics.helpers import _corr_abs_clamped, _weighted_percentile
+from vibesensor.adapters.pdf.pdf_diagram_render import _canonical_location
+from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
+from vibesensor.adapters.pdf_i18n import normalize_lang, tr
+from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
+from vibesensor.use_cases.updates.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher, _dir_sha256
+from vibesensor.use_cases.updates.manager import UpdateManager, UpdateState
 from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 # ── 1. NaN guard in vibration_strength_db_scalar ─────────────────────────
@@ -172,7 +172,7 @@ class TestFirmwareCacheStreamingDownload:
         mock_resp.__enter__ = lambda s: s
         mock_resp.__exit__ = lambda s, *a: None
 
-        with patch("vibesensor.update.firmware_cache.urlopen", return_value=mock_resp):
+        with patch("vibesensor.use_cases.updates.firmware_cache.urlopen", return_value=mock_resp):
             fetcher._download_asset("https://example.com/fw.bin", dest)
 
         assert dest.exists()

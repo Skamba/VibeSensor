@@ -9,10 +9,10 @@ from pathlib import Path
 import pytest
 from _paths import SERVER_ROOT
 
-from vibesensor.analysis.helpers import _weighted_percentile
-from vibesensor.analysis.location_analysis import _weighted_percentile_speed
-from vibesensor.history_db import HistoryDB
-from vibesensor.processing import SignalProcessor
+from vibesensor.use_cases.diagnostics.helpers import _weighted_percentile
+from vibesensor.use_cases.diagnostics.location_analysis import _weighted_percentile_speed
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.infra.processing import SignalProcessor
 
 
 # ---------------------------------------------------------------------------

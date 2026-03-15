@@ -9,11 +9,11 @@ from test_support.report_helpers import RUN_END, minimal_summary, write_jsonl
 from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
-from vibesensor.analysis import summarize_log
-from vibesensor.analysis.summary_builder import summarize_origin
-from vibesensor.boundaries.finding import finding_from_payload
-from vibesensor.report.mapping import map_summary
-from vibesensor.report.report_data import ReportTemplateData
+from vibesensor.use_cases.diagnostics import summarize_log
+from vibesensor.use_cases.diagnostics.summary_builder import summarize_origin
+from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.report_data import ReportTemplateData
 
 
 def _sample(idx: int, *, speed_kmh: float, dominant_freq_hz: float, peak_amp_g: float) -> dict:

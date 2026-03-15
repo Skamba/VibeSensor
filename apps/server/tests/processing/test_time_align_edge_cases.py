@@ -1,4 +1,4 @@
-"""Edge-case tests for vibesensor.processing.time_align.
+"""Edge-case tests for vibesensor.infra.processing.time_align.
 
 These complement the primary test file (test_processing_time_align.py) by
 covering degenerate inputs and corner cases not handled there:
@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.processing.time_align import (
+from vibesensor.infra.processing.time_align import (
     analysis_time_range,
     compute_overlap,
 )

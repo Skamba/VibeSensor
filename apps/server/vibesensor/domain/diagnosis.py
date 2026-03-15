@@ -5,10 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .finding import Finding
+from vibesensor.domain.finding import Finding
 
 if TYPE_CHECKING:
-    from .diagnostic_case import DiagnosticCaseEpistemicRule
+    from vibesensor.domain.diagnostic_case import DiagnosticCaseEpistemicRule
 
 __all__ = ["Diagnosis"]
 

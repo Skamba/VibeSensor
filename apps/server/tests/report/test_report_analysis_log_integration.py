@@ -7,8 +7,8 @@ from test_support.report_helpers import analysis_metadata as _make_metadata
 from test_support.report_helpers import analysis_sample as _make_sample
 from test_support.report_helpers import write_test_log
 
-from vibesensor.analysis import summarize_log
-from vibesensor.runlog import append_jsonl_records, create_run_end_record
+from vibesensor.use_cases.diagnostics import summarize_log
+from vibesensor.adapters.persistence.runlog import append_jsonl_records, create_run_end_record
 
 
 def test_summarize_log_basic(tmp_path: Path) -> None:

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.update.installer import UpdateInstaller
-from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
-from vibesensor.update.runner import sanitize_log_line as sanitize_log_line
-from vibesensor.update.wifi import parse_wifi_diagnostics
+from vibesensor.use_cases.updates.installer import UpdateInstaller
+from vibesensor.use_cases.updates.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
+from vibesensor.use_cases.updates.runner import sanitize_log_line as sanitize_log_line
+from vibesensor.use_cases.updates.wifi import parse_wifi_diagnostics
 
 
 class TestUpdateJobStatus:

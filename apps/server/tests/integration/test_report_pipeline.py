@@ -41,8 +41,8 @@ from test_support import (
     top_confidence,
 )
 
-from vibesensor.report.mapping import map_summary
-from vibesensor.report.pdf_engine import build_report_pdf
+from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
 # ---------------------------------------------------------------------------
 # Helpers

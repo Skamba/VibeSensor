@@ -9,21 +9,21 @@ import numpy as np
 import pytest
 from pypdf import PdfReader
 
-from vibesensor.analysis_settings import (
+from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     AnalysisSettingsStore,
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
-from vibesensor.gps_speed import GPSSpeedMonitor
-from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
-from vibesensor.processing import SignalProcessor
-from vibesensor.protocol import pack_data, pack_hello, parse_hello
-from vibesensor.registry import ClientRegistry
-from vibesensor.report.mapping import map_summary
-from vibesensor.report.pdf_engine import build_report_pdf
-from vibesensor.udp_data_rx import DataDatagramProtocol
+from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
+from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 
 _FRAME_N = 256
 _SAMPLE_RATE_HZ = 800

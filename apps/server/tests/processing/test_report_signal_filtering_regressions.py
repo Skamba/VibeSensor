@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.processing import SignalProcessor
-from vibesensor.processing.fft import medfilt3
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.fft import medfilt3
 
 
 def _make_processor(**overrides) -> SignalProcessor:

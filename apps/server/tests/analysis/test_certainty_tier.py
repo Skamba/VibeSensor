@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis.strength_labels import (
+from vibesensor.use_cases.diagnostics.strength_labels import (
     TIER_A_CEILING,
     TIER_B_CEILING,
     certainty_tier,
 )
-from vibesensor.report.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary
 
 # ---------------------------------------------------------------------------
 # Unit tests: certainty_tier() thresholds and boundary conditions

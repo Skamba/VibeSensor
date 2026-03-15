@@ -17,8 +17,8 @@ from math import pi
 import numpy as np
 import pytest
 
-from vibesensor.processing import SignalProcessor
-from vibesensor.worker_pool import WorkerPool
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.workers.worker_pool import WorkerPool
 
 # ---------------------------------------------------------------------------
 # Fixtures

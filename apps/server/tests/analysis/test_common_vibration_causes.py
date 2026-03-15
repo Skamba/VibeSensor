@@ -4,11 +4,11 @@ from math import pi
 
 import pytest
 
-from vibesensor.analysis.order_bands import (
+from vibesensor.use_cases.diagnostics.order_bands import (
     build_diagnostic_settings,
     vehicle_orders_hz,
 )
-from vibesensor.constants import KMH_TO_MPS
+from vibesensor.shared.constants import KMH_TO_MPS
 
 """
 Common-cause cases are based on recurring issues documented in:

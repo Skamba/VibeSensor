@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .recommended_action import RecommendedAction
+from vibesensor.domain.recommended_action import RecommendedAction
 
 __all__ = ["TestPlan"]
 

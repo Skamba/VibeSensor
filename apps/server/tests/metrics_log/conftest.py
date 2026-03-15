@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
+from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------
 # Fake collaborators
@@ -112,7 +112,7 @@ class _FakeGPSMonitor:
     override_speed_mps: float | None = None
 
     def resolve_speed(self):
-        from vibesensor.gps_speed import SpeedResolution
+        from vibesensor.adapters.gps.gps_speed import SpeedResolution
 
         if isinstance(self.override_speed_mps, (int, float)):
             return SpeedResolution(
@@ -211,7 +211,7 @@ class _FailingAppendOnceHistoryDB(_FakeHistoryDB):
     def __init__(self) -> None:
         super().__init__()
         # Must exceed _MAX_APPEND_RETRIES (3) to actually surface a write error
-        from vibesensor.metrics_log.logger import _MAX_APPEND_RETRIES
+        from vibesensor.use_cases.run.logger import _MAX_APPEND_RETRIES
 
         self._append_failures_remaining = _MAX_APPEND_RETRIES
 

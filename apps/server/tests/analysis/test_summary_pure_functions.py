@@ -14,10 +14,10 @@ from __future__ import annotations
 import pytest
 
 from tests.test_support.findings import make_finding_payload
-from vibesensor.analysis.top_cause_selection import select_top_causes
-from vibesensor.boundaries.finding import finding_from_payload
+from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
+from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.domain import Finding
-from vibesensor.report_i18n import normalize_lang
+from vibesensor.adapters.pdf_i18n import normalize_lang
 
 # ---------------------------------------------------------------------------
 # Finding.classify_confidence
@@ -100,7 +100,7 @@ class TestConfidenceLabel:
 class TestNormalizeLangInSummary:
     """Tests for the normalize_lang helper used by summary building.
 
-    This is a separate implementation from vibesensor.report_i18n.normalize_lang
+    This is a separate implementation from vibesensor.adapters.pdf_i18n.normalize_lang
     and must behave consistently.
     """
 

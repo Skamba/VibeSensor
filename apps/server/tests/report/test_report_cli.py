@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from vibesensor.report_cli import main
+from vibesensor.adapters.pdf_cli import main
 
 
 @pytest.mark.parametrize(

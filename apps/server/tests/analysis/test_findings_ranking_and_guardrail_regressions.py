@@ -17,12 +17,12 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.analysis.helpers import _speed_stats
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics.helpers import _speed_stats
+from vibesensor.use_cases.diagnostics.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
-from vibesensor.routes.clients import create_client_routes
-from vibesensor.runlog import append_jsonl_records
+from vibesensor.adapters.http.clients import create_client_routes
+from vibesensor.adapters.persistence.runlog import append_jsonl_records
 
 
 class TestRankingScoreSyncAfterSuppression:
@@ -79,7 +79,7 @@ class TestHistoryDbCloseLocked:
     def test_close_acquires_lock(self) -> None:
         source = inspect.getsource(
             __import__(
-                "vibesensor.history_db",
+                "vibesensor.adapters.persistence.history_db",
                 fromlist=["HistoryDB"],
             ).HistoryDB.close,
         )

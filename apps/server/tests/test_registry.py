@@ -4,9 +4,9 @@ from pathlib import Path
 
 import numpy as np
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.protocol import DataMessage, HelloMessage
-from vibesensor.registry import ClientRegistry
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
+from vibesensor.infra.runtime.registry import ClientRegistry
 
 
 def test_registry_sequence_gap(tmp_path: Path) -> None:
@@ -173,8 +173,8 @@ def test_registry_staleness_uses_monotonic_clock_when_now_not_provided(
     registry = ClientRegistry(db=db, stale_ttl_seconds=10.0)
     now = {"wall": 1_000.0, "mono": 100.0}
 
-    monkeypatch.setattr("vibesensor.registry.time.time", lambda: now["wall"])
-    monkeypatch.setattr("vibesensor.registry.time.monotonic", lambda: now["mono"])
+    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
+    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: now["mono"])
 
     hello = HelloMessage(
         client_id=bytes.fromhex("001122334455"),

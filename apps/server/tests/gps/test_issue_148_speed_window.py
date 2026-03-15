@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from vibesensor.analysis.findings import _speed_breakdown
-from vibesensor.analysis.location_analysis import _location_speedbin_summary
+from vibesensor.use_cases.diagnostics.findings import _speed_breakdown
+from vibesensor.use_cases.diagnostics.location_analysis import _location_speedbin_summary
 
 
 def test_location_speed_window_handles_boundary_straddle() -> None:

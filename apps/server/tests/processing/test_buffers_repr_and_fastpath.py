@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from vibesensor.processing.buffers import ClientBuffer
+from vibesensor.infra.processing.buffers import ClientBuffer
 
 
 def _make_buf(capacity: int = 64) -> ClientBuffer:

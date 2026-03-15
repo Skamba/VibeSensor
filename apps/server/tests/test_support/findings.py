@@ -6,7 +6,7 @@ instead of defining local ``_make_finding`` helpers.
 
 from __future__ import annotations
 
-from vibesensor.analysis._types import FindingPayload
+from vibesensor.use_cases.diagnostics._types import FindingPayload
 
 
 def make_finding_payload(

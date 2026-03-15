@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.hotspot.parsers import (
+from vibesensor.adapters.hotspot.parsers import (
     HealStateStore,
     expected_ip_match,
     nm_log_signals,

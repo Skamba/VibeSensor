@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi import FastAPI
 
-from vibesensor.routes import create_router
+from vibesensor.adapters.http import create_router
 
 
 def _openapi_state() -> MagicMock:
@@ -99,7 +99,7 @@ def test_esp_flash_start_request_requires_port_when_not_auto_detect() -> None:
     import pytest
     from pydantic import ValidationError
 
-    from vibesensor.api_models import EspFlashStartRequest
+    from vibesensor.shared.types.api_models import EspFlashStartRequest
 
     with pytest.raises(ValidationError):
         EspFlashStartRequest(port=None, auto_detect=False)
@@ -126,7 +126,7 @@ async def test_esp_flash_start_returns_400_on_value_error() -> None:
     """start_esp_flash must map ValueError from esp_flash_manager.start → 400 (Fix 3)."""
     from fastapi import HTTPException
 
-    from vibesensor.routes.updates import create_update_routes
+    from vibesensor.adapters.http.updates import create_update_routes
 
     class _ValErrFlashManager:
         async def list_ports(self):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from vibesensor.analysis.top_cause_selection import group_findings_by_source
-from vibesensor.boundaries.finding import finding_from_payload
+from vibesensor.use_cases.diagnostics.top_cause_selection import group_findings_by_source
+from vibesensor.shared.boundaries.finding import finding_from_payload
 
 
 def test_group_findings_by_source_preserves_ranked_signatures() -> None:

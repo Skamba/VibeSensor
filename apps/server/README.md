@@ -77,7 +77,7 @@ Common runtime files under `apps/server/data/` include:
 
 ## HTTP and WebSocket surface
 
-The API surface is implemented in `apps/server/vibesensor/routes/` and assembled by `routes/__init__.py`.
+The API surface is implemented in `apps/server/vibesensor/adapters/http/` and assembled by `routes/__init__.py`.
 
 Current route groups:
 
@@ -101,11 +101,11 @@ Generate a PDF from a saved run:
 vibesensor-report path/to/run.jsonl --output report.pdf --summary-json summary.json
 ```
 
-The public PDF entrypoint is `apps/server/vibesensor/report/pdf_engine.py`. Page composition lives in focused modules under `report/`.
+The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`. Page composition lives in focused modules under `report/`.
 
 ## Updates
 
-Production devices use the wheel-based updater in `apps/server/vibesensor/update/`, with `manager.py` as the public facade over the focused updater modules.
+Production devices use the wheel-based updater in `apps/server/vibesensor/use_cases/updates/`, with `manager.py` as the public facade over the focused updater modules.
 
 - Normal delivery should go through release wheels.
 - Do not rely on manual edits inside deployed `site-packages` as a normal workflow.

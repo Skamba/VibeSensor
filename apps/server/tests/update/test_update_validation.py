@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.update.manager import (
+from vibesensor.use_cases.updates.manager import (
     UpdateValidationConfig,
     validate_prerequisites,
 )
-from vibesensor.update.status import UpdateStateStore, UpdateStatusTracker
+from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
 
 
 def _mock_which(name: str) -> str | None:
@@ -32,7 +32,7 @@ async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_p
 
     monkeypatch.setattr("shutil.which", _mock_which)
     monkeypatch.setattr(
-        "vibesensor.update.manager._probe_rollback_dir",
+        "vibesensor.use_cases.updates.manager._probe_rollback_dir",
         _raise_probe,
     )
 

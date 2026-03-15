@@ -4,8 +4,8 @@ This document is generated from code and shared contract files.
 
 - Regenerate with: `python3 tools/config/generate_contract_reference_doc.py`
 - Source of truth:
-  - `apps/server/vibesensor/protocol.py`
-  - `apps/server/vibesensor/config.py`
+  - `apps/server/vibesensor/adapters/udp/protocol.py`
+  - `apps/server/vibesensor/app/settings.py`
   - `apps/server/vibesensor/contracts.py`
 
 ## Network contract

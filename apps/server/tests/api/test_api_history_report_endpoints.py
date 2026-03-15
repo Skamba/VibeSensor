@@ -19,8 +19,8 @@ from _history_endpoint_helpers import (
 from fastapi import FastAPI, HTTPException
 from pypdf import PdfReader
 
-from vibesensor.analysis import summarize_run_data
-from vibesensor.routes import create_router
+from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.adapters.http import create_router
 
 
 @pytest.mark.asyncio
@@ -83,9 +83,9 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     app.include_router(router)
     endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
 
-    with patch("vibesensor.history_services.reports.map_summary") as patched_map_summary:
+    with patch("vibesensor.use_cases.history.reports.map_summary") as patched_map_summary:
         patched_map_summary.side_effect = lambda summary, **kwargs: __import__(
-            "vibesensor.report.mapping",
+            "vibesensor.adapters.pdf.mapping",
             fromlist=["map_summary"],
         ).map_summary(summary, **kwargs)
         nl = await endpoint("run-1", "nl")
@@ -117,7 +117,7 @@ async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> 
         call_count += 1
         return b"%PDF-cached"
 
-    with patch("vibesensor.history_services.reports.build_report_pdf", side_effect=fake_pdf):
+    with patch("vibesensor.use_cases.history.reports.build_report_pdf", side_effect=fake_pdf):
         first = await endpoint("run-1", "en")
         second = await endpoint("run-1", "en")
 
@@ -137,7 +137,7 @@ async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persist
         call_count += 1
         return b"%PDF-cached-cross-lang"
 
-    with patch("vibesensor.history_services.reports.build_report_pdf", side_effect=fake_pdf):
+    with patch("vibesensor.use_cases.history.reports.build_report_pdf", side_effect=fake_pdf):
         first = await endpoint("run-1", "en")
         second = await endpoint("run-1", "nl")
 
@@ -178,7 +178,7 @@ async def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes()
         call_count += 1
         return b"%PDF-versioned"
 
-    with patch("vibesensor.history_services.reports.build_report_pdf", side_effect=fake_pdf):
+    with patch("vibesensor.use_cases.history.reports.build_report_pdf", side_effect=fake_pdf):
         await endpoint("run-1", "en")
         await endpoint("run-1", "en")
 

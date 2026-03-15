@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from test_support.core import wait_until
 
-from vibesensor.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import HistoryDB
 
 # -- Test ----------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ def test_start_append_stop_produces_complete_run_in_db(
                 diagnostic_case=SimpleNamespace(case_id="mock-case"),
             )
 
-    monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _FakeRunAnalysis)
+    monkeypatch.setattr("vibesensor.use_cases.diagnostics.RunAnalysis", _FakeRunAnalysis)
     logger.stop_recording()
 
     def _status():

@@ -38,15 +38,15 @@ dev = [
 
 [project.scripts]
 vibesensor-server = "vibesensor.server_cli:main"
-vibesensor-report = "vibesensor.report_cli:main"
+vibesensor-report = "vibesensor.adapters.pdf_cli:main"
 vibesensor-http-api-schema-export = "vibesensor.http_api_schema_export:main"
-vibesensor-hotspot-self-heal = "vibesensor.hotspot.self_heal:main"
-vibesensor-sim = "vibesensor.simulator.sim_sender:main"
-vibesensor-ws-smoke = "vibesensor.simulator.ws_smoke:main"
-vibesensor-config-preflight = "vibesensor.config_preflight:main"
-vibesensor-fw-refresh = "vibesensor.update.firmware_cache:refresh_cache_cli"
-vibesensor-fw-info = "vibesensor.update.firmware_cache:cache_info_cli"
-vibesensor-release-fetch = "vibesensor.update.release_fetcher:fetch_latest_wheel_cli"
+vibesensor-hotspot-self-heal = "vibesensor.adapters.hotspot.self_heal:main"
+vibesensor-sim = "vibesensor.adapters.simulator.sim_sender:main"
+vibesensor-ws-smoke = "vibesensor.adapters.simulator.ws_smoke:main"
+vibesensor-config-preflight = "vibesensor.app.settings_preflight:main"
+vibesensor-fw-refresh = "vibesensor.use_cases.updates.firmware_cache:refresh_cache_cli"
+vibesensor-fw-info = "vibesensor.use_cases.updates.firmware_cache:cache_info_cli"
+vibesensor-release-fetch = "vibesensor.use_cases.updates.release_fetcher:fetch_latest_wheel_cli"
 
 [tool.setuptools.dynamic]
 version = {attr = "vibesensor._version.__version__"}

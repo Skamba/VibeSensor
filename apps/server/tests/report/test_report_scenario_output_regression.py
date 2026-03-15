@@ -7,12 +7,12 @@ from typing import Any
 from test_support.core import standard_metadata
 from test_support.sample_scenarios import build_speed_sweep_samples, make_sample
 
-from vibesensor.analysis import summarize_run_data
-from vibesensor.analysis.findings import _reference_missing_finding
-from vibesensor.analysis.top_cause_selection import select_top_causes
-from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-from vibesensor.boundaries.finding import finding_from_payload
-from vibesensor.report.mapping import map_summary
+from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.use_cases.diagnostics.findings import _reference_missing_finding
+from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
+from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.adapters.pdf.mapping import map_summary
 
 
 class TestPlotDataKeyFix:

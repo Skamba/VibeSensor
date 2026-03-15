@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .finding import VibrationSource
+from vibesensor.domain.finding import VibrationSource
 
 __all__ = ["Signature"]
 

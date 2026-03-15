@@ -1,4 +1,4 @@
-"""Tests for vibesensor.runtime – RuntimeState lifecycle and processing loop.
+"""Tests for vibesensor.infra.runtime – RuntimeState lifecycle and processing loop.
 
 These tests verify the newly extracted RuntimeState methods that were
 previously nested closures inside create_app() and therefore untestable
@@ -120,13 +120,13 @@ class _StubProcessor:
 
 def _make_runtime(**overrides: Any):
     """Build a RuntimeState with stubs for lifecycle testing."""
-    import vibesensor.runtime as runtime_module
-    from vibesensor.runtime.lifecycle import LifecycleManager
-    from vibesensor.runtime.processing_loop import (
+    import vibesensor.infra.runtime as runtime_module
+    from vibesensor.infra.runtime.lifecycle import LifecycleManager
+    from vibesensor.infra.runtime.processing_loop import (
         ProcessingLoop,
         ProcessingLoopState,
     )
-    from vibesensor.runtime.ws_broadcast import (
+    from vibesensor.infra.runtime.ws_broadcast import (
         WsBroadcastService,
     )
 
@@ -274,7 +274,7 @@ async def test_processing_loop_broadcasts_sync_clock() -> None:
 @pytest.mark.asyncio
 async def test_start_creates_tasks(monkeypatch) -> None:
     """LifecycleManager.start() should populate the tasks list."""
-    from vibesensor.runtime import lifecycle as lifecycle_mod
+    from vibesensor.infra.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp(*args, **kwargs):
         return None, None
@@ -312,7 +312,7 @@ async def test_start_creates_tasks(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_start_records_background_task_failure(monkeypatch) -> None:
-    from vibesensor.runtime import lifecycle as lifecycle_mod
+    from vibesensor.infra.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp(*args, **kwargs):
         return None, None
@@ -355,7 +355,7 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
 @pytest.mark.asyncio
 async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     """LifecycleManager.stop() should cancel tasks, close DB and worker pool."""
-    from vibesensor.runtime import lifecycle as lifecycle_mod
+    from vibesensor.infra.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp(*args, **kwargs):
         return MagicMock(), None
@@ -415,6 +415,6 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
 @pytest.mark.parametrize("attr", ["settings_store", "processing_loop", "ws_broadcast"])
 def test_runtime_state_has_public_attribute(attr: str) -> None:
     """Canonical import path should expose key public attributes."""
-    from vibesensor.runtime import RuntimeState
+    from vibesensor.infra.runtime import RuntimeState
 
     assert hasattr(RuntimeState, attr), f"RuntimeState missing {attr}"

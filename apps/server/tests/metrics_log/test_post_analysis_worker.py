@@ -1,4 +1,4 @@
-"""Unit tests for vibesensor.metrics_log.post_analysis.PostAnalysisWorker.
+"""Unit tests for vibesensor.use_cases.run.post_analysis.PostAnalysisWorker.
 
 These tests exercise the background analysis worker independently of
 RunRecorder, validating queue management, threading, and error handling.
@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-from vibesensor.metrics_log.post_analysis import PostAnalysisWorker
+from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 
 # ---------------------------------------------------------------------------
 # Fixtures

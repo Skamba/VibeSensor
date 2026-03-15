@@ -10,14 +10,14 @@ import pytest
 from fastapi import HTTPException
 from test_support import response_payload
 
-from vibesensor.routes.updates import create_update_routes
-from vibesensor.update.esp_flash_manager import (
+from vibesensor.adapters.http.updates import create_update_routes
+from vibesensor.use_cases.updates.esp_flash_manager import (
     EspFlashManager,
     FlashCommandRunner,
     SerialPortInfo,
     SerialPortProvider,
 )
-from vibesensor.update.firmware_cache import (
+from vibesensor.use_cases.updates.firmware_cache import (
     FirmwareCache,
     FirmwareCacheConfig,
     validate_bundle,

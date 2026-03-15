@@ -10,8 +10,8 @@ import time
 
 import pytest
 
-from vibesensor.constants import KMH_TO_MPS
-from vibesensor.gps_speed import (
+from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.adapters.gps.gps_speed import (
     _GPS_MAX_SPEED_MPS,
     MAX_MANUAL_SPEED_KMH,
     GPSSpeedMonitor,
@@ -23,7 +23,7 @@ from vibesensor.gps_speed import (
 
 
 def test_valid_fallback_modes_is_frozenset() -> None:
-    from vibesensor.gps_speed import VALID_FALLBACK_MODES
+    from vibesensor.adapters.gps.gps_speed import VALID_FALLBACK_MODES
 
     assert isinstance(VALID_FALLBACK_MODES, frozenset), (
         "VALID_FALLBACK_MODES must be a frozenset for O(1) membership and immutability"
@@ -63,7 +63,7 @@ def test_fallback_speed_value_ignores_bool() -> None:
 
 def test_set_speed_override_kmh_clamps_at_max(caplog: pytest.LogCaptureFixture) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
-    with caplog.at_level(logging.WARNING, logger="vibesensor.gps_speed"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.gps.gps_speed"):
         result = monitor.set_speed_override_kmh(MAX_MANUAL_SPEED_KMH + 100.0)
 
     assert result == MAX_MANUAL_SPEED_KMH
@@ -76,7 +76,7 @@ def test_set_speed_override_kmh_at_exact_max_does_not_warn(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
-    with caplog.at_level(logging.WARNING, logger="vibesensor.gps_speed"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.gps.gps_speed"):
         result = monitor.set_speed_override_kmh(MAX_MANUAL_SPEED_KMH)
 
     assert result == MAX_MANUAL_SPEED_KMH
@@ -92,7 +92,7 @@ def test_set_fallback_settings_warns_on_invalid_mode(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
-    with caplog.at_level(logging.WARNING, logger="vibesensor.gps_speed"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.gps.gps_speed"):
         monitor.set_fallback_settings(fallback_mode="obd2")
 
     assert monitor.fallback_mode == "manual", "invalid mode must not overwrite existing mode"
@@ -207,8 +207,7 @@ def test_accept_speed_sample_not_affected_by_plausibility_constant() -> None:
     """_accept_speed_sample does not know about the cap; cap is enforced in run().
     The constant exists and the TPV guard uses it.  Verify the module exports it.
     """
-    import vibesensor.gps_speed as mod
-
+    import vibesensor.adapters.gps.gps_speed as mod
     assert hasattr(mod, "_GPS_MAX_SPEED_MPS")
     assert mod._GPS_MAX_SPEED_MPS > 0
 
@@ -220,7 +219,7 @@ def test_accept_speed_sample_not_affected_by_plausibility_constant() -> None:
 
 def test_current_reconnect_delay_constant_initial_value() -> None:
     """Newly constructed monitor starts with the initial reconnect delay."""
-    from vibesensor.gps_speed import _GPS_RECONNECT_DELAY_S
+    from vibesensor.adapters.gps.gps_speed import _GPS_RECONNECT_DELAY_S
 
     monitor = GPSSpeedMonitor(gps_enabled=True)
     assert monitor.current_reconnect_delay == _GPS_RECONNECT_DELAY_S

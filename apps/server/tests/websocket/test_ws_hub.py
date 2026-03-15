@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from vibesensor.json_utils import sanitize_for_json
-from vibesensor.ws_hub import WebSocketHub, WSConnection
+from vibesensor.shared.utils.json_utils import sanitize_for_json
+from vibesensor.adapters.websocket.hub import WebSocketHub, WSConnection
 
 
 def _make_ws() -> AsyncMock:
@@ -187,7 +187,7 @@ async def test_payload_error_logged_at_error_level(caplog) -> None:
     ws = _make_ws()
     await hub.add(ws, "sensor_42")
 
-    with caplog.at_level(logging.ERROR, logger="vibesensor.ws_hub"):
+    with caplog.at_level(logging.ERROR, logger="vibesensor.adapters.websocket.hub"):
         await hub.broadcast(lambda _cid: (_ for _ in ()).throw(RuntimeError("boom")))
 
     error_records = [r for r in caplog.records if r.levelno >= logging.ERROR]
@@ -216,7 +216,7 @@ async def test_payload_error_affected_count_logged(caplog) -> None:
             raise RuntimeError("nope")
         return {"ok": True}
 
-    with caplog.at_level(logging.ERROR, logger="vibesensor.ws_hub"):
+    with caplog.at_level(logging.ERROR, logger="vibesensor.adapters.websocket.hub"):
         await hub.broadcast(builder)
 
     # ws3 (good) got normal payload
@@ -379,7 +379,7 @@ async def test_broadcast_logs_warning_on_nan(caplog) -> None:
     ws = _make_ws()
     await hub.add(ws, "sensor_1")
 
-    with caplog.at_level(logging.WARNING, logger="vibesensor.ws_hub"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"):
         await hub.broadcast(lambda _: {"val": float("nan")})
 
     assert any("NaN/Inf" in r.message for r in caplog.records)
@@ -410,8 +410,8 @@ async def test_send_error_logging_is_rate_limited(caplog) -> None:
     fake_loop = MagicMock()
     fake_loop.time.side_effect = [1000.0, 1001.0]
     with (
-        patch("vibesensor.ws_hub.asyncio.get_running_loop", return_value=fake_loop),
-        caplog.at_level(logging.WARNING, logger="vibesensor.ws_hub"),
+        patch("vibesensor.adapters.websocket.hub.asyncio.get_running_loop", return_value=fake_loop),
+        caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"),
     ):
         await hub.broadcast(lambda _: {"ok": True})
 
@@ -490,7 +490,7 @@ async def test_send_failure_log_includes_client_id(caplog) -> None:
     ws.send_text = AsyncMock(side_effect=ConnectionError("boom"))
     await hub.add(ws, "sensor_42")
 
-    with caplog.at_level(logging.WARNING, logger="vibesensor.ws_hub"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.websocket.hub"):
         await hub.broadcast(lambda _: {"ok": True})
 
     warn_logs = [r for r in caplog.records if "broadcast send failed" in r.message]

@@ -12,8 +12,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from vibesensor.analysis.analysis_window import AnalysisWindow
-from vibesensor.boundaries.finding import finding_from_payload
+from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
+from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.domain import (
     Car,
     Finding,
@@ -353,7 +353,7 @@ class TestReport:
             r.title = "new"  # type: ignore[misc]
 
     def test_from_summary(self) -> None:
-        from vibesensor.report.mapping import build_report_from_summary
+        from vibesensor.adapters.pdf.mapping import build_report_from_summary
 
         summary: dict[str, object] = {
             "run_id": "run-123",
@@ -379,7 +379,7 @@ class TestReport:
         assert r.duration_s == 125.0
 
     def test_from_summary_minimal(self) -> None:
-        from vibesensor.report.mapping import build_report_from_summary
+        from vibesensor.adapters.pdf.mapping import build_report_from_summary
 
         r = build_report_from_summary({"run_id": "r1"})
         assert r.run_id == "r1"
@@ -387,7 +387,7 @@ class TestReport:
         assert r.car_name is None
 
     def test_from_summary_short_duration(self) -> None:
-        from vibesensor.report.mapping import build_report_from_summary
+        from vibesensor.adapters.pdf.mapping import build_report_from_summary
 
         r = build_report_from_summary({"run_id": "r1", "duration_s": 45.0})
         assert r.duration_s == 45.0
@@ -435,7 +435,7 @@ class TestBridgeMethods:
     """Config objects bridge to domain objects correctly."""
 
     def test_car_config_to_car(self) -> None:
-        from vibesensor.backend_types import CarConfig
+        from vibesensor.shared.types.backend_types import CarConfig
 
         cfg = CarConfig(
             id="abc",
@@ -454,7 +454,7 @@ class TestBridgeMethods:
         assert car.display_name == "BMW (suv)"
 
     def test_sensor_config_to_sensor(self) -> None:
-        from vibesensor.backend_types import SensorConfig
+        from vibesensor.shared.types.backend_types import SensorConfig
 
         cfg = SensorConfig(sensor_id="aabb", name="FL", location_code="front_left_wheel")
         sensor = cfg.to_sensor()
@@ -466,7 +466,7 @@ class TestBridgeMethods:
         assert sensor.placement.display_name == "Front Left Wheel"
 
     def test_sensor_config_to_sensor_empty_location(self) -> None:
-        from vibesensor.backend_types import SensorConfig
+        from vibesensor.shared.types.backend_types import SensorConfig
 
         cfg = SensorConfig(sensor_id="aabb", name="Test", location_code="")
         sensor = cfg.to_sensor()
@@ -474,7 +474,7 @@ class TestBridgeMethods:
         assert sensor.placement is None
 
     def test_speed_source_config_to_speed_source(self) -> None:
-        from vibesensor.backend_types import SpeedSourceConfig
+        from vibesensor.shared.types.backend_types import SpeedSourceConfig
 
         cfg = SpeedSourceConfig.default()
         speed = cfg.to_speed_source()
@@ -493,7 +493,7 @@ class TestBridgeMethods:
         assert p.label == "Custom Spot"
 
     def test_phase_segment_to_analysis_window(self) -> None:
-        from vibesensor.analysis.phase_segmentation import DrivingPhase, PhaseSegment
+        from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, PhaseSegment
 
         seg = PhaseSegment(
             phase=DrivingPhase.CRUISE,
@@ -514,7 +514,7 @@ class TestBridgeMethods:
         assert aw.speed_max_kmh == 100.0
 
     def test_settings_store_domain_accessors(self) -> None:
-        from vibesensor.settings_store import SettingsStore
+        from vibesensor.infra.config.settings_store import SettingsStore
 
         store = SettingsStore()
         assert store.speed_source().is_gps
@@ -523,7 +523,7 @@ class TestBridgeMethods:
 
     def test_finding_payload_is_distinct_from_domain_finding(self) -> None:
         """FindingPayload is the analysis TypedDict; domain Finding is the dataclass."""
-        from vibesensor.analysis._types import FindingPayload
+        from vibesensor.use_cases.diagnostics._types import FindingPayload
         from vibesensor.domain import Finding as DomainFinding
 
         # They must be distinct types — no name collision
@@ -680,13 +680,13 @@ class TestReportValidation:
         assert r.duration_s == 0.0
 
     def test_from_summary_empty_run_id_gets_fallback(self) -> None:
-        from vibesensor.report.mapping import build_report_from_summary
+        from vibesensor.adapters.pdf.mapping import build_report_from_summary
 
         r = build_report_from_summary({"run_id": ""})
         assert r.run_id == "unknown"
 
     def test_from_summary_creates_metadata(self) -> None:
-        from vibesensor.report.mapping import build_report_from_summary
+        from vibesensor.adapters.pdf.mapping import build_report_from_summary
 
         summary: dict[str, object] = {
             "run_id": "run-1",

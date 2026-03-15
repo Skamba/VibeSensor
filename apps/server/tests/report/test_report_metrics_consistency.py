@@ -34,9 +34,9 @@ from test_support.sample_scenarios import (
     make_transient_samples,
 )
 
-from vibesensor.report.mapping import map_summary
-from vibesensor.report.pdf_engine import build_report_pdf
-from vibesensor.report.report_data import ReportTemplateData
+from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.adapters.pdf.report_data import ReportTemplateData
 
 # ---------------------------------------------------------------------------
 # Type alias
@@ -221,8 +221,8 @@ def _assert_unit_consistency(rd: ReportTemplateData) -> None:
 
 def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> None:
     """Assert the tier stored in report matches certainty_tier() layout gate."""
-    from vibesensor.analysis.strength_labels import certainty_tier, strength_label
-    from vibesensor.boundaries.diagnostic_case import test_run_from_summary
+    from vibesensor.use_cases.diagnostics.strength_labels import certainty_tier, strength_label
+    from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 
     test_run = test_run_from_summary(summary)
     effective = test_run.effective_top_causes()

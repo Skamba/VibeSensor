@@ -1,15 +1,15 @@
-"""Tests for vibesensor.constants and shared vehicle dynamics helpers."""
+"""Tests for vibesensor.shared.constants and shared vehicle dynamics helpers."""
 
 from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis_settings import (
+from vibesensor.infra.config.analysis_settings import (
     engine_rpm_from_wheel_hz,
     wheel_hz_from_speed_kmh,
     wheel_hz_from_speed_mps,
 )
-from vibesensor.constants import (
+from vibesensor.shared.constants import (
     KMH_TO_MPS,
     MPS_TO_KMH,
     PEAK_BANDWIDTH_HZ,

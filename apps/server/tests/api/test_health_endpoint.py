@@ -9,7 +9,7 @@ from test_support import response_payload
 @pytest.fixture
 def _health_router(fake_state):
     """Return ``(router, state)`` for health-endpoint tests."""
-    from vibesensor.routes import create_router
+    from vibesensor.adapters.http import create_router
 
     fake_state.processing_loop_state.processing_state = "ok"
     fake_state.processing_loop_state.processing_failure_count = 0

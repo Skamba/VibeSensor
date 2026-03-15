@@ -11,12 +11,12 @@ from unittest.mock import MagicMock
 from fastapi import FastAPI, WebSocketDisconnect
 from test_support import response_payload as _response_payload
 
-from vibesensor.analysis import summarize_run_data
-from vibesensor.history_services.exports import HistoryExportService
-from vibesensor.history_services.reports import HistoryReportService
-from vibesensor.history_services.runs import HistoryRunService
-from vibesensor.routes import create_router
-from vibesensor.runtime import RuntimeHealthState
+from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.use_cases.history.exports import HistoryExportService
+from vibesensor.use_cases.history.reports import HistoryReportService
+from vibesensor.use_cases.history.runs import HistoryRunService
+from vibesensor.adapters.http import create_router
+from vibesensor.infra.runtime import RuntimeHealthState
 
 
 def make_metadata(**overrides: Any) -> dict[str, Any]:
@@ -241,7 +241,7 @@ class FakeState:
                 },
             },
         )()
-        from vibesensor.runtime import ProcessingLoopState
+        from vibesensor.infra.runtime import ProcessingLoopState
 
         self.processing_loop_state = ProcessingLoopState()
         self.health_state = RuntimeHealthState()

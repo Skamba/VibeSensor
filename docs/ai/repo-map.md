@@ -2,13 +2,13 @@
 
 ## Primary entry points
 
-- Backend app: `apps/server/vibesensor/app.py`
-- Backend service wiring: `apps/server/vibesensor/runtime/builders.py`
-- Backend route assembly: `apps/server/vibesensor/routes/__init__.py`
+- Backend app: `apps/server/vibesensor/app/bootstrap.py`
+- Backend service wiring: `apps/server/vibesensor/app/container.py`
+- Backend route assembly: `apps/server/vibesensor/adapters/http/__init__.py`
 - UI app entry: `apps/ui/src/main.ts`
 - UI runtime/composition root: `apps/ui/src/app/ui_app_runtime.ts`
 - UI runtime owners: `apps/ui/src/app/runtime/`
-- Simulator CLI: `apps/server/vibesensor/simulator/sim_sender.py`
+- Simulator CLI: `apps/server/vibesensor/adapters/simulator/sim_sender.py`
 - Firmware app: `firmware/esp/src/main.cpp`
 - Pi image build: `infra/pi-image/pi-gen/build.sh`
 - Local stack entry point: `docker-compose.yml`

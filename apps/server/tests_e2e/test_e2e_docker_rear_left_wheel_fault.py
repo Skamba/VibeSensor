@@ -9,7 +9,7 @@ from math import floor
 
 import pytest
 
-from .e2e_helpers import (
+from vibesensor.e2e_helpers import (
     api_bytes,
     api_json,
     history_run_ids,

@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.report_i18n import normalize_lang
-from vibesensor.settings_store import _coerce_language
+from vibesensor.adapters.pdf_i18n import normalize_lang
+from vibesensor.infra.config.settings_store import _coerce_language
 
 _SERVER_ROOT = Path(__file__).resolve().parents[2]
 _PYPROJECT = _SERVER_ROOT / "pyproject.toml"

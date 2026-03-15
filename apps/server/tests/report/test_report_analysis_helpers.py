@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis.helpers import (
+from vibesensor.use_cases.diagnostics.helpers import (
     MIN_ANALYSIS_FREQ_HZ,
     _corr_abs,
     _effective_engine_rpm,
@@ -20,11 +20,11 @@ from vibesensor.analysis.helpers import (
     _speed_stats,
     _speed_stats_by_phase,
 )
-from vibesensor.analysis.order_analysis import _wheel_hz
-from vibesensor.analysis.phase_segmentation import segment_run_phases
-from vibesensor.constants import KMH_TO_MPS
-from vibesensor.json_utils import as_float_or_none as _as_float
-from vibesensor.report_i18n import normalize_lang
+from vibesensor.use_cases.diagnostics.order_analysis import _wheel_hz
+from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
+from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
+from vibesensor.adapters.pdf_i18n import normalize_lang
 from vibesensor.vibration_strength import percentile
 
 # -- normalize_lang -----------------------------------------------------------

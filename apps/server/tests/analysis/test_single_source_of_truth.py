@@ -17,8 +17,8 @@ import importlib
 import pytest
 from _paths import REPO_ROOT, SERVER_ROOT
 
-from vibesensor.analysis.order_bands import DEFAULT_DIAGNOSTIC_SETTINGS
-from vibesensor.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
+from vibesensor.use_cases.diagnostics.order_bands import DEFAULT_DIAGNOSTIC_SETTINGS
+from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
 
 
 def test_diagnostic_settings_is_analysis_settings() -> None:
@@ -41,7 +41,7 @@ def test_strength_scoring_module_removed() -> None:
 
 def _make_signal_processor():
     """Create a SignalProcessor with standard test parameters."""
-    from vibesensor.processing import SignalProcessor
+    from vibesensor.infra.processing import SignalProcessor
 
     return SignalProcessor(
         sample_rate_hz=800,
@@ -81,8 +81,8 @@ def test_as_float_single_source_of_truth() -> None:
     """order_bands.as_float_or_none must be the canonical as_float_or_none
     from runlog, not a local re-definition.
     """
-    from vibesensor.analysis.order_bands import as_float_or_none as ob_as_float
-    from vibesensor.json_utils import as_float_or_none
+    from vibesensor.use_cases.diagnostics.order_bands import as_float_or_none as ob_as_float
+    from vibesensor.shared.utils.json_utils import as_float_or_none
 
     assert ob_as_float is as_float_or_none, (
         "order_bands.as_float_or_none must be imported from runlog.as_float_or_none"
@@ -93,7 +93,7 @@ def test_percentile_single_source_of_truth() -> None:
     """analysis.helpers.percentile must be imported from
     vibesensor.vibration_strength, not re-defined locally.
     """
-    from vibesensor.analysis.helpers import percentile
+    from vibesensor.use_cases.diagnostics.helpers import percentile
     from vibesensor.vibration_strength import percentile as canonical
 
     assert percentile is canonical, (
@@ -125,7 +125,7 @@ def test_strength_metrics_no_dead_aliases() -> None:
 
 def test_constants_used_for_speed_conversion() -> None:
     """Speed conversion must use constants, not hardcoded 3.6."""
-    from vibesensor.constants import KMH_TO_MPS, MPS_TO_KMH
+    from vibesensor.shared.constants import KMH_TO_MPS, MPS_TO_KMH
 
     assert MPS_TO_KMH == 3.6
     assert abs(KMH_TO_MPS - 1.0 / 3.6) < 1e-15
@@ -134,7 +134,7 @@ def test_constants_used_for_speed_conversion() -> None:
 
 def test_constants_used_for_peak_detection() -> None:
     """Peak detection defaults must come from constants module."""
-    from vibesensor.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
+    from vibesensor.shared.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
     from vibesensor.vibration_strength import compute_vibration_strength_db
 
     assert PEAK_BANDWIDTH_HZ == 1.2
@@ -150,7 +150,7 @@ def test_constants_used_for_peak_detection() -> None:
 
 def test_silence_db_constant() -> None:
     """SILENCE_DB must be the canonical silence floor value."""
-    from vibesensor.constants import SILENCE_DB
+    from vibesensor.shared.constants import SILENCE_DB
 
     assert SILENCE_DB == -120.0
 
@@ -229,7 +229,7 @@ def test_esp_protocol_constants_match_python() -> None:
     """ESP C++ protocol constants must match the Python protocol module."""
     import re
 
-    from vibesensor.protocol import (
+    from vibesensor.adapters.udp.protocol import (
         ACK_BYTES,
         CMD_HEADER_BYTES,
         CMD_IDENTIFY,
@@ -297,7 +297,7 @@ def test_protocol_docs_byte_sizes_match() -> None:
     """docs/protocol.md byte sizes must match the Python protocol module."""
     import re
 
-    from vibesensor.protocol import (
+    from vibesensor.adapters.udp.protocol import (
         ACK_BYTES,
         CMD_HEADER_BYTES,
         CMD_IDENTIFY_BYTES,
@@ -329,7 +329,7 @@ def test_protocol_docs_byte_sizes_match() -> None:
 
 def test_protocol_docs_match_generated_contract_reference() -> None:
     """docs/protocol.md must match the generated authoritative contract doc."""
-    from vibesensor.contract_reference_doc import render_contract_reference_markdown
+    from vibesensor.shared.contract_reference_doc import render_contract_reference_markdown
 
     root = REPO_ROOT
     doc_path = root / "docs" / "protocol.md"
@@ -345,8 +345,8 @@ def test_sanitize_settings_is_single_source() -> None:
     """domain_models.sanitize_aspects must use the canonical sanitize_settings."""
     import inspect
 
-    from vibesensor.analysis_settings import sanitize_settings
-    from vibesensor.backend_types import sanitize_aspects
+    from vibesensor.infra.config.analysis_settings import sanitize_settings
+    from vibesensor.shared.types.backend_types import sanitize_aspects
 
     # The function should delegate to sanitize_settings (check source contains the call)
     source = inspect.getsource(sanitize_aspects)
@@ -361,7 +361,7 @@ def test_sanitize_settings_is_single_source() -> None:
 
 def test_sanitize_settings_rejects_invalid() -> None:
     """sanitize_settings must drop invalid values."""
-    from vibesensor.analysis_settings import sanitize_settings
+    from vibesensor.infra.config.analysis_settings import sanitize_settings
 
     result = sanitize_settings(
         {
@@ -379,7 +379,7 @@ def test_sanitize_settings_rejects_invalid() -> None:
 
 def test_validation_sets_cover_all_settings_keys() -> None:
     """Every key in DEFAULT_ANALYSIS_SETTINGS must be in exactly one validation set."""
-    from vibesensor.analysis_settings import (
+    from vibesensor.infra.config.analysis_settings import (
         NON_NEGATIVE_KEYS,
         POSITIVE_REQUIRED_KEYS,
     )
@@ -400,8 +400,8 @@ def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -
     import re
     import sys
 
-    from vibesensor.config import DEFAULT_CONFIG, NETWORK_PORTS
-    from vibesensor.simulator.sim_sender import parse_args
+    from vibesensor.app.settings import DEFAULT_CONFIG, NETWORK_PORTS
+    from vibesensor.adapters.simulator.sim_sender import parse_args
 
     root = REPO_ROOT
     expected_data = int(NETWORK_PORTS["server_udp_data"])

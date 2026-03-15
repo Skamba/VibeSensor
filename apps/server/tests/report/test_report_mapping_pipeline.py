@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.report.mapping import (
+from vibesensor.adapters.pdf.mapping import (
     prepare_report_mapping_context,
     resolve_primary_report_candidate,
 )

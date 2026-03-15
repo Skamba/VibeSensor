@@ -18,13 +18,13 @@ _BRIDGE_MODULES = [
 
 
 def _imports_from_analysis(path: Path) -> list[str]:
-    """Return import lines that reference ``vibesensor.analysis`` or ``.analysis``."""
+    """Return import lines that reference ``vibesensor.use_cases.diagnostics`` or ``.analysis``."""
     source = path.read_text(encoding="utf-8")
     violations: list[str] = []
     for node in ast.walk(ast.parse(source)):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                if alias.name.startswith("vibesensor.analysis"):
+                if alias.name.startswith("vibesensor.use_cases.diagnostics"):
                     violations.append(f"import {alias.name}")
         elif isinstance(node, ast.ImportFrom):
             module = node.module or ""
@@ -32,7 +32,7 @@ def _imports_from_analysis(path: Path) -> list[str]:
             if module == "analysis" or module.startswith("analysis."):
                 violations.append(f"from .{module} import ...")
             # Absolute import
-            if module.startswith("vibesensor.analysis"):
+            if module.startswith("vibesensor.use_cases.diagnostics"):
                 violations.append(f"from {module} import ...")
     return violations
 
@@ -50,7 +50,7 @@ def test_history_services_do_not_import_httpexception() -> None:
     """Service-layer modules must not import FastAPI's HTTPException.
 
     Only ``routes/`` modules should import or raise HTTPException.
-    Domain exceptions from ``vibesensor.exceptions`` should be used instead,
+    Domain exceptions from ``vibesensor.shared.errors.exceptions`` should be used instead,
     and the ``routes/_helpers.py::domain_errors_to_http()`` context manager
     translates them at the route boundary.
     """

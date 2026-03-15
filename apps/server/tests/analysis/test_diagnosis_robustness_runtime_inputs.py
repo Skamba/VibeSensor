@@ -13,7 +13,7 @@ from test_support import (
     wheel_hz,
 )
 
-from vibesensor.analysis import summarize_run_data
+from vibesensor.use_cases.diagnostics import summarize_run_data
 
 
 class TestMissingStaleSpeed:
@@ -172,19 +172,19 @@ class TestSensorDropoutRejoin:
 
 class TestSensorNameNormalization:
     def test_sanitize_name_strips_null_bytes(self) -> None:
-        from vibesensor.registry import _sanitize_name
+        from vibesensor.infra.runtime.registry import _sanitize_name
 
         assert "\x00" not in _sanitize_name("abc\x00def")
 
     def test_sanitize_name_strips_control_chars(self) -> None:
-        from vibesensor.registry import _sanitize_name
+        from vibesensor.infra.runtime.registry import _sanitize_name
 
         result = _sanitize_name("sensor\x01\x02\x03test")
         for char in result:
             assert ord(char) >= 0x20 or char in ("\t", "\n")
 
     def test_sanitize_name_handles_emoji_truncation(self) -> None:
-        from vibesensor.registry import _sanitize_name
+        from vibesensor.infra.runtime.registry import _sanitize_name
 
         result = _sanitize_name("🔧" * 10)
         result.encode("utf-8")
@@ -192,7 +192,7 @@ class TestSensorNameNormalization:
 
     @pytest.mark.smoke
     def test_sanitize_name_empty_returns_empty(self) -> None:
-        from vibesensor.registry import _sanitize_name
+        from vibesensor.infra.runtime.registry import _sanitize_name
 
         assert _sanitize_name("") == ""
         assert _sanitize_name("   ") == ""
@@ -281,7 +281,7 @@ class TestGpsSpeedValidation:
     def test_invalid_speed_rejected_by_product_code(self, bad_speed: object, label: str) -> None:
         import asyncio
 
-        from vibesensor.gps_speed import GPSSpeedMonitor
+        from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 
         monitor = GPSSpeedMonitor(gps_enabled=True)
 

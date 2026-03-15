@@ -4,12 +4,12 @@ applyTo: "apps/server/**"
 Backend (python `apps/server/`)
 - Shared workflow/validation rules live in `.github/instructions/general.instructions.md`; this file only captures backend-specific deltas.
 - Backend ownership boundaries:
-	- `apps/server/vibesensor/app.py`: FastAPI app factory and CLI-facing startup entry.
-	- `apps/server/vibesensor/runtime/builders.py`: `build_runtime()` constructs the flat `RuntimeState`.
-	- `apps/server/vibesensor/routes/`: HTTP and WebSocket route groups, assembled by `routes/__init__.py`.
-	- `apps/server/vibesensor/runtime/`: subsystem ownership, lifecycle coordination, processing loop, and websocket broadcast state; routes receive `RuntimeState` directly.
-	- `apps/server/vibesensor/history_db/`: SQLite-backed history and settings persistence.
-	- `apps/server/vibesensor/report/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
+	- `apps/server/vibesensor/app/bootstrap.py`: FastAPI app factory and CLI-facing startup entry.
+	- `apps/server/vibesensor/app/container.py`: `build_runtime()` constructs the flat `RuntimeState`.
+	- `apps/server/vibesensor/adapters/http/`: HTTP and WebSocket route groups, assembled by `routes/__init__.py`.
+	- `apps/server/vibesensor/infra/runtime/`: subsystem ownership, lifecycle coordination, processing loop, and websocket broadcast state; routes receive `RuntimeState` directly.
+	- `apps/server/vibesensor/adapters/persistence/history_db/`: SQLite-backed history and settings persistence.
+	- `apps/server/vibesensor/adapters/pdf/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
 	- `apps/server/vibesensor/domain/`: DDD-aligned domain model package. Each primary domain object has its own file; includes `FindingKind` enum, `RunStatus` state machine, and all domain queries. See `docs/domain-model.md` for the full relationship map and file layout.
 - Domain-first modeling rules:
 	- Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
@@ -22,7 +22,7 @@ Backend (python `apps/server/`)
 	- Keep transient/impact events visible in report output, but not promoted above likely persistent faults by default.
 	- Validate report-facing output (rendered/report API/PDF text and ordering), not just internal helper outputs.
 	- When user-facing report text changes, update `apps/server/data/report_i18n.json`.
-	- `apps/server/vibesensor/update/`: wheel-based updater package; `manager.py` is the public facade with workflow orchestration and validation; other modules handle Wi-Fi, releases, ESP flash, firmware cache, release validation, install and rollback, and status. Do not add backward-compatibility shims, static method passthroughs, or module-level aliases in `update/`; when methods move to sub-modules, update callers directly.
+	- `apps/server/vibesensor/use_cases/updates/`: wheel-based updater package; `manager.py` is the public facade with workflow orchestration and validation; other modules handle Wi-Fi, releases, ESP flash, firmware cache, release validation, install and rollback, and status. Do not add backward-compatibility shims, static method passthroughs, or module-level aliases in `update/`; when methods move to sub-modules, update callers directly.
 - Install: `python -m pip install -e "./apps/server[dev]"` (used by CI).
 - Backend type gate: `make typecheck-backend` runs the enforced mypy slice for app, runtime/routes, core typed-boundary modules, `history_services/`, and the high-risk `analysis/`, `processing/`, `history_db/`, `metrics_log/`, and `update/` packages.
 - Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject` aliases) over broad `Any` when shaping analysis, report, and persistence data.

@@ -4,7 +4,7 @@ from math import inf, nan, pi
 
 import pytest
 
-from vibesensor.analysis_settings import (
+from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     AnalysisSettingsStore,
     engine_rpm_from_wheel_hz,

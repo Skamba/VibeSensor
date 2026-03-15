@@ -8,11 +8,11 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.processing import SignalProcessor
-from vibesensor.protocol import DataMessage, pack_data
-from vibesensor.registry import ClientRegistry, DataUpdateResult, HelloMessage
-from vibesensor.udp_data_rx import DataDatagramProtocol
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.adapters.udp.protocol import DataMessage, pack_data
+from vibesensor.infra.runtime.registry import ClientRegistry, DataUpdateResult, HelloMessage
+from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 
 # ---------------------------------------------------------------------------
 # Unit: SignalProcessor.flush_client_buffer

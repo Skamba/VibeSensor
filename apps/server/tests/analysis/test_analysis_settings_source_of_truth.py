@@ -7,10 +7,10 @@ from conftest import FakeState
 from fastapi import FastAPI
 from test_support import response_payload
 
-from vibesensor.analysis_settings import AnalysisSettingsStore
-from vibesensor.api_models import ActiveCarRequest, AnalysisSettingsRequest, CarUpsertRequest
-from vibesensor.routes import create_router
-from vibesensor.settings_store import SettingsStore
+from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
+from vibesensor.shared.types.api_models import ActiveCarRequest, AnalysisSettingsRequest, CarUpsertRequest
+from vibesensor.adapters.http import create_router
+from vibesensor.infra.config.settings_store import SettingsStore
 
 
 def _route(router, path: str, method: str = "GET"):
@@ -27,7 +27,7 @@ def _route(router, path: str, method: str = "GET"):
 @pytest.fixture
 def _wiring(tmp_path: Path):
     """Provide a wired (state, router) pair with one active car named 'Primary'."""
-    from vibesensor.history_db import HistoryDB
+    from vibesensor.adapters.persistence.history_db import HistoryDB
 
     db = HistoryDB(tmp_path / "test.db")
     analysis_settings = AnalysisSettingsStore()

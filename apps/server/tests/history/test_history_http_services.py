@@ -9,10 +9,10 @@ from typing import Any
 
 import pytest
 
-from vibesensor.exceptions import AnalysisNotReadyError
-from vibesensor.history_services.exports import HistoryExportService, build_run_details_json
-from vibesensor.history_services.reports import HistoryReportPdfCache, HistoryReportService
-from vibesensor.history_services.runs import HistoryRunService, raise_delete_run_error
+from vibesensor.shared.errors.exceptions import AnalysisNotReadyError
+from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
+from vibesensor.use_cases.history.reports import HistoryReportPdfCache, HistoryReportService
+from vibesensor.use_cases.history.runs import HistoryRunService, raise_delete_run_error
 
 
 @dataclass

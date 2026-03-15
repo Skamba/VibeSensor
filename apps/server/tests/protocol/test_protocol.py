@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.protocol import (
+from vibesensor.adapters.udp.protocol import (
     ACK_BYTES,
     ACK_STRUCT,
     CMD_HEADER_BYTES,
@@ -301,7 +301,7 @@ def test_parse_hello_warns_on_zero_control_port(caplog: pytest.LogCaptureFixture
     name_bytes = b"sensor"
     raw = HELLO_BASE.pack(MSG_HELLO, 1, client_id, 0, 800, 200, len(name_bytes))
     raw += name_bytes + bytes([0]) + _struct.pack("<I", 0)
-    with caplog.at_level(logging.WARNING, logger="vibesensor.protocol"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.udp.protocol"):
         msg = parse_hello(raw)
     assert msg.control_port == 0
     assert any("control_port is 0" in r.message for r in caplog.records)
@@ -328,7 +328,7 @@ def test_parse_cmd_warns_on_unknown_cmd_id(caplog: pytest.LogCaptureFixture) -> 
     client_id = bytes.fromhex("aabbccddeeff")
     # Build a CMD header with cmd_id=99 (unknown)
     raw = _struct.pack("<BB6sBI", 3, 1, client_id, 99, 42)
-    with caplog.at_level(logging.WARNING, logger="vibesensor.protocol"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.udp.protocol"):
         cmd = parse_cmd(raw)
     assert cmd.cmd_id == 99
     assert any("unrecognized cmd_id" in r.message for r in caplog.records)

@@ -31,19 +31,18 @@ class TestRoutesPackageStructure:
     """Verify the routes package has the expected modules."""
 
     def test_all_expected_modules_exist(self) -> None:
-        import vibesensor.routes as pkg
-
+        import vibesensor.adapters.http as pkg
         found = {mod.name for mod in pkgutil.iter_modules(pkg.__path__) if not mod.ispkg}
         assert set(_EXPECTED_MODULES) == found
 
     def test_create_router_importable_from_routes(self) -> None:
-        from vibesensor.routes import create_router
+        from vibesensor.adapters.http import create_router
 
         assert callable(create_router)
 
     @pytest.mark.parametrize("mod_name", _EXPECTED_MODULES)
     def test_each_module_importable(self, mod_name: str) -> None:
-        mod = importlib.import_module(f"vibesensor.routes.{mod_name}")
+        mod = importlib.import_module(f"vibesensor.adapters.http.{mod_name}")
         assert mod is not None
 
 
@@ -87,7 +86,7 @@ class TestRouterEndpoints:
 
     def test_no_duplicate_path_method_pairs(self, fake_state) -> None:
         """Verify no two routes share the same (path, methods) combination."""
-        from vibesensor.routes import create_router
+        from vibesensor.adapters.http import create_router
 
         router = create_router(fake_state)
         seen: set[tuple[str, str]] = set()

@@ -1,13 +1,13 @@
 """Round-trip and edge-case tests for UpdateJobStatus serialisation.
 
 These tests cover the ``from_dict`` / ``to_dict`` contract of
-:class:`~vibesensor.update.models.UpdateJobStatus`, which is exercised at
+:class:`~vibesensor.use_cases.updates.models.UpdateJobStatus`, which is exercised at
 runtime when the state-store reloads a persisted snapshot.
 """
 
 from __future__ import annotations
 
-from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
+from vibesensor.use_cases.updates.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
 
 
 class TestUpdateJobStatusRoundTrip:

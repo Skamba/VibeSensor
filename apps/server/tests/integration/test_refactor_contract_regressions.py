@@ -15,16 +15,16 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from vibesensor.history_db import HistoryDB, RunStatus
-from vibesensor.protocol import DataMessage, HelloMessage
-from vibesensor.registry import (
+from vibesensor.adapters.persistence.history_db import HistoryDB, RunStatus
+from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
+from vibesensor.infra.runtime.registry import (
     _JITTER_EMA_ALPHA,
     _RESTART_SEQ_GAP,
     ClientRegistry,
     ClientSnapshot,
 )
-from vibesensor.update.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher
-from vibesensor.update.release_fetcher import (
+from vibesensor.use_cases.updates.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher
+from vibesensor.use_cases.updates.release_fetcher import (
     DOWNLOAD_CHUNK_BYTES,
     GitHubAPIClient,
     ReleaseFetcherConfig,
@@ -326,7 +326,7 @@ class TestVersionComparisonWarning:
 
         with (
             patch.object(fetcher, "find_latest_release", return_value=fake_release),
-            patch("vibesensor.update.release_fetcher.LOGGER") as mock_logger,
+            patch("vibesensor.use_cases.updates.release_fetcher.LOGGER") as mock_logger,
         ):
             result = fetcher.check_update_available("1.0.0")
 

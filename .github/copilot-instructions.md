@@ -1,5 +1,5 @@
 Repository overview
-- VibeSensor has a Python backend in `apps/server/`, a TypeScript/Vite dashboard in `apps/ui/`, simulator tooling in `apps/server/vibesensor/simulator/`, and device/firmware assets under `firmware/esp/`, `hardware/`, and `infra/pi-image/`.
+- VibeSensor has a Python backend in `apps/server/`, a TypeScript/Vite dashboard in `apps/ui/`, simulator tooling in `apps/server/vibesensor/adapters/simulator/`, and device/firmware assets under `firmware/esp/`, `hardware/`, and `infra/pi-image/`.
 - Backend architecture is package-based: `app.py` creates the FastAPI app, `runtime/builders.py` wires services into a flat RuntimeState, `routes/` owns HTTP/WebSocket route groups, `runtime/` owns runtime coordination, `history_db/` owns SQLite persistence, `report/` owns PDF rendering, and `update/` owns wheel-based updates.
 - Key runtime artifacts are `docker-compose.yml` at repo root and `apps/server/pyproject.toml` for backend packaging and CLI entry points.
 - Units policy: raw ingest/sample acceleration values may use g, but post-stop analysis outputs (persisted summaries, findings, report-template artifacts) must expose vibration strength or intensity in dB only.
@@ -24,7 +24,7 @@ Domain model
 - Domain objects own behavior (classification, ranking, lifecycle, computation).  Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
 - Each primary domain object lives in its own file under `vibesensor/domain/`.  Consumers import from `vibesensor.domain`, not from individual module files.
 - The core diagnostic aggregates are `DiagnosticCase` and `TestRun`; boundary consumers reconstruct domain views via `boundaries/diagnostic_case.py::test_run_from_summary()` and re-serialize via individual boundary serializers (`finding_payload_from_domain`, `origin_payload_from_finding`, etc.).
-- Boundary decoders/serializers live under `apps/server/vibesensor/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.
+- Boundary decoders/serializers live under `apps/server/vibesensor/shared/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.
 - See `docs/domain-model.md` for the full relationship map, adapter inventory, and modeling rules.
 
 Common commands

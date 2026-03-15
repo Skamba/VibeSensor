@@ -8,9 +8,9 @@ from typing import Any
 
 import pytest
 
-from vibesensor.backend_types import CarConfig, RunMetadata, SensorConfig, SpeedSourceConfig
-from vibesensor.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.protocol import SensorFrame
+from vibesensor.shared.types.backend_types import CarConfig, RunMetadata, SensorConfig, SpeedSourceConfig
+from vibesensor.shared.utils.json_utils import as_float_or_none, as_int_or_none
+from vibesensor.adapters.udp.protocol import SensorFrame
 
 # ---------------------------------------------------------------------------
 # Helper parsers

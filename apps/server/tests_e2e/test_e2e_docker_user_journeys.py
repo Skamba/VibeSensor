@@ -12,7 +12,7 @@ import re
 
 import pytest
 
-from .e2e_helpers import (
+from vibesensor.e2e_helpers import (
     api_bytes,
     api_json,
     parse_export_zip,

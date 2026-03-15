@@ -6,9 +6,9 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
-from vibesensor.protocol import pack_data
-from vibesensor.registry import DataUpdateResult
-from vibesensor.udp_data_rx import DataDatagramProtocol
+from vibesensor.adapters.udp.protocol import pack_data
+from vibesensor.infra.runtime.registry import DataUpdateResult
+from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 
 
 @pytest.mark.asyncio
@@ -67,8 +67,8 @@ def test_datagram_queue_backpressure_rate_limits_drop_warnings() -> None:
     )
     proto.datagram_received(pkt, ("127.0.0.1", 10001))
     with (
-        patch("vibesensor.udp_data_rx.time.monotonic", side_effect=[100.0, 101.0, 102.0, 115.0]),
-        patch("vibesensor.udp_data_rx.LOGGER.warning") as warning_log,
+        patch("vibesensor.adapters.udp.udp_data_rx.time.monotonic", side_effect=[100.0, 101.0, 102.0, 115.0]),
+        patch("vibesensor.adapters.udp.udp_data_rx.LOGGER.warning") as warning_log,
     ):
         proto.datagram_received(pkt, ("127.0.0.1", 10002))
         proto.datagram_received(pkt, ("127.0.0.1", 10003))

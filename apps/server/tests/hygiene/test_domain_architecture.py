@@ -45,9 +45,9 @@ def test_domain_modules_do_not_import_analysis_types_at_runtime() -> None:
     """Domain objects must not depend on analysis payload types at runtime.
 
     Validates by importing all domain modules and checking that
-    ``vibesensor.analysis._types`` is not pulled in as a side effect.
+    ``vibesensor.use_cases.diagnostics._types`` is not pulled in as a side effect.
     """
-    analysis_types_key = "vibesensor.analysis._types"
+    analysis_types_key = "vibesensor.use_cases.diagnostics._types"
     was_loaded = analysis_types_key in sys.modules
 
     if not was_loaded:
@@ -57,7 +57,7 @@ def test_domain_modules_do_not_import_analysis_types_at_runtime() -> None:
         try:
             importlib.import_module("vibesensor.domain")
             assert analysis_types_key not in sys.modules, (
-                "Domain modules must not import from vibesensor.analysis._types "
+                "Domain modules must not import from vibesensor.use_cases.diagnostics._types "
                 "(payload types belong at boundaries only)"
             )
         finally:
@@ -105,7 +105,7 @@ def test_test_run_effective_top_causes() -> None:
 
 def test_finalize_findings_returns_domain_findings() -> None:
     """``finalize_findings`` must return domain ``Finding`` objects."""
-    from vibesensor.analysis.findings import finalize_findings
+    from vibesensor.use_cases.diagnostics.findings import finalize_findings
     from vibesensor.domain import Finding
 
     domain_findings = finalize_findings(
@@ -124,8 +124,8 @@ def test_finalize_findings_returns_domain_findings() -> None:
 def test_select_top_causes_returns_domain_findings() -> None:
     """``select_top_causes`` must return domain ``Finding`` objects."""
     from tests.test_support.findings import make_finding_payload
-    from vibesensor.analysis.top_cause_selection import select_top_causes
-    from vibesensor.boundaries.finding import finding_from_payload
+    from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
+    from vibesensor.shared.boundaries.finding import finding_from_payload
     from vibesensor.domain import Finding
 
     findings = tuple(
@@ -142,7 +142,7 @@ def test_select_top_causes_returns_domain_findings() -> None:
 
 def test_run_analysis_produces_test_run() -> None:
     """``RunAnalysis.summarize()`` must populate ``test_run``."""
-    from vibesensor.analysis.summary_builder import RunAnalysis
+    from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
     from vibesensor.domain import TestRun
 
     metadata = {"run_id": "test-guard", "car_type": "sedan"}
@@ -247,7 +247,7 @@ def test_report_mapping_context_has_domain_aggregate() -> None:
     """``prepare_report_mapping_context`` must build a domain aggregate."""
     from tests.test_support.findings import make_finding_payload
     from vibesensor.domain import TestRun
-    from vibesensor.report.mapping import prepare_report_mapping_context
+    from vibesensor.adapters.pdf.mapping import prepare_report_mapping_context
 
     summary = {
         "run_id": "test-context",
@@ -371,12 +371,12 @@ def test_finding_tuples_are_immutable() -> None:
 def test_build_system_cards_uses_domain_findings() -> None:
     """build_system_cards must read confidence tone from domain, not dict."""
     from vibesensor.domain import Finding, RunCapture, TestRun
-    from vibesensor.report.mapping import (
+    from vibesensor.adapters.pdf.mapping import (
         PrimaryCandidateContext,
         ReportMappingContext,
         build_system_cards,
     )
-    from vibesensor.report_i18n import tr
+    from vibesensor.adapters.pdf_i18n import tr
 
     lang = "en"
     domain_f = Finding(
@@ -442,7 +442,7 @@ def test_build_system_cards_uses_domain_findings() -> None:
 def test_map_summary_produces_report_with_domain_findings() -> None:
     """map_summary must produce report data using domain-first pipeline."""
     from tests.test_support.findings import make_finding_payload
-    from vibesensor.report.mapping import map_summary
+    from vibesensor.adapters.pdf.mapping import map_summary
 
     summary = {
         "run_id": "test-map",
@@ -533,7 +533,7 @@ def test_domain_value_objects_are_frozen_dataclasses(name: str) -> None:
 
 def test_finding_from_payload_populates_evidence() -> None:
     """finding_from_payload extracts FindingEvidence when evidence_metrics is present."""
-    from vibesensor.boundaries.finding import finding_from_payload
+    from vibesensor.shared.boundaries.finding import finding_from_payload
 
     payload = {
         "finding_id": "F001",
@@ -552,7 +552,7 @@ def test_finding_from_payload_populates_evidence() -> None:
 
 def test_finding_from_payload_populates_location() -> None:
     """finding_from_payload extracts LocationHotspot when location_hotspot is present."""
-    from vibesensor.boundaries.finding import finding_from_payload
+    from vibesensor.shared.boundaries.finding import finding_from_payload
 
     payload = {
         "finding_id": "F001",
@@ -570,7 +570,7 @@ def test_finding_from_payload_populates_location() -> None:
 
 def test_finding_from_payload_prefers_top_location_over_display_string() -> None:
     """Location identity should use top_location, not the ambiguous display string."""
-    from vibesensor.boundaries.finding import finding_from_payload
+    from vibesensor.shared.boundaries.finding import finding_from_payload
 
     payload = {
         "finding_id": "F001",
@@ -590,7 +590,7 @@ def test_finding_from_payload_prefers_top_location_over_display_string() -> None
 
 def test_test_run_from_summary_populates_speed_profile() -> None:
     """test_run_from_summary extracts SpeedProfile when speed_stats is present."""
-    from vibesensor.boundaries.diagnostic_case import test_run_from_summary
+    from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 
     summary = {
         "run_id": "test-123",
@@ -609,7 +609,7 @@ def test_test_run_from_summary_populates_speed_profile() -> None:
 
 def test_test_run_from_summary_populates_suitability() -> None:
     """test_run_from_summary extracts RunSuitability when run_suitability is present."""
-    from vibesensor.boundaries.diagnostic_case import test_run_from_summary
+    from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 
     summary = {
         "run_id": "test-123",
@@ -661,7 +661,7 @@ def test_new_domain_objects_are_exported(name: str) -> None:
 
 
 def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
-    from vibesensor.analysis.summary_builder import RunAnalysis
+    from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
     from vibesensor.domain import DiagnosticCase, TestRun
 
     metadata = {
@@ -695,7 +695,7 @@ def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
 
 def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     from tests.test_support.findings import make_finding_payload
-    from vibesensor.boundaries.diagnostic_case import diagnostic_case_from_summary
+    from vibesensor.shared.boundaries.diagnostic_case import diagnostic_case_from_summary
 
     summary = {
         "case_id": "summary-case-guard-id",
@@ -719,7 +719,7 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
 
 
 def test_finding_from_payload_populates_origin_and_signatures() -> None:
-    from vibesensor.boundaries.finding import finding_from_payload
+    from vibesensor.shared.boundaries.finding import finding_from_payload
 
     payload = {
         "finding_id": "F001",
@@ -890,7 +890,7 @@ def test_analysis_test_plan_renamed() -> None:
 
 def test_finding_projector_in_finding_boundary_module() -> None:
     """Finding payload projector should live in boundaries/finding.py."""
-    from vibesensor.boundaries.finding import finding_payload_from_domain
+    from vibesensor.shared.boundaries.finding import finding_payload_from_domain
 
     assert callable(finding_payload_from_domain)
 
@@ -927,11 +927,11 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     """
     from tests.test_support.findings import make_finding_payload
     from vibesensor.domain import TestRun, VibrationSource
-    from vibesensor.report.mapping import (
+    from vibesensor.adapters.pdf.mapping import (
         prepare_report_mapping_context,
         resolve_primary_report_candidate,
     )
-    from vibesensor.report_i18n import tr
+    from vibesensor.adapters.pdf_i18n import tr
 
     lang = "en"
     finding = make_finding_payload(
@@ -1032,12 +1032,12 @@ def test_localization_assessment_does_not_exist() -> None:
     canonical owner of localization semantics.
     """
     # Must not be importable from analysis
-    mod = importlib.import_module("vibesensor.analysis")
+    mod = importlib.import_module("vibesensor.use_cases.diagnostics")
     assert not hasattr(mod, "LocalizationAssessment"), (
-        "LocalizationAssessment must not exist in vibesensor.analysis"
+        "LocalizationAssessment must not exist in vibesensor.use_cases.diagnostics"
     )
     # Must not exist as a class in summary_builder
-    mod2 = importlib.import_module("vibesensor.analysis.summary_builder")
+    mod2 = importlib.import_module("vibesensor.use_cases.diagnostics.summary_builder")
     for name in dir(mod2):
         assert name != "LocalizationAssessment", (
             "LocalizationAssessment class must not exist in summary_builder"
@@ -1078,7 +1078,7 @@ def test_build_run_suitability_checks_does_not_exist() -> None:
     It was deleted in Workstream 2 (T3.21).  ``RunSuitability.evaluate()``
     is the canonical owner of suitability evaluation.
     """
-    from vibesensor.analysis import summary_builder
+    from vibesensor.use_cases.diagnostics import summary_builder
 
     assert not hasattr(summary_builder, "build_run_suitability_checks"), (
         "build_run_suitability_checks was deleted; use RunSuitability.evaluate()"
@@ -1182,7 +1182,7 @@ def test_post_analysis_does_not_construct_raw_suitability_dicts() -> None:
     Prevents regression of T11: manual construction of ``{"check":…}``
     dicts should be via the domain type, not raw string-keyed dicts.
     """
-    from vibesensor.metrics_log import post_analysis as mod
+    from vibesensor.use_cases.run import post_analysis as mod
 
     source = inspect.getsource(mod)
     # Must import or reference SuitabilityCheck
@@ -1201,7 +1201,7 @@ def test_f_order_finding_id_normalization() -> None:
     consumers see deterministic identifiers.  The normalization to
     ``F001`` is correct behavior, not a test bug.
     """
-    from vibesensor.analysis.findings import finalize_findings
+    from vibesensor.use_cases.diagnostics.findings import finalize_findings
     from vibesensor.domain import Finding
 
     domain_findings = finalize_findings(
@@ -1279,7 +1279,7 @@ def test_next_steps_domain_path_is_primary() -> None:
 def test_fallback_payload_functions_removed() -> None:
     """``top_strength_values`` and ``has_relevant_reference_gap`` have been
     removed — the domain aggregate is always available."""
-    from vibesensor.report import mapping
+    from vibesensor.adapters.pdf import mapping
 
     assert not hasattr(mapping, "top_strength_values")
     assert not hasattr(mapping, "has_relevant_reference_gap")

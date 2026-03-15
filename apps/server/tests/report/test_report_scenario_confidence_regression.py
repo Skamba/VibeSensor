@@ -11,8 +11,8 @@ from test_support.sample_scenarios import (
     max_order_source_conf,
 )
 
-from vibesensor.analysis import summarize_run_data
-from vibesensor.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.domain import Finding
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 

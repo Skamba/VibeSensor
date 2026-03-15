@@ -44,10 +44,10 @@ class SensorPlacement:
         """Create a placement from a canonical location code.
 
         Resolves the human-readable label from the location code registry
-        (``vibesensor.locations.LOCATION_CODES``).  Falls back to a
+        (``vibesensor.shared.ids.locations.LOCATION_CODES``).  Falls back to a
         title-cased version of the code if the code is not found.
         """
-        from vibesensor.locations import LOCATION_CODES
+        from vibesensor.shared.ids.locations import LOCATION_CODES
 
         label = LOCATION_CODES.get(code, code.replace("_", " ").title())
         return cls(code=code, label=label)
