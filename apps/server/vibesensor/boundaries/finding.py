@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from ..domain.finding import Finding, VibrationSource
-from ..domain.finding_evidence import FindingEvidence
 from ..domain.signature import Signature
+from .finding_evidence import finding_evidence_from_metrics
 from .location_hotspot import location_hotspot_from_payload
 from .vibration_origin import vibration_origin_from_payload
 
@@ -87,7 +87,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
 
     # Build domain value objects from nested dicts when available
     evidence = (
-        FindingEvidence.from_metrics_dict(ev_metrics) if isinstance(ev_metrics, dict) else None
+        finding_evidence_from_metrics(ev_metrics) if isinstance(ev_metrics, dict) else None
     )
     hotspot_raw = payload.get("location_hotspot")
     location = location_hotspot_from_payload(hotspot_raw) if isinstance(hotspot_raw, dict) else None

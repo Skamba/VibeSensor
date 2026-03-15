@@ -15,6 +15,7 @@ from vibesensor.vibration_strength import compute_db
 
 from ..boundaries.location_hotspot import location_hotspot_from_payload
 from ..boundaries.run_suitability import run_suitability_payload
+from ..boundaries.speed_profile import speed_profile_from_stats
 from ..boundaries.test_steps import step_payloads_from_plan
 from ..boundaries.vibration_origin import SuspectedVibrationOrigin
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
@@ -846,7 +847,7 @@ def prepare_run_data(
         per_sample_phases=per_sample_phases,
         phase_segments=phase_segments,
         run_noise_baseline_g=run_noise_baseline_g,
-        speed_profile=SpeedProfile.from_stats(speed_stats, phase_info),
+        speed_profile=speed_profile_from_stats(speed_stats, phase_info),
         speed_stats_by_phase=_speed_stats_by_phase(samples, per_sample_phases),
         speed_breakdown=speed_breakdown,
         speed_breakdown_skipped_reason=speed_breakdown_skipped_reason,

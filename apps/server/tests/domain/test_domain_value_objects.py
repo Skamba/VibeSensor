@@ -15,7 +15,9 @@ import dataclasses
 import pytest
 
 from vibesensor.boundaries.finding import finding_from_payload
+from vibesensor.boundaries.finding_evidence import finding_evidence_from_metrics
 from vibesensor.boundaries.location_hotspot import location_hotspot_from_payload
+from vibesensor.boundaries.speed_profile import speed_profile_from_stats
 from vibesensor.boundaries.vibration_origin import (
     origin_payload_from_finding,
     vibration_origin_from_payload,
@@ -155,7 +157,7 @@ class TestFindingEvidence:
             "per_phase_confidence": {"cruise": 0.9, "accel": 0.6},
             "vibration_strength_db": 25.3,
         }
-        e = FindingEvidence.from_metrics_dict(d)
+        e = finding_evidence_from_metrics(d)
         assert e.match_rate == 0.85
         assert e.snr_db == 12.5
         assert e.presence_ratio == 0.7
@@ -166,13 +168,13 @@ class TestFindingEvidence:
         assert ("cruise", 0.9) in e.phase_confidences
 
     def test_from_metrics_dict_empty(self) -> None:
-        e = FindingEvidence.from_metrics_dict({})
+        e = finding_evidence_from_metrics({})
         assert e.match_rate == 0.0
         assert e.snr_db is None
         assert e.phase_confidences == ()
 
     def test_from_metrics_dict_snr_ratio_fallback(self) -> None:
-        e = FindingEvidence.from_metrics_dict({"snr_ratio": 8.0})
+        e = finding_evidence_from_metrics({"snr_ratio": 8.0})
         assert e.snr_db == 8.0
 
 
@@ -1126,7 +1128,7 @@ class TestSpeedProfile:
             "idle_pct": 10.0,
             "speed_unknown_pct": 5.0,
         }
-        sp = SpeedProfile.from_stats(speed_stats, phase_summary)
+        sp = speed_profile_from_stats(speed_stats, phase_summary)
         assert sp.min_kmh == 30.0
         assert sp.max_kmh == 90.0
         assert sp.mean_kmh == 60.0
@@ -1143,7 +1145,7 @@ class TestSpeedProfile:
         assert sp.sample_count == 500
 
     def test_from_stats_empty(self) -> None:
-        sp = SpeedProfile.from_stats({})
+        sp = speed_profile_from_stats({})
         assert sp.min_kmh == 0.0
         assert sp.max_kmh == 0.0
         assert not sp.steady_speed
@@ -1152,12 +1154,12 @@ class TestSpeedProfile:
         assert sp.driving_fraction == 1.0
 
     def test_from_stats_no_phase(self) -> None:
-        sp = SpeedProfile.from_stats({"min_kmh": 10, "max_kmh": 50})
+        sp = speed_profile_from_stats({"min_kmh": 10, "max_kmh": 50})
         assert sp.has_cruise is False
         assert sp.cruise_fraction == 0.0
 
     def test_from_stats_reads_phase_fallbacks_from_nested_phase_maps(self) -> None:
-        sp = SpeedProfile.from_stats(
+        sp = speed_profile_from_stats(
             {
                 "min_kmh": 20,
                 "max_kmh": 60,
@@ -1189,6 +1191,9 @@ class TestSuitabilityCheck:
         assert not SuitabilityCheck(check_key="a", state="pass").failed
         assert SuitabilityCheck(check_key="a", state="fail").failed
         assert SuitabilityCheck(check_key="a", state="warn").is_warning
+
+
+from vibesensor.boundaries.run_suitability import run_suitability_from_payload
 
 
 class TestRunSuitability:
@@ -1242,7 +1247,7 @@ class TestRunSuitability:
             {"check_key": "sample_count", "state": "warn", "explanation": "Marginal"},
             {"check_key": "noise_floor", "state": "fail", "explanation": "Too noisy"},
         ]
-        rs = RunSuitability.from_checks(checks)
+        rs = run_suitability_from_payload(checks)
         assert len(rs.checks) == 3
         assert rs.overall == "fail"
         assert rs.checks[0].check_key == "speed_variation"
@@ -1275,11 +1280,11 @@ class TestRunSuitability:
         }
 
     def test_from_checks_empty(self) -> None:
-        rs = RunSuitability.from_checks([])
+        rs = run_suitability_from_payload([])
         assert rs.overall == "pass"
 
     def test_from_checks_legacy_key(self) -> None:
-        rs = RunSuitability.from_checks([{"check": "old_key", "state": "pass"}])
+        rs = run_suitability_from_payload([{"check": "old_key", "state": "pass"}])
         assert rs.checks[0].check_key == "old_key"
 
 
