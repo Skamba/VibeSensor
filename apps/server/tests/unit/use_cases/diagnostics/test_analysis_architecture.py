@@ -72,8 +72,7 @@ def test_external_module_uses_analysis_public_api(module_path: Path) -> None:
     violations = _analysis_submodule_imports(source, str(module_path))
     assert not violations, (
         f"{module_path.name} imports from analysis sub-modules directly "
-        "(must use 'from vibesensor.use_cases.diagnostics import …'):\n"
-        + "\n".join(violations)
+        "(must use 'from vibesensor.use_cases.diagnostics import …'):\n" + "\n".join(violations)
     )
 
 
@@ -97,12 +96,12 @@ def test_analysis_init_exports_core_symbol(symbol: str) -> None:
     """
     from vibesensor.use_cases import diagnostics as analysis
 
-    assert hasattr(
-        analysis, symbol
-    ), f"vibesensor.use_cases.diagnostics.__init__ must export '{symbol}'"
-    assert (
-        symbol in analysis.__all__
-    ), f"vibesensor.use_cases.diagnostics.__all__ is missing '{symbol}'"
+    assert hasattr(analysis, symbol), (
+        f"vibesensor.use_cases.diagnostics.__init__ must export '{symbol}'"
+    )
+    assert symbol in analysis.__all__, (
+        f"vibesensor.use_cases.diagnostics.__all__ is missing '{symbol}'"
+    )
 
 
 # ---------------------------------------------------------------------------

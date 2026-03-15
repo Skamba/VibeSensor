@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 _DEFAULT_OUT = (
-    Path(__file__).resolve().parents[3]
+    Path(__file__).resolve().parents[5]
     / "apps"
     / "ui"
     / "src"
@@ -51,12 +51,13 @@ def main() -> None:
             raise SystemExit(1)
         committed = args.out.read_text()
         if committed != generated:
-            print(
+            message = (
                 f"FAIL: {args.out} is out of date.\n"
-                (
-                    "Run 'python -m vibesensor.adapters.websocket.schema_export' "
-                    "and commit the result."
-                ),
+                "Run 'python -m vibesensor.adapters.websocket.schema_export' "
+                "and commit the result."
+            )
+            print(
+                message,
                 file=sys.stderr,
             )
             raise SystemExit(1)

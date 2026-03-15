@@ -13,7 +13,7 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.boundaries._helpers import _has_structured_step_content
@@ -153,7 +153,7 @@ class HistoryReportService:
             analysis_summary,
             test_run=test_run,
         )
-        return build_report_pdf(mapped_summary)
+        return cast("bytes", build_report_pdf(mapped_summary))
 
     @staticmethod
     def _metadata_cache_token(metadata: object) -> str:

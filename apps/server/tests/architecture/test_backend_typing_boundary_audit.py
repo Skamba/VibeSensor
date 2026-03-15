@@ -42,7 +42,11 @@ WEAK_TYPING_PATTERNS = [
 def test_backend_typecheck_scope_includes_hardened_boundary_modules() -> None:
     pyproject = tomllib.loads((SERVER_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     mypy_files = set(pyproject["tool"]["mypy"]["files"])
-    missing = sorted(TARGETED_MYPY_FILES - mypy_files)
+    missing = sorted(
+        target
+        for target in TARGETED_MYPY_FILES
+        if not any(target == entry or target.startswith(f"{entry}/") for entry in mypy_files)
+    )
     assert missing == []
 
 

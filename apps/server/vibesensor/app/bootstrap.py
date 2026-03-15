@@ -30,7 +30,7 @@ __all__ = ["create_app", "main"]
 
 LOGGER = logging.getLogger(__name__)
 
-_PACKAGE_DIR = Path(__file__).resolve().parent
+_PACKAGE_DIR = Path(__file__).resolve().parents[1]
 """Resolved directory containing this package, cached at import time to avoid
 repeated filesystem resolution in ``create_app()``."""
 

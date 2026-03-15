@@ -80,7 +80,10 @@ class TestNormalizeLangArchitecturalBoundary:
 
     def test_summary_imports_normalize_lang_from_report_i18n(self) -> None:
         """summary_builder.py must import normalize_lang from report_i18n (single source)."""
-        assert "from vibesensor.use_cases.reporting.i18n import normalize_lang" in self._SUMMARY_SRC.read_text()
+        assert (
+            "from vibesensor.use_cases.reporting.i18n import normalize_lang"
+            in self._SUMMARY_SRC.read_text()
+        )
 
     def test_summary_does_not_define_own_normalize_lang(self) -> None:
         """summary_builder.py must NOT define its own normalize_lang."""

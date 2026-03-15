@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from vibesensor.adapters.http.routes import create_router
 
 _DEFAULT_OUT = (
-    Path(__file__).resolve().parents[3]
+    Path(__file__).resolve().parents[5]
     / "apps"
     / "ui"
     / "src"
@@ -51,7 +51,7 @@ def _build_openapi_app() -> FastAPI:
         health_state=placeholder,
     )
     app = FastAPI(title="VibeSensor HTTP API")
-    app.include_router(create_router(services))  # type: ignore[arg-type]
+    app.include_router(create_router(services))
     return app
 
 

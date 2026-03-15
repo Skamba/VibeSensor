@@ -103,4 +103,6 @@ class TestMypyEnforcement:
         ],
     )
     def test_module_in_mypy_files(self, mypy_files: list[str], module: str) -> None:
-        assert module in mypy_files, f"{module} not in pyproject.toml [tool.mypy] files"
+        assert any(module == entry or module.startswith(f"{entry}/") for entry in mypy_files), (
+            f"{module} not in pyproject.toml [tool.mypy] files"
+        )
