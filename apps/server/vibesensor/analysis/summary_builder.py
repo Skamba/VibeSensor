@@ -13,7 +13,6 @@ from statistics import median as _median
 from vibesensor.analysis.analysis_window import AnalysisWindow
 from vibesensor.vibration_strength import compute_db
 
-from ..boundaries.location_hotspot import location_hotspot_from_payload
 from ..boundaries.run_suitability import run_suitability_payload
 from ..boundaries.speed_profile import speed_profile_from_stats
 from ..boundaries.test_steps import step_payloads_from_plan
@@ -29,7 +28,6 @@ from ..domain import (
     SpeedProfile,
     Symptom,
     TestRun,
-    VibrationSource,
 )
 from ..domain import (
     DrivingSegment as DomainDrivingSegment,
@@ -70,7 +68,6 @@ from ._types import (
     i18n_ref,
     is_json_object,
 )
-from .diagnosis_candidates import non_reference_findings
 from .findings import (
     _build_findings,
     _phase_speed_breakdown,
@@ -457,16 +454,9 @@ def build_sensor_analysis(
 
 
 def summarize_origin(
-    findings: list[FindingPayload],
-    *,
-    domain_findings: tuple[DomainFinding, ...] | None = None,
+    findings: tuple[DomainFinding, ...],
 ) -> SuspectedVibrationOrigin:
-    """Build the most-likely-origin summary from ranked diagnostic findings.
-
-    When *domain_findings* is provided, uses domain ``Finding`` properties
-    for classification fields (suspected_source, confidence, speed_band).
-    Evidence-level details (location_hotspot) are read from the payloads.
-    """
+    """Build the most-likely-origin summary from ranked diagnostic findings."""
     if not findings:
         return {
             "location": "unknown",
@@ -477,102 +467,59 @@ def summarize_origin(
             "explanation": i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
         }
 
-    top = findings[0]
-    # Resolve domain objects (match by index if available)
-    domain_top: DomainFinding | None = None
-    domain_second: DomainFinding | None = None
-    if domain_findings is not None and len(domain_findings) >= 1:
-        domain_top = domain_findings[0]
-    if domain_findings is not None and len(domain_findings) >= 2:
-        domain_second = domain_findings[1]
+    top_finding = findings[0]
 
-    hotspot_raw = top.get("location_hotspot")
-    location_count: int | None = None
-    raw_alternatives: list[str] = []
-    if isinstance(hotspot_raw, dict):
-        decoded = location_hotspot_from_payload(hotspot_raw)
-        raw_alternatives = list(decoded.alternative_locations)
-        second_location = str(hotspot_raw.get("second_location") or "").strip()
-        if second_location and second_location not in raw_alternatives:
-            raw_alternatives.append(second_location)
-        raw_location_count = _as_float(top.get("location_count"))
-        if raw_location_count is None:
-            raw_location_count = _as_float(hotspot_raw.get("location_count"))
-        location_count = int(raw_location_count) if raw_location_count else None
-    else:
-        decoded = None
-        raw_location_count = _as_float(top.get("location_count"))
-        location_count = int(raw_location_count) if raw_location_count else None
-
-    if domain_top is not None and domain_top.location is not None:
+    # Build LocationHotspot from domain Finding
+    if top_finding.location is not None:
         loc = LocationHotspot.from_analysis_inputs(
             strongest_location=(
-                domain_top.location.strongest_location or domain_top.strongest_location or "unknown"
-            ),
-            dominance_ratio=domain_top.location.dominance_ratio,
-            localization_confidence=domain_top.location.localization_confidence,
-            weak_spatial_separation=domain_top.location.weak_spatial_separation,
-            ambiguous=domain_top.location.ambiguous,
-            alternative_locations=(*domain_top.location.alternative_locations, *raw_alternatives),
-        )
-    elif decoded is not None:
-        loc = LocationHotspot.from_analysis_inputs(
-            strongest_location=(
-                decoded.strongest_location
-                or str(top.get("strongest_location") or "").strip()
+                top_finding.location.strongest_location
+                or top_finding.strongest_location
                 or "unknown"
             ),
             dominance_ratio=(
-                decoded.dominance_ratio
-                if decoded.dominance_ratio is not None
-                else _as_float(top.get("dominance_ratio"))
+                top_finding.location.dominance_ratio
+                if top_finding.location.dominance_ratio is not None
+                else top_finding.dominance_ratio
             ),
-            localization_confidence=decoded.localization_confidence,
-            weak_spatial_separation=(
-                decoded.weak_spatial_separation or bool(top.get("weak_spatial_separation"))
-            ),
-            ambiguous=decoded.ambiguous,
-            alternative_locations=raw_alternatives,
+            localization_confidence=top_finding.location.localization_confidence,
+            weak_spatial_separation=top_finding.location.weak_spatial_separation,
+            ambiguous=top_finding.location.ambiguous,
+            alternative_locations=tuple(top_finding.location.alternative_locations),
         )
     else:
         loc = LocationHotspot.from_analysis_inputs(
-            strongest_location=str(top.get("strongest_location") or "").strip() or "unknown",
-            dominance_ratio=_as_float(top.get("dominance_ratio")),
-            weak_spatial_separation=bool(top.get("weak_spatial_separation")),
+            strongest_location=top_finding.strongest_location or "unknown",
+            dominance_ratio=top_finding.dominance_ratio,
+            weak_spatial_separation=top_finding.weak_spatial_separation,
         )
-    loc = loc.with_adaptive_weak_spatial(location_count)
-    if domain_top:
-        source = str(domain_top.suspected_source)
-    else:
-        source = str(top.get("suspected_source") or "unknown")
 
+    # Location count for adaptive weak spatial
+    location_count = top_finding.location.location_count if top_finding.location else None
+    loc = loc.with_adaptive_weak_spatial(location_count)
+
+    source = str(top_finding.suspected_source)
+
+    # Near-tie promotion
     if len(findings) >= 2:
-        if domain_top:
-            top_conf = domain_top.effective_confidence
-        else:
-            top_conf = _as_float(top.get("confidence")) or 0.0
-        if domain_second is not None:
-            second_location = (
-                (domain_second.location.strongest_location if domain_second.location else "")
-                or domain_second.strongest_location
-                or str(findings[1].get("strongest_location") or "")
-            ).strip()
-            second_conf = domain_second.effective_confidence
-        else:
-            second_location = str(findings[1].get("strongest_location") or "").strip()
-            second_conf = _as_float(findings[1].get("confidence")) or 0.0
+        second = findings[1]
+        second_location = (
+            (second.location.strongest_location if second.location else "")
+            or second.strongest_location
+            or ""
+        ).strip()
         loc = loc.promote_near_tie(
             alternative_location=second_location,
-            top_confidence=top_conf,
-            alternative_confidence=second_conf,
+            top_confidence=top_finding.effective_confidence,
+            alternative_confidence=second.effective_confidence,
         )
 
     location = loc.summary_location
-    if domain_top:
-        speed_band = str(domain_top.strongest_speed_band or "")
-    else:
-        speed_band = str(top.get("strongest_speed_band") or "")
-    dominant_phase = str(top.get("dominant_phase") or "").strip()
+    speed_band = str(top_finding.strongest_speed_band or "")
+    dominant_phase = (
+        str(top_finding.origin.dominant_phase or "").strip() if top_finding.origin else ""
+    )
+
     explanation = build_origin_explanation(
         source=source,
         speed_band=speed_band,
@@ -899,12 +846,10 @@ def build_findings_bundle(
     )
     # Create domain findings from finalized payloads
     domain_findings = domain_findings_from_payloads(findings)
-    diagnostic_findings = non_reference_findings(findings)
     # Filter domain findings to match the diagnostic payload subset
     domain_diagnostic_findings = tuple(f for f in domain_findings if not f.is_reference)
     most_likely_origin = summarize_origin(
-        diagnostic_findings,
-        domain_findings=domain_diagnostic_findings,
+        domain_diagnostic_findings,
     )
     phase_timeline = build_phase_timeline(
         prepared.phase_segments,
@@ -987,44 +932,27 @@ class AnalysisResult:
     summary: AnalysisSummary
 
 
-def _extract_magnitude_db(payload: FindingPayload) -> float | None:
-    metrics = payload.get("evidence_metrics")
-    if isinstance(metrics, dict):
-        val = metrics.get("vibration_strength_db")
-        if val is not None:
-            try:
-                return float(val)
-            except (ValueError, TypeError):
-                pass
-    return None
-
-
 def _build_observation_evidence(
-    findings: list[FindingPayload],
+    findings: tuple[DomainFinding, ...],
 ) -> list[ObservationEvidence]:
     evidence_items: list[ObservationEvidence] = []
-    for payload in findings:
-        sig_labels: tuple[str, ...] = ()
-        freq_or_order = str(payload.get("frequency_hz_or_order") or "")
-        sigs = payload.get("signatures_observed")
-        if isinstance(sigs, list) and sigs:
-            sig_labels = tuple(str(s) for s in sigs)
-        if not sig_labels and freq_or_order:
-            sig_labels = (freq_or_order,)
-        raw_source = str(payload.get("suspected_source") or payload.get("source") or "unknown")
-        try:
-            source = VibrationSource(raw_source.strip().lower())
-        except ValueError:
-            source = VibrationSource.UNKNOWN
+    for finding in findings:
+        sig_labels = finding.signature_labels
+        if not sig_labels:
+            freq_or_order = finding.order or (
+                f"{finding.frequency_hz:.1f} Hz" if finding.frequency_hz is not None else ""
+            )
+            if freq_or_order:
+                sig_labels = (freq_or_order,)
         evidence_items.append(
             ObservationEvidence(
-                source=source,
+                source=finding.suspected_source,
                 signature_labels=sig_labels,
-                magnitude_db=_extract_magnitude_db(payload),
-                speed_band=payload.get("strongest_speed_band"),
-                dominant_phase=payload.get("dominant_phase"),
-                location=payload.get("strongest_location"),
-                confidence=float(payload.get("confidence") or 0.0),
+                magnitude_db=finding.vibration_strength_db,
+                speed_band=finding.strongest_speed_band,
+                dominant_phase=finding.origin.dominant_phase if finding.origin else None,
+                location=finding.strongest_location,
+                confidence=finding.effective_confidence,
             )
         )
     return evidence_items
@@ -1146,25 +1074,31 @@ class RunAnalysis:
         domain_suitability = run_suitability
         run_suitability_checks = run_suitability_payload(domain_suitability)
 
-        # Enrich top-cause domain Findings with ConfidenceAssessment
+        # Enrich ALL domain Findings with ConfidenceAssessment
         has_ref_gaps = not reference_complete
-        enriched_domain_top_causes: list[DomainFinding] = []
-        for f in domain_top_causes:
+        _steady = speed_profile.steady_speed if speed_profile is not None else False
+        _n_sensors = len(sensor_locations)
+        enriched_domain_findings: list[DomainFinding] = []
+        for f in domain_findings:
+            if f.confidence_assessment is not None:
+                enriched_domain_findings.append(f)
+                continue
             ca = ConfidenceAssessment.assess(
                 f.effective_confidence,
                 strength_band_key=overall_strength_band_key,
-                steady_speed=speed_profile.steady_speed if speed_profile is not None else False,
+                steady_speed=_steady,
                 has_reference_gaps=has_ref_gaps,
                 weak_spatial=f.weak_spatial_separation,
-                sensor_count=len(sensor_locations),
+                sensor_count=_n_sensors,
             )
-            enriched_domain_top_causes.append(replace(f, confidence_assessment=ca))
+            enriched_domain_findings.append(replace(f, confidence_assessment=ca))
+        domain_findings = tuple(enriched_domain_findings)
 
-        final_top_causes = (
-            tuple(enriched_domain_top_causes) if enriched_domain_top_causes else domain_top_causes
-        )
+        # Derive top_causes as a subset of the enriched findings
+        top_cause_ids = {f.finding_id for f in domain_top_causes if f.finding_id}
+        final_top_causes = tuple(f for f in domain_findings if f.finding_id in top_cause_ids)
 
-        evidence_items = _build_observation_evidence(findings)
+        evidence_items = _build_observation_evidence(domain_findings)
         observations = extract_observations(evidence_items)
         signatures = recognize_signatures(observations)
         hypotheses = evaluate_hypotheses(signatures)

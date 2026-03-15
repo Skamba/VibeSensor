@@ -37,7 +37,7 @@ def _source_from_payload(
 ) -> VibrationSource:
     if fallback is not None:
         return fallback
-    raw_source = str(payload.get("suspected_source") or payload.get("source") or "").strip().lower()
+    raw_source = str(payload.get("suspected_source") or "").strip().lower()
     try:
         return VibrationSource(raw_source)
     except ValueError:

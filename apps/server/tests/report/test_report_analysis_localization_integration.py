@@ -9,6 +9,7 @@ from vibesensor.analysis import location_analysis as _test_plan_module
 from vibesensor.analysis.location_analysis import _location_speedbin_summary
 from vibesensor.analysis.summary_builder import summarize_origin
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.boundaries.finding import finding_from_payload
 
 
 def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> None:
@@ -61,19 +62,18 @@ def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_cou
 
 
 def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> None:
-    origin = summarize_origin(
-        [
-            {
-                "suspected_source": "wheel/tire",
-                "strongest_location": "Front Left",
-                "strongest_speed_band": "80-90 km/h",
-                "dominance_ratio": 1.30,
-                "weak_spatial_separation": False,
-                "location_hotspot": {"location_count": 3},
-                "confidence": 0.8,
-            },
-        ],
+    f = finding_from_payload(
+        {
+            "suspected_source": "wheel/tire",
+            "strongest_location": "Front Left",
+            "strongest_speed_band": "80-90 km/h",
+            "dominance_ratio": 1.30,
+            "weak_spatial_separation": False,
+            "location_hotspot": {"location_count": 3},
+            "confidence": 0.8,
+        },
     )
+    origin = summarize_origin((f,))
     assert origin["weak_spatial_separation"] is True
 
 

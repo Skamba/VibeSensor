@@ -7,7 +7,6 @@ standard CI so that schema drift between the two subsystems is caught early.
 
 from __future__ import annotations
 
-from copy import deepcopy
 from dataclasses import replace
 
 from test_support import (
@@ -114,41 +113,29 @@ def test_multilingual_mapping():
     assert report_data.lang == "nl"
 
 
-def test_report_certainty_smoke_uses_speed_profile_over_raw_speed_stats() -> None:
-    """Report certainty should follow the live aggregate speed profile, not raw speed_stats."""
+def test_report_certainty_uses_confidence_assessment_reason() -> None:
+    """Report certainty reason comes from ConfidenceAssessment on the domain finding."""
     meta, samples = _make_steady_speed_fault_dataset()
-    analysis = RunAnalysis(meta, samples, lang="en", file_name="steady-speed-proof")
+    analysis = RunAnalysis(meta, samples, lang="en", file_name="ca-reason-proof")
     result = analysis.summarize()
     summary = result.summary
 
     assert analysis.test_run is not None
     assert analysis.test_run.speed_profile is not None
-    assert analysis.test_run.speed_profile.steady_speed is True
 
-    stripped_findings = tuple(
-        replace(finding, confidence_assessment=None) for finding in analysis.test_run.findings
-    )
-    stripped_top_causes = tuple(
-        replace(finding, confidence_assessment=None) for finding in analysis.test_run.top_causes
-    )
-    stripped_aggregate = replace(
-        analysis.test_run,
-        findings=stripped_findings,
-        top_causes=stripped_top_causes,
-    )
-
-    corrupted_summary = deepcopy(summary)
-    corrupted_summary["speed_stats"]["steady_speed"] = False
-
-    context = prepare_report_mapping_context(corrupted_summary)
-    context = replace(context, domain_aggregate=stripped_aggregate)
+    context = prepare_report_mapping_context(summary)
+    context = replace(context, domain_aggregate=analysis.test_run)
 
     primary = resolve_primary_report_candidate(
-        corrupted_summary,
+        summary,
         context=context,
         tr=lambda key, **_kw: key,
         lang="en",
     )
 
-    assert context.speed_stats["steady_speed"] is False
-    assert primary.certainty_reason == "Limited speed variation reduces tracking confidence"
+    # Reason must come from ConfidenceAssessment, not from the deleted certainty_label()
+    effective = analysis.test_run.effective_top_causes()
+    domain_primary = effective[0] if effective else analysis.test_run.primary_finding
+    assert domain_primary is not None
+    assert domain_primary.confidence_assessment is not None
+    assert primary.certainty_reason == domain_primary.confidence_assessment.reason

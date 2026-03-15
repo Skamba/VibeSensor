@@ -20,11 +20,10 @@ from ..analysis._types import (
     SpeedStats,
     TestStep,
 )
-from ..analysis.diagnosis_candidates import normalize_origin_location, select_effective_top_causes
+from ..analysis.diagnosis_candidates import normalize_origin_location
 from ..analysis.helpers import PHASE_I18N_KEYS
 from ..analysis.plots import PeakTableRow
 from ..analysis.strength_labels import (
-    certainty_label,
     certainty_tier,
     strength_label,
     strength_text,
@@ -50,6 +49,8 @@ from .report_data import (
 )
 
 __all__ = ["map_summary"]
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -215,7 +216,7 @@ def human_source(source: object, *, tr: Callable[[str], str]) -> str:
     try:
         key = VibrationSource(raw)
     except ValueError:
-        logging.getLogger(__name__).warning(
+        logger.warning(
             "Unrecognized vibration source %r; falling back to titlecase",
             raw,
         )
@@ -278,16 +279,6 @@ def extract_confidence(item: FindingPayload) -> float:
     """Return the confidence value from a cause/finding dict."""
     value = _as_float(item.get("confidence"))
     return value if value is not None else 0.0
-
-
-def finding_strength_db(finding: FindingPayload) -> float | None:
-    """Extract a finding's vibration-strength dB value if present."""
-    evidence_metrics = finding.get("evidence_metrics")
-    return (
-        _as_float(evidence_metrics.get("vibration_strength_db"))
-        if isinstance(evidence_metrics, dict)
-        else None
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -682,35 +673,6 @@ def _resolve_detail_text(value: object, *, lang: str, tr: Callable) -> str | Non
 # ---------------------------------------------------------------------------
 
 
-def top_strength_values(
-    summary: AnalysisSummary,
-    *,
-    effective_causes: list[FindingPayload] | None = None,
-) -> float | None:
-    """Return the best available vibration strength in dB for report text.
-
-    Aggregate-absent safety fallback.  When a ``TestRun`` domain
-    aggregate is available, callers use ``TestRun.top_strength_db()``
-    instead.  This function remains only for the defensive path where
-    summary decoding fails to produce an aggregate.
-    """
-    causes = effective_causes if effective_causes is not None else summary.get("top_causes", [])
-    all_findings = summary.get("findings", [])
-    for cause in causes:
-        if not isinstance(cause, dict):
-            continue
-        finding_id = cause.get("finding_id")
-        for finding in all_findings:
-            if not isinstance(finding, dict):
-                continue
-            if finding.get("finding_id") != finding_id:
-                continue
-            db = finding_strength_db(finding)
-            if db is not None:
-                return db
-    return _sensor_fallback_strength_db(summary)
-
-
 def _sensor_fallback_strength_db(summary: AnalysisSummary) -> float | None:
     """Return the best sensor-intensity dB as a last-resort fallback."""
     sensor_rows = [
@@ -719,30 +681,6 @@ def _sensor_fallback_strength_db(summary: AnalysisSummary) -> float | None:
         if isinstance(row, dict)
     ]
     return max((value for value in sensor_rows if value is not None), default=None)
-
-
-def has_relevant_reference_gap(findings: list[FindingPayload], primary_source: object) -> bool:
-    """Whether the report certainty should mention missing reference inputs.
-
-    Aggregate-absent safety fallback.  When a ``TestRun`` domain
-    aggregate is available, callers use
-    ``TestRun.has_relevant_reference_gap()`` instead.  This function
-    remains only for the defensive path where summary decoding fails to
-    produce an aggregate.
-    """
-    source = str(primary_source or "").strip().lower()
-    for finding in findings:
-        finding_id = str(finding.get("finding_id") or "").strip().upper()
-        if finding_id in {"REF_SPEED", "REF_SAMPLE_RATE"}:
-            return True
-        if finding_id == "REF_WHEEL" and source in {
-            VibrationSource.WHEEL_TIRE,
-            VibrationSource.DRIVELINE,
-        }:
-            return True
-        if finding_id == "REF_ENGINE" and source == VibrationSource.ENGINE:
-            return True
-    return False
 
 
 def build_system_cards(
@@ -795,6 +733,9 @@ def build_system_cards(
                     strength_band_key=primary.strength_band_key,
                 )[1]
         else:
+            logger.warning(
+                "build_system_cards: domain aggregate not available, falling back to raw summary",
+            )
             source = cause.get("suspected_source") or "unknown"
             source_human = human_source(source, tr=tr)
             location = str(cause.get("strongest_location") or tr("UNKNOWN"))
@@ -848,15 +789,11 @@ def build_pattern_evidence(
     """
     # Domain-first: use aggregate effective top causes for matched systems
     aggregate = context.domain_aggregate
+    assert aggregate is not None
     domain_primary = None
-    if aggregate:
-        effective = aggregate.effective_top_causes()
-        domain_primary = effective[0] if effective else aggregate.primary_finding
-        systems_raw = [human_source(str(f.suspected_source), tr=tr) for f in effective[:3]]
-    else:
-        systems_raw = [
-            human_source(cause.get("suspected_source"), tr=tr) for cause in context.top_causes[:3]
-        ]
+    effective = aggregate.effective_top_causes()
+    domain_primary = effective[0] if effective else aggregate.primary_finding
+    systems_raw = [human_source(str(f.suspected_source), tr=tr) for f in effective[:3]]
     systems = list(dict.fromkeys(systems_raw))
     interpretation = resolve_interpretation(context.origin, lang=lang, tr=tr)
     source_for_why, order_label_for_why = resolve_parts_context(
@@ -995,37 +932,31 @@ def prepare_report_mapping_context(
 
     domain_aggregate = test_run_from_summary(summary)
 
-    if domain_aggregate is not None:
-        findings = [
-            finding_payload_from_domain(
-                finding,
-                primary=summary_findings_by_id,
-                secondary=summary_top_causes_by_id,
-            )
-            for finding in domain_aggregate.findings
-        ]
-        findings_non_ref = [
-            finding_payload_from_domain(
-                finding,
-                primary=summary_findings_by_id,
-                secondary=summary_top_causes_by_id,
-            )
-            for finding in domain_aggregate.non_reference_findings
-        ]
-        top_causes = [
-            finding_payload_from_domain(
-                finding,
-                primary=summary_top_causes_by_id,
-                secondary=summary_findings_by_id,
-            )
-            for finding in domain_aggregate.effective_top_causes()
-        ]
-        origin = _origin_from_aggregate(domain_aggregate, origin)
-    else:
-        findings, findings_non_ref, _top_causes_all, top_causes = select_effective_top_causes(
-            summary_top_causes_all,
-            summary_findings_all,
+    findings = [
+        finding_payload_from_domain(
+            finding,
+            primary=summary_findings_by_id,
+            secondary=summary_top_causes_by_id,
         )
+        for finding in domain_aggregate.findings
+    ]
+    findings_non_ref = [
+        finding_payload_from_domain(
+            finding,
+            primary=summary_findings_by_id,
+            secondary=summary_top_causes_by_id,
+        )
+        for finding in domain_aggregate.non_reference_findings
+    ]
+    top_causes = [
+        finding_payload_from_domain(
+            finding,
+            primary=summary_top_causes_by_id,
+            secondary=summary_findings_by_id,
+        )
+        for finding in domain_aggregate.effective_top_causes()
+    ]
+    origin = _origin_from_aggregate(domain_aggregate, origin)
 
     origin_location = normalized_origin_location(origin)
 
@@ -1070,44 +1001,26 @@ def resolve_primary_report_candidate(
     """
     primary_candidate = context.top_report_candidate()
     aggregate = context.domain_aggregate
+    assert aggregate is not None
 
     primary_source: object = None
-    if aggregate:
-        # Domain-first: derive all business fields from the aggregate
-        effective = aggregate.effective_top_causes()
-        domain_primary = effective[0] if effective else aggregate.primary_finding
-        if domain_primary:
-            primary_source = domain_primary.suspected_source
-            primary_system = human_source(primary_source, tr=tr)
-            primary_location = context.origin_location or (
-                domain_primary.strongest_location or tr("UNKNOWN")
-            )
-            primary_speed = str(
-                domain_primary.strongest_speed_band
-                or (primary_candidate.get("speed_band") if primary_candidate else None)
-                or tr("UNKNOWN"),
-            )
-            confidence = domain_primary.effective_confidence
-        elif primary_candidate:
-            # Aggregate exists but has no findings; fall back to payload
-            primary_source = primary_candidate.get("suspected_source")
-            primary_system = human_source(primary_source, tr=tr)
-            primary_location = context.origin_location or str(
-                primary_candidate.get("strongest_location") or tr("UNKNOWN"),
-            )
-            primary_speed = str(
-                primary_candidate.get("strongest_speed_band")
-                or primary_candidate.get("speed_band")
-                or tr("UNKNOWN"),
-            )
-            confidence = extract_confidence(primary_candidate)
-        else:
-            primary_system = tr("UNKNOWN")
-            primary_location = context.origin_location or tr("UNKNOWN")
-            primary_speed = tr("UNKNOWN")
-            confidence = 0.0
+    # Domain-first: derive all business fields from the aggregate
+    effective = aggregate.effective_top_causes()
+    domain_primary = effective[0] if effective else aggregate.primary_finding
+    if domain_primary:
+        primary_source = domain_primary.suspected_source
+        primary_system = human_source(primary_source, tr=tr)
+        primary_location = context.origin_location or (
+            domain_primary.strongest_location or tr("UNKNOWN")
+        )
+        primary_speed = str(
+            domain_primary.strongest_speed_band
+            or (primary_candidate.get("speed_band") if primary_candidate else None)
+            or tr("UNKNOWN"),
+        )
+        confidence = domain_primary.effective_confidence
     elif primary_candidate:
-        # Safety fallback: no aggregate available
+        # Aggregate exists but has no findings; fall back to payload
         primary_source = primary_candidate.get("suspected_source")
         primary_system = human_source(primary_source, tr=tr)
         primary_location = context.origin_location or str(
@@ -1120,41 +1033,30 @@ def resolve_primary_report_candidate(
         )
         confidence = extract_confidence(primary_candidate)
     else:
-        primary_source = None
         primary_system = tr("UNKNOWN")
         primary_location = context.origin_location or tr("UNKNOWN")
         primary_speed = tr("UNKNOWN")
         confidence = 0.0
 
     # Domain-first strength and reference gap detection
-    if aggregate:
-        strength_db = aggregate.top_strength_db()
-        # Fall back to sensor intensity if domain aggregate has no strength
-        if strength_db is None:
-            strength_db = _sensor_fallback_strength_db(summary)
-        has_ref_gaps = aggregate.has_relevant_reference_gap(
-            str(primary_source) if primary_source else "unknown",
-        )
-        effective = aggregate.effective_top_causes()
-        domain_primary = effective[0] if effective else aggregate.primary_finding
-        weak_spatial = domain_primary.weak_spatial_separation if domain_primary else False
-    else:
-        strength_db = top_strength_values(summary, effective_causes=context.top_causes)
-        weak_spatial = bool(
-            primary_candidate.get("weak_spatial_separation") if primary_candidate else False,
-        )
-        has_ref_gaps = has_relevant_reference_gap(context.findings, primary_source)
+    strength_db = aggregate.top_strength_db()
+    # Fall back to sensor intensity if domain aggregate has no strength
+    if strength_db is None:
+        strength_db = _sensor_fallback_strength_db(summary)
+    has_ref_gaps = aggregate.has_relevant_reference_gap(
+        str(primary_source) if primary_source else "unknown",
+    )
+    effective = aggregate.effective_top_causes()
+    domain_primary = effective[0] if effective else aggregate.primary_finding
+    weak_spatial = domain_primary.weak_spatial_separation if domain_primary else False
 
     strength_text_value = strength_text(strength_db, lang=lang)
     sensor_count = resolve_sensor_count(summary, context.sensor_locations_active)
     strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
 
     # Use domain ConfidenceAssessment when available on the primary finding
-    if aggregate:
-        effective = aggregate.effective_top_causes()
-        domain_primary = effective[0] if effective else aggregate.primary_finding
-    else:
-        domain_primary = None
+    effective = aggregate.effective_top_causes()
+    domain_primary = effective[0] if effective else aggregate.primary_finding
 
     if domain_primary and domain_primary.confidence_assessment:
         ca = domain_primary.confidence_assessment
@@ -1162,20 +1064,12 @@ def resolve_primary_report_candidate(
         certainty_label_text = tr(ca.label_key)
         certainty_pct = ca.pct_text
         certainty_reason = ca.reason
-        tier = ca.tier
+        tier = certainty_tier(confidence, strength_band_key=strength_band_key)
     else:
-        steady_speed = (
-            aggregate.speed_profile.steady_speed if aggregate and aggregate.speed_profile else False
-        )
-        certainty_key, certainty_label_text, certainty_pct, certainty_reason = certainty_label(
-            confidence,
-            lang=lang,
-            steady_speed=steady_speed,
-            weak_spatial=weak_spatial,
-            sensor_count=sensor_count,
-            has_reference_gaps=has_ref_gaps,
-            strength_band_key=strength_band_key,
-        )
+        certainty_key = "CONFIDENCE_LOW"
+        certainty_label_text = tr("CONFIDENCE_LOW")
+        certainty_pct = "0%"
+        certainty_reason = ""
         tier = certainty_tier(confidence, strength_band_key=strength_band_key)
     return PrimaryCandidateContext(
         primary_candidate=primary_candidate,
@@ -1208,14 +1102,8 @@ def build_report_from_summary(summary: dict[str, object]) -> Report:
     if not isinstance(meta, dict):
         meta = {}
 
-    car_cfg = meta.get("car")
-    car_name: str | None = None
-    car_type: str | None = None
-    if isinstance(car_cfg, dict):
-        raw_name = car_cfg.get("name")
-        car_name = str(raw_name) if raw_name else None
-        raw_type = car_cfg.get("car_type")
-        car_type = str(raw_type) if raw_type else None
+    car_name = str(meta.get("car_name") or "").strip() or None
+    car_type = str(meta.get("car_type") or "").strip() or None
 
     rows = summary.get("rows")
     sample_count = int(rows) if isinstance(rows, (int, float, str)) else 0

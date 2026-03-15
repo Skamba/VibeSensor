@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import replace
 
 from ..domain.car import Car
+from ..domain.confidence_assessment import ConfidenceAssessment
 from ..domain.configuration_snapshot import ConfigurationSnapshot
 from ..domain.diagnostic_case import DiagnosticCase
 from ..domain.driving_phase import DrivingPhase
 from ..domain.driving_segment import DrivingSegment
 from ..domain.finding import Finding
-from ..domain.hypothesis import Hypothesis, HypothesisStatus
+from ..domain.hypothesis import Hypothesis
 from ..domain.recommended_action import RecommendedAction
 from ..domain.run import Run
-from ..domain.run_suitability import RunSuitability
 from ..domain.signature import Signature
 from ..domain.symptom import Symptom
 from ..domain.test_plan import TestPlan
@@ -23,7 +24,7 @@ from .finding import finding_from_payload, finding_payload_from_domain
 from .run_suitability import run_suitability_from_payload, run_suitability_payload
 from .speed_profile import speed_profile_from_stats
 from .test_steps import step_payloads_from_plan
-from .vibration_origin import origin_payload_from_finding, vibration_origin_from_payload
+from .vibration_origin import origin_payload_from_finding
 
 
 def _actions_from_steps(steps: object) -> tuple[RecommendedAction, ...]:
@@ -63,8 +64,12 @@ def _segments_from_summary(summary: Mapping[str, object]) -> tuple[DrivingSegmen
         segments.append(
             DrivingSegment(
                 phase=phase,
-                start_idx=int(_as_float(segment.get("start_idx")) or 0),
-                end_idx=int(_as_float(segment.get("end_idx")) or 0),
+                start_idx=(
+                    int(_si) if (_si := _as_float(segment.get("start_idx"))) is not None else None
+                ),
+                end_idx=(
+                    int(_ei) if (_ei := _as_float(segment.get("end_idx"))) is not None else None
+                ),
                 start_t_s=_as_float(segment.get("start_t_s")),
                 end_t_s=_as_float(segment.get("end_t_s")),
                 speed_min_kmh=_as_float(segment.get("speed_min_kmh")),
@@ -75,49 +80,6 @@ def _segments_from_summary(summary: Mapping[str, object]) -> tuple[DrivingSegmen
     return tuple(segments)
 
 
-def _signatures_from_finding(
-    finding: Finding,
-    payload: Mapping[str, object],
-) -> tuple[Signature, ...]:
-    raw_signatures = payload.get("signatures_observed")
-    if not isinstance(raw_signatures, list):
-        return ()
-    return tuple(
-        Signature.from_label(
-            str(label),
-            source=finding.suspected_source,
-            support_score=finding.effective_confidence,
-        )
-        for label in raw_signatures[:3]
-        if str(label).strip()
-    )
-
-
-def _hypothesis_from_finding(finding: Finding, signatures: tuple[Signature, ...]) -> Hypothesis:
-    status = (
-        HypothesisStatus.SUPPORTED
-        if finding.effective_confidence >= Hypothesis.SUPPORTED_THRESHOLD
-        else HypothesisStatus.INCONCLUSIVE
-    )
-    return Hypothesis(
-        hypothesis_id=finding.finding_id or f"hyp-{finding.suspected_source}",
-        source=finding.suspected_source,
-        signature_keys=tuple(signature.key for signature in signatures),
-        support_score=finding.effective_confidence,
-        contradiction_score=0.0,
-        status=status,
-        rationale=(
-            (finding.confidence_assessment.reason,)
-            if finding.confidence_assessment and finding.confidence_assessment.reason
-            else ()
-        ),
-    )
-
-
-def _checks_from_suitability(suitability: RunSuitability | None) -> list[dict[str, object]]:
-    return run_suitability_payload(suitability)
-
-
 def _enrich_findings(raw_findings: object) -> tuple[Finding, ...]:
     if not isinstance(raw_findings, list):
         return ()
@@ -125,16 +87,7 @@ def _enrich_findings(raw_findings: object) -> tuple[Finding, ...]:
     for payload in raw_findings:
         if not isinstance(payload, Mapping):
             continue
-        finding = finding_from_payload(payload)
-        signatures = _signatures_from_finding(finding, payload)
-        origin = vibration_origin_from_payload(
-            payload,
-            hotspot=finding.location,
-            suspected_source=finding.suspected_source,
-            dominance_ratio=finding.dominance_ratio,
-            speed_band=finding.strongest_speed_band,
-        )
-        enriched.append(finding.with_origin_and_signatures(origin=origin, signatures=signatures))
+        enriched.append(finding_from_payload(payload))
     return tuple(enriched)
 
 
@@ -191,15 +144,50 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         run_suitability_from_payload(run_suitability) if isinstance(run_suitability, list) else None
     )
 
+    # Synthesize ConfidenceAssessment for historical findings that lack it
+    _steady = speed_profile.steady_speed if speed_profile is not None else True
+    _raw_locs = summary.get("sensor_locations")
+    _sensor_count = len(_raw_locs) if isinstance(_raw_locs, Mapping) else 0
+    _amp_summary = summary.get("amplitude_summary")
+    _band_key = (
+        _amp_summary.get("overall_band", "moderate")
+        if isinstance(_amp_summary, Mapping)
+        else "moderate"
+    )
+    _has_ref_gaps = False
+    if isinstance(run_suitability, list):
+        for _chk in run_suitability:
+            if (
+                isinstance(_chk, Mapping)
+                and _chk.get("check_key") == "reference_complete"
+                and _chk.get("state") == "fail"
+            ):
+                _has_ref_gaps = True
+                break
+
+    def _ensure_ca(f: Finding) -> Finding:
+        if f.confidence_assessment is not None:
+            return f
+        ca = ConfidenceAssessment.assess(
+            f.effective_confidence,
+            strength_band_key=_band_key,
+            steady_speed=_steady,
+            has_reference_gaps=_has_ref_gaps,
+            weak_spatial=f.weak_spatial_separation,
+            sensor_count=max(_sensor_count, 1),
+        )
+        return replace(f, confidence_assessment=ca)
+
+    findings = tuple(_ensure_ca(f) for f in findings)
+    top_causes = tuple(_ensure_ca(f) for f in top_causes)
+
     signatures: list[Signature] = []
     hypotheses: list[Hypothesis] = []
-    raw_findings = summary.get("findings") if isinstance(summary.get("findings"), list) else []
-    for payload, finding in zip(raw_findings, findings, strict=False):
-        if not isinstance(payload, Mapping):
-            continue
-        finding_signatures = _signatures_from_finding(finding, payload)
-        signatures.extend(finding_signatures)
-        hypotheses.append(_hypothesis_from_finding(finding, finding_signatures))
+    for finding in findings:
+        if finding.is_reference:
+            continue  # reference findings don't produce hypotheses
+        signatures.extend(finding.signatures)
+        hypotheses.append(Hypothesis.from_finding(finding, finding.signatures))
 
     return TestRun(
         run=Run(run_id=str(summary.get("run_id") or "unknown")),
@@ -285,6 +273,6 @@ def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, o
     )
     if not _has_structured_step_content(summary.get("test_plan")):
         projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
-    projected["run_suitability"] = _checks_from_suitability(test_run.suitability)
+    projected["run_suitability"] = run_suitability_payload(test_run.suitability)
 
     return projected

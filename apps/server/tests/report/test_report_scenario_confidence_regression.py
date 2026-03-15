@@ -12,8 +12,8 @@ from test_support.sample_scenarios import (
 )
 
 from vibesensor.analysis import confidence_label, summarize_run_data
-from vibesensor.analysis.strength_labels import certainty_label
 from vibesensor.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 
 
 class TestConfidenceCalibration:
@@ -83,64 +83,45 @@ class TestConfidenceCalibration:
         assert confidence_label(0.20)[:2] == ("CONFIDENCE_LOW", "neutral")
 
 
-class TestCertaintyLabelSignalQualityGuard:
-    """Negligible strength must cap certainty labels."""
+class TestConfidenceAssessmentSignalQualityGuard:
+    """Negligible strength must cap confidence assessment labels."""
 
     @pytest.mark.parametrize(
-        ("confidence", "lang", "strength_band_key", "expected_level", "expected_label"),
+        ("confidence", "strength_band_key", "expected_label_key"),
         [
             pytest.param(
                 0.90,
-                "en",
                 "negligible",
-                "medium",
-                "Medium",
+                "CONFIDENCE_MEDIUM",
                 id="negligible_caps_high_to_medium",
             ),
             pytest.param(
                 0.55,
-                "en",
                 "negligible",
-                "medium",
-                None,
+                "CONFIDENCE_MEDIUM",
                 id="negligible_keeps_medium",
             ),
             pytest.param(
                 0.30,
-                "en",
                 "negligible",
-                "low",
-                None,
+                "CONFIDENCE_LOW",
                 id="negligible_keeps_low",
-            ),
-            pytest.param(
-                0.80,
-                "nl",
-                "negligible",
-                "medium",
-                "Gemiddeld",
-                id="negligible_guard_nl",
             ),
         ],
     )
     def test_negligible_strength_certainty(
         self,
         confidence: float,
-        lang: str,
         strength_band_key: str,
-        expected_level: str,
-        expected_label: str | None,
+        expected_label_key: str,
     ) -> None:
-        level, label, _, _ = certainty_label(
+        ca = ConfidenceAssessment.assess(
             confidence,
-            lang=lang,
             strength_band_key=strength_band_key,
         )
-        assert level == expected_level
-        if expected_label is not None:
-            assert label == expected_label
+        assert ca.label_key == expected_label_key
 
     @pytest.mark.parametrize("band", ["light", "moderate", "strong", "very_strong", None])
     def test_non_negligible_strength_allows_high_confidence(self, band: str | None) -> None:
-        level, _, _, _ = certainty_label(0.80, lang="en", strength_band_key=band)
-        assert level == "high"
+        ca = ConfidenceAssessment.assess(0.80, strength_band_key=band)
+        assert ca.label_key == "CONFIDENCE_HIGH"

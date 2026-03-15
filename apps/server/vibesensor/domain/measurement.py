@@ -1,7 +1,6 @@
 """Value objects for raw acceleration measurements and processed vibration readings.
 
 ``Measurement`` is the raw multi-axis sample captured by an ESP32 sensor.
-``AccelerationSample`` is kept as a backward-compatibility alias.
 
 ``VibrationReading`` is the dB-expressed result of processing a raw sample
 through the vibration-strength pipeline.

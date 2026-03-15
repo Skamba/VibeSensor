@@ -1,21 +1,16 @@
-"""Strength and certainty labeling for diagnostic reports.
+"""Strength labeling and certainty tier gating for diagnostic reports.
 
-Provides user-friendly natural-language labels for vibration strength and
-analysis certainty, including short generated reasons from a controlled set
-of phrases.
+Provides user-friendly natural-language labels for vibration strength
+and report layout tier gating based on analysis confidence.
 """
 
 from __future__ import annotations
 
 import math
 
-from vibesensor.domain import Finding
 from vibesensor.strength_bands import BANDS
 
 _isfinite = math.isfinite  # local bind avoids repeated attribute lookup
-
-CONFIDENCE_HIGH_THRESHOLD: float = Finding.CONFIDENCE_HIGH_THRESHOLD
-CONFIDENCE_MEDIUM_THRESHOLD: float = Finding.CONFIDENCE_MEDIUM_THRESHOLD
 
 # ---------------------------------------------------------------------------
 # Strength labels  (vibration_strength_db → natural-language band)
@@ -87,150 +82,9 @@ def strength_text(
     return f"{label} ({db_value:.1f} dB)"
 
 
-# ---------------------------------------------------------------------------
-# Certainty labels  (confidence 0–1 → label + short reason)
-# ---------------------------------------------------------------------------
-
-
 def _is_negligible_band(key: str | None) -> bool:
     """Return *True* when *key* denotes the negligible vibration band."""
     return (key or "").strip().lower() == "negligible"
-
-
-# Controlled set of certainty reason phrases.
-_CERTAINTY_REASONS: dict[str, dict[str, str]] = {
-    "strong_order_match": {
-        "en": "Consistent order-tracking match across speed range",
-        "nl": "Consistente ordetracking-overeenkomst over snelheidsbereik",
-    },
-    "moderate_order_match": {
-        "en": "Partial order-tracking match with some scatter",
-        "nl": "Gedeeltelijke ordetracking-overeenkomst met enige spreiding",
-    },
-    "weak_order_match": {
-        "en": "Weak pattern correlation — additional data recommended",
-        "nl": "Zwakke patrooncorrelatie — aanvullende data aanbevolen",
-    },
-    "single_sensor": {
-        "en": "Based on a single sensor location — cross-check advised",
-        "nl": "Gebaseerd op één sensorlocatie — controle aanbevolen",
-    },
-    "narrow_speed_range": {
-        "en": "Limited speed variation reduces tracking confidence",
-        "nl": "Beperkte snelheidsvariatie vermindert trackingbetrouwbaarheid",
-    },
-    "reference_gaps": {
-        "en": "Missing reference data limits pattern matching",
-        "nl": "Ontbrekende referentiedata beperkt patroonvergelijking",
-    },
-    "good_spatial_separation": {
-        "en": "Clear spatial separation between sensor locations",
-        "nl": "Duidelijke ruimtelijke scheiding tussen sensorlocaties",
-    },
-    "weak_spatial_separation": {
-        "en": "Overlapping signal levels — spatial separation is weak",
-        "nl": "Overlappende signaalniveaus — ruimtelijke scheiding is zwak",
-    },
-    "insufficient_data": {
-        "en": "Insufficient data for reliable pattern assessment",
-        "nl": "Onvoldoende data voor betrouwbare patroonbeoordeling",
-    },
-}
-
-
-def _select_reason_key(
-    confidence: float,
-    *,
-    steady_speed: bool = False,
-    weak_spatial: bool = False,
-    sensor_count: int = 2,
-    has_reference_gaps: bool = False,
-) -> str:
-    """Pick the best reason key based on context."""
-    if has_reference_gaps:
-        return "reference_gaps"
-    if sensor_count <= 1:
-        return "single_sensor"
-    if steady_speed:
-        return "narrow_speed_range"
-    if confidence >= CONFIDENCE_MEDIUM_THRESHOLD:
-        if weak_spatial:
-            return "weak_spatial_separation"
-        return (
-            "strong_order_match"
-            if confidence >= CONFIDENCE_HIGH_THRESHOLD
-            else "moderate_order_match"
-        )
-    return "weak_order_match"
-
-
-def certainty_label(
-    confidence: float,
-    *,
-    lang: str = "en",
-    steady_speed: bool = False,
-    weak_spatial: bool = False,
-    sensor_count: int = 2,
-    has_reference_gaps: bool = False,
-    strength_band_key: str | None = None,
-) -> tuple[str, str, str, str]:
-    """Return (level_key, human_label, pct_text, reason) for a confidence value.
-
-    Parameters
-    ----------
-    confidence:
-        Analysis confidence from 0.0 to 1.0.
-    lang:
-        ``"en"`` or ``"nl"``.
-    steady_speed:
-        ``True`` when the vehicle was at a consistent cruising speed during
-        the run; used to select the most appropriate reason phrase.
-    weak_spatial:
-        ``True`` when spatial correlation across sensors is weak; shifts
-        the reason phrase towards uncertainty.
-    sensor_count:
-        Number of active sensors; affects confidence reason phrasing.
-    has_reference_gaps:
-        ``True`` when known-order reference data has gaps; used to select
-        a more conservative reason phrase.
-    strength_band_key:
-        Optional vibration-strength band key.  When set to ``"negligible"``,
-        high certainty is capped to medium as a defensive label guard.
-
-    Returns
-    -------
-    tuple[str, str, str, str]
-        ``(level_key, human_label, pct_text, reason)``
-        e.g. ``("high", "High", "80%", "Consistent order-tracking …")``.
-
-    """
-    # Guard non-finite inputs before any arithmetic so that all downstream
-    # expressions (pct, threshold comparisons) work on a valid float.
-    if not _isfinite(confidence):
-        confidence = 0.0
-    pct = max(0.0, min(100.0, confidence * 100.0))
-    pct_text = f"{pct:.0f}%"
-
-    if confidence >= CONFIDENCE_HIGH_THRESHOLD:
-        level_key, label_en, label_nl = "high", "High", "Hoog"
-    elif confidence >= CONFIDENCE_MEDIUM_THRESHOLD:
-        level_key, label_en, label_nl = "medium", "Medium", "Gemiddeld"
-    else:
-        level_key, label_en, label_nl = "low", "Low", "Laag"
-    if _is_negligible_band(strength_band_key) and level_key == "high":
-        level_key, label_en, label_nl = "medium", "Medium", "Gemiddeld"
-
-    label = label_nl if lang == "nl" else label_en
-    reason_key = _select_reason_key(
-        confidence,
-        steady_speed=steady_speed,
-        weak_spatial=weak_spatial,
-        sensor_count=sensor_count,
-        has_reference_gaps=has_reference_gaps,
-    )
-    reason_texts = _CERTAINTY_REASONS[reason_key]
-    reason = reason_texts.get(lang) or reason_texts["en"]
-    return (level_key, label, pct_text, reason)
 
 
 # ---------------------------------------------------------------------------
@@ -249,8 +103,7 @@ def certainty_label(
 #
 # * TIER_B_CEILING (≤ 40%): Low-to-medium certainty – the report may list
 #   candidate systems as hypotheses but must NOT recommend repair.  Next
-#   steps should be verification-oriented.  The 40% boundary aligns with
-#   the existing medium/low certainty-label cut in certainty_label().
+#   steps should be verification-oriented.
 #
 # * Tier C (> 40%): Sufficient certainty for the existing diagnostic report
 #   behavior (system cards, repair-oriented next steps).
@@ -264,7 +117,10 @@ def certainty_tier(
     *,
     strength_band_key: str | None = None,
 ) -> str:
-    """Return the certainty tier key for report section gating.
+    """Determine report layout tier (A/B/C) for section visibility.
+
+    NOT equivalent to ``ConfidenceAssessment.tier`` — uses different
+    thresholds for report presentation purposes.
 
     Parameters
     ----------
@@ -279,7 +135,7 @@ def certainty_tier(
     Returns
     -------
     str
-        ``"A"`` (very low), ``"B"`` (guarded), or ``"C"`` (sufficient).
+        ``"A"`` (≤0.15), ``"B"`` (≤0.40), or ``"C"`` (>0.40).
 
     """
     # Non-finite confidence (inf/nan/-inf) must not flow through the tier

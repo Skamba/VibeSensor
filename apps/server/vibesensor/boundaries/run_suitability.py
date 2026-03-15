@@ -95,7 +95,6 @@ def _payload_for_check(
         explanation = fallback.get("explanation", explanation)
 
     return {
-        "check": check.check_key,
         "check_key": check.check_key,
         "state": check.state,
         "explanation": explanation,

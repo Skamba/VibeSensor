@@ -4,7 +4,6 @@ from __future__ import annotations
 """Report pipeline audit – rendering and data consistency regressions."""
 
 
-from vibesensor.report.mapping import finding_strength_db as _finding_strength_values
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.mapping import peak_classification_text as _peak_classification_text
 from vibesensor.report_i18n import tr
@@ -284,27 +283,3 @@ class TestPeaksTableFixedHeight:
         data = map_summary(summary)
         # Builder forwards up to 8 above-noise peaks
         assert len(data.peak_rows) == 8
-
-
-class TestFindingStrengthValuesWastedComputation:
-    """_finding_strength_values always extracts peak_amp from
-    amplitude_metric.value, but if evidence_metrics.vibration_strength_db
-    is present, it returns immediately without using peak_amp.
-    peak_amp is only used in the second fallback path.
-
-    Evidence: report_mapping_common.py.
-    Impact: minor inefficiency; peak_amp is computed even when not needed.
-    """
-
-    def test_early_return_with_db_present(self) -> None:
-        finding = {
-            "amplitude_metric": {"value": 0.123},
-            "evidence_metrics": {"vibration_strength_db": 25.0},
-        }
-        result = _finding_strength_values(finding)
-        # Returns 25.0 immediately without using peak_amp
-        assert result == 25.0
-
-    def test_returns_none_when_no_metrics(self) -> None:
-        result = _finding_strength_values({})
-        assert result is None

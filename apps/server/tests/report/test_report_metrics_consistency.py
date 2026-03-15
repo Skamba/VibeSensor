@@ -34,7 +34,6 @@ from test_support.sample_scenarios import (
     make_transient_samples,
 )
 
-from vibesensor.analysis.strength_labels import certainty_tier
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.report_data import ReportTemplateData
@@ -221,38 +220,23 @@ def _assert_unit_consistency(rd: ReportTemplateData) -> None:
 
 
 def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> None:
-    """Assert the tier stored in report matches what certainty_tier() would return."""
-    top_causes = summary.get("top_causes", [])
-    findings = [f for f in summary.get("findings", []) if isinstance(f, dict)]
-    findings_non_ref = [
-        f for f in findings if not str(f.get("finding_id") or "").strip().upper().startswith("REF_")
-    ]
-    top_causes_non_ref = [
-        c
-        for c in top_causes
-        if not str(c.get("finding_id") or "").strip().upper().startswith("REF_")
-    ]
-    top_causes_actionable = [
-        c
-        for c in top_causes_non_ref
-        if str(c.get("suspected_source") or "").strip().lower()
-        not in {"unknown_resonance", "unknown"}
-        or str(c.get("strongest_location") or "").strip().lower()
-        not in {"", "unknown", "not available", "n/a"}
-    ]
-    effective_causes = top_causes_actionable or findings_non_ref or top_causes_non_ref or top_causes
+    """Assert the tier stored in report matches certainty_tier() layout gate."""
+    from vibesensor.analysis.strength_labels import certainty_tier, strength_label
+    from vibesensor.boundaries.diagnostic_case import test_run_from_summary
 
-    if effective_causes:
-        primary = effective_causes[0]
-        conf_val = primary.get("confidence") or primary.get("confidence") or 0.0
-        conf = float(conf_val)
+    test_run = test_run_from_summary(summary)
+    effective = test_run.effective_top_causes()
+    domain_primary = effective[0] if effective else test_run.primary_finding
+    if domain_primary:
+        confidence = domain_primary.effective_confidence
+        strength_db = test_run.top_strength_db()
+        strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
+        expected_tier = certainty_tier(confidence, strength_band_key=strength_band_key)
     else:
-        conf = 0.0
+        expected_tier = "A"  # no findings → lowest tier
 
-    expected_tier = certainty_tier(conf)
     assert rd.certainty_tier_key == expected_tier, (
-        f"Tier mismatch: report has '{rd.certainty_tier_key}', "
-        f"expected '{expected_tier}' for confidence {conf:.3f}"
+        f"Tier mismatch: report has '{rd.certainty_tier_key}', expected '{expected_tier}'"
     )
 
 
