@@ -1192,26 +1192,6 @@ def test_post_analysis_does_not_construct_raw_suitability_dicts() -> None:
     )
 
 
-def test_exports_project_through_domain() -> None:
-    """``build_run_details_json`` must call ``project_summary_through_domain``.
-
-    Prevents regression: export payloads must go through domain
-    projection before output.
-    """
-    from tests._paths import SERVER_ROOT
-
-    exports_path = SERVER_ROOT / "vibesensor" / "history_services" / "exports.py"
-    source = exports_path.read_text()
-    assert "project_summary_through_domain" in source, (
-        "history_services/exports.py must call project_summary_through_domain "
-        "before outputting run details"
-    )
-    # Verify it's actually imported (not just in a comment)
-    assert "from" in source and "project_summary_through_domain" in source, (
-        "project_summary_through_domain must be imported, not just mentioned"
-    )
-
-
 def test_f_order_finding_id_normalization() -> None:
     """``finalize_findings`` normalises arbitrary IDs to sequential ``F###``.
 

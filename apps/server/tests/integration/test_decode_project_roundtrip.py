@@ -19,7 +19,14 @@ from test_support import (
 )
 
 from vibesensor.analysis import RunAnalysis
-from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
+from vibesensor.boundaries._helpers import _has_structured_step_content
+from vibesensor.boundaries.diagnostic_case import (
+    test_run_from_summary as _test_run_from_summary,
+)
+from vibesensor.boundaries.finding import finding_payload_from_domain
+from vibesensor.boundaries.run_suitability import run_suitability_payload
+from vibesensor.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.history_db import HistoryDB
 from vibesensor.history_services.exports import build_run_details_json
@@ -61,6 +68,28 @@ def _persist_and_reload(tmp_path: Path, summary: dict[str, Any]) -> dict[str, An
         db.close()
     assert run is not None
     return run
+
+
+def _reproject(analysis_blob: dict[str, Any]) -> dict[str, Any]:
+    """Re-serialize domain-owned fields through TestRun reconstruction."""
+    test_run = _test_run_from_summary(analysis_blob)
+    projected: dict[str, Any] = dict(analysis_blob)
+    projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
+    projected["top_causes"] = [
+        finding_payload_from_domain(f) for f in test_run.effective_top_causes()
+    ]
+    primary = test_run.primary_finding
+    origin_fb = analysis_blob.get("most_likely_origin")
+    fb_payload = dict(origin_fb) if isinstance(origin_fb, dict) else {}
+    projected["most_likely_origin"] = (
+        origin_payload_from_finding(primary, fb_payload)
+        if primary is not None
+        else fb_payload
+    )
+    if not _has_structured_step_content(analysis_blob.get("test_plan")):
+        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
+    projected["run_suitability"] = run_suitability_payload(test_run.suitability)
+    return projected
 
 
 def _extract_domain_meaning(summary: dict[str, Any]) -> dict[str, Any]:
@@ -113,14 +142,14 @@ def test_analysis_produces_wired_domain_aggregates() -> None:
 
 
 def test_persist_reload_project_preserves_domain_meaning(tmp_path: Path) -> None:
-    """Summary persisted to DB and reloaded through project_summary_through_domain
+    """Summary persisted to DB and reloaded through domain reconstruction
     must carry the same domain meaning as the direct analysis output."""
     _analysis, direct_summary = _run_analysis()
     run = _persist_and_reload(tmp_path, direct_summary)
 
     analysis_blob = run.get("analysis")
     assert isinstance(analysis_blob, dict)
-    reconstructed = project_summary_through_domain(analysis_blob)
+    reconstructed = _reproject(analysis_blob)
 
     direct_meaning = _extract_domain_meaning(direct_summary)
     reloaded_meaning = _extract_domain_meaning(reconstructed)
@@ -149,7 +178,7 @@ def test_report_from_reconstructed_aggregate(tmp_path: Path) -> None:
 
     analysis_blob = run.get("analysis")
     assert isinstance(analysis_blob, dict)
-    reconstructed = project_summary_through_domain(analysis_blob)
+    reconstructed = _reproject(analysis_blob)
 
     direct_report = map_summary(direct_summary)
     reloaded_report = map_summary(reconstructed)
@@ -202,7 +231,7 @@ def test_cross_boundary_domain_meaning_consistency(tmp_path: Path) -> None:
 
     analysis_blob = run.get("analysis")
     assert isinstance(analysis_blob, dict)
-    reconstructed = project_summary_through_domain(analysis_blob)
+    reconstructed = _reproject(analysis_blob)
 
     # 1. Summary-level consistency
     direct_meaning = _extract_domain_meaning(direct_summary)

@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Never, cast
 
 from ..backend_types import HistoryRunListEntryPayload, HistoryRunPayload
-from ..boundaries.diagnostic_case import project_summary_through_domain
+from ..boundaries._helpers import _has_structured_step_content
+from ..boundaries.diagnostic_case import test_run_from_summary
+from ..boundaries.finding import finding_payload_from_domain
+from ..boundaries.run_suitability import run_suitability_payload
+from ..boundaries.test_steps import step_payloads_from_plan
+from ..boundaries.vibration_origin import origin_payload_from_finding
 from ..exceptions import AnalysisNotReadyError, RunNotFoundError
 from ..history_db import RunStatus
 from ..json_types import JsonObject, is_json_object
@@ -42,12 +48,35 @@ class HistoryRunService:
         run = await async_require_run(self._history_db, run_id)
         analysis = run.get("analysis")
         if is_json_object(analysis):
-            projected_analysis = project_summary_through_domain(analysis)
-            updated_run: HistoryRunPayload = {
-                **run,
-                "analysis": strip_internal_fields(projected_analysis),
-            }
-            return updated_run
+            if isinstance(analysis.get("findings"), list) or isinstance(
+                analysis.get("top_causes"), list
+            ):
+                test_run = test_run_from_summary(analysis)
+                projected: JsonObject = dict(analysis)
+                projected["findings"] = [
+                    finding_payload_from_domain(f) for f in test_run.findings
+                ]
+                projected["top_causes"] = [
+                    finding_payload_from_domain(f)
+                    for f in test_run.effective_top_causes()
+                ]
+                primary = test_run.primary_finding
+                origin_fb = analysis.get("most_likely_origin")
+                fb_payload = dict(origin_fb) if isinstance(origin_fb, Mapping) else {}
+                projected["most_likely_origin"] = (
+                    origin_payload_from_finding(primary, fb_payload)
+                    if primary is not None
+                    else fb_payload
+                )
+                if not _has_structured_step_content(analysis.get("test_plan")):
+                    projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
+                projected["run_suitability"] = run_suitability_payload(test_run.suitability)
+                updated_run: HistoryRunPayload = {
+                    **run,
+                    "analysis": strip_internal_fields(projected),
+                }
+                return updated_run
+            return {**run, "analysis": strip_internal_fields(dict(analysis))}
         return run
 
     async def get_insights(
@@ -60,7 +89,29 @@ class HistoryRunService:
         if run["status"] == RunStatus.ANALYZING:
             return None
 
-        analysis = project_summary_through_domain(require_analysis_ready(run))
+        raw_analysis = require_analysis_ready(run)
+        analysis: JsonObject = dict(raw_analysis)
+        if isinstance(raw_analysis.get("findings"), list) or isinstance(
+            raw_analysis.get("top_causes"), list
+        ):
+            test_run = test_run_from_summary(raw_analysis)
+            analysis["findings"] = [
+                finding_payload_from_domain(f) for f in test_run.findings
+            ]
+            analysis["top_causes"] = [
+                finding_payload_from_domain(f) for f in test_run.effective_top_causes()
+            ]
+            primary = test_run.primary_finding
+            origin_fb = raw_analysis.get("most_likely_origin")
+            fb_payload = dict(origin_fb) if isinstance(origin_fb, Mapping) else {}
+            analysis["most_likely_origin"] = (
+                origin_payload_from_finding(primary, fb_payload)
+                if primary is not None
+                else fb_payload
+            )
+            if not _has_structured_step_content(raw_analysis.get("test_plan")):
+                analysis["test_plan"] = step_payloads_from_plan(test_run.test_plan)
+            analysis["run_suitability"] = run_suitability_payload(test_run.suitability)
         current_active_car_snapshot = (
             self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )

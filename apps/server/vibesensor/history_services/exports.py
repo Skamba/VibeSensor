@@ -9,12 +9,17 @@ import json
 import logging
 import tempfile
 import zipfile
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeGuard
 
 from ..backend_types import HistoryRunPayload
-from ..boundaries.diagnostic_case import project_summary_through_domain
+from ..boundaries._helpers import _has_structured_step_content
+from ..boundaries.diagnostic_case import test_run_from_summary
+from ..boundaries.finding import finding_payload_from_domain
+from ..boundaries.run_suitability import run_suitability_payload
+from ..boundaries.test_steps import step_payloads_from_plan
+from ..boundaries.vibration_origin import origin_payload_from_finding
 from ..json_types import JsonObject, JsonValue, is_json_object
 from ..json_utils import sanitize_for_json
 from .helpers import async_require_run, safe_filename, strip_internal_fields
@@ -169,7 +174,31 @@ def build_run_details_json(
     run_details["sample_count"] = sample_count
     analysis = run_details.get("analysis")
     if is_json_object(analysis):
-        run_details["analysis"] = strip_internal_fields(project_summary_through_domain(analysis))
+        has_findings = isinstance(analysis.get("findings"), list)
+        has_top_causes = isinstance(analysis.get("top_causes"), list)
+        if has_findings or has_top_causes:
+            test_run = test_run_from_summary(analysis)
+            projected: JsonObject = dict(analysis)
+            projected["findings"] = [
+                finding_payload_from_domain(f) for f in test_run.findings
+            ]
+            projected["top_causes"] = [
+                finding_payload_from_domain(f) for f in test_run.effective_top_causes()
+            ]
+            primary = test_run.primary_finding
+            origin_fb = analysis.get("most_likely_origin")
+            fb_payload = dict(origin_fb) if isinstance(origin_fb, Mapping) else {}
+            projected["most_likely_origin"] = (
+                origin_payload_from_finding(primary, fb_payload)
+                if primary is not None
+                else fb_payload
+            )
+            if not _has_structured_step_content(analysis.get("test_plan")):
+                projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
+            projected["run_suitability"] = run_suitability_payload(test_run.suitability)
+            run_details["analysis"] = strip_internal_fields(projected)
+        else:
+            run_details["analysis"] = strip_internal_fields(dict(analysis))
     sanitized, had_non_finite = sanitize_for_json(run_details)
     if had_non_finite:
         LOGGER.warning("Export run %s: sanitized non-finite floats in analysis data", run_id)

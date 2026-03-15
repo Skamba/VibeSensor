@@ -11,12 +11,17 @@ import asyncio
 import json
 import logging
 from collections import OrderedDict
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 from ..backend_types import CarConfigPayload, HistoryRunPayload
-from ..boundaries.diagnostic_case import project_summary_through_domain, test_run_from_summary
+from ..boundaries._helpers import _has_structured_step_content
+from ..boundaries.diagnostic_case import test_run_from_summary
+from ..boundaries.finding import finding_payload_from_domain
+from ..boundaries.run_suitability import run_suitability_payload
+from ..boundaries.test_steps import step_payloads_from_plan
+from ..boundaries.vibration_origin import origin_payload_from_finding
 from ..exceptions import AnalysisNotReadyError, ProcessingError
 from ..json_types import JsonObject, is_json_object
 from ..report.mapping import map_summary
@@ -106,9 +111,25 @@ class HistoryReportService:
         )
         # Build TestRun once — used for both dict canonicalization and report mapping
         domain_test_run = test_run_from_summary(analysis_summary)
-        analysis_summary = project_summary_through_domain(
-            analysis_summary, test_run=domain_test_run,
+        projected: JsonObject = dict(analysis_summary)
+        projected["findings"] = [
+            finding_payload_from_domain(f) for f in domain_test_run.findings
+        ]
+        projected["top_causes"] = [
+            finding_payload_from_domain(f) for f in domain_test_run.effective_top_causes()
+        ]
+        primary = domain_test_run.primary_finding
+        origin_fb = analysis_summary.get("most_likely_origin")
+        fb_payload = dict(origin_fb) if isinstance(origin_fb, Mapping) else {}
+        projected["most_likely_origin"] = (
+            origin_payload_from_finding(primary, fb_payload)
+            if primary is not None
+            else fb_payload
         )
+        if not _has_structured_step_content(analysis_summary.get("test_plan")):
+            projected["test_plan"] = step_payloads_from_plan(domain_test_run.test_plan)
+        projected["run_suitability"] = run_suitability_payload(domain_test_run.suitability)
+        analysis_summary = projected
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,

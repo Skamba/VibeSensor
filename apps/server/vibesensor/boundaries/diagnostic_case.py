@@ -23,12 +23,10 @@ from ..domain.speed_source import SpeedSource
 from ..domain.symptom import Symptom
 from ..domain.test_plan import TestPlan
 from ..domain.test_run import TestRun
-from ._helpers import _as_float, _has_structured_step_content
-from .finding import finding_from_payload, finding_payload_from_domain
-from .run_suitability import run_suitability_from_payload, run_suitability_payload
+from ._helpers import _as_float
+from .finding import finding_from_payload
+from .run_suitability import run_suitability_from_payload
 from .speed_profile import speed_profile_from_stats
-from .test_steps import step_payloads_from_plan
-from .vibration_origin import origin_payload_from_finding
 
 
 def _actions_from_steps(steps: object) -> tuple[RecommendedAction, ...]:
@@ -116,7 +114,10 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     if top_causes:
         merged = list(findings)
         for tc in top_causes:
-            if not any(tc == f or (tc.finding_id and tc.finding_id == f.finding_id) for f in merged):
+            if not any(
+                tc == f or (tc.finding_id and tc.finding_id == f.finding_id)
+                for f in merged
+            ):
                 merged.append(tc)
         findings = tuple(merged)
     actions = _actions_from_steps(summary.get("test_plan"))
@@ -237,46 +238,4 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
     return case.add_run(test_run)
 
 
-def project_summary_through_domain(
-    summary: Mapping[str, object],
-    *,
-    test_run: TestRun | None = None,
-) -> dict[str, object]:
-    """Return *summary* with domain-owned fields rebuilt from aggregates.
 
-    When *test_run* is supplied, reconstruction is skipped and the
-    provided aggregate is used directly.
-    """
-    projected = dict(summary)
-    raw_findings = summary.get("findings")
-    raw_top_causes = summary.get("top_causes")
-    if not isinstance(raw_findings, list) and not isinstance(raw_top_causes, list):
-        return projected
-
-    if test_run is None:
-        test_run = test_run_from_summary(summary)
-
-    projected["findings"] = [
-        finding_payload_from_domain(finding)
-        for finding in test_run.findings
-    ]
-    projected["top_causes"] = [
-        finding_payload_from_domain(finding)
-        for finding in test_run.effective_top_causes()
-    ]
-    _origin_fallback = summary.get("most_likely_origin")
-    if not isinstance(_origin_fallback, Mapping):
-        _origin_fallback_payload: dict[str, object] = {}
-    else:
-        _origin_fallback_payload = dict(_origin_fallback)
-    _primary = test_run.primary_finding
-    projected["most_likely_origin"] = (
-        origin_payload_from_finding(_primary, _origin_fallback_payload)
-        if _primary is not None
-        else _origin_fallback_payload
-    )
-    if not _has_structured_step_content(summary.get("test_plan")):
-        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
-    projected["run_suitability"] = run_suitability_payload(test_run.suitability)
-
-    return projected

@@ -56,9 +56,10 @@
   `docs/domain-model.md` for the full relationship map and modeling rules.
 - `boundaries/`: explicit ingress/egress decoders and serializers between
   domain aggregates (`DiagnosticCase`, `TestRun`) and
-  summary/persistence/report payload shapes, including the shared
-  `diagnostic_case.py::project_summary_through_domain()` projection helper
-  used by report/history/export/post-analysis boundaries.
+  summary/persistence/report payload shapes; `diagnostic_case.py::test_run_from_summary()`
+  reconstructs domain aggregates, and individual boundary serializers
+  (`finding_payload_from_domain`, `origin_payload_from_finding`, etc.) handle
+  re-serialization at history/export/report call sites.
 - `metrics_log/`: recording pipeline package; `logger.py` owns the `RunRecorder` class (formerly `MetricsLogger`) which directly manages session state and persistence coordination (no private helper classes), enriching status/health payloads with sample counts and analysis results; `post_analysis.py` owns the background analysis queue with outcome tracking; `sample_builder.py` owns pure sample-building functions.
 - `history_db/`: SQLite-backed history and settings persistence (3 files: `__init__.py` with `HistoryDB` class consolidating connection management, settings KV, client names, and all run reads/writes; `_schema.py` with DDL and `ANALYSIS_SCHEMA_VERSION`; `_samples.py` for v2 sample serialization). `RunStatus` and state-transition logic live in `domain/run_status.py`. Incompatible older schemas raise a clear error directing the user to delete the DB file.
 - `history_services/`: focused history service layer (run query/delete,

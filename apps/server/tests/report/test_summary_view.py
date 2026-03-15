@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from vibesensor.analysis._types import AnalysisSummary
-from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
+from vibesensor.boundaries.diagnostic_case import (
+    test_run_from_summary as _test_run_from_summary,
+)
 from vibesensor.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.domain import (
     Finding,
     LocationHotspot,
@@ -196,8 +199,10 @@ class TestSummaryHelpers:
             ],
             most_likely_origin={},
         )
-        projected = project_summary_through_domain(summary)
-        origin = projected["most_likely_origin"]
+        test_run = _test_run_from_summary(summary)
+        primary = test_run.primary_finding
+        assert primary is not None
+        origin = origin_payload_from_finding(primary, {})
         assert origin["location"] == "Front Left / Front Right"
         assert origin["alternative_locations"] == ["front_right"]
         assert origin["dominant_phase"] == "acceleration"
@@ -279,9 +284,10 @@ class TestSummaryHelpers:
             ],
         )
 
-        projected = project_summary_through_domain(summary)
+        test_run = _test_run_from_summary(summary)
+        projected_plan = step_payloads_from_plan(test_run.test_plan)
 
-        assert projected["test_plan"] == [
+        assert projected_plan == [
             {
                 "action_id": "engine_mounts_and_accessories",
                 "what": "ACTION_ENGINE_MOUNTS_WHAT",
