@@ -83,7 +83,6 @@ _EXPECTED_PUBLIC_SYMBOLS = [
     "summarize_run_data",
     "summarize_log",
     "build_findings_for_samples",
-    "confidence_label",
     "DrivingPhase",
     "classify_sample_phase",
 ]

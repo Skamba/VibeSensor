@@ -9,7 +9,6 @@ Core selection and ranking logic operates on domain ``Finding`` objects.
 
 from __future__ import annotations
 
-import math
 from collections import defaultdict
 from dataclasses import replace as _dc_replace
 
@@ -61,24 +60,8 @@ def group_findings_by_source(
 
 
 # ---------------------------------------------------------------------------
-# Confidence and top-cause selection
+# Top-cause selection
 # ---------------------------------------------------------------------------
-
-
-def confidence_label(
-    conf_0_to_1: float | None,
-    *,
-    strength_band_key: str | None = None,
-) -> tuple[str, str, str]:
-    """Return ``(label_key, tone, pct_text)`` for a 0–1 confidence value.
-
-    Delegates to :meth:`Finding.classify_confidence` so the threshold
-    rules have a single source of truth in the domain model.
-    """
-    raw = float(conf_0_to_1) if conf_0_to_1 is not None else 0.0
-    # Clamp to valid range; Finding validates [0, 1].
-    clamped = max(0.0, min(1.0, raw)) if math.isfinite(raw) else 0.0
-    return Finding.classify_confidence(clamped, strength_band_key=strength_band_key)
 
 
 def select_top_causes(

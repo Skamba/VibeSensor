@@ -295,16 +295,14 @@ def test_finding_confidence_negligible_strength_downgrade() -> None:
     assert tone == "warn"
 
 
-def test_confidence_label_delegates_to_domain() -> None:
-    """top_cause_selection.confidence_label must agree with Finding.classify_confidence."""
-    from vibesensor.analysis.top_cause_selection import confidence_label
+def test_classify_confidence_is_domain_owned() -> None:
+    """Finding.classify_confidence is the canonical source of truth for confidence presentation."""
     from vibesensor.domain import Finding
 
-    for conf in (0.80, 0.55, 0.20, 0.0, None):
-        clamped = float(conf) if conf is not None else 0.0
-        expected = Finding.classify_confidence(clamped)
-        actual = confidence_label(conf)
-        assert actual == expected, f"Mismatch for confidence={conf}: {actual} != {expected}"
+    for conf in (0.80, 0.55, 0.20, 0.0):
+        result = Finding.classify_confidence(conf)
+        assert len(result) == 3
+        assert all(isinstance(v, str) for v in result)
 
 
 # ── TestRun owns primary source/location queries ─────────────────────────

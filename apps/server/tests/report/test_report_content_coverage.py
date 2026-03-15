@@ -17,10 +17,11 @@ from test_support.report_helpers import (
     report_sample as _base_sample,
 )
 
-from vibesensor.analysis import confidence_label, summarize_log
+from vibesensor.analysis import summarize_log
 from vibesensor.analysis.top_cause_selection import select_top_causes
 from vibesensor.boundaries.finding import finding_from_payload
 from vibesensor.constants import KMH_TO_MPS
+from vibesensor.domain import Finding
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
@@ -246,7 +247,7 @@ def test_select_top_causes_no_phase_evidence_still_works() -> None:
     ],
 )
 def test_confidence_label_boundaries(value: float, expected_key: str, expected_tone: str) -> None:
-    label_key, tone, pct_text = confidence_label(value)
+    label_key, tone, pct_text = Finding.classify_confidence(value)
     assert label_key == expected_key
     assert tone == expected_tone
     assert pct_text == f"{value * 100:.0f}%"
@@ -254,7 +255,7 @@ def test_confidence_label_boundaries(value: float, expected_key: str, expected_t
 
 def test_confidence_label_negligible_strength_caps_high_to_medium() -> None:
     """High confidence + negligible strength → CONFIDENCE_MEDIUM, not CONFIDENCE_HIGH."""
-    label_key, tone, _ = confidence_label(0.80, strength_band_key="negligible")
+    label_key, tone, _ = Finding.classify_confidence(0.80, strength_band_key="negligible")
     assert label_key == "CONFIDENCE_MEDIUM"
     assert tone == "warn"
 
@@ -271,14 +272,14 @@ def test_confidence_label_negligible_does_not_affect_below_high(
     expected_key: str,
 ) -> None:
     """Negligible strength does not alter labels already below high."""
-    label_key, _, _ = confidence_label(value, strength_band_key="negligible")
+    label_key, _, _ = Finding.classify_confidence(value, strength_band_key="negligible")
     assert label_key == expected_key
 
 
 def test_confidence_label_non_negligible_allows_high() -> None:
     """Non-negligible (or absent) strength_band_key must not prevent CONFIDENCE_HIGH."""
     for band in ("light", "moderate", "strong", "very_strong", None):
-        label_key, tone, _ = confidence_label(0.80, strength_band_key=band)
+        label_key, tone, _ = Finding.classify_confidence(0.80, strength_band_key=band)
         assert label_key == "CONFIDENCE_HIGH", f"Unexpected cap for strength_band_key={band!r}"
         assert tone == "success"
 
