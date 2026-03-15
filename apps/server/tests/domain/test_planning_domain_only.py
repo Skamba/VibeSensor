@@ -23,11 +23,11 @@ def _make_finding(
 class TestPlanTestActionsDomainOnly:
     def test_returns_test_plan(self) -> None:
         findings = [_make_finding()]
-        result = plan_test_actions(findings, hypotheses=[], lang="en")
+        result = plan_test_actions(findings)
         assert isinstance(result, TestPlan)
 
     def test_empty_findings_gives_fallback(self) -> None:
-        result = plan_test_actions([], hypotheses=[], lang="en")
+        result = plan_test_actions([])
         assert result.has_actions
 
     def test_multiple_sources_deduplicated(self) -> None:
@@ -36,7 +36,7 @@ class TestPlanTestActionsDomainOnly:
             _make_finding("F2", "wheel/tire"),
             _make_finding("F3", "engine"),
         ]
-        result = plan_test_actions(findings, hypotheses=[], lang="en")
+        result = plan_test_actions(findings)
         assert result.has_actions
         action_ids = [a.action_id for a in result.actions]
         assert len(action_ids) == len(set(action_ids)), "actions must be deduplicated"
@@ -46,7 +46,7 @@ class TestPlanTestActionsDomainOnly:
             _make_finding("F1", "engine"),
             _make_finding("F2", "wheel/tire"),
         ]
-        result = plan_test_actions(findings, hypotheses=[], lang="en")
+        result = plan_test_actions(findings)
         priorities = [a.priority for a in result.actions]
         assert priorities == sorted(priorities), "actions must be ordered least-invasive-first"
 

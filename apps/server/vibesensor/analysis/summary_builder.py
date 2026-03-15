@@ -1169,11 +1169,7 @@ class RunAnalysis:
         hypotheses = evaluate_hypotheses(signatures)
         configuration_snapshot = ConfigurationSnapshot.from_metadata(self._metadata)
         driving_segments = build_domain_driving_segments(self._prepared.phase_segments)
-        domain_test_plan = plan_test_actions(
-            domain_findings,
-            hypotheses,
-            lang=self._language,
-        )
+        domain_test_plan = plan_test_actions(domain_findings)
         summary_test_plan = step_payloads_from_plan(domain_test_plan)
         self._test_run = TestRun(
             run=Run(run_id=self._prepared.run_id, analysis_settings={}),
