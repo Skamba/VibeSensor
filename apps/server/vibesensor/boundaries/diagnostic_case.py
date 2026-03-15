@@ -106,30 +106,19 @@ def _require_authoritative_case_id(summary: Mapping[str, object]) -> str:
     )
 
 
-def _ensure_top_causes_in_findings(
-    findings: tuple[Finding, ...],
-    top_causes: tuple[Finding, ...],
-) -> tuple[Finding, ...]:
-    """Merge unmatched top_causes into findings so the domain invariant holds."""
-    if not top_causes:
-        return findings
-    merged = list(findings)
-    for tc in top_causes:
-        if any(tc == f or (tc.finding_id and tc.finding_id == f.finding_id) for f in merged):
-            continue
-        merged.append(tc)
-    return tuple(merged)
-
-
 def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     metadata = summary.get("metadata")
     meta = metadata if isinstance(metadata, Mapping) else {}
     findings = _enrich_findings(summary.get("findings"))
     top_causes = _enrich_findings(summary.get("top_causes"))
-    # Domain invariant: top_causes ⊆ findings.  Payload data may have
-    # top_causes that don't appear in findings; merge them so the
-    # invariant holds without discarding data.
-    findings = _ensure_top_causes_in_findings(findings, top_causes)
+    # Historical payload data may have top_causes not present in findings.
+    # Merge any unmatched into findings so the domain invariant holds.
+    if top_causes:
+        merged = list(findings)
+        for tc in top_causes:
+            if not any(tc == f or (tc.finding_id and tc.finding_id == f.finding_id) for f in merged):
+                merged.append(tc)
+        findings = tuple(merged)
     actions = _actions_from_steps(summary.get("test_plan"))
     speed_stats = summary.get("speed_stats")
     phase_info = summary.get("phase_info")

@@ -705,7 +705,7 @@ def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
 
 def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     from tests.test_support.findings import make_finding_payload
-    from vibesensor.boundaries import diagnostic_case_from_summary
+    from vibesensor.boundaries.diagnostic_case import diagnostic_case_from_summary
 
     summary = {
         "case_id": "summary-case-guard-id",
