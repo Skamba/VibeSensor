@@ -1283,3 +1283,102 @@ def test_fallback_payload_functions_removed() -> None:
 
     assert not hasattr(mapping, "top_strength_values")
     assert not hasattr(mapping, "has_relevant_reference_gap")
+
+
+# ── TODO-20: Layer import guardrails ─────────────────────────────────────
+
+
+def test_domain_does_not_import_outer_packages() -> None:
+    """domain/ must not import from boundaries/, report/, routes/, etc.
+
+    Relative intra-package imports (level >= 1) are excluded because
+    ``from .report import Report`` refers to ``domain/report.py``, not the
+    outer ``vibesensor/report/`` package.
+    """
+    import ast
+    from pathlib import Path
+
+    domain_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "domain"
+    forbidden = {
+        "boundaries",
+        "report",
+        "routes",
+        "history",
+        "history_services",
+        "history_db",
+        "runtime",
+        "metrics_log",
+    }
+    violations: list[str] = []
+    for py in sorted(domain_dir.rglob("*.py")):
+        tree = ast.parse(py.read_text(), filename=str(py))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                # Skip relative imports — they resolve within domain/ itself
+                if node.level >= 1:
+                    continue
+                for part in forbidden:
+                    if part in node.module.split("."):
+                        violations.append(f"{py.name}: imports from {node.module}")
+    assert not violations, (
+        "domain/ must not import outer packages:\n" + "\n".join(violations)
+    )
+
+
+def test_boundaries_do_not_import_outer_layers() -> None:
+    """boundaries/ must not import from report/, routes/, history_services/,
+    history_db/, runtime/, or metrics_log/.
+
+    boundaries/ sits between domain/ and the rest of the application; it must
+    not depend on higher-level adapter packages.
+    """
+    import ast
+    from pathlib import Path
+
+    boundaries_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "boundaries"
+    forbidden = {
+        "report",
+        "routes",
+        "history",
+        "history_services",
+        "history_db",
+        "runtime",
+        "metrics_log",
+    }
+    violations: list[str] = []
+    for py in sorted(boundaries_dir.rglob("*.py")):
+        tree = ast.parse(py.read_text(), filename=str(py))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                if node.level >= 1:
+                    continue
+                for part in forbidden:
+                    if part in node.module.split("."):
+                        violations.append(f"{py.name}: imports from {node.module}")
+    assert not violations, (
+        "boundaries/ must not import outer layers:\n" + "\n".join(violations)
+    )
+
+
+def test_boundaries_do_not_import_analysis() -> None:
+    """boundaries/ must not import from analysis/.
+
+    Boundary modules decode/project between persistence payloads and domain
+    objects.  They must not reach into analysis internals.
+    """
+    import ast
+    from pathlib import Path
+
+    boundaries_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "boundaries"
+    violations: list[str] = []
+    for py in sorted(boundaries_dir.rglob("*.py")):
+        tree = ast.parse(py.read_text(), filename=str(py))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                if node.level >= 1:
+                    continue
+                if "analysis" in node.module.split("."):
+                    violations.append(f"{py.name}: imports from {node.module}")
+    assert not violations, (
+        "boundaries/ must not import analysis/:\n" + "\n".join(violations)
+    )
