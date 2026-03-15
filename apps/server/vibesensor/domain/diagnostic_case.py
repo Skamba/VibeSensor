@@ -213,8 +213,8 @@ class DiagnosticCase:
                 finding_sequences.setdefault(key, []).append(finding)
 
         kept_findings: dict[tuple[str, str | None], Finding] = {}
-        for key, sequence in finding_sequences.items():
-            kept_findings[key] = sequence[-1]
+        for key, finding_seq in finding_sequences.items():
+            kept_findings[key] = finding_seq[-1]
 
         # ── Actions: lowest priority wins (unchanged) ──
         actions: dict[str, RecommendedAction] = {

@@ -56,7 +56,7 @@ def _create_v8_database(
 ) -> None:
     conn = sqlite3.connect(str(db_path))
     conn.executescript(
-        f"""\
+        """\
 PRAGMA user_version = 8;
 
 CREATE TABLE runs (
@@ -197,7 +197,10 @@ def test_historydb_migrates_v8_database_backfills_case_id_from_analysis_summary(
     db_path = tmp_path / "history.db"
     _create_v8_database(
         db_path,
-        analysis_json='{"case_id": "case-from-summary", "findings": [], "top_causes": [], "warnings": []}',
+        analysis_json=(
+            '{"case_id": "case-from-summary", "findings": [],'
+            ' "top_causes": [], "warnings": []}'
+        ),
     )
 
     db = HistoryDB(db_path)
@@ -217,7 +220,10 @@ def test_historydb_migrated_v8_case_id_supports_forward_only_followup_attachment
     db_path = tmp_path / "history.db"
     _create_v8_database(
         db_path,
-        analysis_json='{"case_id": "case-from-summary", "findings": [], "top_causes": [], "warnings": []}',
+        analysis_json=(
+            '{"case_id": "case-from-summary", "findings": [],'
+            ' "top_causes": [], "warnings": []}'
+        ),
     )
 
     db = HistoryDB(db_path)

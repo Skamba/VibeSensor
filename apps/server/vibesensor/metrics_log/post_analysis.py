@@ -14,7 +14,7 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock, Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..runlog import bounded_sample
 
@@ -252,7 +252,7 @@ class PostAnalysisWorker:
                 file_name=run_id,
                 include_samples=False,
             ).summarize()
-            summary = result.summary
+            summary: dict[str, Any] = dict(result.summary)
             summary["case_id"] = result.diagnostic_case.case_id
             summary["analysis_metadata"] = {
                 "analyzed_sample_count": len(samples),
