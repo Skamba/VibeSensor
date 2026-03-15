@@ -13,7 +13,7 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from ..backend_types import CarConfigPayload, HistoryRunPayload
 from ..boundaries._helpers import _has_structured_step_content
@@ -149,10 +149,8 @@ class HistoryReportService:
         *,
         test_run: TestRun | None = None,
     ) -> bytes:
-        from ..analysis import AnalysisSummary
-
         mapped_summary = map_summary(
-            cast("AnalysisSummary", analysis_summary),
+            analysis_summary,
             test_run=test_run,
         )
         return build_report_pdf(mapped_summary)

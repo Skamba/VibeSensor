@@ -5,13 +5,13 @@ from __future__ import annotations
 import logging
 import os
 from collections import defaultdict
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from statistics import mean as _mean
+from typing import Any
 
 from .. import __version__
 from ..analysis._types import (
-    AnalysisSummary,
     IntensityRow,
     JsonValue,
     MetadataDict,
@@ -282,71 +282,71 @@ _EMPTY_ORIGIN: SuspectedVibrationOrigin = {
 }
 
 
-def summary_metadata(summary: AnalysisSummary) -> MetadataDict:
+def summary_metadata(summary: Mapping[str, Any]) -> MetadataDict:
     return summary.get("metadata") or {}
 
 
-def summary_report_date(summary: AnalysisSummary) -> str:
+def summary_report_date(summary: Mapping[str, Any]) -> str:
     return str(summary.get("report_date") or "")
 
 
-def summary_row_count(summary: AnalysisSummary) -> int:
+def summary_row_count(summary: Mapping[str, Any]) -> int:
     return int(_as_float(summary.get("rows")) or 0)
 
 
-def summary_record_length(summary: AnalysisSummary) -> str | None:
+def summary_record_length(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("record_length") or "") or None
 
 
-def summary_start_time_utc(summary: AnalysisSummary) -> str | None:
+def summary_start_time_utc(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("start_time_utc") or "").strip() or None
 
 
-def summary_end_time_utc(summary: AnalysisSummary) -> str | None:
+def summary_end_time_utc(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("end_time_utc") or "").strip() or None
 
 
-def summary_raw_sample_rate_hz(summary: AnalysisSummary) -> float | None:
+def summary_raw_sample_rate_hz(summary: Mapping[str, Any]) -> float | None:
     return _as_float(summary.get("raw_sample_rate_hz"))
 
 
-def summary_sensor_model(summary: AnalysisSummary) -> str | None:
+def summary_sensor_model(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("sensor_model") or "").strip() or None
 
 
-def summary_firmware_version(summary: AnalysisSummary) -> str | None:
+def summary_firmware_version(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("firmware_version") or "").strip() or None
 
 
-def summary_sensor_count_used(summary: AnalysisSummary) -> int:
+def summary_sensor_count_used(summary: Mapping[str, Any]) -> int:
     return int(_as_float(summary.get("sensor_count_used")) or 0)
 
 
-def summary_speed_stats(summary: AnalysisSummary) -> SpeedStats:
+def summary_speed_stats(summary: Mapping[str, Any]) -> SpeedStats:
     return summary.get("speed_stats") or _EMPTY_SPEED_STATS
 
 
-def summary_origin(summary: AnalysisSummary) -> SuspectedVibrationOrigin:
+def summary_origin(summary: Mapping[str, Any]) -> SuspectedVibrationOrigin:
     return summary.get("most_likely_origin") or _EMPTY_ORIGIN
 
 
-def summary_test_plan(summary: AnalysisSummary) -> list[TestStep]:
+def summary_test_plan(summary: Mapping[str, Any]) -> list[TestStep]:
     return [step for step in summary.get("test_plan", []) if isinstance(step, dict)]
 
 
-def summary_run_suitability(summary: AnalysisSummary) -> list[RunSuitabilityCheck]:
-    return [item for item in summary.get("run_suitability", []) if isinstance(item, dict)]
+def summary_run_suitability(summary: Mapping[str, Any]) -> list[RunSuitabilityCheck]:
+    return [item for item in summary.get("run_suitability", []) if isinstance(item, dict)]  # type: ignore[misc]
 
 
-def summary_warnings(summary: AnalysisSummary) -> list[object]:
+def summary_warnings(summary: Mapping[str, Any]) -> list[object]:
     return list(summary.get("warnings", []))
 
 
-def summary_sensor_intensity_by_location(summary: AnalysisSummary) -> list[IntensityRow]:
+def summary_sensor_intensity_by_location(summary: Mapping[str, Any]) -> list[IntensityRow]:
     return [row for row in summary.get("sensor_intensity_by_location", []) if isinstance(row, dict)]
 
 
-def summary_sensor_locations_active(summary: AnalysisSummary) -> list[str]:
+def summary_sensor_locations_active(summary: Mapping[str, Any]) -> list[str]:
     connected = summary.get("sensor_locations_connected_throughout", [])
     active = [str(loc) for loc in connected if str(loc).strip()]
     if not active:
@@ -354,7 +354,7 @@ def summary_sensor_locations_active(summary: AnalysisSummary) -> list[str]:
     return active
 
 
-def summary_sample_rate_hz_text(summary: AnalysisSummary) -> str | None:
+def summary_sample_rate_hz_text(summary: Mapping[str, Any]) -> str | None:
     rate = summary_raw_sample_rate_hz(summary)
     return f"{rate:g}" if rate is not None else None
 
@@ -380,7 +380,7 @@ def normalized_origin_location(origin: SuspectedVibrationOrigin) -> str:
 
 
 def build_peak_rows_from_plots(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     lang: str,
     tr: Callable,
@@ -395,7 +395,7 @@ def build_peak_rows_from_plots(
         for row in raw_peaks
         if ((_strength_db := _as_float(row.get("strength_db"))) is None or _strength_db > 0)
     ]
-    return [build_peak_row(row, lang=lang, tr=tr) for row in above_noise[:8]]
+    return [build_peak_row(row, lang=lang, tr=tr) for row in above_noise[:8]]  # type: ignore[arg-type]
 
 
 def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable) -> PeakRow:
@@ -490,7 +490,7 @@ def collect_location_intensity(sensor_intensity: list[dict]) -> dict[str, list[f
 
 
 def build_next_steps_from_summary(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     aggregate: TestRun | None,
     tier: str,
@@ -566,7 +566,7 @@ def _resolve_optional_step_value(
 
 
 def build_data_trust_from_summary(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     aggregate: TestRun | None,
     lang: str,
@@ -830,7 +830,7 @@ def build_version_marker() -> str:
 
 
 def prepare_report_mapping_context(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     test_run: TestRun | None = None,
 ) -> ReportMappingContext:
@@ -1023,7 +1023,7 @@ def build_report_from_summary(summary: dict[str, object]) -> Report:
 
 
 def map_summary(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     test_run: TestRun | None = None,
 ) -> ReportTemplateData:
@@ -1046,7 +1046,7 @@ def map_summary(
 
 
 def _build_report_template_data(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     report: Report,
     lang: str,

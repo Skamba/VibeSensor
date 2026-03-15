@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from vibesensor.analysis._types import AnalysisSummary
 from vibesensor.boundaries.diagnostic_case import (
     test_run_from_summary as _test_run_from_summary,
 )
@@ -41,7 +40,7 @@ from vibesensor.report.mapping import (
 )
 
 
-def _minimal_summary(**overrides: object) -> AnalysisSummary:
+def _minimal_summary(**overrides: object) -> dict[str, object]:
     """Build a minimal SummaryData dict with overrides."""
     base: dict = {
         "file_name": "test",

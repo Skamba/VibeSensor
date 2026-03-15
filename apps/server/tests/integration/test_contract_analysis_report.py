@@ -16,7 +16,7 @@ from test_support import (
     standard_metadata,
 )
 
-from vibesensor.analysis import AnalysisSummary, RunAnalysis, summarize_run_data
+from vibesensor.analysis import RunAnalysis, summarize_run_data
 from vibesensor.report.mapping import (
     filter_active_sensor_intensity,
     map_summary,
@@ -66,7 +66,7 @@ def _make_steady_speed_fault_dataset() -> tuple[dict, list[dict]]:
 def test_analysis_output_accepted_by_report_mapper():
     """summarize_run_data() output must be accepted by map_summary()."""
     meta, samples = _make_small_dataset()
-    summary: AnalysisSummary = summarize_run_data(meta, samples, lang="en")
+    summary = summarize_run_data(meta, samples, lang="en")
 
     report_data = map_summary(summary)
 
