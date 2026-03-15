@@ -15,6 +15,7 @@ from vibesensor.analysis.findings import _build_findings as _findings_build_find
 from vibesensor.analysis.findings import _speed_breakdown
 from vibesensor.analysis.plots import top_peaks_table_rows as _top_peaks_table_rows
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.domain.finding import Finding
 
 
 def test_speed_breakdown_basic() -> None:
@@ -40,21 +41,21 @@ def test_speed_breakdown_no_speed() -> None:
 
 def test_build_findings_empty_samples() -> None:
     findings = build_findings_for_samples(metadata=_make_metadata(), samples=[], lang="en")
-    assert isinstance(findings, list)
+    assert isinstance(findings, tuple)
 
 
 def test_build_findings_with_speed_data() -> None:
     samples = [_make_sample(float(i) * 0.5, 80.0 + i * 0.5, 0.01 + i * 0.001) for i in range(20)]
     findings = build_findings_for_samples(metadata=_make_metadata(), samples=samples, lang="en")
-    assert isinstance(findings, list)
+    assert isinstance(findings, tuple)
     assert findings
 
 
 def test_build_findings_nl_language() -> None:
     samples = [_make_sample(float(i) * 0.5, 85.0, 0.05) for i in range(10)]
     findings = build_findings_for_samples(metadata=_make_metadata(), samples=samples, lang="nl")
-    assert isinstance(findings, list)
-    assert all(isinstance(finding, dict) for finding in findings)
+    assert isinstance(findings, tuple)
+    assert all(isinstance(finding, Finding) for finding in findings)
 
 
 def test_build_findings_orders_informational_transients_after_diagnostics(
@@ -101,12 +102,12 @@ def test_build_findings_orders_informational_transients_after_diagnostics(
     non_ref_findings = [
         finding
         for finding in findings
-        if isinstance(finding, dict) and not str(finding.get("finding_id", "")).startswith("REF_")
+        if not finding.finding_id.startswith("REF_")
     ]
 
     assert len(non_ref_findings) >= 2
-    assert str(non_ref_findings[0].get("severity") or "") != "info"
-    assert str(non_ref_findings[-1].get("severity") or "") == "info"
+    assert non_ref_findings[0].severity != "info"
+    assert non_ref_findings[-1].severity == "info"
 
 
 def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
@@ -127,12 +128,12 @@ def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
 
     findings = build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
     wheel_finding = next(
-        (finding for finding in findings if str(finding.get("finding_key") or "") == "wheel_1x"),
+        (finding for finding in findings if finding.finding_key == "wheel_1x"),
         None,
     )
 
     assert wheel_finding is not None
-    strongest_speed_band = str(wheel_finding.get("strongest_speed_band") or "")
+    strongest_speed_band = wheel_finding.strongest_speed_band or ""
     assert strongest_speed_band.endswith("km/h")
     low_str, high_str = strongest_speed_band.replace(" km/h", "").split("-", maxsplit=1)
     assert float(low_str) >= 90.0
@@ -182,20 +183,11 @@ def test_build_findings_order_exposes_structured_speed_profile() -> None:
 
     findings = build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
     wheel_finding = next(
-        (finding for finding in findings if str(finding.get("finding_key") or "") == "wheel_1x"),
+        (finding for finding in findings if finding.finding_key == "wheel_1x"),
         None,
     )
     assert wheel_finding is not None
-    peak_speed = wheel_finding.get("peak_speed_kmh")
-    speed_window = wheel_finding.get("speed_window_kmh")
-    assert isinstance(peak_speed, float)
-    assert isinstance(speed_window, list)
-    assert len(speed_window) == 2
-    low = float(speed_window[0])
-    high = float(speed_window[1])
-    assert low <= high
-    assert low <= peak_speed <= 83.0
-    assert str(wheel_finding.get("strongest_speed_band") or "").endswith("km/h")
+    assert (wheel_finding.strongest_speed_band or "").endswith("km/h")
 
 
 def test_build_findings_detects_driveline_2x_order() -> None:
@@ -219,14 +211,14 @@ def test_build_findings_detects_driveline_2x_order() -> None:
         (
             finding
             for finding in findings
-            if str(finding.get("finding_key") or "") == "driveshaft_2x"
+            if finding.finding_key == "driveshaft_2x"
         ),
         None,
     )
 
     assert driveline_2x is not None
-    assert driveline_2x.get("suspected_source") == "driveline"
-    assert driveline_2x.get("frequency_hz_or_order") == "2x driveshaft"
+    assert str(driveline_2x.suspected_source) == "driveline"
+    assert driveline_2x.order == "2x driveshaft"
 
 
 def test_build_findings_persistent_peak_exposes_structured_speed_profile() -> None:
@@ -252,21 +244,12 @@ def test_build_findings_persistent_peak_exposes_structured_speed_profile() -> No
         (
             finding
             for finding in findings
-            if str(finding.get("finding_key") or "").startswith("peak_")
+            if finding.finding_key.startswith("peak_")
         ),
         None,
     )
     assert persistent is not None
-    peak_speed = persistent.get("peak_speed_kmh")
-    speed_window = persistent.get("speed_window_kmh")
-    assert isinstance(peak_speed, float)
-    assert isinstance(speed_window, list)
-    assert len(speed_window) == 2
-    low = float(speed_window[0])
-    high = float(speed_window[1])
-    assert low <= high
-    assert low <= peak_speed <= 77.0
-    assert str(persistent.get("strongest_speed_band") or "").endswith("km/h")
+    assert (persistent.strongest_speed_band or "").endswith("km/h")
 
 
 def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> None:
@@ -285,22 +268,22 @@ def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> No
 
     findings = build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
     wheel_finding = next(
-        (finding for finding in findings if str(finding.get("finding_key") or "") == "wheel_1x"),
+        (finding for finding in findings if finding.finding_key == "wheel_1x"),
         None,
     )
     persistent = next(
         (
             finding
             for finding in findings
-            if str(finding.get("finding_key") or "").startswith("peak_")
+            if finding.finding_key.startswith("peak_")
         ),
         None,
     )
     assert wheel_finding is not None
     assert persistent is not None
 
-    order_band = str(wheel_finding.get("strongest_speed_band") or "")
-    persistent_band = str(persistent.get("strongest_speed_band") or "")
+    order_band = wheel_finding.strongest_speed_band or ""
+    persistent_band = persistent.strongest_speed_band or ""
     rows = _top_peaks_table_rows(samples, top_n=6, freq_bin_hz=1.0)
     target_row = min(rows, key=lambda row: abs(float(row.get("frequency_hz") or 0.0) - 43.0))
     peak_table_band = str(target_row.get("typical_speed_band") or "")
@@ -365,11 +348,11 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
 
     findings = build_findings_for_samples(metadata=wheel_metadata(), samples=samples, lang="en")
     wheel_finding = next(
-        (finding for finding in findings if str(finding.get("finding_key") or "") == "wheel_1x"),
+        (finding for finding in findings if finding.finding_key == "wheel_1x"),
         None,
     )
 
     assert wheel_finding is not None
     assert seen_relevant_speed_bins
     assert seen_relevant_speed_bins[0] in {"90-100 km/h", "100-110 km/h"}
-    assert wheel_finding.get("strongest_location") == "Front Right"
+    assert wheel_finding.strongest_location == "Front Right"

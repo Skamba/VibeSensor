@@ -108,12 +108,11 @@ def test_finalize_findings_returns_domain_findings() -> None:
     from vibesensor.analysis.findings import finalize_findings
     from vibesensor.domain import Finding
 
-    payloads, domain_findings = finalize_findings(
+    domain_findings = finalize_findings(
         [
             {"finding_id": "F_ORDER", "confidence": 0.7, "suspected_source": "wheel/tire"},
         ]
     )
-    assert len(payloads) == 1
     assert len(domain_findings) == 1
     assert isinstance(domain_findings[0], Finding)
     assert domain_findings[0].finding_id == "F001"
@@ -126,11 +125,14 @@ def test_select_top_causes_returns_domain_findings() -> None:
     """``select_top_causes`` must return domain ``Finding`` objects."""
     from tests.test_support.findings import make_finding_payload
     from vibesensor.analysis.top_cause_selection import select_top_causes
+    from vibesensor.boundaries.finding import finding_from_payload
     from vibesensor.domain import Finding
 
-    findings = [make_finding_payload(confidence=0.80, suspected_source="wheel/tire")]
-    payloads, domain_findings = select_top_causes(findings)
-    assert len(payloads) == 1
+    findings = tuple(
+        finding_from_payload(f)
+        for f in [make_finding_payload(confidence=0.80, suspected_source="wheel/tire")]
+    )
+    domain_findings = select_top_causes(findings)
     assert len(domain_findings) == 1
     assert isinstance(domain_findings[0], Finding)
 
@@ -1234,7 +1236,7 @@ def test_f_order_finding_id_normalization() -> None:
     from vibesensor.analysis.findings import finalize_findings
     from vibesensor.domain import Finding
 
-    payloads, domain_findings = finalize_findings(
+    domain_findings = finalize_findings(
         [
             {"finding_id": "F_ORDER", "confidence": 0.7, "suspected_source": "wheel/tire"},
             {"finding_id": "F_PERSISTENT", "confidence": 0.4, "suspected_source": "engine"},
@@ -1246,7 +1248,7 @@ def test_f_order_finding_id_normalization() -> None:
     assert all(isinstance(f, Finding) for f in domain_findings)
 
     # Reference findings keep their original IDs
-    payloads_ref, domain_ref = finalize_findings(
+    domain_ref = finalize_findings(
         [
             {
                 "finding_id": "REF_SPEED",

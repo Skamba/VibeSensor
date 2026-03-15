@@ -370,7 +370,7 @@ class TestPhaseInfoInSummary:
             metadata=standard_metadata(),
             samples=build_phased_samples([(10, 0.0, 0.0), (10, 60.0, 60.0)]),
         )
-        assert isinstance(findings, list)
+        assert isinstance(findings, tuple)
 
 
 class TestSpeedStatsByPhase:

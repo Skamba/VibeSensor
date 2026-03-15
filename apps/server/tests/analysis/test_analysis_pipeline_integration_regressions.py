@@ -263,7 +263,7 @@ def test_build_findings_uses_shared_speed_prep() -> None:
     findings_standalone = build_findings_for_samples(metadata=meta, samples=samples, lang="en")
     summary = summarize_run_data(meta, samples, lang="en", include_samples=False)
 
-    standalone_ids = {f.get("finding_id") for f in findings_standalone}
+    standalone_ids = {f.finding_id for f in findings_standalone}
     summary_ids = {f.get("finding_id") for f in summary.get("findings", [])}
     assert standalone_ids == summary_ids
 

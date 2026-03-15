@@ -22,7 +22,7 @@ from .summary_builder import (
     summarize_log,
     summarize_run_data,
 )
-from .top_cause_selection import confidence_label, select_top_causes
+from .top_cause_selection import confidence_label
 
 __all__ = [
     "DrivingPhase",
@@ -35,7 +35,6 @@ __all__ = [
     "classify_sample_phase",
     "confidence_label",
     "i18n_ref",
-    "select_top_causes",
     "summarize_log",
     "summarize_run_data",
     "vehicle_orders_hz",

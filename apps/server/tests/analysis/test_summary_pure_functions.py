@@ -15,6 +15,7 @@ import pytest
 
 from tests.test_support.findings import make_finding_payload
 from vibesensor.analysis.top_cause_selection import confidence_label, select_top_causes
+from vibesensor.boundaries.finding import finding_from_payload
 from vibesensor.domain import Finding
 from vibesensor.report_i18n import normalize_lang
 
@@ -128,68 +129,70 @@ class TestNormalizeLangInSummary:
 class TestSelectTopCauses:
     """Direct unit tests for select_top_causes grouping and drop-off."""
 
+    @staticmethod
+    def _to_domain(*payloads: dict) -> tuple[Finding, ...]:  # type: ignore[type-arg]
+        return tuple(finding_from_payload(p) for p in payloads)
+
     def test_empty_findings_returns_empty(self) -> None:
-        payloads, domain_findings = select_top_causes([])
-        assert payloads == []
+        domain_findings = select_top_causes(())
         assert domain_findings == ()
 
     def test_below_min_confidence_findings_excluded(self) -> None:
         """Findings below ORDER_MIN_CONFIDENCE (0.25) must be filtered."""
-        findings = [make_finding_payload(suspected_source="wheel/tire", confidence=0.10)]
-        payloads, domain_findings = select_top_causes(findings)
-        assert payloads == []
+        findings = self._to_domain(
+            make_finding_payload(suspected_source="wheel/tire", confidence=0.10),
+        )
+        domain_findings = select_top_causes(findings)
         assert domain_findings == ()
 
     def test_info_severity_excluded(self) -> None:
         """Info-severity findings must not appear in top causes."""
-        findings = [
+        findings = self._to_domain(
             make_finding_payload(suspected_source="wheel/tire", confidence=0.90, severity="info"),
-        ]
-        payloads, _ = select_top_causes(findings)
-        assert payloads == []
+        )
+        domain_findings = select_top_causes(findings)
+        assert domain_findings == ()
 
     def test_ref_finding_excluded(self) -> None:
         """Findings whose ID starts with REF_ must be excluded."""
-        findings = [
+        findings = self._to_domain(
             make_finding_payload(
                 suspected_source="baseline",
                 confidence=0.95,
                 finding_id="REF_BASELINE",
             ),
-        ]
-        payloads, _ = select_top_causes(findings)
-        assert payloads == []
+        )
+        domain_findings = select_top_causes(findings)
+        assert domain_findings == ()
 
     def test_respects_max_causes_limit(self) -> None:
         """At most max_causes findings are returned."""
-        findings = [
+        findings = self._to_domain(
             make_finding_payload(suspected_source="wheel/tire", confidence=0.90),
             make_finding_payload(suspected_source="driveline", confidence=0.85),
             make_finding_payload(suspected_source="engine", confidence=0.80),
             make_finding_payload(suspected_source="body resonance", confidence=0.75),
-        ]
-        payloads, domain_findings = select_top_causes(findings, max_causes=2)
-        assert len(payloads) <= 2
+        )
+        domain_findings = select_top_causes(findings, max_causes=2)
         assert len(domain_findings) <= 2
 
     def test_best_per_source_group_selected(self) -> None:
         """Two findings for the same source → only the higher-confidence one."""
-        findings = [
+        findings = self._to_domain(
             make_finding_payload(suspected_source="wheel/tire", confidence=0.90),
             make_finding_payload(suspected_source="wheel/tire", confidence=0.60),
             make_finding_payload(suspected_source="engine", confidence=0.80),
-        ]
-        payloads, domain_findings = select_top_causes(findings, max_causes=3)
-        sources = [f.get("suspected_source") for f in payloads]
+        )
+        domain_findings = select_top_causes(findings, max_causes=3)
+        sources = [f.source_normalized for f in domain_findings]
         # "wheel/tire" should appear exactly once (best representative)
         assert sources.count("wheel/tire") == 1
-        # Domain findings correspond 1:1
-        assert len(domain_findings) == len(payloads)
 
-    def test_returns_list_of_dicts(self) -> None:
-        """Return value must be a list of dicts."""
-        findings = [make_finding_payload(suspected_source="wheel/tire", confidence=0.80)]
-        payloads, domain_findings = select_top_causes(findings)
-        assert isinstance(payloads, list)
-        assert all(isinstance(f, dict) for f in payloads)
+    def test_returns_domain_findings(self) -> None:
+        """Return value must be a tuple of Finding objects."""
+        findings = self._to_domain(
+            make_finding_payload(suspected_source="wheel/tire", confidence=0.80),
+        )
+        domain_findings = select_top_causes(findings)
+        assert isinstance(domain_findings, tuple)
         assert all(isinstance(d, Finding) for d in domain_findings)

@@ -70,18 +70,17 @@ class TestFinalizeFindings:
         diag_high = make_finding_payload(confidence=0.80, ranking_score=2.0)
         diag_low = make_finding_payload(confidence=0.30, ranking_score=1.0)
         info = make_info_finding(confidence=0.10)
-        ordered, domain_findings = finalize_findings([diag_low, info, ref, diag_high])
-        assert len(ordered) == 4
-        # Reference first
-        assert str(ordered[0]["finding_id"]).startswith("REF_")
-        # Then high-confidence diagnostic
-        assert ordered[1]["confidence"] == 0.80
-        # Then low-confidence diagnostic
-        assert ordered[2]["confidence"] == 0.30
-        # Then informational
-        assert ordered[3].get("severity") == "info"
-        # Domain findings match
+        domain_findings = finalize_findings([diag_low, info, ref, diag_high])
         assert len(domain_findings) == 4
+        # Reference first
+        assert domain_findings[0].is_reference
+        # Then high-confidence diagnostic
+        assert domain_findings[1].effective_confidence == 0.80
+        # Then low-confidence diagnostic
+        assert domain_findings[2].effective_confidence == 0.30
+        # Then informational
+        assert domain_findings[3].is_informational
+        # Domain findings match
         assert domain_findings[0].is_reference
         assert domain_findings[1].is_diagnostic
         assert domain_findings[2].is_diagnostic
@@ -92,20 +91,16 @@ class TestFinalizeFindings:
         d1 = make_finding_payload(confidence=0.80)
         d2 = make_finding_payload(confidence=0.40)
         info = make_info_finding()
-        ordered, domain_findings = finalize_findings([d2, info, ref, d1])
+        domain_findings = finalize_findings([d2, info, ref, d1])
         # Reference keeps its original ID
-        assert ordered[0]["finding_id"] == "REF_SPEED"
-        # Non-reference findings get sequential F### IDs
-        assert ordered[1]["finding_id"] == "F001"
-        assert ordered[2]["finding_id"] == "F002"
-        assert ordered[3]["finding_id"] == "F003"
-        # Domain findings have matching IDs
         assert domain_findings[0].finding_id == "REF_SPEED"
+        # Non-reference findings get sequential F### IDs
         assert domain_findings[1].finding_id == "F001"
+        assert domain_findings[2].finding_id == "F002"
+        assert domain_findings[3].finding_id == "F003"
 
     def test_finalize_empty(self) -> None:
-        payloads, domain_findings = finalize_findings([])
-        assert payloads == []
+        domain_findings = finalize_findings([])
         assert domain_findings == ()
 
 
