@@ -73,12 +73,16 @@ not a conclusion object and not a boundary shape.
 
 The model uses explicit scope and lifetime boundaries:
 
-- case-scoped concepts: `DiagnosticCase`, `Diagnosis`, and `Car`
+- case-scoped concepts: `DiagnosticCase`, `Diagnosis`, `Car`, and `Symptom`
 - run-scoped diagnostic concepts: `TestRun`, `DiagnosticReasoning`, `Finding`,
-  `DrivingSegment`, `Observation`, `Signature`, and `Hypothesis`
-- capture-scoped lifecycle concepts: `Run`
+  `DrivingSegment`, `DrivingPhase`, `Observation`, `Signature`, `Hypothesis`,
+  `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
+  and `TestPlan`
+- finding-scoped value objects: `ConfidenceAssessment`, `FindingEvidence`,
+  `LocationHotspot`, and `VibrationOrigin`
+- capture-scoped lifecycle concepts: `Run`, `RunStatus`
 - capture and evidence concepts derived from completed capture: `RunCapture`,
-  `RunSetup`, and `Measurement`
+  `RunSetup`, `Measurement`, and `ConfigurationSnapshot`
 - run setup and evidence-context concepts: `Sensor`, `SensorPlacement`, and
   `SpeedSource`
 - analysis-machinery concepts: `PhaseSegment` and `AnalysisWindow`
