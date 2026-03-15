@@ -2,6 +2,11 @@
 
 Consolidates the former ``plot_spectrum``, ``plot_series``,
 ``plot_peak_table``, and ``plot_data`` modules into a single file.
+
+This module is **boundary-adjacent**: it transforms raw DSP arrays and
+sample data into rendering-ready data structures (peak tables, spectrum
+rows) consumed by the report template.  It operates on raw numpy/sample
+data, not domain objects, and is intentionally outside the domain layer.
 """
 
 from __future__ import annotations

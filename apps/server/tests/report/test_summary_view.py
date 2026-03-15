@@ -19,7 +19,6 @@ from vibesensor.domain import (
 from vibesensor.report.mapping import (
     _origin_from_aggregate,
     summary_end_time_utc,
-    summary_findings,
     summary_firmware_version,
     summary_metadata,
     summary_origin,
@@ -35,7 +34,6 @@ from vibesensor.report.mapping import (
     summary_speed_stats,
     summary_start_time_utc,
     summary_test_plan,
-    summary_top_causes,
     summary_warnings,
 )
 
@@ -114,12 +112,6 @@ class TestSummaryHelpers:
 
     def test_sensor_count_used(self) -> None:
         assert summary_sensor_count_used(_minimal_summary(sensor_count_used=3)) == 3
-
-    def test_findings_empty(self) -> None:
-        assert summary_findings(_minimal_summary()) == []
-
-    def test_top_causes_empty(self) -> None:
-        assert summary_top_causes(_minimal_summary()) == []
 
     def test_speed_stats(self) -> None:
         assert summary_speed_stats(_minimal_summary())["min_kmh"] == 50.0

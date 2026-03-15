@@ -951,8 +951,8 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     assert isinstance(context.domain_aggregate, TestRun)
 
     primary = resolve_primary_report_candidate(
-        summary,
         context=context,
+        sensor_intensity=[],
         tr=lambda key, **kw: tr(lang, key, **kw),
         lang=lang,
     )

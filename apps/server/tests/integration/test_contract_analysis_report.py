@@ -18,9 +18,11 @@ from test_support import (
 
 from vibesensor.analysis import AnalysisSummary, RunAnalysis, summarize_run_data
 from vibesensor.report.mapping import (
+    filter_active_sensor_intensity,
     map_summary,
     prepare_report_mapping_context,
     resolve_primary_report_candidate,
+    summary_sensor_intensity_by_location,
 )
 from vibesensor.report.report_data import ReportTemplateData
 
@@ -126,9 +128,13 @@ def test_report_certainty_uses_confidence_assessment_reason() -> None:
     context = prepare_report_mapping_context(summary)
     context = replace(context, domain_aggregate=analysis.test_run)
 
+    sensor_intensity = filter_active_sensor_intensity(
+        summary_sensor_intensity_by_location(summary),
+        context.sensor_locations_active,
+    )
     primary = resolve_primary_report_candidate(
-        summary,
         context=context,
+        sensor_intensity=sensor_intensity,
         tr=lambda key, **_kw: key,
         lang="en",
     )

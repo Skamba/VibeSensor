@@ -12,7 +12,6 @@ from statistics import mean as _mean
 from .. import __version__
 from ..analysis._types import (
     AnalysisSummary,
-    FindingPayload,
     IntensityRow,
     JsonValue,
     MetadataDict,
@@ -261,12 +260,6 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
     return str(value).replace("_", " ").title()
 
 
-def extract_confidence(item: FindingPayload) -> float:
-    """Return the confidence value from a cause/finding dict."""
-    value = _as_float(item.get("confidence"))
-    return value if value is not None else 0.0
-
-
 # ---------------------------------------------------------------------------
 # Context extraction
 # ---------------------------------------------------------------------------
@@ -329,16 +322,6 @@ def summary_sensor_count_used(summary: AnalysisSummary) -> int:
     return int(_as_float(summary.get("sensor_count_used")) or 0)
 
 
-def summary_findings(summary: AnalysisSummary) -> list[FindingPayload]:
-    raw = summary.get("findings", [])
-    return list(raw) if isinstance(raw, list) else []
-
-
-def summary_top_causes(summary: AnalysisSummary) -> list[FindingPayload]:
-    raw = summary.get("top_causes", [])
-    return list(raw) if isinstance(raw, list) else []
-
-
 def summary_speed_stats(summary: AnalysisSummary) -> SpeedStats:
     return summary.get("speed_stats") or _EMPTY_SPEED_STATS
 
@@ -389,14 +372,6 @@ def _origin_from_aggregate(
 def normalized_origin_location(origin: SuspectedVibrationOrigin) -> str:
     """Return the report-ready origin location string."""
     return normalize_origin_location(origin.get("location"))
-
-
-def resolve_sensor_count(summary: AnalysisSummary, sensor_locations_active: list[str]) -> int:
-    """Resolve the effective sensor count used by report certainty logic."""
-    sensor_count = len(sensor_locations_active)
-    if sensor_count <= 0:
-        sensor_count = summary_sensor_count_used(summary)
-    return sensor_count
 
 
 # ---------------------------------------------------------------------------
@@ -659,11 +634,11 @@ def _resolve_detail_text(value: object, *, lang: str, tr: Callable) -> str | Non
 # ---------------------------------------------------------------------------
 
 
-def _sensor_fallback_strength_db(summary: AnalysisSummary) -> float | None:
+def _sensor_fallback_strength_db(sensor_intensity: list[IntensityRow]) -> float | None:
     """Return the best sensor-intensity dB as a last-resort fallback."""
     sensor_rows = [
         _as_float(row.get("p95_intensity_db"))
-        for row in summary.get("sensor_intensity_by_location", [])
+        for row in sensor_intensity
         if isinstance(row, dict)
     ]
     return max((value for value in sensor_rows if value is not None), default=None)
@@ -812,20 +787,6 @@ def resolve_parts_context(
     return source_for_why, order_label
 
 
-def build_run_metadata_fields(summary: AnalysisSummary, meta: MetadataDict) -> dict[str, object]:
-    """Extract and format run metadata text fields for the report template."""
-    return {
-        "duration_text": summary_record_length(summary),
-        "start_time_utc": summary_start_time_utc(summary),
-        "end_time_utc": summary_end_time_utc(summary),
-        "sample_rate_hz": summary_sample_rate_hz_text(summary),
-        "tire_spec_text": tire_spec_text(meta),
-        "sample_count": summary_row_count(summary),
-        "sensor_model": summary_sensor_model(summary),
-        "firmware_version": summary_firmware_version(summary),
-    }
-
-
 def tire_spec_text(meta: dict) -> str | None:
     """Format tire specification text from metadata when present."""
     tire_width_mm = _as_float(meta.get("tire_width_mm"))
@@ -928,9 +889,9 @@ def prepare_report_mapping_context(
 
 
 def resolve_primary_report_candidate(
-    summary: AnalysisSummary,
     *,
     context: ReportMappingContext,
+    sensor_intensity: list[IntensityRow],
     tr: Callable[..., str],
     lang: str,
 ) -> PrimaryCandidateContext:
@@ -968,7 +929,7 @@ def resolve_primary_report_candidate(
     strength_db = aggregate.top_strength_db()
     # Fall back to sensor intensity if domain aggregate has no strength
     if strength_db is None:
-        strength_db = _sensor_fallback_strength_db(summary)
+        strength_db = _sensor_fallback_strength_db(sensor_intensity)
     has_ref_gaps = aggregate.has_relevant_reference_gap(
         str(primary_source) if primary_source else "unknown",
     )
@@ -977,7 +938,7 @@ def resolve_primary_report_candidate(
     weak_spatial = domain_primary.weak_spatial_separation if domain_primary else False
 
     strength_text_value = strength_text(strength_db, lang=lang)
-    sensor_count = resolve_sensor_count(summary, context.sensor_locations_active)
+    sensor_count = len(context.sensor_locations_active) or len(context.domain_aggregate.capture.setup.sensors)
     strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
 
     # Use domain ConfidenceAssessment when available on the primary finding
@@ -1099,7 +1060,16 @@ def _build_report_template_data(
     specific fields are resolved from the full *summary* dict.
     """
     context = prepare_report_mapping_context(summary, test_run=test_run)
-    primary = resolve_primary_report_candidate(summary, context=context, tr=tr, lang=lang)
+    raw_sensor_intensity = filter_active_sensor_intensity(
+        summary_sensor_intensity_by_location(summary),
+        context.sensor_locations_active,
+    )
+    primary = resolve_primary_report_candidate(
+        context=context,
+        sensor_intensity=raw_sensor_intensity,
+        tr=tr,
+        lang=lang,
+    )
     observed = context.observed_signature(primary)
     system_cards = build_system_cards(
         context,
@@ -1130,10 +1100,6 @@ def _build_report_template_data(
     peak_rows = build_peak_rows_from_plots(summary, lang=lang, tr=tr)
     version_marker = build_version_marker()
 
-    raw_sensor_intensity = filter_active_sensor_intensity(
-        summary_sensor_intensity_by_location(summary),
-        context.sensor_locations_active,
-    )
     hotspot_rows = compute_location_hotspot_rows(raw_sensor_intensity)
 
     return ReportTemplateData(
