@@ -450,6 +450,17 @@ The following guardrails are enforced by tests in
   persisted or transported summary payloads
 - remaining raw payload handling is transport/rendering detail, not business
   decision-making
+- domain value objects (`FindingEvidence`, `SpeedProfile`, `RunSuitability`)
+  have no dict/payload-accepting factory classmethods; boundary adapter
+  functions own decode
+- `post_analysis.py` constructs suitability warnings through domain
+  `SuitabilityCheck` objects, not raw dicts
+- export services project summaries through domain aggregates before emitting
+- `build_next_steps_from_summary()` checks domain aggregate before payload
+  fallback
+- report mapping aggregate-absent fallbacks (`has_relevant_reference_gap`,
+  `top_strength_values`) appear only in the `else` branch after an aggregate
+  check
 
 ## Current package layout
 
