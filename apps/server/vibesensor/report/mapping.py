@@ -116,16 +116,6 @@ class ReportMappingContext:
             return self.finding_payloads_by_id.get(finding.finding_id)
         return None
 
-    # -- display helpers ----------------------------------------------------
-
-    def display_speed_range(self) -> str | None:
-        """Return the formatted speed range from speed stats."""
-        min_kmh = self.speed_stats.get("min_kmh")
-        max_kmh = self.speed_stats.get("max_kmh")
-        if min_kmh is not None and max_kmh is not None:
-            return f"{min_kmh:.0f}\u2013{max_kmh:.0f} km/h"
-        return None
-
     # -- intensity queries --------------------------------------------------
 
     def has_significant_location_intensity(
