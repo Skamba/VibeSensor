@@ -115,8 +115,7 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         merged = list(findings)
         for tc in top_causes:
             if not any(
-                tc == f or (tc.finding_id and tc.finding_id == f.finding_id)
-                for f in merged
+                tc == f or (tc.finding_id and tc.finding_id == f.finding_id) for f in merged
             ):
                 merged.append(tc)
         findings = tuple(merged)
@@ -236,6 +235,3 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
         test_plan=test_run.test_plan,
     )
     return case.add_run(test_run)
-
-
-

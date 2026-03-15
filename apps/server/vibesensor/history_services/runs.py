@@ -53,12 +53,9 @@ class HistoryRunService:
             ):
                 test_run = test_run_from_summary(analysis)
                 projected: JsonObject = dict(analysis)
-                projected["findings"] = [
-                    finding_payload_from_domain(f) for f in test_run.findings
-                ]
+                projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
                 projected["top_causes"] = [
-                    finding_payload_from_domain(f)
-                    for f in test_run.effective_top_causes()
+                    finding_payload_from_domain(f) for f in test_run.effective_top_causes()
                 ]
                 primary = test_run.primary_finding
                 origin_fb = analysis.get("most_likely_origin")
@@ -95,9 +92,7 @@ class HistoryRunService:
             raw_analysis.get("top_causes"), list
         ):
             test_run = test_run_from_summary(raw_analysis)
-            analysis["findings"] = [
-                finding_payload_from_domain(f) for f in test_run.findings
-            ]
+            analysis["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
             analysis["top_causes"] = [
                 finding_payload_from_domain(f) for f in test_run.effective_top_causes()
             ]

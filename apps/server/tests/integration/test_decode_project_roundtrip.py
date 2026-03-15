@@ -82,9 +82,7 @@ def _reproject(analysis_blob: dict[str, Any]) -> dict[str, Any]:
     origin_fb = analysis_blob.get("most_likely_origin")
     fb_payload = dict(origin_fb) if isinstance(origin_fb, dict) else {}
     projected["most_likely_origin"] = (
-        origin_payload_from_finding(primary, fb_payload)
-        if primary is not None
-        else fb_payload
+        origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
     )
     if not _has_structured_step_content(analysis_blob.get("test_plan")):
         projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)

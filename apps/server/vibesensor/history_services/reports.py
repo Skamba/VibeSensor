@@ -112,9 +112,7 @@ class HistoryReportService:
         # Build TestRun once — used for both dict canonicalization and report mapping
         domain_test_run = test_run_from_summary(analysis_summary)
         projected: JsonObject = dict(analysis_summary)
-        projected["findings"] = [
-            finding_payload_from_domain(f) for f in domain_test_run.findings
-        ]
+        projected["findings"] = [finding_payload_from_domain(f) for f in domain_test_run.findings]
         projected["top_causes"] = [
             finding_payload_from_domain(f) for f in domain_test_run.effective_top_causes()
         ]
@@ -122,9 +120,7 @@ class HistoryReportService:
         origin_fb = analysis_summary.get("most_likely_origin")
         fb_payload = dict(origin_fb) if isinstance(origin_fb, Mapping) else {}
         projected["most_likely_origin"] = (
-            origin_payload_from_finding(primary, fb_payload)
-            if primary is not None
-            else fb_payload
+            origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
         )
         if not _has_structured_step_content(analysis_summary.get("test_plan")):
             projected["test_plan"] = step_payloads_from_plan(domain_test_run.test_plan)

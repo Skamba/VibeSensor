@@ -100,9 +100,7 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
     origin_fb = analysis.get("most_likely_origin")
     fb_payload = dict(origin_fb) if isinstance(origin_fb, dict) else {}
     projected["most_likely_origin"] = (
-        origin_payload_from_finding(primary, fb_payload)
-        if primary is not None
-        else fb_payload
+        origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
     )
     from vibesensor.boundaries._helpers import _has_structured_step_content
 

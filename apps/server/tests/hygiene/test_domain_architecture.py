@@ -1320,9 +1320,7 @@ def test_domain_does_not_import_outer_packages() -> None:
                 for part in forbidden:
                     if part in node.module.split("."):
                         violations.append(f"{py.name}: imports from {node.module}")
-    assert not violations, (
-        "domain/ must not import outer packages:\n" + "\n".join(violations)
-    )
+    assert not violations, "domain/ must not import outer packages:\n" + "\n".join(violations)
 
 
 def test_boundaries_do_not_import_outer_layers() -> None:
@@ -1355,9 +1353,7 @@ def test_boundaries_do_not_import_outer_layers() -> None:
                 for part in forbidden:
                     if part in node.module.split("."):
                         violations.append(f"{py.name}: imports from {node.module}")
-    assert not violations, (
-        "boundaries/ must not import outer layers:\n" + "\n".join(violations)
-    )
+    assert not violations, "boundaries/ must not import outer layers:\n" + "\n".join(violations)
 
 
 def test_boundaries_do_not_import_analysis() -> None:
@@ -1379,9 +1375,7 @@ def test_boundaries_do_not_import_analysis() -> None:
                     continue
                 if "analysis" in node.module.split("."):
                     violations.append(f"{py.name}: imports from {node.module}")
-    assert not violations, (
-        "boundaries/ must not import analysis/:\n" + "\n".join(violations)
-    )
+    assert not violations, "boundaries/ must not import analysis/:\n" + "\n".join(violations)
 
 
 # ── TODO-22: Canonical domain graph structural verification ──────────────
@@ -1431,9 +1425,9 @@ def test_canonical_domain_graph_relationships() -> None:
     field_type(RunCapture, "run_id")  # str (not a Run object — known deviation)
     field_type(RunCapture, "setup")  # RunSetup
     field_type(RunCapture, "measurements")  # tuple[Measurement, ...]
-    assert not any(
-        f.name == "run" for f in dataclasses.fields(RunCapture)
-    ), "RunCapture must not hold a Run object reference (uses run_id: str)"
+    assert not any(f.name == "run" for f in dataclasses.fields(RunCapture)), (
+        "RunCapture must not hold a Run object reference (uses run_id: str)"
+    )
 
     # RunSetup
     field_type(RunSetup, "sensors")  # tuple[Sensor, ...]
@@ -1452,9 +1446,21 @@ def test_canonical_domain_graph_relationships() -> None:
 
     # Verify all imports are real classes (not just string names)
     for cls in (
-        Car, Diagnosis, DiagnosticCase, DiagnosticReasoning,
-        DrivingSegment, Finding, Hypothesis, Measurement,
-        Observation, RunCapture, RunSetup, Sensor, SensorPlacement,
-        Signature, SpeedSource, TestRun,
+        Car,
+        Diagnosis,
+        DiagnosticCase,
+        DiagnosticReasoning,
+        DrivingSegment,
+        Finding,
+        Hypothesis,
+        Measurement,
+        Observation,
+        RunCapture,
+        RunSetup,
+        Sensor,
+        SensorPlacement,
+        Signature,
+        SpeedSource,
+        TestRun,
     ):
         assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"

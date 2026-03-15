@@ -100,9 +100,7 @@ def test_build_findings_orders_informational_transients_after_diagnostics(
         lang="en",
     )
     non_ref_findings = [
-        finding
-        for finding in findings
-        if not finding.finding_id.startswith("REF_")
+        finding for finding in findings if not finding.finding_id.startswith("REF_")
     ]
 
     assert len(non_ref_findings) >= 2
@@ -208,11 +206,7 @@ def test_build_findings_detects_driveline_2x_order() -> None:
 
     findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
     driveline_2x = next(
-        (
-            finding
-            for finding in findings
-            if finding.finding_key == "driveshaft_2x"
-        ),
+        (finding for finding in findings if finding.finding_key == "driveshaft_2x"),
         None,
     )
 
@@ -241,11 +235,7 @@ def test_build_findings_persistent_peak_exposes_structured_speed_profile() -> No
 
     findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
     persistent = next(
-        (
-            finding
-            for finding in findings
-            if finding.finding_key.startswith("peak_")
-        ),
+        (finding for finding in findings if finding.finding_key.startswith("peak_")),
         None,
     )
     assert persistent is not None
@@ -272,11 +262,7 @@ def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> No
         None,
     )
     persistent = next(
-        (
-            finding
-            for finding in findings
-            if finding.finding_key.startswith("peak_")
-        ),
+        (finding for finding in findings if finding.finding_key.startswith("peak_")),
         None,
     )
     assert wheel_finding is not None

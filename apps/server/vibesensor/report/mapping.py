@@ -636,9 +636,7 @@ def _resolve_detail_text(value: object, *, lang: str, tr: Callable) -> str | Non
 def _sensor_fallback_strength_db(sensor_intensity: list[IntensityRow]) -> float | None:
     """Return the best sensor-intensity dB as a last-resort fallback."""
     sensor_rows = [
-        _as_float(row.get("p95_intensity_db"))
-        for row in sensor_intensity
-        if isinstance(row, dict)
+        _as_float(row.get("p95_intensity_db")) for row in sensor_intensity if isinstance(row, dict)
     ]
     return max((value for value in sensor_rows if value is not None), default=None)
 
@@ -660,9 +658,7 @@ def build_system_cards(
         return []
     aggregate = context.domain_aggregate
     card_sources = (
-        aggregate.effective_top_causes()
-        or aggregate.non_reference_findings
-        or aggregate.findings
+        aggregate.effective_top_causes() or aggregate.non_reference_findings or aggregate.findings
     )
 
     cards: list[SystemFindingCard] = []
@@ -914,8 +910,7 @@ def resolve_primary_report_candidate(
             domain_primary.strongest_location or tr("UNKNOWN")
         )
         primary_speed = str(
-            domain_primary.strongest_speed_band
-            or tr("UNKNOWN"),
+            domain_primary.strongest_speed_band or tr("UNKNOWN"),
         )
         confidence = domain_primary.effective_confidence
     else:
@@ -937,7 +932,9 @@ def resolve_primary_report_candidate(
     weak_spatial = domain_primary.weak_spatial_separation if domain_primary else False
 
     strength_text_value = strength_text(strength_db, lang=lang)
-    sensor_count = len(context.sensor_locations_active) or len(context.domain_aggregate.capture.setup.sensors)
+    sensor_count = len(context.sensor_locations_active) or len(
+        context.domain_aggregate.capture.setup.sensors
+    )
     strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
 
     # Use domain ConfidenceAssessment when available on the primary finding
@@ -1126,13 +1123,9 @@ def _build_report_template_data(
         version_marker=version_marker,
         lang=report.lang,
         certainty_tier_key=primary.tier,
-        findings=[
-            finding_payload_from_domain(f)
-            for f in context.domain_aggregate.findings
-        ],
+        findings=[finding_payload_from_domain(f) for f in context.domain_aggregate.findings],
         top_causes=[
-            finding_payload_from_domain(f)
-            for f in context.domain_aggregate.effective_top_causes()
+            finding_payload_from_domain(f) for f in context.domain_aggregate.effective_top_causes()
         ],
         sensor_intensity_by_location=raw_sensor_intensity,
         location_hotspot_rows=hotspot_rows,

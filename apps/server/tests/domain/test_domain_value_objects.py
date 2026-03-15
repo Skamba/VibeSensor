@@ -1306,7 +1306,11 @@ class TestSuitabilityCheck:
         ],
     )
     def test_explanation_i18n_ref(
-        self, check_key: str, state: str, details: tuple, expected_key: str,
+        self,
+        check_key: str,
+        state: str,
+        details: tuple,
+        expected_key: str,
     ) -> None:
         c = SuitabilityCheck(check_key=check_key, state=state, details=details)
         ref = c.explanation_i18n_ref()

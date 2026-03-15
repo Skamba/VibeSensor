@@ -27,6 +27,7 @@ class SuspectedVibrationOrigin(TypedDict, total=False):
     Domain code must use :class:`~vibesensor.domain.VibrationOrigin`
     instead.  This type exists solely at ingress/egress boundaries.
     """
+
     location: str
     alternative_locations: list[str]
     suspected_source: str

@@ -190,7 +190,9 @@ def finding_payload_from_domain(
         "peak_classification": finding.peak_classification,
         "signatures_observed": list(finding.signature_labels),
         "evidence_summary": "",
-        "frequency_hz_or_order": finding.frequency_hz if finding.frequency_hz is not None else finding.order or "",
+        "frequency_hz_or_order": (
+            finding.frequency_hz if finding.frequency_hz is not None else finding.order or ""
+        ),
         "amplitude_metric": {"vibration_strength_db": finding.vibration_strength_db},
         "quick_checks": [],
     }
