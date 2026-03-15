@@ -1,4 +1,4 @@
-"""Unit tests for vibesensor.processing.time_align pure functions.
+"""Unit tests for vibesensor.infra.processing.time_align pure functions.
 
 These tests validate the time-alignment utilities extracted from the
 monolithic SignalProcessor class.  All functions under test are pure
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.processing.time_align import (
+from vibesensor.infra.processing.time_align import (
     _ALIGNMENT_MIN_OVERLAP,
     analysis_time_range,
     compute_overlap,

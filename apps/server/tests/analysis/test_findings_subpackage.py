@@ -10,8 +10,8 @@ from typing import get_type_hints
 
 import pytest
 
-from vibesensor.analysis._types import AmplitudeMetric, FindingPayload, MatchedPoint
-from vibesensor.analysis.findings import (
+from vibesensor.use_cases.diagnostics._types import AmplitudeMetric, FindingPayload, MatchedPoint
+from vibesensor.use_cases.diagnostics.findings import (
     _build_findings,
     _classify_peak_type,
     _phase_speed_breakdown,
@@ -21,22 +21,22 @@ from vibesensor.analysis.findings import (
     _speed_breakdown,
     _speed_profile_from_points,
 )
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_analysis import (
     OrderMatchAccumulator,
     _compute_effective_match_rate,
     assemble_order_finding,
 )
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_analysis import (
     compute_order_confidence as _compute_order_confidence,
 )
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_analysis import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
-from vibesensor.analysis.phase_segmentation import DrivingPhase
-from vibesensor.constants import (
+from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
+from vibesensor.shared.constants import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     NEGLIGIBLE_STRENGTH_MAX_DB,
@@ -50,7 +50,7 @@ class TestFindingsModuleStructure:
 
     def test_modules_importable_independently(self) -> None:
         """Consolidated findings module must be directly importable with expected symbols."""
-        from vibesensor.analysis import (  # noqa: F401
+        from vibesensor.use_cases.diagnostics import (  # noqa: F401
             findings,
             order_analysis,
         )

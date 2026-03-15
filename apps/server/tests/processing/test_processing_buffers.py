@@ -1,10 +1,10 @@
-"""Unit tests for vibesensor.processing.buffers.ClientBuffer."""
+"""Unit tests for vibesensor.infra.processing.buffers.ClientBuffer."""
 
 from __future__ import annotations
 
 import numpy as np
 
-from vibesensor.processing.buffers import ClientBuffer
+from vibesensor.infra.processing.buffers import ClientBuffer
 
 
 class TestClientBuffer:

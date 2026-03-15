@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .driving_phase import DrivingPhase
+from vibesensor.domain.driving_phase import DrivingPhase
 
 __all__ = ["DrivingSegment"]
 

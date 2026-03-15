@@ -9,12 +9,12 @@ from test_support.report_helpers import (
     wheel_metadata,
 )
 
-from vibesensor.analysis import build_findings_for_samples
-from vibesensor.analysis import findings as findings_builder_module
-from vibesensor.analysis.findings import _build_findings as _findings_build_findings
-from vibesensor.analysis.findings import _speed_breakdown
-from vibesensor.analysis.plots import top_peaks_table_rows as _top_peaks_table_rows
-from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.use_cases.diagnostics import build_findings_for_samples
+from vibesensor.use_cases.diagnostics import findings as findings_builder_module
+from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
+from vibesensor.use_cases.diagnostics.findings import _speed_breakdown
+from vibesensor.use_cases.diagnostics.plots import top_peaks_table_rows as _top_peaks_table_rows
+from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.domain.finding import Finding
 
 
@@ -313,7 +313,7 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
             },
         )
 
-    from vibesensor.analysis import location_analysis as _test_plan_module
+    from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
 
     monkeypatch.setattr(_test_plan_module, "_location_speedbin_summary", _fake_location_summary)
 

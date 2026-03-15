@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.processing import MAX_CLIENT_SAMPLE_RATE_HZ, SignalProcessor
-from vibesensor.processing.fft import noise_floor, smooth_spectrum, top_peaks
+from vibesensor.infra.processing import MAX_CLIENT_SAMPLE_RATE_HZ, SignalProcessor
+from vibesensor.infra.processing.fft import noise_floor, smooth_spectrum, top_peaks
 from vibesensor.vibration_strength import compute_vibration_strength_db
 
 
@@ -169,7 +169,7 @@ def test_payload_reuses_cached_conversion(
         raise AssertionError(f"float_list should not be called for cached {method_name}")
 
     monkeypatch.setattr(
-        "vibesensor.processing.payload.float_list",
+        "vibesensor.infra.processing.payload.float_list",
         _fail_float_list,
     )
     second = payload_fn("client1")
@@ -218,7 +218,7 @@ def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
     def _fail_asarray(*args, **kwargs):  # type: ignore[no-untyped-def]
         raise AssertionError("np.asarray should not be used in multi_spectrum_payload")
 
-    monkeypatch.setattr("vibesensor.processing.payload.np.asarray", _fail_asarray)
+    monkeypatch.setattr("vibesensor.infra.processing.payload.np.asarray", _fail_asarray)
 
     result = proc.multi_spectrum_payload(["c1", "c2"])
     assert sorted(result["clients"]) == ["c1", "c2"]

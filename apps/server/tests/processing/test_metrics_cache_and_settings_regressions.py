@@ -10,9 +10,9 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from vibesensor.analysis.helpers import counter_delta
-from vibesensor.processing import ClientBuffer, SignalProcessor
-from vibesensor.settings_store import PersistenceError, SettingsStore
+from vibesensor.use_cases.diagnostics.helpers import counter_delta
+from vibesensor.infra.processing import ClientBuffer, SignalProcessor
+from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 
 # ---------------------------------------------------------------------------
 # counter_delta shared helper

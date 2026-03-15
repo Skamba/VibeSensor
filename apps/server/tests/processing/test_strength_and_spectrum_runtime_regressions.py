@@ -16,8 +16,8 @@ import re
 import numpy as np
 import pytest
 
-from vibesensor.constants import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
-from vibesensor.processing.fft import compute_fft_spectrum, noise_floor
+from vibesensor.shared.constants import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
+from vibesensor.infra.processing.fft import compute_fft_spectrum, noise_floor
 from vibesensor.strength_bands import bucket_for_strength
 
 

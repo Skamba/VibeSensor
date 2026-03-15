@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from math import inf, nan
 
-from vibesensor.analysis.order_bands import (
+from vibesensor.use_cases.diagnostics.order_bands import (
     build_diagnostic_settings,
     tolerance_for_order,
     vehicle_orders_hz,
@@ -33,7 +33,7 @@ def test_tolerance_for_order_honors_floor_and_cap() -> None:
 
 def test_vehicle_orders_hz_uses_tire_deflection_factor() -> None:
     """vehicle_orders_hz should compute frequencies with the deflected circumference."""
-    from vibesensor.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
+    from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
 
     settings_no_deflection = dict(DEFAULT_ANALYSIS_SETTINGS)
     settings_no_deflection["tire_deflection_factor"] = 1.0

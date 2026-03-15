@@ -12,8 +12,8 @@ from typing import Any
 import numpy as np
 import pytest
 
-from vibesensor.payload_types import SCHEMA_VERSION
-from vibesensor.processing import ClientBuffer, SignalProcessor
+from vibesensor.shared.types.payload_types import SCHEMA_VERSION
+from vibesensor.infra.processing import ClientBuffer, SignalProcessor
 from vibesensor.ws_schema_export import export_schema
 
 # ---------------------------------------------------------------------------

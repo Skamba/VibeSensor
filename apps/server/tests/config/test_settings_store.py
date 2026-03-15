@@ -4,15 +4,15 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.backend_types import (
+from vibesensor.shared.types.backend_types import (
     DEFAULT_CAR_ASPECTS,
     CarConfig,
     SensorConfig,
     _parse_manual_speed,
     sanitize_aspects,
 )
-from vibesensor.history_db import HistoryDB
-from vibesensor.settings_store import (
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.infra.config.settings_store import (
     PersistenceError,
     SettingsStore,
 )
@@ -329,7 +329,7 @@ def test_store_language_roundtrip() -> None:
 def test_store_corrupted_snapshot_falls_back_to_defaults(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     # Write invalid JSON directly into the settings_kv table
-    from vibesensor.runlog import utc_now_iso
+    from vibesensor.adapters.persistence.runlog import utc_now_iso
 
     with db._cursor() as cur:
         cur.execute(

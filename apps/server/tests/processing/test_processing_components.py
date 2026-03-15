@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from vibesensor.processing.buffer_store import SignalBufferStore
-from vibesensor.processing.compute import SignalMetricsComputer
-from vibesensor.processing.models import (
+from vibesensor.infra.processing.buffer_store import SignalBufferStore
+from vibesensor.infra.processing.compute import SignalMetricsComputer
+from vibesensor.infra.processing.models import (
     CachedMetricsHit,
     MetricsComputationResult,
     MetricsSnapshot,

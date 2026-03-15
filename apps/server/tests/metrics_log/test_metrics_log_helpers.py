@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 from test_support.core import wait_until
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log.post_analysis import PostAnalysisHealthSnapshot
-from vibesensor.metrics_log.sample_builder import safe_metric
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.use_cases.run.post_analysis import PostAnalysisHealthSnapshot
+from vibesensor.use_cases.run.sample_builder import safe_metric
 
 
 class _NullDB:
@@ -343,7 +343,7 @@ def test_append_records_does_not_timeout_on_brief_gap(
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
-    monkeypatch.setattr("vibesensor.metrics_log.logger.time.monotonic", lambda: 100.0)
+    monkeypatch.setattr("vibesensor.use_cases.run.logger.time.monotonic", lambda: 100.0)
     logger._run_last_data_progress_mono_s = 95.0
 
     timed_out = logger._append_records(
@@ -394,7 +394,7 @@ def test_stop_recording_does_not_block_on_post_analysis(
                 diagnostic_case=SimpleNamespace(case_id="mock-case"),
             )
 
-    monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _SlowRunAnalysis)
+    monkeypatch.setattr("vibesensor.use_cases.diagnostics.RunAnalysis", _SlowRunAnalysis)
     started = time.monotonic()
     logger.stop_recording()
     elapsed = time.monotonic() - started
@@ -429,7 +429,7 @@ def test_post_analysis_failure_sets_persistent_error_status(
     def _failing_init(*args, **kwargs):
         raise RuntimeError("analysis exploded")
 
-    monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _failing_init)
+    monkeypatch.setattr("vibesensor.use_cases.diagnostics.RunAnalysis", _failing_init)
     logger.stop_recording()
 
     def _status():
@@ -559,7 +559,7 @@ def test_post_analysis_uses_run_language_from_metadata(
     def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
         return {"lang": lang, "row_count": len(samples)}
 
-    monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _summary)
+    monkeypatch.setattr("vibesensor.use_cases.diagnostics.summarize_run_data", _summary)
     logger.stop_recording()
 
     def _status():
@@ -627,7 +627,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
 ) -> None:
     # Reduce the cap so we only need ~250 iterations instead of 13 000 (28 s -> <1 s).
     cap = 200
-    monkeypatch.setattr("vibesensor.metrics_log.post_analysis._MAX_POST_ANALYSIS_SAMPLES", cap)
+    monkeypatch.setattr("vibesensor.use_cases.run.post_analysis._MAX_POST_ANALYSIS_SAMPLES", cap)
 
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db)
@@ -653,7 +653,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
                 diagnostic_case=SimpleNamespace(case_id="mock-case"),
             )
 
-    monkeypatch.setattr("vibesensor.analysis.RunAnalysis", _FakeRunAnalysis)
+    monkeypatch.setattr("vibesensor.use_cases.diagnostics.RunAnalysis", _FakeRunAnalysis)
     logger.stop_recording()
 
     def _status():
@@ -689,8 +689,8 @@ async def test_run_offloads_append_records_with_to_thread(
     async def _cancel_sleep(_interval: float) -> None:
         raise asyncio.CancelledError()
 
-    monkeypatch.setattr("vibesensor.metrics_log.logger.asyncio.to_thread", _fake_to_thread)
-    monkeypatch.setattr("vibesensor.metrics_log.logger.asyncio.sleep", _cancel_sleep)
+    monkeypatch.setattr("vibesensor.use_cases.run.logger.asyncio.to_thread", _fake_to_thread)
+    monkeypatch.setattr("vibesensor.use_cases.run.logger.asyncio.sleep", _cancel_sleep)
 
     with pytest.raises(asyncio.CancelledError):
         await logger.run()

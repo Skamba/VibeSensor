@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
-from vibesensor.metrics_log.logger import _MAX_HISTORY_CREATE_RETRIES
+from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
+from vibesensor.use_cases.run.logger import _MAX_HISTORY_CREATE_RETRIES
 
 # -- Minimal fakes -----------------------------------------------------------
 
@@ -76,7 +76,7 @@ class _FakeGPSMonitor:
     override_speed_mps = None
 
     def resolve_speed(self):
-        from vibesensor.gps_speed import SpeedResolution
+        from vibesensor.adapters.gps.gps_speed import SpeedResolution
 
         return SpeedResolution(speed_mps=None, fallback_active=False, source="none")
 
@@ -265,7 +265,7 @@ class TestDroppedSamplesLogged:
             )
 
         # Now append_records should log about dropped samples
-        with patch("vibesensor.metrics_log.logger.LOGGER") as mock_logger:
+        with patch("vibesensor.use_cases.run.logger.LOGGER") as mock_logger:
             logger._append_records(run_id, start_utc, start_mono)
             # Verify warning about dropped samples was logged
             warning_calls = [

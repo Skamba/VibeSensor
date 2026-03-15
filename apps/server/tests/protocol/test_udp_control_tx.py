@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.protocol import HelloMessage, parse_cmd
-from vibesensor.registry import ClientRegistry
-from vibesensor.udp_control_tx import UDPControlPlane
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.udp.protocol import HelloMessage, parse_cmd
+from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 
 
 @pytest.mark.parametrize(

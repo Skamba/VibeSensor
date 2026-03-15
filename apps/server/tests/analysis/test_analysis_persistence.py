@@ -11,7 +11,7 @@ import pytest
 from conftest import FakeState
 from test_support import response_payload
 
-from vibesensor.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import HistoryDB
 
 # -- Schema v4 tests ----------------------------------------------------------
 
@@ -179,11 +179,11 @@ def _find_endpoint(router, path: str):
 
 def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) -> None:
     """Integration: stop_recording → post-analysis → analysis persisted in DB."""
-    from vibesensor.analysis_settings import AnalysisSettingsStore
-    from vibesensor.gps_speed import GPSSpeedMonitor
-    from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
-    from vibesensor.processing import SignalProcessor
-    from vibesensor.registry import ClientRegistry
+    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
+    from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+    from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
+    from vibesensor.infra.processing import SignalProcessor
+    from vibesensor.infra.runtime.registry import ClientRegistry
 
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db)
@@ -235,7 +235,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
             "rows": len(samples),
         }
 
-    monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _fake_summarize)
+    monkeypatch.setattr("vibesensor.use_cases.diagnostics.summarize_run_data", _fake_summarize)
 
     # Stop logging - should trigger post-analysis
     logger.stop_recording()
@@ -262,8 +262,8 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
 
     from fastapi import FastAPI
 
-    from vibesensor.analysis import summarize_run_data
-    from vibesensor.routes import create_router
+    from vibesensor.use_cases.diagnostics import summarize_run_data
+    from vibesensor.adapters.http import create_router
 
     metadata = {
         "run_id": "run-pdf",
@@ -322,8 +322,8 @@ async def test_insights_returns_persisted_analysis_no_lang() -> None:
 
     from fastapi import FastAPI
 
-    from vibesensor.analysis import summarize_run_data
-    from vibesensor.routes import create_router
+    from vibesensor.use_cases.diagnostics import summarize_run_data
+    from vibesensor.adapters.http import create_router
 
     metadata = {
         "run_id": "run-ins",
@@ -367,7 +367,7 @@ async def test_export_offloaded_to_thread() -> None:
 
     from fastapi import FastAPI
 
-    from vibesensor.routes import create_router
+    from vibesensor.adapters.http import create_router
 
     samples = [_sample(i) for i in range(5)]
 

@@ -16,8 +16,8 @@ from _update_manager_test_helpers import (
     setup_update_env,
 )
 
-from vibesensor.update.models import UpdateState
-from vibesensor.update.status import collect_runtime_details
+from vibesensor.use_cases.updates.models import UpdateState
+from vibesensor.use_cases.updates.status import collect_runtime_details
 
 
 def _build_fake_wheel(path, *, version: str) -> bytes:
@@ -58,7 +58,7 @@ class TestUpdateManagerAsync:
             if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])
         ]
         assert_hotspot_restored(runner)
-        fw_mod = "vibesensor.update.firmware_cache"
+        fw_mod = "vibesensor.use_cases.updates.firmware_cache"
         firmware_refresh_calls = [call[0] for call in runner.calls if fw_mod in " ".join(call[0])]
         assert firmware_refresh_calls
         restart_cmd = (
@@ -126,9 +126,9 @@ class TestUpdateManagerAsync:
         runner.run = run_with_retry  # type: ignore[assignment]
         with (
             patch("shutil.which", mock_which),
-            patch("vibesensor.update.manager.asyncio.sleep", new=AsyncMock(return_value=None)),
-            patch("vibesensor.update.release_fetcher.ServerReleaseFetcher") as mock_fetcher,
-            patch("vibesensor.update.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor.use_cases.updates.manager.asyncio.sleep", new=AsyncMock(return_value=None)),
+            patch("vibesensor.use_cases.updates.release_fetcher.ServerReleaseFetcher") as mock_fetcher,
+            patch("vibesensor.use_cases.updates.release_fetcher.ReleaseFetcherConfig"),
             patch("vibesensor._version.__version__", "2025.6.15"),
         ):
             mock_fetcher.return_value.check_update_available.return_value = None
@@ -143,8 +143,8 @@ class TestUpdateManagerAsync:
         runner.set_response("socket.getaddrinfo", 1, "", "Temporary failure in name resolution")
         with (
             patch_release_fetcher() as mock_fetcher,
-            patch("vibesensor.update.manager.DNS_READY_MIN_WAIT_S", 0.05),
-            patch("vibesensor.update.manager.DNS_RETRY_INTERVAL_S", 0.01),
+            patch("vibesensor.use_cases.updates.manager.DNS_READY_MIN_WAIT_S", 0.05),
+            patch("vibesensor.use_cases.updates.manager.DNS_RETRY_INTERVAL_S", 0.01),
         ):
             await run_update(manager)
             mock_fetcher.assert_not_called()
@@ -165,8 +165,8 @@ class TestUpdateManagerAsync:
         runner.run = run_with_dns_retry  # type: ignore[assignment]
         with (
             patch_release_fetcher() as mock_fetcher,
-            patch("vibesensor.update.manager.DNS_READY_MIN_WAIT_S", 0.2),
-            patch("vibesensor.update.manager.DNS_RETRY_INTERVAL_S", 0.01),
+            patch("vibesensor.use_cases.updates.manager.DNS_READY_MIN_WAIT_S", 0.2),
+            patch("vibesensor.use_cases.updates.manager.DNS_RETRY_INTERVAL_S", 0.01),
         ):
             mock_fetcher.return_value.check_update_available.return_value = None
             await run_update(manager)
@@ -227,7 +227,7 @@ class TestUpdateManagerAsync:
         with (
             patch_release_fetcher(current_version="2025.6.14") as mock_fetcher,
             patch(
-                "vibesensor.update.installer.UpdateInstaller.snapshot_for_rollback",
+                "vibesensor.use_cases.updates.installer.UpdateInstaller.snapshot_for_rollback",
                 new=AsyncMock(return_value=False),
             ),
         ):
@@ -313,8 +313,8 @@ class TestUpdateManagerAsync:
         runner.run = slow_run  # type: ignore[assignment]
         with (
             patch("shutil.which", mock_which),
-            patch("vibesensor.update.manager.UPDATE_TIMEOUT_S", 0.5),
-            patch("vibesensor.update.manager.HOTSPOT_RESTORE_RETRIES", 1),
+            patch("vibesensor.use_cases.updates.manager.UPDATE_TIMEOUT_S", 0.5),
+            patch("vibesensor.use_cases.updates.manager.HOTSPOT_RESTORE_RETRIES", 1),
         ):
             manager.start("TestNet", "pass")
             await asyncio.wait_for(manager._task, timeout=3)

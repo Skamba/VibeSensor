@@ -4,25 +4,25 @@
 
 The report generation pipeline has two distinct phases:
 
-1. **Post-stop analysis** (`vibesensor.analysis`) — runs once when a recording
+1. **Post-stop analysis** (`vibesensor.use_cases.diagnostics`) — runs once when a recording
    ends, producing a persisted summary dict and a `ReportTemplateData` artifact.
-2. **Report rendering** (`vibesensor.report`) — loads the persisted
+2. **Report rendering** (`vibesensor.adapters.pdf`) — loads the persisted
    `ReportTemplateData` and renders a PDF.  This phase performs **zero
    analysis** — it only formats and lays out pre-computed data.
 
 ```text
 Recording stops
-  → _run_post_analysis() [vibesensor.metrics_log.post_analysis]
-    → summarize_run_data() [vibesensor.analysis.summary_builder]
+  → _run_post_analysis() [vibesensor.use_cases.run.post_analysis]
+    → summarize_run_data() [vibesensor.use_cases.diagnostics.summary_builder]
       → summary_builder.py (phases, suitability, payload assembly)
       → findings.py, ranking.py, top_cause_selection.py, plots.py
-    → map_summary() [vibesensor.report.mapping]
+    → map_summary() [vibesensor.adapters.pdf.mapping]
       → mapping.py (actions, peaks, systems)
-    → store_analysis() [vibesensor.history_db]
+    → store_analysis() [vibesensor.adapters.persistence.history_db]
 
-GET /api/history/{run_id}/report.pdf [vibesensor.routes.history]
-  → HistoryReportService.build_pdf() [vibesensor.history_services.reports]
-    → build_report_pdf(data) [vibesensor.report.pdf_engine]
+GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
+  → HistoryReportService.build_pdf() [vibesensor.use_cases.history.reports]
+    → build_report_pdf(data) [vibesensor.adapters.pdf.pdf_engine]
 ```
 
 ## Key Architectural Rules
@@ -36,7 +36,7 @@ analysis.
 
 ### Renderer-only report package
 
-The `vibesensor.report` package contains **only** rendering code:
+The `vibesensor.adapters.pdf` package contains **only** rendering code:
 
 | File | Purpose |
 |---|---|
@@ -47,13 +47,13 @@ The `vibesensor.report` package contains **only** rendering code:
 | `pdf_diagram_render.py` | Diagram planning, drawing, and location canonicalisation |
 | `report_data.py` | Dataclass definitions (pure data) |
 
-**Rule:** Report modules must not import from `vibesensor.analysis` at
+**Rule:** Report modules must not import from `vibesensor.use_cases.diagnostics` at
 module level.  A guardrail test (`test_report_analysis_separation.py`)
 enforces this.
 
 ### ReportTemplateData schema
 
-`ReportTemplateData` (defined in `vibesensor.report.report_data`) is the
+`ReportTemplateData` (defined in `vibesensor.adapters.pdf.report_data`) is the
 canonical rendering artifact.  It contains everything the PDF renderer
 needs:
 
@@ -80,10 +80,10 @@ needs:
 ## Adding new report sections
 
 1. Add any new analysis output to `summarize_run_data()` in
-   `vibesensor.analysis.summary_builder`.
+   `vibesensor.use_cases.diagnostics.summary_builder`.
 2. Add a corresponding field to `ReportTemplateData` in
-   `vibesensor.report.report_data`.
+   `vibesensor.adapters.pdf.report_data`.
 3. Populate the new field in `map_summary()` in
-   `vibesensor.report.mapping`.
-4. Render the new field through `pdf_engine.py`, usually by wiring it into the relevant page or section module under `vibesensor.report`.
+   `vibesensor.adapters.pdf.mapping`.
+4. Render the new field through `pdf_engine.py`, usually by wiring it into the relevant page or section module under `vibesensor.adapters.pdf`.
 5. Never add analysis logic to the renderer package — always pre-compute.

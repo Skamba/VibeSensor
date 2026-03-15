@@ -12,12 +12,12 @@ from typing import Any
 
 import pytest
 
-from vibesensor.analysis import build_findings_for_samples, summarize_run_data
-from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
-from vibesensor.report.mapping import map_summary
-from vibesensor.report.pdf_engine import build_report_pdf
-from vibesensor.runlog import bounded_sample, normalize_sample_record
+from vibesensor.use_cases.diagnostics import build_findings_for_samples, summarize_run_data
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
+from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.adapters.persistence.runlog import bounded_sample, normalize_sample_record
 
 # ---------------------------------------------------------------------------
 # Helpers / Fixtures

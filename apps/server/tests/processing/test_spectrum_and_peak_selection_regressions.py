@@ -12,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.processing.fft import smooth_spectrum, top_peaks
+from vibesensor.infra.processing.fft import smooth_spectrum, top_peaks
 from vibesensor.vibration_strength import compute_vibration_strength_db
 
 

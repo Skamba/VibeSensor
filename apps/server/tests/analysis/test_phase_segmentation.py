@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis.phase_segmentation import (
+from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     _estimate_speed_derivative,
     _interpolate_speed_unknown,

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.update.firmware_cache import (
+from vibesensor.use_cases.updates.firmware_cache import (
     FirmwareCacheConfig,
     GitHubReleaseFetcher,
     _safe_extractall,

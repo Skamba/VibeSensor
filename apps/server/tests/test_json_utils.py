@@ -7,7 +7,7 @@ import json
 import numpy as np
 import pytest
 
-from vibesensor.json_utils import (
+from vibesensor.shared.utils.json_utils import (
     safe_json_dumps,
     safe_json_loads,
     sanitize_for_json,
@@ -141,7 +141,7 @@ class TestSanitizeForJson:
         import logging
 
         nested = {"a": {"b": {"c": "deep"}}}
-        with caplog.at_level(logging.WARNING, logger="vibesensor.json_utils"):
+        with caplog.at_level(logging.WARNING, logger="vibesensor.shared.utils.json_utils"):
             sanitize_for_json(nested, _max_depth=1)
         assert any("nesting depth" in r.message for r in caplog.records)
 

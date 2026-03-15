@@ -20,12 +20,12 @@ from unittest.mock import patch
 import pytest
 
 from vibesensor.domain import Run
-from vibesensor.metrics_log.logger import (
+from vibesensor.use_cases.run.logger import (
     _MAX_HISTORY_CREATE_RETRIES,
     _RETRY_COOLDOWN_BASE_S,
     RunRecorder,
 )
-from vibesensor.metrics_log.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysisWorker
+from vibesensor.use_cases.run.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysisWorker
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -230,7 +230,7 @@ class TestRetryCooldown:
         assert not logger._persist_history_run_created
 
         # Fast-forward past cooldown
-        with patch("vibesensor.metrics_log.logger.time") as mock_time:
+        with patch("vibesensor.use_cases.run.logger.time") as mock_time:
             # First call: check if past cooldown (return time after cooldown)
             mock_time.monotonic.return_value = time.monotonic() + _RETRY_COOLDOWN_BASE_S + 1
             logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
@@ -423,7 +423,7 @@ class TestQueueDepthWarning:
         started.wait(timeout=2.0)
 
         # Fill queue past threshold
-        with caplog.at_level(logging.WARNING, logger="vibesensor.metrics_log.post_analysis"):
+        with caplog.at_level(logging.WARNING, logger="vibesensor.use_cases.run.post_analysis"):
             for i in range(1, _WARN_QUEUE_DEPTH + 1):
                 worker.schedule(f"run-{i}")
 

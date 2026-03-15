@@ -7,8 +7,8 @@ from unittest.mock import patch
 import pytest
 from _update_manager_test_helpers import FakeRunner, cancel_task, mock_which
 
-from vibesensor.update.manager import UpdateManager
-from vibesensor.update.models import UpdatePhase, UpdateState
+from vibesensor.use_cases.updates.manager import UpdateManager
+from vibesensor.use_cases.updates.models import UpdatePhase, UpdateState
 
 
 class TestUpdateManager:

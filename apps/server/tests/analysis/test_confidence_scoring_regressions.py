@@ -13,10 +13,10 @@ import inspect
 
 import pytest
 
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_analysis import (
     compute_order_confidence as _compute_order_confidence,
 )
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
 
@@ -36,7 +36,7 @@ class TestRankingScoreErrorDenominator:
         The ranking_score computation lives in ``assemble_order_finding``
         in ``order_analysis``; verify it there.
         """
-        from vibesensor.analysis.order_analysis import assemble_order_finding
+        from vibesensor.use_cases.diagnostics.order_analysis import assemble_order_finding
 
         src = inspect.getsource(assemble_order_finding)
         # Old code had a hardcoded 0.5 denominator; new code derives from compliance.
@@ -246,7 +246,7 @@ class TestPersistentPeakNegligibleCapAligned:
         that a weak order finding at ~0.37 confidence always suppresses
         persistent peaks at the same frequency.
         """
-        from vibesensor.analysis.findings import PeakBin
+        from vibesensor.use_cases.diagnostics.findings import PeakBin
 
         # Build a PeakBin with high presence (patterned), low burstiness,
         # decent SNR so it classifies as patterned, but low enough absolute

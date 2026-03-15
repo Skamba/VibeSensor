@@ -8,14 +8,14 @@ from test_support.report_helpers import (
     analysis_sample_with_peaks as sample,
 )
 
-from vibesensor.analysis import build_findings_for_samples
-from vibesensor.analysis.plots import (
+from vibesensor.use_cases.diagnostics import build_findings_for_samples
+from vibesensor.use_cases.diagnostics.plots import (
     spectrogram_from_peaks as _spectrogram_from_peaks,
 )
-from vibesensor.analysis.plots import (
+from vibesensor.use_cases.diagnostics.plots import (
     spectrogram_from_peaks_raw as _spectrogram_from_peaks_raw,
 )
-from vibesensor.analysis.plots import (
+from vibesensor.use_cases.diagnostics.plots import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
 

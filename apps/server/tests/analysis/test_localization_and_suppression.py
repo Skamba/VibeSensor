@@ -17,9 +17,9 @@ from test_support import make_speed_sweep_fault_samples as _make_speed_sweep_fau
 from test_support import standard_metadata as _standard_metadata
 from test_support import wheel_hz as _wheel_hz
 
-from vibesensor.analysis import build_findings_for_samples, summarize_run_data
-from vibesensor.analysis.location_analysis import _location_speedbin_summary
-from vibesensor.locations import WHEEL_LOCATION_CODES, is_wheel_location
+from vibesensor.use_cases.diagnostics import build_findings_for_samples, summarize_run_data
+from vibesensor.use_cases.diagnostics.location_analysis import _location_speedbin_summary
+from vibesensor.shared.ids.locations import WHEEL_LOCATION_CODES, is_wheel_location
 
 # ---------------------------------------------------------------------------
 # Helpers (reused from test_scenario_ground_truth patterns)

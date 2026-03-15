@@ -16,8 +16,8 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from vibesensor.processing import SignalProcessor
-from vibesensor.processing.time_align import _ALIGNMENT_MIN_OVERLAP
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.time_align import _ALIGNMENT_MIN_OVERLAP
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -51,7 +51,7 @@ def _fill_sensor(
     signal = 0.01 * np.sin(2 * np.pi * freq_hz * t)
     samples = np.column_stack([signal, signal, signal])
     if mono_time is not None:
-        with patch("vibesensor.processing.processor.time") as mock_time:
+        with patch("vibesensor.infra.processing.processor.time") as mock_time:
             mock_time.monotonic.return_value = mono_time
             proc.ingest(client_id, samples, sample_rate_hz=sample_rate_hz, t0_us=t0_us)
     else:
@@ -231,7 +231,7 @@ class TestDriftSimulation:
 
 class TestCmdSyncClockProtocol:
     def test_pack_and_parse_sync_clock(self) -> None:
-        from vibesensor.protocol import (
+        from vibesensor.adapters.udp.protocol import (
             CMD_SYNC_CLOCK,
             CMD_SYNC_CLOCK_BYTES,
             pack_cmd_sync_clock,
@@ -255,7 +255,7 @@ class TestCmdSyncClockProtocol:
         assert parsed_time_us == server_time_us
 
     def test_pack_sync_clock_struct_size(self) -> None:
-        from vibesensor.protocol import CMD_SYNC_CLOCK_BYTES, CMD_SYNC_CLOCK_STRUCT
+        from vibesensor.adapters.udp.protocol import CMD_SYNC_CLOCK_BYTES, CMD_SYNC_CLOCK_STRUCT
 
         assert CMD_SYNC_CLOCK_STRUCT.size == CMD_SYNC_CLOCK_BYTES
 
@@ -368,7 +368,7 @@ class TestAnalysisTimeRangeEdgeCases:
         When samples_since_t0 is negative (defensive guard against corruption),
         analysis_time_range should clamp it to 0 so end_s == last_t0_us / 1e6.
         """
-        from vibesensor.processing.time_align import analysis_time_range
+        from vibesensor.infra.processing.time_align import analysis_time_range
 
         last_t0_us = 10_000_000  # 10 s
         result = analysis_time_range(
@@ -389,7 +389,7 @@ class TestAnalysisTimeRangeEdgeCases:
 
     def test_zero_waveform_seconds_returns_none(self) -> None:
         """Fix 10: waveform_seconds <= 0 must return None rather than a silent 1-sample window."""
-        from vibesensor.processing.time_align import analysis_time_range
+        from vibesensor.infra.processing.time_align import analysis_time_range
 
         result = analysis_time_range(
             count=400,
@@ -404,7 +404,7 @@ class TestAnalysisTimeRangeEdgeCases:
 
     def test_negative_waveform_seconds_returns_none(self) -> None:
         """Fix 10: waveform_seconds < 0 must also return None."""
-        from vibesensor.processing.time_align import analysis_time_range
+        from vibesensor.infra.processing.time_align import analysis_time_range
 
         result = analysis_time_range(
             count=200,

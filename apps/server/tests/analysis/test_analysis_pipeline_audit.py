@@ -9,13 +9,13 @@ from typing import Any
 import numpy as np
 import pytest
 
-from vibesensor.analysis.helpers import _speed_stats
-from vibesensor.analysis.phase_segmentation import (
+from vibesensor.use_cases.diagnostics.helpers import _speed_stats
+from vibesensor.use_cases.diagnostics.phase_segmentation import (
     segment_run_phases,
 )
-from vibesensor.analysis.strength_labels import strength_label
-from vibesensor.processing import SignalProcessor
-from vibesensor.processing.fft import noise_floor
+from vibesensor.use_cases.diagnostics.strength_labels import strength_label
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.processing.fft import noise_floor
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.vibration_strength import (
     compute_vibration_strength_db,
@@ -113,7 +113,7 @@ class TestBoundedSampleNoHint:
     """Demonstrate the reactive doubling behavior without total_hint."""
 
     def test_reactive_doubling_wastes_work(self):
-        from vibesensor.runlog import bounded_sample
+        from vibesensor.adapters.persistence.runlog import bounded_sample
 
         items = [{"v": i} for i in range(200)]
         # Without total_hint: starts with stride=1, collects all until overflow
@@ -201,7 +201,7 @@ class TestNoPipelineErrorIsolation:
     """Demonstrate that a failure in one stage kills the entire summary."""
 
     def test_findings_failure_kills_entire_summary(self):
-        from vibesensor.analysis import summarize_run_data
+        from vibesensor.use_cases.diagnostics import summarize_run_data
 
         metadata: dict[str, Any] = {
             "run_id": "test-run",

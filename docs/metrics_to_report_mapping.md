@@ -2,9 +2,9 @@
 
 This document describes how every report field and visual element maps back
 to a specific persisted analysis metric/value.  The report renderer
-(`vibesensor.report`, entered through `vibesensor.report.pdf_engine`) must **never** recompute or infer analysis
+(`vibesensor.adapters.pdf`, entered through `vibesensor.adapters.pdf.pdf_engine`) must **never** recompute or infer analysis
 values; it reads exclusively from `ReportTemplateData` (built by
-`vibesensor.report.mapping.map_summary()`).
+`vibesensor.adapters.pdf.mapping.map_summary()`).
 
 ## Data flow
 

@@ -6,14 +6,14 @@ from datetime import UTC, datetime
 
 import pytest
 
-from vibesensor.analysis.helpers import _speed_stats
-from vibesensor.analysis.summary_builder import (
+from vibesensor.use_cases.diagnostics.helpers import _speed_stats
+from vibesensor.use_cases.diagnostics.summary_builder import (
     PreparedRunData,
     RunAnalysis,
     build_phase_summary,
     prepare_run_data,
 )
-from vibesensor.boundaries.speed_profile import speed_profile_from_stats
+from vibesensor.shared.boundaries.speed_profile import speed_profile_from_stats
 from vibesensor.domain import SpeedProfile
 
 
@@ -124,7 +124,7 @@ class TestRunAnalysis:
 
     def test_summarize_matches_function_api(self) -> None:
         """RunAnalysis.summarize() should produce identical output to summarize_run_data()."""
-        from vibesensor.analysis.summary_builder import summarize_run_data
+        from vibesensor.use_cases.diagnostics.summary_builder import summarize_run_data
 
         metadata = {"raw_sample_rate_hz": 100.0}
         samples = [

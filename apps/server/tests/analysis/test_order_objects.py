@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_analysis import (
     OrderAnalysisSession,
     OrderMatchAccumulator,
 )

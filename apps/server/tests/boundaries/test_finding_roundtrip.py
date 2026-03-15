@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.boundaries.finding import finding_from_payload, finding_payload_from_domain
+from vibesensor.shared.boundaries.finding import finding_from_payload, finding_payload_from_domain
 from vibesensor.domain.finding import Finding, FindingKind, VibrationSource
 from vibesensor.domain.finding_evidence import FindingEvidence
 from vibesensor.domain.location_hotspot import LocationHotspot

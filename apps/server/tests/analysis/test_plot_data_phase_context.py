@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import pytest
 
-import vibesensor.analysis.plots as plots_module
-from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
-from vibesensor.analysis.plots import _plot_data
+import vibesensor.use_cases.diagnostics.plots as plots_module
+from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, segment_run_phases
+from vibesensor.use_cases.diagnostics.plots import _plot_data
 
 
 def _make_sample(
@@ -180,7 +180,7 @@ def test_aggregate_fft_spectrum_presence_ratio_clamped_to_one() -> None:
     bin (bin_center = 45 Hz). Previously len(amps)=2 / n_samples=1 = 2.0 gave
     a persistence score inflated by 4× relative to a single-peak sample.
     """
-    from vibesensor.analysis.plots import aggregate_fft_spectrum as _aggregate_fft_spectrum
+    from vibesensor.use_cases.diagnostics.plots import aggregate_fft_spectrum as _aggregate_fft_spectrum
 
     # Two co-binned peaks from one sample — should behave like presence_ratio=1.
     two_peaks_sample = [

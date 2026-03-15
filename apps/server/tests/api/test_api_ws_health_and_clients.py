@@ -70,7 +70,7 @@ async def test_health_warn_status_when_processing_failures() -> None:
 
 @pytest.mark.asyncio
 async def test_identify_client_404_when_sensor_not_in_registry() -> None:
-    from vibesensor.routes.clients import create_client_routes
+    from vibesensor.adapters.http.clients import create_client_routes
 
     registry = type("R", (), {"get": lambda self, cid: None})()
     control_plane = MagicMock()
@@ -86,7 +86,7 @@ async def test_identify_client_404_when_sensor_not_in_registry() -> None:
 
 @pytest.mark.asyncio
 async def test_identify_client_503_when_sensor_known_but_unreachable() -> None:
-    from vibesensor.routes.clients import create_client_routes
+    from vibesensor.adapters.http.clients import create_client_routes
 
     sentinel = object()
     registry = type("R", (), {"get": lambda self, cid: sentinel})()
@@ -102,7 +102,7 @@ async def test_identify_client_503_when_sensor_known_but_unreachable() -> None:
 
 @pytest.mark.asyncio
 async def test_identify_client_200_when_sensor_reachable() -> None:
-    from vibesensor.routes.clients import create_client_routes
+    from vibesensor.adapters.http.clients import create_client_routes
 
     sentinel = object()
     registry = type("R", (), {"get": lambda self, cid: sentinel})()

@@ -1,4 +1,4 @@
-"""Unit tests for vibesensor.processing.fft pure spectral functions.
+"""Unit tests for vibesensor.infra.processing.fft pure spectral functions.
 
 These tests validate the stateless FFT/spectral functions that were
 extracted from the monolithic SignalProcessor class during the
@@ -12,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.processing.fft import (
+from vibesensor.infra.processing.fft import (
     compute_fft_spectrum,
     float_list,
     medfilt3,

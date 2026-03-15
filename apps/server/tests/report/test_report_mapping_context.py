@@ -6,7 +6,7 @@ import pytest
 
 from vibesensor.domain import Finding, TestRun
 from vibesensor.domain.run_capture import RunCapture
-from vibesensor.report.mapping import (
+from vibesensor.adapters.pdf.mapping import (
     PrimaryCandidateContext,
     ReportMappingContext,
 )

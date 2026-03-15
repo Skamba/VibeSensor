@@ -9,9 +9,9 @@ import pytest
 from _paths import SERVER_ROOT
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.report import pdf_page1
-from vibesensor.report.pdf_page1 import _draw_next_steps_table
-from vibesensor.report.report_data import NextStep
+from vibesensor.adapters.pdf import pdf_page1
+from vibesensor.adapters.pdf.pdf_page1 import _draw_next_steps_table
+from vibesensor.adapters.pdf.report_data import NextStep
 
 
 def _make_canvas() -> Canvas:

@@ -11,10 +11,10 @@ from unittest.mock import patch
 
 import pytest
 
-from vibesensor.update.manager import UpdateManager
-from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
-from vibesensor.update.runner import CommandRunner
-from vibesensor.update.status import UpdateStateStore, UpdateStatusTracker
+from vibesensor.use_cases.updates.manager import UpdateManager
+from vibesensor.use_cases.updates.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
+from vibesensor.use_cases.updates.runner import CommandRunner
+from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
 
 # ---------------------------------------------------------------------------
 # Fake runner (minimal; only records calls)
@@ -330,8 +330,8 @@ class TestStartupRecovery:
         mgr = make_mgr()
 
         with (
-            patch("vibesensor.update.wifi.HOTSPOT_RESTORE_RETRIES", 1),
-            patch("vibesensor.update.wifi.HOTSPOT_RESTORE_DELAY_S", 0),
+            patch("vibesensor.use_cases.updates.wifi.HOTSPOT_RESTORE_RETRIES", 1),
+            patch("vibesensor.use_cases.updates.wifi.HOTSPOT_RESTORE_DELAY_S", 0),
         ):
             await mgr.startup_recover()
 

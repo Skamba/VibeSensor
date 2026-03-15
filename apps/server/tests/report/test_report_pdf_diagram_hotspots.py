@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from vibesensor.report.pdf_diagram_render import (
+from vibesensor.adapters.pdf.pdf_diagram_render import (
     _build_sensor_render_plan,
     _estimate_text_width,
     _resolve_marker_states,
     car_location_diagram,
 )
-from vibesensor.report.pdf_style import REPORT_COLORS
+from vibesensor.adapters.pdf.pdf_style import REPORT_COLORS
 
 
 def _rectangles_overlap(

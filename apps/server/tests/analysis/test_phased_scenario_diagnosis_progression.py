@@ -14,7 +14,7 @@ from test_support import (
     wheel_hz,
 )
 
-from vibesensor.analysis import summarize_run_data
+from vibesensor.use_cases.diagnostics import summarize_run_data
 
 
 class TestScenario1IdleToSpeedUp:

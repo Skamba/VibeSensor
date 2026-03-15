@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .configuration_snapshot import ConfigurationSnapshot
-from .sensor import Sensor
-from .speed_source import SpeedSource
+from vibesensor.domain.configuration_snapshot import ConfigurationSnapshot
+from vibesensor.domain.sensor import Sensor
+from vibesensor.domain.speed_source import SpeedSource
 
 __all__ = ["RunSetup"]
 

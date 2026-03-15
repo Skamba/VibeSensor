@@ -17,14 +17,14 @@ from test_support.report_helpers import (
     report_sample as _base_sample,
 )
 
-from vibesensor.analysis import summarize_log
-from vibesensor.analysis.top_cause_selection import select_top_causes
-from vibesensor.boundaries.finding import finding_from_payload
-from vibesensor.constants import KMH_TO_MPS
+from vibesensor.use_cases.diagnostics import summarize_log
+from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
+from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.domain import Finding
-from vibesensor.report.mapping import map_summary
-from vibesensor.report.pdf_engine import build_report_pdf
-from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
+from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.adapters.pdf.report_data import PatternEvidence, ReportTemplateData
 
 _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
 

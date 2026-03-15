@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 from tests.test_support.findings import make_finding_payload
-from vibesensor.analysis.findings import finalize_findings
-from vibesensor.analysis.summary_builder import summarize_run_data
+from vibesensor.use_cases.diagnostics.findings import finalize_findings
+from vibesensor.use_cases.diagnostics.summary_builder import summarize_run_data
 from vibesensor.domain import Finding
 
 _MINIMAL_META: dict[str, Any] = {

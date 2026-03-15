@@ -12,8 +12,8 @@ from test_support import (
     wheel_hz,
 )
 
-from vibesensor.analysis import summarize_run_data
-from vibesensor.report.mapping import map_summary
+from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.adapters.pdf.mapping import map_summary
 
 
 class TestPdfContentForDiagnosedScenario:
@@ -39,7 +39,7 @@ class TestPdfContentForDiagnosedScenario:
                     ),
                 )
 
-        from vibesensor.report.pdf_engine import build_report_pdf
+        from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
         summary = summarize_run_data(
             standard_metadata(language="en"),
@@ -78,7 +78,7 @@ class TestPdfContentForDiagnosedScenario:
                     ),
                 )
 
-        from vibesensor.report.pdf_engine import build_report_pdf
+        from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
         summary = summarize_run_data(
             standard_metadata(language="nl"),

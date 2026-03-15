@@ -7,7 +7,7 @@ the function's output contract so regressions are caught immediately.
 
 from __future__ import annotations
 
-from vibesensor.runlog import (
+from vibesensor.adapters.persistence.runlog import (
     RUN_END_TYPE,
     RUN_SCHEMA_VERSION,
     create_run_end_record,

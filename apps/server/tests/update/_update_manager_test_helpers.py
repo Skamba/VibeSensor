@@ -8,9 +8,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from vibesensor.update.manager import UpdateManager
-from vibesensor.update.runner import CommandRunner
-from vibesensor.update.status import collect_runtime_details
+from vibesensor.use_cases.updates.manager import UpdateManager
+from vibesensor.use_cases.updates.runner import CommandRunner
+from vibesensor.use_cases.updates.status import collect_runtime_details
 
 
 def _build_fake_downloaded_wheel(path: Path, *, version: str) -> None:
@@ -123,8 +123,8 @@ async def run_update(
 def patch_release_fetcher(current_version: str = "2025.6.15") -> Iterator[MagicMock]:
     with (
         patch("shutil.which", mock_which),
-        patch("vibesensor.update.release_fetcher.ServerReleaseFetcher") as mock_fetcher,
-        patch("vibesensor.update.release_fetcher.ReleaseFetcherConfig"),
+        patch("vibesensor.use_cases.updates.release_fetcher.ServerReleaseFetcher") as mock_fetcher,
+        patch("vibesensor.use_cases.updates.release_fetcher.ReleaseFetcherConfig"),
         patch("vibesensor._version.__version__", current_version),
     ):
         yield mock_fetcher

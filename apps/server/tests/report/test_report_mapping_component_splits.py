@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.report.mapping import (
+from vibesensor.adapters.pdf.mapping import (
     _resolve_optional_step_value,
     collect_location_intensity,
     peak_row_system_label,

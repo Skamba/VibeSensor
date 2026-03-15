@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.config import LoggingConfig, ProcessingConfig, ServerConfig, UDPConfig, load_config
+from vibesensor.app.settings import LoggingConfig, ProcessingConfig, ServerConfig, UDPConfig, load_config
 
 
 def _write_config(path: Path, payload: dict) -> None:

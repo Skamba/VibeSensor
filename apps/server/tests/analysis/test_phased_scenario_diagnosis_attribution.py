@@ -11,8 +11,8 @@ from test_support import (
     wheel_hz,
 )
 
-from vibesensor.analysis import summarize_run_data
-from vibesensor.analysis.findings import _classify_peak_type
+from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.use_cases.diagnostics.findings import _classify_peak_type
 
 
 class TestSpeedBandAttribution:

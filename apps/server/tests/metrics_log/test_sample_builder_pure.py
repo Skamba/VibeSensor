@@ -1,4 +1,4 @@
-"""Pure-function tests for vibesensor.metrics_log.sample_builder.
+"""Pure-function tests for vibesensor.use_cases.run.sample_builder.
 
 All helpers tested here are stateless, so no async machinery or database
 fixtures are required.  This file focuses on edge cases not covered by the
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.metrics_log.sample_builder import (
+from vibesensor.use_cases.run.sample_builder import (
     _parse_peak,
     extract_strength_data,
     safe_metric,

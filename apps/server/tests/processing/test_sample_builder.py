@@ -1,4 +1,4 @@
-"""Unit tests for vibesensor.metrics_log.sample_builder.
+"""Unit tests for vibesensor.use_cases.run.sample_builder.
 
 These tests exercise the pure functions extracted from RunRecorder,
 validating that they work independently of any session lifecycle or
@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.metrics_log.sample_builder import (
+from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
     build_sample_records,
     dominant_hz_from_strength,

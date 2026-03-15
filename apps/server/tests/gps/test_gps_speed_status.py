@@ -6,8 +6,8 @@ import time
 
 import pytest
 
-from vibesensor.backend_types import SpeedSourceConfig
-from vibesensor.gps_speed import (
+from vibesensor.shared.types.backend_types import SpeedSourceConfig
+from vibesensor.adapters.gps.gps_speed import (
     DEFAULT_FALLBACK_MODE,
     DEFAULT_STALE_TIMEOUT_S,
     MAX_STALE_TIMEOUT_S,

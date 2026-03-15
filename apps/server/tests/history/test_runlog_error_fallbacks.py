@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.runlog import append_jsonl_records
+from vibesensor.adapters.persistence.runlog import append_jsonl_records
 
 # -- Helpers -------------------------------------------------------------------
 

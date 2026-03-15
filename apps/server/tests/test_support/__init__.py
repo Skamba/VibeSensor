@@ -6,8 +6,8 @@ This package is the canonical shared test-helper entrypoint.
 
 from typing import Any
 
-from .analysis import extract_top, run_analysis, top_confidence
-from .assertions import (
+from vibesensor.use_cases.diagnostics import extract_top, run_analysis, top_confidence
+from vibesensor.assertions import (
     assert_confidence_between,
     assert_confidence_label_valid,
     assert_diagnosis_contract,
@@ -27,7 +27,7 @@ from .assertions import (
     extract_top_finding,
     parse_speed_band,
 )
-from .core import (
+from vibesensor.core import (
     ALL_SENSORS,
     ALL_WHEEL_SENSORS,
     CAR_PROFILE_IDS,
@@ -57,7 +57,7 @@ from .core import (
     standard_metadata,
     wheel_hz,
 )
-from .fault_scenarios import (
+from vibesensor.fault_scenarios import (
     build_fault_samples_at_speed,
     build_speed_sweep_fault_samples,
     make_engine_order_samples,
@@ -69,7 +69,7 @@ from .fault_scenarios import (
     make_profile_speed_sweep_fault_samples,
     make_speed_sweep_fault_samples,
 )
-from .sample_scenarios import (
+from vibesensor.sample_scenarios import (
     make_clipped_samples,
     make_clock_skew_samples,
     make_diffuse_samples,

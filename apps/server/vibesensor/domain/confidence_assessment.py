@@ -73,7 +73,7 @@ class ConfidenceAssessment:
         on top (reference gaps, speed steadiness, spatial separation,
         sensor count).
         """
-        from .finding import Finding
+        from vibesensor.domain.finding import Finding
 
         conf = float(confidence) if math.isfinite(confidence) else 0.0
         label_key, tone, pct_text = Finding.classify_confidence(

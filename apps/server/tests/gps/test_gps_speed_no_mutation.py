@@ -15,7 +15,7 @@ import time
 
 import pytest
 
-from vibesensor.gps_speed import GPSSpeedMonitor, SpeedResolution
+from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor, SpeedResolution
 
 
 def _snapshot(m: GPSSpeedMonitor) -> dict:

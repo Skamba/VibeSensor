@@ -127,7 +127,7 @@ class TestSimulatorIngestion:
         sim_cmd = [
             sys.executable,
             "-m",
-            "vibesensor.simulator.sim_sender",
+            "vibesensor.adapters.simulator.sim_sender",
             "--server-host",
             SIM_HOST,
             "--server-data-port",

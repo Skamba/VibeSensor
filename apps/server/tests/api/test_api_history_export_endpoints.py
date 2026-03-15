@@ -19,8 +19,8 @@ from _history_endpoint_helpers import (
 )
 from fastapi import HTTPException
 
-from vibesensor.analysis import summarize_run_data
-from vibesensor.routes import create_router
+from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.adapters.http import create_router
 
 
 @pytest.mark.asyncio
@@ -94,7 +94,7 @@ async def test_history_export_uses_streaming_response() -> None:
 
 @pytest.mark.asyncio
 async def test_history_export_csv_has_fixed_columns() -> None:
-    from vibesensor.history_services.exports import EXPORT_CSV_COLUMNS
+    from vibesensor.use_cases.history.exports import EXPORT_CSV_COLUMNS
 
     router, _ = make_router_and_state(language="en", sample_count=5)
     endpoint = route_endpoint(router, "/api/history/{run_id}/export")

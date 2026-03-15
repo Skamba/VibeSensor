@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import HistoryDB
 
 
 def test_append_samples_in_chunks(tmp_path: Path) -> None:
@@ -141,7 +141,7 @@ def test_create_run_persists_case_id(tmp_path: Path) -> None:
 def test_create_run_logs_stale_recovery(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-old", "2026-01-01T00:00:00Z", {"source": "test"})
-    with caplog.at_level(logging.WARNING, logger="vibesensor.history_db._run_writes"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.persistence.history_db._run_writes"):
         db.create_run("run-new", "2026-01-01T00:01:00Z", {"source": "test"})
     assert any("stale recording" in r.message.lower() for r in caplog.records)
 
@@ -364,7 +364,7 @@ def test_get_run_metadata_non_dict_json_returns_none_and_warns(
             ("[1, 2, 3]", "run-bad-meta"),
         )
 
-    with caplog.at_level(logging.WARNING, logger="vibesensor.history_db"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.persistence.history_db"):
         result = db.get_run_metadata("run-bad-meta")
 
     assert result is None

@@ -1,7 +1,7 @@
 """Guardrail tests enforcing analysis-folder ownership and pipeline discipline.
 
 These tests verify the architectural invariants:
-1. External code imports analysis symbols only through ``vibesensor.analysis``
+1. External code imports analysis symbols only through ``vibesensor.use_cases.diagnostics``
    (the package ``__init__.py``), never from sub-modules directly.
 2. The analysis pipeline has a single clear entrypoint (``summarize_run_data``).
 3. Post-stop analysis code lives exclusively in the analysis folder.
@@ -54,7 +54,7 @@ def _analysis_submodule_imports(source: str, filename: str) -> list[str]:
             if mod.startswith("analysis."):
                 violations.append(f"line {node.lineno}: from {'.' * level}{mod} import ...")
         else:
-            # Absolute import: `from vibesensor.analysis.xyz import …`
+            # Absolute import: `from vibesensor.use_cases.diagnostics.xyz import …`
             parts = mod.split(".")
             if "analysis" in parts:
                 idx = parts.index("analysis")
@@ -65,12 +65,12 @@ def _analysis_submodule_imports(source: str, filename: str) -> list[str]:
 
 @pytest.mark.parametrize("module_path", _EXTERNAL_MODULES, ids=lambda p: p.name)
 def test_external_module_uses_analysis_public_api(module_path: Path) -> None:
-    """Files outside analysis/ must import from ``vibesensor.analysis``, not sub-modules."""
+    """Files outside analysis/ must import from ``vibesensor.use_cases.diagnostics``, not sub-modules."""
     source = module_path.read_text(encoding="utf-8")
     violations = _analysis_submodule_imports(source, str(module_path))
     assert not violations, (
         f"{module_path.name} imports from analysis sub-modules directly "
-        f"(must use 'from .analysis import …' or 'from vibesensor.analysis import …'):\n"
+        f"(must use 'from .analysis import …' or 'from vibesensor.use_cases.diagnostics import …'):\n"
         + "\n".join(violations)
     )
 
@@ -91,12 +91,12 @@ _EXPECTED_PUBLIC_SYMBOLS = [
 @pytest.mark.parametrize("symbol", _EXPECTED_PUBLIC_SYMBOLS)
 def test_analysis_init_exports_core_symbol(symbol: str) -> None:
     """Each expected symbol must be importable from
-    ``vibesensor.analysis`` and listed in ``__all__``.
+    ``vibesensor.use_cases.diagnostics`` and listed in ``__all__``.
     """
     from vibesensor import analysis
 
-    assert hasattr(analysis, symbol), f"vibesensor.analysis.__init__ must export '{symbol}'"
-    assert symbol in analysis.__all__, f"vibesensor.analysis.__all__ is missing '{symbol}'"
+    assert hasattr(analysis, symbol), f"vibesensor.use_cases.diagnostics.__init__ must export '{symbol}'"
+    assert symbol in analysis.__all__, f"vibesensor.use_cases.diagnostics.__all__ is missing '{symbol}'"
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +106,7 @@ def test_analysis_init_exports_core_symbol(symbol: str) -> None:
 
 def test_summarize_run_data_returns_expected_structure() -> None:
     """summarize_run_data produces a dict with the expected top-level keys."""
-    from vibesensor.analysis import summarize_run_data
+    from vibesensor.use_cases.diagnostics import summarize_run_data
 
     metadata = {
         "run_id": "test-arch",

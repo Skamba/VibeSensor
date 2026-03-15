@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.config import SERVER_DIR, load_config
+from vibesensor.app.settings import SERVER_DIR, load_config
 
 
 def _write_config(path: Path, payload: dict) -> None:

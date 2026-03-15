@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from vibesensor.runtime import RuntimeState
+    from vibesensor.infra.runtime import RuntimeState
 
 # ---------------------------------------------------------------------------
 # Minimal stubs – only implement methods called by build_ws_payload / on_ws_broadcast_tick
@@ -152,9 +152,9 @@ def _make_state(
     ui_push_hz: int = 10,
     ui_heavy_push_hz: int = 4,
 ) -> RuntimeState:
-    import vibesensor.runtime as runtime_module
-    from vibesensor.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
-    from vibesensor.runtime.ws_broadcast import WsBroadcastService
+    import vibesensor.infra.runtime as runtime_module
+    from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
+    from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 
     registry = _StubRegistry(clients)
     processor = _StubProcessor()

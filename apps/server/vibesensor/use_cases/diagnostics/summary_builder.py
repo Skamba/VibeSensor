@@ -1,0 +1,1276 @@
+"""Structured orchestration for building analysis summaries from run samples."""
+
+from __future__ import annotations
+
+import math
+from collections import defaultdict
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, replace
+from datetime import datetime, timedelta
+from pathlib import Path
+from statistics import median as _median
+from typing import Any
+
+from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
+from vibesensor.vibration_strength import compute_db
+
+from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
+from vibesensor.shared.boundaries.speed_profile import speed_profile_from_stats
+from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
+from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
+from vibesensor.domain import (
+    Car,
+    ConfigurationSnapshot,
+    DiagnosticCase,
+    DiagnosticReasoning,
+    LocationHotspot,
+    RunCapture,
+    RunSetup,
+    RunSuitability,
+    Sensor,
+    SpeedProfile,
+    SpeedSource,
+    Symptom,
+    TestRun,
+)
+from vibesensor.domain import (
+    DrivingSegment as DomainDrivingSegment,
+)
+from vibesensor.domain import (
+    Finding as DomainFinding,
+)
+from vibesensor.domain.services import (
+    ObservationEvidence,
+    evaluate_hypotheses,
+    extract_observations,
+    plan_test_actions,
+    recognize_signatures,
+)
+from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
+from vibesensor.report_i18n import normalize_lang
+from vibesensor.shared.run_context import build_summary_warnings, order_reference_context_complete
+from vibesensor.adapters.persistence.runlog import parse_iso8601, utc_now_iso
+from vibesensor.use_cases.diagnostics._types import (
+    AccelStatistics,
+    AnalysisSummary,
+    FindingPayload,
+    I18nRef,
+    IntensityRow,
+    JsonObject,
+    JsonValue,
+    MetadataDict,
+    PhaseSegmentSummary,
+    PhaseSpeedBreakdownRow,
+    PhaseSpeedStats,
+    PhaseSummary,
+    PhaseTimelineEntry,
+    RunSuitabilityCheck,
+    Sample,
+    SpeedBreakdownRow,
+    SpeedStats,
+    TestStep,
+    i18n_ref,
+    is_json_object,
+)
+from vibesensor.use_cases.diagnostics.findings import (
+    _build_findings,
+    _phase_speed_breakdown,
+    _sensor_intensity_by_location,
+    _speed_breakdown,
+)
+from vibesensor.use_cases.diagnostics.helpers import (
+    PHASE_I18N_KEYS,
+    _format_duration,
+    _load_run,
+    _location_label,
+    _locations_connected_throughout_run,
+    _mean_variance,
+    _outlier_summary,
+    _percent_missing,
+    _primary_vibration_strength_db,
+    _run_noise_baseline_g,
+    _sensor_limit_g,
+    _speed_stats,
+    _speed_stats_by_phase,
+    _validate_required_strength_metrics,
+    counter_delta,
+)
+from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, PhaseSegment, segment_run_phases
+from vibesensor.use_cases.diagnostics.plots import _plot_data
+from vibesensor.use_cases.diagnostics.strength_labels import strength_label as _strength_label
+from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Suitability checks and data quality
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+# Fraction of sensor ADC limit above which a sample is considered clipping.
+# 2% headroom accounts for quantization effects near the ADC rail.
+_SATURATION_FRACTION = 0.98
+
+
+def _json_outlier_summary(values: list[float]) -> JsonObject:
+    """Convert the local outlier summary helper output into the shared JSON shape."""
+    summary = _outlier_summary(values)
+    return {
+        "count": summary["count"],
+        "outlier_count": summary["outlier_count"],
+        "outlier_pct": summary["outlier_pct"],
+        "lower_bound": summary["lower_bound"],
+        "upper_bound": summary["upper_bound"],
+    }
+
+
+def compute_accel_statistics(
+    samples: list[Sample],
+    sensor_model: object,
+) -> AccelStatistics:
+    """Compute per-axis values, aggregate amplitude metrics, and saturation counts."""
+    sensor_limit = _sensor_limit_g(sensor_model)
+    sat_threshold = sensor_limit * _SATURATION_FRACTION if sensor_limit is not None else None
+
+    accel_x_vals: list[float] = []
+    accel_y_vals: list[float] = []
+    accel_z_vals: list[float] = []
+    accel_mag_vals: list[float] = []
+    amp_metric_values: list[float] = []
+    sat_count = 0
+
+    for sample in samples:
+        x = _as_float(sample.get("accel_x_g"))
+        y = _as_float(sample.get("accel_y_g"))
+        z = _as_float(sample.get("accel_z_g"))
+        if x is not None:
+            accel_x_vals.append(x)
+        if y is not None:
+            accel_y_vals.append(y)
+        if z is not None:
+            accel_z_vals.append(z)
+        if x is not None and y is not None and z is not None:
+            accel_mag_vals.append(math.sqrt(x * x + y * y + z * z))
+        if sat_threshold is not None and any(
+            axis_val is not None and abs(axis_val) >= sat_threshold for axis_val in (x, y, z)
+        ):
+            sat_count += 1
+        amp = _primary_vibration_strength_db(sample)
+        if amp is not None:
+            amp_metric_values.append(amp)
+
+    x_mean, x_var = _mean_variance(accel_x_vals)
+    y_mean, y_var = _mean_variance(accel_y_vals)
+    z_mean, z_var = _mean_variance(accel_z_vals)
+    return {
+        "accel_x_vals": accel_x_vals,
+        "accel_y_vals": accel_y_vals,
+        "accel_z_vals": accel_z_vals,
+        "accel_mag_vals": accel_mag_vals,
+        "amp_metric_values": amp_metric_values,
+        "sat_count": sat_count,
+        "sensor_limit": sensor_limit,
+        "x_mean": x_mean,
+        "x_var": x_var,
+        "y_mean": y_mean,
+        "y_var": y_var,
+        "z_mean": z_mean,
+        "z_var": z_var,
+    }
+
+
+def compute_frame_integrity_counts(samples: list[Sample]) -> tuple[int, int]:
+    """Compute ``(total_dropped, total_overflow)`` across all client sensors."""
+    per_client_dropped: dict[str, list[float]] = defaultdict(list)
+    per_client_overflow: dict[str, list[float]] = defaultdict(list)
+    for sample in samples:
+        client_id = str(sample.get("client_id") or "")
+        if not client_id:
+            continue
+        dropped = _as_float(sample.get("frames_dropped_total"))
+        if dropped is not None:
+            per_client_dropped[client_id].append(dropped)
+        overflow = _as_float(sample.get("queue_overflow_drops"))
+        if overflow is not None:
+            per_client_overflow[client_id].append(overflow)
+    total_dropped = sum(counter_delta(values) for values in per_client_dropped.values())
+    total_overflow = sum(counter_delta(values) for values in per_client_overflow.values())
+    return total_dropped, total_overflow
+
+
+def compute_reference_completeness(metadata: MetadataDict) -> bool:
+    """Return True when enough reference metadata is present for order analysis."""
+    return bool(order_reference_context_complete(metadata))
+
+
+def build_data_quality_dict(
+    samples: list[Sample],
+    speed_values: list[float],
+    speed_stats: SpeedStats,
+    speed_non_null_pct: float,
+    accel_stats: AccelStatistics,
+    amp_metric_values: list[float],
+) -> JsonObject:
+    """Build the ``data_quality`` sub-dict for the run summary."""
+    return {
+        "required_missing_pct": {
+            "t_s": _percent_missing(samples, "t_s"),
+            "speed_kmh": _percent_missing(samples, "speed_kmh"),
+            "accel_x": _percent_missing(samples, "accel_x_g"),
+            "accel_y": _percent_missing(samples, "accel_y_g"),
+            "accel_z": _percent_missing(samples, "accel_z_g"),
+        },
+        "speed_coverage": {
+            "non_null_pct": speed_non_null_pct,
+            "min_kmh": min(speed_values) if speed_values else None,
+            "max_kmh": max(speed_values) if speed_values else None,
+            "mean_kmh": speed_stats.get("mean_kmh"),
+            "stddev_kmh": speed_stats.get("stddev_kmh"),
+            "count_non_null": len(speed_values),
+        },
+        "accel_sanity": {
+            "x_mean": accel_stats["x_mean"],
+            "x_variance": accel_stats["x_var"],
+            "y_mean": accel_stats["y_mean"],
+            "y_variance": accel_stats["y_var"],
+            "z_mean": accel_stats["z_mean"],
+            "z_variance": accel_stats["z_var"],
+            "sensor_limit": accel_stats["sensor_limit"],
+            "saturation_count": accel_stats["sat_count"],
+        },
+        "outliers": {
+            "accel_magnitude": _json_outlier_summary(accel_stats["accel_mag_vals"]),
+            "amplitude_metric": _json_outlier_summary(amp_metric_values),
+        },
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Phase timeline and speed analysis
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def build_phase_timeline(
+    phase_segments: list[PhaseSegment],
+    findings: list[FindingPayload],
+    *,
+    min_confidence: float,
+) -> list[PhaseTimelineEntry]:
+    """Build a simple phase timeline annotated with finding evidence."""
+    if not phase_segments:
+        return []
+
+    finding_phases: set[str] = set()
+    for finding in findings:
+        if not isinstance(finding, dict):
+            continue
+        if str(finding.get("finding_id", "")).startswith("REF_"):
+            continue
+        conf = _as_float(finding.get("confidence")) or 0.0
+        if conf < min_confidence:
+            continue
+        phase_ev = finding.get("phase_evidence")
+        if isinstance(phase_ev, dict):
+            detected_phases = phase_ev.get("phases_detected", [])
+            if not isinstance(detected_phases, list):
+                continue
+            for phase in detected_phases:
+                finding_phases.add(str(phase))
+
+    return [
+        {
+            "phase": segment.phase.value,
+            "start_t_s": None if math.isnan(segment.start_t_s) else segment.start_t_s,
+            "end_t_s": None if math.isnan(segment.end_t_s) else segment.end_t_s,
+            "speed_min_kmh": segment.speed_min_kmh,
+            "speed_max_kmh": segment.speed_max_kmh,
+            "has_fault_evidence": segment.phase.value in finding_phases,
+        }
+        for segment in phase_segments
+    ]
+
+
+def serialize_phase_segments(phase_segments: list[PhaseSegment]) -> list[PhaseSegmentSummary]:
+    """Serialize phase segments to JSON-safe dicts."""
+    return [
+        {
+            "phase": seg.phase.value,
+            "start_idx": seg.start_idx,
+            "end_idx": seg.end_idx,
+            "start_t_s": (
+                None
+                if isinstance(seg.start_t_s, float) and math.isnan(seg.start_t_s)
+                else seg.start_t_s
+            ),
+            "end_t_s": (
+                None if isinstance(seg.end_t_s, float) and math.isnan(seg.end_t_s) else seg.end_t_s
+            ),
+            "speed_min_kmh": seg.speed_min_kmh,
+            "speed_max_kmh": seg.speed_max_kmh,
+            "sample_count": seg.sample_count,
+        }
+        for seg in phase_segments
+    ]
+
+
+def build_domain_driving_segments(
+    phase_segments: list[PhaseSegment],
+) -> tuple[DomainDrivingSegment, ...]:
+    return tuple(
+        DomainDrivingSegment(
+            phase=segment.phase,
+            start_idx=segment.start_idx,
+            end_idx=segment.end_idx,
+            start_t_s=(
+                None
+                if isinstance(segment.start_t_s, float) and math.isnan(segment.start_t_s)
+                else segment.start_t_s
+            ),
+            end_t_s=(
+                None
+                if isinstance(segment.end_t_s, float) and math.isnan(segment.end_t_s)
+                else segment.end_t_s
+            ),
+            speed_min_kmh=segment.speed_min_kmh,
+            speed_max_kmh=segment.speed_max_kmh,
+            sample_count=segment.sample_count,
+        )
+        for segment in phase_segments
+    )
+
+
+def build_domain_car(metadata: MetadataDict) -> Car | None:
+    car_name = str(metadata.get("car_name") or "").strip()
+    car_type = str(metadata.get("car_type") or "").strip()
+    aspects = {
+        key: value
+        for key in ("tire_width_mm", "tire_aspect_pct", "rim_in")
+        if isinstance((value := _as_float(metadata.get(key))), float)
+    }
+    if not car_name and not car_type and not aspects:
+        return None
+    return Car(
+        name=car_name or "Unnamed Car",
+        car_type=car_type or "sedan",
+        aspects=aspects,
+        variant=str(metadata.get("car_variant") or "").strip() or None,
+    )
+
+
+def build_domain_symptoms(metadata: MetadataDict) -> tuple[Symptom, ...]:
+    complaint = str(metadata.get("symptom") or metadata.get("complaint") or "").strip()
+    if not complaint:
+        return (Symptom.unspecified(),)
+    return (
+        Symptom(
+            description=complaint,
+            onset=str(metadata.get("symptom_onset") or "").strip(),
+            context=str(metadata.get("symptom_context") or "").strip(),
+        ),
+    )
+
+
+def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
+    """Convert a run noise baseline amplitude in g to dB, or return None."""
+    if run_noise_baseline_g is None:
+        return None
+    return compute_db(
+        max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
+        MEMS_NOISE_FLOOR_G,
+    )
+
+
+def prepare_speed_and_phases(
+    samples: list[Sample],
+) -> tuple[list[float], SpeedStats, float, bool, list[DrivingPhase], list[PhaseSegment]]:
+    """Compute speed stats and phase segmentation shared by multiple entry points."""
+    speed_values = [
+        speed
+        for speed in (_as_float(sample.get("speed_kmh")) for sample in samples)
+        if speed is not None and speed > 0
+    ]
+    speed_stats = _speed_stats(speed_values)
+    speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
+    speed_sufficient = (
+        speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
+    )
+    per_sample_phases, phase_segments = segment_run_phases(samples)
+    return (
+        speed_values,
+        speed_stats,
+        speed_non_null_pct,
+        speed_sufficient,
+        per_sample_phases,
+        phase_segments,
+    )
+
+
+def compute_run_timing(
+    metadata: MetadataDict,
+    samples: list[Sample],
+    file_name: str,
+) -> tuple[str, datetime | None, datetime | None, float]:
+    """Extract run_id, start/end timestamps and duration from metadata+samples."""
+    run_id = str(metadata.get("run_id") or f"run-{file_name}")
+    start_ts = parse_iso8601(metadata.get("start_time_utc"))
+    end_ts = parse_iso8601(metadata.get("end_time_utc"))
+
+    if end_ts is None and samples:
+        sample_max_t = max((_as_float(sample.get("t_s")) or 0.0) for sample in samples)
+        if start_ts is not None:
+            end_ts = start_ts + timedelta(seconds=sample_max_t)
+    duration_s = 0.0
+    if start_ts is not None and end_ts is not None:
+        duration_s = max(0.0, (end_ts - start_ts).total_seconds())
+    elif samples:
+        duration_s = max((_as_float(sample.get("t_s")) or 0.0) for sample in samples)
+
+    return run_id, start_ts, end_ts, duration_s
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Summary payload assembly
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def build_sensor_analysis(
+    *,
+    samples: list[Sample],
+    language: str,
+    per_sample_phases: list[DrivingPhase],
+) -> tuple[list[str], set[str], list[IntensityRow]]:
+    """Build sensor location lists and intensity rows from analysed samples."""
+    sensor_locations = sorted(
+        {
+            label
+            for sample in samples
+            if isinstance(sample, dict) and (label := _location_label(sample, lang=language))
+        },
+    )
+    connected_locations = _locations_connected_throughout_run(samples, lang=language)
+    sensor_intensity_by_location = _sensor_intensity_by_location(
+        samples,
+        include_locations=set(sensor_locations),
+        lang=language,
+        connected_locations=connected_locations,
+        per_sample_phases=per_sample_phases,
+    )
+    return sensor_locations, connected_locations, sensor_intensity_by_location
+
+
+def summarize_origin(
+    findings: tuple[DomainFinding, ...],
+) -> SuspectedVibrationOrigin:
+    """Build the most-likely-origin summary from ranked diagnostic findings."""
+    if not findings:
+        return {
+            "location": "unknown",
+            "alternative_locations": [],
+            "suspected_source": "unknown",
+            "dominance_ratio": None,
+            "weak_spatial_separation": True,
+            "explanation": i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
+        }
+
+    top_finding = findings[0]
+
+    # Build LocationHotspot from domain Finding
+    if top_finding.location is not None:
+        loc = LocationHotspot.from_analysis_inputs(
+            strongest_location=(
+                top_finding.location.strongest_location
+                or top_finding.strongest_location
+                or "unknown"
+            ),
+            dominance_ratio=(
+                top_finding.location.dominance_ratio
+                if top_finding.location.dominance_ratio is not None
+                else top_finding.dominance_ratio
+            ),
+            localization_confidence=top_finding.location.localization_confidence,
+            weak_spatial_separation=top_finding.location.weak_spatial_separation,
+            ambiguous=top_finding.location.ambiguous,
+            alternative_locations=tuple(top_finding.location.alternative_locations),
+        )
+    else:
+        loc = LocationHotspot.from_analysis_inputs(
+            strongest_location=top_finding.strongest_location or "unknown",
+            dominance_ratio=top_finding.dominance_ratio,
+            weak_spatial_separation=top_finding.weak_spatial_separation,
+        )
+
+    # Location count for adaptive weak spatial
+    location_count = top_finding.location.location_count if top_finding.location else None
+    loc = loc.with_adaptive_weak_spatial(location_count)
+
+    source = str(top_finding.suspected_source)
+
+    # Near-tie promotion
+    if len(findings) >= 2:
+        second = findings[1]
+        second_location = (
+            (second.location.strongest_location if second.location else "")
+            or second.strongest_location
+            or ""
+        ).strip()
+        loc = loc.promote_near_tie(
+            alternative_location=second_location,
+            top_confidence=top_finding.effective_confidence,
+            alternative_confidence=second.effective_confidence,
+        )
+
+    location = loc.summary_location
+    speed_band = str(top_finding.strongest_speed_band or "")
+    dominant_phase = (
+        str(top_finding.origin.dominant_phase or "").strip() if top_finding.origin else ""
+    )
+
+    explanation = build_origin_explanation(
+        source=source,
+        speed_band=speed_band,
+        location=location,
+        dominance=loc.dominance_ratio,
+        weak=not loc.has_clear_separation,
+        dominant_phase=dominant_phase,
+    )
+    return {
+        "location": location,
+        "alternative_locations": list(loc.supporting_locations),
+        "suspected_source": source,
+        "dominance_ratio": loc.dominance_ratio,
+        "weak_spatial_separation": not loc.has_clear_separation,
+        "speed_band": speed_band or None,
+        "dominant_phase": dominant_phase or None,
+        "explanation": explanation,
+    }
+
+
+def build_origin_explanation(
+    *,
+    source: str,
+    speed_band: str,
+    location: str,
+    dominance: float | None,
+    weak: bool,
+    dominant_phase: str,
+) -> JsonValue:
+    """Build the language-neutral origin explanation block."""
+    explanation_parts: list[JsonValue] = [
+        i18n_ref(
+            "ORIGIN_EXPLANATION_FINDING_1",
+            source=source,
+            speed_band=speed_band or "unknown",
+            location=location,
+            dominance=f"{dominance:.2f}x" if dominance is not None else "n/a",
+        ),
+    ]
+    if weak:
+        explanation_parts.append(i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
+    if dominant_phase and dominant_phase in PHASE_I18N_KEYS:
+        explanation_parts.append(i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
+    return explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts
+
+
+def build_summary_payload(
+    *,
+    file_name: str,
+    run_id: str,
+    samples: list[Sample],
+    duration_s: float,
+    language: str,
+    metadata: MetadataDict,
+    raw_sample_rate_hz: float | None,
+    speed_breakdown: list[SpeedBreakdownRow],
+    phase_speed_breakdown: list[PhaseSpeedBreakdownRow],
+    phase_segments: list[PhaseSegment],
+    run_noise_baseline_g: float | None,
+    speed_breakdown_skipped_reason: I18nRef | None,
+    findings: list[FindingPayload],
+    top_causes: list[FindingPayload],
+    most_likely_origin: SuspectedVibrationOrigin,
+    test_plan: list[TestStep],
+    phase_timeline: list[PhaseTimelineEntry],
+    speed_stats: SpeedStats,
+    speed_stats_by_phase: dict[str, PhaseSpeedStats],
+    phase_info: PhaseSummary,
+    sensor_locations: list[str],
+    connected_locations: set[str],
+    sensor_intensity_by_location: list[IntensityRow],
+    run_suitability: list[RunSuitabilityCheck],
+    speed_values: list[float],
+    speed_non_null_pct: float,
+    accel_stats: AccelStatistics,
+    amp_metric_values: list[float],
+) -> AnalysisSummary:
+    """Assemble the final summary payload from already-computed artifacts."""
+    return {
+        "file_name": file_name,
+        "run_id": run_id,
+        "rows": len(samples),
+        "duration_s": duration_s,
+        "record_length": _format_duration(duration_s),
+        "lang": language,
+        "report_date": metadata.get("end_time_utc") or metadata.get("report_date"),
+        "start_time_utc": metadata.get("start_time_utc"),
+        "end_time_utc": metadata.get("end_time_utc"),
+        "sensor_model": metadata.get("sensor_model"),
+        "firmware_version": metadata.get("firmware_version"),
+        "raw_sample_rate_hz": raw_sample_rate_hz,
+        "feature_interval_s": _as_float(metadata.get("feature_interval_s")),
+        "fft_window_size_samples": metadata.get("fft_window_size_samples"),
+        "fft_window_type": metadata.get("fft_window_type"),
+        "peak_picker_method": metadata.get("peak_picker_method"),
+        "accel_scale_g_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
+        "incomplete_for_order_analysis": bool(metadata.get("incomplete_for_order_analysis")),
+        "metadata": metadata,
+        "warnings": [],
+        "speed_breakdown": speed_breakdown,
+        "phase_speed_breakdown": phase_speed_breakdown,
+        "phase_segments": serialize_phase_segments(phase_segments),
+        "run_noise_baseline_db": noise_baseline_db(run_noise_baseline_g),
+        "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
+        "findings": findings,
+        "top_causes": top_causes,
+        "most_likely_origin": most_likely_origin,
+        "test_plan": test_plan,
+        "phase_timeline": phase_timeline,
+        "speed_stats": speed_stats,
+        "speed_stats_by_phase": speed_stats_by_phase,
+        "phase_info": phase_info,
+        "sensor_locations": sensor_locations,
+        "sensor_locations_connected_throughout": sorted(connected_locations),
+        "sensor_count_used": len(sensor_locations),
+        "sensor_intensity_by_location": sensor_intensity_by_location,
+        "run_suitability": run_suitability,
+        "samples": samples,
+        "data_quality": build_data_quality_dict(
+            samples,
+            speed_values,
+            speed_stats,
+            speed_non_null_pct,
+            accel_stats,
+            amp_metric_values,
+        ),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Main orchestration
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def annotate_peaks_with_order_labels(summary: Mapping[str, Any]) -> None:
+    """Back-fill peak-table order labels by matching order findings to peak rows."""
+    plots = summary.get("plots")
+    if not is_json_object(plots):
+        return
+    raw_peaks_table = plots.get("peaks_table", [])
+    peaks_table = (
+        [row for row in raw_peaks_table if is_json_object(row)]
+        if isinstance(raw_peaks_table, list)
+        else []
+    )
+    raw_findings = summary.get("findings", [])
+    findings = (
+        [finding for finding in raw_findings if is_json_object(finding)]
+        if isinstance(raw_findings, list)
+        else []
+    )
+    if not peaks_table or not findings:
+        return
+
+    order_annotations: list[tuple[float, str]] = []
+    for finding in findings:
+        if finding.get("finding_id") != "F_ORDER":
+            continue
+        label = str(finding.get("frequency_hz_or_order") or "").strip()
+        matched_points = finding.get("matched_points")
+        if not label or not isinstance(matched_points, list) or not matched_points:
+            continue
+        matched_freqs = [
+            value
+            for point in matched_points
+            if isinstance(point, dict) and (value := _as_float(point.get("matched_hz"))) is not None
+        ]
+        if matched_freqs:
+            order_annotations.append((_median(matched_freqs), label))
+
+    if not order_annotations:
+        return
+
+    tolerance_hz = 2.0
+    used_rows: set[int] = set()
+    for median_hz, label in order_annotations:
+        best_idx: int | None = None
+        best_dist = tolerance_hz + 1.0
+        for idx, row in enumerate(peaks_table):
+            if idx in used_rows:
+                continue
+            freq = _as_float(row.get("frequency_hz"))
+            if freq is None:
+                continue
+            dist = abs(freq - median_hz)
+            if dist < best_dist:
+                best_idx = idx
+                best_dist = dist
+        if best_idx is not None and best_dist <= tolerance_hz:
+            peaks_table[best_idx]["order_label"] = label
+            used_rows.add(best_idx)
+
+
+@dataclass(frozen=True)
+class PreparedRunData:
+    """Input coordinator: shared timing, speed, and phase context for summary generation.
+
+    Retained as the canonical input coordinator for the analysis pipeline.
+    Computed once by :func:`prepare_run_data` and consumed by
+    :func:`build_findings_bundle`, :func:`build_run_suitability_bundle`,
+    and :class:`RunAnalysis`.
+    """
+
+    run_id: str
+    start_ts: datetime | None
+    end_ts: datetime | None
+    duration_s: float
+    raw_sample_rate_hz: float | None
+    speed_values: list[float]
+    speed_non_null_pct: float
+    speed_sufficient: bool
+    per_sample_phases: list[DrivingPhase]
+    phase_segments: list[PhaseSegment]
+    run_noise_baseline_g: float | None
+    speed_profile: SpeedProfile
+    speed_stats_by_phase: dict[str, PhaseSpeedStats]
+    speed_breakdown: list[SpeedBreakdownRow]
+    speed_breakdown_skipped_reason: I18nRef | None
+    phase_speed_breakdown: list[PhaseSpeedBreakdownRow]
+
+    # -- derived convenience ------------------------------------------------
+
+    @property
+    def is_steady_speed(self) -> bool:
+        """Whether the run had steady speed (relevant to confidence scoring)."""
+        return self.speed_profile.steady_speed
+
+    @property
+    def speed_stddev_kmh(self) -> float | None:
+        return self.speed_profile.stddev_kmh if self.speed_values else None
+
+    @property
+    def analysis_windows(self) -> list[AnalysisWindow]:
+        """Domain-level view of phase segments as :class:`AnalysisWindow` objects."""
+        return [seg.to_analysis_window() for seg in self.phase_segments]
+
+
+def prepare_run_data(
+    metadata: MetadataDict,
+    samples: list[Sample],
+    *,
+    file_name: str,
+) -> PreparedRunData:
+    """Prepare shared timing, speed, and phase context for summary generation."""
+    run_id, start_ts, end_ts, duration_s = compute_run_timing(metadata, samples, file_name)
+    (
+        speed_values,
+        speed_stats,
+        speed_non_null_pct,
+        speed_sufficient,
+        per_sample_phases,
+        phase_segments,
+    ) = prepare_speed_and_phases(samples)
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
+    speed_breakdown = _speed_breakdown(samples) if speed_sufficient else []
+    speed_breakdown_skipped_reason: I18nRef | None = None
+    if not speed_sufficient:
+        speed_breakdown_skipped_reason = i18n_ref(
+            "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND",
+        )
+    phase_info = build_phase_summary(phase_segments)
+
+    return PreparedRunData(
+        run_id=run_id,
+        start_ts=start_ts,
+        end_ts=end_ts,
+        duration_s=duration_s,
+        raw_sample_rate_hz=_as_float(metadata.get("raw_sample_rate_hz")),
+        speed_values=speed_values,
+        speed_non_null_pct=speed_non_null_pct,
+        speed_sufficient=speed_sufficient,
+        per_sample_phases=per_sample_phases,
+        phase_segments=phase_segments,
+        run_noise_baseline_g=run_noise_baseline_g,
+        speed_profile=speed_profile_from_stats(speed_stats, phase_info),
+        speed_stats_by_phase=_speed_stats_by_phase(samples, per_sample_phases),
+        speed_breakdown=speed_breakdown,
+        speed_breakdown_skipped_reason=speed_breakdown_skipped_reason,
+        phase_speed_breakdown=_phase_speed_breakdown(samples, per_sample_phases),
+    )
+
+
+def build_phase_summary(phase_segments: list[PhaseSegment]) -> PhaseSummary:
+    """Small wrapper to keep summary-building imports localized."""
+    from vibesensor.use_cases.diagnostics.phase_segmentation import phase_summary
+
+    return phase_summary(phase_segments)
+
+
+def build_findings_bundle(
+    metadata: MetadataDict,
+    samples: list[Sample],
+    *,
+    language: str,
+    prepared: PreparedRunData,
+    overall_strength_band_key: str | None,
+    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+) -> tuple[
+    SuspectedVibrationOrigin,
+    list[PhaseTimelineEntry],
+    tuple[DomainFinding, ...],
+    tuple[DomainFinding, ...],
+]:
+    """Build findings plus derived diagnosis narrative fields.
+
+    Returns ``(origin, timeline, domain_findings, domain_top_causes)``.
+    """
+    builder = findings_builder or _build_findings
+    domain_findings = builder(
+        metadata=metadata,
+        samples=samples,
+        speed_sufficient=prepared.speed_sufficient,
+        steady_speed=prepared.is_steady_speed,
+        speed_stddev_kmh=prepared.speed_stddev_kmh,
+        speed_non_null_pct=prepared.speed_non_null_pct,
+        raw_sample_rate_hz=prepared.raw_sample_rate_hz,
+        lang=language,
+        per_sample_phases=prepared.per_sample_phases,
+        run_noise_baseline_g=prepared.run_noise_baseline_g,
+    )
+    domain_diagnostic_findings = tuple(f for f in domain_findings if not f.is_reference)
+    most_likely_origin = summarize_origin(
+        domain_diagnostic_findings,
+    )
+    # build_phase_timeline needs FindingPayload dicts
+    from vibesensor.shared.boundaries.finding import finding_payload_from_domain
+
+    finding_payloads = [finding_payload_from_domain(f) for f in domain_findings]
+    phase_timeline = build_phase_timeline(
+        prepared.phase_segments,
+        finding_payloads,
+        min_confidence=0.25,
+    )
+    domain_top_causes = select_top_causes(
+        domain_findings,
+    )
+    return (
+        most_likely_origin,
+        phase_timeline,
+        domain_findings,
+        domain_top_causes,
+    )
+
+
+def build_sensor_bundle(
+    samples: list[Sample],
+    *,
+    language: str,
+    per_sample_phases: list[DrivingPhase],
+) -> tuple[list[str], set[str], list[IntensityRow]]:
+    """Build location-scoped sensor summaries used by analysis and reports."""
+    return build_sensor_analysis(
+        samples=samples,
+        language=language,
+        per_sample_phases=per_sample_phases,
+    )
+
+
+def build_run_suitability_bundle(
+    metadata: MetadataDict,
+    samples: list[Sample],
+    *,
+    prepared: PreparedRunData,
+    accel_stats: AccelStatistics,
+) -> tuple[bool, RunSuitability | None, str | None]:
+    """Build run-suitability checks and related confidence context."""
+    reference_complete = compute_reference_completeness(metadata)
+    sensor_ids = {
+        str(cid)
+        for sample in samples
+        if isinstance(sample, dict) and (cid := sample.get("client_id"))
+    }
+    total_dropped, total_overflow = compute_frame_integrity_counts(samples)
+    run_suitability = RunSuitability.evaluate(
+        steady_speed=prepared.is_steady_speed,
+        speed_sufficient=prepared.speed_sufficient,
+        sensor_count=len(sensor_ids),
+        reference_complete=reference_complete,
+        sat_count=accel_stats["sat_count"],
+        total_dropped=total_dropped,
+        total_overflow=total_overflow,
+    )
+    amp_metric_values = accel_stats["amp_metric_values"]
+    overall_strength_band_key = (
+        _strength_label(_median(amp_metric_values))[0] if amp_metric_values else None
+    )
+    return reference_complete, run_suitability, overall_strength_band_key
+
+
+@dataclass(frozen=True, slots=True)
+class AnalysisResult:
+    """Output coordinator: carries domain aggregates alongside the legacy summary dict.
+
+    Returned by :meth:`RunAnalysis.summarize`.  The ``summary`` dict is
+    still needed for persistence (SQLite stores it as JSON) and many
+    existing boundary consumers.  ``test_run`` and ``diagnostic_case``
+    expose the fully-constructed domain aggregates so that callers no
+    longer need to discard them.
+    """
+
+    test_run: TestRun
+    diagnostic_case: DiagnosticCase
+    summary: AnalysisSummary
+
+
+def _build_observation_evidence(
+    findings: tuple[DomainFinding, ...],
+) -> list[ObservationEvidence]:
+    evidence_items: list[ObservationEvidence] = []
+    for finding in findings:
+        sig_labels = finding.signature_labels
+        if not sig_labels:
+            freq_or_order = finding.order or (
+                f"{finding.frequency_hz:.1f} Hz" if finding.frequency_hz is not None else ""
+            )
+            if freq_or_order:
+                sig_labels = (freq_or_order,)
+        evidence_items.append(
+            ObservationEvidence(
+                source=finding.suspected_source,
+                signature_labels=sig_labels,
+                magnitude_db=finding.vibration_strength_db,
+                speed_band=finding.strongest_speed_band,
+                dominant_phase=finding.origin.dominant_phase if finding.origin else None,
+                location=finding.strongest_location,
+                confidence=finding.effective_confidence,
+            )
+        )
+    return evidence_items
+
+
+class RunAnalysis:
+    """Cohesive object around a single analyzed run.
+
+    Owns run timing, speed/phase preparation, data quality, suitability,
+    sensor bundle, findings bundle, and summary export.  Replaces the
+    procedural orchestration in ``summarize_run_data`` with a richer
+    object that keeps all derived state together.
+
+    The public ``summarize_run_data()`` function delegates here.
+    """
+
+    __slots__ = (
+        "_metadata",
+        "_samples",
+        "_file_name",
+        "_language",
+        "_include_samples",
+        "_findings_builder",
+        "_prepared",
+        "_accel_stats",
+        "_test_run",
+        "_diagnostic_case",
+    )
+
+    def __init__(
+        self,
+        metadata: MetadataDict,
+        samples: list[Sample],
+        *,
+        file_name: str = "run",
+        lang: str | None = None,
+        include_samples: bool = True,
+        findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+    ) -> None:
+        self._metadata = metadata
+        self._samples = samples
+        self._file_name = file_name
+        self._language = normalize_lang(lang)
+        self._include_samples = include_samples
+        self._findings_builder = findings_builder
+        self._test_run: TestRun | None = None
+        self._diagnostic_case: DiagnosticCase | None = None
+
+        _validate_required_strength_metrics(samples)
+        self._prepared = prepare_run_data(metadata, samples, file_name=file_name)
+        self._accel_stats: AccelStatistics = compute_accel_statistics(
+            samples, metadata.get("sensor_model")
+        )
+
+    # -- read-only access --------------------------------------------------
+
+    @property
+    def prepared(self) -> PreparedRunData:
+        return self._prepared
+
+    @property
+    def accel_stats(self) -> AccelStatistics:
+        return self._accel_stats
+
+    @property
+    def language(self) -> str:
+        return self._language
+
+    @property
+    def test_run(self) -> TestRun | None:
+        return self._test_run
+
+    @property
+    def diagnostic_case(self) -> DiagnosticCase | None:
+        return self._diagnostic_case
+
+    # -- orchestration -----------------------------------------------------
+
+    def summarize(self) -> AnalysisResult:
+        """Run the full analysis pipeline and return the output coordinator.
+
+        Returns an :class:`AnalysisResult` carrying the domain aggregates
+        (``test_run``, ``diagnostic_case``) alongside the legacy
+        ``summary`` dict.
+        """
+        reference_complete, run_suitability, overall_strength_band_key = (
+            build_run_suitability_bundle(
+                self._metadata,
+                self._samples,
+                prepared=self._prepared,
+                accel_stats=self._accel_stats,
+            )
+        )
+        (
+            most_likely_origin,
+            phase_timeline,
+            domain_findings,
+            domain_top_causes,
+        ) = build_findings_bundle(
+            self._metadata,
+            self._samples,
+            language=self._language,
+            prepared=self._prepared,
+            overall_strength_band_key=overall_strength_band_key,
+            findings_builder=self._findings_builder,
+        )
+        sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_bundle(
+            self._samples,
+            language=self._language,
+            per_sample_phases=self._prepared.per_sample_phases,
+        )
+
+        # Build the domain aggregate with run-level value objects
+        from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+
+        speed_profile = self._prepared.speed_profile if self._prepared.speed_values else None
+        domain_suitability = run_suitability
+        run_suitability_checks = run_suitability_payload(domain_suitability)
+
+        # Enrich ALL domain Findings with ConfidenceAssessment
+        has_ref_gaps = not reference_complete
+        _steady = speed_profile.steady_speed if speed_profile is not None else False
+        _n_sensors = len(sensor_locations)
+        enriched_domain_findings: list[DomainFinding] = []
+        for f in domain_findings:
+            if f.confidence_assessment is not None:
+                enriched_domain_findings.append(f)
+                continue
+            ca = ConfidenceAssessment.assess(
+                f.effective_confidence,
+                strength_band_key=overall_strength_band_key,
+                steady_speed=_steady,
+                has_reference_gaps=has_ref_gaps,
+                weak_spatial=f.weak_spatial_separation,
+                sensor_count=_n_sensors,
+            )
+            enriched_domain_findings.append(replace(f, confidence_assessment=ca))
+        domain_findings = tuple(enriched_domain_findings)
+
+        # Derive top_causes as a subset of the enriched findings,
+        # preserving signatures collected by group_findings_by_source
+        top_cause_ids = {f.finding_id for f in domain_top_causes if f.finding_id}
+        top_cause_sigs = {f.finding_id: f.signatures for f in domain_top_causes if f.signatures}
+        final_top_causes_list: list[DomainFinding] = []
+        for f in domain_findings:
+            if f.finding_id in top_cause_ids:
+                sigs = top_cause_sigs.get(f.finding_id)
+                final_top_causes_list.append(replace(f, signatures=sigs) if sigs else f)
+        final_top_causes = tuple(final_top_causes_list)
+
+        evidence_items = _build_observation_evidence(domain_findings)
+        observations = extract_observations(evidence_items)
+        signatures = recognize_signatures(observations)
+        hypotheses = evaluate_hypotheses(signatures)
+        configuration_snapshot = ConfigurationSnapshot.from_metadata(self._metadata)
+        driving_segments = build_domain_driving_segments(self._prepared.phase_segments)
+        domain_test_plan = plan_test_actions(domain_findings)
+        summary_test_plan = step_payloads_from_plan(domain_test_plan)
+        _raw_settings = self._metadata.get("analysis_settings")
+        _scalar_settings: list[tuple[str, int | float | bool | str]] = []
+        if isinstance(_raw_settings, dict):
+            for _k, _v in sorted(_raw_settings.items()):
+                if isinstance(_v, (int, float, bool, str)):
+                    _scalar_settings.append((_k, _v))
+        capture = RunCapture(
+            run_id=self._prepared.run_id,
+            setup=RunSetup(
+                sensors=Sensor.from_location_codes(sensor_locations) if sensor_locations else (),
+                speed_source=SpeedSource(),
+                configuration_snapshot=configuration_snapshot,
+            ),
+            analysis_settings=tuple(_scalar_settings),
+            sample_count=len(self._samples),
+            duration_s=self._prepared.duration_s,
+        )
+        reasoning = DiagnosticReasoning(
+            observations=observations,
+            signatures=signatures,
+            hypotheses=hypotheses,
+        )
+        self._test_run = TestRun(
+            capture=capture,
+            reasoning=reasoning,
+            driving_segments=driving_segments,
+            findings=domain_findings,
+            top_causes=final_top_causes,
+            speed_profile=speed_profile,
+            suitability=domain_suitability,
+            test_plan=domain_test_plan,
+        )
+        self._diagnostic_case = DiagnosticCase.start(
+            car=build_domain_car(self._metadata),
+            symptoms=build_domain_symptoms(self._metadata),
+            test_plan=domain_test_plan,
+        ).add_run(self._test_run)
+
+        summary_speed_stats = _speed_stats(self._prepared.speed_values)
+        summary_phase_info = build_phase_summary(self._prepared.phase_segments)
+
+        # Serialize domain findings to payloads for the summary
+        from vibesensor.shared.boundaries.finding import finding_payload_from_domain
+
+        findings = [finding_payload_from_domain(f) for f in domain_findings]
+        top_causes = [finding_payload_from_domain(f) for f in final_top_causes]
+
+        summary = build_summary_payload(
+            file_name=self._file_name,
+            run_id=self._prepared.run_id,
+            samples=self._samples,
+            duration_s=self._prepared.duration_s,
+            language=self._language,
+            metadata=self._metadata,
+            raw_sample_rate_hz=self._prepared.raw_sample_rate_hz,
+            speed_breakdown=self._prepared.speed_breakdown,
+            phase_speed_breakdown=self._prepared.phase_speed_breakdown,
+            phase_segments=self._prepared.phase_segments,
+            run_noise_baseline_g=self._prepared.run_noise_baseline_g,
+            speed_breakdown_skipped_reason=self._prepared.speed_breakdown_skipped_reason,
+            findings=findings,
+            top_causes=top_causes,
+            most_likely_origin=most_likely_origin,
+            test_plan=summary_test_plan,
+            phase_timeline=phase_timeline,
+            speed_stats=summary_speed_stats,
+            speed_stats_by_phase=self._prepared.speed_stats_by_phase,
+            phase_info=summary_phase_info,
+            sensor_locations=sensor_locations,
+            connected_locations=connected_locations,
+            sensor_intensity_by_location=sensor_intensity_by_location,
+            run_suitability=run_suitability_checks,
+            speed_values=self._prepared.speed_values,
+            speed_non_null_pct=self._prepared.speed_non_null_pct,
+            accel_stats=self._accel_stats,
+            amp_metric_values=self._accel_stats["amp_metric_values"],
+        )
+        summary["warnings"] = build_summary_warnings(
+            self._metadata,
+            reference_complete=reference_complete,
+        )
+        summary["report_date"] = self._metadata.get("end_time_utc") or utc_now_iso()
+        summary["plots"] = _plot_data(
+            summary,
+            run_noise_baseline_g=self._prepared.run_noise_baseline_g,
+            per_sample_phases=self._prepared.per_sample_phases,
+            phase_segments=self._prepared.phase_segments,
+        )
+        annotate_peaks_with_order_labels(summary)
+        if not self._include_samples:
+            summary.pop("samples", None)
+        return AnalysisResult(
+            test_run=self._test_run,
+            diagnostic_case=self._diagnostic_case,
+            summary=summary,
+        )
+
+
+def summarize_run_data(
+    metadata: MetadataDict,
+    samples: list[Sample],
+    lang: str | None = None,
+    file_name: str = "run",
+    include_samples: bool = True,
+    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+) -> dict[str, Any]:
+    """Analyze pre-loaded run data and return the full summary dict.
+
+    Delegates to :class:`RunAnalysis` which owns the full orchestration.
+    """
+    return (
+        RunAnalysis(
+            metadata,
+            samples,
+            file_name=file_name,
+            lang=lang,
+            include_samples=include_samples,
+            findings_builder=findings_builder,
+        )
+        .summarize()
+        .summary  # type: ignore[return-value]
+    )
+
+
+def build_findings_for_samples(
+    *,
+    metadata: MetadataDict,
+    samples: list[Sample],
+    lang: str | None = None,
+    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+) -> tuple[DomainFinding, ...]:
+    """Build the findings list from *samples* using the full analysis pipeline."""
+    language = normalize_lang(lang)
+    rows = list(samples)
+    _validate_required_strength_metrics(rows)
+    prepared = prepare_run_data(metadata, rows, file_name="run")
+    builder = findings_builder or _build_findings
+    return builder(
+        metadata=dict(metadata),
+        samples=rows,
+        speed_sufficient=prepared.speed_sufficient,
+        steady_speed=prepared.is_steady_speed,
+        speed_stddev_kmh=prepared.speed_stddev_kmh,
+        speed_non_null_pct=prepared.speed_non_null_pct,
+        raw_sample_rate_hz=prepared.raw_sample_rate_hz,
+        lang=language,
+        per_sample_phases=prepared.per_sample_phases,
+    )
+
+
+def summarize_log(
+    log_path: Path,
+    lang: str | None = None,
+    include_samples: bool = True,
+    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+) -> dict[str, Any]:
+    """Read a JSONL run file and analyse it."""
+    metadata, samples, _warnings = _load_run(log_path)
+    return summarize_run_data(
+        metadata,
+        samples,
+        lang=lang,
+        file_name=log_path.name,
+        include_samples=include_samples,
+        findings_builder=findings_builder,
+    )

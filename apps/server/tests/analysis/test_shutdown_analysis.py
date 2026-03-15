@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
-from vibesensor.udp_control_tx import UDPControlPlane
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
+from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 
 # ---------------------------------------------------------------------------
 # Minimal fakes (same style as test_metrics_log_helpers.py)
@@ -144,7 +144,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
     monkeypatch.setenv("VIBESENSOR_DISABLE_AUTO_APP", "1")
 
     from vibesensor import app as app_module
-    from vibesensor.runtime import lifecycle as lifecycle_mod
+    from vibesensor.infra.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp_receiver(*args, **kwargs):
         return None, None
@@ -196,7 +196,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
 )
 def test_config_shutdown_analysis_timeout(tmp_path: Path, cfg_timeout, expected) -> None:
     """shutdown_analysis_timeout_s must default to 30 and accept overrides."""
-    from vibesensor.config import load_config
+    from vibesensor.app.settings import load_config
 
     logging_cfg: dict = {}
     if cfg_timeout is not None:

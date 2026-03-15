@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.processing.fft import noise_floor
+from vibesensor.infra.processing.fft import noise_floor
 from vibesensor.vibration_strength import noise_floor_amp_p20_g
 
 # ---------------------------------------------------------------------------

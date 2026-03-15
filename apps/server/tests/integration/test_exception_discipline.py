@@ -14,9 +14,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.registry import ClientRegistry
-from vibesensor.settings_store import PersistenceError, SettingsStore
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 
 # ── HistoryDB — sqlite3.Error caught, bugs propagate ─────────────────────
 

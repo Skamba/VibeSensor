@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from vibesensor.backend_types import CarConfig
-from vibesensor.car_library import (
+from vibesensor.shared.types.backend_types import CarConfig
+from vibesensor.adapters.persistence.car_library import (
     CAR_LIBRARY,
     get_models_for_brand_type,
     get_variants_for_model,
@@ -151,7 +151,7 @@ def test_resolve_variant_unknown_name_returns_base() -> None:
 
 def test_car_library_models_response_accepts_variants() -> None:
     """CarLibraryModelsResponse validates entries with variants."""
-    from vibesensor.api_models import CarLibraryModelsResponse
+    from vibesensor.shared.types.api_models import CarLibraryModelsResponse
 
     models = get_models_for_brand_type("BMW", "Sedan")
     resp = CarLibraryModelsResponse(models=models)
@@ -166,7 +166,7 @@ def test_car_library_variant_entry_requires_drivetrain() -> None:
     """CarLibraryVariantEntry requires drivetrain field."""
     from pydantic import ValidationError
 
-    from vibesensor.api_models import CarLibraryVariantEntry
+    from vibesensor.shared.types.api_models import CarLibraryVariantEntry
 
     # Valid
     v = CarLibraryVariantEntry(name="320i", drivetrain="RWD")
@@ -219,7 +219,7 @@ def test_car_config_variant_truncated() -> None:
 
 def test_car_library_json_parseable() -> None:
     """The car library JSON is valid JSON and loadable."""
-    from vibesensor.car_library import _DATA_FILE
+    from vibesensor.adapters.persistence.car_library import _DATA_FILE
 
     with _DATA_FILE.open() as fh:
         data = json.load(fh)

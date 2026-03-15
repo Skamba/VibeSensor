@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.history_db import HistoryDB
+from vibesensor.adapters.persistence.history_db import HistoryDB
 
 
 def _sensor_frame_dict(i: int, *, run_id: str = "run-v2") -> dict:
@@ -135,7 +135,7 @@ def test_v4_db_rejected(tmp_path: Path) -> None:
 
 
 def test_v2_sensor_frame_objects(tmp_path: Path) -> None:
-    from vibesensor.protocol import SensorFrame
+    from vibesensor.adapters.udp.protocol import SensorFrame
 
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-sf", "2026-01-01T00:00:00Z", {"source": "test"})
@@ -250,7 +250,7 @@ def test_v2_row_to_dict_non_list_peak_column_warns_and_uses_empty(
 
     import logging
 
-    with caplog.at_level(logging.WARNING, logger="vibesensor.history_db"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.persistence.history_db"):
         rows = db.get_run_samples("run-peak-warn")
 
     assert len(rows) == 1

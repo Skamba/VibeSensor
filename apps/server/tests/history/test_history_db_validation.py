@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.json_utils import sanitize_value
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.utils.json_utils import sanitize_value
 
 
 def test_create_run_sanitizes_non_finite_metadata(tmp_path: Path) -> None:

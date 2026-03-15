@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from vibesensor.gps_speed import GPSSpeedMonitor
+from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 
 # -- effective_speed_mps -------------------------------------------------------
 

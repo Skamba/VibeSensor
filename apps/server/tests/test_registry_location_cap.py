@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.registry import ClientRegistry
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.infra.runtime.registry import ClientRegistry
 
 _CLIENT_ID = "aabbccddeeff"
 

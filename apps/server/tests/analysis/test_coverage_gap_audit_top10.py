@@ -11,25 +11,25 @@ from unittest.mock import MagicMock
 import pytest
 
 from tests.test_support.findings import make_finding_payload
-from vibesensor.analysis import summarize_run_data
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.use_cases.diagnostics.order_analysis import (
     compute_order_confidence as _compute_order_confidence,
 )
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_analysis import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
-from vibesensor.analysis.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
-from vibesensor.analysis.phase_segmentation import DrivingPhase
-from vibesensor.analysis.summary_builder import build_phase_timeline as _build_phase_timeline
-from vibesensor.analysis.summary_builder import (
+from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
+from vibesensor.use_cases.diagnostics.summary_builder import build_phase_timeline as _build_phase_timeline
+from vibesensor.use_cases.diagnostics.summary_builder import (
     compute_accel_statistics as _compute_accel_statistics,
 )
-from vibesensor.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.domain import RunSuitability
-from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
-from vibesensor.metrics_log.sample_builder import extract_strength_data, resolve_speed_context
+from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
+from vibesensor.use_cases.run.sample_builder import extract_strength_data, resolve_speed_context
 
 # ---------------------------------------------------------------------------
 # Shared helpers

@@ -5,12 +5,12 @@ from __future__ import annotations
 import pytest
 
 from tests.test_support.findings import make_finding_payload, make_info_finding, make_ref_finding
-from vibesensor.analysis.findings import (
+from vibesensor.use_cases.diagnostics.findings import (
     PeakBin,
     PeakFindingAnalyzer,
     finalize_findings,
 )
-from vibesensor.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.finding import finding_from_payload
 
 # ===========================================================================
 # Domain Finding from payload (replaces former FindingRecord tests)

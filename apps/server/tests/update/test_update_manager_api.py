@@ -5,12 +5,12 @@ from unittest.mock import MagicMock
 import pytest
 from pydantic import ValidationError
 
-from vibesensor.update.manager import UpdateManager
+from vibesensor.use_cases.updates.manager import UpdateManager
 
 
 class TestUpdateApiEndpoints:
     def test_status_endpoint_exists(self) -> None:
-        from vibesensor.routes import create_router
+        from vibesensor.adapters.http import create_router
 
         state = MagicMock()
         state.update_manager = UpdateManager()
@@ -22,7 +22,7 @@ class TestUpdateApiEndpoints:
         assert "/api/update/cancel" in paths
 
     def test_start_request_model_validation(self) -> None:
-        from vibesensor.api_models import UpdateStartRequest
+        from vibesensor.shared.types.api_models import UpdateStartRequest
 
         req = UpdateStartRequest(ssid="TestNet", password="pass123")
         assert req.ssid == "TestNet"

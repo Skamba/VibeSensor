@@ -10,9 +10,9 @@ from pathlib import Path
 import pytest
 from _paths import SERVER_ROOT
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.processing import SignalProcessor
-from vibesensor.routes._helpers import safe_filename as _safe_filename
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.adapters.http._helpers import safe_filename as _safe_filename
 
 _SAFE_RE = re.compile(r"^[a-zA-Z0-9._-]+$")
 

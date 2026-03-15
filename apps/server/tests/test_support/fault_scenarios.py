@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from .core import (
+from vibesensor.core import (
     _fault_transfer_fraction,
     _stable_hash,
     engine_hz,
     profile_wheel_hz,
     wheel_hz,
 )
-from .sample_scenarios import make_sample
+from vibesensor.sample_scenarios import make_sample
 
 
 def make_fault_samples(

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.car_library import (
+from vibesensor.adapters.persistence.car_library import (
     CAR_LIBRARY,
     get_brands,
     get_models_for_brand_type,
@@ -130,7 +130,7 @@ def test_car_library_models_response_accepts_actual_data() -> None:
 
     Regression test for GH-307.
     """
-    from vibesensor.api_models import CarLibraryModelsResponse
+    from vibesensor.shared.types.api_models import CarLibraryModelsResponse
 
     models = get_models_for_brand_type("BMW", "Sedan")
     assert len(models) > 0
@@ -163,9 +163,9 @@ def test_load_library_handles_bad_data(tmp_path: Path, kind: str) -> None:
     """_load_library gracefully returns [] when the data file is missing or malformed."""
     from unittest.mock import patch
 
-    from vibesensor.car_library import _load_library
+    from vibesensor.adapters.persistence.car_library import _load_library
 
     fake_path = _make_bad_data_file(tmp_path, kind)
-    with patch("vibesensor.car_library._DATA_FILE", fake_path):
+    with patch("vibesensor.adapters.persistence.car_library._DATA_FILE", fake_path):
         result = _load_library()
     assert result == []

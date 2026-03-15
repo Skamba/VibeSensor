@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from vibesensor.boundaries.diagnostic_case import (
+from vibesensor.shared.boundaries.diagnostic_case import (
     test_run_from_summary as _test_run_from_summary,
 )
-from vibesensor.boundaries.test_steps import step_payloads_from_plan
-from vibesensor.boundaries.vibration_origin import origin_payload_from_finding
+from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.domain import (
     Finding,
     LocationHotspot,
@@ -18,7 +18,7 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     TestPlan as DomainTestPlan,
 )
-from vibesensor.report.mapping import (
+from vibesensor.adapters.pdf.mapping import (
     _origin_from_aggregate,
     summary_end_time_utc,
     summary_firmware_version,

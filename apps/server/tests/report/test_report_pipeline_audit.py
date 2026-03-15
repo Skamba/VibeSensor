@@ -4,9 +4,9 @@ from __future__ import annotations
 """Report pipeline audit – rendering and data consistency regressions."""
 
 
-from vibesensor.report.mapping import map_summary
-from vibesensor.report.mapping import peak_classification_text as _peak_classification_text
-from vibesensor.report_i18n import tr
+from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import peak_classification_text as _peak_classification_text
+from vibesensor.adapters.pdf_i18n import tr
 
 # ---------------------------------------------------------------------------
 # Helpers

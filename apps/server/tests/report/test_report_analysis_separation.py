@@ -1,7 +1,7 @@
 """Guardrail tests enforcing the analysis/report separation.
 
-These tests verify the architectural invariant that the ``vibesensor.report``
-package is renderer-only and never imports from ``vibesensor.analysis``.
+These tests verify the architectural invariant that the ``vibesensor.adapters.pdf``
+package is renderer-only and never imports from ``vibesensor.use_cases.diagnostics``.
 """
 
 from __future__ import annotations
@@ -16,8 +16,8 @@ import pytest
 from _paths import SERVER_ROOT
 from pypdf import PdfReader
 
-from vibesensor.report.pdf_engine import build_report_pdf
-from vibesensor.report.report_data import (
+from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.adapters.pdf.report_data import (
     PatternEvidence,
     ReportTemplateData,
     SystemFindingCard,
@@ -28,7 +28,7 @@ from vibesensor.report.report_data import (
 # ---------------------------------------------------------------------------
 
 _REPORT_DIR = SERVER_ROOT / "vibesensor" / "report"
-_ANALYSIS_PKG = "vibesensor.analysis"
+_ANALYSIS_PKG = "vibesensor.use_cases.diagnostics"
 
 # Modules in the report package that should be checked.
 # mapping.py is excluded: it is the intentional analysis→report bridge.
@@ -39,7 +39,7 @@ _REPORT_MODULES = [
 
 @pytest.mark.parametrize("module_path", _REPORT_MODULES, ids=lambda p: p.name)
 def test_report_module_does_not_import_analysis(module_path: Path) -> None:
-    """No ``report/*.py`` file may statically import from ``vibesensor.analysis``.
+    """No ``report/*.py`` file may statically import from ``vibesensor.use_cases.diagnostics``.
 
     Lazy imports inside function bodies are allowed.  Only module-level
     (top-of-file) imports are flagged.
@@ -86,22 +86,22 @@ def _is_inside_function(tree: ast.Module, target: ast.AST) -> bool:
 
 
 def test_report_package_imports_without_analysis() -> None:
-    """Importing ``vibesensor.report`` must not import ``vibesensor.analysis``."""
+    """Importing ``vibesensor.adapters.pdf`` must not import ``vibesensor.use_cases.diagnostics``."""
     # Clear cached modules so we get a clean import.
     analysis_modules_before = {
-        name for name in sys.modules if name.startswith("vibesensor.analysis")
+        name for name in sys.modules if name.startswith("vibesensor.use_cases.diagnostics")
     }
 
     # Re-import report modules (they may already be cached, so just verify
     # that none of them pull in analysis at module level).
     for mod_path in _REPORT_MODULES:
-        mod_name = f"vibesensor.report.{mod_path.stem}"
+        mod_name = f"vibesensor.adapters.pdf.{mod_path.stem}"
         if mod_name in sys.modules:
             continue
         importlib.import_module(mod_name)
 
     analysis_modules_after = {
-        name for name in sys.modules if name.startswith("vibesensor.analysis")
+        name for name in sys.modules if name.startswith("vibesensor.use_cases.diagnostics")
     }
     # Statically-enforced by the AST test above.  This runtime check catches
     # module-level side-effect imports that the AST scan cannot detect.
@@ -184,5 +184,5 @@ def test_report_folder_contains_only_renderer_files() -> None:
     unexpected = actual_files & analysis_file_names
     assert not unexpected, (
         f"report/ still contains analysis files: {unexpected}. "
-        "These should be in vibesensor.analysis/."
+        "These should be in vibesensor.use_cases.diagnostics/."
     )

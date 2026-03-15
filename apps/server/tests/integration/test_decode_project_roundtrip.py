@@ -18,20 +18,20 @@ from test_support import (
     standard_metadata,
 )
 
-from vibesensor.analysis import RunAnalysis
-from vibesensor.boundaries._helpers import _has_structured_step_content
-from vibesensor.boundaries.diagnostic_case import (
+from vibesensor.use_cases.diagnostics import RunAnalysis
+from vibesensor.shared.boundaries._helpers import _has_structured_step_content
+from vibesensor.shared.boundaries.diagnostic_case import (
     test_run_from_summary as _test_run_from_summary,
 )
-from vibesensor.boundaries.finding import finding_payload_from_domain
-from vibesensor.boundaries.run_suitability import run_suitability_payload
-from vibesensor.boundaries.test_steps import step_payloads_from_plan
-from vibesensor.boundaries.vibration_origin import origin_payload_from_finding
+from vibesensor.shared.boundaries.finding import finding_payload_from_domain
+from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
+from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.domain import DiagnosticCase, TestRun
-from vibesensor.history_db import HistoryDB
-from vibesensor.history_services.exports import build_run_details_json
-from vibesensor.report.mapping import map_summary
-from vibesensor.report.report_data import ReportTemplateData
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.use_cases.history.exports import build_run_details_json
+from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.report_data import ReportTemplateData
 
 # -- helpers ---------------------------------------------------------------
 
