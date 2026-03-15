@@ -506,7 +506,9 @@ def summarize_origin(
     if domain_top is not None and domain_top.location is not None:
         loc = LocationHotspot.from_analysis_inputs(
             strongest_location=(
-                domain_top.location.strongest_location or domain_top.strongest_location
+                domain_top.location.strongest_location
+                or domain_top.strongest_location
+                or "unknown"
             ),
             dominance_ratio=domain_top.location.dominance_ratio,
             localization_confidence=domain_top.location.localization_confidence,
@@ -993,7 +995,7 @@ def _extract_magnitude_db(payload: FindingPayload) -> float | None:
         val = metrics.get("vibration_strength_db")
         if val is not None:
             try:
-                return float(val)  # type: ignore[arg-type]
+                return float(val)
             except (ValueError, TypeError):
                 pass
     return None
@@ -1021,10 +1023,10 @@ def _build_observation_evidence(
                 source=source,
                 signature_labels=sig_labels,
                 magnitude_db=_extract_magnitude_db(payload),
-                speed_band=payload.get("strongest_speed_band"),  # type: ignore[arg-type]
-                dominant_phase=payload.get("dominant_phase"),  # type: ignore[arg-type]
-                location=payload.get("strongest_location"),  # type: ignore[arg-type]
-                confidence=float(payload.get("confidence") or 0.0),  # type: ignore[arg-type]
+                speed_band=payload.get("strongest_speed_band"),
+                dominant_phase=payload.get("dominant_phase"),
+                location=payload.get("strongest_location"),
+                confidence=float(payload.get("confidence") or 0.0),
             )
         )
     return evidence_items
