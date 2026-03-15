@@ -17,7 +17,7 @@ Canonical instruction sources
 Architectural constraints
 - Offline-first hotspot boot: hotspot provisioning must not depend on internet connectivity. Required packages are baked into the image build stage.
 - Deterministic image outputs: custom pi-gen stage must export uniquely suffixed artifacts and self-validate rootfs contents.
-- Internal shared logic belongs in the server package (`vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`, `vibesensor/contracts.py`), not in separate packages. Shared TS constants live directly in `apps/ui/src/constants.ts`.
+- Internal shared logic belongs in the server package (`vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`), not in separate packages. Shared TS constants live directly in `apps/ui/src/constants.ts`.
 - Do not create runtime file-loading mechanisms for static configuration data. Use Python constants for values that don't change between deployments.
 
 Domain model

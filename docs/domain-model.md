@@ -189,7 +189,10 @@ cases. It is not the primary source of diagnostic truth.
 
 ## Canonical domain graph
 
-The canonical domain graph is:
+The canonical domain graph has two parts: the **aggregates and containment**
+graph, and the **reasoning chain**.
+
+### Aggregates and containment
 
 ```text
 DiagnosticCase
@@ -217,62 +220,35 @@ RunSetup
   contains Sensor*
   references one SpeedSource
   is shared interpretive context for one RunCapture and one derived TestRun
-  contains setup context, not diagnostic conclusions
-
-Sensor
-  may have one SensorPlacement
-
-SensorPlacement
-  qualifies sensor mounting and location meaning
-
-SpeedSource
-  qualifies speed interpretation for the run
-
-Measurement
-  belongs to one RunCapture
-  comes from one Sensor
-  is evidence material, not diagnostic conclusion content
-
-DiagnosticReasoning
-  contains Observation*
-  contains Signature*
-  contains Hypothesis*
-
-DrivingSegment
-  is the canonical domain segmentation concept
-  covers meaningful portions of run evidence
-
-Observation
-  is a diagnostic intermediate derived from run evidence
-
-Signature
-  organizes or characterizes observed patterns in evidence
-
-Hypothesis
-  interprets observations and signatures toward possible explanations
-
-Finding
-  belongs to one TestRun
-  is the surfaced run-level diagnostic conclusion
-
-Diagnosis
-  belongs to one DiagnosticCase
-  is derived from one or more Finding across one or more TestRun
-
-Report
-  is derived from DiagnosticCase, Diagnosis, and TestRun
-
-HistoryRecord
-  archives run or case state at the boundary
-  is not core diagnostic truth
-
-Measurement -> Observation -> Signature -> Hypothesis -> Finding -> Diagnosis -> Report
-  is the canonical reasoning chain from evidence to explanation
-  (in practice, findings are built first by the analysis pipeline and
-  observations/signatures/hypotheses are retroactively derived from
-  finding evidence — a known inversion that preserves the structural
-  relationships while reflecting the actual computation order)
 ```
+
+### Evidence, reasoning intermediates, and conclusions
+
+```text
+Sensor → may have one SensorPlacement
+SpeedSource → qualifies speed interpretation for the run
+Measurement → belongs to one RunCapture, comes from one Sensor
+DiagnosticReasoning → contains Observation*, Signature*, Hypothesis*
+DrivingSegment → canonical domain segmentation concept
+Observation → diagnostic intermediate derived from run evidence
+Signature → organizes observed patterns in evidence
+Hypothesis → interprets observations and signatures
+Finding → belongs to one TestRun, surfaced run-level conclusion
+Diagnosis → belongs to one DiagnosticCase, derived from Finding*
+Report → derived from DiagnosticCase, Diagnosis, and TestRun
+HistoryRecord → archives run or case state at the boundary
+```
+
+### Canonical reasoning chain
+
+```text
+Measurement -> Observation -> Signature -> Hypothesis -> Finding -> Diagnosis -> Report
+```
+
+In practice, findings are built first by the analysis pipeline and
+observations/signatures/hypotheses are retroactively derived from finding
+evidence — a known inversion that preserves the structural relationships while
+reflecting the actual computation order.
 
 The intended meaningful flow is:
 

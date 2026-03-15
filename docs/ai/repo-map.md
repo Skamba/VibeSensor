@@ -37,17 +37,22 @@
   `SuspectedVibrationOrigin` is defined in `boundaries/vibration_origin.py`.
 - `domain/`: DDD-aligned domain model package.  Each primary domain object
   lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
-  SensorPlacement), `measurement.py` (Measurement,
-  VibrationReading), `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
-  `diagnostic_case.py` (DiagnosticCase aggregate),
+  SensorPlacement), `measurement.py` (Measurement, VibrationReading),
+  `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
+  `diagnostic_case.py` (DiagnosticCase aggregate), `diagnosis.py` (Diagnosis),
+  `diagnostic_reasoning.py` (DiagnosticReasoning),
+  `run_capture.py` (RunCapture), `run_setup.py` (RunSetup),
   `configuration_snapshot.py`, `symptom.py`, `test_plan.py`,
   `recommended_action.py`, `driving_segment.py`, `observation.py`,
-  `signature.py`, `hypothesis.py`, and `vibration_origin.py`,
+  `signature.py`, `hypothesis.py`, `vibration_origin.py`,
   `speed_source.py` (SpeedSource), `driving_phase.py` (DrivingPhase),
-  `finding.py` (FindingKind, VibrationSource, Finding, speed_bin_label, speed_band_sort_key), `report.py` (Report),
-  `run_status.py` (RunStatus, RUN_TRANSITIONS).
-  Notable factory/static methods: `Hypothesis.from_finding()`,
-  `LocationHotspot.compute_confidence()`.
+  `finding.py` (FindingKind, VibrationSource, Finding),
+  `finding_evidence.py` (FindingEvidence),
+  `confidence_assessment.py` (ConfidenceAssessment),
+  `location_hotspot.py` (LocationHotspot),
+  `speed_profile.py` (SpeedProfile),
+  `run_suitability.py` (RunSuitability, SuitabilityCheck),
+  `report.py` (Report), `run_status.py` (RunStatus, RUN_TRANSITIONS).
   `domain/services/` owns
   observation extraction, signature recognition, hypothesis evaluation,
   and test planning. Domain objects own
