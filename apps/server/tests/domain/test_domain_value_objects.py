@@ -488,6 +488,62 @@ class TestVibrationOrigin:
         assert payload["location"] == "rear_right"
         assert payload["suspected_source"] == "suspension"
 
+    def test_from_finding_returns_existing_origin(self) -> None:
+        """from_finding() returns the finding's origin when already set."""
+        existing_origin = VibrationOrigin.from_analysis_inputs(
+            suspected_source=VibrationSource.WHEEL_TIRE,
+            dominance_ratio=1.2,
+            speed_band="80-90 km/h",
+            reason="pre-existing",
+        )
+        finding = Finding(
+            finding_id="F001",
+            suspected_source="wheel/tire",
+            origin=existing_origin,
+        )
+        result = VibrationOrigin.from_finding(finding)
+        assert result is existing_origin
+
+    def test_from_finding_constructs_from_location_hotspot(self) -> None:
+        """from_finding() constructs origin from hotspot when no origin is set."""
+        hotspot = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            ambiguous=False,
+        )
+        finding = Finding(
+            finding_id="F002",
+            suspected_source="wheel/tire",
+            strongest_speed_band="80-90 km/h",
+            dominance_ratio=1.3,
+            location=hotspot,
+        )
+        result = VibrationOrigin.from_finding(finding)
+        assert result is not None
+        assert result.hotspot is hotspot
+        assert result.suspected_source == VibrationSource.WHEEL_TIRE
+        assert result.speed_band == "80-90 km/h"
+        assert result.dominance_ratio == 1.3
+
+    def test_from_finding_constructs_from_strongest_location(self) -> None:
+        """from_finding() constructs minimal origin from strongest_location."""
+        finding = Finding(
+            finding_id="F003",
+            suspected_source="engine",
+            strongest_location="rear",
+            strongest_speed_band="60-70 km/h",
+            dominance_ratio=0.9,
+        )
+        result = VibrationOrigin.from_finding(finding)
+        assert result is not None
+        assert result.hotspot is None
+        assert result.suspected_source == VibrationSource.ENGINE
+        assert result.speed_band == "60-70 km/h"
+
+    def test_from_finding_returns_none_when_no_data(self) -> None:
+        """from_finding() returns None for a finding with no origin data."""
+        finding = Finding(finding_id="F004", suspected_source="unknown")
+        assert VibrationOrigin.from_finding(finding) is None
+
     def test_suspected_vibration_origin_is_boundary_type(self) -> None:
         """SuspectedVibrationOrigin is importable from boundaries, not analysis."""
         from vibesensor.boundaries.vibration_origin import SuspectedVibrationOrigin

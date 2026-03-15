@@ -20,6 +20,13 @@ __all__ = [
 
 
 class SuspectedVibrationOrigin(TypedDict, total=False):
+    """Boundary-only JSON payload shape for origin data.
+
+    This TypedDict is the serialization format for
+    ``AnalysisSummary.most_likely_origin`` and persisted run payloads.
+    Domain code must use :class:`~vibesensor.domain.VibrationOrigin`
+    instead.  This type exists solely at ingress/egress boundaries.
+    """
     location: str
     alternative_locations: list[str]
     suspected_source: str
@@ -86,42 +93,31 @@ def origin_payload_from_finding(
     finding: Finding,
     fallback: Mapping[str, object] | None = None,
 ) -> SuspectedVibrationOrigin:
-    """Project a domain finding's origin into the canonical boundary payload shape."""
-    fallback_payload = dict(fallback) if isinstance(fallback, Mapping) else {}
+    """Project a domain finding's origin into the canonical boundary payload shape.
 
-    origin = finding.origin
-    hotspot = finding.location
-    fallback_location = str(fallback_payload.get("location") or "").strip()
-    if origin is None and hotspot is None:
+    Delegates origin extraction to ``VibrationOrigin.from_finding()`` and
+    serializes the result.  Falls back to *fallback* when the domain origin
+    lacks structured location data that the fallback provides.
+    """
+    fallback_payload = dict(fallback) if isinstance(fallback, Mapping) else {}
+    origin = VibrationOrigin.from_finding(finding)
+
+    if origin is None:
         return fallback_payload
-    if hotspot is None and fallback_location and fallback_location.lower() != "unknown":
-        return fallback_payload
+
+    # Prefer fallback when domain origin has no structured location but fallback does
+    if origin.hotspot is None:
+        fallback_location = str(fallback_payload.get("location") or "").strip()
+        if fallback_location and fallback_location.lower() != "unknown":
+            return fallback_payload
 
     return {
-        "location": (
-            origin.projected_location
-            if origin is not None
-            else str(finding.strongest_location or "unknown")
-        ),
-        "alternative_locations": (
-            list(origin.alternative_locations)
-            if origin is not None
-            else list(hotspot.supporting_locations)
-            if hotspot is not None
-            else []
-        ),
-        "suspected_source": str(
-            origin.suspected_source if origin is not None else finding.suspected_source
-        ),
-        "dominance_ratio": (
-            origin.dominance_ratio if origin is not None else finding.dominance_ratio
-        ),
-        "weak_spatial_separation": (
-            origin.weak_spatial_separation
-            if origin is not None
-            else finding.weak_spatial_separation
-        ),
-        "speed_band": origin.speed_band if origin is not None else finding.strongest_speed_band,
-        "dominant_phase": origin.dominant_phase if origin is not None else None,
-        "explanation": origin.explanation if origin is not None else "",
+        "location": origin.projected_location,
+        "alternative_locations": list(origin.alternative_locations),
+        "suspected_source": str(origin.suspected_source),
+        "dominance_ratio": origin.dominance_ratio,
+        "weak_spatial_separation": origin.weak_spatial_separation,
+        "speed_band": origin.speed_band,
+        "dominant_phase": origin.dominant_phase,
+        "explanation": origin.explanation,
     }
