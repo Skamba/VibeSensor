@@ -13,15 +13,22 @@ from statistics import median as _median
 from vibesensor.analysis.analysis_window import AnalysisWindow
 from vibesensor.vibration_strength import compute_db
 
+from ..boundaries.location_hotspot import location_hotspot_from_payload
+from ..boundaries.run_suitability import run_suitability_payload
+from ..boundaries.test_steps import step_payloads_from_plan
+from ..boundaries.vibration_origin import SuspectedVibrationOrigin
 from ..constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from ..domain import (
     Car,
     ConfigurationSnapshot,
     DiagnosticCase,
+    LocationHotspot,
     Run,
-    RunAnalysisResult,
+    RunSuitability,
+    SpeedProfile,
     Symptom,
     TestRun,
+    VibrationSource,
 )
 from ..domain import (
     DrivingSegment as DomainDrivingSegment,
@@ -30,8 +37,10 @@ from ..domain import (
     Finding as DomainFinding,
 )
 from ..domain.services import (
+    ObservationEvidence,
     evaluate_hypotheses,
-    extract_observations_from_findings,
+    extract_observations,
+    plan_test_actions,
     recognize_signatures,
 )
 from ..json_utils import as_float_or_none as _as_float
@@ -56,7 +65,6 @@ from ._types import (
     Sample,
     SpeedBreakdownRow,
     SpeedStats,
-    SuspectedVibrationOrigin,
     TestStep,
     i18n_ref,
     is_json_object,
@@ -85,12 +93,10 @@ from .helpers import (
     _speed_stats_by_phase,
     _validate_required_strength_metrics,
     counter_delta,
-    weak_spatial_dominance_threshold,
 )
 from .phase_segmentation import DrivingPhase, PhaseSegment, segment_run_phases
 from .plots import _plot_data
 from .strength_labels import strength_label as _strength_label
-from .test_plan import _merge_test_plan, build_domain_test_plan
 from .top_cause_selection import select_top_causes
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -187,81 +193,6 @@ def compute_frame_integrity_counts(samples: list[Sample]) -> tuple[int, int]:
     total_dropped = sum(counter_delta(values) for values in per_client_dropped.values())
     total_overflow = sum(counter_delta(values) for values in per_client_overflow.values())
     return total_dropped, total_overflow
-
-
-def build_run_suitability_checks(
-    *,
-    steady_speed: bool,
-    speed_sufficient: bool,
-    sensor_ids: set[str],
-    reference_complete: bool,
-    sat_count: int,
-    samples: list[Sample],
-) -> list[RunSuitabilityCheck]:
-    """Construct the language-neutral run-suitability checklist."""
-    sensor_count_sufficient = len(sensor_ids) >= 3
-    speed_variation_ok = speed_sufficient and not steady_speed
-    run_suitability: list[RunSuitabilityCheck] = [
-        {
-            "check": "SUITABILITY_CHECK_SPEED_VARIATION",
-            "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
-            "state": "pass" if speed_variation_ok else "warn",
-            "explanation": (
-                i18n_ref("SUITABILITY_SPEED_VARIATION_PASS")
-                if speed_variation_ok
-                else i18n_ref("SUITABILITY_SPEED_VARIATION_WARN")
-            ),
-        },
-        {
-            "check": "SUITABILITY_CHECK_SENSOR_COVERAGE",
-            "check_key": "SUITABILITY_CHECK_SENSOR_COVERAGE",
-            "state": "pass" if sensor_count_sufficient else "warn",
-            "explanation": (
-                i18n_ref("SUITABILITY_SENSOR_COVERAGE_PASS")
-                if sensor_count_sufficient
-                else i18n_ref("SUITABILITY_SENSOR_COVERAGE_WARN")
-            ),
-        },
-        {
-            "check": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
-            "check_key": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
-            "state": "pass" if reference_complete else "warn",
-            "explanation": (
-                i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_PASS")
-                if reference_complete
-                else i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_WARN")
-            ),
-        },
-        {
-            "check": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
-            "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
-            "state": "pass" if sat_count == 0 else "warn",
-            "explanation": (
-                i18n_ref("SUITABILITY_SATURATION_PASS")
-                if sat_count == 0
-                else i18n_ref("SUITABILITY_SATURATION_WARN", sat_count=sat_count)
-            ),
-        },
-    ]
-    total_dropped, total_overflow = compute_frame_integrity_counts(samples)
-    frame_issues = total_dropped + total_overflow
-    run_suitability.append(
-        {
-            "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
-            "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
-            "state": "pass" if frame_issues == 0 else "warn",
-            "explanation": (
-                i18n_ref("SUITABILITY_FRAME_INTEGRITY_PASS")
-                if frame_issues == 0
-                else i18n_ref(
-                    "SUITABILITY_FRAME_INTEGRITY_WARN",
-                    total_dropped=total_dropped,
-                    total_overflow=total_overflow,
-                )
-            ),
-        },
-    )
-    return run_suitability
 
 
 def compute_reference_completeness(metadata: MetadataDict) -> bool:
@@ -524,189 +455,6 @@ def build_sensor_analysis(
     return sensor_locations, connected_locations, sensor_intensity_by_location
 
 
-@dataclass
-class LocalizationAssessment:
-    """Interpreted assessment of spatial/localization meaning for a finding.
-
-    Owns localized-vs-diffuse classification, separation quality,
-    primary/supporting location access, and confidence interpretation
-    so that callers no longer scatter localization reasoning across
-    procedural code.
-    """
-
-    _primary_location: str
-    _alternative_locations: list[str]
-    dominance_ratio: float | None
-    _weak_spatial: bool
-    _diffuse_excitation: bool
-    _localization_confidence: float
-    _adaptive_threshold: float
-
-    # -- construction -------------------------------------------------------
-
-    @staticmethod
-    def from_finding(
-        finding: FindingPayload,
-        *,
-        domain: DomainFinding | None = None,
-    ) -> LocalizationAssessment:
-        """Build from a finding, using domain object for classification fields.
-
-        When *domain* is provided, uses its properties for
-        ``strongest_location``, ``dominance_ratio``,
-        ``weak_spatial_separation``, and ``diffuse_excitation``.
-        Evidence-level nested structures (``location_hotspot``) are
-        still read from the payload dict.
-        """
-        hotspot = finding.get("location_hotspot")
-        if domain is not None:
-            primary = (domain.strongest_location or "").strip() or "unknown"
-            dominance = domain.dominance_ratio
-            diffuse = domain.diffuse_excitation
-            weak_flag = domain.weak_spatial_separation
-        else:
-            primary = str(finding.get("strongest_location") or "").strip() or "unknown"
-            dominance = _as_float(finding.get("dominance_ratio"))
-            diffuse = bool(finding.get("diffuse_excitation", False))
-            weak_flag = bool(finding.get("weak_spatial_separation"))
-        alternatives = _collect_alternative_locations(hotspot, primary_location=primary)
-        threshold = _resolve_weak_spatial_threshold(finding, hotspot=hotspot)
-        weak = weak_flag or (dominance is not None and dominance < threshold)
-        loc_conf = 0.0
-        if isinstance(hotspot, dict):
-            loc_conf = float(_as_float(hotspot.get("localization_confidence")) or 0.0)
-        return LocalizationAssessment(
-            _primary_location=primary,
-            _alternative_locations=alternatives,
-            dominance_ratio=dominance,
-            _weak_spatial=weak,
-            _diffuse_excitation=diffuse,
-            _localization_confidence=loc_conf,
-            _adaptive_threshold=threshold,
-        )
-
-    # -- classification -----------------------------------------------------
-
-    @property
-    def is_localized(self) -> bool:
-        """Whether the primary location is known and actionable."""
-        return self._primary_location.lower() not in {"", "unknown"}
-
-    @property
-    def is_diffuse(self) -> bool:
-        """Whether the excitation is diffuse across locations."""
-        return self._diffuse_excitation
-
-    @property
-    def has_clear_separation(self) -> bool:
-        """Whether spatial separation between sensor locations is clear."""
-        return not self._weak_spatial
-
-    # -- location access ----------------------------------------------------
-
-    @property
-    def primary_location(self) -> str:
-        """The strongest sensor location (or ``'unknown'``)."""
-        return self._primary_location
-
-    def supporting_locations(self) -> list[str]:
-        """Alternative/corroborating locations beyond the primary."""
-        return list(self._alternative_locations)
-
-    # -- confidence interpretation ------------------------------------------
-
-    def confidence_band(self) -> str:
-        """Return ``'high'``, ``'medium'``, or ``'low'`` for localization confidence."""
-        if self._localization_confidence >= 0.7:
-            return "high"
-        if self._localization_confidence >= 0.4:
-            return "medium"
-        return "low"
-
-    # -- display helpers ----------------------------------------------------
-
-    def display_location(self) -> str:
-        """Build the display-ready location summary string."""
-        if not (
-            self._weak_spatial
-            and self.dominance_ratio is not None
-            and self.dominance_ratio < self._adaptive_threshold
-        ):
-            return self._primary_location
-        display_locations = [self._primary_location, *self._alternative_locations]
-        return " / ".join(
-            candidate
-            for idx, candidate in enumerate(display_locations)
-            if candidate and candidate not in display_locations[:idx]
-        )
-
-    # -- mutation (multi-finding enrichment) --------------------------------
-
-    def enrich_from_second_finding(
-        self,
-        second_finding: FindingPayload,
-        *,
-        top_confidence: float,
-        domain: DomainFinding | None = None,
-    ) -> None:
-        """Promote ambiguity when the second finding is close in confidence."""
-        if domain is not None:
-            second_loc = (domain.strongest_location or "").strip()
-            second_conf = domain.effective_confidence
-        else:
-            second_loc = str(second_finding.get("strongest_location") or "").strip()
-            second_conf = _as_float(second_finding.get("confidence")) or 0.0
-        if (
-            second_loc
-            and self._primary_location
-            and second_loc != self._primary_location
-            and top_confidence > 0
-            and second_conf / top_confidence >= 0.7
-        ):
-            self._weak_spatial = True
-            if second_loc not in self._alternative_locations:
-                self._alternative_locations.append(second_loc)
-
-
-# ---------------------------------------------------------------------------
-# LocalizationAssessment support helpers
-# ---------------------------------------------------------------------------
-
-
-def _collect_alternative_locations(
-    hotspot: object,
-    *,
-    primary_location: str,
-) -> list[str]:
-    """Collect alternative hotspot locations from the location hotspot dict."""
-    alternative_locations: list[str] = []
-    if not isinstance(hotspot, dict):
-        return alternative_locations
-    ambiguous_locations = hotspot.get("ambiguous_locations", [])
-    if not isinstance(ambiguous_locations, list):
-        ambiguous_locations = []
-    for candidate in ambiguous_locations:
-        loc = str(candidate or "").strip()
-        if loc and loc != primary_location and loc not in alternative_locations:
-            alternative_locations.append(loc)
-    second_location = str(hotspot.get("second_location") or "").strip()
-    if (
-        second_location
-        and second_location != primary_location
-        and second_location not in alternative_locations
-    ):
-        alternative_locations.append(second_location)
-    return alternative_locations
-
-
-def _resolve_weak_spatial_threshold(top_finding: FindingPayload, *, hotspot: object) -> float:
-    """Resolve the adaptive weak-spatial threshold for the strongest finding."""
-    location_count = _as_float(top_finding.get("location_count"))
-    if location_count is None and isinstance(hotspot, dict):
-        location_count = _as_float(hotspot.get("location_count"))
-    return weak_spatial_dominance_threshold(int(location_count) if location_count else None)
-
-
 def summarize_origin(
     findings: list[FindingPayload],
     *,
@@ -737,7 +485,61 @@ def summarize_origin(
     if domain_findings is not None and len(domain_findings) >= 2:
         domain_second = domain_findings[1]
 
-    loc = LocalizationAssessment.from_finding(top, domain=domain_top)
+    hotspot_raw = top.get("location_hotspot")
+    location_count: int | None = None
+    raw_alternatives: list[str] = []
+    if isinstance(hotspot_raw, dict):
+        decoded = location_hotspot_from_payload(hotspot_raw)
+        raw_alternatives = list(decoded.alternative_locations)
+        second_location = str(hotspot_raw.get("second_location") or "").strip()
+        if second_location and second_location not in raw_alternatives:
+            raw_alternatives.append(second_location)
+        raw_location_count = _as_float(top.get("location_count"))
+        if raw_location_count is None:
+            raw_location_count = _as_float(hotspot_raw.get("location_count"))
+        location_count = int(raw_location_count) if raw_location_count else None
+    else:
+        decoded = None
+        raw_location_count = _as_float(top.get("location_count"))
+        location_count = int(raw_location_count) if raw_location_count else None
+
+    if domain_top is not None and domain_top.location is not None:
+        loc = LocationHotspot.from_analysis_inputs(
+            strongest_location=(
+                domain_top.location.strongest_location or domain_top.strongest_location or "unknown"
+            ),
+            dominance_ratio=domain_top.location.dominance_ratio,
+            localization_confidence=domain_top.location.localization_confidence,
+            weak_spatial_separation=domain_top.location.weak_spatial_separation,
+            ambiguous=domain_top.location.ambiguous,
+            alternative_locations=(*domain_top.location.alternative_locations, *raw_alternatives),
+        )
+    elif decoded is not None:
+        loc = LocationHotspot.from_analysis_inputs(
+            strongest_location=(
+                decoded.strongest_location
+                or str(top.get("strongest_location") or "").strip()
+                or "unknown"
+            ),
+            dominance_ratio=(
+                decoded.dominance_ratio
+                if decoded.dominance_ratio is not None
+                else _as_float(top.get("dominance_ratio"))
+            ),
+            localization_confidence=decoded.localization_confidence,
+            weak_spatial_separation=(
+                decoded.weak_spatial_separation or bool(top.get("weak_spatial_separation"))
+            ),
+            ambiguous=decoded.ambiguous,
+            alternative_locations=raw_alternatives,
+        )
+    else:
+        loc = LocationHotspot.from_analysis_inputs(
+            strongest_location=str(top.get("strongest_location") or "").strip() or "unknown",
+            dominance_ratio=_as_float(top.get("dominance_ratio")),
+            weak_spatial_separation=bool(top.get("weak_spatial_separation")),
+        )
+    loc = loc.with_adaptive_weak_spatial(location_count)
     if domain_top:
         source = str(domain_top.suspected_source)
     else:
@@ -748,13 +550,23 @@ def summarize_origin(
             top_conf = domain_top.effective_confidence
         else:
             top_conf = _as_float(top.get("confidence")) or 0.0
-        loc.enrich_from_second_finding(
-            findings[1],
+        if domain_second is not None:
+            second_location = (
+                (domain_second.location.strongest_location if domain_second.location else "")
+                or domain_second.strongest_location
+                or str(findings[1].get("strongest_location") or "")
+            ).strip()
+            second_conf = domain_second.effective_confidence
+        else:
+            second_location = str(findings[1].get("strongest_location") or "").strip()
+            second_conf = _as_float(findings[1].get("confidence")) or 0.0
+        loc = loc.promote_near_tie(
+            alternative_location=second_location,
             top_confidence=top_conf,
-            domain=domain_second,
+            alternative_confidence=second_conf,
         )
 
-    location = loc.display_location()
+    location = loc.summary_location
     if domain_top:
         speed_band = str(domain_top.strongest_speed_band or "")
     else:
@@ -770,7 +582,7 @@ def summarize_origin(
     )
     return {
         "location": location,
-        "alternative_locations": loc.supporting_locations(),
+        "alternative_locations": list(loc.supporting_locations),
         "suspected_source": source,
         "dominance_ratio": loc.dominance_ratio,
         "weak_spatial_separation": not loc.has_clear_separation,
@@ -955,7 +767,13 @@ def annotate_peaks_with_order_labels(summary: AnalysisSummary) -> None:
 
 @dataclass(frozen=True)
 class PreparedRunData:
-    """Shared timing, speed, and phase context for summary generation."""
+    """Input coordinator: shared timing, speed, and phase context for summary generation.
+
+    Retained as the canonical input coordinator for the analysis pipeline.
+    Computed once by :func:`prepare_run_data` and consumed by
+    :func:`build_findings_bundle`, :func:`build_run_suitability_bundle`,
+    and :class:`RunAnalysis`.
+    """
 
     run_id: str
     start_ts: datetime | None
@@ -963,13 +781,12 @@ class PreparedRunData:
     duration_s: float
     raw_sample_rate_hz: float | None
     speed_values: list[float]
-    speed_stats: SpeedStats
     speed_non_null_pct: float
     speed_sufficient: bool
     per_sample_phases: list[DrivingPhase]
     phase_segments: list[PhaseSegment]
     run_noise_baseline_g: float | None
-    phase_info: PhaseSummary
+    speed_profile: SpeedProfile
     speed_stats_by_phase: dict[str, PhaseSpeedStats]
     speed_breakdown: list[SpeedBreakdownRow]
     speed_breakdown_skipped_reason: I18nRef | None
@@ -980,11 +797,11 @@ class PreparedRunData:
     @property
     def is_steady_speed(self) -> bool:
         """Whether the run had steady speed (relevant to confidence scoring)."""
-        return bool(self.speed_stats.get("steady_speed"))
+        return self.speed_profile.steady_speed
 
     @property
     def speed_stddev_kmh(self) -> float | None:
-        return _as_float(self.speed_stats.get("stddev_kmh"))
+        return self.speed_profile.stddev_kmh if self.speed_values else None
 
     @property
     def analysis_windows(self) -> list[AnalysisWindow]:
@@ -1015,6 +832,7 @@ def prepare_run_data(
         speed_breakdown_skipped_reason = i18n_ref(
             "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND",
         )
+    phase_info = build_phase_summary(phase_segments)
 
     return PreparedRunData(
         run_id=run_id,
@@ -1023,13 +841,12 @@ def prepare_run_data(
         duration_s=duration_s,
         raw_sample_rate_hz=_as_float(metadata.get("raw_sample_rate_hz")),
         speed_values=speed_values,
-        speed_stats=speed_stats,
         speed_non_null_pct=speed_non_null_pct,
         speed_sufficient=speed_sufficient,
         per_sample_phases=per_sample_phases,
         phase_segments=phase_segments,
         run_noise_baseline_g=run_noise_baseline_g,
-        phase_info=build_phase_summary(phase_segments),
+        speed_profile=SpeedProfile.from_stats(speed_stats, phase_info),
         speed_stats_by_phase=_speed_stats_by_phase(samples, per_sample_phases),
         speed_breakdown=speed_breakdown,
         speed_breakdown_skipped_reason=speed_breakdown_skipped_reason,
@@ -1055,7 +872,6 @@ def build_findings_bundle(
 ) -> tuple[
     list[FindingPayload],
     SuspectedVibrationOrigin,
-    list[TestStep],
     list[PhaseTimelineEntry],
     list[FindingPayload],
     tuple[DomainFinding, ...],
@@ -1063,9 +879,9 @@ def build_findings_bundle(
 ]:
     """Build findings plus derived diagnosis narrative fields.
 
-    Returns ``(findings, origin, test_plan, timeline, top_causes_payloads,
+    Returns ``(findings, origin, timeline, top_causes_payloads,
     domain_findings, domain_top_causes)``.  The last two elements are the
-    domain ``Finding`` objects for consumption by ``RunAnalysisResult``.
+    domain ``Finding`` objects for consumption by ``TestRun``.
     """
     builder = findings_builder or _build_findings
     findings = builder(
@@ -1089,7 +905,6 @@ def build_findings_bundle(
         diagnostic_findings,
         domain_findings=domain_diagnostic_findings,
     )
-    test_plan = _merge_test_plan(findings, language)
     phase_timeline = build_phase_timeline(
         prepared.phase_segments,
         findings,
@@ -1103,7 +918,6 @@ def build_findings_bundle(
     return (
         findings,
         most_likely_origin,
-        test_plan,
         phase_timeline,
         top_causes,
         domain_findings,
@@ -1131,7 +945,7 @@ def build_run_suitability_bundle(
     *,
     prepared: PreparedRunData,
     accel_stats: AccelStatistics,
-) -> tuple[bool, list[RunSuitabilityCheck], str | None]:
+) -> tuple[bool, RunSuitability | None, str | None]:
     """Build run-suitability checks and related confidence context."""
     reference_complete = compute_reference_completeness(metadata)
     sensor_ids = {
@@ -1139,19 +953,80 @@ def build_run_suitability_bundle(
         for sample in samples
         if isinstance(sample, dict) and (cid := sample.get("client_id"))
     }
-    run_suitability = build_run_suitability_checks(
+    total_dropped, total_overflow = compute_frame_integrity_counts(samples)
+    run_suitability = RunSuitability.evaluate(
         steady_speed=prepared.is_steady_speed,
         speed_sufficient=prepared.speed_sufficient,
-        sensor_ids=sensor_ids,
+        sensor_count=len(sensor_ids),
         reference_complete=reference_complete,
         sat_count=accel_stats["sat_count"],
-        samples=samples,
+        total_dropped=total_dropped,
+        total_overflow=total_overflow,
     )
     amp_metric_values = accel_stats["amp_metric_values"]
     overall_strength_band_key = (
         _strength_label(_median(amp_metric_values))[0] if amp_metric_values else None
     )
     return reference_complete, run_suitability, overall_strength_band_key
+
+
+@dataclass(frozen=True, slots=True)
+class AnalysisResult:
+    """Output coordinator: carries domain aggregates alongside the legacy summary dict.
+
+    Returned by :meth:`RunAnalysis.summarize`.  The ``summary`` dict is
+    still needed for persistence (SQLite stores it as JSON) and many
+    existing boundary consumers.  ``test_run`` and ``diagnostic_case``
+    expose the fully-constructed domain aggregates so that callers no
+    longer need to discard them.
+    """
+
+    test_run: TestRun
+    diagnostic_case: DiagnosticCase
+    summary: AnalysisSummary
+
+
+def _extract_magnitude_db(payload: FindingPayload) -> float | None:
+    metrics = payload.get("evidence_metrics")
+    if isinstance(metrics, dict):
+        val = metrics.get("vibration_strength_db")
+        if val is not None:
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                pass
+    return None
+
+
+def _build_observation_evidence(
+    findings: list[FindingPayload],
+) -> list[ObservationEvidence]:
+    evidence_items: list[ObservationEvidence] = []
+    for payload in findings:
+        sig_labels: tuple[str, ...] = ()
+        freq_or_order = str(payload.get("frequency_hz_or_order") or "")
+        sigs = payload.get("signatures_observed")
+        if isinstance(sigs, list) and sigs:
+            sig_labels = tuple(str(s) for s in sigs)
+        if not sig_labels and freq_or_order:
+            sig_labels = (freq_or_order,)
+        raw_source = str(payload.get("suspected_source") or payload.get("source") or "unknown")
+        try:
+            source = VibrationSource(raw_source.strip().lower())
+        except ValueError:
+            source = VibrationSource.UNKNOWN
+        evidence_items.append(
+            ObservationEvidence(
+                source=source,
+                signature_labels=sig_labels,
+                magnitude_db=_extract_magnitude_db(payload),
+                speed_band=payload.get("strongest_speed_band"),
+                dominant_phase=payload.get("dominant_phase"),
+                location=payload.get("strongest_location"),
+                confidence=float(payload.get("confidence") or 0.0),
+            )
+        )
+    return evidence_items
 
 
 class RunAnalysis:
@@ -1174,7 +1049,6 @@ class RunAnalysis:
         "_findings_builder",
         "_prepared",
         "_accel_stats",
-        "_analysis_result",
         "_test_run",
         "_diagnostic_case",
     )
@@ -1195,7 +1069,6 @@ class RunAnalysis:
         self._language = normalize_lang(lang)
         self._include_samples = include_samples
         self._findings_builder = findings_builder
-        self._analysis_result: RunAnalysisResult | None = None
         self._test_run: TestRun | None = None
         self._diagnostic_case: DiagnosticCase | None = None
 
@@ -1220,11 +1093,6 @@ class RunAnalysis:
         return self._language
 
     @property
-    def analysis_result(self) -> RunAnalysisResult | None:
-        """Domain aggregate produced by :meth:`summarize`, or ``None``."""
-        return self._analysis_result
-
-    @property
     def test_run(self) -> TestRun | None:
         return self._test_run
 
@@ -1234,11 +1102,12 @@ class RunAnalysis:
 
     # -- orchestration -----------------------------------------------------
 
-    def summarize(self) -> AnalysisSummary:
-        """Run the full analysis pipeline and return the summary dict.
+    def summarize(self) -> AnalysisResult:
+        """Run the full analysis pipeline and return the output coordinator.
 
-        Also builds a :class:`RunAnalysisResult` domain aggregate
-        accessible via :attr:`analysis_result`.
+        Returns an :class:`AnalysisResult` carrying the domain aggregates
+        (``test_run``, ``diagnostic_case``) alongside the legacy
+        ``summary`` dict.
         """
         reference_complete, run_suitability, overall_strength_band_key = (
             build_run_suitability_bundle(
@@ -1251,7 +1120,6 @@ class RunAnalysis:
         (
             findings,
             most_likely_origin,
-            test_plan,
             phase_timeline,
             top_causes,
             domain_findings,
@@ -1272,20 +1140,10 @@ class RunAnalysis:
 
         # Build the domain aggregate with run-level value objects
         from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-        from vibesensor.domain.run_suitability import RunSuitability
-        from vibesensor.domain.speed_profile import SpeedProfile
 
-        speed_profile = (
-            SpeedProfile.from_stats(
-                self._prepared.speed_stats,
-                self._prepared.phase_info,
-            )
-            if self._prepared.speed_stats
-            else None
-        )
-        domain_suitability = (
-            RunSuitability.from_checks(run_suitability) if run_suitability else None
-        )
+        speed_profile = self._prepared.speed_profile if self._prepared.speed_values else None
+        domain_suitability = run_suitability
+        run_suitability_checks = run_suitability_payload(domain_suitability)
 
         # Enrich top-cause domain Findings with ConfidenceAssessment
         has_ref_gaps = not reference_complete
@@ -1294,11 +1152,7 @@ class RunAnalysis:
             ca = ConfidenceAssessment.assess(
                 f.effective_confidence,
                 strength_band_key=overall_strength_band_key,
-                steady_speed=bool(
-                    self._prepared.speed_stats.get("steady_speed", True)
-                    if self._prepared.speed_stats
-                    else True
-                ),
+                steady_speed=speed_profile.steady_speed if speed_profile is not None else False,
                 has_reference_gaps=has_ref_gaps,
                 weak_spatial=f.weak_spatial_separation,
                 sensor_count=len(sensor_locations),
@@ -1309,12 +1163,18 @@ class RunAnalysis:
             tuple(enriched_domain_top_causes) if enriched_domain_top_causes else domain_top_causes
         )
 
-        observations = extract_observations_from_findings(domain_findings, findings)
+        evidence_items = _build_observation_evidence(findings)
+        observations = extract_observations(evidence_items)
         signatures = recognize_signatures(observations)
         hypotheses = evaluate_hypotheses(signatures)
         configuration_snapshot = ConfigurationSnapshot.from_metadata(self._metadata)
         driving_segments = build_domain_driving_segments(self._prepared.phase_segments)
-        domain_test_plan = build_domain_test_plan(findings, self._language)
+        domain_test_plan = plan_test_actions(
+            domain_findings,
+            hypotheses,
+            lang=self._language,
+        )
+        summary_test_plan = step_payloads_from_plan(domain_test_plan)
         self._test_run = TestRun(
             run=Run(run_id=self._prepared.run_id, analysis_settings={}),
             configuration_snapshot=configuration_snapshot,
@@ -1335,10 +1195,8 @@ class RunAnalysis:
             test_plan=domain_test_plan,
         ).add_run(self._test_run)
 
-        self._analysis_result = RunAnalysisResult.from_test_run(
-            self._test_run,
-            lang=self._language,
-        )
+        summary_speed_stats = _speed_stats(self._prepared.speed_values)
+        summary_phase_info = build_phase_summary(self._prepared.phase_segments)
 
         summary = build_summary_payload(
             file_name=self._file_name,
@@ -1356,15 +1214,15 @@ class RunAnalysis:
             findings=findings,
             top_causes=top_causes,
             most_likely_origin=most_likely_origin,
-            test_plan=test_plan,
+            test_plan=summary_test_plan,
             phase_timeline=phase_timeline,
-            speed_stats=self._prepared.speed_stats,
+            speed_stats=summary_speed_stats,
             speed_stats_by_phase=self._prepared.speed_stats_by_phase,
-            phase_info=self._prepared.phase_info,
+            phase_info=summary_phase_info,
             sensor_locations=sensor_locations,
             connected_locations=connected_locations,
             sensor_intensity_by_location=sensor_intensity_by_location,
-            run_suitability=run_suitability,
+            run_suitability=run_suitability_checks,
             speed_values=self._prepared.speed_values,
             speed_non_null_pct=self._prepared.speed_non_null_pct,
             accel_stats=self._accel_stats,
@@ -1384,7 +1242,11 @@ class RunAnalysis:
         annotate_peaks_with_order_labels(summary)
         if not self._include_samples:
             summary.pop("samples", None)
-        return summary
+        return AnalysisResult(
+            test_run=self._test_run,
+            diagnostic_case=self._diagnostic_case,
+            summary=summary,
+        )
 
 
 def summarize_run_data(
@@ -1399,14 +1261,18 @@ def summarize_run_data(
 
     Delegates to :class:`RunAnalysis` which owns the full orchestration.
     """
-    return RunAnalysis(
-        metadata,
-        samples,
-        file_name=file_name,
-        lang=lang,
-        include_samples=include_samples,
-        findings_builder=findings_builder,
-    ).summarize()
+    return (
+        RunAnalysis(
+            metadata,
+            samples,
+            file_name=file_name,
+            lang=lang,
+            include_samples=include_samples,
+            findings_builder=findings_builder,
+        )
+        .summarize()
+        .summary
+    )
 
 
 def build_findings_for_samples(

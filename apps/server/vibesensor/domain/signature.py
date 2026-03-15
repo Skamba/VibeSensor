@@ -20,6 +20,10 @@ class Signature:
     support_score: float = 0.0
 
     @property
+    def observation_count(self) -> int:
+        return len(self.observation_ids)
+
+    @property
     def is_consistent(self) -> bool:
         return len(self.observation_ids) > 0 and self.support_score > 0.0
 

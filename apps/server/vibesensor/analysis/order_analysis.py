@@ -28,6 +28,7 @@ from ..constants import (
     SNR_LOG_DIVISOR,
     SPEED_BIN_WIDTH_KMH,
 )
+from ..domain import LocationHotspot
 from ..domain.finding import VibrationSource, speed_band_sort_key, speed_bin_label
 from ..json_utils import as_float_or_none as _as_float
 from ._types import (
@@ -913,8 +914,8 @@ def assemble_order_finding(
 
     relevant_speed_bins = [context.focused_speed_band] if context.focused_speed_band else None
 
-    # Lazy import to avoid circular dependency (test_plan imports from this module).
-    from .test_plan import _location_speedbin_summary
+    # Lazy import to avoid circular dependency (location_analysis imports from this module).
+    from .location_analysis import _location_speedbin_summary
 
     location_line, location_hotspot = _location_speedbin_summary(
         match.matched_points,
@@ -924,16 +925,24 @@ def assemble_order_finding(
         suspected_source=hypothesis.suspected_source,
     )
     hotspot_dict = location_hotspot if isinstance(location_hotspot, dict) else None
-    weak_spatial_separation = (
-        bool(hotspot_dict.get("weak_spatial_separation")) if hotspot_dict is not None else True
-    )
-    dominance_ratio = (
-        _as_float(hotspot_dict.get("dominance_ratio")) if hotspot_dict is not None else None
-    )
-    localization_confidence = (
-        _as_float(hotspot_dict.get("localization_confidence")) or 0.05
+    domain_hotspot = (
+        LocationHotspot.from_analysis_inputs(
+            strongest_location=str(hotspot_dict.get("top_location") or "").strip(),
+            dominance_ratio=_as_float(hotspot_dict.get("dominance_ratio")),
+            localization_confidence=_as_float(hotspot_dict.get("localization_confidence")) or 0.05,
+            weak_spatial_separation=bool(hotspot_dict.get("weak_spatial_separation")),
+            ambiguous=bool(hotspot_dict.get("ambiguous_location")),
+            alternative_locations=list(hotspot_dict.get("ambiguous_locations") or []),
+        )
         if hotspot_dict is not None
-        else 0.05
+        else None
+    )
+    weak_spatial_separation = (
+        domain_hotspot.weak_spatial_separation if domain_hotspot is not None else True
+    )
+    dominance_ratio = domain_hotspot.dominance_ratio if domain_hotspot is not None else None
+    localization_confidence = (
+        domain_hotspot.localization_confidence or 0.05 if domain_hotspot is not None else 0.05
     )
 
     unique_match_locations = match.unique_match_locations

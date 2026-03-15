@@ -17,12 +17,20 @@ class TestPlan:
     requires_additional_data: bool = False
 
     @property
+    def has_actions(self) -> bool:
+        return bool(self.actions)
+
+    @property
+    def supports_case_completion(self) -> bool:
+        return not self.requires_additional_data
+
+    @property
     def prioritized_actions(self) -> tuple[RecommendedAction, ...]:
         return tuple(sorted(self.actions, key=RecommendedAction.sort_key))
 
     @property
     def is_complete(self) -> bool:
-        return not self.requires_additional_data and not self.actions
+        return self.supports_case_completion and not self.has_actions
 
     def needs_more_data(self) -> bool:
-        return self.requires_additional_data or not self.actions
+        return not self.supports_case_completion

@@ -9,6 +9,9 @@ from .driving_phase import DrivingPhase
 __all__ = ["DrivingSegment"]
 
 
+_MIN_USABLE_SAMPLES = 10
+
+
 @dataclass(frozen=True, slots=True)
 class DrivingSegment:
     """Phase-aligned segment of a run."""
@@ -23,5 +26,17 @@ class DrivingSegment:
     sample_count: int = 0
 
     @property
+    def duration_s(self) -> float | None:
+        """Duration of the segment in seconds, or None if timestamps are missing."""
+        if self.start_t_s is not None and self.end_t_s is not None:
+            return self.end_t_s - self.start_t_s
+        return None
+
+    @property
+    def is_cruise(self) -> bool:
+        return self.phase is DrivingPhase.CRUISE
+
+    @property
     def is_diagnostically_usable(self) -> bool:
-        return self.sample_count > 0 and self.phase is not DrivingPhase.IDLE
+        """Whether this segment can contribute to diagnostic conclusions."""
+        return self.sample_count >= _MIN_USABLE_SAMPLES and self.phase is not DrivingPhase.IDLE

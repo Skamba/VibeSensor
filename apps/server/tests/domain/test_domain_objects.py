@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 import pytest
 
 from vibesensor.analysis.analysis_window import AnalysisWindow
+from vibesensor.boundaries.finding import finding_from_payload
 from vibesensor.domain import (
     Car,
     Finding,
@@ -282,7 +283,7 @@ class TestFindingDomainObject:
             "suspected_source": "engine",
             "finding_kind": "diagnostic",
         }
-        f = Finding.from_payload(payload)
+        f = finding_from_payload(payload)
         assert f.is_diagnostic  # explicit kind wins
         assert "REF_ prefix" in caplog.text
 
@@ -301,7 +302,7 @@ class TestFindingDomainObject:
             "evidence_summary": "some evidence",
             "quick_checks": [],
         }
-        f = Finding.from_payload(payload)
+        f = finding_from_payload(payload)
         assert f.finding_id == "F001"
         assert f.suspected_source == "wheel/tire"
         assert f.confidence == 0.85
@@ -315,14 +316,14 @@ class TestFindingDomainObject:
         assert f.confidence_pct == 85
 
     def test_from_payload_minimal(self) -> None:
-        f = Finding.from_payload({"finding_id": "F001", "suspected_source": "engine"})
+        f = finding_from_payload({"finding_id": "F001", "suspected_source": "engine"})
         assert f.finding_id == "F001"
         assert f.suspected_source == "engine"
         assert f.confidence is None
         assert f.frequency_hz is None
 
     def test_from_payload_reference(self) -> None:
-        f = Finding.from_payload({"finding_id": "REF_SPEED", "suspected_source": ""})
+        f = finding_from_payload({"finding_id": "REF_SPEED", "suspected_source": ""})
         assert f.is_reference
         assert not f.is_diagnostic
 
@@ -620,7 +621,7 @@ class TestFindingEnrichments:
             "weak_spatial_separation": True,
             "phase_evidence": {"cruise_fraction": 0.6},
         }
-        f = Finding.from_payload(payload)
+        f = finding_from_payload(payload)
         assert f.ranking_score == 1.5
         assert f.dominance_ratio == 0.85
         assert f.diffuse_excitation is True

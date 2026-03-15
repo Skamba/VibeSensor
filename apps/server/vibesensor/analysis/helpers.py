@@ -21,7 +21,6 @@ from ..constants import (
     SPEED_BIN_WIDTH_KMH,
     STEADY_SPEED_RANGE_KMH,
     STEADY_SPEED_STDDEV_KMH,
-    WEAK_SPATIAL_DOMINANCE_THRESHOLD,
 )
 from ..domain.finding import speed_band_sort_key, speed_bin_label
 from ..json_types import JsonObject
@@ -38,19 +37,6 @@ PHASE_I18N_KEYS: dict[str, str] = {
     "deceleration": "DRIVING_PHASE_DECELERATION",
     "coast_down": "DRIVING_PHASE_COAST_DOWN",
 }
-
-
-def weak_spatial_dominance_threshold(location_count: int | None) -> float:
-    """Return adaptive dominance threshold for weak spatial separation.
-
-    Baseline is the historical 1.2 ratio for two locations. For larger sensor
-    sets, we require stronger separation (+10% per additional location) because
-    chance ties become more likely as the number of compared locations grows.
-    """
-    if location_count is None:
-        return float(WEAK_SPATIAL_DOMINANCE_THRESHOLD)
-    n_locations = max(2, int(location_count))
-    return float(WEAK_SPATIAL_DOMINANCE_THRESHOLD) * (1.0 + (0.1 * (n_locations - 2)))
 
 
 def _validate_required_strength_metrics(samples: list[Sample]) -> None:

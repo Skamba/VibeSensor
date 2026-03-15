@@ -12,6 +12,7 @@ from .observation import Observation
 from .recommended_action import RecommendedAction
 from .run import Run
 from .run_suitability import RunSuitability
+from .sensor import Sensor
 from .signature import Signature
 from .speed_profile import SpeedProfile
 from .test_plan import TestPlan
@@ -34,10 +35,46 @@ class TestRun:
     speed_profile: SpeedProfile | None = None
     suitability: RunSuitability | None = None
     test_plan: TestPlan = TestPlan()
+    sensors: tuple[Sensor, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.top_causes:
+            return
+        if not self.findings:
+            raise ValueError("TestRun.top_causes must be drawn from findings when present")
+        unmatched = tuple(
+            top_cause
+            for top_cause in self.top_causes
+            if not self._matches_top_cause_to_findings(top_cause, self.findings)
+        )
+        if unmatched:
+            detail = ", ".join(
+                top_cause.finding_id or str(top_cause.suspected_source) for top_cause in unmatched
+            )
+            raise ValueError(
+                "TestRun.top_causes must be a subset or derivation of findings; "
+                f"unmatched top causes: {detail}"
+            )
+
+    @staticmethod
+    def _matches_top_cause_to_findings(
+        top_cause: Finding,
+        findings: tuple[Finding, ...],
+    ) -> bool:
+        for finding in findings:
+            if top_cause == finding:
+                return True
+            if top_cause.finding_id and top_cause.finding_id == finding.finding_id:
+                return True
+        return False
 
     @property
     def run_id(self) -> str:
         return self.run.run_id
+
+    @property
+    def sensor_count(self) -> int:
+        return len(self.sensors)
 
     @property
     def diagnostic_findings(self) -> tuple[Finding, ...]:
@@ -100,6 +137,16 @@ class TestRun:
             if finding.vibration_strength_db is not None:
                 return finding.vibration_strength_db
         return None
+
+    @property
+    def usable_segments(self) -> tuple[DrivingSegment, ...]:
+        """Segments that can contribute to diagnostic conclusions."""
+        return tuple(s for s in self.driving_segments if s.is_diagnostically_usable)
+
+    @property
+    def total_usable_samples(self) -> int:
+        """Total sample count across diagnostically usable segments."""
+        return sum(s.sample_count for s in self.usable_segments)
 
     @property
     def recommended_actions(self) -> tuple[RecommendedAction, ...]:

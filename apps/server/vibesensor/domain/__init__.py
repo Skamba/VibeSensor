@@ -31,8 +31,6 @@ ConfidenceAssessment
     Why confidence in a finding is high, low, or withheld.
 Report
     The assembled output of a diagnostic run.
-RunAnalysisResult
-    Finalized analysis result — the domain aggregate.
 SpeedProfile
     Run speed behaviour as a diagnostic concept.
 RunSuitability
@@ -44,7 +42,7 @@ VibrationReading
 from .car import Car, TireSpec
 from .confidence_assessment import ConfidenceAssessment
 from .configuration_snapshot import ConfigurationSnapshot
-from .diagnostic_case import DiagnosticCase
+from .diagnostic_case import DiagnosticCase, DiagnosticCaseEpistemicRule
 from .driving_phase import DrivingPhase
 from .driving_segment import DrivingSegment
 from .finding import (
@@ -62,7 +60,6 @@ from .observation import Observation
 from .recommended_action import RecommendedAction
 from .report import Report
 from .run import Run
-from .run_analysis_result import RunAnalysisResult
 from .run_status import RUN_TRANSITIONS, RunStatus, transition_run
 from .run_suitability import RunSuitability, SuitabilityCheck
 from .sensor import Sensor, SensorPlacement
@@ -80,6 +77,7 @@ __all__ = [
     "ConfigurationSnapshot",
     "ConfidenceAssessment",
     "DiagnosticCase",
+    "DiagnosticCaseEpistemicRule",
     "DrivingSegment",
     "DrivingPhase",
     "Finding",
@@ -94,7 +92,6 @@ __all__ = [
     "RUN_TRANSITIONS",
     "Report",
     "Run",
-    "RunAnalysisResult",
     "RunStatus",
     "RunSuitability",
     "Sensor",

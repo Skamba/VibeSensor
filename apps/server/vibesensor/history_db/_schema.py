@@ -7,11 +7,12 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 
 SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS runs (
     run_id                  TEXT PRIMARY KEY,
+    case_id                 TEXT,
     status                  TEXT NOT NULL DEFAULT 'recording'
                             CHECK (status IN ('recording', 'analyzing', 'complete', 'error')),
     start_time_utc          TEXT NOT NULL,

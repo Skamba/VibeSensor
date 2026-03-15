@@ -8,13 +8,13 @@ from typing import Any
 
 import pytest
 
+from vibesensor.analysis import location_analysis as _test_plan_module
 from vibesensor.analysis import (
     order_analysis as _order_analysis_module,
 )
 from vibesensor.analysis import (
     order_analysis as order_findings_module,
 )
-from vibesensor.analysis import test_plan as _test_plan_module
 from vibesensor.analysis.order_analysis import (
     _build_order_findings as _findings_build_order_findings,
 )

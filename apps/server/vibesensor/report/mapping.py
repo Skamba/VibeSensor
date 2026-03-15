@@ -18,7 +18,6 @@ from ..analysis._types import (
     MetadataDict,
     RunSuitabilityCheck,
     SpeedStats,
-    SuspectedVibrationOrigin,
     TestStep,
 )
 from ..analysis.diagnosis_candidates import normalize_origin_location, select_effective_top_causes
@@ -30,8 +29,10 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..boundaries.diagnostic_case import finding_payload_from_domain
-from ..domain import Finding, Report, RunAnalysisResult, VibrationSource
+from ..boundaries.finding import finding_payload_from_domain
+from ..boundaries.run_suitability import run_suitability_payload
+from ..boundaries.vibration_origin import SuspectedVibrationOrigin, origin_payload_from_finding
+from ..domain import Finding, Report, TestRun, VibrationSource
 from ..json_utils import as_float_or_none as _as_float
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
@@ -90,7 +91,7 @@ class ReportMappingContext:
     sensor_model: str | None
     firmware_version: str | None
     # Domain aggregate for domain-first decisions.
-    domain_aggregate: RunAnalysisResult | None = None
+    domain_aggregate: TestRun | None = None
     finding_payloads_by_id: dict[str, FindingPayload] = field(default_factory=dict)
     top_cause_payloads_by_id: dict[str, FindingPayload] = field(default_factory=dict)
 
@@ -417,38 +418,13 @@ def _payloads_by_id(items: list[FindingPayload]) -> dict[str, FindingPayload]:
 
 
 def _origin_from_aggregate(
-    aggregate: RunAnalysisResult | None,
+    aggregate: TestRun | None,
     fallback: SuspectedVibrationOrigin,
 ) -> SuspectedVibrationOrigin:
     if aggregate is None or aggregate.primary_finding is None:
         return fallback
 
-    primary = aggregate.primary_finding
-    origin = primary.origin
-    hotspot = primary.location
-    fallback_location = str(fallback.get("location") or "").strip()
-    fallback_explanation = str(fallback.get("explanation") or "").strip()
-    if origin is None and hotspot is None:
-        return fallback
-    if hotspot is None and fallback_location and fallback_location.lower() != "unknown":
-        return fallback
-    if origin is not None and not origin.reason and fallback_explanation:
-        return fallback
-
-    return {
-        "location": (
-            origin.display_location
-            if origin is not None
-            else str(primary.strongest_location or "unknown")
-        ),
-        "alternative_locations": (
-            list(hotspot.alternative_locations) if hotspot is not None else []
-        ),
-        "suspected_source": str(primary.suspected_source),
-        "dominance_ratio": primary.dominance_ratio,
-        "weak_spatial_separation": primary.weak_spatial_separation,
-        "explanation": origin.explanation if origin is not None else "",
-    }
+    return origin_payload_from_finding(aggregate.primary_finding, fallback)
 
 
 def normalized_origin_location(origin: SuspectedVibrationOrigin) -> str:
@@ -582,7 +558,7 @@ def collect_location_intensity(sensor_intensity: list[dict]) -> dict[str, list[f
 def build_next_steps_from_summary(
     summary: AnalysisSummary,
     *,
-    aggregate: RunAnalysisResult | None,
+    aggregate: TestRun | None,
     tier: str,
     cert_reason: str,
     lang: str,
@@ -601,19 +577,23 @@ def build_next_steps_from_summary(
 
     next_steps: list[NextStep] = []
     summary_steps = summary_test_plan(summary)
-    if (
-        aggregate is not None
-        and aggregate.test_run is not None
-        and not _summary_has_structured_step_content(summary_steps)
-    ):
-        for action in aggregate.test_run.recommended_actions:
+    if aggregate is not None and not _summary_has_structured_step_content(summary_steps):
+        for action in aggregate.recommended_actions:
             next_steps.append(
                 NextStep(
-                    action=_resolve_step_value(action.what, lang=lang, tr=tr),
-                    why=_resolve_optional_step_value(action.why, lang=lang, tr=tr),
-                    confirm=_resolve_optional_step_value(action.confirm, lang=lang, tr=tr),
-                    falsify=_resolve_optional_step_value(action.falsify, lang=lang, tr=tr),
-                    eta=action.eta,
+                    action=_resolve_step_value(action.instruction, lang=lang, tr=tr),
+                    why=_resolve_optional_step_value(action.rationale, lang=lang, tr=tr),
+                    confirm=_resolve_optional_step_value(
+                        action.confirmation_signal,
+                        lang=lang,
+                        tr=tr,
+                    ),
+                    falsify=_resolve_optional_step_value(
+                        action.falsification_signal,
+                        lang=lang,
+                        tr=tr,
+                    ),
+                    eta=action.estimated_duration,
                 ),
             )
         if next_steps:
@@ -663,19 +643,23 @@ def _resolve_optional_step_value(
 def build_data_trust_from_summary(
     summary: AnalysisSummary,
     *,
-    aggregate: RunAnalysisResult | None,
+    aggregate: TestRun | None,
     lang: str,
     tr: Callable,
 ) -> list[DataTrustItem]:
     """Build the data-trust checklist from run_suitability items."""
     data_trust: list[DataTrustItem] = []
     if aggregate is not None and aggregate.suitability is not None:
-        for item in aggregate.suitability.checks:
+        projected = run_suitability_payload(
+            aggregate.suitability,
+            fallback=summary_run_suitability(summary),
+        )
+        for proj in projected:
             data_trust.append(
                 DataTrustItem(
-                    check=_resolve_check_text(item.check_key, lang=lang, tr=tr),
-                    state=item.state,
-                    detail=_resolve_detail_text(item.explanation, lang=lang, tr=tr),
+                    check=_resolve_check_text(proj.get("check_key"), lang=lang, tr=tr),
+                    state=str(proj.get("state") or "warn"),
+                    detail=_resolve_detail_text(proj.get("explanation"), lang=lang, tr=tr),
                 ),
             )
     else:
@@ -732,10 +716,10 @@ def top_strength_values(
 ) -> float | None:
     """Return the best available vibration strength in dB for report text.
 
-    .. deprecated::
-        Prefer ``RunAnalysisResult.top_strength_db()`` when a domain
-        aggregate is available.  This function remains as a fallback for
-        boundary paths where only the raw summary dict is available.
+    Aggregate-absent safety fallback.  When a ``TestRun`` domain
+    aggregate is available, callers use ``TestRun.top_strength_db()``
+    instead.  This function remains only for the defensive path where
+    summary decoding fails to produce an aggregate.
     """
     causes = effective_causes if effective_causes is not None else summary.get("top_causes", [])
     all_findings = summary.get("findings", [])
@@ -767,10 +751,11 @@ def _sensor_fallback_strength_db(summary: AnalysisSummary) -> float | None:
 def has_relevant_reference_gap(findings: list[FindingPayload], primary_source: object) -> bool:
     """Whether the report certainty should mention missing reference inputs.
 
-    .. deprecated::
-        Prefer ``RunAnalysisResult.has_relevant_reference_gap()`` when a
-        domain aggregate is available.  This function remains as a
-        boundary fallback for paths where only payload dicts exist.
+    Aggregate-absent safety fallback.  When a ``TestRun`` domain
+    aggregate is available, callers use
+    ``TestRun.has_relevant_reference_gap()`` instead.  This function
+    remains only for the defensive path where summary decoding fails to
+    produce an aggregate.
     """
     source = str(primary_source or "").strip().lower()
     for finding in findings:
@@ -953,20 +938,15 @@ def resolve_parts_context(
 
 def build_run_metadata_fields(summary: AnalysisSummary, meta: MetadataDict) -> dict[str, object]:
     """Extract and format run metadata text fields for the report template."""
-    duration_text = str(summary.get("record_length") or "") or None
-    start_time_utc = str(summary.get("start_time_utc") or "").strip() or None
-    end_time_utc = str(summary.get("end_time_utc") or "").strip() or None
-    raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
-    sample_rate_hz = f"{raw_sample_rate_hz:g}" if raw_sample_rate_hz is not None else None
     return {
-        "duration_text": duration_text,
-        "start_time_utc": start_time_utc,
-        "end_time_utc": end_time_utc,
-        "sample_rate_hz": sample_rate_hz,
+        "duration_text": summary_record_length(summary),
+        "start_time_utc": summary_start_time_utc(summary),
+        "end_time_utc": summary_end_time_utc(summary),
+        "sample_rate_hz": summary_sample_rate_hz_text(summary),
         "tire_spec_text": tire_spec_text(meta),
-        "sample_count": int(_as_float(summary.get("rows")) or 0),
-        "sensor_model": str(summary.get("sensor_model") or "").strip() or None,
-        "firmware_version": str(summary.get("firmware_version") or "").strip() or None,
+        "sample_count": summary_row_count(summary),
+        "sensor_model": summary_sensor_model(summary),
+        "firmware_version": summary_firmware_version(summary),
     }
 
 
@@ -1018,7 +998,7 @@ def prepare_report_mapping_context(
 ) -> ReportMappingContext:
     """Extract structural summary context for report mapping.
 
-    Builds a domain ``RunAnalysisResult`` aggregate from the summary dict
+    Builds a domain ``TestRun`` aggregate from the summary dict
     so that downstream business decisions (effective-cause selection,
     reference-gap detection, strength lookup) are domain-first.
     """
@@ -1038,7 +1018,9 @@ def prepare_report_mapping_context(
     sensor_locations_active = summary_sensor_locations_active(summary)
 
     # Build domain aggregate for domain-first decisions downstream
-    domain_aggregate = RunAnalysisResult.from_summary(summary)
+    from ..boundaries.diagnostic_case import test_run_from_summary
+
+    domain_aggregate = test_run_from_summary(summary)
 
     if domain_aggregate is not None:
         findings = [
@@ -1209,10 +1191,13 @@ def resolve_primary_report_candidate(
         certainty_reason = ca.reason
         tier = ca.tier
     else:
+        steady_speed = (
+            aggregate.speed_profile.steady_speed if aggregate and aggregate.speed_profile else False
+        )
         certainty_key, certainty_label_text, certainty_pct, certainty_reason = certainty_label(
             confidence,
             lang=lang,
-            steady_speed=bool(context.speed_stats.get("steady_speed")),
+            steady_speed=steady_speed,
             weak_spatial=weak_spatial,
             sensor_count=sensor_count,
             has_reference_gaps=has_ref_gaps,

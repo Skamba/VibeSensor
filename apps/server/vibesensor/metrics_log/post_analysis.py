@@ -14,7 +14,7 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock, Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..runlog import bounded_sample
 
@@ -210,8 +210,7 @@ class PostAnalysisWorker:
         analysis_start = time.monotonic()
         LOGGER.info("Analysis started for run %s", run_id)
         try:
-            from ..analysis import summarize_run_data
-            from ..boundaries.diagnostic_case import project_summary_through_domain
+            from ..analysis import RunAnalysis
 
             metadata = db.get_run_metadata(run_id)
             if metadata is None:
@@ -246,13 +245,15 @@ class PostAnalysisWorker:
                     self._last_completed_error = error_msg
                 db.store_analysis_error(run_id, error_msg)
                 return
-            summary = summarize_run_data(
+            result = RunAnalysis(
                 metadata,
                 samples,
                 lang=language,
                 file_name=run_id,
                 include_samples=False,
-            )
+            ).summarize()
+            summary: dict[str, Any] = dict(result.summary)
+            summary["case_id"] = result.diagnostic_case.case_id
             summary["analysis_metadata"] = {
                 "analyzed_sample_count": len(samples),
                 "total_sample_count": total_sample_count,
@@ -275,7 +276,6 @@ class PostAnalysisWorker:
                         "explanation": explanation,
                     },
                 )
-            summary = project_summary_through_domain(summary)
             db.store_analysis(run_id, summary)
 
             duration_s = time.monotonic() - analysis_start

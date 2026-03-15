@@ -21,9 +21,62 @@ class VibrationOrigin:
     dominant_phase: str | None = None
     reason: str = ""
 
+    @classmethod
+    def from_analysis_inputs(
+        cls,
+        *,
+        suspected_source: VibrationSource,
+        hotspot: LocationHotspot | None = None,
+        dominance_ratio: float | None = None,
+        speed_band: str | None = None,
+        dominant_phase: str | None = None,
+        reason: str = "",
+    ) -> VibrationOrigin:
+        """Construct origin semantics from typed pre-finding analysis inputs."""
+        return cls(
+            suspected_source=suspected_source,
+            hotspot=hotspot,
+            dominance_ratio=dominance_ratio,
+            speed_band=speed_band,
+            dominant_phase=dominant_phase,
+            reason=reason,
+        )
+
     @property
     def is_ambiguous(self) -> bool:
         return bool(self.hotspot and (self.hotspot.ambiguous or not self.hotspot.is_well_localized))
+
+    @property
+    def summary_location(self) -> str:
+        if self.hotspot is None:
+            return "unknown"
+        return self.hotspot.summary_location
+
+    @property
+    def projected_location(self) -> str:
+        if self.hotspot is None:
+            return "Unknown"
+        if self.hotspot.has_clear_separation:
+            return self.hotspot.display_location
+        display_locations = [self.hotspot.display_location]
+        display_locations.extend(
+            location.replace("_", " ").title() for location in self.alternative_locations
+        )
+        unique_locations: list[str] = []
+        for candidate in display_locations:
+            if candidate and candidate not in unique_locations:
+                unique_locations.append(candidate)
+        return " / ".join(unique_locations) if unique_locations else self.hotspot.display_location
+
+    @property
+    def alternative_locations(self) -> tuple[str, ...]:
+        if self.hotspot is None:
+            return ()
+        return self.hotspot.supporting_locations
+
+    @property
+    def weak_spatial_separation(self) -> bool:
+        return bool(self.hotspot and not self.hotspot.has_clear_separation)
 
     @property
     def display_location(self) -> str:

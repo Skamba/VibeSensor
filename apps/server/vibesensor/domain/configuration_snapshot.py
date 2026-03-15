@@ -27,11 +27,6 @@ class ConfigurationSnapshot:
         if not isinstance(self.metadata, MappingProxyType):
             object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
-    @property
-    def has_order_reference_context(self) -> bool:
-        """Whether enough mechanical reference data exists for order analysis."""
-        return self.tire_spec is not None and self.final_drive_ratio is not None
-
     @classmethod
     def from_metadata(cls, metadata: Mapping[str, object]) -> ConfigurationSnapshot:
         def _coerce_float(value: object) -> float | None:

@@ -18,7 +18,7 @@ from test_support import standard_metadata as _standard_metadata
 from test_support import wheel_hz as _wheel_hz
 
 from vibesensor.analysis import build_findings_for_samples, summarize_run_data
-from vibesensor.analysis.test_plan import _location_speedbin_summary
+from vibesensor.analysis.location_analysis import _location_speedbin_summary
 from vibesensor.locations import WHEEL_LOCATION_CODES, is_wheel_location
 
 # ---------------------------------------------------------------------------

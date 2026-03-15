@@ -21,3 +21,41 @@ class RecommendedAction:
 
     def sort_key(self) -> tuple[int, str]:
         return (self.priority, self.action_id)
+
+    @property
+    def instruction(self) -> str:
+        return self.what.strip()
+
+    @property
+    def rationale(self) -> str | None:
+        value = self.why.strip()
+        return value or None
+
+    @property
+    def confirmation_signal(self) -> str | None:
+        value = self.confirm.strip()
+        return value or None
+
+    @property
+    def falsification_signal(self) -> str | None:
+        value = self.falsify.strip()
+        return value or None
+
+    @property
+    def estimated_duration(self) -> str | None:
+        if self.eta is None:
+            return None
+        value = self.eta.strip()
+        return value or None
+
+    @property
+    def has_supporting_detail(self) -> bool:
+        return any(
+            value is not None
+            for value in (
+                self.rationale,
+                self.confirmation_signal,
+                self.falsification_signal,
+                self.estimated_duration,
+            )
+        )

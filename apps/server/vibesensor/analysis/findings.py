@@ -17,6 +17,7 @@ from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 
+from ..boundaries.finding import finding_from_payload
 from ..constants import (
     MEMS_NOISE_FLOOR_G,
     NEGLIGIBLE_STRENGTH_MAX_DB,
@@ -82,7 +83,7 @@ def finalize_findings(
 
     Callers that only need the payloads can ignore the second element.
     """
-    pairs = [(f, DomainFinding.from_payload(f)) for f in findings]
+    pairs = [(f, finding_from_payload(f)) for f in findings]
     refs = [(f, d) for f, d in pairs if d.is_reference]
     diags = sorted(
         [(f, d) for f, d in pairs if d.is_diagnostic],
@@ -116,7 +117,7 @@ def domain_findings_from_payloads(
     Use when the payloads are already finalized (ranked, with ``F###``
     IDs assigned) and domain objects are needed for core selection logic.
     """
-    return tuple(DomainFinding.from_payload(p) for p in payloads)
+    return tuple(finding_from_payload(p) for p in payloads)
 
 
 # ---------------------------------------------------------------------------

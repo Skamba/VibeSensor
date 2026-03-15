@@ -43,14 +43,14 @@ apps/server/tests/
 | `vibesensor/analysis/*` | `apps/server/tests/analysis/` |
 | `vibesensor/report/*`, `report_i18n.py` | `apps/server/tests/report/` |
 | `vibesensor/routes/*` | `apps/server/tests/api/` |
-| `vibesensor/app.py`, `bootstrap.py`, `runtime/*`, `worker_pool.py` | `apps/server/tests/app/` |
+| `vibesensor/app.py`, `runtime/*`, `worker_pool.py` | `apps/server/tests/app/` |
 | `vibesensor/history_db/*`, `history_services/*`, `runlog.py` | `apps/server/tests/history/` |
 | `vibesensor/update/*` | `apps/server/tests/update/` |
 | `vibesensor/processing/*` | `apps/server/tests/processing/` |
 | `vibesensor/ws_hub.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
 | `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
 | `vibesensor/analysis/order_bands.py` | `apps/server/tests/diagnostics/` |
-| `vibesensor/backend_types.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |
+| `vibesensor/domain/*`, `vibesensor/boundaries/*`, `backend_types.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |
 | `vibesensor/gps_speed.py` | `apps/server/tests/gps/` |
 | `vibesensor/protocol.py`, `udp_*.py` | `apps/server/tests/protocol/` |
 | `vibesensor/metrics_log/*` | `apps/server/tests/metrics_log/` |
@@ -203,7 +203,7 @@ Coverage guidance:
 The default CI-parity suite now mirrors these blocking GitHub checks:
 
 - `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, docs lint, WS schema sync, and HTTP API schema sync.
-- `backend-typecheck`: mypy on the enforced backend slice covering app/bootstrap, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages.
+- `backend-typecheck`: mypy on the enforced backend slice covering app, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages.
 - `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
 - `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
 - `ui-smoke`, `backend-tests`, `e2e`: required test jobs.

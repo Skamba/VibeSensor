@@ -3,7 +3,22 @@
 from __future__ import annotations
 
 from vibesensor.analysis._types import AnalysisSummary
+from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
+from vibesensor.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.domain import (
+    ConfigurationSnapshot,
+    Finding,
+    LocationHotspot,
+    RecommendedAction,
+    Run,
+    TestRun,
+    VibrationOrigin,
+)
+from vibesensor.domain import (
+    TestPlan as DomainTestPlan,
+)
 from vibesensor.report.mapping import (
+    _origin_from_aggregate,
     summary_end_time_utc,
     summary_findings,
     summary_firmware_version,
@@ -113,6 +128,91 @@ class TestSummaryHelpers:
     def test_origin(self) -> None:
         assert summary_origin(_minimal_summary())["location"] == "front_left"
 
+    def test_report_origin_projection_reads_domain_vibration_origin(self) -> None:
+        primary = Finding(
+            finding_id="F001",
+            suspected_source="wheel/tire",
+            strongest_location="front_left",
+            strongest_speed_band="80-90 km/h",
+            dominance_ratio=1.05,
+            weak_spatial_separation=True,
+            location=LocationHotspot.from_analysis_inputs(
+                strongest_location="front_left",
+                ambiguous=True,
+                alternative_locations=["front_right"],
+                dominance_ratio=1.05,
+            ),
+            origin=VibrationOrigin.from_analysis_inputs(
+                suspected_source=Finding(suspected_source="wheel/tire").suspected_source,
+                hotspot=LocationHotspot.from_analysis_inputs(
+                    strongest_location="front_left",
+                    ambiguous=True,
+                    alternative_locations=["front_right"],
+                    dominance_ratio=1.05,
+                ),
+                dominance_ratio=1.05,
+                speed_band="80-90 km/h",
+                dominant_phase="acceleration",
+                reason="domain rationale",
+            ),
+        )
+        aggregate = TestRun(
+            run=Run(run_id="run-1"),
+            configuration_snapshot=ConfigurationSnapshot(),
+            findings=(primary,),
+            top_causes=(primary,),
+        )
+        origin = _origin_from_aggregate(aggregate, _minimal_summary()["most_likely_origin"])
+        assert origin["location"] == "Front Left / Front Right"
+        assert origin["alternative_locations"] == ["front_right"]
+        assert origin["dominant_phase"] == "acceleration"
+        assert origin["speed_band"] == "80-90 km/h"
+
+    def test_history_projection_reads_domain_vibration_origin(self) -> None:
+        summary = _minimal_summary(
+            findings=[
+                {
+                    "finding_id": "F001",
+                    "suspected_source": "wheel/tire",
+                    "strongest_location": "front_left",
+                    "strongest_speed_band": "80-90 km/h",
+                    "dominance_ratio": 1.05,
+                    "weak_spatial_separation": True,
+                    "dominant_phase": "acceleration",
+                    "evidence_summary": "payload rationale",
+                    "location_hotspot": {
+                        "top_location": "front_left",
+                        "ambiguous_location": True,
+                        "ambiguous_locations": ["front_left", "front_right"],
+                    },
+                }
+            ],
+            top_causes=[
+                {
+                    "finding_id": "F001",
+                    "suspected_source": "wheel/tire",
+                    "strongest_location": "front_left",
+                    "strongest_speed_band": "80-90 km/h",
+                    "dominance_ratio": 1.05,
+                    "weak_spatial_separation": True,
+                    "dominant_phase": "acceleration",
+                    "evidence_summary": "payload rationale",
+                    "location_hotspot": {
+                        "top_location": "front_left",
+                        "ambiguous_location": True,
+                        "ambiguous_locations": ["front_left", "front_right"],
+                    },
+                }
+            ],
+            most_likely_origin={},
+        )
+        projected = project_summary_through_domain(summary)
+        origin = projected["most_likely_origin"]
+        assert origin["location"] == "Front Left / Front Right"
+        assert origin["alternative_locations"] == ["front_right"]
+        assert origin["dominant_phase"] == "acceleration"
+        assert origin["speed_band"] == "80-90 km/h"
+
     def test_sensor_locations_active_prefers_connected(self) -> None:
         assert summary_sensor_locations_active(_minimal_summary()) == ["front_left"]
 
@@ -130,6 +230,77 @@ class TestSummaryHelpers:
     def test_test_plan(self) -> None:
         plan = [{"what": "test something", "why": "to verify"}]
         assert len(summary_test_plan(_minimal_summary(test_plan=plan))) == 1
+
+    def test_boundary_test_plan_payload_projects_semantic_action_fields(self) -> None:
+        projected = step_payloads_from_plan(
+            DomainTestPlan(
+                actions=(
+                    RecommendedAction(
+                        action_id=" wheel_balance_and_runout ".strip(),
+                        what="  ACTION_WHEEL_BALANCE_WHAT  ",
+                        why="   ",
+                        confirm=" vibration drops ",
+                        falsify="  no change  ",
+                        eta=" 10-20 min ",
+                        priority=2,
+                    ),
+                    RecommendedAction(
+                        action_id="wheel_tire_condition",
+                        what="ACTION_TIRE_CONDITION_WHAT",
+                        why="ACTION_TIRE_CONDITION_WHY",
+                        priority=1,
+                    ),
+                )
+            )
+        )
+
+        assert projected == [
+            {
+                "action_id": "wheel_tire_condition",
+                "what": "ACTION_TIRE_CONDITION_WHAT",
+                "why": "ACTION_TIRE_CONDITION_WHY",
+                "confirm": None,
+                "falsify": None,
+                "eta": None,
+            },
+            {
+                "action_id": "wheel_balance_and_runout",
+                "what": "ACTION_WHEEL_BALANCE_WHAT",
+                "why": None,
+                "confirm": "vibration drops",
+                "falsify": "no change",
+                "eta": "10-20 min",
+            },
+        ]
+
+    def test_history_projection_uses_canonical_test_plan_payload(self) -> None:
+        summary = _minimal_summary(
+            findings=[{"finding_id": "F001", "suspected_source": "engine"}],
+            top_causes=[{"finding_id": "F001", "suspected_source": "engine"}],
+            test_plan=[
+                {
+                    "action_id": "engine_mounts_and_accessories",
+                    "what": "  ACTION_ENGINE_MOUNTS_WHAT  ",
+                    "why": "   ",
+                    "confirm": " movement changes ",
+                    "falsify": " no change ",
+                    "eta": " 15-30 min ",
+                }
+            ],
+        )
+
+        projected = project_summary_through_domain(summary)
+
+        assert projected["test_plan"] == [
+            {
+                "action_id": "engine_mounts_and_accessories",
+                "what": "ACTION_ENGINE_MOUNTS_WHAT",
+                "why": None,
+                "confirm": "movement changes",
+                "falsify": "no change",
+                "eta": "15-30 min",
+            }
+        ]
 
     def test_run_suitability(self) -> None:
         checks = [{"check": "SPEED", "state": "pass", "explanation": "ok"}]
