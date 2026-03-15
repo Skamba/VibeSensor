@@ -207,9 +207,10 @@ TestRun
   is interpreted within the case-scoped Car context
 
 RunCapture
-  references one Run
+  references one Run (via run_id: str — no embedded Run object)
   contains one RunSetup
-  contains Measurement*
+  contains Measurement* (structurally present, never populated in
+    production — DSP pipeline operates on numpy arrays for performance)
   is interpreted within the case-scoped Car context
 
 RunSetup
@@ -267,6 +268,10 @@ HistoryRecord
 
 Measurement -> Observation -> Signature -> Hypothesis -> Finding -> Diagnosis -> Report
   is the canonical reasoning chain from evidence to explanation
+  (in practice, findings are built first by the analysis pipeline and
+  observations/signatures/hypotheses are retroactively derived from
+  finding evidence — a known inversion that preserves the structural
+  relationships while reflecting the actual computation order)
 ```
 
 The intended meaningful flow is:

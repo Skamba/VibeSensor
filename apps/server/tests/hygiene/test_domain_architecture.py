@@ -1382,3 +1382,79 @@ def test_boundaries_do_not_import_analysis() -> None:
     assert not violations, (
         "boundaries/ must not import analysis/:\n" + "\n".join(violations)
     )
+
+
+# ── TODO-22: Canonical domain graph structural verification ──────────────
+
+
+def test_canonical_domain_graph_relationships() -> None:
+    """Verify all canonical domain graph relationships exist as typed fields."""
+    import dataclasses
+
+    from vibesensor.domain import (
+        Car,
+        Diagnosis,
+        DiagnosticCase,
+        DiagnosticReasoning,
+        DrivingSegment,
+        Finding,
+        Hypothesis,
+        Measurement,
+        Observation,
+        RunCapture,
+        RunSetup,
+        Sensor,
+        SensorPlacement,
+        Signature,
+        SpeedSource,
+        TestRun,
+    )
+
+    def field_type(cls: type, name: str) -> type:
+        """Return the raw annotation for a dataclass field."""
+        hints = {f.name: f for f in dataclasses.fields(cls)}
+        assert name in hints, f"{cls.__name__} missing field {name}"
+        return hints[name]
+
+    # DiagnosticCase
+    field_type(DiagnosticCase, "car")  # Car | None
+    field_type(DiagnosticCase, "test_runs")  # tuple[TestRun, ...]
+    field_type(DiagnosticCase, "diagnoses")  # tuple[Diagnosis, ...]
+
+    # TestRun
+    field_type(TestRun, "capture")  # RunCapture
+    field_type(TestRun, "reasoning")  # DiagnosticReasoning
+    field_type(TestRun, "findings")  # tuple[Finding, ...]
+    field_type(TestRun, "driving_segments")  # tuple[DrivingSegment, ...]
+
+    # RunCapture
+    field_type(RunCapture, "run_id")  # str (not a Run object — known deviation)
+    field_type(RunCapture, "setup")  # RunSetup
+    field_type(RunCapture, "measurements")  # tuple[Measurement, ...]
+    assert not any(
+        f.name == "run" for f in dataclasses.fields(RunCapture)
+    ), "RunCapture must not hold a Run object reference (uses run_id: str)"
+
+    # RunSetup
+    field_type(RunSetup, "sensors")  # tuple[Sensor, ...]
+    field_type(RunSetup, "speed_source")  # SpeedSource
+
+    # Sensor
+    field_type(Sensor, "placement")  # SensorPlacement | None
+
+    # Measurement
+    field_type(Measurement, "sensor_id")  # str
+
+    # DiagnosticReasoning
+    field_type(DiagnosticReasoning, "observations")  # tuple[Observation, ...]
+    field_type(DiagnosticReasoning, "signatures")  # tuple[Signature, ...]
+    field_type(DiagnosticReasoning, "hypotheses")  # tuple[Hypothesis, ...]
+
+    # Verify all imports are real classes (not just string names)
+    for cls in (
+        Car, Diagnosis, DiagnosticCase, DiagnosticReasoning,
+        DrivingSegment, Finding, Hypothesis, Measurement,
+        Observation, RunCapture, RunSetup, Sensor, SensorPlacement,
+        Signature, SpeedSource, TestRun,
+    ):
+        assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
