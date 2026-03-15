@@ -577,7 +577,6 @@ def build_data_trust_from_summary(
     if aggregate is not None and aggregate.suitability is not None:
         projected = run_suitability_payload(
             aggregate.suitability,
-            fallback=summary_run_suitability(summary),
         )
         for proj in projected:
             data_trust.append(

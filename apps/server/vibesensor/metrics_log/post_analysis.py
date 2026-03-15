@@ -266,6 +266,7 @@ class PostAnalysisWorker:
                 stride_check = SuitabilityCheck(
                     check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
                     state="warn",
+                    details=(("stride", stride),),
                 )
                 explanation = _tr(
                     language,

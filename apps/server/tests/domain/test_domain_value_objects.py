@@ -1259,6 +1259,102 @@ class TestSuitabilityCheck:
         assert SuitabilityCheck(check_key="a", state="fail").failed
         assert SuitabilityCheck(check_key="a", state="warn").is_warning
 
+    @pytest.mark.parametrize(
+        "check_key,state,details,expected_key",
+        [
+            ("SUITABILITY_CHECK_SPEED_VARIATION", "pass", (), "SUITABILITY_SPEED_VARIATION_PASS"),
+            ("SUITABILITY_CHECK_SPEED_VARIATION", "warn", (), "SUITABILITY_SPEED_VARIATION_WARN"),
+            ("SUITABILITY_CHECK_SENSOR_COVERAGE", "pass", (), "SUITABILITY_SENSOR_COVERAGE_PASS"),
+            ("SUITABILITY_CHECK_SENSOR_COVERAGE", "warn", (), "SUITABILITY_SENSOR_COVERAGE_WARN"),
+            (
+                "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
+                "pass",
+                (),
+                "SUITABILITY_REFERENCE_COMPLETENESS_PASS",
+            ),
+            (
+                "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
+                "warn",
+                (),
+                "SUITABILITY_REFERENCE_COMPLETENESS_WARN",
+            ),
+            (
+                "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+                "pass",
+                (),
+                "SUITABILITY_SATURATION_PASS",
+            ),
+            (
+                "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+                "warn",
+                (("sat_count", 3),),
+                "SUITABILITY_SATURATION_WARN",
+            ),
+            ("SUITABILITY_CHECK_FRAME_INTEGRITY", "pass", (), "SUITABILITY_FRAME_INTEGRITY_PASS"),
+            (
+                "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "warn",
+                (("total_dropped", 2), ("total_overflow", 1)),
+                "SUITABILITY_FRAME_INTEGRITY_WARN",
+            ),
+            (
+                "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+                "warn",
+                (("stride", 4),),
+                "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
+            ),
+        ],
+    )
+    def test_explanation_i18n_ref(
+        self, check_key: str, state: str, details: tuple, expected_key: str,
+    ) -> None:
+        c = SuitabilityCheck(check_key=check_key, state=state, details=details)
+        ref = c.explanation_i18n_ref()
+        assert isinstance(ref, dict)
+        assert ref["_i18n_key"] == expected_key
+
+    def test_explanation_i18n_ref_saturation_warn_includes_sat_count(self) -> None:
+        c = SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+            state="warn",
+            details=(("sat_count", 5),),
+        )
+        ref = c.explanation_i18n_ref()
+        assert isinstance(ref, dict)
+        assert ref["sat_count"] == 5
+
+    def test_explanation_i18n_ref_frame_integrity_warn_includes_counts(self) -> None:
+        c = SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_FRAME_INTEGRITY",
+            state="warn",
+            details=(("total_dropped", 10), ("total_overflow", 3)),
+        )
+        ref = c.explanation_i18n_ref()
+        assert isinstance(ref, dict)
+        assert ref["total_dropped"] == 10
+        assert ref["total_overflow"] == 3
+
+    def test_explanation_i18n_ref_stride_includes_stride(self) -> None:
+        c = SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+            state="warn",
+            details=(("stride", 4),),
+        )
+        ref = c.explanation_i18n_ref()
+        assert isinstance(ref, dict)
+        assert ref["stride"] == "4"
+
+    def test_explanation_i18n_ref_stride_no_details_returns_empty(self) -> None:
+        c = SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+            state="warn",
+        )
+        assert c.explanation_i18n_ref() == ""
+
+    def test_explanation_i18n_ref_unknown_key_returns_empty(self) -> None:
+        c = SuitabilityCheck(check_key="UNKNOWN_CHECK", state="warn")
+        assert c.explanation_i18n_ref() == ""
+
 
 class TestRunSuitability:
     def test_frozen(self) -> None:

@@ -14,6 +14,10 @@ from typing import ClassVar
 __all__ = ["RunSuitability", "SuitabilityCheck"]
 
 
+def _i18n_ref(key: str, **kwargs: object) -> dict[str, object]:
+    return {"_i18n_key": key, **kwargs}
+
+
 @dataclass(frozen=True, slots=True)
 class SuitabilityCheck:
     """One data-quality check result."""
@@ -37,6 +41,53 @@ class SuitabilityCheck:
     @property
     def details_dict(self) -> dict[str, int]:
         return dict(self.details)
+
+    def explanation_i18n_ref(self) -> dict[str, object] | str:
+        """Return the i18n reference dict (or empty string) for this check."""
+        details = self.details_dict
+        if self.check_key == "SUITABILITY_CHECK_SPEED_VARIATION":
+            return _i18n_ref(
+                "SUITABILITY_SPEED_VARIATION_PASS"
+                if self.passed
+                else "SUITABILITY_SPEED_VARIATION_WARN",
+            )
+        if self.check_key == "SUITABILITY_CHECK_SENSOR_COVERAGE":
+            return _i18n_ref(
+                "SUITABILITY_SENSOR_COVERAGE_PASS"
+                if self.passed
+                else "SUITABILITY_SENSOR_COVERAGE_WARN",
+            )
+        if self.check_key == "SUITABILITY_CHECK_REFERENCE_COMPLETENESS":
+            return _i18n_ref(
+                "SUITABILITY_REFERENCE_COMPLETENESS_PASS"
+                if self.passed
+                else "SUITABILITY_REFERENCE_COMPLETENESS_WARN",
+            )
+        if self.check_key == "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS":
+            sat_count = int(details.get("sat_count", 0))
+            return (
+                _i18n_ref("SUITABILITY_SATURATION_PASS")
+                if self.passed
+                else _i18n_ref("SUITABILITY_SATURATION_WARN", sat_count=sat_count)
+            )
+        if self.check_key == "SUITABILITY_CHECK_FRAME_INTEGRITY":
+            total_dropped = int(details.get("total_dropped", 0))
+            total_overflow = int(details.get("total_overflow", 0))
+            return (
+                _i18n_ref("SUITABILITY_FRAME_INTEGRITY_PASS")
+                if self.passed
+                else _i18n_ref(
+                    "SUITABILITY_FRAME_INTEGRITY_WARN",
+                    total_dropped=total_dropped,
+                    total_overflow=total_overflow,
+                )
+            )
+        if self.check_key == "SUITABILITY_CHECK_ANALYSIS_SAMPLING":
+            stride = str(details.get("stride", ""))
+            if stride:
+                return _i18n_ref("SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING", stride=stride)
+            return ""
+        return ""
 
 
 @dataclass(frozen=True, slots=True)
