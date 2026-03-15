@@ -88,39 +88,6 @@ class TestTopReportCandidate:
 
 
 # ---------------------------------------------------------------------------
-# Display helpers
-# ---------------------------------------------------------------------------
-
-
-class TestDisplaySpeedRange:
-    def test_with_speed_range(self) -> None:
-        context = _make_context(
-            speed_stats={
-                "min_kmh": 40.0,
-                "max_kmh": 120.0,
-                "mean_kmh": 80.0,
-                "stddev_kmh": 20.0,
-                "range_kmh": 80.0,
-                "steady_speed": False,
-            },
-        )
-        assert context.display_speed_range() == "40\u2013120 km/h"
-
-    def test_missing_speed_data(self) -> None:
-        context = _make_context(
-            speed_stats={
-                "min_kmh": None,
-                "max_kmh": None,
-                "mean_kmh": None,
-                "stddev_kmh": None,
-                "range_kmh": None,
-                "steady_speed": False,
-            },
-        )
-        assert context.display_speed_range() is None
-
-
-# ---------------------------------------------------------------------------
 # Intensity queries
 # ---------------------------------------------------------------------------
 

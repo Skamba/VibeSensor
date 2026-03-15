@@ -47,7 +47,7 @@
   `finding.py` (FindingKind, VibrationSource, Finding, speed_bin_label, speed_band_sort_key), `report.py` (Report),
   `run_status.py` (RunStatus, RUN_TRANSITIONS). `domain/services/` owns
   observation extraction, signature recognition, hypothesis evaluation,
-  finding synthesis, and test planning. Domain objects own
+  and test planning. Domain objects own
   classification, ranking, actionability, surfacing, lifecycle, and
   query logic; pipeline adapters in `analysis/` delegate to them. See
   `docs/domain-model.md` for the full relationship map and modeling rules.

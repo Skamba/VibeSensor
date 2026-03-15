@@ -29,6 +29,7 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
+from ..boundaries._helpers import _payloads_by_id
 from ..boundaries.finding import finding_payload_from_domain
 from ..boundaries.run_suitability import run_suitability_payload
 from ..boundaries.vibration_origin import SuspectedVibrationOrigin, origin_payload_from_finding
@@ -114,16 +115,6 @@ class ReportMappingContext:
             if payload is not None:
                 return payload
             return self.finding_payloads_by_id.get(finding.finding_id)
-        return None
-
-    # -- display helpers ----------------------------------------------------
-
-    def display_speed_range(self) -> str | None:
-        """Return the formatted speed range from speed stats."""
-        min_kmh = self.speed_stats.get("min_kmh")
-        max_kmh = self.speed_stats.get("max_kmh")
-        if min_kmh is not None and max_kmh is not None:
-            return f"{min_kmh:.0f}\u2013{max_kmh:.0f} km/h"
         return None
 
     # -- intensity queries --------------------------------------------------
@@ -408,15 +399,6 @@ def summary_sample_rate_hz_text(summary: AnalysisSummary) -> str | None:
     return f"{rate:g}" if rate is not None else None
 
 
-def _payloads_by_id(items: list[FindingPayload]) -> dict[str, FindingPayload]:
-    payloads: dict[str, FindingPayload] = {}
-    for item in items:
-        finding_id = str(item.get("finding_id") or "").strip()
-        if finding_id and finding_id not in payloads:
-            payloads[finding_id] = item
-    return payloads
-
-
 def _origin_from_aggregate(
     aggregate: TestRun | None,
     fallback: SuspectedVibrationOrigin,
@@ -577,7 +559,7 @@ def build_next_steps_from_summary(
 
     next_steps: list[NextStep] = []
     summary_steps = summary_test_plan(summary)
-    if aggregate is not None and not _summary_has_structured_step_content(summary_steps):
+    if aggregate is not None and aggregate.recommended_actions:
         for action in aggregate.recommended_actions:
             next_steps.append(
                 NextStep(
@@ -609,15 +591,6 @@ def build_next_steps_from_summary(
             ),
         )
     return next_steps
-
-
-def _summary_has_structured_step_content(steps: list[TestStep]) -> bool:
-    for step in steps:
-        for key in ("what", "why", "confirm", "falsify"):
-            value = step.get(key)
-            if isinstance(value, (dict, list)):
-                return True
-    return False
 
 
 def _resolve_step_value(value: object, *, lang: str, tr: Callable) -> str:

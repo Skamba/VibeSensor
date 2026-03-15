@@ -9,6 +9,7 @@ from ..domain.finding import Finding, VibrationSource
 from ..domain.location_hotspot import LocationHotspot
 from ..domain.vibration_origin import VibrationOrigin
 from ..json_types import JsonValue
+from ._helpers import _as_float
 from .location_hotspot import location_hotspot_from_payload
 
 __all__ = [
@@ -27,15 +28,6 @@ class SuspectedVibrationOrigin(TypedDict, total=False):
     speed_band: str | None
     dominant_phase: str | None
     explanation: JsonValue
-
-
-def _as_float(value: object) -> float | None:
-    if value is None:
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
 
 
 def _source_from_payload(

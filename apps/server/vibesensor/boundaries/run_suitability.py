@@ -15,7 +15,15 @@ def _i18n_ref(key: str, **kwargs: object) -> dict[str, object]:
 
 def run_suitability_from_payload(checks: Sequence[Mapping[str, object]]) -> RunSuitability:
     """Decode persisted checklist payloads into the domain RunSuitability shape."""
-    return RunSuitability.from_checks(checks)
+    domain_checks = tuple(
+        SuitabilityCheck(
+            check_key=str(c.get("check_key", c.get("check", ""))),
+            state=str(c.get("state", "pass")),
+        )
+        for c in checks
+        if isinstance(c, Mapping)
+    )
+    return RunSuitability(checks=domain_checks)
 
 
 def _fallback_check_by_key(
