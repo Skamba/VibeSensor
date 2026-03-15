@@ -933,27 +933,15 @@ def prepare_report_mapping_context(
     domain_aggregate = test_run_from_summary(summary)
 
     findings = [
-        finding_payload_from_domain(
-            finding,
-            primary=summary_findings_by_id,
-            secondary=summary_top_causes_by_id,
-        )
+        finding_payload_from_domain(finding)
         for finding in domain_aggregate.findings
     ]
     findings_non_ref = [
-        finding_payload_from_domain(
-            finding,
-            primary=summary_findings_by_id,
-            secondary=summary_top_causes_by_id,
-        )
+        finding_payload_from_domain(finding)
         for finding in domain_aggregate.non_reference_findings
     ]
     top_causes = [
-        finding_payload_from_domain(
-            finding,
-            primary=summary_top_causes_by_id,
-            secondary=summary_findings_by_id,
-        )
+        finding_payload_from_domain(finding)
         for finding in domain_aggregate.effective_top_causes()
     ]
     origin = _origin_from_aggregate(domain_aggregate, origin)

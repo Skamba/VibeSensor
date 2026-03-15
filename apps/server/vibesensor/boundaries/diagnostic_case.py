@@ -23,7 +23,7 @@ from ..domain.speed_source import SpeedSource
 from ..domain.symptom import Symptom
 from ..domain.test_plan import TestPlan
 from ..domain.test_run import TestRun
-from ._helpers import _as_float, _has_structured_step_content, _payloads_by_id
+from ._helpers import _as_float, _has_structured_step_content
 from .finding import finding_from_payload, finding_payload_from_domain
 from .run_suitability import run_suitability_from_payload, run_suitability_payload
 from .speed_profile import speed_profile_from_stats
@@ -247,23 +247,12 @@ def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, o
 
     test_run = test_run_from_summary(summary)
 
-    findings_by_id = _payloads_by_id(summary.get("findings"))
-    top_causes_by_id = _payloads_by_id(summary.get("top_causes"))
-
     projected["findings"] = [
-        finding_payload_from_domain(
-            finding,
-            primary=findings_by_id,
-            secondary=top_causes_by_id,
-        )
+        finding_payload_from_domain(finding)
         for finding in test_run.findings
     ]
     projected["top_causes"] = [
-        finding_payload_from_domain(
-            finding,
-            primary=top_causes_by_id,
-            secondary=findings_by_id,
-        )
+        finding_payload_from_domain(finding)
         for finding in test_run.effective_top_causes()
     ]
     _origin_fallback = summary.get("most_likely_origin")
