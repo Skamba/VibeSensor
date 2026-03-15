@@ -19,19 +19,11 @@ from ..domain.speed_profile import SpeedProfile
 from ..domain.symptom import Symptom
 from ..domain.test_plan import TestPlan
 from ..domain.test_run import TestRun
+from ._helpers import _as_float, _has_structured_step_content, _payloads_by_id
 from .finding import finding_from_payload, finding_payload_from_domain
 from .run_suitability import run_suitability_from_payload, run_suitability_payload
 from .test_steps import step_payloads_from_plan
 from .vibration_origin import origin_payload_from_finding, vibration_origin_from_payload
-
-
-def _as_float(value: object) -> float | None:
-    if value is None:
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
 
 
 def _actions_from_steps(steps: object) -> tuple[RecommendedAction, ...]:
@@ -121,31 +113,6 @@ def _hypothesis_from_finding(finding: Finding, signatures: tuple[Signature, ...]
         ),
     )
 
-
-def _payloads_by_id(items: object) -> dict[str, Mapping[str, object]]:
-    if not isinstance(items, list):
-        return {}
-    payloads: dict[str, Mapping[str, object]] = {}
-    for item in items:
-        if not isinstance(item, Mapping):
-            continue
-        finding_id = str(item.get("finding_id") or "").strip()
-        if finding_id and finding_id not in payloads:
-            payloads[finding_id] = item
-    return payloads
-
-
-def _has_structured_step_content(steps: object) -> bool:
-    if not isinstance(steps, list):
-        return False
-    for step in steps:
-        if not isinstance(step, Mapping):
-            continue
-        for key in ("what", "why", "confirm", "falsify"):
-            value = step.get(key)
-            if isinstance(value, (Mapping, list)):
-                return True
-    return False
 
 
 def _checks_from_suitability(suitability: RunSuitability | None) -> list[dict[str, object]]:
