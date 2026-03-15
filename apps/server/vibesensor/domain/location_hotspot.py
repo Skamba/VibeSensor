@@ -25,6 +25,7 @@ class LocationHotspot:
     weak_spatial_separation: bool = False
     ambiguous: bool = False
     alternative_locations: tuple[str, ...] = ()
+    location_count: int | None = None
 
     _UNKNOWN_LOCATIONS: ClassVar[frozenset[str]] = frozenset(
         {"", "unknown", "not available", "n/a"},
@@ -42,6 +43,20 @@ class LocationHotspot:
             return baseline
         n_locations = max(2, int(location_count))
         return baseline * (1.0 + (0.1 * (n_locations - 2)))
+
+    @staticmethod
+    def compute_confidence(
+        *,
+        dominance_ratio: float,
+        location_count: int,
+        total_samples: int,
+    ) -> float:
+        """Compute localization confidence from spatial evidence metrics."""
+        dominance_component = max(0.0, min(1.0, (dominance_ratio - 1.0) / 0.5))
+        location_component = 1.0 / max(1.0, 1.0 + (max(0, location_count - 1) * 0.15))
+        sample_component = min(1.0, max(0.0, total_samples / 10.0))
+        confidence = dominance_component * location_component * (0.6 + 0.4 * sample_component)
+        return max(0.05, min(1.0, confidence))
 
     # -- domain queries ----------------------------------------------------
 

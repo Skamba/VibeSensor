@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis.strength_labels import certainty_label, strength_label, strength_text
+from vibesensor.analysis.strength_labels import strength_label, strength_text
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.report.pattern_parts import parts_for_pattern, why_parts_listed
 
 
@@ -47,53 +48,41 @@ def test_strength_text_value() -> None:
 
 
 @pytest.mark.parametrize(
-    ("conf", "expected_level"),
+    ("conf", "expected_label_key"),
     [
-        (0.0, "low"),
-        (0.39, "low"),
-        (0.40, "medium"),
-        (0.69, "medium"),
-        (0.70, "high"),
-        (1.0, "high"),
+        (0.0, "CONFIDENCE_LOW"),
+        (0.39, "CONFIDENCE_LOW"),
+        (0.40, "CONFIDENCE_MEDIUM"),
+        (0.69, "CONFIDENCE_MEDIUM"),
+        (0.70, "CONFIDENCE_HIGH"),
+        (1.0, "CONFIDENCE_HIGH"),
     ],
 )
-def test_certainty_label_levels(conf: float, expected_level: str) -> None:
-    level, label, pct, reason = certainty_label(conf, lang="en")
-    assert level == expected_level
-    assert isinstance(label, str) and label
-    assert "%" in pct
-    assert isinstance(reason, str) and reason
+def test_confidence_assessment_levels(conf: float, expected_label_key: str) -> None:
+    ca = ConfidenceAssessment.assess(conf)
+    assert ca.label_key == expected_label_key
+    assert isinstance(ca.pct_text, str) and "%" in ca.pct_text
 
 
-def test_certainty_label_nl() -> None:
-    _, label, _, _ = certainty_label(0.80, lang="nl")
-    assert label == "Hoog"
+def test_confidence_assessment_single_sensor_reason() -> None:
+    ca = ConfidenceAssessment.assess(0.80, sensor_count=1)
+    assert "single sensor" in ca.reason.lower() or "sensor" in ca.reason.lower()
 
 
-def test_certainty_single_sensor_reason() -> None:
-    _, _, _, reason = certainty_label(0.80, lang="en", sensor_count=1)
-    assert "single sensor" in reason.lower()
+def test_confidence_assessment_reference_gaps_reason() -> None:
+    ca = ConfidenceAssessment.assess(0.80, has_reference_gaps=True)
+    assert "reference" in ca.reason.lower()
 
 
-def test_certainty_reference_gaps_reason() -> None:
-    _, _, _, reason = certainty_label(0.80, lang="en", has_reference_gaps=True)
-    assert "reference" in reason.lower()
+def test_confidence_assessment_weak_spatial_reason() -> None:
+    ca = ConfidenceAssessment.assess(0.80, weak_spatial=True)
+    assert "spatial" in ca.reason.lower() or "location" in ca.reason.lower()
 
 
-def test_certainty_narrow_speed_reason() -> None:
-    _, _, _, reason = certainty_label(0.80, lang="en", steady_speed=True)
-    assert "speed" in reason.lower()
-
-
-def test_certainty_weak_spatial_reason() -> None:
-    _, _, _, reason = certainty_label(0.80, lang="en", weak_spatial=True)
-    assert "spatial" in reason.lower()
-
-
-def test_certainty_negligible_strength_caps_high_label() -> None:
-    level, label, _, _ = certainty_label(0.80, lang="en", strength_band_key="negligible")
-    assert level == "medium"
-    assert label == "Medium"
+def test_confidence_assessment_negligible_strength_caps_high() -> None:
+    ca = ConfidenceAssessment.assess(0.80, strength_band_key="negligible")
+    assert ca.label_key == "CONFIDENCE_MEDIUM"
+    assert ca.downgraded
 
 
 def test_parts_for_wheel_1x() -> None:

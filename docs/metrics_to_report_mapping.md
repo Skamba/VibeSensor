@@ -49,8 +49,8 @@ report rendering can localize them at read time.
 | Strongest sensor         | `observed.strongest_location`                   | `most_likely_origin.location` or `top_causes[0].strongest_location` | string |
 | Speed band               | `observed.speed_band`                           | `top_causes[0].strongest_speed_band`         | string (e.g. "80–100 km/h") |
 | Strength                 | `observed.strength_label`, `observed.strength_peak_db` | `_top_strength_values()` → `strength_text()` | `"{Label} ({db:.1f} dB)"` |
-| Certainty                | `observed.certainty_label`, `observed.certainty_pct` | `certainty_label(conf)` | `"{Label} ({pct}%)"` |
-| Certainty reason         | `observed.certainty_reason`                     | `certainty_label()` reason output            | string                       |
+| Certainty                | `observed.certainty_label`, `observed.certainty_pct` | `ConfidenceAssessment.assess()` | `"{Label} ({pct}%)"`  |
+| Certainty reason         | `observed.certainty_reason`                     | `ConfidenceAssessment.assess()` reason     | string                       |
 | Tier indicator           | `certainty_tier_key`                            | `certainty_tier(conf)` → `"A"`, `"B"`, `"C"` | single char               |
 
 ### Systems with Findings panel
@@ -135,7 +135,8 @@ report rendering can localize them at read time.
    Both fields are typed as ``PatternEvidence``.
 
 2. **Tier gating**: `certainty_tier_key` controls which sections are shown/suppressed.
-   The tier is derived from the same confidence value used for `certainty_label`.
+   The tier is derived from `certainty_tier()` (layout thresholds A≤0.15, B≤0.40, C>0.40),
+   NOT from `ConfidenceAssessment.tier` (which uses different thresholds).
 
 3. **Units**: Strength/intensity outputs in persisted analysis and report artifacts are always dB (formatted `{:.1f}`). Frequency remains Hz (`{:.1f}`).
 

@@ -4,9 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from enum import StrEnum
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from .finding import VibrationSource
+
+if TYPE_CHECKING:
+    from .finding import Finding
+    from .signature import Signature
 
 __all__ = ["Hypothesis", "HypothesisStatus"]
 
@@ -73,4 +77,26 @@ class Hypothesis:
             self,
             status=HypothesisStatus.RETIRED,
             rationale=(*self.rationale, reason) if reason else self.rationale,
+        )
+
+    @classmethod
+    def from_finding(cls, finding: Finding, signatures: tuple[Signature, ...]) -> Hypothesis:
+        """Build a hypothesis from a completed finding and its signatures."""
+        status = (
+            HypothesisStatus.SUPPORTED
+            if finding.effective_confidence >= cls.SUPPORTED_THRESHOLD
+            else HypothesisStatus.INCONCLUSIVE
+        )
+        return cls(
+            hypothesis_id=finding.finding_id or f"hyp-{finding.suspected_source}",
+            source=finding.suspected_source,
+            signature_keys=tuple(sig.key for sig in signatures),
+            support_score=finding.effective_confidence,
+            contradiction_score=0.0,
+            status=status,
+            rationale=(
+                (finding.confidence_assessment.reason,)
+                if finding.confidence_assessment and finding.confidence_assessment.reason
+                else ()
+            ),
         )

@@ -244,39 +244,6 @@ def test_test_run_top_strength_db() -> None:
     assert result2.top_strength_db() is None
 
 
-# ── diagnosis_candidates delegates to TestRun ────────────────────────────
-
-
-def test_diagnosis_candidates_delegates_to_domain_aggregate() -> None:
-    """``select_effective_top_causes`` must produce identical results to
-    ``TestRun.effective_top_causes()`` for the same data."""
-    from tests.test_support.findings import make_finding_payload, make_ref_finding
-    from vibesensor.analysis.diagnosis_candidates import select_effective_top_causes
-    from vibesensor.boundaries.finding import finding_from_payload
-    from vibesensor.domain import ConfigurationSnapshot, Run, TestRun
-
-    diag1 = make_finding_payload(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
-    diag2 = make_finding_payload(finding_id="F002", confidence=0.60, suspected_source="engine")
-    ref = make_ref_finding(finding_id="REF_SPEED")
-
-    # Build domain aggregate for comparison
-    domain_findings = tuple(finding_from_payload(f) for f in [diag1, diag2, ref])
-    domain_tc = tuple(finding_from_payload(f) for f in [diag1])
-    aggregate = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
-        findings=domain_findings,
-        top_causes=domain_tc,
-    )
-    domain_effective_ids = {f.finding_id for f in aggregate.effective_top_causes()}
-
-    # Run boundary function
-    _all, _non_ref, _tc_all, effective = select_effective_top_causes([diag1], [diag1, diag2, ref])
-    boundary_effective_ids = {str(f.get("finding_id", "")) for f in effective}
-
-    assert boundary_effective_ids == domain_effective_ids
-
-
 # ── Report mapping context builds domain aggregate ───────────────────────
 
 
@@ -296,26 +263,6 @@ def test_report_mapping_context_has_domain_aggregate() -> None:
     assert context.domain_aggregate is not None
     assert isinstance(context.domain_aggregate, TestRun)
     assert len(context.domain_aggregate.findings) == 1
-
-
-# ── non_reference_findings uses domain classification ────────────────────
-
-
-def test_non_reference_findings_uses_domain_classification() -> None:
-    """``non_reference_findings`` must use domain ``Finding.is_reference``."""
-    from tests.test_support.findings import make_finding_payload, make_ref_finding
-    from vibesensor.analysis.diagnosis_candidates import non_reference_findings
-
-    findings = [
-        make_finding_payload(finding_id="F001"),
-        make_ref_finding(finding_id="REF_SPEED"),
-        make_finding_payload(finding_id="F002"),
-    ]
-    result = non_reference_findings(findings)
-    ids = [str(f.get("finding_id", "")) for f in result]
-    assert "F001" in ids
-    assert "F002" in ids
-    assert "REF_SPEED" not in ids
 
 
 # ── Finding owns confidence presentation ─────────────────────────────────
@@ -900,6 +847,57 @@ def test_planning_service_has_no_payload_imports() -> None:
             )
 
 
+def test_domain_services_do_not_import_outer_layers() -> None:
+    """domain/services/ must not import from analysis, report, boundaries,
+    routes, history, history_services, history_db, runtime, or metrics_log."""
+    import ast
+    from pathlib import Path
+
+    services_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "domain" / "services"
+    forbidden = {
+        "analysis",
+        "report",
+        "boundaries",
+        "routes",
+        "history",
+        "history_services",
+        "history_db",
+        "runtime",
+        "metrics_log",
+    }
+    violations: list[str] = []
+    for py in services_dir.rglob("*.py"):
+        tree = ast.parse(py.read_text(), filename=str(py))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                for part in forbidden:
+                    if part in node.module.split("."):
+                        violations.append(f"{py.name}: imports from {node.module}")
+    assert not violations, "domain/services/ must not import outer layers:\n" + "\n".join(
+        violations
+    )
+
+
+def test_domain_does_not_import_domain_services() -> None:
+    """domain/ value objects must not depend on domain/services/."""
+    import ast
+    from pathlib import Path
+
+    domain_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "domain"
+    violations: list[str] = []
+    for py in domain_dir.iterdir():
+        if not py.is_file() or py.suffix != ".py":
+            continue
+        tree = ast.parse(py.read_text(), filename=str(py))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                if "services" in node.module.split("."):
+                    violations.append(f"{py.name}: imports from {node.module}")
+    assert not violations, "domain/ value objects must not import domain/services/:\n" + "\n".join(
+        violations
+    )
+
+
 def test_analysis_test_plan_renamed() -> None:
     """analysis/test_plan.py was renamed to location_analysis.py."""
     from pathlib import Path
@@ -1107,19 +1105,19 @@ def test_build_run_suitability_checks_does_not_exist() -> None:
     )
 
 
-def test_speed_profile_used_by_certainty_label() -> None:
-    """Certainty label must receive steady_speed from SpeedProfile.
+def test_speed_profile_used_by_confidence_assessment() -> None:
+    """ConfidenceAssessment must be the owner of confidence reasoning.
 
-    When a domain aggregate is available, the report mapping must derive
-    ``steady_speed`` from ``aggregate.speed_profile`` rather than from
-    raw ``speed_stats`` dict.
+    ``certainty_label()`` was deleted; ``ConfidenceAssessment.assess()``
+    is the single source of truth for confidence assessment. Report mapping
+    uses ``certainty_tier()`` for layout gating, not ``certainty_label()``.
     """
     from tests._paths import SERVER_ROOT
 
-    mapping_path = SERVER_ROOT / "vibesensor" / "report" / "mapping.py"
-    source = mapping_path.read_text()
-    assert "speed_profile.steady_speed" in source, (
-        "report mapping must derive steady_speed from SpeedProfile domain object"
+    strength_labels_path = SERVER_ROOT / "vibesensor" / "analysis" / "strength_labels.py"
+    source = strength_labels_path.read_text()
+    assert "certainty_label" not in source, (
+        "certainty_label was deleted; ConfidenceAssessment.assess() is the replacement"
     )
 
 
@@ -1318,52 +1316,10 @@ def test_next_steps_domain_path_is_primary() -> None:
     )
 
 
-def test_report_mapping_fallback_not_primary_path() -> None:
-    """``has_relevant_reference_gap`` and ``top_strength_values`` are fallback-only.
+def test_fallback_payload_functions_removed() -> None:
+    """``top_strength_values`` and ``has_relevant_reference_gap`` have been
+    removed — the domain aggregate is always available."""
+    from vibesensor.report import mapping
 
-    These payload-based functions must only be reached when
-    ``domain_aggregate is None``.  When an aggregate is available,
-    callers must use ``TestRun.has_relevant_reference_gap()`` and
-    ``TestRun.top_strength_db()`` respectively.
-    """
-    from tests._paths import SERVER_ROOT
-
-    mapping_path = SERVER_ROOT / "vibesensor" / "report" / "mapping.py"
-    source = mapping_path.read_text()
-
-    # Locate the resolve_primary_report_candidate function where these
-    # are called, and verify the fallback calls are guarded by
-    # aggregate-absent checks.
-    func_start = source.find("def resolve_primary_report_candidate(")
-    assert func_start != -1
-    next_def = source.find("\ndef ", func_start + 1)
-    func_body = source[func_start : next_def if next_def != -1 else len(source)]
-
-    # Verify domain-first path exists: aggregate.top_strength_db() and
-    # aggregate.has_relevant_reference_gap()
-    assert "aggregate.top_strength_db()" in func_body, (
-        "resolve_primary_report_candidate must use aggregate.top_strength_db() as primary path"
-    )
-    assert "aggregate.has_relevant_reference_gap(" in func_body, (
-        "resolve_primary_report_candidate must use aggregate.has_relevant_reference_gap() "
-        "as primary path"
-    )
-
-    # Verify fallback functions are in the else branch (aggregate absent)
-    # Find the fallback calls and verify they appear after an else block
-    top_strength_call = func_body.find("top_strength_values(")
-    ref_gap_call = func_body.find("has_relevant_reference_gap(context.")
-    assert top_strength_call != -1, "top_strength_values fallback must exist"
-    assert ref_gap_call != -1, "has_relevant_reference_gap fallback must exist"
-
-    # Both fallback calls must appear after the else: that follows the
-    # `if aggregate:` block
-    aggregate_check = func_body.find("if aggregate:")
-    else_block = func_body.find("else:", aggregate_check)
-    assert else_block != -1, "else block for aggregate-absent path must exist"
-    assert top_strength_call > else_block, (
-        "top_strength_values must only be called in the aggregate-absent else branch"
-    )
-    assert ref_gap_call > else_block, (
-        "has_relevant_reference_gap must only be called in the aggregate-absent else branch"
-    )
+    assert not hasattr(mapping, "top_strength_values")
+    assert not hasattr(mapping, "has_relevant_reference_gap")

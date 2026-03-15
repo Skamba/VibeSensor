@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, NotRequired, Required, TypeAlias, TypedDict, TypeGuard
+from typing import TYPE_CHECKING, NotRequired, Required, TypeAlias, TypedDict
 
 from ..domain.finding import VibrationSource as VibrationSource  # re-export from domain
 from ..json_types import JsonObject, JsonValue
@@ -295,18 +295,3 @@ class AnalysisSummary(TypedDict):
 PhaseLabel: TypeAlias = DrivingPhase | str
 PhaseLabels: TypeAlias = Sequence[PhaseLabel]
 Translator: TypeAlias = Callable[[str], str]
-
-
-def is_finding(value: object) -> TypeGuard[FindingPayload]:
-    """Narrow a runtime value to the canonical finding payload shape.
-
-    Checks for ``isinstance(value, dict)`` *and* the presence of the
-    required ``finding_id`` key, which distinguishes a FindingPayload from
-    other dict-shaped objects.
-    """
-    return isinstance(value, dict) and "finding_id" in value
-
-
-# NOTE: The backward-compatible ``Finding = FindingPayload`` alias has been
-# removed.  The domain ``Finding`` lives in ``vibesensor.domain``; use
-# ``FindingPayload`` for serialisation/payload dicts.

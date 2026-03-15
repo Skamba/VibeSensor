@@ -14,10 +14,6 @@ from __future__ import annotations
 import pytest
 
 from tests.test_support.findings import make_finding_payload
-from vibesensor.analysis.strength_labels import (
-    CONFIDENCE_HIGH_THRESHOLD,
-    CONFIDENCE_MEDIUM_THRESHOLD,
-)
 from vibesensor.analysis.top_cause_selection import confidence_label, select_top_causes
 from vibesensor.domain import Finding
 from vibesensor.report_i18n import normalize_lang
@@ -32,20 +28,20 @@ class TestConfidenceLabel:
 
     def test_high_threshold_yields_success_tone(self) -> None:
         """Conf >= HIGH_THRESHOLD → CONFIDENCE_HIGH and 'success' tone."""
-        label, tone, pct = confidence_label(CONFIDENCE_HIGH_THRESHOLD)
+        label, tone, pct = confidence_label(Finding.CONFIDENCE_HIGH_THRESHOLD)
         assert label == "CONFIDENCE_HIGH"
         assert tone == "success"
 
     def test_medium_threshold_yields_warn_tone(self) -> None:
         """Conf in [MEDIUM, HIGH) → CONFIDENCE_MEDIUM and 'warn' tone."""
-        mid = (CONFIDENCE_MEDIUM_THRESHOLD + CONFIDENCE_HIGH_THRESHOLD) / 2
+        mid = (Finding.CONFIDENCE_MEDIUM_THRESHOLD + Finding.CONFIDENCE_HIGH_THRESHOLD) / 2
         label, tone, _ = confidence_label(mid)
         assert label == "CONFIDENCE_MEDIUM"
         assert tone == "warn"
 
     def test_below_medium_yields_neutral_tone(self) -> None:
         """Conf < MEDIUM_THRESHOLD → CONFIDENCE_LOW and 'neutral' tone."""
-        label, tone, _ = confidence_label(CONFIDENCE_MEDIUM_THRESHOLD - 0.01)
+        label, tone, _ = confidence_label(Finding.CONFIDENCE_MEDIUM_THRESHOLD - 0.01)
         assert label == "CONFIDENCE_LOW"
         assert tone == "neutral"
 
@@ -74,7 +70,7 @@ class TestConfidenceLabel:
     def test_negligible_band_caps_high_to_medium(self) -> None:
         """strength_band_key='negligible' must reduce HIGH → MEDIUM."""
         label, tone, _ = confidence_label(
-            CONFIDENCE_HIGH_THRESHOLD + 0.05,
+            Finding.CONFIDENCE_HIGH_THRESHOLD + 0.05,
             strength_band_key="negligible",
         )
         assert label == "CONFIDENCE_MEDIUM"
@@ -82,14 +78,14 @@ class TestConfidenceLabel:
 
     def test_negligible_band_does_not_affect_medium(self) -> None:
         """strength_band_key='negligible' only caps HIGH, not MEDIUM already."""
-        mid = (CONFIDENCE_MEDIUM_THRESHOLD + CONFIDENCE_HIGH_THRESHOLD) / 2
+        mid = (Finding.CONFIDENCE_MEDIUM_THRESHOLD + Finding.CONFIDENCE_HIGH_THRESHOLD) / 2
         label, tone, _ = confidence_label(mid, strength_band_key="negligible")
         assert label == "CONFIDENCE_MEDIUM"
 
     def test_non_negligible_band_leaves_high_intact(self) -> None:
         """An unrelated band key must not suppress a HIGH label."""
         label, tone, _ = confidence_label(
-            CONFIDENCE_HIGH_THRESHOLD + 0.05,
+            Finding.CONFIDENCE_HIGH_THRESHOLD + 0.05,
             strength_band_key="strong",
         )
         assert label == "CONFIDENCE_HIGH"

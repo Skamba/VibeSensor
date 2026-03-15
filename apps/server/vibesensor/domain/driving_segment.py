@@ -17,8 +17,8 @@ class DrivingSegment:
     """Phase-aligned segment of a run."""
 
     phase: DrivingPhase
-    start_idx: int
-    end_idx: int
+    start_idx: int | None = None
+    end_idx: int | None = None
     start_t_s: float | None = None
     end_t_s: float | None = None
     speed_min_kmh: float | None = None

@@ -9,7 +9,6 @@ import pytest
 from _paths import SERVER_ROOT
 
 from vibesensor import report_i18n
-from vibesensor.analysis.strength_labels import _CERTAINTY_REASONS
 from vibesensor.report.pattern_parts import _DEFAULT_PARTS, why_parts_listed
 
 _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
@@ -316,13 +315,6 @@ def test_dutch_translation_audit_round_4_ui_and_python() -> None:
 
     # --- Python source file improvements ---
 
-    # Anglicism removal: "match" -> "overeenkomst"
-    assert "overeenkomst" in _CERTAINTY_REASONS["strong_order_match"]["nl"]
-    assert "overeenkomst" in _CERTAINTY_REASONS["moderate_order_match"]["nl"]
-
-    # Anglicism removal: "patroonmatching" -> "patroonvergelijking"
-    assert "patroonvergelijking" in _CERTAINTY_REASONS["reference_gaps"]["nl"]
-
     # Dutch terminology: "rubberbushing" -> "rubberbus"
     default_nl = [entry[2] for entry in _DEFAULT_PARTS]
     assert any("rubberbus" in label for label in default_nl)
@@ -477,9 +469,6 @@ def test_dutch_translation_audit_round_5_ui_and_python() -> None:
     assert ui["settings.esp_flash.start"] == "Nieuwste flashen"
 
     # --- Python source file improvements ---
-
-    # Compound fix: "tracking-betrouwbaarheid" -> "trackingbetrouwbaarheid"
-    assert "trackingbetrouwbaarheid" in _CERTAINTY_REASONS["narrow_speed_range"]["nl"]
 
     # Compound fix in pattern_parts: "cardanas-orde" -> "cardanasorde"
     result = why_parts_listed("driveline", "1x", lang="nl")

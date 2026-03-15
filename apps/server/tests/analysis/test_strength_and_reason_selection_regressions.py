@@ -1,11 +1,11 @@
 # ruff: noqa: E402
 from __future__ import annotations
 
-"""Strength labeling and reason-selection regressions.
+"""Strength labeling and confidence assessment regressions.
 
 Covers:
   1. strength_labels.strength_label — NaN guard returns "unknown"
-  2. strength_labels.certainty_label — NaN confidence clamped to 0.0
+  2. ConfidenceAssessment.assess — NaN confidence clamped to 0.0
   3. ws_hub.run() — tick-rate drift compensation (source verification)
   4. Tests for previously-untested helpers
 """
@@ -19,10 +19,9 @@ from vibesensor.analysis.helpers import (
     _validate_required_strength_metrics,
 )
 from vibesensor.analysis.strength_labels import (
-    _select_reason_key,
-    certainty_label,
     strength_label,
 )
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 
 # ------------------------------------------------------------------
 # 1. strength_label — NaN guard
@@ -49,28 +48,28 @@ class TestStrengthLabelNanGuard:
 
 
 # ------------------------------------------------------------------
-# 3. certainty_label — NaN confidence guard
+# 3. ConfidenceAssessment — NaN confidence guard
 # ------------------------------------------------------------------
 
 
-class TestCertaintyLabelNanGuard:
-    """NaN confidence must be clamped to 0, producing 'low' + '0%'."""
+class TestConfidenceAssessmentNanGuard:
+    """NaN confidence must be clamped to 0, producing CONFIDENCE_LOW + '0%'."""
 
     def test_nan_confidence_returns_low(self) -> None:
-        level, _label, pct, _reason = certainty_label(
+        ca = ConfidenceAssessment.assess(
             float("nan"),
             strength_band_key="moderate",
         )
-        assert level == "low"
-        assert pct == "0%"
+        assert ca.label_key == "CONFIDENCE_LOW"
+        assert ca.pct_text == "0%"
 
     def test_normal_confidence(self) -> None:
-        level, _label, pct, _reason = certainty_label(
+        ca = ConfidenceAssessment.assess(
             0.85,
             strength_band_key="moderate",
         )
-        assert level == "high"
-        assert pct == "85%"
+        assert ca.label_key == "CONFIDENCE_HIGH"
+        assert ca.pct_text == "85%"
 
 
 # ------------------------------------------------------------------
@@ -119,68 +118,3 @@ class TestValidateRequiredStrengthMetrics:
         samples = [{"other_field": 1}, {"other_field": 2}]
         with pytest.raises(ValueError, match="vibration_strength_db"):
             _validate_required_strength_metrics(samples)
-
-
-# ------------------------------------------------------------------
-# 7. _select_reason_key — priority ordering
-# ------------------------------------------------------------------
-
-
-class TestSelectReasonKey:
-    """Test reason key selection priority ordering."""
-
-    @pytest.mark.parametrize(
-        ("kwargs", "expected"),
-        [
-            (
-                {
-                    "confidence": 0.9,
-                    "steady_speed": False,
-                    "weak_spatial": False,
-                    "sensor_count": 4,
-                    "has_reference_gaps": True,
-                },
-                "reference_gaps",
-            ),
-            (
-                {
-                    "confidence": 0.9,
-                    "steady_speed": False,
-                    "weak_spatial": False,
-                    "sensor_count": 1,
-                    "has_reference_gaps": False,
-                },
-                "single_sensor",
-            ),
-            (
-                {
-                    "confidence": 0.9,
-                    "steady_speed": False,
-                    "weak_spatial": False,
-                    "sensor_count": 4,
-                    "has_reference_gaps": False,
-                },
-                "strong_order_match",
-            ),
-            (
-                {
-                    "confidence": 0.2,
-                    "steady_speed": False,
-                    "weak_spatial": False,
-                    "sensor_count": 4,
-                    "has_reference_gaps": False,
-                },
-                "weak_order_match",
-            ),
-        ],
-        ids=["reference-gaps", "single-sensor", "strong-match", "weak-match"],
-    )
-    def test_reason_priority(self, kwargs: dict, expected: str) -> None:
-        result = _select_reason_key(
-            kwargs["confidence"],
-            steady_speed=kwargs["steady_speed"],
-            weak_spatial=kwargs["weak_spatial"],
-            sensor_count=kwargs["sensor_count"],
-            has_reference_gaps=kwargs["has_reference_gaps"],
-        )
-        assert result == expected

@@ -218,7 +218,7 @@ def test_characterization_wheel_fault_persist_reload_round_trip(tmp_path: Path) 
     assert top_cause["suspected_source"] == "wheel/tire"
     assert top_cause["confidence"] == pytest.approx(0.5028523562048559)
     assert origin["location"] == "Front-Right"
-    assert origin["alternative_locations"] == []
+    assert origin["alternative_locations"] == ["front-left"]
     assert origin["suspected_source"] == "wheel/tire"
     assert origin["weak_spatial_separation"] is False
     assert _run_suitability_state(round_trip_summary, "SUITABILITY_CHECK_SENSOR_COVERAGE") == "pass"

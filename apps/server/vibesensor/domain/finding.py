@@ -234,15 +234,6 @@ class Finding:
         """Return a copy of this finding with a new ``finding_id``."""
         return replace(self, finding_id=finding_id)
 
-    def with_origin_and_signatures(
-        self,
-        *,
-        origin: VibrationOrigin | None,
-        signatures: tuple[Signature, ...],
-    ) -> Finding:
-        """Return a copy enriched with explicit origin and signatures."""
-        return replace(self, origin=origin, signatures=signatures)
-
     # -- classification ----------------------------------------------------
 
     @property

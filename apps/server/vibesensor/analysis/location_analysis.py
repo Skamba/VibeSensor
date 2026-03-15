@@ -49,11 +49,11 @@ def _localization_confidence(
     location_count: int,
     total_samples: int,
 ) -> float:
-    dominance_component = max(0.0, min(1.0, (dominance_ratio - 1.0) / 0.5))
-    location_component = 1.0 / max(1.0, 1.0 + (max(0, location_count - 1) * 0.15))
-    sample_component = min(1.0, max(0.0, total_samples / 10.0))
-    confidence = dominance_component * location_component * (0.6 + 0.4 * sample_component)
-    return max(0.05, min(1.0, confidence))
+    return LocationHotspot.compute_confidence(
+        dominance_ratio=dominance_ratio,
+        location_count=location_count,
+        total_samples=total_samples,
+    )
 
 
 def _score_locations_in_bin(
