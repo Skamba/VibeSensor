@@ -16,7 +16,7 @@ Sensor
 SensorPlacement
     A sensor's mounting position on the vehicle.
 Run
-    Aggregate root representing a complete diagnostic measurement session.
+    Mutable capture lifecycle for one diagnostic measurement run.
 Measurement
     Value object representing a single multi-axis acceleration sample.
 SpeedSource

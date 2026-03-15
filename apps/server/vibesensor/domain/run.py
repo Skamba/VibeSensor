@@ -1,12 +1,16 @@
-"""Aggregate root for a vibration-diagnostic measurement run.
+"""Capture lifecycle for a vibration-diagnostic measurement run.
 
 ``Run`` tracks the in-memory lifecycle of a single diagnostic run
-through start/stop guards.  The *persisted* run lifecycle is tracked by
-``RunStatus`` in ``domain/run_status.py`` (RECORDING → ANALYZING →
-COMPLETE | ERROR).  ``RunRecorder`` (in ``metrics_log/logger.py``)
-bridges the two: ``_run_start_new()`` calls ``Run.start()`` and lazily
-creates a DB row in RECORDING status, while ``_persist_finalize_run()``
-transitions the DB row to ANALYZING when recording ends.
+through start/stop guards.  It is a mutable lifecycle object — NOT a
+domain aggregate.  The diagnostic aggregate is ``TestRun``, which
+extracts immutable context from a completed ``Run`` via ``RunCapture``.
+
+The *persisted* run lifecycle is tracked by ``RunStatus`` in
+``domain/run_status.py`` (RECORDING → ANALYZING → COMPLETE | ERROR).
+``RunRecorder`` (in ``metrics_log/logger.py``) bridges the two:
+``_run_start_new()`` calls ``Run.start()`` and lazily creates a DB row
+in RECORDING status, while ``_persist_finalize_run()`` transitions the
+DB row to ANALYZING when recording ends.
 
 The ``Run`` object is live only while actively recording
 (``is_recording is True``).  Once stopped, it is discarded; the
@@ -26,7 +30,7 @@ __all__ = [
 
 @dataclass
 class Run:
-    """Aggregate root for a vibration-diagnostic measurement run.
+    """Mutable capture lifecycle for one diagnostic measurement run.
 
     Tracks the in-memory lifecycle for one diagnostic run.  A ``Run``
     is created, started via :meth:`start`, then ended via :meth:`stop`.
