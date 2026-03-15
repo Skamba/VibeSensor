@@ -23,9 +23,7 @@ def non_reference_findings(items: Sequence[object]) -> list[FindingPayload]:
     reference-detection rule has a single source of truth.
     """
     return [
-        item
-        for item in items
-        if is_finding(item) and not finding_from_payload(item).is_reference
+        item for item in items if is_finding(item) and not finding_from_payload(item).is_reference
     ]
 
 

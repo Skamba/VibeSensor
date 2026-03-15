@@ -76,9 +76,7 @@ def _extract_domain_meaning(summary: dict[str, Any]) -> dict[str, Any]:
         for c in suitability
         if isinstance(c, dict) and "check_key" in c and "state" in c
     }
-    action_ids = [
-        s["action_id"] for s in test_plan if isinstance(s, dict) and "action_id" in s
-    ]
+    action_ids = [s["action_id"] for s in test_plan if isinstance(s, dict) and "action_id" in s]
     return {
         "finding_key": first_cause.get("finding_key"),
         "suspected_source": first_cause.get("suspected_source"),

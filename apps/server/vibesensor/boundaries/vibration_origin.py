@@ -114,7 +114,9 @@ def origin_payload_from_finding(
         "alternative_locations": (
             list(origin.alternative_locations)
             if origin is not None
-            else list(hotspot.supporting_locations) if hotspot is not None else []
+            else list(hotspot.supporting_locations)
+            if hotspot is not None
+            else []
         ),
         "suspected_source": str(
             origin.suspected_source if origin is not None else finding.suspected_source

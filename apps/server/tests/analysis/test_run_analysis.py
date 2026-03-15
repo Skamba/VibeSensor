@@ -40,6 +40,7 @@ def _prepared_with_speed_profile(
         phase_speed_breakdown=[],
     )
 
+
 # ===========================================================================
 # PreparedRunData convenience properties
 # ===========================================================================

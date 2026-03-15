@@ -192,10 +192,7 @@ def _ensure_top_causes_in_findings(
         return findings
     merged = list(findings)
     for tc in top_causes:
-        if any(
-            tc == f or (tc.finding_id and tc.finding_id == f.finding_id)
-            for f in merged
-        ):
+        if any(tc == f or (tc.finding_id and tc.finding_id == f.finding_id) for f in merged):
             continue
         merged.append(tc)
     return tuple(merged)
@@ -225,9 +222,7 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     )
     run_suitability = summary.get("run_suitability")
     suitability = (
-        run_suitability_from_payload(run_suitability)
-        if isinstance(run_suitability, list)
-        else None
+        run_suitability_from_payload(run_suitability) if isinstance(run_suitability, list) else None
     )
 
     signatures: list[Signature] = []

@@ -90,11 +90,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         FindingEvidence.from_metrics_dict(ev_metrics) if isinstance(ev_metrics, dict) else None
     )
     hotspot_raw = payload.get("location_hotspot")
-    location = (
-        location_hotspot_from_payload(hotspot_raw)
-        if isinstance(hotspot_raw, dict)
-        else None
-    )
+    location = location_hotspot_from_payload(hotspot_raw) if isinstance(hotspot_raw, dict) else None
 
     finding_id = _str("finding_id")
     severity = _str("severity")

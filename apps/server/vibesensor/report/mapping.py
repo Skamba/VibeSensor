@@ -577,10 +577,7 @@ def build_next_steps_from_summary(
 
     next_steps: list[NextStep] = []
     summary_steps = summary_test_plan(summary)
-    if (
-        aggregate is not None
-        and not _summary_has_structured_step_content(summary_steps)
-    ):
+    if aggregate is not None and not _summary_has_structured_step_content(summary_steps):
         for action in aggregate.recommended_actions:
             next_steps.append(
                 NextStep(
@@ -1194,7 +1191,9 @@ def resolve_primary_report_candidate(
         certainty_reason = ca.reason
         tier = ca.tier
     else:
-        steady_speed = aggregate.speed_profile.steady_speed if aggregate and aggregate.speed_profile else False
+        steady_speed = (
+            aggregate.speed_profile.steady_speed if aggregate and aggregate.speed_profile else False
+        )
         certainty_key, certainty_label_text, certainty_pct, certainty_reason = certainty_label(
             confidence,
             lang=lang,

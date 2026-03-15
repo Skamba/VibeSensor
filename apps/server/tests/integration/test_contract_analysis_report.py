@@ -126,12 +126,10 @@ def test_report_certainty_smoke_uses_speed_profile_over_raw_speed_stats() -> Non
     assert analysis.test_run.speed_profile.steady_speed is True
 
     stripped_findings = tuple(
-        replace(finding, confidence_assessment=None)
-        for finding in analysis.test_run.findings
+        replace(finding, confidence_assessment=None) for finding in analysis.test_run.findings
     )
     stripped_top_causes = tuple(
-        replace(finding, confidence_assessment=None)
-        for finding in analysis.test_run.top_causes
+        replace(finding, confidence_assessment=None) for finding in analysis.test_run.top_causes
     )
     stripped_aggregate = replace(
         analysis.test_run,

@@ -98,6 +98,7 @@ def _make_hypothesis(
         signature_keys=signature_keys,
     )
 
+
 # ── FindingEvidence ──────────────────────────────────────────────────────────
 
 
@@ -658,17 +659,13 @@ class TestDiagnosticCase:
             test_runs=(
                 _make_test_run(
                     run_id="run-1",
-                    hypotheses=(
-                        _make_hypothesis("hyp-engine", support_score=0.42),
-                    ),
+                    hypotheses=(_make_hypothesis("hyp-engine", support_score=0.42),),
                     findings=(),
                     top_causes=(),
                 ),
                 _make_test_run(
                     run_id="run-2",
-                    hypotheses=(
-                        _make_hypothesis("hyp-engine", support_score=0.76),
-                    ),
+                    hypotheses=(_make_hypothesis("hyp-engine", support_score=0.76),),
                     findings=(),
                     top_causes=(),
                 ),
@@ -686,17 +683,13 @@ class TestDiagnosticCase:
             test_runs=(
                 _make_test_run(
                     run_id="run-1",
-                    hypotheses=(
-                        _make_hypothesis("hyp-engine", support_score=0.83),
-                    ),
+                    hypotheses=(_make_hypothesis("hyp-engine", support_score=0.83),),
                     findings=(),
                     top_causes=(),
                 ),
                 _make_test_run(
                     run_id="run-2",
-                    hypotheses=(
-                        _make_hypothesis("hyp-engine", support_score=0.51),
-                    ),
+                    hypotheses=(_make_hypothesis("hyp-engine", support_score=0.51),),
                     findings=(),
                     top_causes=(),
                 ),
@@ -704,8 +697,7 @@ class TestDiagnosticCase:
         )
 
         assert (
-            case.hypothesis_epistemic_rules()["hyp-engine"]
-            is DiagnosticCaseEpistemicRule.WEAKENING
+            case.hypothesis_epistemic_rules()["hyp-engine"] is DiagnosticCaseEpistemicRule.WEAKENING
         )
 
     def test_hypothesis_epistemic_rules_mark_contradiction(self) -> None:
@@ -714,9 +706,7 @@ class TestDiagnosticCase:
             test_runs=(
                 _make_test_run(
                     run_id="run-1",
-                    hypotheses=(
-                        _make_hypothesis("hyp-engine", support_score=0.74),
-                    ),
+                    hypotheses=(_make_hypothesis("hyp-engine", support_score=0.74),),
                     findings=(),
                     top_causes=(),
                 ),
@@ -747,9 +737,7 @@ class TestDiagnosticCase:
             test_runs=(
                 _make_test_run(
                     run_id="run-1",
-                    hypotheses=(
-                        _make_hypothesis("hyp-engine", support_score=0.69),
-                    ),
+                    hypotheses=(_make_hypothesis("hyp-engine", support_score=0.69),),
                     findings=(),
                     top_causes=(),
                 ),
@@ -1391,6 +1379,7 @@ class TestFindingWithValueObjects:
             )
             promoted = hotspot.with_adaptive_weak_spatial(3)
             assert promoted == hotspot
+
         assert f.vibration_strength_db == 25.3  # still extracted directly too
 
     def test_finding_from_payload_extracts_location(self) -> None:
@@ -1590,17 +1579,13 @@ class TestDiagnosticCaseCompleteness:
     @staticmethod
     def _passing_suitability() -> RunSuitability:
         return RunSuitability(
-            checks=(
-                SuitabilityCheck(check_key="SUITABILITY_CHECK_SPEED_VARIATION", state="pass"),
-            )
+            checks=(SuitabilityCheck(check_key="SUITABILITY_CHECK_SPEED_VARIATION", state="pass"),)
         )
 
     @staticmethod
     def _failing_suitability() -> RunSuitability:
         return RunSuitability(
-            checks=(
-                SuitabilityCheck(check_key="SUITABILITY_CHECK_SPEED_VARIATION", state="fail"),
-            )
+            checks=(SuitabilityCheck(check_key="SUITABILITY_CHECK_SPEED_VARIATION", state="fail"),)
         )
 
     def _make_case(
@@ -1839,21 +1824,15 @@ class TestDrivingSegment:
     """Tests for DrivingSegment diagnostic-usability semantics."""
 
     def test_cruise_segment_is_usable(self) -> None:
-        seg = DrivingSegment(
-            phase=DrivingPhase.CRUISE, start_idx=0, end_idx=99, sample_count=100
-        )
+        seg = DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=99, sample_count=100)
         assert seg.is_diagnostically_usable is True
 
     def test_idle_segment_is_not_usable(self) -> None:
-        seg = DrivingSegment(
-            phase=DrivingPhase.IDLE, start_idx=0, end_idx=99, sample_count=100
-        )
+        seg = DrivingSegment(phase=DrivingPhase.IDLE, start_idx=0, end_idx=99, sample_count=100)
         assert seg.is_diagnostically_usable is False
 
     def test_segment_with_few_samples_is_not_usable(self) -> None:
-        seg = DrivingSegment(
-            phase=DrivingPhase.CRUISE, start_idx=0, end_idx=4, sample_count=5
-        )
+        seg = DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=4, sample_count=5)
         assert seg.is_diagnostically_usable is False
 
     def test_duration_with_timestamps(self) -> None:
@@ -1884,12 +1863,8 @@ class TestTestRunSegments:
 
     def test_usable_segments_filters_idle(self) -> None:
         segments = (
-            DrivingSegment(
-                phase=DrivingPhase.CRUISE, start_idx=0, end_idx=49, sample_count=50
-            ),
-            DrivingSegment(
-                phase=DrivingPhase.IDLE, start_idx=50, end_idx=99, sample_count=50
-            ),
+            DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=49, sample_count=50),
+            DrivingSegment(phase=DrivingPhase.IDLE, start_idx=50, end_idx=99, sample_count=50),
             DrivingSegment(
                 phase=DrivingPhase.ACCELERATION, start_idx=100, end_idx=119, sample_count=20
             ),
@@ -1905,15 +1880,9 @@ class TestTestRunSegments:
 
     def test_total_usable_samples(self) -> None:
         segments = (
-            DrivingSegment(
-                phase=DrivingPhase.CRUISE, start_idx=0, end_idx=49, sample_count=50
-            ),
-            DrivingSegment(
-                phase=DrivingPhase.IDLE, start_idx=50, end_idx=99, sample_count=50
-            ),
-            DrivingSegment(
-                phase=DrivingPhase.CRUISE, start_idx=100, end_idx=129, sample_count=30
-            ),
+            DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=49, sample_count=50),
+            DrivingSegment(phase=DrivingPhase.IDLE, start_idx=50, end_idx=99, sample_count=50),
+            DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=100, end_idx=129, sample_count=30),
         )
         tr = TestRun(
             run=Run(run_id="r1"),

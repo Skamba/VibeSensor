@@ -152,9 +152,7 @@ def _score_locations_in_bin(
         total_samples=total_samples,
     )
     _loc_conf = min(_raw_loc_conf, 0.30) if _no_wheel_sensors else _raw_loc_conf
-    _raw_weak_spatial = dominance < LocationHotspot.weak_spatial_threshold(
-        len(ranked_for_winner)
-    )
+    _raw_weak_spatial = dominance < LocationHotspot.weak_spatial_threshold(len(ranked_for_winner))
     return {
         "speed_range": bin_label,
         "location": display_location,
