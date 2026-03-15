@@ -102,7 +102,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
 
     # Derive kind from explicit finding_type or infer from fields
     explicit = payload.get("finding_kind") or payload.get("finding_type")
-    kind = Finding._derive_kind_from_fields(
+    kind = Finding.derive_kind_from_fields(
         finding_id,
         severity,
         explicit_kind=str(explicit) if isinstance(explicit, str) else None,
