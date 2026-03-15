@@ -54,12 +54,13 @@ The main domain concepts in the current codebase are:
 - `Sensor`: a physical measurement source
 - `Observation`: a notable fact extracted from analyzed data
 - `Signature`: a pattern assembled from observations
-- `Hypothesis`: a possible explanation
+- `Hypothesis`: a possible explanation (includes `from_finding()` factory)
 - `Finding`: a conclusion the system is willing to surface
 - `RecommendedAction`: a next step derived from the evidence
 - `SpeedProfile` and `RunSuitability`: run-quality / run-context value objects
-- `FindingEvidence`, `LocationHotspot`, `ConfidenceAssessment`,
-  `VibrationOrigin`: structured meaning attached to a finding
+- `FindingEvidence`, `LocationHotspot` (includes `compute_confidence()`),
+  `ConfidenceAssessment`, `VibrationOrigin`: structured meaning attached to a finding
+- `DrivingPhase`: phase classification for a segment (cruise, acceleration, etc.)
 
 Raw summaries, report-template DTOs, history payloads, API responses, and PDF
 view models are not the core domain model.
@@ -244,6 +245,10 @@ Current analysis builds `DrivingSegment` instances from `PhaseSegment` via
 `build_domain_driving_segments(...)`, and `TestRun` stores `DrivingSegment`
 objects rather than `PhaseSegment` or `AnalysisWindow`.
 
+`DrivingSegment.start_idx` and `end_idx` are `int | None` (default `None`)
+because boundary decoders reconstruct segments from persisted summaries that
+may not carry array indices.
+
 ### Canonical interpretation today
 
 - low-level analysis machinery: `PhaseSegment`, `AnalysisWindow`
@@ -338,7 +343,9 @@ DiagnosticCase
   hypotheses: Hypothesis*              # reconciled case-level view
   findings: Finding*                   # reconciled case-level view
   recommended_actions: RecommendedAction*
+```
 
+```text
 TestRun
   run: Run
   configuration_snapshot: ConfigurationSnapshot
@@ -359,9 +366,6 @@ Finding
   confidence_assessment: ConfidenceAssessment?
   origin: VibrationOrigin?
   signatures: Signature*
-
-Report
-  run-level metadata only
 ```
 
 ### Relationship rules
@@ -515,8 +519,11 @@ What is still transitional or overlapping:
 - `PhaseSegment`, `AnalysisWindow`, and `DrivingSegment` still overlap
 - `Report` is still thin and mapping-heavy flows still do most report
   composition work
-- some boundary layers still need payload fallbacks when a full aggregate is
-  not available
+- some boundary layers retain defensive fallbacks for data integrity, but the
+  primary paths are now domain-first (`test_run_from_summary` always returns
+  `TestRun`, payload-only report fallback functions like `top_strength_values`,
+  `has_relevant_reference_gap`, and `select_effective_top_causes` have been
+  deleted)
 
 That is the state the document should optimize for: accurate enough for humans
 and future coding agents to understand what the model is today, without

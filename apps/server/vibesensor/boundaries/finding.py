@@ -10,6 +10,8 @@ from .finding_evidence import finding_evidence_from_metrics
 from .location_hotspot import location_hotspot_from_payload
 from .vibration_origin import vibration_origin_from_payload
 
+_MAX_SIGNATURES_PER_FINDING: int = 3
+
 
 def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     """Create a domain Finding from a ``FindingPayload`` dict.
@@ -40,11 +42,13 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
 
     freq_raw = payload.get("frequency_hz") or payload.get("frequency_hz_or_order")
     frequency_hz: float | None = None
+    freq_or_order_label: str = ""
     if freq_raw is not None:
         try:
             frequency_hz = float(freq_raw)  # type: ignore[arg-type]
         except (TypeError, ValueError):
-            pass
+            # Non-numeric value like "1x wheel" — preserve as order label
+            freq_or_order_label = str(freq_raw).strip()
 
     loc = payload.get("strongest_location")
     band = payload.get("strongest_speed_band")
@@ -113,7 +117,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
                 source=source,
                 support_score=confidence or 0.0,
             )
-            for label in raw_signatures[:3]
+            for label in raw_signatures[:_MAX_SIGNATURES_PER_FINDING]
             if str(label).strip()
         )
         if isinstance(raw_signatures, list)
@@ -132,7 +136,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         suspected_source=source,
         confidence=confidence,
         frequency_hz=frequency_hz,
-        order=_str("order"),
+        order=_str("order") or freq_or_order_label,
         severity=severity,
         strongest_location=str(loc) if loc is not None else None,
         strongest_speed_band=str(band) if band is not None else None,

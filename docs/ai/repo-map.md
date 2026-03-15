@@ -45,7 +45,10 @@
   `signature.py`, `hypothesis.py`, and `vibration_origin.py`,
   `speed_source.py` (SpeedSource), `driving_phase.py` (DrivingPhase),
   `finding.py` (FindingKind, VibrationSource, Finding, speed_bin_label, speed_band_sort_key), `report.py` (Report),
-  `run_status.py` (RunStatus, RUN_TRANSITIONS). `domain/services/` owns
+  `run_status.py` (RunStatus, RUN_TRANSITIONS).
+  Notable factory/static methods: `Hypothesis.from_finding()`,
+  `LocationHotspot.compute_confidence()`.
+  `domain/services/` owns
   observation extraction, signature recognition, hypothesis evaluation,
   and test planning. Domain objects own
   classification, ranking, actionability, surfacing, lifecycle, and

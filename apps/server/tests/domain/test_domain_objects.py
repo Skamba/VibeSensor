@@ -366,7 +366,7 @@ class TestReport:
                 {"finding_id": "F001", "suspected_source": "bearing"},
                 {"finding_id": "F002", "suspected_source": "tire"},
             ],
-            "metadata": {"car": {"name": "BMW 3", "car_type": "sedan"}},
+            "metadata": {"car_name": "BMW 3", "car_type": "sedan"},
         }
         r = build_report_from_summary(summary)
         assert r.run_id == "run-123"

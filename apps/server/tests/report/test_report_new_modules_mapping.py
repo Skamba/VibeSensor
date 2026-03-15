@@ -11,6 +11,7 @@ from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.analysis import summarize_log
 from vibesensor.analysis.summary_builder import summarize_origin
+from vibesensor.boundaries.finding import finding_from_payload
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.report_data import ReportTemplateData
 
@@ -126,25 +127,28 @@ def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
 
 
 def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> None:
-    findings = [
-        {
-            "strongest_location": "Rear Left",
-            "location_hotspot": {
-                "ambiguous_locations": ["Rear Left", "Front Right"],
-                "second_location": "Front Right",
+    findings = tuple(
+        finding_from_payload(p)
+        for p in [
+            {
+                "strongest_location": "Rear Left",
+                "location_hotspot": {
+                    "ambiguous_locations": ["Rear Left", "Front Right"],
+                    "second_location": "Front Right",
+                },
+                "suspected_source": "wheel/tire",
+                "dominance_ratio": 1.05,
+                "weak_spatial_separation": True,
+                "strongest_speed_band": "80-90 km/h",
+                "confidence": 0.81,
             },
-            "suspected_source": "wheel/tire",
-            "dominance_ratio": 1.05,
-            "weak_spatial_separation": True,
-            "strongest_speed_band": "80-90 km/h",
-            "confidence": 0.81,
-        },
-        {
-            "strongest_location": "Front Right",
-            "suspected_source": "wheel/tire",
-            "confidence": 0.74,
-        },
-    ]
+            {
+                "strongest_location": "Front Right",
+                "suspected_source": "wheel/tire",
+                "confidence": 0.74,
+            },
+        ]
+    )
 
     origin = summarize_origin(findings)
     assert origin["location"] == "Rear Left / Front Right"
@@ -165,17 +169,20 @@ def test_most_likely_origin_summary_phase_onset(
     speed_band: str,
     confidence: float,
 ) -> None:
-    findings = [
-        {
-            "strongest_location": location,
-            "suspected_source": "wheel/tire",
-            "dominance_ratio": 2.5,
-            "weak_spatial_separation": False,
-            "strongest_speed_band": speed_band,
-            "dominant_phase": phase,
-            "confidence": confidence,
-        },
-    ]
+    findings = tuple(
+        finding_from_payload(p)
+        for p in [
+            {
+                "strongest_location": location,
+                "suspected_source": "wheel/tire",
+                "dominance_ratio": 2.5,
+                "weak_spatial_separation": False,
+                "strongest_speed_band": speed_band,
+                "dominant_phase": phase,
+                "confidence": confidence,
+            },
+        ]
+    )
 
     origin = summarize_origin(findings)
 
@@ -191,33 +198,39 @@ def test_most_likely_origin_summary_phase_onset(
 
 
 def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
-    findings = [
-        {
-            "strongest_location": "Front Left",
-            "suspected_source": "wheel/tire",
-            "dominance_ratio": 3.0,
-            "weak_spatial_separation": False,
-            "strongest_speed_band": "80-100 km/h",
-            "dominant_phase": "cruise",
-            "confidence": 0.80,
-        },
-    ]
+    findings = tuple(
+        finding_from_payload(p)
+        for p in [
+            {
+                "strongest_location": "Front Left",
+                "suspected_source": "wheel/tire",
+                "dominance_ratio": 3.0,
+                "weak_spatial_separation": False,
+                "strongest_speed_band": "80-100 km/h",
+                "dominant_phase": "cruise",
+                "confidence": 0.80,
+            },
+        ]
+    )
 
     origin = summarize_origin(findings)
     _assert_no_phase_onset(origin["explanation"])
 
 
 def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
-    findings = [
-        {
-            "strongest_location": "Front Left",
-            "suspected_source": "wheel/tire",
-            "dominance_ratio": 3.0,
-            "weak_spatial_separation": False,
-            "strongest_speed_band": "80-100 km/h",
-            "confidence": 0.80,
-        },
-    ]
+    findings = tuple(
+        finding_from_payload(p)
+        for p in [
+            {
+                "strongest_location": "Front Left",
+                "suspected_source": "wheel/tire",
+                "dominance_ratio": 3.0,
+                "weak_spatial_separation": False,
+                "strongest_speed_band": "80-100 km/h",
+                "confidence": 0.80,
+            },
+        ]
+    )
 
     origin = summarize_origin(findings)
 
@@ -398,6 +411,11 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
     summary = minimal_summary(
         lang="en",
         sensor_count_used=4,
+        sensor_locations={"FL": {}, "FR": {}, "RL": {}, "RR": {}},
+        speed_stats={"steady_speed": True},
+        run_suitability=[
+            {"check_key": "reference_complete", "state": "fail"},
+        ],
         top_causes=[
             {
                 "finding_id": "F_ENGINE",
@@ -410,4 +428,4 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
         findings=[{"finding_id": "REF_ENGINE"}],
     )
     data = map_summary(summary)
-    assert data.observed.certainty_reason == "Missing reference data limits pattern matching"
+    assert "Missing reference data" in data.observed.certainty_reason

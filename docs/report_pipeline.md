@@ -74,7 +74,7 @@ needs:
 | `confidence_0_to_1 = 0.62`   | `certainty_tier_key = "C"`      |
 | `findings[].suspected_source` | `system_cards[].system_name`    |
 | `test_plan[].what`            | `next_steps[].action`           |
-| `speed_stats.steady_speed`    | used to compute `certainty_label` |
+| `speed_stats.steady_speed`    | used by `ConfidenceAssessment.assess()` |
 | `sensor_intensity_by_location`| `sensor_intensity_by_location`  |
 
 ## Adding new report sections

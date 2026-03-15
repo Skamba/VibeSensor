@@ -274,7 +274,6 @@ class PostAnalysisWorker:
                 )
                 summary.setdefault("run_suitability", []).append(
                     {
-                        "check": stride_check.check_key,
                         "check_key": stride_check.check_key,
                         "state": stride_check.state,
                         "explanation": explanation,
