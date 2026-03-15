@@ -228,9 +228,7 @@ class TestMultiRunReconciliation:
         hyp_a_r2 = _hypothesis("hyp-A", support=0.5)
         hyp_b_r2 = _hypothesis("hyp-B", support=0.6)
         finding_x_r2 = _finding("FX-2", source="wheel/tire", confidence=0.6)
-        finding_y_r2 = _finding(
-            "FY-1", source="driveline", confidence=0.7, location="center"
-        )
+        finding_y_r2 = _finding("FY-1", source="driveline", confidence=0.7, location="center")
 
         case = DiagnosticCase.start()
         case = case.add_run(
@@ -647,18 +645,24 @@ class TestMultiRunReconciliationEdgeCases:
         # Run 2: clear wheel/tire finding with supporting hypothesis
         f2 = _finding("F002", source="wheel/tire", confidence=0.7, location="front_left")
         h2a = _hypothesis(
-            "hyp-A", source="engine", support=0.1,
+            "hyp-A",
+            source="engine",
+            support=0.1,
             status=HypothesisStatus.INCONCLUSIVE,
         )
         h2b = _hypothesis(
-            "hyp-B", source="wheel/tire", support=0.6,
+            "hyp-B",
+            source="wheel/tire",
+            support=0.6,
             status=HypothesisStatus.SUPPORTED,
         )
 
         # Run 3: confirmed wheel/tire with higher confidence
         f3 = _finding("F003", source="wheel/tire", confidence=0.9, location="front_left")
         h3b = _hypothesis(
-            "hyp-B", source="wheel/tire", support=0.85,
+            "hyp-B",
+            source="wheel/tire",
+            support=0.85,
             status=HypothesisStatus.SUPPORTED,
         )
 

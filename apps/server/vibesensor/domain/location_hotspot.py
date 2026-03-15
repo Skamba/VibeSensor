@@ -55,9 +55,8 @@ class LocationHotspot:
         """Evidence is clearly concentrated at one location."""
         if self.strongest_location.strip().lower() in self._UNKNOWN_LOCATIONS:
             return False
-        return (
-            self.has_clear_separation
-            and (self.dominance_ratio is None or self.dominance_ratio >= 0.5)
+        return self.has_clear_separation and (
+            self.dominance_ratio is None or self.dominance_ratio >= 0.5
         )
 
     @property

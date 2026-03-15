@@ -131,8 +131,7 @@ def _prioritize_actions(actions: Sequence[RecommendedAction]) -> tuple[Recommend
 
     ordered.sort(key=lambda action: _ACTION_PRIORITY.get(action.action_id, 99))
     return tuple(
-        replace(action, priority=priority)
-        for priority, action in enumerate(ordered[:5], start=1)
+        replace(action, priority=priority) for priority, action in enumerate(ordered[:5], start=1)
     )
 
 

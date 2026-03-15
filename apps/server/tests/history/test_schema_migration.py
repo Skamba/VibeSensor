@@ -165,8 +165,7 @@ def test_historydb_migrates_v8_database_without_manufacturing_case_id(tmp_path: 
     conn = sqlite3.connect(str(db_path))
     try:
         columns = {
-            str(row[1]): str(row[2])
-            for row in conn.execute("PRAGMA table_info(runs)").fetchall()
+            str(row[1]): str(row[2]) for row in conn.execute("PRAGMA table_info(runs)").fetchall()
         }
         version = conn.execute("PRAGMA user_version").fetchone()[0]
         case_id = conn.execute(
@@ -198,8 +197,7 @@ def test_historydb_migrates_v8_database_backfills_case_id_from_analysis_summary(
     _create_v8_database(
         db_path,
         analysis_json=(
-            '{"case_id": "case-from-summary", "findings": [],'
-            ' "top_causes": [], "warnings": []}'
+            '{"case_id": "case-from-summary", "findings": [], "top_causes": [], "warnings": []}'
         ),
     )
 
@@ -221,8 +219,7 @@ def test_historydb_migrated_v8_case_id_supports_forward_only_followup_attachment
     _create_v8_database(
         db_path,
         analysis_json=(
-            '{"case_id": "case-from-summary", "findings": [],'
-            ' "top_causes": [], "warnings": []}'
+            '{"case_id": "case-from-summary", "findings": [], "top_causes": [], "warnings": []}'
         ),
     )
 
@@ -304,8 +301,7 @@ def test_historydb_fresh_db_includes_case_id_column(tmp_path: Path) -> None:
     conn = sqlite3.connect(str(tmp_path / "history.db"))
     try:
         columns = {
-            str(row[1]): str(row[2])
-            for row in conn.execute("PRAGMA table_info(runs)").fetchall()
+            str(row[1]): str(row[2]) for row in conn.execute("PRAGMA table_info(runs)").fetchall()
         }
     finally:
         conn.close()

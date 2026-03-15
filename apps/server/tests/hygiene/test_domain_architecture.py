@@ -865,8 +865,8 @@ def test_boundary_and_report_modules_do_not_import_analysis_coordinator() -> Non
                         violations.append(
                             f"{subdir_name}/{py.relative_to(subdir)}: imports AnalysisResult"
                         )
-    assert not violations, (
-        "Boundary/report modules must not import AnalysisResult:\n" + "\n".join(violations)
+    assert not violations, "Boundary/report modules must not import AnalysisResult:\n" + "\n".join(
+        violations
     )
 
 
@@ -880,7 +880,10 @@ def test_planning_service_has_no_payload_imports() -> None:
 
     planning_path = (
         Path(__file__).resolve().parents[2]
-        / "vibesensor" / "domain" / "services" / "test_planning.py"
+        / "vibesensor"
+        / "domain"
+        / "services"
+        / "test_planning.py"
     )
     tree = ast.parse(planning_path.read_text())
     for node in ast.walk(tree):
@@ -919,10 +922,7 @@ def test_post_analysis_does_not_import_project_summary() -> None:
     from pathlib import Path
 
     source = (
-        Path(__file__).resolve().parents[2]
-        / "vibesensor"
-        / "metrics_log"
-        / "post_analysis.py"
+        Path(__file__).resolve().parents[2] / "vibesensor" / "metrics_log" / "post_analysis.py"
     ).read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):
@@ -1005,9 +1005,7 @@ def test_report_mapping_does_not_import_finding_from_payload_decoder() -> None:
             for alias in node.names:
                 if alias.name in forbidden:
                     violations.append(f"imports {alias.name}")
-    assert not violations, (
-        f"report/mapping.py must not import boundary decoders: {violations}"
-    )
+    assert not violations, f"report/mapping.py must not import boundary decoders: {violations}"
 
 
 # ── T9.1-T9.6: Workstream 8 architecture guardrails ──────────────────

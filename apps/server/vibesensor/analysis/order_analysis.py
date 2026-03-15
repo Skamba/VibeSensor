@@ -929,8 +929,7 @@ def assemble_order_finding(
         LocationHotspot.from_analysis_inputs(
             strongest_location=str(hotspot_dict.get("top_location") or "").strip(),
             dominance_ratio=_as_float(hotspot_dict.get("dominance_ratio")),
-            localization_confidence=_as_float(hotspot_dict.get("localization_confidence"))
-            or 0.05,
+            localization_confidence=_as_float(hotspot_dict.get("localization_confidence")) or 0.05,
             weak_spatial_separation=bool(hotspot_dict.get("weak_spatial_separation")),
             ambiguous=bool(hotspot_dict.get("ambiguous_location")),
             alternative_locations=list(hotspot_dict.get("ambiguous_locations") or []),

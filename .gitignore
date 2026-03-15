@@ -108,3 +108,4 @@ apps/ui/test-results/.last-run.json
 
 # Copilot working docs
 .copilot-work/
+.copilot-worktrees/

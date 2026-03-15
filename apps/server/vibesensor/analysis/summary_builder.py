@@ -506,9 +506,7 @@ def summarize_origin(
     if domain_top is not None and domain_top.location is not None:
         loc = LocationHotspot.from_analysis_inputs(
             strongest_location=(
-                domain_top.location.strongest_location
-                or domain_top.strongest_location
-                or "unknown"
+                domain_top.location.strongest_location or domain_top.strongest_location or "unknown"
             ),
             dominance_ratio=domain_top.location.dominance_ratio,
             localization_confidence=domain_top.location.localization_confidence,
@@ -530,8 +528,7 @@ def summarize_origin(
             ),
             localization_confidence=decoded.localization_confidence,
             weak_spatial_separation=(
-                decoded.weak_spatial_separation
-                or bool(top.get("weak_spatial_separation"))
+                decoded.weak_spatial_separation or bool(top.get("weak_spatial_separation"))
             ),
             ambiguous=decoded.ambiguous,
             alternative_locations=raw_alternatives,
@@ -1264,14 +1261,18 @@ def summarize_run_data(
 
     Delegates to :class:`RunAnalysis` which owns the full orchestration.
     """
-    return RunAnalysis(
-        metadata,
-        samples,
-        file_name=file_name,
-        lang=lang,
-        include_samples=include_samples,
-        findings_builder=findings_builder,
-    ).summarize().summary
+    return (
+        RunAnalysis(
+            metadata,
+            samples,
+            file_name=file_name,
+            lang=lang,
+            include_samples=include_samples,
+            findings_builder=findings_builder,
+        )
+        .summarize()
+        .summary
+    )
 
 
 def build_findings_for_samples(
