@@ -66,6 +66,43 @@ def test_map_summary_no_top_causes() -> None:
     assert len(data.next_steps) >= 1
 
 
+def test_map_summary_uses_domain_action_render_queries_for_next_steps() -> None:
+    summary = minimal_summary(
+        findings=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "engine",
+                "confidence": 0.74,
+            }
+        ],
+        top_causes=[
+            {
+                "finding_id": "F001",
+                "suspected_source": "engine",
+                "confidence": 0.74,
+            }
+        ],
+        test_plan=[
+            {
+                "action_id": "engine_mounts_and_accessories",
+                "what": "  ACTION_ENGINE_MOUNTS_WHAT  ",
+                "why": "  ACTION_ENGINE_MOUNTS_WHY  ",
+                "confirm": "  ACTION_ENGINE_MOUNTS_CONFIRM  ",
+                "falsify": "   ",
+                "eta": " 15-30 min ",
+            }
+        ],
+    )
+
+    data = map_summary(summary)
+
+    assert data.next_steps[0].action
+    assert data.next_steps[0].why
+    assert data.next_steps[0].confirm
+    assert data.next_steps[0].falsify is None
+    assert data.next_steps[0].eta == "15-30 min"
+
+
 def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
     summary = minimal_summary(
         lang="en",

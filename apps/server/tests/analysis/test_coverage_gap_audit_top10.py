@@ -24,12 +24,10 @@ from vibesensor.analysis.order_analysis import (
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.analysis.summary_builder import build_phase_timeline as _build_phase_timeline
 from vibesensor.analysis.summary_builder import (
-    build_run_suitability_checks as _build_run_suitability_checks,
-)
-from vibesensor.analysis.summary_builder import (
     compute_accel_statistics as _compute_accel_statistics,
 )
-from vibesensor.domain import Finding
+from vibesensor.boundaries.finding import finding_from_payload
+from vibesensor.domain import RunSuitability
 from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
 from vibesensor.metrics_log.sample_builder import extract_strength_data, resolve_speed_context
 
@@ -59,17 +57,21 @@ class _FakeSeg:
 _SUITABILITY_DEFAULTS: dict[str, Any] = {
     "steady_speed": False,
     "speed_sufficient": True,
-    "sensor_ids": {"s1", "s2", "s3"},
+    "sensor_count": 3,
     "reference_complete": True,
     "sat_count": 0,
-    "samples": [],
+    "total_dropped": 0,
+    "total_overflow": 0,
 }
 
 
 def _suitability_checks(**overrides: Any) -> list[dict[str, Any]]:
-    """Call _build_run_suitability_checks with sensible defaults + overrides."""
+    """Call RunSuitability.evaluate with sensible defaults + overrides."""
     kw = {**_SUITABILITY_DEFAULTS, **overrides}
-    return _build_run_suitability_checks(**kw)
+    return [
+        {"check_key": check.check_key, "state": check.state}
+        for check in RunSuitability.evaluate(**kw).checks
+    ]
 
 
 def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
@@ -341,7 +343,7 @@ class TestBuildRunSuitabilityChecks:
                 id="speed_variation_steady",
             ),
             pytest.param(
-                {"sensor_ids": {"s1"}},
+                {"sensor_count": 1},
                 "SUITABILITY_CHECK_SENSOR_COVERAGE",
                 id="sensor_coverage_below_3",
             ),
@@ -351,12 +353,7 @@ class TestBuildRunSuitabilityChecks:
                 id="saturation",
             ),
             pytest.param(
-                {
-                    "samples": [
-                        {"client_id": "c1", "frames_dropped_total": 0},
-                        {"client_id": "c1", "frames_dropped_total": 10},
-                    ],
-                },
+                {"total_dropped": 10},
                 "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 id="frame_integrity_dropped",
             ),
@@ -479,7 +476,7 @@ class TestPhaseRankingScore:
     """Direct unit tests for Finding.phase_adjusted_score."""
 
     def test_no_phase_evidence(self) -> None:
-        score = Finding.from_payload({"confidence": 0.80}).phase_adjusted_score
+        score = finding_from_payload({"confidence": 0.80}).phase_adjusted_score
         # No phase_evidence → cruise_fraction=0 → multiplier=0.85
         assert score == pytest.approx(0.80 * 0.85, rel=1e-3)
 
@@ -488,7 +485,7 @@ class TestPhaseRankingScore:
             "confidence": 0.80,
             "phase_evidence": {"cruise_fraction": 1.0},
         }
-        score = Finding.from_payload(finding).phase_adjusted_score
+        score = finding_from_payload(finding).phase_adjusted_score
         assert score == pytest.approx(0.80 * 1.0, rel=1e-3)
 
     def test_half_cruise(self) -> None:
@@ -496,7 +493,7 @@ class TestPhaseRankingScore:
             "confidence": 0.80,
             "phase_evidence": {"cruise_fraction": 0.50},
         }
-        score = Finding.from_payload(finding).phase_adjusted_score
+        score = finding_from_payload(finding).phase_adjusted_score
         expected = 0.80 * (0.85 + 0.15 * 0.50)
         assert score == pytest.approx(expected, rel=1e-3)
 
@@ -508,7 +505,7 @@ class TestPhaseRankingScore:
         ],
     )
     def test_degenerate_confidence_returns_zero(self, finding: dict[str, object]) -> None:
-        assert Finding.from_payload(finding).phase_adjusted_score == 0.0
+        assert finding_from_payload(finding).phase_adjusted_score == 0.0
 
 
 class TestExtractStrengthData:

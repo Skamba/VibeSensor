@@ -1,15 +1,16 @@
 """Domain services coordinating domain objects without payload-first logic."""
 
-from .case_reconciliation import reconcile_case
 from .finding_synthesis import synthesize_origin
 from .hypothesis_evaluation import evaluate_hypotheses
-from .observation_extraction import extract_observations_from_findings
+from .observation_extraction import ObservationEvidence, extract_observations
 from .signature_recognition import recognize_signatures
+from .test_planning import plan_test_actions
 
 __all__ = [
-    "extract_observations_from_findings",
+    "ObservationEvidence",
+    "extract_observations",
     "recognize_signatures",
     "evaluate_hypotheses",
     "synthesize_origin",
-    "reconcile_case",
+    "plan_test_actions",
 ]

@@ -13,7 +13,7 @@ def evaluate_hypotheses(signatures: Sequence[Signature]) -> tuple[Hypothesis, ..
     for signature in signatures:
         status = (
             HypothesisStatus.SUPPORTED
-            if signature.support_score >= 0.4
+            if signature.support_score >= Hypothesis.SUPPORTED_THRESHOLD
             else HypothesisStatus.INCONCLUSIVE
         )
         hypotheses.append(

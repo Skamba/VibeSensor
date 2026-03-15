@@ -1,4 +1,12 @@
-"""WsBroadcastService – WebSocket payload assembly with per-tick caching."""
+"""WsBroadcastService – WebSocket payload assembly with per-tick caching.
+
+Scope boundary: this module owns **live telemetry transport only**.  It
+broadcasts raw sensor connectivity, GPS speed, FFT spectra, and
+mechanically-derived rotational speeds.  It does not carry diagnostic
+conclusions (findings, confidence, vibration sources, suitability) —
+those are produced by the post-run analysis pipeline and flow through
+``metrics_log/post_analysis`` and ``history_db`` instead.
+"""
 
 from __future__ import annotations
 

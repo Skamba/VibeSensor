@@ -22,7 +22,7 @@ Backend ownership boundaries:
 - `routes/`: HTTP and WebSocket route groups.
 - `runtime/`: service builders, flat `RuntimeState`, processing loop, WebSocket broadcast, and lifecycle management.
 - `processing/`, `analysis/`: signal processing and findings logic.
-- `metrics_log/`, `history_db/`, `history_services/`, `runlog.py`: recording, persistence, and exports. Inside `metrics_log/`, `session_state.py` owns recording-session lifecycle, `persistence.py` owns history-run create/append/finalize bookkeeping, and `post_analysis.py` owns the background analysis queue; `logger.py` is the façade that coordinates those focused collaborators. The `history_services/` package owns the domain-logic layer above `HistoryDB` — run query/delete, PDF report generation, CSV/ZIP exports.
+- `metrics_log/`, `history_db/`, `history_services/`, `runlog.py`: recording, persistence, and exports. Inside `metrics_log/`, `post_analysis.py` owns the background analysis queue; `logger.py` is the `RunRecorder` façade that directly manages session state and persistence coordination. The `history_services/` package owns the domain-logic layer above `HistoryDB` — run query/delete, PDF report generation, CSV/ZIP exports.
 - `report/`: PDF rendering pipeline.
 - `update/`: wheel-based update flow.
 - `hotspot/`: Wi-Fi AP monitoring, parsing, and self-heal infrastructure.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from enum import StrEnum
+from typing import ClassVar
 
 from .finding import VibrationSource
 
@@ -22,6 +23,8 @@ class HypothesisStatus(StrEnum):
 @dataclass(frozen=True, slots=True)
 class Hypothesis:
     """A candidate explanation with support/contradiction state."""
+
+    SUPPORTED_THRESHOLD: ClassVar[float] = 0.40
 
     hypothesis_id: str
     source: VibrationSource

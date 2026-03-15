@@ -13,14 +13,16 @@ from ..domain.finding import Finding
 from ..domain.hypothesis import Hypothesis, HypothesisStatus
 from ..domain.recommended_action import RecommendedAction
 from ..domain.run import Run
-from ..domain.run_analysis_result import RunAnalysisResult
 from ..domain.run_suitability import RunSuitability
 from ..domain.signature import Signature
 from ..domain.speed_profile import SpeedProfile
 from ..domain.symptom import Symptom
 from ..domain.test_plan import TestPlan
 from ..domain.test_run import TestRun
-from ..domain.vibration_origin import VibrationOrigin
+from .finding import finding_from_payload, finding_payload_from_domain
+from .run_suitability import run_suitability_from_payload, run_suitability_payload
+from .test_steps import step_payloads_from_plan
+from .vibration_origin import origin_payload_from_finding, vibration_origin_from_payload
 
 
 def _as_float(value: object) -> float | None:
@@ -133,97 +135,6 @@ def _payloads_by_id(items: object) -> dict[str, Mapping[str, object]]:
     return payloads
 
 
-def finding_payload_from_domain(
-    finding: Finding,
-    *,
-    primary: Mapping[str, Mapping[str, object]],
-    secondary: Mapping[str, Mapping[str, object]],
-) -> dict[str, object]:
-    if finding.finding_id:
-        payload = primary.get(finding.finding_id) or secondary.get(finding.finding_id)
-        if payload is not None:
-            return dict(payload)
-
-    payload: dict[str, object] = {
-        "finding_id": finding.finding_id,
-        "suspected_source": str(finding.suspected_source),
-        "confidence": finding.confidence,
-        "strongest_location": finding.strongest_location,
-        "strongest_speed_band": finding.strongest_speed_band,
-        "weak_spatial_separation": finding.weak_spatial_separation,
-        "dominance_ratio": finding.dominance_ratio,
-        "signatures_observed": list(finding.signature_labels),
-    }
-    if finding.vibration_strength_db is not None:
-        payload["evidence_metrics"] = {"vibration_strength_db": finding.vibration_strength_db}
-    if finding.location is not None:
-        payload["location_hotspot"] = {
-            "best_location": finding.location.best_location,
-            "alternative_locations": list(finding.location.alternative_locations),
-            "dominance_ratio": finding.location.dominance_ratio,
-            "weak_spatial_separation": not finding.location.is_well_localized,
-        }
-    if finding.origin is not None:
-        payload["evidence_summary"] = finding.origin.reason
-        if finding.origin.dominant_phase is not None:
-            payload["dominant_phase"] = finding.origin.dominant_phase
-    return payload
-
-
-def _origin_payload_from_aggregate(
-    aggregate: RunAnalysisResult,
-    fallback: object,
-) -> dict[str, object]:
-    if not isinstance(fallback, Mapping):
-        fallback_payload: dict[str, object] = {}
-    else:
-        fallback_payload = dict(fallback)
-
-    primary = aggregate.primary_finding
-    if primary is None:
-        return fallback_payload
-
-    origin = primary.origin
-    hotspot = primary.location
-    fallback_location = str(fallback_payload.get("location") or "").strip()
-    fallback_explanation = str(fallback_payload.get("explanation") or "").strip()
-    if origin is None and hotspot is None:
-        return fallback_payload
-    if hotspot is None and fallback_location and fallback_location.lower() != "unknown":
-        return fallback_payload
-    if origin is not None and not origin.reason and fallback_explanation:
-        return fallback_payload
-
-    return {
-        "location": (
-            origin.display_location
-            if origin is not None
-            else str(primary.strongest_location or "unknown")
-        ),
-        "alternative_locations": (
-            list(hotspot.alternative_locations) if hotspot is not None else []
-        ),
-        "suspected_source": str(primary.suspected_source),
-        "dominance_ratio": primary.dominance_ratio,
-        "weak_spatial_separation": primary.weak_spatial_separation,
-        "explanation": origin.explanation if origin is not None else "",
-    }
-
-
-def _steps_from_test_plan(test_plan: TestPlan) -> list[dict[str, object]]:
-    return [
-        {
-            "action_id": action.action_id,
-            "what": action.what,
-            "why": action.why,
-            "confirm": action.confirm,
-            "falsify": action.falsify,
-            "eta": action.eta,
-        }
-        for action in test_plan.prioritized_actions
-    ]
-
-
 def _has_structured_step_content(steps: object) -> bool:
     if not isinstance(steps, list):
         return False
@@ -238,17 +149,7 @@ def _has_structured_step_content(steps: object) -> bool:
 
 
 def _checks_from_suitability(suitability: RunSuitability | None) -> list[dict[str, object]]:
-    if suitability is None:
-        return []
-    return [
-        {
-            "check": check.check_key,
-            "check_key": check.check_key,
-            "state": check.state,
-            "explanation": check.explanation,
-        }
-        for check in suitability.checks
-    ]
+    return run_suitability_payload(suitability)
 
 
 def _enrich_findings(raw_findings: object) -> tuple[Finding, ...]:
@@ -258,18 +159,43 @@ def _enrich_findings(raw_findings: object) -> tuple[Finding, ...]:
     for payload in raw_findings:
         if not isinstance(payload, Mapping):
             continue
-        finding = Finding.from_payload(payload)
+        finding = finding_from_payload(payload)
         signatures = _signatures_from_finding(finding, payload)
-        origin = VibrationOrigin(
-            suspected_source=finding.suspected_source,
+        origin = vibration_origin_from_payload(
+            payload,
             hotspot=finding.location,
+            suspected_source=finding.suspected_source,
             dominance_ratio=finding.dominance_ratio,
             speed_band=finding.strongest_speed_band,
-            dominant_phase=str(payload.get("dominant_phase") or "") or None,
-            reason=str(payload.get("evidence_summary") or ""),
         )
         enriched.append(finding.with_origin_and_signatures(origin=origin, signatures=signatures))
     return tuple(enriched)
+
+
+def _require_authoritative_case_id(summary: Mapping[str, object]) -> str:
+    case_id = summary.get("case_id")
+    if isinstance(case_id, str):
+        normalized_case_id = case_id.strip()
+        if normalized_case_id:
+            return normalized_case_id
+    raise ValueError(
+        "Cannot decode DiagnosticCase from legacy summary without authoritative case_id"
+    )
+
+
+def _ensure_top_causes_in_findings(
+    findings: tuple[Finding, ...],
+    top_causes: tuple[Finding, ...],
+) -> tuple[Finding, ...]:
+    """Merge unmatched top_causes into findings so the domain invariant holds."""
+    if not top_causes:
+        return findings
+    merged = list(findings)
+    for tc in top_causes:
+        if any(tc == f or (tc.finding_id and tc.finding_id == f.finding_id) for f in merged):
+            continue
+        merged.append(tc)
+    return tuple(merged)
 
 
 def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
@@ -277,6 +203,10 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     meta = metadata if isinstance(metadata, Mapping) else {}
     findings = _enrich_findings(summary.get("findings"))
     top_causes = _enrich_findings(summary.get("top_causes"))
+    # Domain invariant: top_causes ⊆ findings.  Payload data may have
+    # top_causes that don't appear in findings; merge them so the
+    # invariant holds without discarding data.
+    findings = _ensure_top_causes_in_findings(findings, top_causes)
     actions = _actions_from_steps(summary.get("test_plan"))
     speed_stats = summary.get("speed_stats")
     phase_info = summary.get("phase_info")
@@ -292,7 +222,7 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     )
     run_suitability = summary.get("run_suitability")
     suitability = (
-        RunSuitability.from_checks(run_suitability) if isinstance(run_suitability, list) else None
+        run_suitability_from_payload(run_suitability) if isinstance(run_suitability, list) else None
     )
 
     signatures: list[Signature] = []
@@ -337,17 +267,14 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
     symptom_text = str(meta.get("symptom") or meta.get("complaint") or "").strip()
     symptom = Symptom(description=symptom_text) if symptom_text else Symptom.unspecified()
     test_run = test_run_from_summary(summary)
-    case = DiagnosticCase.start(
+    case = DiagnosticCase(
+        case_id=_require_authoritative_case_id(summary),
         car=car,
         symptoms=(symptom,),
         configuration_snapshots=(test_run.configuration_snapshot,),
         test_plan=test_run.test_plan,
     )
     return case.add_run(test_run)
-
-
-def run_analysis_result_from_summary(summary: Mapping[str, object]) -> RunAnalysisResult:
-    return RunAnalysisResult.from_test_run(test_run_from_summary(summary))
 
 
 def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, object]:
@@ -358,8 +285,7 @@ def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, o
     if not isinstance(raw_findings, list) and not isinstance(raw_top_causes, list):
         return projected
 
-    aggregate = run_analysis_result_from_summary(summary)
-    test_run = aggregate.test_run
+    test_run = test_run_from_summary(summary)
 
     findings_by_id = _payloads_by_id(summary.get("findings"))
     top_causes_by_id = _payloads_by_id(summary.get("top_causes"))
@@ -370,7 +296,7 @@ def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, o
             primary=findings_by_id,
             secondary=top_causes_by_id,
         )
-        for finding in aggregate.findings
+        for finding in test_run.findings
     ]
     projected["top_causes"] = [
         finding_payload_from_domain(
@@ -378,15 +304,21 @@ def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, o
             primary=top_causes_by_id,
             secondary=findings_by_id,
         )
-        for finding in aggregate.effective_top_causes()
+        for finding in test_run.effective_top_causes()
     ]
-    projected["most_likely_origin"] = _origin_payload_from_aggregate(
-        aggregate,
-        summary.get("most_likely_origin"),
+    _origin_fallback = summary.get("most_likely_origin")
+    if not isinstance(_origin_fallback, Mapping):
+        _origin_fallback_payload: dict[str, object] = {}
+    else:
+        _origin_fallback_payload = dict(_origin_fallback)
+    _primary = test_run.primary_finding
+    projected["most_likely_origin"] = (
+        origin_payload_from_finding(_primary, _origin_fallback_payload)
+        if _primary is not None
+        else _origin_fallback_payload
     )
-    if test_run is not None:
-        if not _has_structured_step_content(summary.get("test_plan")):
-            projected["test_plan"] = _steps_from_test_plan(test_run.test_plan)
-        projected["run_suitability"] = _checks_from_suitability(test_run.suitability)
+    if not _has_structured_step_content(summary.get("test_plan")):
+        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
+    projected["run_suitability"] = _checks_from_suitability(test_run.suitability)
 
     return projected
