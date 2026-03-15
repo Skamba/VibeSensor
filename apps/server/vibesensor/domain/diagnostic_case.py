@@ -7,7 +7,7 @@ from enum import StrEnum
 from uuid import uuid4
 
 from .car import Car
-from .configuration_snapshot import ConfigurationSnapshot
+from .diagnosis import Diagnosis
 from .finding import Finding
 from .hypothesis import Hypothesis, HypothesisStatus
 from .recommended_action import RecommendedAction
@@ -45,11 +45,10 @@ class DiagnosticCase:
     case_id: str
     car: Car | None = None
     symptoms: tuple[Symptom, ...] = ()
-    configuration_snapshots: tuple[ConfigurationSnapshot, ...] = ()
     test_plan: TestPlan = TestPlan()
     test_runs: tuple[TestRun, ...] = ()
     hypotheses: tuple[Hypothesis, ...] = ()
-    findings: tuple[Finding, ...] = ()
+    diagnoses: tuple[Diagnosis, ...] = ()
     recommended_actions: tuple[RecommendedAction, ...] = ()
 
     _EMPTY_TEST_PLAN = TestPlan()
@@ -149,7 +148,7 @@ class DiagnosticCase:
         """Return the explicit cross-run rule outcome for each hypothesis id."""
         grouped: dict[str, list[Hypothesis]] = {}
         for test_run in self.test_runs:
-            for hypothesis in test_run.hypotheses:
+            for hypothesis in test_run.reasoning.hypotheses:
                 grouped.setdefault(hypothesis.hypothesis_id, []).append(hypothesis)
         return {
             hypothesis_id: self.classify_hypothesis_sequence(tuple(sequence))
@@ -162,25 +161,19 @@ class DiagnosticCase:
         *,
         car: Car | None = None,
         symptoms: tuple[Symptom, ...] = (),
-        configuration_snapshots: tuple[ConfigurationSnapshot, ...] = (),
         test_plan: TestPlan | None = None,
     ) -> DiagnosticCase:
         return cls(
             case_id=uuid4().hex,
             car=car,
             symptoms=symptoms or (Symptom.unspecified(),),
-            configuration_snapshots=configuration_snapshots,
             test_plan=test_plan or cls._EMPTY_TEST_PLAN,
         )
 
     def add_run(self, test_run: TestRun) -> DiagnosticCase:
-        snapshots = self.configuration_snapshots
-        if test_run.configuration_snapshot not in snapshots:
-            snapshots = (*snapshots, test_run.configuration_snapshot)
         updated = replace(
             self,
             test_runs=(*self.test_runs, test_run),
-            configuration_snapshots=snapshots,
         )
         return updated.reconcile()
 
@@ -195,7 +188,7 @@ class DiagnosticCase:
         # ── Hypotheses: group by id, classify, keep latest (exclude retired) ──
         hyp_sequences: dict[str, list[Hypothesis]] = {}
         for test_run in self.test_runs:
-            for hypothesis in test_run.hypotheses:
+            for hypothesis in test_run.reasoning.hypotheses:
                 hyp_sequences.setdefault(hypothesis.hypothesis_id, []).append(hypothesis)
 
         kept_hypotheses: dict[str, Hypothesis] = {}
@@ -212,9 +205,10 @@ class DiagnosticCase:
                 key = self._finding_identity(finding)
                 finding_sequences.setdefault(key, []).append(finding)
 
-        kept_findings: dict[tuple[str, str | None], Finding] = {}
+        kept_diagnoses: dict[tuple[str, str | None], Diagnosis] = {}
         for key, finding_seq in finding_sequences.items():
-            kept_findings[key] = finding_seq[-1]
+            rule = self.classify_finding_sequence(tuple(finding_seq))
+            kept_diagnoses[key] = Diagnosis.from_finding_group(key, tuple(finding_seq), rule)
 
         # ── Actions: lowest priority wins (unchanged) ──
         actions: dict[str, RecommendedAction] = {
@@ -236,8 +230,12 @@ class DiagnosticCase:
                     key=lambda item: (-item.support_score, item.hypothesis_id),
                 )
             ),
-            findings=tuple(
-                sorted(kept_findings.values(), key=lambda item: item.rank_key, reverse=True)
+            diagnoses=tuple(
+                sorted(
+                    kept_diagnoses.values(),
+                    key=lambda d: d.representative_finding.rank_key,
+                    reverse=True,
+                )
             ),
             recommended_actions=tuple(sorted(actions.values(), key=RecommendedAction.sort_key)),
         )
@@ -249,7 +247,7 @@ class DiagnosticCase:
     @property
     def has_usable_evidence(self) -> bool:
         """Whether the case has genuinely usable diagnostic evidence."""
-        if not any(f.is_actionable for f in self.findings):
+        if not any(d.is_actionable for d in self.diagnoses):
             return False
         primary = self.primary_run
         if primary is not None and primary.suitability is not None:
@@ -265,9 +263,9 @@ class DiagnosticCase:
     def evidence_gaps(self) -> tuple[str, ...]:
         """Descriptions of what evidence is missing or weak."""
         gaps: list[str] = []
-        if not self.findings:
+        if not self.diagnoses:
             gaps.append("no_findings")
-        elif not any(f.is_actionable for f in self.findings):
+        elif not any(d.is_actionable for d in self.diagnoses):
             gaps.append("no_actionable_findings")
         primary = self.primary_run
         if primary is not None and primary.suitability is not None:

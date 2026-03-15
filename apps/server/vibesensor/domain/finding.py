@@ -120,6 +120,7 @@ class Finding:
     """
 
     finding_id: str = ""
+    finding_key: str = ""
     suspected_source: VibrationSource = VibrationSource.UNKNOWN
     confidence: float | None = None
     frequency_hz: float | None = None

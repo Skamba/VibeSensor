@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from .finding import VibrationSource
 from .location_hotspot import LocationHotspot
+
+if TYPE_CHECKING:
+    from .finding import Finding
 
 __all__ = ["VibrationOrigin"]
 
@@ -41,6 +45,31 @@ class VibrationOrigin:
             dominant_phase=dominant_phase,
             reason=reason,
         )
+
+    @classmethod
+    def from_finding(cls, finding: Finding) -> VibrationOrigin | None:
+        """Extract the best available origin from a diagnostic finding.
+
+        Returns the finding's existing origin if present, or constructs
+        one from the finding's location/source data.  Returns ``None`` if
+        the finding has insufficient data for meaningful origin semantics.
+        """
+        if finding.origin is not None:
+            return finding.origin
+        if finding.location is not None:
+            return cls(
+                suspected_source=finding.suspected_source,
+                hotspot=finding.location,
+                dominance_ratio=finding.dominance_ratio,
+                speed_band=finding.strongest_speed_band,
+            )
+        if finding.strongest_location:
+            return cls(
+                suspected_source=finding.suspected_source,
+                dominance_ratio=finding.dominance_ratio,
+                speed_band=finding.strongest_speed_band,
+            )
+        return None
 
     @property
     def is_ambiguous(self) -> bool:

@@ -4,16 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .configuration_snapshot import ConfigurationSnapshot
+from .diagnostic_reasoning import DiagnosticReasoning
 from .driving_segment import DrivingSegment
 from .finding import Finding, VibrationSource
-from .hypothesis import Hypothesis
-from .observation import Observation
 from .recommended_action import RecommendedAction
-from .run import Run
+from .run_capture import RunCapture
 from .run_suitability import RunSuitability
-from .sensor import Sensor
-from .signature import Signature
 from .speed_profile import SpeedProfile
 from .test_plan import TestPlan
 
@@ -24,18 +20,14 @@ __all__ = ["TestRun"]
 class TestRun:
     """Canonical run-level diagnostic aggregate."""
 
-    run: Run
-    configuration_snapshot: ConfigurationSnapshot
+    capture: RunCapture
+    reasoning: DiagnosticReasoning = DiagnosticReasoning()
     driving_segments: tuple[DrivingSegment, ...] = ()
-    observations: tuple[Observation, ...] = ()
-    signatures: tuple[Signature, ...] = ()
-    hypotheses: tuple[Hypothesis, ...] = ()
     findings: tuple[Finding, ...] = ()
     top_causes: tuple[Finding, ...] = ()
     speed_profile: SpeedProfile | None = None
     suitability: RunSuitability | None = None
     test_plan: TestPlan = TestPlan()
-    sensors: tuple[Sensor, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.top_causes:
@@ -70,11 +62,11 @@ class TestRun:
 
     @property
     def run_id(self) -> str:
-        return self.run.run_id
+        return self.capture.run_id
 
     @property
     def sensor_count(self) -> int:
-        return len(self.sensors)
+        return len(self.capture.setup.sensors)
 
     @property
     def diagnostic_findings(self) -> tuple[Finding, ...]:

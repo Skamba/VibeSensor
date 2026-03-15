@@ -2,20 +2,26 @@
 
 Consolidates the former ``plot_spectrum``, ``plot_series``,
 ``plot_peak_table``, and ``plot_data`` modules into a single file.
+
+This module is **boundary-adjacent**: it transforms raw DSP arrays and
+sample data into rendering-ready data structures (peak tables, spectrum
+rows) consumed by the report template.  It operates on raw numpy/sample
+data, not domain objects, and is intentionally outside the domain layer.
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from math import floor
-from typing import Literal, Required, TypedDict
+from typing import Any, Literal, Required, TypedDict
 
 from vibesensor.vibration_strength import compute_db, compute_db_or_none, percentile
 
 from ..constants import MEMS_NOISE_FLOOR_G
 from ..json_utils import as_float_or_none as _as_float
-from ._types import AnalysisSummary, Sample
+from ._types import Sample
 from .findings import _classify_peak_type
 from .helpers import (
     _amplitude_weighted_speed_window,
@@ -386,7 +392,7 @@ class PlotSeriesBundle:
 
 
 def build_plot_series(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     per_sample_phases: list[DrivingPhase],
     phase_segments: list[PhaseSegment],
@@ -485,7 +491,7 @@ def build_plot_series(
 
 
 def build_steady_speed_distribution(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     vib_mag_points: list[tuple[float, float, str]],
 ) -> dict[str, float] | None:
@@ -504,7 +510,7 @@ def build_steady_speed_distribution(
     }
 
 
-def build_amp_vs_phase(summary: AnalysisSummary) -> list[AmpVsPhaseRow]:
+def build_amp_vs_phase(summary: Mapping[str, Any]) -> list[AmpVsPhaseRow]:
     """Shape the phase-grouped vibration rows for plotting."""
     amp_vs_phase: list[AmpVsPhaseRow] = []
     for row in summary.get("phase_speed_breakdown", []):
@@ -769,7 +775,7 @@ class PlotDataResult(TypedDict):
 
 
 def _plot_data(
-    summary: AnalysisSummary,
+    summary: Mapping[str, Any],
     *,
     run_noise_baseline_g: float | None = None,
     per_sample_phases: list[DrivingPhase] | None = None,

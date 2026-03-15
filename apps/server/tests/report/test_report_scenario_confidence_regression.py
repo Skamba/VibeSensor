@@ -11,8 +11,9 @@ from test_support.sample_scenarios import (
     max_order_source_conf,
 )
 
-from vibesensor.analysis import confidence_label, summarize_run_data
+from vibesensor.analysis import summarize_run_data
 from vibesensor.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.domain import Finding
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 
 
@@ -78,9 +79,9 @@ class TestConfidenceCalibration:
         assert max_order_source_conf(steady_summary) <= 0.65
 
     def test_confidence_label_thresholds(self) -> None:
-        assert confidence_label(0.75)[:2] == ("CONFIDENCE_HIGH", "success")
-        assert confidence_label(0.50)[:2] == ("CONFIDENCE_MEDIUM", "warn")
-        assert confidence_label(0.20)[:2] == ("CONFIDENCE_LOW", "neutral")
+        assert Finding.classify_confidence(0.75)[:2] == ("CONFIDENCE_HIGH", "success")
+        assert Finding.classify_confidence(0.50)[:2] == ("CONFIDENCE_MEDIUM", "warn")
+        assert Finding.classify_confidence(0.20)[:2] == ("CONFIDENCE_LOW", "neutral")
 
 
 class TestConfidenceAssessmentSignalQualityGuard:

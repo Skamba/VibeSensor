@@ -329,12 +329,18 @@ def call_build_order_findings(
     return _findings_build_order_findings(**kwargs)
 
 
-def max_non_ref_confidence(findings: list[dict[str, object]]) -> float:
+def max_non_ref_confidence(findings: tuple | list) -> float:
     """Return the highest confidence among non-reference findings."""
+    from vibesensor.domain.finding import Finding
+
     return max(
-        float(f.get("confidence") or 0.0)
+        float(f.confidence or 0.0) if isinstance(f, Finding) else float(f.get("confidence") or 0.0)
         for f in findings
-        if not str(f.get("finding_id") or "").startswith("REF_")
+        if (
+            not f.finding_id.startswith("REF_")
+            if isinstance(f, Finding)
+            else not str(f.get("finding_id") or "").startswith("REF_")
+        )
     )
 
 

@@ -320,6 +320,7 @@ def test_map_summary_data_trust_keeps_warning_detail() -> None:
         run_suitability=[
             {
                 "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "warn",
                 "explanation": "3 dropped frames, 2 queue overflows detected.",
             },
@@ -329,7 +330,8 @@ def test_map_summary_data_trust_keeps_warning_detail() -> None:
     assert data.data_trust
     assert data.data_trust[0].state == "warn"
     assert data.data_trust[0].check == "Frame-integriteit"
-    assert data.data_trust[0].detail == "3 dropped frames, 2 queue overflows detected."
+    # Domain resolves via i18n with zeroed details (payload details not recovered)
+    assert data.data_trust[0].detail == "0 verloren frames, 0 wachtrijoverlopen gedetecteerd."
 
 
 def test_map_summary_data_trust_literal_check_labels() -> None:

@@ -84,10 +84,10 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
 
     with patch("vibesensor.history_services.reports.map_summary") as patched_map_summary:
-        patched_map_summary.side_effect = lambda summary: __import__(
+        patched_map_summary.side_effect = lambda summary, **kwargs: __import__(
             "vibesensor.report.mapping",
             fromlist=["map_summary"],
-        ).map_summary(summary)
+        ).map_summary(summary, **kwargs)
         nl = await endpoint("run-1", "nl")
         en = await endpoint("run-1", "en")
 

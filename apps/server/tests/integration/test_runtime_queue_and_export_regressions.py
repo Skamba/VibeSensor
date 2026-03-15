@@ -96,7 +96,9 @@ class TestExportZipFiltersInternals:
         helper_text = (SERVER_ROOT / "vibesensor" / "history_services" / "helpers.py").read_text()
         export_text = (SERVER_ROOT / "vibesensor" / "history_services" / "exports.py").read_text()
         assert 'if not key.startswith("_")' in helper_text
-        assert "strip_internal_fields(project_summary_through_domain(analysis))" in export_text
+        assert "strip_internal_fields" in export_text
+        assert "test_run_from_summary" in export_text
+        assert "finding_payload_from_domain" in export_text
 
 
 # ---------------------------------------------------------------------------

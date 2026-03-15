@@ -7,9 +7,11 @@ from typing import Any
 from test_support.core import standard_metadata
 from test_support.sample_scenarios import build_speed_sweep_samples, make_sample
 
-from vibesensor.analysis import select_top_causes, summarize_run_data
+from vibesensor.analysis import summarize_run_data
 from vibesensor.analysis.findings import _reference_missing_finding
+from vibesensor.analysis.top_cause_selection import select_top_causes
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.boundaries.finding import finding_from_payload
 from vibesensor.report.mapping import map_summary
 
 
@@ -119,8 +121,9 @@ class TestReferenceFindingDistinguishability:
                 "severity": "diagnostic",
             },
         ]
-        for cause in select_top_causes(findings)[0]:
-            assert not str(cause.get("finding_id") or "").startswith("REF_")
+        findings_domain = tuple(finding_from_payload(f) for f in findings)
+        for cause in select_top_causes(findings_domain):
+            assert not str(cause.finding_id or "").startswith("REF_")
 
     def test_all_ref_variants_have_reference_type(self) -> None:
         for finding_id in ("REF_SPEED", "REF_WHEEL", "REF_ENGINE", "REF_SAMPLE_RATE"):

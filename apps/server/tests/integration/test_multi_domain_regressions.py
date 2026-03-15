@@ -18,9 +18,8 @@ from vibesensor.analysis.helpers import _format_duration, _speed_bin_label
 from vibesensor.analysis.location_analysis import _weighted_speed_window_label
 from vibesensor.analysis.phase_segmentation import segment_run_phases
 from vibesensor.analysis.summary_builder import compute_run_timing
-from vibesensor.analysis.top_cause_selection import confidence_label
 from vibesensor.config import _split_host_port
-from vibesensor.domain import SpeedSourceKind
+from vibesensor.domain import Finding, SpeedSourceKind
 from vibesensor.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.report.mapping import order_label_human
 from vibesensor.report.mapping import resolve_i18n as resolve_i18n_impl
@@ -189,35 +188,31 @@ class TestBug09HotspotP95FallbackOnZero:
 
 
 # ---------------------------------------------------------------------------
-# Bug 10: confidence_label(None) crashes
+# Bug 10: confidence classification edge cases
 # ---------------------------------------------------------------------------
 
 
 class TestBug10ConfidenceLabelNone:
-    def test_none_confidence_returns_low(self) -> None:
-        label_key, tone, pct_text = confidence_label(None)
+    def test_zero_confidence_returns_low(self) -> None:
+        label_key, tone, pct_text = Finding.classify_confidence(0.0)
         assert label_key == "CONFIDENCE_LOW"
         assert tone == "neutral"
         assert pct_text == "0%"
 
-    def test_zero_confidence_returns_low(self) -> None:
-        label_key, tone, pct_text = confidence_label(0.0)
-        assert label_key == "CONFIDENCE_LOW"
-
     def test_inf_confidence_returns_low_not_high(self) -> None:
         """float('inf') previously returned CONFIDENCE_HIGH silently."""
-        label_key, tone, pct_text = confidence_label(float("inf"))
+        label_key, tone, pct_text = Finding.classify_confidence(float("inf"))
         assert label_key == "CONFIDENCE_LOW"
         assert pct_text == "0%"
 
     def test_nan_confidence_consistent_label_and_pct(self) -> None:
         """float('nan') previously gave pct_text='100%' with CONFIDENCE_LOW label."""
-        label_key, tone, pct_text = confidence_label(float("nan"))
+        label_key, tone, pct_text = Finding.classify_confidence(float("nan"))
         assert label_key == "CONFIDENCE_LOW"
         assert pct_text == "0%"
 
     def test_neg_inf_confidence_returns_low(self) -> None:
-        label_key, tone, pct_text = confidence_label(float("-inf"))
+        label_key, tone, pct_text = Finding.classify_confidence(float("-inf"))
         assert label_key == "CONFIDENCE_LOW"
         assert pct_text == "0%"
 

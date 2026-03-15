@@ -11,12 +11,17 @@ import asyncio
 import json
 import logging
 from collections import OrderedDict
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from ..backend_types import CarConfigPayload, HistoryRunPayload
-from ..boundaries.diagnostic_case import project_summary_through_domain
+from ..boundaries._helpers import _has_structured_step_content
+from ..boundaries.diagnostic_case import test_run_from_summary
+from ..boundaries.finding import finding_payload_from_domain
+from ..boundaries.run_suitability import run_suitability_payload
+from ..boundaries.test_steps import step_payloads_from_plan
+from ..boundaries.vibration_origin import origin_payload_from_finding
 from ..exceptions import AnalysisNotReadyError, ProcessingError
 from ..json_types import JsonObject, is_json_object
 from ..report.mapping import map_summary
@@ -30,6 +35,7 @@ from .helpers import (
 )
 
 if TYPE_CHECKING:
+    from ..domain import TestRun
     from ..history_db import HistoryDB
     from ..settings_store import SettingsStore
 
@@ -54,6 +60,7 @@ class HistoryReportRequest:
     cache_key: ReportPdfCacheKey
     filename: str
     analysis_summary: JsonObject
+    domain_test_run: TestRun | None = None
 
 
 class HistoryReportService:
@@ -74,7 +81,10 @@ class HistoryReportService:
 
         pdf = await self._pdf_cache.get_or_build(
             request.cache_key,
-            lambda: self._build_pdf_bytes(request.analysis_summary),
+            lambda: self._build_pdf_bytes(
+                request.analysis_summary,
+                test_run=request.domain_test_run,
+            ),
             run_id=run_id,
         )
         return HistoryReportPdf(content=pdf, filename=request.filename)
@@ -99,7 +109,23 @@ class HistoryReportService:
             analysis,
             current_active_car_snapshot=current_active_car_snapshot,
         )
-        analysis_summary = project_summary_through_domain(analysis_summary)
+        # Build TestRun once — used for both dict canonicalization and report mapping
+        domain_test_run = test_run_from_summary(analysis_summary)
+        projected: JsonObject = dict(analysis_summary)
+        projected["findings"] = [finding_payload_from_domain(f) for f in domain_test_run.findings]
+        projected["top_causes"] = [
+            finding_payload_from_domain(f) for f in domain_test_run.effective_top_causes()
+        ]
+        primary = domain_test_run.primary_finding
+        origin_fb = analysis_summary.get("most_likely_origin")
+        fb_payload = dict(origin_fb) if isinstance(origin_fb, Mapping) else {}
+        projected["most_likely_origin"] = (
+            origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
+        )
+        if not _has_structured_step_content(analysis_summary.get("test_plan")):
+            projected["test_plan"] = step_payloads_from_plan(domain_test_run.test_plan)
+        projected["run_suitability"] = run_suitability_payload(domain_test_run.suitability)
+        analysis_summary = projected
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
@@ -110,13 +136,19 @@ class HistoryReportService:
             cache_key=cache_key,
             filename=f"{safe_filename(run_id)}_report.pdf",
             analysis_summary=analysis_summary,
+            domain_test_run=domain_test_run,
         )
 
     @staticmethod
-    def _build_pdf_bytes(analysis_summary: JsonObject) -> bytes:
-        from ..analysis import AnalysisSummary
-
-        mapped_summary = map_summary(cast("AnalysisSummary", analysis_summary))
+    def _build_pdf_bytes(
+        analysis_summary: JsonObject,
+        *,
+        test_run: TestRun | None = None,
+    ) -> bytes:
+        mapped_summary = map_summary(
+            analysis_summary,
+            test_run=test_run,
+        )
         return build_report_pdf(mapped_summary)
 
     @staticmethod

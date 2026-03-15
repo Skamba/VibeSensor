@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 from tests.test_support.findings import make_finding_payload
-from vibesensor.analysis._types import FindingPayload
+from vibesensor.analysis.findings import finalize_findings
 from vibesensor.analysis.summary_builder import summarize_run_data
+from vibesensor.domain import Finding
 
 _MINIMAL_META: dict[str, Any] = {
     "run_id": "test-plan-domain-projection",
@@ -33,8 +34,8 @@ def test_summary_test_plan_ignores_payload_actions_and_projects_domain_plan() ->
         ],
     )
 
-    def _findings_builder(**_: object) -> list[FindingPayload]:
-        return [payload]
+    def _findings_builder(**_: object) -> tuple[Finding, ...]:
+        return finalize_findings([payload])
 
     summary = summarize_run_data(
         _MINIMAL_META,
@@ -55,7 +56,9 @@ def test_summary_test_plan_uses_boundary_step_shape_from_domain_actions() -> Non
         _MINIMAL_META,
         [],
         lang="en",
-        findings_builder=lambda **_: [make_finding_payload(suspected_source="engine")],
+        findings_builder=lambda **_: finalize_findings(
+            [make_finding_payload(suspected_source="engine")]
+        ),
     )
 
     assert summary["test_plan"]

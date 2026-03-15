@@ -26,8 +26,10 @@ from vibesensor.boundaries.vibration_origin import (
 from vibesensor.domain import (
     ConfidenceAssessment,
     ConfigurationSnapshot,
+    Diagnosis,
     DiagnosticCase,
     DiagnosticCaseEpistemicRule,
+    DiagnosticReasoning,
     DrivingPhase,
     DrivingSegment,
     Finding,
@@ -35,7 +37,7 @@ from vibesensor.domain import (
     Hypothesis,
     HypothesisStatus,
     LocationHotspot,
-    Run,
+    RunCapture,
     RunSuitability,
     Sensor,
     SensorPlacement,
@@ -76,9 +78,8 @@ def _make_test_run(
     top_causes: tuple[Finding, ...],
 ) -> TestRun:
     return TestRun(
-        run=Run(run_id=run_id),
-        configuration_snapshot=ConfigurationSnapshot(),
-        hypotheses=hypotheses,
+        capture=RunCapture(run_id=run_id),
+        reasoning=DiagnosticReasoning(hypotheses=hypotheses),
         findings=findings,
         top_causes=top_causes,
     )
@@ -487,6 +488,62 @@ class TestVibrationOrigin:
         assert payload["location"] == "rear_right"
         assert payload["suspected_source"] == "suspension"
 
+    def test_from_finding_returns_existing_origin(self) -> None:
+        """from_finding() returns the finding's origin when already set."""
+        existing_origin = VibrationOrigin.from_analysis_inputs(
+            suspected_source=VibrationSource.WHEEL_TIRE,
+            dominance_ratio=1.2,
+            speed_band="80-90 km/h",
+            reason="pre-existing",
+        )
+        finding = Finding(
+            finding_id="F001",
+            suspected_source="wheel/tire",
+            origin=existing_origin,
+        )
+        result = VibrationOrigin.from_finding(finding)
+        assert result is existing_origin
+
+    def test_from_finding_constructs_from_location_hotspot(self) -> None:
+        """from_finding() constructs origin from hotspot when no origin is set."""
+        hotspot = LocationHotspot.from_analysis_inputs(
+            strongest_location="front_left",
+            ambiguous=False,
+        )
+        finding = Finding(
+            finding_id="F002",
+            suspected_source="wheel/tire",
+            strongest_speed_band="80-90 km/h",
+            dominance_ratio=1.3,
+            location=hotspot,
+        )
+        result = VibrationOrigin.from_finding(finding)
+        assert result is not None
+        assert result.hotspot is hotspot
+        assert result.suspected_source == VibrationSource.WHEEL_TIRE
+        assert result.speed_band == "80-90 km/h"
+        assert result.dominance_ratio == 1.3
+
+    def test_from_finding_constructs_from_strongest_location(self) -> None:
+        """from_finding() constructs minimal origin from strongest_location."""
+        finding = Finding(
+            finding_id="F003",
+            suspected_source="engine",
+            strongest_location="rear",
+            strongest_speed_band="60-70 km/h",
+            dominance_ratio=0.9,
+        )
+        result = VibrationOrigin.from_finding(finding)
+        assert result is not None
+        assert result.hotspot is None
+        assert result.suspected_source == VibrationSource.ENGINE
+        assert result.speed_band == "60-70 km/h"
+
+    def test_from_finding_returns_none_when_no_data(self) -> None:
+        """from_finding() returns None for a finding with no origin data."""
+        finding = Finding(finding_id="F004", suspected_source="unknown")
+        assert VibrationOrigin.from_finding(finding) is None
+
     def test_suspected_vibration_origin_is_boundary_type(self) -> None:
         """SuspectedVibrationOrigin is importable from boundaries, not analysis."""
         from vibesensor.boundaries.vibration_origin import SuspectedVibrationOrigin
@@ -630,9 +687,16 @@ class TestTestPlan:
 
 class TestDiagnosticCase:
     def test_case_complete_when_findings_exist_and_plan_supports_completion(self) -> None:
+        f = Finding(suspected_source="engine", confidence=0.74)
         case = DiagnosticCase(
             case_id="case-1",
-            findings=(Finding(suspected_source="engine", confidence=0.74),),
+            diagnoses=(
+                Diagnosis.from_finding_group(
+                    ("engine", None),
+                    (f,),
+                    DiagnosticCaseEpistemicRule.UNRESOLVED_SUPPORT,
+                ),
+            ),
             test_plan=DomainTestPlan(
                 actions=(
                     DomainRecommendedAction(
@@ -647,9 +711,16 @@ class TestDiagnosticCase:
         assert case.needs_more_data is False
 
     def test_case_incomplete_when_test_plan_requires_more_data(self) -> None:
+        f = Finding(suspected_source="wheel/tire", confidence=0.81)
         case = DiagnosticCase(
             case_id="case-2",
-            findings=(Finding(suspected_source="wheel/tire", confidence=0.81),),
+            diagnoses=(
+                Diagnosis.from_finding_group(
+                    ("wheel/tire", None),
+                    (f,),
+                    DiagnosticCaseEpistemicRule.UNRESOLVED_SUPPORT,
+                ),
+            ),
             test_plan=DomainTestPlan(requires_additional_data=True),
         )
 
@@ -917,9 +988,9 @@ class TestDiagnosticCaseReconcile:
             ),
         )
 
-        assert len(case.findings) == 1
-        assert case.findings[0].finding_id == "F002"
-        assert case.findings[0].confidence == 0.40
+        assert len(case.diagnoses) == 1
+        assert case.diagnoses[0].representative_finding.finding_id == "F002"
+        assert case.diagnoses[0].representative_finding.confidence == 0.40
 
     def test_reconcile_action_lowest_priority_wins(self) -> None:
         """Action merge picks the lowest priority for a given action_id."""
@@ -942,9 +1013,7 @@ class TestDiagnosticCaseReconcile:
         )
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-2"),
-                configuration_snapshot=ConfigurationSnapshot(),
-                hypotheses=(),
+                capture=RunCapture(run_id="run-2"),
                 findings=(),
                 top_causes=(),
                 test_plan=DomainTestPlan(actions=(action_low,)),
@@ -988,9 +1057,8 @@ class TestDiagnosticCaseReconcile:
         case = DiagnosticCase.start()
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-1"),
-                configuration_snapshot=ConfigurationSnapshot(),
-                hypotheses=(hyp_engine_r1, hyp_tire_r1),
+                capture=RunCapture(run_id="run-1"),
+                reasoning=DiagnosticReasoning(hypotheses=(hyp_engine_r1, hyp_tire_r1)),
                 findings=(finding_tire_r1,),
                 top_causes=(finding_tire_r1,),
                 test_plan=DomainTestPlan(actions=(action_r1,)),
@@ -998,9 +1066,8 @@ class TestDiagnosticCaseReconcile:
         )
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-2"),
-                configuration_snapshot=ConfigurationSnapshot(),
-                hypotheses=(hyp_engine_r2, hyp_tire_r2),
+                capture=RunCapture(run_id="run-2"),
+                reasoning=DiagnosticReasoning(hypotheses=(hyp_engine_r2, hyp_tire_r2)),
                 findings=(finding_tire_r2,),
                 top_causes=(finding_tire_r2,),
                 test_plan=DomainTestPlan(actions=(action_r2,)),
@@ -1008,9 +1075,8 @@ class TestDiagnosticCaseReconcile:
         )
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-3"),
-                configuration_snapshot=ConfigurationSnapshot(),
-                hypotheses=(hyp_tire_r3,),
+                capture=RunCapture(run_id="run-3"),
+                reasoning=DiagnosticReasoning(hypotheses=(hyp_tire_r3,)),
                 findings=(finding_tire_r3,),
                 top_causes=(finding_tire_r3,),
                 test_plan=DomainTestPlan(actions=(action_r3,)),
@@ -1024,9 +1090,9 @@ class TestDiagnosticCaseReconcile:
         assert case.hypotheses[0].support_score == 0.78  # latest run
 
         # Finding: latest run's finding kept (F003, confidence=0.70)
-        assert len(case.findings) == 1
-        assert case.findings[0].finding_id == "F003"
-        assert case.findings[0].confidence == 0.70
+        assert len(case.diagnoses) == 1
+        assert case.diagnoses[0].representative_finding.finding_id == "F003"
+        assert case.diagnoses[0].representative_finding.confidence == 0.70
 
         # Actions: check_tires picks lowest priority (20), rotate_wheels (40) also present
         action_ids = {a.action_id for a in case.recommended_actions}
@@ -1192,6 +1258,106 @@ class TestSuitabilityCheck:
         assert not SuitabilityCheck(check_key="a", state="pass").failed
         assert SuitabilityCheck(check_key="a", state="fail").failed
         assert SuitabilityCheck(check_key="a", state="warn").is_warning
+
+    @pytest.mark.parametrize(
+        "check_key,state,details,expected_key",
+        [
+            ("SUITABILITY_CHECK_SPEED_VARIATION", "pass", (), "SUITABILITY_SPEED_VARIATION_PASS"),
+            ("SUITABILITY_CHECK_SPEED_VARIATION", "warn", (), "SUITABILITY_SPEED_VARIATION_WARN"),
+            ("SUITABILITY_CHECK_SENSOR_COVERAGE", "pass", (), "SUITABILITY_SENSOR_COVERAGE_PASS"),
+            ("SUITABILITY_CHECK_SENSOR_COVERAGE", "warn", (), "SUITABILITY_SENSOR_COVERAGE_WARN"),
+            (
+                "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
+                "pass",
+                (),
+                "SUITABILITY_REFERENCE_COMPLETENESS_PASS",
+            ),
+            (
+                "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
+                "warn",
+                (),
+                "SUITABILITY_REFERENCE_COMPLETENESS_WARN",
+            ),
+            (
+                "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+                "pass",
+                (),
+                "SUITABILITY_SATURATION_PASS",
+            ),
+            (
+                "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+                "warn",
+                (("sat_count", 3),),
+                "SUITABILITY_SATURATION_WARN",
+            ),
+            ("SUITABILITY_CHECK_FRAME_INTEGRITY", "pass", (), "SUITABILITY_FRAME_INTEGRITY_PASS"),
+            (
+                "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                "warn",
+                (("total_dropped", 2), ("total_overflow", 1)),
+                "SUITABILITY_FRAME_INTEGRITY_WARN",
+            ),
+            (
+                "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+                "warn",
+                (("stride", 4),),
+                "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
+            ),
+        ],
+    )
+    def test_explanation_i18n_ref(
+        self,
+        check_key: str,
+        state: str,
+        details: tuple,
+        expected_key: str,
+    ) -> None:
+        c = SuitabilityCheck(check_key=check_key, state=state, details=details)
+        ref = c.explanation_i18n_ref()
+        assert isinstance(ref, dict)
+        assert ref["_i18n_key"] == expected_key
+
+    def test_explanation_i18n_ref_saturation_warn_includes_sat_count(self) -> None:
+        c = SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+            state="warn",
+            details=(("sat_count", 5),),
+        )
+        ref = c.explanation_i18n_ref()
+        assert isinstance(ref, dict)
+        assert ref["sat_count"] == 5
+
+    def test_explanation_i18n_ref_frame_integrity_warn_includes_counts(self) -> None:
+        c = SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_FRAME_INTEGRITY",
+            state="warn",
+            details=(("total_dropped", 10), ("total_overflow", 3)),
+        )
+        ref = c.explanation_i18n_ref()
+        assert isinstance(ref, dict)
+        assert ref["total_dropped"] == 10
+        assert ref["total_overflow"] == 3
+
+    def test_explanation_i18n_ref_stride_includes_stride(self) -> None:
+        c = SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+            state="warn",
+            details=(("stride", 4),),
+        )
+        ref = c.explanation_i18n_ref()
+        assert isinstance(ref, dict)
+        assert ref["stride"] == "4"
+
+    def test_explanation_i18n_ref_stride_no_details_returns_empty(self) -> None:
+        c = SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+            state="warn",
+        )
+        assert c.explanation_i18n_ref() == ""
+
+    def test_explanation_i18n_ref_unknown_key_returns_empty(self) -> None:
+        c = SuitabilityCheck(check_key="UNKNOWN_CHECK", state="warn")
+        assert c.explanation_i18n_ref() == ""
 
 
 class TestRunSuitability:
@@ -1479,8 +1645,7 @@ class TestTestRunWithValueObjects:
     def test_result_with_speed_profile(self) -> None:
         sp = SpeedProfile(min_kmh=40, max_kmh=80, steady_speed=True)
         result = TestRun(
-            run=Run(run_id="test"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="test"),
             findings=(),
             top_causes=(),
             speed_profile=sp,
@@ -1491,8 +1656,7 @@ class TestTestRunWithValueObjects:
     def test_result_with_suitability(self) -> None:
         rs = RunSuitability(checks=(SuitabilityCheck(check_key="test", state="pass"),))
         result = TestRun(
-            run=Run(run_id="test"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="test"),
             findings=(),
             top_causes=(),
             suitability=rs,
@@ -1550,8 +1714,7 @@ class TestTestRunWithValueObjects:
 
     def test_defaults_none(self) -> None:
         result = TestRun(
-            run=Run(run_id="test"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="test"),
             findings=(),
             top_causes=(),
         )
@@ -1603,8 +1766,7 @@ class TestDiagnosticCaseCompleteness:
         if include_run:
             runs = (
                 TestRun(
-                    run=Run(run_id="run-1"),
-                    configuration_snapshot=ConfigurationSnapshot(),
+                    capture=RunCapture(run_id="run-1"),
                     findings=findings,
                     top_causes=tuple(f for f in findings if f.is_actionable),
                     suitability=suitability,
@@ -1612,7 +1774,19 @@ class TestDiagnosticCaseCompleteness:
             )
         return DiagnosticCase(
             case_id="case-1",
-            findings=findings,
+            diagnoses=tuple(
+                Diagnosis.from_finding_group(
+                    (
+                        f.source_normalized,
+                        f.strongest_location
+                        if not Finding.is_unknown_location(f.strongest_location)
+                        else None,
+                    ),
+                    (f,),
+                    DiagnosticCaseEpistemicRule.UNRESOLVED_SUPPORT,
+                )
+                for f in findings
+            ),
             test_runs=runs,
             test_plan=test_plan or DomainTestPlan(),
         )
@@ -1730,40 +1904,30 @@ class TestConfigurationSnapshot:
         assert snap.metadata["sensor_model"] == "MPU6050"
         assert snap.metadata["custom_key"] == "custom_value"
 
-    def test_case_dedup_appends_unique_snapshots(self) -> None:
+    def test_case_snapshot_accessible_via_capture(self) -> None:
         snap_a = ConfigurationSnapshot.from_metadata({"sensor_model": "MPU6050"})
         snap_b = ConfigurationSnapshot.from_metadata({"sensor_model": "BMI270"})
+
+        from vibesensor.domain import RunSetup
 
         finding = Finding(suspected_source="wheel/tire", confidence=0.8)
         case = DiagnosticCase(case_id="case-snap")
         case = case.add_run(
             TestRun(
-                run=Run(run_id="r1"),
-                configuration_snapshot=snap_a,
+                capture=RunCapture(run_id="r1", setup=RunSetup(configuration_snapshot=snap_a)),
                 findings=(finding,),
                 top_causes=(finding,),
             )
         )
         case = case.add_run(
             TestRun(
-                run=Run(run_id="r2"),
-                configuration_snapshot=snap_b,
+                capture=RunCapture(run_id="r2", setup=RunSetup(configuration_snapshot=snap_b)),
                 findings=(finding,),
                 top_causes=(finding,),
             )
         )
-        assert len(case.configuration_snapshots) == 2
-
-        # Third run reuses snap_a — dedup should keep count at 2
-        case = case.add_run(
-            TestRun(
-                run=Run(run_id="r3"),
-                configuration_snapshot=snap_a,
-                findings=(finding,),
-                top_causes=(finding,),
-            )
-        )
-        assert len(case.configuration_snapshots) == 2
+        assert case.test_runs[0].capture.setup.configuration_snapshot == snap_a
+        assert case.test_runs[1].capture.setup.configuration_snapshot == snap_b
 
 
 # ── Sensor ───────────────────────────────────────────────────────────────────
@@ -1797,28 +1961,27 @@ class TestSensor:
 class TestTestRunSensors:
     def test_test_run_default_sensors_empty(self) -> None:
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="r1"),
         )
-        assert tr.sensors == ()
+        assert tr.capture.setup.sensors == ()
         assert tr.sensor_count == 0
 
     def test_test_run_with_sensors(self) -> None:
+        from vibesensor.domain import RunSetup
+
         sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle"])
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
-            sensors=sensors,
+            capture=RunCapture(run_id="r1", setup=RunSetup(sensors=sensors)),
         )
-        assert len(tr.sensors) == 2
+        assert len(tr.capture.setup.sensors) == 2
         assert tr.sensor_count == 2
 
     def test_test_run_sensor_count_property(self) -> None:
+        from vibesensor.domain import RunSetup
+
         sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle", "dashboard"])
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
-            sensors=sensors,
+            capture=RunCapture(run_id="r1", setup=RunSetup(sensors=sensors)),
         )
         assert tr.sensor_count == len(sensors)
 
@@ -1873,8 +2036,7 @@ class TestTestRunSegments:
             ),
         )
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="r1"),
             driving_segments=segments,
         )
         usable = tr.usable_segments
@@ -1888,8 +2050,7 @@ class TestTestRunSegments:
             DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=100, end_idx=129, sample_count=30),
         )
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="r1"),
             driving_segments=segments,
         )
         assert tr.total_usable_samples == 80

@@ -1,4 +1,9 @@
-"""Boundary decoder: payload dict → domain Finding."""
+"""Boundary decoder and projector for domain Finding.
+
+``finding_from_payload``  — payload → domain (history reconstruction and
+analysis finalization).
+``finding_payload_from_domain`` — domain → payload (persistence serialization).
+"""
 
 from __future__ import annotations
 
@@ -15,6 +20,13 @@ _MAX_SIGNATURES_PER_FINDING: int = 3
 
 def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     """Create a domain Finding from a ``FindingPayload`` dict.
+
+    Used at two boundary points:
+
+    * **history reconstruction** — decoding persisted summaries via
+      ``test_run_from_summary()``.
+    * **analysis finalization** — converting analysis-pipeline dicts into
+      domain objects at the end of ``finalize_findings()``.
 
     Extracts the subset of fields that the domain object cares about,
     ignoring serialization-only keys present in the full payload.
@@ -133,6 +145,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
 
     return Finding(
         finding_id=finding_id,
+        finding_key=_str("finding_key"),
         suspected_source=source,
         confidence=confidence,
         frequency_hz=frequency_hz,
@@ -157,42 +170,92 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
 
 def finding_payload_from_domain(
     finding: Finding,
-    *,
-    primary: Mapping[str, Mapping[str, object]],
-    secondary: Mapping[str, Mapping[str, object]],
 ) -> dict[str, object]:
-    """Project a domain Finding back to a payload dict.
+    """Project a domain Finding to a complete payload dict.
 
-    If the finding's ``finding_id`` matches a key in *primary* or
-    *secondary*, the original payload dict is returned as-is (pass-through).
-    Otherwise a minimal payload is synthesised from the domain object.
+    Produces all FindingPayload fields from domain objects alone,
+    without pass-through shortcuts to original payload dicts.
     """
-    if finding.finding_id:
-        payload = primary.get(finding.finding_id) or secondary.get(finding.finding_id)
-        if payload is not None:
-            return dict(payload)
-
     payload: dict[str, object] = {
         "finding_id": finding.finding_id,
+        "finding_key": finding.finding_key,
         "suspected_source": str(finding.suspected_source),
         "confidence": finding.confidence,
         "strongest_location": finding.strongest_location,
         "strongest_speed_band": finding.strongest_speed_band,
         "weak_spatial_separation": finding.weak_spatial_separation,
         "dominance_ratio": finding.dominance_ratio,
+        "diffuse_excitation": finding.diffuse_excitation,
+        "ranking_score": finding.ranking_score,
+        "peak_classification": finding.peak_classification,
         "signatures_observed": list(finding.signature_labels),
+        "evidence_summary": "",
+        "frequency_hz_or_order": (
+            finding.frequency_hz if finding.frequency_hz is not None else finding.order or ""
+        ),
+        "amplitude_metric": {"vibration_strength_db": finding.vibration_strength_db},
+        "quick_checks": [],
     }
-    if finding.vibration_strength_db is not None:
-        payload["evidence_metrics"] = {"vibration_strength_db": finding.vibration_strength_db}
-    if finding.location is not None:
-        payload["location_hotspot"] = {
-            "best_location": finding.location.best_location,
-            "alternative_locations": list(finding.location.alternative_locations),
-            "dominance_ratio": finding.location.dominance_ratio,
-            "weak_spatial_separation": not finding.location.is_well_localized,
+    if finding.severity:
+        payload["severity"] = finding.severity
+    if finding.kind is not None:
+        payload["finding_kind"] = str(finding.kind)
+    if finding.order:
+        payload["order"] = finding.order
+
+    # Evidence metrics
+    if finding.evidence is not None:
+        ev = finding.evidence
+        metrics: dict[str, object] = {
+            "match_rate": ev.match_rate,
+            "presence_ratio": ev.presence_ratio,
+            "burstiness": ev.burstiness,
+            "spatial_concentration": ev.spatial_concentration,
+            "frequency_correlation": ev.frequency_correlation,
+            "speed_uniformity": ev.speed_uniformity,
+            "spatial_uniformity": ev.spatial_uniformity,
         }
+        if ev.snr_db is not None:
+            metrics["snr_db"] = ev.snr_db
+        if ev.vibration_strength_db is not None:
+            metrics["vibration_strength_db"] = ev.vibration_strength_db
+        if ev.phase_confidences:
+            metrics["per_phase_confidence"] = dict(ev.phase_confidences)
+        payload["evidence_metrics"] = metrics
+    elif finding.vibration_strength_db is not None:
+        payload["evidence_metrics"] = {"vibration_strength_db": finding.vibration_strength_db}
+
+    # Phase evidence
+    if finding.cruise_fraction > 0.0:
+        payload["phase_evidence"] = {"cruise_fraction": finding.cruise_fraction}
+
+    # Location hotspot
+    if finding.location is not None:
+        loc = finding.location
+        hotspot: dict[str, object] = {
+            "top_location": loc.strongest_location,
+            "dominance_ratio": loc.dominance_ratio,
+            "localization_confidence": loc.localization_confidence,
+            "weak_spatial_separation": loc.weak_spatial_separation,
+            "ambiguous_location": loc.ambiguous,
+        }
+        if loc.alternative_locations:
+            hotspot["ambiguous_locations"] = list(loc.alternative_locations)
+        if loc.location_count is not None:
+            hotspot["location_count"] = loc.location_count
+        payload["location_hotspot"] = hotspot
+
+    # Confidence assessment
+    if finding.confidence_assessment is not None:
+        ca = finding.confidence_assessment
+        payload["confidence_label_key"] = ca.label_key
+        payload["confidence_tone"] = ca.tone
+        payload["confidence_pct"] = ca.pct_text
+
+    # Origin / evidence summary
     if finding.origin is not None:
         payload["evidence_summary"] = finding.origin.reason
         if finding.origin.dominant_phase is not None:
             payload["dominant_phase"] = finding.origin.dominant_phase
+
     return payload

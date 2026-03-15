@@ -34,12 +34,18 @@ def build_findings(
     )
 
 
-def findings_at_freq(findings: list[dict], *freq_strs: str) -> list[dict]:
-    return [
-        finding
-        for finding in findings
-        if any(freq_str in str(finding.get("frequency_hz_or_order", "")) for freq_str in freq_strs)
-    ]
+def findings_at_freq(findings: tuple | list, *freq_strs: str) -> list:
+    from vibesensor.domain.finding import Finding
+
+    def _matches(finding: object) -> bool:
+        if isinstance(finding, Finding):
+            sources = [finding.order or ""]
+            if finding.frequency_hz is not None:
+                sources.append(str(finding.frequency_hz))
+            return any(fs in s for s in sources for fs in freq_strs)
+        return any(fs in str(finding.get("frequency_hz_or_order", "")) for fs in freq_strs)  # type: ignore[union-attr]
+
+    return [f for f in findings if _matches(f)]
 
 
 def summarize(samples: list[dict], **meta_overrides: object) -> dict:

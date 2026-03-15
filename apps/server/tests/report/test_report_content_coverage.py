@@ -17,8 +17,11 @@ from test_support.report_helpers import (
     report_sample as _base_sample,
 )
 
-from vibesensor.analysis import confidence_label, select_top_causes, summarize_log
+from vibesensor.analysis import summarize_log
+from vibesensor.analysis.top_cause_selection import select_top_causes
+from vibesensor.boundaries.finding import finding_from_payload
 from vibesensor.constants import KMH_TO_MPS
+from vibesensor.domain import Finding
 from vibesensor.report.mapping import map_summary
 from vibesensor.report.pdf_engine import build_report_pdf
 from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
@@ -55,8 +58,12 @@ def _make_run_jsonl(tmp_path: Path, *, tire_circumference_m: float = 2.20) -> Pa
 # -- select_top_causes -------------------------------------------------------
 
 
+def _to_domain(*payloads: dict) -> tuple:  # type: ignore[type-arg]
+    return tuple(finding_from_payload(p) for p in payloads)
+
+
 def test_select_top_causes_groups_by_source() -> None:
-    findings = [
+    findings = _to_domain(
         {
             "finding_id": "F001",
             "suspected_source": "wheel/tire",
@@ -75,24 +82,20 @@ def test_select_top_causes_groups_by_source() -> None:
             "confidence": 0.55,
             "frequency_hz_or_order": "2x engine order",
         },
-    ]
-    causes, _ = select_top_causes(findings)
-    sources = [c["suspected_source"] for c in causes]
+    )
+    causes = select_top_causes(findings)
+    sources = [c.source_normalized for c in causes]
     # Two wheel/tire findings should be grouped into one cause
     assert sources.count("wheel/tire") == 1
-    # The wheel/tire group representative should carry both signatures
-    wheel_cause = [c for c in causes if c["suspected_source"] == "wheel/tire"][0]
-    assert wheel_cause["grouped_count"] == 2
-    assert len(wheel_cause["signatures_observed"]) == 2
 
 
 def test_select_top_causes_empty_findings() -> None:
-    payloads, _ = select_top_causes([])
-    assert payloads == []
+    causes = select_top_causes(())
+    assert causes == ()
 
 
 def test_select_top_causes_excludes_reference_findings() -> None:
-    findings = [
+    findings = _to_domain(
         {
             "finding_id": "REF_SPEED",
             "suspected_source": "unknown",
@@ -111,9 +114,9 @@ def test_select_top_causes_excludes_reference_findings() -> None:
             "confidence": 1.0,
             "frequency_hz_or_order": "reference missing",
         },
-    ]
-    causes, _ = select_top_causes(findings)
-    assert causes == []
+    )
+    causes = select_top_causes(findings)
+    assert causes == ()
 
 
 @pytest.mark.parametrize(
@@ -127,7 +130,7 @@ def test_select_top_causes_excludes_informational_transient_findings(
     confidence: float,
     freq_hz: str,
 ) -> None:
-    findings = [
+    findings = _to_domain(
         {
             "finding_id": "F007",
             "severity": "info",
@@ -136,13 +139,13 @@ def test_select_top_causes_excludes_informational_transient_findings(
             "confidence": confidence,
             "frequency_hz_or_order": freq_hz,
         },
-    ]
-    causes, _ = select_top_causes(findings)
-    assert causes == []
+    )
+    causes = select_top_causes(findings)
+    assert causes == ()
 
 
 def test_select_top_causes_prefers_diagnostic_over_info() -> None:
-    findings = [
+    findings = _to_domain(
         {
             "finding_id": "F009",
             "severity": "info",
@@ -158,17 +161,17 @@ def test_select_top_causes_prefers_diagnostic_over_info() -> None:
             "confidence": 0.26,
             "frequency_hz_or_order": "1x wheel order",
         },
-    ]
-    causes, _ = select_top_causes(findings)
+    )
+    causes = select_top_causes(findings)
     assert len(causes) == 1
-    assert causes[0]["suspected_source"] == "wheel/tire"
+    assert causes[0].source_normalized == "wheel/tire"
 
 
 def test_select_top_causes_prefers_cruise_phase_evidence() -> None:
     """A finding with strong cruise-phase evidence should rank above one with
     equal raw confidence but no cruise evidence.
     """
-    findings = [
+    findings = _to_domain(
         {
             "finding_id": "F_A",
             "severity": "diagnostic",
@@ -186,18 +189,18 @@ def test_select_top_causes_prefers_cruise_phase_evidence() -> None:
             # All matches were in cruise phase
             "phase_evidence": {"cruise_fraction": 1.0, "phases_detected": ["cruise"]},
         },
-    ]
-    causes, _ = select_top_causes(findings)
+    )
+    causes = select_top_causes(findings)
     # Both qualify; wheel/tire (cruise dominant) should come first
     assert len(causes) == 2
-    assert causes[0]["suspected_source"] == "wheel/tire"
-    assert causes[1]["suspected_source"] == "driveline"
+    assert causes[0].source_normalized == "wheel/tire"
+    assert causes[1].source_normalized == "driveline"
 
 
 def test_select_top_causes_phase_evidence_in_output() -> None:
     """phase_evidence cruise_fraction from the representative finding must be passed through."""
     phase_ev = {"cruise_fraction": 0.85, "phases_detected": ["cruise", "acceleration"]}
-    findings = [
+    findings = _to_domain(
         {
             "finding_id": "F_C",
             "severity": "diagnostic",
@@ -206,17 +209,16 @@ def test_select_top_causes_phase_evidence_in_output() -> None:
             "frequency_hz_or_order": "1x wheel order",
             "phase_evidence": phase_ev,
         },
-    ]
-    causes, _ = select_top_causes(findings)
+    )
+    causes = select_top_causes(findings)
     assert len(causes) == 1
-    # Domain Finding only preserves cruise_fraction; phases_detected is only
-    # consumed from raw FindingPayload dicts by summary_builder, not via TopCause.
-    assert causes[0]["phase_evidence"] == {"cruise_fraction": 0.85}
+    # Domain Finding preserves cruise_fraction
+    assert causes[0].cruise_fraction == pytest.approx(0.85)
 
 
 def test_select_top_causes_no_phase_evidence_still_works() -> None:
     """Findings without phase_evidence should still be ranked correctly."""
-    findings = [
+    findings = _to_domain(
         {
             "finding_id": "F_D",
             "severity": "diagnostic",
@@ -224,11 +226,10 @@ def test_select_top_causes_no_phase_evidence_still_works() -> None:
             "confidence": 0.55,
             "frequency_hz_or_order": "2x engine order",
         },
-    ]
-    causes, _ = select_top_causes(findings)
+    )
+    causes = select_top_causes(findings)
     assert len(causes) == 1
-    assert causes[0]["suspected_source"] == "engine"
-    assert causes[0]["phase_evidence"] is None
+    assert causes[0].source_normalized == "engine"
 
 
 # -- confidence_label --------------------------------------------------------
@@ -246,7 +247,7 @@ def test_select_top_causes_no_phase_evidence_still_works() -> None:
     ],
 )
 def test_confidence_label_boundaries(value: float, expected_key: str, expected_tone: str) -> None:
-    label_key, tone, pct_text = confidence_label(value)
+    label_key, tone, pct_text = Finding.classify_confidence(value)
     assert label_key == expected_key
     assert tone == expected_tone
     assert pct_text == f"{value * 100:.0f}%"
@@ -254,7 +255,7 @@ def test_confidence_label_boundaries(value: float, expected_key: str, expected_t
 
 def test_confidence_label_negligible_strength_caps_high_to_medium() -> None:
     """High confidence + negligible strength → CONFIDENCE_MEDIUM, not CONFIDENCE_HIGH."""
-    label_key, tone, _ = confidence_label(0.80, strength_band_key="negligible")
+    label_key, tone, _ = Finding.classify_confidence(0.80, strength_band_key="negligible")
     assert label_key == "CONFIDENCE_MEDIUM"
     assert tone == "warn"
 
@@ -271,14 +272,14 @@ def test_confidence_label_negligible_does_not_affect_below_high(
     expected_key: str,
 ) -> None:
     """Negligible strength does not alter labels already below high."""
-    label_key, _, _ = confidence_label(value, strength_band_key="negligible")
+    label_key, _, _ = Finding.classify_confidence(value, strength_band_key="negligible")
     assert label_key == expected_key
 
 
 def test_confidence_label_non_negligible_allows_high() -> None:
     """Non-negligible (or absent) strength_band_key must not prevent CONFIDENCE_HIGH."""
     for band in ("light", "moderate", "strong", "very_strong", None):
-        label_key, tone, _ = confidence_label(0.80, strength_band_key=band)
+        label_key, tone, _ = Finding.classify_confidence(0.80, strength_band_key=band)
         assert label_key == "CONFIDENCE_HIGH", f"Unexpected cap for strength_band_key={band!r}"
         assert tone == "success"
 

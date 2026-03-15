@@ -83,7 +83,7 @@ class TestCanonicalFindingModel:
         assert hints["matched_points"] == list[MatchedPoint]
 
     def test_main_finding_builders_return_canonical_model(self) -> None:
-        assert _build_findings.__annotations__["return"] == "list[FindingPayload]"
+        assert _build_findings.__annotations__["return"] == "tuple[DomainFinding, ...]"
         assert assemble_order_finding.__annotations__["return"] == "tuple[float, FindingPayload]"
         assert get_type_hints(OrderMatchAccumulator)["matched_points"] == list[MatchedPoint]
 

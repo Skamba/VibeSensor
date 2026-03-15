@@ -14,7 +14,13 @@ from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 
 from vibesensor.analysis import RunAnalysis, summarize_run_data
 from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
+from vibesensor.boundaries.diagnostic_case import (
+    test_run_from_summary as _test_run_from_summary,
+)
+from vibesensor.boundaries.finding import finding_payload_from_domain
+from vibesensor.boundaries.run_suitability import run_suitability_payload
+from vibesensor.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.history_db import HistoryDB
 
 
@@ -84,7 +90,24 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
     assert run is not None
     analysis = run.get("analysis")
     assert isinstance(analysis, dict)
-    return project_summary_through_domain(analysis)
+    test_run = _test_run_from_summary(analysis)
+    projected: dict[str, Any] = dict(analysis)
+    projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
+    projected["top_causes"] = [
+        finding_payload_from_domain(f) for f in test_run.effective_top_causes()
+    ]
+    primary = test_run.primary_finding
+    origin_fb = analysis.get("most_likely_origin")
+    fb_payload = dict(origin_fb) if isinstance(origin_fb, dict) else {}
+    projected["most_likely_origin"] = (
+        origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
+    )
+    from vibesensor.boundaries._helpers import _has_structured_step_content
+
+    if not _has_structured_step_content(analysis.get("test_plan")):
+        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
+    projected["run_suitability"] = run_suitability_payload(test_run.suitability)
+    return projected
 
 
 def _driveline_samples() -> list[dict[str, Any]]:
@@ -154,8 +177,8 @@ def test_characterization_wheel_fault_summary_contract() -> None:
     assert top_cause["confidence"] == pytest.approx(0.5028523562048559)
     assert top_cause["confidence_tone"] == "warn"
     assert top_cause["strongest_speed_band"] == "80-90 km/h"
-    assert test_run.hypotheses[0].hypothesis_id == "hyp-1x_wheel"
-    assert test_run.hypotheses[0].is_supported is True
+    assert test_run.reasoning.hypotheses[0].hypothesis_id == "hyp-1x_wheel"
+    assert test_run.reasoning.hypotheses[0].is_supported is True
     assert origin["location"] == "front-right"
     assert origin["alternative_locations"] == ["front-left"]
     assert origin["suspected_source"] == "wheel/tire"

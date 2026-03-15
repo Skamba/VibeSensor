@@ -155,7 +155,7 @@ def test_historydb_rejects_v4_database(tmp_path: Path) -> None:
 
 
 def test_historydb_migrates_v8_database_without_manufacturing_case_id(tmp_path: Path) -> None:
-    from vibesensor.boundaries import diagnostic_case_from_summary
+    from vibesensor.boundaries.diagnostic_case import diagnostic_case_from_summary
 
     db_path = tmp_path / "history.db"
     _create_v8_database(db_path, analysis_json='{"findings": [], "top_causes": [], "warnings": []}')
@@ -213,7 +213,7 @@ def test_historydb_migrates_v8_database_backfills_case_id_from_analysis_summary(
 def test_historydb_migrated_v8_case_id_supports_forward_only_followup_attachment(
     tmp_path: Path,
 ) -> None:
-    from vibesensor.boundaries import diagnostic_case_from_summary
+    from vibesensor.boundaries.diagnostic_case import diagnostic_case_from_summary
 
     db_path = tmp_path / "history.db"
     _create_v8_database(

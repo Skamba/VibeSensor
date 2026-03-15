@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from vibesensor.analysis._types import AnalysisSummary
-from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
+from vibesensor.boundaries.diagnostic_case import (
+    test_run_from_summary as _test_run_from_summary,
+)
 from vibesensor.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.domain import (
-    ConfigurationSnapshot,
     Finding,
     LocationHotspot,
     RecommendedAction,
-    Run,
+    RunCapture,
     TestRun,
     VibrationOrigin,
 )
@@ -20,7 +21,6 @@ from vibesensor.domain import (
 from vibesensor.report.mapping import (
     _origin_from_aggregate,
     summary_end_time_utc,
-    summary_findings,
     summary_firmware_version,
     summary_metadata,
     summary_origin,
@@ -36,12 +36,11 @@ from vibesensor.report.mapping import (
     summary_speed_stats,
     summary_start_time_utc,
     summary_test_plan,
-    summary_top_causes,
     summary_warnings,
 )
 
 
-def _minimal_summary(**overrides: object) -> AnalysisSummary:
+def _minimal_summary(**overrides: object) -> dict[str, object]:
     """Build a minimal SummaryData dict with overrides."""
     base: dict = {
         "file_name": "test",
@@ -116,12 +115,6 @@ class TestSummaryHelpers:
     def test_sensor_count_used(self) -> None:
         assert summary_sensor_count_used(_minimal_summary(sensor_count_used=3)) == 3
 
-    def test_findings_empty(self) -> None:
-        assert summary_findings(_minimal_summary()) == []
-
-    def test_top_causes_empty(self) -> None:
-        assert summary_top_causes(_minimal_summary()) == []
-
     def test_speed_stats(self) -> None:
         assert summary_speed_stats(_minimal_summary())["min_kmh"] == 50.0
 
@@ -157,8 +150,7 @@ class TestSummaryHelpers:
             ),
         )
         aggregate = TestRun(
-            run=Run(run_id="run-1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="run-1"),
             findings=(primary,),
             top_causes=(primary,),
         )
@@ -206,8 +198,10 @@ class TestSummaryHelpers:
             ],
             most_likely_origin={},
         )
-        projected = project_summary_through_domain(summary)
-        origin = projected["most_likely_origin"]
+        test_run = _test_run_from_summary(summary)
+        primary = test_run.primary_finding
+        assert primary is not None
+        origin = origin_payload_from_finding(primary, {})
         assert origin["location"] == "Front Left / Front Right"
         assert origin["alternative_locations"] == ["front_right"]
         assert origin["dominant_phase"] == "acceleration"
@@ -289,9 +283,10 @@ class TestSummaryHelpers:
             ],
         )
 
-        projected = project_summary_through_domain(summary)
+        test_run = _test_run_from_summary(summary)
+        projected_plan = step_payloads_from_plan(test_run.test_plan)
 
-        assert projected["test_plan"] == [
+        assert projected_plan == [
             {
                 "action_id": "engine_mounts_and_accessories",
                 "what": "ACTION_ENGINE_MOUNTS_WHAT",
