@@ -61,6 +61,7 @@ from .observation import Observation
 from .recommended_action import RecommendedAction
 from .report import Report
 from .run import Run
+from .run_setup import RunSetup
 from .run_status import RUN_TRANSITIONS, RunStatus, transition_run
 from .run_suitability import RunSuitability, SuitabilityCheck
 from .sensor import Sensor, SensorPlacement
@@ -94,6 +95,7 @@ __all__ = [
     "RUN_TRANSITIONS",
     "Report",
     "Run",
+    "RunSetup",
     "RunStatus",
     "RunSuitability",
     "Sensor",
