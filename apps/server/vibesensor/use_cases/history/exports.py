@@ -13,16 +13,20 @@ from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeGuard
 
-from vibesensor.shared.types.backend_types import HistoryRunPayload
 from vibesensor.shared.boundaries._helpers import _has_structured_step_content
 from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 from vibesensor.shared.boundaries.finding import finding_payload_from_domain
 from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
+from vibesensor.shared.types.backend_types import HistoryRunPayload
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.shared.utils.json_utils import sanitize_for_json
-from vibesensor.use_cases.history.helpers import async_require_run, safe_filename, strip_internal_fields
+from vibesensor.use_cases.history.helpers import (
+    async_require_run,
+    safe_filename,
+    strip_internal_fields,
+)
 
 if TYPE_CHECKING:
     from vibesensor.adapters.persistence.history_db import HistoryDB

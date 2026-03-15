@@ -16,11 +16,11 @@ from unittest.mock import patch
 import pytest
 from _paths import REPO_ROOT
 
-from vibesensor.infra.processing import SignalProcessor
 from vibesensor.adapters.pdf import pdf_diagram_render
-from vibesensor.adapters.pdf_cli import main as report_cli_main
-from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
 from vibesensor.adapters.websocket.hub import WebSocketHub
+from vibesensor.cli.report import main as report_cli_main
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
 
 _PDF_DIAGRAM_SRC = inspect.getsource(pdf_diagram_render)
 _RUN_FLASH_JOB_SRC = inspect.getsource(EspFlashManager._run_flash_job)

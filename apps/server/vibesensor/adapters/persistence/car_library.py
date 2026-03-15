@@ -55,7 +55,8 @@ def _load_library() -> list[dict]:
 # but callers can call ``_load_library()`` again to retry.
 
 
-# Module-level alias keeps existing ``from vibesensor.adapters.persistence.car_library import CAR_LIBRARY`` working.
+# Module-level alias keeps
+# ``from vibesensor.adapters.persistence.car_library import CAR_LIBRARY`` working.
 CAR_LIBRARY: list[dict] = _load_library()
 
 

@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict
 
+from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.shared.types.backend_types import (
     RUN_END_TYPE,
     RUN_METADATA_TYPE,
@@ -25,7 +26,6 @@ from vibesensor.shared.types.backend_types import (
     RunMetadata,
 )
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
-from vibesensor.adapters.udp.protocol import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
 

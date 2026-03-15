@@ -13,10 +13,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from vibesensor.infra.runtime import ProcessingLoopState, RuntimeHealthState
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService
-from vibesensor.infra.runtime import ProcessingLoopState, RuntimeHealthState
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers

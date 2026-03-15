@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.adapters.pdf_i18n import normalize_lang
 from vibesensor.infra.config.settings_store import _coerce_language
+from vibesensor.report_i18n import normalize_lang
 
 _SERVER_ROOT = Path(__file__).resolve().parents[2]
 _PYPROJECT = _SERVER_ROOT / "pyproject.toml"
@@ -47,7 +47,9 @@ class TestNormalizeLangConsolidation:
 
     def test_summary_builder_imports_from_report_i18n(self) -> None:
         """summary_builder must import normalize_lang from report_i18n, not define its own."""
-        src = (_SERVER_ROOT / "vibesensor" / "analysis" / "summary_builder.py").read_text()
+        src = (
+            _SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics" / "summary_builder.py"
+        ).read_text()
         tree = ast.parse(src)
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name == "normalize_lang":
@@ -68,14 +70,14 @@ class TestClientIdDedup:
     """Registry must use normalize_sensor_id from protocol, not a private copy."""
 
     def test_no_private_normalize_client_id(self) -> None:
-        src = (_SERVER_ROOT / "vibesensor" / "registry.py").read_text()
+        src = (_SERVER_ROOT / "vibesensor" / "infra" / "runtime" / "registry.py").read_text()
         tree = ast.parse(src)
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name == "_normalize_client_id":
                 pytest.fail("registry.py must not define _normalize_client_id()")
 
     def test_registry_imports_normalize_sensor_id(self) -> None:
-        src = (_SERVER_ROOT / "vibesensor" / "registry.py").read_text()
+        src = (_SERVER_ROOT / "vibesensor" / "infra" / "runtime" / "registry.py").read_text()
         assert "normalize_sensor_id" in src
 
 
@@ -96,8 +98,8 @@ class TestMypyEnforcement:
         "module",
         [
             "vibesensor/report_i18n.py",
-            "vibesensor/analysis_settings.py",
-            "vibesensor/metrics_log",
+            "vibesensor/infra/config/analysis_settings.py",
+            "vibesensor/use_cases/run",
         ],
     )
     def test_module_in_mypy_files(self, mypy_files: list[str], module: str) -> None:

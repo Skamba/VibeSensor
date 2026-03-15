@@ -12,8 +12,6 @@ from datetime import UTC, datetime
 
 import pytest
 
-from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
-from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.domain import (
     Car,
     Finding,
@@ -24,6 +22,8 @@ from vibesensor.domain import (
     SensorPlacement,
     SpeedSource,
 )
+from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
 
 _NOW = datetime(2025, 6, 15, 12, 0, 0, tzinfo=UTC)
 
@@ -523,8 +523,8 @@ class TestBridgeMethods:
 
     def test_finding_payload_is_distinct_from_domain_finding(self) -> None:
         """FindingPayload is the analysis TypedDict; domain Finding is the dataclass."""
-        from vibesensor.use_cases.diagnostics._types import FindingPayload
         from vibesensor.domain import Finding as DomainFinding
+        from vibesensor.use_cases.diagnostics._types import FindingPayload
 
         # They must be distinct types — no name collision
         assert DomainFinding is not FindingPayload

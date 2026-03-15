@@ -6,15 +6,15 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
-from vibesensor.shared.types.api_models import HealthResponse
 from vibesensor.infra.runtime.health_snapshot import build_health_snapshot
+from vibesensor.shared.types.api_models import HealthResponse
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.run import RunRecorder
     from vibesensor.infra.processing import SignalProcessor
-    from vibesensor.infra.runtime.registry import ClientRegistry
     from vibesensor.infra.runtime.health_state import RuntimeHealthState
     from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
+    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.use_cases.run import RunRecorder
 
 
 def create_health_routes(

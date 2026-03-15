@@ -23,8 +23,8 @@ from collections.abc import Mapping
 from math import isfinite
 from threading import RLock
 
-from vibesensor.shared.constants import KMH_TO_MPS, SECONDS_PER_MINUTE
 from vibesensor.domain import TireSpec
+from vibesensor.shared.constants import KMH_TO_MPS, SECONDS_PER_MINUTE
 
 LOGGER = logging.getLogger(__name__)
 

@@ -11,14 +11,7 @@ from pathlib import Path
 from statistics import median as _median
 from typing import Any
 
-from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
-from vibesensor.vibration_strength import compute_db
-
-from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
-from vibesensor.shared.boundaries.speed_profile import speed_profile_from_stats
-from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
-from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
-from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
+from vibesensor.adapters.persistence.runlog import parse_iso8601, utc_now_iso
 from vibesensor.domain import (
     Car,
     ConfigurationSnapshot,
@@ -47,10 +40,14 @@ from vibesensor.domain.services import (
     plan_test_actions,
     recognize_signatures,
 )
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.report_i18n import normalize_lang
+from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
+from vibesensor.shared.boundaries.speed_profile import speed_profile_from_stats
+from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
+from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from vibesensor.shared.run_context import build_summary_warnings, order_reference_context_complete
-from vibesensor.adapters.persistence.runlog import parse_iso8601, utc_now_iso
+from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     AnalysisSummary,
@@ -73,6 +70,7 @@ from vibesensor.use_cases.diagnostics._types import (
     i18n_ref,
     is_json_object,
 )
+from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
 from vibesensor.use_cases.diagnostics.findings import (
     _build_findings,
     _phase_speed_breakdown,
@@ -96,10 +94,15 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _validate_required_strength_metrics,
     counter_delta,
 )
-from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, PhaseSegment, segment_run_phases
+from vibesensor.use_cases.diagnostics.phase_segmentation import (
+    DrivingPhase,
+    PhaseSegment,
+    segment_run_phases,
+)
 from vibesensor.use_cases.diagnostics.plots import _plot_data
 from vibesensor.use_cases.diagnostics.strength_labels import strength_label as _strength_label
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
+from vibesensor.vibration_strength import compute_db
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Suitability checks and data quality

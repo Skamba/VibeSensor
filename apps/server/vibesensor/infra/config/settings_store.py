@@ -28,6 +28,9 @@ import sqlite3
 from threading import RLock
 from typing import TYPE_CHECKING, cast, get_args
 
+from vibesensor.adapters.udp.protocol import normalize_sensor_id
+from vibesensor.domain import Car, Sensor, SpeedSource
+from vibesensor.shared.errors.exceptions import PersistenceError as PersistenceError
 from vibesensor.shared.types.backend_types import (
     AnalysisSettingsPayload,
     CarConfig,
@@ -46,15 +49,12 @@ from vibesensor.shared.types.backend_types import (
     new_car_id,
     sanitize_aspects,
 )
-from vibesensor.domain import Car, Sensor, SpeedSource
-from vibesensor.shared.errors.exceptions import PersistenceError as PersistenceError
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.adapters.udp.protocol import normalize_sensor_id
 
 if TYPE_CHECKING:
-    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
 
 LOGGER = logging.getLogger(__name__)
 

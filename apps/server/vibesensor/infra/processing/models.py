@@ -6,9 +6,8 @@ from typing import TypeAlias, TypedDict
 import numpy as np
 import numpy.typing as npt
 
-from vibesensor.vibration_strength import VibrationStrengthMetrics
-
 from vibesensor.shared.types.payload_types import AxisPeak, ClientMetrics
+from vibesensor.vibration_strength import VibrationStrengthMetrics
 
 FloatArray: TypeAlias = npt.NDArray[np.float32]
 IntIndexArray: TypeAlias = npt.NDArray[np.intp]

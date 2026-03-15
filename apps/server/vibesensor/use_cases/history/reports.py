@@ -13,9 +13,10 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from vibesensor.shared.types.backend_types import CarConfigPayload, HistoryRunPayload
+from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.shared.boundaries._helpers import _has_structured_step_content
 from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 from vibesensor.shared.boundaries.finding import finding_payload_from_domain
@@ -23,10 +24,9 @@ from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.shared.errors.exceptions import AnalysisNotReadyError, ProcessingError
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
-from vibesensor.adapters.pdf.mapping import map_summary
-from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
+from vibesensor.shared.types.backend_types import CarConfigPayload, HistoryRunPayload
+from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.use_cases.history.helpers import (
     async_require_run,
     require_analysis_ready,
@@ -35,8 +35,8 @@ from vibesensor.use_cases.history.helpers import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.domain import TestRun
     from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.domain import TestRun
     from vibesensor.infra.config.settings_store import SettingsStore
 
 LOGGER = logging.getLogger(__name__)
@@ -149,7 +149,7 @@ class HistoryReportService:
             analysis_summary,
             test_run=test_run,
         )
-        return build_report_pdf(mapped_summary)
+        return cast("bytes", build_report_pdf(mapped_summary))
 
     @staticmethod
     def _metadata_cache_token(metadata: object) -> str:

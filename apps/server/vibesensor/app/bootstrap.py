@@ -20,10 +20,10 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from vibesensor.app.settings import load_config
 from vibesensor.adapters.http import create_router
-from vibesensor.infra.runtime import RuntimeState
 from vibesensor.app.container import build_runtime
+from vibesensor.app.settings import load_config
+from vibesensor.infra.runtime import RuntimeState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager
 
 __all__ = ["create_app", "main"]

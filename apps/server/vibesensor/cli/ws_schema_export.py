@@ -1,7 +1,7 @@
 """Export the JSON Schema for LiveWsPayload to a file.
 
 Usage:
-    python -m vibesensor.ws_schema_export [--out PATH]
+    python -m vibesensor.cli.ws_schema_export [--out PATH]
 
 Default output: apps/ui/src/contracts/ws_payload_schema.json
 """
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 _DEFAULT_OUT = (
-    Path(__file__).resolve().parents[3]
+    Path(__file__).resolve().parents[4]
     / "apps"
     / "ui"
     / "src"
@@ -53,7 +53,7 @@ def main() -> None:
         if committed != generated:
             print(
                 f"FAIL: {args.out} is out of date.\n"
-                "Run 'python -m vibesensor.ws_schema_export' and commit the result.",
+                "Run 'python -m vibesensor.cli.ws_schema_export' and commit the result.",
                 file=sys.stderr,
             )
             raise SystemExit(1)

@@ -395,7 +395,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     control_host, control_port = _split_host_port(str(udp_cfg["control_listen"]))
 
     accel_scale_raw = processing_cfg.get("accel_scale_g_per_lsb")
-    accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, NUMERIC_TYPES) else None  # type: ignore[arg-type]
+    accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, NUMERIC_TYPES) else None
     if accel_scale is not None and accel_scale <= 0:
         LOGGER.warning(
             "processing.accel_scale_g_per_lsb=%s is not positive — using auto-detection",

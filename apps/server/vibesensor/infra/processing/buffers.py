@@ -11,9 +11,9 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from vibesensor.vibration_strength import VibrationStrengthMetrics, empty_vibration_strength_metrics
 from vibesensor.infra.processing.models import ClientMetrics, SpectrumByAxis
 from vibesensor.infra.processing.payload import SpectrumSeriesPayload
+from vibesensor.vibration_strength import VibrationStrengthMetrics, empty_vibration_strength_metrics
 
 
 @dataclass(slots=True, eq=False, repr=False)

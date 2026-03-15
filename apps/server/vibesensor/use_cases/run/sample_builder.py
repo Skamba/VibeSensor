@@ -10,13 +10,13 @@ import math
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, NamedTuple
 
+from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.infra.config.analysis_settings import (
     engine_rpm_from_wheel_hz,
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
 from vibesensor.shared.constants import MPS_TO_KMH, NUMERIC_TYPES
-from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.shared.run_context import (
     ANALYSIS_SETTINGS_SNAPSHOT_KEYS,
     apply_run_context_snapshot,
@@ -173,10 +173,10 @@ def resolve_speed_context(
     resolution = gps_monitor.resolve_speed()
     effective_speed_mps = resolution.speed_mps
     gps_speed_kmh = (
-        (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, NUMERIC_TYPES) else None  # type: ignore[arg-type]
+        (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, NUMERIC_TYPES) else None
     )
     speed_kmh = (
-        (float(effective_speed_mps) * MPS_TO_KMH)  # type: ignore[arg-type]
+        (float(effective_speed_mps) * MPS_TO_KMH)
         if isinstance(effective_speed_mps, NUMERIC_TYPES)
         else None
     )
@@ -364,11 +364,11 @@ def build_run_metadata(
         deflection_factor=_safe_float(settings, "tire_deflection_factor"),
     )
     apply_run_context_snapshot(
-        metadata,  # type: ignore[arg-type]
+        metadata,
         analysis_settings_snapshot=settings,
         active_car_snapshot=active_car_snapshot,
     )
     metadata["incomplete_for_order_analysis"] = not order_reference_context_complete(metadata)
     if language_provider is not None:
         metadata["language"] = str(language_provider()).strip().lower() or "en"
-    return metadata
+    return dict(metadata)

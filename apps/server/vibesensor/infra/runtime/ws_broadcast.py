@@ -19,14 +19,14 @@ from vibesensor.infra.runtime.rotational_speeds import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
+    from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
-    from vibesensor.infra.config.settings_store import SettingsStore
 
-from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload, SpectraPayload
 from vibesensor.adapters.persistence.runlog import utc_now_iso
+from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload, SpectraPayload
 
 
 class WsBroadcastService:

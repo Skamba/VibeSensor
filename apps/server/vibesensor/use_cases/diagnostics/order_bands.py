@@ -19,8 +19,8 @@ from vibesensor.shared.constants import (
     HARMONIC_2X,
     MIN_OVERLAP_TOLERANCE,
 )
-from vibesensor.shared.utils.json_utils import as_float_or_none
 from vibesensor.shared.types.payload_types import OrderBandPayload
+from vibesensor.shared.utils.json_utils import as_float_or_none
 
 DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
 

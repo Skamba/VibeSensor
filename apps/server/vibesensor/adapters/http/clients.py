@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException
 
+from vibesensor.adapters.http._helpers import normalize_client_id_or_400
+from vibesensor.adapters.udp.protocol import client_id_mac
+from vibesensor.shared.ids.locations import all_locations, label_for_code
 from vibesensor.shared.types.api_models import (
     ClientLocationsResponse,
     ClientsResponse,
@@ -16,15 +19,12 @@ from vibesensor.shared.types.api_models import (
     SetClientLocationResponse,
     SetLocationRequest,
 )
-from vibesensor.shared.ids.locations import all_locations, label_for_code
-from vibesensor.adapters.udp.protocol import client_id_mac
-from vibesensor.adapters.http._helpers import normalize_client_id_or_400
 
 if TYPE_CHECKING:
+    from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
+    from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.processing.processor import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
-    from vibesensor.infra.config.settings_store import SettingsStore
-    from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 
 
 def create_client_routes(

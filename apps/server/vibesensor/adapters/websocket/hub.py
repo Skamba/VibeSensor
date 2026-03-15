@@ -17,8 +17,8 @@ from dataclasses import dataclass
 
 from fastapi import WebSocket
 
-from vibesensor.shared.utils.json_utils import sanitize_for_json
 from vibesensor.shared.types.payload_types import LiveWsPayload
+from vibesensor.shared.utils.json_utils import sanitize_for_json
 
 LOGGER = logging.getLogger(__name__)
 

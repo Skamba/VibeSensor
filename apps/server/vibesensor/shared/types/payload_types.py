@@ -4,9 +4,8 @@ from typing import TypeAlias
 
 from typing_extensions import TypedDict
 
-from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics
-
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 
 # Bump this when the payload shape changes in a backwards-incompatible way.
 SCHEMA_VERSION: str = "1"

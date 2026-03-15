@@ -13,7 +13,11 @@ from vibesensor.shared.types.api_models import (
 
 def create_car_library_routes() -> APIRouter:
     """Create and return the car-library API routes."""
-    from vibesensor.adapters.persistence.car_library import get_brands, get_models_for_brand_type, get_types_for_brand
+    from vibesensor.adapters.persistence.car_library import (
+        get_brands,
+        get_models_for_brand_type,
+        get_types_for_brand,
+    )
 
     router = APIRouter()
 

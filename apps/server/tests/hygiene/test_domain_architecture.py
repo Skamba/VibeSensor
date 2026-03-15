@@ -105,8 +105,8 @@ def test_test_run_effective_top_causes() -> None:
 
 def test_finalize_findings_returns_domain_findings() -> None:
     """``finalize_findings`` must return domain ``Finding`` objects."""
-    from vibesensor.use_cases.diagnostics.findings import finalize_findings
     from vibesensor.domain import Finding
+    from vibesensor.use_cases.diagnostics.findings import finalize_findings
 
     domain_findings = finalize_findings(
         [
@@ -124,9 +124,9 @@ def test_finalize_findings_returns_domain_findings() -> None:
 def test_select_top_causes_returns_domain_findings() -> None:
     """``select_top_causes`` must return domain ``Finding`` objects."""
     from tests.test_support.findings import make_finding_payload
-    from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
-    from vibesensor.shared.boundaries.finding import finding_from_payload
     from vibesensor.domain import Finding
+    from vibesensor.shared.boundaries.finding import finding_from_payload
+    from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 
     findings = tuple(
         finding_from_payload(f)
@@ -142,8 +142,8 @@ def test_select_top_causes_returns_domain_findings() -> None:
 
 def test_run_analysis_produces_test_run() -> None:
     """``RunAnalysis.summarize()`` must populate ``test_run``."""
-    from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
     from vibesensor.domain import TestRun
+    from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
     metadata = {"run_id": "test-guard", "car_type": "sedan"}
     samples = [
@@ -246,8 +246,8 @@ def test_test_run_top_strength_db() -> None:
 def test_report_mapping_context_has_domain_aggregate() -> None:
     """``prepare_report_mapping_context`` must build a domain aggregate."""
     from tests.test_support.findings import make_finding_payload
-    from vibesensor.domain import TestRun
     from vibesensor.adapters.pdf.mapping import prepare_report_mapping_context
+    from vibesensor.domain import TestRun
 
     summary = {
         "run_id": "test-context",
@@ -370,13 +370,13 @@ def test_finding_tuples_are_immutable() -> None:
 
 def test_build_system_cards_uses_domain_findings() -> None:
     """build_system_cards must read confidence tone from domain, not dict."""
-    from vibesensor.domain import Finding, RunCapture, TestRun
     from vibesensor.adapters.pdf.mapping import (
         PrimaryCandidateContext,
         ReportMappingContext,
         build_system_cards,
     )
-    from vibesensor.adapters.pdf_i18n import tr
+    from vibesensor.domain import Finding, RunCapture, TestRun
+    from vibesensor.report_i18n import tr
 
     lang = "en"
     domain_f = Finding(
@@ -661,8 +661,8 @@ def test_new_domain_objects_are_exported(name: str) -> None:
 
 
 def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
-    from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
     from vibesensor.domain import DiagnosticCase, TestRun
+    from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
     metadata = {
         "run_id": "domain-case-guard",
@@ -882,8 +882,20 @@ def test_analysis_test_plan_renamed() -> None:
     """analysis/test_plan.py was renamed to location_analysis.py."""
     from pathlib import Path
 
-    old = Path(__file__).resolve().parents[2] / "vibesensor" / "analysis" / "test_plan.py"
-    new = Path(__file__).resolve().parents[2] / "vibesensor" / "analysis" / "location_analysis.py"
+    old = (
+        Path(__file__).resolve().parents[2]
+        / "vibesensor"
+        / "use_cases"
+        / "diagnostics"
+        / "test_plan.py"
+    )
+    new = (
+        Path(__file__).resolve().parents[2]
+        / "vibesensor"
+        / "use_cases"
+        / "diagnostics"
+        / "location_analysis.py"
+    )
     assert not old.exists(), f"{old} should have been renamed"
     assert new.exists(), f"{new} must exist after rename"
 
@@ -901,7 +913,11 @@ def test_post_analysis_does_not_import_project_summary() -> None:
     from pathlib import Path
 
     source = (
-        Path(__file__).resolve().parents[2] / "vibesensor" / "metrics_log" / "post_analysis.py"
+        Path(__file__).resolve().parents[2]
+        / "vibesensor"
+        / "use_cases"
+        / "run"
+        / "post_analysis.py"
     ).read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):
@@ -926,12 +942,12 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     raw payload dict traversal.
     """
     from tests.test_support.findings import make_finding_payload
-    from vibesensor.domain import TestRun, VibrationSource
     from vibesensor.adapters.pdf.mapping import (
         prepare_report_mapping_context,
         resolve_primary_report_candidate,
     )
-    from vibesensor.adapters.pdf_i18n import tr
+    from vibesensor.domain import TestRun, VibrationSource
+    from vibesensor.report_i18n import tr
 
     lang = "en"
     finding = make_finding_payload(
@@ -974,7 +990,7 @@ def test_report_mapping_does_not_import_finding_from_payload_decoder() -> None:
 
     from tests._paths import SERVER_ROOT
 
-    mapping_path = SERVER_ROOT / "vibesensor" / "report" / "mapping.py"
+    mapping_path = SERVER_ROOT / "vibesensor" / "adapters" / "pdf" / "mapping.py"
     source = mapping_path.read_text()
     tree = ast.parse(source)
     forbidden = {"finding_from_payload"}
@@ -1094,7 +1110,9 @@ def test_speed_profile_used_by_confidence_assessment() -> None:
     """
     from tests._paths import SERVER_ROOT
 
-    strength_labels_path = SERVER_ROOT / "vibesensor" / "analysis" / "strength_labels.py"
+    strength_labels_path = (
+        SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics" / "strength_labels.py"
+    )
     source = strength_labels_path.read_text()
     assert "certainty_label" not in source, (
         "certainty_label was deleted; ConfidenceAssessment.assess() is the replacement"
@@ -1201,8 +1219,8 @@ def test_f_order_finding_id_normalization() -> None:
     consumers see deterministic identifiers.  The normalization to
     ``F001`` is correct behavior, not a test bug.
     """
-    from vibesensor.use_cases.diagnostics.findings import finalize_findings
     from vibesensor.domain import Finding
+    from vibesensor.use_cases.diagnostics.findings import finalize_findings
 
     domain_findings = finalize_findings(
         [
@@ -1243,7 +1261,7 @@ def test_next_steps_domain_path_is_primary() -> None:
     """
     from tests._paths import SERVER_ROOT
 
-    mapping_path = SERVER_ROOT / "vibesensor" / "report" / "mapping.py"
+    mapping_path = SERVER_ROOT / "vibesensor" / "adapters" / "pdf" / "mapping.py"
     source = mapping_path.read_text()
 
     # Find the function body
@@ -1293,7 +1311,7 @@ def test_domain_does_not_import_outer_packages() -> None:
 
     Relative intra-package imports (level >= 1) are excluded because
     ``from .report import Report`` refers to ``domain/report.py``, not the
-    outer ``vibesensor/report/`` package.
+    outer ``vibesensor/adapters/pdf/`` package.
     """
     import ast
     from pathlib import Path

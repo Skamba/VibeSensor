@@ -6,10 +6,8 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from math import log1p
 
-from vibesensor.vibration_strength import (
-    vibration_strength_db_scalar as canonical_vibration_db,
-)
-
+from vibesensor.domain import LocationHotspot
+from vibesensor.domain.finding import VibrationSource, speed_band_sort_key, speed_bin_label
 from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.shared.constants import (
     CONFIDENCE_CEILING,
@@ -28,8 +26,6 @@ from vibesensor.shared.constants import (
     SNR_LOG_DIVISOR,
     SPEED_BIN_WIDTH_KMH,
 )
-from vibesensor.domain import LocationHotspot
-from vibesensor.domain.finding import VibrationSource, speed_band_sort_key, speed_bin_label
 from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     FindingPayload,
@@ -53,6 +49,9 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _speed_profile_from_points,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
+from vibesensor.vibration_strength import (
+    vibration_strength_db_scalar as canonical_vibration_db,
+)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Hz helpers, hypotheses, and action plans

@@ -17,8 +17,8 @@ from test_support import (
     standard_metadata,
 )
 
-from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.use_cases.diagnostics import summarize_run_data
 
 
 def _create_populated_db(

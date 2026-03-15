@@ -21,9 +21,9 @@ from threading import RLock
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from vibesensor.shared.constants import NUMERIC_TYPES
-from vibesensor.domain import Run
 from vibesensor.adapters.persistence.runlog import utc_now_iso
+from vibesensor.domain import Run
+from vibesensor.shared.constants import NUMERIC_TYPES
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
@@ -32,12 +32,12 @@ from vibesensor.use_cases.run.sample_builder import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
+    from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
-    from vibesensor.infra.config.settings_store import SettingsStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -138,9 +138,9 @@ class RunRecorder:
         self.default_sample_rate_hz = int(config.default_sample_rate_hz)
         self.fft_window_size_samples = int(config.fft_window_size_samples)
         self.accel_scale_g_per_lsb = (
-            float(config.accel_scale_g_per_lsb)  # type: ignore[arg-type]
+            float(config.accel_scale_g_per_lsb)
             if isinstance(config.accel_scale_g_per_lsb, NUMERIC_TYPES)
-            and config.accel_scale_g_per_lsb > 0  # type: ignore[operator]
+            and config.accel_scale_g_per_lsb > 0
             else None
         )
         self._lock = RLock()
@@ -374,7 +374,7 @@ class RunRecorder:
                 self._persist_history_create_fail_count = 0
         metadata = self._run_metadata_record(run_id, start_time_utc)
         try:
-            self._history_db.create_run(run_id, start_time_utc, metadata)  # type: ignore[arg-type]
+            self._history_db.create_run(run_id, start_time_utc, metadata)
             with self._lock:
                 if not self._persist_run_id_matches(run_id):
                     return
@@ -446,7 +446,7 @@ class RunRecorder:
                 for attempt in range(_MAX_APPEND_RETRIES):
                     try:
                         write_start = time.monotonic()
-                        self._history_db.append_samples(run_id, rows)  # type: ignore[arg-type]
+                        self._history_db.append_samples(run_id, rows)
                         write_dur = time.monotonic() - write_start
                         with self._lock:
                             if not self._persist_run_id_matches(run_id):
@@ -500,7 +500,7 @@ class RunRecorder:
             finalized = self._history_db.finalize_run(
                 run_id,
                 end_utc,
-                metadata=latest_metadata,  # type: ignore[arg-type]
+                metadata=latest_metadata,
             )
             if finalized is False:
                 self._persist_last_write_error = "history finalize_run skipped due to invalid state"

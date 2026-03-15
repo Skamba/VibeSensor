@@ -8,9 +8,9 @@ from dataclasses import dataclass
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 
+from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.domain import VibrationSource
 from vibesensor.report_i18n import tr as _tr
-from vibesensor.adapters.pdf.report_data import ReportTemplateData
 
 # ── Theme ────────────────────────────────────────────────────────────────────
 

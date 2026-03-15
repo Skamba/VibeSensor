@@ -14,15 +14,6 @@ import dataclasses
 
 import pytest
 
-from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.boundaries.finding_evidence import finding_evidence_from_metrics
-from vibesensor.shared.boundaries.location_hotspot import location_hotspot_from_payload
-from vibesensor.shared.boundaries.run_suitability import run_suitability_from_payload
-from vibesensor.shared.boundaries.speed_profile import speed_profile_from_stats
-from vibesensor.shared.boundaries.vibration_origin import (
-    origin_payload_from_finding,
-    vibration_origin_from_payload,
-)
 from vibesensor.domain import (
     ConfidenceAssessment,
     ConfigurationSnapshot,
@@ -52,6 +43,15 @@ from vibesensor.domain import (
 )
 from vibesensor.domain import (
     TestPlan as DomainTestPlan,
+)
+from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.finding_evidence import finding_evidence_from_metrics
+from vibesensor.shared.boundaries.location_hotspot import location_hotspot_from_payload
+from vibesensor.shared.boundaries.run_suitability import run_suitability_from_payload
+from vibesensor.shared.boundaries.speed_profile import speed_profile_from_stats
+from vibesensor.shared.boundaries.vibration_origin import (
+    origin_payload_from_finding,
+    vibration_origin_from_payload,
 )
 
 

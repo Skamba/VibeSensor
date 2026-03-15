@@ -12,12 +12,12 @@ import time
 
 import pytest
 
-from vibesensor.use_cases.diagnostics.order_bands import build_order_bands
+from vibesensor.adapters.persistence.runlog import bounded_sample
+from vibesensor.infra.runtime.registry import _sanitize_name
+from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.types.backend_types import new_car_id, sanitize_aspects
 from vibesensor.shared.utils.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.infra.runtime.registry import _sanitize_name
-from vibesensor.adapters.persistence.runlog import bounded_sample
-from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.use_cases.diagnostics.order_bands import build_order_bands
 
 # ---------------------------------------------------------------------------
 # Item 1 + 2: Public API naming in domain_models
@@ -65,6 +65,7 @@ class TestBuildOrderBandsLocation:
     def test_not_in_runtime(self) -> None:
         """The old _build_order_bands should not exist in runtime anymore."""
         import vibesensor.infra.runtime as rt
+
         assert not hasattr(rt, "_build_order_bands")
 
     def test_build_order_bands_basic(self) -> None:

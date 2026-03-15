@@ -17,8 +17,6 @@ from dataclasses import dataclass, field
 from math import floor
 from typing import Any, Literal, Required, TypedDict
 
-from vibesensor.vibration_strength import compute_db, compute_db_or_none, percentile
-
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import Sample
@@ -34,7 +32,10 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _speed_bin_label,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, PhaseSegment
-from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases as _segment_run_phases
+from vibesensor.use_cases.diagnostics.phase_segmentation import (
+    segment_run_phases as _segment_run_phases,
+)
+from vibesensor.vibration_strength import compute_db, compute_db_or_none, percentile
 
 # ---------------------------------------------------------------------------
 # Spectrum types & builders (formerly plot_spectrum.py)
