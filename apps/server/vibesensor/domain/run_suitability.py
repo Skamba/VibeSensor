@@ -8,7 +8,6 @@ variation, enough samples, acceptable noise floor).
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -120,18 +119,3 @@ class RunSuitability:
                 ),
             )
         )
-
-    # -- boundary adapter --------------------------------------------------
-
-    @staticmethod
-    def from_checks(checks: Sequence[Mapping[str, object]]) -> RunSuitability:
-        """Construct from a list of ``RunSuitabilityCheck`` dicts (boundary adapter)."""
-        domain_checks = tuple(
-            SuitabilityCheck(
-                check_key=str(c.get("check_key", c.get("check", ""))),
-                state=str(c.get("state", "pass")),
-            )
-            for c in checks
-            if isinstance(c, Mapping)
-        )
-        return RunSuitability(checks=domain_checks)

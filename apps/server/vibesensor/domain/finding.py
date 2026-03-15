@@ -159,7 +159,7 @@ class Finding:
             object.__setattr__(
                 self,
                 "kind",
-                self._derive_kind_from_fields(self.finding_id, self.severity),
+                self.derive_kind_from_fields(self.finding_id, self.severity),
             )
         if self.confidence is not None and not (0.0 <= self.confidence <= 1.0):
             raise ValueError(f"Finding.confidence must be in [0, 1], got {self.confidence}")
@@ -171,7 +171,7 @@ class Finding:
             raise ValueError(f"Finding.ranking_score must be finite, got {self.ranking_score}")
 
     @staticmethod
-    def _derive_kind_from_fields(
+    def derive_kind_from_fields(
         finding_id: str,
         severity: str,
         *,

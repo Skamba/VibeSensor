@@ -6,7 +6,6 @@ from collections.abc import Sequence
 from dataclasses import replace
 
 from ..finding import Finding
-from ..hypothesis import Hypothesis
 from ..recommended_action import RecommendedAction
 from ..test_plan import TestPlan
 
@@ -137,16 +136,12 @@ def _prioritize_actions(actions: Sequence[RecommendedAction]) -> tuple[Recommend
 
 def plan_test_actions(
     findings: Sequence[Finding],
-    hypotheses: Sequence[Hypothesis],
-    *,
-    lang: str,
 ) -> TestPlan:
-    """Build a domain test plan from domain findings and hypotheses.
+    """Build a domain test plan from domain findings.
 
     The domain service owns action selection and action priority for the
     migrated finding-based planning path.
     """
-    del hypotheses, lang
     actions: list[RecommendedAction] = []
     for finding in findings:
         actions.extend(_actions_for_finding(finding))

@@ -260,9 +260,13 @@ class PostAnalysisWorker:
                 "sampling_method": "full" if stride == 1 else f"stride_{stride}",
             }
             if stride > 1:
+                from ..domain import SuitabilityCheck
                 from ..report_i18n import tr as _tr
 
-                check = _tr(language, "SUITABILITY_CHECK_ANALYSIS_SAMPLING")
+                stride_check = SuitabilityCheck(
+                    check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+                    state="warn",
+                )
                 explanation = _tr(
                     language,
                     "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
@@ -270,9 +274,9 @@ class PostAnalysisWorker:
                 )
                 summary.setdefault("run_suitability", []).append(
                     {
-                        "check": check,
-                        "check_key": "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
-                        "state": "warn",
+                        "check": stride_check.check_key,
+                        "check_key": stride_check.check_key,
+                        "state": stride_check.state,
                         "explanation": explanation,
                     },
                 )

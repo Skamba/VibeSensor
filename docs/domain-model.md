@@ -209,8 +209,9 @@ cross-object reasoning belongs in domain services.
 | **Observation extraction** | Turn processed signals (FFT outputs, filtered waveforms, statistical measures, and similar algorithm outputs) into domain `Observation` objects without making business conclusions |
 | **Signature recognition** | Group observations into meaningful `Signature` objects |
 | **Hypothesis evaluation** | Compare signatures and evidence against possible causes and update/support `Hypothesis` objects |
-| **Finding synthesis** | Turn supported hypotheses into `Finding` objects with structured evidence, origin, localization, and confidence |
-| **Case reconciliation** | Compare multiple runs inside a `DiagnosticCase` and determine whether findings strengthen, conflict, or remain inconclusive |
+| **Finding synthesis** | Turn supported hypotheses into `Finding` objects with structured evidence, origin, localization, and confidence. Currently handled by the analysis pipeline (`finalize_findings` + `select_top_causes`) rather than a standalone domain service file |
+| **Case reconciliation** | Compare multiple runs inside a `DiagnosticCase` and determine whether findings strengthen, conflict, or remain inconclusive. Lives on `DiagnosticCase.reconcile()` as an aggregate method; a separate domain service file is not needed until a second consumer exists |
+| **Test planning** | Determine recommended next diagnostic actions based on findings and unresolved hypotheses |
 
 Rule: domain services may coordinate domain objects, but they must not replace
 those objects with payload-driven logic.
@@ -449,6 +450,17 @@ The following guardrails are enforced by tests in
   persisted or transported summary payloads
 - remaining raw payload handling is transport/rendering detail, not business
   decision-making
+- domain value objects (`FindingEvidence`, `SpeedProfile`, `RunSuitability`)
+  have no dict/payload-accepting factory classmethods; boundary adapter
+  functions own decode
+- `post_analysis.py` constructs suitability warnings through domain
+  `SuitabilityCheck` objects, not raw dicts
+- export services project summaries through domain aggregates before emitting
+- `build_next_steps_from_summary()` checks domain aggregate before payload
+  fallback
+- report mapping aggregate-absent fallbacks (`has_relevant_reference_gap`,
+  `top_strength_values`) appear only in the `else` branch after an aggregate
+  check
 
 ## Current package layout
 
@@ -482,7 +494,7 @@ The domain package (`vibesensor/domain/`) mirrors the human concepts above:
 | `driving_phase.py` | `DrivingPhase` | ✅ |
 | `measurement.py` | `Measurement`, `VibrationReading` | ✅ |
 | `report.py` | `Report` | ✅ |
-| `services/` | observation extraction, signature recognition, hypothesis evaluation, finding synthesis, test planning | ✅ |
+| `services/` | observation extraction, signature recognition, hypothesis evaluation, test planning | ✅ |
 
 The exact file split may change, but the conceptual split should not: the model
 must be built around the human diagnostic concepts, not around transport or

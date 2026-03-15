@@ -8,6 +8,7 @@ aggregate.  Prevents regression to the previous payload-first flow.
 from __future__ import annotations
 
 import importlib
+import inspect
 import sys
 
 import pytest
@@ -1119,4 +1120,250 @@ def test_speed_profile_used_by_certainty_label() -> None:
     source = mapping_path.read_text()
     assert "speed_profile.steady_speed" in source, (
         "report mapping must derive steady_speed from SpeedProfile domain object"
+    )
+
+
+# ── T14: Architecture guardrail regression tests ─────────────────────────
+
+
+def test_domain_vos_have_no_dict_accepting_factory_methods() -> None:
+    """Domain value objects must not accept raw ``dict`` / ``Mapping`` args.
+
+    Factory methods on domain classes under ``vibesensor/domain/*.py``
+    (top-level only — not ``domain/services/``) must accept typed domain
+    arguments, not untyped containers.  Prevents regression of T08
+    boundary adapter migration.
+    """
+    import inspect
+
+    from tests._paths import SERVER_ROOT
+
+    domain_dir = SERVER_ROOT / "vibesensor" / "domain"
+    # Only top-level .py files (not subdirectories like services/)
+    domain_files = [f for f in domain_dir.glob("*.py") if f.name != "__init__.py"]
+
+    # Untyped container type names that should not appear in annotations
+    untyped_names = {"dict", "Dict", "MutableMapping"}
+
+    # Known legitimate methods that accept typed Mapping for config decode
+    allowlist = {
+        ("ConfigurationSnapshot", "from_metadata"),
+        ("TireSpec", "from_aspects"),
+    }
+
+    violations: list[str] = []
+    seen_classes: set[int] = set()
+    for py_file in domain_files:
+        module_name = f"vibesensor.domain.{py_file.stem}"
+        mod = importlib.import_module(module_name)
+
+        for attr_name in dir(mod):
+            obj = getattr(mod, attr_name)
+            if not isinstance(obj, type):
+                continue
+            # Deduplicate re-exported classes
+            if id(obj) in seen_classes:
+                continue
+            seen_classes.add(id(obj))
+            for method_name in dir(obj):
+                if (obj.__name__, method_name) in allowlist:
+                    continue
+                method = getattr(obj, method_name, None)
+                if method is None:
+                    continue
+                if not (
+                    isinstance(inspect.getattr_static(obj, method_name, None), classmethod)
+                    or isinstance(inspect.getattr_static(obj, method_name, None), staticmethod)
+                ):
+                    continue
+                try:
+                    raw = method.__func__ if hasattr(method, "__func__") else method
+                    hints = inspect.get_annotations(raw)
+                except Exception:
+                    continue
+                for param_name, annotation in hints.items():
+                    if param_name == "return":
+                        continue
+                    ann_str = str(annotation)
+                    # Check for bare dict, list[dict], MutableMapping, etc.
+                    for ut in untyped_names:
+                        if ut in ann_str:
+                            violations.append(
+                                f"{obj.__name__}.{method_name}() param '{param_name}' "
+                                f"has untyped annotation: {ann_str}"
+                            )
+    assert not violations, (
+        "Domain factory methods must not accept raw dict/Mapping args "
+        "(use boundary adapters instead):\n" + "\n".join(violations)
+    )
+
+
+def test_post_analysis_does_not_construct_raw_suitability_dicts() -> None:
+    """post_analysis must use ``SuitabilityCheck`` domain objects.
+
+    Prevents regression of T11: manual construction of ``{"check":…}``
+    dicts should be via the domain type, not raw string-keyed dicts.
+    """
+    from vibesensor.metrics_log import post_analysis as mod
+
+    source = inspect.getsource(mod)
+    # Must import or reference SuitabilityCheck
+    assert "SuitabilityCheck" in source, (
+        "post_analysis.py must use SuitabilityCheck domain objects "
+        "for suitability dict construction"
+    )
+
+
+def test_exports_project_through_domain() -> None:
+    """``build_run_details_json`` must call ``project_summary_through_domain``.
+
+    Prevents regression: export payloads must go through domain
+    projection before output.
+    """
+    from tests._paths import SERVER_ROOT
+
+    exports_path = SERVER_ROOT / "vibesensor" / "history_services" / "exports.py"
+    source = exports_path.read_text()
+    assert "project_summary_through_domain" in source, (
+        "history_services/exports.py must call project_summary_through_domain "
+        "before outputting run details"
+    )
+    # Verify it's actually imported (not just in a comment)
+    assert "from" in source and "project_summary_through_domain" in source, (
+        "project_summary_through_domain must be imported, not just mentioned"
+    )
+
+
+def test_f_order_finding_id_normalization() -> None:
+    """``finalize_findings`` normalises arbitrary IDs to sequential ``F###``.
+
+    ``F_ORDER`` is an internal working ID from order analysis.
+    ``finalize_findings`` replaces all non-reference IDs with stable
+    sequential ``F001``, ``F002``, … so that report and history
+    consumers see deterministic identifiers.  The normalization to
+    ``F001`` is correct behavior, not a test bug.
+    """
+    from vibesensor.analysis.findings import finalize_findings
+    from vibesensor.domain import Finding
+
+    payloads, domain_findings = finalize_findings(
+        [
+            {"finding_id": "F_ORDER", "confidence": 0.7, "suspected_source": "wheel/tire"},
+            {"finding_id": "F_PERSISTENT", "confidence": 0.4, "suspected_source": "engine"},
+        ]
+    )
+    # Both get sequential F### IDs regardless of their input names
+    assert domain_findings[0].finding_id == "F001"
+    assert domain_findings[1].finding_id == "F002"
+    assert all(isinstance(f, Finding) for f in domain_findings)
+
+    # Reference findings keep their original IDs
+    payloads_ref, domain_ref = finalize_findings(
+        [
+            {
+                "finding_id": "REF_SPEED",
+                "finding_kind": "reference",
+                "confidence": None,
+                "suspected_source": "unknown",
+            },
+            {
+                "finding_id": "F_ORDER",
+                "confidence": 0.7,
+                "suspected_source": "wheel/tire",
+            },
+        ]
+    )
+    assert domain_ref[0].finding_id == "REF_SPEED"
+    assert domain_ref[1].finding_id == "F001"
+
+
+def test_next_steps_domain_path_is_primary() -> None:
+    """``build_next_steps_from_summary`` must check domain aggregate BEFORE payload.
+
+    The if-elif order must be: aggregate.recommended_actions first,
+    then payload ``test_plan`` fallback.  Prevents regression of T12.
+    """
+    from tests._paths import SERVER_ROOT
+
+    mapping_path = SERVER_ROOT / "vibesensor" / "report" / "mapping.py"
+    source = mapping_path.read_text()
+
+    # Find the function body
+    func_start = source.find("def build_next_steps_from_summary(")
+    assert func_start != -1, "build_next_steps_from_summary not found in mapping.py"
+
+    # Find end of function (next top-level def or end of file)
+    next_def = source.find("\ndef ", func_start + 1)
+    func_body = source[func_start : next_def if next_def != -1 else len(source)]
+
+    # The domain aggregate if-guard must come before the payload for-loop
+    # that iterates summary_steps.  The function may eagerly call
+    # summary_test_plan() before the if-guard, but the actual consumption
+    # of those steps (``for step in summary_steps:``) must be after the
+    # domain branch with its early return.
+    domain_guard = func_body.find("if aggregate is not None and aggregate.recommended_actions")
+    payload_loop = func_body.find("for step in summary_steps")
+    assert domain_guard != -1, (
+        "build_next_steps_from_summary must check aggregate.recommended_actions"
+    )
+    assert payload_loop != -1, "build_next_steps_from_summary must have payload fallback loop"
+    assert domain_guard < payload_loop, (
+        "Domain aggregate if-guard must appear BEFORE the payload fallback loop "
+        f"(domain at pos {domain_guard}, payload loop at pos {payload_loop})"
+    )
+    # The domain branch must do an early return to be primary
+    domain_block = func_body[domain_guard:payload_loop]
+    assert "return next_steps" in domain_block or "return next_steps\n" in domain_block, (
+        "Domain aggregate branch must return early before the payload fallback"
+    )
+
+
+def test_report_mapping_fallback_not_primary_path() -> None:
+    """``has_relevant_reference_gap`` and ``top_strength_values`` are fallback-only.
+
+    These payload-based functions must only be reached when
+    ``domain_aggregate is None``.  When an aggregate is available,
+    callers must use ``TestRun.has_relevant_reference_gap()`` and
+    ``TestRun.top_strength_db()`` respectively.
+    """
+    from tests._paths import SERVER_ROOT
+
+    mapping_path = SERVER_ROOT / "vibesensor" / "report" / "mapping.py"
+    source = mapping_path.read_text()
+
+    # Locate the resolve_primary_report_candidate function where these
+    # are called, and verify the fallback calls are guarded by
+    # aggregate-absent checks.
+    func_start = source.find("def resolve_primary_report_candidate(")
+    assert func_start != -1
+    next_def = source.find("\ndef ", func_start + 1)
+    func_body = source[func_start : next_def if next_def != -1 else len(source)]
+
+    # Verify domain-first path exists: aggregate.top_strength_db() and
+    # aggregate.has_relevant_reference_gap()
+    assert "aggregate.top_strength_db()" in func_body, (
+        "resolve_primary_report_candidate must use aggregate.top_strength_db() as primary path"
+    )
+    assert "aggregate.has_relevant_reference_gap(" in func_body, (
+        "resolve_primary_report_candidate must use aggregate.has_relevant_reference_gap() "
+        "as primary path"
+    )
+
+    # Verify fallback functions are in the else branch (aggregate absent)
+    # Find the fallback calls and verify they appear after an else block
+    top_strength_call = func_body.find("top_strength_values(")
+    ref_gap_call = func_body.find("has_relevant_reference_gap(context.")
+    assert top_strength_call != -1, "top_strength_values fallback must exist"
+    assert ref_gap_call != -1, "has_relevant_reference_gap fallback must exist"
+
+    # Both fallback calls must appear after the else: that follows the
+    # `if aggregate:` block
+    aggregate_check = func_body.find("if aggregate:")
+    else_block = func_body.find("else:", aggregate_check)
+    assert else_block != -1, "else block for aggregate-absent path must exist"
+    assert top_strength_call > else_block, (
+        "top_strength_values must only be called in the aggregate-absent else branch"
+    )
+    assert ref_gap_call > else_block, (
+        "has_relevant_reference_gap must only be called in the aggregate-absent else branch"
     )

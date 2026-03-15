@@ -13,6 +13,7 @@ from vibesensor.analysis.summary_builder import (
     build_phase_summary,
     prepare_run_data,
 )
+from vibesensor.boundaries.speed_profile import speed_profile_from_stats
 from vibesensor.domain import SpeedProfile
 
 
@@ -83,7 +84,7 @@ class TestPreparedRunDataProperties:
         speed_stats = _speed_stats(prepared.speed_values)
         phase_info = build_phase_summary(prepared.phase_segments)
 
-        assert prepared.speed_profile == SpeedProfile.from_stats(speed_stats, phase_info)
+        assert prepared.speed_profile == speed_profile_from_stats(speed_stats, phase_info)
         assert prepared.speed_profile.min_kmh == pytest.approx(speed_stats["min_kmh"])
         assert prepared.speed_profile.max_kmh == pytest.approx(speed_stats["max_kmh"])
         assert prepared.speed_profile.has_acceleration is True
