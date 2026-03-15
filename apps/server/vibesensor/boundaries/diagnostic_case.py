@@ -96,7 +96,7 @@ def _signatures_from_finding(
 def _hypothesis_from_finding(finding: Finding, signatures: tuple[Signature, ...]) -> Hypothesis:
     status = (
         HypothesisStatus.SUPPORTED
-        if finding.effective_confidence >= 0.4
+        if finding.effective_confidence >= Hypothesis.SUPPORTED_THRESHOLD
         else HypothesisStatus.INCONCLUSIVE
     )
     return Hypothesis(
