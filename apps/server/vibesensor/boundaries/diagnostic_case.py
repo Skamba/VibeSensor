@@ -9,13 +9,17 @@ from ..domain.car import Car
 from ..domain.confidence_assessment import ConfidenceAssessment
 from ..domain.configuration_snapshot import ConfigurationSnapshot
 from ..domain.diagnostic_case import DiagnosticCase
+from ..domain.diagnostic_reasoning import DiagnosticReasoning
 from ..domain.driving_phase import DrivingPhase
 from ..domain.driving_segment import DrivingSegment
 from ..domain.finding import Finding
 from ..domain.hypothesis import Hypothesis
 from ..domain.recommended_action import RecommendedAction
-from ..domain.run import Run
+from ..domain.run_capture import RunCapture
+from ..domain.run_setup import RunSetup
+from ..domain.sensor import Sensor
 from ..domain.signature import Signature
+from ..domain.speed_source import SpeedSource
 from ..domain.symptom import Symptom
 from ..domain.test_plan import TestPlan
 from ..domain.test_run import TestRun
@@ -189,12 +193,26 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         signatures.extend(finding.signatures)
         hypotheses.append(Hypothesis.from_finding(finding, finding.signatures))
 
-    return TestRun(
-        run=Run(run_id=str(summary.get("run_id") or "unknown")),
+    sensor_locs = summary.get("sensor_locations")
+    sensor_loc_list = list(sensor_locs) if isinstance(sensor_locs, Mapping) else []
+    setup = RunSetup(
+        sensors=Sensor.from_location_codes(sensor_loc_list) if sensor_loc_list else (),
+        speed_source=SpeedSource(),
         configuration_snapshot=ConfigurationSnapshot.from_metadata(meta),
-        driving_segments=_segments_from_summary(summary),
+    )
+    capture = RunCapture(
+        run_id=str(summary.get("run_id") or "unknown"),
+        setup=setup,
+    )
+    reasoning_obj = DiagnosticReasoning(
         signatures=tuple(dict.fromkeys(signatures)),
         hypotheses=tuple(hypotheses),
+    )
+
+    return TestRun(
+        capture=capture,
+        reasoning=reasoning_obj,
+        driving_segments=_segments_from_summary(summary),
         findings=findings,
         top_causes=top_causes,
         speed_profile=speed_profile,
@@ -225,7 +243,6 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
         case_id=_require_authoritative_case_id(summary),
         car=car,
         symptoms=(symptom,),
-        configuration_snapshots=(test_run.configuration_snapshot,),
         test_plan=test_run.test_plan,
     )
     return case.add_run(test_run)

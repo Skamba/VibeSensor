@@ -29,6 +29,7 @@ from vibesensor.domain import (
     Diagnosis,
     DiagnosticCase,
     DiagnosticCaseEpistemicRule,
+    DiagnosticReasoning,
     DrivingPhase,
     DrivingSegment,
     Finding,
@@ -36,7 +37,7 @@ from vibesensor.domain import (
     Hypothesis,
     HypothesisStatus,
     LocationHotspot,
-    Run,
+    RunCapture,
     RunSuitability,
     Sensor,
     SensorPlacement,
@@ -77,9 +78,8 @@ def _make_test_run(
     top_causes: tuple[Finding, ...],
 ) -> TestRun:
     return TestRun(
-        run=Run(run_id=run_id),
-        configuration_snapshot=ConfigurationSnapshot(),
-        hypotheses=hypotheses,
+        capture=RunCapture(run_id=run_id),
+        reasoning=DiagnosticReasoning(hypotheses=hypotheses),
         findings=findings,
         top_causes=top_causes,
     )
@@ -957,9 +957,7 @@ class TestDiagnosticCaseReconcile:
         )
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-2"),
-                configuration_snapshot=ConfigurationSnapshot(),
-                hypotheses=(),
+                capture=RunCapture(run_id="run-2"),
                 findings=(),
                 top_causes=(),
                 test_plan=DomainTestPlan(actions=(action_low,)),
@@ -1003,9 +1001,8 @@ class TestDiagnosticCaseReconcile:
         case = DiagnosticCase.start()
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-1"),
-                configuration_snapshot=ConfigurationSnapshot(),
-                hypotheses=(hyp_engine_r1, hyp_tire_r1),
+                capture=RunCapture(run_id="run-1"),
+                reasoning=DiagnosticReasoning(hypotheses=(hyp_engine_r1, hyp_tire_r1)),
                 findings=(finding_tire_r1,),
                 top_causes=(finding_tire_r1,),
                 test_plan=DomainTestPlan(actions=(action_r1,)),
@@ -1013,9 +1010,8 @@ class TestDiagnosticCaseReconcile:
         )
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-2"),
-                configuration_snapshot=ConfigurationSnapshot(),
-                hypotheses=(hyp_engine_r2, hyp_tire_r2),
+                capture=RunCapture(run_id="run-2"),
+                reasoning=DiagnosticReasoning(hypotheses=(hyp_engine_r2, hyp_tire_r2)),
                 findings=(finding_tire_r2,),
                 top_causes=(finding_tire_r2,),
                 test_plan=DomainTestPlan(actions=(action_r2,)),
@@ -1023,9 +1019,8 @@ class TestDiagnosticCaseReconcile:
         )
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-3"),
-                configuration_snapshot=ConfigurationSnapshot(),
-                hypotheses=(hyp_tire_r3,),
+                capture=RunCapture(run_id="run-3"),
+                reasoning=DiagnosticReasoning(hypotheses=(hyp_tire_r3,)),
                 findings=(finding_tire_r3,),
                 top_causes=(finding_tire_r3,),
                 test_plan=DomainTestPlan(actions=(action_r3,)),
@@ -1494,8 +1489,7 @@ class TestTestRunWithValueObjects:
     def test_result_with_speed_profile(self) -> None:
         sp = SpeedProfile(min_kmh=40, max_kmh=80, steady_speed=True)
         result = TestRun(
-            run=Run(run_id="test"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="test"),
             findings=(),
             top_causes=(),
             speed_profile=sp,
@@ -1506,8 +1500,7 @@ class TestTestRunWithValueObjects:
     def test_result_with_suitability(self) -> None:
         rs = RunSuitability(checks=(SuitabilityCheck(check_key="test", state="pass"),))
         result = TestRun(
-            run=Run(run_id="test"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="test"),
             findings=(),
             top_causes=(),
             suitability=rs,
@@ -1565,8 +1558,7 @@ class TestTestRunWithValueObjects:
 
     def test_defaults_none(self) -> None:
         result = TestRun(
-            run=Run(run_id="test"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="test"),
             findings=(),
             top_causes=(),
         )
@@ -1618,8 +1610,7 @@ class TestDiagnosticCaseCompleteness:
         if include_run:
             runs = (
                 TestRun(
-                    run=Run(run_id="run-1"),
-                    configuration_snapshot=ConfigurationSnapshot(),
+                    capture=RunCapture(run_id="run-1"),
                     findings=findings,
                     top_causes=tuple(f for f in findings if f.is_actionable),
                     suitability=suitability,
@@ -1757,40 +1748,30 @@ class TestConfigurationSnapshot:
         assert snap.metadata["sensor_model"] == "MPU6050"
         assert snap.metadata["custom_key"] == "custom_value"
 
-    def test_case_dedup_appends_unique_snapshots(self) -> None:
+    def test_case_snapshot_accessible_via_capture(self) -> None:
         snap_a = ConfigurationSnapshot.from_metadata({"sensor_model": "MPU6050"})
         snap_b = ConfigurationSnapshot.from_metadata({"sensor_model": "BMI270"})
+
+        from vibesensor.domain import RunSetup
 
         finding = Finding(suspected_source="wheel/tire", confidence=0.8)
         case = DiagnosticCase(case_id="case-snap")
         case = case.add_run(
             TestRun(
-                run=Run(run_id="r1"),
-                configuration_snapshot=snap_a,
+                capture=RunCapture(run_id="r1", setup=RunSetup(configuration_snapshot=snap_a)),
                 findings=(finding,),
                 top_causes=(finding,),
             )
         )
         case = case.add_run(
             TestRun(
-                run=Run(run_id="r2"),
-                configuration_snapshot=snap_b,
+                capture=RunCapture(run_id="r2", setup=RunSetup(configuration_snapshot=snap_b)),
                 findings=(finding,),
                 top_causes=(finding,),
             )
         )
-        assert len(case.configuration_snapshots) == 2
-
-        # Third run reuses snap_a — dedup should keep count at 2
-        case = case.add_run(
-            TestRun(
-                run=Run(run_id="r3"),
-                configuration_snapshot=snap_a,
-                findings=(finding,),
-                top_causes=(finding,),
-            )
-        )
-        assert len(case.configuration_snapshots) == 2
+        assert case.test_runs[0].capture.setup.configuration_snapshot == snap_a
+        assert case.test_runs[1].capture.setup.configuration_snapshot == snap_b
 
 
 # ── Sensor ───────────────────────────────────────────────────────────────────
@@ -1824,28 +1805,27 @@ class TestSensor:
 class TestTestRunSensors:
     def test_test_run_default_sensors_empty(self) -> None:
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="r1"),
         )
-        assert tr.sensors == ()
+        assert tr.capture.setup.sensors == ()
         assert tr.sensor_count == 0
 
     def test_test_run_with_sensors(self) -> None:
+        from vibesensor.domain import RunSetup
+
         sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle"])
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
-            sensors=sensors,
+            capture=RunCapture(run_id="r1", setup=RunSetup(sensors=sensors)),
         )
-        assert len(tr.sensors) == 2
+        assert len(tr.capture.setup.sensors) == 2
         assert tr.sensor_count == 2
 
     def test_test_run_sensor_count_property(self) -> None:
+        from vibesensor.domain import RunSetup
+
         sensors = Sensor.from_location_codes(["front_left_wheel", "rear_axle", "dashboard"])
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
-            sensors=sensors,
+            capture=RunCapture(run_id="r1", setup=RunSetup(sensors=sensors)),
         )
         assert tr.sensor_count == len(sensors)
 
@@ -1900,8 +1880,7 @@ class TestTestRunSegments:
             ),
         )
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="r1"),
             driving_segments=segments,
         )
         usable = tr.usable_segments
@@ -1915,8 +1894,7 @@ class TestTestRunSegments:
             DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=100, end_idx=129, sample_count=30),
         )
         tr = TestRun(
-            run=Run(run_id="r1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="r1"),
             driving_segments=segments,
         )
         assert tr.total_usable_samples == 80

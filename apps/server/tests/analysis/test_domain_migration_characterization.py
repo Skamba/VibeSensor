@@ -154,8 +154,8 @@ def test_characterization_wheel_fault_summary_contract() -> None:
     assert top_cause["confidence"] == pytest.approx(0.5028523562048559)
     assert top_cause["confidence_tone"] == "warn"
     assert top_cause["strongest_speed_band"] == "80-90 km/h"
-    assert test_run.hypotheses[0].hypothesis_id == "hyp-1x_wheel"
-    assert test_run.hypotheses[0].is_supported is True
+    assert test_run.reasoning.hypotheses[0].hypothesis_id == "hyp-1x_wheel"
+    assert test_run.reasoning.hypotheses[0].is_supported is True
     assert origin["location"] == "front-right"
     assert origin["alternative_locations"] == ["front-left"]
     assert origin["suspected_source"] == "wheel/tire"

@@ -22,10 +22,14 @@ from ..domain import (
     Car,
     ConfigurationSnapshot,
     DiagnosticCase,
+    DiagnosticReasoning,
     LocationHotspot,
-    Run,
+    RunCapture,
+    RunSetup,
     RunSuitability,
+    Sensor,
     SpeedProfile,
+    SpeedSource,
     Symptom,
     TestRun,
 )
@@ -1106,13 +1110,32 @@ class RunAnalysis:
         driving_segments = build_domain_driving_segments(self._prepared.phase_segments)
         domain_test_plan = plan_test_actions(domain_findings)
         summary_test_plan = step_payloads_from_plan(domain_test_plan)
-        self._test_run = TestRun(
-            run=Run(run_id=self._prepared.run_id, analysis_settings={}),
-            configuration_snapshot=configuration_snapshot,
-            driving_segments=driving_segments,
+        _raw_settings = self._metadata.get("analysis_settings")
+        _scalar_settings: list[tuple[str, int | float | bool | str]] = []
+        if isinstance(_raw_settings, dict):
+            for _k, _v in sorted(_raw_settings.items()):
+                if isinstance(_v, (int, float, bool, str)):
+                    _scalar_settings.append((_k, _v))
+        capture = RunCapture(
+            run_id=self._prepared.run_id,
+            setup=RunSetup(
+                sensors=Sensor.from_location_codes(sensor_locations) if sensor_locations else (),
+                speed_source=SpeedSource(),
+                configuration_snapshot=configuration_snapshot,
+            ),
+            analysis_settings=tuple(_scalar_settings),
+            sample_count=len(self._samples),
+            duration_s=self._prepared.duration_s,
+        )
+        reasoning = DiagnosticReasoning(
             observations=observations,
             signatures=signatures,
             hypotheses=hypotheses,
+        )
+        self._test_run = TestRun(
+            capture=capture,
+            reasoning=reasoning,
+            driving_segments=driving_segments,
             findings=domain_findings,
             top_causes=final_top_causes,
             speed_profile=speed_profile,
@@ -1122,7 +1145,6 @@ class RunAnalysis:
         self._diagnostic_case = DiagnosticCase.start(
             car=build_domain_car(self._metadata),
             symptoms=build_domain_symptoms(self._metadata),
-            configuration_snapshots=(configuration_snapshot,),
             test_plan=domain_test_plan,
         ).add_run(self._test_run)
 

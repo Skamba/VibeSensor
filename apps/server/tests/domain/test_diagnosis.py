@@ -136,14 +136,13 @@ class TestIsActionable:
 class TestDiagnosticCaseWithDiagnoses:
     def test_reconcile_produces_diagnosis_objects(self) -> None:
         """reconcile() must produce Diagnosis objects, not bare Findings."""
-        from vibesensor.domain import ConfigurationSnapshot, Run, TestRun
+        from vibesensor.domain import RunCapture, TestRun
 
         f = _finding("F001", source="wheel/tire", confidence=0.8)
         case = DiagnosticCase.start()
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-1"),
-                configuration_snapshot=ConfigurationSnapshot(),
+                capture=RunCapture(run_id="run-1"),
                 findings=(f,),
                 top_causes=(f,),
             ),
@@ -154,23 +153,21 @@ class TestDiagnosticCaseWithDiagnoses:
 
     def test_reconcile_epistemic_rule_assigned(self) -> None:
         """reconcile() assigns an epistemic rule to each diagnosis."""
-        from vibesensor.domain import ConfigurationSnapshot, Run, TestRun
+        from vibesensor.domain import RunCapture, TestRun
 
         f1 = _finding("F001", source="wheel/tire", confidence=0.5)
         f2 = _finding("F002", source="wheel/tire", confidence=0.9)
         case = DiagnosticCase.start()
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-1"),
-                configuration_snapshot=ConfigurationSnapshot(),
+                capture=RunCapture(run_id="run-1"),
                 findings=(f1,),
                 top_causes=(f1,),
             ),
         )
         case = case.add_run(
             TestRun(
-                run=Run(run_id="run-2"),
-                configuration_snapshot=ConfigurationSnapshot(),
+                capture=RunCapture(run_id="run-2"),
                 findings=(f2,),
                 top_causes=(f2,),
             ),

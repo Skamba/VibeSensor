@@ -7,7 +7,6 @@ from enum import StrEnum
 from uuid import uuid4
 
 from .car import Car
-from .configuration_snapshot import ConfigurationSnapshot
 from .diagnosis import Diagnosis
 from .finding import Finding
 from .hypothesis import Hypothesis, HypothesisStatus
@@ -46,7 +45,6 @@ class DiagnosticCase:
     case_id: str
     car: Car | None = None
     symptoms: tuple[Symptom, ...] = ()
-    configuration_snapshots: tuple[ConfigurationSnapshot, ...] = ()
     test_plan: TestPlan = TestPlan()
     test_runs: tuple[TestRun, ...] = ()
     hypotheses: tuple[Hypothesis, ...] = ()
@@ -150,7 +148,7 @@ class DiagnosticCase:
         """Return the explicit cross-run rule outcome for each hypothesis id."""
         grouped: dict[str, list[Hypothesis]] = {}
         for test_run in self.test_runs:
-            for hypothesis in test_run.hypotheses:
+            for hypothesis in test_run.reasoning.hypotheses:
                 grouped.setdefault(hypothesis.hypothesis_id, []).append(hypothesis)
         return {
             hypothesis_id: self.classify_hypothesis_sequence(tuple(sequence))
@@ -163,25 +161,19 @@ class DiagnosticCase:
         *,
         car: Car | None = None,
         symptoms: tuple[Symptom, ...] = (),
-        configuration_snapshots: tuple[ConfigurationSnapshot, ...] = (),
         test_plan: TestPlan | None = None,
     ) -> DiagnosticCase:
         return cls(
             case_id=uuid4().hex,
             car=car,
             symptoms=symptoms or (Symptom.unspecified(),),
-            configuration_snapshots=configuration_snapshots,
             test_plan=test_plan or cls._EMPTY_TEST_PLAN,
         )
 
     def add_run(self, test_run: TestRun) -> DiagnosticCase:
-        snapshots = self.configuration_snapshots
-        if test_run.configuration_snapshot not in snapshots:
-            snapshots = (*snapshots, test_run.configuration_snapshot)
         updated = replace(
             self,
             test_runs=(*self.test_runs, test_run),
-            configuration_snapshots=snapshots,
         )
         return updated.reconcile()
 
@@ -196,7 +188,7 @@ class DiagnosticCase:
         # ── Hypotheses: group by id, classify, keep latest (exclude retired) ──
         hyp_sequences: dict[str, list[Hypothesis]] = {}
         for test_run in self.test_runs:
-            for hypothesis in test_run.hypotheses:
+            for hypothesis in test_run.reasoning.hypotheses:
                 hyp_sequences.setdefault(hypothesis.hypothesis_id, []).append(hypothesis)
 
         kept_hypotheses: dict[str, Hypothesis] = {}

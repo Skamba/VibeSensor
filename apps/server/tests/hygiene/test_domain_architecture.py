@@ -26,12 +26,11 @@ def test_test_run_is_frozen_dataclass() -> None:
     """``TestRun`` must be a frozen dataclass."""
     import dataclasses
 
-    from vibesensor.domain import ConfigurationSnapshot, Run, TestRun
+    from vibesensor.domain import RunCapture, TestRun
 
     assert dataclasses.is_dataclass(TestRun)
     r = TestRun(
-        run=Run(run_id="test-123"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test-123"),
         findings=(),
         top_causes=(),
     )
@@ -70,15 +69,14 @@ def test_domain_modules_do_not_import_analysis_types_at_runtime() -> None:
 
 def test_test_run_provides_finding_queries() -> None:
     """``TestRun`` must own finding classification queries."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
+    from vibesensor.domain import Finding, RunCapture, TestRun
 
     diag = Finding(finding_id="F001", confidence=0.75, suspected_source="wheel/tire")
     ref = Finding(finding_id="REF_SPEED", confidence=1.0, suspected_source="unknown")
     info = Finding(finding_id="F002", confidence=0.10, severity="info", suspected_source="unknown")
 
     result = TestRun(
-        run=Run(run_id="test-123"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test-123"),
         findings=(ref, diag, info),
         top_causes=(diag,),
     )
@@ -90,12 +88,11 @@ def test_test_run_provides_finding_queries() -> None:
 
 def test_test_run_effective_top_causes() -> None:
     """``effective_top_causes()`` mirrors diagnosis_candidates logic."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
+    from vibesensor.domain import Finding, RunCapture, TestRun
 
     actionable = Finding(finding_id="F001", confidence=0.75, suspected_source="wheel/tire")
     result = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(actionable,),
         top_causes=(actionable,),
     )
@@ -172,7 +169,7 @@ def test_run_analysis_produces_test_run() -> None:
 
 def test_test_run_reference_gap_detection() -> None:
     """``has_relevant_reference_gap()`` detects source-relevant gaps."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun, VibrationSource
+    from vibesensor.domain import Finding, RunCapture, TestRun, VibrationSource
 
     ref_speed = Finding(finding_id="REF_SPEED", suspected_source="unknown")
     ref_wheel = Finding(finding_id="REF_WHEEL", suspected_source="unknown")
@@ -186,8 +183,7 @@ def test_test_run_reference_gap_detection() -> None:
 
     def _make(findings: tuple[Finding, ...]) -> TestRun:
         return TestRun(
-            run=Run(run_id="test"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="test"),
             findings=findings + (diag,),
             top_causes=(diag,),
         )
@@ -211,7 +207,7 @@ def test_test_run_reference_gap_detection() -> None:
 
 def test_test_run_top_strength_db() -> None:
     """``top_strength_db()`` finds the best strength from findings."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
+    from vibesensor.domain import Finding, RunCapture, TestRun
 
     f1 = Finding(
         finding_id="F001",
@@ -226,8 +222,7 @@ def test_test_run_top_strength_db() -> None:
         vibration_strength_db=8.0,
     )
     result = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(f1, f2),
         top_causes=(f1,),
     )
@@ -236,8 +231,7 @@ def test_test_run_top_strength_db() -> None:
     # No strength → None
     f3 = Finding(finding_id="F003", confidence=0.50, suspected_source="engine")
     result2 = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(f3,),
         top_causes=(f3,),
     )
@@ -316,7 +310,7 @@ def test_confidence_label_delegates_to_domain() -> None:
 
 def test_test_run_primary_source_and_location() -> None:
     """``primary_source`` and ``primary_location`` are domain queries."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun, VibrationSource
+    from vibesensor.domain import Finding, RunCapture, TestRun, VibrationSource
 
     f = Finding(
         finding_id="F001",
@@ -325,8 +319,7 @@ def test_test_run_primary_source_and_location() -> None:
         strongest_location="Left Front",
     )
     result = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(f,),
         top_causes=(f,),
     )
@@ -335,8 +328,7 @@ def test_test_run_primary_source_and_location() -> None:
 
     # No findings → None
     empty = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(),
         top_causes=(),
     )
@@ -361,12 +353,11 @@ def test_finding_is_frozen_dataclass() -> None:
 
 def test_finding_tuples_are_immutable() -> None:
     """TestRun findings must be tuples (not mutable lists)."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
+    from vibesensor.domain import Finding, RunCapture, TestRun
 
     f = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
     result = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(f,),
         top_causes=(f,),
     )
@@ -379,7 +370,7 @@ def test_finding_tuples_are_immutable() -> None:
 
 def test_build_system_cards_uses_domain_findings() -> None:
     """build_system_cards must read confidence tone from domain, not dict."""
-    from vibesensor.domain import ConfigurationSnapshot, Finding, Run, TestRun
+    from vibesensor.domain import Finding, RunCapture, TestRun
     from vibesensor.report.mapping import (
         PrimaryCandidateContext,
         ReportMappingContext,
@@ -395,8 +386,7 @@ def test_build_system_cards_uses_domain_findings() -> None:
         strongest_location="Left Front",
     )
     aggregate = TestRun(
-        run=Run(run_id="test"),
-        configuration_snapshot=ConfigurationSnapshot(),
+        capture=RunCapture(run_id="test"),
         findings=(domain_f,),
         top_causes=(domain_f,),
     )

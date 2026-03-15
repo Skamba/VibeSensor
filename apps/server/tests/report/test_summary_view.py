@@ -6,11 +6,10 @@ from vibesensor.analysis._types import AnalysisSummary
 from vibesensor.boundaries.diagnostic_case import project_summary_through_domain
 from vibesensor.boundaries.test_steps import step_payloads_from_plan
 from vibesensor.domain import (
-    ConfigurationSnapshot,
     Finding,
     LocationHotspot,
     RecommendedAction,
-    Run,
+    RunCapture,
     TestRun,
     VibrationOrigin,
 )
@@ -157,8 +156,7 @@ class TestSummaryHelpers:
             ),
         )
         aggregate = TestRun(
-            run=Run(run_id="run-1"),
-            configuration_snapshot=ConfigurationSnapshot(),
+            capture=RunCapture(run_id="run-1"),
             findings=(primary,),
             top_causes=(primary,),
         )

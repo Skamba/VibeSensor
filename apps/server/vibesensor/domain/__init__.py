@@ -17,6 +17,10 @@ SensorPlacement
     A sensor's mounting position on the vehicle.
 Run
     Mutable capture lifecycle for one diagnostic measurement run.
+RunCapture
+    Immutable captured evidence from one completed Run.
+DiagnosticReasoning
+    Run-scoped reasoning model (observations, signatures, hypotheses).
 Measurement
     Value object representing a single multi-axis acceleration sample.
 SpeedSource
@@ -44,6 +48,7 @@ from .confidence_assessment import ConfidenceAssessment
 from .configuration_snapshot import ConfigurationSnapshot
 from .diagnosis import Diagnosis
 from .diagnostic_case import DiagnosticCase, DiagnosticCaseEpistemicRule
+from .diagnostic_reasoning import DiagnosticReasoning
 from .driving_phase import DrivingPhase
 from .driving_segment import DrivingSegment
 from .finding import (
@@ -61,6 +66,7 @@ from .observation import Observation
 from .recommended_action import RecommendedAction
 from .report import Report
 from .run import Run
+from .run_capture import RunCapture
 from .run_setup import RunSetup
 from .run_status import RUN_TRANSITIONS, RunStatus, transition_run
 from .run_suitability import RunSuitability, SuitabilityCheck
@@ -81,6 +87,7 @@ __all__ = [
     "Diagnosis",
     "DiagnosticCase",
     "DiagnosticCaseEpistemicRule",
+    "DiagnosticReasoning",
     "DrivingSegment",
     "DrivingPhase",
     "Finding",
@@ -95,6 +102,7 @@ __all__ = [
     "RUN_TRANSITIONS",
     "Report",
     "Run",
+    "RunCapture",
     "RunSetup",
     "RunStatus",
     "RunSuitability",
