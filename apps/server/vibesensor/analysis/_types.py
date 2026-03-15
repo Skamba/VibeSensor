@@ -1,4 +1,11 @@
-"""Shared lightweight typing aliases for the analysis package."""
+"""Shared lightweight typing aliases for the analysis package.
+
+Serialization TypedDicts (``FindingPayload``, ``FindingEvidenceMetrics``,
+``LocationHotspotPayload``, ``AnalysisSummary``, ``RunSuitabilityCheck``)
+are intentionally co-located here — the analysis pipeline constructs
+the dicts that conform to these shapes, while boundary decoders accept
+the broader ``Mapping[str, object]`` type for flexibility.
+"""
 
 from __future__ import annotations
 
