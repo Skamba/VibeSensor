@@ -29,7 +29,7 @@ from ..analysis.strength_labels import (
     strength_label,
     strength_text,
 )
-from ..boundaries._helpers import _has_structured_step_content, _payloads_by_id
+from ..boundaries._helpers import _payloads_by_id
 from ..boundaries.finding import finding_payload_from_domain
 from ..boundaries.run_suitability import run_suitability_payload
 from ..boundaries.vibration_origin import SuspectedVibrationOrigin, origin_payload_from_finding
@@ -559,7 +559,7 @@ def build_next_steps_from_summary(
 
     next_steps: list[NextStep] = []
     summary_steps = summary_test_plan(summary)
-    if aggregate is not None and not _has_structured_step_content(summary_steps):
+    if aggregate is not None and aggregate.recommended_actions:
         for action in aggregate.recommended_actions:
             next_steps.append(
                 NextStep(
