@@ -6,14 +6,14 @@ from dataclasses import dataclass, replace
 from enum import StrEnum
 from uuid import uuid4
 
-from .car import Car
-from .diagnosis import Diagnosis
-from .finding import Finding
-from .hypothesis import Hypothesis, HypothesisStatus
-from .recommended_action import RecommendedAction
-from .symptom import Symptom
-from .test_plan import TestPlan
-from .test_run import TestRun
+from vibesensor.domain.car import Car
+from vibesensor.domain.diagnosis import Diagnosis
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.hypothesis import Hypothesis, HypothesisStatus
+from vibesensor.domain.recommended_action import RecommendedAction
+from vibesensor.domain.symptom import Symptom
+from vibesensor.domain.test_plan import TestPlan
+from vibesensor.domain.test_run import TestRun
 
 __all__ = ["DiagnosticCase", "DiagnosticCaseEpistemicRule"]
 

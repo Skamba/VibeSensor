@@ -20,11 +20,11 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
-    from .confidence_assessment import ConfidenceAssessment
-    from .finding_evidence import FindingEvidence
-    from .location_hotspot import LocationHotspot
-    from .signature import Signature
-    from .vibration_origin import VibrationOrigin
+    from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+    from vibesensor.domain.finding_evidence import FindingEvidence
+    from vibesensor.domain.location_hotspot import LocationHotspot
+    from vibesensor.domain.signature import Signature
+    from vibesensor.domain.vibration_origin import VibrationOrigin
 
 __all__ = [
     "Finding",
@@ -96,7 +96,7 @@ class Finding:
     This is the first-class domain object for a finding.
     ``FindingPayload`` (the TypedDict in ``analysis._types``) remains as
     the serialization/payload shape; use
-    :func:`~vibesensor.boundaries.finding.finding_from_payload` to create
+    :func:`~vibesensor.shared.boundaries.finding.finding_from_payload` to create
     a domain ``Finding`` from a payload dict.
 
     ``finding_id`` is assigned during finalization (``F001``, ``F002``, …).

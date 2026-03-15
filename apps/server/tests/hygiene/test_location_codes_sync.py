@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from tests._paths import REPO_ROOT
-from vibesensor.locations import LOCATION_CODES
+from vibesensor.shared.ids.locations import LOCATION_CODES
 
 _CONSTANTS_TS = REPO_ROOT / "apps" / "ui" / "src" / "constants.ts"
 

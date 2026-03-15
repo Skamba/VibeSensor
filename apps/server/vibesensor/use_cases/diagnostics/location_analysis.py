@@ -1,0 +1,305 @@
+"""Location and speed-bin summary helpers for analysis findings."""
+
+from __future__ import annotations
+
+from collections import defaultdict
+from math import ceil, floor, log1p, pow
+
+from vibesensor.domain import LocationHotspot, VibrationSource
+from vibesensor.shared.constants import MULTI_SENSOR_CORROBORATION_DB
+from vibesensor.shared.ids.locations import has_any_wheel_location, is_wheel_location
+from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
+from vibesensor.use_cases.diagnostics._types import (
+    JsonObject,
+    LocationHotspotPayload,
+    MatchedPoint,
+    i18n_ref,
+)
+from vibesensor.use_cases.diagnostics.helpers import _speed_bin_label, _weighted_percentile
+
+NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
+
+
+def _weighted_percentile_speed(
+    speed_weight_pairs: list[tuple[float, float]],
+    percentile_0_to_1: float,
+) -> float | None:
+    # Filter out non-positive speeds before delegating to the generic helper.
+    valid = [(speed, weight) for speed, weight in speed_weight_pairs if speed > 0]
+    return _weighted_percentile(valid, percentile_0_to_1)
+
+
+def _weighted_speed_window_label(speed_weight_pairs: list[tuple[float, float]]) -> str | None:
+    p10 = _weighted_percentile_speed(speed_weight_pairs, 0.10)
+    p90 = _weighted_percentile_speed(speed_weight_pairs, 0.90)
+    if p10 is None or p90 is None:
+        return None
+    low = floor(min(p10, p90))
+    high = ceil(max(p10, p90))
+    # Note: floor(min(...)) ≤ ceil(max(...)) is guaranteed for any finite
+    # floats, so no explicit low/high swap is needed here.
+    if low == high:
+        return f"{low} km/h"
+    return f"{low}-{high} km/h"
+
+
+def _localization_confidence(
+    *,
+    dominance_ratio: float,
+    location_count: int,
+    total_samples: int,
+) -> float:
+    return LocationHotspot.compute_confidence(
+        dominance_ratio=dominance_ratio,
+        location_count=location_count,
+        total_samples=total_samples,
+    )
+
+
+def _score_locations_in_bin(
+    bin_label: str,
+    rows: list[JsonObject],
+    *,
+    corroboration_amp_multiplier: float,
+    connected_locations: set[str] | None,
+    suspected_source: str | None,
+) -> LocationHotspotPayload | None:
+    """Score and rank sensor locations within a single speed-bin.
+
+    Returns a candidate dict summarising the strongest location in this bin,
+    or ``None`` if no valid rows were found.
+    """
+    per_loc_scores: dict[str, list[float]] = defaultdict(list)
+    per_loc_sample_counts: dict[str, int] = defaultdict(int)
+    per_loc_corroborated_counts: dict[str, list[int]] = defaultdict(list)
+
+    for row in rows:
+        location = str(row.get("location") or "").strip()
+        amp = _as_float(row.get("amp"))
+        if not location or amp is None or amp <= 0:
+            continue
+
+        matched_hz = _as_float(row.get("matched_hz"))
+        rel_error = _as_float(row.get("rel_error"))
+        quality_weight = max(0.0, min(1.0, 1.0 - rel_error)) if rel_error is not None else 1.0
+
+        corroborating_locations: set[str] = set()
+        if matched_hz is not None and matched_hz > 0:
+            tolerance_hz = max(0.75, matched_hz * 0.03)
+            for peer in rows:
+                peer_location = str(peer.get("location") or "").strip()
+                peer_hz = _as_float(peer.get("matched_hz"))
+                if (
+                    not peer_location
+                    or peer_location == location
+                    or peer_hz is None
+                    or abs(peer_hz - matched_hz) > tolerance_hz
+                ):
+                    continue
+                corroborating_locations.add(peer_location)
+
+        corroborated_by_n_sensors = 1 + len(corroborating_locations)
+        corroboration_weight = (
+            corroboration_amp_multiplier if corroborated_by_n_sensors >= 2 else 1.0
+        )
+
+        per_loc_scores[location].append(amp * quality_weight * corroboration_weight)
+        per_loc_sample_counts[location] += 1
+        per_loc_corroborated_counts[location].append(corroborated_by_n_sensors)
+
+    ranked = sorted(
+        ((loc, sum(vals) / len(vals)) for loc, vals in per_loc_scores.items() if vals),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+    if not ranked:
+        return None
+
+    eligible_ranked = (
+        [item for item in ranked if item[0] in connected_locations]
+        if connected_locations is not None
+        else ranked
+    )
+    ranked_for_winner = eligible_ranked or ranked
+
+    # Source-aware localization: for wheel/tire diagnoses prefer wheel
+    # sensors as the fault source.
+    _prefer_wheel = (suspected_source or "").strip().lower() == VibrationSource.WHEEL_TIRE
+    if _prefer_wheel:
+        wheel_ranked = [item for item in ranked_for_winner if is_wheel_location(item[0])]
+        if wheel_ranked:
+            ranked_for_winner = wheel_ranked
+
+    top_loc, top_amp = ranked_for_winner[0]
+    top_count = int(per_loc_sample_counts.get(top_loc, 0))
+    second_loc = ranked_for_winner[1][0] if len(ranked_for_winner) > 1 else top_loc
+    second_count = (
+        int(per_loc_sample_counts.get(second_loc, 0)) if len(ranked_for_winner) > 1 else top_count
+    )
+    second_amp = ranked_for_winner[1][1] if len(ranked_for_winner) > 1 else top_amp
+    dominance = (top_amp / second_amp) if second_amp > 0 else 1.0
+    total_samples = sum(per_loc_sample_counts.values())
+    ambiguous = len(ranked_for_winner) > 1 and dominance < NEAR_TIE_DOMINANCE_THRESHOLD
+    display_location = f"ambiguous location: {top_loc} / {second_loc}" if ambiguous else top_loc
+    partial_coverage = bool(connected_locations is not None and top_loc not in connected_locations)
+    top_corroborated_by_n_sensors = max(per_loc_corroborated_counts.get(top_loc, [1]))
+    _no_wheel_sensors = _prefer_wheel and not has_any_wheel_location(
+        loc for loc, _ in ranked_for_winner
+    )
+    _raw_loc_conf = _localization_confidence(
+        dominance_ratio=dominance,
+        location_count=len(ranked_for_winner),
+        total_samples=total_samples,
+    )
+    _loc_conf = min(_raw_loc_conf, 0.30) if _no_wheel_sensors else _raw_loc_conf
+    _raw_weak_spatial = dominance < LocationHotspot.weak_spatial_threshold(len(ranked_for_winner))
+    return {
+        "speed_range": bin_label,
+        "location": display_location,
+        "mean_amp": top_amp,
+        "dominance_ratio": dominance,
+        "location_count": len(ranked_for_winner),
+        "top_location": top_loc,
+        "second_location": second_loc if len(ranked_for_winner) > 1 else None,
+        "top_location_samples": top_count,
+        "second_location_samples": second_count,
+        "corroborated_by_n_sensors": top_corroborated_by_n_sensors,
+        "total_samples": total_samples,
+        "ambiguous_location": ambiguous,
+        "ambiguous_locations": [top_loc, second_loc] if ambiguous else [],
+        "partial_coverage": partial_coverage,
+        "localization_confidence": _loc_conf,
+        "weak_spatial_separation": _raw_weak_spatial or _no_wheel_sensors,
+        "no_wheel_sensors": _no_wheel_sensors,
+    }
+
+
+def _location_speedbin_summary(
+    matches: list[MatchedPoint],
+    lang: str,
+    relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
+    connected_locations: set[str] | None = None,
+    suspected_source: str | None = None,
+) -> tuple[object, LocationHotspotPayload | None]:
+    """Return strongest location summary, optionally restricted to specific speed bins.
+
+    When ``relevant_speed_bins`` is provided, location ranking is computed only
+    from samples that fall inside those speed-bin labels (for example
+    ``{"90-100 km/h"}``). This allows order findings to localize the strongest
+    sensor in the same speed range where the order is most relevant.
+
+    When ``suspected_source`` is ``"wheel/tire"``, eligible wheel/corner
+    locations are preferred as fault sources.  Non-wheel sensors may appear
+    as transfer-path evidence but will not be selected as the strongest
+    location unless no wheel sensors are present.
+    """
+    allowed_bins = {
+        str(bin_label).strip()
+        for bin_label in (relevant_speed_bins or [])
+        if str(bin_label).strip()
+    }
+    grouped: dict[str, list[JsonObject]] = defaultdict(list)
+    for row in matches:
+        speed = _as_float(row.get("speed_kmh"))
+        amp = _as_float(row.get("amp"))
+        location = str(row.get("location") or "").strip()
+        if speed is None or speed <= 0 or amp is None or amp <= 0 or not location:
+            continue
+        speed_bin = _speed_bin_label(speed)
+        if allowed_bins and speed_bin not in allowed_bins:
+            continue
+        grouped[speed_bin].append(
+            {
+                "location": location,
+                "amp": amp,
+                "speed_kmh": speed,
+                "matched_hz": _as_float(row.get("matched_hz")),
+                "rel_error": _as_float(row.get("rel_error")),
+            },
+        )
+
+    if not grouped:
+        return "", None
+
+    per_bin_results: list[LocationHotspotPayload] = []
+    best: LocationHotspotPayload | None = None
+    corroboration_amp_multiplier = pow(10.0, MULTI_SENSOR_CORROBORATION_DB / 20.0)
+    for bin_label, rows in grouped.items():
+        if not rows:
+            continue
+
+        candidate = _score_locations_in_bin(
+            bin_label,
+            rows,
+            corroboration_amp_multiplier=corroboration_amp_multiplier,
+            connected_locations=connected_locations,
+            suspected_source=suspected_source,
+        )
+        if candidate is None:
+            continue
+        per_bin_results.append(candidate)
+        # Prefer bins that are both strong and sufficiently sampled.
+        # Pure mean-amplitude ranking lets tiny outlier bins dominate; this
+        # weighted score preserves amplitude leadership while rewarding evidence
+        # density via a logarithmic sample-count factor.
+        candidate_mean_amp = _as_float(candidate.get("mean_amp")) or 0.0
+        candidate_total_samples = _as_float(candidate.get("total_samples")) or 0.0
+        candidate_score = candidate_mean_amp * log1p(candidate_total_samples)
+        best_score = (
+            (_as_float(best.get("mean_amp")) or 0.0)
+            * log1p(_as_float(best.get("total_samples")) or 0.0)
+            if best is not None
+            else float("-inf")
+        )
+        if best is None or candidate_score > best_score:
+            best = candidate
+
+    if best is None:
+        return "", None
+
+    top_location = str(best.get("top_location") or "").strip()
+    speed_weight_pairs = [
+        (
+            _as_float(row.get("speed_kmh")) or 0.0,
+            _as_float(row.get("amp")) or 0.0,
+        )
+        for rows in grouped.values()
+        for row in rows
+        if str(row.get("location") or "").strip() == top_location
+    ]
+    if not speed_weight_pairs:
+        # Defensive fallback: top_location is always a key from per_loc_scores
+        # which is built from the same grouped rows, so this branch should not
+        # trigger in practice.  Guard against any future refactor that
+        # introduces a mismatch between the scored and grouped data structures.
+        speed_weight_pairs = [
+            (
+                _as_float(row.get("speed_kmh")) or 0.0,
+                _as_float(row.get("amp")) or 0.0,
+            )
+            for rows in grouped.values()
+            for row in rows
+        ]
+    weighted_speed_window = _weighted_speed_window_label(speed_weight_pairs)
+    if weighted_speed_window:
+        best["speed_range"] = weighted_speed_window
+
+    # Attach per-bin breakdown so callers can inspect per-speed-bin location
+    # rankings instead of only getting the global winner.
+    # Use detached copies to avoid self-referential structures when `best`
+    # points to one of the dicts in `per_bin_results`.
+    best_out: LocationHotspotPayload = {**best}
+    best_out["per_bin_results"] = [{**item} for item in per_bin_results]
+
+    sentence = i18n_ref(
+        "STRONGEST_AT_LOCATION_IN_SPEED_RANGE",
+        location=str(best_out.get("location") or ""),
+        speed_range=str(best_out.get("speed_range") or ""),
+        dominance=f"{(_as_float(best_out.get('dominance_ratio')) or 0.0):.2f}",
+        weak_note=(
+            i18n_ref("WEAK_SPATIAL_SEPARATION_NOTE")
+            if bool(best_out.get("weak_spatial_separation"))
+            else ""
+        ),
+    )
+    return sentence, best_out

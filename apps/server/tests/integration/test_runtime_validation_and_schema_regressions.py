@@ -23,11 +23,11 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from vibesensor.analysis.helpers import _corr_abs
-from vibesensor.api_models import CarUpsertRequest, SensorRequest, SpeedSourceRequest
-from vibesensor.history_db import HistoryDB
-from vibesensor.json_utils import sanitize_for_json
-from vibesensor.settings_store import SettingsStore
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.infra.config.settings_store import SettingsStore
+from vibesensor.shared.types.api_models import CarUpsertRequest, SensorRequest, SpeedSourceRequest
+from vibesensor.shared.utils.json_utils import sanitize_for_json
+from vibesensor.use_cases.diagnostics.helpers import _corr_abs
 
 # ------------------------------------------------------------------
 # 1. _corr_abs — NaN propagation guard

@@ -22,7 +22,7 @@ from typing import Final
 
 from typing_extensions import TypedDict
 
-from .strength_bands import bucket_for_strength
+from vibesensor.strength_bands import bucket_for_strength
 
 __all__ = [
     "compute_db",

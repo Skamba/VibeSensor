@@ -1,0 +1,292 @@
+"""Server release fetcher: download wheel artifacts from GitHub Releases.
+
+Follows the same patterns as :mod:`firmware_cache` for GitHub API access,
+HTTPS-only validation, and atomic staging.
+
+Release tag convention: ``server-v<CalVer>``  (e.g. ``server-v2025.6.15``).
+Asset pattern: ``vibesensor-*.whl``.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import logging
+import os
+import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+from urllib.request import Request, urlopen
+
+from vibesensor.shared.constants import GITHUB_REPO
+
+LOGGER = logging.getLogger(__name__)
+
+_DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
+
+# Shared download constants used by both server and firmware fetchers.
+DOWNLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB per read()
+"""Chunk size for streaming downloads.  Shared between
+:class:`ServerReleaseFetcher` and
+:class:`~vibesensor.use_cases.updates.firmware_cache.GitHubReleaseFetcher`."""
+
+_HASH_CHUNK_BYTES = 65536  # 64 KB per hash update
+
+
+@dataclass
+class ReleaseFetcherConfig:
+    """Configuration for fetching server releases from GitHub."""
+
+    server_repo: str = ""
+    github_token: str = ""
+    rollback_dir: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.server_repo:
+            self.server_repo = os.environ.get("VIBESENSOR_SERVER_REPO", GITHUB_REPO)
+        if not self.github_token:
+            self.github_token = os.environ.get("GITHUB_TOKEN", "")
+        if not self.rollback_dir:
+            self.rollback_dir = os.environ.get("VIBESENSOR_ROLLBACK_DIR", _DEFAULT_ROLLBACK_DIR)
+
+
+@dataclass
+class ReleaseInfo:
+    """Metadata about a discovered server release."""
+
+    tag: str
+    version: str
+    asset_name: str
+    asset_url: str
+    sha256: str = ""
+    published_at: str = ""
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "tag": self.tag,
+            "version": self.version,
+            "asset_name": self.asset_name,
+            "asset_url": self.asset_url,
+            "sha256": self.sha256,
+            "published_at": self.published_at,
+        }
+
+
+def validate_https_url(url: str, *, context: str = "operation") -> None:
+    """Raise ``ValueError`` if *url* does not use the HTTPS scheme."""
+    if not url.startswith("https://"):
+        raise ValueError(f"Refusing non-HTTPS URL for {context}: {url}")
+
+
+def github_api_headers(token: str = "") -> dict[str, str]:
+    """Build standard GitHub REST API request headers.
+
+    If *token* is non-empty it is included as a Bearer authorization header.
+    Used by both :class:`ServerReleaseFetcher` and
+    :class:`~vibesensor.use_cases.updates.firmware_cache.GitHubReleaseFetcher` so that the
+    header construction lives in one place.
+    """
+    headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
+
+
+class GitHubAPIClient:
+    """Shared base for classes that call the GitHub REST API.
+
+    Subclasses must set ``_github_token`` and ``_api_context`` before
+    calling any API methods.
+    """
+
+    _github_token: str = ""
+    _api_context: str = "github"
+
+    def _api_headers(self) -> dict[str, str]:
+        return github_api_headers(self._github_token)
+
+    def _api_get(self, url: str) -> Any:
+        """GET *url* and return the parsed JSON response."""
+        validate_https_url(url, context=self._api_context)
+        req = Request(url, headers=self._api_headers())
+        with urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+
+class ServerReleaseFetcher(GitHubAPIClient):
+    """Fetch server wheel releases from GitHub Releases."""
+
+    def __init__(self, config: ReleaseFetcherConfig | None = None) -> None:
+        self._config = config or ReleaseFetcherConfig()
+        self._github_token = self._config.github_token
+        self._api_context = "release"
+
+    _MAX_DOWNLOAD_BYTES = 200 * 1024 * 1024  # 200 MB hard limit
+    _MAX_DOWNLOAD_MB = _MAX_DOWNLOAD_BYTES // (1024 * 1024)
+
+    def _download_asset(self, url: str, dest: Path) -> None:
+        validate_https_url(url, context="release")
+        headers = self._api_headers()
+        headers["Accept"] = "application/octet-stream"
+        req = Request(url, headers=headers)
+        tmp = dest.with_suffix(".tmp")
+        max_bytes = self._MAX_DOWNLOAD_BYTES
+        chunk_size = DOWNLOAD_CHUNK_BYTES
+        try:
+            with urlopen(req, timeout=300) as resp:
+                total = 0
+                with tmp.open("wb") as f:
+                    while True:
+                        chunk = resp.read(chunk_size)
+                        if not chunk:
+                            break
+                        total += len(chunk)
+                        if total > max_bytes:
+                            raise ValueError(f"Asset exceeds {self._MAX_DOWNLOAD_MB} MB limit")
+                        f.write(chunk)
+                    f.flush()
+                    os.fsync(f.fileno())
+            tmp.replace(dest)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
+
+    def find_latest_release(self) -> ReleaseInfo:
+        """Find the latest server release (tag matching ``server-v*``).
+
+        Returns :class:`ReleaseInfo` with asset download details.
+        Raises ``ValueError`` if no matching release is found.
+        """
+        owner, repo = self._config.server_repo.split("/", 1)
+        url = f"https://api.github.com/repos/{owner}/{repo}/releases?per_page=50"
+        LOGGER.info("Querying releases from %s/%s", owner, repo)
+        releases = self._api_get(url)
+        if not isinstance(releases, list):
+            raise ValueError("Unexpected GitHub API response format")
+
+        for release in releases:
+            if release.get("draft", False):
+                continue
+            tag = release.get("tag_name", "")
+            if not tag.startswith("server-v"):
+                continue
+            version = tag.removeprefix("server-v")
+            asset = self._find_wheel_asset(release)
+            if asset is None:
+                continue
+            return ReleaseInfo(
+                tag=tag,
+                version=version,
+                asset_name=asset.get("name", ""),
+                asset_url=asset.get("url", ""),
+                sha256="",
+                published_at=release.get("published_at", ""),
+            )
+
+        raise ValueError(
+            f"No server release found with tag 'server-v*' in {self._config.server_repo}",
+        )
+
+    @staticmethod
+    def _find_wheel_asset(release: dict[str, Any]) -> dict[str, Any] | None:
+        """Find a .whl asset in a release."""
+        for asset in release.get("assets", []):
+            name = asset.get("name", "")
+            if name.startswith("vibesensor") and name.endswith(".whl"):
+                return asset  # type: ignore[no-any-return]
+        return None
+
+    def download_wheel(
+        self,
+        release: ReleaseInfo,
+        dest_dir: str | Path | None = None,
+    ) -> Path:
+        """Download the wheel for a release.
+
+        Returns the path to the downloaded ``.whl`` file.
+        """
+        if dest_dir is None:
+            dest_dir = Path(tempfile.mkdtemp(prefix="vibesensor-release-"))
+        dest_dir = Path(dest_dir)
+        dest_dir.mkdir(parents=True, exist_ok=True)
+
+        dest = dest_dir / release.asset_name
+        LOGGER.info("Downloading %s", release.asset_name)
+        self._download_asset(release.asset_url, dest)
+
+        h = hashlib.sha256()
+        with dest.open("rb") as f:
+            for chunk in iter(lambda: f.read(_HASH_CHUNK_BYTES), b""):
+                h.update(chunk)
+        sha = h.hexdigest()
+        release.sha256 = sha
+        LOGGER.info("Downloaded %s (sha256=%s)", release.asset_name, sha)
+        return dest
+
+    def check_update_available(self, current_version: str) -> ReleaseInfo | None:
+        """Check if a newer release is available.
+
+        Returns :class:`ReleaseInfo` if a newer version exists, ``None``
+        if already up-to-date or the latest release is older.
+        Raises on API errors.
+        """
+        release = self.find_latest_release()
+        if release.version == current_version:
+            LOGGER.info("Already up-to-date (version=%s)", current_version)
+            return None
+        # Guard against suggesting downgrades: compare versions so that only
+        # genuinely newer releases are reported.
+        try:
+            from packaging.version import Version
+
+            if Version(release.version) <= Version(current_version):
+                LOGGER.info(
+                    "Latest release %s is not newer than current %s; skipping",
+                    release.version,
+                    current_version,
+                )
+                return None
+        except (ImportError, ValueError):
+            # If packaging is unavailable or versions are unparseable,
+            # fall through and treat any difference as an update.
+            LOGGER.warning(
+                "Could not compare versions %r vs %r; treating as update",
+                release.version,
+                current_version,
+                exc_info=True,
+            )
+        LOGGER.info(
+            "Update available: %s → %s",
+            current_version,
+            release.version,
+        )
+        return release
+
+
+def fetch_latest_wheel_cli() -> None:
+    """CLI entry point: fetch the latest server release wheel."""
+    import argparse
+    import sys
+
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+    parser = argparse.ArgumentParser(
+        description="Fetch the latest VibeSensor server wheel from GitHub Releases",
+    )
+    parser.add_argument("--repo", default="", help="GitHub owner/repo")
+    parser.add_argument("--dest", default=".", help="Destination directory for the wheel")
+    args = parser.parse_args()
+
+    config = ReleaseFetcherConfig(server_repo=args.repo)
+    fetcher = ServerReleaseFetcher(config)
+
+    try:
+        release = fetcher.find_latest_release()
+        print(f"Latest release: {release.tag} ({release.version})")
+        whl = fetcher.download_wheel(release, dest_dir=args.dest)
+        print(f"Downloaded: {whl}")
+        print(f"SHA256: {release.sha256}")
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)

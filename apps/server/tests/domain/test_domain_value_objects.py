@@ -14,15 +14,6 @@ import dataclasses
 
 import pytest
 
-from vibesensor.boundaries.finding import finding_from_payload
-from vibesensor.boundaries.finding_evidence import finding_evidence_from_metrics
-from vibesensor.boundaries.location_hotspot import location_hotspot_from_payload
-from vibesensor.boundaries.run_suitability import run_suitability_from_payload
-from vibesensor.boundaries.speed_profile import speed_profile_from_stats
-from vibesensor.boundaries.vibration_origin import (
-    origin_payload_from_finding,
-    vibration_origin_from_payload,
-)
 from vibesensor.domain import (
     ConfidenceAssessment,
     ConfigurationSnapshot,
@@ -52,6 +43,15 @@ from vibesensor.domain import (
 )
 from vibesensor.domain import (
     TestPlan as DomainTestPlan,
+)
+from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.finding_evidence import finding_evidence_from_metrics
+from vibesensor.shared.boundaries.location_hotspot import location_hotspot_from_payload
+from vibesensor.shared.boundaries.run_suitability import run_suitability_from_payload
+from vibesensor.shared.boundaries.speed_profile import speed_profile_from_stats
+from vibesensor.shared.boundaries.vibration_origin import (
+    origin_payload_from_finding,
+    vibration_origin_from_payload,
 )
 
 
@@ -546,7 +546,7 @@ class TestVibrationOrigin:
 
     def test_suspected_vibration_origin_is_boundary_type(self) -> None:
         """SuspectedVibrationOrigin is importable from boundaries, not analysis."""
-        from vibesensor.boundaries.vibration_origin import SuspectedVibrationOrigin
+        from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
 
         origin: SuspectedVibrationOrigin = {
             "location": "front_left",
@@ -1665,7 +1665,7 @@ class TestTestRunWithValueObjects:
         assert result.suitability.is_usable
 
     def test_from_summary_extracts_speed_profile(self) -> None:
-        from vibesensor.boundaries.diagnostic_case import test_run_from_summary
+        from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 
         summary = {
             "run_id": "test-123",
@@ -1688,7 +1688,7 @@ class TestTestRunWithValueObjects:
         assert result.speed_profile.cruise_fraction == pytest.approx(0.65)
 
     def test_from_summary_extracts_suitability(self) -> None:
-        from vibesensor.boundaries.diagnostic_case import test_run_from_summary
+        from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 
         summary = {
             "run_id": "test-123",
@@ -1705,7 +1705,7 @@ class TestTestRunWithValueObjects:
         assert len(result.suitability.checks) == 2
 
     def test_from_summary_no_speed_stats(self) -> None:
-        from vibesensor.boundaries.diagnostic_case import test_run_from_summary
+        from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
 
         summary = {"run_id": "test-123", "findings": [], "top_causes": []}
         result = test_run_from_summary(summary)

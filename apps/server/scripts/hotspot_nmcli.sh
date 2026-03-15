@@ -124,7 +124,7 @@ python3 - "${CONFIG_PATH}" <<'PY'
 import pathlib
 import sys
 
-from vibesensor.config import DEFAULT_CONFIG
+from vibesensor.app.settings import DEFAULT_CONFIG
 
 defaults = {k: v for k, v in DEFAULT_CONFIG["ap"].items() if k != "self_heal"}
 

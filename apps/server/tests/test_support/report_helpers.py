@@ -8,20 +8,20 @@ from typing import Any
 
 import pytest
 
-from vibesensor.analysis import location_analysis as _test_plan_module
-from vibesensor.analysis import (
-    order_analysis as _order_analysis_module,
-)
-from vibesensor.analysis import (
-    order_analysis as order_findings_module,
-)
-from vibesensor.analysis.order_analysis import (
-    _build_order_findings as _findings_build_order_findings,
-)
-from vibesensor.runlog import (
+from vibesensor.adapters.persistence.runlog import (
     append_jsonl_records,
     create_run_end_record,
     create_run_metadata,
+)
+from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
+from vibesensor.use_cases.diagnostics import (
+    order_analysis as _order_analysis_module,
+)
+from vibesensor.use_cases.diagnostics import (
+    order_analysis as order_findings_module,
+)
+from vibesensor.use_cases.diagnostics.order_analysis import (
+    _build_order_findings as _findings_build_order_findings,
 )
 
 # Canonical run-end record reused across report tests.
