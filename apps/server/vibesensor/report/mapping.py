@@ -905,12 +905,18 @@ def build_version_marker() -> str:
 
 def prepare_report_mapping_context(
     summary: AnalysisSummary,
+    *,
+    test_run: TestRun | None = None,
 ) -> ReportMappingContext:
     """Extract structural summary context for report mapping.
 
     Builds a domain ``TestRun`` aggregate from the summary dict
     so that downstream business decisions (effective-cause selection,
     reference-gap detection, strength lookup) are domain-first.
+
+    When *test_run* is supplied, reconstruction is skipped and the
+    caller-provided aggregate is used directly (avoids double
+    reconstruction when the caller already holds a ``TestRun``).
     """
     meta = summary_metadata(summary)
     car_name = str(meta.get("car_name") or "").strip() or None
@@ -928,9 +934,12 @@ def prepare_report_mapping_context(
     sensor_locations_active = summary_sensor_locations_active(summary)
 
     # Build domain aggregate for domain-first decisions downstream
-    from ..boundaries.diagnostic_case import test_run_from_summary
+    if test_run is None:
+        from ..boundaries.diagnostic_case import test_run_from_summary
 
-    domain_aggregate = test_run_from_summary(summary)
+        domain_aggregate = test_run_from_summary(summary)
+    else:
+        domain_aggregate = test_run
 
     findings = [
         finding_payload_from_domain(finding)
@@ -1124,12 +1133,19 @@ def build_report_from_summary(summary: dict[str, object]) -> Report:
     )
 
 
-def map_summary(summary: AnalysisSummary) -> ReportTemplateData:
+def map_summary(
+    summary: AnalysisSummary,
+    *,
+    test_run: TestRun | None = None,
+) -> ReportTemplateData:
     """Map a run summary dict into the final report template data model.
 
     Constructs a domain :class:`~vibesensor.domain.Report` as the
     high-level entry point, then delegates to the template-data builder
     for PDF-specific rendering fields.
+
+    When *test_run* is supplied, reconstruction from the summary dict is
+    skipped and the caller-provided aggregate is used directly.
     """
     lang = str(normalize_lang(summary.get("lang")))
     report = build_report_from_summary(summary)  # type: ignore[arg-type]
@@ -1137,7 +1153,7 @@ def map_summary(summary: AnalysisSummary) -> ReportTemplateData:
     def tr(key: str, **kw: object) -> str:
         return str(_tr(lang, key, **kw))
 
-    return _build_report_template_data(summary, report=report, lang=lang, tr=tr)
+    return _build_report_template_data(summary, report=report, lang=lang, tr=tr, test_run=test_run)
 
 
 def _build_report_template_data(
@@ -1146,13 +1162,14 @@ def _build_report_template_data(
     report: Report,
     lang: str,
     tr: Callable[..., str],
+    test_run: TestRun | None = None,
 ) -> ReportTemplateData:
     """Map a summary dict into the final report template data structure.
 
     The *report* domain object provides high-level metadata; rendering-
     specific fields are resolved from the full *summary* dict.
     """
-    context = prepare_report_mapping_context(summary)
+    context = prepare_report_mapping_context(summary, test_run=test_run)
     primary = resolve_primary_report_candidate(summary, context=context, tr=tr, lang=lang)
     observed = context.observed_signature(primary)
     system_cards = build_system_cards(

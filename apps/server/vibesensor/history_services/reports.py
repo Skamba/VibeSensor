@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 from ..backend_types import CarConfigPayload, HistoryRunPayload
-from ..boundaries.diagnostic_case import project_summary_through_domain
+from ..boundaries.diagnostic_case import project_summary_through_domain, test_run_from_summary
 from ..exceptions import AnalysisNotReadyError, ProcessingError
 from ..json_types import JsonObject, is_json_object
 from ..report.mapping import map_summary
@@ -30,6 +30,7 @@ from .helpers import (
 )
 
 if TYPE_CHECKING:
+    from ..domain import TestRun
     from ..history_db import HistoryDB
     from ..settings_store import SettingsStore
 
@@ -54,6 +55,7 @@ class HistoryReportRequest:
     cache_key: ReportPdfCacheKey
     filename: str
     analysis_summary: JsonObject
+    domain_test_run: TestRun | None = None
 
 
 class HistoryReportService:
@@ -74,7 +76,10 @@ class HistoryReportService:
 
         pdf = await self._pdf_cache.get_or_build(
             request.cache_key,
-            lambda: self._build_pdf_bytes(request.analysis_summary),
+            lambda: self._build_pdf_bytes(
+                request.analysis_summary,
+                test_run=request.domain_test_run,
+            ),
             run_id=run_id,
         )
         return HistoryReportPdf(content=pdf, filename=request.filename)
@@ -99,7 +104,11 @@ class HistoryReportService:
             analysis,
             current_active_car_snapshot=current_active_car_snapshot,
         )
-        analysis_summary = project_summary_through_domain(analysis_summary)
+        # Build TestRun once — used for both dict canonicalization and report mapping
+        domain_test_run = test_run_from_summary(analysis_summary)
+        analysis_summary = project_summary_through_domain(
+            analysis_summary, test_run=domain_test_run,
+        )
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
@@ -110,13 +119,21 @@ class HistoryReportService:
             cache_key=cache_key,
             filename=f"{safe_filename(run_id)}_report.pdf",
             analysis_summary=analysis_summary,
+            domain_test_run=domain_test_run,
         )
 
     @staticmethod
-    def _build_pdf_bytes(analysis_summary: JsonObject) -> bytes:
+    def _build_pdf_bytes(
+        analysis_summary: JsonObject,
+        *,
+        test_run: TestRun | None = None,
+    ) -> bytes:
         from ..analysis import AnalysisSummary
 
-        mapped_summary = map_summary(cast("AnalysisSummary", analysis_summary))
+        mapped_summary = map_summary(
+            cast("AnalysisSummary", analysis_summary),
+            test_run=test_run,
+        )
         return build_report_pdf(mapped_summary)
 
     @staticmethod

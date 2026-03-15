@@ -237,15 +237,24 @@ def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCas
     return case.add_run(test_run)
 
 
-def project_summary_through_domain(summary: Mapping[str, object]) -> dict[str, object]:
-    """Return *summary* with domain-owned fields rebuilt from aggregates."""
+def project_summary_through_domain(
+    summary: Mapping[str, object],
+    *,
+    test_run: TestRun | None = None,
+) -> dict[str, object]:
+    """Return *summary* with domain-owned fields rebuilt from aggregates.
+
+    When *test_run* is supplied, reconstruction is skipped and the
+    provided aggregate is used directly.
+    """
     projected = dict(summary)
     raw_findings = summary.get("findings")
     raw_top_causes = summary.get("top_causes")
     if not isinstance(raw_findings, list) and not isinstance(raw_top_causes, list):
         return projected
 
-    test_run = test_run_from_summary(summary)
+    if test_run is None:
+        test_run = test_run_from_summary(summary)
 
     projected["findings"] = [
         finding_payload_from_domain(finding)
