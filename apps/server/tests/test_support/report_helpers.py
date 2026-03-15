@@ -8,20 +8,20 @@ from typing import Any
 
 import pytest
 
-from vibesensor.analysis import location_analysis as _test_plan_module
-from vibesensor.analysis import (
-    order_analysis as _order_analysis_module,
-)
-from vibesensor.analysis import (
-    order_analysis as order_findings_module,
-)
-from vibesensor.analysis.order_analysis import (
-    _build_order_findings as _findings_build_order_findings,
-)
-from vibesensor.runlog import (
+from vibesensor.adapters.persistence.runlog import (
     append_jsonl_records,
     create_run_end_record,
     create_run_metadata,
+)
+from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
+from vibesensor.use_cases.diagnostics import (
+    order_analysis as _order_analysis_module,
+)
+from vibesensor.use_cases.diagnostics import (
+    order_analysis as order_findings_module,
+)
+from vibesensor.use_cases.diagnostics.order_analysis import (
+    _build_order_findings as _findings_build_order_findings,
 )
 
 # Canonical run-end record reused across report tests.
@@ -331,7 +331,7 @@ def call_build_order_findings(
 
 def max_non_ref_confidence(findings: tuple | list) -> float:
     """Return the highest confidence among non-reference findings."""
-    from vibesensor.domain.finding import Finding
+    from vibesensor.domain.diagnostics.finding import Finding
 
     return max(
         float(f.confidence or 0.0) if isinstance(f, Finding) else float(f.get("confidence") or 0.0)

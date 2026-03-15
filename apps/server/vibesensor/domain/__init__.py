@@ -43,41 +43,45 @@ VibrationReading
     Value object representing a processed vibration measurement in dB.
 """
 
-from .car import Car, TireSpec
-from .confidence_assessment import ConfidenceAssessment
-from .configuration_snapshot import ConfigurationSnapshot
-from .diagnosis import Diagnosis
-from .diagnostic_case import DiagnosticCase, DiagnosticCaseEpistemicRule
-from .diagnostic_reasoning import DiagnosticReasoning
-from .driving_phase import DrivingPhase
-from .driving_segment import DrivingSegment
-from .finding import (
+from .diagnostics import (
+    ConfidenceAssessment,
+    Diagnosis,
+    DiagnosticCase,
+    DiagnosticCaseEpistemicRule,
+    DiagnosticReasoning,
     Finding,
+    FindingEvidence,
     FindingKind,
+    Hypothesis,
+    HypothesisStatus,
+    LocationHotspot,
+    Observation,
+    RecommendedAction,
+    RunSuitability,
+    Signature,
+    SpeedProfile,
+    SuitabilityCheck,
+    Symptom,
+    TestPlan,
+    VibrationOrigin,
     VibrationSource,
     speed_band_sort_key,
     speed_bin_label,
 )
-from .finding_evidence import FindingEvidence
-from .hypothesis import Hypothesis, HypothesisStatus
-from .location_hotspot import LocationHotspot
-from .measurement import Measurement, VibrationReading
-from .observation import Observation
-from .recommended_action import RecommendedAction
-from .report import Report
-from .run import Run
-from .run_capture import RunCapture
-from .run_setup import RunSetup
-from .run_status import RUN_TRANSITIONS, RunStatus, transition_run
-from .run_suitability import RunSuitability, SuitabilityCheck
-from .sensor import Sensor, SensorPlacement
-from .signature import Signature
-from .speed_profile import SpeedProfile
-from .speed_source import SpeedSource, SpeedSourceKind
-from .symptom import Symptom
-from .test_plan import TestPlan
-from .test_run import TestRun
-from .vibration_origin import VibrationOrigin
+from .reporting import Report
+from .run import RUN_TRANSITIONS, Run, RunCapture, RunSetup, RunStatus, TestRun, transition_run
+from .sensing import (
+    ConfigurationSnapshot,
+    DrivingPhase,
+    DrivingSegment,
+    Measurement,
+    Sensor,
+    SensorPlacement,
+    SpeedSource,
+    SpeedSourceKind,
+    VibrationReading,
+)
+from .vehicle import Car, TireSpec
 
 __all__ = [
     # Primary domain names (prefer these)

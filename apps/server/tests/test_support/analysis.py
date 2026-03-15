@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from vibesensor.analysis import summarize_run_data
+from vibesensor.use_cases.diagnostics import summarize_run_data
 
 from .core import standard_metadata
 

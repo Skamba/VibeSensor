@@ -12,20 +12,18 @@ FastAPI backend for VibeSensor. It ingests UDP telemetry from ESP32 sensor nodes
 ## Current architecture
 
 ```text
-ESP32 nodes -> udp_data_rx.py -> processing/ + analysis/ -> runtime/ -> routes/ + ws_hub.py -> apps/ui
-                                           \-> metrics_log/ + history_db/ -> history_services/ -> report/
+ESP32 nodes -> adapters/udp + adapters/gps -> infra/processing -> infra/runtime -> adapters/http + adapters/websocket -> apps/ui
+                                                            \-> infra/metrics + adapters/persistence -> use_cases/history -> use_cases/reporting + adapters/pdf
 ```
 
 Backend ownership boundaries:
 
-- `app.py`: FastAPI app factory and startup entry.
-- `routes/`: HTTP and WebSocket route groups.
-- `runtime/`: service builders, flat `RuntimeState`, processing loop, WebSocket broadcast, and lifecycle management.
-- `processing/`, `analysis/`: signal processing and findings logic.
-- `metrics_log/`, `history_db/`, `history_services/`, `runlog.py`: recording, persistence, and exports. Inside `metrics_log/`, `post_analysis.py` owns the background analysis queue; `logger.py` is the `RunRecorder` façade that directly manages session state and persistence coordination. The `history_services/` package owns the domain-logic layer above `HistoryDB` — run query/delete, PDF report generation, CSV/ZIP exports.
-- `report/`: PDF rendering pipeline.
-- `update/`: wheel-based update flow.
-- `hotspot/`: Wi-Fi AP monitoring, parsing, and self-heal infrastructure.
+- `app/`: FastAPI bootstrap (`bootstrap.py`), runtime assembly (`container.py`), and config loading (`settings.py`).
+- `domain/`: domain-first aggregates and value objects grouped by `run/`, `diagnostics/`, `vehicle/`, `sensing/`, `reporting/`, and `updates/`.
+- `use_cases/`: post-stop diagnostics, history orchestration, reporting assembly, and update workflows.
+- `adapters/`: HTTP routes/models/schema export, WebSocket hub/schema export, persistence boundaries + SQLite/history I/O, PDF rendering, UDP transport, GPS ingestion, and simulator tooling.
+- `infra/`: runtime coordination, live processing, worker pool, config stores, hotspot management, and metrics/recording infrastructure.
+- `cli/`: server/report/config entry points.
 
 ## Important directories
 
@@ -77,7 +75,7 @@ Common runtime files under `apps/server/data/` include:
 
 ## HTTP and WebSocket surface
 
-The API surface is implemented in `apps/server/vibesensor/routes/` and assembled by `routes/__init__.py`.
+The API surface is implemented in `apps/server/vibesensor/adapters/http/routes/` and assembled by `adapters/http/routes/__init__.py`.
 
 Current route groups:
 
@@ -101,11 +99,11 @@ Generate a PDF from a saved run:
 vibesensor-report path/to/run.jsonl --output report.pdf --summary-json summary.json
 ```
 
-The public PDF entrypoint is `apps/server/vibesensor/report/pdf_engine.py`. Page composition lives in focused modules under `report/`.
+The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`. Report assembly lives in `use_cases/reporting/`, and page composition/rendering stays in `adapters/pdf/`.
 
 ## Updates
 
-Production devices use the wheel-based updater in `apps/server/vibesensor/update/`, with `manager.py` as the public facade over the focused updater modules.
+Production devices use the wheel-based updater flow under `apps/server/vibesensor/use_cases/updates/`, with update state/value objects in `domain/updates/`.
 
 - Normal delivery should go through release wheels.
 - Do not rely on manual edits inside deployed `site-packages` as a normal workflow.
@@ -121,6 +119,6 @@ python3 tools/tests/pytest_progress.py --show-test-names apps/server/tests
 make test-all
 ```
 
-`make typecheck-backend` is the enforced backend static-typing gate for app, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages. Use `docs/testing.md` for the full test map. Start with the matching feature directory under `apps/server/tests/`, then add `integration/` coverage when the behavior crosses package boundaries.
+`make typecheck-backend` is the enforced backend static-typing gate for `app/`, `adapters/`, `infra/`, `use_cases/`, and the high-risk persistence/update packages. Use `docs/testing.md` for the full test map. Start with the matching feature directory under `apps/server/tests/unit/`, then add `integration/` coverage when the behavior crosses package boundaries.
 
 When tightening Python types, treat `Any` as a smell rather than a shortcut: prefer shared `JsonValue`/`JsonObject` aliases for persisted JSON, `TypedDict`/dataclass contracts for nested payloads, and `ParamSpec` for generic callable wrappers so mypy reflects the real runtime contract instead of a permissive fallback.

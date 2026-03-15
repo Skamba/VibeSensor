@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Any
 
-from vibesensor.boundaries.finding import finding_from_payload
+from vibesensor.adapters.persistence.boundaries.finding import finding_from_payload
 
 from .analysis import extract_top, top_confidence, top_corner_label
 

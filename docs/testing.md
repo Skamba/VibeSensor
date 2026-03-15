@@ -9,59 +9,51 @@
 
 ## Layout
 
-The test tree is feature-based. Most directories mirror the backend package or module they cover.
+The server test tree now mirrors the refactored backend layers.
 
 ```text
 apps/server/tests/
 ├── conftest.py
 ├── _paths.py
 ├── test_support/
-├── analysis/
-├── api/
-├── app/
-├── car_library/
-├── config/
-├── diagnostics/
-├── domain/
-├── gps/
-├── history/
-├── hotspot/
-├── hygiene/
+├── unit/
+│   ├── app/
+│   ├── domain/
+│   ├── use_cases/
+│   ├── adapters/
+│   ├── infra/
+│   └── shared/
 ├── integration/
-├── metrics_log/
-├── processing/
-├── protocol/
-├── report/
-├── update/
-└── websocket/
+│   ├── api/
+│   ├── persistence/
+│   ├── reporting/
+│   ├── runtime/
+│   └── websocket/
+└── architecture/
 ```
 
 ## Where tests belong
 
 | If you change... | Start with... |
 |---|---|
-| `vibesensor/analysis/*` | `apps/server/tests/analysis/` |
-| `vibesensor/report/*`, `report_i18n.py` | `apps/server/tests/report/` |
-| `vibesensor/routes/*` | `apps/server/tests/api/` |
-| `vibesensor/app.py`, `runtime/*`, `worker_pool.py` | `apps/server/tests/app/` |
-| `vibesensor/history_db/*`, `history_services/*`, `runlog.py` | `apps/server/tests/history/` |
-| `vibesensor/update/*` | `apps/server/tests/update/` |
-| `vibesensor/processing/*` | `apps/server/tests/processing/` |
-| `vibesensor/ws_hub.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
-| `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
-| `vibesensor/analysis/order_bands.py` | `apps/server/tests/diagnostics/` |
-| `vibesensor/domain/*`, `vibesensor/boundaries/*`, `backend_types.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |
-| `vibesensor/gps_speed.py` | `apps/server/tests/gps/` |
-| `vibesensor/protocol.py`, `udp_*.py` | `apps/server/tests/protocol/` |
-| `vibesensor/metrics_log/*` | `apps/server/tests/metrics_log/` |
-| `vibesensor/car_library.py` and related data | `apps/server/tests/car_library/` |
-| `vibesensor/hotspot/*` | `apps/server/tests/hotspot/` |
-| `vibesensor/locations.py` | `apps/server/tests/analysis/` |
+| `vibesensor/use_cases/diagnostics/*` | `apps/server/tests/unit/use_cases/diagnostics/` |
+| `vibesensor/use_cases/reporting/*`, `vibesensor/adapters/pdf/*` | `apps/server/tests/unit/use_cases/reporting/` or `apps/server/tests/unit/adapters/pdf/` |
+| `vibesensor/adapters/http/*` | `apps/server/tests/unit/adapters/http/` |
+| `vibesensor/app/*`, `vibesensor/infra/runtime/*`, `vibesensor/infra/workers/*` | `apps/server/tests/unit/app/` and `apps/server/tests/unit/infra/runtime/` |
+| `vibesensor/adapters/persistence/*`, `vibesensor/use_cases/history/*` | `apps/server/tests/unit/adapters/persistence/` and `apps/server/tests/unit/use_cases/history/` |
+| `vibesensor/use_cases/updates/*`, `vibesensor/domain/updates/*` | `apps/server/tests/unit/use_cases/updates/` |
+| `vibesensor/infra/processing/*`, `vibesensor/infra/metrics/*` | `apps/server/tests/unit/infra/processing/` and `apps/server/tests/unit/infra/metrics/` |
+| `vibesensor/adapters/websocket/*` | `apps/server/tests/unit/adapters/websocket/` |
+| `vibesensor/app/settings.py`, `vibesensor/infra/config/*` | `apps/server/tests/unit/infra/config/` |
+| `vibesensor/domain/*` | `apps/server/tests/unit/domain/` |
+| `vibesensor/adapters/gps/*` | `apps/server/tests/unit/adapters/gps/` |
+| `vibesensor/adapters/udp/*` | `apps/server/tests/unit/adapters/udp/` |
+| shared helpers like `json_utils` / payload types | `apps/server/tests/unit/shared/` |
 
 Use cross-cutting directories when a test is intentionally broader than one package boundary:
 
 - `apps/server/tests/integration/`: scenario, pipeline, multi-module behavior, and bug-fix regressions spanning multiple subsystems.
-- `apps/server/tests/hygiene/`: architecture guards and repo hygiene.
+- `apps/server/tests/architecture/`: architecture guards, type-boundary audits, and repo hygiene.
 
 Regression tests live alongside the feature they primarily test. Cross-cutting
 regressions that span multiple subsystems go in `integration/`.
@@ -94,9 +86,9 @@ make test-all
 act -W .github/workflows/ci.yml
 
 # Single feature area
-pytest -q apps/server/tests/report/
-pytest -q apps/server/tests/history/
-pytest -q apps/server/tests/update/
+pytest -q apps/server/tests/unit/use_cases/reporting/
+pytest -q apps/server/tests/unit/adapters/persistence/
+pytest -q apps/server/tests/unit/use_cases/updates/
 
 # Cross-cutting scopes
 pytest -q apps/server/tests/integration/
@@ -198,12 +190,12 @@ cd apps/server && python -m pytest -q --cov=vibesensor --cov-report=term-missing
 Coverage guidance:
 
 - Treat coverage as a risk-finding tool, not the only quality signal.
-- High-risk backend areas such as `analysis/`, `processing/`, `history_db/`, and `update/` should stay above the repo-wide baseline whenever practical.
+- High-risk backend areas such as `use_cases/diagnostics/`, `infra/processing/`, `adapters/persistence/history_db/`, and `use_cases/updates/` should stay above the repo-wide baseline whenever practical.
 
 The default CI-parity suite now mirrors these blocking GitHub checks:
 
 - `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, docs lint, WS schema sync, and HTTP API schema sync.
-- `backend-typecheck`: mypy on the enforced backend slice covering app, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages.
+- `backend-typecheck`: mypy on the enforced backend slice covering `app/`, `adapters/`, `infra/`, `use_cases/`, and the high-risk persistence/update packages.
 - `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
 - `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
 - `ui-smoke`, `backend-tests`, `e2e`: required test jobs.

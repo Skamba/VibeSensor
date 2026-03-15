@@ -4,13 +4,13 @@ applyTo: "apps/server/**"
 Backend (python `apps/server/`)
 - Shared workflow/validation rules live in `.github/instructions/general.instructions.md`; this file only captures backend-specific deltas.
 - Backend ownership boundaries:
-	- `apps/server/vibesensor/app.py`: FastAPI app factory and CLI-facing startup entry.
-	- `apps/server/vibesensor/runtime/builders.py`: `build_runtime()` constructs the flat `RuntimeState`.
-	- `apps/server/vibesensor/routes/`: HTTP and WebSocket route groups, assembled by `routes/__init__.py`.
-	- `apps/server/vibesensor/runtime/`: subsystem ownership, lifecycle coordination, processing loop, and websocket broadcast state; routes receive `RuntimeState` directly.
-	- `apps/server/vibesensor/history_db/`: SQLite-backed history and settings persistence.
-	- `apps/server/vibesensor/report/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
-	- `apps/server/vibesensor/domain/`: DDD-aligned domain model package. Each primary domain object has its own file; includes `FindingKind` enum, `RunStatus` state machine, and all domain queries. See `docs/domain-model.md` for the full relationship map and file layout.
+	- `apps/server/vibesensor/app/bootstrap.py`: FastAPI app factory and CLI-facing startup entry.
+	- `apps/server/vibesensor/app/container.py`: `build_runtime()` constructs the flat `RuntimeState`.
+	- `apps/server/vibesensor/adapters/http/routes/`: HTTP and WebSocket route groups.
+	- `apps/server/vibesensor/infra/runtime/`: subsystem ownership, lifecycle coordination, processing loop, and websocket broadcast state; HTTP routes receive `RuntimeState` directly.
+	- `apps/server/vibesensor/adapters/persistence/history_db/`: SQLite-backed history and settings persistence.
+	- `apps/server/vibesensor/adapters/pdf/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
+	- `apps/server/vibesensor/domain/`: DDD-aligned domain model package split into `run/`, `diagnostics/`, `vehicle/`, `sensing/`, `reporting/`, and `updates/`. Consumers import from `vibesensor.domain`.
 - Domain-first modeling rules:
 	- Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
 	- Each primary domain object lives in its own file under `vibesensor/domain/`. Consumers import from `vibesensor.domain`, not from individual module files.
@@ -22,12 +22,12 @@ Backend (python `apps/server/`)
 	- Keep transient/impact events visible in report output, but not promoted above likely persistent faults by default.
 	- Validate report-facing output (rendered/report API/PDF text and ordering), not just internal helper outputs.
 	- When user-facing report text changes, update `apps/server/data/report_i18n.json`.
-	- `apps/server/vibesensor/update/`: wheel-based updater package; `manager.py` is the public facade with workflow orchestration and validation; other modules handle Wi-Fi, releases, ESP flash, firmware cache, release validation, install and rollback, and status. Do not add backward-compatibility shims, static method passthroughs, or module-level aliases in `update/`; when methods move to sub-modules, update callers directly.
+	- `apps/server/vibesensor/use_cases/updates/` + `apps/server/vibesensor/domain/updates/`: wheel-based updater workflow and update state/value objects. Do not add backward-compatibility shims, static method passthroughs, or module-level aliases; when methods move, update callers directly.
 - Install: `python -m pip install -e "./apps/server[dev]"` (used by CI).
-- Backend type gate: `make typecheck-backend` runs the enforced mypy slice for app, runtime/routes, core typed-boundary modules, `history_services/`, and the high-risk `analysis/`, `processing/`, `history_db/`, `metrics_log/`, and `update/` packages.
+- Backend type gate: `make typecheck-backend` runs the enforced mypy slice for `app/`, `adapters/`, `infra/runtime/`, `use_cases/history/`, and the high-risk `use_cases/diagnostics/`, `infra/processing/`, `adapters/persistence/history_db/`, `infra/metrics/`, and `use_cases/updates/` packages.
 - Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject` aliases) over broad `Any` when shaping analysis, report, and persistence data.
 - Treat `Any` as a design smell by default: prefer `object` for untrusted inputs, shared JSON aliases for persisted payloads, `ParamSpec` for callable wrappers, and focused `TypedDict`/protocol contracts for nested state.
-- For live processing / WebSocket payloads, prefer shared contracts in `apps/server/vibesensor/payload_types.py` and `vibesensor.vibration_strength` over ad-hoc `dict[str, Any]` bags.
+- For live processing / WebSocket payloads, prefer shared contracts in `apps/server/vibesensor/shared/types/payloads.py` and `vibesensor.vibration_strength` over ad-hoc `dict[str, Any]` bags.
 - Tests: add tests in the matching `tests/<module>/` subdirectory (see `docs/testing.md`); use `tests/integration/` for cross-cutting scenarios and regressions. Run a single area with `pytest -q apps/server/tests/<module>/`.
 - i18n: Add/modify keys in `apps/server/data/report_i18n.json` when changing user-facing strings.
 - Styling/lint: `ruff` is enforced in CI; follow existing `ruff` conventions.

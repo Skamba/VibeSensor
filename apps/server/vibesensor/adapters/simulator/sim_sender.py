@@ -1,0 +1,681 @@
+from __future__ import annotations
+
+import argparse
+import asyncio
+import contextlib
+import random
+import subprocess
+import sys
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, cast
+
+import numpy as np
+
+from vibesensor.adapters.udp.protocol import (
+    CMD_IDENTIFY,
+    MSG_CMD,
+    client_id_mac,
+    pack_ack,
+    pack_data,
+    pack_hello,
+    parse_cmd,
+)
+from vibesensor.app.settings import NETWORK_PORTS
+
+from .commands import (
+    apply_command,
+    apply_one_wheel_mild_scenario,
+    apply_road_fixed_scenario,
+    choose_default_profile,
+)
+from .profiles import (
+    DEFAULT_ORDER_HZ,
+    DEFAULT_SPEED_KMH,
+    PROFILE_LIBRARY,
+    Profile,
+)
+from .server_http import (
+    maybe_start_server,
+    set_server_speed_override_kmh,
+)
+
+ROOT = Path(__file__).resolve().parents[3]
+
+_TWO_PI = 2.0 * np.pi
+
+_COMMON_TONES: tuple[tuple[float, tuple[float, float, float]], ...] = (
+    (DEFAULT_ORDER_HZ["wheel_1x"], (70.0, 58.0, 82.0)),
+    (DEFAULT_ORDER_HZ["wheel_2x"], (46.0, 38.0, 54.0)),
+    (DEFAULT_ORDER_HZ["shaft_1x"], (95.0, 76.0, 110.0)),
+    (DEFAULT_ORDER_HZ["engine_2x"], (64.0, 52.0, 78.0)),
+)
+
+_WHEEL_SLOT_ALIASES: dict[str, str] = {
+    "fl": "front-left",
+    "fr": "front-right",
+    "rl": "rear-left",
+    "rr": "rear-right",
+}
+
+
+@dataclass(slots=True)
+class SimClient:
+    name: str
+    client_id: bytes
+    control_port: int
+    sample_rate_hz: int
+    frame_samples: int
+    server_host: str
+    server_data_port: int
+    server_control_port: int
+    profile_name: str
+    seq: int = 0
+    phase_s: float = 0.0
+    amp_scale: float = 1.0
+    noise_scale: float = 1.0
+    noise_floor_std: float = 3.5
+    scene_gain: float = 1.0
+    scene_noise_gain: float = 1.0
+    scene_mode: str = "all"
+    common_event_gain: float = 0.0
+    paused: bool = False
+    # Current simulated speed – used to scale order-based profile tones.
+    current_speed_kmh: float = DEFAULT_SPEED_KMH
+    send_period_scale: float = 1.0
+    send_jitter_s: float = 0.0
+    start_offset_s: float = 0.0
+    control_transport: asyncio.DatagramTransport | None = None
+    data_transport: asyncio.DatagramTransport | None = None
+    bump_state: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
+    phase_offsets: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
+    rng: np.random.Generator | None = None
+
+    def __post_init__(self) -> None:
+        seed = int.from_bytes(self.client_id, "little")
+        self.rng = np.random.default_rng(seed)
+        self.phase_offsets = np.asarray(self.rng.uniform(0.0, np.pi, size=3), dtype=np.float32)
+        # Intentional slight timing mismatch between sensors to mimic real deployments.
+        self.send_period_scale = float(self.rng.uniform(0.997, 1.003))
+        self.send_jitter_s = float(self.rng.uniform(0.001, 0.007))
+        self.start_offset_s = float(self.rng.uniform(0.0, 0.045))
+
+    @property
+    def profile(self) -> Profile:
+        return PROFILE_LIBRARY[self.profile_name]
+
+    @property
+    def mac_address(self) -> str:
+        return client_id_mac(self.client_id)
+
+    def pulse(self, strength: float) -> None:
+        vec = np.asarray(self.profile.bump_strength, dtype=np.float32)
+        self.bump_state += vec * np.float32(strength)
+
+    def summary(self) -> str:
+        return (
+            f"{self.name} id={self.client_id.hex()} "
+            f"mac={self.mac_address} profile={self.profile_name} "
+            f"amp={self.amp_scale:.2f} noise={self.noise_scale:.2f} "
+            f"floor={self.noise_floor_std:.1f} "
+            f"scene={self.scene_mode}:{self.scene_gain:.2f} "
+            f"common={self.common_event_gain:.2f} paused={self.paused} "
+            f"tx_scale={self.send_period_scale:.5f} "
+            f"tx_jitter={self.send_jitter_s * 1000:.1f}ms "
+            f"offset={self.start_offset_s * 1000:.1f}ms"
+        )
+
+    def make_frame(self) -> np.ndarray:
+        if self.paused:
+            self.phase_s += self.frame_samples / self.sample_rate_hz
+            return np.zeros((self.frame_samples, 3), dtype=np.int16)
+
+        assert self.rng is not None  # guaranteed by __post_init__
+        profile = self.profile
+
+        dt = 1.0 / self.sample_rate_hz
+        t = self.phase_s + np.arange(self.frame_samples, dtype=np.float32) * dt
+
+        modulation = 1.0 + profile.modulation_depth * np.sin(_TWO_PI * profile.modulation_hz * t)
+        signal: np.ndarray[Any, np.dtype[Any]] = np.zeros((self.frame_samples, 3), dtype=np.float32)
+
+        # Compute speed-scaling ratio for order-based profiles.
+        # Tones in wheel_imbalance / wheel_mild_imbalance were defined at the
+        # reference speed; scale them proportionally to the current speed.
+        speed_ratio = 1.0
+        if profile.reference_speed_kmh and profile.reference_speed_kmh > 0:
+            speed_ratio = max(0.0, self.current_speed_kmh) / profile.reference_speed_kmh
+
+        _sin = np.sin
+        _phase = self.phase_offsets
+        for freq_hz, amps_xyz in profile.tones:
+            effective_hz = freq_hz * speed_ratio
+            if effective_hz <= 0:
+                continue
+            omega_t = _TWO_PI * effective_hz * t
+            signal[:, 0] += amps_xyz[0] * _sin(omega_t + _phase[0])
+            signal[:, 1] += amps_xyz[1] * _sin(omega_t + _phase[1])
+            signal[:, 2] += amps_xyz[2] * _sin(omega_t + _phase[2])
+
+        if self.common_event_gain > 0:
+            # Common order tones shared by all sensors.
+            # Scale by current speed vs DEFAULT_SPEED_KMH reference.
+            common_speed_ratio = (
+                max(0.0, self.current_speed_kmh) / DEFAULT_SPEED_KMH
+                if DEFAULT_SPEED_KMH > 0
+                else 1.0
+            )
+            _gain = self.common_event_gain
+            for freq_hz, amps_xyz in _COMMON_TONES:
+                effective_hz = freq_hz * common_speed_ratio
+                if effective_hz <= 0:
+                    continue
+                omega_t = _TWO_PI * effective_hz * t
+                signal[:, 0] += _gain * amps_xyz[0] * _sin(omega_t)
+                signal[:, 1] += _gain * amps_xyz[1] * _sin(omega_t + 0.2)
+                signal[:, 2] += _gain * amps_xyz[2] * _sin(omega_t + 0.4)
+
+        signal *= modulation[:, None]
+
+        for i in range(self.frame_samples):
+            if self.rng.random() < profile.bump_probability:
+                jitter = self.rng.uniform(0.85, 1.15, size=3).astype(np.float32)
+                self.bump_state += np.asarray(profile.bump_strength, dtype=np.float32) * jitter
+            signal[i] += self.bump_state
+            self.bump_state *= profile.bump_decay
+
+        noise = self.rng.normal(
+            0.0,
+            profile.noise_std * self.noise_scale * self.scene_noise_gain,
+            size=signal.shape,
+        ).astype(np.float32)
+        signal += noise
+        signal *= self.amp_scale * self.scene_gain
+        # Keep a minimum broadband floor on every sensor even in quiet/low-gain scenes.
+        floor_noise = self.rng.normal(
+            0.0,
+            self.noise_floor_std,
+            size=signal.shape,
+        ).astype(np.float32)
+        signal += floor_noise
+
+        self.phase_s = float(t[-1] + dt)
+        result: np.ndarray[Any, np.dtype[Any]] = np.clip(signal, -32768, 32767).astype(np.int16)
+        return result
+
+
+class ClientProtocol(asyncio.DatagramProtocol):
+    def __init__(self, sim: SimClient):
+        self.sim = sim
+
+    def connection_made(self, transport: asyncio.BaseTransport) -> None:
+        self.sim.control_transport = cast(asyncio.DatagramTransport, transport)
+
+    def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
+        if not data or data[0] != MSG_CMD:
+            return
+        try:
+            cmd = parse_cmd(data)
+        except Exception as exc:
+            print(f"{self.sim.name}: ignoring unparseable command from {addr[0]}:{addr[1]}: {exc}")
+            return
+        if cmd.client_id != self.sim.client_id:
+            return
+        if cmd.cmd_id == CMD_IDENTIFY:
+            duration_ms = int.from_bytes(cmd.params[:2], "little") if len(cmd.params) >= 2 else 1000
+            print(f"{self.sim.name}: identify {duration_ms}ms from {addr[0]}:{addr[1]}")
+            self.sim.pulse(1.4)
+            ack = pack_ack(self.sim.client_id, cmd.cmd_seq, status=0)
+            if self.sim.control_transport is not None:
+                self.sim.control_transport.sendto(
+                    ack, (self.sim.server_host, self.sim.server_control_port)
+                )
+
+
+class DataProtocol(asyncio.DatagramProtocol):
+    def __init__(self, sim: SimClient):
+        self.sim = sim
+
+    def connection_made(self, transport: asyncio.BaseTransport) -> None:
+        self.sim.data_transport = cast(asyncio.DatagramTransport, transport)
+
+
+def make_client_id(seed: int) -> bytes:
+    rng = random.Random(seed)
+    return bytes(
+        [
+            0x02,  # locally administered unicast
+            0x5A,
+            rng.randrange(0, 255),
+            rng.randrange(0, 255),
+            rng.randrange(0, 255),
+            seed & 0xFF,
+        ]
+    )
+
+
+async def command_loop(clients: list[SimClient], stop_event: asyncio.Event) -> None:
+    print("Interactive mode enabled. Type 'help' for commands.")
+    while not stop_event.is_set():
+        try:
+            line = await asyncio.to_thread(input, "sim> ")
+        except (EOFError, KeyboardInterrupt):
+            stop_event.set()
+            break
+        try:
+            out = apply_command(clients, line, stop_event, list(PROFILE_LIBRARY.keys()))
+        except Exception as exc:
+            print(f"Command error: {exc}")
+            continue
+        if out:
+            print(out)
+
+
+class RoadSceneController:
+    def __init__(self, clients: list[SimClient]):
+        self.clients = clients
+        self.rng = random.Random(2026)
+
+    @staticmethod
+    def _normalize_wheel_slot(name: str) -> str | None:
+        normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
+        if normalized in _WHEEL_SLOT_ALIASES:
+            return _WHEEL_SLOT_ALIASES[normalized]
+        axle = "front" if "front" in normalized else "rear" if "rear" in normalized else None
+        side = "left" if "left" in normalized else "right" if "right" in normalized else None
+        if axle and side:
+            return f"{axle}-{side}"
+        return None
+
+    @classmethod
+    def _cross_corner_coupling(cls, source_name: str, sink_name: str) -> float:
+        source = cls._normalize_wheel_slot(source_name)
+        sink = cls._normalize_wheel_slot(sink_name)
+        if source is None or sink is None:
+            return 0.34
+        if source == sink:
+            return 1.0
+        source_axle, source_side = source.split("-", maxsplit=1)
+        sink_axle, sink_side = sink.split("-", maxsplit=1)
+        if source_side == sink_side and source_axle != sink_axle:
+            return 0.52
+        if source_axle == sink_axle and source_side != sink_side:
+            return 0.48
+        return 0.40
+
+    @staticmethod
+    def _baseline_profile(name: str) -> str:
+        normalized = name.strip().lower()
+        if "rear" in normalized or "trunk" in normalized:
+            return "rear_body"
+        return "rough_road"
+
+    def _apply_quiet(self) -> None:
+        for client in self.clients:
+            client.scene_mode = "quiet"
+            client.profile_name = self._baseline_profile(client.name)
+            client.scene_gain = self.rng.uniform(0.18, 0.30)
+            client.scene_noise_gain = self.rng.uniform(0.88, 1.04)
+            client.common_event_gain = self.rng.uniform(0.02, 0.06)
+            client.amp_scale = self.rng.uniform(0.36, 0.55)
+            client.noise_scale = self.rng.uniform(0.94, 1.08)
+
+    def _apply_single_active(self) -> None:
+        active_idx = self.rng.randrange(0, len(self.clients))
+        active_name = self.clients[active_idx].name
+        for i, client in enumerate(self.clients):
+            client.scene_mode = "single"
+            coupling = self._cross_corner_coupling(active_name, client.name)
+            if i == active_idx:
+                client.profile_name = "wheel_mild_imbalance"
+                client.scene_gain = self.rng.uniform(0.78, 1.05)
+                client.scene_noise_gain = self.rng.uniform(0.98, 1.14)
+                client.amp_scale = self.rng.uniform(0.90, 1.08)
+                client.noise_scale = self.rng.uniform(1.00, 1.12)
+                client.common_event_gain = self.rng.uniform(0.18, 0.32)
+                client.pulse(self.rng.uniform(0.28, 0.85))
+            else:
+                client.profile_name = self._baseline_profile(client.name)
+                client.scene_gain = self.rng.uniform(0.28, 0.40) + 0.18 * coupling
+                client.scene_noise_gain = self.rng.uniform(0.92, 1.08) + 0.06 * coupling
+                client.amp_scale = self.rng.uniform(0.52, 0.70) + 0.22 * coupling
+                client.noise_scale = self.rng.uniform(0.95, 1.06)
+                client.common_event_gain = self.rng.uniform(0.06, 0.12) + 0.10 * coupling
+
+    def _apply_all_active(self) -> None:
+        pulse_strength = self.rng.uniform(0.22, 0.60)
+        for client in self.clients:
+            client.scene_mode = "all"
+            client.profile_name = self._baseline_profile(client.name)
+            client.scene_gain = self.rng.uniform(0.48, 0.74)
+            client.scene_noise_gain = self.rng.uniform(0.94, 1.14)
+            client.common_event_gain = self.rng.uniform(0.16, 0.34)
+            client.amp_scale = self.rng.uniform(0.70, 0.94)
+            client.noise_scale = self.rng.uniform(0.98, 1.12)
+            client.pulse(pulse_strength * self.rng.uniform(0.90, 1.10))
+
+    def _apply_all_sync_event(self) -> None:
+        # Explicit synchronized but moderate all-sensor event for multi-sensor detection testing.
+        base = self.rng.uniform(0.38, 0.58)
+        pulse_strength = self.rng.uniform(0.25, 0.55)
+        for client in self.clients:
+            client.scene_mode = "all-sync"
+            client.profile_name = self._baseline_profile(client.name)
+            client.scene_gain = self.rng.uniform(0.52, 0.80)
+            client.scene_noise_gain = self.rng.uniform(0.92, 1.12)
+            client.common_event_gain = max(0.0, base + self.rng.uniform(-0.03, 0.03))
+            client.amp_scale = self.rng.uniform(0.76, 0.98)
+            client.noise_scale = self.rng.uniform(0.98, 1.10)
+            client.pulse(pulse_strength * self.rng.uniform(0.90, 1.10))
+
+    def _apply_highway_100_sync(self) -> None:
+        # 640i-like synchronized event around 100 km/h across all sensors.
+        base = self.rng.uniform(0.46, 0.70)
+        pulse_strength = self.rng.uniform(0.20, 0.50)
+        for client in self.clients:
+            client.scene_mode = "highway100-sync"
+            client.profile_name = (
+                "wheel_mild_imbalance"
+                if self._normalize_wheel_slot(client.name) is not None
+                else "rear_body"
+            )
+            client.scene_gain = self.rng.uniform(0.54, 0.78)
+            client.scene_noise_gain = self.rng.uniform(0.90, 1.08)
+            client.common_event_gain = max(0.0, base + self.rng.uniform(-0.04, 0.04))
+            client.amp_scale = self.rng.uniform(0.78, 1.00)
+            client.noise_scale = self.rng.uniform(0.96, 1.08)
+            client.pulse(pulse_strength * self.rng.uniform(0.85, 1.15))
+
+    def next_scene(self) -> tuple[str, float]:
+        mode = self.rng.choices(
+            ["quiet", "single", "all", "all_sync", "highway100"],
+            weights=[0.26, 0.24, 0.22, 0.16, 0.12],
+            k=1,
+        )[0]
+        if mode == "quiet":
+            self._apply_quiet()
+            return mode, self.rng.uniform(5.0, 10.0)
+        if mode == "single":
+            self._apply_single_active()
+            return mode, self.rng.uniform(4.5, 9.0)
+        if mode == "all_sync":
+            self._apply_all_sync_event()
+            return mode, self.rng.uniform(2.4, 4.8)
+        if mode == "highway100":
+            self._apply_highway_100_sync()
+            return mode, self.rng.uniform(3.2, 6.4)
+        self._apply_all_active()
+        return mode, self.rng.uniform(4.0, 8.0)
+
+
+async def road_scene_loop(clients: list[SimClient], stop_event: asyncio.Event) -> None:
+    if not clients:
+        return
+    controller = RoadSceneController(clients)
+    while not stop_event.is_set():
+        mode, duration = controller.next_scene()
+        print(f"[road-scene] mode={mode} duration={duration:.1f}s")
+        await asyncio.sleep(duration)
+
+
+async def run_client(sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event) -> None:
+    loop = asyncio.get_running_loop()
+    control_transport, _ = await loop.create_datagram_endpoint(
+        lambda: ClientProtocol(sim),
+        local_addr=("0.0.0.0", sim.control_port),
+    )
+    data_transport, _ = await loop.create_datagram_endpoint(
+        lambda: DataProtocol(sim),
+        local_addr=("0.0.0.0", 0),
+    )
+    sim.control_transport = control_transport
+    sim.data_transport = data_transport
+    try:
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(hello_loop(sim, hello_interval_s, stop_event))
+            tg.create_task(data_loop(sim, stop_event))
+            tg.create_task(wait_stop(stop_event))
+    finally:
+        control_transport.close()
+        data_transport.close()
+
+
+async def wait_stop(stop_event: asyncio.Event) -> None:
+    await stop_event.wait()
+    raise asyncio.CancelledError()
+
+
+async def hello_loop(sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event) -> None:
+    while not stop_event.is_set():
+        if sim.control_transport is not None:
+            packet = pack_hello(
+                client_id=sim.client_id,
+                control_port=sim.control_port,
+                sample_rate_hz=sim.sample_rate_hz,
+                name=sim.name,
+                frame_samples=sim.frame_samples,
+                firmware_version="sim-0.2",
+            )
+            sim.control_transport.sendto(packet, (sim.server_host, sim.server_control_port))
+        await asyncio.sleep(hello_interval_s)
+
+
+async def data_loop(sim: SimClient, stop_event: asyncio.Event) -> None:
+    if sim.rng is None:
+        raise RuntimeError("SimClient.rng must be initialised before data_loop")
+    frame_period = (sim.frame_samples / sim.sample_rate_hz) * sim.send_period_scale
+    loop = asyncio.get_running_loop()
+    next_send = loop.time() + sim.start_offset_s
+    while not stop_event.is_set():
+        if sim.data_transport is not None:
+            samples = sim.make_frame()
+            packet = pack_data(
+                client_id=sim.client_id,
+                seq=sim.seq,
+                t0_us=time.monotonic_ns() // 1000,
+                samples=samples,
+            )
+            sim.data_transport.sendto(packet, (sim.server_host, sim.server_data_port))
+            sim.seq = (sim.seq + 1) & 0xFFFFFFFF
+        next_send += frame_period
+        jitter = float(sim.rng.uniform(-sim.send_jitter_s, sim.send_jitter_s))
+        await asyncio.sleep(max(0.0, (next_send + jitter) - loop.time()))
+
+
+async def auto_stop(delay_s: float, stop_event: asyncio.Event) -> None:
+    await asyncio.sleep(delay_s)
+    stop_event.set()
+
+
+async def async_main(args: argparse.Namespace) -> None:
+    managed_server: subprocess.Popen[str] | None = None
+    if not args.no_auto_server:
+        managed_server = maybe_start_server(args, ROOT)
+
+    names = [n.strip() for n in args.names.split(",") if n.strip()] if args.names else []
+    while len(names) < args.count:
+        names.append(f"sim-{len(names) + 1}")
+
+    clients = [
+        SimClient(
+            name=names[i],
+            client_id=make_client_id(i + 1),
+            control_port=args.client_control_base + i,
+            sample_rate_hz=args.sample_rate_hz,
+            frame_samples=args.frame_samples,
+            server_host=args.server_host,
+            server_data_port=args.server_data_port,
+            server_control_port=args.server_control_port,
+            profile_name=choose_default_profile(i),
+            noise_floor_std=args.sensor_noise_floor,
+        )
+        for i in range(args.count)
+    ]
+
+    if args.scenario == "one-wheel-mild":
+        apply_one_wheel_mild_scenario(clients, args.fault_wheel)
+    elif args.scenario == "road-fixed":
+        apply_road_fixed_scenario(clients)
+
+    override_speed_kmh = max(0.0, float(args.speed_kmh))
+    if override_speed_kmh > 0.0:
+        applied_speed = set_server_speed_override_kmh(
+            args.server_host,
+            args.server_http_port,
+            override_speed_kmh,
+            args.server_check_timeout,
+        )
+        shown_speed = applied_speed if applied_speed is not None else override_speed_kmh
+        # Propagate speed to all clients so order-based profiles scale tones.
+        for client in clients:
+            client.current_speed_kmh = override_speed_kmh
+        print(f"Applied server speed override: {shown_speed:.1f} km/h")
+
+    interactive = args.interactive or (
+        not args.no_interactive and args.duration <= 0 and sys.stdin.isatty()
+    )
+    stop_event = asyncio.Event()
+    tasks: list[asyncio.Task[Any]] = []
+    server_url = f"http://{args.server_host}"
+    if int(args.server_http_port) != 80:
+        server_url = f"{server_url}:{args.server_http_port}"
+
+    print(
+        f"Starting {len(clients)} simulated clients -> "
+        f"{args.server_host}:{args.server_data_port} (open {server_url}) "
+        f"rate={args.sample_rate_hz}Hz frame={args.frame_samples} samples "
+        f"({args.sample_rate_hz / max(1, args.frame_samples):.2f} fps)"
+    )
+    print(
+        "Default order tones: "
+        f"wheel1={DEFAULT_ORDER_HZ['wheel_1x']:.3f}Hz "
+        f"wheel2={DEFAULT_ORDER_HZ['wheel_2x']:.3f}Hz "
+        f"shaft1={DEFAULT_ORDER_HZ['shaft_1x']:.3f}Hz "
+        f"engine1={DEFAULT_ORDER_HZ['engine_1x']:.3f}Hz "
+        f"engine2={DEFAULT_ORDER_HZ['engine_2x']:.3f}Hz"
+    )
+    print("\n".join(c.summary() for c in clients))
+
+    try:
+        for client in clients:
+            tasks.append(asyncio.create_task(run_client(client, args.hello_interval, stop_event)))
+        if args.scenario == "road" and not args.no_road_scene:
+            tasks.append(asyncio.create_task(road_scene_loop(clients, stop_event)))
+        else:
+            print(
+                f"[scenario] fixed={args.scenario} fault_wheel={args.fault_wheel} "
+                "(no road-scene randomization)"
+            )
+        if args.duration > 0:
+            tasks.append(asyncio.create_task(auto_stop(args.duration, stop_event)))
+        if interactive:
+            tasks.append(asyncio.create_task(command_loop(clients, stop_event)))
+        await stop_event.wait()
+    finally:
+        stop_event.set()
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        if managed_server is not None:
+            managed_server.terminate()
+            try:
+                managed_server.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                managed_server.kill()
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="VibeSensor UDP simulator")
+    parser.add_argument("--server-host", default="127.0.0.1")
+    parser.add_argument(
+        "--server-data-port", type=int, default=int(NETWORK_PORTS["server_udp_data"])
+    )
+    parser.add_argument(
+        "--server-control-port",
+        type=int,
+        default=int(NETWORK_PORTS["server_udp_control"]),
+    )
+    parser.add_argument("--count", type=int, default=5)
+    parser.add_argument("--names", default="front-left,front-right,rear-left,rear-right,trunk")
+    parser.add_argument("--sample-rate-hz", type=int, default=800)
+    parser.add_argument("--frame-samples", type=int, default=200)
+    parser.add_argument("--hello-interval", type=float, default=2.0)
+    parser.add_argument(
+        "--sensor-noise-floor",
+        type=float,
+        default=3.5,
+        help="Per-sensor always-on broadband noise floor (raw sample units).",
+    )
+    parser.add_argument("--client-control-base", type=int, default=9100)
+    parser.add_argument(
+        "--duration", type=float, default=0.0, help="Optional run duration in seconds"
+    )
+    parser.add_argument(
+        "--speed-kmh",
+        type=float,
+        default=DEFAULT_SPEED_KMH,
+        help="Server manual speed override (km/h) applied before run",
+    )
+    parser.add_argument(
+        "--scenario",
+        choices=("road", "one-wheel-mild", "road-fixed"),
+        default="road",
+        help=(
+            "Simulation scenario: random road scene, deterministic mild"
+            " single-wheel fault, or fixed road baseline (no randomization)"
+        ),
+    )
+    parser.add_argument(
+        "--fault-wheel",
+        default="front-right",
+        help="Client name to apply the mild wheel fault to when --scenario one-wheel-mild",
+    )
+    parser.add_argument("--interactive", action="store_true", help="Force interactive command mode")
+    parser.add_argument(
+        "--no-interactive", action="store_true", help="Disable interactive command mode"
+    )
+    parser.add_argument(
+        "--no-road-scene",
+        action="store_true",
+        help="Disable the road-scene randomization loop (for scripted/deterministic runs)",
+    )
+    parser.add_argument(
+        "--no-auto-server",
+        action="store_true",
+        help="Disable local server auto-start check",
+    )
+    parser.add_argument(
+        "--server-http-port",
+        type=int,
+        default=8000,
+        help="HTTP port for server health check",
+    )
+    parser.add_argument(
+        "--server-config",
+        default="apps/server/config.dev.yaml",
+        help="Config path used when auto-starting server",
+    )
+    parser.add_argument(
+        "--server-start-timeout",
+        type=float,
+        default=10.0,
+        help="Seconds to wait for auto-started server readiness",
+    )
+    parser.add_argument(
+        "--server-check-timeout",
+        type=float,
+        default=1.0,
+        help="Per-check HTTP timeout in seconds",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    with contextlib.suppress(KeyboardInterrupt):
+        asyncio.run(async_main(args))
+
+
+if __name__ == "__main__":
+    main()

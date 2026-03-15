@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Sequence
 
-from ..observation import Observation
-from ..signature import Signature
+from vibesensor.domain.diagnostics.observation import Observation
+from vibesensor.domain.diagnostics.signature import Signature
 
 
 def recognize_signatures(observations: Sequence[Observation]) -> tuple[Signature, ...]:

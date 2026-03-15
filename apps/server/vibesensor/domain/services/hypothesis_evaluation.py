@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from ..hypothesis import Hypothesis, HypothesisStatus
-from ..signature import Signature
+from vibesensor.domain.diagnostics.hypothesis import Hypothesis, HypothesisStatus
+from vibesensor.domain.diagnostics.signature import Signature
 
 
 def evaluate_hypotheses(signatures: Sequence[Signature]) -> tuple[Hypothesis, ...]:

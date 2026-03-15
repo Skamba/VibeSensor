@@ -1,0 +1,212 @@
+from __future__ import annotations
+
+from typing import TypeAlias
+
+from typing_extensions import TypedDict
+
+from vibesensor.shared.types.json import JsonObject
+from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics
+
+# Bump this when the payload shape changes in a backwards-incompatible way.
+SCHEMA_VERSION: str = "1"
+
+IntakeStatsPayload: TypeAlias = JsonObject
+
+
+class AxisPeak(TypedDict, total=False):
+    hz: float
+    amp: float
+    snr_ratio: float
+
+
+class AxisMetrics(TypedDict):
+    rms: float
+    p2p: float
+    peaks: list[AxisPeak]
+
+
+class CombinedMetrics(TypedDict, total=False):
+    vib_mag_rms: float
+    vib_mag_p2p: float
+    peaks: list[StrengthPeak]
+    strength_metrics: VibrationStrengthMetrics
+
+
+class ClientMetrics(TypedDict, total=False):
+    x: AxisMetrics
+    y: AxisMetrics
+    z: AxisMetrics
+    combined: CombinedMetrics
+
+
+class TimingHealthPayload(TypedDict, total=False):
+    jitter_us_ema: float
+    drift_us_total: float
+    last_t0_us: int
+
+
+class ClientApiRow(TypedDict):
+    id: str
+    mac_address: str
+    name: str
+    connected: bool
+    location_code: str
+    firmware_version: str
+    sample_rate_hz: int
+    frame_samples: int
+    last_seen_age_ms: int | None
+    frames_total: int
+    dropped_frames: int
+    latest_metrics: ClientMetrics
+    reset_count: int
+    last_reset_time: float | None
+
+
+class WsClientRow(TypedDict):
+    """Lightweight client row for WebSocket broadcast (UI-consumed fields only)."""
+
+    id: str
+    name: str
+    connected: bool
+    mac_address: str
+    location_code: str
+    last_seen_age_ms: int | None
+    dropped_frames: int
+    frames_total: int
+    sample_rate_hz: int
+    firmware_version: str
+
+
+class SpectrumSeriesPayload(TypedDict, total=False):
+    combined_spectrum_amp_g: list[float]
+    strength_metrics: VibrationStrengthMetrics
+    freq: list[float]
+
+
+class AlignmentInfoPayload(TypedDict):
+    overlap_ratio: float
+    aligned: bool
+    shared_window_s: float
+    sensor_count: int
+    clock_synced: bool
+
+
+class FrequencyWarningPayload(TypedDict):
+    code: str
+    message: str
+    client_ids: list[str]
+
+
+class SpectraPayload(TypedDict, total=False):
+    freq: list[float]
+    clients: dict[str, SpectrumSeriesPayload]
+    alignment: AlignmentInfoPayload
+    warning: FrequencyWarningPayload
+
+
+class DebugSpectrumStatsPayload(TypedDict):
+    mean_g: list[float]
+    std_g: list[float]
+    min_g: list[float]
+    max_g: list[float]
+
+
+class DebugSpectrumTopBinPayload(TypedDict):
+    bin: int
+    freq_hz: float
+    combined_amp_g: float
+    x_amp_g: float
+    y_amp_g: float
+    z_amp_g: float
+
+
+class DebugSpectrumErrorPayload(TypedDict):
+    error: str
+    count: int
+    fft_n: int
+
+
+class DebugSpectrumPayload(TypedDict, total=False):
+    client_id: str
+    sample_rate_hz: int
+    fft_n: int
+    fft_scale: float
+    window: str
+    spectrum_min_hz: float
+    spectrum_max_hz: float
+    freq_bins: int
+    freq_resolution_hz: float
+    raw_stats: DebugSpectrumStatsPayload
+    detrended_std_g: list[float]
+    vibration_strength_db: float
+    top_bins_by_amplitude: list[DebugSpectrumTopBinPayload]
+    strength_peaks: list[StrengthPeak]
+    error: str
+    count: int
+
+
+class RawSamplesErrorPayload(TypedDict):
+    error: str
+    count: int
+
+
+class RawSamplesPayload(TypedDict):
+    client_id: str
+    sample_rate_hz: int
+    n_samples: int
+    x: list[float]
+    y: list[float]
+    z: list[float]
+
+
+class TimeAlignmentSensorPayload(TypedDict):
+    start_s: float
+    end_s: float
+    duration_s: float
+    synced: bool
+
+
+class SharedWindowPayload(TypedDict):
+    start_s: float
+    end_s: float
+    duration_s: float
+
+
+class TimeAlignmentPayload(TypedDict):
+    per_sensor: dict[str, TimeAlignmentSensorPayload]
+    shared_window: SharedWindowPayload | None
+    overlap_ratio: float
+    aligned: bool
+    clock_synced: bool
+    sensors_included: list[str]
+    sensors_excluded: list[str]
+
+
+class RotationalSpeedValuePayload(TypedDict):
+    rpm: float | None
+    mode: str | None
+    reason: str | None
+
+
+class OrderBandPayload(TypedDict):
+    key: str
+    center_hz: float
+    tolerance: float
+
+
+class RotationalSpeedsPayload(TypedDict):
+    basis_speed_source: str | None
+    wheel: RotationalSpeedValuePayload
+    driveshaft: RotationalSpeedValuePayload
+    engine: RotationalSpeedValuePayload
+    order_bands: list[OrderBandPayload] | None
+
+
+class LiveWsPayload(TypedDict, total=False):
+    schema_version: str
+    server_time: str
+    speed_mps: float | None
+    clients: list[WsClientRow]
+    selected_client_id: str | None
+    rotational_speeds: RotationalSpeedsPayload | None
+    spectra: SpectraPayload

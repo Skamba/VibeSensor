@@ -1,0 +1,41 @@
+"""Hotspot infrastructure — Wi-Fi AP monitoring, parsing, and self-heal.
+
+Sub-modules
+-----------
+- :mod:`~vibesensor.infra.hotspot.parsers` — text-parsing helpers for hostapd,
+  dnsmasq, NetworkManager, iw, and rfkill output.
+- :mod:`~vibesensor.infra.hotspot.self_heal` — hotspot watchdog manager with
+  CLI entry point.
+"""
+
+from .parsers import (
+    HealStateStore,
+    expected_ip_match,
+    nm_log_signals,
+    parse_active_conn_device,
+    parse_active_connection_names,
+    parse_ip,
+    parse_iw_info,
+    parse_port53_conflict,
+    parse_rfkill_blocked,
+)
+from .self_heal import (
+    CommandResult,
+    CommandRunner,
+    main,
+)
+
+__all__ = [
+    "CommandResult",
+    "CommandRunner",
+    "HealStateStore",
+    "expected_ip_match",
+    "main",
+    "nm_log_signals",
+    "parse_active_conn_device",
+    "parse_active_connection_names",
+    "parse_ip",
+    "parse_iw_info",
+    "parse_port53_conflict",
+    "parse_rfkill_blocked",
+]
