@@ -9,10 +9,10 @@ from pathlib import Path
 import pytest
 from _paths import SERVER_ROOT
 
-from vibesensor.use_cases.diagnostics.helpers import _weighted_percentile
-from vibesensor.use_cases.diagnostics.location_analysis import _weighted_percentile_speed
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.processing import SignalProcessor
+from vibesensor.use_cases.diagnostics.helpers import _weighted_percentile
+from vibesensor.use_cases.diagnostics.location_analysis import _weighted_percentile_speed
 
 
 # ---------------------------------------------------------------------------
@@ -54,10 +54,10 @@ class TestFlushBumpsGeneration:
 # Fix 5 – Dead functions removed
 # ---------------------------------------------------------------------------
 _DEAD_FUNCTION_CASES = [
-    ("vibesensor/report/pdf_page1.py", "_measure_text_height"),
-    ("vibesensor/report/pdf_diagram_render.py", "_amp_heat_color"),
-    ("vibesensor/report/pdf_diagram_render.py", "def _format_db"),
-    ("vibesensor/update/firmware_cache.py", "def install_baseline"),
+    ("vibesensor/adapters/pdf/pdf_page1.py", "_measure_text_height"),
+    ("vibesensor/adapters/pdf/pdf_diagram_render.py", "_amp_heat_color"),
+    ("vibesensor/adapters/pdf/pdf_diagram_render.py", "def _format_db"),
+    ("vibesensor/use_cases/updates/firmware_cache.py", "def install_baseline"),
 ]
 
 
@@ -76,11 +76,11 @@ class TestDeadFunctionsRemoved:
 # Fix 6 – normalize_lang consolidated in report_i18n (canonical source)
 # ---------------------------------------------------------------------------
 class TestNormalizeLangArchitecturalBoundary:
-    _SUMMARY_SRC = SERVER_ROOT / "vibesensor" / "analysis" / "summary_builder.py"
+    _SUMMARY_SRC = SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics" / "summary_builder.py"
 
     def test_summary_imports_normalize_lang_from_report_i18n(self) -> None:
         """summary_builder.py must import normalize_lang from report_i18n (single source)."""
-        assert "from ..report_i18n import normalize_lang" in self._SUMMARY_SRC.read_text()
+        assert "from vibesensor.report_i18n import normalize_lang" in self._SUMMARY_SRC.read_text()
 
     def test_summary_does_not_define_own_normalize_lang(self) -> None:
         """summary_builder.py must NOT define its own normalize_lang."""
@@ -93,8 +93,12 @@ class TestNormalizeLangArchitecturalBoundary:
 class TestExportZipFiltersInternals:
     def test_underscore_fields_stripped_in_source(self) -> None:
         """Export assembly must strip _-prefixed analysis keys before zipping details."""
-        helper_text = (SERVER_ROOT / "vibesensor" / "history_services" / "helpers.py").read_text()
-        export_text = (SERVER_ROOT / "vibesensor" / "history_services" / "exports.py").read_text()
+        helper_text = (
+            SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "helpers.py"
+        ).read_text()
+        export_text = (
+            SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "exports.py"
+        ).read_text()
         assert 'if not key.startswith("_")' in helper_text
         assert "strip_internal_fields" in export_text
         assert "test_run_from_summary" in export_text
@@ -125,11 +129,11 @@ class TestWeightedPercentileDedup:
 class TestAnalysisQueueContract:
     def test_analysis_queue_is_not_bounded_or_evicted(self) -> None:
         """PostAnalysisWorker._analysis_queue must not silently evict queued runs."""
-        text = (SERVER_ROOT / "vibesensor" / "metrics_log" / "post_analysis.py").read_text()
+        text = (SERVER_ROOT / "vibesensor" / "use_cases" / "run" / "post_analysis.py").read_text()
         assert "self._analysis_queue: deque[_QueuedRun] = deque()" in text
         assert "evicting run" not in text
 
     def test_post_analysis_does_not_round_trip_through_domain(self) -> None:
         """Fresh summaries from summarize() must not re-project through domain decode."""
-        text = (SERVER_ROOT / "vibesensor" / "metrics_log" / "post_analysis.py").read_text()
+        text = (SERVER_ROOT / "vibesensor" / "use_cases" / "run" / "post_analysis.py").read_text()
         assert "project_summary_through_domain" not in text

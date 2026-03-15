@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING, Any
 from vibesensor.infra.runtime.processing_loop import ProcessingHealth
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.run import RunRecorder
     from vibesensor.infra.processing import SignalProcessor
-    from vibesensor.infra.runtime.registry import ClientRegistry
     from vibesensor.infra.runtime.health_state import RuntimeHealthState
     from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
+    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.use_cases.run import RunRecorder
 
 
 def build_health_snapshot(

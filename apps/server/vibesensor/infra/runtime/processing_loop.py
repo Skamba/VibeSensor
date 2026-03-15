@@ -17,9 +17,9 @@ from typing import TYPE_CHECKING
 from vibesensor.shared.errors.exceptions import ProcessingError
 
 if TYPE_CHECKING:
+    from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
-    from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 
 LOGGER = logging.getLogger(__name__)
 

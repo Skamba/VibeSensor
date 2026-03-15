@@ -24,7 +24,10 @@ async def check_for_update(
     current_version: str,
 ) -> UpdateReleaseCheck:
     """Check GitHub releases for an available update."""
-    from vibesensor.use_cases.updates.release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
+    from vibesensor.use_cases.updates.release_fetcher import (
+        ReleaseFetcherConfig,
+        ServerReleaseFetcher,
+    )
 
     fetcher = ServerReleaseFetcher(
         ReleaseFetcherConfig(rollback_dir=str(rollback_dir)),
@@ -55,7 +58,10 @@ async def download_release(
     staging_dir: Path,
 ) -> Path | None:
     """Download a release wheel to *staging_dir*."""
-    from vibesensor.use_cases.updates.release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
+    from vibesensor.use_cases.updates.release_fetcher import (
+        ReleaseFetcherConfig,
+        ServerReleaseFetcher,
+    )
 
     fetcher = ServerReleaseFetcher(
         ReleaseFetcherConfig(rollback_dir=str(rollback_dir)),

@@ -8,9 +8,9 @@ from typing import TypedDict
 from vibesensor.domain.finding import Finding, VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.types.json_types import JsonValue
 from vibesensor.shared.boundaries._helpers import _as_float
 from vibesensor.shared.boundaries.location_hotspot import location_hotspot_from_payload
+from vibesensor.shared.types.json_types import JsonValue
 
 __all__ = [
     "SuspectedVibrationOrigin",

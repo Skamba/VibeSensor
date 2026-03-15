@@ -8,9 +8,6 @@ from typing import cast
 
 import numpy as np
 
-from vibesensor.vibration_strength import empty_vibration_strength_metrics
-
-from vibesensor.shared.types.payload_types import AxisMetrics
 from vibesensor.infra.processing.fft import (
     AXES,
     compute_fft_spectrum,
@@ -26,6 +23,8 @@ from vibesensor.infra.processing.models import (
     ProcessorConfig,
     SpectrumByAxis,
 )
+from vibesensor.shared.types.payload_types import AxisMetrics
+from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 LOGGER = logging.getLogger(__name__)
 _FFT_CACHE_MAXSIZE = 64

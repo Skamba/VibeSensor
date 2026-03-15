@@ -10,10 +10,24 @@ import tempfile
 from pathlib import Path
 
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
-from vibesensor.use_cases.updates.models import UpdateJobStatus, UpdatePhase, UpdateRequest, UpdateState, UpdateValidationConfig
-from vibesensor.use_cases.updates.releases import check_for_update, download_release, verify_download
+from vibesensor.use_cases.updates.models import (
+    UpdateJobStatus,
+    UpdatePhase,
+    UpdateRequest,
+    UpdateState,
+    UpdateValidationConfig,
+)
+from vibesensor.use_cases.updates.releases import (
+    check_for_update,
+    download_release,
+    verify_download,
+)
 from vibesensor.use_cases.updates.runner import CommandRunner, UpdateCommandExecutor
-from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker, collect_runtime_details
+from vibesensor.use_cases.updates.status import (
+    UpdateStateStore,
+    UpdateStatusTracker,
+    collect_runtime_details,
+)
 from vibesensor.use_cases.updates.wifi import (
     DNS_PROBE_HOST,
     DNS_READY_MIN_WAIT_S,
@@ -324,7 +338,18 @@ class UpdateManager:
     async def _cleanup_after_update(self) -> None:
         tracker = self._tracker
         try:
-            if tracker.status.state == UpdateState.running:
+            restore_phases = {
+                UpdatePhase.stopping_hotspot,
+                UpdatePhase.connecting_wifi,
+                UpdatePhase.checking,
+                UpdatePhase.downloading,
+                UpdatePhase.installing,
+                UpdatePhase.restoring_hotspot,
+            }
+            if (
+                tracker.status.state == UpdateState.running
+                or tracker.status.phase in restore_phases
+            ):
                 tracker.transition(UpdatePhase.restoring_hotspot)
                 tracker.log("Restoring hotspot...")
                 await asyncio.shield(self._build_wifi_controller().restore_hotspot())

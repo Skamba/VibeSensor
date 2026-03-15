@@ -13,11 +13,7 @@ from dataclasses import replace as _dc_replace
 from math import floor as _math_floor
 from math import log1p
 
-from vibesensor.vibration_strength import percentile
-from vibesensor.vibration_strength import (
-    vibration_strength_db_scalar as canonical_vibration_db,
-)
-
+from vibesensor.domain import Finding as DomainFinding
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.constants import (
     MEMS_NOISE_FLOOR_G,
@@ -26,7 +22,6 @@ from vibesensor.shared.constants import (
     SNR_LOG_DIVISOR,
     SPEED_COVERAGE_MIN_PCT,
 )
-from vibesensor.domain import Finding as DomainFinding
 from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     FindingEvidenceMetrics,
@@ -63,6 +58,10 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,
     segment_run_phases,
+)
+from vibesensor.vibration_strength import percentile
+from vibesensor.vibration_strength import (
+    vibration_strength_db_scalar as canonical_vibration_db,
 )
 
 # ---------------------------------------------------------------------------

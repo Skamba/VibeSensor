@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from vibesensor.use_cases.diagnostics import build_order_bands, vehicle_orders_hz
 from vibesensor.shared.constants import SECONDS_PER_MINUTE
 from vibesensor.shared.types.payload_types import (
     RotationalSpeedsPayload,
     RotationalSpeedValuePayload,
 )
+from vibesensor.use_cases.diagnostics import build_order_bands, vehicle_orders_hz
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor

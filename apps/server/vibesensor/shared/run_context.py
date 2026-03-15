@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from typing import cast
 
-from vibesensor.use_cases.diagnostics import i18n_ref
-from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS, tire_circumference_m_from_spec
+from vibesensor.infra.config.analysis_settings import (
+    DEFAULT_ANALYSIS_SETTINGS,
+    tire_circumference_m_from_spec,
+)
+from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
-from vibesensor.report_i18n import tr as _tr
+from vibesensor.use_cases.diagnostics import i18n_ref
 
 ANALYSIS_SETTINGS_SNAPSHOT_KEYS: tuple[str, ...] = tuple(DEFAULT_ANALYSIS_SETTINGS.keys())
 
@@ -223,4 +227,4 @@ def _resolve_i18n(lang: str, value: object) -> str:
 
     from vibesensor.adapters.pdf.mapping import resolve_i18n
 
-    return resolve_i18n(lang, value, tr=partial(_tr, lang))
+    return cast("str", resolve_i18n(lang, value, tr=partial(_tr, lang)))

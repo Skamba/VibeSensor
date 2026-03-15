@@ -17,8 +17,8 @@ from collections.abc import Coroutine
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from vibesensor.shared.constants import UI_PUSH_HZ
 from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
+from vibesensor.shared.constants import UI_PUSH_HZ
 
 if TYPE_CHECKING:
     from vibesensor.infra.runtime.state import RuntimeState

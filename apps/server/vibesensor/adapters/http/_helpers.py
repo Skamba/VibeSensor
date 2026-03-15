@@ -7,6 +7,7 @@ from contextlib import contextmanager
 
 from fastapi import HTTPException
 
+from vibesensor.adapters.udp.protocol import normalize_sensor_id
 from vibesensor.shared.errors.exceptions import (
     AnalysisNotReadyError,
     DataCorruptError,
@@ -14,7 +15,6 @@ from vibesensor.shared.errors.exceptions import (
     RunNotFoundError,
 )
 from vibesensor.use_cases.history.helpers import async_require_run, safe_filename
-from vibesensor.adapters.udp.protocol import normalize_sensor_id
 
 __all__ = [
     "async_require_run",

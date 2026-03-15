@@ -14,18 +14,24 @@ from unittest.mock import patch
 
 import pytest
 
-import vibesensor.shared.ids.locations as locations_mod
 import vibesensor.adapters.udp.udp_control_tx as udp_control_tx_mod
-from vibesensor.use_cases.diagnostics.order_bands import as_float_or_none as order_bands_as_float_or_none
-from vibesensor.infra.config.analysis_settings import sanitize_settings
-from vibesensor.adapters.persistence.car_library import CAR_LIBRARY, get_models_for_brand_type, get_variants_for_model
+import vibesensor.shared.ids.locations as locations_mod
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.shared.ids.locations import is_wheel_location
-from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
+from vibesensor.adapters.persistence.car_library import (
+    CAR_LIBRARY,
+    get_models_for_brand_type,
+    get_variants_for_model,
+)
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
-from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.adapters.websocket.hub import _ws_debug_enabled
+from vibesensor.infra.config.analysis_settings import sanitize_settings
+from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
+from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.shared.ids.locations import is_wheel_location
+from vibesensor.use_cases.diagnostics.order_bands import (
+    as_float_or_none as order_bands_as_float_or_none,
+)
 
 
 def _make_store_with_sensor() -> SettingsStore:

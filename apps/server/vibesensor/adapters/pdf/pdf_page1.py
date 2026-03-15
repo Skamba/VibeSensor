@@ -7,8 +7,13 @@ from collections.abc import Callable
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.report_i18n import tr as _tr
-from vibesensor.adapters.pdf.pdf_drawing import _cert_display, _draw_panel, _hex, _safe, _strength_with_peak
+from vibesensor.adapters.pdf.pdf_drawing import (
+    _cert_display,
+    _draw_panel,
+    _hex,
+    _safe,
+    _strength_with_peak,
+)
 from vibesensor.adapters.pdf.pdf_style import (
     DATA_TRUST_LABEL_W,
     DISCLAIMER_Y_OFFSET,
@@ -34,8 +39,15 @@ from vibesensor.adapters.pdf.pdf_style import (
     PdfRenderContext,
     build_page1_layout,
 )
-from vibesensor.adapters.pdf.pdf_text import _draw_kv, _draw_kv_column, _draw_text, _kv_consumed_height, _wrap_lines
+from vibesensor.adapters.pdf.pdf_text import (
+    _draw_kv,
+    _draw_kv_column,
+    _draw_text,
+    _kv_consumed_height,
+    _wrap_lines,
+)
 from vibesensor.adapters.pdf.report_data import NextStep, ReportTemplateData, SystemFindingCard
+from vibesensor.report_i18n import tr as _tr
 
 # -- Section helpers (merged from pdf_page1_sections) -------------------------
 

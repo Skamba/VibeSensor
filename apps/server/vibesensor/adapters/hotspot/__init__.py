@@ -8,7 +8,7 @@ Sub-modules
   CLI entry point.
 """
 
-from vibesensor.parsers import (
+from vibesensor.adapters.hotspot.parsers import (
     HealStateStore,
     expected_ip_match,
     nm_log_signals,
@@ -19,7 +19,7 @@ from vibesensor.parsers import (
     parse_port53_conflict,
     parse_rfkill_blocked,
 )
-from vibesensor.self_heal import (
+from vibesensor.adapters.hotspot.self_heal import (
     CommandResult,
     CommandRunner,
     main,

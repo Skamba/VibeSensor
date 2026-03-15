@@ -13,7 +13,22 @@ from typing import Any, cast
 
 import numpy as np
 
-from vibesensor.app.settings import NETWORK_PORTS
+from vibesensor.adapters.simulator.commands import (
+    apply_command,
+    apply_one_wheel_mild_scenario,
+    apply_road_fixed_scenario,
+    choose_default_profile,
+)
+from vibesensor.adapters.simulator.profiles import (
+    DEFAULT_ORDER_HZ,
+    DEFAULT_SPEED_KMH,
+    PROFILE_LIBRARY,
+    Profile,
+)
+from vibesensor.adapters.simulator.server_http import (
+    maybe_start_server,
+    set_server_speed_override_kmh,
+)
 from vibesensor.adapters.udp.protocol import (
     CMD_IDENTIFY,
     MSG_CMD,
@@ -23,23 +38,7 @@ from vibesensor.adapters.udp.protocol import (
     pack_hello,
     parse_cmd,
 )
-
-from vibesensor.commands import (
-    apply_command,
-    apply_one_wheel_mild_scenario,
-    apply_road_fixed_scenario,
-    choose_default_profile,
-)
-from vibesensor.profiles import (
-    DEFAULT_ORDER_HZ,
-    DEFAULT_SPEED_KMH,
-    PROFILE_LIBRARY,
-    Profile,
-)
-from vibesensor.server_http import (
-    maybe_start_server,
-    set_server_speed_override_kmh,
-)
+from vibesensor.app.settings import NETWORK_PORTS
 
 ROOT = Path(__file__).resolve().parents[3]
 

@@ -8,8 +8,6 @@ from __future__ import annotations
 
 __all__ = ["render_contract_reference_markdown"]
 
-from vibesensor.app.settings import DEFAULT_CONFIG
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.adapters.udp.protocol import (
     ACK_BYTES,
     CMD_HEADER_BYTES,
@@ -25,6 +23,8 @@ from vibesensor.adapters.udp.protocol import (
     MSG_HELLO,
     VERSION,
 )
+from vibesensor.app.settings import DEFAULT_CONFIG
+from vibesensor.shared.types.json_types import JsonObject
 
 
 def _port(value: str) -> int:

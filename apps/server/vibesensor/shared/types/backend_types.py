@@ -10,9 +10,9 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, Literal, NotRequired, TypeAlias, TypedDict
 
+from vibesensor.domain.speed_source import SpeedSourceKind as SpeedSourceKind
 from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
 from vibesensor.shared.constants import NUMERIC_TYPES
-from vibesensor.domain.speed_source import SpeedSourceKind as SpeedSourceKind
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
 if TYPE_CHECKING:
@@ -174,7 +174,7 @@ DEFAULT_CAR_ASPECTS: Final[MappingProxyType[str, float]] = MappingProxyType(
 def _parse_manual_speed(value: object) -> float | None:
     """Return a positive, finite float speed (≤500 km/h) or None."""
     if isinstance(value, NUMERIC_TYPES):
-        f = float(value)  # type: ignore[arg-type]
+        f = float(value)
         if _isfinite(f) and 0 < f <= 500:
             return f
     return None
@@ -183,7 +183,7 @@ def _parse_manual_speed(value: object) -> float | None:
 def _parse_stale_timeout(value: object) -> float:
     """Return a stale-timeout value clamped to [3, 120], default 10."""
     if isinstance(value, NUMERIC_TYPES):
-        return max(3.0, min(120.0, float(value)))  # type: ignore[arg-type]
+        return max(3.0, min(120.0, float(value)))
     return 10.0
 
 

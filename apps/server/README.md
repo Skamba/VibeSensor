@@ -12,20 +12,24 @@ FastAPI backend for VibeSensor. It ingests UDP telemetry from ESP32 sensor nodes
 ## Current architecture
 
 ```text
-ESP32 nodes -> udp_data_rx.py -> processing/ + analysis/ -> runtime/ -> routes/ + ws_hub.py -> apps/ui
-                                           \-> metrics_log/ + history_db/ -> history_services/ -> report/
+ESP32 nodes -> adapters/udp/ -> infra/processing/ + use_cases/diagnostics/
+                             -> infra/runtime/ -> adapters/http/ + adapters/websocket/ -> apps/ui
+                             -> use_cases/run/ + adapters/persistence/history_db/ -> use_cases/history/ -> adapters/pdf/
 ```
 
 Backend ownership boundaries:
 
-- `app.py`: FastAPI app factory and startup entry.
-- `routes/`: HTTP and WebSocket route groups.
-- `runtime/`: service builders, flat `RuntimeState`, processing loop, WebSocket broadcast, and lifecycle management.
-- `processing/`, `analysis/`: signal processing and findings logic.
-- `metrics_log/`, `history_db/`, `history_services/`, `runlog.py`: recording, persistence, and exports. Inside `metrics_log/`, `post_analysis.py` owns the background analysis queue; `logger.py` is the `RunRecorder` façade that directly manages session state and persistence coordination. The `history_services/` package owns the domain-logic layer above `HistoryDB` — run query/delete, PDF report generation, CSV/ZIP exports.
-- `report/`: PDF rendering pipeline.
-- `update/`: wheel-based update flow.
-- `hotspot/`: Wi-Fi AP monitoring, parsing, and self-heal infrastructure.
+- `app/`: FastAPI app factory (`bootstrap.py`), runtime container wiring (`container.py`), and YAML settings/config loading (`settings.py`).
+- `adapters/http/` and `adapters/websocket/`: HTTP route groups and live WebSocket delivery.
+- `infra/runtime/`: flat `RuntimeState`, lifecycle management, processing loop, health snapshots, and WebSocket broadcast coordination.
+- `infra/processing/`: signal processing pipeline.
+- `infra/config/`: runtime settings stores used by recording and runtime services.
+- `use_cases/diagnostics/`: post-stop analysis/findings logic.
+- `use_cases/run/`: recording orchestration and post-analysis queue.
+- `adapters/persistence/` and `use_cases/history/`: SQLite persistence, runlog I/O, car library loading, and history/report/export services.
+- `adapters/pdf/`: PDF/report rendering pipeline.
+- `use_cases/updates/`: wheel-based update flow.
+- `adapters/hotspot/`: Wi-Fi AP monitoring, parsing, and self-heal infrastructure.
 
 ## Important directories
 
@@ -77,7 +81,7 @@ Common runtime files under `apps/server/data/` include:
 
 ## HTTP and WebSocket surface
 
-The API surface is implemented in `apps/server/vibesensor/adapters/http/` and assembled by `routes/__init__.py`.
+The API surface is implemented in `apps/server/vibesensor/adapters/http/` and assembled by `adapters/http/__init__.py`.
 
 Current route groups:
 
@@ -101,7 +105,7 @@ Generate a PDF from a saved run:
 vibesensor-report path/to/run.jsonl --output report.pdf --summary-json summary.json
 ```
 
-The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`. Page composition lives in focused modules under `report/`.
+The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`. Page composition lives in focused modules under `adapters/pdf/`.
 
 ## Updates
 
@@ -121,6 +125,6 @@ python3 tools/tests/pytest_progress.py --show-test-names apps/server/tests
 make test-all
 ```
 
-`make typecheck-backend` is the enforced backend static-typing gate for app, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages. Use `docs/testing.md` for the full test map. Start with the matching feature directory under `apps/server/tests/`, then add `integration/` coverage when the behavior crosses package boundaries.
+`make typecheck-backend` is the enforced backend static-typing gate for the reorganized `app/`, `shared/`, `infra/`, `use_cases/`, `adapters/`, and `domain/` packages. Use `docs/testing.md` for the full test map. Start with the matching mirrored feature directory under `apps/server/tests/`, then add `integration/` coverage when the behavior crosses package boundaries.
 
 When tightening Python types, treat `Any` as a smell rather than a shortcut: prefer shared `JsonValue`/`JsonObject` aliases for persisted JSON, `TypedDict`/dataclass contracts for nested payloads, and `ParamSpec` for generic callable wrappers so mypy reflects the real runtime contract instead of a permissive fallback.

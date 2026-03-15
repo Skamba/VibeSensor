@@ -17,8 +17,8 @@ import dataclasses
 
 from vibesensor.adapters.persistence.history_db._samples import _V2_PEAK_COLS, _V2_TYPED_COLS
 from vibesensor.adapters.persistence.history_db._schema import SCHEMA_SQL
-from vibesensor.use_cases.history.exports import EXPORT_CSV_COLUMNS
 from vibesensor.adapters.udp.protocol import SensorFrame
+from vibesensor.use_cases.history.exports import EXPORT_CSV_COLUMNS
 
 # Known source-specific columns that are intentionally absent from other sources.
 _DDL_ONLY = {"id"}  # autoincrement PK

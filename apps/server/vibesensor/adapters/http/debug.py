@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING, cast
 
 from fastapi import APIRouter, HTTPException, Query
 
+from vibesensor.adapters.http._helpers import normalize_client_id_or_400
 from vibesensor.shared.types.payload_types import (
     DebugSpectrumErrorPayload,
     DebugSpectrumPayload,
     RawSamplesErrorPayload,
     RawSamplesPayload,
 )
-from vibesensor.adapters.http._helpers import normalize_client_id_or_400
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor

@@ -16,8 +16,8 @@ lint:
 	vibesensor-config-preflight apps/server/config.docker.yaml
 	vibesensor-config-preflight apps/server/config.pi.yaml
 	python3 tools/dev/docs_lint.py
-	python3 -m vibesensor.ws_schema_export --check
-	python3 -m vibesensor.http_api_schema_export --check
+	python3 -m vibesensor.cli.ws_schema_export --check
+	python3 -m vibesensor.cli.http_api_schema_export --check
 
 typecheck-backend:
 	PYTHON=$(CURDIR)/.venv/bin/python; \

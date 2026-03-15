@@ -1,8 +1,8 @@
-"""Verify that root-level analysis bridge modules don't import from analysis/.
+"""Verify that infra config modules don't import from diagnostics.
 
-``analysis_settings.py`` lives at the vibesensor package root specifically
-to avoid circular dependencies: ``runtime/`` and ``metrics_log/`` depend on
-it, and it must not depend on the ``analysis/`` subpackage.
+``infra/config/analysis_settings.py`` still sits on a hot import path for
+runtime wiring and recording orchestration, so it must not depend on the
+diagnostics use-case package.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from pathlib import Path
 from _paths import SERVER_ROOT
 
 _BRIDGE_MODULES = [
-    SERVER_ROOT / "vibesensor" / "analysis_settings.py",
+    SERVER_ROOT / "vibesensor" / "infra" / "config" / "analysis_settings.py",
 ]
 
 
@@ -38,10 +38,10 @@ def _imports_from_analysis(path: Path) -> list[str]:
 
 
 def test_analysis_settings_does_not_import_from_analysis() -> None:
-    path = SERVER_ROOT / "vibesensor" / "analysis_settings.py"
+    path = SERVER_ROOT / "vibesensor" / "infra" / "config" / "analysis_settings.py"
     violations = _imports_from_analysis(path)
     assert not violations, (
-        f"analysis_settings.py must not import from the analysis/ package "
+        f"analysis_settings.py must not import from the diagnostics package "
         f"(circular dependency risk): {violations}"
     )
 
@@ -49,16 +49,16 @@ def test_analysis_settings_does_not_import_from_analysis() -> None:
 def test_history_services_do_not_import_httpexception() -> None:
     """Service-layer modules must not import FastAPI's HTTPException.
 
-    Only ``routes/`` modules should import or raise HTTPException.
+    Only HTTP adapter modules should import or raise HTTPException.
     Domain exceptions from ``vibesensor.shared.errors.exceptions`` should be used instead,
-    and the ``routes/_helpers.py::domain_errors_to_http()`` context manager
+    and the ``adapters/http/_helpers.py::domain_errors_to_http()`` context manager
     translates them at the route boundary.
     """
     service_modules = [
-        SERVER_ROOT / "vibesensor" / "history_services" / "helpers.py",
-        SERVER_ROOT / "vibesensor" / "history_services" / "runs.py",
-        SERVER_ROOT / "vibesensor" / "history_services" / "reports.py",
-        SERVER_ROOT / "vibesensor" / "history_services" / "exports.py",
+        SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "helpers.py",
+        SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "runs.py",
+        SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "reports.py",
+        SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "exports.py",
     ]
     violations: list[str] = []
     for path in service_modules:

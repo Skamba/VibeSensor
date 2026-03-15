@@ -13,8 +13,10 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from vibesensor.shared.errors.exceptions import (
+    ProtocolError as ProtocolError,  # re-export for consumers
+)
 from vibesensor.shared.types.backend_types import RUN_SAMPLE_TYPE, RUN_SCHEMA_VERSION
-from vibesensor.shared.errors.exceptions import ProtocolError as ProtocolError  # re-export for consumers
 
 LOGGER = logging.getLogger(__name__)
 

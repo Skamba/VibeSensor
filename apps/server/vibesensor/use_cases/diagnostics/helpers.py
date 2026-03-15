@@ -8,8 +8,8 @@ from math import isfinite, sqrt
 from pathlib import Path
 from typing import TypedDict, cast
 
-from vibesensor.vibration_strength import percentile
-
+from vibesensor.adapters.persistence.runlog import read_jsonl_run
+from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.infra.config.analysis_settings import (
     engine_rpm_from_wheel_hz,
     tire_circumference_m_from_spec,
@@ -22,12 +22,17 @@ from vibesensor.shared.constants import (
     STEADY_SPEED_RANGE_KMH,
     STEADY_SPEED_STDDEV_KMH,
 )
-from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
+from vibesensor.shared.ids.locations import label_for_code as _label_for_code
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.ids.locations import label_for_code as _label_for_code
-from vibesensor.adapters.persistence.runlog import read_jsonl_run
-from vibesensor.use_cases.diagnostics._types import MetadataDict, PhaseLabel, PhaseSpeedStats, Sample, SpeedStats
+from vibesensor.use_cases.diagnostics._types import (
+    MetadataDict,
+    PhaseLabel,
+    PhaseSpeedStats,
+    Sample,
+    SpeedStats,
+)
+from vibesensor.vibration_strength import percentile
 
 # Maps driving-phase keys to their canonical i18n label keys.
 # Shared by summary-building logic (phase-onset notes) and report mapping

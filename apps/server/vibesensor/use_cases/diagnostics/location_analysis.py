@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections import defaultdict
 from math import ceil, floor, log1p, pow
 
-from vibesensor.shared.constants import MULTI_SENSOR_CORROBORATION_DB
 from vibesensor.domain import LocationHotspot, VibrationSource
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.constants import MULTI_SENSOR_CORROBORATION_DB
 from vibesensor.shared.ids.locations import has_any_wheel_location, is_wheel_location
+from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     JsonObject,
     LocationHotspotPayload,

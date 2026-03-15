@@ -16,7 +16,6 @@ from test_support import (
     standard_metadata,
 )
 
-from vibesensor.use_cases.diagnostics import RunAnalysis, summarize_run_data
 from vibesensor.adapters.pdf.mapping import (
     filter_active_sensor_intensity,
     map_summary,
@@ -25,6 +24,7 @@ from vibesensor.adapters.pdf.mapping import (
     summary_sensor_intensity_by_location,
 )
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
+from vibesensor.use_cases.diagnostics import RunAnalysis, summarize_run_data
 
 
 def _make_small_dataset() -> tuple[dict, list[dict]]:

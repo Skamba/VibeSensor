@@ -1,3 +1,3 @@
-from .hub import WSConnection, WebSocketHub
+from .hub import WebSocketHub, WSConnection
 
 __all__ = ["WSConnection", "WebSocketHub"]

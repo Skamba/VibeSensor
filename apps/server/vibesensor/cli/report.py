@@ -7,9 +7,9 @@ import json
 import sys
 from pathlib import Path
 
-from vibesensor.use_cases.diagnostics import summarize_log
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.use_cases.diagnostics import summarize_log
 
 
 def parse_args() -> argparse.Namespace:

@@ -11,6 +11,27 @@ from statistics import mean as _mean
 from typing import Any
 
 from vibesensor import __version__
+from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern, why_parts_listed
+from vibesensor.adapters.pdf.report_data import (
+    DataTrustItem,
+    NextStep,
+    PartSuggestion,
+    PatternEvidence,
+    PeakRow,
+    ReportTemplateData,
+    SystemFindingCard,
+)
+from vibesensor.adapters.persistence.runlog import utc_now_iso
+from vibesensor.domain import Finding, Report, TestRun, VibrationSource
+from vibesensor.report_i18n import normalize_lang
+from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.finding import finding_payload_from_domain
+from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
+from vibesensor.shared.boundaries.vibration_origin import (
+    SuspectedVibrationOrigin,
+    origin_payload_from_finding,
+)
+from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     IntensityRow,
     JsonValue,
@@ -26,24 +47,6 @@ from vibesensor.use_cases.diagnostics.strength_labels import (
     certainty_tier,
     strength_label,
     strength_text,
-)
-from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
-from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin, origin_payload_from_finding
-from vibesensor.domain import Finding, Report, TestRun, VibrationSource
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
-from vibesensor.report_i18n import normalize_lang
-from vibesensor.report_i18n import tr as _tr
-from vibesensor.adapters.persistence.runlog import utc_now_iso
-from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern, why_parts_listed
-from vibesensor.adapters.pdf.report_data import (
-    DataTrustItem,
-    NextStep,
-    PartSuggestion,
-    PatternEvidence,
-    PeakRow,
-    ReportTemplateData,
-    SystemFindingCard,
 )
 
 __all__ = ["map_summary"]

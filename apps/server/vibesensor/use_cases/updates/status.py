@@ -13,7 +13,12 @@ import time
 from pathlib import Path
 
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
-from vibesensor.use_cases.updates.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
+from vibesensor.use_cases.updates.models import (
+    UpdateIssue,
+    UpdateJobStatus,
+    UpdatePhase,
+    UpdateState,
+)
 from vibesensor.use_cases.updates.runner import sanitize_log_line
 
 LOGGER = logging.getLogger(__name__)

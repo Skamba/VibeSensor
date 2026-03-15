@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from test_support.core import standard_metadata
 from vibesensor.use_cases.diagnostics import summarize_run_data
-
-from vibesensor.core import standard_metadata
 
 
 def run_analysis(

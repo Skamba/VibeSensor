@@ -15,12 +15,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.use_cases.diagnostics.helpers import _corr_abs_clamped, _weighted_percentile
 from vibesensor.adapters.pdf.pdf_diagram_render import _canonical_location
 from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
-from vibesensor.adapters.pdf_i18n import normalize_lang, tr
 from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
-from vibesensor.use_cases.updates.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher, _dir_sha256
+from vibesensor.report_i18n import normalize_lang, tr
+from vibesensor.use_cases.diagnostics.helpers import _corr_abs_clamped, _weighted_percentile
+from vibesensor.use_cases.updates.firmware_cache import (
+    FirmwareCacheConfig,
+    GitHubReleaseFetcher,
+    _dir_sha256,
+)
 from vibesensor.use_cases.updates.manager import UpdateManager, UpdateState
 from vibesensor.vibration_strength import vibration_strength_db_scalar
 

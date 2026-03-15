@@ -7,12 +7,6 @@ from threading import RLock
 
 import numpy as np
 
-from vibesensor.shared.types.payload_types import (
-    IntakeStatsPayload,
-    RawSamplesErrorPayload,
-    RawSamplesPayload,
-)
-from vibesensor.vibration_strength import empty_vibration_strength_metrics
 from vibesensor.infra.processing.buffers import ClientBuffer
 from vibesensor.infra.processing.models import (
     CachedMetricsHit,
@@ -24,6 +18,12 @@ from vibesensor.infra.processing.models import (
     ProcessorConfig,
     ProcessorStats,
 )
+from vibesensor.shared.types.payload_types import (
+    IntakeStatsPayload,
+    RawSamplesErrorPayload,
+    RawSamplesPayload,
+)
+from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 LOGGER = logging.getLogger(__name__)
 MAX_CLIENT_SAMPLE_RATE_HZ = 4096

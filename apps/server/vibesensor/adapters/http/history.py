@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
+from vibesensor.adapters.http._helpers import domain_errors_to_http
 from vibesensor.shared.types.api_models import (
     DeleteHistoryRunResponse,
     HistoryInsightsResponse,
     HistoryListResponse,
     HistoryRunResponse,
 )
-from vibesensor.adapters.http._helpers import domain_errors_to_http
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.history.exports import HistoryExportService

@@ -5,8 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
-from vibesensor.domain import VibrationSource
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.adapters.pdf.pdf_style import (
     BMW_LENGTH_MM as _BMW_LENGTH_MM,
 )
@@ -17,6 +15,8 @@ from vibesensor.adapters.pdf.pdf_style import (
     FINDING_SOURCE_COLORS,
     REPORT_COLORS,
 )
+from vibesensor.domain import VibrationSource
+from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -12,6 +12,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from vibesensor.infra.processing.fft import float_list
+from vibesensor.infra.processing.models import SpectrumAxisData
+from vibesensor.infra.processing.time_align import compute_overlap
 from vibesensor.shared.types.payload_types import (
     AlignmentInfoPayload,
     FrequencyWarningPayload,
@@ -19,9 +22,6 @@ from vibesensor.shared.types.payload_types import (
     SpectrumSeriesPayload,
 )
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
-from vibesensor.infra.processing.fft import float_list
-from vibesensor.infra.processing.models import SpectrumAxisData
-from vibesensor.infra.processing.time_align import compute_overlap
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException
 
+from vibesensor.adapters.http._helpers import normalize_mac_or_400
 from vibesensor.shared.types.api_models import (
     ActiveCarRequest,
     AnalysisSettingsRequest,
@@ -25,11 +26,10 @@ from vibesensor.shared.types.api_models import (
     SpeedUnitRequest,
     SpeedUnitResponse,
 )
-from vibesensor.adapters.http._helpers import normalize_mac_or_400
 
 if TYPE_CHECKING:
-    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
     from vibesensor.infra.config.settings_store import SettingsStore
 
 

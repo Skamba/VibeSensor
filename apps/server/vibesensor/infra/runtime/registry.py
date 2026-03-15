@@ -11,10 +11,8 @@ import sqlite3
 import time
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from vibesensor.shared.types.payload_types import ClientApiRow, WsClientRow
-from vibesensor.infra.processing.models import ClientMetrics
 from vibesensor.adapters.udp.protocol import (
     AckMessage,
     DataMessage,
@@ -23,6 +21,8 @@ from vibesensor.adapters.udp.protocol import (
     client_id_mac,
 )
 from vibesensor.adapters.udp.protocol import normalize_sensor_id as _normalize_client_id
+from vibesensor.infra.processing.models import ClientMetrics
+from vibesensor.shared.types.payload_types import ClientApiRow, WsClientRow
 
 if TYPE_CHECKING:
     from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -547,9 +547,11 @@ class ClientRegistry:
             "last_seen_age_ms": snapshot.last_seen_age_ms,
             "frames_total": snapshot.frames_total,
             "dropped_frames": snapshot.dropped_frames,
-            "latest_metrics": snapshot.latest_metrics
-            if snapshot.latest_metrics is not None
-            else {},
+            "latest_metrics": (
+                snapshot.latest_metrics
+                if snapshot.latest_metrics is not None
+                else cast("ClientMetrics", {})
+            ),
             "reset_count": snapshot.reset_count,
             "last_reset_time": snapshot.last_reset_time,
         }

@@ -1,7 +1,7 @@
 """Export the HTTP API OpenAPI schema for frontend contract generation.
 
 Usage:
-    python -m vibesensor.http_api_schema_export [--out PATH]
+    python -m vibesensor.cli.http_api_schema_export [--out PATH]
 
 Default output: apps/ui/src/contracts/http_api_schema.json
 """
@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from vibesensor.adapters.http import create_router
 
 _DEFAULT_OUT = (
-    Path(__file__).resolve().parents[3]
+    Path(__file__).resolve().parents[4]
     / "apps"
     / "ui"
     / "src"
@@ -81,7 +81,7 @@ def main() -> None:
         if committed != generated:
             print(
                 f"FAIL: {args.out} is out of date.\n"
-                "Run 'python -m vibesensor.http_api_schema_export' and commit the result.",
+                "Run 'python -m vibesensor.cli.http_api_schema_export' and commit the result.",
                 file=sys.stderr,
             )
             raise SystemExit(1)
