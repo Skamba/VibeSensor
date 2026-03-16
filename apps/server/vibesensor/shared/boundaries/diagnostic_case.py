@@ -132,9 +132,11 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         if isinstance(speed_stats, Mapping)
         else None
     )
-    run_suitability = summary.get("run_suitability")
+    raw_suitability_payload = summary.get("run_suitability")
     suitability = (
-        run_suitability_from_payload(run_suitability) if isinstance(run_suitability, list) else None
+        run_suitability_from_payload(raw_suitability_payload)
+        if isinstance(raw_suitability_payload, list)
+        else None
     )
 
     # Synthesize ConfidenceAssessment for historical findings that lack it
@@ -147,17 +149,11 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         if isinstance(_amp_summary, Mapping)
         else "moderate"
     )
-    _has_ref_gaps = False
-    if isinstance(run_suitability, list):
-        for _chk in run_suitability:
-            if (
-                isinstance(_chk, Mapping)
-                and _chk.get("check_key") == "reference_complete"
-                and _chk.get("state") == "fail"
-            ):
-                _has_ref_gaps = True
-                break
+    _has_ref_gaps = suitability.has_reference_gaps if suitability else False
 
+    # MIGRATION: backfills ConfidenceAssessment for historical findings that
+    # lack it.  Can be removed once all production databases are confirmed to
+    # carry ConfidenceAssessment on every Finding.
     def _ensure_ca(f: Finding) -> Finding:
         if f.confidence_assessment is not None:
             return f
