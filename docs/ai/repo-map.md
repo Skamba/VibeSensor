@@ -34,7 +34,7 @@
 - `infra/processing/`: signal processing pipeline (buffers, FFT, payload shaping, and processor facade).
 - `infra/config/`: runtime analysis/settings stores used by runtime wiring and recording flows.
 - `infra/workers/`: worker-pool infrastructure.
-- `use_cases/diagnostics/`: post-stop diagnostics pipeline. `findings.py` and `top_cause_selection.py` delegate classification and ranking to the domain `Finding`; `location_analysis.py` owns the location-analysis pipeline; `analysis_window.py` owns the `AnalysisWindow` dataclass; `_types.py` owns `PhaseEvidence`, `FindingPayload`, and `AnalysisSummary`.
+- `use_cases/diagnostics/`: post-stop diagnostics pipeline. `findings.py` and `top_cause_selection.py` delegate classification and ranking to the domain `Finding`; `location_analysis.py` owns the location-analysis pipeline and `LocationAnalysisResult` typed return; `analysis_window.py` owns the `AnalysisWindow` dataclass; `_types.py` owns `PhaseEvidence`, `FindingPayload`, and `AnalysisSummary`.
 - `use_cases/history/`: run query/delete, PDF report generation, CSV/ZIP exports, and history-facing helper orchestration above persistence.
 - `use_cases/run/`: recording pipeline orchestration; `logger.py` owns `RunRecorder`, `post_analysis.py` owns the background analysis queue, and `sample_builder.py` owns pure sample-building helpers.
 - `use_cases/updates/`: wheel-based updater workflow orchestration, firmware cache, ESP flashing, release discovery, install, rollback, runner, Wi-Fi, and status tracking.
