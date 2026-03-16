@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -7,7 +8,6 @@ from test_support.report_helpers import analysis_metadata as _make_metadata
 from test_support.report_helpers import analysis_sample as _make_sample
 from test_support.report_helpers import write_test_log
 
-from vibesensor.adapters.persistence.runlog import append_jsonl_records, create_run_end_record
 from vibesensor.use_cases.diagnostics import summarize_log
 
 
@@ -52,8 +52,17 @@ def test_summarize_log_missing_precomputed_strength_metrics_raises(tmp_path: Pat
     metadata = _make_metadata()
     sample = _make_sample(0.0, 80.0, 0.02)
     sample.pop("vibration_strength_db", None)
-    end = create_run_end_record("test-run", "2025-01-01T00:00:10+00:00")
-    append_jsonl_records(log_path, [metadata, sample, end])
+    end = {
+        "record_type": "run_end",
+        "schema_version": "v2-jsonl",
+        "run_id": "test-run",
+        "end_time_utc": "2025-01-01T00:00:10+00:00",
+    }
+    records = [metadata, sample, end]
+    log_path.write_text(
+        "\n".join(json.dumps(r, ensure_ascii=False) for r in records) + "\n",
+        encoding="utf-8",
+    )
     with pytest.raises(ValueError, match="Missing required precomputed strength metrics"):
         summarize_log(log_path)
 
@@ -64,8 +73,17 @@ def test_summarize_log_allows_partial_missing_precomputed_strength_metrics(tmp_p
     sample_missing = _make_sample(0.0, 80.0, 0.02)
     sample_missing.pop("vibration_strength_db", None)
     sample_valid = _make_sample(0.5, 82.0, 0.021)
-    end = create_run_end_record("test-run", "2025-01-01T00:00:10+00:00")
-    append_jsonl_records(log_path, [metadata, sample_missing, sample_valid, end])
+    end = {
+        "record_type": "run_end",
+        "schema_version": "v2-jsonl",
+        "run_id": "test-run",
+        "end_time_utc": "2025-01-01T00:00:10+00:00",
+    }
+    records = [metadata, sample_missing, sample_valid, end]
+    log_path.write_text(
+        "\n".join(json.dumps(r, ensure_ascii=False) for r in records) + "\n",
+        encoding="utf-8",
+    )
 
     summary = summarize_log(log_path)
     assert summary["rows"] == 2

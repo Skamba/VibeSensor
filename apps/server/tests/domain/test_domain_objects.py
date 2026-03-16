@@ -2,8 +2,7 @@
 Measurement, SpeedSource, Finding, Report.
 
 Validates that the simple domain names are properly defined, importable,
-and carry the expected behavior. AnalysisWindow lives in the analysis
-layer and is tested in tests/analysis/.
+and carry the expected behavior.
 """
 
 from __future__ import annotations
@@ -12,18 +11,17 @@ from datetime import UTC, datetime
 
 import pytest
 
+from vibesensor.adapters.pdf.mapping import Report
 from vibesensor.domain import (
     Car,
     Finding,
     Measurement,
-    Report,
     Run,
     Sensor,
     SensorPlacement,
     SpeedSource,
 )
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
 
 _NOW = datetime(2025, 6, 15, 12, 0, 0, tzinfo=UTC)
 
@@ -193,44 +191,6 @@ class TestCar:
             Car(aspects={"tire_aspect_pct": 0.0})
         with pytest.raises(ValueError, match="positive finite"):
             Car(aspects={"rim_in": 0.0})
-
-
-# ---------------------------------------------------------------------------
-# Phase 3: AnalysisWindow
-# ---------------------------------------------------------------------------
-
-
-class TestAnalysisWindow:
-    """Analysis window value object."""
-
-    def test_sample_count(self) -> None:
-        w = AnalysisWindow(start_idx=10, end_idx=50)
-        assert w.sample_count == 40
-
-    def test_duration(self) -> None:
-        w = AnalysisWindow(start_idx=0, end_idx=100, start_time_s=0.0, end_time_s=5.0)
-        assert w.duration_s == pytest.approx(5.0)
-
-    def test_duration_none_when_missing(self) -> None:
-        w = AnalysisWindow(start_idx=0, end_idx=100)
-        assert w.duration_s is None
-
-    def test_phase_context(self) -> None:
-        w = AnalysisWindow(
-            start_idx=0,
-            end_idx=50,
-            phase="cruise",
-            speed_min_kmh=80.0,
-            speed_max_kmh=100.0,
-        )
-        assert w.phase == "cruise"
-        assert w.speed_min_kmh == 80.0
-        assert w.speed_max_kmh == 100.0
-
-    def test_frozen(self) -> None:
-        w = AnalysisWindow(start_idx=0, end_idx=10)
-        with pytest.raises(AttributeError):
-            w.start_idx = 5  # type: ignore[misc]
 
 
 # ---------------------------------------------------------------------------
@@ -407,7 +367,6 @@ class TestPackageImports:
             DrivingPhase,
             Finding,
             Measurement,
-            Report,
             Run,
             Sensor,
             SensorPlacement,
@@ -423,7 +382,6 @@ class TestPackageImports:
         assert SpeedSource is not None
         assert DrivingPhase is not None
         assert Finding is not None
-        assert Report is not None
 
 
 # ---------------------------------------------------------------------------
@@ -491,27 +449,6 @@ class TestBridgeMethods:
         p = SensorPlacement.from_code("custom_spot")
         assert p.code == "custom_spot"
         assert p.label == "Custom Spot"
-
-    def test_phase_segment_to_analysis_window(self) -> None:
-        from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, PhaseSegment
-
-        seg = PhaseSegment(
-            phase=DrivingPhase.CRUISE,
-            start_idx=10,
-            end_idx=50,
-            start_t_s=1.0,
-            end_t_s=5.0,
-            speed_min_kmh=80.0,
-            speed_max_kmh=100.0,
-            sample_count=40,
-        )
-        aw = seg.to_analysis_window()
-        assert isinstance(aw, AnalysisWindow)
-        assert aw.phase == "cruise"
-        assert aw.sample_count == 40
-        assert aw.duration_s == pytest.approx(4.0)
-        assert aw.speed_min_kmh == 80.0
-        assert aw.speed_max_kmh == 100.0
 
     def test_settings_store_domain_accessors(self) -> None:
         from vibesensor.infra.config.settings_store import SettingsStore
@@ -627,41 +564,6 @@ class TestFindingEnrichments:
         assert f.diffuse_excitation is True
         assert f.weak_spatial_separation is True
         assert f.cruise_fraction == pytest.approx(0.6)
-
-
-class TestAnalysisWindowEnrichments:
-    """Tests for AnalysisWindow (now in analysis layer)."""
-
-    def test_phase_comparison(self) -> None:
-        from vibesensor.domain import DrivingPhase
-
-        aw = AnalysisWindow(start_idx=0, end_idx=100, phase="cruise")
-        assert aw.phase == DrivingPhase.CRUISE
-        assert aw.phase != DrivingPhase.IDLE
-
-    def test_is_analyzable(self) -> None:
-        assert AnalysisWindow(start_idx=0, end_idx=100).is_analyzable
-        assert not AnalysisWindow(start_idx=0, end_idx=0).is_analyzable
-
-    def test_contains_speed(self) -> None:
-        aw = AnalysisWindow(start_idx=0, end_idx=100, speed_min_kmh=80.0, speed_max_kmh=100.0)
-        assert aw.contains_speed(90.0)
-        assert aw.contains_speed(80.0)  # boundary
-        assert aw.contains_speed(100.0)  # boundary
-        assert not aw.contains_speed(120.0)
-        assert not aw.contains_speed(60.0)
-
-    def test_contains_speed_missing(self) -> None:
-        aw = AnalysisWindow(start_idx=0, end_idx=100)
-        assert not aw.contains_speed(90.0)
-
-    def test_speed_range_text(self) -> None:
-        aw = AnalysisWindow(start_idx=0, end_idx=100, speed_min_kmh=80.0, speed_max_kmh=100.0)
-        assert aw.speed_range_text == "80\u2013100 km/h"
-
-    def test_speed_range_text_missing(self) -> None:
-        aw = AnalysisWindow(start_idx=0, end_idx=100)
-        assert aw.speed_range_text is None
 
 
 class TestReportValidation:

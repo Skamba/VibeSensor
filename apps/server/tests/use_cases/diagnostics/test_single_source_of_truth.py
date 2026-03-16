@@ -395,43 +395,6 @@ def test_validation_sets_cover_all_settings_keys() -> None:
     assert not overlap, f"Keys in both validation sets: {overlap}"
 
 
-def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Network port defaults must come from shared contracts across runtime layers."""
-    import re
-    import sys
-
-    from vibesensor.adapters.simulator.sim_sender import parse_args
-    from vibesensor.app.settings import DEFAULT_CONFIG, NETWORK_PORTS
-
-    root = REPO_ROOT
-    expected_data = int(NETWORK_PORTS["server_udp_data"])
-    expected_control = int(NETWORK_PORTS["server_udp_control"])
-    expected_fw_base = int(NETWORK_PORTS["firmware_control_port_base"])
-
-    py_data = int(str(DEFAULT_CONFIG["udp"]["data_listen"]).rsplit(":", 1)[-1])
-    py_ctrl = int(str(DEFAULT_CONFIG["udp"]["control_listen"]).rsplit(":", 1)[-1])
-    assert py_data == expected_data
-    assert py_ctrl == expected_control
-
-    monkeypatch.setattr(sys, "argv", ["vibesensor-sim"])
-    sim_args = parse_args()
-    assert sim_args.server_data_port == expected_data
-    assert sim_args.server_control_port == expected_control
-
-    contracts_h = (root / "firmware" / "esp" / "include" / "vibesensor_contracts.h").read_text(
-        encoding="utf-8",
-    )
-
-    def _macro(name: str) -> int:
-        match = re.search(rf"#define\s+{name}\s+(\d+)", contracts_h)
-        assert match, f"Missing macro {name} in vibesensor_contracts.h"
-        return int(match.group(1))
-
-    assert _macro("VS_SERVER_UDP_DATA_PORT") == expected_data
-    assert _macro("VS_SERVER_UDP_CONTROL_PORT") == expected_control
-    assert _macro("VS_FIRMWARE_CONTROL_PORT_BASE") == expected_fw_base
-
-
 def test_config_example_does_not_exist() -> None:
     """config.example.yaml was removed — use ``vibesensor-config-preflight --dump-defaults``."""
     root = REPO_ROOT

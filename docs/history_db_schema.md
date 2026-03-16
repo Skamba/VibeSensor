@@ -1,4 +1,4 @@
-# History DB Schema (v5)
+# History DB Schema (v9)
 
 The VibeSensor server stores run history, samples, analysis results,
 application settings and client names in a single SQLite file located at
@@ -21,7 +21,7 @@ Single-row key-value table tracking the schema version.
 | Column | Type | Description |
 |--------|------|-------------|
 | `key` | TEXT PK | Always `'version'` |
-| `value` | TEXT | Current schema version (`'5'`) |
+| `value` | TEXT | Current schema version (`'9'`) |
 
 ### `runs`
 
@@ -30,7 +30,8 @@ One row per recording session.
 | Column | Type | Description |
 |--------|------|-------------|
 | `run_id` | TEXT PK | UUID for the run |
-| `status` | TEXT | `recording` → `analyzing` → `complete` (or `error`). CHECK constraint enforces valid values on new databases. Transitions are enforced atomically via WHERE guards. |
+| `case_id` | TEXT | Diagnostic case this run belongs to |
+| `status` | TEXT | `recording` → `analyzing` → `complete` (or `error`). CHECK constraint enforces valid values. Transitions are enforced atomically via WHERE guards. |
 | `start_time_utc` | TEXT | ISO-8601 start time |
 | `end_time_utc` | TEXT | ISO-8601 end time (set on finalize) |
 | `metadata_json` | TEXT | Run-level metadata (car config, language, sensor model, etc.) |
@@ -41,17 +42,15 @@ One row per recording session.
 | `analysis_started_at` | TEXT | When analysis started |
 | `analysis_completed_at` | TEXT | When analysis finished |
 
-### `samples_v2` (new in v5)
+### `samples_v2`
 
 One row per sensor frame — **no JSON blobs**. All SensorFrame scalar fields
-are stored as typed columns; peak arrays use compact JSON in TEXT columns.
+are stored as typed columns; peak arrays use compact JSON in a TEXT column.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | INTEGER PK | Auto-increment row ID |
 | `run_id` | TEXT FK | References `runs(run_id)` with `ON DELETE CASCADE` |
-| `record_type` | TEXT | Always `'sample'` |
-| `schema_version` | TEXT | E.g. `'v2-jsonl'` |
 | `timestamp_utc` | TEXT | ISO-8601 sample time |
 | `t_s` | REAL | Seconds since run start (monotonic) |
 | `client_id` | TEXT | Sensor MAC address (hex) |
@@ -77,7 +76,6 @@ are stored as typed columns; peak arrays use compact JSON in TEXT columns.
 | `frames_dropped_total` | INTEGER | Cumulative dropped frames |
 | `queue_overflow_drops` | INTEGER | Queue overflow drop count |
 | `top_peaks` | TEXT | JSON array of combined top peaks |
-| `extra_json` | TEXT | JSON dict of any non-standard keys |
 
 **Indexes:**
 - `idx_samples_v2_run_id` on `(run_id)` — fast lookup by run
@@ -110,10 +108,10 @@ checks the stored version (the text value of the `'version'` key):
 
 | Stored version | Action |
 |----------------|--------|
-| No row (fresh DB, `schema_meta` table just created) | Create all v5 tables, insert version `'5'` |
-| `'5'` | No action needed |
-| Older (e.g. `'4'`) | Raise `RuntimeError` directing the user to delete the database file |
-| Newer than `'5'` | Raise `RuntimeError` (downgrade not supported) |
+| No row (fresh DB, `schema_meta` table just created) | Create all tables, insert version `'9'` |
+| `'9'` | No action needed |
+| Older (e.g. `'5'`) | Raise `RuntimeError` directing the user to delete the database file |
+| Newer than `'9'` | Raise `RuntimeError` (downgrade not supported) |
 
 ### Schema versioning policy
 

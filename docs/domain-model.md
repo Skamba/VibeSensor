@@ -28,23 +28,15 @@ The core diagnostic domain is centered on:
 - `DiagnosticCase`
 - `TestRun`
 - `Finding`
-- `Diagnosis`
-
-Related concepts such as `Observation`, `Signature`, and `Hypothesis` are part
-of this diagnostic model, but they are not aggregate roots.
 
 The model is organized around diagnostic truth:
 
 - a `DiagnosticCase` represents one diagnostic investigation
 - a `Car` provides the case-scoped interpretive context for that entire
   investigation
-- a `Diagnosis` represents a consolidated case-level conclusion inside a
-  `DiagnosticCase`
 - a `TestRun` represents one analyzed diagnostic run within that case
 - every `TestRun` inside a `DiagnosticCase` is interpreted within that same
   `Car` context
-- a `DiagnosticReasoning` object represents the run-scoped reasoning model
-  inside a `TestRun`
 - a `Finding` represents run-level diagnostic conclusion content inside a
   `TestRun`
 - a `Run` represents capture and recording lifecycle for a run, not analyzed
@@ -60,11 +52,10 @@ The model is organized around diagnostic truth:
   portions of run evidence
 - `Sensor`, `SensorPlacement`, and `SpeedSource` are part of run setup and
   evidence context
-- `Observation`, `Signature`, and `Hypothesis` are diagnostic intermediate
-  concepts that support the derivation of `Finding`
 
-`Report` and `HistoryRecord` are not the center of the diagnostic model. They
-are derived or archival representations around that model.
+`Report` is not the center of the diagnostic model. It
+is a derived representation around that model and lives in the adapter
+layer (`adapters/pdf/mapping.py`).
 
 `Car` is case-scoped interpretive context for the whole investigation. It is
 not a conclusion object and not a boundary shape.
@@ -73,9 +64,9 @@ not a conclusion object and not a boundary shape.
 
 The model uses explicit scope and lifetime boundaries:
 
-- case-scoped concepts: `DiagnosticCase`, `Diagnosis`, `Car`, and `Symptom`
-- run-scoped diagnostic concepts: `TestRun`, `DiagnosticReasoning`, `Finding`,
-  `DrivingSegment`, `DrivingPhase`, `Observation`, `Signature`, `Hypothesis`,
+- case-scoped concepts: `DiagnosticCase`, `Car`, and `Symptom`
+- run-scoped diagnostic concepts: `TestRun`, `Finding`,
+  `DrivingSegment`, `DrivingPhase`,
   `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
   and `TestPlan`
 - finding-scoped value objects: `ConfidenceAssessment`, `FindingEvidence`,
@@ -88,10 +79,9 @@ The model uses explicit scope and lifetime boundaries:
 - analysis-machinery concepts: `PhaseSegment` and `AnalysisWindow`
 - boundary-scoped derived or archival concepts: `Report` and `HistoryRecord`
 
-These scoping rules define where behavior and invariants belong. Case-level
-reasoning belongs on `DiagnosticCase` and its contained `Diagnosis` objects.
+These scoping rules define where behavior and invariants belong.
 Run-level diagnostic meaning belongs on `TestRun` and its contained
-`DiagnosticReasoning`, `Finding`, and `DrivingSegment` objects. Capture
+`Finding` and `DrivingSegment` objects. Capture
 lifecycle belongs on `Run`. Captured evidence belongs on `RunCapture` and its
 `RunSetup`. Communication and archival concerns belong on `Report` and
 `HistoryRecord`.
@@ -109,7 +99,6 @@ The model uses explicit lifecycle and stability expectations:
 - `RunCapture` is immutable once produced from a completed `Run`
 - `RunSetup` is stable setup context for that capture
 - `TestRun` is a derived analyzed aggregate built from captured evidence
-- `Diagnosis` is a derived case-level conclusion object
 - `Report` is a derived explanatory representation
 - `HistoryRecord` is an archival snapshot and boundary representation
 
@@ -119,9 +108,6 @@ The aggregate hierarchy is canonical:
 
 - `DiagnosticCase` is the top-level diagnostic aggregate root.
 - `TestRun` is the run-level diagnostic aggregate.
-- `Diagnosis` is the case-level consolidated conclusion object inside
-  `DiagnosticCase`.
-- `DiagnosticReasoning` is the run-scoped reasoning object inside a `TestRun`.
 - `Finding` is the surfaced run-level conclusion object inside a `TestRun`.
 - `Run` is not the main analyzed-run aggregate. It is the recording-time
   lifecycle object used to capture a run.
@@ -135,28 +121,14 @@ The aggregate hierarchy is canonical:
 ### `DiagnosticCase`
 
 `DiagnosticCase` is the top-level aggregate root for one diagnostic
-investigation. It owns case-level identity, case-level reasoning, and
-cross-run reconciliation. It is scoped to one `Car` context and contains
-case-level `Diagnosis` objects. That `Car` context applies to every `TestRun`,
-`RunCapture`, and `RunSetup` in the case.
-
-### `Diagnosis`
-
-`Diagnosis` is the canonical case-level consolidated conclusion object inside a
-`DiagnosticCase`. It is derived from one or more run-level `Finding` objects
-across one or more `TestRun`s.
+investigation. It owns case-level identity and scopes runs to one `Car`
+context.
 
 ### `TestRun`
 
 `TestRun` is the analyzed run aggregate inside a `DiagnosticCase`. It owns the
 interpreted evidence and run-level diagnostic meaning of one analyzed run. It
 is derived from one `RunCapture`.
-
-### `DiagnosticReasoning`
-
-`DiagnosticReasoning` is the run-scoped reasoning object inside a `TestRun`. It
-contains the run-scoped intermediate reasoning concepts used to derive
-`Finding`.
 
 ### `Finding`
 
@@ -198,13 +170,11 @@ graph, and the **reasoning chain**.
 DiagnosticCase
   is scoped to one Car
   contains TestRun*
-  contains Diagnosis*
-  owns case-level identity and reasoning
+  owns case-level identity
   gives Car context to its TestRun*, RunCapture*, and RunSetup*
 
 TestRun
   references one RunCapture
-  contains one DiagnosticReasoning
   contains DrivingSegment*
   contains Finding*
   is interpreted within the case-scoped Car context
@@ -222,33 +192,23 @@ RunSetup
   is shared interpretive context for one RunCapture and one derived TestRun
 ```
 
-### Evidence, reasoning intermediates, and conclusions
+### Evidence and conclusions
 
 ```text
 Sensor → may have one SensorPlacement
 SpeedSource → qualifies speed interpretation for the run
 Measurement → belongs to one RunCapture, comes from one Sensor
-DiagnosticReasoning → contains Observation*, Signature*, Hypothesis*
 DrivingSegment → canonical domain segmentation concept
-Observation → diagnostic intermediate derived from run evidence
-Signature → organizes observed patterns in evidence
-Hypothesis → interprets observations and signatures
 Finding → belongs to one TestRun, surfaced run-level conclusion
-Diagnosis → belongs to one DiagnosticCase, derived from Finding*
-Report → derived from DiagnosticCase, Diagnosis, and TestRun
+Report → derived from DiagnosticCase and TestRun
 HistoryRecord → archives run or case state at the boundary
 ```
 
 ### Canonical reasoning chain
 
 ```text
-Measurement -> Observation -> Signature -> Hypothesis -> Finding -> Diagnosis -> Report
+Measurement -> Finding -> Report
 ```
-
-In practice, findings are built first by the analysis pipeline and
-observations/signatures/hypotheses are retroactively derived from finding
-evidence — a known inversion that preserves the structural relationships while
-reflecting the actual computation order.
 
 The intended meaningful flow is:
 
@@ -276,20 +236,14 @@ The intended evidence flow is also explicit:
 - `TestRun` is derived from one `RunCapture`
 - `Run` is not where analyzed diagnostic meaning lives
 - `TestRun` is the object that gives diagnostic meaning to captured evidence
-- `DiagnosticCase` reconciles one or more `TestRun` into case-level
-  `Diagnosis*`
 - `Report` is derived from the diagnostic model
 
 The intended reasoning chain is also explicit:
 
 - `Measurement` is evidence material
-- `Observation`, `Signature`, and `Hypothesis` are internal run-scoped
-  reasoning artifacts
 - `Finding` is the surfaced run-level conclusion
-- `Diagnosis` is the consolidated case-level conclusion
 - `Report` is the explanatory presentation of those conclusions
-- canonical chain: `Measurement -> Observation -> Signature -> Hypothesis ->
-  Finding -> Diagnosis -> Report`
+- canonical chain: `Measurement -> Finding -> Report`
 
 ## Concept categories
 
@@ -302,7 +256,6 @@ The concept categories in this repo are:
 
 ### Core domain entities and value objects
 
-- `Diagnosis`
 - `Finding`
 - `DrivingSegment`
 - `DrivingPhase`
@@ -335,23 +288,6 @@ The concept categories in this repo are:
 
 - `Run`
 
-### Diagnostic intermediate concepts
-
-- `DiagnosticReasoning`
-- `Observation`
-- `Signature`
-- `Hypothesis`
-
-These concepts belong to the diagnostic domain, but they are not aggregate
-roots, boundary shapes, or low-level analysis machinery. They exist only to
-support the derivation of `Finding`.
-
-- `DiagnosticReasoning` is the run-scoped reasoning object inside `TestRun`.
-- `Observation` is a diagnostic intermediate derived from run evidence.
-- `Signature` organizes or characterizes observed patterns in that evidence.
-- `Hypothesis` interprets observations and signatures toward possible
-  explanations.
-
 ### Analysis machinery and internal workflow concepts
 
 - `PhaseSegment`
@@ -364,7 +300,8 @@ These are analysis-layer concepts, not canonical domain concepts.
 - `Report`
 
 `Report` is a derived explanatory representation of diagnostic conclusions. It
-is domain-adjacent, but it is not the primary source of diagnostic truth.
+lives in the adapter layer (`adapters/pdf/mapping.py`), not in the domain
+package.
 
 ### Boundary, adapter, archival, persistence, and payload concepts
 
@@ -382,21 +319,13 @@ source of truth.
 
 The ownership rules are:
 
-- `DiagnosticCase` owns case-level identity, cross-run reconciliation, and
-  case-level reasoning.
-- `Diagnosis` owns consolidated case-level conclusion meaning derived from one
-  or more run-level findings.
+- `DiagnosticCase` owns case-level identity.
 - `TestRun` owns run-level diagnostic behavior and run-level queries.
 - `RunCapture` owns immutable captured evidence from one completed `Run`.
 - `RunSetup` owns stable run-conduct and setup context for interpreting one
   capture and the derived `TestRun`.
 - `Run` owns recording and capture lifecycle semantics, not analyzed
   diagnostic meaning.
-- `DiagnosticReasoning` owns run-scoped reasoning built from evidence.
-- `Observation` owns derived run-level facts that matter for reasoning.
-- `Signature` owns pattern-level characterization of observed evidence.
-- `Hypothesis` owns possible-explanation reasoning built from observations and
-  signatures.
 - `Finding` owns run-level diagnostic conclusion behavior.
 - `DrivingSegment` owns segment-level meaning about a meaningful portion of run
   evidence.
@@ -424,7 +353,6 @@ Domain concepts are the diagnostic source of truth:
 
 - `DiagnosticCase`
 - `TestRun`
-- `Diagnosis`
 - `Finding`
 - `DrivingSegment`
 - `DrivingPhase`
@@ -435,10 +363,6 @@ Domain concepts are the diagnostic source of truth:
 - `SpeedSource`
 - `RunCapture`
 - `RunSetup`
-- `DiagnosticReasoning`
-- `Observation`
-- `Signature`
-- `Hypothesis`
 - `Symptom`
 - `TestPlan`
 - `RecommendedAction`
@@ -460,9 +384,9 @@ boundary representation, and not the analyzed run aggregate.
 
 Within the domain, scope still matters:
 
-- case-scoped: `DiagnosticCase`, `Diagnosis`, `Car`, `Symptom`
-- run-scoped diagnostic: `TestRun`, `DiagnosticReasoning`, `Finding`,
-  `DrivingSegment`, `DrivingPhase`, `Observation`, `Signature`, `Hypothesis`,
+- case-scoped: `DiagnosticCase`, `Car`, `Symptom`
+- run-scoped diagnostic: `TestRun`, `Finding`,
+  `DrivingSegment`, `DrivingPhase`,
   `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
   `TestPlan`
 - finding-scoped value objects: `ConfidenceAssessment`, `FindingEvidence`,
@@ -492,8 +416,9 @@ do not replace it as the source of truth:
 
 - `Report`
 
-`Report` is boundary-facing in use, but its role is explanatory communication
-derived from diagnostic conclusions rather than raw transport or persistence.
+`Report` lives in the adapter layer (`adapters/pdf/mapping.py`) and its role
+is explanatory communication derived from diagnostic conclusions rather than
+raw transport or persistence.
 
 ### Boundary representations
 
@@ -529,8 +454,6 @@ It means:
   run, capture, analysis, or boundary level where it belongs
 - the meaningful flow avoids multiple competing representations of the same
   concept
-- diagnostic intermediate concepts remain inside the domain model rather than
-  being flattened into boundary payloads or demoted to low-level machinery
 - pure numeric, DSP, FFT, and stateless transforms remain functional where
   appropriate
 
@@ -556,17 +479,6 @@ The canonical model position is:
 Any naming overlap in implementation does not change the model. The resolved
 model position is that `TestRun` is the true diagnostic run object.
 
-### `Finding` vs `Diagnosis`
-
-The canonical model position is:
-
-- `Finding` is run-level
-- `Diagnosis` is case-level
-- `Diagnosis` is derived from one or more run-level `Finding` across the
-  `DiagnosticCase`
-- case-level reasoning does not overload `Finding` with both run-level and
-  case-level meaning
-
 ### `PhaseSegment` vs `AnalysisWindow` vs `DrivingSegment`
 
 The canonical model position is:
@@ -589,7 +501,7 @@ The canonical model position is:
 - template, export, and rendering models are edge adapters built from or around
   that derived representation
 - the diagnostic source of truth is the domain graph around `DiagnosticCase`,
-  `Diagnosis`, `TestRun`, and `Finding`, not the report layer
+  `TestRun`, and `Finding`, not the report layer
 
 `Report` must not be treated as richer than it is.
 
@@ -605,15 +517,10 @@ The canonical model position is:
 
 ## File-structure expectations
 
-Key behavior-owning domain objects should generally have their own file.
-
-The file structure should mirror the domain language. Main domain objects
-should not be hidden in generic catch-all modules. Small related value objects
-may be grouped when appropriate. Boundary and adapter objects may live
-separately from core domain files.
-
-This file structure expectation exists to keep the model discoverable, easy to
-reason about, easy to extend, and aligned with the aggregate language.
+Key behavior-owning domain objects live under `vibesensor/domain/`. Closely
+related value objects may share a file with their parent aggregate (e.g.
+`FindingEvidence` and `Signature` in `finding.py`, `Symptom` in
+`diagnostic_case.py`, `Measurement` in `run_capture.py`).
 
 ## Future-proofing requirement
 
@@ -635,21 +542,14 @@ Future-proofing means:
 
 ## Known bounded deviations
 
-Three structural deviations from the ideal model are intentional and bounded:
+Two structural deviations from the ideal model are intentional and bounded:
 
 1. **RunCapture.measurements: structurally present, never populated.**
    The DSP pipeline operates on numpy arrays for performance.
    `Measurement` exists in the domain graph but `RunCapture` instances
    never carry populated measurement tuples in production.
 
-2. **Reasoning chain direction inverted; observations absent in
-   reconstruction.** Findings are built first by the analysis pipeline;
-   observations, signatures, and hypotheses are retroactively derived
-   from finding evidence. Boundary reconstruction via
-   `DiagnosticReasoning.from_findings()` does not populate observations
-   (there is no persisted evidence to derive them from).
-
-3. **`FindingPayload` as analysis-internal accumulator.** The analysis
+2. **`FindingPayload` as analysis-internal accumulator.** The analysis
    pipeline accumulates finding data into `FindingPayload` TypedDicts
    (`use_cases/diagnostics/_types.py`) before projecting to domain
    `Finding` objects at the boundary. This is an implementation
@@ -660,9 +560,9 @@ or treated as refactoring targets without understanding the trade-offs.
 
 ## Implementation decisions (not model requirements)
 
-- `Report` is `frozen=True` (immutable dataclass). This reflects the
-  current implementation's read-only rendering pipeline, not a
-  model-level immutability requirement.
+- `Report` lives in the adapter layer (`adapters/pdf/mapping.py`) rather
+  than in the `domain/` package because it is a derived representation
+  with a single consumer (the PDF rendering pipeline).
 
 ## Brief implementation-alignment note
 
@@ -674,12 +574,10 @@ That does not change the canonical model defined here:
 - `DiagnosticCase` is the top-level aggregate root
 - `Car` provides case-scoped interpretive context across the whole
   investigation
-- `Diagnosis` is the case-level consolidated conclusion object
 - `TestRun` is the analyzed run aggregate
 - `Run` is the recording-time lifecycle object
 - `RunCapture` is the bridge between capture and diagnosis
 - `RunSetup` is the canonical run-setup object
-- `DiagnosticReasoning` is the run-scoped reasoning object
 - `DrivingSegment` is the canonical domain segment concept
 - `Report` is derived from the diagnostic domain and is not a core aggregate
   root

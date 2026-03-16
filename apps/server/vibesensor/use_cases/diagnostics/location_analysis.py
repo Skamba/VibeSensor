@@ -10,8 +10,8 @@ from vibesensor.domain import LocationHotspot, VibrationSource
 from vibesensor.shared.constants import MULTI_SENSOR_CORROBORATION_DB
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.locations import has_any_wheel_location, is_wheel_location
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (
-    JsonObject,
     MatchedPoint,
     i18n_ref,
 )
@@ -49,18 +49,10 @@ class LocationAnalysisResult:
         return self.top_location
 
 
-def _weighted_percentile_speed(
-    speed_weight_pairs: list[tuple[float, float]],
-    percentile_0_to_1: float,
-) -> float | None:
-    # Filter out non-positive speeds before delegating to the generic helper.
-    valid = [(speed, weight) for speed, weight in speed_weight_pairs if speed > 0]
-    return _weighted_percentile(valid, percentile_0_to_1)
-
-
 def _weighted_speed_window_label(speed_weight_pairs: list[tuple[float, float]]) -> str | None:
-    p10 = _weighted_percentile_speed(speed_weight_pairs, 0.10)
-    p90 = _weighted_percentile_speed(speed_weight_pairs, 0.90)
+    valid = [(speed, weight) for speed, weight in speed_weight_pairs if speed > 0]
+    p10 = _weighted_percentile(valid, 0.10)
+    p90 = _weighted_percentile(valid, 0.90)
     if p10 is None or p90 is None:
         return None
     low = floor(min(p10, p90))

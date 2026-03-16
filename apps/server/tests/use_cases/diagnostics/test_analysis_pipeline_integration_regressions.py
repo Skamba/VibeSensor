@@ -165,7 +165,6 @@ class TestWorkerThreadRace:
             registry=FakeReg(),
             gps_monitor=FakeGPS(),
             processor=FakeProc(),
-            analysis_settings=FakeSettings(),
         )
 
         seen: list[str] = []

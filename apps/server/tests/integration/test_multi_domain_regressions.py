@@ -16,7 +16,6 @@ import pytest
 from vibesensor.adapters.pdf.mapping import order_label_human
 from vibesensor.adapters.pdf.mapping import resolve_i18n as resolve_i18n_impl
 from vibesensor.adapters.persistence.runlog import parse_iso8601
-from vibesensor.app.settings import _split_host_port
 from vibesensor.domain import Finding, SpeedSourceKind
 from vibesensor.report_i18n import tr
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
@@ -124,22 +123,6 @@ class TestBug05ReleaseVersionComparison:
         result = fetcher.check_update_available("2025.6.0")
         assert result is not None
         assert result.version == "2026.1.0"
-
-
-# ---------------------------------------------------------------------------
-# Bug 7: _split_host_port gives unhelpful error on bad port
-# ---------------------------------------------------------------------------
-
-
-class TestBug07SplitHostPort:
-    def test_non_integer_port_raises_descriptive_error(self) -> None:
-        with pytest.raises(ValueError, match="not an integer"):
-            _split_host_port("host:abc")
-
-    def test_valid_host_port(self) -> None:
-        host, port = _split_host_port("127.0.0.1:8080")
-        assert host == "127.0.0.1"
-        assert port == 8080
 
 
 # ---------------------------------------------------------------------------

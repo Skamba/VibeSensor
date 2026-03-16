@@ -123,7 +123,8 @@ def test_finalize_findings_returns_domain_findings() -> None:
 
 def test_select_top_causes_returns_domain_findings() -> None:
     """``select_top_causes`` must return domain ``Finding`` objects."""
-    from tests.test_support.findings import make_finding_payload
+    from test_support.findings import make_finding_payload
+
     from vibesensor.domain import Finding
     from vibesensor.shared.boundaries.finding import finding_from_payload
     from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
@@ -245,7 +246,8 @@ def test_test_run_top_strength_db() -> None:
 
 def test_report_mapping_context_has_domain_aggregate() -> None:
     """``prepare_report_mapping_context`` must build a domain aggregate."""
-    from tests.test_support.findings import make_finding_payload
+    from test_support.findings import make_finding_payload
+
     from vibesensor.adapters.pdf.mapping import prepare_report_mapping_context
     from vibesensor.domain import TestRun
 
@@ -441,7 +443,8 @@ def test_build_system_cards_uses_domain_findings() -> None:
 
 def test_map_summary_produces_report_with_domain_findings() -> None:
     """map_summary must produce report data using domain-first pipeline."""
-    from tests.test_support.findings import make_finding_payload
+    from test_support.findings import make_finding_payload
+
     from vibesensor.adapters.pdf.mapping import map_summary
 
     summary = {
@@ -643,8 +646,6 @@ def test_confidence_assessment_tier_matches_domain_finding() -> None:
         "ConfigurationSnapshot",
         "DiagnosticCase",
         "DrivingSegment",
-        "Hypothesis",
-        "Observation",
         "RecommendedAction",
         "Signature",
         "Symptom",
@@ -683,18 +684,19 @@ def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
         for i in range(30)
     ]
     analysis = RunAnalysis(metadata, samples)
-    analysis.summarize()
+    result = analysis.summarize()
 
     assert analysis.test_run is not None
-    assert analysis.diagnostic_case is not None
+    assert result.diagnostic_case is not None
     assert isinstance(analysis.test_run, TestRun)
-    assert isinstance(analysis.diagnostic_case, DiagnosticCase)
-    assert analysis.diagnostic_case.primary_run is not None
-    assert analysis.diagnostic_case.primary_run.run_id == analysis.test_run.run_id
+    assert isinstance(result.diagnostic_case, DiagnosticCase)
+    assert result.diagnostic_case.primary_run is not None
+    assert result.diagnostic_case.primary_run.run_id == analysis.test_run.run_id
 
 
 def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
-    from tests.test_support.findings import make_finding_payload
+    from test_support.findings import make_finding_payload
+
     from vibesensor.shared.boundaries.diagnostic_case import diagnostic_case_from_summary
 
     summary = {
@@ -714,7 +716,6 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     diagnostic_case = diagnostic_case_from_summary(summary)
     assert diagnostic_case.case_id == "summary-case-guard-id"
     assert diagnostic_case.test_runs
-    assert diagnostic_case.diagnoses
     assert diagnostic_case.primary_run is not None
 
 
@@ -884,7 +885,8 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     strength, and reference-gap status from domain objects — not from
     raw payload dict traversal.
     """
-    from tests.test_support.findings import make_finding_payload
+    from test_support.findings import make_finding_payload
+
     from vibesensor.adapters.pdf.mapping import (
         prepare_report_mapping_context,
         resolve_primary_report_candidate,
@@ -947,36 +949,6 @@ def test_report_mapping_does_not_import_finding_from_payload_decoder() -> None:
 
 
 # ── T9.1-T9.6: Workstream 8 architecture guardrails ──────────────────
-
-
-def test_observation_extraction_does_not_accept_findings() -> None:
-    """extract_observations must not accept Finding objects.
-
-    Observations are extracted from raw ObservationEvidence before
-    findings exist. The diagnostic_reasoning module may import Finding
-    under TYPE_CHECKING for type hints, but extract_observations itself
-    must take ObservationEvidence, not Finding.
-    """
-    import ast
-
-    from tests._paths import SERVER_ROOT
-
-    dr_path = SERVER_ROOT / "vibesensor" / "domain" / "diagnostic_reasoning.py"
-    source = dr_path.read_text()
-    tree = ast.parse(source)
-
-    # Find the extract_observations function and check its parameter annotations
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "extract_observations":
-            for arg in node.args.args:
-                ann = arg.annotation
-                if ann is not None:
-                    ann_source = ast.dump(ann)
-                    assert "Finding" not in ann_source, (
-                        "extract_observations must not accept Finding as a parameter; "
-                        "observations are extracted from raw evidence before findings exist"
-                    )
-            break
 
 
 def test_localization_assessment_does_not_exist() -> None:
@@ -1248,8 +1220,8 @@ def test_domain_does_not_import_outer_packages() -> None:
     """domain/ must not import from boundaries/, report/, routes/, etc.
 
     Relative intra-package imports (level >= 1) are excluded because
-    ``from .report import Report`` refers to ``domain/report.py``, not the
-    outer ``vibesensor/adapters/pdf/`` package.
+    they resolve within ``domain/`` itself, not against the outer
+    ``vibesensor/adapters/`` packages.
     """
     import ast
     from pathlib import Path
@@ -1343,14 +1315,10 @@ def test_canonical_domain_graph_relationships() -> None:
 
     from vibesensor.domain import (
         Car,
-        Diagnosis,
         DiagnosticCase,
-        DiagnosticReasoning,
         DrivingSegment,
         Finding,
-        Hypothesis,
         Measurement,
-        Observation,
         RunCapture,
         RunSetup,
         Sensor,
@@ -1369,11 +1337,9 @@ def test_canonical_domain_graph_relationships() -> None:
     # DiagnosticCase
     field_type(DiagnosticCase, "car")  # Car | None
     field_type(DiagnosticCase, "test_runs")  # tuple[TestRun, ...]
-    field_type(DiagnosticCase, "diagnoses")  # tuple[Diagnosis, ...]
 
     # TestRun
     field_type(TestRun, "capture")  # RunCapture
-    field_type(TestRun, "reasoning")  # DiagnosticReasoning
     field_type(TestRun, "findings")  # tuple[Finding, ...]
     field_type(TestRun, "driving_segments")  # tuple[DrivingSegment, ...]
 
@@ -1395,22 +1361,13 @@ def test_canonical_domain_graph_relationships() -> None:
     # Measurement
     field_type(Measurement, "sensor_id")  # str
 
-    # DiagnosticReasoning
-    field_type(DiagnosticReasoning, "observations")  # tuple[Observation, ...]
-    field_type(DiagnosticReasoning, "signatures")  # tuple[Signature, ...]
-    field_type(DiagnosticReasoning, "hypotheses")  # tuple[Hypothesis, ...]
-
     # Verify all imports are real classes (not just string names)
     for cls in (
         Car,
-        Diagnosis,
         DiagnosticCase,
-        DiagnosticReasoning,
         DrivingSegment,
         Finding,
-        Hypothesis,
         Measurement,
-        Observation,
         RunCapture,
         RunSetup,
         Sensor,
@@ -1461,10 +1418,10 @@ def test_finding_is_run_scoped() -> None:
     assert not leaked, f"Finding has cross-run fields (must be run-scoped): {leaked}"
 
 
-def test_observation_signature_hypothesis_confinement() -> None:
-    """Observation, Signature, and Hypothesis must not leak into adapter layers.
+def test_signature_confinement() -> None:
+    """Signature must not leak into adapter layers.
 
-    These diagnostic intermediate concepts live in the domain model and may be
+    This diagnostic intermediate concept lives in the domain model and may be
     reconstructed in boundary decoders, but must not appear in transport,
     rendering, or persistence adapters.
     """
@@ -1472,7 +1429,7 @@ def test_observation_signature_hypothesis_confinement() -> None:
 
     from tests._paths import SERVER_ROOT
 
-    confined_names = {"Observation", "Signature", "Hypothesis"}
+    confined_names = {"Signature"}
     forbidden_dirs = [
         SERVER_ROOT / "vibesensor" / "adapters" / "pdf",
         SERVER_ROOT / "vibesensor" / "adapters" / "http",

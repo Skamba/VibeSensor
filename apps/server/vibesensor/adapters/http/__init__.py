@@ -47,7 +47,6 @@ def create_router(services: RuntimeState) -> APIRouter:
         create_settings_routes(
             services.settings_store,
             services.gps_monitor,
-            services.analysis_settings,
         ),
     )
     router.include_router(

@@ -39,7 +39,6 @@ class FakeState:
     worker_pool: object = field(default_factory=MagicMock)
     ws_hub: object = field(default_factory=MagicMock)
     gps_monitor: object = field(default_factory=MagicMock)
-    analysis_settings: object = field(default_factory=MagicMock)
     run_recorder: object = field(default_factory=MagicMock)
     settings_store: object = field(default_factory=MagicMock)
     history_db: object = field(default_factory=MagicMock)

@@ -33,6 +33,179 @@
       "title": "AlignmentInfoPayload",
       "type": "object"
     },
+    "AxisMetrics": {
+      "properties": {
+        "p2p": {
+          "title": "P2P",
+          "type": "number"
+        },
+        "peaks": {
+          "items": {
+            "$ref": "#/$defs/AxisPeak"
+          },
+          "title": "Peaks",
+          "type": "array"
+        },
+        "rms": {
+          "title": "Rms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "rms",
+        "p2p",
+        "peaks"
+      ],
+      "title": "AxisMetrics",
+      "type": "object"
+    },
+    "AxisPeak": {
+      "properties": {
+        "amp": {
+          "title": "Amp",
+          "type": "number"
+        },
+        "hz": {
+          "title": "Hz",
+          "type": "number"
+        },
+        "snr_ratio": {
+          "title": "Snr Ratio",
+          "type": "number"
+        }
+      },
+      "title": "AxisPeak",
+      "type": "object"
+    },
+    "ClientApiRow": {
+      "properties": {
+        "connected": {
+          "title": "Connected",
+          "type": "boolean"
+        },
+        "dropped_frames": {
+          "title": "Dropped Frames",
+          "type": "integer"
+        },
+        "firmware_version": {
+          "title": "Firmware Version",
+          "type": "string"
+        },
+        "frame_samples": {
+          "title": "Frame Samples",
+          "type": "integer"
+        },
+        "frames_total": {
+          "title": "Frames Total",
+          "type": "integer"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "last_reset_time": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Last Reset Time"
+        },
+        "last_seen_age_ms": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Last Seen Age Ms"
+        },
+        "latest_metrics": {
+          "$ref": "#/$defs/ClientMetrics"
+        },
+        "location_code": {
+          "title": "Location Code",
+          "type": "string"
+        },
+        "mac_address": {
+          "title": "Mac Address",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "reset_count": {
+          "title": "Reset Count",
+          "type": "integer"
+        },
+        "sample_rate_hz": {
+          "title": "Sample Rate Hz",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "mac_address",
+        "name",
+        "connected",
+        "location_code",
+        "firmware_version",
+        "sample_rate_hz",
+        "last_seen_age_ms",
+        "frames_total",
+        "dropped_frames"
+      ],
+      "title": "ClientApiRow",
+      "type": "object"
+    },
+    "ClientMetrics": {
+      "properties": {
+        "combined": {
+          "$ref": "#/$defs/CombinedMetrics"
+        },
+        "x": {
+          "$ref": "#/$defs/AxisMetrics"
+        },
+        "y": {
+          "$ref": "#/$defs/AxisMetrics"
+        },
+        "z": {
+          "$ref": "#/$defs/AxisMetrics"
+        }
+      },
+      "title": "ClientMetrics",
+      "type": "object"
+    },
+    "CombinedMetrics": {
+      "properties": {
+        "peaks": {
+          "items": {
+            "$ref": "#/$defs/StrengthPeak"
+          },
+          "title": "Peaks",
+          "type": "array"
+        },
+        "strength_metrics": {
+          "$ref": "#/$defs/VibrationStrengthMetrics"
+        },
+        "vib_mag_p2p": {
+          "title": "Vib Mag P2P",
+          "type": "number"
+        },
+        "vib_mag_rms": {
+          "title": "Vib Mag Rms",
+          "type": "number"
+        }
+      },
+      "title": "CombinedMetrics",
+      "type": "object"
+    },
     "FrequencyWarningPayload": {
       "properties": {
         "client_ids": {
@@ -299,78 +472,12 @@
       ],
       "title": "VibrationStrengthMetrics",
       "type": "object"
-    },
-    "WsClientRow": {
-      "description": "Lightweight client row for WebSocket broadcast (UI-consumed fields only).",
-      "properties": {
-        "connected": {
-          "title": "Connected",
-          "type": "boolean"
-        },
-        "dropped_frames": {
-          "title": "Dropped Frames",
-          "type": "integer"
-        },
-        "firmware_version": {
-          "title": "Firmware Version",
-          "type": "string"
-        },
-        "frames_total": {
-          "title": "Frames Total",
-          "type": "integer"
-        },
-        "id": {
-          "title": "Id",
-          "type": "string"
-        },
-        "last_seen_age_ms": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Last Seen Age Ms"
-        },
-        "location_code": {
-          "title": "Location Code",
-          "type": "string"
-        },
-        "mac_address": {
-          "title": "Mac Address",
-          "type": "string"
-        },
-        "name": {
-          "title": "Name",
-          "type": "string"
-        },
-        "sample_rate_hz": {
-          "title": "Sample Rate Hz",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "connected",
-        "mac_address",
-        "location_code",
-        "last_seen_age_ms",
-        "dropped_frames",
-        "frames_total",
-        "sample_rate_hz",
-        "firmware_version"
-      ],
-      "title": "WsClientRow",
-      "type": "object"
     }
   },
   "properties": {
     "clients": {
       "items": {
-        "$ref": "#/$defs/WsClientRow"
+        "$ref": "#/$defs/ClientApiRow"
       },
       "title": "Clients",
       "type": "array"

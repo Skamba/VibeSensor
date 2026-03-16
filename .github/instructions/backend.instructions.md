@@ -10,12 +10,14 @@ Backend (python `apps/server/`)
 	- `apps/server/vibesensor/infra/runtime/`: subsystem ownership, lifecycle coordination, processing loop, and websocket broadcast state; routes receive `RuntimeState` directly.
 	- `apps/server/vibesensor/adapters/persistence/history_db/`: SQLite-backed history and settings persistence.
 	- `apps/server/vibesensor/adapters/pdf/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
-	- `apps/server/vibesensor/domain/`: DDD-aligned domain model package. Each primary domain object has its own file; includes `FindingKind` enum, `RunStatus` state machine, and all domain queries. See `docs/domain-model.md` for the full relationship map and file layout.
+	- `apps/server/vibesensor/domain/`: DDD-aligned domain model package. Primary domain objects live under `vibesensor/domain/`; closely related value objects may share a file with their parent aggregate. Includes `FindingKind` enum, `RunStatus` state machine, and all domain queries. See `docs/domain-model.md` for the full relationship map and file layout.
 - Domain-first modeling rules:
 	- Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
-	- Each primary domain object lives in its own file under `vibesensor/domain/`. Consumers import from `vibesensor.domain`, not from individual module files.
+	- Each primary domain object lives under `vibesensor/domain/`; closely related value objects may share a file with their parent aggregate. Consumers import from `vibesensor.domain`, not from individual module files.
 	- Analysis pipeline adapters delegate classification and ranking to domain `Finding`.
 	- Keep pure math, DSP, FFT, and signal-processing transforms functional; do not wrap them in classes unless a domain reason exists.
+	- Do not introduce forward-looking infrastructure types until their persistence and delivery requirements exist. Domain types that produce outputs consumed by no production code path are phantom infrastructure.
+	- Do not create domain types that are only consumed by a single class within the same package. Merge single-consumer satellites into their host file.
 	- See `docs/domain-model.md` for the full domain object graph and modeling rules.
 - Report generation rules:
 	- Preserve persistence-aware diagnostics and ranking behavior; do not regress report ranking to max-only peak selection.

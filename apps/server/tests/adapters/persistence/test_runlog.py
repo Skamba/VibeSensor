@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 import pytest
 
 from vibesensor.adapters.persistence.runlog import (
     RUN_METADATA_TYPE,
-    RUN_SAMPLE_TYPE,
-    append_jsonl_records,
     bounded_sample,
-    create_run_end_record,
     create_run_metadata,
     normalize_sample_record,
     parse_iso8601,
@@ -130,7 +126,6 @@ def test_normalize_sample_record_basic() -> None:
         "accel_z_g": 0.03,
     }
     result = normalize_sample_record(record)
-    assert result["record_type"] == RUN_SAMPLE_TYPE
     assert result["t_s"] == 1.5
     assert result["speed_kmh"] == 80.0
 
@@ -196,28 +191,7 @@ def test_normalize_sample_record_strength_amplitudes_default_to_none_for_old_run
     assert result["strength_floor_amp_g"] is None
 
 
-# -- append_jsonl_records / read_jsonl_run ------------------------------------
-
-
-def test_append_and_read_roundtrip(tmp_path: Path) -> None:
-    path = tmp_path / "test_run.jsonl"
-    metadata = _make_run_metadata(run_id="test-123")
-    sample = {
-        "record_type": "sample",
-        "t_s": 0.5,
-        "speed_kmh": 80.0,
-        "accel_x_g": 0.01,
-        "accel_y_g": 0.02,
-        "accel_z_g": 0.03,
-    }
-    end = create_run_end_record("test-123", "2025-01-01T00:10:00Z")
-    append_jsonl_records(path, [metadata, sample, end])
-
-    run_data = read_jsonl_run(path)
-    assert run_data.metadata["run_id"] == "test-123"
-    assert len(run_data.samples) == 1
-    assert run_data.samples[0]["t_s"] == 0.5
-    assert run_data.metadata["end_time_utc"] == "2025-01-01T00:10:00Z"
+# -- read_jsonl_run -----------------------------------------------------------
 
 
 def test_read_jsonl_run_missing_metadata_raises(tmp_path: Path) -> None:
@@ -314,40 +288,6 @@ def test_create_run_metadata_includes_firmware_version_when_provided() -> None:
     assert meta["firmware_version"] == "esp-fw-1.2.3"
 
 
-def test_append_jsonl_records_preserves_unicode_text(tmp_path: Path) -> None:
-    path = tmp_path / "unicode.jsonl"
-    append_jsonl_records(path, [{"sensor_name": "Voorwiel links", "finding": "trilling én geluid"}])
-    text = path.read_text(encoding="utf-8")
-    assert "Voorwiel links" in text
-    assert "\\u00e9" not in text
-
-
-def test_append_jsonl_records_durable_fsync_cadence(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    path = tmp_path / "durable.jsonl"
-    fsync_calls: list[int] = []
-    original_fsync = os.fsync
-    monkeypatch.setattr(os, "fsync", lambda fd: fsync_calls.append(fd))
-    try:
-        append_jsonl_records(
-            path,
-            [{"i": i} for i in range(5)],
-            durable=True,
-            durable_every_records=2,
-        )
-    finally:
-        monkeypatch.setattr(os, "fsync", original_fsync)
-    # At records 2 and 4, plus final flush.
-    assert len(fsync_calls) == 3
-
-
-# ---------------------------------------------------------------------------
-# Fix 1: bounded_sample rejects max_items <= 0
-# ---------------------------------------------------------------------------
-
-
 def test_bounded_sample_zero_max_items_raises() -> None:
     """max_items=0 must raise ValueError (not ZeroDivisionError)."""
     with pytest.raises(ValueError, match="max_items"):
@@ -433,7 +373,12 @@ def test_read_jsonl_run_end_record_with_valid_end_time_utc_is_applied(
     """When the end record has a valid end_time_utc and metadata lacks one, it is propagated."""
     path = tmp_path / "valid_end.jsonl"
     meta = _make_run_metadata(run_id="end-run")
-    end_record = create_run_end_record("end-run", "2025-01-01T00:10:00Z")
+    end_record = {
+        "record_type": "run_end",
+        "schema_version": "v2-jsonl",
+        "run_id": "end-run",
+        "end_time_utc": "2025-01-01T00:10:00Z",
+    }
 
     with path.open("w") as f:
         f.write(json.dumps(meta) + "\n")

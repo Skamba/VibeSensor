@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeAlias
+from typing import NotRequired, TypeAlias
 
 from typing_extensions import TypedDict
 
@@ -45,7 +45,7 @@ class TimingHealthPayload(TypedDict, total=False):
     last_t0_us: int
 
 
-class ClientApiRow(TypedDict):
+class ClientApiRow(TypedDict, total=True):
     id: str
     mac_address: str
     name: str
@@ -53,28 +53,14 @@ class ClientApiRow(TypedDict):
     location_code: str
     firmware_version: str
     sample_rate_hz: int
-    frame_samples: int
     last_seen_age_ms: int | None
     frames_total: int
     dropped_frames: int
-    latest_metrics: ClientMetrics
-    reset_count: int
-    last_reset_time: float | None
-
-
-class WsClientRow(TypedDict):
-    """Lightweight client row for WebSocket broadcast (UI-consumed fields only)."""
-
-    id: str
-    name: str
-    connected: bool
-    mac_address: str
-    location_code: str
-    last_seen_age_ms: int | None
-    dropped_frames: int
-    frames_total: int
-    sample_rate_hz: int
-    firmware_version: str
+    # API-only fields — omitted in lightweight WebSocket snapshots:
+    frame_samples: NotRequired[int]
+    latest_metrics: NotRequired[ClientMetrics]
+    reset_count: NotRequired[int]
+    last_reset_time: NotRequired[float | None]
 
 
 class SpectrumSeriesPayload(TypedDict, total=False):
@@ -206,7 +192,7 @@ class LiveWsPayload(TypedDict, total=False):
     schema_version: str
     server_time: str
     speed_mps: float | None
-    clients: list[WsClientRow]
+    clients: list[ClientApiRow]
     selected_client_id: str | None
     rotational_speeds: RotationalSpeedsPayload | None
     spectra: SpectraPayload

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -16,7 +16,6 @@ from vibesensor.domain import (
     Car,
     ConfigurationSnapshot,
     DiagnosticCase,
-    DiagnosticReasoning,
     LocationHotspot,
     RunCapture,
     RunSetup,
@@ -33,12 +32,6 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     Finding as DomainFinding,
 )
-from vibesensor.domain.diagnostic_reasoning import (
-    ObservationEvidence,
-    evaluate_hypotheses,
-    extract_observations,
-    recognize_signatures,
-)
 from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.diagnostic_case import (
@@ -50,15 +43,13 @@ from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrig
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.run_context import build_summary_warnings, order_reference_context_complete
-from vibesensor.shared.types.json_types import is_json_object
+from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     AnalysisSummary,
     FindingPayload,
     I18nRef,
     IntensityRow,
-    JsonObject,
-    JsonValue,
     MetadataDict,
     PhaseSegmentSummary,
     PhaseSpeedBreakdownRow,
@@ -72,7 +63,6 @@ from vibesensor.use_cases.diagnostics._types import (
     TestStep,
     i18n_ref,
 )
-from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
 from vibesensor.use_cases.diagnostics.findings import (
     _build_findings,
     _phase_speed_breakdown,
@@ -256,7 +246,7 @@ def build_data_quality_dict(
 
 def build_phase_timeline(
     phase_segments: list[PhaseSegment],
-    findings: list[FindingPayload],
+    findings: Sequence[DomainFinding],
     *,
     min_confidence: float,
 ) -> list[PhaseTimelineEntry]:
@@ -264,23 +254,9 @@ def build_phase_timeline(
     if not phase_segments:
         return []
 
-    finding_phases: set[str] = set()
-    for finding in findings:
-        if not isinstance(finding, dict):
-            continue
-        if str(finding.get("finding_id", "")).startswith("REF_"):
-            continue
-        conf = _as_float(finding.get("confidence")) or 0.0
-        if conf < min_confidence:
-            continue
-        phase_ev = finding.get("phase_evidence")
-        if isinstance(phase_ev, dict):
-            detected_phases = phase_ev.get("phases_detected", [])
-            if not isinstance(detected_phases, list):
-                continue
-            for phase in detected_phases:
-                finding_phases.add(str(phase))
-
+    # NOTE: has_fault_evidence is always False because phases_detected is not
+    # preserved on the domain Finding (only cruise_fraction survives the
+    # payload→domain decode).  Keeping the field for schema stability.
     return [
         {
             "phase": segment.phase.value,
@@ -288,7 +264,7 @@ def build_phase_timeline(
             "end_t_s": None if math.isnan(segment.end_t_s) else segment.end_t_s,
             "speed_min_kmh": segment.speed_min_kmh,
             "speed_max_kmh": segment.speed_max_kmh,
-            "has_fault_evidence": segment.phase.value in finding_phases,
+            "has_fault_evidence": False,
         }
         for segment in phase_segments
     ]
@@ -760,11 +736,6 @@ class PreparedRunData:
     def speed_stddev_kmh(self) -> float | None:
         return self.speed_profile.stddev_kmh if self.speed_values else None
 
-    @property
-    def analysis_windows(self) -> list[AnalysisWindow]:
-        """Domain-level view of phase segments as :class:`AnalysisWindow` objects."""
-        return [seg.to_analysis_window() for seg in self.phase_segments]
-
 
 def prepare_run_data(
     metadata: MetadataDict,
@@ -853,13 +824,9 @@ def build_findings_bundle(
     most_likely_origin = summarize_origin(
         domain_diagnostic_findings,
     )
-    # build_phase_timeline needs FindingPayload dicts
-    from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-
-    finding_payloads = [finding_payload_from_domain(f) for f in domain_findings]
     phase_timeline = build_phase_timeline(
         prepared.phase_segments,
-        finding_payloads,
+        domain_findings,
         min_confidence=0.25,
     )
     domain_top_causes = select_top_causes(
@@ -934,32 +901,6 @@ class AnalysisResult:
     summary: AnalysisSummary
 
 
-def _build_observation_evidence(
-    findings: tuple[DomainFinding, ...],
-) -> list[ObservationEvidence]:
-    evidence_items: list[ObservationEvidence] = []
-    for finding in findings:
-        sig_labels = finding.signature_labels
-        if not sig_labels:
-            freq_or_order = finding.order or (
-                f"{finding.frequency_hz:.1f} Hz" if finding.frequency_hz is not None else ""
-            )
-            if freq_or_order:
-                sig_labels = (freq_or_order,)
-        evidence_items.append(
-            ObservationEvidence(
-                source=finding.suspected_source,
-                signature_labels=sig_labels,
-                magnitude_db=finding.vibration_strength_db,
-                speed_band=finding.strongest_speed_band,
-                dominant_phase=finding.origin.dominant_phase if finding.origin else None,
-                location=finding.strongest_location,
-                confidence=finding.effective_confidence,
-            )
-        )
-    return evidence_items
-
-
 class RunAnalysis:
     """Cohesive object around a single analyzed run.
 
@@ -981,7 +922,6 @@ class RunAnalysis:
         "_prepared",
         "_accel_stats",
         "_test_run",
-        "_diagnostic_case",
     )
 
     def __init__(
@@ -1001,7 +941,6 @@ class RunAnalysis:
         self._include_samples = include_samples
         self._findings_builder = findings_builder
         self._test_run: TestRun | None = None
-        self._diagnostic_case: DiagnosticCase | None = None
 
         _validate_required_strength_metrics(samples)
         self._prepared = prepare_run_data(metadata, samples, file_name=file_name)
@@ -1026,10 +965,6 @@ class RunAnalysis:
     @property
     def test_run(self) -> TestRun | None:
         return self._test_run
-
-    @property
-    def diagnostic_case(self) -> DiagnosticCase | None:
-        return self._diagnostic_case
 
     # -- orchestration -----------------------------------------------------
 
@@ -1105,10 +1040,6 @@ class RunAnalysis:
                 final_top_causes_list.append(replace(f, signatures=sigs) if sigs else f)
         final_top_causes = tuple(final_top_causes_list)
 
-        evidence_items = _build_observation_evidence(domain_findings)
-        observations = extract_observations(evidence_items)
-        signatures = recognize_signatures(observations)
-        hypotheses = evaluate_hypotheses(signatures)
         configuration_snapshot = ConfigurationSnapshot.from_metadata(self._metadata)
         driving_segments = build_domain_driving_segments(self._prepared.phase_segments)
         domain_test_plan = plan_test_actions(domain_findings)
@@ -1130,14 +1061,8 @@ class RunAnalysis:
             sample_count=len(self._samples),
             duration_s=self._prepared.duration_s,
         )
-        reasoning = DiagnosticReasoning(
-            observations=observations,
-            signatures=signatures,
-            hypotheses=hypotheses,
-        )
         self._test_run = TestRun(
             capture=capture,
-            reasoning=reasoning,
             driving_segments=driving_segments,
             findings=domain_findings,
             top_causes=final_top_causes,
@@ -1145,7 +1070,7 @@ class RunAnalysis:
             suitability=domain_suitability,
             test_plan=domain_test_plan,
         )
-        self._diagnostic_case = DiagnosticCase.start(
+        diagnostic_case = DiagnosticCase.start(
             car=build_domain_car(self._metadata),
             symptoms=build_domain_symptoms(self._metadata),
             test_plan=domain_test_plan,
@@ -1202,11 +1127,12 @@ class RunAnalysis:
             phase_segments=self._prepared.phase_segments,
         )
         annotate_peaks_with_order_labels(summary)
+        summary["_summary_version"] = 2
         if not self._include_samples:
             summary.pop("samples", None)
         return AnalysisResult(
             test_run=self._test_run,
-            diagnostic_case=self._diagnostic_case,
+            diagnostic_case=diagnostic_case,
             summary=summary,
         )
 

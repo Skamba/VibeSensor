@@ -23,12 +23,11 @@ from vibesensor.shared.constants import (
     SPEED_COVERAGE_MIN_PCT,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.use_cases.diagnostics._types import (
     FindingEvidenceMetrics,
     FindingPayload,
     IntensityRow,
-    JsonObject,
-    JsonValue,
     MetadataDict,
     PhaseEvidence,
     PhaseLabels,

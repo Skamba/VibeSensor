@@ -9,9 +9,9 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from test_support.findings import make_finding_payload
 
-from tests.test_support.findings import make_finding_payload
-from vibesensor.domain import RunSuitability
+from vibesensor.domain import Finding, RunSuitability
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.diagnostics.order_analysis import (
@@ -88,7 +88,7 @@ def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
     registry.active_client_ids.return_value = []
 
     settings_mock = MagicMock()
-    settings_mock.snapshot.return_value = {
+    settings_mock.analysis_settings_snapshot.return_value = {
         "tire_width_mm": 205,
         "tire_aspect_pct": 55,
         "rim_in": 16,
@@ -109,7 +109,7 @@ def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
         registry=registry,
         gps_monitor=gps_mock,
         processor=MagicMock(),
-        analysis_settings=settings_mock,
+        settings_store=settings_mock,
     )
     return logger, gps_mock
 
@@ -383,41 +383,29 @@ class TestBuildPhaseTimeline:
             _FakeSeg(DrivingPhase.CRUISE, 0.0, 30.0, speed_min=40.0, speed_max=80.0),
             _FakeSeg(DrivingPhase.ACCELERATION, 30.0, 45.0, speed_min=40.0, speed_max=80.0),
         ]
-        findings: list[dict[str, object]] = [
-            {
-                "finding_id": "F001",
-                "confidence": 0.60,
-                "phase_evidence": {"phases_detected": ["cruise"]},
-            },
-        ]
+        findings = [Finding(finding_id="F001", confidence=0.60)]
         entries = _build_phase_timeline(segs, findings, min_confidence=0.25)
         assert len(entries) == 2
         assert entries[0]["phase"] == "cruise"
-        assert entries[0]["has_fault_evidence"] is True
+        # has_fault_evidence is always False: phases_detected is not preserved
+        # on the domain Finding (only cruise_fraction survives decode).
+        assert entries[0]["has_fault_evidence"] is False
         assert entries[1]["has_fault_evidence"] is False
 
     @pytest.mark.parametrize(
         "finding",
         [
             pytest.param(
-                {
-                    "finding_id": "REF_SPEED",
-                    "confidence": 0.90,
-                    "phase_evidence": {"phases_detected": ["cruise"]},
-                },
+                Finding(finding_id="REF_SPEED", confidence=0.90),
                 id="ref_finding_ignored",
             ),
             pytest.param(
-                {
-                    "finding_id": "F001",
-                    "confidence": 0.01,
-                    "phase_evidence": {"phases_detected": ["cruise"]},
-                },
+                Finding(finding_id="F001", confidence=0.01),
                 id="low_confidence_ignored",
             ),
         ],
     )
-    def test_finding_does_not_mark_phase(self, finding: dict[str, object]) -> None:
+    def test_finding_does_not_mark_phase(self, finding: Finding) -> None:
         """REF_ findings and below-threshold findings should not contribute."""
         entries = _build_phase_timeline([_FakeSeg()], [finding], min_confidence=0.25)
         assert entries[0]["has_fault_evidence"] is False
@@ -592,7 +580,7 @@ class TestResolveSpeedContext:
         logger, _ = _make_run_recorder()
         speed_kmh, gps_speed, source, rpm = resolve_speed_context(
             logger.gps_monitor,
-            logger.analysis_settings.snapshot(),
+            logger._analysis_settings_snapshot(),
         )
         assert speed_kmh is None
         assert rpm is None
@@ -603,7 +591,7 @@ class TestResolveSpeedContext:
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
         speed_kmh, gps_speed, source, rpm = resolve_speed_context(
             logger.gps_monitor,
-            logger.analysis_settings.snapshot(),
+            logger._analysis_settings_snapshot(),
         )
         assert speed_kmh == pytest.approx(36.0, rel=0.01)
         assert gps_speed == pytest.approx(36.0, rel=0.01)
@@ -616,7 +604,7 @@ class TestResolveSpeedContext:
         gps_mock.resolve_speed.return_value = MagicMock(source="manual", speed_mps=20.0)
         speed_kmh, _, source, _ = resolve_speed_context(
             logger.gps_monitor,
-            logger.analysis_settings.snapshot(),
+            logger._analysis_settings_snapshot(),
         )
         assert speed_kmh == pytest.approx(72.0, rel=0.01)
         assert source == "manual"
@@ -624,8 +612,9 @@ class TestResolveSpeedContext:
     def test_no_gear_ratio_skips_rpm(self) -> None:
         logger, gps_mock = _make_run_recorder()
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=15.0)
-        # Remove gear ratio from settings
-        logger.analysis_settings.snapshot.return_value = {
+        # Remove gear ratio from settings via settings_store mock
+        settings_mock = logger._settings_store
+        settings_mock.analysis_settings_snapshot.return_value = {
             "tire_width_mm": 205,
             "tire_aspect_pct": 55,
             "rim_in": 16,
@@ -635,7 +624,7 @@ class TestResolveSpeedContext:
         }
         _, _, _, rpm = resolve_speed_context(
             logger.gps_monitor,
-            logger.analysis_settings.snapshot(),
+            logger._analysis_settings_snapshot(),
         )
         assert rpm is None, "Without gear_ratio, RPM should not be estimated"
 
