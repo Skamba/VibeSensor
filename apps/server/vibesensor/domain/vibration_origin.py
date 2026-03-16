@@ -5,11 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .finding import VibrationSource
-from .location_hotspot import LocationHotspot
+from vibesensor.domain.finding import VibrationSource
+from vibesensor.domain.location_hotspot import LocationHotspot
 
 if TYPE_CHECKING:
-    from .finding import Finding
+    from vibesensor.domain.finding import Finding
 
 __all__ = ["VibrationOrigin"]
 

@@ -20,7 +20,7 @@ def _runtime_app(port: int):
 def _run_main(monkeypatch, *, port: int, fail_port: int | None = None) -> list[int]:
     """Shared harness: patch app_module, call ``main()``, return recorded port calls."""
     monkeypatch.setenv("VIBESENSOR_DISABLE_AUTO_APP", "1")
-    from vibesensor import app as app_module
+    from vibesensor.app import bootstrap as app_module
 
     monkeypatch.setattr(
         app_module.argparse.ArgumentParser,

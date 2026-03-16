@@ -30,7 +30,7 @@ from unittest.mock import AsyncMock
 import numpy as np
 import pytest
 
-from vibesensor.gps_speed import (
+from vibesensor.adapters.gps.gps_speed import (
     _GPS_RECONNECT_DELAY_S,
     _GPS_RECONNECT_MAX_DELAY_S,
     DEFAULT_FALLBACK_MODE,
@@ -38,12 +38,12 @@ from vibesensor.gps_speed import (
     MIN_STALE_TIMEOUT_S,
     GPSSpeedMonitor,
 )
-from vibesensor.history_db import HistoryDB
-from vibesensor.history_services.exports import flatten_for_csv as _flatten_for_csv
-from vibesensor.processing import SignalProcessor
-from vibesensor.routes._helpers import safe_filename as _safe_filename
-from vibesensor.worker_pool import WorkerPool
-from vibesensor.ws_hub import WebSocketHub
+from vibesensor.adapters.http._helpers import safe_filename as _safe_filename
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.websocket.hub import WebSocketHub
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.use_cases.history.exports import flatten_for_csv as _flatten_for_csv
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 

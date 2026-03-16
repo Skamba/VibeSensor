@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+from test_support.core import _stable_hash
+from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.strength_bands import bucket_for_strength
-
-from .core import _stable_hash
 
 
 def make_sample(

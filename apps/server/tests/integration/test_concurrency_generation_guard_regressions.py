@@ -16,12 +16,12 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.analysis_settings import AnalysisSettingsStore
-from vibesensor.gps_speed import GPSSpeedMonitor
-from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log import RunRecorder, RunRecorderConfig
-from vibesensor.processing import SignalProcessor
-from vibesensor.registry import ClientRegistry
+from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 
 def _make_logger(tmp_path: Path, **overrides):

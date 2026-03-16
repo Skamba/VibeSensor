@@ -12,7 +12,7 @@ from functools import cache
 from io import BytesIO
 from typing import Any
 
-from vibesensor.analysis_settings import (
+from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,

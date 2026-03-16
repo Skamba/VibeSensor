@@ -6,21 +6,19 @@ import tomllib
 from _paths import SERVER_ROOT
 
 TARGETED_MYPY_FILES = {
-    "vibesensor/api_models.py",
-    "vibesensor/backend_types.py",
-    "vibesensor/config.py",
-    "vibesensor/gps_speed.py",
-    "vibesensor/history_services",
-    "vibesensor/json_types.py",
-    "vibesensor/payload_types.py",
-    "vibesensor/registry.py",
-    "vibesensor/run_context.py",
-    "vibesensor/settings_store.py",
+    "vibesensor/app",
+    "vibesensor/shared/types/api_models.py",
+    "vibesensor/shared/types/backend_types.py",
+    "vibesensor/adapters/gps/gps_speed.py",
+    "vibesensor/use_cases/history",
+    "vibesensor/shared/types/json_types.py",
+    "vibesensor/shared/types/payload_types.py",
+    "vibesensor/infra/runtime/registry.py",
+    "vibesensor/shared/run_context.py",
+    "vibesensor/infra/config/settings_store.py",
 }
 
-_TARGETED_MYPY_FILES_FOR_SCAN = sorted(
-    f for f in TARGETED_MYPY_FILES if f != "vibesensor/json_types.py"
-)
+_TARGETED_MYPY_FILES_FOR_SCAN = sorted(TARGETED_MYPY_FILES)
 
 TARGETED_WEAK_TYPING_FILES: list = []
 for _path_str in _TARGETED_MYPY_FILES_FOR_SCAN:

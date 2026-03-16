@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import replace
 
-from ..finding import Finding
-from ..recommended_action import RecommendedAction
-from ..test_plan import TestPlan
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.recommended_action import RecommendedAction
+from vibesensor.domain.test_plan import TestPlan
 
 _ACTION_PRIORITY: dict[str, int] = {
     "wheel_tire_condition": 1,

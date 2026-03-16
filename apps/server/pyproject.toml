@@ -37,16 +37,16 @@ dev = [
 ]
 
 [project.scripts]
-vibesensor-server = "vibesensor.server_cli:main"
-vibesensor-report = "vibesensor.report_cli:main"
-vibesensor-http-api-schema-export = "vibesensor.http_api_schema_export:main"
-vibesensor-hotspot-self-heal = "vibesensor.hotspot.self_heal:main"
-vibesensor-sim = "vibesensor.simulator.sim_sender:main"
-vibesensor-ws-smoke = "vibesensor.simulator.ws_smoke:main"
-vibesensor-config-preflight = "vibesensor.config_preflight:main"
-vibesensor-fw-refresh = "vibesensor.update.firmware_cache:refresh_cache_cli"
-vibesensor-fw-info = "vibesensor.update.firmware_cache:cache_info_cli"
-vibesensor-release-fetch = "vibesensor.update.release_fetcher:fetch_latest_wheel_cli"
+vibesensor-server = "vibesensor.cli.server:main"
+vibesensor-report = "vibesensor.cli.report:main"
+vibesensor-http-api-schema-export = "vibesensor.cli.http_api_schema_export:main"
+vibesensor-hotspot-self-heal = "vibesensor.adapters.hotspot.self_heal:main"
+vibesensor-sim = "vibesensor.adapters.simulator.sim_sender:main"
+vibesensor-ws-smoke = "vibesensor.adapters.simulator.ws_smoke:main"
+vibesensor-config-preflight = "vibesensor.cli.preflight:main"
+vibesensor-fw-refresh = "vibesensor.use_cases.updates.firmware_cache:refresh_cache_cli"
+vibesensor-fw-info = "vibesensor.use_cases.updates.firmware_cache:cache_info_cli"
+vibesensor-release-fetch = "vibesensor.use_cases.updates.release_fetcher:fetch_latest_wheel_cli"
 
 [tool.setuptools.dynamic]
 version = {attr = "vibesensor._version.__version__"}
@@ -81,55 +81,24 @@ target-version = "py311"
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
-"vibesensor/report/*.py" = ["E501"]
+"vibesensor/adapters/pdf/*.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.11"
 files = [
-  "vibesensor/app.py",
-  "vibesensor/api_models.py",
-  "vibesensor/backend_types.py",
-  "vibesensor/car_library.py",
-  "vibesensor/config.py",
-  "vibesensor/constants.py",
-  "vibesensor/contract_reference_doc.py",
-  "vibesensor/domain",
-  "vibesensor/exceptions.py",
-  "vibesensor/gps_speed.py",
-  "vibesensor/history_services",
-  "vibesensor/hotspot",
-  "vibesensor/http_api_schema_export.py",
-  "vibesensor/json_types.py",
-  "vibesensor/json_utils.py",
-  "vibesensor/locations.py",
-  "vibesensor/worker_pool.py",
-  "vibesensor/payload_types.py",
-  "vibesensor/protocol.py",
-  "vibesensor/registry.py",
-  "vibesensor/report",
-  "vibesensor/report_cli.py",
+  "vibesensor/app",
+  "vibesensor/shared/types/api_models.py",
+  "vibesensor/shared/types/backend_types.py",
+  "vibesensor/adapters/gps/gps_speed.py",
+  "vibesensor/use_cases/history",
+  "vibesensor/use_cases/run",
+  "vibesensor/shared/types/json_types.py",
+  "vibesensor/shared/types/payload_types.py",
+  "vibesensor/infra/runtime/registry.py",
+  "vibesensor/infra/config/analysis_settings.py",
+  "vibesensor/shared/run_context.py",
+  "vibesensor/infra/config/settings_store.py",
   "vibesensor/report_i18n.py",
-  "vibesensor/runtime",
-  "vibesensor/routes",
-  "vibesensor/run_context.py",
-  "vibesensor/runlog.py",
-  "vibesensor/server_cli.py",
-  "vibesensor/settings_store.py",
-  "vibesensor/udp_control_tx.py",
-  "vibesensor/udp_data_rx.py",
-  "vibesensor/update",
-  "vibesensor/processing",
-  "vibesensor/analysis",
-  "vibesensor/analysis_settings.py",
-  "vibesensor/vibration_strength.py",
-  "vibesensor/strength_bands.py",
-  "vibesensor/sensor_units.py",
-  "vibesensor/history_db",
-  "vibesensor/metrics_log",
-  "vibesensor/ws_hub.py",
-  "vibesensor/ws_schema_export.py",
-  "vibesensor/simulator",
-  "vibesensor/config_preflight.py",
 ]
 follow_imports = "skip"
 check_untyped_defs = true

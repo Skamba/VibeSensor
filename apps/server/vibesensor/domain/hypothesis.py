@@ -6,11 +6,11 @@ from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import TYPE_CHECKING, ClassVar
 
-from .finding import VibrationSource
+from vibesensor.domain.finding import VibrationSource
 
 if TYPE_CHECKING:
-    from .finding import Finding
-    from .signature import Signature
+    from vibesensor.domain.finding import Finding
+    from vibesensor.domain.signature import Signature
 
 __all__ = ["Hypothesis", "HypothesisStatus"]
 

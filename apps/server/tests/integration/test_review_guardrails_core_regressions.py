@@ -12,12 +12,12 @@ import time
 
 import pytest
 
-from vibesensor.analysis.order_bands import build_order_bands
-from vibesensor.backend_types import new_car_id, sanitize_aspects
-from vibesensor.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.registry import _sanitize_name
-from vibesensor.runlog import bounded_sample
-from vibesensor.worker_pool import WorkerPool
+from vibesensor.adapters.persistence.runlog import bounded_sample
+from vibesensor.infra.runtime.registry import _sanitize_name
+from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.shared.types.backend_types import new_car_id, sanitize_aspects
+from vibesensor.shared.utils.json_utils import as_float_or_none, as_int_or_none
+from vibesensor.use_cases.diagnostics.order_bands import build_order_bands
 
 # ---------------------------------------------------------------------------
 # Item 1 + 2: Public API naming in domain_models
@@ -48,7 +48,7 @@ class TestDomainModelsPublicAPI:
 
     def test_runlog_re_exports(self) -> None:
         """runlog.as_float_or_none still works as before."""
-        from vibesensor.json_utils import as_float_or_none as runlog_as_float
+        from vibesensor.shared.utils.json_utils import as_float_or_none as runlog_as_float
 
         assert runlog_as_float(42) == 42.0
 
@@ -64,7 +64,7 @@ class TestBuildOrderBandsLocation:
 
     def test_not_in_runtime(self) -> None:
         """The old _build_order_bands should not exist in runtime anymore."""
-        import vibesensor.runtime as rt
+        import vibesensor.infra.runtime as rt
 
         assert not hasattr(rt, "_build_order_bands")
 
@@ -175,12 +175,12 @@ class TestModuleAllExports:
     @pytest.mark.parametrize(
         "module_path",
         [
-            "vibesensor.backend_types",
-            "vibesensor.protocol",
-            "vibesensor.worker_pool",
-            "vibesensor.car_library",
-            "vibesensor.gps_speed",
-            "vibesensor.registry",
+            "vibesensor.shared.types.backend_types",
+            "vibesensor.adapters.udp.protocol",
+            "vibesensor.infra.workers.worker_pool",
+            "vibesensor.adapters.persistence.car_library",
+            "vibesensor.adapters.gps.gps_speed",
+            "vibesensor.infra.runtime.registry",
         ],
     )
     def test_module_has_all(self, module_path: str) -> None:

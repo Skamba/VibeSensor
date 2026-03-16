@@ -55,11 +55,11 @@ jobs:
 
       - name: WS payload schema sync check
         run: |
-          python -m vibesensor.ws_schema_export --check
+          python -m vibesensor.cli.ws_schema_export --check
 
       - name: HTTP API schema sync check
         run: |
-          python -m vibesensor.http_api_schema_export --check
+          python -m vibesensor.cli.http_api_schema_export --check
 
   backend-typecheck:
     name: Backend type check

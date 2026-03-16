@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .measurement import Measurement
-from .run_setup import RunSetup
+from vibesensor.domain.measurement import Measurement
+from vibesensor.domain.run_setup import RunSetup
 
 __all__ = ["RunCapture"]
 
