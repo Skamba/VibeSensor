@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from vibesensor.shared.errors.exceptions import AnalysisNotReadyError
+from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
 from vibesensor.use_cases.history.reports import HistoryReportPdfCache, HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService, raise_delete_run_error

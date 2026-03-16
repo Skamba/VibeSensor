@@ -19,8 +19,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import DrivingPhase
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
 
 if TYPE_CHECKING:

@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from vibesensor.shared.errors.exceptions import (
+from vibesensor.shared.exceptions import (
     ProtocolError as ProtocolError,  # re-export for consumers
 )
 from vibesensor.shared.types.backend_types import RUN_SAMPLE_TYPE, RUN_SCHEMA_VERSION
@@ -410,7 +410,7 @@ _BUCKET_KEY: str = "strength_bucket"
 
 def _normalize_peak_list(peaks_raw: object, *, max_items: int) -> list[dict[str, object]]:
     """Validate and normalise a raw peak list into canonical form."""
-    from vibesensor.shared.utils.json_utils import as_float_or_none
+    from vibesensor.shared.json_utils import as_float_or_none
 
     normalized: list[dict[str, object]] = []
     if not isinstance(peaks_raw, list):
@@ -499,7 +499,7 @@ class SensorFrame:
     @classmethod
     def from_dict(cls, record: Mapping[str, object]) -> SensorFrame:
         """Normalize a raw sample dict (e.g. from JSONL or DB) into a SensorFrame."""
-        from vibesensor.shared.utils.json_utils import as_float_or_none, as_int_or_none
+        from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 
         t_s = as_float_or_none(record.get("t_s"))
         speed_kmh = as_float_or_none(record.get("speed_kmh"))

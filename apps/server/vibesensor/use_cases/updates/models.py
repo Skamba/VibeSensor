@@ -7,8 +7,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.types.json_types import JsonObject, is_json_array, is_json_object
-from vibesensor.shared.utils.json_utils import as_float_or_none, as_int_or_none
 
 
 @dataclass(frozen=True, slots=True)

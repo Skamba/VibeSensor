@@ -14,12 +14,14 @@ from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
 from vibesensor.shared.boundaries.diagnostic_case import (
     test_run_from_summary as _test_run_from_summary,
 )
-from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
-from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.shared.boundaries.finding import (
+    finding_payload_from_domain,
+    step_payloads_from_plan,
+)
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.use_cases.diagnostics import RunAnalysis, summarize_run_data
 
@@ -102,7 +104,7 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
     projected["most_likely_origin"] = (
         origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
     )
-    from vibesensor.shared.boundaries._helpers import _has_structured_step_content
+    from vibesensor.shared.boundaries.finding import _has_structured_step_content
 
     if not _has_structured_step_content(analysis.get("test_plan")):
         projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)

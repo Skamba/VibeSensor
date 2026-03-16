@@ -8,8 +8,8 @@ from math import ceil, floor, log1p, pow
 
 from vibesensor.domain import LocationHotspot, VibrationSource
 from vibesensor.shared.constants import MULTI_SENSOR_CORROBORATION_DB
-from vibesensor.shared.ids.locations import has_any_wheel_location, is_wheel_location
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.locations import has_any_wheel_location, is_wheel_location
 from vibesensor.use_cases.diagnostics._types import (
     JsonObject,
     MatchedPoint,

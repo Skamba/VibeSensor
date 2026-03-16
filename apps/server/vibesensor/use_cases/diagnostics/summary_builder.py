@@ -33,22 +33,24 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     Finding as DomainFinding,
 )
-from vibesensor.domain.services import (
+from vibesensor.domain.diagnostic_reasoning import (
     ObservationEvidence,
     evaluate_hypotheses,
     extract_observations,
-    plan_test_actions,
     recognize_signatures,
 )
+from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
-from vibesensor.shared.boundaries.speed_profile import speed_profile_from_stats
-from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
+from vibesensor.shared.boundaries.diagnostic_case import (
+    run_suitability_payload,
+    speed_profile_from_stats,
+)
+from vibesensor.shared.boundaries.finding import step_payloads_from_plan
 from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.run_context import build_summary_warnings, order_reference_context_complete
 from vibesensor.shared.types.json_types import is_json_object
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     AnalysisSummary,

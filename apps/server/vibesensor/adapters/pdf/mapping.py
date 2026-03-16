@@ -25,13 +25,13 @@ from vibesensor.adapters.persistence.runlog import utc_now_iso
 from vibesensor.domain import Finding, Report, TestRun, VibrationSource
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
 from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.vibration_origin import (
     SuspectedVibrationOrigin,
     origin_payload_from_finding,
 )
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     IntensityRow,
     JsonValue,

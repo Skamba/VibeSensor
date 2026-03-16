@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.shared.utils.json_utils import as_float_or_none
+from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.use_cases.diagnostics.order_bands import (
     build_diagnostic_settings,
     combined_relative_uncertainty,

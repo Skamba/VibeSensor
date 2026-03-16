@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from vibesensor.adapters.websocket.hub import WebSocketHub, WSConnection
-from vibesensor.shared.utils.json_utils import sanitize_for_json
+from vibesensor.shared.json_utils import sanitize_for_json
 
 
 def _make_ws() -> AsyncMock:

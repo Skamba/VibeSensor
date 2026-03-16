@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 
 from vibesensor.domain import Finding, TestPlan
-from vibesensor.domain.services import plan_test_actions
+from vibesensor.domain.test_plan import plan_test_actions
 
 
 def _make_finding(

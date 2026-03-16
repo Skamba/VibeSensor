@@ -9,7 +9,7 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     TestPlan as DomainTestPlan,
 )
-from vibesensor.domain.services import plan_test_actions
+from vibesensor.domain.test_plan import plan_test_actions
 
 
 def test_plan_test_actions_accepts_domain_findings() -> None:

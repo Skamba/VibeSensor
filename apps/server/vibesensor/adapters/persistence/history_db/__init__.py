@@ -37,8 +37,8 @@ from vibesensor.domain.run_status import (
     RunStatus,
     transition_run,
 )
+from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
-from vibesensor.shared.utils.json_utils import safe_json_dumps, safe_json_loads
 
 # Re-export for public API.
 __all__ = ["HistoryDB", "RunStatus"]

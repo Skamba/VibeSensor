@@ -18,7 +18,7 @@ from math import floor
 from typing import Any, Literal, Required, TypedDict
 
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics.findings import _classify_peak_type
 from vibesensor.use_cases.diagnostics.helpers import (

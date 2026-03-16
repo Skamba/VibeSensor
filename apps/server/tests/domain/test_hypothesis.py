@@ -1,9 +1,8 @@
 """Tests for Hypothesis.from_finding classmethod."""
 
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+from vibesensor.domain.diagnostic_reasoning import Hypothesis, HypothesisStatus, Signature
 from vibesensor.domain.finding import Finding, VibrationSource
-from vibesensor.domain.hypothesis import Hypothesis, HypothesisStatus
-from vibesensor.domain.signature import Signature
 
 
 def _make_signature(key: str = "sig-test") -> Signature:

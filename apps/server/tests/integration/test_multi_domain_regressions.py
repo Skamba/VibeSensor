@@ -19,7 +19,7 @@ from vibesensor.adapters.persistence.runlog import parse_iso8601
 from vibesensor.app.settings import _split_host_port
 from vibesensor.domain import Finding, SpeedSourceKind
 from vibesensor.report_i18n import tr
-from vibesensor.shared.utils.json_utils import as_float_or_none as runlog_as_float_or_none
+from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.use_cases.diagnostics.findings import _sensor_intensity_by_location
 from vibesensor.use_cases.diagnostics.helpers import _format_duration, _speed_bin_label
 from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_window_label

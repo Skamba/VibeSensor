@@ -7,11 +7,10 @@ from dataclasses import dataclass
 from vibesensor.domain.diagnostic_reasoning import DiagnosticReasoning
 from vibesensor.domain.driving_segment import DrivingSegment
 from vibesensor.domain.finding import Finding, VibrationSource
-from vibesensor.domain.recommended_action import RecommendedAction
 from vibesensor.domain.run_capture import RunCapture
 from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.speed_profile import SpeedProfile
-from vibesensor.domain.test_plan import TestPlan
+from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 
 __all__ = ["TestRun"]
 

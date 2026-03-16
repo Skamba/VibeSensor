@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, cast, get_args
 
 from vibesensor.adapters.udp.protocol import normalize_sensor_id
 from vibesensor.domain import Car, Sensor, SpeedSource
-from vibesensor.shared.errors.exceptions import PersistenceError as PersistenceError
+from vibesensor.shared.exceptions import PersistenceError as PersistenceError
 from vibesensor.shared.types.backend_types import (
     AnalysisSettingsPayload,
     CarConfig,

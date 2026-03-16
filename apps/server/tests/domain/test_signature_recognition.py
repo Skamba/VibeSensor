@@ -1,8 +1,7 @@
 """Tests for signature recognition service (T5.17)."""
 
+from vibesensor.domain.diagnostic_reasoning import Observation, recognize_signatures
 from vibesensor.domain.finding import VibrationSource
-from vibesensor.domain.observation import Observation
-from vibesensor.domain.services.signature_recognition import recognize_signatures
 
 
 def _obs(

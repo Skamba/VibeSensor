@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 import pytest
 
 from vibesensor.domain import SpeedProfile
-from vibesensor.shared.boundaries.speed_profile import speed_profile_from_stats
+from vibesensor.shared.boundaries.diagnostic_case import speed_profile_from_stats
 from vibesensor.use_cases.diagnostics.helpers import _speed_stats
 from vibesensor.use_cases.diagnostics.summary_builder import (
     PreparedRunData,

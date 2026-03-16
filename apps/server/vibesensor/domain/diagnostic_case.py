@@ -8,11 +8,10 @@ from uuid import uuid4
 
 from vibesensor.domain.car import Car
 from vibesensor.domain.diagnosis import Diagnosis
+from vibesensor.domain.diagnostic_reasoning import Hypothesis, HypothesisStatus
 from vibesensor.domain.finding import Finding
-from vibesensor.domain.hypothesis import Hypothesis, HypothesisStatus
-from vibesensor.domain.recommended_action import RecommendedAction
 from vibesensor.domain.symptom import Symptom
-from vibesensor.domain.test_plan import TestPlan
+from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
 
 __all__ = ["DiagnosticCase", "DiagnosticCaseEpistemicRule"]

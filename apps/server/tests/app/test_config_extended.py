@@ -11,7 +11,7 @@ from vibesensor.app.settings import (
     _split_host_port,
     load_config,
 )
-from vibesensor.shared.utils.json_utils import deep_merge as _deep_merge
+from vibesensor.shared.json_utils import deep_merge as _deep_merge
 
 # -- _split_host_port ---------------------------------------------------------
 
