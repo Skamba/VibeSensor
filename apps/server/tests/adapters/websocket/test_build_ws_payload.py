@@ -7,6 +7,8 @@ os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from vibesensor.domain import AnalysisSettingsSnapshot
+
 if TYPE_CHECKING:
     from vibesensor.infra.runtime import RuntimeState
 
@@ -100,15 +102,15 @@ class _StubSettingsStore:
     def get_speed_source(self) -> dict[str, Any]:
         return {"speedSource": "gps"}
 
-    def analysis_settings_snapshot(self) -> dict[str, float]:
+    def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         self.snapshot_calls += 1
-        return {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-            "final_drive_ratio": 3.08,
-            "current_gear_ratio": 0.64,
-        }
+        return AnalysisSettingsSnapshot(
+            tire_width_mm=285.0,
+            tire_aspect_pct=30.0,
+            rim_in=21.0,
+            final_drive_ratio=3.08,
+            current_gear_ratio=0.64,
+        )
 
 
 @dataclass(slots=True)

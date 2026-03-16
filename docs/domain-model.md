@@ -809,3 +809,17 @@ That does not change the canonical model defined here:
 - `DrivingSegment` is the canonical domain segment concept
 - `Report` is derived from the diagnostic domain and is not a core aggregate
   root
+
+### Closely related sub-exports
+
+The domain package also exports these closely related value objects and
+functions that are conceptually part of a parent aggregate:
+
+- `TireSpec`, `SpeedSourceKind`, `FindingKind`, `Signature`,
+  `VibrationSource`: enum-like or small value-object types
+- `VibrationReading`: raw multi-axis reading attached to `Measurement`;
+  lives in `run_capture.py` alongside `RunCapture`
+- `RunStatus`, `RUN_TRANSITIONS`, `transition_run`: run lifecycle state
+  machine
+- `speed_band_sort_key`, `speed_bin_label`: finding-related classification
+  helpers

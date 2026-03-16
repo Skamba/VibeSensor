@@ -22,8 +22,6 @@ from vibesensor.shared.constants import (
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.types.payload_types import OrderBandPayload
 
-DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
-
 
 def build_diagnostic_settings(overrides: Mapping[str, object] | None = None) -> dict[str, float]:
     """Return analysis settings merged with validated *overrides*."""

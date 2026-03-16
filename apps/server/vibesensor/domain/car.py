@@ -1,8 +1,11 @@
-"""The vehicle under test.
+"""The vehicle under test and car-scoped interpretive context.
 
 ``Car`` owns identity, user-facing name, vehicle type, and geometry aspects
 (tire dimensions, gear ratios) that drive order analysis.  ``TireSpec``
 encapsulates the three standard tire dimensions and derived geometry.
+``OrderReferenceSpec`` owns tire geometry and driveline/reference-order
+interpretation.  ``CarSnapshot`` is typed internal car context attached
+to a run.
 Configuration and persistence details remain in ``CarConfig``.
 """
 
@@ -16,6 +19,8 @@ from types import MappingProxyType
 
 __all__ = [
     "Car",
+    "CarSnapshot",
+    "OrderReferenceSpec",
     "TireSpec",
 ]
 
@@ -72,6 +77,147 @@ class TireSpec:
         return self.diameter_mm / 1000.0 * math.pi * self.deflection_factor
 
 
+# ---------------------------------------------------------------------------
+# OrderReferenceSpec — tire geometry + driveline/reference-order interpretation
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class OrderReferenceSpec:
+    """Canonical typed owner of tire geometry and driveline/reference-order
+    interpretation within a Car context.
+
+    Owns the data needed to derive wheel, driveshaft, and engine reference
+    frequencies from vehicle speed.
+    """
+
+    tire_spec: TireSpec
+    final_drive_ratio: float
+    current_gear_ratio: float
+    wheel_bandwidth_pct: float
+    driveshaft_bandwidth_pct: float
+    engine_bandwidth_pct: float
+    speed_uncertainty_pct: float
+    tire_diameter_uncertainty_pct: float
+    final_drive_uncertainty_pct: float
+    gear_uncertainty_pct: float
+    min_abs_band_hz: float
+    max_band_half_width_pct: float
+
+    @classmethod
+    def from_settings(
+        cls,
+        settings: Mapping[str, float],
+        deflection_factor: float = 1.0,
+    ) -> OrderReferenceSpec | None:
+        """Build from a flat settings mapping.
+
+        Returns ``None`` if tire geometry keys are missing or invalid.
+        """
+        tire = TireSpec.from_aspects(settings, deflection_factor=deflection_factor)
+        if tire is None:
+            return None
+
+        def _f(key: str, default: float = 0.0) -> float:
+            v = settings.get(key)
+            if v is None or not math.isfinite(v):
+                return default
+            return float(v)
+
+        return cls(
+            tire_spec=tire,
+            final_drive_ratio=_f("final_drive_ratio"),
+            current_gear_ratio=_f("current_gear_ratio"),
+            wheel_bandwidth_pct=_f("wheel_bandwidth_pct"),
+            driveshaft_bandwidth_pct=_f("driveshaft_bandwidth_pct"),
+            engine_bandwidth_pct=_f("engine_bandwidth_pct"),
+            speed_uncertainty_pct=_f("speed_uncertainty_pct"),
+            tire_diameter_uncertainty_pct=_f("tire_diameter_uncertainty_pct"),
+            final_drive_uncertainty_pct=_f("final_drive_uncertainty_pct"),
+            gear_uncertainty_pct=_f("gear_uncertainty_pct"),
+            min_abs_band_hz=_f("min_abs_band_hz"),
+            max_band_half_width_pct=_f("max_band_half_width_pct"),
+        )
+
+    # -- queries -----------------------------------------------------------
+
+    @property
+    def tire_circumference_m(self) -> float:
+        """Tire circumference in metres (deflection-adjusted)."""
+        return self.tire_spec.circumference_m
+
+    @property
+    def has_engine_reference(self) -> bool:
+        """Whether gear ratio is set (non-zero) for engine order analysis."""
+        return self.current_gear_ratio != 0.0
+
+    @property
+    def is_complete(self) -> bool:
+        """Whether all required fields are present for order analysis."""
+        return self.final_drive_ratio > 0.0 and self.tire_spec.circumference_m > 0.0
+
+
+# ---------------------------------------------------------------------------
+# CarSnapshot — typed internal car context attached to a run
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class CarSnapshot:
+    """Typed internal car context attached to a run.
+
+    Not an aggregate — a supporting typed internal object for run-attached
+    car interpretation context.
+    """
+
+    car_id: str | None = None
+    name: str | None = None
+    car_type: str | None = None
+    variant: str | None = None
+    aspects: Mapping[str, float] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.aspects, MappingProxyType):
+            object.__setattr__(self, "aspects", MappingProxyType(dict(self.aspects)))
+
+    @classmethod
+    def from_dict(cls, d: Mapping[str, object]) -> CarSnapshot:
+        """Parse from a flat mapping. Missing keys default to ``None``/empty."""
+        raw_aspects = d.get("aspects")
+        aspects: dict[str, float] = {}
+        if isinstance(raw_aspects, dict):
+            for k, v in raw_aspects.items():
+                if isinstance(k, str):
+                    try:
+                        aspects[k] = float(v)
+                    except (TypeError, ValueError):
+                        pass
+        return cls(
+            car_id=_str_or_none(d.get("id") or d.get("car_id")),
+            name=_str_or_none(d.get("name")),
+            car_type=_str_or_none(d.get("type") or d.get("car_type")),
+            variant=_str_or_none(d.get("variant")),
+            aspects=aspects,
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        """Project to a persistence-compatible dict."""
+        return {
+            "id": self.car_id,
+            "name": self.name,
+            "type": self.car_type,
+            "variant": self.variant,
+            "aspects": dict(self.aspects),
+        }
+
+
+def _str_or_none(v: object) -> str | None:
+    if v is None:
+        return None
+    s = str(v).strip()
+    return s if s else None
+
+
 @dataclass(frozen=True, slots=True)
 class Car:
     """The vehicle under test.
@@ -86,6 +232,7 @@ class Car:
     car_type: str = "sedan"
     aspects: Mapping[str, float] = field(default_factory=dict)
     variant: str | None = None
+    order_reference_spec: OrderReferenceSpec | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if not self.name or not self.name.strip():
@@ -99,6 +246,12 @@ class Car:
                 raise ValueError(
                     f"Car.aspects[{key!r}] must be a positive finite number, got {val}"
                 )
+        # Eagerly derive OrderReferenceSpec from aspects when tire geometry is present.
+        deflection = self.aspects.get("tire_deflection_factor", 1.0)
+        if not isinstance(deflection, (int, float)) or not math.isfinite(deflection):
+            deflection = 1.0
+        spec = OrderReferenceSpec.from_settings(dict(self.aspects), deflection_factor=deflection)
+        object.__setattr__(self, "order_reference_spec", spec)
 
     # -- queries -----------------------------------------------------------
 

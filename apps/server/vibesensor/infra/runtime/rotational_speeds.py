@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from vibesensor.shared.constants import SECONDS_PER_MINUTE
@@ -48,7 +49,7 @@ def build_rotational_speeds_payload(
     *,
     basis_speed_source: str,
     speed_mps: float | None,
-    analysis_settings: dict[str, float],
+    analysis_settings: Mapping[str, object],
 ) -> RotationalSpeedsPayload:
     """Assemble the ``rotational_speeds`` sub-dict for the WS payload."""
     if speed_mps is None or speed_mps <= 0:

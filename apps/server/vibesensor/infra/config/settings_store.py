@@ -29,12 +29,12 @@ from threading import RLock
 from typing import TYPE_CHECKING, cast, get_args
 
 from vibesensor.adapters.udp.protocol import normalize_sensor_id
-from vibesensor.domain import Car, Sensor, SpeedSource
+from vibesensor.domain import Car, CarSnapshot, Sensor, SpeedSource
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.exceptions import PersistenceError as PersistenceError
 from vibesensor.shared.types.backend_types import (
     AnalysisSettingsPayload,
     CarConfig,
-    CarConfigPayload,
     CarConfigUpdatePayload,
     LanguageCode,
     SensorConfig,
@@ -216,10 +216,10 @@ class SettingsStore:
         self._sync_analysis_settings()
         self._sync_speed_source()
 
-    def analysis_settings_snapshot(self) -> dict[str, float]:
-        """Return a thread-safe copy of the current analysis settings."""
+    def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
+        """Return a thread-safe typed snapshot of the current analysis settings."""
         with self._lock:
-            return dict(self._analysis_values)
+            return AnalysisSettingsSnapshot.from_dict(self._analysis_values)
 
     # -- full snapshot ---------------------------------------------------------
 
@@ -274,11 +274,11 @@ class SettingsStore:
             car = car_cfg.to_car()
             return dict(car.aspects)
 
-    def active_car_snapshot(self) -> CarConfigPayload | None:
-        """Return the active car profile as a plain dict snapshot."""
+    def active_car_snapshot(self) -> CarSnapshot | None:
+        """Return the active car profile as a typed domain snapshot."""
         with self._lock:
             car = self._find_car(self._active_car_id)
-            return car.to_dict() if car else None
+            return car.to_car_snapshot() if car else None
 
     def _find_car(self, car_id: str | None) -> CarConfig | None:
         if not car_id:

@@ -43,7 +43,8 @@
 - `domain/`: DDD-aligned domain model package. Primary domain objects
   live under `vibesensor/domain/`; closely related value objects share
   a file with their parent aggregate:
-  `car.py` (Car, TireSpec), `sensor.py` (Sensor, SensorPlacement),
+  `car.py` (Car, TireSpec, OrderReferenceSpec, CarSnapshot),
+  `sensor.py` (Sensor, SensorPlacement),
   `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
   `diagnostic_case.py` (DiagnosticCase aggregate, Symptom),
   `run_capture.py` (RunCapture, RunSetup, ConfigurationSnapshot, Measurement, VibrationReading),
@@ -56,7 +57,9 @@
   `location_hotspot.py` (LocationHotspot),
   `speed_profile.py` (SpeedProfile),
   `run_suitability.py` (RunSuitability, SuitabilityCheck),
-  `run_status.py` (RunStatus, RUN_TRANSITIONS).
+  `run_status.py` (RunStatus, RUN_TRANSITIONS),
+  `snapshots.py` (AnalysisSettingsSnapshot, RunContextSnapshot, SpeedStatsSnapshot, PhaseSummarySnapshot),
+  `strength_metrics.py` (StrengthMetrics, StrengthPeak).
   Domain objects own
   classification, ranking, actionability, surfacing, lifecycle, and
   query logic; diagnostics use cases delegate to them. See

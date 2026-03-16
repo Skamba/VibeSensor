@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from dataclasses import asdict
 from typing import cast
 
+from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
 from vibesensor.infra.config.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
     tire_circumference_m_from_spec,
 )
 from vibesensor.report_i18n import tr as _tr
@@ -15,34 +16,31 @@ from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.use_cases.diagnostics import i18n_ref
 
-ANALYSIS_SETTINGS_SNAPSHOT_KEYS: tuple[str, ...] = tuple(DEFAULT_ANALYSIS_SETTINGS.keys())
-
 WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE = "reference_context_incomplete"
 WARNING_CODE_CAR_SETTINGS_CHANGED = "car_settings_changed"
 
 
 def build_run_context_snapshot(
     *,
-    analysis_settings_snapshot: Mapping[str, object],
-    active_car_snapshot: Mapping[str, object] | None,
+    analysis_settings_snapshot: AnalysisSettingsSnapshot,
+    active_car_snapshot: CarSnapshot | None,
 ) -> JsonObject:
     """Build a structured run-context snapshot for persisted metadata."""
-    settings_snapshot: JsonObject = {}
-    for key in ANALYSIS_SETTINGS_SNAPSHOT_KEYS:
-        value = _as_float(analysis_settings_snapshot.get(key))
-        if value is not None:
-            settings_snapshot[key] = value
+    settings_dict = asdict(analysis_settings_snapshot)
+    settings_snapshot: JsonObject = {
+        k: v for k, v in settings_dict.items() if isinstance(v, (int, float)) and v == v
+    }
     snapshot: JsonObject = {"analysis_settings_snapshot": settings_snapshot}
     if active_car_snapshot is not None:
-        snapshot["active_car_snapshot"] = _sanitize_car_snapshot(active_car_snapshot)
+        snapshot["active_car_snapshot"] = active_car_snapshot.to_dict()
     return snapshot
 
 
 def apply_run_context_snapshot(
     metadata: JsonObject,
     *,
-    analysis_settings_snapshot: Mapping[str, object],
-    active_car_snapshot: Mapping[str, object] | None,
+    analysis_settings_snapshot: AnalysisSettingsSnapshot,
+    active_car_snapshot: CarSnapshot | None,
 ) -> None:
     """Attach structured run-context snapshot fields to persisted metadata."""
     context_snapshot = build_run_context_snapshot(
@@ -99,7 +97,7 @@ def build_summary_warnings(
 def add_current_context_warnings(
     summary: Mapping[str, JsonValue],
     *,
-    current_active_car_snapshot: Mapping[str, object] | None,
+    current_active_car_snapshot: CarSnapshot | None,
 ) -> JsonObject:
     """Return a summary copy enriched with dynamic current-context warnings."""
     enriched = dict(summary)
@@ -136,10 +134,10 @@ def localize_warning_list(
     return localized
 
 
-def current_car_snapshot_token(current_active_car_snapshot: Mapping[str, object] | None) -> str:
+def current_car_snapshot_token(current_active_car_snapshot: CarSnapshot | None) -> str:
     """Return a stable cache token for current active-car context."""
     return json.dumps(
-        _sanitize_car_snapshot(current_active_car_snapshot) if current_active_car_snapshot else {},
+        current_active_car_snapshot.to_dict() if current_active_car_snapshot else {},
         sort_keys=True,
         ensure_ascii=False,
         default=str,
@@ -149,14 +147,15 @@ def current_car_snapshot_token(current_active_car_snapshot: Mapping[str, object]
 def _build_car_settings_changed_warning(
     metadata: object,
     *,
-    current_active_car_snapshot: Mapping[str, object] | None,
+    current_active_car_snapshot: CarSnapshot | None,
 ) -> JsonObject | None:
     if not is_json_object(metadata) or current_active_car_snapshot is None:
         return None
     recorded_snapshot = metadata.get("active_car_snapshot")
     if not is_json_object(recorded_snapshot):
         return None
-    if _normalized_aspects(recorded_snapshot) == _normalized_aspects(current_active_car_snapshot):
+    current_dict = current_active_car_snapshot.to_dict()
+    if _normalized_aspects(recorded_snapshot) == _normalized_aspects(current_dict):
         return None
     return {
         "code": WARNING_CODE_CAR_SETTINGS_CHANGED,
@@ -166,7 +165,7 @@ def _build_car_settings_changed_warning(
         "detail": i18n_ref(
             "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_DETAIL",
             run_car=_car_label(recorded_snapshot),
-            current_car=_car_label(current_active_car_snapshot),
+            current_car=_car_label(current_dict),
         ),
     }
 
@@ -177,30 +176,14 @@ def _normalized_warning_list(warnings: object) -> list[JsonObject]:
     return [warning for warning in warnings if is_json_object(warning)]
 
 
-def _sanitize_car_snapshot(snapshot: Mapping[str, object]) -> JsonObject:
-    aspects_raw = snapshot.get("aspects")
-    aspects = aspects_raw if isinstance(aspects_raw, Mapping) else {}
-    return {
-        "id": str(snapshot.get("id") or "").strip() or None,
-        "name": str(snapshot.get("name") or "").strip() or None,
-        "type": str(snapshot.get("type") or "").strip() or None,
-        "variant": str(snapshot.get("variant") or "").strip() or None,
-        "aspects": {
-            key: value
-            for key in ANALYSIS_SETTINGS_SNAPSHOT_KEYS
-            if (value := _as_float(aspects.get(key))) is not None
-        },
-    }
-
-
 def _normalized_aspects(snapshot: Mapping[str, object]) -> tuple[tuple[str, float], ...]:
     aspects_raw = snapshot.get("aspects")
     if not isinstance(aspects_raw, Mapping):
         return ()
     normalized = [
         (key, float(value))
-        for key in ANALYSIS_SETTINGS_SNAPSHOT_KEYS
-        if (value := _as_float(aspects_raw.get(key))) is not None
+        for key, value in aspects_raw.items()
+        if isinstance(key, str) and _as_float(value) is not None
     ]
     return tuple(sorted(normalized))
 

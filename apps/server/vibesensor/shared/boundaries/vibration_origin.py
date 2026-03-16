@@ -8,16 +8,8 @@ from typing import TypedDict
 from vibesensor.domain.finding import Finding, VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.vibration_origin import VibrationOrigin
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonValue
-
-
-def _as_float(value: object) -> float | None:
-    if value is None:
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
 
 
 def location_hotspot_from_payload(payload: dict[str, object]) -> LocationHotspot:

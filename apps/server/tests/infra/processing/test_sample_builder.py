@@ -11,6 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
     build_sample_records,
@@ -145,7 +146,7 @@ class TestResolveSpeedContext:
         gps.speed_mps = None
         gps.effective_speed_mps = None
         gps.resolve_speed.return_value = MagicMock(source="none")
-        settings = {}
+        settings = AnalysisSettingsSnapshot()
         speed, gps_speed, source, rpm = resolve_speed_context(gps, settings)
         assert speed is None
         assert rpm is None
@@ -155,13 +156,13 @@ class TestResolveSpeedContext:
         gps = MagicMock()
         gps.speed_mps = 10.0
         gps.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
-        settings = {
-            "tire_width_mm": 205.0,
-            "tire_aspect_pct": 55.0,
-            "rim_in": 16.0,
-            "final_drive_ratio": 3.73,
-            "current_gear_ratio": 1.0,
-        }
+        settings = AnalysisSettingsSnapshot(
+            tire_width_mm=205.0,
+            tire_aspect_pct=55.0,
+            rim_in=16.0,
+            final_drive_ratio=3.73,
+            current_gear_ratio=1.0,
+        )
         speed, gps_speed, source, rpm = resolve_speed_context(gps, settings)
         assert speed == pytest.approx(36.0, rel=0.01)
         assert source == "gps"
@@ -220,7 +221,7 @@ def _default_run_metadata_kwargs(**overrides) -> dict:
     defaults: dict = {
         "run_id": "test-run",
         "start_time_utc": "2026-01-01T00:00:00Z",
-        "analysis_settings_snapshot": {},
+        "analysis_settings_snapshot": AnalysisSettingsSnapshot(),
         "sensor_model": "test",
         "firmware_version": None,
         "default_sample_rate_hz": 800,
@@ -238,11 +239,11 @@ class TestBuildRunMetadata:
             **_default_run_metadata_kwargs(
                 sensor_model="ADXL345",
                 fft_window_size_samples=1024,
-                analysis_settings_snapshot={
-                    "tire_width_mm": 205.0,
-                    "tire_aspect_pct": 55.0,
-                    "rim_in": 16.0,
-                },
+                analysis_settings_snapshot=AnalysisSettingsSnapshot(
+                    tire_width_mm=205.0,
+                    tire_aspect_pct=55.0,
+                    rim_in=16.0,
+                ),
             ),
         )
         assert meta["run_id"] == "test-run"
@@ -291,7 +292,7 @@ class TestBuildSampleRecords:
             registry=reg,
             processor=proc,
             gps_monitor=gps,
-            analysis_settings_snapshot={},
+            analysis_settings_snapshot=AnalysisSettingsSnapshot(),
             default_sample_rate_hz=800,
         )
         assert records == []

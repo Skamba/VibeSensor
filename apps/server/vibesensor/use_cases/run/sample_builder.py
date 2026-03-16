@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable, Mapping
+from dataclasses import asdict
 from typing import TYPE_CHECKING, NamedTuple
 
 from vibesensor.adapters.udp.protocol import SensorFrame
+from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.infra.config.analysis_settings import (
     engine_rpm_from_wheel_hz,
     tire_circumference_m_from_spec,
@@ -18,7 +21,6 @@ from vibesensor.infra.config.analysis_settings import (
 )
 from vibesensor.shared.constants import MPS_TO_KMH, NUMERIC_TYPES
 from vibesensor.shared.run_context import (
-    ANALYSIS_SETTINGS_SNAPSHOT_KEYS,
     apply_run_context_snapshot,
     order_reference_context_complete,
 )
@@ -49,15 +51,6 @@ def _parse_peak(raw: object) -> tuple[float, float] | None:
 _VIB_STRENGTH_DB_KEY: str = "vibration_strength_db"
 _STRENGTH_BUCKET_KEY: str = "strength_bucket"
 
-_SPEED_SOURCE_MAP = {
-    "manual": "manual",
-    "gps": "gps",
-    "fallback_manual": "manual",
-    "none": "none",
-}
-
-_SETTINGS_PASSTHROUGH_KEYS = ANALYSIS_SETTINGS_SNAPSHOT_KEYS
-
 
 def _safe_float(d: Mapping[str, object], key: str) -> float | None:
     """Extract a finite float from *d[key]*, or ``None``."""
@@ -69,6 +62,14 @@ def _safe_float(d: Mapping[str, object], key: str) -> float | None:
     except (TypeError, ValueError):
         return None
     return out if _isfinite(out) else None
+
+
+_SPEED_SOURCE_MAP = {
+    "manual": "manual",
+    "gps": "gps",
+    "fallback_manual": "manual",
+    "none": "none",
+}
 
 
 def safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None:
@@ -157,18 +158,18 @@ class SpeedContext(NamedTuple):
 
 def resolve_speed_context(
     gps_monitor: GPSSpeedMonitor,
-    analysis_settings_snapshot: Mapping[str, object],
+    analysis_settings_snapshot: AnalysisSettingsSnapshot,
 ) -> SpeedContext:
     """Resolve current speed/vehicle state into sample-record values."""
-    settings = analysis_settings_snapshot
+    s = analysis_settings_snapshot
     tire_circumference_m = tire_circumference_m_from_spec(
-        _safe_float(settings, "tire_width_mm"),
-        _safe_float(settings, "tire_aspect_pct"),
-        _safe_float(settings, "rim_in"),
-        deflection_factor=_safe_float(settings, "tire_deflection_factor"),
+        s.tire_width_mm or None,
+        s.tire_aspect_pct or None,
+        s.rim_in or None,
+        deflection_factor=s.tire_deflection_factor or None,
     )
-    final_drive_ratio = _safe_float(settings, "final_drive_ratio")
-    gear_ratio = _safe_float(settings, "current_gear_ratio")
+    final_drive_ratio = s.final_drive_ratio or None
+    gear_ratio = s.current_gear_ratio or None
     gps_speed_mps = gps_monitor.speed_mps
     resolution = gps_monitor.resolve_speed()
     effective_speed_mps = resolution.speed_mps
@@ -231,7 +232,7 @@ def build_sample_records(
     registry: ClientRegistry,
     processor: SignalProcessor,
     gps_monitor: GPSSpeedMonitor,
-    analysis_settings_snapshot: Mapping[str, object],
+    analysis_settings_snapshot: AnalysisSettingsSnapshot,
     default_sample_rate_hz: int,
 ) -> list[dict[str, object]]:
     """Build one batch of sample records from all active clients."""
@@ -241,8 +242,8 @@ def build_sample_records(
         speed_source,
         engine_rpm_estimated,
     ) = resolve_speed_context(gps_monitor, analysis_settings_snapshot)
-    final_drive_ratio = _safe_float(analysis_settings_snapshot, "final_drive_ratio")
-    gear_ratio = _safe_float(analysis_settings_snapshot, "current_gear_ratio")
+    final_drive_ratio = analysis_settings_snapshot.final_drive_ratio or None
+    gear_ratio = analysis_settings_snapshot.current_gear_ratio or None
 
     records: list[dict[str, object]] = []
     active_client_ids = sorted(
@@ -327,20 +328,20 @@ def build_run_metadata(
     *,
     run_id: str,
     start_time_utc: str,
-    analysis_settings_snapshot: Mapping[str, object],
+    analysis_settings_snapshot: AnalysisSettingsSnapshot,
     sensor_model: str,
     firmware_version: str | None,
     default_sample_rate_hz: int,
     metrics_log_hz: int,
     fft_window_size_samples: int,
     accel_scale_g_per_lsb: float | None,
-    active_car_snapshot: Mapping[str, object] | None = None,
+    active_car_snapshot: CarSnapshot | None = None,
     language_provider: Callable[[], str] | None = None,
 ) -> dict[str, object]:
     """Assemble comprehensive run metadata."""
     from vibesensor.adapters.persistence.runlog import create_run_metadata
 
-    settings = analysis_settings_snapshot
+    settings = asdict(analysis_settings_snapshot)
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
     raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
     incomplete = raw_sample_rate_hz is None
@@ -355,17 +356,16 @@ def build_run_metadata(
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         incomplete_for_order_analysis=incomplete,
     )
-    for _key in _SETTINGS_PASSTHROUGH_KEYS:
-        metadata[_key] = settings.get(_key)
+    metadata.update(settings)
     metadata["tire_circumference_m"] = tire_circumference_m_from_spec(
-        _safe_float(settings, "tire_width_mm"),
-        _safe_float(settings, "tire_aspect_pct"),
-        _safe_float(settings, "rim_in"),
-        deflection_factor=_safe_float(settings, "tire_deflection_factor"),
+        analysis_settings_snapshot.tire_width_mm,
+        analysis_settings_snapshot.tire_aspect_pct,
+        analysis_settings_snapshot.rim_in,
+        deflection_factor=analysis_settings_snapshot.tire_deflection_factor,
     )
     apply_run_context_snapshot(
         metadata,
-        analysis_settings_snapshot=settings,
+        analysis_settings_snapshot=analysis_settings_snapshot,
         active_car_snapshot=active_car_snapshot,
     )
     metadata["incomplete_for_order_analysis"] = not order_reference_context_complete(metadata)

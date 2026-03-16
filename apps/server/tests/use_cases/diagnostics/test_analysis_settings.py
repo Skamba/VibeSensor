@@ -128,12 +128,9 @@ def test_snapshot_returns_copy_of_defaults(tmp_path) -> None:
     db = HistoryDB(tmp_path / "test.db")
     store = SettingsStore(db=db)
     snap = store.analysis_settings_snapshot()
-    assert snap == DEFAULT_ANALYSIS_SETTINGS
-    snap["tire_width_mm"] = 999.0
-    assert (
-        store.analysis_settings_snapshot()["tire_width_mm"]
-        == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
-    )
+    # Frozen dataclass — values match defaults and instance is immutable
+    assert snap.tire_width_mm == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
+    assert snap.rim_in == DEFAULT_ANALYSIS_SETTINGS["rim_in"]
 
 
 def test_update_merges_valid_values(tmp_path) -> None:
@@ -146,8 +143,8 @@ def test_update_merges_valid_values(tmp_path) -> None:
     store.set_active_car(initial["cars"][0]["id"])
     store.update_active_car_aspects({"tire_width_mm": 225.0})
     result = store.analysis_settings_snapshot()
-    assert result["tire_width_mm"] == 225.0
-    assert result["rim_in"] == DEFAULT_ANALYSIS_SETTINGS["rim_in"]
+    assert result.tire_width_mm == 225.0
+    assert result.rim_in == DEFAULT_ANALYSIS_SETTINGS["rim_in"]
 
 
 def test_update_rejects_invalid_and_keeps_old(tmp_path) -> None:
@@ -160,7 +157,7 @@ def test_update_rejects_invalid_and_keeps_old(tmp_path) -> None:
     store.set_active_car(initial["cars"][0]["id"])
     store.update_active_car_aspects({"tire_width_mm": -5.0})
     assert (
-        store.analysis_settings_snapshot()["tire_width_mm"]
+        store.analysis_settings_snapshot().tire_width_mm
         == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
     )
 

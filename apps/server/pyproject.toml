@@ -86,6 +86,9 @@ select = ["E", "F", "I", "UP", "B"]
 python_version = "3.11"
 files = [
   "vibesensor/app",
+  "vibesensor/domain/snapshots.py",
+  "vibesensor/domain/strength_metrics.py",
+  "vibesensor/domain/car.py",
   "vibesensor/shared/types/api_models.py",
   "vibesensor/shared/types/backend_types.py",
   "vibesensor/adapters/gps/gps_speed.py",

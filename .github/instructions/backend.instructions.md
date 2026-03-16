@@ -10,7 +10,12 @@ Backend (python `apps/server/`)
 	- `apps/server/vibesensor/infra/runtime/`: subsystem ownership, lifecycle coordination, processing loop, and websocket broadcast state; routes receive `RuntimeState` directly.
 	- `apps/server/vibesensor/adapters/persistence/history_db/`: SQLite-backed history and settings persistence.
 	- `apps/server/vibesensor/adapters/pdf/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
-	- `apps/server/vibesensor/domain/`: DDD-aligned domain model package. Primary domain objects live under `vibesensor/domain/`; closely related value objects may share a file with their parent aggregate. Includes `FindingKind` enum, `RunStatus` state machine, and all domain queries. See `docs/domain-model.md` for the full relationship map and file layout.
+	- `apps/server/vibesensor/domain/`: DDD-aligned domain model package. Primary domain objects live under `vibesensor/domain/`; closely related value objects may share a file with their parent aggregate. Includes `FindingKind` enum, `RunStatus` state machine, and all domain queries. Key domain files and types:
+		- `car.py`: Car, TireSpec, OrderReferenceSpec, CarSnapshot
+		- `snapshots.py`: AnalysisSettingsSnapshot, RunContextSnapshot, SpeedStatsSnapshot, PhaseSummarySnapshot
+		- `strength_metrics.py`: StrengthMetrics, StrengthPeak
+		- `finding.py`: Finding, FindingEvidence (with `from_metrics()` factory and `with_confidence_assessment()` method)
+		- See `docs/domain-model.md` for the full relationship map and file layout.
 - Domain-first modeling rules:
 	- Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
 	- Each primary domain object lives under `vibesensor/domain/`; closely related value objects may share a file with their parent aggregate. Consumers import from `vibesensor.domain`, not from individual module files.

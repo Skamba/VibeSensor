@@ -39,12 +39,12 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     TestPlan as DomainTestPlan,
 )
+from vibesensor.domain.snapshots import PhaseSummarySnapshot, SpeedStatsSnapshot
 from vibesensor.shared.boundaries.diagnostic_case import (
     run_suitability_from_payload,
     speed_profile_from_stats,
 )
 from vibesensor.shared.boundaries.finding import (
-    finding_evidence_from_metrics,
     finding_from_payload,
 )
 from vibesensor.shared.boundaries.vibration_origin import (
@@ -138,7 +138,7 @@ class TestFindingEvidence:
             "per_phase_confidence": {"cruise": 0.9, "accel": 0.6},
             "vibration_strength_db": 25.3,
         }
-        e = finding_evidence_from_metrics(d)
+        e = FindingEvidence.from_metrics(d)
         assert e.match_rate == 0.85
         assert e.snr_db == 12.5
         assert e.presence_ratio == 0.7
@@ -149,13 +149,18 @@ class TestFindingEvidence:
         assert ("cruise", 0.9) in e.phase_confidences
 
     def test_from_metrics_dict_empty(self) -> None:
-        e = finding_evidence_from_metrics({})
+        e = FindingEvidence.from_metrics({})
         assert e.match_rate == 0.0
         assert e.snr_db is None
         assert e.phase_confidences == ()
 
-    def test_from_metrics_dict_snr_ratio_fallback(self) -> None:
-        e = finding_evidence_from_metrics({"snr_ratio": 8.0})
+    def test_from_metrics_domain_uses_canonical_keys_only(self) -> None:
+        """Domain factory does not handle legacy snr_ratio alias."""
+        e = FindingEvidence.from_metrics({"snr_ratio": 8.0})
+        assert e.snr_db is None  # legacy alias not recognized by domain
+
+    def test_from_metrics_snr_db_canonical(self) -> None:
+        e = FindingEvidence.from_metrics({"snr_db": 8.0})
         assert e.snr_db == 8.0
 
 
@@ -742,21 +747,21 @@ class TestSpeedProfile:
         ).supports_steady_state_diagnosis
 
     def test_from_stats_full(self) -> None:
-        speed_stats = {
-            "min_kmh": 30.0,
-            "max_kmh": 90.0,
-            "mean_kmh": 60.0,
-            "stddev_kmh": 15.0,
-            "steady_speed": True,
-            "sample_count": 500,
-        }
-        phase_summary = {
-            "has_cruise": True,
-            "has_acceleration": True,
-            "cruise_pct": 65.0,
-            "idle_pct": 10.0,
-            "speed_unknown_pct": 5.0,
-        }
+        speed_stats = SpeedStatsSnapshot(
+            min_kmh=30.0,
+            max_kmh=90.0,
+            mean_kmh=60.0,
+            stddev_kmh=15.0,
+            steady_speed=True,
+            sample_count=500,
+        )
+        phase_summary = PhaseSummarySnapshot(
+            has_cruise=True,
+            has_acceleration=True,
+            cruise_pct=65.0,
+            idle_pct=10.0,
+            speed_unknown_pct=5.0,
+        )
         sp = speed_profile_from_stats(speed_stats, phase_summary)
         assert sp.min_kmh == 30.0
         assert sp.max_kmh == 90.0
@@ -774,7 +779,7 @@ class TestSpeedProfile:
         assert sp.sample_count == 500
 
     def test_from_stats_empty(self) -> None:
-        sp = speed_profile_from_stats({})
+        sp = speed_profile_from_stats(SpeedStatsSnapshot())
         assert sp.min_kmh == 0.0
         assert sp.max_kmh == 0.0
         assert not sp.steady_speed
@@ -783,21 +788,23 @@ class TestSpeedProfile:
         assert sp.driving_fraction == 1.0
 
     def test_from_stats_no_phase(self) -> None:
-        sp = speed_profile_from_stats({"min_kmh": 10, "max_kmh": 50})
+        sp = speed_profile_from_stats(SpeedStatsSnapshot(min_kmh=10, max_kmh=50))
         assert sp.has_cruise is False
         assert sp.cruise_fraction == 0.0
 
     def test_from_stats_reads_phase_fallbacks_from_nested_phase_maps(self) -> None:
         sp = speed_profile_from_stats(
-            {
-                "min_kmh": 20,
-                "max_kmh": 60,
-                "sample_count": 50,
-            },
-            {
-                "phase_counts": {"acceleration": 5, "cruise": 20},
-                "phase_pcts": {"cruise": 40.0, "idle": 15.0, "speed_unknown": 20.0},
-            },
+            SpeedStatsSnapshot(
+                min_kmh=20,
+                max_kmh=60,
+                sample_count=50,
+            ),
+            PhaseSummarySnapshot.from_dict(
+                {
+                    "phase_counts": {"acceleration": 5, "cruise": 20},
+                    "phase_pcts": {"cruise": 40.0, "idle": 15.0, "speed_unknown": 20.0},
+                }
+            ),
         )
         assert sp.has_cruise is True
         assert sp.has_acceleration is True

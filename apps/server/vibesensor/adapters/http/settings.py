@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException
@@ -156,7 +157,7 @@ def create_settings_routes(
 
     @router.get("/api/settings/analysis", response_model=AnalysisSettingsResponse)
     async def get_analysis_settings() -> AnalysisSettingsResponse:
-        return AnalysisSettingsResponse(**settings_store.analysis_settings_snapshot())
+        return AnalysisSettingsResponse(**asdict(settings_store.analysis_settings_snapshot()))
 
     @router.post("/api/settings/analysis", response_model=AnalysisSettingsResponse)
     async def set_analysis_settings(req: AnalysisSettingsRequest) -> AnalysisSettingsResponse:
@@ -164,6 +165,6 @@ def create_settings_routes(
         if changes:
             with domain_errors_to_http(catch_value_error=400):
                 await asyncio.to_thread(settings_store.update_active_car_aspects, changes)
-        return AnalysisSettingsResponse(**settings_store.analysis_settings_snapshot())
+        return AnalysisSettingsResponse(**asdict(settings_store.analysis_settings_snapshot()))
 
     return router

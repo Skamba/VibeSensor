@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 import pytest
 from test_support.findings import make_finding_payload
 
-from vibesensor.domain import Finding, RunSuitability
+from vibesensor.domain import AnalysisSettingsSnapshot, Finding, RunSuitability
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.diagnostics.order_analysis import (
@@ -88,14 +88,13 @@ def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
     registry.active_client_ids.return_value = []
 
     settings_mock = MagicMock()
-    settings_mock.analysis_settings_snapshot.return_value = {
-        "tire_width_mm": 205,
-        "tire_aspect_pct": 55,
-        "rim_in": 16,
-        "final_drive_ratio": 3.73,
-        "current_gear_ratio": 1.0,
-        "tire_deflection_factor": None,
-    }
+    settings_mock.analysis_settings_snapshot.return_value = AnalysisSettingsSnapshot(
+        tire_width_mm=205,
+        tire_aspect_pct=55,
+        rim_in=16,
+        final_drive_ratio=3.73,
+        current_gear_ratio=1.0,
+    )
 
     logger = RunRecorder(
         RunRecorderConfig(
@@ -613,14 +612,12 @@ class TestResolveSpeedContext:
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=15.0)
         # Remove gear ratio from settings via settings_store mock
         settings_mock = logger._settings_store
-        settings_mock.analysis_settings_snapshot.return_value = {
-            "tire_width_mm": 205,
-            "tire_aspect_pct": 55,
-            "rim_in": 16,
-            "final_drive_ratio": 3.73,
-            "current_gear_ratio": None,  # missing
-            "tire_deflection_factor": None,
-        }
+        settings_mock.analysis_settings_snapshot.return_value = AnalysisSettingsSnapshot(
+            tire_width_mm=205,
+            tire_aspect_pct=55,
+            rim_in=16,
+            final_drive_ratio=3.73,
+        )
         _, _, _, rpm = resolve_speed_context(
             logger.gps_monitor,
             logger._analysis_settings_snapshot(),

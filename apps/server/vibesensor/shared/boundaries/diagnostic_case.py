@@ -7,16 +7,15 @@ Also includes boundary functions for run suitability and speed profile
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import replace
 
 from vibesensor.domain.car import Car
-from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture, RunSetup
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.sensor import Sensor
+from vibesensor.domain.snapshots import PhaseSummarySnapshot, SpeedStatsSnapshot
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
@@ -28,21 +27,8 @@ from vibesensor.shared.boundaries.finding import (
     step_payloads_from_plan,
 )
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
-
-# ---------------------------------------------------------------------------
-# Shared helpers
-# ---------------------------------------------------------------------------
-
-
-def _as_float(value: object) -> float | None:
-    if value is None:
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
 
 # ---------------------------------------------------------------------------
 # Run suitability (formerly run_suitability.py)
@@ -124,62 +110,29 @@ def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun 
 
 
 def speed_profile_from_stats(
-    speed_stats: Mapping[str, object],
-    phase_summary: Mapping[str, object] | None = None,
+    speed_stats: SpeedStatsSnapshot,
+    phase_summary: PhaseSummarySnapshot | None = None,
 ) -> SpeedProfile:
-    """Construct a ``SpeedProfile`` from speed-stats and phase-summary dicts."""
-    ps: Mapping[str, object] = phase_summary or {}
+    """Construct a ``SpeedProfile`` from typed speed-stats and phase-summary snapshots."""
+    ps = phase_summary or PhaseSummarySnapshot()
 
-    def _f(d: Mapping[str, object], key: str, default: float = 0.0) -> float:
-        raw = d.get(key)
-        if raw is not None:
-            try:
-                return float(raw)  # type: ignore[arg-type]
-            except (TypeError, ValueError):
-                pass
-        return default
-
-    def _fraction(d: Mapping[str, object], key: str, *, phase_key: str | None = None) -> float:
-        raw = d.get(key)
-        if raw is None and phase_key is not None:
-            phase_pcts = d.get("phase_pcts")
-            if isinstance(phase_pcts, Mapping):
-                raw = phase_pcts.get(phase_key)
-        if raw is None:
-            return 0.0
-        try:
-            pct = float(raw) / 100.0  # type: ignore[arg-type]
-        except (TypeError, ValueError):
-            return 0.0
-        return min(1.0, max(0.0, pct))
-
-    def _flag(d: Mapping[str, object], key: str, *, phase_key: str | None = None) -> bool:
-        raw = d.get(key)
-        if raw is not None:
-            return bool(raw)
-        if phase_key is None:
-            return False
-        phase_counts = d.get("phase_counts")
-        if not isinstance(phase_counts, Mapping):
-            return False
-        return _f(phase_counts, phase_key, 0.0) > 0.0
+    def _or_zero(v: float | None) -> float:
+        return v if v is not None else 0.0
 
     return SpeedProfile(
-        min_kmh=_f(speed_stats, "min_kmh"),
-        max_kmh=_f(speed_stats, "max_kmh"),
-        mean_kmh=_f(speed_stats, "mean_kmh"),
-        stddev_kmh=_f(speed_stats, "stddev_kmh"),
-        steady_speed=bool(speed_stats.get("steady_speed", False)),
-        has_cruise=_flag(ps, "has_cruise", phase_key="cruise"),
-        has_acceleration=_flag(ps, "has_acceleration", phase_key="acceleration"),
-        cruise_fraction=_fraction(ps, "cruise_pct", phase_key="cruise"),
-        idle_fraction=_fraction(ps, "idle_pct", phase_key="idle"),
-        speed_unknown_fraction=_fraction(
-            ps,
-            "speed_unknown_pct",
-            phase_key="speed_unknown",
+        min_kmh=_or_zero(speed_stats.min_kmh),
+        max_kmh=_or_zero(speed_stats.max_kmh),
+        mean_kmh=_or_zero(speed_stats.mean_kmh),
+        stddev_kmh=_or_zero(speed_stats.stddev_kmh),
+        steady_speed=speed_stats.steady_speed,
+        has_cruise=ps.has_cruise,
+        has_acceleration=ps.has_acceleration,
+        cruise_fraction=min(1.0, max(0.0, ps.cruise_pct / 100.0)) if ps.cruise_pct else 0.0,
+        idle_fraction=min(1.0, max(0.0, ps.idle_pct / 100.0)) if ps.idle_pct else 0.0,
+        speed_unknown_fraction=(
+            min(1.0, max(0.0, ps.speed_unknown_pct / 100.0)) if ps.speed_unknown_pct else 0.0
         ),
-        sample_count=int(_f(speed_stats, "sample_count", 0)),
+        sample_count=speed_stats.sample_count,
     )
 
 
@@ -279,16 +232,16 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
                 merged.append(tc)
         findings = tuple(merged)
     actions = _actions_from_steps(summary.get("test_plan"))
-    speed_stats = summary.get("speed_stats")
+    raw_speed_stats = summary.get("speed_stats")
     phase_info = summary.get("phase_info")
     if not isinstance(phase_info, Mapping):
         phase_info = summary.get("phase_summary")
     speed_profile = (
         speed_profile_from_stats(
-            speed_stats,
-            phase_info if isinstance(phase_info, Mapping) else None,
+            SpeedStatsSnapshot.from_dict(raw_speed_stats),
+            PhaseSummarySnapshot.from_dict(phase_info) if isinstance(phase_info, Mapping) else None,
         )
-        if isinstance(speed_stats, Mapping)
+        if isinstance(raw_speed_stats, Mapping)
         else None
     )
     raw_suitability_payload = summary.get("run_suitability")
@@ -316,15 +269,12 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     def _ensure_ca(f: Finding) -> Finding:
         if f.confidence_assessment is not None:
             return f
-        ca = ConfidenceAssessment.assess(
-            f.effective_confidence,
+        return f.with_confidence_assessment(
             strength_band_key=_band_key,
             steady_speed=_steady,
             has_reference_gaps=_has_ref_gaps,
-            weak_spatial=f.weak_spatial_separation,
             sensor_count=max(_sensor_count, 1),
         )
-        return replace(f, confidence_assessment=ca)
 
     findings = tuple(_ensure_ca(f) for f in findings)
     top_causes = tuple(_ensure_ca(f) for f in top_causes)
