@@ -6,7 +6,6 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from math import log1p
 
-from vibesensor.domain import LocationHotspot
 from vibesensor.domain.finding import VibrationSource, speed_band_sort_key, speed_bin_label
 from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.shared.constants import (
@@ -31,6 +30,7 @@ from vibesensor.use_cases.diagnostics._types import (
     FindingPayload,
     I18nRef,
     JsonValue,
+    LocationHotspotPayload,
     MatchedPoint,
     MetadataDict,
     PhaseEvidence,
@@ -56,6 +56,39 @@ from vibesensor.vibration_strength import (
 # ═══════════════════════════════════════════════════════════════════════════
 # Hz helpers, hypotheses, and action plans
 # ═══════════════════════════════════════════════════════════════════════════
+
+
+def _location_result_to_payload(
+    result: object,
+) -> LocationHotspotPayload:
+    """Project LocationAnalysisResult to serialization payload at FindingPayload boundary."""
+    from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
+
+    r: LocationAnalysisResult = result  # type: ignore[assignment]
+    return {
+        "speed_range": r.speed_range,
+        "location": r.display_location,
+        "mean_amp": r.mean_amp,
+        "dominance_ratio": r.dominance_ratio,
+        "location_count": (
+            len(r.hotspot.alternative_locations) if r.hotspot.alternative_locations else 1
+        ),
+        "top_location": r.top_location,
+        "second_location": r.second_location,
+        "top_location_samples": r.top_location_samples,
+        "second_location_samples": r.second_location_samples,
+        "corroborated_by_n_sensors": r.corroborated_by_n_sensors,
+        "total_samples": r.total_samples,
+        "ambiguous_location": r.ambiguous_location,
+        "ambiguous_locations": (
+            list(r.hotspot.alternative_locations) if r.ambiguous_location else []
+        ),
+        "partial_coverage": r.partial_coverage,
+        "localization_confidence": r.localization_confidence,
+        "weak_spatial_separation": r.weak_spatial_separation,
+        "no_wheel_sensors": r.no_wheel_sensors,
+        "per_bin_results": [],
+    }
 
 
 def _wheel_hz(sample: Sample, tire_circumference_m: float | None) -> float | None:
@@ -923,19 +956,8 @@ def assemble_order_finding(
         connected_locations=context.connected_locations,
         suspected_source=hypothesis.suspected_source,
     )
-    hotspot_dict = location_hotspot if isinstance(location_hotspot, dict) else None
-    domain_hotspot = (
-        LocationHotspot.from_analysis_inputs(
-            strongest_location=str(hotspot_dict.get("top_location") or "").strip(),
-            dominance_ratio=_as_float(hotspot_dict.get("dominance_ratio")),
-            localization_confidence=_as_float(hotspot_dict.get("localization_confidence")) or 0.05,
-            weak_spatial_separation=bool(hotspot_dict.get("weak_spatial_separation")),
-            ambiguous=bool(hotspot_dict.get("ambiguous_location")),
-            alternative_locations=list(hotspot_dict.get("ambiguous_locations") or []),
-        )
-        if hotspot_dict is not None
-        else None
-    )
+    loc_result = location_hotspot  # LocationAnalysisResult | None
+    domain_hotspot = loc_result.hotspot if loc_result is not None else None
     weak_spatial_separation = (
         domain_hotspot.weak_spatial_separation if domain_hotspot is not None else True
     )
@@ -945,9 +967,7 @@ def assemble_order_finding(
     )
 
     unique_match_locations = match.unique_match_locations
-    no_wheel_override = (
-        bool(hotspot_dict.get("no_wheel_sensors")) if hotspot_dict is not None else False
-    )
+    no_wheel_override = loc_result.no_wheel_sensors if loc_result is not None else False
     localization_confidence, weak_spatial_separation = apply_localization_override(
         per_location_dominant=context.per_location_dominant,
         unique_match_locations=unique_match_locations,
@@ -1016,8 +1036,8 @@ def assemble_order_finding(
         evidence = dict(evidence)
         evidence["_suffix"] = f" {location_line}"
 
-    strongest_location = str(hotspot_dict.get("location")) if hotspot_dict is not None else ""
-    hotspot_speed_band = str(hotspot_dict.get("speed_range")) if hotspot_dict is not None else ""
+    strongest_location = loc_result.display_location if loc_result is not None else ""
+    hotspot_speed_band = loc_result.speed_range if loc_result is not None else ""
     (
         peak_speed_kmh,
         speed_window_kmh,
@@ -1052,7 +1072,9 @@ def assemble_order_finding(
         "confidence": confidence,
         "quick_checks": quick_checks,
         "matched_points": match.matched_points,
-        "location_hotspot": hotspot_dict,
+        "location_hotspot": (
+            _location_result_to_payload(loc_result) if loc_result is not None else None
+        ),
         "strongest_location": strongest_location or None,
         "strongest_speed_band": strongest_speed_band or None,
         "dominant_phase": dominant_phase,

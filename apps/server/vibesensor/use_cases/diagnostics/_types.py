@@ -9,13 +9,10 @@ the broader ``Mapping[str, object]`` type for flexibility.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, NotRequired, Required, TypeAlias, TypedDict
 
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
-from vibesensor.shared.types.json_types import (
-    is_json_object as is_json_object,  # re-export canonical source
-)
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 
 if TYPE_CHECKING:
@@ -302,4 +299,3 @@ class AnalysisSummary(TypedDict):
 
 PhaseLabel: TypeAlias = DrivingPhase | str
 PhaseLabels: TypeAlias = Sequence[PhaseLabel]
-Translator: TypeAlias = Callable[[str], str]

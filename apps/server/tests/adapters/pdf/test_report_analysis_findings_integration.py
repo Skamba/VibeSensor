@@ -9,12 +9,14 @@ from test_support.report_helpers import (
     wheel_metadata,
 )
 
+from vibesensor.domain import LocationHotspot
 from vibesensor.domain.finding import Finding
 from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics import findings as findings_builder_module
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
 from vibesensor.use_cases.diagnostics.findings import _speed_breakdown
+from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.plots import top_peaks_table_rows as _top_peaks_table_rows
 
 
@@ -304,13 +306,26 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
         chosen_band = seen_relevant_speed_bins[0] if seen_relevant_speed_bins else "90-100 km/h"
         return (
             "focused location",
-            {
-                "location": "Front Right",
-                "speed_range": chosen_band,
-                "dominance_ratio": 1.4,
-                "weak_spatial_separation": False,
-                "localization_confidence": 0.8,
-            },
+            LocationAnalysisResult(
+                hotspot=LocationHotspot.from_analysis_inputs(
+                    strongest_location="Front Right",
+                    dominance_ratio=1.4,
+                    localization_confidence=0.8,
+                    weak_spatial_separation=False,
+                ),
+                mean_amp=0.03,
+                total_samples=10,
+                ambiguous_location=False,
+                no_wheel_sensors=False,
+                speed_range=chosen_band,
+                dominance_ratio=1.4,
+                localization_confidence=0.8,
+                weak_spatial_separation=False,
+                top_location="Front Right",
+                second_location=None,
+                partial_coverage=False,
+                corroborated_by_n_sensors=1,
+            ),
         )
 
     from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module

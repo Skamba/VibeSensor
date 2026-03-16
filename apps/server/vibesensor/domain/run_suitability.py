@@ -126,6 +126,14 @@ class RunSuitability:
     def warning_checks(self) -> tuple[SuitabilityCheck, ...]:
         return tuple(c for c in self.checks if c.is_warning)
 
+    @property
+    def has_reference_gaps(self) -> bool:
+        """Whether reference data is incomplete for this run."""
+        return any(
+            c.check_key == "SUITABILITY_CHECK_REFERENCE_COMPLETENESS" and not c.passed
+            for c in self.checks
+        )
+
     @classmethod
     def evaluate(
         cls,

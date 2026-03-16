@@ -633,6 +633,37 @@ Future-proofing means:
 - clear domain and boundary separation
 - fewer competing representations of the same concept
 
+## Known bounded deviations
+
+Three structural deviations from the ideal model are intentional and bounded:
+
+1. **RunCapture.measurements: structurally present, never populated.**
+   The DSP pipeline operates on numpy arrays for performance.
+   `Measurement` exists in the domain graph but `RunCapture` instances
+   never carry populated measurement tuples in production.
+
+2. **Reasoning chain direction inverted; observations absent in
+   reconstruction.** Findings are built first by the analysis pipeline;
+   observations, signatures, and hypotheses are retroactively derived
+   from finding evidence. Boundary reconstruction via
+   `DiagnosticReasoning.from_findings()` does not populate observations
+   (there is no persisted evidence to derive them from).
+
+3. **`FindingPayload` as analysis-internal accumulator.** The analysis
+   pipeline accumulates finding data into `FindingPayload` TypedDicts
+   (`use_cases/diagnostics/_types.py`) before projecting to domain
+   `Finding` objects at the boundary. This is an implementation
+   convenience, not a model-level concept.
+
+These deviations are documented here so they are not mistaken for bugs
+or treated as refactoring targets without understanding the trade-offs.
+
+## Implementation decisions (not model requirements)
+
+- `Report` is `frozen=True` (immutable dataclass). This reflects the
+  current implementation's read-only rendering pipeline, not a
+  model-level immutability requirement.
+
 ## Brief implementation-alignment note
 
 Implementation may still contain naming overlap, reconstruction-heavy flows, or
