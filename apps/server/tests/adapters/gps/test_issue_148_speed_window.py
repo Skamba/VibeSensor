@@ -22,7 +22,7 @@ def test_location_speed_window_handles_boundary_straddle() -> None:
     _, hotspot = _location_speedbin_summary(matches, lang="en")
 
     assert hotspot is not None
-    speed_range = str(hotspot.get("speed_range") or "")
+    speed_range = hotspot.speed_range
     low_text, high_text = speed_range.replace(" km/h", "").split("-", maxsplit=1)
     low, high = float(low_text), float(high_text)
     assert 75.0 <= low <= 77.0
