@@ -51,3 +51,59 @@ class TestPrimarySignature:
         dr = DiagnosticReasoning(signatures=sigs)
         assert dr.primary_signature is not None
         assert dr.primary_signature.key == "s1"
+
+
+class TestFromFindings:
+    def test_happy_path(self) -> None:
+        from vibesensor.domain.finding import Finding
+
+        sig_a = Signature(key="s1", source=VibrationSource.WHEEL_TIRE, label="speed-dep")
+        sig_b = Signature(key="s2", source=VibrationSource.ENGINE, label="rpm-dep")
+        f1 = Finding(
+            finding_id="F1",
+            suspected_source=VibrationSource.WHEEL_TIRE,
+            signatures=(sig_a,),
+        )
+        f2 = Finding(
+            finding_id="F2",
+            suspected_source=VibrationSource.ENGINE,
+            signatures=(sig_a, sig_b),
+        )
+        dr = DiagnosticReasoning.from_findings([f1, f2])
+        assert dr.observations == ()
+        assert len(dr.hypotheses) == 2
+        # Signatures are deduplicated
+        assert len(dr.signatures) == 2
+        assert dr.signatures[0].key == "s1"
+        assert dr.signatures[1].key == "s2"
+
+    def test_reference_exclusion(self) -> None:
+        from vibesensor.domain.finding import Finding
+
+        diag = Finding(
+            finding_id="F1",
+            suspected_source=VibrationSource.WHEEL_TIRE,
+        )
+        ref = Finding(
+            finding_id="REF_ENGINE",
+            suspected_source=VibrationSource.ENGINE,
+        )
+        dr = DiagnosticReasoning.from_findings([diag, ref])
+        assert len(dr.hypotheses) == 1
+        assert dr.hypotheses[0].source == VibrationSource.WHEEL_TIRE
+
+    def test_empty_findings(self) -> None:
+        dr = DiagnosticReasoning.from_findings([])
+        assert dr.observations == ()
+        assert dr.signatures == ()
+        assert dr.hypotheses == ()
+
+    def test_all_reference_findings(self) -> None:
+        from vibesensor.domain.finding import Finding
+
+        r1 = Finding(finding_id="REF_A", suspected_source=VibrationSource.WHEEL_TIRE)
+        r2 = Finding(finding_id="REF_B", suspected_source=VibrationSource.ENGINE)
+        dr = DiagnosticReasoning.from_findings([r1, r2])
+        assert dr.signatures == ()
+        assert dr.hypotheses == ()
+        assert dr.observations == ()
