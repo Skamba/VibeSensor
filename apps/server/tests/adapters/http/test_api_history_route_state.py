@@ -19,6 +19,7 @@ from _history_endpoint_helpers import (
 from fastapi import HTTPException
 
 from vibesensor.adapters.http import create_router
+from vibesensor.domain import CarSnapshot
 from vibesensor.use_cases.diagnostics import summarize_run_data
 
 
@@ -180,18 +181,18 @@ async def test_history_insights_localizes_and_adds_run_context_warnings() -> Non
         analysis=analysis,
         samples=samples,
     )
-    state.settings_store.active_car_snapshot = lambda: {
-        "id": "car-b",
-        "name": "Daily Car",
-        "type": "wagon",
-        "aspects": {
+    state.settings_store.active_car_snapshot = lambda: CarSnapshot(
+        car_id="car-b",
+        name="Daily Car",
+        car_type="wagon",
+        aspects={
             "tire_width_mm": 225.0,
             "tire_aspect_pct": 45.0,
             "rim_in": 18.0,
             "final_drive_ratio": 2.91,
             "current_gear_ratio": 0.72,
         },
-    }
+    )
     endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
 
     payload = response_payload(await endpoint("run-1", "nl"))

@@ -9,6 +9,7 @@ import pytest
 from test_support.core import wait_until
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
 from vibesensor.use_cases.run.post_analysis import PostAnalysisHealthSnapshot
 from vibesensor.use_cases.run.sample_builder import safe_metric
 
@@ -576,25 +577,25 @@ def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
         "SettingsStoreStub",
         (),
         {
-            "active_car_snapshot": lambda self: {
-                "id": "car-1",
-                "name": "Primary",
-                "type": "sedan",
-                "aspects": {
+            "active_car_snapshot": lambda self: CarSnapshot(
+                car_id="car-1",
+                name="Primary",
+                car_type="sedan",
+                aspects={
                     "tire_width_mm": 255.0,
                     "tire_aspect_pct": 40.0,
                     "rim_in": 19.0,
                     "final_drive_ratio": 3.15,
                     "current_gear_ratio": 0.81,
                 },
-            },
-            "analysis_settings_snapshot": lambda self: {
-                "tire_width_mm": 255.0,
-                "tire_aspect_pct": 40.0,
-                "rim_in": 19.0,
-                "final_drive_ratio": 3.15,
-                "current_gear_ratio": 0.81,
-            },
+            ),
+            "analysis_settings_snapshot": lambda self: AnalysisSettingsSnapshot(
+                tire_width_mm=255.0,
+                tire_aspect_pct=40.0,
+                rim_in=19.0,
+                final_drive_ratio=3.15,
+                current_gear_ratio=0.81,
+            ),
         },
     )()
     logger = make_logger(settings_store=settings_store)

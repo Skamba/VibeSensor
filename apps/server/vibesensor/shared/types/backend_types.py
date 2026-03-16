@@ -18,7 +18,7 @@ from vibesensor.shared.constants import NUMERIC_TYPES
 from vibesensor.shared.types.json_types import JsonObject
 
 if TYPE_CHECKING:
-    from vibesensor.domain import Car, Sensor, SpeedSource
+    from vibesensor.domain import Car, CarSnapshot, Sensor, SpeedSource
 
 _isfinite = math.isfinite
 _LOGGER = logging.getLogger(__name__)
@@ -246,6 +246,18 @@ class CarConfig:
             car_type=self.car_type,
             aspects=dict(self.aspects),
             variant=self.variant,
+        )
+
+    def to_car_snapshot(self) -> CarSnapshot:
+        """Return a lightweight ``CarSnapshot`` for run-context persistence."""
+        from vibesensor.domain import CarSnapshot
+
+        return CarSnapshot(
+            car_id=self.id,
+            name=self.name,
+            car_type=self.car_type,
+            variant=self.variant,
+            aspects=dict(self.aspects),
         )
 
 

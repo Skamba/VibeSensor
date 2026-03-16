@@ -1475,3 +1475,142 @@ def test_lifecycle_mutability_rules() -> None:
         assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
         frozen = cls.__dataclass_params__.frozen  # type: ignore[attr-defined]
         assert frozen, f"{cls.__name__} must be frozen (immutable once produced)"
+
+
+# ── Domain model type completeness guardrails ───────────────────────────
+
+# Single list of domain-model types that must be importable from vibesensor.domain.
+_EXPECTED_DOMAIN_EXPORTS = [
+    # Aggregates and entities
+    "Car",
+    "DiagnosticCase",
+    "Run",
+    "TestRun",
+    # Value objects — car and context
+    "CarSnapshot",
+    "OrderReferenceSpec",
+    "TireSpec",
+    # Value objects — snapshots
+    "AnalysisSettingsSnapshot",
+    "PhaseSummarySnapshot",
+    "RunContextSnapshot",
+    "SpeedStatsSnapshot",
+    # Value objects — run and capture
+    "ConfigurationSnapshot",
+    "Measurement",
+    "RunCapture",
+    "RunSetup",
+    "VibrationReading",
+    # Value objects — findings and diagnostics
+    "ConfidenceAssessment",
+    "Finding",
+    "FindingEvidence",
+    "FindingKind",
+    "LocationHotspot",
+    "Signature",
+    "StrengthMetrics",
+    "StrengthPeak",
+    "VibrationOrigin",
+    "VibrationSource",
+    # Value objects — run context
+    "DrivingPhase",
+    "DrivingSegment",
+    "RunStatus",
+    "RunSuitability",
+    "Sensor",
+    "SensorPlacement",
+    "SpeedProfile",
+    "SpeedSource",
+    "SpeedSourceKind",
+    "SuitabilityCheck",
+    "Symptom",
+    # Test plan
+    "RecommendedAction",
+    "TestPlan",
+    # Functions
+    "RUN_TRANSITIONS",
+    "plan_test_actions",
+    "speed_band_sort_key",
+    "speed_bin_label",
+    "transition_run",
+]
+
+
+@pytest.mark.parametrize("name", _EXPECTED_DOMAIN_EXPORTS)
+def test_all_domain_model_types_importable(name: str) -> None:
+    """Every domain-model type must be importable from ``vibesensor.domain``."""
+    import importlib
+
+    mod = importlib.import_module("vibesensor.domain")
+    assert hasattr(mod, name), f"{name} must be exported from vibesensor.domain"
+
+
+def test_domain_exports_completeness() -> None:
+    """``__all__`` in vibesensor.domain must cover every expected domain export."""
+    import importlib
+
+    mod = importlib.import_module("vibesensor.domain")
+    all_names = set(getattr(mod, "__all__", []))
+    missing = [n for n in _EXPECTED_DOMAIN_EXPORTS if n not in all_names]
+    assert not missing, f"Missing from domain __all__: {missing}"
+
+
+def test_domain_import_direction() -> None:
+    """Domain modules must NOT import from shared/boundaries/, adapters/, or infra/."""
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    domain_dir = SERVER_ROOT / "vibesensor" / "domain"
+    violations: list[str] = []
+    forbidden_prefixes = (
+        "vibesensor.shared.boundaries",
+        "vibesensor.adapters",
+        "vibesensor.infra",
+    )
+    for py_file in domain_dir.glob("*.py"):
+        source = py_file.read_text()
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                for prefix in forbidden_prefixes:
+                    if node.module.startswith(prefix):
+                        violations.append(f"{py_file.name} imports from {node.module}")
+    assert not violations, (
+        f"Domain modules must not import from boundary/adapter/infra layers: {violations}"
+    )
+
+
+def test_domain_code_does_not_access_raw_tire_fields() -> None:
+    """Domain-layer code must not read raw tire fields directly from
+    AnalysisSettingsSnapshot — only through order_reference_spec.
+
+    Exceptions: the snapshot's own from_dict() factory, property definitions,
+    and __init__ (dataclass construction).
+    """
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    domain_dir = SERVER_ROOT / "vibesensor" / "domain"
+    raw_tire_fields = {"tire_width_mm", "tire_aspect_pct", "rim_in"}
+    violations: list[str] = []
+    for py_file in domain_dir.glob("*.py"):
+        if py_file.name in ("snapshots.py", "car.py"):
+            continue  # snapshots.py defines these fields; car.py uses TireSpec's own fields
+        source = py_file.read_text()
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and isinstance(node.attr, str):
+                if node.attr in raw_tire_fields:
+                    violations.append(f"{py_file.name}:{node.lineno} accesses .{node.attr}")
+    assert not violations, (
+        f"Domain code must not access raw tire fields on AnalysisSettingsSnapshot "
+        f"(use order_reference_spec instead): {violations}"
+    )

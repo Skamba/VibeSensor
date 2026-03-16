@@ -14,6 +14,8 @@ from typing import Any
 
 import pytest
 
+from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------
@@ -150,16 +152,16 @@ class _FakeProcessor:
 
 
 class _FakeAnalysisSettings:
-    def analysis_settings_snapshot(self) -> dict[str, float]:
-        return {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-            "final_drive_ratio": 3.08,
-            "current_gear_ratio": 0.64,
-        }
+    def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
+        return AnalysisSettingsSnapshot(
+            tire_width_mm=285.0,
+            tire_aspect_pct=30.0,
+            rim_in=21.0,
+            final_drive_ratio=3.08,
+            current_gear_ratio=0.64,
+        )
 
-    def active_car_snapshot(self) -> dict[str, Any] | None:
+    def active_car_snapshot(self) -> CarSnapshot | None:
         return None
 
 
@@ -173,8 +175,8 @@ class _MutableFakeAnalysisSettings(_FakeAnalysisSettings):
             "current_gear_ratio": 0.64,
         }
 
-    def analysis_settings_snapshot(self) -> dict[str, float]:
-        return dict(self.values)
+    def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
+        return AnalysisSettingsSnapshot.from_dict(self.values)
 
 
 class _FakeHistoryDB:
