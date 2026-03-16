@@ -197,7 +197,6 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
 
     logger = RunRecorder(
         RunRecorderConfig(
-            enabled=False,
             metrics_log_hz=10,
             sensor_model="ADXL345",
             default_sample_rate_hz=800,

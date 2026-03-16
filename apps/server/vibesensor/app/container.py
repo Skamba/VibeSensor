@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -16,7 +15,7 @@ from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.state import RuntimeState
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
-from vibesensor.sensor_units import get_accel_scale_g_per_lsb
+from vibesensor.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
 from vibesensor.shared.constants import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -37,14 +36,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def resolve_accel_scale_g_per_lsb(config: AppConfig) -> float:
-    return cast(
-        "float",
-        (
-            config.processing.accel_scale_g_per_lsb
-            if config.processing.accel_scale_g_per_lsb is not None
-            else get_accel_scale_g_per_lsb(config.logging.sensor_model)
-        ),
-    )
+    return config.processing.accel_scale_g_per_lsb or ADXL345_SCALE_G_PER_LSB
 
 
 def create_history_db(config: AppConfig) -> HistoryDB:
@@ -127,10 +119,9 @@ def build_runtime(config: AppConfig) -> RuntimeState:
     # run recorder
     run_recorder = RunRecorder(
         RunRecorderConfig(
-            enabled=config.logging.log_metrics,
             metrics_log_hz=config.logging.metrics_log_hz,
             no_data_timeout_s=config.logging.no_data_timeout_s,
-            sensor_model=config.logging.sensor_model,
+            sensor_model=SENSOR_MODEL,
             default_sample_rate_hz=config.processing.sample_rate_hz,
             fft_window_size_samples=FFT_N,
             accel_scale_g_per_lsb=accel_scale_g_per_lsb,

@@ -152,8 +152,7 @@
   "settings.speed.fallback_no": "Nee",
   "settings.speed.fallback_title": "Terugvalinstellingen",
   "settings.speed.stale_timeout_label": "Time-out voor veroudering (s)",
-  "settings.speed.fallback_mode_label": "Terugvalmodus",
-  "settings.speed.fallback_mode_manual": "Handmatige overschrijving",
+
   "settings.group.order_band_widths": "Ordebandbreedtes",
   "settings.group.uncertainty_model": "Onzekerheidsmodel",
   "settings.uncertainty_defaults": "Standaardwaarden zijn gebaseerd op bandenslijtage van 10/32 inch tot 2/32 inch plus veiligheidsmarge.",

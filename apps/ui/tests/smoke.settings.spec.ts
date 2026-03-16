@@ -33,7 +33,7 @@ test("spectrum title updates when switching language", async ({ page }) => {
 test("manual speed save uses settings endpoint only (no speed-override call)", async ({ page }) => {
   let speedSourcePostCalls = 0;
   let speedOverrideCalls = 0;
-  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/speed-source": { speedSource: "gps", manualSpeedKph: null, staleTimeoutS: 5, fallbackMode: "hold" }, "POST /api/settings/speed-source": async (route) => { speedSourcePostCalls += 1; return route.request().postDataJSON(); } }) });
+  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/speed-source": { speedSource: "gps", manualSpeedKph: null, staleTimeoutS: 5 }, "POST /api/settings/speed-source": async (route) => { speedSourcePostCalls += 1; return route.request().postDataJSON(); } }) });
   await page.route("**/api/speed-override", async (route) => {
     speedOverrideCalls += 1;
     await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ detail: "missing" }) });

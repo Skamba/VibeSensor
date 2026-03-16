@@ -24,11 +24,6 @@ def cfg_path(tmp_path: Path) -> Path:
     return tmp_path / "config.yaml"
 
 
-def test_metrics_can_be_disabled(cfg_path: Path) -> None:
-    cfg = _write_and_load(cfg_path, {"logging": {"log_metrics": False}})
-    assert cfg.logging.log_metrics is False
-
-
 def test_logging_flags_allow_db_only_mode(cfg_path: Path) -> None:
     cfg = _write_and_load(cfg_path, {"logging": {"persist_history_db": True}})
     assert cfg.logging.persist_history_db is True

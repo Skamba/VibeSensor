@@ -92,15 +92,13 @@ def test_resolve_speed_stale_gps_falls_back_to_manual_override() -> None:
     assert resolved.fallback_active is True
 
 
-def test_set_fallback_settings_clamps_timeout_and_ignores_invalid_mode() -> None:
+def test_set_fallback_settings_clamps_timeout() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor.set_fallback_settings(stale_timeout_s=0.1, fallback_mode="invalid")
+    monitor.set_fallback_settings(stale_timeout_s=0.1)
     assert monitor.stale_timeout_s == 3.0
-    assert monitor.fallback_mode == "manual"
 
-    monitor.set_fallback_settings(stale_timeout_s=999.0, fallback_mode="manual")
+    monitor.set_fallback_settings(stale_timeout_s=999.0)
     assert monitor.stale_timeout_s == 120.0
-    assert monitor.fallback_mode == "manual"
 
 
 @pytest.mark.parametrize("invalid_kmh", [-1.0, math.inf, math.nan], ids=["negative", "inf", "nan"])

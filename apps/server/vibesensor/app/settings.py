@@ -69,11 +69,9 @@ DEFAULT_CONFIG: JsonObject = {
         "accel_scale_g_per_lsb": None,
     },
     "logging": {
-        "log_metrics": True,
         "history_db_path": "data/history.db",
         "metrics_log_hz": 4,
         "no_data_timeout_s": 15.0,
-        "sensor_model": "ADXL345",
         "persist_history_db": True,
         "shutdown_analysis_timeout_s": 30,
         "app_log_path": "data/app.log",
@@ -260,10 +258,8 @@ class ProcessingConfig:
 class LoggingConfig:
     """Run-logging configuration (file path, sample rate, history DB, timeouts)."""
 
-    log_metrics: bool
     metrics_log_hz: int
     no_data_timeout_s: float
-    sensor_model: str
     history_db_path: Path
     persist_history_db: bool
     shutdown_analysis_timeout_s: float
@@ -365,7 +361,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     logging_cfg = _require_config_section(merged.get("logging", {}), "logging")
     gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
     update_cfg = _require_config_section(merged.get("update", {}), "update")
-    log_metrics = bool(logging_cfg["log_metrics"])
 
     data_host = str(udp_cfg["data_host"])
     data_port = _coerce_int(udp_cfg["data_port"], "udp.data_port")
@@ -454,13 +449,11 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             accel_scale_g_per_lsb=accel_scale,
         ),  # NOTE: ProcessingConfig.__post_init__ validates & clamps all fields
         logging=LoggingConfig(
-            log_metrics=log_metrics,
             metrics_log_hz=_coerce_int(logging_cfg["metrics_log_hz"], "logging.metrics_log_hz"),
             no_data_timeout_s=_coerce_float(
                 logging_cfg["no_data_timeout_s"],
                 "logging.no_data_timeout_s",
             ),
-            sensor_model=str(logging_cfg["sensor_model"]),
             history_db_path=_resolve_config_path(
                 str(logging_cfg["history_db_path"]),
                 path,

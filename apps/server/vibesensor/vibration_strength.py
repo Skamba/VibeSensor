@@ -23,11 +23,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from math import isfinite, log10, sqrt
 from statistics import median as _stdlib_median
-from typing import Final
+from typing import Final, TypedDict
 
 import numpy as np
 import numpy.typing as npt
-from typing_extensions import TypedDict
 
 from vibesensor.strength_bands import bucket_for_strength
 

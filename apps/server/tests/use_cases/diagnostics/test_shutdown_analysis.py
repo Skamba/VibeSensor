@@ -45,7 +45,6 @@ class _FakeProcessor:
 def _make_logger(tmp_path: Path, history_db=None) -> RunRecorder:
     return RunRecorder(
         RunRecorderConfig(
-            enabled=False,
             metrics_log_hz=2,
             sensor_model="ADXL345",
             default_sample_rate_hz=800,
@@ -126,7 +125,6 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
         yaml.safe_dump(
             {
                 "logging": {
-                    "log_metrics": False,
                     "history_db_path": str(tmp_path / "history.db"),
                     "shutdown_analysis_timeout_s": 10,
                 },

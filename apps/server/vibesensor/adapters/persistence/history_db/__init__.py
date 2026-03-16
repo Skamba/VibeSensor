@@ -145,6 +145,9 @@ class HistoryDB:
             )
         if version == _CASE_ID_MIGRATION_SOURCE_VERSION:
             self._migrate_v8_to_v9_case_id()
+            version = 9
+        if version == 9:
+            self._migrate_v9_to_v10_settings_table()
             return
         msg = (
             f"Database schema v{version} is incompatible with "
@@ -186,18 +189,30 @@ class HistoryDB:
                     updates,
                 )
 
+            cur.execute("PRAGMA user_version = 9")
+
+    def _migrate_v9_to_v10_settings_table(self) -> None:
+        LOGGER.info("Migrating history DB at %s from schema v9 to v10", self.db_path)
+        with self._cursor() as cur:
+            cur.execute(
+                "CREATE TABLE IF NOT EXISTS settings_snapshot ("
+                "id INTEGER PRIMARY KEY CHECK(id = 1), "
+                "value_json TEXT NOT NULL, "
+                "updated_at TEXT NOT NULL)"
+            )
+            cur.execute(
+                "INSERT OR IGNORE INTO settings_snapshot (id, value_json, updated_at) "
+                "SELECT 1, value_json, updated_at FROM settings_kv "
+                "WHERE key = 'settings_snapshot'"
+            )
+            cur.execute("DROP TABLE IF EXISTS settings_kv")
             cur.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 
-    # -- settings_kv persistence ----------------------------------------------
-
-    _SETTINGS_SNAPSHOT_KEY = "settings_snapshot"
+    # -- settings_snapshot persistence -----------------------------------------
 
     def get_settings_snapshot(self) -> JsonObject | None:
         with self._cursor(commit=False) as cur:
-            cur.execute(
-                "SELECT value_json FROM settings_kv WHERE key = ?",
-                (self._SETTINGS_SNAPSHOT_KEY,),
-            )
+            cur.execute("SELECT value_json FROM settings_snapshot WHERE id = 1")
             row = cur.fetchone()
         if row is None:
             return None
@@ -208,10 +223,10 @@ class HistoryDB:
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
-                "INSERT INTO settings_kv (key, value_json, updated_at) VALUES (?, ?, ?) "
-                "ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, "
+                "INSERT INTO settings_snapshot (id, value_json, updated_at) VALUES (1, ?, ?) "
+                "ON CONFLICT(id) DO UPDATE SET value_json = excluded.value_json, "
                 "updated_at = excluded.updated_at",
-                (self._SETTINGS_SNAPSHOT_KEY, safe_json_dumps(snapshot), now),
+                (safe_json_dumps(snapshot), now),
             )
 
     # -- client_names persistence ---------------------------------------------

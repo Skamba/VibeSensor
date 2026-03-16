@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import NotRequired, TypeAlias
-
-from typing_extensions import TypedDict
+from typing import NotRequired, TypeAlias, TypedDict
 
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics

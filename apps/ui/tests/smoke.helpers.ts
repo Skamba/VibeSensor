@@ -139,7 +139,7 @@ export function gpsStatus(overrides: Partial<Record<string, unknown>>) {
     reconnect_delay_s: 1,
     fallback_active: false,
     stale_timeout_s: 5,
-    fallback_mode: "hold",
+
     ...overrides,
   };
 }

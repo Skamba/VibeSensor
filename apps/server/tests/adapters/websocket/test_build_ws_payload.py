@@ -98,7 +98,7 @@ class _StubSettingsStore:
         self.snapshot_calls = 0
 
     def get_speed_source(self) -> dict[str, Any]:
-        return {"speedSource": "gps", "fallbackMode": "manual"}
+        return {"speedSource": "gps"}
 
     def analysis_settings_snapshot(self) -> dict[str, float]:
         self.snapshot_calls += 1

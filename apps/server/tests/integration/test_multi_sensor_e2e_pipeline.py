@@ -107,7 +107,6 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     gps_monitor = GPSSpeedMonitor(gps_enabled=False)
     logger = RunRecorder(
         RunRecorderConfig(
-            enabled=False,
             metrics_log_hz=20,
             sensor_model="ADXL345",
             default_sample_rate_hz=_SAMPLE_RATE_HZ,

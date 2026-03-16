@@ -18,20 +18,6 @@ from vibesensor.adapters.gps.gps_speed import (
 from vibesensor.shared.constants import KMH_TO_MPS
 
 # ---------------------------------------------------------------------------
-# Fix 1: VALID_FALLBACK_MODES is now a frozenset (O(1) membership, immutable)
-# ---------------------------------------------------------------------------
-
-
-def test_valid_fallback_modes_is_frozenset() -> None:
-    from vibesensor.adapters.gps.gps_speed import VALID_FALLBACK_MODES
-
-    assert isinstance(VALID_FALLBACK_MODES, frozenset), (
-        "VALID_FALLBACK_MODES must be a frozenset for O(1) membership and immutability"
-    )
-    assert "manual" in VALID_FALLBACK_MODES
-
-
-# ---------------------------------------------------------------------------
 # Fix 2 & 3: resolve_speed() and _fallback_speed_value() exclude bool values
 # ---------------------------------------------------------------------------
 
@@ -81,22 +67,6 @@ def test_set_speed_override_kmh_at_exact_max_does_not_warn(
 
     assert result == MAX_MANUAL_SPEED_KMH
     assert "cap" not in caplog.text.lower()
-
-
-# ---------------------------------------------------------------------------
-# Fix 5: set_fallback_settings() logs a warning for unknown fallback_mode
-# ---------------------------------------------------------------------------
-
-
-def test_set_fallback_settings_warns_on_invalid_mode(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.gps.gps_speed"):
-        monitor.set_fallback_settings(fallback_mode="obd2")
-
-    assert monitor.fallback_mode == "manual", "invalid mode must not overwrite existing mode"
-    assert "obd2" in caplog.text
 
 
 # ---------------------------------------------------------------------------
