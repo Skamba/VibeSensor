@@ -16,7 +16,6 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
         yaml.safe_dump(
             {
                 "logging": {
-                    "log_metrics": False,
                     "history_db_path": str(tmp_path / "history.db"),
                 },
             },

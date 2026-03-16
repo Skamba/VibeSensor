@@ -1121,8 +1121,6 @@ export interface components {
      * @description Request body for configuring the speed source (GPS, manual, OBD2, etc.).
      */
     SpeedSourceRequest: {
-      /** Fallbackmode */
-      fallbackMode?: "manual" | null;
       /** Manualspeedkph */
       manualSpeedKph?: number | null;
       speedSource?: components["schemas"]["SpeedSourceKind"] | null;
@@ -1134,17 +1132,8 @@ export interface components {
      * @description Response body for the current speed-source configuration.
      */
     SpeedSourceResponse: {
-      /**
-       * Fallbackmode
-       * @constant
-       */
-      fallbackMode: "manual";
       /** Manualspeedkph */
       manualSpeedKph: number | null;
-      /** Obd2Config */
-      obd2Config?: {
-        [key: string]: unknown;
-      };
       speedSource: components["schemas"]["SpeedSourceKind"];
       /** Staletimeouts */
       staleTimeoutS: number;
@@ -1168,11 +1157,6 @@ export interface components {
       epy_m: number | null;
       /** Fallback Active */
       fallback_active: boolean;
-      /**
-       * Fallback Mode
-       * @constant
-       */
-      fallback_mode: "manual";
       /**
        * Fix Dimension
        * @enum {string}

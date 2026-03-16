@@ -1,4 +1,4 @@
-# History DB Schema (v9)
+# History DB Schema (v10)
 
 The VibeSensor server stores run history, samples, analysis results,
 application settings and client names in a single SQLite file located at
@@ -21,7 +21,7 @@ Single-row key-value table tracking the schema version.
 | Column | Type | Description |
 |--------|------|-------------|
 | `key` | TEXT PK | Always `'version'` |
-| `value` | TEXT | Current schema version (`'9'`) |
+| `value` | TEXT | Current schema version (`'10'`) |
 
 ### `runs`
 
@@ -81,14 +81,14 @@ are stored as typed columns; peak arrays use compact JSON in a TEXT column.
 - `idx_samples_v2_run_id` on `(run_id)` — fast lookup by run
 - `idx_samples_v2_run_time` on `(run_id, t_s)` — time-range queries
 
-### `settings_kv`
+### `settings_snapshot`
 
-Persistent application settings.
+Single-row table for persistent application settings.
 
 | Column | Type | Description |
 |--------|------|-------------|
-| `key` | TEXT PK | Setting name |
-| `value_json` | TEXT | JSON-encoded value |
+| `id` | INTEGER PK | Always 1 (CHECK constraint) |
+| `value_json` | TEXT | JSON-encoded settings snapshot |
 | `updated_at` | TEXT | Last update timestamp |
 
 ### `client_names`
@@ -108,10 +108,12 @@ checks the stored version (the text value of the `'version'` key):
 
 | Stored version | Action |
 |----------------|--------|
-| No row (fresh DB, `schema_meta` table just created) | Create all tables, insert version `'9'` |
-| `'9'` | No action needed |
+| No row (fresh DB, `schema_meta` table just created) | Create all tables, insert version `'10'` |
+| `'10'` | No action needed |
+| `'9'` | Migrate `settings_kv` → `settings_snapshot` single-row table |
+| `'8'` | Chain migrate: add `case_id` column (v8→v9), then `settings_kv` → `settings_snapshot` (v9→v10) |
 | Older (e.g. `'5'`) | Raise `RuntimeError` directing the user to delete the database file |
-| Newer than `'9'` | Raise `RuntimeError` (downgrade not supported) |
+| Newer than `'10'` | Raise `RuntimeError` (downgrade not supported) |
 
 ### Schema versioning policy
 

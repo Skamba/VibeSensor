@@ -30,7 +30,6 @@ def _make_logger(tmp_path: Path, **overrides):
     # Separate config fields from collaborator overrides.
     _CONFIG_FIELDS = frozenset(
         {
-            "enabled",
             "metrics_log_hz",
             "sensor_model",
             "default_sample_rate_hz",
@@ -42,7 +41,6 @@ def _make_logger(tmp_path: Path, **overrides):
     )
     config_overrides = {k: overrides.pop(k) for k in list(overrides) if k in _CONFIG_FIELDS}
     config = RunRecorderConfig(
-        enabled=config_overrides.get("enabled", False),
         metrics_log_hz=config_overrides.get("metrics_log_hz", 10),
         sensor_model=config_overrides.get("sensor_model", "ADXL345"),
         default_sample_rate_hz=config_overrides.get("default_sample_rate_hz", 800),

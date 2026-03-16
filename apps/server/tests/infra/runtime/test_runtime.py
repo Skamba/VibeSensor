@@ -50,11 +50,9 @@ class _StubUDPConfig:
 @dataclass(slots=True)
 class _StubLoggingConfig:
     shutdown_analysis_timeout_s: float = 5.0
-    log_metrics: bool = False
     history_db_path: str = ":memory:"
     metrics_log_hz: int = 1
     no_data_timeout_s: int = 10
-    sensor_model: str = "test"
     persist_history_db: bool = False
 
 

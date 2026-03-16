@@ -152,8 +152,7 @@
   "settings.speed.fallback_no": "No",
   "settings.speed.fallback_title": "Fallback Controls",
   "settings.speed.stale_timeout_label": "Stale timeout (s)",
-  "settings.speed.fallback_mode_label": "Fallback mode",
-  "settings.speed.fallback_mode_manual": "Manual override",
+
   "settings.group.order_band_widths": "Order Band Widths",
   "settings.group.uncertainty_model": "Uncertainty Model",
   "settings.uncertainty_defaults": "Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.",

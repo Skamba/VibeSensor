@@ -112,8 +112,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       };
       const staleVal = Number(els.staleTimeoutInput?.value);
       if (staleVal >= 3 && staleVal <= 120) payload.staleTimeoutS = staleVal;
-      const fallbackVal = els.fallbackModeSelect?.value;
-      if (fallbackVal) payload.fallbackMode = fallbackVal;
       await updateSettingsSpeedSource(payload);
     } catch (_err) { /* ignore */ }
   }
@@ -124,7 +122,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       state.speedSource = payload.speedSource;
       state.manualSpeedKph = payload.manualSpeedKph;
       if (els.staleTimeoutInput) els.staleTimeoutInput.value = String(payload.staleTimeoutS);
-      if (els.fallbackModeSelect) els.fallbackModeSelect.value = payload.fallbackMode;
       syncSpeedSourceInputs();
       ctx.renderSpeedReadout();
     } catch (_err) { /* ignore */ }

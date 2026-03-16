@@ -8,12 +8,14 @@ import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final, Literal, NotRequired, TypeAlias, TypedDict
+from typing import TYPE_CHECKING, Final, Literal, TypeAlias
+
+from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 from vibesensor.domain.speed_source import SpeedSourceKind as SpeedSourceKind
 from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
 from vibesensor.shared.constants import NUMERIC_TYPES
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.shared.types.json_types import JsonObject
 
 if TYPE_CHECKING:
     from vibesensor.domain import Car, Sensor, SpeedSource
@@ -39,7 +41,6 @@ __all__ = [
     "SpeedSourceConfig",
     "SpeedSourcePayload",
     "SpeedSourceUpdatePayload",
-    "VALID_FALLBACK_MODES",
     "VALID_SPEED_SOURCES",
     "new_car_id",
     "sanitize_aspects",
@@ -48,7 +49,6 @@ __all__ = [
 AnalysisSettingsPayload: TypeAlias = dict[str, float]
 LanguageCode: TypeAlias = Literal["en", "nl"]
 SpeedUnitCode: TypeAlias = Literal["kmh", "mps"]
-FallbackMode: TypeAlias = Literal["manual"]
 ResolvedSpeedSource: TypeAlias = Literal["gps", "manual", "fallback_manual", "none"]
 
 
@@ -84,17 +84,13 @@ SensorsByMacPayload: TypeAlias = dict[str, SensorConfigPayload]
 class SpeedSourceUpdatePayload(TypedDict, total=False):
     speedSource: SpeedSourceKind
     manualSpeedKph: float | None
-    obd2Config: JsonObject
     staleTimeoutS: float
-    fallbackMode: FallbackMode
 
 
 class SpeedSourcePayload(TypedDict):
     speedSource: SpeedSourceKind
     manualSpeedKph: float | None
-    obd2Config: JsonObject
     staleTimeoutS: float
-    fallbackMode: FallbackMode
 
 
 class SettingsSnapshotPayload(SpeedSourcePayload):
@@ -137,7 +133,6 @@ RUN_SAMPLE_TYPE: Final[str] = "sample"
 RUN_END_TYPE: Final[str] = "run_end"
 
 VALID_SPEED_SOURCES: tuple[str, ...] = tuple(SpeedSourceKind)
-VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
 
 DEFAULT_CAR_ASPECTS: Final[MappingProxyType[str, float]] = MappingProxyType(
     DEFAULT_ANALYSIS_SETTINGS,
@@ -185,10 +180,6 @@ def _coerce_speed_source(value: object) -> SpeedSourceKind:
         except ValueError:
             pass
     return SpeedSourceKind.GPS
-
-
-def _coerce_fallback_mode(value: object) -> FallbackMode:
-    return "manual"
 
 
 def new_car_id() -> str:
@@ -309,9 +300,7 @@ class SpeedSourceConfig:
 
     speed_source: SpeedSourceKind
     manual_speed_kph: float | None
-    obd2_config: JsonObject
     stale_timeout_s: float
-    fallback_mode: FallbackMode
 
     @classmethod
     def default(cls) -> SpeedSourceConfig:
@@ -319,9 +308,7 @@ class SpeedSourceConfig:
         return cls(
             speed_source=SpeedSourceKind.GPS,
             manual_speed_kph=None,
-            obd2_config={},
             stale_timeout_s=10.0,
-            fallback_mode="manual",
         )
 
     @classmethod
@@ -329,17 +316,12 @@ class SpeedSourceConfig:
         """Construct a :class:`SpeedSourceConfig` from a raw dict (e.g., from API payload)."""
         speed_source = _coerce_speed_source(data.get("speedSource"))
         manual_speed_kph = _parse_manual_speed(data.get("manualSpeedKph"))
-        obd2 = data.get("obd2Config")
-        obd2_config = dict(obd2) if is_json_object(obd2) else {}
         raw_timeout = data.get("staleTimeoutS")
         stale_timeout_s = _parse_stale_timeout(raw_timeout)
-        fallback_mode = _coerce_fallback_mode(data.get("fallbackMode"))
         return cls(
             speed_source=speed_source,
             manual_speed_kph=manual_speed_kph,
-            obd2_config=obd2_config,
             stale_timeout_s=stale_timeout_s,
-            fallback_mode=fallback_mode,
         )
 
     def to_dict(self) -> SpeedSourcePayload:
@@ -347,9 +329,7 @@ class SpeedSourceConfig:
         return {
             "speedSource": self.speed_source,
             "manualSpeedKph": self.manual_speed_kph,
-            "obd2Config": dict(self.obd2_config),
             "staleTimeoutS": self.stale_timeout_s,
-            "fallbackMode": self.fallback_mode,
         }
 
     def apply_update(self, data: SpeedSourceUpdatePayload) -> None:
@@ -363,15 +343,9 @@ class SpeedSourceConfig:
                 self.manual_speed_kph = None
             else:
                 self.manual_speed_kph = _parse_manual_speed(manual)
-        obd2 = data.get("obd2Config")
-        if is_json_object(obd2):
-            self.obd2_config = dict(obd2)
         raw_timeout = data.get("staleTimeoutS")
         if raw_timeout is not None:
             self.stale_timeout_s = _parse_stale_timeout(raw_timeout)
-        raw_fallback = data.get("fallbackMode")
-        if raw_fallback is not None:
-            self.fallback_mode = _coerce_fallback_mode(raw_fallback)
         # Validate cross-field invariant early instead of deferring to to_speed_source().
         if self.speed_source == SpeedSourceKind.MANUAL and self.manual_speed_kph is None:
             raise ValueError("SpeedSourceConfig with speed_source=MANUAL requires manual_speed_kph")

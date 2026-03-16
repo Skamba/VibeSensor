@@ -10,7 +10,6 @@ from typing import Annotated, Literal, TypeAlias
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from vibesensor.shared.types.backend_types import (
-    FallbackMode,
     LanguageCode,
     ResolvedSpeedSource,
     SpeedSourceKind,
@@ -167,7 +166,6 @@ class SpeedSourceRequest(_FrozenBase):
     speedSource: SpeedSourceKind | None = None
     manualSpeedKph: float | None = Field(default=None, ge=0, le=500)
     staleTimeoutS: float | None = Field(default=None, ge=3, le=120)
-    fallbackMode: FallbackMode | None = None
 
 
 class UpdateStartRequest(_FrozenBase):
@@ -293,9 +291,7 @@ class SpeedSourceResponse(BaseModel):
 
     speedSource: SpeedSourceKind
     manualSpeedKph: float | None
-    obd2Config: ApiPayloadObject = Field(default_factory=dict)
     staleTimeoutS: float
-    fallbackMode: FallbackMode
 
 
 class SpeedSourceStatusResponse(BaseModel):
@@ -318,7 +314,6 @@ class SpeedSourceStatusResponse(BaseModel):
     fallback_active: bool
     speed_source: ResolvedSpeedSource
     stale_timeout_s: float
-    fallback_mode: FallbackMode
 
 
 class SensorConfigResponse(BaseModel):

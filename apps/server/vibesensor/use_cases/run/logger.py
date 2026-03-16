@@ -86,7 +86,6 @@ class AppendRowsResult:
 class RunRecorderConfig:
     """Static configuration bundle for :class:`RunRecorder`."""
 
-    enabled: bool
     metrics_log_hz: int
     sensor_model: str
     default_sample_rate_hz: int
@@ -177,10 +176,9 @@ class RunRecorder:
             clear_error_callback=lambda: setattr(self, "_persist_last_write_error", None),
         )
 
-        if config.enabled:
-            with self._lock:
-                snapshot = self._start_new_run_locked()
-                self._live_start_mono_s = snapshot.start_mono_s
+        with self._lock:
+            snapshot = self._start_new_run_locked()
+            self._live_start_mono_s = snapshot.start_mono_s
 
     # -----------------------------------------------------------------------
     # Properties

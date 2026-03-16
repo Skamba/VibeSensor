@@ -7,7 +7,7 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
-SCHEMA_VERSION = 9
+SCHEMA_VERSION = 10
 
 SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS runs (
@@ -62,8 +62,8 @@ CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
 CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
 CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs(created_at);
 
-CREATE TABLE IF NOT EXISTS settings_kv (
-    key         TEXT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS settings_snapshot (
+    id          INTEGER PRIMARY KEY CHECK(id = 1),
     value_json  TEXT NOT NULL,
     updated_at  TEXT NOT NULL
 );

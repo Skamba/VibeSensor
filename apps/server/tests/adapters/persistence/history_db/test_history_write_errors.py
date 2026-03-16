@@ -105,7 +105,6 @@ def _make_logger(history_db, tmp_path: Path) -> RunRecorder:
     reg = _FakeRegistry()
     return RunRecorder(
         RunRecorderConfig(
-            enabled=False,
             metrics_log_hz=2,
             sensor_model="ADXL345",
             default_sample_rate_hz=800,

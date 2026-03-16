@@ -7,7 +7,6 @@ import time
 import pytest
 
 from vibesensor.adapters.gps.gps_speed import (
-    DEFAULT_FALLBACK_MODE,
     DEFAULT_STALE_TIMEOUT_S,
     MAX_STALE_TIMEOUT_S,
     MIN_STALE_TIMEOUT_S,
@@ -37,7 +36,6 @@ class TestStatusDict:
         assert s["speed_confidence"] == "low"
         assert s["fallback_active"] is False
         assert s["stale_timeout_s"] == DEFAULT_STALE_TIMEOUT_S
-        assert s["fallback_mode"] == DEFAULT_FALLBACK_MODE
 
     def test_connected_with_fresh_data(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
@@ -194,7 +192,6 @@ class TestSetFallbackSettings:
     def test_default_values(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         assert m.stale_timeout_s == DEFAULT_STALE_TIMEOUT_S
-        assert m.fallback_mode == DEFAULT_FALLBACK_MODE
 
     def test_set_stale_timeout(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
@@ -211,20 +208,10 @@ class TestSetFallbackSettings:
         m.set_fallback_settings(stale_timeout_s=999.0)
         assert m.stale_timeout_s == MAX_STALE_TIMEOUT_S
 
-    def test_set_fallback_mode(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.set_fallback_settings(fallback_mode="manual")
-        assert m.fallback_mode == "manual"
-
-    def test_invalid_fallback_mode_ignored(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.set_fallback_settings(fallback_mode="obd2")  # not valid yet
-        assert m.fallback_mode == DEFAULT_FALLBACK_MODE
-
     def test_none_args_are_noop(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.stale_timeout_s = 42.0
-        m.set_fallback_settings(stale_timeout_s=None, fallback_mode=None)
+        m.set_fallback_settings(stale_timeout_s=None)
         assert m.stale_timeout_s == 42.0
 
 
@@ -255,17 +242,15 @@ class TestIsGpsStale:
 
 
 class TestSpeedSourceConfigFallback:
-    def test_default_has_fallback_fields(self) -> None:
+    def test_default_has_stale_timeout(self) -> None:
         cfg = SpeedSourceConfig.default()
         assert cfg.stale_timeout_s == 10.0
-        assert cfg.fallback_mode == "manual"
 
     def test_from_dict_camel_case(self) -> None:
         cfg = SpeedSourceConfig.from_dict(
-            {"speedSource": "gps", "staleTimeoutS": 30, "fallbackMode": "manual"},
+            {"speedSource": "gps", "staleTimeoutS": 30},
         )
         assert cfg.stale_timeout_s == 30.0
-        assert cfg.fallback_mode == "manual"
 
     def test_from_dict_clamps_timeout(self) -> None:
         cfg = SpeedSourceConfig.from_dict({"staleTimeoutS": 0.1})
@@ -273,29 +258,13 @@ class TestSpeedSourceConfigFallback:
         cfg = SpeedSourceConfig.from_dict({"staleTimeoutS": 999})
         assert cfg.stale_timeout_s == 120.0
 
-    def test_from_dict_invalid_fallback_mode_defaults(self) -> None:
-        cfg = SpeedSourceConfig.from_dict({"fallbackMode": "obd2"})
-        assert cfg.fallback_mode == "manual"
-
-    def test_to_dict_includes_fallback_fields(self) -> None:
+    def test_to_dict_includes_stale_timeout(self) -> None:
         cfg = SpeedSourceConfig.default()
         d = cfg.to_dict()
         assert "staleTimeoutS" in d
-        assert "fallbackMode" in d
         assert d["staleTimeoutS"] == 10.0
-        assert d["fallbackMode"] == "manual"
 
     def test_apply_update_stale_timeout(self) -> None:
         cfg = SpeedSourceConfig.default()
         cfg.apply_update({"staleTimeoutS": 45})
         assert cfg.stale_timeout_s == 45.0
-
-    def test_apply_update_fallback_mode(self) -> None:
-        cfg = SpeedSourceConfig.default()
-        cfg.apply_update({"fallbackMode": "manual"})
-        assert cfg.fallback_mode == "manual"
-
-    def test_apply_update_ignores_invalid_fallback_mode(self) -> None:
-        cfg = SpeedSourceConfig.default()
-        cfg.apply_update({"fallbackMode": "obd2"})
-        assert cfg.fallback_mode == "manual"

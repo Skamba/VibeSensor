@@ -313,12 +313,6 @@ def test_store_delete_car_unknown_raises() -> None:
         store.delete_car("nonexistent")
 
 
-def test_store_obd2_config_update() -> None:
-    store = SettingsStore()
-    result = store.update_speed_source({"obd2Config": {"port": "/dev/ttyUSB0"}})
-    assert result.get("obd2Config") == {"port": "/dev/ttyUSB0"}
-
-
 def test_store_language_roundtrip() -> None:
     store = SettingsStore()
     assert store.language == "en"
@@ -328,13 +322,13 @@ def test_store_language_roundtrip() -> None:
 
 def test_store_corrupted_snapshot_falls_back_to_defaults(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    # Write invalid JSON directly into the settings_kv table
+    # Write invalid JSON directly into the settings_snapshot table
     from vibesensor.adapters.persistence.runlog import utc_now_iso
 
     with db._cursor() as cur:
         cur.execute(
-            "INSERT INTO settings_kv (key, value_json, updated_at) VALUES (?, ?, ?)",
-            ("settings_snapshot", "not-valid-json{{{", utc_now_iso()),
+            "INSERT INTO settings_snapshot (id, value_json, updated_at) VALUES (1, ?, ?)",
+            ("not-valid-json{{{", utc_now_iso()),
         )
     store = SettingsStore(db=db)
     snap = store.snapshot()

@@ -2389,18 +2389,6 @@
       "SpeedSourceRequest": {
         "description": "Request body for configuring the speed source (GPS, manual, OBD2, etc.).",
         "properties": {
-          "fallbackMode": {
-            "anyOf": [
-              {
-                "const": "manual",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Fallbackmode"
-          },
           "manualSpeedKph": {
             "anyOf": [
               {
@@ -2444,11 +2432,6 @@
       "SpeedSourceResponse": {
         "description": "Response body for the current speed-source configuration.",
         "properties": {
-          "fallbackMode": {
-            "const": "manual",
-            "title": "Fallbackmode",
-            "type": "string"
-          },
           "manualSpeedKph": {
             "anyOf": [
               {
@@ -2459,11 +2442,6 @@
               }
             ],
             "title": "Manualspeedkph"
-          },
-          "obd2Config": {
-            "additionalProperties": true,
-            "title": "Obd2Config",
-            "type": "object"
           },
           "speedSource": {
             "$ref": "#/components/schemas/SpeedSourceKind"
@@ -2476,8 +2454,7 @@
         "required": [
           "speedSource",
           "manualSpeedKph",
-          "staleTimeoutS",
-          "fallbackMode"
+          "staleTimeoutS"
         ],
         "title": "SpeedSourceResponse",
         "type": "object"
@@ -2547,11 +2524,6 @@
           "fallback_active": {
             "title": "Fallback Active",
             "type": "boolean"
-          },
-          "fallback_mode": {
-            "const": "manual",
-            "title": "Fallback Mode",
-            "type": "string"
           },
           "fix_dimension": {
             "enum": [
@@ -2662,8 +2634,7 @@
           "reconnect_delay_s",
           "fallback_active",
           "speed_source",
-          "stale_timeout_s",
-          "fallback_mode"
+          "stale_timeout_s"
         ],
         "title": "SpeedSourceStatusResponse",
         "type": "object"

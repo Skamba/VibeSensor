@@ -159,9 +159,7 @@ class SettingsStore:
                 {
                     "speedSource": raw.get("speedSource"),
                     "manualSpeedKph": raw.get("manualSpeedKph"),
-                    "obd2Config": raw.get("obd2Config"),
                     "staleTimeoutS": raw.get("staleTimeoutS"),
-                    "fallbackMode": raw.get("fallbackMode"),
                 },
             )
             self._language = _coerce_language(raw.get("language"))
@@ -208,7 +206,6 @@ class SettingsStore:
         self._gps_monitor.set_speed_override_kmh(ss.effective_speed_kmh)
         self._gps_monitor.set_fallback_settings(
             stale_timeout_s=raw.get("staleTimeoutS"),
-            fallback_mode=self._speed_cfg.fallback_mode,
         )
 
     def sync_all(self) -> None:

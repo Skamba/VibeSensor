@@ -161,7 +161,6 @@ class TestSpeedSourceConfig:
                 "speedSource": "manual",
                 "manualSpeedKph": 80.0,
                 "staleTimeoutS": 5.0,
-                "fallbackMode": "manual",
             },
         )
         assert ssc.speed_source == "manual"

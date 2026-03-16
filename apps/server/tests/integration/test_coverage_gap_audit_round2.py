@@ -33,7 +33,6 @@ import pytest
 from vibesensor.adapters.gps.gps_speed import (
     _GPS_RECONNECT_DELAY_S,
     _GPS_RECONNECT_MAX_DELAY_S,
-    DEFAULT_FALLBACK_MODE,
     MAX_STALE_TIMEOUT_S,
     MIN_STALE_TIMEOUT_S,
     GPSSpeedMonitor,
@@ -310,11 +309,6 @@ class TestGPSFallbackSettings:
 
         m.set_fallback_settings(stale_timeout_s=30)
         assert m.stale_timeout_s == 30
-
-    def test_set_fallback_settings_rejects_invalid_mode(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.set_fallback_settings(fallback_mode="bogus_mode")
-        assert m.fallback_mode == DEFAULT_FALLBACK_MODE
 
     @pytest.mark.parametrize("value", [float("nan"), float("inf")])
     def test_override_non_finite_clears(self, value: float) -> None:
