@@ -7,7 +7,7 @@ from datetime import datetime
 
 import pytest
 
-from vibesensor.e2e_helpers import (
+from tests_e2e.e2e_helpers import (
     api_bytes,
     api_json,
     history_run_ids,
