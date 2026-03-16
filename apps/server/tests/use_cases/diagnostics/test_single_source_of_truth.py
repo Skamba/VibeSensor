@@ -1,13 +1,12 @@
 """Guardrail tests ensuring key definitions have a single source of truth.
 
 These tests prevent regression of the consolidation work by verifying:
-1. DEFAULT_DIAGNOSTIC_SETTINGS is the same object as DEFAULT_ANALYSIS_SETTINGS
-2. Spectrum payloads do not contain dead alias fields
-3. The strength_scoring module does not exist
-4. Metrics log records use canonical field names only
-5. as_float_or_none is the single canonical float converter
-6. percentile is the single canonical percentile implementation
-7. compute_vibration_strength_db output has no dead alias fields
+1. Spectrum payloads do not contain dead alias fields
+2. The strength_scoring module does not exist
+3. Metrics log records use canonical field names only
+4. as_float_or_none is the single canonical float converter
+5. percentile is the single canonical percentile implementation
+6. compute_vibration_strength_db output has no dead alias fields
 """
 
 from __future__ import annotations
@@ -18,19 +17,6 @@ import pytest
 from _paths import REPO_ROOT, SERVER_ROOT
 
 from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
-from vibesensor.use_cases.diagnostics.order_bands import DEFAULT_DIAGNOSTIC_SETTINGS
-
-
-def test_diagnostic_settings_is_analysis_settings() -> None:
-    """DEFAULT_DIAGNOSTIC_SETTINGS must be the same object as DEFAULT_ANALYSIS_SETTINGS."""
-    assert DEFAULT_DIAGNOSTIC_SETTINGS is DEFAULT_ANALYSIS_SETTINGS
-
-
-def test_analysis_settings_keys_match() -> None:
-    """Both default dicts have identical keys and values."""
-    assert set(DEFAULT_DIAGNOSTIC_SETTINGS.keys()) == set(DEFAULT_ANALYSIS_SETTINGS.keys())
-    for key in DEFAULT_ANALYSIS_SETTINGS:
-        assert DEFAULT_DIAGNOSTIC_SETTINGS[key] == DEFAULT_ANALYSIS_SETTINGS[key]
 
 
 def test_strength_scoring_module_removed() -> None:

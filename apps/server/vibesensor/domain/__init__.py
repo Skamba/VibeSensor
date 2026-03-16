@@ -34,7 +34,7 @@ RunSuitability
     Whether a run is trustworthy enough for diagnosis.
 """
 
-from .car import Car, TireSpec
+from .car import Car, CarSnapshot, OrderReferenceSpec, TireSpec
 from .confidence_assessment import ConfidenceAssessment
 from .diagnostic_case import DiagnosticCase, Symptom
 from .driving_segment import DrivingPhase, DrivingSegment
@@ -53,50 +53,70 @@ from .run_capture import ConfigurationSnapshot, Measurement, RunCapture, RunSetu
 from .run_status import RUN_TRANSITIONS, RunStatus, transition_run
 from .run_suitability import RunSuitability, SuitabilityCheck
 from .sensor import Sensor, SensorPlacement
+from .snapshots import (
+    AnalysisSettingsSnapshot,
+    PhaseSummarySnapshot,
+    RunContextSnapshot,
+    SpeedStatsSnapshot,
+)
 from .speed_profile import SpeedProfile
 from .speed_source import SpeedSource, SpeedSourceKind
+from .strength_metrics import StrengthMetrics, StrengthPeak
 from .test_plan import RecommendedAction, TestPlan, plan_test_actions
 from .test_run import TestRun
 from .vibration_origin import VibrationOrigin
 
 __all__ = [
-    # Primary domain names (prefer these)
+    # Aggregates and entities
     "Car",
-    "ConfigurationSnapshot",
-    "ConfidenceAssessment",
     "DiagnosticCase",
-    "DrivingSegment",
-    "DrivingPhase",
+    "Run",
+    "TestRun",
+    # Value objects — car and context
+    "CarSnapshot",
+    "OrderReferenceSpec",
+    "TireSpec",
+    # Value objects — snapshots
+    "AnalysisSettingsSnapshot",
+    "PhaseSummarySnapshot",
+    "RunContextSnapshot",
+    "SpeedStatsSnapshot",
+    # Value objects — run and capture
+    "ConfigurationSnapshot",
+    "Measurement",
+    "RunCapture",
+    "RunSetup",
+    "VibrationReading",
+    # Value objects — findings and diagnostics
+    "ConfidenceAssessment",
     "Finding",
     "FindingEvidence",
     "FindingKind",
     "LocationHotspot",
-    "Measurement",
-    "RecommendedAction",
-    "RUN_TRANSITIONS",
-    "Run",
-    "RunCapture",
-    "RunSetup",
+    "Signature",
+    "StrengthMetrics",
+    "StrengthPeak",
+    "VibrationOrigin",
+    "VibrationSource",
+    # Value objects — run context
+    "DrivingPhase",
+    "DrivingSegment",
     "RunStatus",
     "RunSuitability",
     "Sensor",
     "SensorPlacement",
-    "Signature",
     "SpeedProfile",
-    "speed_band_sort_key",
-    "speed_bin_label",
     "SpeedSource",
     "SpeedSourceKind",
-    "Symptom",
     "SuitabilityCheck",
+    "Symptom",
+    # Test plan
+    "RecommendedAction",
     "TestPlan",
-    "TestRun",
-    "TireSpec",
-    "VibrationSource",
-    "VibrationOrigin",
-    "transition_run",
-    # Service functions
+    # Functions
+    "RUN_TRANSITIONS",
     "plan_test_actions",
-    # Existing names
-    "VibrationReading",
+    "speed_band_sort_key",
+    "speed_bin_label",
+    "transition_run",
 ]

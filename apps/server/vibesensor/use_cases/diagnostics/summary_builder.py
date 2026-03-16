@@ -32,6 +32,7 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     Finding as DomainFinding,
 )
+from vibesensor.domain.snapshots import PhaseSummarySnapshot, SpeedStatsSnapshot
 from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.diagnostic_case import (
@@ -774,7 +775,10 @@ def prepare_run_data(
         per_sample_phases=per_sample_phases,
         phase_segments=phase_segments,
         run_noise_baseline_g=run_noise_baseline_g,
-        speed_profile=speed_profile_from_stats(speed_stats, phase_info),
+        speed_profile=speed_profile_from_stats(
+            SpeedStatsSnapshot.from_dict(speed_stats),
+            PhaseSummarySnapshot.from_dict(phase_info),
+        ),
         speed_stats_by_phase=_speed_stats_by_phase(samples, per_sample_phases),
         speed_breakdown=speed_breakdown,
         speed_breakdown_skipped_reason=speed_breakdown_skipped_reason,

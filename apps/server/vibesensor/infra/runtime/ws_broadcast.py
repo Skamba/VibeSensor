@@ -10,6 +10,7 @@ those are produced by the post-run analysis pipeline and flow through
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 from vibesensor.infra.runtime.processing_loop import STALE_DATA_AGE_S
@@ -101,7 +102,7 @@ class WsBroadcastService:
         payload["rotational_speeds"] = build_rotational_speeds_payload(
             basis_speed_source=basis,
             speed_mps=speed_mps,
-            analysis_settings=analysis_settings_snapshot,
+            analysis_settings=asdict(analysis_settings_snapshot),
         )
         spectra: SpectraPayload | None = None
         if self.include_heavy:

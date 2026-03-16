@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import TYPE_CHECKING, ClassVar
@@ -131,6 +132,54 @@ class FindingEvidence:
     def is_well_localized(self) -> bool:
         """Evidence is spatially concentrated, not diffuse."""
         return self.spatial_concentration >= self._WELL_LOCALIZED_CONCENTRATION
+
+    @classmethod
+    def from_metrics(cls, d: Mapping[str, object]) -> FindingEvidence:
+        """Construct from a ``FindingEvidenceMetrics`` dict using canonical keys.
+
+        Legacy alias handling (e.g. ``snr_ratio`` → ``snr_db``) is NOT done
+        here — boundary callers must pre-normalize before calling this factory.
+        """
+
+        def _float(key: str) -> float:
+            raw = d.get(key)
+            if raw is None:
+                return 0.0
+            try:
+                return float(raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                return 0.0
+
+        def _float_or_none(key: str) -> float | None:
+            raw = d.get(key)
+            if raw is None:
+                return None
+            try:
+                return float(raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                return None
+
+        phase_conf = d.get("per_phase_confidence")
+        phase_items: tuple[tuple[str, float], ...] = ()
+        if isinstance(phase_conf, dict):
+            phase_items = tuple(
+                (str(k), float(v))
+                for k, v in sorted(phase_conf.items())
+                if isinstance(v, (int, float))
+            )
+
+        return cls(
+            match_rate=_float("match_rate"),
+            snr_db=_float_or_none("snr_db"),
+            presence_ratio=_float("presence_ratio"),
+            burstiness=_float("burstiness"),
+            spatial_concentration=_float("spatial_concentration"),
+            frequency_correlation=_float("frequency_correlation"),
+            speed_uniformity=_float("speed_uniformity"),
+            spatial_uniformity=_float("spatial_uniformity"),
+            phase_confidences=phase_items,
+            vibration_strength_db=_float_or_none("vibration_strength_db"),
+        )
 
 
 # ── Signature ─────────────────────────────────────────────────────────────────
@@ -491,3 +540,28 @@ class Finding:
     def is_stronger_than(self, other: Finding) -> bool:
         """Whether this finding ranks higher than *other*."""
         return self.phase_adjusted_score > other.phase_adjusted_score
+
+    def with_confidence_assessment(
+        self,
+        strength_band_key: str,
+        steady_speed: bool,
+        has_reference_gaps: bool,
+        sensor_count: int,
+    ) -> Finding:
+        """Return a copy with a computed :class:`ConfidenceAssessment`.
+
+        Reads ``effective_confidence`` and ``weak_spatial_separation``
+        from *self*, delegates to :meth:`ConfidenceAssessment.assess`,
+        and returns ``replace(self, confidence_assessment=ca)``.
+        """
+        from vibesensor.domain.confidence_assessment import ConfidenceAssessment as CA
+
+        ca = CA.assess(
+            self.effective_confidence,
+            strength_band_key=strength_band_key,
+            steady_speed=steady_speed,
+            has_reference_gaps=has_reference_gaps,
+            weak_spatial=self.weak_spatial_separation,
+            sensor_count=max(sensor_count, 1),
+        )
+        return replace(self, confidence_assessment=ca)

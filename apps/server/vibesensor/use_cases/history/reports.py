@@ -17,10 +17,11 @@ from typing import TYPE_CHECKING, cast
 
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+from vibesensor.domain import CarSnapshot
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
-from vibesensor.shared.types.backend_types import CarConfigPayload, HistoryRunPayload
+from vibesensor.shared.types.backend_types import HistoryRunPayload
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.use_cases.history.helpers import (
     async_require_run,
@@ -142,7 +143,7 @@ class HistoryReportService:
         run_id: str,
         requested_lang: str,
         *,
-        current_active_car_snapshot: CarConfigPayload | None,
+        current_active_car_snapshot: CarSnapshot | None,
     ) -> ReportPdfCacheKey:
         return (
             run_id,
