@@ -1,21 +1,76 @@
 """Immutable captured evidence and setup context for one completed Run.
 
-Co-locates ConfigurationSnapshot, RunSetup, and RunCapture — the tightly
-coupled value objects that together describe what was measured and how.
+Co-locates ConfigurationSnapshot, RunSetup, RunCapture, Measurement,
+and VibrationReading — the tightly coupled value objects that together
+describe what was measured and how.
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import datetime
 from types import MappingProxyType
 
 from vibesensor.domain.car import TireSpec
-from vibesensor.domain.measurement import Measurement
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_source import SpeedSource
+from vibesensor.strength_bands import bucket_for_strength
+from vibesensor.vibration_strength import vibration_strength_db_scalar
 
-__all__ = ["ConfigurationSnapshot", "RunCapture", "RunSetup"]
+__all__ = ["ConfigurationSnapshot", "Measurement", "RunCapture", "RunSetup", "VibrationReading"]
+
+
+# ---------------------------------------------------------------------------
+# Measurement / VibrationReading
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Measurement:
+    """A single multi-axis acceleration measurement from an ESP32 sensor."""
+
+    x: float
+    y: float
+    z: float
+    timestamp: datetime
+    sample_rate_hz: int
+    sensor_id: str = ""
+
+    def __post_init__(self) -> None:
+        if self.sample_rate_hz <= 0:
+            raise ValueError(f"sample_rate_hz must be positive, got {self.sample_rate_hz}")
+
+    def to_vibration_reading(self, noise_floor: float) -> VibrationReading:
+        from math import sqrt
+        peak_amplitude = sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
+        intensity_db = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=peak_amplitude,
+            floor_amp_g=noise_floor,
+        )
+        return VibrationReading(
+            timestamp=self.timestamp,
+            intensity_db=intensity_db,
+            frequency_hz=0.0,
+            peak_amplitude_g=peak_amplitude,
+            noise_floor_g=noise_floor,
+            sensor_id=self.sensor_id,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class VibrationReading:
+    """A processed vibration measurement expressed in dB."""
+
+    timestamp: datetime
+    intensity_db: float
+    frequency_hz: float
+    peak_amplitude_g: float = 0.0
+    noise_floor_g: float = 0.0
+    sensor_id: str = ""
+
+    def get_severity_level(self) -> str:
+        return bucket_for_strength(self.intensity_db)
 
 
 # ---------------------------------------------------------------------------

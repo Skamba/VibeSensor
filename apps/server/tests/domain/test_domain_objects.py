@@ -12,11 +12,11 @@ from datetime import UTC, datetime
 
 import pytest
 
+from vibesensor.adapters.pdf.mapping import Report
 from vibesensor.domain import (
     Car,
     Finding,
     Measurement,
-    Report,
     Run,
     Sensor,
     SensorPlacement,
@@ -407,7 +407,6 @@ class TestPackageImports:
             DrivingPhase,
             Finding,
             Measurement,
-            Report,
             Run,
             Sensor,
             SensorPlacement,
@@ -423,7 +422,6 @@ class TestPackageImports:
         assert SpeedSource is not None
         assert DrivingPhase is not None
         assert Finding is not None
-        assert Report is not None
 
 
 # ---------------------------------------------------------------------------

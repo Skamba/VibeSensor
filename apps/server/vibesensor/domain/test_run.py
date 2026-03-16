@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.domain.diagnostic_reasoning import DiagnosticReasoning
 from vibesensor.domain.driving_segment import DrivingSegment
 from vibesensor.domain.finding import Finding, VibrationSource
 from vibesensor.domain.run_capture import RunCapture
@@ -20,7 +19,6 @@ class TestRun:
     """Canonical run-level diagnostic aggregate."""
 
     capture: RunCapture
-    reasoning: DiagnosticReasoning = DiagnosticReasoning()
     driving_segments: tuple[DrivingSegment, ...] = ()
     findings: tuple[Finding, ...] = ()
     top_causes: tuple[Finding, ...] = ()

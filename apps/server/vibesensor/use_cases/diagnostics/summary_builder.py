@@ -16,7 +16,6 @@ from vibesensor.domain import (
     Car,
     ConfigurationSnapshot,
     DiagnosticCase,
-    DiagnosticReasoning,
     LocationHotspot,
     RunCapture,
     RunSetup,
@@ -32,12 +31,6 @@ from vibesensor.domain import (
 )
 from vibesensor.domain import (
     Finding as DomainFinding,
-)
-from vibesensor.domain.diagnostic_reasoning import (
-    ObservationEvidence,
-    evaluate_hypotheses,
-    extract_observations,
-    recognize_signatures,
 )
 from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.report_i18n import normalize_lang
@@ -934,32 +927,6 @@ class AnalysisResult:
     summary: AnalysisSummary
 
 
-def _build_observation_evidence(
-    findings: tuple[DomainFinding, ...],
-) -> list[ObservationEvidence]:
-    evidence_items: list[ObservationEvidence] = []
-    for finding in findings:
-        sig_labels = finding.signature_labels
-        if not sig_labels:
-            freq_or_order = finding.order or (
-                f"{finding.frequency_hz:.1f} Hz" if finding.frequency_hz is not None else ""
-            )
-            if freq_or_order:
-                sig_labels = (freq_or_order,)
-        evidence_items.append(
-            ObservationEvidence(
-                source=finding.suspected_source,
-                signature_labels=sig_labels,
-                magnitude_db=finding.vibration_strength_db,
-                speed_band=finding.strongest_speed_band,
-                dominant_phase=finding.origin.dominant_phase if finding.origin else None,
-                location=finding.strongest_location,
-                confidence=finding.effective_confidence,
-            )
-        )
-    return evidence_items
-
-
 class RunAnalysis:
     """Cohesive object around a single analyzed run.
 
@@ -981,7 +948,6 @@ class RunAnalysis:
         "_prepared",
         "_accel_stats",
         "_test_run",
-        "_diagnostic_case",
     )
 
     def __init__(
@@ -1001,7 +967,6 @@ class RunAnalysis:
         self._include_samples = include_samples
         self._findings_builder = findings_builder
         self._test_run: TestRun | None = None
-        self._diagnostic_case: DiagnosticCase | None = None
 
         _validate_required_strength_metrics(samples)
         self._prepared = prepare_run_data(metadata, samples, file_name=file_name)
@@ -1026,10 +991,6 @@ class RunAnalysis:
     @property
     def test_run(self) -> TestRun | None:
         return self._test_run
-
-    @property
-    def diagnostic_case(self) -> DiagnosticCase | None:
-        return self._diagnostic_case
 
     # -- orchestration -----------------------------------------------------
 
@@ -1105,10 +1066,6 @@ class RunAnalysis:
                 final_top_causes_list.append(replace(f, signatures=sigs) if sigs else f)
         final_top_causes = tuple(final_top_causes_list)
 
-        evidence_items = _build_observation_evidence(domain_findings)
-        observations = extract_observations(evidence_items)
-        signatures = recognize_signatures(observations)
-        hypotheses = evaluate_hypotheses(signatures)
         configuration_snapshot = ConfigurationSnapshot.from_metadata(self._metadata)
         driving_segments = build_domain_driving_segments(self._prepared.phase_segments)
         domain_test_plan = plan_test_actions(domain_findings)
@@ -1130,14 +1087,8 @@ class RunAnalysis:
             sample_count=len(self._samples),
             duration_s=self._prepared.duration_s,
         )
-        reasoning = DiagnosticReasoning(
-            observations=observations,
-            signatures=signatures,
-            hypotheses=hypotheses,
-        )
         self._test_run = TestRun(
             capture=capture,
-            reasoning=reasoning,
             driving_segments=driving_segments,
             findings=domain_findings,
             top_causes=final_top_causes,
@@ -1145,7 +1096,7 @@ class RunAnalysis:
             suitability=domain_suitability,
             test_plan=domain_test_plan,
         )
-        self._diagnostic_case = DiagnosticCase.start(
+        diagnostic_case = DiagnosticCase.start(
             car=build_domain_car(self._metadata),
             symptoms=build_domain_symptoms(self._metadata),
             test_plan=domain_test_plan,
@@ -1206,7 +1157,7 @@ class RunAnalysis:
             summary.pop("samples", None)
         return AnalysisResult(
             test_run=self._test_run,
-            diagnostic_case=self._diagnostic_case,
+            diagnostic_case=diagnostic_case,
             summary=summary,
         )
 

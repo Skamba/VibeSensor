@@ -39,27 +39,23 @@
 - `use_cases/run/`: recording pipeline orchestration; `logger.py` owns `RunRecorder`, `post_analysis.py` owns the background analysis queue, and `sample_builder.py` owns pure sample-building helpers.
 - `use_cases/updates/`: wheel-based updater workflow orchestration, firmware cache, ESP flashing, release discovery, install, rollback, runner, Wi-Fi, and status tracking.
 - `shared/`: cross-cutting typed payloads (`shared/types/`), boundary serializers/decoders (`shared/boundaries/`), exceptions (`shared/exceptions.py`), JSON helpers (`shared/json_utils.py`), location identifiers (`shared/locations.py`), and run-context helpers.
-- `domain/`: DDD-aligned domain model package. Each primary domain object
-  lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
-  SensorPlacement), `measurement.py` (Measurement, VibrationReading),
+- `domain/`: DDD-aligned domain model package. Primary domain objects
+  live under `vibesensor/domain/`; closely related value objects share
+  a file with their parent aggregate:
+  `car.py` (Car, TireSpec), `sensor.py` (Sensor, SensorPlacement),
   `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
-  `diagnostic_case.py` (DiagnosticCase aggregate), `diagnosis.py` (Diagnosis),
-  `diagnostic_reasoning.py` (DiagnosticReasoning, Observation, ObservationEvidence,
-  Signature, Hypothesis, HypothesisStatus + extraction/recognition/evaluation
-  service functions),
-  `run_capture.py` (RunCapture, RunSetup, ConfigurationSnapshot),
-  `symptom.py`,
+  `diagnostic_case.py` (DiagnosticCase aggregate, Symptom),
+  `run_capture.py` (RunCapture, RunSetup, ConfigurationSnapshot, Measurement, VibrationReading),
   `test_plan.py` (TestPlan, RecommendedAction + planning service functions),
   `driving_segment.py` (DrivingSegment, DrivingPhase),
   `vibration_origin.py`,
   `speed_source.py` (SpeedSource),
-  `finding.py` (FindingKind, VibrationSource, Finding),
-  `finding_evidence.py` (FindingEvidence),
+  `finding.py` (FindingKind, VibrationSource, Finding, FindingEvidence, Signature),
   `confidence_assessment.py` (ConfidenceAssessment),
   `location_hotspot.py` (LocationHotspot),
   `speed_profile.py` (SpeedProfile),
   `run_suitability.py` (RunSuitability, SuitabilityCheck),
-  `report.py` (Report), `run_status.py` (RunStatus, RUN_TRANSITIONS).
+  `run_status.py` (RunStatus, RUN_TRANSITIONS).
   Domain objects own
   classification, ranking, actionability, surfacing, lifecycle, and
   query logic; diagnostics use cases delegate to them. See

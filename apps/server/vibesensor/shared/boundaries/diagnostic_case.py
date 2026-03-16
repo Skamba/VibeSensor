@@ -11,8 +11,7 @@ from dataclasses import replace
 
 from vibesensor.domain.car import Car
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-from vibesensor.domain.diagnostic_case import DiagnosticCase
-from vibesensor.domain.diagnostic_reasoning import DiagnosticReasoning
+from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture, RunSetup
@@ -20,7 +19,6 @@ from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_source import SpeedSource
-from vibesensor.domain.symptom import Symptom
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
 from vibesensor.shared.boundaries.finding import (
@@ -323,8 +321,6 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     findings = tuple(_ensure_ca(f) for f in findings)
     top_causes = tuple(_ensure_ca(f) for f in top_causes)
 
-    reasoning_obj = DiagnosticReasoning.from_findings(findings)
-
     sensor_locs = summary.get("sensor_locations")
     sensor_loc_list = list(sensor_locs) if isinstance(sensor_locs, Mapping) else []
     setup = RunSetup(
@@ -338,7 +334,6 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     )
     return TestRun(
         capture=capture,
-        reasoning=reasoning_obj,
         driving_segments=_segments_from_summary(summary),
         findings=findings,
         top_causes=top_causes,
