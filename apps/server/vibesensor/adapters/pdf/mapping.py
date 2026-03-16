@@ -40,7 +40,6 @@ from vibesensor.use_cases.diagnostics._types import (
     SpeedStats,
     TestStep,
 )
-from vibesensor.use_cases.diagnostics.diagnosis_candidates import normalize_origin_location
 from vibesensor.use_cases.diagnostics.helpers import PHASE_I18N_KEYS
 from vibesensor.use_cases.diagnostics.plots import PeakTableRow
 from vibesensor.use_cases.diagnostics.strength_labels import (
@@ -374,7 +373,8 @@ def _origin_from_aggregate(
 
 def normalized_origin_location(origin: SuspectedVibrationOrigin) -> str:
     """Return the report-ready origin location string."""
-    return normalize_origin_location(origin.get("location"))
+    raw = str(origin.get("location") or "").strip()
+    return "" if raw.lower() == "unknown" else raw
 
 
 # ---------------------------------------------------------------------------
