@@ -22,7 +22,7 @@ from vibesensor.adapters.pdf.report_data import (
     SystemFindingCard,
 )
 from vibesensor.adapters.persistence.runlog import utc_now_iso
-from vibesensor.domain import Finding, Report, TestRun, VibrationSource
+from vibesensor.domain import Finding, TestRun, VibrationSource
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
@@ -32,25 +32,49 @@ from vibesensor.shared.boundaries.vibration_origin import (
     origin_payload_from_finding,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.use_cases.diagnostics._types import (
+from vibesensor.shared.types.json_types import JsonValue
+from vibesensor.use_cases.diagnostics import (
+    PHASE_I18N_KEYS,
     IntensityRow,
-    JsonValue,
     MetadataDict,
+    PeakTableRow,
     RunSuitabilityCheck,
     SpeedStats,
     TestStep,
-)
-from vibesensor.use_cases.diagnostics.helpers import PHASE_I18N_KEYS
-from vibesensor.use_cases.diagnostics.plots import PeakTableRow
-from vibesensor.use_cases.diagnostics.strength_labels import (
     certainty_tier,
     strength_label,
     strength_text,
 )
 
-__all__ = ["map_summary"]
+__all__ = ["Report", "map_summary"]
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Report metadata
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Report:
+    """Run-level metadata carrier consumed by the report rendering pipeline."""
+
+    run_id: str
+    title: str = ""
+    lang: str = "en"
+    car_name: str | None = None
+    car_type: str | None = None
+    report_date: str | None = None
+    duration_s: float | None = None
+    sample_count: int = 0
+    sensor_count: int = 0
+
+    def __post_init__(self) -> None:
+        if not self.run_id:
+            raise ValueError("run_id must be non-empty")
+        if self.duration_s is not None and self.duration_s < 0:
+            raise ValueError("duration_s must be non-negative")
 
 
 # ---------------------------------------------------------------------------

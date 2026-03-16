@@ -27,16 +27,12 @@ from vibesensor.app.settings import DEFAULT_CONFIG
 from vibesensor.shared.types.json_types import JsonObject
 
 
-def _port(value: str) -> int:
-    return int(str(value).rsplit(":", 1)[-1])
-
-
 def render_contract_reference_markdown() -> str:
     """Render the public API contract reference as a Markdown string."""
     udp: JsonObject = DEFAULT_CONFIG["udp"]  # type: ignore[assignment]
     srv: JsonObject = DEFAULT_CONFIG["server"]  # type: ignore[assignment]
-    data_port = _port(str(udp["data_listen"]))
-    control_port = _port(str(udp["control_listen"]))
+    data_port = int(str(udp["data_port"]))
+    control_port = int(str(udp["control_port"]))
     server_http_port = int(str(srv["port"]))
 
     # Canonical metric/report field names

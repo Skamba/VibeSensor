@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
+from test_support.findings import make_finding_payload, make_info_finding, make_ref_finding
 
-from tests.test_support.findings import make_finding_payload, make_info_finding, make_ref_finding
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics.findings import (
     PeakBin,

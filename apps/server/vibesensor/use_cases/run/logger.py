@@ -34,7 +34,6 @@ from vibesensor.use_cases.run.sample_builder import (
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.adapters.persistence.history_db import HistoryDB
-    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
     from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
@@ -123,7 +122,6 @@ class RunRecorder:
         registry: ClientRegistry,
         gps_monitor: GPSSpeedMonitor,
         processor: SignalProcessor,
-        analysis_settings: AnalysisSettingsStore,
         history_db: HistoryDB | None = None,
         settings_store: SettingsStore | None = None,
         language_provider: Callable[[], str] | None = None,
@@ -132,7 +130,6 @@ class RunRecorder:
         self.registry = registry
         self.gps_monitor = gps_monitor
         self.processor = processor
-        self.analysis_settings = analysis_settings
         self._settings_store = settings_store
         self.sensor_model = config.sensor_model.strip() or "unknown"
         self.default_sample_rate_hz = int(config.default_sample_rate_hz)
@@ -207,6 +204,13 @@ class RunRecorder:
         run = self._current_run
         return run.run_id if run is not None else None
 
+    def _analysis_settings_snapshot(self) -> dict[str, float]:
+        if self._settings_store is not None:
+            return self._settings_store.analysis_settings_snapshot()
+        from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
+
+        return dict(DEFAULT_ANALYSIS_SETTINGS)
+
     # -----------------------------------------------------------------------
     # Session state
     # -----------------------------------------------------------------------
@@ -222,7 +226,7 @@ class RunRecorder:
         with self._lock:
             session = Run(
                 run_id=run_id,
-                analysis_settings=dict(self.analysis_settings.snapshot()),
+                analysis_settings=dict(self._analysis_settings_snapshot()),
             )
             session.start()
             self._current_run = session
@@ -675,7 +679,7 @@ class RunRecorder:
         return build_run_metadata(
             run_id=run_id,
             start_time_utc=start_time_utc,
-            analysis_settings_snapshot=self.analysis_settings.snapshot(),
+            analysis_settings_snapshot=self._analysis_settings_snapshot(),
             sensor_model=self.sensor_model,
             firmware_version=firmware_version_for_run(self.registry),
             default_sample_rate_hz=self.default_sample_rate_hz,
@@ -704,7 +708,7 @@ class RunRecorder:
             registry=self.registry,
             processor=self.processor,
             gps_monitor=self.gps_monitor,
-            analysis_settings_snapshot=self.analysis_settings.snapshot(),
+            analysis_settings_snapshot=self._analysis_settings_snapshot(),
             default_sample_rate_hz=self.default_sample_rate_hz,
         )
 

@@ -21,7 +21,6 @@ import logging
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final
 
 import yaml
 
@@ -32,15 +31,6 @@ from vibesensor.shared.types.json_types import JsonObject, is_json_object
 # ---------------------------------------------------------------------------
 # Default configuration
 # ---------------------------------------------------------------------------
-
-NETWORK_PORTS: Final[dict[str, int]] = {
-    "server_udp_data": 9000,
-    "server_udp_control": 9001,
-    "firmware_control_port_base": 9010,
-}
-
-DEFAULT_UDP_DATA_PORT = int(NETWORK_PORTS["server_udp_data"])
-DEFAULT_UDP_CONTROL_PORT = int(NETWORK_PORTS["server_udp_control"])
 
 
 def _require_config_section(raw: object, section_name: str) -> JsonObject:
@@ -66,8 +56,10 @@ DEFAULT_CONFIG: JsonObject = {
     },
     "server": {"host": "0.0.0.0", "port": 80},
     "udp": {
-        "data_listen": f"0.0.0.0:{DEFAULT_UDP_DATA_PORT}",
-        "control_listen": f"0.0.0.0:{DEFAULT_UDP_CONTROL_PORT}",
+        "data_host": "0.0.0.0",
+        "data_port": 9000,
+        "control_host": "0.0.0.0",
+        "control_port": 9001,
         "data_queue_maxsize": 1024,
     },
     "processing": {
@@ -102,9 +94,6 @@ def documented_default_config() -> JsonObject:
 
 __all__ = [
     "DEFAULT_CONFIG",
-    "DEFAULT_UDP_CONTROL_PORT",
-    "DEFAULT_UDP_DATA_PORT",
-    "NETWORK_PORTS",
     "REPO_DIR",
     "SERVER_DIR",
     "VALID_24GHZ_CHANNELS",
@@ -137,19 +126,6 @@ _PROCESSING_POS_MIN: int = 1
 _MAX_BUFFER_SAMPLES: int = 524_288
 
 VALID_24GHZ_CHANNELS: frozenset[int] = frozenset(range(1, 15))  # 1-14
-
-
-def _split_host_port(value: str) -> tuple[str, int]:
-    host, sep, port = value.rpartition(":")
-    if sep == "":
-        raise ValueError(f"Expected HOST:PORT, got: {value!r}")
-    try:
-        port_int = int(port)
-    except ValueError:
-        raise ValueError(f"Invalid port number in {value!r}: {port!r} is not an integer") from None
-    if not (1 <= port_int <= 65535):
-        raise ValueError(f"Port number in {value!r} must be 1–65535, got {port_int}")
-    return host, port_int
 
 
 def _resolve_config_path(path_text: str, config_path: Path) -> Path:
@@ -391,8 +367,14 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     update_cfg = _require_config_section(merged.get("update", {}), "update")
     log_metrics = bool(logging_cfg["log_metrics"])
 
-    data_host, data_port = _split_host_port(str(udp_cfg["data_listen"]))
-    control_host, control_port = _split_host_port(str(udp_cfg["control_listen"]))
+    data_host = str(udp_cfg["data_host"])
+    data_port = _coerce_int(udp_cfg["data_port"], "udp.data_port")
+    if not 1 <= data_port <= 65535:
+        raise ValueError(f"udp.data_port must be 1-65535, got {data_port}")
+    control_host = str(udp_cfg["control_host"])
+    control_port = _coerce_int(udp_cfg["control_port"], "udp.control_port")
+    if not 1 <= control_port <= 65535:
+        raise ValueError(f"udp.control_port must be 1-65535, got {control_port}")
 
     accel_scale_raw = processing_cfg.get("accel_scale_g_per_lsb")
     accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, NUMERIC_TYPES) else None

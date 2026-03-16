@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Never, cast
+from typing import TYPE_CHECKING, Never
 
 from vibesensor.adapters.persistence.history_db import RunStatus
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.run_context import add_current_context_warnings, localize_warning_list
-from vibesensor.shared.types.backend_types import HistoryRunListEntryPayload, HistoryRunPayload
+from vibesensor.shared.types.backend_types import HistoryRunPayload
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.use_cases.history.helpers import (
     async_require_run,
@@ -32,11 +32,8 @@ class HistoryRunService:
         self._history_db = history_db
         self._settings_store = settings_store
 
-    async def list_runs(self) -> list[HistoryRunListEntryPayload]:
-        return cast(
-            "list[HistoryRunListEntryPayload]",
-            await asyncio.to_thread(self._history_db.list_runs),
-        )
+    async def list_runs(self) -> list[JsonObject]:
+        return await asyncio.to_thread(self._history_db.list_runs)
 
     async def get_run(self, run_id: str) -> HistoryRunPayload:
         run = await async_require_run(self._history_db, run_id)

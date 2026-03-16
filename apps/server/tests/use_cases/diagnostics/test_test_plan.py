@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from tests.test_support.findings import make_finding_payload
+from test_support.findings import make_finding_payload
+
 from vibesensor.domain import Finding
 from vibesensor.use_cases.diagnostics.findings import finalize_findings
 from vibesensor.use_cases.diagnostics.summary_builder import summarize_run_data

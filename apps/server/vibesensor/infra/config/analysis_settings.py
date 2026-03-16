@@ -1,7 +1,7 @@
-"""Analysis settings — defaults, validation, and thread-safe storage.
+"""Analysis settings — defaults, validation, and tire/wheel geometry helpers.
 
-Provides ``DEFAULT_ANALYSIS_SETTINGS``, ``sanitize_settings()``, tire/wheel
-geometry helpers, and ``AnalysisSettingsStore`` for runtime settings management.
+Provides ``DEFAULT_ANALYSIS_SETTINGS``, ``sanitize_settings()``, and tire/wheel
+geometry helpers.
 """
 
 from __future__ import annotations
@@ -10,7 +10,6 @@ __all__ = [
     "DEFAULT_ANALYSIS_SETTINGS",
     "NON_NEGATIVE_KEYS",
     "POSITIVE_REQUIRED_KEYS",
-    "AnalysisSettingsStore",
     "engine_rpm_from_wheel_hz",
     "sanitize_settings",
     "tire_circumference_m_from_spec",
@@ -21,7 +20,6 @@ __all__ = [
 import logging
 from collections.abc import Mapping
 from math import isfinite
-from threading import RLock
 
 from vibesensor.domain import TireSpec
 from vibesensor.shared.constants import KMH_TO_MPS, SECONDS_PER_MINUTE
@@ -196,38 +194,3 @@ def engine_rpm_from_wheel_hz(
         return None
     result = wheel_hz * final_drive_ratio * gear_ratio * SECONDS_PER_MINUTE
     return result if isfinite(result) else None
-
-
-class AnalysisSettingsStore:
-    """Thread-safe store for runtime analysis settings (tire specs, gear ratios, etc.)."""
-
-    def __init__(self) -> None:
-        """Initialise the store with default analysis settings."""
-        self._lock = RLock()
-        self._values: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
-
-    @staticmethod
-    def _sanitize(payload: dict[str, float]) -> dict[str, float]:
-        return sanitize_settings(payload)
-
-    def snapshot(self) -> dict[str, float]:
-        """Return a thread-safe snapshot copy of the current analysis settings."""
-        with self._lock:
-            return dict(self._values)
-
-    def update(self, payload: dict[str, float]) -> dict[str, float]:
-        """Merge *payload* into the store (after validation) and return the new snapshot."""
-        with self._lock:
-            sanitized = self._sanitize(payload)
-            changed = {
-                k: (self._values.get(k), v)
-                for k, v in sanitized.items()
-                if self._values.get(k) != v
-            }
-            if changed:
-                LOGGER.info(
-                    "Analysis settings updated: %s",
-                    ", ".join(f"{k}={old!r}→{new!r}" for k, (old, new) in changed.items()),
-                )
-            self._values.update(sanitized)
-            return dict(self._values)

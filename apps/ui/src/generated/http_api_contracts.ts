@@ -451,16 +451,16 @@ export interface components {
       /** Firmware Version */
       firmware_version: string;
       /** Frame Samples */
-      frame_samples: number;
+      frame_samples?: number;
       /** Frames Total */
       frames_total: number;
       /** Id */
       id: string;
       /** Last Reset Time */
-      last_reset_time: number | null;
+      last_reset_time?: number | null;
       /** Last Seen Age Ms */
       last_seen_age_ms: number | null;
-      latest_metrics: components["schemas"]["ClientMetrics"];
+      latest_metrics?: components["schemas"]["ClientMetrics"];
       /** Location Code */
       location_code: string;
       /** Mac Address */
@@ -468,7 +468,7 @@ export interface components {
       /** Name */
       name: string;
       /** Reset Count */
-      reset_count: number;
+      reset_count?: number;
       /** Sample Rate Hz */
       sample_rate_hz: number;
     };

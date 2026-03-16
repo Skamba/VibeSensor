@@ -66,7 +66,7 @@ Validation (always required)
 - Treat watcher exit `RESULT=NON_GREEN` as immediate action: inspect the latest failing run promptly, determine root cause, implement the smallest complete maintainable fix, push, and restart the watcher.
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - Test in this order: targeted tests first, then broader relevant suites.
-- CI-parity suite for fast iteration (non-containerized): `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
+- CI-parity suite for fast iteration: `make test-all` (`python3 tools/tests/run_ci_parallel.py`). Mirrors all CI jobs including Docker-backed e2e; use `--job` flags to run a subset without Docker.
 - Required pre-finalization CI gate: `act -W .github/workflows/ci.yml` runs the real GitHub workflow locally in Docker. All supported jobs must pass before finalizing any task. See `docs/testing.md` for known limitations and the optional wrapper at `tools/tests/run_ci_with_act.sh`.
 - Optional focused CI subset for faster loops: `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests`.
 - Run a single feature area: `pytest -q apps/server/tests/<module>/` (e.g., `tests/analysis/`, `tests/report/`).

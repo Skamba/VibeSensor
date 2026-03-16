@@ -12,8 +12,8 @@ missing direct unit tests that pin their contracts.
 from __future__ import annotations
 
 import pytest
+from test_support.findings import make_finding_payload
 
-from tests.test_support.findings import make_finding_payload
 from vibesensor.domain import Finding
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.finding import finding_from_payload

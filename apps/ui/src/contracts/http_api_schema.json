@@ -826,13 +826,9 @@
           "location_code",
           "firmware_version",
           "sample_rate_hz",
-          "frame_samples",
           "last_seen_age_ms",
           "frames_total",
-          "dropped_frames",
-          "latest_metrics",
-          "reset_count",
-          "last_reset_time"
+          "dropped_frames"
         ],
         "title": "ClientApiRow",
         "type": "object"

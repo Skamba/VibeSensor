@@ -42,11 +42,6 @@ class _FakeProcessor:
         return list(client_ids)
 
 
-class _FakeAnalysisSettings:
-    def snapshot(self) -> dict:
-        return {}
-
-
 def _make_logger(tmp_path: Path, history_db=None) -> RunRecorder:
     return RunRecorder(
         RunRecorderConfig(
@@ -59,7 +54,6 @@ def _make_logger(tmp_path: Path, history_db=None) -> RunRecorder:
         registry=_FakeRegistry(),
         gps_monitor=_FakeGPSMonitor(),
         processor=_FakeProcessor(),
-        analysis_settings=_FakeAnalysisSettings(),
         history_db=history_db,
     )
 

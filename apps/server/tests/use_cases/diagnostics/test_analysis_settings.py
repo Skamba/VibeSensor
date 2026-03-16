@@ -6,18 +6,12 @@ import pytest
 
 from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
-    AnalysisSettingsStore,
     engine_rpm_from_wheel_hz,
+    sanitize_settings,
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
     wheel_hz_from_speed_mps,
 )
-
-
-@pytest.fixture
-def store() -> AnalysisSettingsStore:
-    return AnalysisSettingsStore()
-
 
 # -- tire_circumference_m_from_spec -------------------------------------------
 
@@ -89,64 +83,90 @@ def test_wheel_hz_from_speed_mps_returns_none_for_non_finite_values() -> None:
     assert wheel_hz_from_speed_mps(20.0, inf) is None
 
 
-# -- AnalysisSettingsStore._sanitize ------------------------------------------
+# -- sanitize_settings --------------------------------------------------------
 
 
-def test_sanitize_rejects_negative_positive_required(store: AnalysisSettingsStore) -> None:
-    result = store._sanitize({"tire_width_mm": -1.0, "rim_in": 0.0})
+def test_sanitize_rejects_negative_positive_required() -> None:
+    result = sanitize_settings({"tire_width_mm": -1.0, "rim_in": 0.0})
     assert "tire_width_mm" not in result
     assert "rim_in" not in result
 
 
-def test_sanitize_rejects_negative_non_negative_field(store: AnalysisSettingsStore) -> None:
-    result = store._sanitize({"speed_uncertainty_pct": -0.1})
+def test_sanitize_rejects_negative_non_negative_field() -> None:
+    result = sanitize_settings({"speed_uncertainty_pct": -0.1})
     assert "speed_uncertainty_pct" not in result
 
 
-def test_sanitize_allows_zero_for_non_negative(store: AnalysisSettingsStore) -> None:
-    result = store._sanitize({"speed_uncertainty_pct": 0.0})
+def test_sanitize_allows_zero_for_non_negative() -> None:
+    result = sanitize_settings({"speed_uncertainty_pct": 0.0})
     assert result["speed_uncertainty_pct"] == 0.0
 
 
-def test_sanitize_ignores_unknown_keys(store: AnalysisSettingsStore) -> None:
-    result = store._sanitize({"unknown_field": 42.0})
+def test_sanitize_ignores_unknown_keys() -> None:
+    result = sanitize_settings({"unknown_field": 42.0})
     assert "unknown_field" not in result
 
 
-def test_sanitize_converts_to_float(store: AnalysisSettingsStore) -> None:
-    result = store._sanitize({"tire_width_mm": 285})
+def test_sanitize_converts_to_float() -> None:
+    result = sanitize_settings({"tire_width_mm": 285})
     assert isinstance(result["tire_width_mm"], float)
 
 
-def test_sanitize_rejects_non_finite_values(store: AnalysisSettingsStore) -> None:
-    result = store._sanitize({"tire_width_mm": nan, "rim_in": inf})
+def test_sanitize_rejects_non_finite_values() -> None:
+    result = sanitize_settings({"tire_width_mm": nan, "rim_in": inf})
     assert "tire_width_mm" not in result
     assert "rim_in" not in result
 
 
-# -- AnalysisSettingsStore snapshot / update ----------------------------------
+# -- SettingsStore analysis settings snapshot / update ------------------------
 
 
-def test_snapshot_returns_copy_of_defaults(store: AnalysisSettingsStore) -> None:
-    snap = store.snapshot()
+def test_snapshot_returns_copy_of_defaults(tmp_path) -> None:
+    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.infra.config.settings_store import SettingsStore
+
+    db = HistoryDB(tmp_path / "test.db")
+    store = SettingsStore(db=db)
+    snap = store.analysis_settings_snapshot()
     assert snap == DEFAULT_ANALYSIS_SETTINGS
     snap["tire_width_mm"] = 999.0
-    assert store.snapshot()["tire_width_mm"] == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
+    assert (
+        store.analysis_settings_snapshot()["tire_width_mm"]
+        == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
+    )
 
 
-def test_update_merges_valid_values(store: AnalysisSettingsStore) -> None:
-    result = store.update({"tire_width_mm": 225.0})
+def test_update_merges_valid_values(tmp_path) -> None:
+    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.infra.config.settings_store import SettingsStore
+
+    db = HistoryDB(tmp_path / "test.db")
+    store = SettingsStore(db=db)
+    initial = store.add_car({"name": "Test"})
+    store.set_active_car(initial["cars"][0]["id"])
+    store.update_active_car_aspects({"tire_width_mm": 225.0})
+    result = store.analysis_settings_snapshot()
     assert result["tire_width_mm"] == 225.0
     assert result["rim_in"] == DEFAULT_ANALYSIS_SETTINGS["rim_in"]
 
 
-def test_update_rejects_invalid_and_keeps_old(store: AnalysisSettingsStore) -> None:
-    store.update({"tire_width_mm": -5.0})
-    assert store.snapshot()["tire_width_mm"] == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
+def test_update_rejects_invalid_and_keeps_old(tmp_path) -> None:
+    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.infra.config.settings_store import SettingsStore
+
+    db = HistoryDB(tmp_path / "test.db")
+    store = SettingsStore(db=db)
+    initial = store.add_car({"name": "Test"})
+    store.set_active_car(initial["cars"][0]["id"])
+    store.update_active_car_aspects({"tire_width_mm": -5.0})
+    assert (
+        store.analysis_settings_snapshot()["tire_width_mm"]
+        == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
+    )
 
 
-def test_sanitize_clamps_absurd_values(store: AnalysisSettingsStore) -> None:
-    out = store._sanitize(
+def test_sanitize_clamps_absurd_values() -> None:
+    out = sanitize_settings(
         {
             "wheel_bandwidth_pct": 99999,
             "speed_uncertainty_pct": 99999,
@@ -158,8 +178,8 @@ def test_sanitize_clamps_absurd_values(store: AnalysisSettingsStore) -> None:
     assert out["min_abs_band_hz"] == 500.0
 
 
-def test_sanitize_keeps_normal_values_unchanged(store: AnalysisSettingsStore) -> None:
-    out = store._sanitize({"wheel_bandwidth_pct": 6.0, "speed_uncertainty_pct": 0.6})
+def test_sanitize_keeps_normal_values_unchanged() -> None:
+    out = sanitize_settings({"wheel_bandwidth_pct": 6.0, "speed_uncertainty_pct": 0.6})
     assert out["wheel_bandwidth_pct"] == 6.0
     assert out["speed_uncertainty_pct"] == 0.6
 
@@ -187,17 +207,16 @@ def test_sanitize_keeps_normal_values_unchanged(store: AnalysisSettingsStore) ->
     ],
 )
 def test_sanitize_clamps_out_of_range(
-    store: AnalysisSettingsStore,
     field: str,
     raw_value: float,
     clamped_value: float,
 ) -> None:
-    out = store._sanitize({field: raw_value})
+    out = sanitize_settings({field: raw_value})
     assert out[field] == clamped_value
 
 
-def test_sanitize_keeps_valid_tire_params_unchanged(store: AnalysisSettingsStore) -> None:
-    out = store._sanitize({"tire_width_mm": 225.0, "tire_aspect_pct": 45.0, "rim_in": 18.0})
+def test_sanitize_keeps_valid_tire_params_unchanged() -> None:
+    out = sanitize_settings({"tire_width_mm": 225.0, "tire_aspect_pct": 45.0, "rim_in": 18.0})
     assert out["tire_width_mm"] == 225.0
     assert out["tire_aspect_pct"] == 45.0
     assert out["rim_in"] == 18.0

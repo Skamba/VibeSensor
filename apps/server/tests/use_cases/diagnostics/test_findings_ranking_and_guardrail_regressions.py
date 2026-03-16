@@ -6,19 +6,16 @@ from __future__ import annotations
 - negligible confidence cap aligned with TIER_B_CEILING (0.40)
 - steady_speed uses AND (not OR) for stddev and range
 - HistoryDB.close() acquires lock
-- JSONL serialization rejects NaN
 - identify_client normalizes client_id
 - _suppress_engine_aliases cap raised to 5
 """
 
 
 import inspect
-from pathlib import Path
 
 import pytest
 
 from vibesensor.adapters.http.clients import create_client_routes
-from vibesensor.adapters.persistence.runlog import append_jsonl_records
 from vibesensor.use_cases.diagnostics.helpers import _speed_stats
 from vibesensor.use_cases.diagnostics.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
@@ -84,34 +81,6 @@ class TestHistoryDbCloseLocked:
             ).HistoryDB.close,
         )
         assert "self._lock" in source, "close() must use self._lock"
-
-
-class TestJsonlHandlesNan:
-    """Regression: JSONL serialization must handle NaN/Infinity gracefully.
-
-    Non-finite floats must be sanitised to JSON ``null`` so the output is
-    always valid JSON.  Bare NaN/Infinity (produced by allow_nan=True) are
-    invalid JSON and break downstream parsers.
-    """
-
-    @pytest.mark.parametrize(
-        "value",
-        [
-            pytest.param(float("nan"), id="nan"),
-            pytest.param(float("inf"), id="inf"),
-        ],
-    )
-    def test_non_finite_falls_back(self, tmp_path: Path, value: float) -> None:
-        out = tmp_path / "out.jsonl"
-        append_jsonl_records(path=out, records=[{"value": value}])
-        text = out.read_text()
-        # Must be valid JSON — json.loads raises ValueError for bare NaN/Infinity
-        import json as _json
-
-        parsed = _json.loads(text.strip())
-        assert parsed["value"] is None, (
-            f"Non-finite float must serialise as null, got {parsed['value']!r}"
-        )
 
 
 class TestIdentifyClientNormalized:

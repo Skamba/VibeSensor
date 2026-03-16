@@ -7,10 +7,11 @@ Tests
 - Mapping rule: if you change `vibesensor/<module>/`, the tests live in `tests/<module>/`.
 - Cross-cutting directories: `integration/` (scenarios and cross-cutting regressions), `hygiene/` (guards).
 - Shared helpers: `conftest.py` (fixtures, available to all subdirs), `_paths.py` (use `SERVER_ROOT`/`REPO_ROOT` instead of `Path(__file__).parents[N]`), and the focused `test_support/` modules for synthetic data generators and assertions.
+- Import style: use `from test_support.X import Y` (short form). The `tests/` directory is on `sys.path` via `testpaths` in `pyproject.toml`. Do not use `from tests.test_support` or manipulate `sys.path` for test imports.
 - Use `test_support/findings.py` factories (`make_finding_payload`, `make_ref_finding`, `make_info_finding`) for constructing finding dicts in tests. Do not create local finding factories in individual test files.
 - Test helper re-exports that only alias another module's symbol should be replaced with direct imports. Keep test helper modules for functions that add real logic.
 - Use `test_support/sample_scenarios.py` builders as the single source for synthetic sample/phase construction. Do not duplicate sample-generation logic in other helpers.
-- New tests: place in the matching `tests/<module>/` subdirectory; use `tests/integration/` for cross-cutting scenarios and multi-subsystem regressions.
+- New tests: place in the matching `tests/<module>/` subdirectory; use `tests/integration/` for cross-cutting scenarios and multi-subsystem regressions. Do not add new tests to existing large omnibus regression files — prefer a new focused test module in the matching feature-area directory.
 - When an intentional refactor changes function-level seams or helper boundaries, update or replace tightly coupled tests so they validate current behavior and contracts instead of preserving obsolete internals.
 - Do not use `inspect.getsource` or `ast.parse` on production code in tests. These create brittle source-string-matching assertions that break on any refactor. Instead, test the observable behavior: call the function with representative inputs and assert on outputs, side-effects, or raised exceptions.
 - Do not create local `FakeState` or fake runtime classes in individual test files. Use the shared `FakeState` from `conftest.py` and customise it via constructor arguments.

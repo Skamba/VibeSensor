@@ -26,10 +26,10 @@ from vibesensor.shared.constants import (
     SPEED_BIN_WIDTH_KMH,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.types.json_types import JsonValue
 from vibesensor.use_cases.diagnostics._types import (
     FindingPayload,
     I18nRef,
-    JsonValue,
     LocationHotspotPayload,
     MatchedPoint,
     MetadataDict,

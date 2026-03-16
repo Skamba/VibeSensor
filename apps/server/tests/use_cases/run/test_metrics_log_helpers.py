@@ -244,7 +244,7 @@ def test_finalize_refreshes_run_metadata_from_latest_settings(
     fake_history_db,
     mutable_fake_settings,
 ) -> None:
-    logger = make_logger(analysis_settings=mutable_fake_settings, history_db=fake_history_db)
+    logger = make_logger(settings_store=mutable_fake_settings, history_db=fake_history_db)
 
     logger.start_recording()
     snapshot = logger._session_snapshot()
@@ -587,6 +587,13 @@ def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
                     "final_drive_ratio": 3.15,
                     "current_gear_ratio": 0.81,
                 },
+            },
+            "analysis_settings_snapshot": lambda self: {
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+                "final_drive_ratio": 3.15,
+                "current_gear_ratio": 0.81,
             },
         },
     )()

@@ -9,8 +9,6 @@ from typing import Any
 import pytest
 
 from vibesensor.adapters.persistence.runlog import (
-    append_jsonl_records,
-    create_run_end_record,
     create_run_metadata,
 )
 from vibesensor.domain import LocationHotspot
@@ -373,8 +371,18 @@ def write_test_log(path: Path, n_samples: int = 20, speed: float = 85.0) -> None
         accel_scale_g_per_lsb=1.0 / 256.0,
     )
     samples = [analysis_sample(float(i) * 0.5, speed, 0.01 + i * 0.001) for i in range(n_samples)]
-    end = create_run_end_record("test-run", "2025-01-01T00:10:00+00:00")
-    append_jsonl_records(path, [metadata] + samples + [end])
+    end = {
+        "record_type": "run_end",
+        "schema_version": "v2-jsonl",
+        "run_id": "test-run",
+        "end_time_utc": "2025-01-01T00:10:00+00:00",
+    }
+    records = [metadata] + samples + [end]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "\n".join(json.dumps(r, ensure_ascii=False) for r in records) + "\n",
+        encoding="utf-8",
+    )
 
 
 def make_order_finding_samples(

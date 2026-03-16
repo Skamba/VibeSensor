@@ -12,9 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain.diagnostic_reasoning import Signature
-from vibesensor.domain.finding import Finding, VibrationSource
-from vibesensor.domain.finding_evidence import FindingEvidence
+from vibesensor.domain.finding import Finding, FindingEvidence, Signature, VibrationSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,

@@ -9,7 +9,6 @@ from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.app.settings import AppConfig
-from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
@@ -37,7 +36,6 @@ class RuntimeState:
     worker_pool: WorkerPool
     # settings
     settings_store: SettingsStore
-    analysis_settings: AnalysisSettingsStore
     gps_monitor: GPSSpeedMonitor
     # persistence
     history_db: HistoryDB

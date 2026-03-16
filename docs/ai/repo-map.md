@@ -18,7 +18,8 @@
 - `apps/server/`: backend package, configs, tests, scripts, systemd units, public UI assets, simulator, and config tooling.
 - `apps/ui/`: TypeScript/Vite dashboard and Playwright tests.
 - `firmware/esp/`: ESP32 firmware.
-- `vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`: shared vibration math and unit logic (inlined from former `libs/core/`).
+- `cli/`: CLI entry points — `server.py` (main server), `report.py` (report generation), `preflight.py` (config preflight), `hotspot_config.py` (hotspot config export for shell scripts), `http_api_schema_export.py`, `ws_schema_export.py`.
+- `vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`: shared vibration math and unit logic. Hot-path functions accept numpy arrays; scalar functions remain pure Python.
 - `infra/pi-image/pi-gen/`: Raspberry Pi image build pipeline.
 - `docs/`: human-facing docs plus AI repo maps and runbooks.
 
@@ -32,34 +33,30 @@
 - `adapters/udp/`, `adapters/gps/`, `adapters/simulator/`, `adapters/hotspot/`: UDP protocol transport, GPS speed ingestion, simulator tooling, and hotspot/AP operational adapters.
 - `infra/runtime/`: flat `RuntimeState`, lifecycle management, processing loop, health snapshots, and WebSocket broadcast coordination.
 - `infra/processing/`: signal processing pipeline (buffers, FFT, payload shaping, and processor facade).
-- `infra/config/`: runtime analysis/settings stores used by runtime wiring and recording flows.
+- `infra/config/`: runtime settings store (single `SettingsStore` owns both analysis and device settings) used by runtime wiring and recording flows.
 - `infra/workers/`: worker-pool infrastructure.
-- `use_cases/diagnostics/`: post-stop diagnostics pipeline. `findings.py` and `top_cause_selection.py` delegate classification and ranking to the domain `Finding`; `location_analysis.py` owns the location-analysis pipeline and `LocationAnalysisResult` typed return; `analysis_window.py` owns the `AnalysisWindow` dataclass; `_types.py` owns `PhaseEvidence`, `FindingPayload`, and `AnalysisSummary`.
+- `use_cases/diagnostics/`: post-stop diagnostics pipeline. `findings.py` and `top_cause_selection.py` delegate classification and ranking to the domain `Finding`; `location_analysis.py` owns the location-analysis pipeline and `LocationAnalysisResult` typed return; `_types.py` owns `PhaseEvidence`, `FindingPayload`, and `AnalysisSummary`. Cross-layer types are re-exported from the package `__init__.py` (`PeakTableRow`, `PHASE_I18N_KEYS`, strength labels, suitability types).
 - `use_cases/history/`: run query/delete, PDF report generation, CSV/ZIP exports, and history-facing helper orchestration above persistence.
 - `use_cases/run/`: recording pipeline orchestration; `logger.py` owns `RunRecorder`, `post_analysis.py` owns the background analysis queue, and `sample_builder.py` owns pure sample-building helpers.
 - `use_cases/updates/`: wheel-based updater workflow orchestration, firmware cache, ESP flashing, release discovery, install, rollback, runner, Wi-Fi, and status tracking.
 - `shared/`: cross-cutting typed payloads (`shared/types/`), boundary serializers/decoders (`shared/boundaries/`), exceptions (`shared/exceptions.py`), JSON helpers (`shared/json_utils.py`), location identifiers (`shared/locations.py`), and run-context helpers.
-- `domain/`: DDD-aligned domain model package. Each primary domain object
-  lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
-  SensorPlacement), `measurement.py` (Measurement, VibrationReading),
+- `domain/`: DDD-aligned domain model package. Primary domain objects
+  live under `vibesensor/domain/`; closely related value objects share
+  a file with their parent aggregate:
+  `car.py` (Car, TireSpec), `sensor.py` (Sensor, SensorPlacement),
   `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
-  `diagnostic_case.py` (DiagnosticCase aggregate), `diagnosis.py` (Diagnosis),
-  `diagnostic_reasoning.py` (DiagnosticReasoning, Observation, ObservationEvidence,
-  Signature, Hypothesis, HypothesisStatus + extraction/recognition/evaluation
-  service functions),
-  `run_capture.py` (RunCapture, RunSetup, ConfigurationSnapshot),
-  `symptom.py`,
+  `diagnostic_case.py` (DiagnosticCase aggregate, Symptom),
+  `run_capture.py` (RunCapture, RunSetup, ConfigurationSnapshot, Measurement, VibrationReading),
   `test_plan.py` (TestPlan, RecommendedAction + planning service functions),
   `driving_segment.py` (DrivingSegment, DrivingPhase),
   `vibration_origin.py`,
   `speed_source.py` (SpeedSource),
-  `finding.py` (FindingKind, VibrationSource, Finding),
-  `finding_evidence.py` (FindingEvidence),
+  `finding.py` (FindingKind, VibrationSource, Finding, FindingEvidence, Signature),
   `confidence_assessment.py` (ConfidenceAssessment),
   `location_hotspot.py` (LocationHotspot),
   `speed_profile.py` (SpeedProfile),
   `run_suitability.py` (RunSuitability, SuitabilityCheck),
-  `report.py` (Report), `run_status.py` (RunStatus, RUN_TRANSITIONS).
+  `run_status.py` (RunStatus, RUN_TRANSITIONS).
   Domain objects own
   classification, ranking, actionability, surfacing, lifecycle, and
   query logic; diagnostics use cases delegate to them. See

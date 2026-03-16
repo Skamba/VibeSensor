@@ -20,7 +20,6 @@ from vibesensor.infra.runtime.rotational_speeds import (
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
     from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
@@ -33,7 +32,6 @@ class WsBroadcastService:
     """WebSocket payload assembly: tick management and cached payload building."""
 
     __slots__ = (
-        "_analysis_settings",
         "_gps_monitor",
         "_processor",
         "_registry",
@@ -55,7 +53,6 @@ class WsBroadcastService:
         registry: ClientRegistry,
         processor: SignalProcessor,
         gps_monitor: GPSSpeedMonitor,
-        analysis_settings: AnalysisSettingsStore,
         settings_store: SettingsStore,
     ) -> None:
         self.tick = 0
@@ -68,7 +65,6 @@ class WsBroadcastService:
         self._registry = registry
         self._processor = processor
         self._gps_monitor = gps_monitor
-        self._analysis_settings = analysis_settings
         self._settings_store = settings_store
 
     def on_tick(self) -> None:
@@ -81,7 +77,7 @@ class WsBroadcastService:
         self.include_heavy = (self.tick % heavy_every) == 0
 
     def _build_shared_payload(self) -> LiveWsPayload:
-        clients = self._registry.ws_snapshot()
+        clients = self._registry.snapshot_for_api(include_metrics=False)
         client_ids = [c["id"] for c in clients]
         fresh_ids = self._processor.clients_with_recent_data(
             client_ids,
@@ -96,7 +92,7 @@ class WsBroadcastService:
             "speed_mps": speed_mps,
             "clients": clients,
         }
-        analysis_settings_snapshot = self._analysis_settings.snapshot()
+        analysis_settings_snapshot = self._settings_store.analysis_settings_snapshot()
         basis = rotational_basis_speed_source(
             self._settings_store,
             self._gps_monitor,

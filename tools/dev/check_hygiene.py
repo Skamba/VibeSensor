@@ -1,4 +1,4 @@
-"""Repository hygiene checks: line endings (LF-only) and path indirection detection."""
+"""Repository hygiene checks: line endings (LF-only), path indirection, and CI job sync."""
 
 from __future__ import annotations
 
@@ -81,6 +81,43 @@ def check_path_indirections() -> tuple[list[str], list[str]]:
     return pointer_files, python_path_hacks
 
 
+_CI_JOB_RE = re.compile(r"^  (\w[\w-]*):\s*$")
+_PARALLEL_JOB_RE = re.compile(r'"([^"]+)":\s*\[')
+
+
+def check_ci_job_sync() -> list[str]:
+    """Verify run_ci_parallel.py job names match ci.yml job names."""
+    ci_yml = ROOT / ".github" / "workflows" / "ci.yml"
+    parallel_py = ROOT / "tools" / "tests" / "run_ci_parallel.py"
+    errors: list[str] = []
+    if not ci_yml.exists() or not parallel_py.exists():
+        return errors
+
+    ci_jobs: set[str] = set()
+    in_jobs = False
+    for line in ci_yml.read_text().splitlines():
+        if line.rstrip() == "jobs:":
+            in_jobs = True
+            continue
+        if in_jobs:
+            m = _CI_JOB_RE.match(line)
+            if m:
+                ci_jobs.add(m.group(1))
+
+    parallel_jobs: set[str] = set()
+    py_text = parallel_py.read_text()
+    for m in _PARALLEL_JOB_RE.finditer(py_text):
+        parallel_jobs.add(m.group(1))
+
+    only_ci = ci_jobs - parallel_jobs
+    only_parallel = parallel_jobs - ci_jobs
+    if only_ci:
+        errors.append(f"CI jobs not mirrored in run_ci_parallel.py: {sorted(only_ci)}")
+    if only_parallel:
+        errors.append(f"run_ci_parallel.py jobs not in ci.yml: {sorted(only_parallel)}")
+    return errors
+
+
 def main() -> int:
     failures = 0
 
@@ -106,6 +143,15 @@ def main() -> int:
         failures += 1
     else:
         print("No path-indirection files or sys.path/PYTHONPATH hacks found.")
+
+    ci_sync_errors = check_ci_job_sync()
+    if ci_sync_errors:
+        print("CI job sync drift detected:")
+        for item in ci_sync_errors:
+            print(f"  - {item}")
+        failures += 1
+    else:
+        print("CI job names in sync between ci.yml and run_ci_parallel.py.")
 
     return 1 if failures else 0
 

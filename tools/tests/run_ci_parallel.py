@@ -115,7 +115,7 @@ def _bootstrap_steps(python_cmd: str, run_npm_ci: bool) -> list[Step]:
         ),
         Step(
             "python deps: editable install",
-            [python_cmd, "-m", "pip", "install", "-e", "./apps/server[dev,ocr]"],
+            [python_cmd, "-m", "pip", "install", "-e", "./apps/server[dev]"],
         ),
     ]
     if run_npm_ci:

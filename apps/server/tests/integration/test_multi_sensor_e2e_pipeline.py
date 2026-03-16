@@ -17,7 +17,6 @@ from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
-    AnalysisSettingsStore,
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
@@ -106,7 +105,6 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
         accel_scale_g_per_lsb=_ACCEL_SCALE,
     )
     gps_monitor = GPSSpeedMonitor(gps_enabled=False)
-    settings_store = AnalysisSettingsStore()
     logger = RunRecorder(
         RunRecorderConfig(
             enabled=False,
@@ -119,7 +117,6 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
         registry=registry,
         gps_monitor=gps_monitor,
         processor=processor,
-        analysis_settings=settings_store,
         history_db=history_db,
         language_provider=lambda: "en",
     )

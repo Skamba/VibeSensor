@@ -22,7 +22,7 @@ from vibesensor.adapters.udp.protocol import (
 )
 from vibesensor.adapters.udp.protocol import normalize_sensor_id as _normalize_client_id
 from vibesensor.infra.processing.models import ClientMetrics
-from vibesensor.shared.types.payload_types import ClientApiRow, WsClientRow
+from vibesensor.shared.types.payload_types import ClientApiRow
 
 if TYPE_CHECKING:
     from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -529,13 +529,18 @@ class ClientRegistry:
             record.last_ack_status = None
 
     @staticmethod
-    def _client_api_row(client_id: str, snapshot: ClientSnapshot) -> ClientApiRow:
+    def _client_api_row(
+        client_id: str,
+        snapshot: ClientSnapshot,
+        *,
+        include_metrics: bool = True,
+    ) -> ClientApiRow:
         """Build a single client row for the API snapshot.
 
         Centralises the dict shape so both connected and disconnected
         branches produce identical key sets.
         """
-        return {
+        row: ClientApiRow = {
             "id": client_id,
             "mac_address": client_id_mac(client_id),
             "name": snapshot.name,
@@ -543,18 +548,20 @@ class ClientRegistry:
             "location_code": snapshot.location_code,
             "firmware_version": snapshot.firmware_version,
             "sample_rate_hz": snapshot.sample_rate_hz,
-            "frame_samples": snapshot.frame_samples,
             "last_seen_age_ms": snapshot.last_seen_age_ms,
             "frames_total": snapshot.frames_total,
             "dropped_frames": snapshot.dropped_frames,
-            "latest_metrics": (
+        }
+        if include_metrics:
+            row["frame_samples"] = snapshot.frame_samples
+            row["latest_metrics"] = (
                 snapshot.latest_metrics
                 if snapshot.latest_metrics is not None
                 else cast("ClientMetrics", {})
-            ),
-            "reset_count": snapshot.reset_count,
-            "last_reset_time": snapshot.last_reset_time,
-        }
+            )
+            row["reset_count"] = snapshot.reset_count
+            row["last_reset_time"] = snapshot.last_reset_time
+        return row
 
     def snapshot_for_api(
         self,
@@ -562,6 +569,7 @@ class ClientRegistry:
         *,
         now_mono: float | None = None,
         metrics_by_client: dict[str, ClientMetrics] | None = None,
+        include_metrics: bool = True,
     ) -> list[ClientApiRow]:
         with self._lock:
             now_ts = self._resolve_now_wall(now)
@@ -578,6 +586,7 @@ class ClientRegistry:
                                 name=self._user_names.get(client_id, f"client-{client_id[-4:]}"),
                                 connected=False,
                             ),
+                            include_metrics=include_metrics,
                         ),
                     )
                     continue
@@ -609,59 +618,7 @@ class ClientRegistry:
                             reset_count=record.reset_count,
                             last_reset_time=record.last_reset_time,
                         ),
+                        include_metrics=include_metrics,
                     ),
-                )
-            return rows
-
-    def ws_snapshot(
-        self,
-        now: float | None = None,
-        *,
-        now_mono: float | None = None,
-    ) -> list[WsClientRow]:
-        """Lightweight snapshot for WebSocket broadcast (no metrics)."""
-        with self._lock:
-            now_ts = self._resolve_now_wall(now)
-            mono_now = self._resolve_now_mono(now_mono)
-            rows: list[WsClientRow] = []
-            all_client_ids = sorted(set(self._clients) | set(self._user_names))
-            for client_id in all_client_ids:
-                record = self._clients.get(client_id)
-                if record is None:
-                    rows.append(
-                        {
-                            "id": client_id,
-                            "name": self._user_names.get(client_id, f"client-{client_id[-4:]}"),
-                            "connected": False,
-                            "mac_address": client_id_mac(client_id),
-                            "location_code": "",
-                            "last_seen_age_ms": None,
-                            "dropped_frames": 0,
-                            "frames_total": 0,
-                            "sample_rate_hz": 0,
-                            "firmware_version": "",
-                        },
-                    )
-                    continue
-                age_ms = (
-                    int(max(0.0, now_ts - record.last_seen) * 1000) if record.last_seen else None
-                )
-                connected = bool(
-                    record.last_seen_mono
-                    and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds,
-                )
-                rows.append(
-                    {
-                        "id": record.client_id,
-                        "name": record.name,
-                        "connected": connected,
-                        "mac_address": client_id_mac(record.client_id),
-                        "location_code": record.location_code,
-                        "last_seen_age_ms": age_ms,
-                        "dropped_frames": record.frames_dropped,
-                        "frames_total": record.frames_total,
-                        "sample_rate_hz": record.sample_rate_hz,
-                        "firmware_version": record.firmware_version,
-                    },
                 )
             return rows

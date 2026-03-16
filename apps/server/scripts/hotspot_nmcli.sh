@@ -119,32 +119,7 @@ EOF
 trap 'rc=$?; failed_line=${BASH_LINENO[0]:-0}; failed_cmd=${BASH_COMMAND:-unknown}; echo "ERROR rc=${rc} line=${failed_line} cmd=${failed_cmd}"; dump_all error; write_summary FAILED "${rc}"; exit "${rc}"' ERR
 trap 'rc=$?; echo "EXIT rc=${rc}"' EXIT
 
-eval "$(
-python3 - "${CONFIG_PATH}" <<'PY'
-import pathlib
-import sys
-
-from vibesensor.app.settings import DEFAULT_CONFIG
-
-defaults = {k: v for k, v in DEFAULT_CONFIG["ap"].items() if k != "self_heal"}
-
-config_path = pathlib.Path(sys.argv[1])
-cfg = {}
-if config_path.exists():
-    try:
-        import yaml
-        raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-        if isinstance(raw, dict):
-            cfg = raw.get("ap", {}) or {}
-    except Exception:
-        cfg = {}
-
-ap = {**defaults, **cfg}
-for k, v in ap.items():
-    if not isinstance(v, dict):
-        print(f"{k.upper()}={v!r}")
-PY
-)"
+eval "$(vibesensor-hotspot-config "${CONFIG_PATH}")"
 
 CONFIGURED_IFNAME="${IFNAME}"
 DETECTED_IFNAME=""

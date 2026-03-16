@@ -8,7 +8,6 @@ from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.app.settings import AppConfig
-from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
@@ -68,11 +67,9 @@ def build_runtime(config: AppConfig) -> RuntimeState:
 
     # DB + settings
     history_db = create_history_db(config)
-    analysis_settings = AnalysisSettingsStore()
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
     settings_store = SettingsStore(
         db=history_db,
-        analysis_settings=analysis_settings,
         gps_monitor=gps_monitor,
     )
 
@@ -124,7 +121,6 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         registry=registry,
         processor=processor,
         gps_monitor=gps_monitor,
-        analysis_settings=analysis_settings,
         settings_store=settings_store,
     )
 
@@ -143,7 +139,6 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         registry=registry,
         gps_monitor=gps_monitor,
         processor=processor,
-        analysis_settings=analysis_settings,
         history_db=history_db,
         settings_store=settings_store,
         language_provider=lambda: settings_store.language,
@@ -171,7 +166,6 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         control_plane=control_plane,
         worker_pool=worker_pool,
         settings_store=settings_store,
-        analysis_settings=analysis_settings,
         gps_monitor=gps_monitor,
         history_db=history_db,
         run_service=run_service,

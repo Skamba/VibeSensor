@@ -25,9 +25,7 @@ __all__ = [
     "CarConfig",
     "CarConfigPayload",
     "CarConfigUpdatePayload",
-    "CarsPayload",
     "DEFAULT_CAR_ASPECTS",
-    "HistoryRunListEntryPayload",
     "HistoryRunPayload",
     "RUN_END_TYPE",
     "RUN_METADATA_TYPE",
@@ -70,11 +68,6 @@ class CarConfigPayload(TypedDict):
     variant: NotRequired[str]
 
 
-class CarsPayload(TypedDict):
-    cars: list[CarConfigPayload]
-    activeCarId: str | None
-
-
 class SensorConfigPayload(TypedDict):
     name: str
     location_code: str
@@ -110,21 +103,6 @@ class SettingsSnapshotPayload(SpeedSourcePayload):
     language: LanguageCode
     speedUnit: SpeedUnitCode
     sensorsByMac: SensorsByMacPayload
-
-
-class HistoryRunListEntryPayload(TypedDict, total=False):
-    """Typed record returned by :meth:`HistoryRunService.list_runs`.
-
-    Subset of :class:`HistoryRunPayload` without ``metadata``/``analysis``.
-    """
-
-    run_id: str
-    status: str
-    start_time_utc: str
-    end_time_utc: str | None
-    created_at: str
-    sample_count: int
-    error_message: str
 
 
 class HistoryRunPayload(TypedDict, total=False):

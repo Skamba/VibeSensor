@@ -101,17 +101,6 @@ class _FakeProcessor:
         return list(client_ids)
 
 
-class _FakeAnalysisSettings:
-    def snapshot(self) -> dict[str, float]:
-        return {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-            "final_drive_ratio": 3.08,
-            "current_gear_ratio": 0.64,
-        }
-
-
 def _make_logger(history_db, tmp_path: Path) -> RunRecorder:
     reg = _FakeRegistry()
     return RunRecorder(
@@ -125,7 +114,6 @@ def _make_logger(history_db, tmp_path: Path) -> RunRecorder:
         registry=reg,
         gps_monitor=_FakeGPSMonitor(),
         processor=_FakeProcessor(registry=reg),
-        analysis_settings=_FakeAnalysisSettings(),
         history_db=history_db,
     )
 

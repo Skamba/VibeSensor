@@ -18,7 +18,6 @@ import pytest
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
@@ -60,7 +59,6 @@ def _make_logger(tmp_path: Path, **overrides):
             fft_n=256,
             spectrum_max_hz=200,
         ),
-        "analysis_settings": AnalysisSettingsStore(),
         "history_db": db,
     }
     collab_defaults.update(overrides)
