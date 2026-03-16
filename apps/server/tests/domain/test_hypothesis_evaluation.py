@@ -1,9 +1,12 @@
 """Tests for hypothesis evaluation service."""
 
+from vibesensor.domain.diagnostic_reasoning import (
+    Hypothesis,
+    HypothesisStatus,
+    Signature,
+    evaluate_hypotheses,
+)
 from vibesensor.domain.finding import VibrationSource
-from vibesensor.domain.hypothesis import Hypothesis, HypothesisStatus
-from vibesensor.domain.services.hypothesis_evaluation import evaluate_hypotheses
-from vibesensor.domain.signature import Signature
 
 
 def _make_signature(key: str = "sig-test", score: float = 0.5) -> Signature:

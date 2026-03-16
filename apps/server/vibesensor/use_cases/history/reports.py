@@ -1,6 +1,6 @@
 """PDF report loading, language resolution, cache, and coordination.
 
-Framework-agnostic: raises domain exceptions from ``vibesensor.shared.errors.exceptions``
+Framework-agnostic: raises domain exceptions from ``vibesensor.shared.exceptions``
 rather than HTTP-specific exceptions.  The routes layer translates domain
 exceptions to HTTP status codes.
 """
@@ -11,19 +11,14 @@ import asyncio
 import json
 import logging
 from collections import OrderedDict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.boundaries._helpers import _has_structured_step_content
-from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
-from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
-from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
-from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
-from vibesensor.shared.errors.exceptions import AnalysisNotReadyError, ProcessingError
+from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
+from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
 from vibesensor.shared.types.backend_types import CarConfigPayload, HistoryRunPayload
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
@@ -109,23 +104,7 @@ class HistoryReportService:
             analysis,
             current_active_car_snapshot=current_active_car_snapshot,
         )
-        # Build TestRun once — used for both dict canonicalization and report mapping
-        domain_test_run = test_run_from_summary(analysis_summary)
-        projected: JsonObject = dict(analysis_summary)
-        projected["findings"] = [finding_payload_from_domain(f) for f in domain_test_run.findings]
-        projected["top_causes"] = [
-            finding_payload_from_domain(f) for f in domain_test_run.effective_top_causes()
-        ]
-        primary = domain_test_run.primary_finding
-        origin_fb = analysis_summary.get("most_likely_origin")
-        fb_payload = dict(origin_fb) if isinstance(origin_fb, Mapping) else {}
-        projected["most_likely_origin"] = (
-            origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
-        )
-        if not _has_structured_step_content(analysis_summary.get("test_plan")):
-            projected["test_plan"] = step_payloads_from_plan(domain_test_run.test_plan)
-        projected["run_suitability"] = run_suitability_payload(domain_test_run.suitability)
-        analysis_summary = projected
+        analysis_summary, domain_test_run = project_analysis_summary(analysis_summary)
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,

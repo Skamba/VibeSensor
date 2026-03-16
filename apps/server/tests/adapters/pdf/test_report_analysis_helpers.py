@@ -4,7 +4,7 @@ import pytest
 
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.constants import KMH_TO_MPS
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics.helpers import (
     MIN_ANALYSIS_FREQ_HZ,
     _corr_abs,

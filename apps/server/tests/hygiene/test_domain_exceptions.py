@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.errors.exceptions import (
+from vibesensor.shared.exceptions import (
     ConfigurationError,
     PersistenceError,
     ProcessingError,

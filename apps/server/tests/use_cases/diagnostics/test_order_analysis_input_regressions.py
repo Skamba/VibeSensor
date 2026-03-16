@@ -14,7 +14,7 @@ Covers:
 
 import pytest
 
-from vibesensor.shared.utils.json_utils import as_float_or_none
+from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.use_cases.diagnostics.order_analysis import _driveshaft_hz, _order_label
 
 # ------------------------------------------------------------------

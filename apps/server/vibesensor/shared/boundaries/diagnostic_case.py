@@ -1,30 +1,185 @@
-"""Domain <-> summary boundary conversions for diagnostic cases and runs."""
+"""Domain <-> summary boundary conversions for diagnostic cases and runs.
+
+Also includes boundary functions for run suitability and speed profile
+(formerly in separate modules).
+"""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import replace
 
 from vibesensor.domain.car import Car
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-from vibesensor.domain.configuration_snapshot import ConfigurationSnapshot
 from vibesensor.domain.diagnostic_case import DiagnosticCase
 from vibesensor.domain.diagnostic_reasoning import DiagnosticReasoning
-from vibesensor.domain.driving_phase import DrivingPhase
-from vibesensor.domain.driving_segment import DrivingSegment
+from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
 from vibesensor.domain.finding import Finding
-from vibesensor.domain.recommended_action import RecommendedAction
-from vibesensor.domain.run_capture import RunCapture
-from vibesensor.domain.run_setup import RunSetup
+from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture, RunSetup
+from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.sensor import Sensor
+from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.symptom import Symptom
-from vibesensor.domain.test_plan import TestPlan
+from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries._helpers import _as_float
-from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.boundaries.run_suitability import run_suitability_from_payload
-from vibesensor.shared.boundaries.speed_profile import speed_profile_from_stats
+from vibesensor.shared.boundaries.finding import (
+    _has_structured_step_content,
+    finding_from_payload,
+    finding_payload_from_domain,
+    step_payloads_from_plan,
+)
+from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
+from vibesensor.shared.types.json_types import JsonObject
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+
+def _as_float(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Run suitability (formerly run_suitability.py)
+# ---------------------------------------------------------------------------
+
+
+def run_suitability_from_payload(checks: Sequence[Mapping[str, object]]) -> RunSuitability:
+    """Decode persisted checklist payloads into the domain RunSuitability shape."""
+    domain_checks = tuple(
+        SuitabilityCheck(
+            check_key=str(c.get("check_key", c.get("check", ""))),
+            state=str(c.get("state", "pass")),
+        )
+        for c in checks
+        if isinstance(c, Mapping)
+    )
+    return RunSuitability(checks=domain_checks)
+
+
+def _payload_for_check(check: SuitabilityCheck) -> dict[str, object]:
+    return {
+        "check": check.check_key,
+        "check_key": check.check_key,
+        "state": check.state,
+        "explanation": check.explanation_i18n_ref(),
+    }
+
+
+def run_suitability_payload(
+    suitability: RunSuitability | None,
+) -> list[dict[str, object]]:
+    """Project a domain RunSuitability into the persisted checklist payload shape."""
+    if suitability is None:
+        return []
+    return [_payload_for_check(check) for check in suitability.checks]
+
+
+# ---------------------------------------------------------------------------
+# Analysis summary projection (shared by history services)
+# ---------------------------------------------------------------------------
+
+
+def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]:
+    """Round-trip an analysis dict through the domain model.
+
+    Returns ``(projected, test_run)`` where *projected* is a shallow copy of
+    *analysis* with findings, top causes, origin, test plan, and suitability
+    re-serialised from the domain ``TestRun``.
+    """
+    test_run = test_run_from_summary(analysis)
+    projected: JsonObject = dict(analysis)
+    projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
+    projected["top_causes"] = [
+        finding_payload_from_domain(f) for f in test_run.effective_top_causes()
+    ]
+    primary = test_run.primary_finding
+    origin_fb = analysis.get("most_likely_origin")
+    fb_payload = dict(origin_fb) if isinstance(origin_fb, Mapping) else {}
+    projected["most_likely_origin"] = (
+        origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
+    )
+    if not _has_structured_step_content(analysis.get("test_plan")):
+        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
+    projected["run_suitability"] = run_suitability_payload(test_run.suitability)
+    return projected, test_run
+
+
+# ---------------------------------------------------------------------------
+# Speed profile (formerly speed_profile.py)
+# ---------------------------------------------------------------------------
+
+
+def speed_profile_from_stats(
+    speed_stats: Mapping[str, object],
+    phase_summary: Mapping[str, object] | None = None,
+) -> SpeedProfile:
+    """Construct a ``SpeedProfile`` from speed-stats and phase-summary dicts."""
+    ps: Mapping[str, object] = phase_summary or {}
+
+    def _f(d: Mapping[str, object], key: str, default: float = 0.0) -> float:
+        raw = d.get(key)
+        if raw is not None:
+            try:
+                return float(raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                pass
+        return default
+
+    def _fraction(d: Mapping[str, object], key: str, *, phase_key: str | None = None) -> float:
+        raw = d.get(key)
+        if raw is None and phase_key is not None:
+            phase_pcts = d.get("phase_pcts")
+            if isinstance(phase_pcts, Mapping):
+                raw = phase_pcts.get(phase_key)
+        if raw is None:
+            return 0.0
+        try:
+            pct = float(raw) / 100.0  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return 0.0
+        return min(1.0, max(0.0, pct))
+
+    def _flag(d: Mapping[str, object], key: str, *, phase_key: str | None = None) -> bool:
+        raw = d.get(key)
+        if raw is not None:
+            return bool(raw)
+        if phase_key is None:
+            return False
+        phase_counts = d.get("phase_counts")
+        if not isinstance(phase_counts, Mapping):
+            return False
+        return _f(phase_counts, phase_key, 0.0) > 0.0
+
+    return SpeedProfile(
+        min_kmh=_f(speed_stats, "min_kmh"),
+        max_kmh=_f(speed_stats, "max_kmh"),
+        mean_kmh=_f(speed_stats, "mean_kmh"),
+        stddev_kmh=_f(speed_stats, "stddev_kmh"),
+        steady_speed=bool(speed_stats.get("steady_speed", False)),
+        has_cruise=_flag(ps, "has_cruise", phase_key="cruise"),
+        has_acceleration=_flag(ps, "has_acceleration", phase_key="acceleration"),
+        cruise_fraction=_fraction(ps, "cruise_pct", phase_key="cruise"),
+        idle_fraction=_fraction(ps, "idle_pct", phase_key="idle"),
+        speed_unknown_fraction=_fraction(
+            ps,
+            "speed_unknown_pct",
+            phase_key="speed_unknown",
+        ),
+        sample_count=int(_f(speed_stats, "sample_count", 0)),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Diagnostic case / test run reconstruction
+# ---------------------------------------------------------------------------
 
 
 def _actions_from_steps(steps: object) -> tuple[RecommendedAction, ...]:

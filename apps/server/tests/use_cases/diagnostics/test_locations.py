@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from vibesensor.shared.ids.locations import LOCATION_OPTIONS, all_locations, label_for_code
+from vibesensor.shared.locations import LOCATION_OPTIONS, all_locations, label_for_code
 
 
 def test_location_options_are_unique_and_short() -> None:

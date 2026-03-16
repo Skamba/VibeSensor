@@ -18,7 +18,7 @@ from vibesensor.adapters.persistence.runlog import (
     read_jsonl_run,
     utc_now_iso,
 )
-from vibesensor.shared.utils.json_utils import as_float_or_none, as_int_or_none
+from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 
 # -- Helpers -------------------------------------------------------------------
 

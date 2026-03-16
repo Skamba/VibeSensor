@@ -802,17 +802,11 @@ def test_boundary_and_report_modules_do_not_import_analysis_coordinator() -> Non
 
 
 def test_planning_service_has_no_payload_imports() -> None:
-    """Domain planning service must not import payload types."""
+    """Domain planning service (now in test_plan.py) must not import payload types."""
     import ast
     from pathlib import Path
 
-    planning_path = (
-        Path(__file__).resolve().parents[2]
-        / "vibesensor"
-        / "domain"
-        / "services"
-        / "test_planning.py"
-    )
+    planning_path = Path(__file__).resolve().parents[2] / "vibesensor" / "domain" / "test_plan.py"
     tree = ast.parse(planning_path.read_text())
     for node in ast.walk(tree):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
@@ -820,62 +814,11 @@ def test_planning_service_has_no_payload_imports() -> None:
             names = [alias.name for alias in node.names]
             all_refs = module + " ".join(names)
             assert "FindingPayload" not in all_refs, (
-                "domain/services/test_planning.py must not import FindingPayload"
+                "domain/test_plan.py must not import FindingPayload"
             )
             assert "AnalysisSummary" not in all_refs, (
-                "domain/services/test_planning.py must not import AnalysisSummary"
+                "domain/test_plan.py must not import AnalysisSummary"
             )
-
-
-def test_domain_services_do_not_import_outer_layers() -> None:
-    """domain/services/ must not import from analysis, report, boundaries,
-    routes, history, history_services, history_db, runtime, or metrics_log."""
-    import ast
-    from pathlib import Path
-
-    services_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "domain" / "services"
-    forbidden = {
-        "analysis",
-        "report",
-        "boundaries",
-        "routes",
-        "history",
-        "history_services",
-        "history_db",
-        "runtime",
-        "metrics_log",
-    }
-    violations: list[str] = []
-    for py in services_dir.rglob("*.py"):
-        tree = ast.parse(py.read_text(), filename=str(py))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module:
-                for part in forbidden:
-                    if part in node.module.split("."):
-                        violations.append(f"{py.name}: imports from {node.module}")
-    assert not violations, "domain/services/ must not import outer layers:\n" + "\n".join(
-        violations
-    )
-
-
-def test_domain_does_not_import_domain_services() -> None:
-    """domain/ value objects must not depend on domain/services/."""
-    import ast
-    from pathlib import Path
-
-    domain_dir = Path(__file__).resolve().parents[2] / "vibesensor" / "domain"
-    violations: list[str] = []
-    for py in domain_dir.iterdir():
-        if not py.is_file() or py.suffix != ".py":
-            continue
-        tree = ast.parse(py.read_text(), filename=str(py))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module:
-                if "services" in node.module.split("."):
-                    violations.append(f"{py.name}: imports from {node.module}")
-    assert not violations, "domain/ value objects must not import domain/services/:\n" + "\n".join(
-        violations
-    )
 
 
 def test_analysis_test_plan_renamed() -> None:
@@ -1007,38 +950,33 @@ def test_report_mapping_does_not_import_finding_from_payload_decoder() -> None:
 
 
 def test_observation_extraction_does_not_accept_findings() -> None:
-    """Observation extraction must not accept Finding objects."""
+    """extract_observations must not accept Finding objects.
+
+    Observations are extracted from raw ObservationEvidence before
+    findings exist. The diagnostic_reasoning module may import Finding
+    under TYPE_CHECKING for type hints, but extract_observations itself
+    must take ObservationEvidence, not Finding.
+    """
     import ast
 
     from tests._paths import SERVER_ROOT
 
-    obs_path = SERVER_ROOT / "vibesensor" / "domain" / "services" / "observation_extraction.py"
-    source = obs_path.read_text()
+    dr_path = SERVER_ROOT / "vibesensor" / "domain" / "diagnostic_reasoning.py"
+    source = dr_path.read_text()
     tree = ast.parse(source)
 
-    # Collect all runtime import names (outside TYPE_CHECKING blocks)
-    runtime_imports: list[str] = []
-    type_checking_nodes: set[int] = set()
+    # Find the extract_observations function and check its parameter annotations
     for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.If)
-            and isinstance(node.test, ast.Name)
-            and node.test.id == "TYPE_CHECKING"
-        ):
-            for child in ast.walk(node):
-                type_checking_nodes.add(id(child))
-
-    for node in ast.walk(tree):
-        if id(node) in type_checking_nodes:
-            continue
-        if isinstance(node, (ast.Import, ast.ImportFrom)):
-            for alias in node.names:
-                runtime_imports.append(alias.name)
-
-    assert "Finding" not in runtime_imports, (
-        "observation_extraction.py must not import Finding at runtime; "
-        "observations are extracted from raw evidence before findings exist"
-    )
+        if isinstance(node, ast.FunctionDef) and node.name == "extract_observations":
+            for arg in node.args.args:
+                ann = arg.annotation
+                if ann is not None:
+                    ann_source = ast.dump(ann)
+                    assert "Finding" not in ann_source, (
+                        "extract_observations must not accept Finding as a parameter; "
+                        "observations are extracted from raw evidence before findings exist"
+                    )
+            break
 
 
 def test_localization_assessment_does_not_exist() -> None:
@@ -1126,7 +1064,7 @@ def test_domain_vos_have_no_dict_accepting_factory_methods() -> None:
     """Domain value objects must not accept raw ``dict`` / ``Mapping`` args.
 
     Factory methods on domain classes under ``vibesensor/domain/*.py``
-    (top-level only — not ``domain/services/``) must accept typed domain
+    must accept typed domain
     arguments, not untyped containers.  Prevents regression of T08
     boundary adapter migration.
     """

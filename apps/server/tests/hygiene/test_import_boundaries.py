@@ -50,7 +50,7 @@ def test_history_services_do_not_import_httpexception() -> None:
     """Service-layer modules must not import FastAPI's HTTPException.
 
     Only HTTP adapter modules should import or raise HTTPException.
-    Domain exceptions from ``vibesensor.shared.errors.exceptions`` should be used instead,
+    Domain exceptions from ``vibesensor.shared.exceptions`` should be used instead,
     and the ``adapters/http/_helpers.py::domain_errors_to_http()`` context manager
     translates them at the route boundary.
     """

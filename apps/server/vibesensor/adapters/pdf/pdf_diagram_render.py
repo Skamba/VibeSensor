@@ -16,7 +16,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     REPORT_COLORS,
 )
 from vibesensor.domain import VibrationSource
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 
 if TYPE_CHECKING:
     from collections.abc import Callable

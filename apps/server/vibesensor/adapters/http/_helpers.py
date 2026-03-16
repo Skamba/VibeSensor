@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from fastapi import HTTPException
 
 from vibesensor.adapters.udp.protocol import normalize_sensor_id
-from vibesensor.shared.errors.exceptions import (
+from vibesensor.shared.exceptions import (
     AnalysisNotReadyError,
     DataCorruptError,
     ProcessingError,

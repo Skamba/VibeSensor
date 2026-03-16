@@ -11,8 +11,8 @@ from vibesensor.infra.config.analysis_settings import (
     tire_circumference_m_from_spec,
 )
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics import i18n_ref
 
 ANALYSIS_SETTINGS_SNAPSHOT_KEYS: tuple[str, ...] = tuple(DEFAULT_ANALYSIS_SETTINGS.keys())

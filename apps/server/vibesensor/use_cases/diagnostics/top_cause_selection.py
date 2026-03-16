@@ -13,7 +13,7 @@ from collections import defaultdict
 from dataclasses import replace as _dc_replace
 
 from vibesensor.domain import Finding
-from vibesensor.domain.signature import Signature
+from vibesensor.domain.diagnostic_reasoning import Signature
 
 # ---------------------------------------------------------------------------
 # Source grouping (domain-first)
