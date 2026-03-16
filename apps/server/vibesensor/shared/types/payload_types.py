@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import NotRequired, TypeAlias, TypedDict
+from typing import TypeAlias
+
+from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics

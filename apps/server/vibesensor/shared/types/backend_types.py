@@ -8,7 +8,9 @@ import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final, Literal, NotRequired, TypeAlias, TypedDict
+from typing import TYPE_CHECKING, Final, Literal, TypeAlias
+
+from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 from vibesensor.domain.speed_source import SpeedSourceKind as SpeedSourceKind
 from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
