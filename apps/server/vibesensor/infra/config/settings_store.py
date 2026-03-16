@@ -36,7 +36,6 @@ from vibesensor.shared.types.backend_types import (
     CarConfig,
     CarConfigPayload,
     CarConfigUpdatePayload,
-    CarsPayload,
     LanguageCode,
     SensorConfig,
     SensorConfigUpdatePayload,
@@ -258,7 +257,7 @@ class SettingsStore:
 
     # -- car operations --------------------------------------------------------
 
-    def get_cars(self) -> CarsPayload:
+    def get_cars(self) -> dict[str, object]:
         with self._lock:
             return {
                 "cars": [c.to_dict() for c in self._cars],
@@ -289,7 +288,7 @@ class SettingsStore:
             return None
         return next((c for c in self._cars if c.id == car_id), None)
 
-    def set_active_car(self, car_id: str) -> CarsPayload:
+    def set_active_car(self, car_id: str) -> dict[str, object]:
         with self._lock:
             car = self._find_car(car_id)
             if car is None:
@@ -304,7 +303,7 @@ class SettingsStore:
             self._sync_analysis_settings()
             return self.get_cars()
 
-    def add_car(self, car_data: CarConfigUpdatePayload) -> CarsPayload:
+    def add_car(self, car_data: CarConfigUpdatePayload) -> dict[str, object]:
         with self._lock:
             payload: dict[str, object] = dict(car_data)
             payload["id"] = new_car_id()
@@ -318,7 +317,7 @@ class SettingsStore:
             self._sync_analysis_settings()
             return self.get_cars()
 
-    def update_car(self, car_id: str, car_data: CarConfigUpdatePayload) -> CarsPayload:
+    def update_car(self, car_id: str, car_data: CarConfigUpdatePayload) -> dict[str, object]:
         with self._lock:
             car = self._find_car(car_id)
             if car is None:
@@ -374,7 +373,7 @@ class SettingsStore:
             self._sync_analysis_settings()
             return dict(car.aspects)
 
-    def delete_car(self, car_id: str) -> CarsPayload:
+    def delete_car(self, car_id: str) -> dict[str, object]:
         with self._lock:
             car = self._find_car(car_id)
             if car is None:

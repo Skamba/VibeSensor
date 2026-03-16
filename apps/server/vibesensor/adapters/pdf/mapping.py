@@ -32,17 +32,15 @@ from vibesensor.shared.boundaries.vibration_origin import (
     origin_payload_from_finding,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.use_cases.diagnostics._types import (
+from vibesensor.shared.types.json_types import JsonValue
+from vibesensor.use_cases.diagnostics import (
+    PHASE_I18N_KEYS,
     IntensityRow,
-    JsonValue,
     MetadataDict,
+    PeakTableRow,
     RunSuitabilityCheck,
     SpeedStats,
     TestStep,
-)
-from vibesensor.use_cases.diagnostics.helpers import PHASE_I18N_KEYS
-from vibesensor.use_cases.diagnostics.plots import PeakTableRow
-from vibesensor.use_cases.diagnostics.strength_labels import (
     certainty_tier,
     strength_label,
     strength_text,

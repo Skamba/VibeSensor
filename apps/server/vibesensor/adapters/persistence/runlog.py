@@ -1,6 +1,6 @@
-"""Run-log I/O — reading, writing, and normalising JSONL run files.
+"""Run-log I/O — reading and normalising JSONL run files.
 
-Provides helpers for creating and reading metric run files in JSONL format,
+Provides helpers for reading metric run files in JSONL format,
 plus normalisation helpers for canonical field name handling.
 ``utc_now_iso()`` is canonically defined in this module.
 """
@@ -9,50 +9,27 @@ from __future__ import annotations
 
 import json
 import logging
-import math
-import os
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TypedDict
 
 from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.shared.types.backend_types import (
     RUN_END_TYPE,
     RUN_METADATA_TYPE,
     RUN_SAMPLE_TYPE,
-    RUN_SCHEMA_VERSION,
     RunMetadata,
 )
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.shared.types.json_types import JsonObject
 
 LOGGER = logging.getLogger(__name__)
 
-_JSONL_SEPARATORS = (",", ":")
-
-
-def _sanitize_non_finite(obj: JsonValue) -> JsonValue:
-    """Recursively replace NaN/Inf floats with ``None`` for valid JSON output."""
-    if isinstance(obj, float) and not math.isfinite(obj):
-        return None
-    if isinstance(obj, dict):
-        return {k: _sanitize_non_finite(v) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_sanitize_non_finite(v) for v in obj]
-    return obj
-
-
 __all__ = [
-    "RUN_END_TYPE",
     "RUN_METADATA_TYPE",
     "RUN_SAMPLE_TYPE",
-    "RUN_SCHEMA_VERSION",
     "RunData",
-    "RunEndRecord",
-    "append_jsonl_records",
     "bounded_sample",
-    "create_run_end_record",
     "create_run_metadata",
     "normalize_sample_record",
     "parse_iso8601",
@@ -68,15 +45,6 @@ class RunData:
     metadata: JsonObject
     samples: list[JsonObject]
     source_path: Path
-
-
-class RunEndRecord(TypedDict):
-    """Shape of a RUN_END record written to JSONL run logs."""
-
-    record_type: str
-    schema_version: str
-    run_id: str
-    end_time_utc: str
 
 
 def utc_now_iso() -> str:
@@ -124,16 +92,6 @@ def create_run_metadata(
         end_time_utc=end_time_utc,
         incomplete_for_order_analysis=incomplete_for_order_analysis,
     ).to_dict()
-
-
-def create_run_end_record(run_id: str, end_time_utc: str | None = None) -> RunEndRecord:
-    """Build a RUN_END record dict to mark the end of a run in the log."""
-    return RunEndRecord(
-        record_type=RUN_END_TYPE,
-        schema_version=RUN_SCHEMA_VERSION,
-        run_id=run_id,
-        end_time_utc=end_time_utc or utc_now_iso(),
-    )
 
 
 def normalize_sample_record(record: JsonObject) -> JsonObject:
@@ -191,60 +149,6 @@ def bounded_sample(
     if len(kept) > max_items:
         kept = kept[:max_items]
     return kept, total, stride
-
-
-def append_jsonl_records(
-    path: Path,
-    records: Iterable[JsonObject],
-    *,
-    durable: bool = False,
-    durable_every_records: int = 100,
-) -> None:
-    """Append *records* as JSONL lines to *path*, optionally with fsync durability."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    cadence = max(1, int(durable_every_records))
-    _dumps = json.dumps
-    _seps = _JSONL_SEPARATORS
-    with path.open("a", encoding="utf-8") as f:
-        for index, record in enumerate(records, start=1):
-            try:
-                line = _dumps(record, ensure_ascii=False, allow_nan=False, separators=_seps)
-            except ValueError:
-                # NaN/Inf values — sanitize to null so the output is always
-                # valid JSON and downstream consumers can parse it safely.
-                LOGGER.warning(
-                    "Record %d contains non-finite float; sanitising NaN/Inf to null",
-                    index,
-                )
-                line = _dumps(
-                    _sanitize_non_finite(record),
-                    ensure_ascii=False,
-                    allow_nan=False,
-                    separators=_seps,
-                )
-            except TypeError as exc:
-                # Non-serialisable value (datetime, bytes, set, …). Coerce
-                # to string representation so we never silently drop a
-                # record mid-batch or leave a partial trailing line.
-                LOGGER.warning(
-                    "Record %d contains non-serialisable value (%s); using default fallback",
-                    index,
-                    exc,
-                )
-                line = _dumps(
-                    _sanitize_non_finite(record),
-                    ensure_ascii=False,
-                    allow_nan=False,
-                    separators=_seps,
-                    default=str,
-                )
-            f.write(line + "\n")
-            if durable and (index % cadence) == 0:
-                f.flush()
-                os.fsync(f.fileno())
-        if durable:
-            f.flush()
-            os.fsync(f.fileno())
 
 
 def read_jsonl_run(path: Path) -> RunData:

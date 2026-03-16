@@ -16,7 +16,6 @@ import numpy as np
 from vibesensor.shared.exceptions import (
     ProtocolError as ProtocolError,  # re-export for consumers
 )
-from vibesensor.shared.types.backend_types import RUN_SAMPLE_TYPE, RUN_SCHEMA_VERSION
 
 LOGGER = logging.getLogger(__name__)
 
@@ -466,8 +465,6 @@ class SensorFrame:
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "record_type": RUN_SAMPLE_TYPE,
-            "schema_version": RUN_SCHEMA_VERSION,
             "run_id": self.run_id,
             "timestamp_utc": self.timestamp_utc,
             "t_s": self.t_s,

@@ -2,7 +2,7 @@
 
 The same sample field set is defined independently in:
 - Schema DDL (``_schema.py`` ``samples_v2`` table)
-- Insertion columns (``_samples.py`` ``_V2_TYPED_COLS + _V2_PEAK_COLS``)
+- Insertion columns (``_samples.py`` ``_V2_COLUMNS``)
 - Domain model (``domain_models.py`` ``SensorFrame``)
 - CSV export (``exports.py`` ``EXPORT_CSV_COLUMNS``)
 
@@ -15,14 +15,13 @@ from __future__ import annotations
 
 import dataclasses
 
-from vibesensor.adapters.persistence.history_db._samples import _V2_PEAK_COLS, _V2_TYPED_COLS
+from vibesensor.adapters.persistence.history_db._samples import _V2_COLUMNS
 from vibesensor.adapters.persistence.history_db._schema import SCHEMA_SQL
 from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.use_cases.history.exports import EXPORT_CSV_COLUMNS
 
 # Known source-specific columns that are intentionally absent from other sources.
 _DDL_ONLY = {"id"}  # autoincrement PK
-_DOMAIN_ONLY = {"record_type", "schema_version"}  # runtime metadata
 _EXPORT_ONLY = {"extras"}  # synthetic overflow column
 
 
@@ -51,8 +50,8 @@ def _ddl_columns() -> list[str]:
 
 
 def _insert_columns() -> list[str]:
-    """Column names used for insertion (typed + peak cols)."""
-    return list(_V2_TYPED_COLS) + list(_V2_PEAK_COLS)
+    """Column names used for insertion."""
+    return list(_V2_COLUMNS)
 
 
 def _domain_fields() -> list[str]:
@@ -71,7 +70,7 @@ class TestSampleColumnAlignment:
 
     def test_domain_fields_cover_ddl(self) -> None:
         ddl = set(_ddl_columns()) - _DDL_ONLY
-        domain = set(_domain_fields()) - _DOMAIN_ONLY
+        domain = set(_domain_fields())
         missing_from_domain = ddl - domain
         assert not missing_from_domain, (
             f"DDL columns missing from SensorFrame: {missing_from_domain}"
@@ -87,10 +86,10 @@ class TestSampleColumnAlignment:
 
     def test_no_unexpected_extras_in_domain(self) -> None:
         ddl = set(_ddl_columns()) - _DDL_ONLY
-        domain = set(_domain_fields()) - _DOMAIN_ONLY
+        domain = set(_domain_fields())
         unexpected = domain - ddl
         assert not unexpected, (
-            f"SensorFrame has fields not in DDL (add to _DOMAIN_ONLY if intentional): {unexpected}"
+            f"SensorFrame has fields not in DDL (add to _DDL_ONLY or fix): {unexpected}"
         )
 
     def test_no_unexpected_extras_in_export(self) -> None:

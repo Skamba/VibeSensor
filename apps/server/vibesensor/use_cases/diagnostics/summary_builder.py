@@ -43,15 +43,13 @@ from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrig
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.run_context import build_summary_warnings, order_reference_context_complete
-from vibesensor.shared.types.json_types import is_json_object
+from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     AnalysisSummary,
     FindingPayload,
     I18nRef,
     IntensityRow,
-    JsonObject,
-    JsonValue,
     MetadataDict,
     PhaseSegmentSummary,
     PhaseSpeedBreakdownRow,
