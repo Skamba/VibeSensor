@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
+from vibesensor.shared.boundaries.diagnostic_case import (
+    test_run_from_summary as _reconstruct,
+)
 
 
 def _minimal_summary(
@@ -27,7 +29,7 @@ class TestHasReferenceGapsReconstruction:
                 {"check_key": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS", "state": "warn"},
             ],
         )
-        test_run = test_run_from_summary(summary)
+        test_run = _reconstruct(summary)
         assert test_run.suitability is not None
         assert test_run.suitability.has_reference_gaps
 
@@ -38,14 +40,14 @@ class TestHasReferenceGapsReconstruction:
                 {"check_key": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS", "state": "pass"},
             ],
         )
-        test_run = test_run_from_summary(summary)
+        test_run = _reconstruct(summary)
         assert test_run.suitability is not None
         assert not test_run.suitability.has_reference_gaps
 
     def test_no_suitability_payload_no_gap(self) -> None:
         """Missing suitability payload must NOT flag gaps."""
         summary = _minimal_summary()
-        test_run = test_run_from_summary(summary)
+        test_run = _reconstruct(summary)
         # suitability may be None; either way no gap
         if test_run.suitability is not None:
             assert not test_run.suitability.has_reference_gaps
