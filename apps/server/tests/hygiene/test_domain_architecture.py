@@ -1482,3 +1482,57 @@ def test_canonical_domain_graph_relationships() -> None:
         TestRun,
     ):
         assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
+
+
+def test_finding_is_run_scoped() -> None:
+    """Finding must not reference cross-run or case-level concepts directly."""
+    import dataclasses
+
+    from vibesensor.domain import Finding
+
+    field_names = {f.name for f in dataclasses.fields(Finding)}
+    # Finding is run-scoped: it must not hold case_id, diagnosis, or
+    # cross-run aggregation fields.
+    cross_run_indicators = {"case_id", "diagnosis", "diagnoses", "test_runs", "runs", "case"}
+    leaked = field_names & cross_run_indicators
+    assert not leaked, f"Finding has cross-run fields (must be run-scoped): {leaked}"
+
+
+def test_observation_signature_hypothesis_confinement() -> None:
+    """Observation, Signature, and Hypothesis must not leak into adapter layers.
+
+    These diagnostic intermediate concepts live in the domain model and may be
+    reconstructed in boundary decoders, but must not appear in transport,
+    rendering, or persistence adapters.
+    """
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    confined_names = {"Observation", "Signature", "Hypothesis"}
+    forbidden_dirs = [
+        SERVER_ROOT / "vibesensor" / "adapters" / "pdf",
+        SERVER_ROOT / "vibesensor" / "adapters" / "http",
+        SERVER_ROOT / "vibesensor" / "adapters" / "persistence",
+        SERVER_ROOT / "vibesensor" / "adapters" / "websocket",
+    ]
+    violations: list[str] = []
+    for adapter_dir in forbidden_dirs:
+        if not adapter_dir.exists():
+            continue
+        for py_file in adapter_dir.rglob("*.py"):
+            source = py_file.read_text()
+            try:
+                tree = ast.parse(source)
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    for alias in node.names:
+                        name = alias.asname or alias.name
+                        if name in confined_names:
+                            rel = py_file.relative_to(SERVER_ROOT)
+                            violations.append(f"{rel} imports {name}")
+    assert not violations, (
+        f"Diagnostic intermediates must not leak into adapter layers: {violations}"
+    )
