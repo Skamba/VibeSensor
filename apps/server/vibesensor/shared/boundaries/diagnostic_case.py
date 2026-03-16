@@ -85,13 +85,21 @@ def run_suitability_payload(
 # ---------------------------------------------------------------------------
 
 
-def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]:
+def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun | None]:
     """Round-trip an analysis dict through the domain model.
 
     Returns ``(projected, test_run)`` where *projected* is a shallow copy of
     *analysis* with findings, top causes, origin, test plan, and suitability
     re-serialised from the domain ``TestRun``.
+
+    Summaries written by the current pipeline carry ``_summary_version == 2``
+    and are already fully projected, so the expensive round-trip is skipped.
+    The ``TestRun`` is returned as *None* in that case — callers that need
+    a domain aggregate (e.g. report rendering) reconstruct it themselves.
     """
+    if analysis.get("_summary_version") == 2:
+        return analysis, None
+
     test_run = test_run_from_summary(analysis)
     projected: JsonObject = dict(analysis)
     projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]

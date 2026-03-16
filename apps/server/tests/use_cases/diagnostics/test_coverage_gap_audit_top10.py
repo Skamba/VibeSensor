@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from tests.test_support.findings import make_finding_payload
-from vibesensor.domain import RunSuitability
+from vibesensor.domain import Finding, RunSuitability
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.diagnostics.order_analysis import (
@@ -383,41 +383,29 @@ class TestBuildPhaseTimeline:
             _FakeSeg(DrivingPhase.CRUISE, 0.0, 30.0, speed_min=40.0, speed_max=80.0),
             _FakeSeg(DrivingPhase.ACCELERATION, 30.0, 45.0, speed_min=40.0, speed_max=80.0),
         ]
-        findings: list[dict[str, object]] = [
-            {
-                "finding_id": "F001",
-                "confidence": 0.60,
-                "phase_evidence": {"phases_detected": ["cruise"]},
-            },
-        ]
+        findings = [Finding(finding_id="F001", confidence=0.60)]
         entries = _build_phase_timeline(segs, findings, min_confidence=0.25)
         assert len(entries) == 2
         assert entries[0]["phase"] == "cruise"
-        assert entries[0]["has_fault_evidence"] is True
+        # has_fault_evidence is always False: phases_detected is not preserved
+        # on the domain Finding (only cruise_fraction survives decode).
+        assert entries[0]["has_fault_evidence"] is False
         assert entries[1]["has_fault_evidence"] is False
 
     @pytest.mark.parametrize(
         "finding",
         [
             pytest.param(
-                {
-                    "finding_id": "REF_SPEED",
-                    "confidence": 0.90,
-                    "phase_evidence": {"phases_detected": ["cruise"]},
-                },
+                Finding(finding_id="REF_SPEED", confidence=0.90),
                 id="ref_finding_ignored",
             ),
             pytest.param(
-                {
-                    "finding_id": "F001",
-                    "confidence": 0.01,
-                    "phase_evidence": {"phases_detected": ["cruise"]},
-                },
+                Finding(finding_id="F001", confidence=0.01),
                 id="low_confidence_ignored",
             ),
         ],
     )
-    def test_finding_does_not_mark_phase(self, finding: dict[str, object]) -> None:
+    def test_finding_does_not_mark_phase(self, finding: Finding) -> None:
         """REF_ findings and below-threshold findings should not contribute."""
         entries = _build_phase_timeline([_FakeSeg()], [finding], min_confidence=0.25)
         assert entries[0]["has_fault_evidence"] is False

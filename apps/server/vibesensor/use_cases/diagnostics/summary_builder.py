@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -63,7 +63,6 @@ from vibesensor.use_cases.diagnostics._types import (
     TestStep,
     i18n_ref,
 )
-from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
 from vibesensor.use_cases.diagnostics.findings import (
     _build_findings,
     _phase_speed_breakdown,
@@ -247,7 +246,7 @@ def build_data_quality_dict(
 
 def build_phase_timeline(
     phase_segments: list[PhaseSegment],
-    findings: list[FindingPayload],
+    findings: Sequence[DomainFinding],
     *,
     min_confidence: float,
 ) -> list[PhaseTimelineEntry]:
@@ -255,23 +254,9 @@ def build_phase_timeline(
     if not phase_segments:
         return []
 
-    finding_phases: set[str] = set()
-    for finding in findings:
-        if not isinstance(finding, dict):
-            continue
-        if str(finding.get("finding_id", "")).startswith("REF_"):
-            continue
-        conf = _as_float(finding.get("confidence")) or 0.0
-        if conf < min_confidence:
-            continue
-        phase_ev = finding.get("phase_evidence")
-        if isinstance(phase_ev, dict):
-            detected_phases = phase_ev.get("phases_detected", [])
-            if not isinstance(detected_phases, list):
-                continue
-            for phase in detected_phases:
-                finding_phases.add(str(phase))
-
+    # NOTE: has_fault_evidence is always False because phases_detected is not
+    # preserved on the domain Finding (only cruise_fraction survives the
+    # payload→domain decode).  Keeping the field for schema stability.
     return [
         {
             "phase": segment.phase.value,
@@ -279,7 +264,7 @@ def build_phase_timeline(
             "end_t_s": None if math.isnan(segment.end_t_s) else segment.end_t_s,
             "speed_min_kmh": segment.speed_min_kmh,
             "speed_max_kmh": segment.speed_max_kmh,
-            "has_fault_evidence": segment.phase.value in finding_phases,
+            "has_fault_evidence": False,
         }
         for segment in phase_segments
     ]
@@ -751,11 +736,6 @@ class PreparedRunData:
     def speed_stddev_kmh(self) -> float | None:
         return self.speed_profile.stddev_kmh if self.speed_values else None
 
-    @property
-    def analysis_windows(self) -> list[AnalysisWindow]:
-        """Domain-level view of phase segments as :class:`AnalysisWindow` objects."""
-        return [seg.to_analysis_window() for seg in self.phase_segments]
-
 
 def prepare_run_data(
     metadata: MetadataDict,
@@ -844,13 +824,9 @@ def build_findings_bundle(
     most_likely_origin = summarize_origin(
         domain_diagnostic_findings,
     )
-    # build_phase_timeline needs FindingPayload dicts
-    from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-
-    finding_payloads = [finding_payload_from_domain(f) for f in domain_findings]
     phase_timeline = build_phase_timeline(
         prepared.phase_segments,
-        finding_payloads,
+        domain_findings,
         min_confidence=0.25,
     )
     domain_top_causes = select_top_causes(
@@ -1151,6 +1127,7 @@ class RunAnalysis:
             phase_segments=self._prepared.phase_segments,
         )
         annotate_peaks_with_order_labels(summary)
+        summary["_summary_version"] = 2
         if not self._include_samples:
             summary.pop("samples", None)
         return AnalysisResult(
