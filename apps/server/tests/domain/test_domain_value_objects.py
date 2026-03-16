@@ -1451,6 +1451,28 @@ class TestRunSuitability:
         rs = run_suitability_from_payload([{"check": "old_key", "state": "pass"}])
         assert rs.checks[0].check_key == "old_key"
 
+    def test_has_reference_gaps_true_when_not_passing(self) -> None:
+        rs = RunSuitability(
+            checks=(
+                SuitabilityCheck(check_key="SUITABILITY_CHECK_REFERENCE_COMPLETENESS", state="warn"),
+            )
+        )
+        assert rs.has_reference_gaps
+
+    def test_has_reference_gaps_false_when_passing(self) -> None:
+        rs = RunSuitability(
+            checks=(
+                SuitabilityCheck(check_key="SUITABILITY_CHECK_REFERENCE_COMPLETENESS", state="pass"),
+            )
+        )
+        assert not rs.has_reference_gaps
+
+    def test_has_reference_gaps_false_when_absent(self) -> None:
+        rs = RunSuitability(
+            checks=(SuitabilityCheck(check_key="other", state="pass"),)
+        )
+        assert not rs.has_reference_gaps
+
 
 # ── Integration: Finding with evidence/location ─────────────────────────────
 
