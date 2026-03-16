@@ -66,6 +66,7 @@ def location_hotspot_from_payload(payload: dict[str, object]) -> LocationHotspot
         location_count=loc_count,
     )
 
+
 __all__ = [
     "SuspectedVibrationOrigin",
     "origin_payload_from_finding",

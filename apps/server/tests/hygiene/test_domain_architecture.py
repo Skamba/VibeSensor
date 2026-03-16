@@ -806,12 +806,7 @@ def test_planning_service_has_no_payload_imports() -> None:
     import ast
     from pathlib import Path
 
-    planning_path = (
-        Path(__file__).resolve().parents[2]
-        / "vibesensor"
-        / "domain"
-        / "test_plan.py"
-    )
+    planning_path = Path(__file__).resolve().parents[2] / "vibesensor" / "domain" / "test_plan.py"
     tree = ast.parse(planning_path.read_text())
     for node in ast.walk(tree):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
