@@ -221,11 +221,6 @@ class FakeState:
                 "set_speed_override_kmh": lambda self, _v: None,
             },
         )()
-        self.analysis_settings = type(
-            "A",
-            (),
-            {"snapshot": lambda self: {}, "update": lambda self, payload: payload},
-        )()
         self.processor = type(
             "P",
             (),

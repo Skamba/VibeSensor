@@ -8,24 +8,9 @@ import yaml
 from vibesensor.app.settings import (
     _read_config_file,
     _resolve_config_path,
-    _split_host_port,
     load_config,
 )
 from vibesensor.shared.json_utils import deep_merge as _deep_merge
-
-# -- _split_host_port ---------------------------------------------------------
-
-
-def test_split_host_port_valid() -> None:
-    host, port = _split_host_port("0.0.0.0:9000")
-    assert host == "0.0.0.0"
-    assert port == 9000
-
-
-def test_split_host_port_missing_colon_raises() -> None:
-    with pytest.raises(ValueError, match="Expected HOST:PORT"):
-        _split_host_port("localhost9000")
-
 
 # -- _deep_merge ---------------------------------------------------------------
 

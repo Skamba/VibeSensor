@@ -26,11 +26,18 @@ __all__ = [
 
 
 @contextmanager
-def domain_errors_to_http() -> Iterator[None]:
+def domain_errors_to_http(
+    *,
+    catch_value_error: int | None = None,
+    catch_runtime_error: int | None = None,
+) -> Iterator[None]:
     """Translate domain exceptions to appropriate HTTP status codes.
 
     This is the single place in the routes layer where domain exceptions
     from the service layer are mapped to ``HTTPException`` responses.
+
+    Optional parameters allow catching ``ValueError`` / ``RuntimeError``
+    with a caller-specified HTTP status code.
     """
     try:
         yield
@@ -46,6 +53,14 @@ def domain_errors_to_http() -> Iterator[None]:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except ProcessingError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except ValueError as exc:
+        if catch_value_error is None:
+            raise
+        raise HTTPException(status_code=catch_value_error, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        if catch_runtime_error is None:
+            raise
+        raise HTTPException(status_code=catch_runtime_error, detail=str(exc)) from exc
 
 
 def normalize_client_id_or_400(client_id: str) -> str:

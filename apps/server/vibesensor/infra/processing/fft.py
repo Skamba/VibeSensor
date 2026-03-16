@@ -258,14 +258,14 @@ def compute_fft_spectrum(
         amp_slices = [spectrum_by_axis[axis]["amp"] for axis in spectrum_by_axis]
         combined_amp = np.asarray(
             combined_spectrum_amp_g(
-                axis_spectra_amp_g=[float_list(a) for a in amp_slices],
+                axis_spectra_amp_g=amp_slices,
                 axis_count_for_mean=len(amp_slices),
             ),
             dtype=np.float32,
         )
         strength_metrics = compute_vibration_strength_db(
-            freq_hz=float_list(freq_slice),
-            combined_spectrum_amp_g_values=float_list(combined_amp),
+            freq_hz=freq_slice,
+            combined_spectrum_amp_g_values=combined_amp,
             peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
             peak_separation_hz=PEAK_SEPARATION_HZ,
             top_n=8,

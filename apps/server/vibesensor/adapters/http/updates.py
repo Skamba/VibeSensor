@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 
+from vibesensor.adapters.http._helpers import domain_errors_to_http
 from vibesensor.shared.types.api_models import (
     EspFlashCancelResponse,
     EspFlashHistoryResponse,
@@ -29,16 +28,6 @@ if TYPE_CHECKING:
 __all__ = ["create_update_routes"]
 
 
-@contextmanager
-def _update_errors_to_http() -> Iterator[None]:
-    try:
-        yield
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except RuntimeError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-
-
 def create_update_routes(
     update_manager: UpdateManager,
     esp_flash_manager: EspFlashManager,
@@ -54,7 +43,7 @@ def create_update_routes(
 
     @router.post("/api/update/start", response_model=UpdateStartResponse)
     async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
-        with _update_errors_to_http():
+        with domain_errors_to_http(catch_value_error=400, catch_runtime_error=409):
             update_manager.start(req.ssid, req.password)
         return UpdateStartResponse(status="started", ssid=req.ssid)
 
@@ -71,7 +60,7 @@ def create_update_routes(
 
     @router.post("/api/esp-flash/start", response_model=EspFlashStartResponse)
     async def start_esp_flash(req: EspFlashStartRequest) -> EspFlashStartResponse:
-        with _update_errors_to_http():
+        with domain_errors_to_http(catch_value_error=400, catch_runtime_error=409):
             job_id = esp_flash_manager.start(port=req.port, auto_detect=req.auto_detect)
         return EspFlashStartResponse(status="started", job_id=job_id)
 

@@ -1034,8 +1034,8 @@ pkill -f "python -m vibesensor.app" >/dev/null 2>&1 || true
 cp /etc/vibesensor/config.yaml /tmp/vibesensor-smoke-config.yaml
 sed -i \
   -e "s#^  port: .*#  port: 18080#" \
-  -e "s#^  data_listen: .*#  data_listen: 0.0.0.0:19000#" \
-  -e "s#^  control_listen: .*#  control_listen: 0.0.0.0:19001#" \
+  -e "s#^  data_listen: .*#  data_host: 0.0.0.0\n  data_port: 19000#" \
+  -e "s#^  control_listen: .*#  control_host: 0.0.0.0\n  control_port: 19001#" \
   /tmp/vibesensor-smoke-config.yaml
 set +e
 timeout 10s /opt/VibeSensor/apps/server/.venv/bin/python -m vibesensor.app --config /tmp/vibesensor-smoke-config.yaml >/tmp/vibesensor-smoke.log 2>&1

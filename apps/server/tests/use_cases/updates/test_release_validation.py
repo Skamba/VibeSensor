@@ -29,8 +29,10 @@ def test_build_release_smoke_config_rewrites_runtime_paths(tmp_path: Path) -> No
 
     assert data["server"] == {"port": 18080, "host": "127.0.0.1"}
     assert data["udp"] == {
-        "data_listen": "127.0.0.1:19080",
-        "control_listen": "127.0.0.1:19081",
+        "data_host": "127.0.0.1",
+        "data_port": 19080,
+        "control_host": "127.0.0.1",
+        "control_port": 19081,
     }
     assert data["gps"]["gps_enabled"] is False
     assert data["ap"]["self_heal"]["enabled"] is False

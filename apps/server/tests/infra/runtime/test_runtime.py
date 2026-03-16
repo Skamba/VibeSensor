@@ -136,7 +136,6 @@ def _make_runtime(**overrides: Any):
     control_plane = overrides.pop("control_plane", MagicMock())
     worker_pool = overrides.pop("worker_pool", MagicMock())
     settings_store = overrides.pop("settings_store", MagicMock())
-    analysis_settings = overrides.pop("analysis_settings", MagicMock())
     gps_monitor = overrides.pop("gps_monitor", MagicMock())
     history_db = overrides.pop("history_db", MagicMock())
     run_service = overrides.pop("run_service", MagicMock())
@@ -154,7 +153,6 @@ def _make_runtime(**overrides: Any):
         control_plane=control_plane,
         worker_pool=worker_pool,
         settings_store=settings_store,
-        analysis_settings=analysis_settings,
         gps_monitor=gps_monitor,
         history_db=history_db,
         run_service=run_service,
@@ -178,7 +176,6 @@ def _make_runtime(**overrides: Any):
             registry=registry,
             processor=processor,
             gps_monitor=gps_monitor,
-            analysis_settings=analysis_settings,
             settings_store=settings_store,
         ),
         run_recorder=diagnostics,

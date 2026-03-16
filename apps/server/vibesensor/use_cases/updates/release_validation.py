@@ -54,8 +54,10 @@ def build_release_smoke_config(
             f"{udp_data_port}, {udp_control_port}",
         )
     data.setdefault("udp", {})
-    data["udp"]["data_listen"] = f"{host}:{udp_data_port}"
-    data["udp"]["control_listen"] = f"{host}:{udp_control_port}"
+    data["udp"]["data_host"] = host
+    data["udp"]["data_port"] = udp_data_port
+    data["udp"]["control_host"] = host
+    data["udp"]["control_port"] = udp_control_port
 
     data.setdefault("gps", {})
     data["gps"]["gps_enabled"] = False

@@ -27,16 +27,9 @@ class _StubRegistry:
         self,
         now: float | None = None,
         *,
-        metrics_by_client: dict[str, Any] | None = None,
-    ) -> list[dict[str, Any]]:
-        self.snapshot_calls += 1
-        return list(self._clients)
-
-    def ws_snapshot(
-        self,
-        now: float | None = None,
-        *,
         now_mono: float | None = None,
+        metrics_by_client: dict[str, Any] | None = None,
+        include_metrics: bool = True,
     ) -> list[dict[str, Any]]:
         self.snapshot_calls += 1
         return list(self._clients)
@@ -89,21 +82,6 @@ class _StubGPS:
         pass
 
 
-class _StubAnalysisSettings:
-    def __init__(self) -> None:
-        self.snapshot_calls = 0
-
-    def snapshot(self) -> dict[str, float]:
-        self.snapshot_calls += 1
-        return {
-            "tire_width_mm": 285.0,
-            "tire_aspect_pct": 30.0,
-            "rim_in": 21.0,
-            "final_drive_ratio": 3.08,
-            "current_gear_ratio": 0.64,
-        }
-
-
 class _StubRunRecorder:
     def __init__(self) -> None:
         self.shutdown_calls = 0
@@ -116,8 +94,21 @@ class _StubRunRecorder:
 class _StubSettingsStore:
     language: str = "en"
 
+    def __init__(self) -> None:
+        self.snapshot_calls = 0
+
     def get_speed_source(self) -> dict[str, Any]:
         return {"speedSource": "gps", "fallbackMode": "manual"}
+
+    def analysis_settings_snapshot(self) -> dict[str, float]:
+        self.snapshot_calls += 1
+        return {
+            "tire_width_mm": 285.0,
+            "tire_aspect_pct": 30.0,
+            "rim_in": 21.0,
+            "final_drive_ratio": 3.08,
+            "current_gear_ratio": 0.64,
+        }
 
 
 @dataclass(slots=True)
@@ -159,7 +150,6 @@ def _make_state(
     registry = _StubRegistry(clients)
     processor = _StubProcessor()
     gps_monitor = _StubGPS()
-    analysis_settings = _StubAnalysisSettings()
     settings_store = _StubSettingsStore()
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
@@ -176,7 +166,6 @@ def _make_state(
         control_plane=_SENTINEL,  # type: ignore[arg-type]
         worker_pool=_SENTINEL,  # type: ignore[arg-type]
         settings_store=settings_store,  # type: ignore[arg-type]
-        analysis_settings=analysis_settings,  # type: ignore[arg-type]
         gps_monitor=gps_monitor,  # type: ignore[arg-type]
         history_db=_SENTINEL,  # type: ignore[arg-type]
         run_service=_SENTINEL,  # type: ignore[arg-type]
@@ -199,7 +188,6 @@ def _make_state(
             registry=registry,  # type: ignore[arg-type]
             processor=processor,  # type: ignore[arg-type]
             gps_monitor=gps_monitor,  # type: ignore[arg-type]
-            analysis_settings=analysis_settings,  # type: ignore[arg-type]
             settings_store=settings_store,  # type: ignore[arg-type]
         ),
         run_recorder=_StubRunRecorder(),  # type: ignore[arg-type]
@@ -286,11 +274,11 @@ def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
     registry = state.registry
     processor = state.processor
     gps = state.gps_monitor
-    analysis_settings = state.analysis_settings
+    settings_store = state.settings_store
     assert isinstance(registry, _StubRegistry)
     assert isinstance(processor, _StubProcessor)
     assert isinstance(gps, _StubGPS)
-    assert isinstance(analysis_settings, _StubAnalysisSettings)
+    assert isinstance(settings_store, _StubSettingsStore)
 
     state.ws_broadcast.tick = 77
     payload_aaa = state.ws_broadcast.build_payload(selected_client="aaa")
@@ -304,7 +292,7 @@ def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
     assert processor.recent_data_calls == 1
     assert processor.multi_spectrum_calls == 1
     assert gps.resolve_calls == 1
-    assert analysis_settings.snapshot_calls == 1
+    assert settings_store.snapshot_calls == 1
 
 
 def test_on_ws_broadcast_tick_toggles_heavy() -> None:

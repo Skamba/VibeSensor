@@ -88,7 +88,7 @@ def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
     registry.active_client_ids.return_value = []
 
     settings_mock = MagicMock()
-    settings_mock.snapshot.return_value = {
+    settings_mock.analysis_settings_snapshot.return_value = {
         "tire_width_mm": 205,
         "tire_aspect_pct": 55,
         "rim_in": 16,
@@ -109,7 +109,7 @@ def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
         registry=registry,
         gps_monitor=gps_mock,
         processor=MagicMock(),
-        analysis_settings=settings_mock,
+        settings_store=settings_mock,
     )
     return logger, gps_mock
 
@@ -592,7 +592,7 @@ class TestResolveSpeedContext:
         logger, _ = _make_run_recorder()
         speed_kmh, gps_speed, source, rpm = resolve_speed_context(
             logger.gps_monitor,
-            logger.analysis_settings.snapshot(),
+            logger._analysis_settings_snapshot(),
         )
         assert speed_kmh is None
         assert rpm is None
@@ -603,7 +603,7 @@ class TestResolveSpeedContext:
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
         speed_kmh, gps_speed, source, rpm = resolve_speed_context(
             logger.gps_monitor,
-            logger.analysis_settings.snapshot(),
+            logger._analysis_settings_snapshot(),
         )
         assert speed_kmh == pytest.approx(36.0, rel=0.01)
         assert gps_speed == pytest.approx(36.0, rel=0.01)
@@ -616,7 +616,7 @@ class TestResolveSpeedContext:
         gps_mock.resolve_speed.return_value = MagicMock(source="manual", speed_mps=20.0)
         speed_kmh, _, source, _ = resolve_speed_context(
             logger.gps_monitor,
-            logger.analysis_settings.snapshot(),
+            logger._analysis_settings_snapshot(),
         )
         assert speed_kmh == pytest.approx(72.0, rel=0.01)
         assert source == "manual"
@@ -624,8 +624,9 @@ class TestResolveSpeedContext:
     def test_no_gear_ratio_skips_rpm(self) -> None:
         logger, gps_mock = _make_run_recorder()
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=15.0)
-        # Remove gear ratio from settings
-        logger.analysis_settings.snapshot.return_value = {
+        # Remove gear ratio from settings via settings_store mock
+        settings_mock = logger._settings_store
+        settings_mock.analysis_settings_snapshot.return_value = {
             "tire_width_mm": 205,
             "tire_aspect_pct": 55,
             "rim_in": 16,
@@ -635,7 +636,7 @@ class TestResolveSpeedContext:
         }
         _, _, _, rpm = resolve_speed_context(
             logger.gps_monitor,
-            logger.analysis_settings.snapshot(),
+            logger._analysis_settings_snapshot(),
         )
         assert rpm is None, "Without gear_ratio, RPM should not be estimated"
 

@@ -6,11 +6,11 @@ modules at runtime.
 
 Boundary note
 -------------
-Settings management spans three layers:
+Settings management spans two layers:
 
 - ``settings_store.py`` (this module) — user-facing settings (cars, speed
   source, language, unit, sensors) persisted to ``HistoryDB``.
-- ``analysis_settings.py`` — in-memory-only analysis parameter store
+  Also owns the in-memory analysis parameter cache
   (tire_diameter, tire_aspect, etc.) recomputed from the active car's
   aspects whenever car settings change.
 - ``history_db/`` — ``get_settings_snapshot()`` / ``set_settings_snapshot()``
@@ -54,7 +54,6 @@ from vibesensor.shared.types.json_types import JsonObject
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.adapters.persistence.history_db import HistoryDB
-    from vibesensor.infra.config.analysis_settings import AnalysisSettingsStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -114,14 +113,19 @@ class SettingsStore:
         self,
         db: HistoryDB | None = None,
         *,
-        analysis_settings: AnalysisSettingsStore | None = None,
         gps_monitor: GPSSpeedMonitor | None = None,
     ) -> None:
         """Initialise the settings store, loading persisted settings from *db* if provided."""
+        from vibesensor.infra.config.analysis_settings import (
+            DEFAULT_ANALYSIS_SETTINGS,
+            sanitize_settings,
+        )
+
         self._lock = RLock()
         self._db = db
-        self._analysis_settings = analysis_settings
         self._gps_monitor = gps_monitor
+        self._sanitize_analysis = sanitize_settings
+        self._analysis_values: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
 
         self._cars: list[CarConfig] = []
         self._active_car_id: str | None = None
@@ -189,12 +193,11 @@ class SettingsStore:
             raise PersistenceError("Failed to persist settings to SQLite") from exc
 
     def _sync_analysis_settings(self) -> None:
-        """Push active car aspects into the analysis settings store."""
-        if self._analysis_settings is None:
-            return
+        """Recompute in-memory analysis settings from the active car's aspects."""
         aspects = self.active_car_aspects()
         if aspects:
-            self._analysis_settings.update(aspects)
+            sanitized = self._sanitize_analysis(aspects)
+            self._analysis_values.update(sanitized)
 
     def _sync_speed_source(self) -> None:
         """Push current speed-source config into the GPS monitor."""
@@ -216,6 +219,11 @@ class SettingsStore:
         """
         self._sync_analysis_settings()
         self._sync_speed_source()
+
+    def analysis_settings_snapshot(self) -> dict[str, float]:
+        """Return a thread-safe copy of the current analysis settings."""
+        with self._lock:
+            return dict(self._analysis_values)
 
     # -- full snapshot ---------------------------------------------------------
 

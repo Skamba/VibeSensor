@@ -1,9 +1,12 @@
-"""Vibration-strength computation — canonical pure-Python implementation.
+"""Vibration-strength computation — canonical implementation.
 
 This module is the single source of truth for all vibration-strength
-arithmetic used by VibeSensor.  It is intentionally dependency-free
-(stdlib only) so it can be imported in firmware simulators, server-side
-analysis, and CLI tools alike.
+arithmetic used by VibeSensor.
+
+Hot-path functions (`combined_spectrum_amp_g`, `compute_vibration_strength_db`,
+`noise_floor_amp_p20_g`) accept both plain Python lists and numpy arrays.
+Scalar functions (`vibration_strength_db_scalar`, `bucket_for_strength`) remain
+pure Python.
 
 Key functions
 -------------
@@ -17,9 +20,13 @@ combined_spectrum_amp_g
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from math import isfinite, log10, sqrt
+from statistics import median as _stdlib_median
 from typing import Final
 
+import numpy as np
+import numpy.typing as npt
 from typing_extensions import TypedDict
 
 from vibesensor.strength_bands import bucket_for_strength
@@ -52,6 +59,8 @@ STRENGTH_EPSILON_MIN_G: Final[float] = 1e-9
 STRENGTH_EPSILON_FLOOR_RATIO: Final[float] = 0.05
 PEAK_THRESHOLD_FLOOR_RATIO: Final[float] = 2.6
 
+ArrayLike = Sequence[float] | npt.NDArray[np.floating]
+
 
 class StrengthPeak(TypedDict):
     hz: float
@@ -82,38 +91,28 @@ def median(values: list[float]) -> float:
     """Return the median of *values*, or 0.0 for an empty list."""
     if not values:
         return 0.0
-    ordered = sorted(values)
-    n = len(ordered)
-    mid = n // 2
-    if n % 2 == 0:
-        return float(ordered[mid - 1] + ordered[mid]) / 2.0
-    return float(ordered[mid])
+    return float(_stdlib_median(values))
 
 
 def percentile(sorted_values: list[float], q: float) -> float:
     """Return the *q*-th percentile (0–1) of *sorted_values* via linear interpolation."""
     if not sorted_values:
         return 0.0
-    if len(sorted_values) == 1:
-        return float(sorted_values[0])
-    clamped = max(0.0, min(1.0, float(q)))
-    pos = clamped * (len(sorted_values) - 1)
-    lo = int(pos)
-    hi = min(len(sorted_values) - 1, lo + 1)
-    if lo == hi:
-        return float(sorted_values[lo])
-    frac = pos - lo
-    return float(sorted_values[lo] + ((sorted_values[hi] - sorted_values[lo]) * frac))
+    return float(np.quantile(sorted_values, max(0.0, min(1.0, float(q)))))
 
 
 def combined_spectrum_amp_g(
-    *, axis_spectra_amp_g: list[list[float]], axis_count_for_mean: int | None = None
+    *,
+    axis_spectra_amp_g: Sequence[ArrayLike] | npt.NDArray[np.floating],
+    axis_count_for_mean: int | None = None,
 ) -> list[float]:
     """Canonical combined spectrum amplitude definition.
 
     Input axis arrays must be single-sided FFT amplitude magnitudes in g.
     Output is ``sqrt(mean(axis_amp^2))`` per frequency bin — e.g.
     ``sqrt((x^2 + y^2 + z^2) / 3)`` when three axes are provided.
+
+    Accepts plain Python lists or numpy arrays.
 
     Parameters
     ----------
@@ -126,28 +125,33 @@ def combined_spectrum_amp_g(
         denominator fixed (e.g. always divide by 3 even when only 2 axes are
         valid), which preserves comparability across partial-axis frames.
     """
-    if not axis_spectra_amp_g:
-        return []
-    target_len = min((len(axis) for axis in axis_spectra_amp_g), default=0)
-    if target_len <= 0:
-        return []
+    if isinstance(axis_spectra_amp_g, np.ndarray):
+        if axis_spectra_amp_g.size == 0:
+            return []
+        arr = np.asarray(axis_spectra_amp_g, dtype=np.float64)
+        if arr.ndim == 1:
+            arr = arr.reshape(1, -1)
+    else:
+        if not axis_spectra_amp_g:
+            return []
+        target_len = min((len(a) for a in axis_spectra_amp_g), default=0)
+        if target_len <= 0:
+            return []
+        arr = np.empty((len(axis_spectra_amp_g), target_len), dtype=np.float64)
+        for i, a in enumerate(axis_spectra_amp_g):
+            arr[i] = np.asarray(a, dtype=np.float64)[:target_len]
+
+    arr = np.where(np.isfinite(arr), arr, 0.0)
     divisor = (
         max(1.0, float(axis_count_for_mean))
         if axis_count_for_mean is not None
-        else max(1.0, float(len(axis_spectra_amp_g)))
+        else max(1.0, float(arr.shape[0]))
     )
-    _sqrt = sqrt  # local-bind for tight inner loop
-    out: list[float] = [0.0] * target_len
-    for idx in range(target_len):
-        sq_sum = 0.0
-        for axis_values in axis_spectra_amp_g:
-            value = float(axis_values[idx])
-            sq_sum += value * value
-        out[idx] = _sqrt(sq_sum / divisor)
-    return out
+    result: npt.NDArray[np.floating] = np.sqrt(np.sum(arr**2, axis=0) / divisor)
+    return result.tolist()
 
 
-def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
+def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: ArrayLike) -> float:
     """Return the P20 amplitude floor in g, skipping the DC bin (index 0).
 
     Returns ``0.0`` when the spectrum is empty or contains only the DC bin,
@@ -264,8 +268,8 @@ def vibration_strength_db_scalar(
 
 def compute_vibration_strength_db(
     *,
-    freq_hz: list[float],
-    combined_spectrum_amp_g_values: list[float],
+    freq_hz: ArrayLike,
+    combined_spectrum_amp_g_values: ArrayLike,
     peak_bandwidth_hz: float = PEAK_BANDWIDTH_HZ,
     peak_separation_hz: float = PEAK_SEPARATION_HZ,
     top_n: int = 5,

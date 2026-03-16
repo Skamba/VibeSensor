@@ -150,7 +150,7 @@ class _FakeProcessor:
 
 
 class _FakeAnalysisSettings:
-    def snapshot(self) -> dict[str, float]:
+    def analysis_settings_snapshot(self) -> dict[str, float]:
         return {
             "tire_width_mm": 285.0,
             "tire_aspect_pct": 30.0,
@@ -158,6 +158,9 @@ class _FakeAnalysisSettings:
             "final_drive_ratio": 3.08,
             "current_gear_ratio": 0.64,
         }
+
+    def active_car_snapshot(self) -> dict[str, Any] | None:
+        return None
 
 
 class _MutableFakeAnalysisSettings(_FakeAnalysisSettings):
@@ -170,7 +173,7 @@ class _MutableFakeAnalysisSettings(_FakeAnalysisSettings):
             "current_gear_ratio": 0.64,
         }
 
-    def snapshot(self) -> dict[str, float]:
+    def analysis_settings_snapshot(self) -> dict[str, float]:
         return dict(self.values)
 
 
@@ -233,7 +236,7 @@ def _make_logger(
     registry: object | None = None,
     gps_monitor: object | None = None,
     processor: object | None = None,
-    analysis_settings: object | None = None,
+    settings_store: object | None = None,
     history_db: object | None = None,
     **extra: Any,
 ) -> RunRecorder:
@@ -270,7 +273,7 @@ def _make_logger(
         registry=reg,
         gps_monitor=gps_monitor or _FakeGPSMonitor(),
         processor=processor or _FakeProcessor(registry=reg),  # type: ignore[arg-type]
-        analysis_settings=analysis_settings or _FakeAnalysisSettings(),
+        settings_store=settings_store or _FakeAnalysisSettings(),  # type: ignore[arg-type]
         history_db=history_db,
         **extra,
     )

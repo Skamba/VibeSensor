@@ -18,7 +18,8 @@
 - `apps/server/`: backend package, configs, tests, scripts, systemd units, public UI assets, simulator, and config tooling.
 - `apps/ui/`: TypeScript/Vite dashboard and Playwright tests.
 - `firmware/esp/`: ESP32 firmware.
-- `vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`: shared vibration math and unit logic (inlined from former `libs/core/`).
+- `cli/`: CLI entry points — `server.py` (main server), `report.py` (report generation), `preflight.py` (config preflight), `hotspot_config.py` (hotspot config export for shell scripts), `http_api_schema_export.py`, `ws_schema_export.py`.
+- `vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`: shared vibration math and unit logic. Hot-path functions accept numpy arrays; scalar functions remain pure Python.
 - `infra/pi-image/pi-gen/`: Raspberry Pi image build pipeline.
 - `docs/`: human-facing docs plus AI repo maps and runbooks.
 
@@ -32,7 +33,7 @@
 - `adapters/udp/`, `adapters/gps/`, `adapters/simulator/`, `adapters/hotspot/`: UDP protocol transport, GPS speed ingestion, simulator tooling, and hotspot/AP operational adapters.
 - `infra/runtime/`: flat `RuntimeState`, lifecycle management, processing loop, health snapshots, and WebSocket broadcast coordination.
 - `infra/processing/`: signal processing pipeline (buffers, FFT, payload shaping, and processor facade).
-- `infra/config/`: runtime analysis/settings stores used by runtime wiring and recording flows.
+- `infra/config/`: runtime settings store (single `SettingsStore` owns both analysis and device settings) used by runtime wiring and recording flows.
 - `infra/workers/`: worker-pool infrastructure.
 - `use_cases/diagnostics/`: post-stop diagnostics pipeline. `findings.py` and `top_cause_selection.py` delegate classification and ranking to the domain `Finding`; `location_analysis.py` owns the location-analysis pipeline and `LocationAnalysisResult` typed return; `analysis_window.py` owns the `AnalysisWindow` dataclass; `_types.py` owns `PhaseEvidence`, `FindingPayload`, and `AnalysisSummary`.
 - `use_cases/history/`: run query/delete, PDF report generation, CSV/ZIP exports, and history-facing helper orchestration above persistence.
