@@ -1536,3 +1536,22 @@ def test_observation_signature_hypothesis_confinement() -> None:
     assert not violations, (
         f"Diagnostic intermediates must not leak into adapter layers: {violations}"
     )
+
+
+def test_lifecycle_mutability_rules() -> None:
+    """Run is mutable (lifecycle object); RunCapture, RunSetup, TestRun are frozen."""
+    import dataclasses
+
+    from vibesensor.domain import RunCapture, RunSetup, TestRun
+    from vibesensor.domain.run import Run
+
+    # Run is the mutable lifecycle object during recording
+    assert dataclasses.is_dataclass(Run)
+    r = Run(run_id="mut-test")
+    r.run_id = "mut-test-2"  # must not raise
+
+    # Derived/immutable objects must be frozen
+    for cls in (RunCapture, RunSetup, TestRun):
+        assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
+        frozen = cls.__dataclass_params__.frozen  # type: ignore[attr-defined]
+        assert frozen, f"{cls.__name__} must be frozen (immutable once produced)"
