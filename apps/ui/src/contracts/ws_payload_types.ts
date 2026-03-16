@@ -16,7 +16,7 @@ export interface components {
     /** LiveWsPayload */
     LiveWsPayload: {
       /** Clients */
-      clients?: components["schemas"]["WsClientRow"][];
+      clients?: components["schemas"]["ClientApiRow"][];
       rotational_speeds?: components["schemas"]["RotationalSpeedsPayload"] | null;
       /** Schema Version */
       schema_version?: string;
@@ -40,6 +40,71 @@ export interface components {
       sensor_count: number;
       /** Shared Window S */
       shared_window_s: number;
+    };
+    /** AxisMetrics */
+    AxisMetrics: {
+      /** P2P */
+      p2p: number;
+      /** Peaks */
+      peaks: components["schemas"]["AxisPeak"][];
+      /** Rms */
+      rms: number;
+    };
+    /** AxisPeak */
+    AxisPeak: {
+      /** Amp */
+      amp?: number;
+      /** Hz */
+      hz?: number;
+      /** Snr Ratio */
+      snr_ratio?: number;
+    };
+    /** ClientApiRow */
+    ClientApiRow: {
+      /** Connected */
+      connected: boolean;
+      /** Dropped Frames */
+      dropped_frames: number;
+      /** Firmware Version */
+      firmware_version: string;
+      /** Frame Samples */
+      frame_samples?: number;
+      /** Frames Total */
+      frames_total: number;
+      /** Id */
+      id: string;
+      /** Last Reset Time */
+      last_reset_time?: number | null;
+      /** Last Seen Age Ms */
+      last_seen_age_ms: number | null;
+      latest_metrics?: components["schemas"]["ClientMetrics"];
+      /** Location Code */
+      location_code: string;
+      /** Mac Address */
+      mac_address: string;
+      /** Name */
+      name: string;
+      /** Reset Count */
+      reset_count?: number;
+      /** Sample Rate Hz */
+      sample_rate_hz: number;
+    };
+    /** ClientMetrics */
+    ClientMetrics: {
+      combined?: components["schemas"]["CombinedMetrics"];
+      x?: components["schemas"]["AxisMetrics"];
+      y?: components["schemas"]["AxisMetrics"];
+      z?: components["schemas"]["AxisMetrics"];
+    };
+    /** CombinedMetrics */
+    CombinedMetrics: {
+      /** Peaks */
+      peaks?: components["schemas"]["StrengthPeak"][];
+      strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
+      /** Vib Mag P2P */
+      vib_mag_p2p?: number;
+      /** Vib Mag Rms */
+      vib_mag_rms?: number;
     };
     /** FrequencyWarningPayload */
     FrequencyWarningPayload: {
@@ -121,32 +186,6 @@ export interface components {
       /** Vibration Strength Db */
       vibration_strength_db: number;
     };
-    /**
-     * WsClientRow
-     * @description Lightweight client row for WebSocket broadcast (UI-consumed fields only).
-     */
-    WsClientRow: {
-      /** Connected */
-      connected: boolean;
-      /** Dropped Frames */
-      dropped_frames: number;
-      /** Firmware Version */
-      firmware_version: string;
-      /** Frames Total */
-      frames_total: number;
-      /** Id */
-      id: string;
-      /** Last Seen Age Ms */
-      last_seen_age_ms: number | null;
-      /** Location Code */
-      location_code: string;
-      /** Mac Address */
-      mac_address: string;
-      /** Name */
-      name: string;
-      /** Sample Rate Hz */
-      sample_rate_hz: number;
-    };
   };
   responses: never;
   parameters: never;
@@ -174,5 +213,5 @@ export type WsSpectraPayload = WsSchema<"SpectraPayload">;
 export type WsRotationalSpeedValue = WsSchema<"RotationalSpeedValuePayload">;
 export type WsOrderBand = WsSchema<"OrderBandPayload">;
 export type WsRotationalSpeeds = WsSchema<"RotationalSpeedsPayload">;
-export type WsClientInfo = WsSchema<"WsClientRow">;
+export type WsClientInfo = WsSchema<"ClientApiRow">;
 export type LiveWsPayload = WsSchema<"LiveWsPayload">;

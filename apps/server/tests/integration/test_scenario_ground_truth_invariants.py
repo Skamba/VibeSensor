@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 from test_support import make_sample as _make_sample
+from test_support.core import standard_metadata, wheel_hz
 from test_support.scenario_ground_truth import (
     ALL_SENSORS,
     fault_phase,
@@ -13,8 +14,6 @@ from test_support.scenario_ground_truth import (
     idle_phase,
     ramp_phase,
     road_noise_phase,
-    standard_metadata,
-    wheel_hz,
 )
 
 from vibesensor.use_cases.diagnostics import summarize_run_data

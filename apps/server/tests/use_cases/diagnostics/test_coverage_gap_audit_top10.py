@@ -9,8 +9,8 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from test_support.findings import make_finding_payload
 
-from tests.test_support.findings import make_finding_payload
 from vibesensor.domain import Finding, RunSuitability
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics import summarize_run_data

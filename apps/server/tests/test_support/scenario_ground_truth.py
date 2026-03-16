@@ -6,8 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from test_support import standard_metadata as standard_metadata
-from test_support import wheel_hz as wheel_hz
+from test_support.core import standard_metadata
 from test_support.fault_scenarios import make_fault_samples
 from test_support.sample_scenarios import (
     make_idle_samples,

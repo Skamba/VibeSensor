@@ -43,6 +43,7 @@ class Measurement:
 
     def to_vibration_reading(self, noise_floor: float) -> VibrationReading:
         from math import sqrt
+
         peak_amplitude = sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
         intensity_db = vibration_strength_db_scalar(
             peak_band_rms_amp_g=peak_amplitude,

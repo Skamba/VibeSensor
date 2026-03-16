@@ -666,6 +666,7 @@ class TestTestPlan:
 
 # ── SpeedProfile ─────────────────────────────────────────────────────────────
 
+
 class TestSpeedProfile:
     def test_frozen(self) -> None:
         sp = SpeedProfile()

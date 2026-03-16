@@ -277,4 +277,3 @@ class TestImpossibleSuitabilityStates:
         s = RunSuitability(checks=())
         assert s.overall == "pass"
         assert s.is_usable
-

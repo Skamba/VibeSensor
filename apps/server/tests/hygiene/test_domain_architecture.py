@@ -123,7 +123,8 @@ def test_finalize_findings_returns_domain_findings() -> None:
 
 def test_select_top_causes_returns_domain_findings() -> None:
     """``select_top_causes`` must return domain ``Finding`` objects."""
-    from tests.test_support.findings import make_finding_payload
+    from test_support.findings import make_finding_payload
+
     from vibesensor.domain import Finding
     from vibesensor.shared.boundaries.finding import finding_from_payload
     from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
@@ -245,7 +246,8 @@ def test_test_run_top_strength_db() -> None:
 
 def test_report_mapping_context_has_domain_aggregate() -> None:
     """``prepare_report_mapping_context`` must build a domain aggregate."""
-    from tests.test_support.findings import make_finding_payload
+    from test_support.findings import make_finding_payload
+
     from vibesensor.adapters.pdf.mapping import prepare_report_mapping_context
     from vibesensor.domain import TestRun
 
@@ -441,7 +443,8 @@ def test_build_system_cards_uses_domain_findings() -> None:
 
 def test_map_summary_produces_report_with_domain_findings() -> None:
     """map_summary must produce report data using domain-first pipeline."""
-    from tests.test_support.findings import make_finding_payload
+    from test_support.findings import make_finding_payload
+
     from vibesensor.adapters.pdf.mapping import map_summary
 
     summary = {
@@ -692,7 +695,8 @@ def test_run_analysis_builds_test_run_and_diagnostic_case() -> None:
 
 
 def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
-    from tests.test_support.findings import make_finding_payload
+    from test_support.findings import make_finding_payload
+
     from vibesensor.shared.boundaries.diagnostic_case import diagnostic_case_from_summary
 
     summary = {
@@ -881,7 +885,8 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     strength, and reference-gap status from domain objects — not from
     raw payload dict traversal.
     """
-    from tests.test_support.findings import make_finding_payload
+    from test_support.findings import make_finding_payload
+
     from vibesensor.adapters.pdf.mapping import (
         prepare_report_mapping_context,
         resolve_primary_report_candidate,
