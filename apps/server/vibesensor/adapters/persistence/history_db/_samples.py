@@ -13,8 +13,8 @@ import math
 from typing import TypeGuard
 
 from vibesensor.adapters.udp.protocol import SensorFrame
+from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_array, is_json_object
-from vibesensor.shared.utils.json_utils import safe_json_dumps, safe_json_loads
 
 LOGGER = logging.getLogger(__name__)
 

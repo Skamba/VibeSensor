@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from vibesensor.domain.finding import VibrationSource
-from vibesensor.domain.observation import Observation
-from vibesensor.domain.services.observation_extraction import (
+from vibesensor.domain.diagnostic_reasoning import (
+    Observation,
     ObservationEvidence,
     extract_observations,
 )
+from vibesensor.domain.finding import VibrationSource
 
 
 def _evidence(
@@ -67,7 +67,7 @@ def test_extract_observations_normalizes_signature_key() -> None:
 def test_extract_observations_parses_phase() -> None:
     ev = _evidence(dominant_phase="cruise")
     result = extract_observations([ev])
-    from vibesensor.domain.driving_phase import DrivingPhase
+    from vibesensor.domain.driving_segment import DrivingPhase
 
     assert result[0].phase == DrivingPhase.CRUISE
 

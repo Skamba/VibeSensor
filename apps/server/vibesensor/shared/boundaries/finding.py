@@ -3,19 +3,108 @@
 ``finding_from_payload``  — payload → domain (history reconstruction and
 analysis finalization).
 ``finding_payload_from_domain`` — domain → payload (persistence serialization).
+
+Also includes boundary functions for finding sub-objects (evidence,
+location hotspot, test steps) and the structured-step-content helper.
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 
+from vibesensor.domain.diagnostic_reasoning import Signature
 from vibesensor.domain.finding import Finding, VibrationSource
-from vibesensor.domain.signature import Signature
-from vibesensor.shared.boundaries.finding_evidence import finding_evidence_from_metrics
-from vibesensor.shared.boundaries.location_hotspot import location_hotspot_from_payload
-from vibesensor.shared.boundaries.vibration_origin import vibration_origin_from_payload
+from vibesensor.domain.finding_evidence import FindingEvidence
+from vibesensor.domain.test_plan import RecommendedAction, TestPlan
+from vibesensor.shared.boundaries.vibration_origin import (
+    location_hotspot_from_payload,
+    vibration_origin_from_payload,
+)
 
 _MAX_SIGNATURES_PER_FINDING: int = 3
+
+
+# ---------------------------------------------------------------------------
+# Sub-object decoders (formerly in separate modules)
+# ---------------------------------------------------------------------------
+
+
+def _has_structured_step_content(steps: object) -> bool:
+    if not isinstance(steps, list):
+        return False
+    for step in steps:
+        if not isinstance(step, Mapping):
+            continue
+        for key in ("what", "why", "confirm", "falsify"):
+            value = step.get(key)
+            if isinstance(value, (Mapping, list)):
+                return True
+    return False
+
+
+def finding_evidence_from_metrics(d: dict[str, object]) -> FindingEvidence:
+    """Construct a ``FindingEvidence`` from a ``FindingEvidenceMetrics`` dict."""
+    phase_conf = d.get("per_phase_confidence")
+    phase_items: tuple[tuple[str, float], ...] = ()
+    if isinstance(phase_conf, dict):
+        phase_items = tuple(
+            (str(k), float(v)) for k, v in sorted(phase_conf.items()) if isinstance(v, (int, float))
+        )
+
+    def _float(key: str, *fallbacks: str) -> float:
+        for k in (key, *fallbacks):
+            raw = d.get(k)
+            if raw is not None:
+                try:
+                    return float(raw)  # type: ignore[arg-type]
+                except (TypeError, ValueError):
+                    pass
+        return 0.0
+
+    def _float_or_none(key: str, *fallbacks: str) -> float | None:
+        for k in (key, *fallbacks):
+            raw = d.get(k)
+            if raw is not None:
+                try:
+                    return float(raw)  # type: ignore[arg-type]
+                except (TypeError, ValueError):
+                    pass
+        return None
+
+    return FindingEvidence(
+        match_rate=_float("match_rate"),
+        snr_db=_float_or_none("snr_db", "snr_ratio"),
+        presence_ratio=_float("presence_ratio"),
+        burstiness=_float("burstiness"),
+        spatial_concentration=_float("spatial_concentration"),
+        frequency_correlation=_float("frequency_correlation"),
+        speed_uniformity=_float("speed_uniformity"),
+        spatial_uniformity=_float("spatial_uniformity"),
+        phase_confidences=phase_items,
+        vibration_strength_db=_float_or_none("vibration_strength_db"),
+    )
+
+
+def step_payload_from_action(action: RecommendedAction) -> dict[str, object]:
+    """Project one semantic action into the persisted TestStep shape."""
+    return {
+        "action_id": action.action_id,
+        "what": action.instruction,
+        "why": action.rationale,
+        "confirm": action.confirmation_signal,
+        "falsify": action.falsification_signal,
+        "eta": action.estimated_duration,
+    }
+
+
+def step_payloads_from_plan(test_plan: TestPlan) -> list[dict[str, object]]:
+    """Project a semantic TestPlan into the persisted TestStep payload list."""
+    return [step_payload_from_action(action) for action in test_plan.prioritized_actions]
+
+
+# ---------------------------------------------------------------------------
+# Finding decoder and projector
+# ---------------------------------------------------------------------------
 
 
 def finding_from_payload(payload: Mapping[str, object]) -> Finding:

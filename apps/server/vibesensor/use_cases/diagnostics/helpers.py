@@ -22,9 +22,9 @@ from vibesensor.shared.constants import (
     STEADY_SPEED_RANGE_KMH,
     STEADY_SPEED_STDDEV_KMH,
 )
-from vibesensor.shared.ids.locations import label_for_code as _label_for_code
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.locations import label_for_code as _label_for_code
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     MetadataDict,
     PhaseLabel,

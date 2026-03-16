@@ -21,9 +21,9 @@ from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+    from vibesensor.domain.diagnostic_reasoning import Signature
     from vibesensor.domain.finding_evidence import FindingEvidence
     from vibesensor.domain.location_hotspot import LocationHotspot
-    from vibesensor.domain.signature import Signature
     from vibesensor.domain.vibration_origin import VibrationOrigin
 
 __all__ = [

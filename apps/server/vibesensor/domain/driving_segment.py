@@ -1,13 +1,36 @@
-"""Meaningful portion of a test run used for interpretation."""
+"""Driving phase and segment — tightly coupled driving classification types.
+
+Co-locates DrivingPhase (the classification enum) and DrivingSegment
+(the data container for a classified portion of a run).
+"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import StrEnum
 
-from vibesensor.domain.driving_phase import DrivingPhase
+__all__ = ["DrivingPhase", "DrivingSegment"]
 
-__all__ = ["DrivingSegment"]
 
+# ---------------------------------------------------------------------------
+# DrivingPhase
+# ---------------------------------------------------------------------------
+
+
+class DrivingPhase(StrEnum):
+    """Canonical driving-phase labels."""
+
+    IDLE = "idle"
+    ACCELERATION = "acceleration"
+    CRUISE = "cruise"
+    DECELERATION = "deceleration"
+    COAST_DOWN = "coast_down"
+    SPEED_UNKNOWN = "speed_unknown"
+
+
+# ---------------------------------------------------------------------------
+# DrivingSegment
+# ---------------------------------------------------------------------------
 
 _MIN_USABLE_SAMPLES = 10
 

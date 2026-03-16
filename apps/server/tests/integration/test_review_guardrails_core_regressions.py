@@ -15,8 +15,8 @@ import pytest
 from vibesensor.adapters.persistence.runlog import bounded_sample
 from vibesensor.infra.runtime.registry import _sanitize_name
 from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.types.backend_types import new_car_id, sanitize_aspects
-from vibesensor.shared.utils.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.use_cases.diagnostics.order_bands import build_order_bands
 
 # ---------------------------------------------------------------------------
@@ -48,7 +48,7 @@ class TestDomainModelsPublicAPI:
 
     def test_runlog_re_exports(self) -> None:
         """runlog.as_float_or_none still works as before."""
-        from vibesensor.shared.utils.json_utils import as_float_or_none as runlog_as_float
+        from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float
 
         assert runlog_as_float(42) == 42.0
 

@@ -22,7 +22,7 @@ from vibesensor.shared.constants import (
     SNR_LOG_DIVISOR,
     SPEED_COVERAGE_MIN_PCT,
 )
-from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     FindingEvidenceMetrics,
     FindingPayload,

@@ -101,8 +101,7 @@ class TestExportZipFiltersInternals:
         ).read_text()
         assert 'if not key.startswith("_")' in helper_text
         assert "strip_internal_fields" in export_text
-        assert "test_run_from_summary" in export_text
-        assert "finding_payload_from_domain" in export_text
+        assert "project_analysis_summary" in export_text
 
 
 # ---------------------------------------------------------------------------

@@ -38,18 +38,21 @@
 - `use_cases/history/`: run query/delete, PDF report generation, CSV/ZIP exports, and history-facing helper orchestration above persistence.
 - `use_cases/run/`: recording pipeline orchestration; `logger.py` owns `RunRecorder`, `post_analysis.py` owns the background analysis queue, and `sample_builder.py` owns pure sample-building helpers.
 - `use_cases/updates/`: wheel-based updater workflow orchestration, firmware cache, ESP flashing, release discovery, install, rollback, runner, Wi-Fi, and status tracking.
-- `shared/`: cross-cutting typed payloads (`shared/types/`), boundary serializers/decoders (`shared/boundaries/`), exceptions (`shared/errors/`), JSON helpers (`shared/utils/`), location identifiers (`shared/ids/`), and run-context helpers.
+- `shared/`: cross-cutting typed payloads (`shared/types/`), boundary serializers/decoders (`shared/boundaries/`), exceptions (`shared/exceptions.py`), JSON helpers (`shared/json_utils.py`), location identifiers (`shared/locations.py`), and run-context helpers.
 - `domain/`: DDD-aligned domain model package. Each primary domain object
   lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
   SensorPlacement), `measurement.py` (Measurement, VibrationReading),
   `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
   `diagnostic_case.py` (DiagnosticCase aggregate), `diagnosis.py` (Diagnosis),
-  `diagnostic_reasoning.py` (DiagnosticReasoning),
-  `run_capture.py` (RunCapture), `run_setup.py` (RunSetup),
-  `configuration_snapshot.py`, `symptom.py`, `test_plan.py`,
-  `recommended_action.py`, `driving_segment.py`, `observation.py`,
-  `signature.py`, `hypothesis.py`, `vibration_origin.py`,
-  `speed_source.py` (SpeedSource), `driving_phase.py` (DrivingPhase),
+  `diagnostic_reasoning.py` (DiagnosticReasoning, Observation, ObservationEvidence,
+  Signature, Hypothesis, HypothesisStatus + extraction/recognition/evaluation
+  service functions),
+  `run_capture.py` (RunCapture, RunSetup, ConfigurationSnapshot),
+  `symptom.py`,
+  `test_plan.py` (TestPlan, RecommendedAction + planning service functions),
+  `driving_segment.py` (DrivingSegment, DrivingPhase),
+  `vibration_origin.py`,
+  `speed_source.py` (SpeedSource),
   `finding.py` (FindingKind, VibrationSource, Finding),
   `finding_evidence.py` (FindingEvidence),
   `confidence_assessment.py` (ConfidenceAssessment),
@@ -57,9 +60,7 @@
   `speed_profile.py` (SpeedProfile),
   `run_suitability.py` (RunSuitability, SuitabilityCheck),
   `report.py` (Report), `run_status.py` (RunStatus, RUN_TRANSITIONS).
-  `domain/services/` owns
-  observation extraction, signature recognition, hypothesis evaluation,
-  and test planning. Domain objects own
+  Domain objects own
   classification, ranking, actionability, surfacing, lifecycle, and
   query logic; diagnostics use cases delegate to them. See
   `docs/domain-model.md` for the full relationship map and modeling rules.

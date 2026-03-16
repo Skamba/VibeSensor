@@ -469,7 +469,7 @@ class RunMetadata:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, object]) -> RunMetadata:
-        from vibesensor.shared.utils.json_utils import as_float_or_none, as_int_or_none
+        from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 
         run_id = str(data.get("run_id", ""))
         if not run_id:

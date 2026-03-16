@@ -26,8 +26,8 @@ from typing import Final
 import yaml
 
 from vibesensor.shared.constants import NUMERIC_TYPES
+from vibesensor.shared.json_utils import deep_merge
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
-from vibesensor.shared.utils.json_utils import deep_merge
 
 # ---------------------------------------------------------------------------
 # Default configuration

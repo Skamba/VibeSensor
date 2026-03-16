@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from vibesensor.shared.errors.exceptions import ProcessingError
+from vibesensor.shared.exceptions import ProcessingError
 
 if TYPE_CHECKING:
     from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
