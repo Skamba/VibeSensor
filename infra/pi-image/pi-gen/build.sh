@@ -980,7 +980,7 @@ if [ "${VALIDATE}" = "1" ]; then
 
   # Validate firmware cache CLI is available
   if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python -c '
-import vibesensor.update.firmware_cache
+import vibesensor.use_cases.updates.firmware_cache
 print("FIRMWARE_CACHE_MODULE_OK")
 '; then
     echo "Validation failed: firmware_cache module not importable in target rootfs"
@@ -1010,7 +1010,6 @@ PY
   if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python - <<'PY'
 import pathlib
 import vibesensor
-
 module_path = pathlib.Path(vibesensor.__file__).resolve()
 if "/site-packages/" not in str(module_path):
     raise SystemExit(f"vibesensor imported from unexpected path: {module_path}")

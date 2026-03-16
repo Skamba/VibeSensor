@@ -25,7 +25,7 @@ class Measurement:
     """A single multi-axis acceleration measurement from an ESP32 sensor.
 
     Fields mirror the per-sample data carried inside a ``DataMessage`` from
-    ``vibesensor.protocol``:
+    ``vibesensor.adapters.udp.protocol``:
 
     * **x / y / z**: Acceleration values in *g* (float).  Raw int16 LSB
       values should be converted to *g* before constructing this object.

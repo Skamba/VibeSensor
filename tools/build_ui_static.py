@@ -14,14 +14,14 @@ import shutil
 import subprocess
 from pathlib import Path
 
-# Keep in sync with vibesensor.update.status.UI_BUILD_METADATA_FILE
+# Keep in sync with vibesensor.use_cases.updates.status.UI_BUILD_METADATA_FILE
 UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 
 
 def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
     """Deterministic SHA-256 of a directory tree (sorted, filtered).
 
-    Canonical copy lives in ``vibesensor.update.status.hash_tree``; this
+    Canonical copy lives in ``vibesensor.use_cases.updates.status.hash_tree``; this
     local duplicate exists so the script stays self-contained.
     """
     if not root.exists():

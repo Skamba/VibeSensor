@@ -10,9 +10,9 @@ from pathlib import Path
 import pytest
 from _paths import SERVER_ROOT
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.processing import SignalProcessor
-from vibesensor.routes._helpers import safe_filename as _safe_filename
+from vibesensor.adapters.http._helpers import safe_filename as _safe_filename
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.infra.processing import SignalProcessor
 
 _SAFE_RE = re.compile(r"^[a-zA-Z0-9._-]+$")
 
@@ -124,6 +124,6 @@ class TestProcessingZeroSampleRate:
 
 def test_set_location_uses_stripped_code() -> None:
     """Verify the stripped code is passed to registry.set_location."""
-    source = (SERVER_ROOT / "vibesensor" / "routes" / "clients.py").read_text()
+    source = (SERVER_ROOT / "vibesensor" / "adapters" / "http" / "clients.py").read_text()
     assert "set_location(normalized_client_id, code)" in source
     assert "set_location(normalized_client_id, req.location_code)" not in source

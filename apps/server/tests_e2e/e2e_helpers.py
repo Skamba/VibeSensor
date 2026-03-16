@@ -127,7 +127,7 @@ def run_simulator(
     sim_cmd = [
         sys.executable,
         "-m",
-        "vibesensor.simulator.sim_sender",
+        "vibesensor.adapters.simulator.sim_sender",
         "--server-host",
         sim_host,
         "--server-data-port",

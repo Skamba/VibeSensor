@@ -25,10 +25,10 @@ from test_support.core import (
     standard_metadata,
 )
 
-from vibesensor.analysis import summarize_run_data
-from vibesensor.analysis_settings import (
+from vibesensor.infra.config.analysis_settings import (
     wheel_hz_from_speed_kmh,
 )
+from vibesensor.use_cases.diagnostics import summarize_run_data
 
 # ---------------------------------------------------------------------------
 # Shared helpers

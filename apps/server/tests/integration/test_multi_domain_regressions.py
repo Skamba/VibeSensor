@@ -13,19 +13,19 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.analysis.findings import _sensor_intensity_by_location
-from vibesensor.analysis.helpers import _format_duration, _speed_bin_label
-from vibesensor.analysis.location_analysis import _weighted_speed_window_label
-from vibesensor.analysis.phase_segmentation import segment_run_phases
-from vibesensor.analysis.summary_builder import compute_run_timing
-from vibesensor.config import _split_host_port
+from vibesensor.adapters.pdf.mapping import order_label_human
+from vibesensor.adapters.pdf.mapping import resolve_i18n as resolve_i18n_impl
+from vibesensor.adapters.persistence.runlog import parse_iso8601
+from vibesensor.app.settings import _split_host_port
 from vibesensor.domain import Finding, SpeedSourceKind
-from vibesensor.json_utils import as_float_or_none as runlog_as_float_or_none
-from vibesensor.report.mapping import order_label_human
-from vibesensor.report.mapping import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
-from vibesensor.runlog import parse_iso8601
-from vibesensor.update.release_fetcher import ReleaseInfo, ServerReleaseFetcher
+from vibesensor.shared.utils.json_utils import as_float_or_none as runlog_as_float_or_none
+from vibesensor.use_cases.diagnostics.findings import _sensor_intensity_by_location
+from vibesensor.use_cases.diagnostics.helpers import _format_duration, _speed_bin_label
+from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_window_label
+from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
+from vibesensor.use_cases.diagnostics.summary_builder import compute_run_timing
+from vibesensor.use_cases.updates.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 
 
 def _make_release_info(version: str) -> ReleaseInfo:

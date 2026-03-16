@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
 
-from .car import TireSpec
+from vibesensor.domain.car import TireSpec
 
 __all__ = ["ConfigurationSnapshot"]
 

@@ -20,8 +20,8 @@ import time
 from math import pi
 
 import numpy as np
-from vibesensor.processing import SignalProcessor
-from vibesensor.worker_pool import WorkerPool
+from vibesensor.infra.processing import SignalProcessor
+from vibesensor.infra.workers.worker_pool import WorkerPool
 
 
 def _p95(values: list[float]) -> float:

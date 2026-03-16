@@ -134,7 +134,7 @@ When you change ownership boundaries, commands, or workflows, update the matchin
 
 The backend uses a layered config system. Values are merged in this order (later wins):
 
-1. **Built-in defaults** (`vibesensor.config.DEFAULT_CONFIG`) — always present, never edited
+1. **Built-in defaults** (`vibesensor.app.settings.DEFAULT_CONFIG`) — always present, never edited
 2. **`config.yaml`** — local overrides (gitignored; mostly empty by default)
 3. **Environment variables** — override individual keys at runtime
 

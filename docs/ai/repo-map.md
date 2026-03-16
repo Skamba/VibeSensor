@@ -2,13 +2,13 @@
 
 ## Primary entry points
 
-- Backend app: `apps/server/vibesensor/app.py`
-- Backend service wiring: `apps/server/vibesensor/runtime/builders.py`
-- Backend route assembly: `apps/server/vibesensor/routes/__init__.py`
+- Backend app: `apps/server/vibesensor/app/bootstrap.py`
+- Backend service wiring: `apps/server/vibesensor/app/container.py`
+- Backend route assembly: `apps/server/vibesensor/adapters/http/__init__.py`
 - UI app entry: `apps/ui/src/main.ts`
 - UI runtime/composition root: `apps/ui/src/app/ui_app_runtime.ts`
 - UI runtime owners: `apps/ui/src/app/runtime/`
-- Simulator CLI: `apps/server/vibesensor/simulator/sim_sender.py`
+- Simulator CLI: `apps/server/vibesensor/adapters/simulator/sim_sender.py`
 - Firmware app: `firmware/esp/src/main.cpp`
 - Pi image build: `infra/pi-image/pi-gen/build.sh`
 - Local stack entry point: `docker-compose.yml`
@@ -24,18 +24,22 @@
 
 ## Backend package layout
 
-- `app.py`: app factory and CLI-facing startup.
-- `routes/`: health, clients, settings, recording, history, websocket, updates (`/api/update/`, `/api/esp-flash/`), car library, and debug route groups; `/api/health` now surfaces startup readiness and managed-task failures in addition to processing degradation.
-- `runtime/`: flat `RuntimeState` (`state.py`), service builders (`builders.py`), lifecycle management (`lifecycle.py`), processing loop (`processing_loop.py`), and websocket broadcast (`ws_broadcast.py`); `builders.py::build_runtime()` constructs the flat `RuntimeState` directly; routes receive `RuntimeState` (no intermediate route-service assembly); the websocket broadcaster reuses shared per-tick payload state and only layers in recipient-specific selection at the end.
-- `processing/`, `analysis/`: signal processing and findings logic.
-  `analysis/findings.py` and `analysis/top_cause_selection.py` delegate
-  classification and ranking logic to the domain `Finding`.
-  `analysis/location_analysis.py` owns the location-analysis pipeline.
-  `analysis/analysis_window.py` owns the `AnalysisWindow` frozen dataclass
-  (phase-aligned analysis chunk) and `analysis/_types.py` owns
-  `PhaseEvidence`, `FindingPayload`, and `AnalysisSummary` TypedDicts;
-  `SuspectedVibrationOrigin` is defined in `boundaries/vibration_origin.py`.
-- `domain/`: DDD-aligned domain model package.  Each primary domain object
+- `app/`: startup and wiring. `bootstrap.py` creates the FastAPI app, `container.py` builds the flat `RuntimeState`, and `settings.py` owns YAML config loading and validation.
+- `adapters/http/`: health, clients, settings, recording, history, websocket, updates, car library, and debug route groups; `adapters/http/__init__.py` assembles the router.
+- `adapters/websocket/hub.py`: live WebSocket connection fan-out and payload delivery.
+- `adapters/persistence/`: SQLite history DB (`history_db/`), JSONL runlog I/O (`runlog.py`), and the static car library loader (`car_library.py`).
+- `adapters/pdf/`: PDF/report rendering pipeline and report mapping entrypoints.
+- `adapters/udp/`, `adapters/gps/`, `adapters/simulator/`, `adapters/hotspot/`: UDP protocol transport, GPS speed ingestion, simulator tooling, and hotspot/AP operational adapters.
+- `infra/runtime/`: flat `RuntimeState`, lifecycle management, processing loop, health snapshots, and WebSocket broadcast coordination.
+- `infra/processing/`: signal processing pipeline (buffers, FFT, payload shaping, and processor facade).
+- `infra/config/`: runtime analysis/settings stores used by runtime wiring and recording flows.
+- `infra/workers/`: worker-pool infrastructure.
+- `use_cases/diagnostics/`: post-stop diagnostics pipeline. `findings.py` and `top_cause_selection.py` delegate classification and ranking to the domain `Finding`; `location_analysis.py` owns the location-analysis pipeline; `analysis_window.py` owns the `AnalysisWindow` dataclass; `_types.py` owns `PhaseEvidence`, `FindingPayload`, and `AnalysisSummary`.
+- `use_cases/history/`: run query/delete, PDF report generation, CSV/ZIP exports, and history-facing helper orchestration above persistence.
+- `use_cases/run/`: recording pipeline orchestration; `logger.py` owns `RunRecorder`, `post_analysis.py` owns the background analysis queue, and `sample_builder.py` owns pure sample-building helpers.
+- `use_cases/updates/`: wheel-based updater workflow orchestration, firmware cache, ESP flashing, release discovery, install, rollback, runner, Wi-Fi, and status tracking.
+- `shared/`: cross-cutting typed payloads (`shared/types/`), boundary serializers/decoders (`shared/boundaries/`), exceptions (`shared/errors/`), JSON helpers (`shared/utils/`), location identifiers (`shared/ids/`), and run-context helpers.
+- `domain/`: DDD-aligned domain model package. Each primary domain object
   lives in its own dedicated file: `car.py` (Car, TireSpec), `sensor.py` (Sensor,
   SensorPlacement), `measurement.py` (Measurement, VibrationReading),
   `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
@@ -57,29 +61,13 @@
   observation extraction, signature recognition, hypothesis evaluation,
   and test planning. Domain objects own
   classification, ranking, actionability, surfacing, lifecycle, and
-  query logic; pipeline adapters in `analysis/` delegate to them. See
+  query logic; diagnostics use cases delegate to them. See
   `docs/domain-model.md` for the full relationship map and modeling rules.
-- `boundaries/`: explicit ingress/egress decoders and serializers between
-  domain aggregates (`DiagnosticCase`, `TestRun`) and
-  summary/persistence/report payload shapes; `diagnostic_case.py::test_run_from_summary()`
-  reconstructs domain aggregates, and individual boundary serializers
-  (`finding_payload_from_domain`, `origin_payload_from_finding`, etc.) handle
-  re-serialization at history/export/report call sites.
-- `metrics_log/`: recording pipeline package; `logger.py` owns the `RunRecorder` class (formerly `MetricsLogger`) which directly manages session state and persistence coordination (no private helper classes), enriching status/health payloads with sample counts and analysis results; `post_analysis.py` owns the background analysis queue with outcome tracking; `sample_builder.py` owns pure sample-building functions.
-- `history_db/`: SQLite-backed history and settings persistence (3 files: `__init__.py` with `HistoryDB` class consolidating connection management, settings KV, client names, and all run reads/writes; `_schema.py` with DDL and `ANALYSIS_SCHEMA_VERSION`; `_samples.py` for v2 sample serialization). `RunStatus` and state-transition logic live in `domain/run_status.py`. Incompatible older schemas raise a clear error directing the user to delete the DB file.
-- `history_services/`: focused history service layer (run query/delete,
-  reports, exports, helpers) above `history_db/`; run/report services project
-  persisted analyses through reconstructed domain aggregates before returning
-  API payloads, building PDFs, or emitting exports.
-- `hotspot/`: Wi-Fi AP monitoring, text parsing, and self-heal logic.
-- `runlog.py`: JSONL run-file I/O and normalization.
-- `report/`: PDF renderer, report-template builders, pattern-to-parts mapping (`pattern_parts.py`), and analysis-summary-to-domain-Report factory (`mapping.py::build_report_from_summary()`).
-- `update/`: public update manager facade (`manager.py`) with workflow orchestration, validation, and models (`models.py`); Wi-Fi control and diagnostics (`wifi.py`), release discovery (`releases.py`), ESP flash management, firmware cache, release validation, install and rollback, command execution, and status tracking with runtime detail collection (`status.py`); workflow validation and rollback snapshot creation must both succeed before a live install begins.
 - `apps/ui/src/app/runtime/`: explicit UI runtime owners for shell/chrome state, live transport/payload application, and spectrum/chart orchestration beneath the `UiAppRuntime` composition root.
 
 ## Test layout
 
-- `apps/server/tests/` is feature-based and mirrors backend ownership boundaries.
+- `apps/server/tests/` mirrors the backend package layout with `app/`, `shared/`, `domain/`, `use_cases/`, `adapters/`, and `infra/` subtrees.
 - Cross-cutting coverage lives in `integration/` and `hygiene/`.
 - Regression tests live in the feature directory they primarily test, or in `integration/` for cross-cutting regressions.
 - Shared test support lives at the test root (`conftest.py`, `_paths.py`, focused helper modules, and the `test_support/` package including `findings.py` for canonical finding-payload factories).

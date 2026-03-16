@@ -2,7 +2,7 @@
 
 This repo uses a **minimal, flat design system** with a purple accent for both:
 - `apps/ui/` (web application) — auto light/dark via `prefers-color-scheme`
-- `apps/server/vibesensor/report/` (generated PDF reports) — light/print-friendly
+- `apps/server/vibesensor/adapters/pdf/` (generated PDF reports) — light/print-friendly
 
 ## Goals
 - One visual system across live UI and exported reports.
@@ -27,7 +27,7 @@ Web tokens are defined in:
 - `apps/ui/src/styles/app.css` (`:root` + `@media (prefers-color-scheme: dark)`)
 
 Report tokens are defined in:
-- `apps/server/vibesensor/report/pdf_style.py`
+- `apps/server/vibesensor/adapters/pdf/pdf_style.py`
 
 ## Theme
 - **Auto theme**: default follows system preference (`prefers-color-scheme`).
@@ -84,9 +84,9 @@ The generated PDF uses A4 portrait and is structured as a **diagnostic worksheet
 ### Primitives
 | Primitive | File | Purpose |
 |-----------|------|---------|
-| `parts_for_pattern(system, order)` | `apps/server/vibesensor/analysis/pattern_parts.py` | Centralized pattern-to-parts mapping |
-| `strength_text(db_value, lang)` | `apps/server/vibesensor/analysis/strength_labels.py` | Natural-language strength label with dB |
-| `certainty_tier(conf, band_key)` | `apps/server/vibesensor/analysis/strength_labels.py` | Report layout tier (A/B/C) for section visibility |
+| `parts_for_pattern(system, order)` | `apps/server/vibesensor/use_cases/diagnostics/pattern_parts.py` | Centralized pattern-to-parts mapping |
+| `strength_text(db_value, lang)` | `apps/server/vibesensor/use_cases/diagnostics/strength_labels.py` | Natural-language strength label with dB |
+| `certainty_tier(conf, band_key)` | `apps/server/vibesensor/use_cases/diagnostics/strength_labels.py` | Report layout tier (A/B/C) for section visibility |
 
 ### Card tone tokens (`report/pdf_style.py`)
 - `card_neutral_bg / _border` — informational

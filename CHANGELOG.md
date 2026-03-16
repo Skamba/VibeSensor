@@ -117,7 +117,7 @@
 ### Breaking changes (no backwards compatibility required)
 
 - **Removed `strength_scoring.py`** — Legacy wrapper module deleted. Import
-  directly from `vibesensor.analysis.strength_metrics` instead.
+  directly from `vibesensor.use_cases.diagnostics.strength_metrics` instead.
 - **Removed `metrics_csv_path` config key** — Use `metrics_log_path` in
   `logging:` section of config YAML. The `LoggingConfig.metrics_csv_path`
   property alias is also removed.
@@ -177,7 +177,7 @@
 - **New `constants.py` module** — Shared physical/analysis constants
   (`MPS_TO_KMH`, `KMH_TO_MPS`, `PEAK_BANDWIDTH_HZ`, `PEAK_SEPARATION_HZ`,
   `SILENCE_DB`) extracted from 7 files (14 occurrences total) into a single
-  source of truth. All call sites now import from `vibesensor.constants`.
+  source of truth. All call sites now import from `vibesensor.shared.constants`.
 - **Fixed `config_preflight.py` crash** — Removed reference to deleted
   `LoggingConfig.metrics_csv_path` attribute that caused an `AttributeError`
   during CI config validation.

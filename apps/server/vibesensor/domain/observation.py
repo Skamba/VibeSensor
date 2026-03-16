@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .driving_phase import DrivingPhase
-from .finding import VibrationSource
+from vibesensor.domain.driving_phase import DrivingPhase
+from vibesensor.domain.finding import VibrationSource
 
 __all__ = ["Observation"]
 

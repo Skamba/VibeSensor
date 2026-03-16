@@ -20,10 +20,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.gps_speed import GPSSpeedMonitor
-from vibesensor.report.mapping import map_summary
-from vibesensor.report_cli import main as report_cli_main
-from vibesensor.update.firmware_cache import (
+from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.cli.report import main as report_cli_main
+from vibesensor.use_cases.updates.firmware_cache import (
     FirmwareCache,
     FirmwareCacheConfig,
     GitHubReleaseFetcher,
@@ -101,7 +101,7 @@ class TestDownloadAssetFdLeakGuard:
         fake_resp.__exit__ = lambda s, *a: None
 
         with (
-            patch("vibesensor.update.firmware_cache.urlopen", return_value=fake_resp),
+            patch("vibesensor.use_cases.updates.firmware_cache.urlopen", return_value=fake_resp),
             patch("os.fdopen", side_effect=OSError("mock fdopen failure")),
             patch("os.close") as mock_close,
         ):
@@ -180,14 +180,14 @@ class TestReportCliErrorHandling:
         run_file.write_text('{"event": "meta"}\n')
 
         with (
-            patch("vibesensor.report_cli.summarize_log", return_value={"some": "summary"}),
+            patch("vibesensor.cli.report.summarize_log", return_value={"some": "summary"}),
             patch(
-                "vibesensor.report_cli.build_report_pdf",
+                "vibesensor.cli.report.build_report_pdf",
                 side_effect=RuntimeError("PDF engine failed"),
             ),
-            patch("vibesensor.report_cli.map_summary", return_value={}),
+            patch("vibesensor.cli.report.map_summary", return_value={}),
             patch(
-                "vibesensor.report_cli.parse_args",
+                "vibesensor.cli.report.parse_args",
                 return_value=MagicMock(input=run_file, output=None, summary_json=None),
             ),
         ):
@@ -199,11 +199,11 @@ class TestReportCliErrorHandling:
         run_file.write_text('{"event": "meta"}\n')
 
         with (
-            patch("vibesensor.report_cli.summarize_log", return_value={"some": "summary"}),
-            patch("vibesensor.report_cli.build_report_pdf", return_value=b"%PDF-1.4 fake"),
-            patch("vibesensor.report_cli.map_summary", return_value={}),
+            patch("vibesensor.cli.report.summarize_log", return_value={"some": "summary"}),
+            patch("vibesensor.cli.report.build_report_pdf", return_value=b"%PDF-1.4 fake"),
+            patch("vibesensor.cli.report.map_summary", return_value={}),
             patch(
-                "vibesensor.report_cli.parse_args",
+                "vibesensor.cli.report.parse_args",
                 return_value=MagicMock(
                     input=run_file,
                     output=tmp_path / "out.pdf",

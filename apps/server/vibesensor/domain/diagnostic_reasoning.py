@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .hypothesis import Hypothesis, HypothesisStatus
-from .observation import Observation
-from .signature import Signature
+from vibesensor.domain.hypothesis import Hypothesis, HypothesisStatus
+from vibesensor.domain.observation import Observation
+from vibesensor.domain.signature import Signature
 
 __all__ = ["DiagnosticReasoning"]
 

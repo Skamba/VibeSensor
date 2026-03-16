@@ -57,7 +57,7 @@ def check_file_sizes() -> tuple[bool, list[str]]:
 
 def check_entrypoints() -> tuple[bool, list[str]]:
     required = [
-        ROOT / "apps/server/vibesensor/app.py",
+        ROOT / "apps/server/vibesensor/app/bootstrap.py",
         ROOT / "apps/ui/src/main.ts",
         ROOT / "firmware/esp/src/main.cpp",
         ROOT / "infra/pi-image/pi-gen/build.sh",

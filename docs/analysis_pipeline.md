@@ -8,14 +8,14 @@ its entrypoint, ordered steps, outputs, and architectural rules.
 1. **Analysis runs only once** — after a recording is stopped.
    Report rendering and API endpoints use persisted results.
 2. **Single folder** — all analysis logic lives in
-   `apps/server/vibesensor/analysis/`. No analysis helpers elsewhere.
+   `apps/server/vibesensor/use_cases/diagnostics/`. No analysis helpers elsewhere.
 3. **Single entrypoint** — `summarize_run_data()` is the primary
    pipeline function. All steps are called from there.
-4. **Public API** — external code should prefer `vibesensor.analysis`
+4. **Public API** — external code should prefer `vibesensor.use_cases.diagnostics`
    for stable entrypoints such as `summarize_run_data()`, `map_summary()`,
    and `build_findings_for_samples()`.
-5. **Renderer-only report package** — `vibesensor.report` must not
-   import from `vibesensor.analysis` (enforced by tests).
+5. **Renderer-only report package** — `vibesensor.adapters.pdf` must not
+   import from `vibesensor.use_cases.diagnostics` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
    (`processing/`) must not import from `analysis/`.
 

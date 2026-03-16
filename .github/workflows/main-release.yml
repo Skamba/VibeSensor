@@ -221,7 +221,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PYTHONPATH=apps/server python -m vibesensor.update.release_validation validate-firmware-manifest \
+          PYTHONPATH=apps/server python -m vibesensor.use_cases.updates.release_validation validate-firmware-manifest \
             --dist-dir "${{ steps.firmware_dir.outputs.path }}/dist"
 
       - name: Create firmware bundle

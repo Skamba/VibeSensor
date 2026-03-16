@@ -21,7 +21,7 @@ class Report:
     """Run-level metadata carrier consumed by the report rendering pipeline.
 
     Finding-level data flows through the analysis summary dicts and
-    :class:`~vibesensor.report.mapping.ReportMappingContext`, not
+    :class:`~vibesensor.adapters.pdf.mapping.ReportMappingContext`, not
     through this object.
     """
 

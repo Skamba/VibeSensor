@@ -13,10 +13,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.history_services.exports import HistoryExportService
-from vibesensor.history_services.reports import HistoryReportService
-from vibesensor.history_services.runs import HistoryRunService
-from vibesensor.runtime import ProcessingLoopState, RuntimeHealthState
+from vibesensor.infra.runtime import ProcessingLoopState, RuntimeHealthState
+from vibesensor.use_cases.history.exports import HistoryExportService
+from vibesensor.use_cases.history.reports import HistoryReportService
+from vibesensor.use_cases.history.runs import HistoryRunService
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers
@@ -104,7 +104,7 @@ def fake_state() -> FakeState:
 @pytest.fixture
 def route_paths(fake_state: FakeState) -> set[str]:
     """All registered URL paths from the assembled router."""
-    from vibesensor.routes import create_router
+    from vibesensor.adapters.http import create_router
 
     router = create_router(fake_state)  # type: ignore[arg-type]
     return {r.path for r in router.routes}

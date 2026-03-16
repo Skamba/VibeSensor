@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .diagnostic_reasoning import DiagnosticReasoning
-from .driving_segment import DrivingSegment
-from .finding import Finding, VibrationSource
-from .recommended_action import RecommendedAction
-from .run_capture import RunCapture
-from .run_suitability import RunSuitability
-from .speed_profile import SpeedProfile
-from .test_plan import TestPlan
+from vibesensor.domain.diagnostic_reasoning import DiagnosticReasoning
+from vibesensor.domain.driving_segment import DrivingSegment
+from vibesensor.domain.finding import Finding, VibrationSource
+from vibesensor.domain.recommended_action import RecommendedAction
+from vibesensor.domain.run_capture import RunCapture
+from vibesensor.domain.run_suitability import RunSuitability
+from vibesensor.domain.speed_profile import SpeedProfile
+from vibesensor.domain.test_plan import TestPlan
 
 __all__ = ["TestRun"]
 

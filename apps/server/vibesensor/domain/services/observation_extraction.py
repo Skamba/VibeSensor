@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from ..driving_phase import DrivingPhase
-from ..finding import VibrationSource
-from ..observation import Observation
+from vibesensor.domain.driving_phase import DrivingPhase
+from vibesensor.domain.finding import VibrationSource
+from vibesensor.domain.observation import Observation
 
 
 @dataclass(frozen=True, slots=True)

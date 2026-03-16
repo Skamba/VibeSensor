@@ -19,10 +19,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from vibesensor.history_db import HistoryDB
-from vibesensor.processing import SignalProcessor
-from vibesensor.runlog import bounded_sample as _bounded_sample
-from vibesensor.settings_store import SettingsStore
+from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.adapters.persistence.runlog import bounded_sample as _bounded_sample
+from vibesensor.infra.config.settings_store import SettingsStore
+from vibesensor.infra.processing import SignalProcessor
 
 # -- shared helpers ----------------------------------------------------------
 
