@@ -71,9 +71,7 @@ def _location_result_to_payload(
         "mean_amp": r.mean_amp,
         "dominance_ratio": r.dominance_ratio,
         "location_count": (
-            len(r.hotspot.alternative_locations)
-            if r.hotspot.alternative_locations
-            else 1
+            len(r.hotspot.alternative_locations) if r.hotspot.alternative_locations else 1
         ),
         "top_location": r.top_location,
         "second_location": r.second_location,

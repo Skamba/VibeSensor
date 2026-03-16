@@ -278,9 +278,7 @@ def _location_speedbin_summary(
         # density via a logarithmic sample-count factor.
         candidate_score = candidate.mean_amp * log1p(candidate.total_samples)
         best_score = (
-            best.mean_amp * log1p(best.total_samples)
-            if best is not None
-            else float("-inf")
+            best.mean_amp * log1p(best.total_samples) if best is not None else float("-inf")
         )
         if best is None or candidate_score > best_score:
             best = candidate
@@ -325,9 +323,7 @@ def _location_speedbin_summary(
         speed_range=best_out.speed_range,
         dominance=f"{best_out.dominance_ratio:.2f}",
         weak_note=(
-            i18n_ref("WEAK_SPATIAL_SEPARATION_NOTE")
-            if best_out.weak_spatial_separation
-            else ""
+            i18n_ref("WEAK_SPATIAL_SEPARATION_NOTE") if best_out.weak_spatial_separation else ""
         ),
     )
     return sentence, best_out
