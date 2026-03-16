@@ -177,7 +177,7 @@ class TestSourceAwareLocalization:
             suspected_source="wheel/tire",
         )
         assert hotspot is not None
-        top_location = str(hotspot.get("top_location", ""))
+        top_location = hotspot.top_location
         assert is_wheel_location(top_location), (
             f"Wheel diagnosis assigned to non-wheel sensor: {top_location}"
         )
@@ -212,7 +212,7 @@ class TestSourceAwareLocalization:
             suspected_source="engine",
         )
         assert hotspot is not None
-        top_location = str(hotspot.get("top_location", ""))
+        top_location = hotspot.top_location
         assert top_location == "Engine Bay"
 
     def test_no_wheel_sensors_falls_back_to_strongest(self) -> None:
@@ -247,7 +247,7 @@ class TestSourceAwareLocalization:
         )
         assert hotspot is not None
         # No wheel sensors available, so it should fall back to strongest
-        top_location = str(hotspot.get("top_location", ""))
+        top_location = hotspot.top_location
         assert top_location == "Driver Seat"
 
 

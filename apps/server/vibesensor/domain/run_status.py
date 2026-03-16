@@ -5,10 +5,8 @@ strings (``RunStatus.COMPLETE == "complete"``), preserving backward
 compatibility with SQLite storage and existing dict-based code paths.
 
 This tracks the *persisted* run lifecycle in the database.  The
-in-memory run lifecycle is tracked by ``Run`` in ``domain/session.py``
+in-memory run lifecycle is tracked by ``Run`` in ``domain/run.py``
 (with ``start()``/``stop()`` guards and an ``is_recording`` property).
-Route handlers bridge the two models; see ``session.py`` module
-docstring for details.
 """
 
 from __future__ import annotations

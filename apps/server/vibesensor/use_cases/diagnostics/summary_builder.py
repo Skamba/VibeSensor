@@ -47,6 +47,7 @@ from vibesensor.shared.boundaries.test_steps import step_payloads_from_plan
 from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
 from vibesensor.shared.run_context import build_summary_warnings, order_reference_context_complete
+from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.utils.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
@@ -68,7 +69,6 @@ from vibesensor.use_cases.diagnostics._types import (
     SpeedStats,
     TestStep,
     i18n_ref,
-    is_json_object,
 )
 from vibesensor.use_cases.diagnostics.analysis_window import AnalysisWindow
 from vibesensor.use_cases.diagnostics.findings import (

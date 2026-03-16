@@ -109,7 +109,7 @@ acceleration fields may still be expressed in g.
 - Summary orchestration: `summary_builder.py`.
 - Finding selection and ranking: `findings.py`, `ranking.py`, `top_cause_selection.py`.
 - Domain helpers: `order_analysis.py`, `phase_segmentation.py`, `helpers.py`, `strength_labels.py`, `test_plan.py`, `pattern_parts.py`.
-- Report mapping: `diagnosis_candidates.py`, `vibesensor/report/mapping.py`.
+- Report mapping: `vibesensor/report/mapping.py`.
 - Plot shaping: `plots.py`.
 
 ## Adding a New Analysis Step

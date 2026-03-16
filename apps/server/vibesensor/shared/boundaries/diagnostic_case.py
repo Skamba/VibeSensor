@@ -13,12 +13,10 @@ from vibesensor.domain.diagnostic_reasoning import DiagnosticReasoning
 from vibesensor.domain.driving_phase import DrivingPhase
 from vibesensor.domain.driving_segment import DrivingSegment
 from vibesensor.domain.finding import Finding
-from vibesensor.domain.hypothesis import Hypothesis
 from vibesensor.domain.recommended_action import RecommendedAction
 from vibesensor.domain.run_capture import RunCapture
 from vibesensor.domain.run_setup import RunSetup
 from vibesensor.domain.sensor import Sensor
-from vibesensor.domain.signature import Signature
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.symptom import Symptom
 from vibesensor.domain.test_plan import TestPlan
@@ -132,9 +130,11 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         if isinstance(speed_stats, Mapping)
         else None
     )
-    run_suitability = summary.get("run_suitability")
+    raw_suitability_payload = summary.get("run_suitability")
     suitability = (
-        run_suitability_from_payload(run_suitability) if isinstance(run_suitability, list) else None
+        run_suitability_from_payload(raw_suitability_payload)
+        if isinstance(raw_suitability_payload, list)
+        else None
     )
 
     # Synthesize ConfidenceAssessment for historical findings that lack it
@@ -147,17 +147,11 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         if isinstance(_amp_summary, Mapping)
         else "moderate"
     )
-    _has_ref_gaps = False
-    if isinstance(run_suitability, list):
-        for _chk in run_suitability:
-            if (
-                isinstance(_chk, Mapping)
-                and _chk.get("check_key") == "reference_complete"
-                and _chk.get("state") == "fail"
-            ):
-                _has_ref_gaps = True
-                break
+    _has_ref_gaps = suitability.has_reference_gaps if suitability else False
 
+    # MIGRATION: backfills ConfidenceAssessment for historical findings that
+    # lack it.  Can be removed once all production databases are confirmed to
+    # carry ConfidenceAssessment on every Finding.
     def _ensure_ca(f: Finding) -> Finding:
         if f.confidence_assessment is not None:
             return f
@@ -174,13 +168,7 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     findings = tuple(_ensure_ca(f) for f in findings)
     top_causes = tuple(_ensure_ca(f) for f in top_causes)
 
-    signatures: list[Signature] = []
-    hypotheses: list[Hypothesis] = []
-    for finding in findings:
-        if finding.is_reference:
-            continue  # reference findings don't produce hypotheses
-        signatures.extend(finding.signatures)
-        hypotheses.append(Hypothesis.from_finding(finding, finding.signatures))
+    reasoning_obj = DiagnosticReasoning.from_findings(findings)
 
     sensor_locs = summary.get("sensor_locations")
     sensor_loc_list = list(sensor_locs) if isinstance(sensor_locs, Mapping) else []
@@ -193,11 +181,6 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         run_id=str(summary.get("run_id") or "unknown"),
         setup=setup,
     )
-    reasoning_obj = DiagnosticReasoning(
-        signatures=tuple(dict.fromkeys(signatures)),
-        hypotheses=tuple(hypotheses),
-    )
-
     return TestRun(
         capture=capture,
         reasoning=reasoning_obj,

@@ -4,12 +4,64 @@ import pytest
 from test_support.report_helpers import analysis_sample as _make_sample
 from test_support.report_helpers import max_non_ref_confidence, wheel_metadata
 
+from vibesensor.domain import LocationHotspot
 from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
-from vibesensor.use_cases.diagnostics.location_analysis import _location_speedbin_summary
+from vibesensor.use_cases.diagnostics.location_analysis import (
+    LocationAnalysisResult,
+    _location_speedbin_summary,
+)
 from vibesensor.use_cases.diagnostics.summary_builder import summarize_origin
+
+
+def _make_loc_result(
+    *,
+    location: str = "Front Left",
+    speed_range: str = "70-80 km/h",
+    dominance_ratio: float = 2.0,
+    weak_spatial_separation: bool = False,
+    localization_confidence: float = 1.0,
+    no_wheel_sensors: bool = False,
+    ambiguous_location: bool = False,
+    mean_amp: float = 0.03,
+    total_samples: int = 10,
+) -> LocationAnalysisResult:
+    """Build a LocationAnalysisResult for monkeypatch stubs."""
+    top_loc = location
+    second_loc: str | None = None
+    ambiguous_locs: list[str] = []
+    if "ambiguous" in location.lower() and "/" in location:
+        parts = location.split("/")
+        top_loc = parts[0].replace("ambiguous location:", "").strip()
+        second_loc = parts[1].strip() if len(parts) > 1 else None
+        ambiguous_locs = [top_loc]
+        if second_loc:
+            ambiguous_locs.append(second_loc)
+        ambiguous_location = True
+    return LocationAnalysisResult(
+        hotspot=LocationHotspot.from_analysis_inputs(
+            strongest_location=top_loc,
+            dominance_ratio=dominance_ratio,
+            localization_confidence=localization_confidence,
+            weak_spatial_separation=weak_spatial_separation,
+            ambiguous=ambiguous_location,
+            alternative_locations=ambiguous_locs,
+        ),
+        mean_amp=mean_amp,
+        total_samples=total_samples,
+        ambiguous_location=ambiguous_location,
+        no_wheel_sensors=no_wheel_sensors,
+        speed_range=speed_range,
+        dominance_ratio=dominance_ratio,
+        localization_confidence=localization_confidence,
+        weak_spatial_separation=weak_spatial_separation,
+        top_location=top_loc,
+        second_location=second_loc,
+        partial_coverage=False,
+        corroborated_by_n_sensors=1,
+    )
 
 
 def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> None:
@@ -23,10 +75,10 @@ def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> 
     sentence, hotspot = _location_speedbin_summary(matches, lang="en")
 
     assert hotspot is not None
-    assert bool(hotspot.get("ambiguous_location"))
-    assert hotspot.get("location") == "ambiguous location: Rear Right / Rear Left"
-    assert hotspot.get("ambiguous_locations") == ["Rear Right", "Rear Left"]
-    assert float(hotspot.get("localization_confidence") or 0.0) < 0.4
+    assert hotspot.ambiguous_location
+    assert hotspot.display_location == "ambiguous location: Rear Right / Rear Left"
+    assert list(hotspot.hotspot.alternative_locations) == ["Rear Right", "Rear Left"]
+    assert hotspot.localization_confidence < 0.4
     assert isinstance(sentence, dict)
     assert sentence.get("_i18n_key") == "STRONGEST_AT_LOCATION_IN_SPEED_RANGE"
     assert "ambiguous location" in str(sentence.get("location", ""))
@@ -40,14 +92,14 @@ def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_cou
 
     _, hotspot_2 = _location_speedbin_summary(base_matches, lang="en")
     assert hotspot_2 is not None
-    assert hotspot_2.get("weak_spatial_separation") is False
+    assert hotspot_2.weak_spatial_separation is False
 
     _, hotspot_3 = _location_speedbin_summary(
         base_matches + [{"speed_kmh": 85.0, "amp": 0.40, "location": "Rear Left"}],
         lang="en",
     )
     assert hotspot_3 is not None
-    assert hotspot_3.get("weak_spatial_separation") is True
+    assert hotspot_3.weak_spatial_separation is True
 
     _, hotspot_4 = _location_speedbin_summary(
         base_matches
@@ -58,7 +110,7 @@ def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_cou
         lang="en",
     )
     assert hotspot_4 is not None
-    assert hotspot_4.get("weak_spatial_separation") is True
+    assert hotspot_4.weak_spatial_separation is True
 
 
 def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> None:
@@ -94,9 +146,9 @@ def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None
 
     assert unconstrained is not None
     assert focused is not None
-    assert unconstrained.get("location") == "Rear Left"
-    assert focused.get("location") == "Front Right"
-    focused_range = str(focused.get("speed_range") or "")
+    assert unconstrained.display_location == "Rear Left"
+    assert focused.display_location == "Front Right"
+    focused_range = focused.speed_range
     low_text, high_text = focused_range.replace(" km/h", "").split("-", maxsplit=1)
     assert float(low_text) >= 100.0
     assert float(high_text) <= 110.0
@@ -119,7 +171,7 @@ def test_location_speedbin_summary_reports_weighted_boundary_straddling_window()
 
     _, hotspot = _location_speedbin_summary(matches, lang="en")
     assert hotspot is not None
-    speed_range = str(hotspot.get("speed_range") or "")
+    speed_range = hotspot.speed_range
     low_text, high_text = speed_range.replace(" km/h", "").split("-", maxsplit=1)
     low, high = float(low_text), float(high_text)
     assert 75.0 <= low <= 77.0
@@ -139,8 +191,8 @@ def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outl
 
     _, hotspot = _location_speedbin_summary(sparse_loud_bin + dense_moderate_bin, lang="en")
     assert hotspot is not None
-    assert hotspot.get("location") == "Front Left"
-    speed_range = str(hotspot.get("speed_range") or "")
+    assert hotspot.display_location == "Front Left"
+    speed_range = hotspot.speed_range
     low_text, high_text = speed_range.replace(" km/h", "").split("-", maxsplit=1)
     low, high = float(low_text), float(high_text)
     assert 95.0 <= low <= high <= 97.0
@@ -180,8 +232,8 @@ def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() 
 
     _, hotspot = _location_speedbin_summary(matches, lang="en")
     assert hotspot is not None
-    assert hotspot.get("top_location") == "Front Left"
-    assert int(hotspot.get("corroborated_by_n_sensors") or 0) >= 3
+    assert hotspot.top_location == "Front Left"
+    assert hotspot.corroborated_by_n_sensors >= 3
 
 
 def test_location_speedbin_summary_prefers_connected_throughout_locations() -> None:
@@ -194,8 +246,8 @@ def test_location_speedbin_summary_prefers_connected_throughout_locations() -> N
 
     _, hotspot = _location_speedbin_summary(matches, lang="en", connected_locations={"Front Left"})
     assert hotspot is not None
-    assert hotspot.get("top_location") == "Front Left"
-    assert bool(hotspot.get("partial_coverage")) is False
+    assert hotspot.top_location == "Front Left"
+    assert hotspot.partial_coverage is False
 
 
 def test_build_findings_penalizes_low_localization_confidence(
@@ -214,13 +266,13 @@ def test_build_findings_penalizes_low_localization_confidence(
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "strong location",
-            {
-                "location": "Front Left",
-                "speed_range": "70-80 km/h",
-                "dominance_ratio": 2.0,
-                "weak_spatial_separation": False,
-                "localization_confidence": 1.0,
-            },
+            _make_loc_result(
+                location="Front Left",
+                speed_range="70-80 km/h",
+                dominance_ratio=2.0,
+                weak_spatial_separation=False,
+                localization_confidence=1.0,
+            ),
         ),
     )
     high_conf = max_non_ref_confidence(
@@ -232,13 +284,13 @@ def test_build_findings_penalizes_low_localization_confidence(
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "ambiguous location",
-            {
-                "location": "ambiguous location: Front Left / Front Right",
-                "speed_range": "70-80 km/h",
-                "dominance_ratio": 1.05,
-                "weak_spatial_separation": False,
-                "localization_confidence": 0.1,
-            },
+            _make_loc_result(
+                location="ambiguous location: Front Left / Front Right",
+                speed_range="70-80 km/h",
+                dominance_ratio=1.05,
+                weak_spatial_separation=False,
+                localization_confidence=0.1,
+            ),
         ),
     )
     low_conf = max_non_ref_confidence(
@@ -264,13 +316,13 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "strong location",
-            {
-                "location": "Front Left",
-                "speed_range": "70-80 km/h",
-                "dominance_ratio": 2.0,
-                "weak_spatial_separation": False,
-                "localization_confidence": 1.0,
-            },
+            _make_loc_result(
+                location="Front Left",
+                speed_range="70-80 km/h",
+                dominance_ratio=2.0,
+                weak_spatial_separation=False,
+                localization_confidence=1.0,
+            ),
         ),
     )
     baseline_conf = max_non_ref_confidence(
@@ -282,13 +334,13 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "weak location",
-            {
-                "location": "Front Left",
-                "speed_range": "70-80 km/h",
-                "dominance_ratio": 1.15,
-                "weak_spatial_separation": True,
-                "localization_confidence": 1.0,
-            },
+            _make_loc_result(
+                location="Front Left",
+                speed_range="70-80 km/h",
+                dominance_ratio=1.15,
+                weak_spatial_separation=True,
+                localization_confidence=1.0,
+            ),
         ),
     )
     weak_conf = max_non_ref_confidence(
@@ -300,13 +352,13 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "near tie location",
-            {
-                "location": "ambiguous location: Front Left / Front Right",
-                "speed_range": "70-80 km/h",
-                "dominance_ratio": 1.04,
-                "weak_spatial_separation": True,
-                "localization_confidence": 1.0,
-            },
+            _make_loc_result(
+                location="ambiguous location: Front Left / Front Right",
+                speed_range="70-80 km/h",
+                dominance_ratio=1.04,
+                weak_spatial_separation=True,
+                localization_confidence=1.0,
+            ),
         ),
     )
     near_tie_conf = max_non_ref_confidence(

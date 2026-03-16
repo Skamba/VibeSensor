@@ -13,6 +13,7 @@ from vibesensor.adapters.persistence.runlog import (
     create_run_end_record,
     create_run_metadata,
 )
+from vibesensor.domain import LocationHotspot
 from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
 from vibesensor.use_cases.diagnostics import (
     order_analysis as _order_analysis_module,
@@ -20,6 +21,7 @@ from vibesensor.use_cases.diagnostics import (
 from vibesensor.use_cases.diagnostics import (
     order_analysis as order_findings_module,
 )
+from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.order_analysis import (
     _build_order_findings as _findings_build_order_findings,
 )
@@ -292,11 +294,26 @@ def patch_order_hypothesis(
         "_location_speedbin_summary",
         lambda _points, **_kwargs: (
             "",
-            {
-                "weak_spatial_separation": False,
-                "localization_confidence": 1.0,
-                "dominance_ratio": dominance_ratio,
-            },
+            LocationAnalysisResult(
+                hotspot=LocationHotspot.from_analysis_inputs(
+                    strongest_location="Front Left",
+                    dominance_ratio=dominance_ratio,
+                    localization_confidence=1.0,
+                    weak_spatial_separation=False,
+                ),
+                mean_amp=0.03,
+                total_samples=10,
+                ambiguous_location=False,
+                no_wheel_sensors=False,
+                speed_range="70-80 km/h",
+                dominance_ratio=dominance_ratio,
+                localization_confidence=1.0,
+                weak_spatial_separation=False,
+                top_location="Front Left",
+                second_location=None,
+                partial_coverage=False,
+                corroborated_by_n_sensors=1,
+            ),
         ),
     )
     monkeypatch.setattr(order_findings_module, "ORDER_MIN_CONFIDENCE", 0.0)

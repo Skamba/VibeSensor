@@ -1482,3 +1482,101 @@ def test_canonical_domain_graph_relationships() -> None:
         TestRun,
     ):
         assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
+
+    # Finding → finding-scoped value objects
+    from vibesensor.domain import (
+        ConfidenceAssessment,
+        FindingEvidence,
+        LocationHotspot,
+        VibrationOrigin,
+    )
+
+    field_type(Finding, "confidence_assessment")  # ConfidenceAssessment | None
+    field_type(Finding, "evidence")  # FindingEvidence | None
+    field_type(Finding, "location")  # LocationHotspot | None (direct field, not via origin)
+    field_type(Finding, "origin")  # VibrationOrigin | None (independent from location)
+
+    for cls in (ConfidenceAssessment, FindingEvidence, LocationHotspot, VibrationOrigin):
+        assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
+
+    # RunStatus is associated with Run lifecycle
+    from vibesensor.domain.run_status import RunStatus, transition_run
+
+    assert issubclass(RunStatus, str)  # StrEnum
+    assert callable(transition_run)
+
+    # DrivingPhase and DrivingSegment relationship
+    field_type(DrivingSegment, "phase")  # DrivingPhase or equivalent
+
+
+def test_finding_is_run_scoped() -> None:
+    """Finding must not reference cross-run or case-level concepts directly."""
+    import dataclasses
+
+    from vibesensor.domain import Finding
+
+    field_names = {f.name for f in dataclasses.fields(Finding)}
+    # Finding is run-scoped: it must not hold case_id, diagnosis, or
+    # cross-run aggregation fields.
+    cross_run_indicators = {"case_id", "diagnosis", "diagnoses", "test_runs", "runs", "case"}
+    leaked = field_names & cross_run_indicators
+    assert not leaked, f"Finding has cross-run fields (must be run-scoped): {leaked}"
+
+
+def test_observation_signature_hypothesis_confinement() -> None:
+    """Observation, Signature, and Hypothesis must not leak into adapter layers.
+
+    These diagnostic intermediate concepts live in the domain model and may be
+    reconstructed in boundary decoders, but must not appear in transport,
+    rendering, or persistence adapters.
+    """
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    confined_names = {"Observation", "Signature", "Hypothesis"}
+    forbidden_dirs = [
+        SERVER_ROOT / "vibesensor" / "adapters" / "pdf",
+        SERVER_ROOT / "vibesensor" / "adapters" / "http",
+        SERVER_ROOT / "vibesensor" / "adapters" / "persistence",
+        SERVER_ROOT / "vibesensor" / "adapters" / "websocket",
+    ]
+    violations: list[str] = []
+    for adapter_dir in forbidden_dirs:
+        if not adapter_dir.exists():
+            continue
+        for py_file in adapter_dir.rglob("*.py"):
+            source = py_file.read_text()
+            try:
+                tree = ast.parse(source)
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    for alias in node.names:
+                        name = alias.asname or alias.name
+                        if name in confined_names:
+                            rel = py_file.relative_to(SERVER_ROOT)
+                            violations.append(f"{rel} imports {name}")
+    assert not violations, (
+        f"Diagnostic intermediates must not leak into adapter layers: {violations}"
+    )
+
+
+def test_lifecycle_mutability_rules() -> None:
+    """Run is mutable (lifecycle object); RunCapture, RunSetup, TestRun are frozen."""
+    import dataclasses
+
+    from vibesensor.domain import RunCapture, RunSetup, TestRun
+    from vibesensor.domain.run import Run
+
+    # Run is the mutable lifecycle object during recording
+    assert dataclasses.is_dataclass(Run)
+    r = Run(run_id="mut-test")
+    r.run_id = "mut-test-2"  # must not raise
+
+    # Derived/immutable objects must be frozen
+    for cls in (RunCapture, RunSetup, TestRun):
+        assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
+        frozen = cls.__dataclass_params__.frozen  # type: ignore[attr-defined]
+        assert frozen, f"{cls.__name__} must be frozen (immutable once produced)"

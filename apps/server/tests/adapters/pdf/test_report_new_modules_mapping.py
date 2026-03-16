@@ -416,7 +416,7 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
         sensor_locations={"FL": {}, "FR": {}, "RL": {}, "RR": {}},
         speed_stats={"steady_speed": True},
         run_suitability=[
-            {"check_key": "reference_complete", "state": "fail"},
+            {"check_key": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS", "state": "warn"},
         ],
         top_causes=[
             {
