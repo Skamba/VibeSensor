@@ -27,7 +27,7 @@ from typing import Final
 
 import numpy as np
 import numpy.typing as npt
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 from vibesensor.strength_bands import bucket_for_strength
 

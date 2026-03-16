@@ -99,7 +99,6 @@ def _make_run_recorder() -> tuple[RunRecorder, MagicMock]:
 
     logger = RunRecorder(
         RunRecorderConfig(
-            enabled=False,
             metrics_log_hz=1,
             sensor_model="test",
             default_sample_rate_hz=800,

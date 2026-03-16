@@ -142,6 +142,81 @@ CREATE TABLE client_names (
     conn.close()
 
 
+def _create_v9_database(db_path: Path, *, settings_json: str | None = None) -> None:
+    """Create a minimal v9 schema database with settings_kv table."""
+    conn = sqlite3.connect(str(db_path))
+    conn.executescript(
+        """\
+PRAGMA user_version = 9;
+
+CREATE TABLE runs (
+    run_id                  TEXT PRIMARY KEY,
+    case_id                 TEXT,
+    status                  TEXT NOT NULL DEFAULT 'recording'
+                            CHECK (status IN ('recording', 'analyzing', 'complete', 'error')),
+    start_time_utc          TEXT NOT NULL,
+    end_time_utc            TEXT,
+    metadata_json           TEXT NOT NULL,
+    analysis_json           TEXT,
+    error_message           TEXT,
+    sample_count            INTEGER NOT NULL DEFAULT 0,
+    created_at              TEXT NOT NULL,
+    analysis_started_at     TEXT,
+    analysis_completed_at   TEXT
+);
+
+CREATE TABLE samples_v2 (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id                TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
+    timestamp_utc         TEXT,
+    t_s                   REAL,
+    client_id             TEXT,
+    client_name           TEXT,
+    location              TEXT,
+    sample_rate_hz        INTEGER,
+    speed_kmh             REAL,
+    gps_speed_kmh         REAL,
+    speed_source          TEXT,
+    engine_rpm            REAL,
+    engine_rpm_source     TEXT,
+    gear                  REAL,
+    final_drive_ratio     REAL,
+    accel_x_g             REAL,
+    accel_y_g             REAL,
+    accel_z_g             REAL,
+    dominant_freq_hz      REAL,
+    dominant_axis         TEXT,
+    vibration_strength_db REAL,
+    strength_bucket       TEXT,
+    strength_peak_amp_g   REAL,
+    strength_floor_amp_g  REAL,
+    frames_dropped_total  INTEGER DEFAULT 0,
+    queue_overflow_drops  INTEGER DEFAULT 0,
+    top_peaks             TEXT
+);
+
+CREATE TABLE settings_kv (
+    key         TEXT PRIMARY KEY,
+    value_json  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+
+CREATE TABLE client_names (
+    client_id   TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+""",
+    )
+    if settings_json is not None:
+        conn.execute(
+            "INSERT INTO settings_kv (key, value_json, updated_at) VALUES (?, ?, ?)",
+            ("settings_snapshot", settings_json, "2026-01-01T00:00:00Z"),
+        )
+    conn.commit()
+    conn.close()
+
+
 # -- HistoryDB integration tests ---------------------------------------------
 
 
@@ -268,6 +343,72 @@ def test_historydb_migrated_v8_case_id_supports_forward_only_followup_attachment
     assert migrated_legacy_run["case_id"] == "case-from-summary"
     assert followup_run is not None
     assert followup_run["case_id"] == "case-from-summary"
+
+
+def test_historydb_migrates_v9_settings_kv_to_settings_snapshot(tmp_path: Path) -> None:
+    """v9→v10 migration replaces settings_kv with single-row settings_snapshot table."""
+    db_path = tmp_path / "history.db"
+    _create_v9_database(db_path, settings_json='{"speedSource": "gps", "cars": []}')
+
+    db = HistoryDB(db_path)
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+        tables = {
+            row[0]
+            for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+        }
+        snapshot_row = conn.execute(
+            "SELECT value_json FROM settings_snapshot WHERE id = 1"
+        ).fetchone()
+    finally:
+        conn.close()
+
+    assert version == SCHEMA_VERSION
+    assert "settings_snapshot" in tables
+    assert "settings_kv" not in tables
+    assert snapshot_row is not None
+    assert '"speedSource"' in snapshot_row[0]
+
+    # Round-trip through HistoryDB API
+    snap = db.get_settings_snapshot()
+    assert snap is not None
+    assert snap["speedSource"] == "gps"
+    db.close()
+
+
+def test_historydb_migrates_v9_empty_settings_kv(tmp_path: Path) -> None:
+    """v9→v10 migration with no settings_kv data creates empty settings_snapshot table."""
+    db_path = tmp_path / "history.db"
+    _create_v9_database(db_path)
+
+    db = HistoryDB(db_path)
+    assert db.get_settings_snapshot() is None
+    db.close()
+
+
+def test_historydb_v8_migrates_through_v9_to_v10(tmp_path: Path) -> None:
+    """v8 databases chain-migrate through v9 (case_id) to v10 (settings_snapshot)."""
+    db_path = tmp_path / "history.db"
+    _create_v8_database(db_path, analysis_json='{"findings": [], "top_causes": [], "warnings": []}')
+
+    db = HistoryDB(db_path)
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+        tables = {
+            row[0]
+            for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+        }
+    finally:
+        conn.close()
+
+    assert version == SCHEMA_VERSION
+    assert "settings_snapshot" in tables
+    assert "settings_kv" not in tables
+    db.close()
 
 
 def test_historydb_newer_version_raises(tmp_path: Path) -> None:

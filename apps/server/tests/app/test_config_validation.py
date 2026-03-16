@@ -169,10 +169,8 @@ class TestLoggingConfigValidation:
 
     def _make(self, **overrides) -> LoggingConfig:
         defaults = {
-            "log_metrics": True,
             "metrics_log_hz": 4,
             "no_data_timeout_s": 15.0,
-            "sensor_model": "ADXL345",
             "history_db_path": Path("/tmp/history.db"),
             "persist_history_db": True,
             "shutdown_analysis_timeout_s": 30.0,

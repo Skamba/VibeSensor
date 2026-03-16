@@ -14,7 +14,7 @@ import time
 from typing import Literal, NamedTuple
 
 from vibesensor.shared.constants import KMH_TO_MPS, MPS_TO_KMH, NUMERIC_TYPES
-from vibesensor.shared.types.backend_types import FallbackMode, ResolvedSpeedSource
+from vibesensor.shared.types.backend_types import ResolvedSpeedSource
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
 
@@ -47,9 +47,6 @@ _GPS_ZERO_CONFIRM_SAMPLES: int = 3
 DEFAULT_STALE_TIMEOUT_S: float = 10.0
 MIN_STALE_TIMEOUT_S: float = 3.0
 MAX_STALE_TIMEOUT_S: float = 120.0
-VALID_FALLBACK_MODES: frozenset[str] = frozenset({"manual"})
-"""Use frozenset so ``in`` membership tests are O(1) and the set is immutable."""
-DEFAULT_FALLBACK_MODE: FallbackMode = "manual"
 
 # Speed plausibility limits
 _GPS_MAX_SPEED_MPS: float = 150.0
@@ -90,7 +87,6 @@ class GPSSpeedMonitor:
 
         # --- fallback ---
         self.stale_timeout_s: float = DEFAULT_STALE_TIMEOUT_S
-        self.fallback_mode: FallbackMode = DEFAULT_FALLBACK_MODE
 
     @property
     def speed_mps(self) -> float | None:
@@ -177,7 +173,7 @@ class GPSSpeedMonitor:
     def _fallback_speed_value(self) -> float | None:
         """Return fallback speed if available — **no side effects**."""
         # _is_numeric() excludes bool to match the guard in resolve_speed().
-        if self.fallback_mode == "manual" and _is_numeric(self.override_speed_mps):
+        if _is_numeric(self.override_speed_mps):
             override_speed = self.override_speed_mps
             if override_speed is not None:
                 return float(override_speed)
@@ -207,7 +203,7 @@ class GPSSpeedMonitor:
     def set_fallback_settings(
         self,
         stale_timeout_s: float | None = None,
-        fallback_mode: str | None = None,
+        **_kwargs: object,
     ) -> None:
         """Update fallback settings at runtime."""
         if stale_timeout_s is not None:
@@ -215,15 +211,6 @@ class GPSSpeedMonitor:
                 MIN_STALE_TIMEOUT_S,
                 min(MAX_STALE_TIMEOUT_S, float(stale_timeout_s)),
             )
-        if fallback_mode is not None:
-            if fallback_mode in VALID_FALLBACK_MODES:
-                self.fallback_mode = "manual"
-            else:
-                LOGGER.warning(
-                    "Ignoring unknown fallback_mode %r; valid values: %s",
-                    fallback_mode,
-                    sorted(VALID_FALLBACK_MODES),
-                )
 
     @staticmethod
     def _read_non_negative_metric(payload: JsonObject, field: str) -> float | None:
@@ -329,7 +316,6 @@ class GPSSpeedMonitor:
             "fallback_active": resolution.fallback_active,
             "speed_source": resolution.source,
             "stale_timeout_s": self.stale_timeout_s,
-            "fallback_mode": self.fallback_mode,
         }
 
     async def run(self, host: str = "127.0.0.1", port: int = 2947) -> None:
