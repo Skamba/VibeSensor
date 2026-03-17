@@ -25,9 +25,7 @@ from test_support.core import (
     standard_metadata,
 )
 
-from vibesensor.infra.config.analysis_settings import (
-    wheel_hz_from_speed_kmh,
-)
+from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import summarize_run_data
 
 # ---------------------------------------------------------------------------
@@ -55,8 +53,8 @@ def _assert_no_false_positives(
 
 
 def _wheel_hz(speed_kmh: float) -> float:
-    hz = wheel_hz_from_speed_kmh(speed_kmh, TIRE_CIRC)
-    assert hz is not None and hz > 0
+    hz = speed_kmh * KMH_TO_MPS / TIRE_CIRC
+    assert hz > 0
     return hz
 
 

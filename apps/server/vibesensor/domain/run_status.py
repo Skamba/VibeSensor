@@ -17,6 +17,7 @@ from typing import Final
 __all__ = [
     "RunStatus",
     "RUN_TRANSITIONS",
+    "is_run_deletable",
     "transition_run",
 ]
 
@@ -37,6 +38,17 @@ RUN_TRANSITIONS: Final[dict[RunStatus | None, frozenset[RunStatus]]] = {
     RunStatus.COMPLETE: frozenset(),
     RunStatus.ERROR: frozenset(),
 }
+
+
+_TERMINAL: Final[frozenset[RunStatus]] = frozenset({RunStatus.COMPLETE, RunStatus.ERROR})
+
+
+def is_run_deletable(status: RunStatus | str) -> bool:
+    """Return ``True`` if a run in *status* may be deleted.
+
+    Only terminal states (``complete``, ``error``) are deletable.
+    """
+    return RunStatus(status) in _TERMINAL
 
 
 def transition_run(

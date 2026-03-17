@@ -8,8 +8,8 @@ from test_support.core import standard_metadata
 from test_support.sample_scenarios import build_speed_sweep_samples, make_sample
 
 from vibesensor.adapters.pdf.mapping import map_summary
-from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.diagnostics.findings import _reference_missing_finding
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
@@ -36,7 +36,7 @@ class TestMultiSensorLocalization:
         tire_circumference = 2.036
         for idx in range(30):
             speed = 40.0 + idx * 2.0
-            wheel_hz = wheel_hz_from_speed_kmh(speed, tire_circumference) or 10.0
+            wheel_hz = speed * KMH_TO_MPS / tire_circumference
             samples.append(
                 make_sample(
                     t_s=float(idx),

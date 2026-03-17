@@ -112,15 +112,17 @@ def test_recover_stale_recording_runs_marks_error(tmp_path: Path) -> None:
     assert "Recovered stale recording during startup at" in str(run["error_message"])
 
 
-def test_create_run_recovers_previous_recording(tmp_path: Path) -> None:
+def test_create_run_does_not_auto_recover_recording(tmp_path: Path) -> None:
+    """create_run no longer auto-recovers stale recordings — startup does that."""
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-old", "2026-01-01T00:00:00Z", {"source": "test"})
-    db.create_run("run-new", "2026-01-01T00:01:00Z", {"source": "test"})
+    # Second create should fail (unique constraint) — old run stays recording
+    try:
+        db.create_run("run-old", "2026-01-01T00:01:00Z", {"source": "test"})
+    except Exception:
+        pass
     old_run = db.get_run("run-old")
-    new_run = db.get_run("run-new")
-    assert old_run is not None and old_run["status"] == "error"
-    assert "starting run run-new" in str(old_run["error_message"])
-    assert new_run is not None and new_run["status"] == "recording"
+    assert old_run is not None and old_run["status"] == "recording"
 
 
 def test_create_run_persists_case_id(tmp_path: Path) -> None:
@@ -138,15 +140,16 @@ def test_create_run_persists_case_id(tmp_path: Path) -> None:
     assert run["case_id"] == "case-123"
 
 
-def test_create_run_logs_stale_recovery(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_recover_stale_recording_logs_warning(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-old", "2026-01-01T00:00:00Z", {"source": "test"})
-    with caplog.at_level(
-        logging.WARNING,
-        logger="vibesensor.adapters.persistence.history_db._run_writes",
-    ):
-        db.create_run("run-new", "2026-01-01T00:01:00Z", {"source": "test"})
-    assert any("stale recording" in r.message.lower() for r in caplog.records)
+    with caplog.at_level(logging.WARNING):
+        recovered = db.recover_stale_recording_runs()
+    assert recovered == 1
+    run = db.get_run("run-old")
+    assert run is not None and run["status"] == "error"
 
 
 def test_delete_run_cascades_samples(tmp_path: Path) -> None:

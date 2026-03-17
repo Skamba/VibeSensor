@@ -84,3 +84,32 @@ class SpeedSource:
             SpeedSourceKind.MANUAL: "Manual",
         }
         return labels.get(self.kind, self.kind.upper())
+
+    @staticmethod
+    def resolve_basis_label(
+        selected_source: str,
+        *,
+        gps_enabled: bool,
+        fallback_active: bool,
+        resolution_source: str | None = None,
+    ) -> str:
+        """Resolve the basis speed-source label for rotational display.
+
+        Pure decision logic extracted from infra — no I/O or runtime objects.
+        """
+        src = selected_source.strip().lower()
+        if src == "manual":
+            return "manual"
+        if src == "obd2":
+            return "obd2"
+        if resolution_source is not None:
+            if resolution_source == "fallback_manual":
+                return "fallback_manual"
+            if gps_enabled:
+                return "gps"
+        else:
+            if fallback_active:
+                return "fallback_manual"
+            if gps_enabled:
+                return "gps"
+        return "unknown"

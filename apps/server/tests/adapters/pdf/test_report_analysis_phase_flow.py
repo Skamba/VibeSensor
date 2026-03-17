@@ -12,7 +12,7 @@ from test_support.report_helpers import (
     wheel_metadata,
 )
 
-from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, segment_run_phases
@@ -48,7 +48,7 @@ def test_build_order_findings_dominant_phase(
 
 def test_build_order_findings_per_phase_confidence_key_present() -> None:
     speed_kmh = 70.0
-    wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+    wh = speed_kmh * KMH_TO_MPS / 2.036
     findings = call_build_order_findings(
         make_order_finding_samples(20, speed_kmh, wh),
         per_sample_phases=[DrivingPhase.CRUISE] * 20,
@@ -67,7 +67,7 @@ def test_build_order_findings_per_phase_confidence_key_present() -> None:
 
 def test_build_order_findings_no_phases_leaves_per_phase_confidence_none() -> None:
     speed_kmh = 70.0
-    wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+    wh = speed_kmh * KMH_TO_MPS / 2.036
     findings = call_build_order_findings(
         make_order_finding_samples(20, speed_kmh, wh),
         speed_stddev_kmh=5.0,
@@ -81,7 +81,7 @@ def test_build_order_findings_no_phases_leaves_per_phase_confidence_none() -> No
 
 def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() -> None:
     speed_kmh = 70.0
-    wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+    wh = speed_kmh * KMH_TO_MPS / 2.036
     samples = make_order_finding_samples(20, speed_kmh, wh)
 
     single_findings = call_build_order_findings(
@@ -109,7 +109,7 @@ def test_build_findings_per_phase_confidence_flows_through_pipeline() -> None:
     samples = []
     for idx in range(30):
         speed_kmh = 50.0 + float(idx)
-        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = speed_kmh * KMH_TO_MPS / 2.036
         samples.append(
             {
                 "t_s": float(idx),

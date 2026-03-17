@@ -24,7 +24,7 @@ from vibesensor.adapters.persistence.car_library import (
 )
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import _ws_debug_enabled
-from vibesensor.infra.config.analysis_settings import sanitize_settings
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.workers.worker_pool import WorkerPool
@@ -223,13 +223,13 @@ class TestWSDebugLazy:
 
 
 # ---------------------------------------------------------------------------
-# Item 7: DEFAULT_ANALYSIS_SETTINGS defined before sanitize_settings
+# Item 7: AnalysisSettingsSnapshot.DEFAULTS defined with sanitize
 # ---------------------------------------------------------------------------
 
 
 class TestAnalysisSettingsOrder:
     def test_sanitize_settings_works_with_defaults(self) -> None:
-        result = sanitize_settings({"tire_width_mm": 225.0})
+        result = AnalysisSettingsSnapshot.sanitize({"tire_width_mm": 225.0})
         assert "tire_width_mm" in result
         assert result["tire_width_mm"] == 225.0
 

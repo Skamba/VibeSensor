@@ -7,18 +7,17 @@ import math
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
-from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, Literal, TypeAlias
 
 from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.domain.speed_source import SpeedSourceKind as SpeedSourceKind
-from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
 from vibesensor.shared.constants import NUMERIC_TYPES
 from vibesensor.shared.types.json_types import JsonObject
 
 if TYPE_CHECKING:
-    from vibesensor.domain import Car, CarSnapshot, Sensor, SpeedSource
+    from vibesensor.domain import SpeedSource
 
 _isfinite = math.isfinite
 _LOGGER = logging.getLogger(__name__)
@@ -27,7 +26,6 @@ __all__ = [
     "CarConfig",
     "CarConfigPayload",
     "CarConfigUpdatePayload",
-    "DEFAULT_CAR_ASPECTS",
     "HistoryRunPayload",
     "RUN_END_TYPE",
     "RUN_METADATA_TYPE",
@@ -43,7 +41,6 @@ __all__ = [
     "SpeedSourceUpdatePayload",
     "VALID_SPEED_SOURCES",
     "new_car_id",
-    "sanitize_aspects",
 ]
 
 AnalysisSettingsPayload: TypeAlias = dict[str, float]
@@ -134,10 +131,6 @@ RUN_END_TYPE: Final[str] = "run_end"
 
 VALID_SPEED_SOURCES: tuple[str, ...] = tuple(SpeedSourceKind)
 
-DEFAULT_CAR_ASPECTS: Final[MappingProxyType[str, float]] = MappingProxyType(
-    DEFAULT_ANALYSIS_SETTINGS,
-)
-
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -158,12 +151,6 @@ def _parse_stale_timeout(value: object) -> float:
     if isinstance(value, NUMERIC_TYPES):
         return max(3.0, min(120.0, float(value)))
     return 10.0
-
-
-def sanitize_aspects(raw: Mapping[str, object]) -> AnalysisSettingsPayload:
-    """Sanitize car aspects using the canonical validation from analysis_settings."""
-    sanitized = sanitize_settings(dict(raw), allowed_keys=DEFAULT_CAR_ASPECTS)
-    return {key: float(value) for key, value in sanitized.items()}
 
 
 def _as_str_or_none(value: object) -> str | None:
@@ -209,9 +196,9 @@ class CarConfig:
         name = str(data.get("name") or "Unnamed Car").strip()[:64] or "Unnamed Car"
         car_type = str(data.get("type") or "sedan").strip()[:32] or "sedan"
         raw_aspects = data.get("aspects") or {}
-        aspects = dict(DEFAULT_CAR_ASPECTS)
+        aspects = dict(AnalysisSettingsSnapshot.DEFAULTS)
         if isinstance(raw_aspects, dict):
-            aspects.update(sanitize_aspects(raw_aspects))
+            aspects.update(AnalysisSettingsSnapshot.sanitize(raw_aspects))
         raw_variant = data.get("variant")
         variant = (
             str(raw_variant).strip()[:64] if isinstance(raw_variant, str) and raw_variant else None
@@ -235,30 +222,6 @@ class CarConfig:
         if self.variant:
             d["variant"] = self.variant
         return d
-
-    def to_car(self) -> Car:
-        """Return the domain ``Car`` value object for this config."""
-        from vibesensor.domain import Car
-
-        return Car(
-            id=self.id,
-            name=self.name,
-            car_type=self.car_type,
-            aspects=dict(self.aspects),
-            variant=self.variant,
-        )
-
-    def to_car_snapshot(self) -> CarSnapshot:
-        """Return a lightweight ``CarSnapshot`` for run-context persistence."""
-        from vibesensor.domain import CarSnapshot
-
-        return CarSnapshot(
-            car_id=self.id,
-            name=self.name,
-            car_type=self.car_type,
-            variant=self.variant,
-            aspects=dict(self.aspects),
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -288,17 +251,6 @@ class SensorConfig:
     def to_dict(self) -> SensorConfigPayload:
         """Serialise this sensor config to a plain dict."""
         return {"name": self.name, "location_code": self.location_code}
-
-    def to_sensor(self) -> Sensor:
-        """Return the domain ``Sensor`` value object for this config."""
-        from vibesensor.domain import Sensor, SensorPlacement
-
-        placement = SensorPlacement.from_code(self.location_code) if self.location_code else None
-        return Sensor(
-            sensor_id=self.sensor_id,
-            name=self.name,
-            placement=placement,
-        )
 
 
 # ---------------------------------------------------------------------------

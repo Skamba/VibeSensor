@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
+from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.shared.constants import SECONDS_PER_MINUTE
 from vibesensor.shared.types.payload_types import (
     RotationalSpeedsPayload,
@@ -25,24 +26,13 @@ def rotational_basis_speed_source(
 ) -> str:
     """Determine the basis speed source label for rotational RPM display."""
     speed_source = settings_store.get_speed_source()
-    selected_source = str(speed_source.get("speedSource") or "gps").lower()
-    if selected_source == "manual":
-        return "manual"
-    if selected_source == "obd2":
-        return "obd2"
-    # Use the pre-resolved source when available for snapshot consistency.
-    if resolution_source is not None:
-        if resolution_source == "fallback_manual":
-            return "fallback_manual"
-        if gps_monitor.gps_enabled:
-            return "gps"
-    else:
-        # Fallback for callers that don't pass a resolution.
-        if gps_monitor.fallback_active:
-            return "fallback_manual"
-        if gps_monitor.gps_enabled:
-            return "gps"
-    return "unknown"
+    selected_source = str(speed_source.get("speedSource") or "gps")
+    return SpeedSource.resolve_basis_label(
+        selected_source,
+        gps_enabled=gps_monitor.gps_enabled,
+        fallback_active=gps_monitor.fallback_active,
+        resolution_source=resolution_source,
+    )
 
 
 def build_rotational_speeds_payload(

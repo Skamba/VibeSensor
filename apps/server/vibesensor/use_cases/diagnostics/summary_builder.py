@@ -16,7 +16,6 @@ from vibesensor.domain import (
     Car,
     ConfigurationSnapshot,
     DiagnosticCase,
-    LocationHotspot,
     RunCapture,
     RunSetup,
     RunSuitability,
@@ -34,6 +33,7 @@ from vibesensor.domain import (
 )
 from vibesensor.domain.snapshots import PhaseSummarySnapshot, SpeedStatsSnapshot
 from vibesensor.domain.test_plan import plan_test_actions
+from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.diagnostic_case import (
     run_suitability_payload,
@@ -453,73 +453,30 @@ def summarize_origin(
             "explanation": i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
         }
 
-    top_finding = findings[0]
+    origin = VibrationOrigin.from_ranked_findings(findings)
+    assert origin is not None  # guaranteed: findings is non-empty
 
-    # Build LocationHotspot from domain Finding
-    if top_finding.location is not None:
-        loc = LocationHotspot.from_analysis_inputs(
-            strongest_location=(
-                top_finding.location.strongest_location
-                or top_finding.strongest_location
-                or "unknown"
-            ),
-            dominance_ratio=(
-                top_finding.location.dominance_ratio
-                if top_finding.location.dominance_ratio is not None
-                else top_finding.dominance_ratio
-            ),
-            localization_confidence=top_finding.location.localization_confidence,
-            weak_spatial_separation=top_finding.location.weak_spatial_separation,
-            ambiguous=top_finding.location.ambiguous,
-            alternative_locations=tuple(top_finding.location.alternative_locations),
-        )
-    else:
-        loc = LocationHotspot.from_analysis_inputs(
-            strongest_location=top_finding.strongest_location or "unknown",
-            dominance_ratio=top_finding.dominance_ratio,
-            weak_spatial_separation=top_finding.weak_spatial_separation,
-        )
-
-    # Location count for adaptive weak spatial
-    location_count = top_finding.location.location_count if top_finding.location else None
-    loc = loc.with_adaptive_weak_spatial(location_count)
-
-    source = str(top_finding.suspected_source)
-
-    # Near-tie promotion
-    if len(findings) >= 2:
-        second = findings[1]
-        second_location = (
-            (second.location.strongest_location if second.location else "")
-            or second.strongest_location
-            or ""
-        ).strip()
-        loc = loc.promote_near_tie(
-            alternative_location=second_location,
-            top_confidence=top_finding.effective_confidence,
-            alternative_confidence=second.effective_confidence,
-        )
-
-    location = loc.summary_location
-    speed_band = str(top_finding.strongest_speed_band or "")
-    dominant_phase = (
-        str(top_finding.origin.dominant_phase or "").strip() if top_finding.origin else ""
-    )
+    location = origin.summary_location
+    source = str(origin.suspected_source)
+    speed_band = origin.speed_band or ""
+    dominant_phase = origin.dominant_phase or ""
+    hotspot = origin.hotspot
+    weak = origin.weak_spatial_separation
 
     explanation = build_origin_explanation(
         source=source,
         speed_band=speed_band,
         location=location,
-        dominance=loc.dominance_ratio,
-        weak=not loc.has_clear_separation,
+        dominance=hotspot.dominance_ratio if hotspot else None,
+        weak=weak,
         dominant_phase=dominant_phase,
     )
     return {
         "location": location,
-        "alternative_locations": list(loc.supporting_locations),
+        "alternative_locations": list(origin.alternative_locations),
         "suspected_source": source,
-        "dominance_ratio": loc.dominance_ratio,
-        "weak_spatial_separation": not loc.has_clear_separation,
+        "dominance_ratio": hotspot.dominance_ratio if hotspot else None,
+        "weak_spatial_separation": weak,
         "speed_band": speed_band or None,
         "dominant_phase": dominant_phase or None,
         "explanation": explanation,
@@ -800,6 +757,8 @@ def build_findings_bundle(
     language: str,
     prepared: PreparedRunData,
     overall_strength_band_key: str | None,
+    has_reference_gaps: bool,
+    sensor_count: int,
     findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
 ) -> tuple[
     SuspectedVibrationOrigin,
@@ -810,6 +769,8 @@ def build_findings_bundle(
     """Build findings plus derived diagnosis narrative fields.
 
     Returns ``(origin, timeline, domain_findings, domain_top_causes)``.
+    Findings are returned with :class:`ConfidenceAssessment` already
+    attached via :meth:`Finding.with_confidence_assessment`.
     """
     builder = findings_builder or _build_findings
     domain_findings = builder(
@@ -824,6 +785,20 @@ def build_findings_bundle(
         per_sample_phases=prepared.per_sample_phases,
         run_noise_baseline_g=prepared.run_noise_baseline_g,
     )
+
+    # Enrich findings with ConfidenceAssessment at construction time
+    domain_findings = tuple(
+        f
+        if f.confidence_assessment is not None
+        else f.with_confidence_assessment(
+            strength_band_key=overall_strength_band_key or "",
+            steady_speed=prepared.is_steady_speed,
+            has_reference_gaps=has_reference_gaps,
+            sensor_count=sensor_count,
+        )
+        for f in domain_findings
+    )
+
     domain_diagnostic_findings = tuple(f for f in domain_findings if not f.is_reference)
     most_likely_origin = summarize_origin(
         domain_diagnostic_findings,
@@ -987,6 +962,11 @@ class RunAnalysis:
                 accel_stats=self._accel_stats,
             )
         )
+        sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_bundle(
+            self._samples,
+            language=self._language,
+            per_sample_phases=self._prepared.per_sample_phases,
+        )
         (
             most_likely_origin,
             phase_timeline,
@@ -998,40 +978,15 @@ class RunAnalysis:
             language=self._language,
             prepared=self._prepared,
             overall_strength_band_key=overall_strength_band_key,
+            has_reference_gaps=not reference_complete,
+            sensor_count=len(sensor_locations),
             findings_builder=self._findings_builder,
-        )
-        sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_bundle(
-            self._samples,
-            language=self._language,
-            per_sample_phases=self._prepared.per_sample_phases,
         )
 
         # Build the domain aggregate with run-level value objects
-        from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-
         speed_profile = self._prepared.speed_profile if self._prepared.speed_values else None
         domain_suitability = run_suitability
         run_suitability_checks = run_suitability_payload(domain_suitability)
-
-        # Enrich ALL domain Findings with ConfidenceAssessment
-        has_ref_gaps = not reference_complete
-        _steady = speed_profile.steady_speed if speed_profile is not None else False
-        _n_sensors = len(sensor_locations)
-        enriched_domain_findings: list[DomainFinding] = []
-        for f in domain_findings:
-            if f.confidence_assessment is not None:
-                enriched_domain_findings.append(f)
-                continue
-            ca = ConfidenceAssessment.assess(
-                f.effective_confidence,
-                strength_band_key=overall_strength_band_key,
-                steady_speed=_steady,
-                has_reference_gaps=has_ref_gaps,
-                weak_spatial=f.weak_spatial_separation,
-                sensor_count=_n_sensors,
-            )
-            enriched_domain_findings.append(replace(f, confidence_assessment=ca))
-        domain_findings = tuple(enriched_domain_findings)
 
         # Derive top_causes as a subset of the enriched findings,
         # preserving signatures collected by group_findings_by_source

@@ -71,9 +71,83 @@ class VibrationOrigin:
             )
         return None
 
+    @classmethod
+    def from_ranked_findings(
+        cls,
+        findings: tuple[Finding, ...],
+    ) -> VibrationOrigin | None:
+        """Build origin from the top-ranked findings.
+
+        Constructs a ``LocationHotspot`` from the top finding, applies
+        adaptive weak-spatial classification, and promotes near-ties
+        when a second finding is close in confidence.  Returns ``None``
+        when *findings* is empty.
+        """
+        if not findings:
+            return None
+
+        top = findings[0]
+
+        # Build LocationHotspot from top finding
+        if top.location is not None:
+            loc = LocationHotspot.from_analysis_inputs(
+                strongest_location=(
+                    top.location.strongest_location or top.strongest_location or "unknown"
+                ),
+                dominance_ratio=(
+                    top.location.dominance_ratio
+                    if top.location.dominance_ratio is not None
+                    else top.dominance_ratio
+                ),
+                localization_confidence=top.location.localization_confidence,
+                weak_spatial_separation=top.location.weak_spatial_separation,
+                ambiguous=top.location.ambiguous,
+                alternative_locations=tuple(top.location.alternative_locations),
+            )
+        else:
+            loc = LocationHotspot.from_analysis_inputs(
+                strongest_location=top.strongest_location or "unknown",
+                dominance_ratio=top.dominance_ratio,
+                weak_spatial_separation=top.weak_spatial_separation,
+            )
+
+        # Adaptive weak spatial
+        location_count = top.location.location_count if top.location else None
+        loc = loc.with_adaptive_weak_spatial(location_count)
+
+        # Near-tie promotion
+        if len(findings) >= 2:
+            second = findings[1]
+            second_location = (
+                (second.location.strongest_location if second.location else "")
+                or second.strongest_location
+                or ""
+            ).strip()
+            loc = loc.promote_near_tie(
+                alternative_location=second_location,
+                top_confidence=top.effective_confidence,
+                alternative_confidence=second.effective_confidence,
+            )
+
+        speed_band = str(top.strongest_speed_band or "")
+        dominant_phase = str(top.origin.dominant_phase or "").strip() if top.origin else ""
+
+        return cls(
+            suspected_source=top.suspected_source,
+            hotspot=loc,
+            dominance_ratio=loc.dominance_ratio,
+            speed_band=speed_band or None,
+            dominant_phase=dominant_phase or None,
+        )
+
     @property
     def is_ambiguous(self) -> bool:
         return bool(self.hotspot and (self.hotspot.ambiguous or not self.hotspot.is_well_localized))
+
+    @property
+    def has_sufficient_location(self) -> bool:
+        """Whether this origin has structured location data (a hotspot)."""
+        return self.hotspot is not None
 
     @property
     def summary_location(self) -> str:

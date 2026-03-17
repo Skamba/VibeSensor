@@ -9,15 +9,13 @@ from pathlib import Path
 from typing import TypedDict, cast
 
 from vibesensor.adapters.persistence.runlog import read_jsonl_run
+from vibesensor.domain import TireSpec
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
-from vibesensor.infra.config.analysis_settings import (
-    engine_rpm_from_wheel_hz,
-    tire_circumference_m_from_spec,
-    wheel_hz_from_speed_kmh,
-)
 from vibesensor.shared.constants import (
+    KMH_TO_MPS,
     MEMS_NOISE_FLOOR_G,
     MIN_ANALYSIS_FREQ_HZ,
+    SECONDS_PER_MINUTE,
     SPEED_BIN_WIDTH_KMH,
     STEADY_SPEED_RANGE_KMH,
     STEADY_SPEED_STDDEV_KMH,
@@ -123,14 +121,6 @@ def _outlier_summary(values: list[float]) -> _OutlierSummary:
     }
 
 
-def _speed_bin_label(kmh: float) -> str:
-    return speed_bin_label(kmh, bin_width=SPEED_BIN_WIDTH_KMH)
-
-
-def _speed_bin_sort_key(label: str) -> int:
-    return speed_band_sort_key(label)
-
-
 def _amplitude_weighted_speed_window(
     speeds: list[float],
     amplitudes: list[float],
@@ -145,16 +135,16 @@ def _amplitude_weighted_speed_window(
         amp_val = _as_float(amp)
         if speed_val is None or speed_val <= 0 or amp_val is None or amp_val <= 0:
             continue
-        bin_weight[_speed_bin_label(speed_val)] += amp_val
+        bin_weight[speed_bin_label(speed_val)] += amp_val
 
     if not bin_weight:
         return (None, None)
 
     strongest_bin = max(
         bin_weight.items(),
-        key=lambda item: (item[1], _speed_bin_sort_key(item[0])),
+        key=lambda item: (item[1], speed_band_sort_key(item[0])),
     )[0]
-    low_kmh = float(_speed_bin_sort_key(strongest_bin))
+    low_kmh = float(speed_band_sort_key(strongest_bin))
     return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
 
 
@@ -222,14 +212,17 @@ def _tire_reference_from_metadata(metadata: MetadataDict) -> tuple[float | None,
     if direct is not None and direct > 0:
         return direct, "metadata.tire_circumference_m"
 
-    derived = tire_circumference_m_from_spec(
-        _as_float(metadata.get("tire_width_mm")),
-        _as_float(metadata.get("tire_aspect_pct")),
-        _as_float(metadata.get("rim_in")),
-        deflection_factor=_as_float(metadata.get("tire_deflection_factor")),
-    )
-    if derived is not None and derived > 0:
-        return float(derived), "derived_from_tire_dimensions"
+    _w = _as_float(metadata.get("tire_width_mm"))
+    _a = _as_float(metadata.get("tire_aspect_pct"))
+    _r = _as_float(metadata.get("rim_in"))
+    if _w is not None and _a is not None and _r is not None:
+        _df = _as_float(metadata.get("tire_deflection_factor"))
+        _spec = TireSpec.from_aspects(
+            {"tire_width_mm": _w, "tire_aspect_pct": _a, "rim_in": _r},
+            deflection_factor=_df if _df is not None else 1.0,
+        )
+        if _spec is not None and _spec.circumference_m > 0:
+            return _spec.circumference_m, "derived_from_tire_dimensions"
     return None, None
 
 
@@ -264,12 +257,8 @@ def _effective_engine_rpm(
     ):
         return None, "missing"
 
-    whz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
-    if whz is None:
-        return None, "missing"
-    rpm = engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)
-    if rpm is None:
-        return None, "missing"
+    whz = speed_kmh * KMH_TO_MPS / tire_circumference_m
+    rpm = whz * final_drive_ratio * gear_ratio * SECONDS_PER_MINUTE
     return float(rpm), "estimated_from_speed_and_ratios"
 
 
@@ -539,7 +528,7 @@ def _speed_profile_from_points(
 ) -> tuple[float | None, tuple[float, float] | None, str | None]:
     allowed = set(allowed_speed_bins) if allowed_speed_bins is not None else None
 
-    _bin_label = _speed_bin_label
+    _bin_label = speed_bin_label
     _float_or_none = _as_float
 
     valid: list[tuple[float, float]] = []

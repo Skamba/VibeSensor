@@ -98,7 +98,6 @@ class TestMypyEnforcement:
         "module",
         [
             "vibesensor/report_i18n.py",
-            "vibesensor/infra/config/analysis_settings.py",
             "vibesensor/use_cases/run",
         ],
     )
