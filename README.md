@@ -71,18 +71,12 @@ Sensors connect to the Pi's Wi-Fi AP, stream accelerometer data via UDP, and the
 apps/
   server/      Python backend (FastAPI + signal processing + reports)
   ui/          TypeScript frontend (Vite + uPlot)
-  simulator/   Runnable simulator + websocket smoke tools
 firmware/
   esp/         ESP32 firmware (PlatformIO, C++)
-libs/
-  core/        Pure domain logic (no IO/framework)
-  shared/      Canonical contracts/schemas/constants
 infra/
   pi-image/    Raspberry Pi image build pipeline
-  ci/          CI helpers
 docs/          Protocol spec, run schema, design language
 hardware/      Bill of materials and wiring reference
-examples/      Sample run data for report generation
 tools/         Utilities (config checks, tests, support scripts)
 artifacts/     Build/runtime artifacts (non-source)
 ```
@@ -256,7 +250,8 @@ vibesensor-report path/to/metrics_run.jsonl
 Reports adapt to available data — if speed or engine RPM references are missing,
 order-specific sections are skipped with explicit reason text instead of
 speculative labels. See [docs/run_schema_v2.md](docs/run_schema_v2.md) for the
-run log format and [examples/](examples/) for sample data.
+run log format. Synthetic analysis scenarios live in
+`apps/server/tests/test_support/`.
 
 ## Troubleshooting
 
