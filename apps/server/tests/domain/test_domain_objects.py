@@ -392,45 +392,6 @@ class TestPackageImports:
 class TestBridgeMethods:
     """Config objects bridge to domain objects correctly."""
 
-    def test_car_config_to_car(self) -> None:
-        from vibesensor.shared.types.backend_types import CarConfig
-
-        cfg = CarConfig(
-            id="abc",
-            name="BMW",
-            car_type="suv",
-            aspects={"rim_in": 19.0},
-            variant="M3",
-        )
-        car = cfg.to_car()
-        assert isinstance(car, Car)
-        assert car.id == "abc"
-        assert car.name == "BMW"
-        assert car.car_type == "suv"
-        assert car.rim_in == 19.0
-        assert car.variant == "M3"
-        assert car.display_name == "BMW (suv)"
-
-    def test_sensor_config_to_sensor(self) -> None:
-        from vibesensor.shared.types.backend_types import SensorConfig
-
-        cfg = SensorConfig(sensor_id="aabb", name="FL", location_code="front_left_wheel")
-        sensor = cfg.to_sensor()
-        assert isinstance(sensor, Sensor)
-        assert sensor.sensor_id == "aabb"
-        assert sensor.display_name == "FL"
-        assert sensor.is_placed
-        assert sensor.placement is not None
-        assert sensor.placement.display_name == "Front Left Wheel"
-
-    def test_sensor_config_to_sensor_empty_location(self) -> None:
-        from vibesensor.shared.types.backend_types import SensorConfig
-
-        cfg = SensorConfig(sensor_id="aabb", name="Test", location_code="")
-        sensor = cfg.to_sensor()
-        assert not sensor.is_placed
-        assert sensor.placement is None
-
     def test_speed_source_config_to_speed_source(self) -> None:
         from vibesensor.shared.types.backend_types import SpeedSourceConfig
 

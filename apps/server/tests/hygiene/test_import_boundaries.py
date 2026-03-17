@@ -12,7 +12,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-import pytest
 from _paths import SERVER_ROOT
 
 
@@ -125,10 +124,6 @@ def test_shared_types_does_not_import_from_infra() -> None:
 # ── Boundary types must not have domain factory methods ──────────────────
 
 
-@pytest.mark.xfail(
-    reason="CarConfig/SensorConfig factory methods exist (fix: Section 3.1)",
-    strict=True,
-)
 def test_boundary_types_no_domain_factory_methods() -> None:
     """Boundary types (CarConfig, SensorConfig) should not construct domain objects directly."""
     path = SERVER_ROOT / "vibesensor" / "shared" / "types" / "backend_types.py"
