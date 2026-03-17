@@ -75,17 +75,10 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     Extracts the subset of fields that the domain object cares about,
     ignoring serialization-only keys present in the full payload.
 
-    Reads ``suspected_source`` with fallback to ``source`` for backward
-    compatibility with legacy dicts that used the ``source`` key.
     """
 
-    def _str(key: str, *fallback_keys: str) -> str:
+    def _str(key: str) -> str:
         v = payload.get(key)
-        if v is None:
-            for fk in fallback_keys:
-                v = payload.get(fk)
-                if v is not None:
-                    break
         return str(v) if v is not None else ""
 
     conf_raw = payload.get("confidence")
@@ -148,16 +141,13 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     # Build domain value objects from nested dicts when available
     evidence: FindingEvidence | None = None
     if isinstance(ev_metrics, dict):
-        # Normalize legacy alias before delegating to domain factory
-        if "snr_ratio" in ev_metrics and "snr_db" not in ev_metrics:
-            ev_metrics = {**ev_metrics, "snr_db": ev_metrics["snr_ratio"]}
         evidence = FindingEvidence.from_metrics(ev_metrics)
     hotspot_raw = payload.get("location_hotspot")
     location = location_hotspot_from_payload(hotspot_raw) if isinstance(hotspot_raw, dict) else None
 
     finding_id = _str("finding_id")
     severity = _str("severity")
-    raw_source = _str("suspected_source", "source").strip().lower()
+    raw_source = _str("suspected_source").strip().lower()
     try:
         source = VibrationSource(raw_source)
     except ValueError:
