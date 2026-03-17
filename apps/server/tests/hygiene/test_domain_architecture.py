@@ -1603,3 +1603,101 @@ def test_domain_code_does_not_access_raw_tire_fields() -> None:
         f"Domain code must not access raw tire fields on AnalysisSettingsSnapshot "
         f"(use order_reference_spec instead): {violations}"
     )
+
+
+# ── Car.aspects OOP: domain/use_cases must not import CarConfig ──────────
+
+
+def test_domain_and_use_cases_do_not_import_car_config() -> None:
+    """domain/ and use_cases/ must not import CarConfig (infra config type).
+
+    Vehicle interpretive context is carried by typed domain objects
+    (Car, OrderReferenceSpec, TireSpec), not by raw infra config types.
+    SettingsStore using CarConfig for persistence is fine, but domain
+    and use-case code must not depend on it.
+    """
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    pkg_dir = SERVER_ROOT / "vibesensor"
+    violations: list[str] = []
+    for subdir_name in ("domain", "use_cases"):
+        subdir = pkg_dir / subdir_name
+        if not subdir.is_dir():
+            continue
+        for py_file in subdir.rglob("*.py"):
+            source = py_file.read_text()
+            try:
+                tree = ast.parse(source, filename=str(py_file))
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom) and node.module:
+                    imported_names = [alias.name for alias in node.names]
+                    if "CarConfig" in imported_names:
+                        rel = py_file.relative_to(pkg_dir)
+                        violations.append(f"{rel}:{node.lineno} imports CarConfig")
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        if alias.name and "CarConfig" in alias.name:
+                            rel = py_file.relative_to(pkg_dir)
+                            violations.append(f"{rel}:{node.lineno} imports CarConfig")
+    assert not violations, (
+        "domain/ and use_cases/ must use typed domain objects (Car, OrderReferenceSpec), "
+        f"not infra CarConfig: {violations}"
+    )
+
+
+def test_domain_and_use_cases_do_not_read_raw_aspects_dict_keys() -> None:
+    """domain/ and use_cases/ must not read raw aspects dict keys for computation.
+
+    Car.aspects is not the canonical internal model for vehicle interpretive
+    context — OrderReferenceSpec and TireSpec are. Direct ``.get("aspects")``
+    or ``["aspects"]`` access in business logic is forbidden.
+
+    Exceptions:
+    - car.py itself (owns the aspects field and its typed projections)
+    - summary_builder.py build_domain_car() (constructs Car from metadata)
+    """
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    pkg_dir = SERVER_ROOT / "vibesensor"
+    violations: list[str] = []
+    # Files that legitimately construct or own Car.aspects
+    allowed_files = {"car.py", "summary_builder.py"}
+
+    for subdir_name in ("domain", "use_cases"):
+        subdir = pkg_dir / subdir_name
+        if not subdir.is_dir():
+            continue
+        for py_file in subdir.rglob("*.py"):
+            if py_file.name in allowed_files:
+                continue
+            source = py_file.read_text()
+            try:
+                tree = ast.parse(source, filename=str(py_file))
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                # Check for .get("aspects") or ["aspects"] on any object
+                if isinstance(node, ast.Subscript):
+                    if isinstance(node.slice, ast.Constant) and node.slice.value == "aspects":
+                        rel = py_file.relative_to(pkg_dir)
+                        violations.append(
+                            f'{rel}:{node.lineno} accesses ["aspects"] raw dict key'
+                        )
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                    if node.func.attr == "get" and node.args:
+                        first_arg = node.args[0]
+                        if isinstance(first_arg, ast.Constant) and first_arg.value == "aspects":
+                            rel = py_file.relative_to(pkg_dir)
+                            violations.append(
+                                f'{rel}:{node.lineno} accesses .get("aspects") raw dict key'
+                            )
+    assert not violations, (
+        "domain/ and use_cases/ must not read raw aspects dict keys "
+        f"(use Car.order_ref / TireSpec instead): {violations}"
+    )
