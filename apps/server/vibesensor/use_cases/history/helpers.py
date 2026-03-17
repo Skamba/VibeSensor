@@ -11,7 +11,7 @@ import asyncio
 import re
 from typing import TYPE_CHECKING, cast
 
-from vibesensor.adapters.persistence.history_db import RunStatus
+from vibesensor.domain import RunStatus
 from vibesensor.shared.exceptions import (
     AnalysisNotReadyError,
     DataCorruptError,

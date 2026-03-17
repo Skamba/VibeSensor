@@ -2,8 +2,11 @@
 
 Provides a structured base class and domain-specific subclasses so that
 error handling across the codebase can be narrowed from broad ``except
-Exception`` to specific categories, while remaining backward-compatible
-with the ad-hoc ``ValueError`` / ``RuntimeError`` patterns already in use.
+Exception`` to specific categories.
+
+All domain exceptions inherit exclusively from ``VibeSensorError``;
+callers should catch ``VibeSensorError`` (or a specific subclass) rather
+than stdlib types like ``ValueError`` or ``RuntimeError``.
 
 Hierarchy
 ---------
@@ -37,39 +40,27 @@ class VibeSensorError(Exception):
     """Base exception for all VibeSensor domain errors."""
 
 
-class ConfigurationError(VibeSensorError, ValueError):
-    """Invalid or inconsistent configuration.
-
-    Inherits from ``ValueError`` so existing ``except ValueError`` handlers
-    continue to work during migration.
-    """
+class ConfigurationError(VibeSensorError):
+    """Invalid or inconsistent configuration."""
 
 
-class PersistenceError(VibeSensorError, RuntimeError):
-    """Database or file-system storage failure.
-
-    Inherits from ``RuntimeError`` for backward compatibility with code
-    that catches ``RuntimeError`` for storage issues.
-    """
+class PersistenceError(VibeSensorError):
+    """Database or file-system storage failure."""
 
 
-class ProcessingError(VibeSensorError, RuntimeError):
+class ProcessingError(VibeSensorError):
     """Signal processing pipeline failure."""
 
 
-class ProtocolError(VibeSensorError, ValueError):
-    """Malformed or unexpected binary protocol message.
-
-    Inherits from ``ValueError`` for backward compatibility with code
-    that catches ``ValueError`` for parse/validation issues.
-    """
+class ProtocolError(VibeSensorError):
+    """Malformed or unexpected binary protocol message."""
 
 
-class UpdateError(VibeSensorError, RuntimeError):
+class UpdateError(VibeSensorError):
     """OTA update system failure."""
 
 
-class RunNotFoundError(VibeSensorError, LookupError):
+class RunNotFoundError(VibeSensorError):
     """Requested run does not exist in the history database."""
 
 

@@ -3,11 +3,26 @@
 from __future__ import annotations
 
 from vibesensor.shared.exceptions import (
+    AnalysisNotReadyError,
     ConfigurationError,
+    DataCorruptError,
     PersistenceError,
     ProcessingError,
+    ProtocolError,
+    RunNotFoundError,
     UpdateError,
     VibeSensorError,
+)
+
+_ALL_DOMAIN_EXCEPTIONS = (
+    ConfigurationError,
+    DataCorruptError,
+    PersistenceError,
+    ProcessingError,
+    ProtocolError,
+    RunNotFoundError,
+    UpdateError,
+    AnalysisNotReadyError,
 )
 
 
@@ -15,30 +30,9 @@ def test_base_exception_is_exception() -> None:
     assert issubclass(VibeSensorError, Exception)
 
 
-def test_configuration_error_inherits_from_value_error() -> None:
-    """ConfigurationError should be catchable as ValueError for backward compat."""
-    assert issubclass(ConfigurationError, ValueError)
-    assert issubclass(ConfigurationError, VibeSensorError)
-
-
-def test_persistence_error_inherits_from_runtime_error() -> None:
-    assert issubclass(PersistenceError, RuntimeError)
-    assert issubclass(PersistenceError, VibeSensorError)
-
-
-def test_processing_error_inherits_from_runtime_error() -> None:
-    assert issubclass(ProcessingError, RuntimeError)
-    assert issubclass(ProcessingError, VibeSensorError)
-
-
-def test_update_error_inherits_from_runtime_error() -> None:
-    assert issubclass(UpdateError, RuntimeError)
-    assert issubclass(UpdateError, VibeSensorError)
-
-
 def test_domain_errors_catchable_by_base() -> None:
     """All domain exceptions should be catchable with VibeSensorError."""
-    for exc_cls in (ConfigurationError, PersistenceError, ProcessingError, UpdateError):
+    for exc_cls in _ALL_DOMAIN_EXCEPTIONS:
         try:
             raise exc_cls("test")
         except VibeSensorError:
@@ -47,19 +41,30 @@ def test_domain_errors_catchable_by_base() -> None:
             raise AssertionError(f"{exc_cls.__name__} not catchable as VibeSensorError")
 
 
-def test_backward_compatible_catches() -> None:
-    """Verify that existing except ValueError/RuntimeError patterns still work."""
-    try:
-        raise ConfigurationError("bad config")
-    except ValueError:
-        pass
+def test_all_domain_exceptions_single_base() -> None:
+    """Every domain exception inherits exclusively from VibeSensorError."""
+    assert VibeSensorError.__bases__ == (Exception,)
+    for exc_cls in _ALL_DOMAIN_EXCEPTIONS:
+        assert exc_cls.__bases__ == (VibeSensorError,), (
+            f"{exc_cls.__name__}.__bases__ = {exc_cls.__bases__}, expected (VibeSensorError,)"
+        )
 
-    try:
-        raise PersistenceError("db error")
-    except RuntimeError:
-        pass
 
+def test_no_stdlib_exception_inheritance() -> None:
+    """No domain exception is a subclass of ValueError, RuntimeError, or LookupError."""
+    stdlib_bases = (ValueError, RuntimeError, LookupError)
+    for exc_cls in _ALL_DOMAIN_EXCEPTIONS:
+        for stdlib in stdlib_bases:
+            assert not issubclass(exc_cls, stdlib), (
+                f"{exc_cls.__name__} should not be a subclass of {stdlib.__name__}"
+            )
+
+
+def test_configuration_error_caught_by_vibesensor_error() -> None:
+    """ConfigurationError is catchable via except VibeSensorError."""
+    with_catch = False
     try:
-        raise UpdateError("update failed")
-    except RuntimeError:
-        pass
+        raise ConfigurationError("bad")
+    except VibeSensorError:
+        with_catch = True
+    assert with_catch

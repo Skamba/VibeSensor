@@ -45,7 +45,7 @@ class VibrationSource(StrEnum):
     """Canonical mechanical vibration source categories.
 
     Compares equal to plain strings (``VibrationSource.ENGINE == "engine"``),
-    so serialised payloads and dict-keyed lookups work without migration.
+    so serialised payloads and dict-keyed lookups work naturally.
     """
 
     WHEEL_TIRE = "wheel/tire"

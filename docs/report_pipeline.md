@@ -71,7 +71,7 @@ needs:
 
 | Analysis output               | ReportTemplateData field        |
 |-------------------------------|----------------------------------|
-| `confidence_0_to_1 = 0.62`   | `certainty_tier_key = "C"`      |
+| `confidence_0_to_1 = 0.62`   | `certainty_tier_key = "B"`      |
 | `findings[].suspected_source` | `system_cards[].system_name`    |
 | `test_plan[].what`            | `next_steps[].action`           |
 | `speed_stats.steady_speed`    | used by `ConfidenceAssessment.assess()` |

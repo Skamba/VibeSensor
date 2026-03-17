@@ -220,20 +220,26 @@ def _assert_unit_consistency(rd: ReportTemplateData) -> None:
 
 
 def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> None:
-    """Assert the tier stored in report matches certainty_tier() layout gate."""
+    """Assert the tier stored in report matches ConfidenceAssessment.tier."""
+    from vibesensor.domain import ConfidenceAssessment
     from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
-    from vibesensor.use_cases.diagnostics.strength_labels import certainty_tier, strength_label
+    from vibesensor.use_cases.diagnostics.strength_labels import strength_label
 
     test_run = test_run_from_summary(summary)
     effective = test_run.effective_top_causes()
     domain_primary = effective[0] if effective else test_run.primary_finding
-    if domain_primary:
+    if domain_primary and domain_primary.confidence_assessment:
+        expected_tier = domain_primary.confidence_assessment.tier
+    elif domain_primary:
         confidence = domain_primary.effective_confidence
         strength_db = test_run.top_strength_db()
         strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
-        expected_tier = certainty_tier(confidence, strength_band_key=strength_band_key)
+        expected_tier = ConfidenceAssessment.assess(
+            confidence,
+            strength_band_key=strength_band_key,
+        ).tier
     else:
-        expected_tier = "A"  # no findings → lowest tier
+        expected_tier = "A"
 
     assert rd.certainty_tier_key == expected_tier, (
         f"Tier mismatch: report has '{rd.certainty_tier_key}', expected '{expected_tier}'"

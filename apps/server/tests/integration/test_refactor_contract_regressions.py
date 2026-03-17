@@ -15,8 +15,9 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from vibesensor.adapters.persistence.history_db import HistoryDB, RunStatus
+from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
+from vibesensor.domain import RunStatus
 from vibesensor.infra.runtime.registry import (
     _JITTER_EMA_ALPHA,
     _RESTART_SEQ_GAP,

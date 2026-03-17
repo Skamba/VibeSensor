@@ -23,10 +23,10 @@ def build_report_pdf(data: ReportTemplateData) -> bytes:
     valid_tiers = frozenset({"A", "B", "C"})
     if data.certainty_tier_key not in valid_tiers:
         LOGGER.warning(
-            "Invalid certainty_tier_key %r; falling back to 'C'.",
+            "Invalid certainty_tier_key %r; falling back to 'A'.",
             data.certainty_tier_key,
         )
-        data.certainty_tier_key = "C"
+        data.certainty_tier_key = "A"
     try:
         return _build_canvas_pdf(data)
     except Exception as exc:
