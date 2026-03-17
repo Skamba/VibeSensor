@@ -11,9 +11,7 @@ This package contains the core vibration signal processing pipeline:
 - :mod:`~vibesensor.infra.processing.processor` — the stable :class:`SignalProcessor`
   facade that composes the subsystems above.
 
-All public symbols are re-exported here so that existing
-``from vibesensor.infra.processing import SignalProcessor`` (and similar) imports
-continue to work without changes.
+Re-exports public symbols for convenient access.
 """
 
 from vibesensor.infra.processing.buffers import ClientBuffer
