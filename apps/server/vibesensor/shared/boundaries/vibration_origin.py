@@ -153,8 +153,8 @@ def origin_payload_from_finding(
     if origin is None:
         return fallback_payload
 
-    # Prefer fallback when domain origin has no structured location but fallback does
-    if origin.hotspot is None:
+    # Prefer fallback when domain origin lacks sufficient location but fallback does
+    if not origin.has_sufficient_location:
         fallback_location = str(fallback_payload.get("location") or "").strip()
         if fallback_location and fallback_location.lower() != "unknown":
             return fallback_payload

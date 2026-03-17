@@ -147,6 +147,11 @@ class VibrationOrigin:
         return bool(self.hotspot and (self.hotspot.ambiguous or not self.hotspot.is_well_localized))
 
     @property
+    def has_sufficient_location(self) -> bool:
+        """Whether this origin has structured location data (a hotspot)."""
+        return self.hotspot is not None
+
+    @property
     def summary_location(self) -> str:
         if self.hotspot is None:
             return "unknown"
