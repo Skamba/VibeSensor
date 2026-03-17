@@ -578,6 +578,7 @@ class PeakTableRow(TypedDict):
     presence_ratio: float
     burstiness: float
     persistence_score: float
+    suspected_source: str
     peak_classification: str
     typical_speed_band: str
 
@@ -727,6 +728,7 @@ def top_peaks_table_rows(
                 rank=idx,
                 frequency_hz=item.frequency_hz,
                 order_label="",
+                suspected_source="",
                 max_intensity_db=item.max_intensity_db,
                 median_intensity_db=item.median_intensity_db,
                 p95_intensity_db=item.p95_intensity_db,

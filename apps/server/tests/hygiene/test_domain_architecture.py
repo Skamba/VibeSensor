@@ -1014,7 +1014,7 @@ def test_speed_profile_used_by_confidence_assessment() -> None:
 
     ``certainty_label()`` was deleted; ``ConfidenceAssessment.assess()``
     is the single source of truth for confidence assessment. Report mapping
-    uses ``certainty_tier()`` for layout gating, not ``certainty_label()``.
+    uses ``ConfidenceAssessment.tier`` for layout gating.
     """
     from tests._paths import SERVER_ROOT
 

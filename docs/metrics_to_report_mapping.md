@@ -51,7 +51,7 @@ report rendering can localize them at read time.
 | Strength                 | `observed.strength_label`, `observed.strength_peak_db` | `_top_strength_values()` → `strength_text()` | `"{Label} ({db:.1f} dB)"` |
 | Certainty                | `observed.certainty_label`, `observed.certainty_pct` | `ConfidenceAssessment.assess()` | `"{Label} ({pct}%)"`  |
 | Certainty reason         | `observed.certainty_reason`                     | `ConfidenceAssessment.assess()` reason     | string                       |
-| Tier indicator           | `certainty_tier_key`                            | `certainty_tier(conf)` → `"A"`, `"B"`, `"C"` | single char               |
+| Tier indicator           | `certainty_tier_key`                            | `ConfidenceAssessment.tier` → `"A"`, `"B"`, `"C"` | single char               |
 
 ### Systems with Findings panel
 
@@ -135,8 +135,7 @@ report rendering can localize them at read time.
    Both fields are typed as ``PatternEvidence``.
 
 2. **Tier gating**: `certainty_tier_key` controls which sections are shown/suppressed.
-   The tier is derived from `certainty_tier()` (layout thresholds A≤0.15, B≤0.40, C>0.40),
-   NOT from `ConfidenceAssessment.tier` (which uses different thresholds).
+   The tier is derived from `ConfidenceAssessment.tier` (domain thresholds A<0.40, B<0.70, C≥0.70).
 
 3. **Units**: Strength/intensity outputs in persisted analysis and report artifacts are always dB (formatted `{:.1f}`). Frequency remains Hz (`{:.1f}`).
 

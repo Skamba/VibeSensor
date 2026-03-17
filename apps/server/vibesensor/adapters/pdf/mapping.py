@@ -22,7 +22,7 @@ from vibesensor.adapters.pdf.report_data import (
     SystemFindingCard,
 )
 from vibesensor.adapters.persistence.runlog import utc_now_iso
-from vibesensor.domain import Finding, TestRun, VibrationSource
+from vibesensor.domain import ConfidenceAssessment, Finding, TestRun, VibrationSource
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
@@ -38,7 +38,6 @@ from vibesensor.use_cases.diagnostics import (
     IntensityRow,
     MetadataDict,
     PeakTableRow,
-    certainty_tier,
     strength_label,
     strength_text,
 )
@@ -388,7 +387,7 @@ def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable) -> PeakRow:
     score = _as_float(row.get("persistence_score")) or 0.0
     return PeakRow(
         rank=rank,
-        system=peak_row_system_label(row, order=order, tr=tr),
+        system=peak_row_system_label(row, tr=tr),
         freq_hz=freq,
         order=order,
         peak_db=peak_db,
@@ -398,23 +397,19 @@ def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable) -> PeakRow:
     )
 
 
-def peak_row_system_label(row: PeakTableRow, *, order: str, tr: Callable[..., str]) -> str:
+def peak_row_system_label(row: PeakTableRow, *, tr: Callable[..., str]) -> str:
     """Resolve the system label shown for one peak row."""
-    order_lower = order.lower()
-    source_hint = str(row.get("source") or "").strip().lower()
-    if source_hint == VibrationSource.WHEEL_TIRE or "wheel" in order_lower:
-        return str(tr("SOURCE_WHEEL_TIRE"))
-    if source_hint == VibrationSource.ENGINE or "engine" in order_lower:
-        return str(tr("SOURCE_ENGINE"))
-    if (
-        source_hint == VibrationSource.DRIVELINE
-        or "driveshaft" in order_lower
-        or "drive" in order_lower
-    ):
-        return str(tr("SOURCE_DRIVELINE"))
-    if "transient" in order_lower:
-        return str(tr("SOURCE_TRANSIENT_IMPACT"))
-    return "—"
+    source_hint = str(row.get("suspected_source") or "").strip().lower()
+    _SOURCE_MAP: dict[str, str] = {
+        VibrationSource.WHEEL_TIRE: "SOURCE_WHEEL_TIRE",
+        VibrationSource.ENGINE: "SOURCE_ENGINE",
+        VibrationSource.DRIVELINE: "SOURCE_DRIVELINE",
+        VibrationSource.TRANSIENT_IMPACT: "SOURCE_TRANSIENT_IMPACT",
+    }
+    i18n_key = _SOURCE_MAP.get(source_hint)
+    if i18n_key:
+        return str(tr(i18n_key))
+    return "\u2014"
 
 
 def compute_location_hotspot_rows(sensor_intensity: list[dict]) -> list[dict]:
@@ -897,13 +892,13 @@ def resolve_primary_report_candidate(
         certainty_label_text = tr(ca.label_key)
         certainty_pct = ca.pct_text
         certainty_reason = ca.reason
-        tier = certainty_tier(confidence, strength_band_key=strength_band_key)
+        tier = ca.tier
     else:
         certainty_key = "CONFIDENCE_LOW"
         certainty_label_text = tr("CONFIDENCE_LOW")
         certainty_pct = "0%"
         certainty_reason = ""
-        tier = certainty_tier(confidence, strength_band_key=strength_band_key)
+        tier = ConfidenceAssessment.assess(confidence, strength_band_key=strength_band_key).tier
     return PrimaryCandidateContext(
         primary_candidate=primary_candidate,
         primary_source=primary_source,
