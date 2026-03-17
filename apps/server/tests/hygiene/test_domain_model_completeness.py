@@ -67,6 +67,4 @@ def test_domain_exports_match_all_list() -> None:
     """vibesensor.domain.__all__ must include all documented objects."""
     all_exports = set(domain.__all__)
     missing = [name for name in _REQUIRED_DOMAIN_EXPORTS if name not in all_exports]
-    assert not missing, (
-        f"Domain objects missing from vibesensor.domain.__all__: {missing}"
-    )
+    assert not missing, f"Domain objects missing from vibesensor.domain.__all__: {missing}"

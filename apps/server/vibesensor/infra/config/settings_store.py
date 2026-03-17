@@ -257,9 +257,7 @@ class SettingsStore:
                     sensor_id=cfg.sensor_id,
                     name=cfg.name,
                     placement=(
-                        SensorPlacement.from_code(cfg.location_code)
-                        if cfg.location_code
-                        else None
+                        SensorPlacement.from_code(cfg.location_code) if cfg.location_code else None
                     ),
                 )
                 for cfg in self._sensors.values()

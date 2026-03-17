@@ -130,9 +130,7 @@ class VibrationOrigin:
             )
 
         speed_band = str(top.strongest_speed_band or "")
-        dominant_phase = (
-            str(top.origin.dominant_phase or "").strip() if top.origin else ""
-        )
+        dominant_phase = str(top.origin.dominant_phase or "").strip() if top.origin else ""
 
         return cls(
             suspected_source=top.suspected_source,

@@ -89,17 +89,15 @@ def _collect_domain_import_violations() -> list[str]:
                 module = node.module or ""
                 for prefix in _FORBIDDEN_DOMAIN_IMPORTS:
                     if module.startswith(prefix):
-                        violations.append(
-                            f"{py_file.name}:{node.lineno}: from {module} import ..."
-                        )
+                        violations.append(f"{py_file.name}:{node.lineno}: from {module} import ...")
     return violations
 
 
 def test_domain_does_not_import_from_outer_layers() -> None:
     """domain/ must not import from adapters, infra, shared/types, or use_cases."""
     violations = _collect_domain_import_violations()
-    assert not violations, (
-        "Domain modules must not import from outer layers:\n  " + "\n  ".join(violations)
+    assert not violations, "Domain modules must not import from outer layers:\n  " + "\n  ".join(
+        violations
     )
 
 
@@ -116,8 +114,8 @@ def test_shared_types_does_not_import_from_infra() -> None:
             module = node.module or ""
             if module.startswith("vibesensor.infra"):
                 violations.append(f"L{node.lineno}: from {module} import ...")
-    assert not violations, (
-        "backend_types.py must not import from infra/config/:\n  " + "\n  ".join(violations)
+    assert not violations, "backend_types.py must not import from infra/config/:\n  " + "\n  ".join(
+        violations
     )
 
 
