@@ -7,11 +7,11 @@ from dataclasses import dataclass
 from math import log1p
 
 from vibesensor.domain.finding import VibrationSource, speed_band_sort_key, speed_bin_label
-from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.shared.constants import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     CONSTANT_SPEED_STDDEV_KMH,
+    KMH_TO_MPS,
     LIGHT_STRENGTH_MAX_DB,
     MEMS_NOISE_FLOOR_G,
     NEGLIGIBLE_STRENGTH_MAX_DB,
@@ -97,8 +97,7 @@ def _wheel_hz(sample: Sample, tire_circumference_m: float | None) -> float | Non
         return None
     if tire_circumference_m is None or tire_circumference_m <= 0:
         return None
-    wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
-    return float(wheel_hz) if wheel_hz is not None else None
+    return float(speed_kmh * KMH_TO_MPS / tire_circumference_m)
 
 
 def _driveshaft_hz(

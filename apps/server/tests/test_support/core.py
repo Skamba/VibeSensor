@@ -15,8 +15,8 @@ from typing import Any
 from vibesensor.domain import TireSpec
 from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
-    wheel_hz_from_speed_kmh,
 )
+from vibesensor.shared.constants import KMH_TO_MPS
 
 _DEFAULT_TIRE = TireSpec.from_aspects(
     DEFAULT_ANALYSIS_SETTINGS,
@@ -201,8 +201,8 @@ def profile_circ(profile: dict[str, Any]) -> float:
 def profile_wheel_hz(profile: dict[str, Any], speed_kmh: float) -> float:
     """Compute wheel-1x Hz for a car profile at *speed_kmh*."""
     circ = profile_circ(profile)
-    hz = wheel_hz_from_speed_kmh(speed_kmh, circ)
-    assert hz is not None and hz > 0
+    hz = speed_kmh * KMH_TO_MPS / circ
+    assert hz > 0
     return hz
 
 
@@ -283,8 +283,8 @@ def standard_metadata(*, language: str = "en", **overrides: Any) -> dict[str, An
 
 def wheel_hz(speed_kmh: float) -> float:
     """Compute wheel-1x frequency for *speed_kmh*."""
-    hz = wheel_hz_from_speed_kmh(speed_kmh, TIRE_CIRC)
-    assert hz is not None and hz > 0
+    hz = speed_kmh * KMH_TO_MPS / TIRE_CIRC
+    assert hz > 0
     return hz
 
 

@@ -10,17 +10,12 @@ __all__ = [
     "DEFAULT_ANALYSIS_SETTINGS",
     "NON_NEGATIVE_KEYS",
     "POSITIVE_REQUIRED_KEYS",
-    "engine_rpm_from_wheel_hz",
     "sanitize_settings",
-    "wheel_hz_from_speed_kmh",
-    "wheel_hz_from_speed_mps",
 ]
 
 import logging
 from collections.abc import Mapping
 from math import isfinite
-
-from vibesensor.shared.constants import KMH_TO_MPS, SECONDS_PER_MINUTE
 
 LOGGER = logging.getLogger(__name__)
 
@@ -133,42 +128,3 @@ def sanitize_settings(
         )
     return out
 
-
-def wheel_hz_from_speed_kmh(speed_kmh: float, tire_circumference_m: float) -> float | None:
-    """Wheel rotational frequency from vehicle speed (km/h) and tire circumference."""
-    if not isfinite(speed_kmh) or not isfinite(tire_circumference_m):
-        return None
-    if speed_kmh <= 0 or tire_circumference_m <= 0:
-        return None
-    result = (speed_kmh * KMH_TO_MPS) / tire_circumference_m
-    return result if isfinite(result) else None
-
-
-def wheel_hz_from_speed_mps(speed_mps: float, tire_circumference_m: float) -> float | None:
-    """Wheel rotational frequency from vehicle speed (m/s) and tire circumference."""
-    if not isfinite(speed_mps) or not isfinite(tire_circumference_m):
-        return None
-    if speed_mps <= 0 or tire_circumference_m <= 0:
-        return None
-    result = speed_mps / tire_circumference_m
-    return result if isfinite(result) else None
-
-
-def engine_rpm_from_wheel_hz(
-    wheel_hz: float,
-    final_drive_ratio: float,
-    gear_ratio: float,
-) -> float | None:
-    """Engine RPM from wheel Hz, final-drive ratio, and current gear ratio.
-
-    Returns ``None`` when any input is non-finite or when the drive ratios are
-    non-positive, preventing silent propagation of ``inf``/``nan`` into
-    downstream consumers.  A ``wheel_hz`` of zero (stopped vehicle) returns
-    ``0.0`` as expected.
-    """
-    if not (isfinite(wheel_hz) and isfinite(final_drive_ratio) and isfinite(gear_ratio)):
-        return None
-    if final_drive_ratio <= 0 or gear_ratio <= 0:
-        return None
-    result = wheel_hz * final_drive_ratio * gear_ratio * SECONDS_PER_MINUTE
-    return result if isfinite(result) else None

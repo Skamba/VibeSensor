@@ -18,10 +18,10 @@ from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.domain import TireSpec
 from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
-    wheel_hz_from_speed_kmh,
 )
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 _FRAME_N = 256
@@ -142,8 +142,8 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
             20.0 + (80.0 * step / 34.0) if step < 35 else 100.0 - (60.0 * (step - 35) / 34.0)
         )
         gps_monitor.set_speed_override_kmh(speed_kmh)
-        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, tire_circ)
-        assert wheel_hz is not None and wheel_hz > 0
+        wheel_hz = speed_kmh * KMH_TO_MPS / tire_circ
+        assert wheel_hz > 0
 
         for client_id, _, amplitude in SENSORS:
             packet = _build_sensor_packet(client_id, amplitude, step, seq, wheel_hz)

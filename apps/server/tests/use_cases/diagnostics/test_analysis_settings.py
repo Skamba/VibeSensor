@@ -4,13 +4,10 @@ from math import inf, nan, pi
 
 import pytest
 
-from vibesensor.domain import TireSpec
+from vibesensor.domain import OrderReferenceSpec, TireSpec
 from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
-    engine_rpm_from_wheel_hz,
     sanitize_settings,
-    wheel_hz_from_speed_kmh,
-    wheel_hz_from_speed_mps,
 )
 
 # -- TireSpec.circumference_m -------------------------------------------------
@@ -81,9 +78,13 @@ def test_tire_circumference_deflection_factor_above_one_ignored() -> None:
     assert abs(above_one - no_deflection) < 1e-9  # factor ignored
 
 
-def test_wheel_hz_from_speed_mps_returns_none_for_non_finite_values() -> None:
-    assert wheel_hz_from_speed_mps(nan, 2.0) is None
-    assert wheel_hz_from_speed_mps(20.0, inf) is None
+def test_wheel_hz_returns_none_for_non_finite_speed() -> None:
+    from vibesensor.domain import OrderReferenceSpec
+
+    spec = OrderReferenceSpec.from_settings(DEFAULT_ANALYSIS_SETTINGS)
+    assert spec is not None
+    assert spec.wheel_hz(nan) is None
+    assert spec.wheel_hz(inf) is None
 
 
 # -- sanitize_settings --------------------------------------------------------
@@ -222,59 +223,73 @@ def test_sanitize_keeps_valid_tire_params_unchanged() -> None:
     assert out["rim_in"] == 18.0
 
 
-# -- wheel_hz_from_speed_kmh --------------------------------------------------
+# -- OrderReferenceSpec.wheel_hz / engine_hz -----------------------------------
+
+
+def _default_spec() -> OrderReferenceSpec:
+    spec = OrderReferenceSpec.from_settings(DEFAULT_ANALYSIS_SETTINGS)
+    assert spec is not None
+    return spec
 
 
 def test_wheel_hz_from_speed_kmh_typical_value() -> None:
-    """100 km/h with 2m circumference → ~13.9 Hz."""
-    result = wheel_hz_from_speed_kmh(100.0, 2.0)
+    """100 km/h → wheel Hz consistent with tire circumference."""
+    spec = _default_spec()
+    result = spec.wheel_hz_from_speed_kmh(100.0)
     assert result is not None
-    assert abs(result - (100.0 / 3.6 / 2.0)) < 1e-9
+    assert abs(result - (100.0 / 3.6 / spec.tire_circumference_m)) < 1e-9
 
 
 @pytest.mark.parametrize(
-    ("speed", "circ"),
-    [
-        (0.0, 2.0),
-        (-50.0, 2.0),
-        (100.0, 0.0),
-        (nan, 2.0),
-        (100.0, inf),
-        (inf, 2.0),
-    ],
-    ids=["zero-speed", "negative-speed", "zero-circ", "nan-speed", "inf-circ", "inf-speed"],
+    "speed",
+    [0.0, -50.0, nan, inf],
+    ids=["zero-speed", "negative-speed", "nan-speed", "inf-speed"],
 )
-def test_wheel_hz_from_speed_kmh_invalid_returns_none(speed: float, circ: float) -> None:
-    assert wheel_hz_from_speed_kmh(speed, circ) is None
+def test_wheel_hz_from_speed_kmh_invalid_returns_none(speed: float) -> None:
+    spec = _default_spec()
+    assert spec.wheel_hz_from_speed_kmh(speed) is None
 
 
-# -- engine_rpm_from_wheel_hz -------------------------------------------------
+# -- OrderReferenceSpec.engine_rpm_from_wheel_hz -------------------------------
 
 
 def test_engine_rpm_from_wheel_hz_basic() -> None:
-    """10 Hz wheel × 3.08 final × 0.64 gear × 60 = 1182.72 RPM."""
-    result = engine_rpm_from_wheel_hz(10.0, 3.08, 0.64)
+    """10 Hz wheel × final_drive × gear × 60 = expected RPM."""
+    spec = _default_spec()
+    result = spec.engine_rpm_from_wheel_hz(10.0)
     assert result is not None
-    assert abs(result - 10.0 * 3.08 * 0.64 * 60.0) < 1e-6
+    assert abs(result - 10.0 * spec.final_drive_ratio * spec.current_gear_ratio * 60.0) < 1e-6
 
 
 def test_engine_rpm_from_wheel_hz_non_finite_inputs_return_none() -> None:
     """Non-finite inputs must return None to avoid propagating nan/inf."""
-    assert engine_rpm_from_wheel_hz(float("nan"), 3.08, 0.64) is None
-    assert engine_rpm_from_wheel_hz(float("inf"), 3.08, 0.64) is None
-    assert engine_rpm_from_wheel_hz(10.0, float("nan"), 0.64) is None
-    assert engine_rpm_from_wheel_hz(10.0, 3.08, float("inf")) is None
+    spec = _default_spec()
+    assert spec.engine_rpm_from_wheel_hz(float("nan")) is None
+    assert spec.engine_rpm_from_wheel_hz(float("inf")) is None
 
 
-def test_engine_rpm_from_wheel_hz_non_positive_ratios_return_none() -> None:
-    """Zero or negative drive ratios must return None (invalid configuration)."""
-    assert engine_rpm_from_wheel_hz(10.0, 0.0, 0.64) is None
-    assert engine_rpm_from_wheel_hz(10.0, -1.0, 0.64) is None
-    assert engine_rpm_from_wheel_hz(10.0, 3.08, 0.0) is None
-    assert engine_rpm_from_wheel_hz(10.0, 3.08, -0.5) is None
+def test_engine_hz_returns_none_without_gear() -> None:
+    """engine_hz returns None when gear ratio is zero."""
+    tire = TireSpec(width_mm=285.0, aspect_pct=30.0, rim_in=21.0)
+    spec = OrderReferenceSpec(
+        tire_spec=tire,
+        final_drive_ratio=3.08,
+        current_gear_ratio=0.0,
+        wheel_bandwidth_pct=5.0,
+        driveshaft_bandwidth_pct=4.5,
+        engine_bandwidth_pct=5.2,
+        speed_uncertainty_pct=1.0,
+        tire_diameter_uncertainty_pct=1.0,
+        final_drive_uncertainty_pct=0.1,
+        gear_uncertainty_pct=0.2,
+        min_abs_band_hz=0.2,
+        max_band_half_width_pct=6.0,
+    )
+    assert spec.engine_hz(10.0) is None
 
 
 def test_engine_rpm_from_wheel_hz_zero_wheel_hz_returns_zero() -> None:
     """Zero wheel Hz (stopped vehicle) must return 0.0, not None."""
-    result = engine_rpm_from_wheel_hz(0.0, 3.08, 0.64)
+    spec = _default_spec()
+    result = spec.engine_rpm_from_wheel_hz(0.0)
     assert result == 0.0

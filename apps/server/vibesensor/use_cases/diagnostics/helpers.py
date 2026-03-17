@@ -11,13 +11,11 @@ from typing import TypedDict, cast
 from vibesensor.adapters.persistence.runlog import read_jsonl_run
 from vibesensor.domain import TireSpec
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
-from vibesensor.infra.config.analysis_settings import (
-    engine_rpm_from_wheel_hz,
-    wheel_hz_from_speed_kmh,
-)
 from vibesensor.shared.constants import (
+    KMH_TO_MPS,
     MEMS_NOISE_FLOOR_G,
     MIN_ANALYSIS_FREQ_HZ,
+    SECONDS_PER_MINUTE,
     SPEED_BIN_WIDTH_KMH,
     STEADY_SPEED_RANGE_KMH,
     STEADY_SPEED_STDDEV_KMH,
@@ -267,12 +265,8 @@ def _effective_engine_rpm(
     ):
         return None, "missing"
 
-    whz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
-    if whz is None:
-        return None, "missing"
-    rpm = engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)
-    if rpm is None:
-        return None, "missing"
+    whz = speed_kmh * KMH_TO_MPS / tire_circumference_m
+    rpm = whz * final_drive_ratio * gear_ratio * SECONDS_PER_MINUTE
     return float(rpm), "estimated_from_speed_and_ratios"
 
 
