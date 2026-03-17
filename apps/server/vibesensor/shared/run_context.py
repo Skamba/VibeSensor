@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from dataclasses import asdict
 from typing import cast
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
+from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
 from vibesensor.infra.config.analysis_settings import (
     tire_circumference_m_from_spec,
 )
@@ -24,16 +23,12 @@ def build_run_context_snapshot(
     *,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     active_car_snapshot: CarSnapshot | None,
-) -> JsonObject:
-    """Build a structured run-context snapshot for persisted metadata."""
-    settings_dict = asdict(analysis_settings_snapshot)
-    settings_snapshot: JsonObject = {
-        k: v for k, v in settings_dict.items() if isinstance(v, (int, float)) and v == v
-    }
-    snapshot: JsonObject = {"analysis_settings_snapshot": settings_snapshot}
-    if active_car_snapshot is not None:
-        snapshot["active_car_snapshot"] = active_car_snapshot.to_dict()
-    return snapshot
+) -> RunContextSnapshot:
+    """Build the canonical typed run-context snapshot for the current run."""
+    return RunContextSnapshot(
+        analysis_settings=analysis_settings_snapshot,
+        car=active_car_snapshot,
+    )
 
 
 def apply_run_context_snapshot(
@@ -47,13 +42,12 @@ def apply_run_context_snapshot(
         analysis_settings_snapshot=analysis_settings_snapshot,
         active_car_snapshot=active_car_snapshot,
     )
-    metadata.update(context_snapshot)
-    car_snapshot = context_snapshot.get("active_car_snapshot")
-    if isinstance(car_snapshot, dict):
-        metadata["active_car_id"] = car_snapshot.get("id")
-        metadata["car_name"] = car_snapshot.get("name")
-        metadata["car_type"] = car_snapshot.get("type")
-        metadata["car_variant"] = car_snapshot.get("variant")
+    metadata.update(context_snapshot.to_metadata_dict())
+    if context_snapshot.has_car_context:
+        metadata["active_car_id"] = context_snapshot.active_car_id
+        metadata["car_name"] = context_snapshot.car_name
+        metadata["car_type"] = context_snapshot.car_type
+        metadata["car_variant"] = context_snapshot.car_variant
 
 
 def order_reference_context_complete(metadata: Mapping[str, object]) -> bool:

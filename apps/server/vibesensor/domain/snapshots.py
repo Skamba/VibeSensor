@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from types import MappingProxyType
 
 from .car import CarSnapshot, OrderReferenceSpec, TireSpec
@@ -175,6 +175,19 @@ class RunContextSnapshot:
 
         return cls(analysis_settings=settings, car=car)
 
+    def to_metadata_dict(self) -> dict[str, object]:
+        settings_dict = asdict(self.analysis_settings)
+        metadata: dict[str, object] = {
+            "analysis_settings_snapshot": {
+                key: value
+                for key, value in settings_dict.items()
+                if isinstance(value, (int, float)) and value == value
+            },
+        }
+        if self.car is not None:
+            metadata["active_car_snapshot"] = self.car.to_dict()
+        return metadata
+
     @property
     def order_reference_spec(self) -> OrderReferenceSpec | None:
         """Convenience — delegates to analysis settings."""
@@ -183,6 +196,22 @@ class RunContextSnapshot:
     @property
     def has_car_context(self) -> bool:
         return self.car is not None
+
+    @property
+    def active_car_id(self) -> str | None:
+        return self.car.car_id if self.car is not None else None
+
+    @property
+    def car_name(self) -> str | None:
+        return self.car.name if self.car is not None else None
+
+    @property
+    def car_type(self) -> str | None:
+        return self.car.car_type if self.car is not None else None
+
+    @property
+    def car_variant(self) -> str | None:
+        return self.car.variant if self.car is not None else None
 
 
 # ---------------------------------------------------------------------------
