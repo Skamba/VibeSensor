@@ -235,7 +235,8 @@ def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> 
         strength_db = test_run.top_strength_db()
         strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
         expected_tier = ConfidenceAssessment.assess(
-            confidence, strength_band_key=strength_band_key,
+            confidence,
+            strength_band_key=strength_band_key,
         ).tier
     else:
         expected_tier = "A"

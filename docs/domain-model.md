@@ -55,13 +55,14 @@ The model uses explicit scope boundaries:
   `CarSnapshot`, `RunContextSnapshot`
 - internal typed analysis/reconstruction support: `StrengthMetrics`,
   `StrengthPeak`, `SpeedStatsSnapshot`, `PhaseSummarySnapshot`
-- analysis machinery: `PhaseSegment`, `AnalysisWindow`
+- analysis machinery: `PhaseSegment`
 - boundary representations: `Report`, `HistoryRecord`, API shapes, DTOs,
   persistence shapes, export/render/template shapes, config transport shapes,
   archival/history shapes
 
-`DiagnosticCase` scopes one `Car` context, and every `TestRun`, `RunCapture`,
-and `RunSetup` in that case is interpreted within that same car context.
+`DiagnosticCase` scopes zero or one `Car` context (a case may exist before
+car details are known), and every `TestRun`, `RunCapture`, and `RunSetup`
+in that case is interpreted within that same car context when present.
 
 ## Aggregate hierarchy
 
@@ -90,7 +91,7 @@ Car
   owns OrderReferenceSpec as supporting typed value context
 
 TestRun
-  references one RunCapture
+  contains one RunCapture
   contains DrivingSegment*
   contains Finding*
 
@@ -101,7 +102,7 @@ RunCapture
 
 RunSetup
   contains Sensor*
-  references one SpeedSource
+  contains one SpeedSource
 ```
 
 Reasoning chain:
@@ -116,10 +117,27 @@ Measurement -> Finding -> Report
 
 `DiagnosticCase`, `TestRun`, `Finding`, `Run`, `RunCapture`, `RunSetup`,
 `Car`, `DrivingSegment`, `DrivingPhase`, `Measurement`, `Sensor`,
-`SensorPlacement`, `SpeedSource`, `Symptom`, `TestPlan`,
+`SensorPlacement`, `SpeedSource`, `SpeedSourceKind`, `Symptom`, `TestPlan`,
 `RecommendedAction`, `SpeedProfile`, `RunSuitability`, `SuitabilityCheck`,
 `ConfigurationSnapshot`, `ConfidenceAssessment`, `FindingEvidence`,
-`LocationHotspot`, `VibrationOrigin`.
+`LocationHotspot`, `VibrationOrigin`, `RunStatus`.
+
+### Domain enums
+
+`VibrationSource`, `FindingKind`, `DrivingPhase`, `SpeedSourceKind`,
+`RunStatus`.
+
+### Domain value objects exported from Car scope
+
+`TireSpec`, `OrderReferenceSpec`.
+
+### Domain value objects exported from Finding scope
+
+`Signature`, `FindingEvidence`, `VibrationOrigin`.
+
+### Domain value objects exported from Measurement scope
+
+`VibrationReading`.
 
 ### Supporting typed internal concepts
 
@@ -132,8 +150,8 @@ Measurement -> Finding -> Report
 
 ### Analysis machinery
 
-`PhaseSegment`, `AnalysisWindow`, and low-level numeric/signal-processing
-helpers support the model but are not canonical domain concepts.
+`PhaseSegment` and low-level numeric/signal-processing helpers support the
+model but are not canonical domain concepts.
 
 ### Boundary representations
 
@@ -198,9 +216,8 @@ scope, centered on `OrderReferenceSpec`.
 
 - **`Run` vs `TestRun`:** `Run` is capture lifecycle; `TestRun` is analyzed
   diagnostic run; `RunCapture` bridges them.
-- **`DrivingSegment` vs analysis segments/windows:** `DrivingSegment` is the
-  domain segment concept; `PhaseSegment` and `AnalysisWindow` are analysis
-  machinery.
+- **`DrivingSegment` vs analysis segments:** `DrivingSegment` is the domain
+  segment concept; `PhaseSegment` is analysis machinery.
 - **`Car` context ownership:** `Car` owns case-scoped vehicle interpretive
   context. `OrderReferenceSpec` is a supporting typed value object within that
   context.

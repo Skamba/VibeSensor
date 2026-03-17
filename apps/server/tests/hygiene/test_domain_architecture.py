@@ -1686,9 +1686,7 @@ def test_domain_and_use_cases_do_not_read_raw_aspects_dict_keys() -> None:
                 if isinstance(node, ast.Subscript):
                     if isinstance(node.slice, ast.Constant) and node.slice.value == "aspects":
                         rel = py_file.relative_to(pkg_dir)
-                        violations.append(
-                            f'{rel}:{node.lineno} accesses ["aspects"] raw dict key'
-                        )
+                        violations.append(f'{rel}:{node.lineno} accesses ["aspects"] raw dict key')
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                     if node.func.attr == "get" and node.args:
                         first_arg = node.args[0]
@@ -1736,9 +1734,7 @@ def test_boundary_owns_no_meaning_finding_kind() -> None:
                     and node.func.id == "FindingKind"
                 ):
                     rel = py_file.relative_to(pkg_dir)
-                    violations.append(
-                        f"{rel}:{node.lineno} constructs FindingKind directly"
-                    )
+                    violations.append(f"{rel}:{node.lineno} constructs FindingKind directly")
     assert not violations, (
         "adapters/ and shared/boundaries/ must not construct FindingKind for "
         f"business logic. Use domain classification methods instead: {violations}"
@@ -1795,8 +1791,7 @@ def test_boundary_owns_no_meaning_vibration_source() -> None:
                     continue
                 rel = py_file.relative_to(pkg_dir)
                 violations.append(
-                    f"{rel}:{node.lineno} constructs VibrationSource "
-                    f"(in {enclosing or '<module>'})"
+                    f"{rel}:{node.lineno} constructs VibrationSource (in {enclosing or '<module>'})"
                 )
     assert not violations, (
         "adapters/ and shared/boundaries/ must not construct VibrationSource for "
@@ -1907,10 +1902,7 @@ def test_run_status_from_domain_only() -> None:
                 # Check if module path contains a forbidden source
                 if any(part in node.module for part in forbidden_sources):
                     rel = py_file.relative_to(SERVER_ROOT)
-                    violations.append(
-                        f"{rel}:{node.lineno} imports RunStatus from "
-                        f"{node.module}"
-                    )
+                    violations.append(f"{rel}:{node.lineno} imports RunStatus from {node.module}")
     assert not violations, (
         "RunStatus must be imported from vibesensor.domain, not from the "
         f"persistence layer: {violations}"
