@@ -80,6 +80,35 @@ class TestAnalysisSettingsOrderRef:
         assert spec.tire_spec is not None
         assert spec.tire_spec.width_mm == 285.0
 
+    def test_order_reference_spec_is_snapshot_projection(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        captured: dict[str, object] = {}
+        sentinel = OrderReferenceSpec.from_settings(
+            {"tire_width_mm": 285.0, "tire_aspect_pct": 30.0, "rim_in": 21.0},
+        )
+        assert sentinel is not None
+
+        def _fake_from_settings(data: dict[str, object]) -> OrderReferenceSpec | None:
+            captured.update(data)
+            return sentinel
+
+        monkeypatch.setattr(OrderReferenceSpec, "from_settings", _fake_from_settings)
+        snap = AnalysisSettingsSnapshot(
+            tire_width_mm=285.0,
+            tire_aspect_pct=30.0,
+            rim_in=21.0,
+            final_drive_ratio=3.08,
+            current_gear_ratio=0.64,
+            tire_deflection_factor=0.97,
+        )
+
+        assert snap.order_reference_spec is sentinel
+        assert captured["tire_width_mm"] == 285.0
+        assert captured["final_drive_ratio"] == 3.08
+        assert captured["tire_deflection_factor"] == 0.97
+
 
 # ── RunContextSnapshot ──────────────────────────────────────────────
 
@@ -121,6 +150,79 @@ class TestRunContextSnapshotFromDict:
             }
         )
         assert ctx.order_reference_spec is not None
+
+    def test_to_metadata_dict_matches_persisted_shape(self) -> None:
+        ctx = RunContextSnapshot(
+            analysis_settings=AnalysisSettingsSnapshot(
+                tire_width_mm=255.0,
+                tire_aspect_pct=40.0,
+                rim_in=19.0,
+                final_drive_ratio=3.15,
+                current_gear_ratio=0.81,
+            ),
+            car=CarSnapshot(
+                car_id="car-1",
+                name="Primary",
+                car_type="sedan",
+                variant="track",
+                aspects={"tire_width_mm": 255.0},
+            ),
+        )
+
+        metadata = ctx.to_metadata_dict()
+
+        assert metadata == {
+            "analysis_settings_snapshot": {
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+                "final_drive_ratio": 3.15,
+                "current_gear_ratio": 0.81,
+                "wheel_bandwidth_pct": 0.0,
+                "driveshaft_bandwidth_pct": 0.0,
+                "engine_bandwidth_pct": 0.0,
+                "speed_uncertainty_pct": 0.0,
+                "tire_diameter_uncertainty_pct": 0.0,
+                "final_drive_uncertainty_pct": 0.0,
+                "gear_uncertainty_pct": 0.0,
+                "min_abs_band_hz": 0.0,
+                "max_band_half_width_pct": 0.0,
+                "tire_deflection_factor": 1.0,
+            },
+            "active_car_snapshot": {
+                "id": "car-1",
+                "name": "Primary",
+                "type": "sedan",
+                "variant": "track",
+                "aspects": {"tire_width_mm": 255.0},
+            },
+        }
+
+    def test_convenience_accessors_delegate_to_car_snapshot(self) -> None:
+        ctx = RunContextSnapshot(
+            analysis_settings=AnalysisSettingsSnapshot(),
+            car=CarSnapshot(
+                car_id="car-1",
+                name="Primary",
+                car_type="sedan",
+                variant="track",
+            ),
+        )
+
+        assert ctx.has_car_context is True
+        assert ctx.active_car_id == "car-1"
+        assert ctx.car_name == "Primary"
+        assert ctx.car_type == "sedan"
+        assert ctx.car_variant == "track"
+
+    def test_convenience_accessors_degrade_when_car_absent(self) -> None:
+        ctx = RunContextSnapshot()
+
+        assert ctx.has_car_context is False
+        assert ctx.active_car_id is None
+        assert ctx.car_name is None
+        assert ctx.car_type is None
+        assert ctx.car_variant is None
 
 
 # ── SpeedStatsSnapshot ──────────────────────────────────────────────

@@ -14,11 +14,7 @@ from typing import TYPE_CHECKING, NamedTuple
 from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
-from vibesensor.infra.config.analysis_settings import (
-    engine_rpm_from_wheel_hz,
-    tire_circumference_m_from_spec,
-    wheel_hz_from_speed_kmh,
-)
+from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.constants import MPS_TO_KMH, NUMERIC_TYPES
 from vibesensor.shared.run_context import (
     apply_run_context_snapshot,
@@ -32,24 +28,6 @@ if TYPE_CHECKING:
     from vibesensor.infra.runtime.registry import ClientRegistry
 
 _isfinite = math.isfinite
-
-
-def _parse_peak(raw: object) -> tuple[float, float] | None:
-    """Validate and parse a peak dict into ``(hz, amp)`` or ``None``."""
-    if not isinstance(raw, dict):
-        return None
-    try:
-        hz = float(raw.get("hz"))  # type: ignore[arg-type]
-        amp = float(raw.get("amp"))  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        return None
-    if _isfinite(hz) and _isfinite(amp) and hz > 0:
-        return (hz, amp)
-    return None
-
-
-_VIB_STRENGTH_DB_KEY: str = "vibration_strength_db"
-_STRENGTH_BUCKET_KEY: str = "strength_bucket"
 
 
 def _safe_float(d: Mapping[str, object], key: str) -> float | None:
@@ -83,68 +61,40 @@ def safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None
 class StrengthExtraction(NamedTuple):
     """Named result of :func:`extract_strength_data`."""
 
-    strength_metrics: dict[str, object]
-    vibration_strength_db: float | None
-    strength_bucket: str | None
-    strength_peak_amp_g: float | None
-    strength_floor_amp_g: float | None
+    strength_metrics: StrengthMetrics
     top_peaks: list[dict[str, object]]
+
+
+def _raw_strength_metrics(metrics: Mapping[str, object]) -> Mapping[str, object] | None:
+    combined = metrics.get("combined")
+    if not isinstance(combined, Mapping):
+        return None
+    nested = combined.get("strength_metrics")
+    return nested if isinstance(nested, Mapping) else None
 
 
 def extract_strength_data(
     metrics: Mapping[str, object],
 ) -> StrengthExtraction:
     """Extract strength metrics and top peaks from client metrics."""
-    strength_metrics: dict[str, object] = {}
-    combined = metrics.get("combined")
-    if isinstance(combined, dict):
-        nested = combined.get("strength_metrics")
-        if isinstance(nested, dict):
-            strength_metrics = nested
-
-    vibration_strength_db = _safe_float(strength_metrics, _VIB_STRENGTH_DB_KEY)
-    _bucket_val = strength_metrics.get(_STRENGTH_BUCKET_KEY)
-    strength_bucket = str(_bucket_val) if _bucket_val not in (None, "") else None
-    strength_peak_amp_g = _safe_float(strength_metrics, "peak_amp_g")
-    strength_floor_amp_g = _safe_float(strength_metrics, "noise_floor_amp_g")
-
-    top_peaks_raw = strength_metrics.get("top_peaks")
-    top_peaks: list[dict[str, object]] = []
-    if isinstance(top_peaks_raw, list):
-        for peak in top_peaks_raw[:8]:
-            parsed = _parse_peak(peak)
-            if parsed is None or parsed[1] <= 0:
-                continue
-            hz, amp = parsed
-            peak_payload: dict[str, object] = {"hz": hz, "amp": amp}
-            peak_db = _safe_float(peak, _VIB_STRENGTH_DB_KEY)
-            if peak_db is not None:
-                peak_payload[_VIB_STRENGTH_DB_KEY] = peak_db
-            peak_bucket = peak.get(_STRENGTH_BUCKET_KEY)
-            if peak_bucket not in (None, ""):
-                peak_payload[_STRENGTH_BUCKET_KEY] = str(peak_bucket)
-            top_peaks.append(peak_payload)
+    raw_strength_metrics = _raw_strength_metrics(metrics)
+    strength_metrics = (
+        StrengthMetrics.from_typed_dict(raw_strength_metrics)
+        if raw_strength_metrics is not None
+        else StrengthMetrics()
+    )
 
     return StrengthExtraction(
         strength_metrics=strength_metrics,
-        vibration_strength_db=vibration_strength_db,
-        strength_bucket=strength_bucket,
-        strength_peak_amp_g=strength_peak_amp_g,
-        strength_floor_amp_g=strength_floor_amp_g,
-        top_peaks=top_peaks,
+        top_peaks=strength_metrics.to_peak_payloads(max_items=8),
     )
 
 
 def dominant_hz_from_strength(
-    strength_metrics: dict[str, object],
+    strength_metrics: StrengthMetrics,
 ) -> float | None:
     """Return the frequency of the strongest peak, or ``None``."""
-    top_peaks_raw = strength_metrics.get("top_peaks")
-    if isinstance(top_peaks_raw, list) and top_peaks_raw:
-        first_peak = top_peaks_raw[0]
-        if isinstance(first_peak, dict):
-            return _safe_float(first_peak, "hz")
-    return None
+    return strength_metrics.dominant_hz
 
 
 class SpeedContext(NamedTuple):
@@ -161,15 +111,7 @@ def resolve_speed_context(
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
 ) -> SpeedContext:
     """Resolve current speed/vehicle state into sample-record values."""
-    s = analysis_settings_snapshot
-    tire_circumference_m = tire_circumference_m_from_spec(
-        s.tire_width_mm or None,
-        s.tire_aspect_pct or None,
-        s.rim_in or None,
-        deflection_factor=s.tire_deflection_factor or None,
-    )
-    final_drive_ratio = s.final_drive_ratio or None
-    gear_ratio = s.current_gear_ratio or None
+    order_reference_spec = analysis_settings_snapshot.order_reference_spec
     gps_speed_mps = gps_monitor.speed_mps
     resolution = gps_monitor.resolve_speed()
     effective_speed_mps = resolution.speed_mps
@@ -183,18 +125,8 @@ def resolve_speed_context(
     )
     speed_source = _SPEED_SOURCE_MAP.get(resolution.source, "none")
     engine_rpm_estimated = None
-    if (
-        speed_kmh is not None
-        and tire_circumference_m is not None
-        and tire_circumference_m > 0
-        and isinstance(final_drive_ratio, float)
-        and final_drive_ratio > 0
-        and isinstance(gear_ratio, float)
-        and gear_ratio > 0
-    ):
-        whz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
-        if whz is not None:
-            engine_rpm_estimated = engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)
+    if speed_kmh is not None and order_reference_spec is not None:
+        engine_rpm_estimated = order_reference_spec.engine_rpm_from_speed_kmh(speed_kmh)
 
     return SpeedContext(
         speed_kmh=speed_kmh,
@@ -242,8 +174,13 @@ def build_sample_records(
         speed_source,
         engine_rpm_estimated,
     ) = resolve_speed_context(gps_monitor, analysis_settings_snapshot)
-    final_drive_ratio = analysis_settings_snapshot.final_drive_ratio or None
-    gear_ratio = analysis_settings_snapshot.current_gear_ratio or None
+    order_reference_spec = analysis_settings_snapshot.order_reference_spec
+    final_drive_ratio = (
+        order_reference_spec.final_drive_ratio if order_reference_spec is not None else None
+    )
+    gear_ratio = (
+        order_reference_spec.current_gear_ratio if order_reference_spec is not None else None
+    )
 
     records: list[dict[str, object]] = []
     active_client_ids = sorted(
@@ -269,13 +206,12 @@ def build_sample_records(
 
         (
             strength_metrics,
-            vibration_strength_db,
-            _strength_bucket,
-            strength_peak_amp_g,
-            strength_floor_amp_g,
             top_peaks,
         ) = extract_strength_data(metrics)
         dominant_hz = dominant_hz_from_strength(strength_metrics)
+        vibration_strength_db = strength_metrics.vibration_strength_db
+        strength_peak_amp_g = strength_metrics.peak_amp_g
+        strength_floor_amp_g = strength_metrics.noise_floor_amp_g
 
         # Derive severity bucket directly from the dB value via the
         # canonical bucket_for_strength() function (single source of truth).
@@ -342,6 +278,7 @@ def build_run_metadata(
     from vibesensor.adapters.persistence.runlog import create_run_metadata
 
     settings = asdict(analysis_settings_snapshot)
+    order_reference_spec = analysis_settings_snapshot.order_reference_spec
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
     raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
     incomplete = raw_sample_rate_hz is None
@@ -357,11 +294,8 @@ def build_run_metadata(
         incomplete_for_order_analysis=incomplete,
     )
     metadata.update(settings)
-    metadata["tire_circumference_m"] = tire_circumference_m_from_spec(
-        analysis_settings_snapshot.tire_width_mm,
-        analysis_settings_snapshot.tire_aspect_pct,
-        analysis_settings_snapshot.rim_in,
-        deflection_factor=analysis_settings_snapshot.tire_deflection_factor,
+    metadata["tire_circumference_m"] = (
+        order_reference_spec.tire_circumference_m if order_reference_spec is not None else None
     )
     apply_run_context_snapshot(
         metadata,

@@ -24,6 +24,25 @@ __all__ = [
     "TireSpec",
 ]
 
+_ORDER_REFERENCE_KEYS: tuple[str, ...] = (
+    "tire_width_mm",
+    "tire_aspect_pct",
+    "rim_in",
+    "final_drive_ratio",
+    "current_gear_ratio",
+    "wheel_bandwidth_pct",
+    "driveshaft_bandwidth_pct",
+    "engine_bandwidth_pct",
+    "speed_uncertainty_pct",
+    "tire_diameter_uncertainty_pct",
+    "final_drive_uncertainty_pct",
+    "gear_uncertainty_pct",
+    "min_abs_band_hz",
+    "max_band_half_width_pct",
+    "tire_deflection_factor",
+)
+KMH_TO_MPS = 1.0 / 3.6
+
 
 @dataclass(frozen=True, slots=True)
 class TireSpec:
@@ -107,22 +126,34 @@ class OrderReferenceSpec:
     @classmethod
     def from_settings(
         cls,
-        settings: Mapping[str, float],
-        deflection_factor: float = 1.0,
+        settings: Mapping[str, object],
+        deflection_factor: float | None = None,
     ) -> OrderReferenceSpec | None:
         """Build from a flat settings mapping.
 
         Returns ``None`` if tire geometry keys are missing or invalid.
         """
-        tire = TireSpec.from_aspects(settings, deflection_factor=deflection_factor)
+        resolved_deflection = _coerce_finite_float(
+            settings.get("tire_deflection_factor"),
+            default=1.0,
+        )
+        if deflection_factor is not None and math.isfinite(deflection_factor):
+            resolved_deflection = float(deflection_factor)
+        tire_inputs = {
+            key: value
+            for key in ("tire_width_mm", "tire_aspect_pct", "rim_in")
+            if (value := _coerce_finite_float(settings.get(key), default=None)) is not None
+        }
+        tire = TireSpec.from_aspects(
+            tire_inputs,
+            deflection_factor=resolved_deflection if resolved_deflection is not None else 1.0,
+        )
         if tire is None:
             return None
 
         def _f(key: str, default: float = 0.0) -> float:
-            v = settings.get(key)
-            if v is None or not math.isfinite(v):
-                return default
-            return float(v)
+            value = _coerce_finite_float(settings.get(key), default=default)
+            return default if value is None else value
 
         return cls(
             tire_spec=tire,
@@ -138,6 +169,26 @@ class OrderReferenceSpec:
             min_abs_band_hz=_f("min_abs_band_hz"),
             max_band_half_width_pct=_f("max_band_half_width_pct"),
         )
+
+    def to_settings_dict(self) -> dict[str, float]:
+        """Project to the flat settings mapping used at persistence boundaries."""
+        return {
+            "tire_width_mm": self.tire_spec.width_mm,
+            "tire_aspect_pct": self.tire_spec.aspect_pct,
+            "rim_in": self.tire_spec.rim_in,
+            "final_drive_ratio": self.final_drive_ratio,
+            "current_gear_ratio": self.current_gear_ratio,
+            "wheel_bandwidth_pct": self.wheel_bandwidth_pct,
+            "driveshaft_bandwidth_pct": self.driveshaft_bandwidth_pct,
+            "engine_bandwidth_pct": self.engine_bandwidth_pct,
+            "speed_uncertainty_pct": self.speed_uncertainty_pct,
+            "tire_diameter_uncertainty_pct": self.tire_diameter_uncertainty_pct,
+            "final_drive_uncertainty_pct": self.final_drive_uncertainty_pct,
+            "gear_uncertainty_pct": self.gear_uncertainty_pct,
+            "min_abs_band_hz": self.min_abs_band_hz,
+            "max_band_half_width_pct": self.max_band_half_width_pct,
+            "tire_deflection_factor": self.tire_spec.deflection_factor,
+        }
 
     # -- queries -----------------------------------------------------------
 
@@ -155,6 +206,74 @@ class OrderReferenceSpec:
     def is_complete(self) -> bool:
         """Whether all required fields are present for order analysis."""
         return self.final_drive_ratio > 0.0 and self.tire_spec.circumference_m > 0.0
+
+    @property
+    def wheel_uncertainty_pct(self) -> float:
+        return _combined_relative_uncertainty(
+            self.speed_uncertainty_pct / 100.0,
+            self.tire_diameter_uncertainty_pct / 100.0,
+        )
+
+    @property
+    def drive_uncertainty_pct(self) -> float:
+        return _combined_relative_uncertainty(
+            self.wheel_uncertainty_pct,
+            self.final_drive_uncertainty_pct / 100.0,
+        )
+
+    @property
+    def engine_uncertainty_pct(self) -> float:
+        return _combined_relative_uncertainty(
+            self.drive_uncertainty_pct,
+            self.gear_uncertainty_pct / 100.0,
+        )
+
+    def wheel_hz_from_speed_kmh(self, speed_kmh: float) -> float | None:
+        if not math.isfinite(speed_kmh) or speed_kmh <= 0:
+            return None
+        return self.wheel_hz_from_speed_mps(speed_kmh * KMH_TO_MPS)
+
+    def wheel_hz_from_speed_mps(self, speed_mps: float) -> float | None:
+        if not math.isfinite(speed_mps) or speed_mps <= 0:
+            return None
+        circumference = self.tire_circumference_m
+        if not math.isfinite(circumference) or circumference <= 0:
+            return None
+        wheel_hz = speed_mps / circumference
+        return wheel_hz if math.isfinite(wheel_hz) else None
+
+    def engine_rpm_from_wheel_hz(self, wheel_hz: float) -> float | None:
+        if not math.isfinite(wheel_hz) or not self.is_complete or not self.has_engine_reference:
+            return None
+        engine_rpm = wheel_hz * self.final_drive_ratio * self.current_gear_ratio * 60.0
+        return engine_rpm if math.isfinite(engine_rpm) else None
+
+    def engine_rpm_from_speed_kmh(self, speed_kmh: float) -> float | None:
+        wheel_hz = self.wheel_hz_from_speed_kmh(speed_kmh)
+        if wheel_hz is None:
+            return None
+        return self.engine_rpm_from_wheel_hz(wheel_hz)
+
+    def orders_hz_from_speed_mps(self, speed_mps: float | None) -> dict[str, float] | None:
+        if speed_mps is None or not math.isfinite(speed_mps) or speed_mps <= 0:
+            return None
+        if not self.is_complete or not self.has_engine_reference:
+            return None
+        wheel_hz = self.wheel_hz_from_speed_mps(speed_mps)
+        if wheel_hz is None:
+            return None
+        drive_hz = wheel_hz * self.final_drive_ratio
+        engine_hz = drive_hz * self.current_gear_ratio
+        if not all(math.isfinite(v) and v > 0 for v in (wheel_hz, drive_hz, engine_hz)):
+            return None
+        return {
+            "wheel_hz": wheel_hz,
+            "drive_hz": drive_hz,
+            "engine_hz": engine_hz,
+            "wheel_uncertainty_pct": self.wheel_uncertainty_pct,
+            "drive_uncertainty_pct": self.drive_uncertainty_pct,
+            "engine_uncertainty_pct": self.engine_uncertainty_pct,
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -232,26 +351,17 @@ class Car:
     car_type: str = "sedan"
     aspects: Mapping[str, float] = field(default_factory=dict)
     variant: str | None = None
-    order_reference_spec: OrderReferenceSpec | None = field(default=None, init=False, repr=False)
+    order_reference_spec: OrderReferenceSpec | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if not self.name or not self.name.strip():
             object.__setattr__(self, "name", "Unnamed Car")
-        # Freeze aspects to enforce immutability of the domain object.
-        if not isinstance(self.aspects, MappingProxyType):
-            object.__setattr__(self, "aspects", MappingProxyType(dict(self.aspects)))
-        for key in ("tire_width_mm", "tire_aspect_pct", "rim_in"):
-            val = self.aspects.get(key)
-            if val is not None and (not math.isfinite(val) or val <= 0):
-                raise ValueError(
-                    f"Car.aspects[{key!r}] must be a positive finite number, got {val}"
-                )
-        # Eagerly derive OrderReferenceSpec from aspects when tire geometry is present.
-        deflection = self.aspects.get("tire_deflection_factor", 1.0)
-        if not isinstance(deflection, (int, float)) or not math.isfinite(deflection):
-            deflection = 1.0
-        spec = OrderReferenceSpec.from_settings(dict(self.aspects), deflection_factor=deflection)
+        normalized_aspects = _normalized_order_reference_mapping(self.aspects)
+        spec = self.order_reference_spec or OrderReferenceSpec.from_settings(normalized_aspects)
         object.__setattr__(self, "order_reference_spec", spec)
+        if spec is not None:
+            normalized_aspects = spec.to_settings_dict()
+        object.__setattr__(self, "aspects", MappingProxyType(normalized_aspects))
 
     # -- queries -----------------------------------------------------------
 
@@ -265,20 +375,30 @@ class Car:
     @property
     def tire_spec(self) -> TireSpec | None:
         """Parsed tire dimensions, or ``None`` if incomplete."""
-        return TireSpec.from_aspects(self.aspects)
+        spec = self.order_reference_spec
+        return spec.tire_spec if spec is not None else None
 
     @property
     def tire_width_mm(self) -> float | None:
-        return self.aspects.get("tire_width_mm")
+        spec = self.order_reference_spec
+        if spec is not None:
+            return spec.tire_spec.width_mm
+        return _coerce_finite_float(self.aspects.get("tire_width_mm"), default=None)
 
     @property
     def tire_aspect_pct(self) -> float | None:
-        return self.aspects.get("tire_aspect_pct")
+        spec = self.order_reference_spec
+        if spec is not None:
+            return spec.tire_spec.aspect_pct
+        return _coerce_finite_float(self.aspects.get("tire_aspect_pct"), default=None)
 
     @property
     def rim_in(self) -> float | None:
         """Rim diameter in inches (aspects key ``rim_in``)."""
-        return self.aspects.get("rim_in")
+        spec = self.order_reference_spec
+        if spec is not None:
+            return spec.tire_spec.rim_in
+        return _coerce_finite_float(self.aspects.get("rim_in"), default=None)
 
     @property
     def tire_circumference_m(self) -> float | None:
@@ -286,5 +406,41 @@ class Car:
 
         Returns ``None`` if any required dimension is missing or invalid.
         """
-        spec = self.tire_spec
-        return spec.circumference_m if spec else None
+        spec = self.order_reference_spec
+        return spec.tire_circumference_m if spec is not None else None
+
+
+def _coerce_finite_float(value: object, *, default: float | None) -> float | None:
+    if value is None:
+        return default
+    # Reject bool explicitly: Python treats bool as an int subclass, but
+    # order-reference configuration values should come from real numerics only.
+    if isinstance(value, bool):
+        return default
+    if not isinstance(value, int | float | str):
+        return default
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if math.isfinite(parsed) else default
+
+
+def _combined_relative_uncertainty(*parts: float) -> float:
+    sum_sq = 0.0
+    for part in parts:
+        if part > 0 and math.isfinite(part):
+            sum_sq += part * part
+    return math.sqrt(sum_sq)
+
+
+def _normalized_order_reference_mapping(aspects: Mapping[str, float]) -> dict[str, float]:
+    normalized: dict[str, float] = {}
+    for key in _ORDER_REFERENCE_KEYS:
+        value = _coerce_finite_float(aspects.get(key), default=None)
+        if value is None:
+            continue
+        if key in {"tire_width_mm", "tire_aspect_pct", "rim_in"} and value <= 0:
+            raise ValueError(f"Car.aspects[{key!r}] must be a positive finite number, got {value}")
+        normalized[key] = value
+    return normalized

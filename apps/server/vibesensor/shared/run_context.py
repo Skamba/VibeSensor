@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from dataclasses import asdict
 from typing import cast
 
-from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
-from vibesensor.infra.config.analysis_settings import (
-    tire_circumference_m_from_spec,
+from vibesensor.domain import (
+    AnalysisSettingsSnapshot,
+    CarSnapshot,
+    OrderReferenceSpec,
+    RunContextSnapshot,
 )
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
@@ -24,16 +25,12 @@ def build_run_context_snapshot(
     *,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     active_car_snapshot: CarSnapshot | None,
-) -> JsonObject:
-    """Build a structured run-context snapshot for persisted metadata."""
-    settings_dict = asdict(analysis_settings_snapshot)
-    settings_snapshot: JsonObject = {
-        k: v for k, v in settings_dict.items() if isinstance(v, (int, float)) and v == v
-    }
-    snapshot: JsonObject = {"analysis_settings_snapshot": settings_snapshot}
-    if active_car_snapshot is not None:
-        snapshot["active_car_snapshot"] = active_car_snapshot.to_dict()
-    return snapshot
+) -> RunContextSnapshot:
+    """Build the canonical typed run-context snapshot for the current run."""
+    return RunContextSnapshot(
+        analysis_settings=analysis_settings_snapshot,
+        car=active_car_snapshot,
+    )
 
 
 def apply_run_context_snapshot(
@@ -47,31 +44,31 @@ def apply_run_context_snapshot(
         analysis_settings_snapshot=analysis_settings_snapshot,
         active_car_snapshot=active_car_snapshot,
     )
-    metadata.update(context_snapshot)
-    car_snapshot = context_snapshot.get("active_car_snapshot")
-    if isinstance(car_snapshot, dict):
-        metadata["active_car_id"] = car_snapshot.get("id")
-        metadata["car_name"] = car_snapshot.get("name")
-        metadata["car_type"] = car_snapshot.get("type")
-        metadata["car_variant"] = car_snapshot.get("variant")
+    metadata.update(context_snapshot.to_metadata_dict())
+    if context_snapshot.has_car_context:
+        metadata["active_car_id"] = context_snapshot.active_car_id
+        metadata["car_name"] = context_snapshot.car_name
+        metadata["car_type"] = context_snapshot.car_type
+        metadata["car_variant"] = context_snapshot.car_variant
 
 
 def order_reference_context_complete(metadata: Mapping[str, object]) -> bool:
     """Return True when persisted run metadata is sufficient for order references."""
     raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
+    order_reference_spec = OrderReferenceSpec.from_settings(metadata)
     tire_circumference_m = _as_float(metadata.get("tire_circumference_m"))
-    if tire_circumference_m is None:
-        tire_circumference_m = tire_circumference_m_from_spec(
-            _as_float(metadata.get("tire_width_mm")),
-            _as_float(metadata.get("tire_aspect_pct")),
-            _as_float(metadata.get("rim_in")),
-            deflection_factor=_as_float(metadata.get("tire_deflection_factor")),
-        )
+    if tire_circumference_m is None and order_reference_spec is not None:
+        tire_circumference_m = order_reference_spec.tire_circumference_m
     has_engine_reference = _as_float(metadata.get("engine_rpm")) is not None or (
-        _as_float(metadata.get("final_drive_ratio")) is not None
-        and _as_float(metadata.get("current_gear_ratio")) is not None
+        order_reference_spec is not None and order_reference_spec.has_engine_reference
     )
-    return bool(raw_sample_rate_hz and tire_circumference_m and has_engine_reference)
+    return bool(
+        raw_sample_rate_hz
+        and tire_circumference_m
+        and order_reference_spec is not None
+        and order_reference_spec.is_complete
+        and has_engine_reference
+    )
 
 
 def build_summary_warnings(
