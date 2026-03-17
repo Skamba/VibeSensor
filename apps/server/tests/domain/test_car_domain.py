@@ -136,6 +136,30 @@ class TestCarOrderReferenceSpec:
         assert car.order_reference_spec is not None
         assert car.order_reference_spec.tire_spec.deflection_factor == 0.97
 
+    def test_car_projects_boundary_aspects_from_typed_spec(self) -> None:
+        spec = OrderReferenceSpec.from_settings(
+            {
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+                "final_drive_ratio": 3.23,
+                "current_gear_ratio": 0.82,
+                "tire_deflection_factor": 0.97,
+            },
+        )
+        assert spec is not None
+
+        car = Car(
+            order_reference_spec=spec,
+            aspects={"tire_width_mm": 100.0, "tire_aspect_pct": 20.0, "rim_in": 10.0},
+        )
+
+        assert car.order_reference_spec is spec
+        assert dict(car.aspects) == spec.to_settings_dict()
+        assert car.tire_width_mm == 245.0
+        assert car.tire_aspect_pct == 40.0
+        assert car.rim_in == 18.0
+
 
 # ---------------------------------------------------------------------------
 # CarSnapshot tests

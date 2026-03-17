@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import pytest
+
+from vibesensor.domain import OrderReferenceSpec
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.use_cases.diagnostics.order_bands import (
     build_diagnostic_settings,
@@ -108,3 +111,40 @@ def test_vehicle_orders_bad_tire_returns_none() -> None:
 def test_vehicle_orders_bad_ratios_returns_none() -> None:
     settings = {"final_drive_ratio": 0.0}
     assert vehicle_orders_hz(speed_mps=25.0, settings=settings) is None
+
+
+def test_vehicle_orders_projects_boundary_settings_into_order_reference_spec(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    class _FakeSpec:
+        def orders_hz_from_speed_mps(self, speed_mps: float | None) -> dict[str, float] | None:
+            assert speed_mps == 25.0
+            return {
+                "wheel_hz": 1.0,
+                "drive_hz": 2.0,
+                "engine_hz": 3.0,
+                "wheel_uncertainty_pct": 0.1,
+                "drive_uncertainty_pct": 0.2,
+                "engine_uncertainty_pct": 0.3,
+            }
+
+    def _fake_from_settings(data: dict[str, object]) -> OrderReferenceSpec | None:
+        captured.update(data)
+        return _FakeSpec()  # type: ignore[return-value]
+
+    monkeypatch.setattr(OrderReferenceSpec, "from_settings", _fake_from_settings)
+
+    result = vehicle_orders_hz(speed_mps=25.0, settings={"final_drive_ratio": 3.55})
+
+    assert result == {
+        "wheel_hz": 1.0,
+        "drive_hz": 2.0,
+        "engine_hz": 3.0,
+        "wheel_uncertainty_pct": 0.1,
+        "drive_uncertainty_pct": 0.2,
+        "engine_uncertainty_pct": 0.3,
+    }
+    assert captured["final_drive_ratio"] == 3.55
+    assert captured["tire_width_mm"] == 285.0

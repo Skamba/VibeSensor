@@ -9,10 +9,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from math import isfinite, sqrt
 
+from vibesensor.domain import OrderReferenceSpec
 from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
-    tire_circumference_m_from_spec,
-    wheel_hz_from_speed_mps,
 )
 from vibesensor.shared.constants import (
     FREQUENCY_EPSILON_HZ,
@@ -64,7 +63,7 @@ def tolerance_for_order(
 
 def order_tolerances(
     orders_hz: dict[str, float],
-    settings: dict[str, float],
+    order_reference_spec: OrderReferenceSpec,
 ) -> tuple[float, float, float]:
     """Compute (wheel_tol, drive_tol, engine_tol) for the given order frequencies.
 
@@ -73,23 +72,23 @@ def order_tolerances(
     repeating the five-parameter call pattern three times per site.
     """
     common = {
-        "min_abs_band_hz": settings["min_abs_band_hz"],
-        "max_band_half_width_pct": settings["max_band_half_width_pct"],
+        "min_abs_band_hz": order_reference_spec.min_abs_band_hz,
+        "max_band_half_width_pct": order_reference_spec.max_band_half_width_pct,
     }
     wheel_tol = tolerance_for_order(
-        settings["wheel_bandwidth_pct"],
+        order_reference_spec.wheel_bandwidth_pct,
         orders_hz["wheel_hz"],
         orders_hz["wheel_uncertainty_pct"],
         **common,
     )
     drive_tol = tolerance_for_order(
-        settings["driveshaft_bandwidth_pct"],
+        order_reference_spec.driveshaft_bandwidth_pct,
         orders_hz["drive_hz"],
         orders_hz["drive_uncertainty_pct"],
         **common,
     )
     engine_tol = tolerance_for_order(
-        settings["engine_bandwidth_pct"],
+        order_reference_spec.engine_bandwidth_pct,
         orders_hz["engine_hz"],
         orders_hz["engine_uncertainty_pct"],
         **common,
@@ -107,10 +106,13 @@ def build_order_bands(
     analysis settings — no runtime state required.
     """
     resolved = build_diagnostic_settings(analysis_settings)
+    order_reference_spec = OrderReferenceSpec.from_settings(resolved)
+    if order_reference_spec is None:
+        return []
     wheel_hz = float(orders_hz["wheel_hz"])
     drive_hz = float(orders_hz["drive_hz"])
     engine_hz = float(orders_hz["engine_hz"])
-    wheel_tol, drive_tol, engine_tol = order_tolerances(orders_hz, resolved)
+    wheel_tol, drive_tol, engine_tol = order_tolerances(orders_hz, order_reference_spec)
     bands: list[OrderBandPayload] = [
         {"key": "wheel_1x", "center_hz": wheel_hz, "tolerance": wheel_tol},
         {"key": "wheel_2x", "center_hz": wheel_hz * HARMONIC_2X, "tolerance": wheel_tol},
@@ -147,52 +149,8 @@ def vehicle_orders_hz(
     """
     if speed_mps is None or not isfinite(speed_mps) or speed_mps <= 0:
         return None
-    # build_diagnostic_settings guarantees all DEFAULT_ANALYSIS_SETTINGS keys
-    # are present as finite floats, so as_float_or_none / isfinite guards are
-    # unnecessary for those keys.
     spec_settings = build_diagnostic_settings(settings)
-    circumference = tire_circumference_m_from_spec(
-        spec_settings["tire_width_mm"],
-        spec_settings["tire_aspect_pct"],
-        spec_settings["rim_in"],
-        deflection_factor=spec_settings["tire_deflection_factor"],
-    )
-    if circumference is None or circumference <= 0:
+    order_reference_spec = OrderReferenceSpec.from_settings(spec_settings)
+    if order_reference_spec is None:
         return None
-    final_drive_ratio = spec_settings["final_drive_ratio"]
-    gear_ratio = spec_settings["current_gear_ratio"]
-    if final_drive_ratio <= 0 or gear_ratio <= 0:
-        return None
-
-    whz = wheel_hz_from_speed_mps(speed_mps, circumference)
-    if whz is None:
-        return None
-    wheel_hz = whz
-    drive_hz = wheel_hz * final_drive_ratio
-    engine_hz = drive_hz * gear_ratio
-    if not all(isfinite(v) and v > 0 for v in (wheel_hz, drive_hz, engine_hz)):
-        return None
-    speed_uncertainty_pct = max(0.0, spec_settings["speed_uncertainty_pct"]) / 100.0
-    tire_uncertainty_pct = max(0.0, spec_settings["tire_diameter_uncertainty_pct"]) / 100.0
-    final_drive_uncertainty_pct = max(0.0, spec_settings["final_drive_uncertainty_pct"]) / 100.0
-    gear_uncertainty_pct = max(0.0, spec_settings["gear_uncertainty_pct"]) / 100.0
-    wheel_uncertainty_pct = combined_relative_uncertainty(
-        speed_uncertainty_pct,
-        tire_uncertainty_pct,
-    )
-    drive_uncertainty_pct = combined_relative_uncertainty(
-        wheel_uncertainty_pct,
-        final_drive_uncertainty_pct,
-    )
-    engine_uncertainty_pct = combined_relative_uncertainty(
-        drive_uncertainty_pct,
-        gear_uncertainty_pct,
-    )
-    return {
-        "wheel_hz": wheel_hz,
-        "drive_hz": drive_hz,
-        "engine_hz": engine_hz,
-        "wheel_uncertainty_pct": wheel_uncertainty_pct,
-        "drive_uncertainty_pct": drive_uncertainty_pct,
-        "engine_uncertainty_pct": engine_uncertainty_pct,
-    }
+    return order_reference_spec.orders_hz_from_speed_mps(speed_mps)

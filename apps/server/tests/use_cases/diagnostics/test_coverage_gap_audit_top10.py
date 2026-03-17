@@ -500,11 +500,12 @@ class TestExtractStrengthData:
     """Direct unit tests for RunRecorder._extract_strength_data."""
 
     def test_empty_metrics(self) -> None:
-        strength, db, bucket, peak, floor, peaks = extract_strength_data({})
-        assert strength == {}
-        assert db is None
-        assert bucket is None
-        assert peaks == []
+        result = extract_strength_data({})
+        assert result.strength_metrics.vibration_strength_db is None
+        assert result.strength_metrics.peak_amp_g is None
+        assert result.strength_metrics.noise_floor_amp_g is None
+        assert result.strength_metrics.strength_bucket is None
+        assert result.top_peaks == []
 
     def test_combined_strength_metrics(self) -> None:
         metrics: dict[str, object] = {
@@ -518,11 +519,11 @@ class TestExtractStrengthData:
                 },
             },
         }
-        strength, db, bucket, peak, floor, peaks = extract_strength_data(metrics)
-        assert db == pytest.approx(18.5)
-        assert bucket == "l3"
-        assert len(peaks) == 1
-        assert peaks[0]["hz"] == pytest.approx(45.0)
+        result = extract_strength_data(metrics)
+        assert result.strength_metrics.vibration_strength_db == pytest.approx(18.5)
+        assert result.strength_metrics.strength_bucket == "l3"
+        assert len(result.top_peaks) == 1
+        assert result.top_peaks[0]["hz"] == pytest.approx(45.0)
 
     def test_nested_combined_strength_metrics(self) -> None:
         metrics: dict[str, object] = {
@@ -534,9 +535,9 @@ class TestExtractStrengthData:
                 },
             },
         }
-        strength, db, bucket, _, _, _ = extract_strength_data(metrics)
-        assert db == pytest.approx(12.0)
-        assert bucket == "l2"
+        result = extract_strength_data(metrics)
+        assert result.strength_metrics.vibration_strength_db == pytest.approx(12.0)
+        assert result.strength_metrics.strength_bucket == "l2"
 
     def test_invalid_peak_data_filtered(self) -> None:
         metrics: dict[str, object] = {
@@ -553,9 +554,9 @@ class TestExtractStrengthData:
                 },
             },
         }
-        _, _, _, _, _, peaks = extract_strength_data(metrics)
-        assert len(peaks) == 1
-        assert peaks[0]["hz"] == pytest.approx(50.0)
+        result = extract_strength_data(metrics)
+        assert len(result.top_peaks) == 1
+        assert result.top_peaks[0]["hz"] == pytest.approx(50.0)
 
     def test_empty_bucket_treated_as_none(self) -> None:
         metrics: dict[str, object] = {
@@ -567,8 +568,8 @@ class TestExtractStrengthData:
                 },
             },
         }
-        _, _, bucket, _, _, _ = extract_strength_data(metrics)
-        assert bucket is None
+        result = extract_strength_data(metrics)
+        assert result.strength_metrics.strength_bucket is None
 
 
 class TestResolveSpeedContext:
