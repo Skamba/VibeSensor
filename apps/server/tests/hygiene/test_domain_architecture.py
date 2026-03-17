@@ -1701,3 +1701,279 @@ def test_domain_and_use_cases_do_not_read_raw_aspects_dict_keys() -> None:
         "domain/ and use_cases/ must not read raw aspects dict keys "
         f"(use Car.order_ref / TireSpec instead): {violations}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Domain model migration guardrails (Step 3.10)
+# ---------------------------------------------------------------------------
+
+
+def test_boundary_owns_no_meaning_finding_kind() -> None:
+    """adapters/ and shared/boundaries/ must not construct FindingKind for
+    business logic decisions.  Boundary decoders that reconstruct from
+    serialized payloads are allowed."""
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    pkg_dir = SERVER_ROOT / "vibesensor"
+    violations: list[str] = []
+
+    scan_dirs = [pkg_dir / "adapters", pkg_dir / "shared" / "boundaries"]
+    for scan_dir in scan_dirs:
+        if not scan_dir.is_dir():
+            continue
+        for py_file in scan_dir.rglob("*.py"):
+            source = py_file.read_text()
+            try:
+                tree = ast.parse(source, filename=str(py_file))
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Name)
+                    and node.func.id == "FindingKind"
+                ):
+                    rel = py_file.relative_to(pkg_dir)
+                    violations.append(
+                        f"{rel}:{node.lineno} constructs FindingKind directly"
+                    )
+    assert not violations, (
+        "adapters/ and shared/boundaries/ must not construct FindingKind for "
+        f"business logic. Use domain classification methods instead: {violations}"
+    )
+
+
+def test_boundary_owns_no_meaning_vibration_source() -> None:
+    """adapters/ and shared/boundaries/ must not construct VibrationSource for
+    business logic decisions.
+
+    Sanctioned exceptions (boundary decoders reconstructing from serialized
+    data, adapters deserializing for rendering):
+    - finding.py:finding_from_payload
+    - vibration_origin.py:_source_from_payload
+    - mapping.py:human_source
+    - pdf_diagram_render.py:_source_color
+    """
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    pkg_dir = SERVER_ROOT / "vibesensor"
+    violations: list[str] = []
+
+    # (filename, set of allowed enclosing function names)
+    sanctioned: dict[str, set[str]] = {
+        "finding.py": {"finding_from_payload"},
+        "vibration_origin.py": {"_source_from_payload"},
+        "mapping.py": {"human_source"},
+        "pdf_diagram_render.py": {"_source_color"},
+    }
+
+    scan_dirs = [pkg_dir / "adapters", pkg_dir / "shared" / "boundaries"]
+    for scan_dir in scan_dirs:
+        if not scan_dir.is_dir():
+            continue
+        for py_file in scan_dir.rglob("*.py"):
+            source = py_file.read_text()
+            try:
+                tree = ast.parse(source, filename=str(py_file))
+            except SyntaxError:
+                continue
+            allowed_funcs = sanctioned.get(py_file.name, set())
+            for node in ast.walk(tree):
+                if not (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Name)
+                    and node.func.id == "VibrationSource"
+                ):
+                    continue
+                # Walk up to find enclosing function
+                enclosing = _find_enclosing_function(tree, node.lineno)
+                if enclosing in allowed_funcs:
+                    continue
+                rel = py_file.relative_to(pkg_dir)
+                violations.append(
+                    f"{rel}:{node.lineno} constructs VibrationSource "
+                    f"(in {enclosing or '<module>'})"
+                )
+    assert not violations, (
+        "adapters/ and shared/boundaries/ must not construct VibrationSource for "
+        f"business logic. Only boundary decoders and renderers may: {violations}"
+    )
+
+
+def _find_enclosing_function(tree: object, target_lineno: int) -> str | None:
+    """Return the name of the innermost function/method enclosing *target_lineno*."""
+    import ast as _ast
+
+    best: str | None = None
+    best_line = 0
+    for node in _ast.walk(tree):  # type: ignore[arg-type]
+        if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+            end = getattr(node, "end_lineno", None) or float("inf")
+            if node.lineno <= target_lineno <= end and node.lineno >= best_line:
+                best = node.name
+                best_line = node.lineno
+    return best
+
+
+def test_no_compat_dual_base_exceptions() -> None:
+    """All VibeSensorError subclasses must not also inherit from stdlib
+    exception types (ValueError, RuntimeError, LookupError, etc.).
+
+    This prevents accidental dual-base compatibility shims that let callers
+    catch stdlib types and bypass the domain exception hierarchy.
+    """
+    from vibesensor.shared.exceptions import VibeSensorError
+
+    # stdlib exception types that should never appear as co-parents
+    stdlib_bases = (
+        ValueError,
+        TypeError,
+        RuntimeError,
+        LookupError,
+        KeyError,
+        IndexError,
+        AttributeError,
+        OSError,
+        IOError,
+        NotImplementedError,
+        ArithmeticError,
+        StopIteration,
+    )
+
+    violations: list[str] = []
+
+    def _check_recursive(cls: type) -> None:
+        # MRO between cls and VibeSensorError should contain no stdlib types
+        mro = cls.__mro__
+        vs_idx = mro.index(VibeSensorError)
+        between = mro[1:vs_idx]  # skip cls itself, stop before VibeSensorError
+        for entry in between:
+            if entry in stdlib_bases or (
+                issubclass(entry, BaseException)
+                and entry not in (VibeSensorError, Exception, BaseException)
+                and entry.__module__ == "builtins"
+            ):
+                violations.append(
+                    f"{cls.__name__} inherits from stdlib {entry.__name__} "
+                    f"(MRO: {[c.__name__ for c in mro]})"
+                )
+        for sub in cls.__subclasses__():
+            _check_recursive(sub)
+
+    _check_recursive(VibeSensorError)
+
+    assert not violations, (
+        "Custom exceptions must inherit exclusively from VibeSensorError, "
+        f"not from stdlib exception types: {violations}"
+    )
+
+
+def test_run_status_from_domain_only() -> None:
+    """No consumer may import RunStatus from the persistence layer.
+
+    RunStatus is a domain enum at vibesensor.domain.run_status. Importing
+    it from adapters.persistence.history_db would couple consumers to the
+    persistence layer.
+    """
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    pkg_dir = SERVER_ROOT / "vibesensor"
+    tests_dir = SERVER_ROOT / "tests"
+    violations: list[str] = []
+
+    forbidden_sources = {"history_db", "adapters.persistence.history_db"}
+
+    for root_dir in (pkg_dir, tests_dir):
+        for py_file in root_dir.rglob("*.py"):
+            source = py_file.read_text()
+            try:
+                tree = ast.parse(source, filename=str(py_file))
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ImportFrom):
+                    continue
+                if node.module is None:
+                    continue
+                names = [alias.name for alias in node.names]
+                if "RunStatus" not in names:
+                    continue
+                # Check if module path contains a forbidden source
+                if any(part in node.module for part in forbidden_sources):
+                    rel = py_file.relative_to(SERVER_ROOT)
+                    violations.append(
+                        f"{rel}:{node.lineno} imports RunStatus from "
+                        f"{node.module}"
+                    )
+    assert not violations, (
+        "RunStatus must be imported from vibesensor.domain, not from the "
+        f"persistence layer: {violations}"
+    )
+
+
+def test_run_lifecycle_only() -> None:
+    """Run (the mutable recording lifecycle class) must not be imported in
+    analysis, finding, test-run, or report-rendering code.
+
+    Run owns start/stop guards and status transitions.  Diagnostics and
+    report code should use TestRun (immutable aggregate) or RunCapture
+    instead.
+    """
+    import ast
+
+    from tests._paths import SERVER_ROOT
+
+    pkg_dir = SERVER_ROOT / "vibesensor"
+    violations: list[str] = []
+
+    # Paths where Run should never appear as an import
+    forbidden_areas = [
+        pkg_dir / "use_cases" / "diagnostics",
+        pkg_dir / "domain" / "finding.py",
+        pkg_dir / "domain" / "test_run.py",
+        pkg_dir / "adapters" / "pdf",
+    ]
+
+    for area in forbidden_areas:
+        py_files = area.rglob("*.py") if area.is_dir() else [area] if area.exists() else []
+        for py_file in py_files:
+            source = py_file.read_text()
+            try:
+                tree = ast.parse(source, filename=str(py_file))
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ImportFrom):
+                    continue
+                if node.module is None:
+                    continue
+                names = [alias.name for alias in node.names]
+                # Look for importing the Run class specifically
+                if "Run" not in names:
+                    continue
+                # Only flag imports from the run module (not RunCapture, RunStatus, etc.)
+                if "vibesensor.domain.run" in node.module or "vibesensor.domain" == node.module:
+                    # Verify it's actually the Run class, not RunCapture/RunStatus
+                    if "Run" in names and not any(
+                        n.startswith("Run") and n != "Run" and alias.name == n
+                        for n in names
+                        for alias in node.names
+                        if alias.name == "Run"
+                    ):
+                        for alias in node.names:
+                            if alias.name == "Run":
+                                rel = py_file.relative_to(pkg_dir)
+                                violations.append(
+                                    f"{rel}:{node.lineno} imports Run "
+                                    f"(lifecycle class) from {node.module}"
+                                )
+    assert not violations, (
+        "Run (mutable lifecycle) must not be imported in diagnostics, finding, "
+        f"test_run, or report code (use TestRun/RunCapture instead): {violations}"
+    )
