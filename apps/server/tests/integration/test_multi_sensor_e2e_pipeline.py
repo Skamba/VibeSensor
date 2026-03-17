@@ -16,9 +16,7 @@ from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.domain import TireSpec
-from vibesensor.infra.config.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-)
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.constants import KMH_TO_MPS
@@ -125,8 +123,8 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     _register_sensors(registry)
 
     _tire = TireSpec.from_aspects(
-        DEFAULT_ANALYSIS_SETTINGS,
-        deflection_factor=DEFAULT_ANALYSIS_SETTINGS.get("tire_deflection_factor", 1.0),
+        AnalysisSettingsSnapshot.DEFAULTS,
+        deflection_factor=AnalysisSettingsSnapshot.DEFAULTS.get("tire_deflection_factor", 1.0),
     )
     assert _tire is not None
     tire_circ = _tire.circumference_m

@@ -46,18 +46,18 @@ def _spec_with_circumference(circ_m: float) -> OrderReferenceSpec:
     Uses a TireSpec with dimensions reverse-engineered to approximate the
     requested circumference.  For test convenience only.
     """
-    from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
+    from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 
     return OrderReferenceSpec.from_settings(
-        {**DEFAULT_ANALYSIS_SETTINGS, "tire_circumference_m": circ_m},
+        {**AnalysisSettingsSnapshot.DEFAULTS, "tire_circumference_m": circ_m},
     )  # type: ignore[return-value]
 
 
 def _make_spec(circ_m: float) -> OrderReferenceSpec:
     """Build a spec using defaults — circumference comes from real tire dims."""
-    from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
+    from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 
-    return OrderReferenceSpec.from_settings(DEFAULT_ANALYSIS_SETTINGS)  # type: ignore[return-value]
+    return OrderReferenceSpec.from_settings(AnalysisSettingsSnapshot.DEFAULTS)  # type: ignore[return-value]
 
 
 def test_wheel_hz_from_speed_kmh_basic() -> None:

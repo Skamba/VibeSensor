@@ -206,9 +206,7 @@ class RunRecorder:
     def _analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         if self._settings_store is not None:
             return self._settings_store.analysis_settings_snapshot()
-        from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
-
-        return AnalysisSettingsSnapshot.from_dict(DEFAULT_ANALYSIS_SETTINGS)
+        return AnalysisSettingsSnapshot.from_dict(AnalysisSettingsSnapshot.DEFAULTS)
 
     # -----------------------------------------------------------------------
     # Session state

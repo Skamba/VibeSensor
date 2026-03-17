@@ -3,24 +3,22 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.domain import TireSpec
-from vibesensor.infra.config.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-)
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.constants import KMH_TO_MPS
 
 DEFAULT_SPEED_KMH = 100.0
-DEFAULT_TIRE_WIDTH_MM = DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
-DEFAULT_TIRE_ASPECT_PCT = DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"]
-DEFAULT_RIM_IN = DEFAULT_ANALYSIS_SETTINGS["rim_in"]
-DEFAULT_DEFLECTION_FACTOR = DEFAULT_ANALYSIS_SETTINGS["tire_deflection_factor"]
-DEFAULT_FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
-DEFAULT_GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
+DEFAULT_TIRE_WIDTH_MM = AnalysisSettingsSnapshot.DEFAULTS["tire_width_mm"]
+DEFAULT_TIRE_ASPECT_PCT = AnalysisSettingsSnapshot.DEFAULTS["tire_aspect_pct"]
+DEFAULT_RIM_IN = AnalysisSettingsSnapshot.DEFAULTS["rim_in"]
+DEFAULT_DEFLECTION_FACTOR = AnalysisSettingsSnapshot.DEFAULTS["tire_deflection_factor"]
+DEFAULT_FINAL_DRIVE = AnalysisSettingsSnapshot.DEFAULTS["final_drive_ratio"]
+DEFAULT_GEAR_RATIO = AnalysisSettingsSnapshot.DEFAULTS["current_gear_ratio"]
 
 
 def calc_default_orders() -> dict[str, float]:
     speed_mps = DEFAULT_SPEED_KMH * KMH_TO_MPS
     _tire = TireSpec.from_aspects(
-        DEFAULT_ANALYSIS_SETTINGS,
+        AnalysisSettingsSnapshot.DEFAULTS,
         deflection_factor=DEFAULT_DEFLECTION_FACTOR,
     )
     if _tire is None:

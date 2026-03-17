@@ -5,17 +5,19 @@ from pathlib import Path
 import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.infra.config.settings_store import (
     PersistenceError,
     SettingsStore,
 )
 from vibesensor.shared.types.backend_types import (
-    DEFAULT_CAR_ASPECTS,
     CarConfig,
     SensorConfig,
     _parse_manual_speed,
-    sanitize_aspects,
 )
+
+DEFAULT_CAR_ASPECTS = AnalysisSettingsSnapshot.DEFAULTS
+sanitize_aspects = AnalysisSettingsSnapshot.sanitize
 
 
 def _sabotaged_store(tmp_path: Path) -> SettingsStore:

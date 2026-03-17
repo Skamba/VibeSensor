@@ -1,11 +1,10 @@
 """Verify import boundary rules across layers.
 
 Rules enforced:
-1. ``infra/config/analysis_settings.py`` must not import from diagnostics.
-2. Service modules must not import FastAPI's HTTPException.
-3. ``domain/`` must not import from ``adapters/``, ``infra/``, ``shared/types/``, ``use_cases/``.
-4. ``shared/types/backend_types.py`` must not import from ``infra/config/``.
-5. Boundary types must not have factory methods that construct domain objects.
+1. Service modules must not import FastAPI's HTTPException.
+2. ``domain/`` must not import from ``adapters/``, ``infra/``, ``shared/types/``, ``use_cases/``.
+3. ``shared/types/backend_types.py`` must not import from ``infra/config/``.
+4. Boundary types must not have factory methods that construct domain objects.
 """
 
 from __future__ import annotations
@@ -15,10 +14,6 @@ from pathlib import Path
 
 import pytest
 from _paths import SERVER_ROOT
-
-_BRIDGE_MODULES = [
-    SERVER_ROOT / "vibesensor" / "infra" / "config" / "analysis_settings.py",
-]
 
 
 def _imports_from_analysis(path: Path) -> list[str]:
@@ -39,15 +34,6 @@ def _imports_from_analysis(path: Path) -> list[str]:
             if module.startswith("vibesensor.use_cases.diagnostics"):
                 violations.append(f"from {module} import ...")
     return violations
-
-
-def test_analysis_settings_does_not_import_from_analysis() -> None:
-    path = SERVER_ROOT / "vibesensor" / "infra" / "config" / "analysis_settings.py"
-    violations = _imports_from_analysis(path)
-    assert not violations, (
-        f"analysis_settings.py must not import from the diagnostics package "
-        f"(circular dependency risk): {violations}"
-    )
 
 
 def test_history_services_do_not_import_httpexception() -> None:
@@ -121,10 +107,6 @@ def test_domain_does_not_import_from_outer_layers() -> None:
 # ── shared/types must not import from infra ──────────────────────────────
 
 
-@pytest.mark.xfail(
-    reason="backend_types.py still imports from infra/config/ (planned fix: Section 3.2)",
-    strict=True,
-)
 def test_shared_types_does_not_import_from_infra() -> None:
     """shared/types/ must not import from infra/ — wrong dependency direction."""
     path = SERVER_ROOT / "vibesensor" / "shared" / "types" / "backend_types.py"

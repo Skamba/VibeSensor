@@ -13,19 +13,17 @@ from io import BytesIO
 from typing import Any
 
 from vibesensor.domain import TireSpec
-from vibesensor.infra.config.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-)
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.constants import KMH_TO_MPS
 
 _DEFAULT_TIRE = TireSpec.from_aspects(
-    DEFAULT_ANALYSIS_SETTINGS,
-    deflection_factor=DEFAULT_ANALYSIS_SETTINGS.get("tire_deflection_factor", 1.0),
+    AnalysisSettingsSnapshot.DEFAULTS,
+    deflection_factor=AnalysisSettingsSnapshot.DEFAULTS.get("tire_deflection_factor", 1.0),
 )
 assert _DEFAULT_TIRE is not None
 TIRE_CIRC = _DEFAULT_TIRE.circumference_m
-FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
-GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
+FINAL_DRIVE = AnalysisSettingsSnapshot.DEFAULTS["final_drive_ratio"]
+GEAR_RATIO = AnalysisSettingsSnapshot.DEFAULTS["current_gear_ratio"]
 
 # Canonical sensor names / corners
 SENSOR_FL = "front-left"

@@ -46,7 +46,6 @@ from vibesensor.shared.types.backend_types import (
     SpeedSourceUpdatePayload,
     SpeedUnitCode,
     new_car_id,
-    sanitize_aspects,
 )
 from vibesensor.shared.types.json_types import JsonObject
 
@@ -115,16 +114,11 @@ class SettingsStore:
         gps_monitor: GPSSpeedMonitor | None = None,
     ) -> None:
         """Initialise the settings store, loading persisted settings from *db* if provided."""
-        from vibesensor.infra.config.analysis_settings import (
-            DEFAULT_ANALYSIS_SETTINGS,
-            sanitize_settings,
-        )
-
         self._lock = RLock()
         self._db = db
         self._gps_monitor = gps_monitor
-        self._sanitize_analysis = sanitize_settings
-        self._analysis_values: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
+        self._sanitize_analysis = AnalysisSettingsSnapshot.sanitize
+        self._analysis_values: dict[str, float] = dict(AnalysisSettingsSnapshot.DEFAULTS)
 
         self._cars: list[CarConfig] = []
         self._active_car_id: str | None = None
@@ -336,7 +330,7 @@ class SettingsStore:
                     if car_type:
                         car.car_type = car_type
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
-                car.aspects.update(sanitize_aspects(car_data["aspects"]))
+                car.aspects.update(AnalysisSettingsSnapshot.sanitize(car_data["aspects"]))
             if "variant" in car_data:
                 raw = car_data["variant"]
                 car.variant = _clamp_str(raw, 64) or None if isinstance(raw, str) and raw else None
@@ -360,7 +354,7 @@ class SettingsStore:
             if car is None:
                 raise ValueError("No active car configured")
             old_aspects = dict(car.aspects)
-            car.aspects.update(sanitize_aspects(aspects))
+            car.aspects.update(AnalysisSettingsSnapshot.sanitize(aspects))
             try:
                 self._persist()
             except PersistenceError:

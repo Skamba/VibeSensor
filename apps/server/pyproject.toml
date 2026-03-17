@@ -97,7 +97,6 @@ files = [
   "vibesensor/shared/types/json_types.py",
   "vibesensor/shared/types/payload_types.py",
   "vibesensor/infra/runtime/registry.py",
-  "vibesensor/infra/config/analysis_settings.py",
   "vibesensor/shared/run_context.py",
   "vibesensor/infra/config/settings_store.py",
   "vibesensor/report_i18n.py",

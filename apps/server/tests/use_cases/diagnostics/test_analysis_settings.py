@@ -5,10 +5,10 @@ from math import inf, nan, pi
 import pytest
 
 from vibesensor.domain import OrderReferenceSpec, TireSpec
-from vibesensor.infra.config.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-    sanitize_settings,
-)
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+
+DEFAULT_ANALYSIS_SETTINGS = AnalysisSettingsSnapshot.DEFAULTS
+sanitize_settings = AnalysisSettingsSnapshot.sanitize
 
 # -- TireSpec.circumference_m -------------------------------------------------
 
