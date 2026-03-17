@@ -1,15 +1,9 @@
-"""Golden-file regression test for boundary reconstruction.
-
-Uses ``examples/sample_complete_run.jsonl`` to verify historical summaries
-reconstruct correctly through ``test_run_from_summary`` → domain objects.
-"""
+"""Boundary reconstruction regression tests built from canonical test fixtures."""
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 import pytest
+from test_support import build_speed_sweep_fault_samples, standard_metadata
 
 from vibesensor.domain.snapshots import PhaseSummarySnapshot, SpeedStatsSnapshot
 from vibesensor.shared.boundaries.diagnostic_case import (
@@ -20,20 +14,23 @@ from vibesensor.shared.boundaries.diagnostic_case import (
 )
 from vibesensor.use_cases.diagnostics import summarize_run_data
 
-_GOLDEN_FILE = Path(__file__).resolve().parents[5] / "examples" / "sample_complete_run.jsonl"
-
 
 @pytest.fixture(scope="module")
 def golden_summary() -> dict:
-    """Load golden JSONL, run through analysis pipeline, return summary."""
-    records: list[dict] = []
-    with _GOLDEN_FILE.open() as f:
-        for line in f:
-            records.append(json.loads(line))
-
-    metadata = records[0]
-    samples = [r for r in records if r.get("record_type") == "sample"]
-    return summarize_run_data(metadata, samples)
+    """Build a representative summary via shared synthetic scenario builders."""
+    return summarize_run_data(
+        standard_metadata(),
+        build_speed_sweep_fault_samples(
+            speed_start_kmh=40.0,
+            speed_end_kmh=120.0,
+            fault_sensor="front-left",
+            other_sensors=["front-right", "rear-left", "rear-right"],
+            n_samples=50,
+            fault_amp=0.06,
+            fault_vib_db=24.0,
+        ),
+        include_samples=False,
+    )
 
 
 class TestGoldenFileReconstruction:
