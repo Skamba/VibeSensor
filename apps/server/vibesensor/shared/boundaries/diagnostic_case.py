@@ -294,9 +294,12 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
         speed_source=SpeedSource(),
         configuration_snapshot=ConfigurationSnapshot.from_metadata(meta),
     )
+    rows_raw = summary.get("rows")
+    row_count = int(rows_raw) if isinstance(rows_raw, (int, float, str)) else 0
     capture = RunCapture(
         run_id=str(summary.get("run_id") or "unknown"),
         setup=setup,
+        sample_count=row_count,
     )
     return TestRun(
         capture=capture,
