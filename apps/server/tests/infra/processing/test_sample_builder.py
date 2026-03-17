@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.domain import AnalysisSettingsSnapshot, StrengthMetrics
 from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
     build_sample_records,
@@ -75,20 +75,27 @@ class TestExtractStrengthData:
                 },
             },
         }
-        sm, db_val, bucket, peak, floor, peaks = extract_strength_data(metrics)
-        assert db_val == 22.0
-        assert bucket == "l2"
-        assert peak == 0.15
-        assert floor == 0.003
+        sm, peaks = extract_strength_data(metrics)
+        assert isinstance(sm, StrengthMetrics)
+        assert sm.vibration_strength_db == 22.0
+        assert sm.strength_bucket == "l2"
+        assert sm.peak_amp_g == 0.15
+        assert sm.noise_floor_amp_g == 0.003
+        assert sm.dominant_hz == 15.0
         assert len(peaks) == 1
-        assert peaks[0]["hz"] == 15.0
+        assert peaks[0] == {
+            "hz": 15.0,
+            "amp": 0.12,
+            "vibration_strength_db": 22.0,
+            "strength_bucket": "l2",
+        }
 
     def test_empty_metrics(self) -> None:
-        sm, db_val, bucket, peak, floor, peaks = extract_strength_data({})
-        assert db_val is None
-        assert bucket is None
-        assert peak is None
-        assert floor is None
+        sm, peaks = extract_strength_data({})
+        assert isinstance(sm, StrengthMetrics)
+        assert sm.vibration_strength_db is None
+        assert sm.peak_amp_g is None
+        assert sm.noise_floor_amp_g is None
         assert peaks == []
 
     def test_invalid_peak_skipped(self) -> None:
@@ -103,7 +110,8 @@ class TestExtractStrengthData:
                 },
             },
         }
-        _, _, _, _, _, peaks = extract_strength_data(metrics)
+        sm, peaks = extract_strength_data(metrics)
+        assert sm.dominant_hz is None
         assert peaks == []
 
     def test_max_8_peaks(self) -> None:
@@ -114,7 +122,8 @@ class TestExtractStrengthData:
                 },
             },
         }
-        _, _, _, _, _, peaks = extract_strength_data(metrics)
+        sm, peaks = extract_strength_data(metrics)
+        assert len(sm.top_peaks) == 11
         assert len(peaks) == 8
 
 
@@ -125,14 +134,22 @@ class TestExtractStrengthData:
 
 class TestDominantHzFromStrength:
     def test_returns_first_peak_hz(self) -> None:
-        sm = {"top_peaks": [{"hz": 42.0, "amp": 0.5}]}
+        sm = StrengthMetrics.from_dict({"top_peaks": [{"hz": 42.0, "amp": 0.5}]})
         assert dominant_hz_from_strength(sm) == 42.0
 
     def test_empty(self) -> None:
-        assert dominant_hz_from_strength({}) is None
+        assert dominant_hz_from_strength(StrengthMetrics()) is None
 
-    def test_no_peaks(self) -> None:
-        assert dominant_hz_from_strength({"top_peaks": []}) is None
+    def test_invalid_first_peak_does_not_scan_ahead(self) -> None:
+        sm = StrengthMetrics.from_dict(
+            {
+                "top_peaks": [
+                    {"hz": "bad", "amp": 0.5},
+                    {"hz": 99.0, "amp": 0.4},
+                ],
+            },
+        )
+        assert dominant_hz_from_strength(sm) is None
 
 
 # ---------------------------------------------------------------------------
@@ -296,3 +313,75 @@ class TestBuildSampleRecords:
             default_sample_rate_hz=800,
         )
         assert records == []
+
+    def test_serializes_typed_strength_metrics_only_at_sensor_frame_boundary(self) -> None:
+        record = MagicMock()
+        record.client_id = "client-1"
+        record.name = "Front Left"
+        record.location_code = "fl"
+        record.sample_rate_hz = 400
+        record.frames_dropped = 1
+        record.queue_overflow_drops = 2
+
+        reg = MagicMock()
+        reg.active_client_ids.return_value = ["client-1"]
+        reg.get.return_value = record
+
+        proc = MagicMock()
+        proc.clients_with_recent_data.return_value = ["client-1"]
+        proc.latest_metrics.return_value = {
+            "combined": {
+                "strength_metrics": {
+                    "vibration_strength_db": 22.0,
+                    "peak_amp_g": 0.15,
+                    "noise_floor_amp_g": 0.003,
+                    "top_peaks": [
+                        {
+                            "hz": 15.0,
+                            "amp": 0.12,
+                            "vibration_strength_db": 22.0,
+                            "strength_bucket": "l2",
+                        },
+                        {
+                            "hz": 0.0,
+                            "amp": 0.99,
+                            "vibration_strength_db": 99.0,
+                            "strength_bucket": "l5",
+                        },
+                    ],
+                },
+            },
+        }
+        proc.latest_sample_xyz.return_value = (0.1, 0.2, 0.3)
+        proc.latest_sample_rate_hz.return_value = 400
+
+        gps = MagicMock()
+        gps.speed_mps = None
+        gps.resolve_speed.return_value = MagicMock(source="none", speed_mps=None)
+
+        records = build_sample_records(
+            run_id="r1",
+            t_s=1.25,
+            timestamp_utc="2026-01-01T00:00:00Z",
+            registry=reg,
+            processor=proc,
+            gps_monitor=gps,
+            analysis_settings_snapshot=AnalysisSettingsSnapshot(),
+            default_sample_rate_hz=800,
+        )
+
+        assert len(records) == 1
+        frame = records[0]
+        assert frame["dominant_freq_hz"] == 15.0
+        assert frame["vibration_strength_db"] == 22.0
+        assert frame["strength_peak_amp_g"] == 0.15
+        assert frame["strength_floor_amp_g"] == 0.003
+        assert frame["strength_bucket"] == "l2"
+        assert frame["top_peaks"] == [
+            {
+                "hz": 15.0,
+                "amp": 0.12,
+                "vibration_strength_db": 22.0,
+                "strength_bucket": "l2",
+            },
+        ]

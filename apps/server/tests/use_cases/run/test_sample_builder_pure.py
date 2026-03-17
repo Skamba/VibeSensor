@@ -9,53 +9,20 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.domain import StrengthMetrics
 from vibesensor.use_cases.run.sample_builder import (
-    _parse_peak,
     extract_strength_data,
     safe_metric,
 )
-
-
-class TestParsePeak:
-    """Tests for the internal _parse_peak helper."""
-
-    def test_valid_peak_dict_returns_tuple(self) -> None:
-        result = _parse_peak({"hz": 123.5, "amp": 0.42})
-        assert result == (123.5, 0.42)
-
-    def test_negative_hz_returns_none(self) -> None:
-        """A peak with non-positive frequency is physically invalid."""
-        assert _parse_peak({"hz": -50.0, "amp": 0.3}) is None
-
-    def test_zero_hz_returns_none(self) -> None:
-        assert _parse_peak({"hz": 0.0, "amp": 0.3}) is None
-
-    def test_non_dict_returns_none(self) -> None:
-        assert _parse_peak(None) is None
-        assert _parse_peak(42) is None
-        assert _parse_peak([100.0, 0.5]) is None
-
-    def test_missing_amp_key_returns_none(self) -> None:
-        assert _parse_peak({"hz": 100.0}) is None
-
-    def test_nan_amp_returns_none(self) -> None:
-        assert _parse_peak({"hz": 100.0, "amp": float("nan")}) is None
-
-    def test_inf_hz_returns_none(self) -> None:
-        assert _parse_peak({"hz": float("inf"), "amp": 0.3}) is None
 
 
 class TestExtractStrengthData:
     """Tests for extract_strength_data edge cases."""
 
     def test_empty_metrics_dict_returns_all_nones(self) -> None:
-        sm, vib_db, bucket, peak_g, floor_g, peaks = extract_strength_data({})
+        sm, peaks = extract_strength_data({})
 
-        assert sm == {}
-        assert vib_db is None
-        assert bucket is None
-        assert peak_g is None
-        assert floor_g is None
+        assert sm == StrengthMetrics()
         assert peaks == []
 
     def test_top_peaks_with_zero_amp_are_filtered(self) -> None:
@@ -71,8 +38,9 @@ class TestExtractStrengthData:
                 },
             },
         }
-        _, _, _, _, _, peaks = extract_strength_data(metrics)
+        sm, peaks = extract_strength_data(metrics)
 
+        assert len(sm.top_peaks) == 3
         assert len(peaks) == 1
         assert peaks[0]["hz"] == 300.0
 
@@ -85,10 +53,29 @@ class TestExtractStrengthData:
                 },
             },
         }
-        sm, _, _, peak_g, _, _ = extract_strength_data(metrics)
+        sm, _ = extract_strength_data(metrics)
 
-        assert sm == {"peak_amp_g": 0.88}
-        assert peak_g == pytest.approx(0.88)
+        assert sm == StrengthMetrics(peak_amp_g=0.88)
+
+    def test_invalid_scalar_fields_degrade_to_none_on_typed_metrics(self) -> None:
+        sm, peaks = extract_strength_data(
+            {
+                "combined": {
+                    "strength_metrics": {
+                        "vibration_strength_db": "bad",
+                        "peak_amp_g": float("nan"),
+                        "noise_floor_amp_g": "invalid",
+                        "top_peaks": [{"hz": 50.0, "amp": 0.2}],
+                    },
+                },
+            },
+        )
+
+        assert sm.vibration_strength_db is None
+        assert sm.peak_amp_g is None
+        assert sm.noise_floor_amp_g is None
+        assert sm.dominant_hz == 50.0
+        assert peaks == [{"hz": 50.0, "amp": 0.2}]
 
 
 class TestSafeMetric:

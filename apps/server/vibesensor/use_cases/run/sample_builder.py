@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.infra.config.analysis_settings import (
     engine_rpm_from_wheel_hz,
@@ -32,25 +33,6 @@ if TYPE_CHECKING:
     from vibesensor.infra.runtime.registry import ClientRegistry
 
 _isfinite = math.isfinite
-
-
-def _parse_peak(raw: object) -> tuple[float, float] | None:
-    """Validate and parse a peak dict into ``(hz, amp)`` or ``None``."""
-    if not isinstance(raw, dict):
-        return None
-    try:
-        hz = float(raw.get("hz"))  # type: ignore[arg-type]
-        amp = float(raw.get("amp"))  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        return None
-    if _isfinite(hz) and _isfinite(amp) and hz > 0:
-        return (hz, amp)
-    return None
-
-
-_VIB_STRENGTH_DB_KEY: str = "vibration_strength_db"
-_STRENGTH_BUCKET_KEY: str = "strength_bucket"
-
 
 def _safe_float(d: Mapping[str, object], key: str) -> float | None:
     """Extract a finite float from *d[key]*, or ``None``."""
@@ -83,68 +65,40 @@ def safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None
 class StrengthExtraction(NamedTuple):
     """Named result of :func:`extract_strength_data`."""
 
-    strength_metrics: dict[str, object]
-    vibration_strength_db: float | None
-    strength_bucket: str | None
-    strength_peak_amp_g: float | None
-    strength_floor_amp_g: float | None
+    strength_metrics: StrengthMetrics
     top_peaks: list[dict[str, object]]
+
+
+def _raw_strength_metrics(metrics: Mapping[str, object]) -> Mapping[str, object] | None:
+    combined = metrics.get("combined")
+    if not isinstance(combined, Mapping):
+        return None
+    nested = combined.get("strength_metrics")
+    return nested if isinstance(nested, Mapping) else None
 
 
 def extract_strength_data(
     metrics: Mapping[str, object],
 ) -> StrengthExtraction:
     """Extract strength metrics and top peaks from client metrics."""
-    strength_metrics: dict[str, object] = {}
-    combined = metrics.get("combined")
-    if isinstance(combined, dict):
-        nested = combined.get("strength_metrics")
-        if isinstance(nested, dict):
-            strength_metrics = nested
-
-    vibration_strength_db = _safe_float(strength_metrics, _VIB_STRENGTH_DB_KEY)
-    _bucket_val = strength_metrics.get(_STRENGTH_BUCKET_KEY)
-    strength_bucket = str(_bucket_val) if _bucket_val not in (None, "") else None
-    strength_peak_amp_g = _safe_float(strength_metrics, "peak_amp_g")
-    strength_floor_amp_g = _safe_float(strength_metrics, "noise_floor_amp_g")
-
-    top_peaks_raw = strength_metrics.get("top_peaks")
-    top_peaks: list[dict[str, object]] = []
-    if isinstance(top_peaks_raw, list):
-        for peak in top_peaks_raw[:8]:
-            parsed = _parse_peak(peak)
-            if parsed is None or parsed[1] <= 0:
-                continue
-            hz, amp = parsed
-            peak_payload: dict[str, object] = {"hz": hz, "amp": amp}
-            peak_db = _safe_float(peak, _VIB_STRENGTH_DB_KEY)
-            if peak_db is not None:
-                peak_payload[_VIB_STRENGTH_DB_KEY] = peak_db
-            peak_bucket = peak.get(_STRENGTH_BUCKET_KEY)
-            if peak_bucket not in (None, ""):
-                peak_payload[_STRENGTH_BUCKET_KEY] = str(peak_bucket)
-            top_peaks.append(peak_payload)
+    raw_strength_metrics = _raw_strength_metrics(metrics)
+    strength_metrics = (
+        StrengthMetrics.from_typed_dict(raw_strength_metrics)
+        if raw_strength_metrics is not None
+        else StrengthMetrics()
+    )
 
     return StrengthExtraction(
         strength_metrics=strength_metrics,
-        vibration_strength_db=vibration_strength_db,
-        strength_bucket=strength_bucket,
-        strength_peak_amp_g=strength_peak_amp_g,
-        strength_floor_amp_g=strength_floor_amp_g,
-        top_peaks=top_peaks,
+        top_peaks=strength_metrics.to_peak_payloads(max_items=8),
     )
 
 
 def dominant_hz_from_strength(
-    strength_metrics: dict[str, object],
+    strength_metrics: StrengthMetrics,
 ) -> float | None:
     """Return the frequency of the strongest peak, or ``None``."""
-    top_peaks_raw = strength_metrics.get("top_peaks")
-    if isinstance(top_peaks_raw, list) and top_peaks_raw:
-        first_peak = top_peaks_raw[0]
-        if isinstance(first_peak, dict):
-            return _safe_float(first_peak, "hz")
-    return None
+    return strength_metrics.dominant_hz
 
 
 class SpeedContext(NamedTuple):
@@ -269,13 +223,12 @@ def build_sample_records(
 
         (
             strength_metrics,
-            vibration_strength_db,
-            _strength_bucket,
-            strength_peak_amp_g,
-            strength_floor_amp_g,
             top_peaks,
         ) = extract_strength_data(metrics)
         dominant_hz = dominant_hz_from_strength(strength_metrics)
+        vibration_strength_db = strength_metrics.vibration_strength_db
+        strength_peak_amp_g = strength_metrics.peak_amp_g
+        strength_floor_amp_g = strength_metrics.noise_floor_amp_g
 
         # Derive severity bucket directly from the dB value via the
         # canonical bucket_for_strength() function (single source of truth).
