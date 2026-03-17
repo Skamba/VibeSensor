@@ -394,11 +394,9 @@ def test_build_system_cards_uses_domain_findings() -> None:
     )
     # Build a context with the aggregate (payloads no longer stored on context)
     context = ReportMappingContext(
-        meta={},
         car_name=None,
         car_type=None,
         date_str="",
-        speed_stats={},  # type: ignore[typeddict-item]
         origin={},  # type: ignore[typeddict-item]
         origin_location="",
         sensor_locations_active=[],
@@ -1164,10 +1162,11 @@ def test_f_order_finding_id_normalization() -> None:
 
 
 def test_next_steps_domain_path_is_primary() -> None:
-    """``build_next_steps_from_summary`` must check domain aggregate BEFORE payload.
+    """``build_next_steps_from_summary`` must use domain aggregate only.
 
-    The if-elif order must be: aggregate.recommended_actions first,
-    then payload ``test_plan`` fallback.  Prevents regression of T12.
+    The function must check ``aggregate.recommended_actions`` as its
+    sole source for next steps.  No payload fallback loop should exist.
+    Prevents regression of T12.
     """
     from tests._paths import SERVER_ROOT
 
@@ -1182,25 +1181,15 @@ def test_next_steps_domain_path_is_primary() -> None:
     next_def = source.find("\ndef ", func_start + 1)
     func_body = source[func_start : next_def if next_def != -1 else len(source)]
 
-    # The domain aggregate if-guard must come before the payload for-loop
-    # that iterates summary_steps.  The function may eagerly call
-    # summary_test_plan() before the if-guard, but the actual consumption
-    # of those steps (``for step in summary_steps:``) must be after the
-    # domain branch with its early return.
+    # The domain aggregate if-guard must exist
     domain_guard = func_body.find("if aggregate is not None and aggregate.recommended_actions")
-    payload_loop = func_body.find("for step in summary_steps")
     assert domain_guard != -1, (
         "build_next_steps_from_summary must check aggregate.recommended_actions"
     )
-    assert payload_loop != -1, "build_next_steps_from_summary must have payload fallback loop"
-    assert domain_guard < payload_loop, (
-        "Domain aggregate if-guard must appear BEFORE the payload fallback loop "
-        f"(domain at pos {domain_guard}, payload loop at pos {payload_loop})"
-    )
-    # The domain branch must do an early return to be primary
-    domain_block = func_body[domain_guard:payload_loop]
-    assert "return next_steps" in domain_block or "return next_steps\n" in domain_block, (
-        "Domain aggregate branch must return early before the payload fallback"
+    # No payload fallback loop should remain
+    payload_loop = func_body.find("for step in summary_steps")
+    assert payload_loop == -1, (
+        "build_next_steps_from_summary must not have a payload fallback loop — domain-only"
     )
 
 

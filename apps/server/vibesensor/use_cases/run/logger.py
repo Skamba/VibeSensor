@@ -16,7 +16,7 @@ import logging
 import sqlite3
 import time
 from collections.abc import Callable
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from threading import RLock
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
@@ -206,9 +206,7 @@ class RunRecorder:
     def _analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         if self._settings_store is not None:
             return self._settings_store.analysis_settings_snapshot()
-        from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
-
-        return AnalysisSettingsSnapshot.from_dict(DEFAULT_ANALYSIS_SETTINGS)
+        return AnalysisSettingsSnapshot.from_dict(AnalysisSettingsSnapshot.DEFAULTS)
 
     # -----------------------------------------------------------------------
     # Session state
@@ -225,7 +223,7 @@ class RunRecorder:
         with self._lock:
             session = Run(
                 run_id=run_id,
-                analysis_settings=asdict(self._analysis_settings_snapshot()),
+                analysis_settings=self._analysis_settings_snapshot(),
             )
             session.start()
             self._current_run = session

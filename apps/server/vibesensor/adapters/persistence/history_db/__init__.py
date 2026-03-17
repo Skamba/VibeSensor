@@ -35,6 +35,7 @@ from vibesensor.adapters.persistence.runlog import utc_now_iso
 from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.domain.run_status import (
     RunStatus,
+    is_run_deletable,
     transition_run,
 )
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
@@ -279,16 +280,6 @@ class HistoryDB:
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
-                "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
-                (f"Recovered stale recording when starting run {run_id} at {now}",),
-            )
-            if cur.rowcount > 0:
-                LOGGER.warning(
-                    "Recovered %d stale recording run(s) while starting run %s",
-                    cur.rowcount,
-                    run_id,
-                )
-            cur.execute(
                 "INSERT INTO runs (run_id, case_id, status, start_time_utc, metadata_json, "
                 "created_at) VALUES (?, ?, 'recording', ?, ?, ?)",
                 (run_id, case_id, start_time_utc, safe_json_dumps(metadata), now),
@@ -326,6 +317,16 @@ class HistoryDB:
     ) -> bool:
         now = utc_now_iso()
         with self._cursor() as cur:
+            current_status = self._run_status(cur, run_id)
+            try:
+                transition_run(current_status, RunStatus.ANALYZING)
+            except ValueError:
+                LOGGER.warning(
+                    "finalize_run for run %s: invalid transition %s → analyzing",
+                    run_id,
+                    current_status,
+                )
+                return False
             assignments = ["status = 'analyzing'", "end_time_utc = ?", "analysis_started_at = ?"]
             params: list[object] = [end_time_utc, now]
             if metadata is not None:
@@ -336,22 +337,10 @@ class HistoryDB:
                 params.insert(0, case_id)
             params.append(run_id)
             cur.execute(
-                f"UPDATE runs SET {', '.join(assignments)} "
-                "WHERE run_id = ? AND status = 'recording'",
+                f"UPDATE runs SET {', '.join(assignments)} WHERE run_id = ?",
                 params,
             )
-            if int(cur.rowcount) > 0:
-                return True
-            current_status = self._run_status(cur, run_id)
-            try:
-                transition_run(current_status, RunStatus.ANALYZING)
-            except ValueError:
-                LOGGER.warning(
-                    "finalize_run for run %s: invalid transition %s → analyzing",
-                    run_id,
-                    current_status,
-                )
-            return False
+            return int(cur.rowcount) > 0
 
     def update_run_metadata(
         self,
@@ -374,11 +363,9 @@ class HistoryDB:
             row = cur.fetchone()
             if row is None:
                 return False, "not_found"
-            status = row[0]
-            if status == RunStatus.RECORDING:
-                return False, "active"
-            if status == RunStatus.ANALYZING:
-                return False, RunStatus.ANALYZING
+            status = RunStatus(row[0])
+            if not is_run_deletable(status):
+                return False, "active" if status == RunStatus.RECORDING else status.value
             cur.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
             return bool(int(cur.rowcount) > 0), None
 
@@ -396,23 +383,6 @@ class HistoryDB:
             )
         now = utc_now_iso()
         with self._cursor() as cur:
-            # Include 'recording' to handle the case where finalize_run()
-            # failed (e.g. DB unavailable at that moment).  store_analysis
-            # still succeeds via the RECORDING → COMPLETE shortcut path
-            # defined in RUN_TRANSITIONS.
-            cur.execute(
-                "UPDATE runs SET status = 'complete', analysis_json = ?, "
-                "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
-                "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
-                (
-                    safe_json_dumps(analysis),
-                    now,
-                    now,
-                    run_id,
-                ),
-            )
-            if int(cur.rowcount) > 0:
-                return True
             current_status = self._run_status(cur, run_id)
             if current_status == RunStatus.COMPLETE:
                 LOGGER.warning(
@@ -428,19 +398,23 @@ class HistoryDB:
                     run_id,
                     current_status,
                 )
-            return False
+                return False
+            cur.execute(
+                "UPDATE runs SET status = 'complete', analysis_json = ?, "
+                "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
+                "WHERE run_id = ?",
+                (
+                    safe_json_dumps(analysis),
+                    now,
+                    now,
+                    run_id,
+                ),
+            )
+            return int(cur.rowcount) > 0
 
     def store_analysis_error(self, run_id: str, error: str) -> bool:
         now = utc_now_iso()
         with self._cursor() as cur:
-            cur.execute(
-                "UPDATE runs SET status = 'error', error_message = ?, "
-                "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
-                "WHERE run_id = ? AND status IN ('recording', 'analyzing')",
-                (error, now, now, run_id),
-            )
-            if int(cur.rowcount) > 0:
-                return True
             current_status = self._run_status(cur, run_id)
             if current_status == RunStatus.COMPLETE:
                 LOGGER.warning(
@@ -456,7 +430,14 @@ class HistoryDB:
                     run_id,
                     current_status,
                 )
-            return False
+                return False
+            cur.execute(
+                "UPDATE runs SET status = 'error', error_message = ?, "
+                "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
+                "WHERE run_id = ?",
+                (error, now, now, run_id),
+            )
+            return int(cur.rowcount) > 0
 
     def delete_run(self, run_id: str) -> bool:
         with self._cursor() as cur:

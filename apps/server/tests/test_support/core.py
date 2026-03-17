@@ -12,20 +12,18 @@ from functools import cache
 from io import BytesIO
 from typing import Any
 
-from vibesensor.infra.config.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-    tire_circumference_m_from_spec,
-    wheel_hz_from_speed_kmh,
-)
+from vibesensor.domain import TireSpec
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.shared.constants import KMH_TO_MPS
 
-TIRE_CIRC = tire_circumference_m_from_spec(
-    DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"],
-    DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"],
-    DEFAULT_ANALYSIS_SETTINGS["rim_in"],
-    deflection_factor=DEFAULT_ANALYSIS_SETTINGS.get("tire_deflection_factor"),
+_DEFAULT_TIRE = TireSpec.from_aspects(
+    AnalysisSettingsSnapshot.DEFAULTS,
+    deflection_factor=AnalysisSettingsSnapshot.DEFAULTS.get("tire_deflection_factor", 1.0),
 )
-FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
-GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
+assert _DEFAULT_TIRE is not None
+TIRE_CIRC = _DEFAULT_TIRE.circumference_m
+FINAL_DRIVE = AnalysisSettingsSnapshot.DEFAULTS["final_drive_ratio"]
+GEAR_RATIO = AnalysisSettingsSnapshot.DEFAULTS["current_gear_ratio"]
 
 # Canonical sensor names / corners
 SENSOR_FL = "front-left"
@@ -178,13 +176,13 @@ def _profile_circ_cached(
     rim_in: int,
     tire_deflection_factor: float | None,
 ) -> float:
-    circ = tire_circumference_m_from_spec(
-        tire_width_mm,
-        tire_aspect_pct,
-        rim_in,
-        deflection_factor=tire_deflection_factor,
+    spec = TireSpec.from_aspects(
+        {"tire_width_mm": tire_width_mm, "tire_aspect_pct": tire_aspect_pct, "rim_in": rim_in},
+        deflection_factor=tire_deflection_factor if tire_deflection_factor is not None else 1.0,
     )
-    assert circ is not None and circ > 0
+    assert spec is not None
+    circ = spec.circumference_m
+    assert circ > 0
     return circ
 
 
@@ -201,8 +199,8 @@ def profile_circ(profile: dict[str, Any]) -> float:
 def profile_wheel_hz(profile: dict[str, Any], speed_kmh: float) -> float:
     """Compute wheel-1x Hz for a car profile at *speed_kmh*."""
     circ = profile_circ(profile)
-    hz = wheel_hz_from_speed_kmh(speed_kmh, circ)
-    assert hz is not None and hz > 0
+    hz = speed_kmh * KMH_TO_MPS / circ
+    assert hz > 0
     return hz
 
 
@@ -283,8 +281,8 @@ def standard_metadata(*, language: str = "en", **overrides: Any) -> dict[str, An
 
 def wheel_hz(speed_kmh: float) -> float:
     """Compute wheel-1x frequency for *speed_kmh*."""
-    hz = wheel_hz_from_speed_kmh(speed_kmh, TIRE_CIRC)
-    assert hz is not None and hz > 0
+    hz = speed_kmh * KMH_TO_MPS / TIRE_CIRC
+    assert hz > 0
     return hz
 
 

@@ -11,20 +11,13 @@ High-level analysis entry points are re-exported here so callers can use
 findings.  The domain ``Finding`` lives in ``vibesensor.domain``.
 """
 
-from vibesensor.domain import DrivingPhase
 from vibesensor.use_cases.diagnostics._types import (
-    AnalysisSummary,
-    FindingPayload,
     IntensityRow,
     MetadataDict,
-    RunSuitabilityCheck,
-    SpeedStats,
-    TestStep,
     i18n_ref,
 )
 from vibesensor.use_cases.diagnostics.helpers import PHASE_I18N_KEYS
 from vibesensor.use_cases.diagnostics.order_bands import build_order_bands, vehicle_orders_hz
-from vibesensor.use_cases.diagnostics.phase_segmentation import classify_sample_phase
 from vibesensor.use_cases.diagnostics.plots import PeakTableRow
 from vibesensor.use_cases.diagnostics.strength_labels import (
     certainty_tier,
@@ -41,21 +34,14 @@ from vibesensor.use_cases.diagnostics.summary_builder import (
 
 __all__ = [
     "AnalysisResult",
-    "AnalysisSummary",
-    "DrivingPhase",
-    "FindingPayload",
     "IntensityRow",
     "MetadataDict",
     "PHASE_I18N_KEYS",
     "PeakTableRow",
     "RunAnalysis",
-    "RunSuitabilityCheck",
-    "SpeedStats",
-    "TestStep",
     "build_findings_for_samples",
     "build_order_bands",
     "certainty_tier",
-    "classify_sample_phase",
     "i18n_ref",
     "strength_label",
     "strength_text",

@@ -11,7 +11,7 @@ from test_support.report_helpers import (
 
 from vibesensor.domain import LocationHotspot
 from vibesensor.domain.finding import Finding
-from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics import findings as findings_builder_module
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
@@ -114,7 +114,7 @@ def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
     samples = []
     for idx in range(30):
         speed_kmh = 40.0 + (2.0 * idx)
-        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = speed_kmh * KMH_TO_MPS / 2.036
         high_speed_band = speed_kmh >= 90.0
         samples.append(
             {
@@ -171,7 +171,7 @@ def test_build_findings_order_exposes_structured_speed_profile() -> None:
     samples = []
     for idx in range(24):
         speed_kmh = 60.0 + float(idx)
-        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = speed_kmh * KMH_TO_MPS / 2.036
         amp = 0.01 + (0.0008 * idx)
         samples.append(
             {
@@ -197,7 +197,7 @@ def test_build_findings_detects_driveline_2x_order() -> None:
     samples = []
     for idx in range(24):
         speed_kmh = 55.0 + (2.0 * idx)
-        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = speed_kmh * KMH_TO_MPS / 2.036
         samples.append(
             {
                 **_make_sample(float(idx), speed_kmh, 0.04),
@@ -248,7 +248,7 @@ def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> No
     samples = []
     for idx, speed_kmh in enumerate(range(40, 121)):
         speed_val = float(speed_kmh)
-        wh = wheel_hz_from_speed_kmh(speed_val, 2.036) or 10.0
+        wh = speed_val * KMH_TO_MPS / 2.036
         amp = 0.08 if 75 <= speed_kmh <= 90 else 0.01
         samples.append(
             {
@@ -335,7 +335,7 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
     samples = []
     for idx in range(30):
         speed_kmh = 40.0 + (2.0 * idx)
-        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = speed_kmh * KMH_TO_MPS / 2.036
         high_speed_band = speed_kmh >= 90.0
         samples.append(
             {

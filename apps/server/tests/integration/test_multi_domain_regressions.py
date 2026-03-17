@@ -17,10 +17,11 @@ from vibesensor.adapters.pdf.mapping import order_label_human
 from vibesensor.adapters.pdf.mapping import resolve_i18n as resolve_i18n_impl
 from vibesensor.adapters.persistence.runlog import parse_iso8601
 from vibesensor.domain import Finding, SpeedSourceKind
+from vibesensor.domain.finding import speed_bin_label
 from vibesensor.report_i18n import tr
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.use_cases.diagnostics.findings import _sensor_intensity_by_location
-from vibesensor.use_cases.diagnostics.helpers import _format_duration, _speed_bin_label
+from vibesensor.use_cases.diagnostics.helpers import _format_duration
 from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_window_label
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.summary_builder import compute_run_timing
@@ -92,17 +93,17 @@ class TestBug03FormatDurationNonFinite:
 
 
 # ---------------------------------------------------------------------------
-# Bug 4: _speed_bin_label crashes on NaN/inf
+# Bug 4: speed_bin_label crashes on NaN/inf
 # ---------------------------------------------------------------------------
 
 
 class TestBug04SpeedBinLabelNonFinite:
     @pytest.mark.parametrize("value", [float("nan"), float("inf")])
     def test_non_finite_returns_fallback(self, value: float) -> None:
-        assert _speed_bin_label(value) == "0-10 km/h"
+        assert speed_bin_label(value) == "0-10 km/h"
 
     def test_normal_value_works(self) -> None:
-        assert _speed_bin_label(55.0) == "50-60 km/h"
+        assert speed_bin_label(55.0) == "50-60 km/h"
 
 
 # ---------------------------------------------------------------------------

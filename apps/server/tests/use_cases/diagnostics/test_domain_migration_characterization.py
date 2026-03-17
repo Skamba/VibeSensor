@@ -13,7 +13,6 @@ from test_support import (
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
 from vibesensor.shared.boundaries.diagnostic_case import (
     test_run_from_summary as _test_run_from_summary,
@@ -23,6 +22,7 @@ from vibesensor.shared.boundaries.finding import (
     step_payloads_from_plan,
 )
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
+from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import RunAnalysis, summarize_run_data
 
 
@@ -116,7 +116,7 @@ def _driveline_samples() -> list[dict[str, Any]]:
     samples: list[dict[str, Any]] = []
     for idx in range(24):
         speed_kmh = 55.0 + (2.0 * idx)
-        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wheel_hz = speed_kmh * KMH_TO_MPS / 2.036
         samples.append(
             make_sample(
                 t_s=float(idx),

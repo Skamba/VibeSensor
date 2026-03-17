@@ -13,10 +13,11 @@ import time
 import pytest
 
 from vibesensor.adapters.persistence.runlog import bounded_sample
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.infra.runtime.registry import _sanitize_name
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.shared.types.backend_types import new_car_id, sanitize_aspects
+from vibesensor.shared.types.backend_types import new_car_id
 from vibesensor.use_cases.diagnostics.order_bands import build_order_bands
 
 # ---------------------------------------------------------------------------
@@ -39,7 +40,7 @@ class TestDomainModelsPublicAPI:
         assert as_int_or_none(None) is None
 
     def test_sanitize_aspects_importable(self) -> None:
-        result = sanitize_aspects({"tire_width_mm": 225.0})
+        result = AnalysisSettingsSnapshot.sanitize({"tire_width_mm": 225.0})
         assert "tire_width_mm" in result
 
     def test_new_car_id_importable(self) -> None:

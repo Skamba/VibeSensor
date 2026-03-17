@@ -22,6 +22,10 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 
 __all__ = [
     "Run",
@@ -49,7 +53,7 @@ class Run:
     """
 
     run_id: str = field(default_factory=lambda: uuid.uuid4().hex)
-    analysis_settings: dict[str, float] = field(default_factory=dict)
+    analysis_settings: AnalysisSettingsSnapshot | None = None
 
     _started: bool = field(default=False, init=False, repr=False)
     _stopped: bool = field(default=False, init=False, repr=False)

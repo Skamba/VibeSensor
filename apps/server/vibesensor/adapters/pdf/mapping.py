@@ -38,9 +38,6 @@ from vibesensor.use_cases.diagnostics import (
     IntensityRow,
     MetadataDict,
     PeakTableRow,
-    RunSuitabilityCheck,
-    SpeedStats,
-    TestStep,
     certainty_tier,
     strength_label,
     strength_text,
@@ -96,11 +93,9 @@ class ReportMappingContext:
     the payloads.
     """
 
-    meta: MetadataDict
     car_name: str | None
     car_type: str | None
     date_str: str
-    speed_stats: SpeedStats
     origin: SuspectedVibrationOrigin
     origin_location: str
     sensor_locations_active: list[str]
@@ -290,15 +285,6 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
 # Context extraction
 # ---------------------------------------------------------------------------
 
-_EMPTY_SPEED_STATS: SpeedStats = {
-    "min_kmh": None,
-    "max_kmh": None,
-    "mean_kmh": None,
-    "stddev_kmh": None,
-    "range_kmh": None,
-    "steady_speed": False,
-}
-
 _EMPTY_ORIGIN: SuspectedVibrationOrigin = {
     "location": "unknown",
     "alternative_locations": [],
@@ -316,10 +302,6 @@ def summary_report_date(summary: Mapping[str, Any]) -> str:
     return str(summary.get("report_date") or "")
 
 
-def summary_row_count(summary: Mapping[str, Any]) -> int:
-    return int(_as_float(summary.get("rows")) or 0)
-
-
 def summary_record_length(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("record_length") or "") or None
 
@@ -330,38 +312,6 @@ def summary_start_time_utc(summary: Mapping[str, Any]) -> str | None:
 
 def summary_end_time_utc(summary: Mapping[str, Any]) -> str | None:
     return str(summary.get("end_time_utc") or "").strip() or None
-
-
-def summary_raw_sample_rate_hz(summary: Mapping[str, Any]) -> float | None:
-    return _as_float(summary.get("raw_sample_rate_hz"))
-
-
-def summary_sensor_model(summary: Mapping[str, Any]) -> str | None:
-    return str(summary.get("sensor_model") or "").strip() or None
-
-
-def summary_firmware_version(summary: Mapping[str, Any]) -> str | None:
-    return str(summary.get("firmware_version") or "").strip() or None
-
-
-def summary_sensor_count_used(summary: Mapping[str, Any]) -> int:
-    return int(_as_float(summary.get("sensor_count_used")) or 0)
-
-
-def summary_speed_stats(summary: Mapping[str, Any]) -> SpeedStats:
-    return summary.get("speed_stats") or _EMPTY_SPEED_STATS
-
-
-def summary_origin(summary: Mapping[str, Any]) -> SuspectedVibrationOrigin:
-    return summary.get("most_likely_origin") or _EMPTY_ORIGIN
-
-
-def summary_test_plan(summary: Mapping[str, Any]) -> list[TestStep]:
-    return [step for step in summary.get("test_plan", []) if isinstance(step, dict)]
-
-
-def summary_run_suitability(summary: Mapping[str, Any]) -> list[RunSuitabilityCheck]:
-    return [item for item in summary.get("run_suitability", []) if isinstance(item, dict)]  # type: ignore[misc]
 
 
 def summary_warnings(summary: Mapping[str, Any]) -> list[object]:
@@ -378,11 +328,6 @@ def summary_sensor_locations_active(summary: Mapping[str, Any]) -> list[str]:
     if not active:
         active = [str(loc) for loc in summary.get("sensor_locations", []) if str(loc).strip()]
     return active
-
-
-def summary_sample_rate_hz_text(summary: Mapping[str, Any]) -> str | None:
-    rate = summary_raw_sample_rate_hz(summary)
-    return f"{rate:g}" if rate is not None else None
 
 
 def _origin_from_aggregate(
@@ -537,7 +482,6 @@ def build_next_steps_from_summary(
         ]
 
     next_steps: list[NextStep] = []
-    summary_steps = summary_test_plan(summary)
     if aggregate is not None and aggregate.recommended_actions:
         for action in aggregate.recommended_actions:
             next_steps.append(
@@ -557,18 +501,6 @@ def build_next_steps_from_summary(
                     eta=action.estimated_duration,
                 ),
             )
-        if next_steps:
-            return next_steps
-    for step in summary_steps:
-        next_steps.append(
-            NextStep(
-                action=_resolve_step_value(step.get("what"), lang=lang, tr=tr),
-                why=_resolve_optional_step_value(step.get("why"), lang=lang, tr=tr),
-                confirm=_resolve_optional_step_value(step.get("confirm"), lang=lang, tr=tr),
-                falsify=_resolve_optional_step_value(step.get("falsify"), lang=lang, tr=tr),
-                eta=str(step.get("eta") or "") or None,
-            ),
-        )
     return next_steps
 
 
@@ -611,17 +543,6 @@ def build_data_trust_from_summary(
                     check=_resolve_check_text(proj.get("check_key"), lang=lang, tr=tr),
                     state=str(proj.get("state") or "warn"),
                     detail=_resolve_detail_text(proj.get("explanation"), lang=lang, tr=tr),
-                ),
-            )
-    else:
-        for summary_item in summary_run_suitability(summary):
-            check_text = _resolve_check_text(summary_item.get("check"), lang=lang, tr=tr)
-            detail = _resolve_detail_text(summary_item.get("explanation"), lang=lang, tr=tr)
-            data_trust.append(
-                DataTrustItem(
-                    check=check_text,
-                    state=str(summary_item.get("state") or "warn"),
-                    detail=detail,
                 ),
             )
     for warning in summary_warnings(summary):
@@ -873,8 +794,6 @@ def prepare_report_mapping_context(
     report_date = summary_report_date(summary) or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
-    speed_stats = summary_speed_stats(summary)
-    origin = summary_origin(summary)
     sensor_locations_active = summary_sensor_locations_active(summary)
 
     # Build domain aggregate for domain-first decisions downstream
@@ -885,27 +804,31 @@ def prepare_report_mapping_context(
     else:
         domain_aggregate = test_run
 
-    origin = _origin_from_aggregate(domain_aggregate, origin)
+    origin_fallback = summary.get("most_likely_origin") or _EMPTY_ORIGIN
+    if not isinstance(origin_fallback, dict):
+        origin_fallback = _EMPTY_ORIGIN
+    origin = _origin_from_aggregate(domain_aggregate, origin_fallback)
 
     origin_location = normalized_origin_location(origin)
 
+    config_snap = domain_aggregate.capture.setup.configuration_snapshot
+    rate = config_snap.raw_sample_rate_hz
+
     return ReportMappingContext(
-        meta=meta,
         car_name=car_name,
         car_type=car_type,
         date_str=date_str,
-        speed_stats=speed_stats,
         origin=origin,
         origin_location=origin_location,
         sensor_locations_active=sensor_locations_active,
         duration_text=summary_record_length(summary),
         start_time_utc=summary_start_time_utc(summary),
         end_time_utc=summary_end_time_utc(summary),
-        sample_rate_hz=summary_sample_rate_hz_text(summary),
+        sample_rate_hz=f"{rate:g}" if rate is not None else None,
         tire_spec_text=tire_spec_text(meta),
-        sample_count=summary_row_count(summary),
-        sensor_model=summary_sensor_model(summary),
-        firmware_version=summary_firmware_version(summary),
+        sample_count=domain_aggregate.capture.sample_count,
+        sensor_model=config_snap.sensor_model,
+        firmware_version=config_snap.firmware_version,
         domain_aggregate=domain_aggregate,
     )
 

@@ -7,6 +7,7 @@ from dataclasses import dataclass, replace
 from math import ceil, floor, log1p, pow
 
 from vibesensor.domain import LocationHotspot, VibrationSource
+from vibesensor.domain.finding import speed_bin_label
 from vibesensor.shared.constants import MULTI_SENSOR_CORROBORATION_DB
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.locations import has_any_wheel_location, is_wheel_location
@@ -15,7 +16,7 @@ from vibesensor.use_cases.diagnostics._types import (
     MatchedPoint,
     i18n_ref,
 )
-from vibesensor.use_cases.diagnostics.helpers import _speed_bin_label, _weighted_percentile
+from vibesensor.use_cases.diagnostics.helpers import _weighted_percentile
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
 
@@ -231,7 +232,7 @@ def _location_speedbin_summary(
         location = str(row.get("location") or "").strip()
         if speed is None or speed <= 0 or amp is None or amp <= 0 or not location:
             continue
-        speed_bin = _speed_bin_label(speed)
+        speed_bin = speed_bin_label(speed)
         if allowed_bins and speed_bin not in allowed_bins:
             continue
         grouped[speed_bin].append(

@@ -10,9 +10,7 @@ from collections.abc import Mapping
 from math import isfinite, sqrt
 
 from vibesensor.domain import OrderReferenceSpec
-from vibesensor.infra.config.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-)
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.constants import (
     FREQUENCY_EPSILON_HZ,
     HARMONIC_2X,
@@ -24,10 +22,10 @@ from vibesensor.shared.types.payload_types import OrderBandPayload
 
 def build_diagnostic_settings(overrides: Mapping[str, object] | None = None) -> dict[str, float]:
     """Return analysis settings merged with validated *overrides*."""
-    out = dict(DEFAULT_ANALYSIS_SETTINGS)
+    out = dict(AnalysisSettingsSnapshot.DEFAULTS)
     if not overrides:
         return out
-    for key in DEFAULT_ANALYSIS_SETTINGS:
+    for key in AnalysisSettingsSnapshot.DEFAULTS:
         parsed = as_float_or_none(overrides.get(key))
         if parsed is not None:
             out[key] = parsed

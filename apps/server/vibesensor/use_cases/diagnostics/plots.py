@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from math import floor
 from typing import Any, Literal, Required, TypedDict
 
+from vibesensor.domain.finding import speed_bin_label
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import Sample
@@ -29,7 +30,6 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _primary_vibration_strength_db,
     _run_noise_baseline_g,
     _sample_top_peaks,
-    _speed_bin_label,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, PhaseSegment
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
@@ -97,7 +97,7 @@ def scan_peak_samples(samples: list[Sample]) -> PeakSampleScan:
         peaks = [(hz, amp) for hz, amp in _sample_top_peaks(sample) if hz > 0 and amp > 0]
         floor_amp = _estimate_strength_floor_amp_g(sample)
         location = _location_label(sample)
-        speed_bin = _speed_bin_label(speed) if speed is not None and speed > 0 else None
+        speed_bin = speed_bin_label(speed) if speed is not None and speed > 0 else None
 
         if t_s is not None and t_s >= 0:
             time_values.append(t_s)

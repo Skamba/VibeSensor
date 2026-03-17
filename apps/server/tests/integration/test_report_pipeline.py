@@ -445,10 +445,14 @@ class TestPdfReportValidation:
             "very-long-identifier-with-extra-context-for-layout-validation-"
             "tailtoken-runid-12345"
         )
-        summary["sensor_model"] = (
+        long_sensor = (
             "ADXL345 laboratory validation model with extended calibration metadata "
             "tailtoken-sensormodel-98765"
         )
+        summary["sensor_model"] = long_sensor
+        # Domain reconstruction reads sensor_model from metadata sub-dict
+        if isinstance(summary.get("metadata"), dict):
+            summary["metadata"]["sensor_model"] = long_sensor
         pdf_text = _extract_pdf_text(build_report_pdf(map_summary(summary)))
         assert "tailtoken-runid-12345" in pdf_text
         assert "tailtoken" in pdf_text and "sensormodel-98765" in pdf_text

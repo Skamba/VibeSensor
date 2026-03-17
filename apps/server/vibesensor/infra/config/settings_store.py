@@ -29,7 +29,7 @@ from threading import RLock
 from typing import TYPE_CHECKING, cast, get_args
 
 from vibesensor.adapters.udp.protocol import normalize_sensor_id
-from vibesensor.domain import Car, CarSnapshot, Sensor, SpeedSource
+from vibesensor.domain import Car, CarSnapshot, Sensor, SensorPlacement, SpeedSource
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.exceptions import PersistenceError as PersistenceError
 from vibesensor.shared.types.backend_types import (
@@ -46,7 +46,6 @@ from vibesensor.shared.types.backend_types import (
     SpeedSourceUpdatePayload,
     SpeedUnitCode,
     new_car_id,
-    sanitize_aspects,
 )
 from vibesensor.shared.types.json_types import JsonObject
 
@@ -115,16 +114,11 @@ class SettingsStore:
         gps_monitor: GPSSpeedMonitor | None = None,
     ) -> None:
         """Initialise the settings store, loading persisted settings from *db* if provided."""
-        from vibesensor.infra.config.analysis_settings import (
-            DEFAULT_ANALYSIS_SETTINGS,
-            sanitize_settings,
-        )
-
         self._lock = RLock()
         self._db = db
         self._gps_monitor = gps_monitor
-        self._sanitize_analysis = sanitize_settings
-        self._analysis_values: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
+        self._sanitize_analysis = AnalysisSettingsSnapshot.sanitize
+        self._analysis_values: dict[str, float] = dict(AnalysisSettingsSnapshot.DEFAULTS)
 
         self._cars: list[CarConfig] = []
         self._active_car_id: str | None = None
@@ -240,7 +234,15 @@ class SettingsStore:
         """Return the active car as a domain ``Car`` value object."""
         with self._lock:
             car_cfg = self._find_car(self._active_car_id)
-            return car_cfg.to_car() if car_cfg else None
+            if car_cfg is None:
+                return None
+            return Car(
+                id=car_cfg.id,
+                name=car_cfg.name,
+                car_type=car_cfg.car_type,
+                aspects=dict(car_cfg.aspects),
+                variant=car_cfg.variant,
+            )
 
     def speed_source(self) -> SpeedSource:
         """Return the current speed source as a domain ``SpeedSource`` value object."""
@@ -250,7 +252,16 @@ class SettingsStore:
     def sensors(self) -> list[Sensor]:
         """Return all configured sensors as domain ``Sensor`` value objects."""
         with self._lock:
-            return [cfg.to_sensor() for cfg in self._sensors.values()]
+            return [
+                Sensor(
+                    sensor_id=cfg.sensor_id,
+                    name=cfg.name,
+                    placement=(
+                        SensorPlacement.from_code(cfg.location_code) if cfg.location_code else None
+                    ),
+                )
+                for cfg in self._sensors.values()
+            ]
 
     # -- car operations --------------------------------------------------------
 
@@ -271,14 +282,28 @@ class SettingsStore:
             car_cfg = self._find_car(self._active_car_id)
             if car_cfg is None:
                 return None
-            car = car_cfg.to_car()
+            car = Car(
+                id=car_cfg.id,
+                name=car_cfg.name,
+                car_type=car_cfg.car_type,
+                aspects=dict(car_cfg.aspects),
+                variant=car_cfg.variant,
+            )
             return dict(car.aspects)
 
     def active_car_snapshot(self) -> CarSnapshot | None:
         """Return the active car profile as a typed domain snapshot."""
         with self._lock:
-            car = self._find_car(self._active_car_id)
-            return car.to_car_snapshot() if car else None
+            car_cfg = self._find_car(self._active_car_id)
+            if car_cfg is None:
+                return None
+            return CarSnapshot(
+                car_id=car_cfg.id,
+                name=car_cfg.name,
+                car_type=car_cfg.car_type,
+                variant=car_cfg.variant,
+                aspects=dict(car_cfg.aspects),
+            )
 
     def _find_car(self, car_id: str | None) -> CarConfig | None:
         if not car_id:
@@ -336,7 +361,7 @@ class SettingsStore:
                     if car_type:
                         car.car_type = car_type
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
-                car.aspects.update(sanitize_aspects(car_data["aspects"]))
+                car.aspects.update(AnalysisSettingsSnapshot.sanitize(car_data["aspects"]))
             if "variant" in car_data:
                 raw = car_data["variant"]
                 car.variant = _clamp_str(raw, 64) or None if isinstance(raw, str) and raw else None
@@ -360,7 +385,7 @@ class SettingsStore:
             if car is None:
                 raise ValueError("No active car configured")
             old_aspects = dict(car.aspects)
-            car.aspects.update(sanitize_aspects(aspects))
+            car.aspects.update(AnalysisSettingsSnapshot.sanitize(aspects))
             try:
                 self._persist()
             except PersistenceError:

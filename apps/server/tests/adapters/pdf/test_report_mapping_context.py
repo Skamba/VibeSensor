@@ -43,18 +43,9 @@ def _make_context(**overrides: object) -> ReportMappingContext:
     if "domain_aggregate" not in overrides:
         overrides["domain_aggregate"] = _make_test_run()
     defaults: dict[str, object] = {
-        "meta": {},
         "car_name": None,
         "car_type": None,
         "date_str": "2025-01-01 12:00:00 UTC",
-        "speed_stats": {
-            "min_kmh": None,
-            "max_kmh": None,
-            "mean_kmh": None,
-            "stddev_kmh": None,
-            "range_kmh": None,
-            "steady_speed": False,
-        },
         "origin": {
             "location": "unknown",
             "alternative_locations": [],

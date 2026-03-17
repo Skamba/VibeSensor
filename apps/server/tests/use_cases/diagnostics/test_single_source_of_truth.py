@@ -16,7 +16,9 @@ import importlib
 import pytest
 from _paths import REPO_ROOT, SERVER_ROOT
 
-from vibesensor.infra.config.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+
+DEFAULT_ANALYSIS_SETTINGS = AnalysisSettingsSnapshot.DEFAULTS
 
 
 def test_strength_scoring_module_removed() -> None:
@@ -328,28 +330,19 @@ def test_protocol_docs_match_generated_contract_reference() -> None:
 
 
 def test_sanitize_settings_is_single_source() -> None:
-    """domain_models.sanitize_aspects must use the canonical sanitize_settings."""
-    import inspect
+    """AnalysisSettingsSnapshot.sanitize is the canonical validation function."""
+    sanitize = AnalysisSettingsSnapshot.sanitize
 
-    from vibesensor.infra.config.analysis_settings import sanitize_settings
-    from vibesensor.shared.types.backend_types import sanitize_aspects
-
-    # The function should delegate to sanitize_settings (check source contains the call)
-    source = inspect.getsource(sanitize_aspects)
-    assert "sanitize_settings" in source, (
-        "sanitize_aspects must delegate to sanitize_settings from analysis_settings"
-    )
-
-    # Both must use the same validation logic — verify on a known-invalid input
-    bad = {"tire_width_mm": -1.0, "rim_in": 21.0}
-    assert sanitize_settings(bad) == sanitize_aspects(bad)
+    # Verify on a known-invalid input
+    bad: dict[str, object] = {"tire_width_mm": -1.0, "rim_in": 21.0}
+    result = sanitize(bad)
+    assert "tire_width_mm" not in result
+    assert result["rim_in"] == 21.0
 
 
 def test_sanitize_settings_rejects_invalid() -> None:
-    """sanitize_settings must drop invalid values."""
-    from vibesensor.infra.config.analysis_settings import sanitize_settings
-
-    result = sanitize_settings(
+    """AnalysisSettingsSnapshot.sanitize must drop invalid values."""
+    result = AnalysisSettingsSnapshot.sanitize(
         {
             "tire_width_mm": -1.0,  # positive required, should be dropped
             "rim_in": 21.0,  # valid
@@ -364,20 +357,17 @@ def test_sanitize_settings_rejects_invalid() -> None:
 
 
 def test_validation_sets_cover_all_settings_keys() -> None:
-    """Every key in DEFAULT_ANALYSIS_SETTINGS must be in exactly one validation set."""
-    from vibesensor.infra.config.analysis_settings import (
-        NON_NEGATIVE_KEYS,
-        POSITIVE_REQUIRED_KEYS,
-    )
-
+    """Every key in DEFAULTS must be in exactly one validation set."""
     all_keys = set(DEFAULT_ANALYSIS_SETTINGS)
-    covered = POSITIVE_REQUIRED_KEYS | NON_NEGATIVE_KEYS
+    pos = AnalysisSettingsSnapshot.POSITIVE_REQUIRED_KEYS
+    non_neg = AnalysisSettingsSnapshot.NON_NEGATIVE_KEYS
+    covered = pos | non_neg
     uncovered = all_keys - covered
     assert not uncovered, (
         f"Keys not in any validation set: {uncovered}. "
         "Add them to POSITIVE_REQUIRED_KEYS or NON_NEGATIVE_KEYS."
     )
-    overlap = POSITIVE_REQUIRED_KEYS & NON_NEGATIVE_KEYS
+    overlap = pos & non_neg
     assert not overlap, f"Keys in both validation sets: {overlap}"
 
 

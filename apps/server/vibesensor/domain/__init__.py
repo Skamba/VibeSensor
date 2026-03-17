@@ -50,7 +50,7 @@ from .finding import (
 from .location_hotspot import LocationHotspot
 from .run import Run
 from .run_capture import ConfigurationSnapshot, Measurement, RunCapture, RunSetup, VibrationReading
-from .run_status import RUN_TRANSITIONS, RunStatus, transition_run
+from .run_status import RUN_TRANSITIONS, RunStatus, is_run_deletable, transition_run
 from .run_suitability import RunSuitability, SuitabilityCheck
 from .sensor import Sensor, SensorPlacement
 from .snapshots import (
@@ -115,6 +115,7 @@ __all__ = [
     "TestPlan",
     # Functions
     "RUN_TRANSITIONS",
+    "is_run_deletable",
     "plan_test_actions",
     "speed_band_sort_key",
     "speed_bin_label",

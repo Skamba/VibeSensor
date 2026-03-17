@@ -228,19 +228,36 @@ class OrderReferenceSpec:
             self.gear_uncertainty_pct / 100.0,
         )
 
-    def wheel_hz_from_speed_kmh(self, speed_kmh: float) -> float | None:
-        if not math.isfinite(speed_kmh) or speed_kmh <= 0:
-            return None
-        return self.wheel_hz_from_speed_mps(speed_kmh * KMH_TO_MPS)
-
-    def wheel_hz_from_speed_mps(self, speed_mps: float) -> float | None:
+    def wheel_hz(self, speed_mps: float) -> float | None:
+        """Wheel rotational frequency (Hz) from vehicle speed (m/s)."""
         if not math.isfinite(speed_mps) or speed_mps <= 0:
             return None
         circumference = self.tire_circumference_m
         if not math.isfinite(circumference) or circumference <= 0:
             return None
-        wheel_hz = speed_mps / circumference
-        return wheel_hz if math.isfinite(wheel_hz) else None
+        result = speed_mps / circumference
+        return result if math.isfinite(result) else None
+
+    def engine_hz(self, speed_mps: float) -> float | None:
+        """Engine rotational frequency (Hz) from vehicle speed (m/s).
+
+        Returns ``None`` when gear ratios are unavailable or zero.
+        """
+        whz = self.wheel_hz(speed_mps)
+        if whz is None or not self.is_complete or not self.has_engine_reference:
+            return None
+        result = whz * self.final_drive_ratio * self.current_gear_ratio
+        return result if math.isfinite(result) else None
+
+    # -- convenience aliases kept for callers using km/h or RPM ------------
+
+    def wheel_hz_from_speed_kmh(self, speed_kmh: float) -> float | None:
+        if not math.isfinite(speed_kmh) or speed_kmh <= 0:
+            return None
+        return self.wheel_hz(speed_kmh * KMH_TO_MPS)
+
+    def wheel_hz_from_speed_mps(self, speed_mps: float) -> float | None:
+        return self.wheel_hz(speed_mps)
 
     def engine_rpm_from_wheel_hz(self, wheel_hz: float) -> float | None:
         if not math.isfinite(wheel_hz) or not self.is_complete or not self.has_engine_reference:
@@ -249,10 +266,10 @@ class OrderReferenceSpec:
         return engine_rpm if math.isfinite(engine_rpm) else None
 
     def engine_rpm_from_speed_kmh(self, speed_kmh: float) -> float | None:
-        wheel_hz = self.wheel_hz_from_speed_kmh(speed_kmh)
-        if wheel_hz is None:
+        wh = self.wheel_hz_from_speed_kmh(speed_kmh)
+        if wh is None:
             return None
-        return self.engine_rpm_from_wheel_hz(wheel_hz)
+        return self.engine_rpm_from_wheel_hz(wh)
 
     def orders_hz_from_speed_mps(self, speed_mps: float | None) -> dict[str, float] | None:
         if speed_mps is None or not math.isfinite(speed_mps) or speed_mps <= 0:

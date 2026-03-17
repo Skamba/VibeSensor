@@ -15,13 +15,11 @@ from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
-from vibesensor.infra.config.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-    tire_circumference_m_from_spec,
-    wheel_hz_from_speed_kmh,
-)
+from vibesensor.domain import TireSpec
+from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 _FRAME_N = 256
@@ -124,13 +122,12 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
 
     _register_sensors(registry)
 
-    tire_circ = tire_circumference_m_from_spec(
-        DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"],
-        DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"],
-        DEFAULT_ANALYSIS_SETTINGS["rim_in"],
-        deflection_factor=DEFAULT_ANALYSIS_SETTINGS.get("tire_deflection_factor"),
+    _tire = TireSpec.from_aspects(
+        AnalysisSettingsSnapshot.DEFAULTS,
+        deflection_factor=AnalysisSettingsSnapshot.DEFAULTS.get("tire_deflection_factor", 1.0),
     )
-    assert tire_circ is not None
+    assert _tire is not None
+    tire_circ = _tire.circumference_m
 
     logger.start_recording()
     run_id = str(logger._run_id)
@@ -143,8 +140,8 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
             20.0 + (80.0 * step / 34.0) if step < 35 else 100.0 - (60.0 * (step - 35) / 34.0)
         )
         gps_monitor.set_speed_override_kmh(speed_kmh)
-        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, tire_circ)
-        assert wheel_hz is not None and wheel_hz > 0
+        wheel_hz = speed_kmh * KMH_TO_MPS / tire_circ
+        assert wheel_hz > 0
 
         for client_id, _, amplitude in SENSORS:
             packet = _build_sensor_packet(client_id, amplitude, step, seq, wheel_hz)

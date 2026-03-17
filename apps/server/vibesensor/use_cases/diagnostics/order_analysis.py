@@ -7,11 +7,11 @@ from dataclasses import dataclass
 from math import log1p
 
 from vibesensor.domain.finding import VibrationSource, speed_band_sort_key, speed_bin_label
-from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.shared.constants import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     CONSTANT_SPEED_STDDEV_KMH,
+    KMH_TO_MPS,
     LIGHT_STRENGTH_MAX_DB,
     MEMS_NOISE_FLOOR_G,
     NEGLIGIBLE_STRENGTH_MAX_DB,
@@ -26,17 +26,14 @@ from vibesensor.shared.constants import (
     SPEED_BIN_WIDTH_KMH,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.json_types import JsonValue
 from vibesensor.use_cases.diagnostics._types import (
     FindingPayload,
-    I18nRef,
     LocationHotspotPayload,
     MatchedPoint,
     MetadataDict,
     PhaseEvidence,
     PhaseLabels,
     Sample,
-    TestStep,
     i18n_ref,
 )
 from vibesensor.use_cases.diagnostics.helpers import (
@@ -97,8 +94,7 @@ def _wheel_hz(sample: Sample, tire_circumference_m: float | None) -> float | Non
         return None
     if tire_circumference_m is None or tire_circumference_m <= 0:
         return None
-    wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
-    return float(wheel_hz) if wheel_hz is not None else None
+    return float(speed_kmh * KMH_TO_MPS / tire_circumference_m)
 
 
 def _driveshaft_hz(
@@ -194,160 +190,6 @@ _ORDER_HYPOTHESES: tuple[OrderHypothesis, ...] = (
 
 def _order_hypotheses() -> tuple[OrderHypothesis, ...]:
     return _ORDER_HYPOTHESES
-
-
-# Ordered (token, i18n_key) pairs for wheel-focus resolution.
-# More-specific patterns come first so the first match wins.
-_WHEEL_FOCUS_RULES: tuple[tuple[str, str], ...] = (
-    ("front left wheel", "WHEEL_FOCUS_FRONT_LEFT"),
-    ("front right wheel", "WHEEL_FOCUS_FRONT_RIGHT"),
-    ("rear left wheel", "WHEEL_FOCUS_REAR_LEFT"),
-    ("rear right wheel", "WHEEL_FOCUS_REAR_RIGHT"),
-)
-
-
-def _wheel_focus_from_location(location: str) -> I18nRef:
-    """Return an i18n reference for the wheel focus label."""
-    # Normalize hyphens/underscores to spaces for robust matching against
-    # label_for_code() output which uses spaces (e.g. "Front Left Wheel").
-    token = location.strip().lower().replace("-", " ").replace("_", " ")
-    for pattern, key in _WHEEL_FOCUS_RULES:
-        if pattern in token:
-            return {"_i18n_key": key}
-    if "rear" in token or "trunk" in token:
-        return {"_i18n_key": "WHEEL_FOCUS_REAR"}
-    if "front" in token or "engine" in token:
-        return {"_i18n_key": "WHEEL_FOCUS_FRONT"}
-    return {"_i18n_key": "WHEEL_FOCUS_ALL"}
-
-
-def _finding_actions_for_source(
-    source: str,
-    *,
-    strongest_location: str = "",
-    strongest_speed_band: str = "",
-    weak_spatial_separation: bool = False,
-) -> list[TestStep]:
-    """Return language-neutral action plan dicts with i18n references.
-
-    Each ``what``, ``why``, ``confirm``, ``falsify`` field is an i18n reference
-    dict (``{"_i18n_key": "KEY", ...params}``) that the report layer resolves
-    at render time.
-
-    Parameters
-    ----------
-    source:
-        Vibration source string.
-        Recognised values: ``"wheel/tire"``, ``"driveline"``, ``"engine"``.
-    strongest_location:
-        Sensor location code (e.g. ``"front_left"``) used to tailor action
-        hints toward the most affected wheel or mounting position.
-    strongest_speed_band:
-        Speed band string (e.g. ``"80–100 km/h"``) injected into speed-focus
-        action hints so the technician knows at which speed to reproduce the
-        symptom.
-    weak_spatial_separation:
-        When ``True``, the action plan notes that sensor locations produced
-        similar intensities, which weakens spatial localisation confidence.
-
-    """
-    location = strongest_location.strip()
-    speed_band = strongest_speed_band.strip()
-    # Only include speed_hint param when a speed band is available; passing an
-    # empty string (the previous behaviour) included speed_hint="" in the i18n
-    # ref dict, which is semantically different from the key being absent and
-    # could confuse template renderers that check for key presence vs truthiness.
-    _speed_hint_param: I18nRef = (
-        {"speed_hint": i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band)} if speed_band else {}
-    )
-    if source == VibrationSource.WHEEL_TIRE:
-        wheel_focus = _wheel_focus_from_location(location)
-        location_hint = (
-            i18n_ref("LOCATION_HINT_NEAR", location=location)
-            if location
-            else i18n_ref("LOCATION_HINT_AT_WHEEL_CORNERS")
-        )
-        return [
-            {
-                "action_id": "wheel_balance_and_runout",
-                "what": i18n_ref(
-                    "ACTION_WHEEL_BALANCE_WHAT",
-                    wheel_focus=wheel_focus,
-                    **_speed_hint_param,
-                ),
-                "why": i18n_ref("ACTION_WHEEL_BALANCE_WHY", location_hint=location_hint),
-                "confirm": i18n_ref("ACTION_WHEEL_BALANCE_CONFIRM"),
-                "falsify": i18n_ref("ACTION_WHEEL_BALANCE_FALSIFY"),
-                "eta": "20-45 min",
-            },
-            {
-                "action_id": "wheel_tire_condition",
-                "what": i18n_ref("ACTION_TIRE_CONDITION_WHAT", wheel_focus=wheel_focus),
-                "why": i18n_ref("ACTION_TIRE_CONDITION_WHY"),
-                "confirm": i18n_ref("ACTION_TIRE_CONDITION_CONFIRM"),
-                "falsify": i18n_ref("ACTION_TIRE_CONDITION_FALSIFY"),
-                "eta": "10-20 min",
-            },
-        ]
-    if source == VibrationSource.DRIVELINE:
-        driveline_focus = (
-            i18n_ref("LOCATION_HINT_NEAR_SHORT", location=location)
-            if location
-            else i18n_ref("LOCATION_HINT_ALONG_DRIVELINE")
-        )
-        return [
-            {
-                "action_id": "driveline_inspection",
-                "what": i18n_ref(
-                    "ACTION_DRIVELINE_INSPECTION_WHAT",
-                    driveline_focus=driveline_focus,
-                ),
-                "why": i18n_ref("ACTION_DRIVELINE_INSPECTION_WHY"),
-                "confirm": i18n_ref("ACTION_DRIVELINE_INSPECTION_CONFIRM"),
-                "falsify": i18n_ref("ACTION_DRIVELINE_INSPECTION_FALSIFY"),
-                "eta": "20-35 min",
-            },
-            {
-                "action_id": "driveline_mounts_and_fasteners",
-                "what": i18n_ref("ACTION_DRIVELINE_MOUNTS_WHAT"),
-                "why": i18n_ref("ACTION_DRIVELINE_MOUNTS_WHY"),
-                "confirm": i18n_ref("ACTION_DRIVELINE_MOUNTS_CONFIRM"),
-                "falsify": i18n_ref("ACTION_DRIVELINE_MOUNTS_FALSIFY"),
-                "eta": "10-20 min",
-            },
-        ]
-    if source == VibrationSource.ENGINE:
-        return [
-            {
-                "action_id": "engine_mounts_and_accessories",
-                "what": i18n_ref("ACTION_ENGINE_MOUNTS_WHAT"),
-                "why": i18n_ref("ACTION_ENGINE_MOUNTS_WHY"),
-                "confirm": i18n_ref("ACTION_ENGINE_MOUNTS_CONFIRM"),
-                "falsify": i18n_ref("ACTION_ENGINE_MOUNTS_FALSIFY"),
-                "eta": "15-30 min",
-            },
-            {
-                "action_id": "engine_combustion_quality",
-                "what": i18n_ref("ACTION_ENGINE_COMBUSTION_WHAT"),
-                "why": i18n_ref("ACTION_ENGINE_COMBUSTION_WHY"),
-                "confirm": i18n_ref("ACTION_ENGINE_COMBUSTION_CONFIRM"),
-                "falsify": i18n_ref("ACTION_ENGINE_COMBUSTION_FALSIFY"),
-                "eta": "10-20 min",
-            },
-        ]
-    fallback_why = i18n_ref("ACTION_GENERAL_FALLBACK_WHY")
-    if weak_spatial_separation:
-        fallback_why = i18n_ref("ACTION_GENERAL_WEAK_SPATIAL_WHY")
-    return [
-        {
-            "action_id": "general_mechanical_inspection",
-            "what": i18n_ref("ACTION_GENERAL_INSPECTION_WHAT"),
-            "why": fallback_why,
-            "confirm": i18n_ref("ACTION_GENERAL_INSPECTION_CONFIRM"),
-            "falsify": i18n_ref("ACTION_GENERAL_INSPECTION_FALSIFY"),
-            "eta": "20-35 min",
-        },
-    ]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1049,13 +891,6 @@ def assemble_order_finding(
         focused_speed_band=context.focused_speed_band,
         hotspot_speed_band=hotspot_speed_band,
     )
-    actions = _finding_actions_for_source(
-        hypothesis.suspected_source,
-        strongest_location=strongest_location,
-        strongest_speed_band=strongest_speed_band or "",
-        weak_spatial_separation=weak_spatial_separation,
-    )
-    quick_checks: list[JsonValue] = [action["what"] for action in actions if action.get("what")][:3]
     finding: FindingPayload = {
         "finding_id": "F_ORDER",
         "finding_key": hypothesis.key,
@@ -1070,7 +905,7 @@ def assemble_order_finding(
             "definition": i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
         },
         "confidence": confidence,
-        "quick_checks": quick_checks,
+        "quick_checks": [],
         "matched_points": match.matched_points,
         "location_hotspot": (
             _location_result_to_payload(loc_result) if loc_result is not None else None
@@ -1102,10 +937,8 @@ def assemble_order_finding(
             "per_phase_confidence": per_phase_confidence,
             "phases_with_evidence": phases_with_evidence,
         },
-        "next_sensor_move": (
-            actions[0].get("what") if actions else i18n_ref("NEXT_SENSOR_MOVE_DEFAULT")
-        ),
-        "actions": actions,
+        "next_sensor_move": i18n_ref("NEXT_SENSOR_MOVE_DEFAULT"),
+        "actions": [],
         "ranking_score": ranking_score,
     }
     return ranking_score, finding

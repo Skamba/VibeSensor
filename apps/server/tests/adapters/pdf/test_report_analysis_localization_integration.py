@@ -5,8 +5,8 @@ from test_support.report_helpers import analysis_sample as _make_sample
 from test_support.report_helpers import max_non_ref_confidence, wheel_metadata
 
 from vibesensor.domain import LocationHotspot
-from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
 from vibesensor.use_cases.diagnostics.location_analysis import (
@@ -256,7 +256,7 @@ def test_build_findings_penalizes_low_localization_confidence(
     samples = []
     for idx in range(24):
         speed = 70.0 + idx
-        wh = wheel_hz_from_speed_kmh(speed, 2.036) or 10.0
+        wh = speed * KMH_TO_MPS / 2.036
         samples.append(
             {**_make_sample(float(idx), speed, 0.03), "top_peaks": [{"hz": wh, "amp": 0.03}]},
         )
@@ -306,7 +306,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     samples = []
     for idx in range(24):
         speed = 65.0 + idx
-        wh = wheel_hz_from_speed_kmh(speed, 2.036) or 10.0
+        wh = speed * KMH_TO_MPS / 2.036
         samples.append(
             {**_make_sample(float(idx), speed, 0.03), "top_peaks": [{"hz": wh, "amp": 0.03}]},
         )
@@ -374,7 +374,7 @@ def test_build_findings_excludes_partial_coverage_sensor_from_strongest_location
     samples: list[dict[str, object]] = []
     for idx in range(20):
         speed_kmh = 70.0 + idx
-        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = speed_kmh * KMH_TO_MPS / 2.036
         samples.append(
             {
                 **_make_sample(float(idx), speed_kmh, 0.02),

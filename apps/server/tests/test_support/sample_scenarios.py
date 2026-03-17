@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from test_support.core import _stable_hash
-from vibesensor.infra.config.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.strength_bands import bucket_for_strength
 
 
@@ -337,7 +337,7 @@ def build_speed_sweep_samples(
         speed = speed_start_kmh + (speed_end_kmh - speed_start_kmh) * (idx / max(1, n - 1))
         peaks: list[dict[str, float]] = []
         if add_wheel_1x:
-            w_hz = wheel_hz_from_speed_kmh(speed, tire_circumference_m)
+            w_hz = speed * KMH_TO_MPS / tire_circumference_m if tire_circumference_m > 0 else None
             if w_hz and w_hz > 0:
                 peaks.append({"hz": w_hz, "amp": peak_amp})
         peaks.append({"hz": 142.5, "amp": 0.003})

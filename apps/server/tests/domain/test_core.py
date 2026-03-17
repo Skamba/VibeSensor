@@ -201,9 +201,16 @@ class TestRun:
             session.stop()
 
     def test_analysis_settings(self) -> None:
-        settings = {"tire_width_mm": 285.0, "final_drive_ratio": 3.08}
-        session = Run(analysis_settings=settings)
-        assert session.analysis_settings == settings
+        from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+
+        snapshot = AnalysisSettingsSnapshot(tire_width_mm=285.0, final_drive_ratio=3.08)
+        session = Run(analysis_settings=snapshot)
+        assert session.analysis_settings is snapshot
+        assert session.analysis_settings.tire_width_mm == 285.0
+
+    def test_analysis_settings_default_none(self) -> None:
+        session = Run()
+        assert session.analysis_settings is None
 
 
 # ---------------------------------------------------------------------------
