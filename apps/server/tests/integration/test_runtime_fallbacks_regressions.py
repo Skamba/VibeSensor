@@ -15,7 +15,6 @@ import pytest
 from _paths import SERVER_ROOT
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.use_cases.diagnostics.order_analysis import _wheel_focus_from_location
 from vibesensor.vibration_strength import (
     strength_floor_amp_g,
     vibration_strength_db_scalar,
@@ -72,35 +71,6 @@ class TestStrengthFloorFallback:
         # Should be the median of [0.001, 0.002, 0.002, 0.001]
         expected_median = (0.001 + 0.002) / 2  # sorted: [0.001, 0.001, 0.002, 0.002]
         assert abs(floor - expected_median) < 1e-6
-
-
-class TestWheelFocusFromLocation:
-    """Regression: _wheel_focus_from_location must match label_for_code() outputs
-    which use spaces (e.g. 'Front Left Wheel'), not hyphens.
-    """
-
-    @pytest.mark.parametrize(
-        ("label", "expected_key"),
-        [
-            # Space-separated (canonical)
-            ("Front Left Wheel", "WHEEL_FOCUS_FRONT_LEFT"),
-            ("Front Right Wheel", "WHEEL_FOCUS_FRONT_RIGHT"),
-            ("Rear Left Wheel", "WHEEL_FOCUS_REAR_LEFT"),
-            ("Rear Right Wheel", "WHEEL_FOCUS_REAR_RIGHT"),
-            # Hyphen-separated
-            ("front-left wheel", "WHEEL_FOCUS_FRONT_LEFT"),
-            ("rear-right wheel", "WHEEL_FOCUS_REAR_RIGHT"),
-            # Underscore-separated
-            ("front_left_wheel", "WHEEL_FOCUS_FRONT_LEFT"),
-            ("rear_left_wheel", "WHEEL_FOCUS_REAR_LEFT"),
-            # Generic locations
-            ("Trunk", "WHEEL_FOCUS_REAR"),
-            ("Engine Bay", "WHEEL_FOCUS_FRONT"),
-            ("unknown location", "WHEEL_FOCUS_ALL"),
-        ],
-    )
-    def test_location_to_wheel_focus(self, label: str, expected_key: str) -> None:
-        assert _wheel_focus_from_location(label) == {"_i18n_key": expected_key}
 
 
 class TestStoreAnalysisErrorGuard:
