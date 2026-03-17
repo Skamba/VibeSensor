@@ -280,16 +280,6 @@ class HistoryDB:
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
-                "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
-                (f"Recovered stale recording when starting run {run_id} at {now}",),
-            )
-            if cur.rowcount > 0:
-                LOGGER.warning(
-                    "Recovered %d stale recording run(s) while starting run %s",
-                    cur.rowcount,
-                    run_id,
-                )
-            cur.execute(
                 "INSERT INTO runs (run_id, case_id, status, start_time_utc, metadata_json, "
                 "created_at) VALUES (?, ?, 'recording', ?, ?, ?)",
                 (run_id, case_id, start_time_utc, safe_json_dumps(metadata), now),
