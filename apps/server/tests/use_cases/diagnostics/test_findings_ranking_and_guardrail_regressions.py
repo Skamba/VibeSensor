@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Findings ranking and analysis guardrail regressions:
 - ranking_score synced after engine alias suppression
-- negligible confidence cap aligned with TIER_B_CEILING (0.40)
+- negligible confidence cap aligned with ConfidenceAssessment tier thresholds
 - steady_speed uses AND (not OR) for stddev and range
 - HistoryDB.close() acquires lock
 - identify_client normalizes client_id

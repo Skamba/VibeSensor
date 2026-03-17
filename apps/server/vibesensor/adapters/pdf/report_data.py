@@ -132,7 +132,7 @@ class ReportTemplateData:
     peak_rows: list[PeakRow] = field(default_factory=list)
     version_marker: str = ""
     lang: str = "en"
-    certainty_tier_key: str = "C"
+    certainty_tier_key: str = "A"
 
     # Rendering context — pre-computed during analysis so the report
     # renderer never needs to read raw samples or call analysis code.

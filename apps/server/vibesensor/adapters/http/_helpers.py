@@ -13,6 +13,7 @@ from vibesensor.shared.exceptions import (
     DataCorruptError,
     ProcessingError,
     RunNotFoundError,
+    VibeSensorError,
 )
 from vibesensor.use_cases.history.helpers import async_require_run, safe_filename
 
@@ -52,6 +53,8 @@ def domain_errors_to_http(
     except DataCorruptError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except ProcessingError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except VibeSensorError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except ValueError as exc:
         if catch_value_error is None:

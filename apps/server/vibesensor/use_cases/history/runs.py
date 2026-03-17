@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Never
 
-from vibesensor.adapters.persistence.history_db import RunStatus
+from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.run_context import add_current_context_warnings, localize_warning_list

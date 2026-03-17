@@ -86,7 +86,7 @@ The generated PDF uses A4 portrait and is structured as a **diagnostic worksheet
 |-----------|------|---------|
 | `parts_for_pattern(system, order)` | `apps/server/vibesensor/use_cases/diagnostics/pattern_parts.py` | Centralized pattern-to-parts mapping |
 | `strength_text(db_value, lang)` | `apps/server/vibesensor/use_cases/diagnostics/strength_labels.py` | Natural-language strength label with dB |
-| `certainty_tier(conf, band_key)` | `apps/server/vibesensor/use_cases/diagnostics/strength_labels.py` | Report layout tier (A/B/C) for section visibility |
+| `ConfidenceAssessment.tier` | `apps/server/vibesensor/domain/confidence_assessment.py` | Report layout tier (A/B/C) for section visibility |
 
 ### Card tone tokens (`report/pdf_style.py`)
 - `card_neutral_bg / _border` — informational

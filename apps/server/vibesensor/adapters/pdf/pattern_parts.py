@@ -126,7 +126,7 @@ def _order_bucket(order_text: str) -> str:
 
 
 def parts_for_pattern(
-    system: str,
+    system: VibrationSource | str,
     order_label: str | None = None,
     *,
     lang: str = "en",
@@ -136,7 +136,7 @@ def parts_for_pattern(
     Parameters
     ----------
     system:
-        Suspected source, e.g. ``"wheel/tire"``, ``"driveline"``, ``"engine"``.
+        Suspected source as a ``VibrationSource`` enum value.
     order_label:
         Optional order string, e.g. ``"1x wheel order"``.  When *None* or
         unrecognised the wildcard bucket ``"*"`` is used.
@@ -165,7 +165,7 @@ _SRC_PHRASES: dict[str, tuple[str, str, str, str]] = {
 
 
 def why_parts_listed(
-    system: str,
+    system: VibrationSource | str,
     order_label: str | None = None,
     *,
     lang: str = "en",

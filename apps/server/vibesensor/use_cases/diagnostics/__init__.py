@@ -20,7 +20,6 @@ from vibesensor.use_cases.diagnostics.helpers import PHASE_I18N_KEYS
 from vibesensor.use_cases.diagnostics.order_bands import build_order_bands, vehicle_orders_hz
 from vibesensor.use_cases.diagnostics.plots import PeakTableRow
 from vibesensor.use_cases.diagnostics.strength_labels import (
-    certainty_tier,
     strength_label,
     strength_text,
 )
@@ -41,7 +40,6 @@ __all__ = [
     "RunAnalysis",
     "build_findings_for_samples",
     "build_order_bands",
-    "certainty_tier",
     "i18n_ref",
     "strength_label",
     "strength_text",

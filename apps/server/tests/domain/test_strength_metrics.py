@@ -100,18 +100,6 @@ class TestStrengthMetricsFromDict:
         m = StrengthMetrics.from_dict({"vibration_strength_db": 5.0})
         assert m.top_peaks == ()
 
-    def test_from_typed_dict_alias(self) -> None:
-        data = {
-            "vibration_strength_db": 7.0,
-            "peak_amp_g": 0.01,
-            "noise_floor_amp_g": 0.001,
-            "strength_bucket": None,
-            "top_peaks": [],
-        }
-        m = StrengthMetrics.from_typed_dict(data)
-        assert m.vibration_strength_db == 7.0
-        assert m.top_peaks == ()
-
     def test_top_peaks_immutable(self) -> None:
         m = StrengthMetrics.from_dict({"top_peaks": [{"hz": 1.0}]})
         assert isinstance(m.top_peaks, tuple)

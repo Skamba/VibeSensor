@@ -124,12 +124,6 @@ class StrengthMetrics:
             top_peaks=peaks,
         )
 
-    @classmethod
-    def from_typed_dict(cls, td: Mapping[str, object]) -> StrengthMetrics:
-        """Convenience alias for ``from_dict`` — accepts the pipeline
-        ``VibrationStrengthMetrics`` TypedDict directly."""
-        return cls.from_dict(td)
-
     @property
     def dominant_peak(self) -> StrengthPeak | None:
         return self.top_peaks[0] if self.top_peaks else None

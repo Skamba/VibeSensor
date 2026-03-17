@@ -1,9 +1,11 @@
-"""Tests for certainty tier gating logic.
+"""Tests for report tier gating via domain ConfidenceAssessment.tier.
 
 Validates the 3-tier certainty system that controls report section visibility:
-- Tier A (≤ 15%): suppress specific diagnoses, show capture guidance
-- Tier B (≤ 40%): label as hypotheses, verification-only next steps
-- Tier C (> 40%): existing diagnostic behavior
+- Tier A (< 40%): suppress specific diagnoses, show capture guidance
+- Tier B (40% ≤ x < 70%): label as hypotheses, verification-only next steps
+- Tier C (≥ 70%): full diagnostic behavior with system cards and parts
+
+Tier classification is owned by ``ConfidenceAssessment.tier`` in the domain.
 """
 
 from __future__ import annotations
@@ -11,59 +13,46 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.adapters.pdf.mapping import map_summary
-from vibesensor.use_cases.diagnostics.strength_labels import (
-    TIER_A_CEILING,
-    TIER_B_CEILING,
-    certainty_tier,
-)
+from vibesensor.domain import ConfidenceAssessment
 
 # ---------------------------------------------------------------------------
-# Unit tests: certainty_tier() thresholds and boundary conditions
+# Unit tests: ConfidenceAssessment.assess().tier domain thresholds
 # ---------------------------------------------------------------------------
 
 
-class TestCertaintyTierThresholds:
-    """Verify tier boundaries are correctly applied."""
+class TestDomainTierThresholds:
+    """Verify domain tier boundaries produce the expected tier."""
 
     @pytest.mark.parametrize(
         ("confidence", "expected_tier"),
         [
-            # Tier A: low confidence (≤ 15%)
+            # Tier A: confidence < 0.40
             pytest.param(0.0, "A", id="zero"),
             pytest.param(0.05, "A", id="5pct"),
-            pytest.param(0.06, "A", id="6pct_screenshot_regression"),
             pytest.param(0.10, "A", id="10pct"),
-            pytest.param(TIER_A_CEILING, "A", id="ceiling_a"),
+            pytest.param(0.15, "A", id="15pct"),
+            pytest.param(0.30, "A", id="30pct"),
+            pytest.param(0.39, "A", id="39pct"),
             pytest.param(-0.1, "A", id="negative_edge_case"),
-            # Non-finite inputs must always return "A" (lowest tier):
-            # float('inf') previously passed both <= guards and returned "C".
             pytest.param(float("inf"), "A", id="inf_clamps_to_tier_a"),
             pytest.param(float("nan"), "A", id="nan_clamps_to_tier_a"),
             pytest.param(float("-inf"), "A", id="neg_inf_clamps_to_tier_a"),
-            # Tier B: moderate confidence (15% < x ≤ 40%)
-            pytest.param(TIER_A_CEILING + 0.001, "B", id="just_above_a"),
-            pytest.param(0.16, "B", id="16pct"),
-            pytest.param(0.20, "B", id="20pct"),
-            pytest.param(0.30, "B", id="30pct"),
-            pytest.param(TIER_B_CEILING, "B", id="ceiling_b"),
-            # Tier C: high confidence (> 40%)
-            pytest.param(TIER_B_CEILING + 0.001, "C", id="just_above_b"),
-            pytest.param(0.41, "C", id="41pct"),
-            pytest.param(0.50, "C", id="50pct"),
-            pytest.param(0.70, "C", id="70pct"),
+            # Tier B: 0.40 ≤ confidence < 0.70
+            pytest.param(0.40, "B", id="40pct_boundary"),
+            pytest.param(0.41, "B", id="41pct"),
+            pytest.param(0.50, "B", id="50pct"),
+            pytest.param(0.60, "B", id="60pct"),
+            pytest.param(0.69, "B", id="69pct"),
+            # Tier C: confidence ≥ 0.70
+            pytest.param(0.70, "C", id="70pct_boundary"),
+            pytest.param(0.75, "C", id="75pct"),
             pytest.param(0.80, "C", id="80pct"),
             pytest.param(0.97, "C", id="97pct"),
             pytest.param(1.0, "C", id="maximum"),
         ],
     )
     def test_tier_classification(self, confidence: float, expected_tier: str) -> None:
-        assert certainty_tier(confidence) == expected_tier
-
-    def test_tier_a_ceiling_constant(self):
-        assert TIER_A_CEILING == 0.15
-
-    def test_tier_b_ceiling_constant(self):
-        assert TIER_B_CEILING == 0.40
+        assert ConfidenceAssessment.assess(confidence).tier == expected_tier
 
 
 # ---------------------------------------------------------------------------
@@ -112,11 +101,11 @@ def _make_summary(
 
 
 class TestTierAReportOutput:
-    """Tier A (very low certainty): no specific systems, no repair steps."""
+    """Tier A (low certainty, < 40%): no specific systems, no repair steps."""
 
     @pytest.fixture
     def tier_a_data(self):
-        return map_summary(_make_summary(confidence=0.06))
+        return map_summary(_make_summary(confidence=0.10))
 
     def test_tier_a_no_system_cards(self, tier_a_data):
         assert tier_a_data.certainty_tier_key == "A"
@@ -135,11 +124,6 @@ class TestTierAReportOutput:
         assert any("sensor" in a.lower() for a in actions)
         assert any("reference" in a.lower() or "tire size" in a.lower() for a in actions)
 
-    def test_tier_a_at_ceiling(self):
-        data = map_summary(_make_summary(confidence=TIER_A_CEILING))
-        assert data.certainty_tier_key == "A"
-        assert data.system_cards == []
-
     def test_tier_a_next_steps_not_empty(self, tier_a_data):
         """The report should not be empty — it must guide the user."""
         assert len(tier_a_data.next_steps) > 0
@@ -156,11 +140,11 @@ class TestTierAReportOutput:
 
 
 class TestTierBReportOutput:
-    """Tier B (guarded certainty): hypotheses only, no repair parts."""
+    """Tier B (medium certainty, 40%–70%): hypotheses only, no repair parts."""
 
     @pytest.fixture
     def tier_b_data(self):
-        return map_summary(_make_summary(confidence=0.30))
+        return map_summary(_make_summary(confidence=0.50))
 
     def test_tier_b_system_cards_present(self, tier_b_data):
         assert tier_b_data.certainty_tier_key == "B"
@@ -183,12 +167,12 @@ class TestTierBReportOutput:
 
 
 # ---------------------------------------------------------------------------
-# Report output tests: Tier C behavior (unchanged)
+# Report output tests: Tier C behavior
 # ---------------------------------------------------------------------------
 
 
 class TestTierCReportOutput:
-    """Tier C (sufficient certainty): existing diagnostic behavior."""
+    """Tier C (high certainty, ≥ 70%): full diagnostic behavior."""
 
     @pytest.fixture
     def tier_c_data(self):
@@ -211,12 +195,12 @@ class TestTierCReportOutput:
 
 
 # ---------------------------------------------------------------------------
-# Regression test: ~6% certainty scenario
+# Regression test: low certainty scenario
 # ---------------------------------------------------------------------------
 
 
 class TestLowCertaintyRegression:
-    """Regression: at ~6% certainty the report must not suggest specific repairs."""
+    """Regression: at low certainty the report must not suggest specific repairs."""
 
     @pytest.fixture
     def low_cert_data(self):
@@ -240,7 +224,6 @@ class TestLowCertaintyRegression:
         data = map_summary(_make_summary(confidence=0.08, source="baseline_noise"))
         assert data.certainty_tier_key == "A"
         assert data.system_cards == []
-        # Should still provide data-collection guidance
         assert len(data.next_steps) >= 3
 
 
@@ -256,12 +239,11 @@ class TestCertaintyTierNL:
         data = map_summary(_make_summary(confidence=0.06, lang="nl"))
         assert data.certainty_tier_key == "A"
         assert len(data.next_steps) >= 3
-        # Check that NL text is used (not EN)
         actions_text = " ".join(s.action for s in data.next_steps)
         assert "snelheidsvariatie" in actions_text or "sensorlocaties" in actions_text
 
     def test_tier_b_nl_hypothesis_label(self):
-        data = map_summary(_make_summary(confidence=0.25, lang="nl"))
+        data = map_summary(_make_summary(confidence=0.50, lang="nl"))
         for card in data.system_cards:
             assert (
                 "hypothese" in card.system_name.lower() or "hypothesis" in card.system_name.lower()

@@ -617,11 +617,12 @@ def annotate_peaks_with_order_labels(summary: Mapping[str, Any]) -> None:
     if not peaks_table or not findings:
         return
 
-    order_annotations: list[tuple[float, str]] = []
+    order_annotations: list[tuple[float, str, str]] = []
     for finding in findings:
         if finding.get("finding_id") != "F_ORDER":
             continue
         label = str(finding.get("frequency_hz_or_order") or "").strip()
+        suspected_source = str(finding.get("suspected_source") or "").strip()
         matched_points = finding.get("matched_points")
         if not label or not isinstance(matched_points, list) or not matched_points:
             continue
@@ -631,14 +632,14 @@ def annotate_peaks_with_order_labels(summary: Mapping[str, Any]) -> None:
             if isinstance(point, dict) and (value := _as_float(point.get("matched_hz"))) is not None
         ]
         if matched_freqs:
-            order_annotations.append((_median(matched_freqs), label))
+            order_annotations.append((_median(matched_freqs), label, suspected_source))
 
     if not order_annotations:
         return
 
     tolerance_hz = 2.0
     used_rows: set[int] = set()
-    for median_hz, label in order_annotations:
+    for median_hz, label, suspected_source in order_annotations:
         best_idx: int | None = None
         best_dist = tolerance_hz + 1.0
         for idx, row in enumerate(peaks_table):
@@ -653,6 +654,7 @@ def annotate_peaks_with_order_labels(summary: Mapping[str, Any]) -> None:
                 best_dist = dist
         if best_idx is not None and best_dist <= tolerance_hz:
             peaks_table[best_idx]["order_label"] = label
+            peaks_table[best_idx]["suspected_source"] = suspected_source
             used_rows.add(best_idx)
 
 

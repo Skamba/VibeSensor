@@ -79,7 +79,7 @@ def extract_strength_data(
     """Extract strength metrics and top peaks from client metrics."""
     raw_strength_metrics = _raw_strength_metrics(metrics)
     strength_metrics = (
-        StrengthMetrics.from_typed_dict(raw_strength_metrics)
+        StrengthMetrics.from_dict(raw_strength_metrics)
         if raw_strength_metrics is not None
         else StrengthMetrics()
     )
