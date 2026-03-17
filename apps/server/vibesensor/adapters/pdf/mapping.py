@@ -635,7 +635,7 @@ def build_system_cards(
         signatures_human = humanize_signatures(signature_values, lang=lang)
         pattern_text = ", ".join(signatures_human) if signatures_human else tr("UNKNOWN")
         order_label = signatures_human[0] if signatures_human else None
-        parts_list = parts_for_pattern(str(source), order_label, lang=lang)
+        parts_list = parts_for_pattern(source, order_label, lang=lang)
 
         card_system_name = source_human
         card_parts = [PartSuggestion(name=part) for part in parts_list]
