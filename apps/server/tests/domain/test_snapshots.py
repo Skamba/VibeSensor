@@ -80,6 +80,35 @@ class TestAnalysisSettingsOrderRef:
         assert spec.tire_spec is not None
         assert spec.tire_spec.width_mm == 285.0
 
+    def test_order_reference_spec_is_snapshot_projection(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        captured: dict[str, object] = {}
+        sentinel = OrderReferenceSpec.from_settings(
+            {"tire_width_mm": 285.0, "tire_aspect_pct": 30.0, "rim_in": 21.0},
+        )
+        assert sentinel is not None
+
+        def _fake_from_settings(data: dict[str, object]) -> OrderReferenceSpec | None:
+            captured.update(data)
+            return sentinel
+
+        monkeypatch.setattr(OrderReferenceSpec, "from_settings", _fake_from_settings)
+        snap = AnalysisSettingsSnapshot(
+            tire_width_mm=285.0,
+            tire_aspect_pct=30.0,
+            rim_in=21.0,
+            final_drive_ratio=3.08,
+            current_gear_ratio=0.64,
+            tire_deflection_factor=0.97,
+        )
+
+        assert snap.order_reference_spec is sentinel
+        assert captured["tire_width_mm"] == 285.0
+        assert captured["final_drive_ratio"] == 3.08
+        assert captured["tire_deflection_factor"] == 0.97
+
 
 # ── RunContextSnapshot ──────────────────────────────────────────────
 

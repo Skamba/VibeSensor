@@ -12,14 +12,9 @@ from dataclasses import asdict
 from typing import TYPE_CHECKING, NamedTuple
 
 from vibesensor.adapters.udp.protocol import SensorFrame
-from vibesensor.domain.car import CarSnapshot
-from vibesensor.domain.strength_metrics import StrengthMetrics
+from vibesensor.domain.car import CarSnapshot, OrderReferenceSpec
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
-from vibesensor.infra.config.analysis_settings import (
-    engine_rpm_from_wheel_hz,
-    tire_circumference_m_from_spec,
-    wheel_hz_from_speed_kmh,
-)
+from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.constants import MPS_TO_KMH, NUMERIC_TYPES
 from vibesensor.shared.run_context import (
     apply_run_context_snapshot,
@@ -115,15 +110,7 @@ def resolve_speed_context(
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
 ) -> SpeedContext:
     """Resolve current speed/vehicle state into sample-record values."""
-    s = analysis_settings_snapshot
-    tire_circumference_m = tire_circumference_m_from_spec(
-        s.tire_width_mm or None,
-        s.tire_aspect_pct or None,
-        s.rim_in or None,
-        deflection_factor=s.tire_deflection_factor or None,
-    )
-    final_drive_ratio = s.final_drive_ratio or None
-    gear_ratio = s.current_gear_ratio or None
+    order_reference_spec = analysis_settings_snapshot.order_reference_spec
     gps_speed_mps = gps_monitor.speed_mps
     resolution = gps_monitor.resolve_speed()
     effective_speed_mps = resolution.speed_mps
@@ -137,18 +124,8 @@ def resolve_speed_context(
     )
     speed_source = _SPEED_SOURCE_MAP.get(resolution.source, "none")
     engine_rpm_estimated = None
-    if (
-        speed_kmh is not None
-        and tire_circumference_m is not None
-        and tire_circumference_m > 0
-        and isinstance(final_drive_ratio, float)
-        and final_drive_ratio > 0
-        and isinstance(gear_ratio, float)
-        and gear_ratio > 0
-    ):
-        whz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
-        if whz is not None:
-            engine_rpm_estimated = engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)
+    if speed_kmh is not None and order_reference_spec is not None:
+        engine_rpm_estimated = order_reference_spec.engine_rpm_from_speed_kmh(speed_kmh)
 
     return SpeedContext(
         speed_kmh=speed_kmh,
@@ -196,8 +173,9 @@ def build_sample_records(
         speed_source,
         engine_rpm_estimated,
     ) = resolve_speed_context(gps_monitor, analysis_settings_snapshot)
-    final_drive_ratio = analysis_settings_snapshot.final_drive_ratio or None
-    gear_ratio = analysis_settings_snapshot.current_gear_ratio or None
+    order_reference_spec = analysis_settings_snapshot.order_reference_spec
+    final_drive_ratio = _order_reference_value(order_reference_spec, "final_drive_ratio")
+    gear_ratio = _order_reference_value(order_reference_spec, "current_gear_ratio")
 
     records: list[dict[str, object]] = []
     active_client_ids = sorted(
@@ -295,6 +273,7 @@ def build_run_metadata(
     from vibesensor.adapters.persistence.runlog import create_run_metadata
 
     settings = asdict(analysis_settings_snapshot)
+    order_reference_spec = analysis_settings_snapshot.order_reference_spec
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
     raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
     incomplete = raw_sample_rate_hz is None
@@ -310,11 +289,8 @@ def build_run_metadata(
         incomplete_for_order_analysis=incomplete,
     )
     metadata.update(settings)
-    metadata["tire_circumference_m"] = tire_circumference_m_from_spec(
-        analysis_settings_snapshot.tire_width_mm,
-        analysis_settings_snapshot.tire_aspect_pct,
-        analysis_settings_snapshot.rim_in,
-        deflection_factor=analysis_settings_snapshot.tire_deflection_factor,
+    metadata["tire_circumference_m"] = (
+        order_reference_spec.tire_circumference_m if order_reference_spec is not None else None
     )
     apply_run_context_snapshot(
         metadata,
@@ -325,3 +301,13 @@ def build_run_metadata(
     if language_provider is not None:
         metadata["language"] = str(language_provider()).strip().lower() or "en"
     return dict(metadata)
+
+
+def _order_reference_value(
+    order_reference_spec: OrderReferenceSpec | None,
+    attribute: str,
+) -> float | None:
+    if order_reference_spec is None:
+        return None
+    value = getattr(order_reference_spec, attribute)
+    return float(value) if isinstance(value, float) and math.isfinite(value) else None

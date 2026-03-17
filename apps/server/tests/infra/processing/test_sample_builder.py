@@ -185,6 +185,29 @@ class TestResolveSpeedContext:
         assert source == "gps"
         assert rpm is not None and rpm > 0
 
+    def test_uses_order_reference_spec_for_engine_rpm(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        class _FakeSpec:
+            def engine_rpm_from_speed_kmh(self, speed_kmh: float) -> float | None:
+                return 1234.5 if speed_kmh > 0 else None
+
+        monkeypatch.setattr(
+            AnalysisSettingsSnapshot,
+            "order_reference_spec",
+            property(lambda self: _FakeSpec()),
+        )
+        gps = MagicMock()
+        gps.speed_mps = 10.0
+        gps.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
+        settings = AnalysisSettingsSnapshot()
+
+        speed, _, _, rpm = resolve_speed_context(gps, settings)
+
+        assert speed == pytest.approx(36.0, rel=0.01)
+        assert rpm == 1234.5
+
 
 # ---------------------------------------------------------------------------
 # firmware_version_for_run
@@ -286,6 +309,27 @@ class TestBuildRunMetadata:
             ),
         )
         assert meta["language"] == "en"
+
+    def test_uses_order_reference_spec_for_tire_circumference(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        class _FakeSpec:
+            tire_circumference_m = 2.345
+
+        monkeypatch.setattr(
+            AnalysisSettingsSnapshot,
+            "order_reference_spec",
+            property(lambda self: _FakeSpec()),
+        )
+
+        meta = build_run_metadata(
+            **_default_run_metadata_kwargs(
+                analysis_settings_snapshot=AnalysisSettingsSnapshot(),
+            ),
+        )
+
+        assert meta["tire_circumference_m"] == 2.345
 
 
 # ---------------------------------------------------------------------------

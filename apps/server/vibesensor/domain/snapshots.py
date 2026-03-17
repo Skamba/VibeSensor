@@ -17,7 +17,7 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from types import MappingProxyType
 
-from .car import CarSnapshot, OrderReferenceSpec, TireSpec
+from .car import CarSnapshot, OrderReferenceSpec
 
 __all__ = [
     "AnalysisSettingsSnapshot",
@@ -111,34 +111,12 @@ class AnalysisSettingsSnapshot:
 
     @property
     def order_reference_spec(self) -> OrderReferenceSpec | None:
-        """Derive ``OrderReferenceSpec`` from these settings.
+        """Project the captured flat settings into an ``OrderReferenceSpec``.
 
-        Returns ``None`` if tire geometry is missing/invalid.
+        This is a run-time snapshot view over persisted analysis settings, not
+        a second owner of order-reference meaning.
         """
-        tire = TireSpec.from_aspects(
-            {
-                "tire_width_mm": self.tire_width_mm,
-                "tire_aspect_pct": self.tire_aspect_pct,
-                "rim_in": self.rim_in,
-            },
-            deflection_factor=self.tire_deflection_factor,
-        )
-        if tire is None:
-            return None
-        return OrderReferenceSpec(
-            tire_spec=tire,
-            final_drive_ratio=self.final_drive_ratio,
-            current_gear_ratio=self.current_gear_ratio,
-            wheel_bandwidth_pct=self.wheel_bandwidth_pct,
-            driveshaft_bandwidth_pct=self.driveshaft_bandwidth_pct,
-            engine_bandwidth_pct=self.engine_bandwidth_pct,
-            speed_uncertainty_pct=self.speed_uncertainty_pct,
-            tire_diameter_uncertainty_pct=self.tire_diameter_uncertainty_pct,
-            final_drive_uncertainty_pct=self.final_drive_uncertainty_pct,
-            gear_uncertainty_pct=self.gear_uncertainty_pct,
-            min_abs_band_hz=self.min_abs_band_hz,
-            max_band_half_width_pct=self.max_band_half_width_pct,
-        )
+        return OrderReferenceSpec.from_settings(asdict(self))
 
 
 # ---------------------------------------------------------------------------
