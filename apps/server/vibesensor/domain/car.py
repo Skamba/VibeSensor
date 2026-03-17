@@ -41,7 +41,7 @@ _ORDER_REFERENCE_KEYS: tuple[str, ...] = (
     "max_band_half_width_pct",
     "tire_deflection_factor",
 )
-_KMH_TO_MPS = 1.0 / 3.6
+KMH_TO_MPS = 1.0 / 3.6
 
 
 @dataclass(frozen=True, slots=True)
@@ -200,7 +200,7 @@ class OrderReferenceSpec:
     @property
     def has_engine_reference(self) -> bool:
         """Whether gear ratio is set (non-zero) for engine order analysis."""
-        return self.current_gear_ratio > 0.0
+        return self.current_gear_ratio != 0.0
 
     @property
     def is_complete(self) -> bool:
@@ -231,7 +231,7 @@ class OrderReferenceSpec:
     def wheel_hz_from_speed_kmh(self, speed_kmh: float) -> float | None:
         if not math.isfinite(speed_kmh) or speed_kmh <= 0:
             return None
-        return self.wheel_hz_from_speed_mps(speed_kmh * _KMH_TO_MPS)
+        return self.wheel_hz_from_speed_mps(speed_kmh * KMH_TO_MPS)
 
     def wheel_hz_from_speed_mps(self, speed_mps: float) -> float | None:
         if not math.isfinite(speed_mps) or speed_mps <= 0:
@@ -417,8 +417,10 @@ class Car:
 def _coerce_finite_float(value: object, *, default: float | None) -> float | None:
     if value is None:
         return default
+    # Reject bool explicitly: Python treats bool as an int subclass, but
+    # order-reference configuration values should come from real numerics only.
     if isinstance(value, bool):
-        return float(value)
+        return default
     if not isinstance(value, int | float | str):
         return default
     try:

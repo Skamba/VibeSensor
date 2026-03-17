@@ -12,7 +12,7 @@ from dataclasses import asdict
 from typing import TYPE_CHECKING, NamedTuple
 
 from vibesensor.adapters.udp.protocol import SensorFrame
-from vibesensor.domain.car import CarSnapshot, OrderReferenceSpec
+from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.constants import MPS_TO_KMH, NUMERIC_TYPES
@@ -174,8 +174,12 @@ def build_sample_records(
         engine_rpm_estimated,
     ) = resolve_speed_context(gps_monitor, analysis_settings_snapshot)
     order_reference_spec = analysis_settings_snapshot.order_reference_spec
-    final_drive_ratio = _order_reference_value(order_reference_spec, "final_drive_ratio")
-    gear_ratio = _order_reference_value(order_reference_spec, "current_gear_ratio")
+    final_drive_ratio = (
+        order_reference_spec.final_drive_ratio if order_reference_spec is not None else None
+    )
+    gear_ratio = (
+        order_reference_spec.current_gear_ratio if order_reference_spec is not None else None
+    )
 
     records: list[dict[str, object]] = []
     active_client_ids = sorted(
@@ -301,13 +305,3 @@ def build_run_metadata(
     if language_provider is not None:
         metadata["language"] = str(language_provider()).strip().lower() or "en"
     return dict(metadata)
-
-
-def _order_reference_value(
-    order_reference_spec: OrderReferenceSpec | None,
-    attribute: str,
-) -> float | None:
-    if order_reference_spec is None:
-        return None
-    value = getattr(order_reference_spec, attribute)
-    return float(value) if isinstance(value, float) and math.isfinite(value) else None
