@@ -243,11 +243,7 @@ class OrderReferenceSpec:
         return wheel_hz if math.isfinite(wheel_hz) else None
 
     def engine_rpm_from_wheel_hz(self, wheel_hz: float) -> float | None:
-        if (
-            not math.isfinite(wheel_hz)
-            or not self.is_complete
-            or not self.has_engine_reference
-        ):
+        if not math.isfinite(wheel_hz) or not self.is_complete or not self.has_engine_reference:
             return None
         engine_rpm = wheel_hz * self.final_drive_ratio * self.current_gear_ratio * 60.0
         return engine_rpm if math.isfinite(engine_rpm) else None

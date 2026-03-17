@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
 _isfinite = math.isfinite
 
+
 def _safe_float(d: Mapping[str, object], key: str) -> float | None:
     """Extract a finite float from *d[key]*, or ``None``."""
     raw = d.get(key)
