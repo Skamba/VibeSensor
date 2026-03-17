@@ -14,6 +14,7 @@ from math import floor as _math_floor
 from math import log1p
 
 from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.constants import (
     MEMS_NOISE_FLOOR_G,
@@ -46,8 +47,6 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _primary_vibration_strength_db,
     _run_noise_baseline_g,
     _sample_top_peaks,
-    _speed_bin_label,
-    _speed_bin_sort_key,
     _speed_profile_from_points,
     _tire_reference_from_metadata,
     counter_delta,
@@ -405,7 +404,7 @@ def _accumulate_peak_bin_stats(
 
     # Local-bind frequently called helpers to avoid repeated global lookups.
     _local_as_float = _as_float
-    _local_speed_bin = _speed_bin_label
+    _local_speed_bin = speed_bin_label
     _local_location = _location_label
     _local_top_peaks = _sample_top_peaks
     _local_floor_est = _estimate_strength_floor_amp_g
@@ -1067,7 +1066,7 @@ def _speed_breakdown(samples: list[Sample]) -> list[SpeedBreakdownRow]:
     counts: dict[str, int] = defaultdict(int)
     _as_float_local = _as_float
     _vib_db = _primary_vibration_strength_db
-    _bin_label = _speed_bin_label
+    _bin_label = speed_bin_label
     for sample in samples:
         speed = _as_float_local(sample.get("speed_kmh"))
         if speed is None or speed <= 0:
@@ -1079,7 +1078,7 @@ def _speed_breakdown(samples: list[Sample]) -> list[SpeedBreakdownRow]:
             grouped[label].append(amp)
 
     rows: list[SpeedBreakdownRow] = []
-    for label in sorted(counts, key=_speed_bin_sort_key):
+    for label in sorted(counts, key=speed_band_sort_key):
         values = grouped.get(label, [])
         rows.append(
             {

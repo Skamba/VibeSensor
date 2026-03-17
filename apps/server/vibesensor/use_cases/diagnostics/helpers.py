@@ -121,14 +121,6 @@ def _outlier_summary(values: list[float]) -> _OutlierSummary:
     }
 
 
-def _speed_bin_label(kmh: float) -> str:
-    return speed_bin_label(kmh, bin_width=SPEED_BIN_WIDTH_KMH)
-
-
-def _speed_bin_sort_key(label: str) -> int:
-    return speed_band_sort_key(label)
-
-
 def _amplitude_weighted_speed_window(
     speeds: list[float],
     amplitudes: list[float],
@@ -143,16 +135,16 @@ def _amplitude_weighted_speed_window(
         amp_val = _as_float(amp)
         if speed_val is None or speed_val <= 0 or amp_val is None or amp_val <= 0:
             continue
-        bin_weight[_speed_bin_label(speed_val)] += amp_val
+        bin_weight[speed_bin_label(speed_val)] += amp_val
 
     if not bin_weight:
         return (None, None)
 
     strongest_bin = max(
         bin_weight.items(),
-        key=lambda item: (item[1], _speed_bin_sort_key(item[0])),
+        key=lambda item: (item[1], speed_band_sort_key(item[0])),
     )[0]
-    low_kmh = float(_speed_bin_sort_key(strongest_bin))
+    low_kmh = float(speed_band_sort_key(strongest_bin))
     return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
 
 
@@ -536,7 +528,7 @@ def _speed_profile_from_points(
 ) -> tuple[float | None, tuple[float, float] | None, str | None]:
     allowed = set(allowed_speed_bins) if allowed_speed_bins is not None else None
 
-    _bin_label = _speed_bin_label
+    _bin_label = speed_bin_label
     _float_or_none = _as_float
 
     valid: list[tuple[float, float]] = []

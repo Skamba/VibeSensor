@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
@@ -18,8 +19,6 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _primary_vibration_strength_db,
     _sample_top_peaks,
     _sensor_limit_g,
-    _speed_bin_label,
-    _speed_bin_sort_key,
     _speed_stats,
     _speed_stats_by_phase,
 )
@@ -179,15 +178,15 @@ def test_outlier_summary_with_outlier() -> None:
 
 
 def test_speed_bin_label() -> None:
-    assert _speed_bin_label(85.0) == "80-90 km/h"
-    assert _speed_bin_label(100.0) == "100-110 km/h"
-    assert _speed_bin_label(0.5) == "0-10 km/h"
+    assert speed_bin_label(85.0) == "80-90 km/h"
+    assert speed_bin_label(100.0) == "100-110 km/h"
+    assert speed_bin_label(0.5) == "0-10 km/h"
 
 
 def test_speed_bin_sort_key() -> None:
-    assert _speed_bin_sort_key("80-90 km/h") == 80
-    assert _speed_bin_sort_key("0-10 km/h") == 0
-    assert _speed_bin_sort_key("invalid") == 0
+    assert speed_band_sort_key("80-90 km/h") == 80
+    assert speed_band_sort_key("0-10 km/h") == 0
+    assert speed_band_sort_key("invalid") == 0
 
 
 # -- _speed_stats --------------------------------------------------------------
