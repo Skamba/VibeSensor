@@ -181,7 +181,7 @@ class RunContextSnapshot:
             "analysis_settings_snapshot": {
                 key: value
                 for key, value in settings_dict.items()
-                if isinstance(value, (int, float)) and value == value
+                if isinstance(value, (int, float)) and not math.isnan(value)
             },
         }
         if self.car is not None:

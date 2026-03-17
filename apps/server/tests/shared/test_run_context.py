@@ -79,7 +79,7 @@ class TestApplyRunContextSnapshot:
             "aspects": {"tire_width_mm": 255.0},
         }
 
-    def test_derives_flat_fields_from_typed_snapshot_not_serialized_dict(
+    def test_applies_car_fields_from_typed_snapshot(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
