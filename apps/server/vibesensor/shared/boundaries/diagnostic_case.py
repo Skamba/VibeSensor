@@ -254,7 +254,7 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     # Synthesize ConfidenceAssessment for historical findings that lack it
     _steady = speed_profile.steady_speed if speed_profile is not None else True
     _raw_locs = summary.get("sensor_locations")
-    _sensor_count = len(_raw_locs) if isinstance(_raw_locs, Mapping) else 0
+    _sensor_count = max(len(_raw_locs) if isinstance(_raw_locs, Mapping) else 0, 1)
     _amp_summary = summary.get("amplitude_summary")
     _band_key = (
         _amp_summary.get("overall_band", "moderate")
@@ -263,21 +263,29 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     )
     _has_ref_gaps = suitability.has_reference_gaps if suitability else False
 
-    # MIGRATION: backfills ConfidenceAssessment for historical findings that
-    # lack it.  Can be removed once all production databases are confirmed to
-    # carry ConfidenceAssessment on every Finding.
-    def _ensure_ca(f: Finding) -> Finding:
-        if f.confidence_assessment is not None:
-            return f
-        return f.with_confidence_assessment(
+    # Backfill ConfidenceAssessment for historical findings that lack it.
+    findings = tuple(
+        f
+        if f.confidence_assessment is not None
+        else f.with_confidence_assessment(
             strength_band_key=_band_key,
             steady_speed=_steady,
             has_reference_gaps=_has_ref_gaps,
-            sensor_count=max(_sensor_count, 1),
+            sensor_count=_sensor_count,
         )
-
-    findings = tuple(_ensure_ca(f) for f in findings)
-    top_causes = tuple(_ensure_ca(f) for f in top_causes)
+        for f in findings
+    )
+    top_causes = tuple(
+        f
+        if f.confidence_assessment is not None
+        else f.with_confidence_assessment(
+            strength_band_key=_band_key,
+            steady_speed=_steady,
+            has_reference_gaps=_has_ref_gaps,
+            sensor_count=_sensor_count,
+        )
+        for f in top_causes
+    )
 
     sensor_locs = summary.get("sensor_locations")
     sensor_loc_list = list(sensor_locs) if isinstance(sensor_locs, Mapping) else []
