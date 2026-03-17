@@ -757,6 +757,8 @@ def build_findings_bundle(
     language: str,
     prepared: PreparedRunData,
     overall_strength_band_key: str | None,
+    has_reference_gaps: bool,
+    sensor_count: int,
     findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
 ) -> tuple[
     SuspectedVibrationOrigin,
@@ -767,6 +769,8 @@ def build_findings_bundle(
     """Build findings plus derived diagnosis narrative fields.
 
     Returns ``(origin, timeline, domain_findings, domain_top_causes)``.
+    Findings are returned with :class:`ConfidenceAssessment` already
+    attached via :meth:`Finding.with_confidence_assessment`.
     """
     builder = findings_builder or _build_findings
     domain_findings = builder(
@@ -781,6 +785,20 @@ def build_findings_bundle(
         per_sample_phases=prepared.per_sample_phases,
         run_noise_baseline_g=prepared.run_noise_baseline_g,
     )
+
+    # Enrich findings with ConfidenceAssessment at construction time
+    domain_findings = tuple(
+        f
+        if f.confidence_assessment is not None
+        else f.with_confidence_assessment(
+            strength_band_key=overall_strength_band_key or "",
+            steady_speed=prepared.is_steady_speed,
+            has_reference_gaps=has_reference_gaps,
+            sensor_count=sensor_count,
+        )
+        for f in domain_findings
+    )
+
     domain_diagnostic_findings = tuple(f for f in domain_findings if not f.is_reference)
     most_likely_origin = summarize_origin(
         domain_diagnostic_findings,
@@ -944,6 +962,11 @@ class RunAnalysis:
                 accel_stats=self._accel_stats,
             )
         )
+        sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_bundle(
+            self._samples,
+            language=self._language,
+            per_sample_phases=self._prepared.per_sample_phases,
+        )
         (
             most_likely_origin,
             phase_timeline,
@@ -955,40 +978,15 @@ class RunAnalysis:
             language=self._language,
             prepared=self._prepared,
             overall_strength_band_key=overall_strength_band_key,
+            has_reference_gaps=not reference_complete,
+            sensor_count=len(sensor_locations),
             findings_builder=self._findings_builder,
-        )
-        sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_bundle(
-            self._samples,
-            language=self._language,
-            per_sample_phases=self._prepared.per_sample_phases,
         )
 
         # Build the domain aggregate with run-level value objects
-        from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-
         speed_profile = self._prepared.speed_profile if self._prepared.speed_values else None
         domain_suitability = run_suitability
         run_suitability_checks = run_suitability_payload(domain_suitability)
-
-        # Enrich ALL domain Findings with ConfidenceAssessment
-        has_ref_gaps = not reference_complete
-        _steady = speed_profile.steady_speed if speed_profile is not None else False
-        _n_sensors = len(sensor_locations)
-        enriched_domain_findings: list[DomainFinding] = []
-        for f in domain_findings:
-            if f.confidence_assessment is not None:
-                enriched_domain_findings.append(f)
-                continue
-            ca = ConfidenceAssessment.assess(
-                f.effective_confidence,
-                strength_band_key=overall_strength_band_key,
-                steady_speed=_steady,
-                has_reference_gaps=has_ref_gaps,
-                weak_spatial=f.weak_spatial_separation,
-                sensor_count=_n_sensors,
-            )
-            enriched_domain_findings.append(replace(f, confidence_assessment=ca))
-        domain_findings = tuple(enriched_domain_findings)
 
         # Derive top_causes as a subset of the enriched findings,
         # preserving signatures collected by group_findings_by_source
