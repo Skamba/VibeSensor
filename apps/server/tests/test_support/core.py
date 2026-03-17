@@ -12,18 +12,18 @@ from functools import cache
 from io import BytesIO
 from typing import Any
 
+from vibesensor.domain import TireSpec
 from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
-    tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
 
-TIRE_CIRC = tire_circumference_m_from_spec(
-    DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"],
-    DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"],
-    DEFAULT_ANALYSIS_SETTINGS["rim_in"],
-    deflection_factor=DEFAULT_ANALYSIS_SETTINGS.get("tire_deflection_factor"),
+_DEFAULT_TIRE = TireSpec.from_aspects(
+    DEFAULT_ANALYSIS_SETTINGS,
+    deflection_factor=DEFAULT_ANALYSIS_SETTINGS.get("tire_deflection_factor", 1.0),
 )
+assert _DEFAULT_TIRE is not None
+TIRE_CIRC = _DEFAULT_TIRE.circumference_m
 FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
 GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
 
@@ -178,13 +178,13 @@ def _profile_circ_cached(
     rim_in: int,
     tire_deflection_factor: float | None,
 ) -> float:
-    circ = tire_circumference_m_from_spec(
-        tire_width_mm,
-        tire_aspect_pct,
-        rim_in,
-        deflection_factor=tire_deflection_factor,
+    spec = TireSpec.from_aspects(
+        {"tire_width_mm": tire_width_mm, "tire_aspect_pct": tire_aspect_pct, "rim_in": rim_in},
+        deflection_factor=tire_deflection_factor if tire_deflection_factor is not None else 1.0,
     )
-    assert circ is not None and circ > 0
+    assert spec is not None
+    circ = spec.circumference_m
+    assert circ > 0
     return circ
 
 

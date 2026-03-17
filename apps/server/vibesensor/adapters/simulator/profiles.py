@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from vibesensor.domain import TireSpec
 from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
-    tire_circumference_m_from_spec,
     wheel_hz_from_speed_mps,
 )
 from vibesensor.shared.constants import KMH_TO_MPS
@@ -20,14 +20,13 @@ DEFAULT_GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
 
 def calc_default_orders() -> dict[str, float]:
     speed_mps = DEFAULT_SPEED_KMH * KMH_TO_MPS
-    circumference = tire_circumference_m_from_spec(
-        DEFAULT_TIRE_WIDTH_MM,
-        DEFAULT_TIRE_ASPECT_PCT,
-        DEFAULT_RIM_IN,
+    _tire = TireSpec.from_aspects(
+        DEFAULT_ANALYSIS_SETTINGS,
         deflection_factor=DEFAULT_DEFLECTION_FACTOR,
     )
-    if circumference is None:
+    if _tire is None:
         raise ValueError("Failed to compute tire circumference from default specs")
+    circumference = _tire.circumference_m
     whz = wheel_hz_from_speed_mps(speed_mps, circumference)
     if whz is None:
         raise ValueError("Failed to compute wheel Hz from default speed/circumference")

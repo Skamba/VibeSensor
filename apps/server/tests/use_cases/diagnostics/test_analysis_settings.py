@@ -4,21 +4,29 @@ from math import inf, nan, pi
 
 import pytest
 
+from vibesensor.domain import TireSpec
 from vibesensor.infra.config.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     engine_rpm_from_wheel_hz,
     sanitize_settings,
-    tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
     wheel_hz_from_speed_mps,
 )
 
-# -- tire_circumference_m_from_spec -------------------------------------------
+# -- TireSpec.circumference_m -------------------------------------------------
+
+
+def _circ(w: float, a: float, r: float, df: float = 1.0) -> float | None:
+    spec = TireSpec.from_aspects(
+        {"tire_width_mm": w, "tire_aspect_pct": a, "rim_in": r},
+        deflection_factor=df,
+    )
+    return spec.circumference_m if spec is not None else None
 
 
 def test_tire_circumference_typical_spec() -> None:
     # 285/30R21 → sidewall 85.5 mm, diameter 704.4 mm (no deflection)
-    result = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
+    result = _circ(285.0, 30.0, 21.0)
     assert result is not None
     expected_diameter_m = ((21.0 * 25.4) + (2.0 * 285.0 * 30.0 / 100.0)) / 1000.0
     assert abs(result - expected_diameter_m * pi) < 1e-9
@@ -26,25 +34,17 @@ def test_tire_circumference_typical_spec() -> None:
 
 def test_tire_circumference_with_deflection_factor() -> None:
     # Deflection factor of 0.97 reduces circumference by 3%.
-    no_deflection = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
-    with_deflection = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=0.97)
+    no_deflection = _circ(285.0, 30.0, 21.0)
+    with_deflection = _circ(285.0, 30.0, 21.0, df=0.97)
     assert no_deflection is not None and with_deflection is not None
     assert abs(with_deflection - no_deflection * 0.97) < 1e-9
 
 
 def test_tire_circumference_deflection_factor_one_is_identity() -> None:
-    no_deflection = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
-    factor_one = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=1.0)
+    no_deflection = _circ(285.0, 30.0, 21.0)
+    factor_one = _circ(285.0, 30.0, 21.0, df=1.0)
     assert no_deflection is not None and factor_one is not None
     assert abs(factor_one - no_deflection) < 1e-9
-
-
-def test_tire_circumference_deflection_factor_none_omitted() -> None:
-    # When deflection_factor is None, no deflection applied.
-    a = tire_circumference_m_from_spec(285.0, 30.0, 21.0)
-    b = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
-    assert a is not None and b is not None
-    assert a == b
 
 
 def test_tire_deflection_factor_in_default_analysis_settings() -> None:
@@ -53,27 +53,30 @@ def test_tire_deflection_factor_in_default_analysis_settings() -> None:
 
 
 def test_tire_circumference_returns_none_for_none_inputs() -> None:
-    assert tire_circumference_m_from_spec(None, 30.0, 21.0) is None
-    assert tire_circumference_m_from_spec(285.0, None, 21.0) is None
-    assert tire_circumference_m_from_spec(285.0, 30.0, None) is None
+    assert TireSpec.from_aspects({"tire_aspect_pct": 30.0, "rim_in": 21.0}) is None
+    assert TireSpec.from_aspects({"tire_width_mm": 285.0, "rim_in": 21.0}) is None
+    assert TireSpec.from_aspects({"tire_width_mm": 285.0, "tire_aspect_pct": 30.0}) is None
+
+
+_D = {"tire_width_mm": 285.0, "tire_aspect_pct": 30.0, "rim_in": 21.0}
 
 
 def test_tire_circumference_returns_none_for_zero_or_negative() -> None:
-    assert tire_circumference_m_from_spec(0, 30.0, 21.0) is None
-    assert tire_circumference_m_from_spec(285.0, 0, 21.0) is None
-    assert tire_circumference_m_from_spec(285.0, 30.0, 0) is None
-    assert tire_circumference_m_from_spec(-1, 30.0, 21.0) is None
+    assert TireSpec.from_aspects({**_D, "tire_width_mm": 0}) is None
+    assert TireSpec.from_aspects({**_D, "tire_aspect_pct": 0}) is None
+    assert TireSpec.from_aspects({**_D, "rim_in": 0}) is None
+    assert TireSpec.from_aspects({**_D, "tire_width_mm": -1}) is None
 
 
 def test_tire_circumference_returns_none_for_non_finite_values() -> None:
-    assert tire_circumference_m_from_spec(nan, 30.0, 21.0) is None
-    assert tire_circumference_m_from_spec(285.0, inf, 21.0) is None
+    assert TireSpec.from_aspects({**_D, "tire_width_mm": nan}) is None
+    assert TireSpec.from_aspects({**_D, "tire_aspect_pct": inf}) is None
 
 
 def test_tire_circumference_deflection_factor_above_one_ignored() -> None:
     """Deflection factor > 1.0 is physically unrealistic and must be ignored."""
-    no_deflection = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
-    above_one = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=1.5)
+    no_deflection = _circ(285.0, 30.0, 21.0)
+    above_one = _circ(285.0, 30.0, 21.0, df=1.5)
     assert no_deflection is not None and above_one is not None
     assert abs(above_one - no_deflection) < 1e-9  # factor ignored
 

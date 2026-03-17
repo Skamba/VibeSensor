@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import TypedDict, cast
 
 from vibesensor.adapters.persistence.runlog import read_jsonl_run
+from vibesensor.domain import TireSpec
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.infra.config.analysis_settings import (
     engine_rpm_from_wheel_hz,
-    tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
 from vibesensor.shared.constants import (
@@ -222,14 +222,17 @@ def _tire_reference_from_metadata(metadata: MetadataDict) -> tuple[float | None,
     if direct is not None and direct > 0:
         return direct, "metadata.tire_circumference_m"
 
-    derived = tire_circumference_m_from_spec(
-        _as_float(metadata.get("tire_width_mm")),
-        _as_float(metadata.get("tire_aspect_pct")),
-        _as_float(metadata.get("rim_in")),
-        deflection_factor=_as_float(metadata.get("tire_deflection_factor")),
-    )
-    if derived is not None and derived > 0:
-        return float(derived), "derived_from_tire_dimensions"
+    _w = _as_float(metadata.get("tire_width_mm"))
+    _a = _as_float(metadata.get("tire_aspect_pct"))
+    _r = _as_float(metadata.get("rim_in"))
+    if _w is not None and _a is not None and _r is not None:
+        _df = _as_float(metadata.get("tire_deflection_factor"))
+        _spec = TireSpec.from_aspects(
+            {"tire_width_mm": _w, "tire_aspect_pct": _a, "rim_in": _r},
+            deflection_factor=_df if _df is not None else 1.0,
+        )
+        if _spec is not None and _spec.circumference_m > 0:
+            return _spec.circumference_m, "derived_from_tire_dimensions"
     return None, None
 
 

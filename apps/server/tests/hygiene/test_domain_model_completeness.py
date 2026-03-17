@@ -1,4 +1,4 @@
-"""Verify that all domain objects listed in docs/domain-model.md are exported from vibesensor.domain.
+"""Verify all domain objects from docs/domain-model.md are exported.
 
 This test prevents regressions where domain objects are deleted or renamed
 without updating the document or the package exports.

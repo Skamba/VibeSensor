@@ -14,7 +14,6 @@ import ast
 from pathlib import Path
 
 import pytest
-
 from _paths import SERVER_ROOT
 
 _BRIDGE_MODULES = [
@@ -112,7 +111,7 @@ def _collect_domain_import_violations() -> list[str]:
 
 
 def test_domain_does_not_import_from_outer_layers() -> None:
-    """domain/ must be self-contained — no imports from adapters, infra, shared/types, or use_cases."""
+    """domain/ must not import from adapters, infra, shared/types, or use_cases."""
     violations = _collect_domain_import_violations()
     assert not violations, (
         "Domain modules must not import from outer layers:\n  " + "\n  ".join(violations)
@@ -145,7 +144,7 @@ def test_shared_types_does_not_import_from_infra() -> None:
 
 
 @pytest.mark.xfail(
-    reason="CarConfig.to_car(), to_car_snapshot(), SensorConfig.to_sensor() exist (planned fix: Section 3.1)",
+    reason="CarConfig/SensorConfig factory methods exist (fix: Section 3.1)",
     strict=True,
 )
 def test_boundary_types_no_domain_factory_methods() -> None:

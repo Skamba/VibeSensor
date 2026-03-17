@@ -12,7 +12,6 @@ __all__ = [
     "POSITIVE_REQUIRED_KEYS",
     "engine_rpm_from_wheel_hz",
     "sanitize_settings",
-    "tire_circumference_m_from_spec",
     "wheel_hz_from_speed_kmh",
     "wheel_hz_from_speed_mps",
 ]
@@ -21,7 +20,6 @@ import logging
 from collections.abc import Mapping
 from math import isfinite
 
-from vibesensor.domain import TireSpec
 from vibesensor.shared.constants import KMH_TO_MPS, SECONDS_PER_MINUTE
 
 LOGGER = logging.getLogger(__name__)
@@ -134,26 +132,6 @@ def sanitize_settings(
             attempted,
         )
     return out
-
-
-def tire_circumference_m_from_spec(
-    tire_width_mm: float | None,
-    tire_aspect_pct: float | None,
-    rim_in: float | None,
-    deflection_factor: float | None = None,
-) -> float | None:
-    """Compute tire circumference in metres from width/aspect/rim spec."""
-    if tire_width_mm is None or tire_aspect_pct is None or rim_in is None:
-        return None
-    spec = TireSpec.from_aspects(
-        {
-            "tire_width_mm": tire_width_mm,
-            "tire_aspect_pct": tire_aspect_pct,
-            "rim_in": rim_in,
-        },
-        deflection_factor=deflection_factor if deflection_factor is not None else 1.0,
-    )
-    return spec.circumference_m if spec is not None else None
 
 
 def wheel_hz_from_speed_kmh(speed_kmh: float, tire_circumference_m: float) -> float | None:
