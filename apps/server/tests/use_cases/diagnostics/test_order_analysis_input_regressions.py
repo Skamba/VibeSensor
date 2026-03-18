@@ -14,6 +14,7 @@ Covers:
 
 import pytest
 
+from vibesensor.domain import OrderReferenceSpec
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.use_cases.diagnostics.order_analysis import _driveshaft_hz, _order_label
 
@@ -128,6 +129,27 @@ class TestDriveshaftHz:
         )
         assert result is not None
         assert result > 0
+
+    def test_driveshaft_hz_prefers_order_reference_spec(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        class _FakeSpec:
+            supports_driveshaft_reference = True
+
+            def driveshaft_hz_from_speed_kmh(self, speed_kmh: float) -> float | None:
+                assert speed_kmh == 72.0
+                return 44.5
+
+        monkeypatch.setattr(
+            OrderReferenceSpec,
+            "from_settings",
+            lambda data: _FakeSpec(),  # type: ignore[return-value]
+        )
+
+        result = _driveshaft_hz({"speed_kmh": 72.0}, {}, tire_circumference_m=None)
+
+        assert result == pytest.approx(44.5)
 
 
 # ------------------------------------------------------------------

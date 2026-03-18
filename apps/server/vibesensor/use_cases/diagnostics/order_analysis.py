@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from math import log1p
 
+from vibesensor.domain import OrderReferenceSpec
 from vibesensor.domain.finding import VibrationSource, speed_band_sort_key, speed_bin_label
 from vibesensor.shared.constants import (
     CONFIDENCE_CEILING,
@@ -41,6 +42,7 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _effective_engine_rpm,
     _estimate_strength_floor_amp_g,
     _location_label,
+    _order_reference_spec_from_context,
     _phase_to_str,
     _sample_top_peaks,
     _speed_profile_from_points,
@@ -88,10 +90,20 @@ def _location_result_to_payload(
     }
 
 
-def _wheel_hz(sample: Sample, tire_circumference_m: float | None) -> float | None:
+def _wheel_hz(
+    sample: Sample,
+    tire_circumference_m: float | None,
+    metadata: MetadataDict | None = None,
+    order_reference_spec: OrderReferenceSpec | None = None,
+) -> float | None:
     speed_kmh = _as_float(sample.get("speed_kmh"))
     if speed_kmh is None or speed_kmh <= 0:
         return None
+    spec = order_reference_spec
+    if spec is None and metadata is not None:
+        spec = _order_reference_spec_from_context(metadata, sample)
+    if spec is not None and spec.supports_wheel_reference:
+        return spec.wheel_hz_from_speed_kmh(speed_kmh)
     if tire_circumference_m is None or tire_circumference_m <= 0:
         return None
     return float(speed_kmh * KMH_TO_MPS / tire_circumference_m)
@@ -102,7 +114,21 @@ def _driveshaft_hz(
     metadata: MetadataDict,
     tire_circumference_m: float | None,
 ) -> float | None:
-    whz = _wheel_hz(sample, tire_circumference_m)
+    speed_kmh = _as_float(sample.get("speed_kmh"))
+    spec = _order_reference_spec_from_context(metadata, sample)
+    if (
+        speed_kmh is not None
+        and speed_kmh > 0
+        and spec is not None
+        and spec.supports_driveshaft_reference
+    ):
+        return spec.driveshaft_hz_from_speed_kmh(speed_kmh)
+    whz = _wheel_hz(
+        sample,
+        tire_circumference_m,
+        metadata,
+        order_reference_spec=spec,
+    )
     fd = _as_float(sample.get("final_drive_ratio")) or _as_float(metadata.get("final_drive_ratio"))
     if whz is None or fd is None or fd <= 0:
         return None
@@ -145,7 +171,7 @@ class OrderHypothesis:
         tire_circumference_m: float | None,
     ) -> tuple[float | None, str]:
         if self.order_label_base == "wheel":
-            base = _wheel_hz(sample, tire_circumference_m)
+            base = _wheel_hz(sample, tire_circumference_m, metadata)
             return (base * self.order, "speed+tire") if base is not None else (None, "missing")
         if self.order_label_base == "driveshaft":
             base = _driveshaft_hz(sample, metadata, tire_circumference_m)
@@ -1008,6 +1034,7 @@ class OrderAnalysisSession:
         "_lang",
         "_per_sample_phases",
         "_cached_peaks",
+        "_order_reference_spec",
     )
 
     def __init__(
@@ -1036,6 +1063,7 @@ class OrderAnalysisSession:
         self._connected_locations = connected_locations
         self._lang = lang
         self._per_sample_phases = per_sample_phases
+        self._order_reference_spec = _order_reference_spec_from_context(metadata)
         # Pre-compute peaks once for all hypotheses
         self._cached_peaks: list[list[tuple[float, float]]] = [
             _sample_top_peaks(s) for s in samples
@@ -1058,11 +1086,16 @@ class OrderAnalysisSession:
 
     def _should_test(self, hypothesis: OrderHypothesis) -> bool:
         """Whether to test this hypothesis given available references."""
-        if hypothesis.key.startswith(("wheel_", "driveshaft_")):
-            return (
-                self._speed_sufficient
-                and self._tire_circumference_m is not None
-                and self._tire_circumference_m > 0
+        spec = self._order_reference_spec
+        if hypothesis.key.startswith("wheel_"):
+            return self._speed_sufficient and (
+                (spec is not None and spec.supports_wheel_reference)
+                or (self._tire_circumference_m is not None and self._tire_circumference_m > 0)
+            )
+        if hypothesis.key.startswith("driveshaft_"):
+            return self._speed_sufficient and (
+                (spec is not None and spec.supports_driveshaft_reference)
+                or (self._tire_circumference_m is not None and self._tire_circumference_m > 0)
             )
         if hypothesis.key.startswith("engine_"):
             return self._engine_ref_sufficient
