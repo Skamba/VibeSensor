@@ -169,6 +169,7 @@ def _build_full_ingestion_scenario() -> tuple[dict[str, Any], list[dict[str, Any
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.xdist_group(name="report_pipeline")
 class TestIngestionScenario:
     """Full multi-sensor ingestion scenario with thorough validation."""
 
@@ -325,6 +326,7 @@ def _build_20s_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
 
 
 @pytest.mark.long_sim
+@pytest.mark.xdist_group(name="report_pipeline")
 class TestPdfReportValidation:
     """Validate PDF report from a realistic 20-second scenario."""
 
@@ -464,6 +466,7 @@ class TestPdfReportValidation:
 
 
 @pytest.mark.long_sim
+@pytest.mark.xdist_group(name="report_pipeline")
 class TestPdfLanguageParity:
     """Validate that EN and NL PDFs for the same scenario are structurally equivalent."""
 

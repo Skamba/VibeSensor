@@ -458,6 +458,7 @@ _SCENARIO_BUILDERS = {
 }
 
 
+@pytest.mark.xdist_group(name="report_metrics_consistency")
 class TestAllFiveScenariosPass:
     """Run all 5 scenarios and assert all consistency checks pass."""
 
