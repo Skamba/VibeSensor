@@ -31,7 +31,7 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     Finding as DomainFinding,
 )
-from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedStatsSnapshot
+from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
 from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
@@ -209,7 +209,7 @@ def compute_reference_completeness(metadata: JsonObject) -> bool:
 def build_data_quality_dict(
     samples: list[Sample],
     speed_values: list[float],
-    speed_stats: SpeedStatsSnapshot,
+    speed_stats: SpeedProfileSummary,
     speed_non_null_pct: float,
     accel_stats: AccelStatistics,
     amp_metric_values: list[float],
@@ -340,7 +340,7 @@ def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
 
 def prepare_speed_and_phases(
     samples: list[Sample],
-) -> tuple[list[float], SpeedStatsSnapshot, float, bool, list[DrivingPhase], list[PhaseSegment]]:
+) -> tuple[list[float], SpeedProfileSummary, float, bool, list[DrivingPhase], list[PhaseSegment]]:
     """Compute speed stats and phase segmentation shared by multiple entry points."""
     speed_values = [
         speed
@@ -508,8 +508,8 @@ def build_summary_payload(
     most_likely_origin: VibrationOrigin | None,
     test_plan: list[JsonObject],
     phase_timeline: list[DrivingPhaseInterval],
-    speed_stats: SpeedStatsSnapshot,
-    speed_stats_by_phase: dict[str, SpeedStatsSnapshot],
+    speed_stats: SpeedProfileSummary,
+    speed_stats_by_phase: dict[str, SpeedProfileSummary],
     phase_info: DrivingPhaseSummary,
     sensor_locations: list[str],
     connected_locations: set[str],
@@ -670,7 +670,7 @@ class PreparedRunData:
     phase_segments: list[PhaseSegment]
     run_noise_baseline_g: float | None
     speed_profile: SpeedProfile
-    speed_stats_by_phase: dict[str, SpeedStatsSnapshot]
+    speed_stats_by_phase: dict[str, SpeedProfileSummary]
     speed_breakdown: list[SpeedBreakdownRow]
     speed_breakdown_skipped_reason: JsonObject | None
     phase_speed_breakdown: list[PhaseSpeedBreakdownRow]

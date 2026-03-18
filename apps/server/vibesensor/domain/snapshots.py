@@ -6,7 +6,7 @@ boundary payload shapes.
 ``AnalysisSettingsSnapshot`` — typed analysis-settings context.
 ``RunContextSnapshot`` — run-attached interpretive snapshot containing
 settings and optional car context.
-``SpeedStatsSnapshot`` — speed summary for reconstruction/interpretation.
+``SpeedProfileSummary`` — speed summary for reconstruction/interpretation.
 ``DrivingPhaseSummary`` — phase summary for reconstruction/interpretation.
 """
 
@@ -28,7 +28,7 @@ __all__ = [
     "DrivingPhaseSummary",
     "RunContextSnapshot",
     "RunMetadataSnapshot",
-    "SpeedStatsSnapshot",
+    "SpeedProfileSummary",
 ]
 
 
@@ -308,12 +308,12 @@ class RunContextSnapshot:
 
 
 # ---------------------------------------------------------------------------
-# SpeedStatsSnapshot
+# SpeedProfileSummary
 # ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True, slots=True)
-class SpeedStatsSnapshot:
+class SpeedProfileSummary:
     """Typed internal speed-summary snapshot for reconstruction and
     interpretation support.
     """
@@ -327,7 +327,7 @@ class SpeedStatsSnapshot:
     sample_count: int = 0
 
     @classmethod
-    def from_dict(cls, d: Mapping[str, object]) -> SpeedStatsSnapshot:
+    def from_dict(cls, d: Mapping[str, object]) -> SpeedProfileSummary:
         """Parse from flat mapping. Missing keys default sensibly."""
 
         def _opt_float(key: str) -> float | None:

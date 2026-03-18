@@ -1553,7 +1553,7 @@ _EXPECTED_DOMAIN_EXPORTS = [
     "AnalysisSettingsSnapshot",
     "DrivingPhaseSummary",
     "RunContextSnapshot",
-    "SpeedStatsSnapshot",
+    "SpeedProfileSummary",
     # Value objects — run and capture
     "ConfigurationSnapshot",
     "Measurement",

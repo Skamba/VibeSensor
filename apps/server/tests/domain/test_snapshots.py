@@ -1,7 +1,7 @@
 """Tests for domain snapshot value objects.
 
 Covers AnalysisSettingsSnapshot, RunContextSnapshot,
-SpeedStatsSnapshot, and DrivingPhaseSummary.
+SpeedProfileSummary, and DrivingPhaseSummary.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from vibesensor.domain import (
     DrivingPhaseSummary,
     OrderReferenceSpec,
     RunContextSnapshot,
-    SpeedStatsSnapshot,
+    SpeedProfileSummary,
 )
 
 # ── AnalysisSettingsSnapshot ────────────────────────────────────────
@@ -225,14 +225,14 @@ class TestRunContextSnapshotFromDict:
         assert ctx.car_variant is None
 
 
-# ── SpeedStatsSnapshot ──────────────────────────────────────────────
+# ── SpeedProfileSummary ──────────────────────────────────────────────
 
 
-class TestSpeedStatsSnapshotFromDict:
+class TestSpeedProfileSummaryFromDict:
     """from_dict() constructor tests."""
 
     def test_empty_dict_never_raises(self) -> None:
-        snap = SpeedStatsSnapshot.from_dict({})
+        snap = SpeedProfileSummary.from_dict({})
         assert snap.min_kmh is None
         assert snap.steady_speed is False
         assert snap.sample_count == 0
@@ -247,18 +247,18 @@ class TestSpeedStatsSnapshotFromDict:
             "steady_speed": True,
             "sample_count": 500,
         }
-        snap = SpeedStatsSnapshot.from_dict(data)
+        snap = SpeedProfileSummary.from_dict(data)
         assert snap.min_kmh == 40.0
         assert snap.max_kmh == 120.0
         assert snap.steady_speed is True
         assert snap.sample_count == 500
 
     def test_non_numeric_speed_defaults_to_none(self) -> None:
-        snap = SpeedStatsSnapshot.from_dict({"min_kmh": "bad"})
+        snap = SpeedProfileSummary.from_dict({"min_kmh": "bad"})
         assert snap.min_kmh is None
 
     def test_infinity_speed_defaults_to_none(self) -> None:
-        snap = SpeedStatsSnapshot.from_dict({"mean_kmh": float("inf")})
+        snap = SpeedProfileSummary.from_dict({"mean_kmh": float("inf")})
         assert snap.mean_kmh is None
 
 

@@ -59,7 +59,7 @@
   `speed_profile.py` (SpeedProfile),
   `run_suitability.py` (RunSuitability, SuitabilityCheck),
   `run_status.py` (RunStatus, RUN_TRANSITIONS),
-  `snapshots.py` (AnalysisSettingsSnapshot, RunContextSnapshot, RunMetadataSnapshot, SpeedStatsSnapshot, DrivingPhaseSummary),
+  `snapshots.py` (AnalysisSettingsSnapshot, RunContextSnapshot, RunMetadataSnapshot, SpeedProfileSummary, DrivingPhaseSummary),
   `strength_metrics.py` (StrengthMetrics, StrengthPeak).
   Domain objects own
   classification, ranking, actionability, surfacing, lifecycle, and

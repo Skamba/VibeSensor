@@ -59,7 +59,7 @@ from .snapshots import (
     DrivingPhaseSummary,
     RunContextSnapshot,
     RunMetadataSnapshot,
-    SpeedStatsSnapshot,
+    SpeedProfileSummary,
 )
 from .speed_profile import SpeedProfile
 from .speed_source import SpeedSource, SpeedSourceKind
@@ -83,7 +83,7 @@ __all__ = [
     "DrivingPhaseSummary",
     "RunContextSnapshot",
     "RunMetadataSnapshot",
-    "SpeedStatsSnapshot",
+    "SpeedProfileSummary",
     # Value objects — run and capture
     "ConfigurationSnapshot",
     "Measurement",

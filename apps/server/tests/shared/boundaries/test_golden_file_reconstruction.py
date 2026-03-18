@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from test_support import build_speed_sweep_fault_samples, standard_metadata
 
-from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedStatsSnapshot
+from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
 from vibesensor.shared.boundaries.diagnostic_case import (
     speed_profile_from_stats,
 )
@@ -63,7 +63,7 @@ class TestGoldenFileReconstruction:
             pytest.skip("No speed_stats in golden summary")
 
         sp = speed_profile_from_stats(
-            SpeedStatsSnapshot.from_dict(raw_speed_stats),
+            SpeedProfileSummary.from_dict(raw_speed_stats),
             DrivingPhaseSummary.from_dict(raw_phase_info) if raw_phase_info else None,
         )
         assert sp == test_run.speed_profile
@@ -73,14 +73,14 @@ class TestRoundTripParity:
     """Round-trip parity tests for snapshot from_dict factories."""
 
     def test_speed_stats_snapshot_from_dict_empty(self) -> None:
-        snap = SpeedStatsSnapshot.from_dict({})
+        snap = SpeedProfileSummary.from_dict({})
         assert snap.min_kmh is None
         assert snap.max_kmh is None
         assert snap.steady_speed is False
         assert snap.sample_count == 0
 
     def test_speed_stats_snapshot_from_dict_partial(self) -> None:
-        snap = SpeedStatsSnapshot.from_dict({"min_kmh": 30, "max_kmh": 80})
+        snap = SpeedProfileSummary.from_dict({"min_kmh": 30, "max_kmh": 80})
         assert snap.min_kmh == 30.0
         assert snap.max_kmh == 80.0
         assert snap.steady_speed is False
@@ -114,7 +114,7 @@ class TestRoundTripParity:
         assert snap.speed_unknown_pct == pytest.approx(8.0)
 
     def test_speed_profile_from_stats_with_empty_snapshots(self) -> None:
-        sp = speed_profile_from_stats(SpeedStatsSnapshot())
+        sp = speed_profile_from_stats(SpeedProfileSummary())
         assert sp.min_kmh == 0.0
         assert sp.max_kmh == 0.0
         assert sp.steady_speed is False

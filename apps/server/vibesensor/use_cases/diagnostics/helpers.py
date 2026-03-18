@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TypedDict
 
 from vibesensor.adapters.persistence.runlog import read_jsonl_run
-from vibesensor.domain import OrderReferenceSpec, SpeedStatsSnapshot, TireSpec
+from vibesensor.domain import OrderReferenceSpec, SpeedProfileSummary, TireSpec
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.shared.constants import (
     KMH_TO_MPS,
@@ -145,15 +145,15 @@ def _amplitude_weighted_speed_window(
     return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
 
 
-def _speed_stats(speed_values: list[float]) -> SpeedStatsSnapshot:
+def _speed_stats(speed_values: list[float]) -> SpeedProfileSummary:
     if not speed_values:
-        return SpeedStatsSnapshot()
+        return SpeedProfileSummary()
     vmin = min(speed_values)
     vmax = max(speed_values)
     vmean, var = _mean_variance(speed_values)
     stddev = sqrt(var) if var is not None else 0.0
     vrange = max(0.0, vmax - vmin)
-    return SpeedStatsSnapshot(
+    return SpeedProfileSummary(
         min_kmh=vmin,
         max_kmh=vmax,
         mean_kmh=vmean,
@@ -166,11 +166,11 @@ def _speed_stats(speed_values: list[float]) -> SpeedStatsSnapshot:
 def _speed_stats_by_phase(
     samples: list[Sample],
     per_sample_phases: Sequence[PhaseLabel],
-) -> dict[str, SpeedStatsSnapshot]:
+) -> dict[str, SpeedProfileSummary]:
     """Compute speed statistics broken down by driving phase.
 
     Returns a dict mapping each phase label (string) to a
-    :class:`SpeedStatsSnapshot` with ``sample_count`` set to the total
+    :class:`SpeedProfileSummary` with ``sample_count`` set to the total
     number of samples assigned to that phase (regardless of speed availability).
     """
     phase_speeds: dict[str, list[float]] = defaultdict(list)
@@ -181,10 +181,10 @@ def _speed_stats_by_phase(
         speed = _as_float(sample.get("speed_kmh"))
         if speed is not None and speed > 0:
             phase_speeds[phase_key].append(speed)
-    result: dict[str, SpeedStatsSnapshot] = {}
+    result: dict[str, SpeedProfileSummary] = {}
     for phase_key in phase_sample_counts:
         base = _speed_stats(phase_speeds.get(phase_key, []))
-        result[phase_key] = SpeedStatsSnapshot(
+        result[phase_key] = SpeedProfileSummary(
             min_kmh=base.min_kmh,
             max_kmh=base.max_kmh,
             mean_kmh=base.mean_kmh,
