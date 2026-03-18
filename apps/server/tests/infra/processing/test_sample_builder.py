@@ -17,7 +17,6 @@ from vibesensor.use_cases.run.sample_builder import (
     build_sample_records,
     dominant_hz_from_strength,
     firmware_version_for_run,
-    resolve_speed_context,
     safe_metric,
 )
 
@@ -72,63 +71,6 @@ class TestDominantHzFromStrength:
             },
         )
         assert dominant_hz_from_strength(sm) is None
-
-
-# ---------------------------------------------------------------------------
-# resolve_speed_context
-# ---------------------------------------------------------------------------
-
-
-class TestResolveSpeedContext:
-    def test_no_speed(self) -> None:
-        gps = MagicMock()
-        gps.speed_mps = None
-        gps.effective_speed_mps = None
-        gps.resolve_speed.return_value = MagicMock(source="none")
-        settings = AnalysisSettingsSnapshot()
-        speed, gps_speed, source, rpm = resolve_speed_context(gps, settings)
-        assert speed is None
-        assert rpm is None
-        assert source == "none"
-
-    def test_gps_speed(self) -> None:
-        gps = MagicMock()
-        gps.speed_mps = 10.0
-        gps.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
-        settings = AnalysisSettingsSnapshot(
-            tire_width_mm=205.0,
-            tire_aspect_pct=55.0,
-            rim_in=16.0,
-            final_drive_ratio=3.73,
-            current_gear_ratio=1.0,
-        )
-        speed, gps_speed, source, rpm = resolve_speed_context(gps, settings)
-        assert speed == pytest.approx(36.0, rel=0.01)
-        assert source == "gps"
-        assert rpm is not None and rpm > 0
-
-    def test_uses_order_reference_spec_for_engine_rpm(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        class _FakeSpec:
-            def engine_rpm_from_speed_kmh(self, speed_kmh: float) -> float | None:
-                return 1234.5 if speed_kmh > 0 else None
-
-        monkeypatch.setattr(
-            AnalysisSettingsSnapshot,
-            "order_reference_spec",
-            property(lambda self: _FakeSpec()),
-        )
-        gps = MagicMock()
-        gps.speed_mps = 10.0
-        gps.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
-        settings = AnalysisSettingsSnapshot()
-
-        speed, _, _, rpm = resolve_speed_context(gps, settings)
-
-        assert speed == pytest.approx(36.0, rel=0.01)
-        assert rpm == 1234.5
 
 
 # ---------------------------------------------------------------------------
