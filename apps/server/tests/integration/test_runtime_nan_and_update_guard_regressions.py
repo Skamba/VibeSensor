@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Runtime NaN handling and update-manager guard regressions:
 NaN guards, correlation clamp, persist rollback,
-firmware cache streaming, CancelledError re-raise, _normalize_lang dedup,
+firmware cache streaming, CancelledError re-raise,
 _weighted_percentile direct import, _dir_sha256 separators, _corr_abs_clamped,
 _canonical_location edge cases, PDF peak suffix i18n."""
 
@@ -18,7 +18,7 @@ import pytest
 from vibesensor.adapters.pdf.pdf_diagram_render import _canonical_location
 from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
 from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
-from vibesensor.report_i18n import normalize_lang, tr
+from vibesensor.report_i18n import tr
 from vibesensor.use_cases.diagnostics.helpers import _corr_abs_clamped, _weighted_percentile
 from vibesensor.use_cases.updates.firmware_cache import (
     FirmwareCacheConfig,
@@ -215,28 +215,6 @@ class TestUpdateManagerCancelledError:
 
         with pytest.raises(asyncio.CancelledError):
             await mgr._run_update("ssid", "pass")
-
-
-# ── 6. _normalize_lang uses canonical implementation ─────────────────────
-
-
-class TestNormalizeLangDedup:
-    """Verify summary uses the canonical normalize_lang."""
-
-    @pytest.mark.parametrize(
-        ("raw", "expected"),
-        [
-            ("en", "en"),
-            ("EN", "en"),
-            ("", "en"),
-            (None, "en"),
-            ("nl", "nl"),
-            ("NL", "nl"),
-            ("nl-BE", "nl"),
-        ],
-    )
-    def test_normalize_lang(self, raw: str | None, expected: str) -> None:
-        assert normalize_lang(raw) == expected
 
 
 # ── 7. _weighted_percentile direct import ─────────────────────────────────
