@@ -75,28 +75,29 @@ class TestExtractStrengthData:
                 },
             },
         }
-        sm, peaks = extract_strength_data(metrics)
+        sm = extract_strength_data(metrics)
         assert isinstance(sm, StrengthMetrics)
         assert sm.vibration_strength_db == 22.0
         assert sm.strength_bucket == "l2"
         assert sm.peak_amp_g == 0.15
         assert sm.noise_floor_amp_g == 0.003
         assert sm.dominant_hz == 15.0
-        assert len(peaks) == 1
-        assert peaks[0] == {
-            "hz": 15.0,
-            "amp": 0.12,
-            "vibration_strength_db": 22.0,
-            "strength_bucket": "l2",
-        }
+        assert sm.to_peak_payloads(max_items=8) == [
+            {
+                "hz": 15.0,
+                "amp": 0.12,
+                "vibration_strength_db": 22.0,
+                "strength_bucket": "l2",
+            },
+        ]
 
     def test_empty_metrics(self) -> None:
-        sm, peaks = extract_strength_data({})
+        sm = extract_strength_data({})
         assert isinstance(sm, StrengthMetrics)
         assert sm.vibration_strength_db is None
         assert sm.peak_amp_g is None
         assert sm.noise_floor_amp_g is None
-        assert peaks == []
+        assert sm.to_peak_payloads(max_items=8) == []
 
     def test_invalid_peak_skipped(self) -> None:
         metrics = {
@@ -110,9 +111,9 @@ class TestExtractStrengthData:
                 },
             },
         }
-        sm, peaks = extract_strength_data(metrics)
+        sm = extract_strength_data(metrics)
         assert sm.dominant_hz is None
-        assert peaks == []
+        assert sm.to_peak_payloads(max_items=8) == []
 
     def test_max_8_peaks(self) -> None:
         metrics = {
@@ -122,9 +123,9 @@ class TestExtractStrengthData:
                 },
             },
         }
-        sm, peaks = extract_strength_data(metrics)
+        sm = extract_strength_data(metrics)
         assert len(sm.top_peaks) == 11
-        assert len(peaks) == 8
+        assert len(sm.to_peak_payloads(max_items=8)) == 8
 
 
 # ---------------------------------------------------------------------------

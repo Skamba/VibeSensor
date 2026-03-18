@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from types import MappingProxyType
+
 from vibesensor.domain import Car, CarSnapshot, OrderReferenceSpec
 
 # ---------------------------------------------------------------------------
@@ -156,6 +158,33 @@ class TestCarOrderReferenceSpec:
 
         assert car.order_reference_spec is spec
         assert dict(car.aspects) == spec.to_settings_dict()
+        assert car.tire_width_mm == 245.0
+        assert car.tire_aspect_pct == 40.0
+        assert car.rim_in == 18.0
+
+    def test_car_order_reference_properties_do_not_fall_back_to_aspects(self) -> None:
+        car = Car(
+            aspects={
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+                "final_drive_ratio": 3.23,
+            },
+        )
+        assert car.order_reference_spec is not None
+
+        object.__setattr__(
+            car,
+            "_aspects",
+            MappingProxyType(
+                {
+                    "tire_width_mm": 999.0,
+                    "tire_aspect_pct": 1.0,
+                    "rim_in": 1.0,
+                },
+            ),
+        )
+
         assert car.tire_width_mm == 245.0
         assert car.tire_aspect_pct == 40.0
         assert car.rim_in == 18.0

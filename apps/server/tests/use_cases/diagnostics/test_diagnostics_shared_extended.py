@@ -4,6 +4,7 @@ import pytest
 
 from vibesensor.domain import OrderReferenceSpec
 from vibesensor.shared.json_utils import as_float_or_none
+from vibesensor.use_cases.diagnostics.helpers import _effective_engine_rpm
 from vibesensor.use_cases.diagnostics.order_bands import (
     build_diagnostic_settings,
     combined_relative_uncertainty,
@@ -148,3 +149,29 @@ def test_vehicle_orders_projects_boundary_settings_into_order_reference_spec(
     }
     assert captured["final_drive_ratio"] == 3.55
     assert captured["tire_width_mm"] == 285.0
+
+
+def test_effective_engine_rpm_prefers_order_reference_spec(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _FakeSpec:
+        supports_engine_reference = True
+
+        def engine_rpm_from_speed_kmh(self, speed_kmh: float) -> float | None:
+            assert speed_kmh == 80.0
+            return 2345.0
+
+    monkeypatch.setattr(
+        OrderReferenceSpec,
+        "from_settings",
+        lambda data: _FakeSpec(),  # type: ignore[return-value]
+    )
+
+    rpm, source = _effective_engine_rpm(
+        {"speed_kmh": 80.0},
+        metadata={},
+        tire_circumference_m=None,
+    )
+
+    assert rpm == pytest.approx(2345.0)
+    assert source == "estimated_from_speed_and_ratios"

@@ -501,11 +501,11 @@ class TestExtractStrengthData:
 
     def test_empty_metrics(self) -> None:
         result = extract_strength_data({})
-        assert result.strength_metrics.vibration_strength_db is None
-        assert result.strength_metrics.peak_amp_g is None
-        assert result.strength_metrics.noise_floor_amp_g is None
-        assert result.strength_metrics.strength_bucket is None
-        assert result.top_peaks == []
+        assert result.vibration_strength_db is None
+        assert result.peak_amp_g is None
+        assert result.noise_floor_amp_g is None
+        assert result.strength_bucket is None
+        assert result.to_peak_payloads(max_items=8) == []
 
     def test_combined_strength_metrics(self) -> None:
         metrics: dict[str, object] = {
@@ -520,10 +520,11 @@ class TestExtractStrengthData:
             },
         }
         result = extract_strength_data(metrics)
-        assert result.strength_metrics.vibration_strength_db == pytest.approx(18.5)
-        assert result.strength_metrics.strength_bucket == "l3"
-        assert len(result.top_peaks) == 1
-        assert result.top_peaks[0]["hz"] == pytest.approx(45.0)
+        assert result.vibration_strength_db == pytest.approx(18.5)
+        assert result.strength_bucket == "l3"
+        payloads = result.to_peak_payloads(max_items=8)
+        assert len(payloads) == 1
+        assert payloads[0]["hz"] == pytest.approx(45.0)
 
     def test_nested_combined_strength_metrics(self) -> None:
         metrics: dict[str, object] = {
@@ -536,8 +537,8 @@ class TestExtractStrengthData:
             },
         }
         result = extract_strength_data(metrics)
-        assert result.strength_metrics.vibration_strength_db == pytest.approx(12.0)
-        assert result.strength_metrics.strength_bucket == "l2"
+        assert result.vibration_strength_db == pytest.approx(12.0)
+        assert result.strength_bucket == "l2"
 
     def test_invalid_peak_data_filtered(self) -> None:
         metrics: dict[str, object] = {
@@ -555,8 +556,9 @@ class TestExtractStrengthData:
             },
         }
         result = extract_strength_data(metrics)
-        assert len(result.top_peaks) == 1
-        assert result.top_peaks[0]["hz"] == pytest.approx(50.0)
+        payloads = result.to_peak_payloads(max_items=8)
+        assert len(payloads) == 1
+        assert payloads[0]["hz"] == pytest.approx(50.0)
 
     def test_empty_bucket_treated_as_none(self) -> None:
         metrics: dict[str, object] = {
@@ -569,7 +571,7 @@ class TestExtractStrengthData:
             },
         }
         result = extract_strength_data(metrics)
-        assert result.strength_metrics.strength_bucket is None
+        assert result.strength_bucket is None
 
 
 class TestResolveSpeedContext:

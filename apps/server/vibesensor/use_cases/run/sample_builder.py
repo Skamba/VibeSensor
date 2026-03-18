@@ -58,13 +58,6 @@ def safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None
     return _safe_float(axis_metrics, key)
 
 
-class StrengthExtraction(NamedTuple):
-    """Named result of :func:`extract_strength_data`."""
-
-    strength_metrics: StrengthMetrics
-    top_peaks: list[dict[str, object]]
-
-
 def _raw_strength_metrics(metrics: Mapping[str, object]) -> Mapping[str, object] | None:
     combined = metrics.get("combined")
     if not isinstance(combined, Mapping):
@@ -75,18 +68,13 @@ def _raw_strength_metrics(metrics: Mapping[str, object]) -> Mapping[str, object]
 
 def extract_strength_data(
     metrics: Mapping[str, object],
-) -> StrengthExtraction:
+) -> StrengthMetrics:
     """Extract strength metrics and top peaks from client metrics."""
     raw_strength_metrics = _raw_strength_metrics(metrics)
-    strength_metrics = (
+    return (
         StrengthMetrics.from_dict(raw_strength_metrics)
         if raw_strength_metrics is not None
         else StrengthMetrics()
-    )
-
-    return StrengthExtraction(
-        strength_metrics=strength_metrics,
-        top_peaks=strength_metrics.to_peak_payloads(max_items=8),
     )
 
 
@@ -204,10 +192,7 @@ def build_sample_records(
         accel_y_g = latest_xyz[1] if latest_xyz else None
         accel_z_g = latest_xyz[2] if latest_xyz else None
 
-        (
-            strength_metrics,
-            top_peaks,
-        ) = extract_strength_data(metrics)
+        strength_metrics = extract_strength_data(metrics)
         dominant_hz = dominant_hz_from_strength(strength_metrics)
         vibration_strength_db = strength_metrics.vibration_strength_db
         strength_peak_amp_g = strength_metrics.peak_amp_g
@@ -247,7 +232,7 @@ def build_sample_records(
             accel_z_g=accel_z_g,
             dominant_freq_hz=dominant_hz,
             dominant_axis="combined",
-            top_peaks=top_peaks,
+            top_peaks=strength_metrics.to_peak_payloads(max_items=8),
             vibration_strength_db=vibration_strength_db,
             strength_bucket=strength_bucket,
             strength_peak_amp_g=strength_peak_amp_g,

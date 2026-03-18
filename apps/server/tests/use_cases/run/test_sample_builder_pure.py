@@ -20,10 +20,10 @@ class TestExtractStrengthData:
     """Tests for extract_strength_data edge cases."""
 
     def test_empty_metrics_dict_returns_all_nones(self) -> None:
-        sm, peaks = extract_strength_data({})
+        sm = extract_strength_data({})
 
         assert sm == StrengthMetrics()
-        assert peaks == []
+        assert sm.to_peak_payloads(max_items=8) == []
 
     def test_top_peaks_with_zero_amp_are_filtered(self) -> None:
         """Peaks with amp ≤ 0 must be excluded from top_peaks output."""
@@ -38,11 +38,12 @@ class TestExtractStrengthData:
                 },
             },
         }
-        sm, peaks = extract_strength_data(metrics)
+        sm = extract_strength_data(metrics)
 
         assert len(sm.top_peaks) == 3
-        assert len(peaks) == 1
-        assert peaks[0]["hz"] == 300.0
+        payloads = sm.to_peak_payloads(max_items=8)
+        assert len(payloads) == 1
+        assert payloads[0]["hz"] == 300.0
 
     def test_combined_reads_nested_strength_metrics(self) -> None:
         """Reads strength_metrics from combined.strength_metrics."""
@@ -53,12 +54,12 @@ class TestExtractStrengthData:
                 },
             },
         }
-        sm, _ = extract_strength_data(metrics)
+        sm = extract_strength_data(metrics)
 
         assert sm == StrengthMetrics(peak_amp_g=0.88)
 
     def test_invalid_scalar_fields_degrade_to_none_on_typed_metrics(self) -> None:
-        sm, peaks = extract_strength_data(
+        sm = extract_strength_data(
             {
                 "combined": {
                     "strength_metrics": {
@@ -75,7 +76,7 @@ class TestExtractStrengthData:
         assert sm.peak_amp_g is None
         assert sm.noise_floor_amp_g is None
         assert sm.dominant_hz == 50.0
-        assert peaks == [{"hz": 50.0, "amp": 0.2}]
+        assert sm.to_peak_payloads(max_items=8) == [{"hz": 50.0, "amp": 0.2}]
 
 
 class TestSafeMetric:
