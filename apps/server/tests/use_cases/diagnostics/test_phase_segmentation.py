@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.domain import DrivingPhaseSegment
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
+    PhaseSegment,
     _estimate_speed_derivative,
     _interpolate_speed_unknown,
     classify_sample_phase,
     diagnostic_sample_mask,
+    phase_summary,
     segment_run_phases,
 )
 
@@ -248,3 +251,77 @@ class TestDiagnosticSampleMaskGpsDropout:
         # All 110 samples should be included (nothing is IDLE)
         assert all(mask)
         assert sum(mask) == 110
+
+
+# ---------------------------------------------------------------------------
+# phase_summary (integration: DrivingPhaseSegment population)
+# ---------------------------------------------------------------------------
+
+
+class TestPhaseSummaryPhaseTypeSegments:
+    """Verify phase_summary() populates DrivingPhaseSummary.phase_type_summaries."""
+
+    def test_phase_type_summaries_populated(self) -> None:
+        """phase_summary produces one DrivingPhaseSegment per phase type."""
+        segments = [
+            PhaseSegment(
+                phase=DrivingPhase.CRUISE,
+                start_idx=0, end_idx=49,
+                start_t_s=0.0, end_t_s=5.0,
+                speed_min_kmh=30.0, speed_max_kmh=60.0,
+                sample_count=50,
+            ),
+            PhaseSegment(
+                phase=DrivingPhase.IDLE,
+                start_idx=50, end_idx=69,
+                start_t_s=5.0, end_t_s=7.0,
+                sample_count=20,
+            ),
+            PhaseSegment(
+                phase=DrivingPhase.CRUISE,
+                start_idx=70, end_idx=99,
+                start_t_s=7.0, end_t_s=10.0,
+                speed_min_kmh=25.0, speed_max_kmh=70.0,
+                sample_count=30,
+            ),
+        ]
+        summary = phase_summary(segments)
+        pts = summary.phase_type_summaries
+        assert len(pts) == 2  # cruise + idle
+        assert all(isinstance(s, DrivingPhaseSegment) for s in pts)
+
+        by_phase = {s.phase: s for s in pts}
+        cruise = by_phase[DrivingPhase.CRUISE]
+        assert cruise.sample_count == 80
+        assert cruise.duration_s == pytest.approx(8.0)
+        assert cruise.speed_min_kmh == 25.0
+        assert cruise.speed_max_kmh == 70.0
+        assert cruise.fraction == pytest.approx(0.8)
+
+        idle = by_phase[DrivingPhase.IDLE]
+        assert idle.sample_count == 20
+        assert idle.speed_min_kmh is None
+        assert idle.fraction == pytest.approx(0.2)
+
+    def test_fractions_sum_to_one(self) -> None:
+        segments = [
+            PhaseSegment(
+                phase=DrivingPhase.ACCELERATION,
+                start_idx=0, end_idx=29,
+                start_t_s=0.0, end_t_s=3.0,
+                sample_count=30,
+            ),
+            PhaseSegment(
+                phase=DrivingPhase.CRUISE,
+                start_idx=30, end_idx=99,
+                start_t_s=3.0, end_t_s=10.0,
+                sample_count=70,
+            ),
+        ]
+        summary = phase_summary(segments)
+        total_fraction = sum(s.fraction for s in summary.phase_type_summaries)
+        assert total_fraction == pytest.approx(1.0)
+
+    def test_empty_segments(self) -> None:
+        summary = phase_summary([])
+        assert summary.phase_type_summaries == ()

@@ -57,6 +57,7 @@ _REQUIRED_DOMAIN_EXPORTS = [
     "RunMetadataSnapshot",
     "OrderMatchObservation",
     "DrivingPhaseInterval",
+    "DrivingPhaseSegment",
     "LocationIntensitySummary",
     # Lifecycle and support
     "RunStatus",

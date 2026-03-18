@@ -1573,6 +1573,7 @@ _EXPECTED_DOMAIN_EXPORTS = [
     "VibrationSource",
     # Value objects — run context
     "DrivingPhase",
+    "DrivingPhaseSegment",
     "DrivingSegment",
     "RunStatus",
     "RunSuitability",

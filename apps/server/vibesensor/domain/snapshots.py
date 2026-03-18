@@ -20,6 +20,7 @@ from types import MappingProxyType
 from typing import ClassVar
 
 from .car import CarSnapshot, OrderReferenceSpec
+from .driving_segment import DrivingPhaseSegment
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -383,6 +384,7 @@ class DrivingPhaseSummary:
     cruise_pct: float = 0.0
     idle_pct: float = 0.0
     speed_unknown_pct: float = 0.0
+    phase_type_summaries: tuple[DrivingPhaseSegment, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.phase_counts, MappingProxyType):

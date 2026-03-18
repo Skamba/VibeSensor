@@ -37,7 +37,7 @@ RunSuitability
 from .car import Car, CarSnapshot, OrderReferenceSpec, TireSpec
 from .confidence_assessment import ConfidenceAssessment
 from .diagnostic_case import DiagnosticCase, Symptom
-from .driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingSegment
+from .driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingPhaseSegment, DrivingSegment
 from .finding import (
     Finding,
     FindingEvidence,
@@ -106,6 +106,7 @@ __all__ = [
     # Value objects — run context
     "DrivingPhase",
     "DrivingPhaseInterval",
+    "DrivingPhaseSegment",
     "DrivingSegment",
     "RunStatus",
     "RunSuitability",

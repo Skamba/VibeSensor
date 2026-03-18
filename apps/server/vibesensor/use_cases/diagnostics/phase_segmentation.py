@@ -18,6 +18,7 @@ import math
 from dataclasses import dataclass
 
 from vibesensor.domain import DrivingPhase
+from vibesensor.domain.driving_segment import DrivingPhaseSegment
 from vibesensor.domain.snapshots import DrivingPhaseSummary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
@@ -269,14 +270,45 @@ def segment_run_phases(
 def phase_summary(segments: list[PhaseSegment]) -> DrivingPhaseSummary:
     """Return a typed snapshot suitable for embedding in the run summary."""
     phase_counts: dict[str, int] = {}
+    phase_durations: dict[str, float] = {}
+    phase_speed_mins: dict[str, float] = {}
+    phase_speed_maxs: dict[str, float] = {}
     total = 0
     for seg in segments:
-        phase_counts[seg.phase.value] = phase_counts.get(seg.phase.value, 0) + seg.sample_count
+        key = seg.phase.value
+        phase_counts[key] = phase_counts.get(key, 0) + seg.sample_count
         total += seg.sample_count
+        # Accumulate duration
+        has_times = math.isfinite(seg.end_t_s) and math.isfinite(seg.start_t_s)
+        dur = (seg.end_t_s - seg.start_t_s) if has_times else 0.0
+        phase_durations[key] = phase_durations.get(key, 0.0) + dur
+        # Track speed range
+        if seg.speed_min_kmh is not None:
+            phase_speed_mins[key] = min(phase_speed_mins.get(key, float("inf")), seg.speed_min_kmh)
+        if seg.speed_max_kmh is not None:
+            phase_speed_maxs[key] = max(phase_speed_maxs.get(key, float("-inf")), seg.speed_max_kmh)
 
     phase_pcts: dict[str, float] = {}
     for phase, count in phase_counts.items():
         phase_pcts[phase] = (count / total * 100.0) if total > 0 else 0.0
+
+    # Build DrivingPhaseSegment per phase type
+    phase_type_summaries: list[DrivingPhaseSegment] = []
+    for key, count in phase_counts.items():
+        try:
+            phase_enum = DrivingPhase(key)
+        except ValueError:
+            continue
+        phase_type_summaries.append(
+            DrivingPhaseSegment(
+                phase=phase_enum,
+                duration_s=phase_durations.get(key, 0.0),
+                sample_count=count,
+                speed_min_kmh=phase_speed_mins.get(key),
+                speed_max_kmh=phase_speed_maxs.get(key),
+                fraction=(count / total) if total > 0 else 0.0,
+            ),
+        )
 
     return DrivingPhaseSummary(
         phase_counts=phase_counts,
@@ -288,6 +320,7 @@ def phase_summary(segments: list[PhaseSegment]) -> DrivingPhaseSummary:
         cruise_pct=phase_pcts.get(DrivingPhase.CRUISE.value, 0.0),
         idle_pct=phase_pcts.get(DrivingPhase.IDLE.value, 0.0),
         speed_unknown_pct=phase_pcts.get(DrivingPhase.SPEED_UNKNOWN.value, 0.0),
+        phase_type_summaries=tuple(phase_type_summaries),
     )
 
 
