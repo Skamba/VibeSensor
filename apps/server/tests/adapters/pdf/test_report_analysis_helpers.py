@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
-from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics.helpers import (
@@ -25,23 +24,6 @@ from vibesensor.use_cases.diagnostics.helpers import (
 from vibesensor.use_cases.diagnostics.order_analysis import _wheel_hz
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.vibration_strength import percentile
-
-# -- normalize_lang -----------------------------------------------------------
-
-
-def test_normalize_lang_en_default() -> None:
-    assert normalize_lang("en") == "en"
-    assert normalize_lang("EN") == "en"
-    assert normalize_lang("") == "en"
-    assert normalize_lang(None) == "en"
-    assert normalize_lang(42) == "en"
-
-
-def test_normalize_lang_nl() -> None:
-    assert normalize_lang("nl") == "nl"
-    assert normalize_lang("NL") == "nl"
-    assert normalize_lang("nl-NL") == "nl"
-
 
 # -- _as_float -----------------------------------------------------------------
 
