@@ -31,7 +31,7 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     Finding as DomainFinding,
 )
-from vibesensor.domain.snapshots import PhaseSummarySnapshot, SpeedStatsSnapshot
+from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
 from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
@@ -47,16 +47,23 @@ from vibesensor.shared.boundaries.diagnostic_case import (
     speed_profile_from_stats,
 )
 from vibesensor.shared.boundaries.finding import step_payloads_from_plan
-from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
-from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G, SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
+from vibesensor.shared.boundaries.vibration_origin import (
+    SuspectedVibrationOrigin,
+    build_origin_explanation,
+)
+from vibesensor.shared.constants import (
+    MEMS_NOISE_FLOOR_G,
+    SPEED_COVERAGE_MIN_PCT,
+    SPEED_MIN_POINTS,
+)
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context import build_summary_warnings, order_reference_context_complete
-from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
+from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     Sample,
-    i18n_ref,
 )
 from vibesensor.use_cases.diagnostics.findings import (
     _build_findings,
@@ -65,7 +72,6 @@ from vibesensor.use_cases.diagnostics.findings import (
     _speed_breakdown,
 )
 from vibesensor.use_cases.diagnostics.helpers import (
-    PHASE_I18N_KEYS,
     _format_duration,
     _load_run,
     _location_label,
@@ -209,7 +215,7 @@ def compute_reference_completeness(metadata: JsonObject) -> bool:
 def build_data_quality_dict(
     samples: list[Sample],
     speed_values: list[float],
-    speed_stats: SpeedStatsSnapshot,
+    speed_stats: SpeedProfileSummary,
     speed_non_null_pct: float,
     accel_stats: AccelStatistics,
     amp_metric_values: list[float],
@@ -340,7 +346,7 @@ def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
 
 def prepare_speed_and_phases(
     samples: list[Sample],
-) -> tuple[list[float], SpeedStatsSnapshot, float, bool, list[DrivingPhase], list[PhaseSegment]]:
+) -> tuple[list[float], SpeedProfileSummary, float, bool, list[DrivingPhase], list[PhaseSegment]]:
     """Compute speed stats and phase segmentation shared by multiple entry points."""
     speed_values = [
         speed
@@ -463,32 +469,6 @@ def _serialize_origin_summary(
     }
 
 
-def build_origin_explanation(
-    *,
-    source: str,
-    speed_band: str,
-    location: str,
-    dominance: float | None,
-    weak: bool,
-    dominant_phase: str,
-) -> JsonValue:
-    """Build the language-neutral origin explanation block."""
-    explanation_parts: list[JsonValue] = [
-        i18n_ref(
-            "ORIGIN_EXPLANATION_FINDING_1",
-            source=source,
-            speed_band=speed_band or "unknown",
-            location=location,
-            dominance=f"{dominance:.2f}x" if dominance is not None else "n/a",
-        ),
-    ]
-    if weak:
-        explanation_parts.append(i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
-    if dominant_phase and dominant_phase in PHASE_I18N_KEYS:
-        explanation_parts.append(i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
-    return explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts
-
-
 def build_summary_payload(
     *,
     file_name: str,
@@ -508,9 +488,9 @@ def build_summary_payload(
     most_likely_origin: VibrationOrigin | None,
     test_plan: list[JsonObject],
     phase_timeline: list[DrivingPhaseInterval],
-    speed_stats: SpeedStatsSnapshot,
-    speed_stats_by_phase: dict[str, SpeedStatsSnapshot],
-    phase_info: PhaseSummarySnapshot,
+    speed_stats: SpeedProfileSummary,
+    speed_stats_by_phase: dict[str, SpeedProfileSummary],
+    phase_info: DrivingPhaseSummary,
     sensor_locations: list[str],
     connected_locations: set[str],
     sensor_intensity_by_location: list[LocationIntensitySummary],
@@ -670,7 +650,7 @@ class PreparedRunData:
     phase_segments: list[PhaseSegment]
     run_noise_baseline_g: float | None
     speed_profile: SpeedProfile
-    speed_stats_by_phase: dict[str, SpeedStatsSnapshot]
+    speed_stats_by_phase: dict[str, SpeedProfileSummary]
     speed_breakdown: list[SpeedBreakdownRow]
     speed_breakdown_skipped_reason: JsonObject | None
     phase_speed_breakdown: list[PhaseSpeedBreakdownRow]
@@ -735,7 +715,7 @@ def prepare_run_data(
     )
 
 
-def build_phase_summary(phase_segments: list[PhaseSegment]) -> PhaseSummarySnapshot:
+def build_phase_summary(phase_segments: list[PhaseSegment]) -> DrivingPhaseSummary:
     """Small wrapper to keep summary-building imports localized."""
     from vibesensor.use_cases.diagnostics.phase_segmentation import phase_summary
 
@@ -858,7 +838,7 @@ def build_run_suitability_bundle(
 
 @dataclass(frozen=True, slots=True)
 class AnalysisResult:
-    """Output coordinator: carries domain aggregates alongside the legacy summary dict.
+    """Output coordinator: carries domain aggregates alongside the boundary summary dict.
 
     Returned by :meth:`RunAnalysis.summarize`.  The ``summary`` dict is
     still needed for persistence (SQLite stores it as JSON) and many
@@ -943,7 +923,7 @@ class RunAnalysis:
         """Run the full analysis pipeline and return the output coordinator.
 
         Returns an :class:`AnalysisResult` carrying the domain aggregates
-        (``test_run``, ``diagnostic_case``) alongside the legacy
+        (``test_run``, ``diagnostic_case``) alongside the boundary
         ``summary`` dict.
         """
         reference_complete, run_suitability, overall_strength_band_key = (

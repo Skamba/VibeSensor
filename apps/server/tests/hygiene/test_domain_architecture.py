@@ -1041,7 +1041,7 @@ def test_history_backend_types_do_not_export_history_run_payload() -> None:
 
     `HistoryRunPayload` made persistence dicts look like a general backend
     business contract. The only supported alias is the history-local
-    `HistoryRunRecord` in use_cases/history/helpers.py.
+    `HistoryRecord` in use_cases/history/helpers.py.
     """
     from tests._paths import SERVER_ROOT
 
@@ -1052,7 +1052,7 @@ def test_history_backend_types_do_not_export_history_run_payload() -> None:
         SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "helpers.py"
     ).read_text()
     assert "HistoryRunPayload" not in backend_types_source
-    assert "class HistoryRunRecord" in history_helpers_source
+    assert "class HistoryRecord" in history_helpers_source
 
 
 def test_types_modules_do_not_duplicate_domain_concepts_as_typeddicts() -> None:
@@ -1551,9 +1551,10 @@ _EXPECTED_DOMAIN_EXPORTS = [
     "TireSpec",
     # Value objects — snapshots
     "AnalysisSettingsSnapshot",
-    "PhaseSummarySnapshot",
+    "DrivingPhaseSummary",
     "RunContextSnapshot",
-    "SpeedStatsSnapshot",
+    "RunMetadataSnapshot",
+    "SpeedProfileSummary",
     # Value objects — run and capture
     "ConfigurationSnapshot",
     "Measurement",
@@ -1566,6 +1567,8 @@ _EXPECTED_DOMAIN_EXPORTS = [
     "FindingEvidence",
     "FindingKind",
     "LocationHotspot",
+    "LocationIntensitySummary",
+    "OrderMatchObservation",
     "Signature",
     "StrengthMetrics",
     "StrengthPeak",
@@ -1573,6 +1576,8 @@ _EXPECTED_DOMAIN_EXPORTS = [
     "VibrationSource",
     # Value objects — run context
     "DrivingPhase",
+    "DrivingPhaseInterval",
+    "DrivingPhaseSegment",
     "DrivingSegment",
     "RunStatus",
     "RunSuitability",

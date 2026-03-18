@@ -1,7 +1,7 @@
 """Tests for domain snapshot value objects.
 
 Covers AnalysisSettingsSnapshot, RunContextSnapshot,
-SpeedStatsSnapshot, and PhaseSummarySnapshot.
+SpeedProfileSummary, and DrivingPhaseSummary.
 """
 
 from __future__ import annotations
@@ -11,10 +11,10 @@ import pytest
 from vibesensor.domain import (
     AnalysisSettingsSnapshot,
     CarSnapshot,
+    DrivingPhaseSummary,
     OrderReferenceSpec,
-    PhaseSummarySnapshot,
     RunContextSnapshot,
-    SpeedStatsSnapshot,
+    SpeedProfileSummary,
 )
 
 # ── AnalysisSettingsSnapshot ────────────────────────────────────────
@@ -225,14 +225,14 @@ class TestRunContextSnapshotFromDict:
         assert ctx.car_variant is None
 
 
-# ── SpeedStatsSnapshot ──────────────────────────────────────────────
+# ── SpeedProfileSummary ──────────────────────────────────────────────
 
 
-class TestSpeedStatsSnapshotFromDict:
+class TestSpeedProfileSummaryFromDict:
     """from_dict() constructor tests."""
 
     def test_empty_dict_never_raises(self) -> None:
-        snap = SpeedStatsSnapshot.from_dict({})
+        snap = SpeedProfileSummary.from_dict({})
         assert snap.min_kmh is None
         assert snap.steady_speed is False
         assert snap.sample_count == 0
@@ -247,29 +247,29 @@ class TestSpeedStatsSnapshotFromDict:
             "steady_speed": True,
             "sample_count": 500,
         }
-        snap = SpeedStatsSnapshot.from_dict(data)
+        snap = SpeedProfileSummary.from_dict(data)
         assert snap.min_kmh == 40.0
         assert snap.max_kmh == 120.0
         assert snap.steady_speed is True
         assert snap.sample_count == 500
 
     def test_non_numeric_speed_defaults_to_none(self) -> None:
-        snap = SpeedStatsSnapshot.from_dict({"min_kmh": "bad"})
+        snap = SpeedProfileSummary.from_dict({"min_kmh": "bad"})
         assert snap.min_kmh is None
 
     def test_infinity_speed_defaults_to_none(self) -> None:
-        snap = SpeedStatsSnapshot.from_dict({"mean_kmh": float("inf")})
+        snap = SpeedProfileSummary.from_dict({"mean_kmh": float("inf")})
         assert snap.mean_kmh is None
 
 
-# ── PhaseSummarySnapshot ────────────────────────────────────────────
+# ── DrivingPhaseSummary ────────────────────────────────────────────────────
 
 
-class TestPhaseSummarySnapshotFromDict:
+class TestDrivingPhaseSummaryFromDict:
     """from_dict() constructor tests."""
 
     def test_empty_dict_never_raises(self) -> None:
-        snap = PhaseSummarySnapshot.from_dict({})
+        snap = DrivingPhaseSummary.from_dict({})
         assert snap.total_samples == 0
         assert snap.has_cruise is False
         assert dict(snap.phase_counts) == {}
@@ -286,23 +286,23 @@ class TestPhaseSummarySnapshotFromDict:
             "idle_pct": 0.0,
             "speed_unknown_pct": 0.0,
         }
-        snap = PhaseSummarySnapshot.from_dict(data)
+        snap = DrivingPhaseSummary.from_dict(data)
         assert snap.total_samples == 150
         assert snap.has_cruise is True
         assert snap.phase_counts["cruise"] == 100
         assert snap.cruise_pct == pytest.approx(0.66)
 
     def test_invalid_phase_counts_skipped(self) -> None:
-        snap = PhaseSummarySnapshot.from_dict({"phase_counts": {"cruise": "bad", "accel": 10}})
+        snap = DrivingPhaseSummary.from_dict({"phase_counts": {"cruise": "bad", "accel": 10}})
         assert "cruise" not in snap.phase_counts
         assert snap.phase_counts["accel"] == 10
 
     def test_phase_counts_immutable(self) -> None:
-        snap = PhaseSummarySnapshot.from_dict({"phase_counts": {"cruise": 5}})
+        snap = DrivingPhaseSummary.from_dict({"phase_counts": {"cruise": 5}})
         with pytest.raises(TypeError):
             snap.phase_counts["new"] = 1  # type: ignore[index]
 
     def test_phase_pcts_immutable(self) -> None:
-        snap = PhaseSummarySnapshot.from_dict({"phase_pcts": {"cruise": 0.5}})
+        snap = DrivingPhaseSummary.from_dict({"phase_pcts": {"cruise": 0.5}})
         with pytest.raises(TypeError):
             snap.phase_pcts["new"] = 0.1  # type: ignore[index]

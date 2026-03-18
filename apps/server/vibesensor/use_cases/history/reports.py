@@ -23,7 +23,7 @@ from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.use_cases.history.helpers import (
-    HistoryRunRecord,
+    HistoryRecord,
     async_require_run,
     require_analysis_ready,
     resolve_run_language,
@@ -139,7 +139,7 @@ class HistoryReportService:
 
     def _report_pdf_cache_key(
         self,
-        run: HistoryRunRecord,
+        run: HistoryRecord,
         run_id: str,
         requested_lang: str,
         *,
@@ -155,7 +155,7 @@ class HistoryReportService:
         )
 
     @staticmethod
-    def _report_pdf_cache_lang(run: HistoryRunRecord, requested_lang: str) -> str:
+    def _report_pdf_cache_lang(run: HistoryRecord, requested_lang: str) -> str:
         analysis = run.get("analysis")
         if is_json_object(analysis):
             persisted_lang = str(analysis.get("lang") or "").strip().lower()
@@ -164,7 +164,7 @@ class HistoryReportService:
         return requested_lang
 
     @staticmethod
-    def _analysis_language(run: HistoryRunRecord, requested: str | None) -> str:
+    def _analysis_language(run: HistoryRecord, requested: str | None) -> str:
         return resolve_run_language(run, requested)
 
 

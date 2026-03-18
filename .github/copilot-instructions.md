@@ -4,7 +4,7 @@ Repository overview
 - Key runtime artifacts are `docker-compose.yml` at repo root and `apps/server/pyproject.toml` for backend packaging and CLI entry points.
 - Units policy: raw ingest/sample acceleration values may use g, but post-stop analysis outputs (persisted summaries, findings, report-template artifacts) must expose vibration strength or intensity in dB only.
 - Canonical dB definition: `vibesensor/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
-- Domain file map highlights: `car.py` owns `Car`, `TireSpec`, `OrderReferenceSpec`, and `CarSnapshot`; `snapshots.py` owns `AnalysisSettingsSnapshot`, `RunContextSnapshot`, `RunMetadataSnapshot`, `SpeedStatsSnapshot`, and `PhaseSummarySnapshot`; `order_match.py` owns `OrderMatchObservation`; `driving_segment.py` owns `DrivingSegment`, `DrivingPhase`, and `DrivingPhaseInterval`; `location_hotspot.py` owns `LocationHotspot` and `LocationIntensitySummary`; `strength_metrics.py` owns `StrengthMetrics` and `StrengthPeak`.
+- Domain file map highlights: `car.py` owns `Car`, `TireSpec`, `OrderReferenceSpec`, and `CarSnapshot`; `snapshots.py` owns `AnalysisSettingsSnapshot`, `RunContextSnapshot`, `RunMetadataSnapshot`, `SpeedProfileSummary`, and `DrivingPhaseSummary`; `order_match.py` owns `OrderMatchObservation`; `driving_segment.py` owns `DrivingSegment`, `DrivingPhase`, `DrivingPhaseInterval`, and `DrivingPhaseSegment`; `location_hotspot.py` owns `LocationHotspot` and `LocationIntensitySummary`; `strength_metrics.py` owns `StrengthMetrics` and `StrengthPeak`.
 
 Source-of-truth note
 - This file is the canonical short AI guide; `AGENTS.md` should remain a pointer to this file to prevent drift.

@@ -243,3 +243,13 @@ NUMERIC_TYPES: Final[tuple[type, ...]] = (int, float)
 """Cached type-tuple for ``isinstance`` checks against numeric types.
 
 Avoids creating a fresh ``(int, float)`` tuple on every call."""
+
+
+# ---------------------------------------------------------------------------
+# i18n — driving-phase label keys
+# ---------------------------------------------------------------------------
+PHASE_I18N_KEYS: Final[dict[str, str]] = {
+    "acceleration": "DRIVING_PHASE_ACCELERATION",
+    "deceleration": "DRIVING_PHASE_DECELERATION",
+    "coast_down": "DRIVING_PHASE_COAST_DOWN",
+}

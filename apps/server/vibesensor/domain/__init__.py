@@ -37,7 +37,7 @@ RunSuitability
 from .car import Car, CarSnapshot, OrderReferenceSpec, TireSpec
 from .confidence_assessment import ConfidenceAssessment
 from .diagnostic_case import DiagnosticCase, Symptom
-from .driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingSegment
+from .driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingPhaseSegment, DrivingSegment
 from .finding import (
     Finding,
     FindingEvidence,
@@ -56,10 +56,10 @@ from .run_suitability import RunSuitability, SuitabilityCheck
 from .sensor import Sensor, SensorPlacement
 from .snapshots import (
     AnalysisSettingsSnapshot,
-    PhaseSummarySnapshot,
+    DrivingPhaseSummary,
     RunContextSnapshot,
     RunMetadataSnapshot,
-    SpeedStatsSnapshot,
+    SpeedProfileSummary,
 )
 from .speed_profile import SpeedProfile
 from .speed_source import SpeedSource, SpeedSourceKind
@@ -80,10 +80,10 @@ __all__ = [
     "TireSpec",
     # Value objects — snapshots
     "AnalysisSettingsSnapshot",
-    "PhaseSummarySnapshot",
+    "DrivingPhaseSummary",
     "RunContextSnapshot",
     "RunMetadataSnapshot",
-    "SpeedStatsSnapshot",
+    "SpeedProfileSummary",
     # Value objects — run and capture
     "ConfigurationSnapshot",
     "Measurement",
@@ -106,6 +106,7 @@ __all__ = [
     # Value objects — run context
     "DrivingPhase",
     "DrivingPhaseInterval",
+    "DrivingPhaseSegment",
     "DrivingSegment",
     "RunStatus",
     "RunSuitability",

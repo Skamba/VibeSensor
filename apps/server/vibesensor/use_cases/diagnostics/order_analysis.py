@@ -34,11 +34,11 @@ from vibesensor.shared.constants import (
     SPEED_BIN_WIDTH_KMH,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (
     PhaseLabels,
     Sample,
-    i18n_ref,
 )
 from vibesensor.use_cases.diagnostics.helpers import (
     _corr_abs_clamped,

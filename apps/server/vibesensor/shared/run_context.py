@@ -14,8 +14,8 @@ from vibesensor.domain import (
 )
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
-from vibesensor.use_cases.diagnostics import i18n_ref
 
 WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE = "reference_context_incomplete"
 WARNING_CODE_CAR_SETTINGS_CHANGED = "car_settings_changed"

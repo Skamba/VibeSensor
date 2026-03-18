@@ -11,10 +11,6 @@ High-level analysis entry points are re-exported here so callers can use
 findings.  The domain ``Finding`` lives in ``vibesensor.domain``.
 """
 
-from vibesensor.use_cases.diagnostics._types import (
-    i18n_ref,
-)
-from vibesensor.use_cases.diagnostics.helpers import PHASE_I18N_KEYS
 from vibesensor.use_cases.diagnostics.order_bands import build_order_bands, vehicle_orders_hz
 from vibesensor.use_cases.diagnostics.summary_builder import (
     AnalysisResult,
@@ -26,11 +22,9 @@ from vibesensor.use_cases.diagnostics.summary_builder import (
 
 __all__ = [
     "AnalysisResult",
-    "PHASE_I18N_KEYS",
     "RunAnalysis",
     "build_findings_for_samples",
     "build_order_bands",
-    "i18n_ref",
     "summarize_log",
     "summarize_run_data",
     "vehicle_orders_hz",
