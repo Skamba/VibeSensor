@@ -13,7 +13,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from vibesensor.domain.finding import Finding, FindingEvidence, Signature, VibrationSource
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
+from vibesensor.shared.boundaries.analysis_payload import matched_point_from_observation
 from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,
     vibration_origin_from_payload,
@@ -121,11 +123,17 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
 
     phase_ev = payload.get("phase_evidence")
     cruise_fraction = 0.0
+    phases_detected: tuple[str, ...] = ()
     if isinstance(phase_ev, dict):
         try:
             cruise_fraction = float(phase_ev.get("cruise_fraction", 0.0))
         except (TypeError, ValueError):
             pass
+        raw_phases_detected = phase_ev.get("phases_detected")
+        if isinstance(raw_phases_detected, list):
+            phases_detected = tuple(
+                str(phase).strip() for phase in raw_phases_detected if str(phase).strip()
+            )
 
     # Extract vibration_strength_db from evidence_metrics
     vib_db: float | None = None
@@ -142,6 +150,14 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     evidence: FindingEvidence | None = None
     if isinstance(ev_metrics, dict):
         evidence = FindingEvidence.from_metrics(ev_metrics)
+    raw_matched_points = payload.get("matched_points")
+    matched_points: tuple[OrderMatchObservation, ...] = ()
+    if isinstance(raw_matched_points, list):
+        matched_points = tuple(
+            OrderMatchObservation.from_dict(point)
+            for point in raw_matched_points
+            if isinstance(point, Mapping)
+        )
     hotspot_raw = payload.get("location_hotspot")
     location = location_hotspot_from_payload(hotspot_raw) if isinstance(hotspot_raw, dict) else None
 
@@ -194,12 +210,15 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         strongest_speed_band=str(band) if band is not None else None,
         peak_classification=_str("peak_classification"),
         kind=kind,
+        dominant_phase=_str("dominant_phase") or None,
         ranking_score=ranking_score,
         dominance_ratio=dominance_ratio,
         diffuse_excitation=bool(payload.get("diffuse_excitation", False)),
         weak_spatial_separation=bool(payload.get("weak_spatial_separation", False)),
         vibration_strength_db=vib_db,
         cruise_fraction=cruise_fraction,
+        phases_detected=phases_detected,
+        matched_points=matched_points,
         evidence=evidence,
         location=location,
         origin=origin,
@@ -241,6 +260,12 @@ def finding_payload_from_domain(
         payload["finding_kind"] = str(finding.kind)
     if finding.order:
         payload["order"] = finding.order
+    if finding.dominant_phase:
+        payload["dominant_phase"] = finding.dominant_phase
+    if finding.matched_points:
+        payload["matched_points"] = [
+            matched_point_from_observation(point) for point in finding.matched_points
+        ]
 
     # Evidence metrics
     if finding.evidence is not None:
@@ -254,10 +279,24 @@ def finding_payload_from_domain(
             "speed_uniformity": ev.speed_uniformity,
             "spatial_uniformity": ev.spatial_uniformity,
         }
+        if ev.global_match_rate is not None:
+            metrics["global_match_rate"] = ev.global_match_rate
+        if ev.focused_speed_band is not None:
+            metrics["focused_speed_band"] = ev.focused_speed_band
+        if ev.mean_relative_error is not None:
+            metrics["mean_relative_error"] = ev.mean_relative_error
+        if ev.mean_noise_floor_db is not None:
+            metrics["mean_noise_floor_db"] = ev.mean_noise_floor_db
+        if ev.possible_samples is not None:
+            metrics["possible_samples"] = ev.possible_samples
+        if ev.matched_samples is not None:
+            metrics["matched_samples"] = ev.matched_samples
         if ev.snr_db is not None:
             metrics["snr_db"] = ev.snr_db
         if ev.vibration_strength_db is not None:
             metrics["vibration_strength_db"] = ev.vibration_strength_db
+        if ev.phases_with_evidence is not None:
+            metrics["phases_with_evidence"] = ev.phases_with_evidence
         if ev.phase_confidences:
             metrics["per_phase_confidence"] = dict(ev.phase_confidences)
         payload["evidence_metrics"] = metrics
@@ -265,8 +304,11 @@ def finding_payload_from_domain(
         payload["evidence_metrics"] = {"vibration_strength_db": finding.vibration_strength_db}
 
     # Phase evidence
-    if finding.cruise_fraction > 0.0:
-        payload["phase_evidence"] = {"cruise_fraction": finding.cruise_fraction}
+    if finding.cruise_fraction > 0.0 or finding.phases_detected:
+        phase_evidence: dict[str, object] = {"cruise_fraction": finding.cruise_fraction}
+        if finding.phases_detected:
+            phase_evidence["phases_detected"] = list(finding.phases_detected)
+        payload["phase_evidence"] = phase_evidence
 
     # Location hotspot
     if finding.location is not None:

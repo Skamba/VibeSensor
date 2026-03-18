@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.use_cases.diagnostics.strength_labels import strength_text
+from vibesensor.adapters.pdf.presentation import strength_text
 from vibesensor.vibration_strength import compute_vibration_strength_db
 
 # Fields every result dict must contain as floats.

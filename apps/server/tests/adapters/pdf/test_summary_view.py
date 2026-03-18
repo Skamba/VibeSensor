@@ -124,10 +124,11 @@ class TestSummaryHelpers:
             top_causes=(primary,),
         )
         origin = _origin_from_aggregate(aggregate, _minimal_summary()["most_likely_origin"])
-        assert origin["location"] == "Front Left / Front Right"
-        assert origin["alternative_locations"] == ["front_right"]
-        assert origin["dominant_phase"] == "acceleration"
-        assert origin["speed_band"] == "80-90 km/h"
+        assert origin is not None
+        assert origin.projected_location == "Front Left / Front Right"
+        assert origin.alternative_locations == ("front_right",)
+        assert origin.dominant_phase == "acceleration"
+        assert origin.speed_band == "80-90 km/h"
 
     def test_history_projection_reads_domain_vibration_origin(self) -> None:
         summary = _minimal_summary(
@@ -170,7 +171,7 @@ class TestSummaryHelpers:
         test_run = _test_run_from_summary(summary)
         primary = test_run.primary_finding
         assert primary is not None
-        origin = origin_payload_from_finding(primary, {})
+        origin = origin_payload_from_finding(primary)
         assert origin["location"] == "Front Left / Front Right"
         assert origin["alternative_locations"] == ["front_right"]
         assert origin["dominant_phase"] == "acceleration"

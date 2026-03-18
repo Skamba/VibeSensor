@@ -13,14 +13,12 @@ Covers:
 
 import pytest
 
+from vibesensor.adapters.pdf.presentation import strength_label
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.use_cases.diagnostics.helpers import (
     MEMS_NOISE_FLOOR_G,
     _effective_baseline_floor,
     _validate_required_strength_metrics,
-)
-from vibesensor.use_cases.diagnostics.strength_labels import (
-    strength_label,
 )
 
 # ------------------------------------------------------------------

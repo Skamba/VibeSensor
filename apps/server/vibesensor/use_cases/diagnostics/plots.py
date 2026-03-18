@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from math import floor
 from typing import Any, Literal, Required, TypedDict
 
+from vibesensor.adapters.pdf.report_types import PeakTableRow
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
@@ -557,30 +558,8 @@ def serialize_phase_context(
 
 
 # ---------------------------------------------------------------------------
-# Peak-table types & builders (formerly plot_peak_table.py)
+# Peak-table builders (formerly plot_peak_table.py)
 # ---------------------------------------------------------------------------
-
-
-class PeakTableRow(TypedDict):
-    """Shape of a single row in the ranked peak table."""
-
-    rank: int
-    frequency_hz: float
-    order_label: str
-    max_intensity_db: float | None
-    median_intensity_db: float | None
-    p95_intensity_db: float | None
-    run_noise_baseline_db: float | None
-    median_vs_run_noise_ratio: float
-    p95_vs_run_noise_ratio: float
-    strength_floor_db: float | None
-    strength_db: float | None
-    presence_ratio: float
-    burstiness: float
-    persistence_score: float
-    suspected_source: str
-    peak_classification: str
-    typical_speed_band: str
 
 
 @dataclass

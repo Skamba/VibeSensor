@@ -139,25 +139,12 @@ def vibration_origin_from_payload(
 
 def origin_payload_from_finding(
     finding: Finding,
-    fallback: Mapping[str, object] | None = None,
 ) -> SuspectedVibrationOrigin:
-    """Project a domain finding's origin into the canonical boundary payload shape.
-
-    Delegates origin extraction to ``VibrationOrigin.from_finding()`` and
-    serializes the result.  Falls back to *fallback* when the domain origin
-    lacks structured location data that the fallback provides.
-    """
-    fallback_payload = dict(fallback) if isinstance(fallback, Mapping) else {}
+    """Project a domain finding's origin into the canonical boundary payload shape."""
     origin = VibrationOrigin.from_finding(finding)
 
     if origin is None:
-        return fallback_payload
-
-    # Prefer fallback when domain origin lacks sufficient location but fallback does
-    if not origin.has_sufficient_location:
-        fallback_location = str(fallback_payload.get("location") or "").strip()
-        if fallback_location and fallback_location.lower() != "unknown":
-            return fallback_payload
+        return {}
 
     return {
         "location": origin.projected_location,

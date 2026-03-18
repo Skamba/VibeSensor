@@ -335,21 +335,25 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
         pattern_evidence=PatternEvidence(),
         lang="en",
         findings=[
-            {
-                "finding_id": "F001",
-                "severity": "diagnostic",
-                "suspected_source": "wheel/tire",
-                "confidence": 0.55,
-                "frequency_hz_or_order": "1x wheel order",
-            },
-            {
-                "finding_id": "F002",
-                "severity": "info",
-                "suspected_source": "transient_impact",
-                "peak_classification": "transient",
-                "confidence": 0.22,
-                "frequency_hz_or_order": "95.0 Hz",
-            },
+            finding_from_payload(
+                {
+                    "finding_id": "F001",
+                    "severity": "diagnostic",
+                    "suspected_source": "wheel/tire",
+                    "confidence": 0.55,
+                    "frequency_hz_or_order": "1x wheel order",
+                }
+            ),
+            finding_from_payload(
+                {
+                    "finding_id": "F002",
+                    "severity": "info",
+                    "suspected_source": "transient_impact",
+                    "peak_classification": "transient",
+                    "confidence": 0.22,
+                    "frequency_hz_or_order": "95.0 Hz",
+                }
+            ),
         ],
     )
 

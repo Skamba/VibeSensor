@@ -35,6 +35,22 @@ def _imports_from_analysis(path: Path) -> list[str]:
     return violations
 
 
+def _imports_from_prefixes(path: Path, prefixes: tuple[str, ...]) -> list[str]:
+    """Return import lines that reference any forbidden absolute import prefix."""
+    source = path.read_text(encoding="utf-8")
+    violations: list[str] = []
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if any(alias.name.startswith(prefix) for prefix in prefixes):
+                    violations.append(f"import {alias.name}")
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            if any(module.startswith(prefix) for prefix in prefixes):
+                violations.append(f"from {module} import ...")
+    return violations
+
+
 def test_history_services_do_not_import_httpexception() -> None:
     """Service-layer modules must not import FastAPI's HTTPException.
 
@@ -98,6 +114,26 @@ def test_domain_does_not_import_from_outer_layers() -> None:
     violations = _collect_domain_import_violations()
     assert not violations, "Domain modules must not import from outer layers:\n  " + "\n  ".join(
         violations
+    )
+
+
+def test_new_domain_modules_keep_import_isolation() -> None:
+    """New typed domain files must stay isolated from diagnostics and boundary layers."""
+    domain_modules = [
+        SERVER_ROOT / "vibesensor" / "domain" / "snapshots.py",
+        SERVER_ROOT / "vibesensor" / "domain" / "order_match.py",
+        SERVER_ROOT / "vibesensor" / "domain" / "driving_segment.py",
+        SERVER_ROOT / "vibesensor" / "domain" / "location_hotspot.py",
+    ]
+    violations: list[str] = []
+    for path in domain_modules:
+        for entry in _imports_from_analysis(path):
+            violations.append(f"{path.name}: {entry}")
+        for entry in _imports_from_prefixes(path, ("vibesensor.shared.boundaries",)):
+            violations.append(f"{path.name}: {entry}")
+    assert not violations, (
+        "New domain modules must not import diagnostics or boundary serializers:\n  "
+        + "\n  ".join(violations)
     )
 
 

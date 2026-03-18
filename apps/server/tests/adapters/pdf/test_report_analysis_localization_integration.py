@@ -4,7 +4,7 @@ import pytest
 from test_support.report_helpers import analysis_sample as _make_sample
 from test_support.report_helpers import max_non_ref_confidence, wheel_metadata
 
-from vibesensor.domain import LocationHotspot
+from vibesensor.domain import LocationHotspot, OrderMatchObservation
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
@@ -14,6 +14,23 @@ from vibesensor.use_cases.diagnostics.location_analysis import (
     _location_speedbin_summary,
 )
 from vibesensor.use_cases.diagnostics.summary_builder import summarize_origin
+
+
+def _obs(
+    speed_kmh: float,
+    amp: float,
+    location: str,
+    matched_hz: float = 1.0,
+    rel_error: float = 0.0,
+) -> OrderMatchObservation:
+    return OrderMatchObservation(
+        predicted_hz=1.0,
+        matched_hz=matched_hz or 1.0,
+        rel_error=rel_error,
+        amp=amp,
+        location=location,
+        speed_kmh=speed_kmh,
+    )
 
 
 def _make_loc_result(
@@ -66,10 +83,10 @@ def _make_loc_result(
 
 def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> None:
     matches = [
-        {"speed_kmh": 85.0, "amp": 0.0110, "location": "Rear Right"},
-        {"speed_kmh": 85.0, "amp": 0.0102, "location": "Rear Left"},
-        {"speed_kmh": 86.0, "amp": 0.0112, "location": "Rear Right"},
-        {"speed_kmh": 86.0, "amp": 0.0103, "location": "Rear Left"},
+        _obs(85.0, 0.0110, "Rear Right"),
+        _obs(85.0, 0.0102, "Rear Left"),
+        _obs(86.0, 0.0112, "Rear Right"),
+        _obs(86.0, 0.0103, "Rear Left"),
     ]
 
     sentence, hotspot = _location_speedbin_summary(matches, lang="en")
@@ -86,8 +103,8 @@ def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> 
 
 def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_count() -> None:
     base_matches = [
-        {"speed_kmh": 85.0, "amp": 1.30, "location": "Front Left"},
-        {"speed_kmh": 85.0, "amp": 1.00, "location": "Front Right"},
+        _obs(85.0, 1.30, "Front Left"),
+        _obs(85.0, 1.00, "Front Right"),
     ]
 
     _, hotspot_2 = _location_speedbin_summary(base_matches, lang="en")
@@ -95,7 +112,7 @@ def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_cou
     assert hotspot_2.weak_spatial_separation is False
 
     _, hotspot_3 = _location_speedbin_summary(
-        base_matches + [{"speed_kmh": 85.0, "amp": 0.40, "location": "Rear Left"}],
+        base_matches + [_obs(85.0, 0.40, "Rear Left")],
         lang="en",
     )
     assert hotspot_3 is not None
@@ -104,8 +121,8 @@ def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_cou
     _, hotspot_4 = _location_speedbin_summary(
         base_matches
         + [
-            {"speed_kmh": 85.0, "amp": 0.40, "location": "Rear Left"},
-            {"speed_kmh": 85.0, "amp": 0.35, "location": "Rear Right"},
+            _obs(85.0, 0.40, "Rear Left"),
+            _obs(85.0, 0.35, "Rear Right"),
         ],
         lang="en",
     )
@@ -126,15 +143,16 @@ def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> Non
         },
     )
     origin = summarize_origin((f,))
-    assert origin["weak_spatial_separation"] is True
+    assert origin is not None
+    assert origin.weak_spatial_separation is True
 
 
 def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None:
     matches = [
-        {"speed_kmh": 65.0, "amp": 0.030, "location": "Rear Left"},
-        {"speed_kmh": 66.0, "amp": 0.028, "location": "Rear Left"},
-        {"speed_kmh": 105.0, "amp": 0.019, "location": "Front Right"},
-        {"speed_kmh": 106.0, "amp": 0.020, "location": "Front Right"},
+        _obs(65.0, 0.030, "Rear Left"),
+        _obs(66.0, 0.028, "Rear Left"),
+        _obs(105.0, 0.019, "Front Right"),
+        _obs(106.0, 0.020, "Front Right"),
     ]
 
     _, unconstrained = _location_speedbin_summary(matches, lang="en")
@@ -156,17 +174,17 @@ def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None
 
 def test_location_speedbin_summary_reports_weighted_boundary_straddling_window() -> None:
     matches = [
-        {"speed_kmh": 74.0, "amp": 0.005, "location": "Front Left"},
-        {"speed_kmh": 75.0, "amp": 0.005, "location": "Front Left"},
-        {"speed_kmh": 76.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 77.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 78.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 79.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 80.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 81.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 82.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 83.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 84.0, "amp": 0.005, "location": "Front Left"},
+        _obs(74.0, 0.005, "Front Left"),
+        _obs(75.0, 0.005, "Front Left"),
+        _obs(76.0, 0.030, "Front Left"),
+        _obs(77.0, 0.030, "Front Left"),
+        _obs(78.0, 0.030, "Front Left"),
+        _obs(79.0, 0.030, "Front Left"),
+        _obs(80.0, 0.030, "Front Left"),
+        _obs(81.0, 0.030, "Front Left"),
+        _obs(82.0, 0.030, "Front Left"),
+        _obs(83.0, 0.030, "Front Left"),
+        _obs(84.0, 0.005, "Front Left"),
     ]
 
     _, hotspot = _location_speedbin_summary(matches, lang="en")
@@ -181,13 +199,10 @@ def test_location_speedbin_summary_reports_weighted_boundary_straddling_window()
 
 def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outlier_bin() -> None:
     sparse_loud_bin = [
-        {"speed_kmh": 85.0, "amp": 0.120, "location": "Rear Left"},
-        {"speed_kmh": 86.0, "amp": 0.120, "location": "Rear Left"},
+        _obs(85.0, 0.120, "Rear Left"),
+        _obs(86.0, 0.120, "Rear Left"),
     ]
-    dense_moderate_bin = [
-        {"speed_kmh": 95.0 + (0.1 * idx), "amp": 0.090, "location": "Front Left"}
-        for idx in range(20)
-    ]
+    dense_moderate_bin = [_obs(95.0 + (0.1 * idx), 0.090, "Front Left") for idx in range(20)]
 
     _, hotspot = _location_speedbin_summary(sparse_loud_bin + dense_moderate_bin, lang="en")
     assert hotspot is not None
@@ -200,34 +215,10 @@ def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outl
 
 def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() -> None:
     matches = [
-        {
-            "speed_kmh": 92.0,
-            "amp": 0.120,
-            "location": "Front Right",
-            "matched_hz": 33.0,
-            "rel_error": 0.40,
-        },
-        {
-            "speed_kmh": 92.0,
-            "amp": 0.055,
-            "location": "Front Left",
-            "matched_hz": 40.0,
-            "rel_error": 0.01,
-        },
-        {
-            "speed_kmh": 92.0,
-            "amp": 0.048,
-            "location": "Rear Left",
-            "matched_hz": 40.1,
-            "rel_error": 0.01,
-        },
-        {
-            "speed_kmh": 92.0,
-            "amp": 0.047,
-            "location": "Rear Right",
-            "matched_hz": 39.9,
-            "rel_error": 0.01,
-        },
+        _obs(92.0, 0.120, "Front Right", matched_hz=33.0, rel_error=0.40),
+        _obs(92.0, 0.055, "Front Left", matched_hz=40.0, rel_error=0.01),
+        _obs(92.0, 0.048, "Rear Left", matched_hz=40.1, rel_error=0.01),
+        _obs(92.0, 0.047, "Rear Right", matched_hz=39.9, rel_error=0.01),
     ]
 
     _, hotspot = _location_speedbin_summary(matches, lang="en")
@@ -238,10 +229,10 @@ def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() 
 
 def test_location_speedbin_summary_prefers_connected_throughout_locations() -> None:
     matches = [
-        {"speed_kmh": 85.0, "amp": 0.022, "location": "Front Left"},
-        {"speed_kmh": 86.0, "amp": 0.023, "location": "Front Left"},
-        {"speed_kmh": 85.0, "amp": 0.050, "location": "Rear Right"},
-        {"speed_kmh": 86.0, "amp": 0.048, "location": "Rear Right"},
+        _obs(85.0, 0.022, "Front Left"),
+        _obs(86.0, 0.023, "Front Left"),
+        _obs(85.0, 0.050, "Rear Right"),
+        _obs(86.0, 0.048, "Rear Right"),
     ]
 
     _, hotspot = _location_speedbin_summary(matches, lang="en", connected_locations={"Front Left"})

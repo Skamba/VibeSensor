@@ -14,7 +14,6 @@ from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.domain.speed_source import SpeedSourceKind as SpeedSourceKind
 from vibesensor.shared.constants import NUMERIC_TYPES
-from vibesensor.shared.types.json_types import JsonObject
 
 if TYPE_CHECKING:
     from vibesensor.domain import SpeedSource
@@ -26,7 +25,6 @@ __all__ = [
     "CarConfig",
     "CarConfigPayload",
     "CarConfigUpdatePayload",
-    "HistoryRunPayload",
     "RUN_END_TYPE",
     "RUN_METADATA_TYPE",
     "RUN_SAMPLE_TYPE",
@@ -96,28 +94,6 @@ class SettingsSnapshotPayload(SpeedSourcePayload):
     language: LanguageCode
     speedUnit: SpeedUnitCode
     sensorsByMac: SensorsByMacPayload
-
-
-class HistoryRunPayload(TypedDict, total=False):
-    """Typed record returned by :meth:`HistoryRunService.get_run`.
-
-    Acts as the history-record boundary type used throughout the service
-    layer.  All ``history_services/`` methods return this (or its list
-    subset) instead of raw dicts.
-    """
-
-    run_id: str
-    status: str
-    start_time_utc: str
-    end_time_utc: str | None
-    metadata: JsonObject
-    analysis: JsonObject
-    analysis_corrupt: bool
-    error_message: str
-    created_at: str
-    sample_count: int
-    analysis_started_at: str
-    analysis_completed_at: str
 
 
 # ---------------------------------------------------------------------------

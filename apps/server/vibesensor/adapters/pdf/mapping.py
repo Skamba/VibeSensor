@@ -12,6 +12,7 @@ from typing import Any
 
 from vibesensor import __version__
 from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern, why_parts_listed
+from vibesensor.adapters.pdf.presentation import strength_label, strength_text
 from vibesensor.adapters.pdf.report_data import (
     DataTrustItem,
     NextStep,
@@ -21,26 +22,23 @@ from vibesensor.adapters.pdf.report_data import (
     ReportTemplateData,
     SystemFindingCard,
 )
+from vibesensor.adapters.pdf.report_types import PeakTableRow
 from vibesensor.adapters.persistence.runlog import utc_now_iso
-from vibesensor.domain import ConfidenceAssessment, Finding, TestRun, VibrationSource
+from vibesensor.domain import (
+    ConfidenceAssessment,
+    Finding,
+    TestRun,
+    VibrationOrigin,
+    VibrationSource,
+)
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
-from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-from vibesensor.shared.boundaries.vibration_origin import (
-    SuspectedVibrationOrigin,
-    origin_payload_from_finding,
-)
+from vibesensor.shared.boundaries.vibration_origin import vibration_origin_from_payload
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.json_types import JsonValue
-from vibesensor.use_cases.diagnostics import (
-    PHASE_I18N_KEYS,
-    IntensityRow,
-    MetadataDict,
-    PeakTableRow,
-    strength_label,
-    strength_text,
-)
+from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.use_cases.diagnostics import PHASE_I18N_KEYS
+from vibesensor.use_cases.diagnostics.summary_builder import build_origin_explanation
 
 __all__ = ["Report", "map_summary"]
 
@@ -95,7 +93,7 @@ class ReportMappingContext:
     car_name: str | None
     car_type: str | None
     date_str: str
-    origin: SuspectedVibrationOrigin
+    origin: VibrationOrigin | None
     origin_location: str
     sensor_locations_active: list[str]
     # Typed run metadata (replaces dict[str, object] + type: ignore).
@@ -284,16 +282,8 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
 # Context extraction
 # ---------------------------------------------------------------------------
 
-_EMPTY_ORIGIN: SuspectedVibrationOrigin = {
-    "location": "unknown",
-    "alternative_locations": [],
-    "suspected_source": "unknown",
-    "dominance_ratio": None,
-    "weak_spatial_separation": True,
-}
 
-
-def summary_metadata(summary: Mapping[str, Any]) -> MetadataDict:
+def summary_metadata(summary: Mapping[str, Any]) -> dict[str, Any]:
     return summary.get("metadata") or {}
 
 
@@ -317,7 +307,7 @@ def summary_warnings(summary: Mapping[str, Any]) -> list[object]:
     return list(summary.get("warnings", []))
 
 
-def summary_sensor_intensity_by_location(summary: Mapping[str, Any]) -> list[IntensityRow]:
+def summary_sensor_intensity_by_location(summary: Mapping[str, Any]) -> list[JsonObject]:
     return [row for row in summary.get("sensor_intensity_by_location", []) if isinstance(row, dict)]
 
 
@@ -331,17 +321,65 @@ def summary_sensor_locations_active(summary: Mapping[str, Any]) -> list[str]:
 
 def _origin_from_aggregate(
     aggregate: TestRun | None,
-    fallback: SuspectedVibrationOrigin,
-) -> SuspectedVibrationOrigin:
-    if aggregate is None or aggregate.primary_finding is None:
-        return fallback
+    fallback: Mapping[str, Any] | None,
+) -> VibrationOrigin | None:
+    fallback_origin: VibrationOrigin | None = None
+    if isinstance(fallback, Mapping):
+        raw_location = str(fallback.get("location") or "").strip()
+        alternatives_raw = fallback.get("alternative_locations")
+        alternatives = (
+            [str(location).strip() for location in alternatives_raw if str(location).strip()]
+            if isinstance(alternatives_raw, list)
+            else []
+        )
 
-    return origin_payload_from_finding(aggregate.primary_finding, fallback)
+        strongest_location = (
+            raw_location.split(" / ", maxsplit=1)[0].strip() if raw_location else ""
+        )
+        hotspot = None
+        if strongest_location and strongest_location.lower() != "unknown":
+            from vibesensor.domain import LocationHotspot
+
+            hotspot = LocationHotspot.from_analysis_inputs(
+                strongest_location=strongest_location,
+                dominance_ratio=_as_float(fallback.get("dominance_ratio")),
+                weak_spatial_separation=bool(fallback.get("weak_spatial_separation", False)),
+                ambiguous=bool(alternatives),
+                alternative_locations=alternatives,
+            )
+
+        speed_band = str(fallback.get("speed_band") or "").strip() or None
+        dominant_phase = str(fallback.get("dominant_phase") or "").strip() or None
+        dominance_ratio = _as_float(fallback.get("dominance_ratio"))
+        if (
+            hotspot is not None
+            or speed_band is not None
+            or dominant_phase is not None
+            or dominance_ratio is not None
+        ):
+            fallback_origin = vibration_origin_from_payload(
+                fallback,
+                hotspot=hotspot,
+                dominance_ratio=dominance_ratio,
+                speed_band=speed_band,
+            )
+
+    if aggregate is not None and aggregate.primary_finding is not None:
+        primary_origin = VibrationOrigin.from_finding(aggregate.primary_finding)
+        if primary_origin is None:
+            return fallback_origin
+        if not primary_origin.has_sufficient_location and fallback_origin is not None:
+            return fallback_origin
+        return primary_origin
+
+    return fallback_origin
 
 
-def normalized_origin_location(origin: SuspectedVibrationOrigin) -> str:
+def normalized_origin_location(origin: VibrationOrigin | None) -> str:
     """Return the report-ready origin location string."""
-    raw = str(origin.get("location") or "").strip()
+    if origin is None:
+        return ""
+    raw = origin.projected_location.strip()
     return "" if raw.lower() == "unknown" else raw
 
 
@@ -361,12 +399,9 @@ def build_peak_rows_from_plots(
     if plots is None:
         return []
     raw_peaks = [row for row in (plots.get("peaks_table", []) or []) if isinstance(row, dict)]
-    above_noise = [
-        row
-        for row in raw_peaks
-        if ((_strength_db := _as_float(row.get("strength_db"))) is None or _strength_db > 0)
-    ]
-    return [build_peak_row(row, lang=lang, tr=tr) for row in above_noise[:8]]  # type: ignore[arg-type]
+    above_noise = [row for row in raw_peaks if (_as_float(row.get("strength_db")) or 0.0) > 0]
+    ranked = above_noise or raw_peaks
+    return [build_peak_row(row, lang=lang, tr=tr) for row in ranked[:8]]
 
 
 def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable) -> PeakRow:
@@ -576,7 +611,7 @@ def _resolve_detail_text(value: object, *, lang: str, tr: Callable) -> str | Non
 # ---------------------------------------------------------------------------
 
 
-def _sensor_fallback_strength_db(sensor_intensity: list[IntensityRow]) -> float | None:
+def _sensor_fallback_strength_db(sensor_intensity: list[JsonObject]) -> float | None:
     """Return the best sensor-intensity dB as a last-resort fallback."""
     sensor_rows = [
         _as_float(row.get("p95_intensity_db")) for row in sensor_intensity if isinstance(row, dict)
@@ -696,12 +731,20 @@ def build_pattern_evidence(
     )
 
 
-def resolve_interpretation(origin: SuspectedVibrationOrigin, *, lang: str, tr: Callable) -> str:
+def resolve_interpretation(origin: VibrationOrigin | None, *, lang: str, tr: Callable) -> str:
     """Resolve the origin explanation into localized report text."""
-    interpretation_raw = origin.get("explanation", "") if isinstance(origin, dict) else ""
-    if is_i18n_ref(interpretation_raw) or isinstance(interpretation_raw, list):
-        return resolve_i18n(lang, interpretation_raw, tr=tr)
-    return str(interpretation_raw)
+    if origin is None:
+        return ""
+
+    explanation = build_origin_explanation(
+        source=str(origin.suspected_source),
+        speed_band=origin.speed_band or "",
+        location=origin.summary_location,
+        dominance=origin.dominance_ratio,
+        weak=origin.weak_spatial_separation,
+        dominant_phase=origin.dominant_phase or "",
+    )
+    return resolve_i18n(lang, explanation, tr=tr)
 
 
 def resolve_parts_context(
@@ -799,9 +842,7 @@ def prepare_report_mapping_context(
     else:
         domain_aggregate = test_run
 
-    origin_fallback = summary.get("most_likely_origin") or _EMPTY_ORIGIN
-    if not isinstance(origin_fallback, dict):
-        origin_fallback = _EMPTY_ORIGIN
+    origin_fallback = summary.get("most_likely_origin")
     origin = _origin_from_aggregate(domain_aggregate, origin_fallback)
 
     origin_location = normalized_origin_location(origin)
@@ -831,7 +872,7 @@ def prepare_report_mapping_context(
 def resolve_primary_report_candidate(
     *,
     context: ReportMappingContext,
-    sensor_intensity: list[IntensityRow],
+    sensor_intensity: list[JsonObject],
     tr: Callable[..., str],
     lang: str,
 ) -> PrimaryCandidateContext:
@@ -1068,10 +1109,8 @@ def _build_report_template_data(
         version_marker=version_marker,
         lang=report.lang,
         certainty_tier_key=primary.tier,
-        findings=[finding_payload_from_domain(f) for f in context.domain_aggregate.findings],
-        top_causes=[
-            finding_payload_from_domain(f) for f in context.domain_aggregate.effective_top_causes()
-        ],
+        findings=list(context.domain_aggregate.findings),
+        top_causes=list(context.domain_aggregate.effective_top_causes()),
         sensor_intensity_by_location=raw_sensor_intensity,
         location_hotspot_rows=hotspot_rows,
     )

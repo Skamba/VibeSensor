@@ -63,25 +63,25 @@ def test_build_findings_nl_language() -> None:
 def test_build_findings_orders_informational_transients_after_diagnostics(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def _fake_order_findings(**_kwargs) -> list[dict[str, object]]:
+    def _fake_order_findings(**_kwargs) -> list[Finding]:
         return [
-            {
-                "finding_id": "F_PEAK",
-                "severity": "diagnostic",
-                "suspected_source": "wheel/tire",
-                "confidence": 0.30,
-            },
+            Finding(
+                finding_id="F_PEAK",
+                severity="diagnostic",
+                suspected_source="wheel/tire",
+                confidence=0.30,
+            ),
         ]
 
-    def _fake_persistent_peaks(**_kwargs) -> list[dict[str, object]]:
+    def _fake_persistent_peaks(**_kwargs) -> list[Finding]:
         return [
-            {
-                "finding_id": "F_PEAK",
-                "severity": "info",
-                "suspected_source": "transient_impact",
-                "peak_classification": "transient",
-                "confidence": 0.22,
-            },
+            Finding(
+                finding_id="F_PEAK",
+                severity="info",
+                suspected_source="transient_impact",
+                peak_classification="transient",
+                confidence=0.22,
+            ),
         ]
 
     monkeypatch.setattr(findings_builder_module, "_build_order_findings", _fake_order_findings)
@@ -161,8 +161,8 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
     findings = call_build_order_findings(samples)
     assert len(findings) == 1
     finding = findings[0]
-    confidence = float(finding.get("confidence") or 0.0)
-    match_rate = float(((finding.get("evidence_metrics") or {}).get("global_match_rate")) or 0.0)
+    confidence = finding.effective_confidence
+    match_rate = finding.evidence.global_match_rate if finding.evidence is not None else 0.0
     assert match_rate == pytest.approx(0.25)
     assert confidence < 0.25
 
