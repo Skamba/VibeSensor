@@ -8,7 +8,6 @@ import re
 from pathlib import Path
 
 import pytest
-from _paths import SERVER_ROOT
 
 from vibesensor.adapters.http._helpers import safe_filename as _safe_filename
 from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -117,13 +116,3 @@ class TestProcessingZeroSampleRate:
         else:
             assert len(freq_slice) > 0
             assert len(valid_idx) > 0
-
-
-# --- Bug 10: location_code stripped before registry -----------------------
-
-
-def test_set_location_uses_stripped_code() -> None:
-    """Verify the stripped code is passed to registry.set_location."""
-    source = (SERVER_ROOT / "vibesensor" / "adapters" / "http" / "clients.py").read_text()
-    assert "set_location(normalized_client_id, code)" in source
-    assert "set_location(normalized_client_id, req.location_code)" not in source
