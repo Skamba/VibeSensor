@@ -1185,6 +1185,20 @@ class TestFindingWithValueObjects:
         assert f.evidence is None
         assert f.location is None
 
+    def test_finding_from_payload_populates_origin_and_signatures(self) -> None:
+        payload = {
+            "finding_id": "F001",
+            "suspected_source": "wheel/tire",
+            "confidence": 0.85,
+            "strongest_speed_band": "80-90 km/h",
+            "signatures_observed": ["1x wheel order", "2x wheel order"],
+            "location_hotspot": {"location": "FL wheel", "dominance_ratio": 0.75},
+        }
+        finding = finding_from_payload(payload)
+        assert finding.origin is not None
+        assert len(finding.signatures) == 2
+        assert finding.origin.display_location == "Fl Wheel"
+
     def test_finding_defaults_none(self) -> None:
         f = Finding(finding_id="F001")
         assert f.evidence is None
