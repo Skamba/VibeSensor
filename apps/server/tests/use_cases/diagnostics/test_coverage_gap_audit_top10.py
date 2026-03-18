@@ -731,6 +731,31 @@ class TestResolveSpeedContext:
         )
         assert rpm is None, "Without gear_ratio, RPM should not be estimated"
 
+    def test_uses_order_reference_spec_for_engine_rpm(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        class _FakeSpec:
+            def engine_rpm_from_speed_kmh(self, speed_kmh: float) -> float | None:
+                return 1234.5 if speed_kmh > 0 else None
+
+        monkeypatch.setattr(
+            AnalysisSettingsSnapshot,
+            "order_reference_spec",
+            property(lambda self: _FakeSpec()),
+        )
+        logger, gps_mock = _make_run_recorder()
+        gps_mock.speed_mps = 10.0
+        gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
+
+        speed, _, _, rpm = resolve_speed_context(
+            logger.gps_monitor,
+            logger._analysis_settings_snapshot(),
+        )
+
+        assert speed == pytest.approx(36.0, rel=0.01)
+        assert rpm == 1234.5
+
 
 class TestSummarizeRunDataEdgeCases:
     """Integration edge cases for summarize_run_data."""
