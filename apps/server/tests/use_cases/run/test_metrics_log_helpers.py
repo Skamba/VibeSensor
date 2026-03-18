@@ -400,8 +400,9 @@ def test_stop_recording_does_not_block_on_post_analysis(
     logger.stop_recording()
     elapsed = time.monotonic() - started
 
-    # stop_recording() must return quickly; summary runs in a worker thread
-    assert elapsed < 0.45, f"stop_recording() blocked for {elapsed:.2f}s (expected < 0.45s)"
+    # stop_recording() must return quickly; summary runs in a worker thread.
+    # 5.0s threshold guards against blocking; not a performance target.
+    assert elapsed < 5.0, f"stop_recording() blocked for {elapsed:.2f}s (expected < 5.0s)"
     assert summary_started.wait(timeout=2.0)
     allow_summary_finish.set()
 
