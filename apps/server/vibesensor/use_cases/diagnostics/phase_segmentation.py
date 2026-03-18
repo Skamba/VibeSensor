@@ -16,15 +16,11 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from vibesensor.domain import DrivingPhase
+from vibesensor.domain.snapshots import PhaseSummarySnapshot
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
-
-if TYPE_CHECKING:
-    from vibesensor.use_cases.diagnostics._types import PhaseSummary
-
 
 # Thresholds (tuneable)
 _IDLE_SPEED_KMH = 3.0  # below this → IDLE
@@ -270,8 +266,8 @@ def segment_run_phases(
     return per_sample, segments
 
 
-def phase_summary(segments: list[PhaseSegment]) -> PhaseSummary:
-    """Return a summary dict suitable for embedding in the run summary."""
+def phase_summary(segments: list[PhaseSegment]) -> PhaseSummarySnapshot:
+    """Return a typed snapshot suitable for embedding in the run summary."""
     phase_counts: dict[str, int] = {}
     total = 0
     for seg in segments:
@@ -282,17 +278,17 @@ def phase_summary(segments: list[PhaseSegment]) -> PhaseSummary:
     for phase, count in phase_counts.items():
         phase_pcts[phase] = (count / total * 100.0) if total > 0 else 0.0
 
-    return {
-        "phase_counts": phase_counts,
-        "phase_pcts": phase_pcts,
-        "total_samples": total,
-        "segment_count": len(segments),
-        "has_cruise": phase_counts.get(DrivingPhase.CRUISE.value, 0) > 0,
-        "has_acceleration": phase_counts.get(DrivingPhase.ACCELERATION.value, 0) > 0,
-        "cruise_pct": phase_pcts.get(DrivingPhase.CRUISE.value, 0.0),
-        "idle_pct": phase_pcts.get(DrivingPhase.IDLE.value, 0.0),
-        "speed_unknown_pct": phase_pcts.get(DrivingPhase.SPEED_UNKNOWN.value, 0.0),
-    }
+    return PhaseSummarySnapshot(
+        phase_counts=phase_counts,
+        phase_pcts=phase_pcts,
+        total_samples=total,
+        segment_count=len(segments),
+        has_cruise=phase_counts.get(DrivingPhase.CRUISE.value, 0) > 0,
+        has_acceleration=phase_counts.get(DrivingPhase.ACCELERATION.value, 0) > 0,
+        cruise_pct=phase_pcts.get(DrivingPhase.CRUISE.value, 0.0),
+        idle_pct=phase_pcts.get(DrivingPhase.IDLE.value, 0.0),
+        speed_unknown_pct=phase_pcts.get(DrivingPhase.SPEED_UNKNOWN.value, 0.0),
+    )
 
 
 def diagnostic_sample_mask(

@@ -6,14 +6,13 @@ from collections import defaultdict
 from dataclasses import dataclass, replace
 from math import ceil, floor, log1p, pow
 
-from vibesensor.domain import LocationHotspot, VibrationSource
+from vibesensor.domain import LocationHotspot, OrderMatchObservation, VibrationSource
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.shared.constants import MULTI_SENSOR_CORROBORATION_DB
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.locations import has_any_wheel_location, is_wheel_location
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (
-    MatchedPoint,
     i18n_ref,
 )
 from vibesensor.use_cases.diagnostics.helpers import _weighted_percentile
@@ -202,7 +201,7 @@ def _score_locations_in_bin(
 
 
 def _location_speedbin_summary(
-    matches: list[MatchedPoint],
+    matches: list[OrderMatchObservation],
     lang: str,
     relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
     connected_locations: set[str] | None = None,
@@ -227,9 +226,9 @@ def _location_speedbin_summary(
     }
     grouped: dict[str, list[JsonObject]] = defaultdict(list)
     for row in matches:
-        speed = _as_float(row.get("speed_kmh"))
-        amp = _as_float(row.get("amp"))
-        location = str(row.get("location") or "").strip()
+        speed = row.speed_kmh
+        amp = row.amp
+        location = (row.location or "").strip()
         if speed is None or speed <= 0 or amp is None or amp <= 0 or not location:
             continue
         speed_bin = speed_bin_label(speed)
@@ -240,8 +239,8 @@ def _location_speedbin_summary(
                 "location": location,
                 "amp": amp,
                 "speed_kmh": speed,
-                "matched_hz": _as_float(row.get("matched_hz")),
-                "rel_error": _as_float(row.get("rel_error")),
+                "matched_hz": row.matched_hz,
+                "rel_error": row.rel_error,
             },
         )
 

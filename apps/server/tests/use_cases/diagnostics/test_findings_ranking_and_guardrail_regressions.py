@@ -14,6 +14,7 @@ from __future__ import annotations
 import inspect
 
 import pytest
+from test_support.findings import make_finding
 
 from vibesensor.adapters.http.clients import create_client_routes
 from vibesensor.use_cases.diagnostics.helpers import _speed_stats
@@ -31,27 +32,27 @@ class TestRankingScoreSyncAfterSuppression:
         findings = [
             (
                 0.8,
-                {
-                    "suspected_source": "wheel/tire",
-                    "confidence": 0.6,
-                    "ranking_score": 0.8,
-                    "key": "wheel_1",
-                },
+                make_finding(
+                    suspected_source="wheel/tire",
+                    confidence=0.6,
+                    ranking_score=0.8,
+                    finding_key="wheel_1",
+                ),
             ),
             (
                 0.7,
-                {
-                    "suspected_source": "engine",
-                    "confidence": 0.5,
-                    "ranking_score": 0.7,
-                    "key": "engine_2",
-                },
+                make_finding(
+                    suspected_source="engine",
+                    confidence=0.5,
+                    ranking_score=0.7,
+                    finding_key="engine_2",
+                ),
             ),
         ]
         result = _suppress_engine_aliases(findings)
-        engine_findings = [f for f in result if f.get("suspected_source") == "engine"]
+        engine_findings = [f for f in result if str(f.suspected_source) == "engine"]
         for f in engine_findings:
-            assert f["ranking_score"] == pytest.approx(0.7 * 0.60, abs=1e-9), (
+            assert f.ranking_score == pytest.approx(0.7 * 0.60, abs=1e-9), (
                 "ranking_score must be updated after suppression"
             )
 
@@ -61,13 +62,13 @@ class TestSteadySpeedUsesAND:
 
     def test_high_stddev_low_range_not_steady(self) -> None:
         speeds = [50.0 + (i % 2) * 7.9 for i in range(50)]
-        assert not _speed_stats(speeds)["steady_speed"], (
+        assert not _speed_stats(speeds).steady_speed, (
             "High stddev should not be steady even with low range"
         )
 
     def test_both_low_is_steady(self) -> None:
         speeds = [60.0 + 0.1 * (i % 3) for i in range(50)]
-        assert _speed_stats(speeds)["steady_speed"], "Both low stddev and range → steady"
+        assert _speed_stats(speeds).steady_speed, "Both low stddev and range → steady"
 
 
 class TestHistoryDbCloseLocked:
@@ -102,12 +103,12 @@ class TestSuppressEngineAliasesCapRaised:
         findings = [
             (
                 0.9 - i * 0.1,
-                {
-                    "suspected_source": "wheel/tire",
-                    "confidence": 0.8 - i * 0.1,
-                    "ranking_score": 0.9 - i * 0.1,
-                    "key": f"wheel_{i}",
-                },
+                make_finding(
+                    suspected_source="wheel/tire",
+                    confidence=0.8 - i * 0.1,
+                    ranking_score=0.9 - i * 0.1,
+                    finding_key=f"wheel_{i}",
+                ),
             )
             for i in range(4)
         ]

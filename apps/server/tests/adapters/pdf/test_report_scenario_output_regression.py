@@ -100,29 +100,27 @@ class TestReferenceFindingDistinguishability:
         reference = _reference_missing_finding(
             finding_id="REF_SPEED",
             suspected_source="unknown",
-            evidence_summary="Speed data missing",
-            quick_checks=["Check GPS"],
         )
-        assert reference.get("finding_kind") == "reference"
+        assert reference.kind is not None
+        assert reference.kind.value == "reference"
 
     def test_reference_findings_excluded_from_top_causes(self) -> None:
         reference = _reference_missing_finding(
             finding_id="REF_SPEED",
             suspected_source="unknown",
-            evidence_summary="Speed data missing",
-            quick_checks=[],
         )
         findings = [
             reference,
-            {
-                "finding_id": "F001",
-                "confidence": 0.80,
-                "suspected_source": "wheel/tire",
-                "severity": "diagnostic",
-            },
+            finding_from_payload(
+                {
+                    "finding_id": "F001",
+                    "confidence": 0.80,
+                    "suspected_source": "wheel/tire",
+                    "severity": "diagnostic",
+                }
+            ),
         ]
-        findings_domain = tuple(finding_from_payload(f) for f in findings)
-        for cause in select_top_causes(findings_domain):
+        for cause in select_top_causes(tuple(findings)):
             assert not str(cause.finding_id or "").startswith("REF_")
 
     def test_all_ref_variants_have_reference_type(self) -> None:
@@ -130,17 +128,13 @@ class TestReferenceFindingDistinguishability:
             reference = _reference_missing_finding(
                 finding_id=finding_id,
                 suspected_source="unknown",
-                evidence_summary="missing",
-                quick_checks=[],
             )
-            assert reference.get("finding_kind") == "reference"
+            assert reference.kind is not None
+            assert reference.kind.value == "reference"
 
     def test_reference_finding_confidence_is_none(self) -> None:
         reference = _reference_missing_finding(
             finding_id="REF_SPEED",
             suspected_source="unknown",
-            evidence_summary="Speed data missing",
-            quick_checks=[],
         )
-        assert "confidence" in reference
-        assert reference["confidence"] is None
+        assert reference.confidence is None

@@ -9,9 +9,9 @@ from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.run_context import add_current_context_warnings, localize_warning_list
-from vibesensor.shared.types.backend_types import HistoryRunPayload
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.use_cases.history.helpers import (
+    HistoryRunRecord,
     async_require_run,
     require_analysis_ready,
     resolve_run_language,
@@ -35,7 +35,7 @@ class HistoryRunService:
     async def list_runs(self) -> list[JsonObject]:
         return await asyncio.to_thread(self._history_db.list_runs)
 
-    async def get_run(self, run_id: str) -> HistoryRunPayload:
+    async def get_run(self, run_id: str) -> HistoryRunRecord:
         run = await async_require_run(self._history_db, run_id)
         analysis = run.get("analysis")
         if is_json_object(analysis):
@@ -43,7 +43,7 @@ class HistoryRunService:
                 analysis.get("top_causes"), list
             ):
                 projected, _ = project_analysis_summary(analysis)
-                updated_run: HistoryRunPayload = {
+                updated_run: HistoryRunRecord = {
                     **run,
                     "analysis": strip_internal_fields(projected),
                 }

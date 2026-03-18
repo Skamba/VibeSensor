@@ -350,6 +350,18 @@ class SpeedStatsSnapshot:
             sample_count=_int_or(d, "sample_count"),
         )
 
+    def to_dict(self) -> dict[str, object]:
+        """Serialize to a plain dict suitable for JSON / boundary payloads."""
+        return {
+            "min_kmh": self.min_kmh,
+            "max_kmh": self.max_kmh,
+            "mean_kmh": self.mean_kmh,
+            "stddev_kmh": self.stddev_kmh,
+            "range_kmh": self.range_kmh,
+            "steady_speed": self.steady_speed,
+            "sample_count": self.sample_count,
+        }
+
 
 # ---------------------------------------------------------------------------
 # PhaseSummarySnapshot
@@ -377,6 +389,20 @@ class PhaseSummarySnapshot:
             object.__setattr__(self, "phase_counts", MappingProxyType(dict(self.phase_counts)))
         if not isinstance(self.phase_pcts, MappingProxyType):
             object.__setattr__(self, "phase_pcts", MappingProxyType(dict(self.phase_pcts)))
+
+    def to_dict(self) -> dict[str, object]:
+        """Serialize to a plain dict suitable for JSON / boundary payloads."""
+        return {
+            "phase_counts": dict(self.phase_counts),
+            "phase_pcts": dict(self.phase_pcts),
+            "total_samples": self.total_samples,
+            "segment_count": self.segment_count,
+            "has_cruise": self.has_cruise,
+            "has_acceleration": self.has_acceleration,
+            "cruise_pct": self.cruise_pct,
+            "idle_pct": self.idle_pct,
+            "speed_unknown_pct": self.speed_unknown_pct,
+        }
 
     @classmethod
     def from_dict(cls, d: Mapping[str, object]) -> PhaseSummarySnapshot:

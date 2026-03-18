@@ -66,10 +66,10 @@ class TestDomainFindingFromPayload:
 class TestFinalizeFindings:
     def test_finalize_ordering(self) -> None:
         """References come first, then diagnostics by confidence, then informational."""
-        ref = make_ref_finding()
-        diag_high = make_finding_payload(confidence=0.80, ranking_score=2.0)
-        diag_low = make_finding_payload(confidence=0.30, ranking_score=1.0)
-        info = make_info_finding(confidence=0.10)
+        ref = finding_from_payload(make_ref_finding())
+        diag_high = finding_from_payload(make_finding_payload(confidence=0.80, ranking_score=2.0))
+        diag_low = finding_from_payload(make_finding_payload(confidence=0.30, ranking_score=1.0))
+        info = finding_from_payload(make_info_finding(confidence=0.10))
         domain_findings = finalize_findings([diag_low, info, ref, diag_high])
         assert len(domain_findings) == 4
         # Reference first
@@ -87,10 +87,10 @@ class TestFinalizeFindings:
         assert domain_findings[3].is_informational
 
     def test_finalize_assigns_sequential_ids(self) -> None:
-        ref = make_ref_finding("REF_SPEED")
-        d1 = make_finding_payload(confidence=0.80)
-        d2 = make_finding_payload(confidence=0.40)
-        info = make_info_finding()
+        ref = finding_from_payload(make_ref_finding("REF_SPEED"))
+        d1 = finding_from_payload(make_finding_payload(confidence=0.80))
+        d2 = finding_from_payload(make_finding_payload(confidence=0.40))
+        info = finding_from_payload(make_info_finding())
         domain_findings = finalize_findings([d2, info, ref, d1])
         # Reference keeps its original ID
         assert domain_findings[0].finding_id == "REF_SPEED"
@@ -190,30 +190,24 @@ class TestPeakBin:
     def test_to_finding_has_required_keys(self) -> None:
         pb = _make_peak_bin()
         finding = pb.to_finding()
-        required_keys = {
-            "finding_id",
-            "suspected_source",
-            "evidence_summary",
-            "frequency_hz_or_order",
-            "amplitude_metric",
-            "confidence",
-            "quick_checks",
-        }
-        assert required_keys.issubset(set(finding.keys()))
+        assert finding.finding_id == "F_PEAK"
+        assert str(finding.suspected_source)
+        assert finding.confidence is not None
+        assert finding.kind is not None
 
     def test_to_finding_preserves_bin_center(self) -> None:
         pb = _make_peak_bin(bin_center=42.0)
         finding = pb.to_finding()
-        assert "42.0 Hz" in str(finding["frequency_hz_or_order"])
+        assert finding.order == "42.0 Hz"
 
     def test_to_finding_includes_evidence_metrics(self) -> None:
         pb = _make_peak_bin()
         finding = pb.to_finding()
-        metrics = finding.get("evidence_metrics")
-        assert isinstance(metrics, dict)
-        assert "presence_ratio" in metrics
-        assert "burstiness" in metrics
-        assert "spatial_concentration" in metrics
+        metrics = finding.evidence
+        assert metrics is not None
+        assert metrics.presence_ratio > 0.0
+        assert metrics.burstiness >= 0.0
+        assert metrics.spatial_concentration > 0.0
 
     def test_spatial_uniformity_single_location(self) -> None:
         pb = _make_peak_bin(total_locations={"front_left"})
@@ -274,8 +268,8 @@ class TestPeakFindingAnalyzer:
         findings = analyzer.analyze()
         assert len(findings) > 0
         for f in findings:
-            assert "finding_id" in f
-            assert "confidence" in f
+            assert f.finding_id == "F_PEAK"
+            assert f.confidence is not None
 
     def test_order_freq_exclusion(self) -> None:
         """Bins overlapping with order frequencies are excluded."""

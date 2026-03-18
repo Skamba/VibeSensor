@@ -194,22 +194,22 @@ def test_speed_bin_sort_key() -> None:
 
 def test_speed_stats_empty() -> None:
     result = _speed_stats([])
-    assert result["min_kmh"] is None
-    assert result["steady_speed"] is False
+    assert result.min_kmh is None
+    assert result.steady_speed is False
 
 
 def test_speed_stats_steady() -> None:
     values = [80.0, 80.5, 81.0, 80.2]
     result = _speed_stats(values)
-    assert result["steady_speed"] is True
-    assert result["min_kmh"] == 80.0
-    assert result["max_kmh"] == 81.0
+    assert result.steady_speed is True
+    assert result.min_kmh == 80.0
+    assert result.max_kmh == 81.0
 
 
 def test_speed_stats_not_steady() -> None:
     values = [30.0, 60.0, 90.0, 120.0]
     result = _speed_stats(values)
-    assert result["steady_speed"] is False
+    assert result.steady_speed is False
 
 
 # -- _speed_stats_by_phase -----------------------------------------------------
@@ -229,9 +229,9 @@ def test_speed_stats_by_phase_single_phase() -> None:
     phases = ["cruise", "cruise", "cruise"]
     result = _speed_stats_by_phase(samples, phases)
     assert "cruise" in result
-    assert result["cruise"]["sample_count"] == 3
-    assert result["cruise"]["min_kmh"] == 60.0
-    assert result["cruise"]["max_kmh"] == 61.0
+    assert result["cruise"].sample_count == 3
+    assert result["cruise"].min_kmh == 60.0
+    assert result["cruise"].max_kmh == 61.0
 
 
 def test_speed_stats_by_phase_multiple_phases() -> None:
@@ -245,9 +245,9 @@ def test_speed_stats_by_phase_multiple_phases() -> None:
     phases = ["idle", "idle", "cruise", "cruise", "cruise"]
     result = _speed_stats_by_phase(samples, phases)
     assert set(result.keys()) == {"idle", "cruise"}
-    assert result["idle"]["sample_count"] == 2
-    assert result["cruise"]["sample_count"] == 3
-    assert result["cruise"]["min_kmh"] == 60.0
+    assert result["idle"].sample_count == 2
+    assert result["cruise"].sample_count == 3
+    assert result["cruise"].min_kmh == 60.0
 
 
 def test_speed_stats_by_phase_excludes_zero_and_none_speed() -> None:
@@ -260,10 +260,10 @@ def test_speed_stats_by_phase_excludes_zero_and_none_speed() -> None:
     phases = ["idle", "idle", "cruise"]
     result = _speed_stats_by_phase(samples, phases)
     # idle has 2 samples but none with speed > 0
-    assert result["idle"]["sample_count"] == 2
-    assert result["idle"]["min_kmh"] is None
+    assert result["idle"].sample_count == 2
+    assert result["idle"].min_kmh is None
     # cruise has valid speed
-    assert result["cruise"]["min_kmh"] == 50.0
+    assert result["cruise"].min_kmh == 50.0
 
 
 def test_speed_stats_by_phase_sample_count_sums_to_total() -> None:
@@ -273,7 +273,7 @@ def test_speed_stats_by_phase_sample_count_sums_to_total() -> None:
     ]
     per_sample_phases, _ = segment_run_phases(samples)
     result = _speed_stats_by_phase(samples, per_sample_phases)
-    total = sum(v["sample_count"] for v in result.values())
+    total = sum(v.sample_count for v in result.values())
     assert total == len(samples)
 
 

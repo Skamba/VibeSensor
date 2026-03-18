@@ -35,11 +35,11 @@
 - `infra/processing/`: signal processing pipeline (buffers, FFT, payload shaping, and processor facade).
 - `infra/config/`: runtime settings store (single `SettingsStore` owns both analysis and device settings) used by runtime wiring and recording flows.
 - `infra/workers/`: worker-pool infrastructure.
-- `use_cases/diagnostics/`: post-stop diagnostics pipeline. `findings.py` and `top_cause_selection.py` delegate classification and ranking to the domain `Finding`; `location_analysis.py` owns the location-analysis pipeline and `LocationAnalysisResult` typed return; `_types.py` owns `PhaseEvidence`, `FindingPayload`, and `AnalysisSummary`. Cross-layer types are re-exported from the package `__init__.py` (`PeakTableRow`, `PHASE_I18N_KEYS`, strength labels).
-- `use_cases/history/`: run query/delete, PDF report generation, CSV/ZIP exports, and history-facing helper orchestration above persistence.
+- `use_cases/diagnostics/`: post-stop diagnostics pipeline. `findings.py` and `top_cause_selection.py` delegate classification and ranking to the domain `Finding`; `location_analysis.py` owns the location-analysis pipeline and `LocationAnalysisResult` typed return; `_types.py` is now limited to diagnostics-local helper types such as `AccelStatistics`, while boundary summary payloads live in `shared/boundaries/analysis_payload.py`. The package `__init__.py` re-exports only high-level analysis entrypoints plus `PHASE_I18N_KEYS`; PDF rendering types/helpers now live under `adapters/pdf/`.
+- `use_cases/history/`: run query/delete, PDF report generation, CSV/ZIP exports, and history-facing helper orchestration above persistence. `helpers.py` owns the local `HistoryRunRecord` TypedDict used only inside history workflows.
 - `use_cases/run/`: recording pipeline orchestration; `logger.py` owns `RunRecorder`, `post_analysis.py` owns the background analysis queue, and `sample_builder.py` owns pure sample-building helpers.
 - `use_cases/updates/`: wheel-based updater workflow orchestration, firmware cache, ESP flashing, release discovery, install, rollback, runner, Wi-Fi, and status tracking.
-- `shared/`: cross-cutting typed payloads (`shared/types/`), boundary serializers/decoders (`shared/boundaries/`), exceptions (`shared/exceptions.py`), JSON helpers (`shared/json_utils.py`), location identifiers (`shared/locations.py`), and run-context helpers.
+- `shared/`: cross-cutting typed payloads (`shared/types/`), boundary serializers/decoders (`shared/boundaries/`), exceptions (`shared/exceptions.py`), JSON helpers (`shared/json_utils.py`), location identifiers (`shared/locations.py`), and run-context helpers. `shared/boundaries/diagnostic_case.py` owns summary projection, typed speed/suitability decoding, and shared metadata-to-case reconstruction (`case_context_from_metadata`).
 - `domain/`: DDD-aligned domain model package. Primary domain objects
   live under `vibesensor/domain/`; closely related value objects share
   a file with their parent aggregate:
@@ -49,16 +49,17 @@
   `diagnostic_case.py` (DiagnosticCase aggregate, Symptom),
   `run_capture.py` (RunCapture, RunSetup, ConfigurationSnapshot, Measurement, VibrationReading),
   `test_plan.py` (TestPlan, RecommendedAction + planning service functions),
-  `driving_segment.py` (DrivingSegment, DrivingPhase),
+  `driving_segment.py` (DrivingSegment, DrivingPhase, DrivingPhaseInterval),
   `vibration_origin.py`,
   `speed_source.py` (SpeedSource),
   `finding.py` (FindingKind, VibrationSource, Finding, FindingEvidence, Signature),
   `confidence_assessment.py` (ConfidenceAssessment),
-  `location_hotspot.py` (LocationHotspot),
+  `location_hotspot.py` (LocationHotspot, LocationIntensitySummary),
+  `order_match.py` (OrderMatchObservation),
   `speed_profile.py` (SpeedProfile),
   `run_suitability.py` (RunSuitability, SuitabilityCheck),
   `run_status.py` (RunStatus, RUN_TRANSITIONS),
-  `snapshots.py` (AnalysisSettingsSnapshot, RunContextSnapshot, SpeedStatsSnapshot, PhaseSummarySnapshot),
+  `snapshots.py` (AnalysisSettingsSnapshot, RunContextSnapshot, RunMetadataSnapshot, SpeedStatsSnapshot, PhaseSummarySnapshot),
   `strength_metrics.py` (StrengthMetrics, StrengthPeak).
   Domain objects own
   classification, ranking, actionability, surfacing, lifecycle, and

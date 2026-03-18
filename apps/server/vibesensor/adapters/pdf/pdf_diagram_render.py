@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -15,7 +16,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     FINDING_SOURCE_COLORS,
     REPORT_COLORS,
 )
-from vibesensor.domain import VibrationSource
+from vibesensor.domain import Finding, VibrationSource
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 
 if TYPE_CHECKING:
@@ -353,14 +354,17 @@ def _extract_amp_by_location(
     return connected_locations, amp_by_location
 
 
-def _highlight_map(top_findings: list[dict[str, object]]) -> dict[str, str]:
+def _highlight_map(top_findings: list[Finding | Mapping[str, object]]) -> dict[str, str]:
     highlight: dict[str, str] = {}
     for finding in top_findings[:3]:
-        if not isinstance(finding, dict):
-            continue
-        loc = _canonical_location(finding.get("strongest_location"))
+        if isinstance(finding, Mapping):
+            loc = _canonical_location(finding.get("strongest_location"))
+            source = finding.get("suspected_source")
+        else:
+            loc = _canonical_location(finding.strongest_location)
+            source = finding.suspected_source
         if loc:
-            highlight[loc] = _source_color(finding.get("suspected_source"))
+            highlight[loc] = _source_color(source)
     return highlight
 
 
@@ -565,7 +569,7 @@ def _draw_source_legend(
 
 
 def car_location_diagram(
-    top_findings: list[dict[str, object]],
+    top_findings: list[Finding | Mapping[str, object]],
     summary: dict[str, object],
     location_rows: list[dict[str, object]],
     *,

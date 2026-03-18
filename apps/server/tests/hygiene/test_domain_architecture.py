@@ -110,7 +110,7 @@ def test_finalize_findings_returns_domain_findings() -> None:
 
     domain_findings = finalize_findings(
         [
-            {"finding_id": "F_ORDER", "confidence": 0.7, "suspected_source": "wheel/tire"},
+            Finding(finding_id="F_ORDER", confidence=0.7, suspected_source="wheel/tire"),
         ]
     )
     assert len(domain_findings) == 1
@@ -1009,6 +1009,87 @@ def test_build_run_suitability_checks_does_not_exist() -> None:
     )
 
 
+def test_project_analysis_summary_has_no_legacy_summary_version_fast_path() -> None:
+    """project_analysis_summary must always reconstruct through TestRun.
+
+    The legacy `_summary_version == 2` bypass was removed. Historical
+    summaries are reconstructed the same way as current ones so the
+    boundary has a single canonical behavior.
+    """
+    from tests._paths import SERVER_ROOT
+
+    source = (
+        SERVER_ROOT / "vibesensor" / "shared" / "boundaries" / "diagnostic_case.py"
+    ).read_text()
+    assert 'analysis.get("_summary_version") == 2' not in source
+
+
+def test_summary_builder_does_not_define_case_context_wrappers() -> None:
+    """summary_builder must not own duplicate Car/Symptom metadata decoders."""
+    from tests._paths import SERVER_ROOT
+
+    source = (
+        SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics" / "summary_builder.py"
+    ).read_text()
+    assert "def build_domain_car" not in source
+    assert "def build_domain_symptoms" not in source
+    assert "RunSuitabilityCheck" not in source
+
+
+def test_history_backend_types_do_not_export_history_run_payload() -> None:
+    """History record typing must stay local to history workflows.
+
+    `HistoryRunPayload` made persistence dicts look like a general backend
+    business contract. The only supported alias is the history-local
+    `HistoryRunRecord` in use_cases/history/helpers.py.
+    """
+    from tests._paths import SERVER_ROOT
+
+    backend_types_source = (
+        SERVER_ROOT / "vibesensor" / "shared" / "types" / "backend_types.py"
+    ).read_text()
+    history_helpers_source = (
+        SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "helpers.py"
+    ).read_text()
+    assert "HistoryRunPayload" not in backend_types_source
+    assert "class HistoryRunRecord" in history_helpers_source
+
+
+def test_types_modules_do_not_duplicate_domain_concepts_as_typeddicts() -> None:
+    """`*_types.py` modules must not mirror domain concepts with TypedDicts.
+
+    Boundary payload modules may define serialization shapes, but generic
+    `*_types.py` files must not reintroduce domain concepts as parallel dict
+    models after the migration.
+    """
+    import ast
+    import importlib
+
+    from tests._paths import SERVER_ROOT
+
+    domain_exports = set(getattr(importlib.import_module("vibesensor.domain"), "__all__", ()))
+    pkg_dir = SERVER_ROOT / "vibesensor"
+    violations: list[str] = []
+
+    for py_file in pkg_dir.rglob("*_types.py"):
+        source = py_file.read_text()
+        tree = ast.parse(source, filename=str(py_file))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ClassDef):
+                continue
+            if not any(
+                isinstance(base, ast.Name) and base.id == "TypedDict" for base in node.bases
+            ):
+                continue
+            if node.name in domain_exports:
+                rel = py_file.relative_to(pkg_dir)
+                violations.append(f"{rel}:{node.lineno} duplicates domain export {node.name}")
+
+    assert not violations, (
+        f"`*_types.py` modules must not redefine domain concepts as TypedDicts: {violations}"
+    )
+
+
 def test_speed_profile_used_by_confidence_assessment() -> None:
     """ConfidenceAssessment must be the owner of confidence reasoning.
 
@@ -1018,9 +1099,7 @@ def test_speed_profile_used_by_confidence_assessment() -> None:
     """
     from tests._paths import SERVER_ROOT
 
-    strength_labels_path = (
-        SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics" / "strength_labels.py"
-    )
+    strength_labels_path = SERVER_ROOT / "vibesensor" / "adapters" / "pdf" / "presentation.py"
     source = strength_labels_path.read_text()
     assert "certainty_label" not in source, (
         "certainty_label was deleted; ConfidenceAssessment.assess() is the replacement"
@@ -1132,8 +1211,8 @@ def test_f_order_finding_id_normalization() -> None:
 
     domain_findings = finalize_findings(
         [
-            {"finding_id": "F_ORDER", "confidence": 0.7, "suspected_source": "wheel/tire"},
-            {"finding_id": "F_PERSISTENT", "confidence": 0.4, "suspected_source": "engine"},
+            Finding(finding_id="F_ORDER", confidence=0.7, suspected_source="wheel/tire"),
+            Finding(finding_id="F_PERSISTENT", confidence=0.4, suspected_source="engine"),
         ]
     )
     # Both get sequential F### IDs regardless of their input names
@@ -1144,17 +1223,8 @@ def test_f_order_finding_id_normalization() -> None:
     # Reference findings keep their original IDs
     domain_ref = finalize_findings(
         [
-            {
-                "finding_id": "REF_SPEED",
-                "finding_kind": "reference",
-                "confidence": None,
-                "suspected_source": "unknown",
-            },
-            {
-                "finding_id": "F_ORDER",
-                "confidence": 0.7,
-                "suspected_source": "wheel/tire",
-            },
+            Finding(finding_id="REF_SPEED", confidence=None, suspected_source="unknown"),
+            Finding(finding_id="F_ORDER", confidence=0.7, suspected_source="wheel/tire"),
         ]
     )
     assert domain_ref[0].finding_id == "REF_SPEED"
@@ -1655,10 +1725,6 @@ def test_domain_and_use_cases_do_not_read_raw_aspects_dict_keys() -> None:
     Car.aspects is not the canonical internal model for vehicle interpretive
     context — OrderReferenceSpec and TireSpec are. Direct ``.get("aspects")``
     or ``["aspects"]`` access in business logic is forbidden.
-
-    Exceptions:
-    - car.py itself (owns the aspects field and its typed projections)
-    - summary_builder.py build_domain_car() (constructs Car from metadata)
     """
     import ast
 
@@ -1667,7 +1733,7 @@ def test_domain_and_use_cases_do_not_read_raw_aspects_dict_keys() -> None:
     pkg_dir = SERVER_ROOT / "vibesensor"
     violations: list[str] = []
     # Files that legitimately construct or own Car.aspects
-    allowed_files = {"car.py", "summary_builder.py"}
+    allowed_files = {"car.py"}
 
     for subdir_name in ("domain", "use_cases"):
         subdir = pkg_dir / subdir_name

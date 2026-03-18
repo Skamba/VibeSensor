@@ -464,13 +464,11 @@ class TestVibrationOrigin:
             "domain rationale; speed band 80-90 km/h; dominant phase acceleration"
         )
 
-    def test_origin_payload_from_finding_uses_fallback_when_no_origin(self) -> None:
-        """When a Finding has no origin or location, the fallback payload is returned."""
+    def test_origin_payload_from_finding_returns_empty_when_no_origin(self) -> None:
+        """When a Finding has no origin or location, pure serialization returns empty payload."""
         finding = Finding(finding_id="F002", suspected_source="unknown")
-        fallback = {"location": "rear_right", "suspected_source": "suspension"}
-        payload = origin_payload_from_finding(finding, fallback)
-        assert payload["location"] == "rear_right"
-        assert payload["suspected_source"] == "suspension"
+        payload = origin_payload_from_finding(finding)
+        assert payload == {}
 
     def test_from_finding_returns_existing_origin(self) -> None:
         """from_finding() returns the finding's origin when already set."""

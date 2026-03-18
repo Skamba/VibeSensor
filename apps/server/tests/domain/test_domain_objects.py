@@ -422,7 +422,7 @@ class TestBridgeMethods:
     def test_finding_payload_is_distinct_from_domain_finding(self) -> None:
         """FindingPayload is the analysis TypedDict; domain Finding is the dataclass."""
         from vibesensor.domain import Finding as DomainFinding
-        from vibesensor.use_cases.diagnostics._types import FindingPayload
+        from vibesensor.shared.boundaries.analysis_payload import FindingPayload
 
         # They must be distinct types — no name collision
         assert DomainFinding is not FindingPayload

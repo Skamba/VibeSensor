@@ -31,10 +31,9 @@ subordinate to the aggregate hierarchy:
 - run/capture interpretation context: `AnalysisSettingsSnapshot`,
   `CarSnapshot`, `RunContextSnapshot`, `RunMetadataSnapshot`
 - analysis reasoning support: `StrengthMetrics`, `StrengthPeak`,
-  `OrderMatchObservation`, `DrivingPhaseSummary`, `SpeedProfileSummary`,
-  `LocationIntensitySummary`
+  `OrderMatchObservation`, `LocationIntensitySummary`
 - reconstruction/interpretation support: `SpeedStatsSnapshot`,
-  `PhaseSummarySnapshot`, `DrivingPhaseInterval`, `DrivingPhaseSegment`
+  `PhaseSummarySnapshot`, `DrivingPhaseInterval`, `DrivingSegment`
 
 The model also draws an explicit internal performance boundary. Raw capture,
 signal-processing, and other high-volume sample-processing representations may
@@ -63,9 +62,9 @@ The model uses explicit scope boundaries:
 - internal typed interpretation context: `AnalysisSettingsSnapshot`,
   `CarSnapshot`, `RunContextSnapshot`, `RunMetadataSnapshot`
 - internal typed analysis/reconstruction support: `StrengthMetrics`,
-  `StrengthPeak`, `OrderMatchObservation`, `DrivingPhaseSummary`,
-  `DrivingPhaseInterval`, `DrivingPhaseSegment`, `SpeedStatsSnapshot`,
-  `PhaseSummarySnapshot`, `SpeedProfileSummary`, `LocationIntensitySummary`
+  `StrengthPeak`, `OrderMatchObservation`, `DrivingPhaseInterval`,
+  `DrivingSegment`, `SpeedStatsSnapshot`, `PhaseSummarySnapshot`,
+  `LocationIntensitySummary`
 - performance-sensitive raw capture / DSP / high-volume sample-processing
   subsystem: arrays, compact records, and dict-like sample payloads retained as
   simple internal representations where per-sample object modeling would add
@@ -171,6 +170,13 @@ Measurement -> Finding -> Report
 - reconstruction support intervals and segments: `DrivingPhaseInterval`,
   `DrivingSegment` (also serves reconstruction/diagnostics segment role)
 
+File locations for new typed internal concepts:
+
+- `RunMetadataSnapshot`: `apps/server/vibesensor/domain/snapshots.py`
+- `OrderMatchObservation`: `apps/server/vibesensor/domain/order_match.py`
+- `DrivingPhaseInterval`: `apps/server/vibesensor/domain/driving_segment.py`
+- `LocationIntensitySummary`: `apps/server/vibesensor/domain/location_hotspot.py`
+
 > **Merge note (D1):** Three originally separate concepts were merged into
 > existing domain types with identical fields to avoid parallel implementations:
 > `DrivingPhaseSegment` → `DrivingSegment`, `SpeedProfileSummary` →
@@ -215,16 +221,14 @@ representations.
 - `StrengthMetrics` owns typed strength-analysis semantics and contains
   `StrengthPeak` values.
 - `SpeedStatsSnapshot` and `PhaseSummarySnapshot` own typed internal
-  reconstruction summaries.
+  reconstruction summaries and diagnostics interpretation snapshots.
 - `OrderMatchObservation` owns one typed internal observed match between
   measured behavior and an order/reference hypothesis.
-- `DrivingPhaseSummary` owns the typed internal summary of driving-phase
-  behavior.
 - `DrivingPhaseInterval` owns the typed internal representation of one
   interval on the driving-phase timeline.
-- `DrivingPhaseSegment` owns the typed internal representation of one
-  summarized segment of phase behavior.
-- `SpeedProfileSummary` owns typed internal speed-profile statistics used by
+- `DrivingSegment` owns the typed internal representation of summarized phase
+  behavior used by both domain and diagnostics/reconstruction flows.
+- `SpeedStatsSnapshot` owns typed internal speed-profile statistics used by
   diagnostics; it is not the same concept as the domain `SpeedProfile`.
 - `LocationIntensitySummary` owns the typed internal representation of
   intensity summarized by location or observation point for diagnostics
@@ -243,10 +247,9 @@ The model separates four layers:
   through `Run` -> `RunCapture` -> `RunSetup`.
 - **Internal typed support:** stable internal interpretive and reasoning
   objects (`OrderReferenceSpec`, snapshots, strength metrics,
-  `RunMetadataSnapshot`, `OrderMatchObservation`, `DrivingPhaseSummary`,
-  `DrivingPhaseInterval`, `DrivingPhaseSegment`, `SpeedProfileSummary`,
-  `LocationIntensitySummary`) used by diagnostics, reconstruction, and
-  interpretation logic.
+  `RunMetadataSnapshot`, `OrderMatchObservation`, `DrivingPhaseInterval`,
+  `DrivingSegment`, `LocationIntensitySummary`) used by diagnostics,
+  reconstruction, and interpretation logic.
 - **Performance-sensitive raw sample / DSP support:** high-volume raw capture,
   telemetry, and signal-processing representations that may remain simple
   arrays, compact records, or dict-like sample payloads where per-sample object
