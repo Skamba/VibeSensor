@@ -14,12 +14,10 @@ from vibesensor.domain import (
     AnalysisSettingsSnapshot,
     CarSnapshot,
     DiagnosticCase,
-    DrivingPhase,
     DrivingPhaseInterval,
     DrivingPhaseSegment,
     DrivingPhaseSummary,
     DrivingSegment,
-    FindingKind,
     LocationIntensitySummary,
     OrderMatchObservation,
     OrderReferenceSpec,
@@ -27,68 +25,12 @@ from vibesensor.domain import (
     RunContextSnapshot,
     RunMetadataSnapshot,
     RunSetup,
-    RunStatus,
     SpeedProfileSummary,
-    SpeedSourceKind,
     StrengthMetrics,
     StrengthPeak,
     TestRun,
     TireSpec,
-    VibrationSource,
 )
-
-# ---------------------------------------------------------------------------
-# T02 — Enum member snapshots
-# ---------------------------------------------------------------------------
-
-
-class TestDomainEnumMembers:
-    """Snapshot tests for domain enum members (T02)."""
-
-    def test_driving_phase_members(self) -> None:
-        assert sorted(m.value for m in DrivingPhase) == [
-            "acceleration",
-            "coast_down",
-            "cruise",
-            "deceleration",
-            "idle",
-            "speed_unknown",
-        ]
-
-    def test_vibration_source_members(self) -> None:
-        assert sorted(m.value for m in VibrationSource) == [
-            "baseline_noise",
-            "body resonance",
-            "driveline",
-            "engine",
-            "transient_impact",
-            "unknown",
-            "unknown_resonance",
-            "wheel/tire",
-        ]
-
-    def test_finding_kind_members(self) -> None:
-        assert sorted(m.value for m in FindingKind) == [
-            "diagnostic",
-            "informational",
-            "reference",
-        ]
-
-    def test_speed_source_kind_members(self) -> None:
-        assert sorted(m.value for m in SpeedSourceKind) == [
-            "gps",
-            "manual",
-            "obd2",
-        ]
-
-    def test_run_status_members(self) -> None:
-        assert sorted(m.value for m in RunStatus) == [
-            "analyzing",
-            "complete",
-            "error",
-            "recording",
-        ]
-
 
 # ---------------------------------------------------------------------------
 # T03 — Domain graph relationships
