@@ -88,6 +88,7 @@ class TestWorkerPool:
         pool = make_pool(max_workers=1)
         pool.shutdown()
         pool.shutdown()  # should not raise
+        assert pool.stats()["alive"] is False
 
     def test_submit_after_shutdown_raises(self, make_pool) -> None:
         pool = make_pool(max_workers=1)
