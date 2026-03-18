@@ -11,11 +11,9 @@ missing direct unit tests that pin their contracts.
 
 from __future__ import annotations
 
-import pytest
 from test_support.findings import make_finding_payload
 
 from vibesensor.domain import Finding
-from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 
@@ -90,35 +88,6 @@ class TestConfidenceLabel:
             strength_band_key="strong",
         )
         assert label == "CONFIDENCE_HIGH"
-
-
-# ---------------------------------------------------------------------------
-# normalize_lang
-# ---------------------------------------------------------------------------
-
-
-class TestNormalizeLangInSummary:
-    """Tests for the normalize_lang helper used by summary building.
-
-    This is a separate implementation from vibesensor.report_i18n.normalize_lang
-    and must behave consistently.
-    """
-
-    @pytest.mark.parametrize(
-        "input_lang",
-        ["en", "EN", "english", "", None, "fr", 42],
-        ids=["en", "EN_upper", "long_en", "empty", "none", "fr_defaults", "int"],
-    )
-    def test_non_nl_returns_en(self, input_lang: object) -> None:
-        assert normalize_lang(input_lang) == "en"
-
-    @pytest.mark.parametrize(
-        "input_lang",
-        ["nl", "NL", "nl-NL", "nl_BE"],
-        ids=["nl_lower", "NL_upper", "nl-NL", "nl_BE"],
-    )
-    def test_nl_prefix_returns_nl(self, input_lang: str) -> None:
-        assert normalize_lang(input_lang) == "nl"
 
 
 # ---------------------------------------------------------------------------

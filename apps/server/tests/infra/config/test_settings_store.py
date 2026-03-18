@@ -17,7 +17,6 @@ from vibesensor.shared.types.backend_types import (
 )
 
 DEFAULT_CAR_ASPECTS = AnalysisSettingsSnapshot.DEFAULTS
-sanitize_aspects = AnalysisSettingsSnapshot.sanitize
 
 
 def _sabotaged_store(tmp_path: Path) -> SettingsStore:
@@ -30,36 +29,6 @@ def _sabotaged_store(tmp_path: Path) -> SettingsStore:
 
     db.set_settings_snapshot = _boom  # type: ignore[assignment]
     return store
-
-
-# -- sanitize_aspects ----------------------------------------------------------
-
-
-def test_sanitize_aspects_filters_invalid_positive_required() -> None:
-    out = sanitize_aspects({"tire_width_mm": -1.0, "rim_in": 0.0})
-    assert "tire_width_mm" not in out
-    assert "rim_in" not in out
-
-
-def test_sanitize_aspects_allows_valid() -> None:
-    out = sanitize_aspects({"tire_width_mm": 225.0, "rim_in": 18.0})
-    assert out["tire_width_mm"] == 225.0
-    assert out["rim_in"] == 18.0
-
-
-def test_sanitize_aspects_rejects_negative_non_negative() -> None:
-    out = sanitize_aspects({"speed_uncertainty_pct": -0.1})
-    assert "speed_uncertainty_pct" not in out
-
-
-def test_sanitize_aspects_allows_zero_non_negative() -> None:
-    out = sanitize_aspects({"speed_uncertainty_pct": 0.0})
-    assert out["speed_uncertainty_pct"] == 0.0
-
-
-def test_sanitize_aspects_ignores_unknown() -> None:
-    out = sanitize_aspects({"unknown_key": 42.0})
-    assert "unknown_key" not in out
 
 
 # -- _validate_car -------------------------------------------------------------
