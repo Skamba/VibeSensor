@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TypedDict, cast
 
 from vibesensor.adapters.persistence.runlog import read_jsonl_run
-from vibesensor.domain import TireSpec
+from vibesensor.domain import OrderReferenceSpec, TireSpec
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.shared.constants import (
     KMH_TO_MPS,
@@ -208,6 +208,10 @@ def _sensor_limit_g(sensor_model: object) -> float | None:
 
 
 def _tire_reference_from_metadata(metadata: MetadataDict) -> tuple[float | None, str | None]:
+    spec = _order_reference_spec_from_context(metadata)
+    if spec is not None and spec.supports_wheel_reference:
+        return spec.tire_circumference_m, "order_reference_spec"
+
     direct = _as_float(metadata.get("tire_circumference_m"))
     if direct is not None and direct > 0:
         return direct, "metadata.tire_circumference_m"
@@ -226,6 +230,19 @@ def _tire_reference_from_metadata(metadata: MetadataDict) -> tuple[float | None,
     return None, None
 
 
+def _order_reference_spec_from_context(
+    metadata: MetadataDict,
+    sample: Sample | None = None,
+) -> OrderReferenceSpec | None:
+    settings: dict[str, object] = dict(metadata)
+    if sample is not None:
+        if (final_drive_ratio := _as_float(sample.get("final_drive_ratio"))) is not None:
+            settings["final_drive_ratio"] = final_drive_ratio
+        if (gear_ratio := _as_float(sample.get("gear"))) is not None:
+            settings["current_gear_ratio"] = gear_ratio
+    return OrderReferenceSpec.from_settings(settings)
+
+
 def _effective_engine_rpm(
     sample: Sample,
     metadata: MetadataDict,
@@ -240,6 +257,17 @@ def _effective_engine_rpm(
         return estimated_in_sample, "estimated_from_speed_and_ratios"
 
     speed_kmh = _as_float(sample.get("speed_kmh"))
+    spec = _order_reference_spec_from_context(metadata, sample)
+    if (
+        speed_kmh is not None
+        and speed_kmh > 0
+        and spec is not None
+        and spec.supports_engine_reference
+    ):
+        rpm = spec.engine_rpm_from_speed_kmh(speed_kmh)
+        if rpm is not None and rpm > 0:
+            return rpm, "estimated_from_speed_and_ratios"
+
     final_drive_ratio = _as_float(sample.get("final_drive_ratio")) or _as_float(
         metadata.get("final_drive_ratio"),
     )

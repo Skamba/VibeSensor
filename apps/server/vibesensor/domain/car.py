@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 import uuid
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from types import MappingProxyType
 
 __all__ = [
@@ -203,9 +203,24 @@ class OrderReferenceSpec:
         return self.current_gear_ratio != 0.0
 
     @property
+    def supports_wheel_reference(self) -> bool:
+        """Whether wheel-order calculations have usable tire geometry."""
+        return self.tire_circumference_m > 0.0
+
+    @property
+    def supports_driveshaft_reference(self) -> bool:
+        """Whether driveshaft-order calculations have usable driveline data."""
+        return self.supports_wheel_reference and self.final_drive_ratio > 0.0
+
+    @property
+    def supports_engine_reference(self) -> bool:
+        """Whether engine-order calculations have usable gear and driveline data."""
+        return self.supports_driveshaft_reference and self.has_engine_reference
+
+    @property
     def is_complete(self) -> bool:
         """Whether all required fields are present for order analysis."""
-        return self.final_drive_ratio > 0.0 and self.tire_spec.circumference_m > 0.0
+        return self.supports_driveshaft_reference
 
     @property
     def wheel_uncertainty_pct(self) -> float:
@@ -259,28 +274,57 @@ class OrderReferenceSpec:
     def wheel_hz_from_speed_mps(self, speed_mps: float) -> float | None:
         return self.wheel_hz(speed_mps)
 
-    def engine_rpm_from_wheel_hz(self, wheel_hz: float) -> float | None:
-        if not math.isfinite(wheel_hz) or not self.is_complete or not self.has_engine_reference:
+    def driveshaft_hz_from_wheel_hz(self, wheel_hz: float) -> float | None:
+        if not math.isfinite(wheel_hz) or wheel_hz <= 0 or not self.supports_driveshaft_reference:
             return None
-        engine_rpm = wheel_hz * self.final_drive_ratio * self.current_gear_ratio * 60.0
+        driveshaft_hz = wheel_hz * self.final_drive_ratio
+        return driveshaft_hz if math.isfinite(driveshaft_hz) else None
+
+    def driveshaft_hz_from_speed_kmh(self, speed_kmh: float) -> float | None:
+        wheel_hz = self.wheel_hz_from_speed_kmh(speed_kmh)
+        if wheel_hz is None:
+            return None
+        return self.driveshaft_hz_from_wheel_hz(wheel_hz)
+
+    def engine_hz_from_wheel_hz(self, wheel_hz: float) -> float | None:
+        driveshaft_hz = self.driveshaft_hz_from_wheel_hz(wheel_hz)
+        if driveshaft_hz is None or not self.supports_engine_reference:
+            return None
+        engine_hz = driveshaft_hz * self.current_gear_ratio
+        return engine_hz if math.isfinite(engine_hz) else None
+
+    def engine_hz_from_speed_kmh(self, speed_kmh: float) -> float | None:
+        wheel_hz = self.wheel_hz_from_speed_kmh(speed_kmh)
+        if wheel_hz is None:
+            return None
+        return self.engine_hz_from_wheel_hz(wheel_hz)
+
+    def engine_rpm_from_wheel_hz(self, wheel_hz: float) -> float | None:
+        engine_hz = self.engine_hz_from_wheel_hz(wheel_hz)
+        if engine_hz is None:
+            return None
+        engine_rpm = engine_hz * 60.0
         return engine_rpm if math.isfinite(engine_rpm) else None
 
     def engine_rpm_from_speed_kmh(self, speed_kmh: float) -> float | None:
-        wh = self.wheel_hz_from_speed_kmh(speed_kmh)
-        if wh is None:
+        engine_hz = self.engine_hz_from_speed_kmh(speed_kmh)
+        if engine_hz is None:
             return None
-        return self.engine_rpm_from_wheel_hz(wh)
+        engine_rpm = engine_hz * 60.0
+        return engine_rpm if math.isfinite(engine_rpm) else None
 
     def orders_hz_from_speed_mps(self, speed_mps: float | None) -> dict[str, float] | None:
         if speed_mps is None or not math.isfinite(speed_mps) or speed_mps <= 0:
             return None
-        if not self.is_complete or not self.has_engine_reference:
+        if not self.supports_engine_reference:
             return None
         wheel_hz = self.wheel_hz_from_speed_mps(speed_mps)
         if wheel_hz is None:
             return None
-        drive_hz = wheel_hz * self.final_drive_ratio
-        engine_hz = drive_hz * self.current_gear_ratio
+        drive_hz = self.driveshaft_hz_from_wheel_hz(wheel_hz)
+        engine_hz = self.engine_hz_from_wheel_hz(wheel_hz)
+        if drive_hz is None or engine_hz is None:
+            return None
         if not all(math.isfinite(v) and v > 0 for v in (wheel_hz, drive_hz, engine_hz)):
             return None
         return {
@@ -366,19 +410,24 @@ class Car:
     id: str = field(default_factory=lambda: uuid.uuid4().hex)
     name: str = "Unnamed Car"
     car_type: str = "sedan"
-    aspects: Mapping[str, float] = field(default_factory=dict)
+    aspects: InitVar[Mapping[str, float] | None] = None
     variant: str | None = None
     order_reference_spec: OrderReferenceSpec | None = field(default=None, repr=False)
+    _aspects: Mapping[str, float] = field(
+        init=False,
+        repr=False,
+        default_factory=lambda: MappingProxyType({}),
+    )
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, aspects: Mapping[str, float] | None) -> None:
         if not self.name or not self.name.strip():
             object.__setattr__(self, "name", "Unnamed Car")
-        normalized_aspects = _normalized_order_reference_mapping(self.aspects)
+        normalized_aspects = _normalized_order_reference_mapping(aspects or {})
         spec = self.order_reference_spec or OrderReferenceSpec.from_settings(normalized_aspects)
         object.__setattr__(self, "order_reference_spec", spec)
         if spec is not None:
             normalized_aspects = spec.to_settings_dict()
-        object.__setattr__(self, "aspects", MappingProxyType(normalized_aspects))
+        object.__setattr__(self, "_aspects", MappingProxyType(normalized_aspects))
 
     # -- queries -----------------------------------------------------------
 
@@ -398,24 +447,24 @@ class Car:
     @property
     def tire_width_mm(self) -> float | None:
         spec = self.order_reference_spec
-        if spec is not None:
+        if spec is not None and spec.supports_wheel_reference:
             return spec.tire_spec.width_mm
-        return _coerce_finite_float(self.aspects.get("tire_width_mm"), default=None)
+        return None
 
     @property
     def tire_aspect_pct(self) -> float | None:
         spec = self.order_reference_spec
-        if spec is not None:
+        if spec is not None and spec.supports_wheel_reference:
             return spec.tire_spec.aspect_pct
-        return _coerce_finite_float(self.aspects.get("tire_aspect_pct"), default=None)
+        return None
 
     @property
     def rim_in(self) -> float | None:
         """Rim diameter in inches (aspects key ``rim_in``)."""
         spec = self.order_reference_spec
-        if spec is not None:
+        if spec is not None and spec.supports_wheel_reference:
             return spec.tire_spec.rim_in
-        return _coerce_finite_float(self.aspects.get("rim_in"), default=None)
+        return None
 
     @property
     def tire_circumference_m(self) -> float | None:
@@ -425,6 +474,13 @@ class Car:
         """
         spec = self.order_reference_spec
         return spec.tire_circumference_m if spec is not None else None
+
+
+def _car_aspects(self: Car) -> Mapping[str, float]:
+    return self._aspects
+
+
+Car.aspects = property(_car_aspects)
 
 
 def _coerce_finite_float(value: object, *, default: float | None) -> float | None:
