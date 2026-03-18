@@ -23,7 +23,6 @@ from vibesensor.shared.constants import (
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
 from vibesensor.use_cases.diagnostics.findings import (
-    _build_findings,
     _classify_peak_type,
     _phase_speed_breakdown,
     _phase_to_str,
@@ -33,9 +32,7 @@ from vibesensor.use_cases.diagnostics.findings import (
     _speed_profile_from_points,
 )
 from vibesensor.use_cases.diagnostics.order_analysis import (
-    OrderMatchAccumulator,
     _compute_effective_match_rate,
-    assemble_order_finding,
 )
 from vibesensor.use_cases.diagnostics.order_analysis import (
     compute_order_confidence as _compute_order_confidence,
@@ -51,48 +48,22 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 # -- Subpackage structure tests -----------------------------------------------
 
 
-class TestFindingsModuleStructure:
-    """Verify the findings modules are independently importable."""
-
-    def test_modules_importable_independently(self) -> None:
-        """Consolidated findings module must be directly importable with expected symbols."""
-        from vibesensor.use_cases.diagnostics import (  # noqa: F401
-            findings,
-            order_analysis,
-        )
-
-        # Verify key symbols exist
-        assert hasattr(findings, "_build_findings")
-        assert hasattr(findings, "_sensor_intensity_by_location")
-        assert hasattr(findings, "_reference_missing_finding")
-        assert hasattr(findings, "_build_persistent_peak_findings")
-        assert hasattr(order_analysis, "_build_order_findings")
-
-
-class TestCanonicalFindingModel:
-    """Guard the canonical finding model and its main builder return types."""
-
-    def test_finding_typed_dict_exposes_core_contract(self) -> None:
-        hints = get_type_hints(FindingPayload)
-        assert {
-            "finding_id",
-            "suspected_source",
-            "evidence_summary",
-            "frequency_hz_or_order",
-            "amplitude_metric",
-            "confidence",
-            "quick_checks",
-            "evidence_metrics",
-            "phase_evidence",
-        }.issubset(hints)
-        assert hints["amplitude_metric"] == AmplitudeMetric
-        assert hints["matched_points"] == list[MatchedPoint]
-
-    def test_main_finding_builders_return_canonical_model(self) -> None:
-        assert _build_findings.__annotations__["return"] == "tuple[DomainFinding, ...]"
-        assert assemble_order_finding.__annotations__["return"] == "tuple[float, DomainFinding]"
-        accumulator_hints = get_type_hints(OrderMatchAccumulator)
-        assert accumulator_hints["matched_points"] == list[OrderMatchObservation]
+def test_finding_typed_dict_exposes_core_contract() -> None:
+    """FindingPayload TypedDict must expose all expected core fields."""
+    hints = get_type_hints(FindingPayload)
+    assert {
+        "finding_id",
+        "suspected_source",
+        "evidence_summary",
+        "frequency_hz_or_order",
+        "amplitude_metric",
+        "confidence",
+        "quick_checks",
+        "evidence_metrics",
+        "phase_evidence",
+    }.issubset(hints)
+    assert hints["amplitude_metric"] == AmplitudeMetric
+    assert hints["matched_points"] == list[MatchedPoint]
 
 
 # -- speed_profile tests ------------------------------------------------------

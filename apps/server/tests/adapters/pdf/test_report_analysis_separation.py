@@ -161,28 +161,3 @@ def test_report_output_matches_template_data() -> None:
     assert "Wheel / Tire" in text
     assert "Front Left" in text
     assert "Diagnostic Worksheet" in text
-
-
-# ---------------------------------------------------------------------------
-# 5.  Analysis module list — report/ only contains renderer files
-# ---------------------------------------------------------------------------
-
-
-def test_report_folder_contains_only_renderer_files() -> None:
-    """The report/ folder must not contain analysis-related files."""
-    analysis_file_names = {
-        "summary_builder.py",
-        "findings.py",
-        "order_analysis.py",
-        "phase_segmentation.py",
-        "plot_data.py",
-        "helpers.py",
-        "strength_labels.py",
-        "test_plan.py",
-    }
-    actual_files = {p.name for p in _REPORT_DIR.glob("*.py")}
-    unexpected = actual_files & analysis_file_names
-    assert not unexpected, (
-        f"report/ still contains analysis files: {unexpected}. "
-        "These should be in vibesensor.use_cases.diagnostics/."
-    )

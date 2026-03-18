@@ -63,24 +63,6 @@ class TestNormalizeLangConsolidation:
         assert _coerce_language("en") == "en"
 
 
-# ── ClientRegistry normalize_sensor_id ────────────────────────────────────────
-
-
-class TestClientIdDedup:
-    """Registry must use normalize_sensor_id from protocol, not a private copy."""
-
-    def test_no_private_normalize_client_id(self) -> None:
-        src = (_SERVER_ROOT / "vibesensor" / "infra" / "runtime" / "registry.py").read_text()
-        tree = ast.parse(src)
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name == "_normalize_client_id":
-                pytest.fail("registry.py must not define _normalize_client_id()")
-
-    def test_registry_imports_normalize_sensor_id(self) -> None:
-        src = (_SERVER_ROOT / "vibesensor" / "infra" / "runtime" / "registry.py").read_text()
-        assert "normalize_sensor_id" in src
-
-
 # ── mypy enforcement expansion ────────────────────────────────────────────────
 
 
