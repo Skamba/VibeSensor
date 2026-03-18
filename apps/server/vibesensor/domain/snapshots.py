@@ -27,6 +27,7 @@ __all__ = [
     "AnalysisSettingsSnapshot",
     "PhaseSummarySnapshot",
     "RunContextSnapshot",
+    "RunMetadataSnapshot",
     "SpeedStatsSnapshot",
 ]
 
@@ -424,4 +425,72 @@ class PhaseSummarySnapshot:
             cruise_pct=_pct_fb("cruise_pct", "cruise"),
             idle_pct=_pct_fb("idle_pct", "idle"),
             speed_unknown_pct=_pct_fb("speed_unknown_pct", "speed_unknown"),
+        )
+
+
+# ---------------------------------------------------------------------------
+# RunMetadataSnapshot
+# ---------------------------------------------------------------------------
+
+
+def _str_or(d: Mapping[str, object], key: str, default: str = "") -> str:
+    v = d.get(key)
+    if v is None:
+        return default
+    return str(v)
+
+
+def _opt_str(d: Mapping[str, object], key: str) -> str | None:
+    v = d.get(key)
+    if v is None:
+        return None
+    return str(v)
+
+
+def _opt_float_raw(d: Mapping[str, object], key: str) -> float | None:
+    v = d.get(key)
+    if v is None:
+        return None
+    try:
+        f = float(v)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    return f if math.isfinite(f) else None
+
+
+@dataclass(frozen=True, slots=True)
+class RunMetadataSnapshot:
+    """Typed internal representation of recording-identification metadata.
+
+    Covers fields NOT already owned by ``AnalysisSettingsSnapshot``,
+    ``CarSnapshot``, ``RunContextSnapshot``, or ``OrderReferenceSpec``.
+    """
+
+    run_id: str = ""
+    case_id: str = ""
+    sensor_mac: str | None = None
+    sensor_model: str | None = None
+    firmware_version: str | None = None
+    raw_sample_rate_hz: float | None = None
+    feature_interval_s: float | None = None
+    summary_version: int = 1
+
+    def __post_init__(self) -> None:
+        if not self.run_id:
+            raise ValueError("run_id must be a non-empty string")
+        if self.summary_version < 1:
+            raise ValueError("summary_version must be >= 1")
+
+    @classmethod
+    def from_dict(cls, raw: Mapping[str, object]) -> RunMetadataSnapshot:
+        """Parse from a raw metadata mapping."""
+        return cls(
+            run_id=_str_or(raw, "run_id", _str_or(raw, "recording_id", "")),
+            case_id=_str_or(raw, "case_id", ""),
+            sensor_mac=_opt_str(raw, "sensor_mac"),
+            sensor_model=_opt_str(raw, "sensor_model"),
+            firmware_version=_opt_str(raw, "firmware_version"),
+            raw_sample_rate_hz=_opt_float_raw(raw, "raw_sample_rate_hz"),
+            feature_interval_s=_opt_float_raw(raw, "feature_interval_s"),
+            summary_version=_int_or(raw, "_summary_version", 1),
         )

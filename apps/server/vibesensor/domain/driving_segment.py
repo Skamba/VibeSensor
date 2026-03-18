@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-__all__ = ["DrivingPhase", "DrivingSegment"]
+__all__ = ["DrivingPhase", "DrivingPhaseInterval", "DrivingSegment"]
 
 
 # ---------------------------------------------------------------------------
@@ -63,3 +63,39 @@ class DrivingSegment:
     def is_diagnostically_usable(self) -> bool:
         """Whether this segment can contribute to diagnostic conclusions."""
         return self.sample_count >= _MIN_USABLE_SAMPLES and self.phase is not DrivingPhase.IDLE
+
+
+# ---------------------------------------------------------------------------
+# DrivingPhaseInterval
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class DrivingPhaseInterval:
+    """A time interval within a driving phase, annotated with fault evidence.
+
+    Unlike ``DrivingSegment``, this carries ``has_fault_evidence`` and is used
+    for diagnostics/reconstruction timeline representation.
+    """
+
+    phase: DrivingPhase
+    start_t_s: float | None = None
+    end_t_s: float | None = None
+    speed_min_kmh: float | None = None
+    speed_max_kmh: float | None = None
+    has_fault_evidence: bool = False
+
+    def __post_init__(self) -> None:
+        if (
+            self.start_t_s is not None
+            and self.end_t_s is not None
+            and self.start_t_s > self.end_t_s
+        ):
+            raise ValueError("start_t_s must be <= end_t_s")
+
+    @property
+    def duration_s(self) -> float | None:
+        """Duration in seconds, or None if timestamps are missing."""
+        if self.start_t_s is not None and self.end_t_s is not None:
+            return self.end_t_s - self.start_t_s
+        return None
