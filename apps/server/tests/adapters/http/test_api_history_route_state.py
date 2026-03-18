@@ -229,7 +229,6 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
     endpoint = route_endpoint(router, "/api/history/{run_id}")
 
     result = response_payload(await endpoint("run-1"))
-    assert isinstance(result, dict)
     analysis = result.get("analysis", {})
     assert "_internal_secret" not in analysis
     assert "_report_template_data" not in analysis

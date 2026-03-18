@@ -213,7 +213,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     # Start logging and simulate some data
     logger.start_recording()
     run_id = logger._run_id
-    assert run_id is not None
+    assert isinstance(run_id, str) and len(run_id) > 0
 
     # Manually create history and append samples (simulate the metrics loop)
     db.create_run(run_id, "2026-01-01T00:00:00Z", {"run_id": run_id, "language": "en"})

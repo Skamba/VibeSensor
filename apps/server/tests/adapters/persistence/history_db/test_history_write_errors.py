@@ -192,6 +192,7 @@ class TestPersistentCreateRunFailureStopsRetrying:
         assert logger._persist_history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
         assert not logger._persist_history_run_created
         assert logger.status()["write_error"] is not None
+        assert "create_run failed" in logger.status()["write_error"]
 
     def test_retry_counter_resets_on_new_session(self, tmp_path: Path) -> None:
         db = MagicMock()
@@ -285,7 +286,7 @@ class TestStatusAlwaysIncludesWriteError:
 
         # Error persists across status calls
         assert logger.status()["write_error"] is not None
-        assert logger.status()["write_error"] is not None
+        assert len(logger.status()["write_error"]) > 0
 
     def test_stop_recording_resets_write_error(self, tmp_path: Path) -> None:
         db = MagicMock()

@@ -99,7 +99,6 @@ def test_different_corners_across_phases(corner_a: str, corner_b: str, speed: fl
     )
     samples = phase1 + phase2
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     assert "top_causes" in summary
     conf = top_confidence(summary)
     assert conf > 0.0, (
@@ -312,7 +311,6 @@ def test_equal_strength_two_corners(corner_a: str, corner_b: str) -> None:
             )
 
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     assert "top_causes" in summary
     # Should produce at least one finding (may report ambiguity)
     conf = top_confidence(summary)
@@ -370,7 +368,6 @@ def test_profile_phased_contradiction(
 
     samples = phase1 + phase2
     summary = run_analysis(samples, metadata=meta)
-    assert isinstance(summary, dict)
     assert "top_causes" in summary
     conf = top_confidence(summary)
     assert conf > 0.0, (
