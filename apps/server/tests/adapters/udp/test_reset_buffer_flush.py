@@ -56,6 +56,7 @@ def test_flush_unknown_client_is_safe() -> None:
     proc = _make_processor()
     # Should not raise
     proc.flush_client_buffer("nonexistent")
+    assert "nonexistent" not in proc._store.buffers  # no buffer created for unknown client
 
 
 def test_fft_waits_for_new_samples_after_flush() -> None:

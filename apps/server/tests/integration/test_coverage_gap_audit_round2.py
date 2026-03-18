@@ -453,6 +453,7 @@ class TestHistoryDBFinalizeNoOp:
     def test_finalize_run_noop_on_missing_run(self, history_db: HistoryDB) -> None:
         # Should not raise
         history_db.finalize_run("nonexistent", "2026-01-01T00:00:00Z")
+        assert history_db.get_run("nonexistent") is None
 
     def test_finalize_run_with_metadata_noop_when_not_recording(
         self,
