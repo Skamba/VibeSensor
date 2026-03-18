@@ -220,7 +220,6 @@ class TestVeryShortRecording:
         )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="short_5s")
-        assert isinstance(summary, dict)
         assert "findings" in summary
         # Run suitability should exist
         suitability = summary.get("run_suitability", [])
@@ -242,7 +241,6 @@ class TestVeryShortRecording:
         )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="short_3s")
-        assert isinstance(summary, dict)
         assert "findings" in summary
 
 
@@ -314,7 +312,6 @@ class TestBorderlineTwoSourceOverlap:
         )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="overlap_test")
-        assert isinstance(summary, dict)
 
         # Must not crash; findings must have valid contracts
         assert_summary_sections(summary, min_findings=0)

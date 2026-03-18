@@ -118,7 +118,6 @@ class TestRunAnalysis:
         analysis = RunAnalysis(metadata, samples, file_name="test_run")
         result = analysis.summarize()
         summary = result.summary
-        assert isinstance(summary, dict)
         assert "findings" in summary
         assert "run_id" in summary
         assert summary["file_name"] == "test_run"

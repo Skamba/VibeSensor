@@ -218,7 +218,6 @@ def test_engine_alias_suppression(corner: str, eng_name: str, engine_amp: float)
         engine_amp=engine_amp,
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     # Pipeline should not crash even with strong engine presence
     assert "top_causes" in summary
 
@@ -273,7 +272,6 @@ def test_three_systems_simultaneous(corner: str, speed: float) -> None:
     )
 
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     assert "top_causes" in summary
     # Should produce at least one finding
     conf = top_confidence(summary)
@@ -380,7 +378,6 @@ def test_profile_engine_plus_wheel(profile: dict[str, Any], corner: str) -> None
 
     meta = profile_metadata(profile)
     summary = run_analysis(samples, metadata=meta)
-    assert isinstance(summary, dict)
     assert "top_causes" in summary
     conf = top_confidence(summary)
     assert conf > 0.0, f"Profile {profile['name']} engine+wheel at {corner} produced no findings"

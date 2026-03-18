@@ -323,7 +323,6 @@ def test_single_sensor_weak_signal(corner: str, profile: dict[str, Any]) -> None
         fault_vib_db=12.0,
         noise_vib_db=10.0,
     )
-    assert isinstance(summary, dict), f"Expected summary dict for weak {corner}"
     assert summary, f"Expected non-empty summary for weak {corner}"
     if top:
         # If detected, confidence should be modest

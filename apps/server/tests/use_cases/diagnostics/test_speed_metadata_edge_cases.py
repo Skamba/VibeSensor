@@ -117,7 +117,6 @@ def test_frozen_speed_with_fault(corner: str, sensor: str, speed: float) -> None
     # Frozen/constant speed gets a penalty but should still detect
     conf = top_confidence(summary)
     assert conf > 0.0, f"No fault detected at frozen speed={speed}, corner={corner}"
-    assert isinstance(summary, dict)
 
 
 # ===================================================================
@@ -145,7 +144,6 @@ def test_speed_oscillation_at_boundary(base_speed: float, jitter_amp: float) -> 
         fault_sensor=SENSOR_FL,
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     assert "top_causes" in summary
     _assert_no_nan_confidence(summary, msg="speed oscillation")
 
@@ -166,7 +164,6 @@ def test_negative_speed_does_not_crash(neg_speed: float) -> None:
         n_samples=20,
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     # Should not produce confident wheel faults
     assert_no_wheel_fault(summary, msg=f"negative speed={neg_speed}")
 
@@ -183,7 +180,7 @@ def test_inf_speed_does_not_crash(inf_speed: float) -> None:
         n_samples=15,
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
+    assert "findings" in summary
 
 
 # ===================================================================
@@ -214,7 +211,6 @@ def test_speed_ramp_with_fault(name: str, start: float, end: float) -> None:
         fault_sensor=SENSOR_FL,
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     # Should produce findings (fault is present throughout the ramp)
     conf = top_confidence(summary)
     assert conf > 0.0, f"No finding from speed ramp {name}"
@@ -247,7 +243,6 @@ def test_mixed_valid_invalid_speed(name: str, speed_fn: Any, fault_sensor: str) 
         fault_sensor=fault_sensor,
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     assert "top_causes" in summary
     _assert_no_nan_confidence(summary, msg=name)
 
@@ -266,7 +261,7 @@ def test_very_slow_speed(speed: float) -> None:
         fault_sensor=SENSOR_FL,
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
+    assert "findings" in summary
 
 
 # ===================================================================
@@ -283,7 +278,6 @@ def test_very_high_speed(speed: float) -> None:
         fault_sensor=SENSOR_FL,
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     assert "top_causes" in summary
 
 
@@ -317,7 +311,6 @@ def test_speed_step_change(name: str, before: float, after: float) -> None:
         fault_sensor=SENSOR_FL,
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     _assert_no_nan_confidence(summary, msg=f"step {name}")
 
 
