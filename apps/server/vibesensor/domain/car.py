@@ -434,9 +434,12 @@ class Car:
         object.__setattr__(self, "variant", variant)
         object.__setattr__(self, "order_reference_spec", order_reference_spec)
         object.__setattr__(self, "_aspects", MappingProxyType({}))
-        self.__post_init__(aspects)
+        self._normalize_order_reference_state(aspects)
 
-    def __post_init__(self, aspects: Mapping[str, float] | None) -> None:
+    def _normalize_order_reference_state(
+        self,
+        aspects: Mapping[str, float] | None,
+    ) -> None:
         if not self.name or not self.name.strip():
             object.__setattr__(self, "name", "Unnamed Car")
         normalized_aspects = _normalized_order_reference_mapping(aspects or {})
