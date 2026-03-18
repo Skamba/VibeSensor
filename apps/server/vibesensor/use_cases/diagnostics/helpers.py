@@ -29,15 +29,6 @@ from vibesensor.use_cases.diagnostics._types import (
 )
 from vibesensor.vibration_strength import percentile
 
-# Maps driving-phase keys to their canonical i18n label keys.
-# Shared by summary-building logic (phase-onset notes) and report mapping
-# (phase param resolution in resolve_i18n) to prevent drift between the two.
-PHASE_I18N_KEYS: dict[str, str] = {
-    "acceleration": "DRIVING_PHASE_ACCELERATION",
-    "deceleration": "DRIVING_PHASE_DECELERATION",
-    "coast_down": "DRIVING_PHASE_COAST_DOWN",
-}
-
 
 def _validate_required_strength_metrics(samples: list[Sample]) -> None:
     if not samples:

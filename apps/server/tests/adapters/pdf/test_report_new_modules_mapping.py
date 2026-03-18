@@ -12,9 +12,9 @@ from test_support.report_helpers import report_sample as _base_sample
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
 from vibesensor.use_cases.diagnostics import summarize_log
 from vibesensor.use_cases.diagnostics.summary_builder import (
-    build_origin_explanation,
     summarize_origin,
 )
 
