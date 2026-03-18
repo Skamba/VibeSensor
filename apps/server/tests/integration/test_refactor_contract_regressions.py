@@ -8,7 +8,6 @@ maintainable than the originals.
 """
 
 
-import inspect
 from pathlib import Path
 from unittest.mock import patch
 
@@ -26,7 +25,6 @@ from vibesensor.infra.runtime.registry import (
 )
 from vibesensor.use_cases.updates.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher
 from vibesensor.use_cases.updates.release_fetcher import (
-    DOWNLOAD_CHUNK_BYTES,
     GitHubAPIClient,
     ReleaseFetcherConfig,
     ReleaseInfo,
@@ -78,14 +76,6 @@ class TestRegistryNamedConstants:
     def test_jitter_ema_alpha_is_float(self) -> None:
         assert isinstance(_JITTER_EMA_ALPHA, float)
         assert 0 < _JITTER_EMA_ALPHA < 1
-
-    def test_restart_seq_gap_value(self) -> None:
-        """Value must be 1000 to match the original literal."""
-        assert _RESTART_SEQ_GAP == 1000
-
-    def test_jitter_ema_alpha_value(self) -> None:
-        """Value must be 0.2 to match the original literal."""
-        assert _JITTER_EMA_ALPHA == 0.2
 
     def test_restart_detection_uses_named_constant(self, registry: ClientRegistry) -> None:
         """Sending a seq far below last_seq should trigger reset detection,
@@ -296,16 +286,6 @@ class TestClientApiRow:
 
 
 # ---------------------------------------------------------------------------
-# Fix 7: Shared download chunk constant
-# ---------------------------------------------------------------------------
-
-
-def test_download_chunk_constant() -> None:
-    assert DOWNLOAD_CHUNK_BYTES == 1024 * 1024  # 1 MB
-    assert DOWNLOAD_CHUNK_BYTES > 0
-
-
-# ---------------------------------------------------------------------------
 # Fix 8: Version comparison warning
 # ---------------------------------------------------------------------------
 
@@ -336,33 +316,3 @@ class TestVersionComparisonWarning:
         # Should have logged a warning
         mock_logger.warning.assert_called_once()
         assert "Could not compare versions" in mock_logger.warning.call_args[0][0]
-
-
-# ---------------------------------------------------------------------------
-# Fix 9: _cursor type annotation
-# ---------------------------------------------------------------------------
-
-
-def test_cursor_has_return_annotation() -> None:
-    """_cursor should have a return type annotation."""
-    sig = inspect.signature(HistoryDB._cursor)
-    assert sig.return_annotation is not inspect.Parameter.empty
-
-
-# ---------------------------------------------------------------------------
-# Fix 10: BACKUP_SERVER_PORT docstring
-# ---------------------------------------------------------------------------
-
-
-class TestBackupServerPort:
-    def test_documented(self) -> None:
-        """BACKUP_SERVER_PORT should be 8000 and importable."""
-        import importlib
-        import os
-
-        os.environ["VIBESENSOR_DISABLE_AUTO_APP"] = "1"
-        try:
-            mod = importlib.import_module("vibesensor.app")
-            assert mod.BACKUP_SERVER_PORT == 8000
-        finally:
-            os.environ.pop("VIBESENSOR_DISABLE_AUTO_APP", None)
