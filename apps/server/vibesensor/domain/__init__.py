@@ -37,7 +37,7 @@ RunSuitability
 from .car import Car, CarSnapshot, OrderReferenceSpec, TireSpec
 from .confidence_assessment import ConfidenceAssessment
 from .diagnostic_case import DiagnosticCase, Symptom
-from .driving_segment import DrivingPhase, DrivingSegment
+from .driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingSegment
 from .finding import (
     Finding,
     FindingEvidence,
@@ -47,7 +47,8 @@ from .finding import (
     speed_band_sort_key,
     speed_bin_label,
 )
-from .location_hotspot import LocationHotspot
+from .location_hotspot import LocationHotspot, LocationIntensitySummary
+from .order_match import OrderMatchObservation
 from .run import Run
 from .run_capture import ConfigurationSnapshot, Measurement, RunCapture, RunSetup, VibrationReading
 from .run_status import RUN_TRANSITIONS, RunStatus, is_run_deletable, transition_run
@@ -57,6 +58,7 @@ from .snapshots import (
     AnalysisSettingsSnapshot,
     PhaseSummarySnapshot,
     RunContextSnapshot,
+    RunMetadataSnapshot,
     SpeedStatsSnapshot,
 )
 from .speed_profile import SpeedProfile
@@ -80,6 +82,7 @@ __all__ = [
     "AnalysisSettingsSnapshot",
     "PhaseSummarySnapshot",
     "RunContextSnapshot",
+    "RunMetadataSnapshot",
     "SpeedStatsSnapshot",
     # Value objects — run and capture
     "ConfigurationSnapshot",
@@ -93,6 +96,8 @@ __all__ = [
     "FindingEvidence",
     "FindingKind",
     "LocationHotspot",
+    "LocationIntensitySummary",
+    "OrderMatchObservation",
     "Signature",
     "StrengthMetrics",
     "StrengthPeak",
@@ -100,6 +105,7 @@ __all__ = [
     "VibrationSource",
     # Value objects — run context
     "DrivingPhase",
+    "DrivingPhaseInterval",
     "DrivingSegment",
     "RunStatus",
     "RunSuitability",

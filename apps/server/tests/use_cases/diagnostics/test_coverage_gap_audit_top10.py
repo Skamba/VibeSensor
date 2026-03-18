@@ -9,9 +9,14 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from test_support.findings import make_finding_payload
+from test_support.findings import make_finding
 
-from vibesensor.domain import AnalysisSettingsSnapshot, Finding, RunSuitability
+from vibesensor.domain import (
+    AnalysisSettingsSnapshot,
+    Finding,
+    OrderMatchObservation,
+    RunSuitability,
+)
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.diagnostics.order_analysis import (
@@ -236,7 +241,16 @@ class TestDetectDiffuseExcitation:
             connected_locations={"front_left"},
             possible_by_location={"front_left": 20},
             matched_by_location={"front_left": 15},
-            matched_points=[{"location": "front_left", "amp": 0.1}] * 15,
+            matched_points=[
+                OrderMatchObservation(
+                    predicted_hz=50.0,
+                    matched_hz=50.5,
+                    rel_error=0.01,
+                    amp=0.1,
+                    location="front_left",
+                )
+            ]
+            * 15,
         )
         assert not is_diff
         assert penalty == 1.0
@@ -245,7 +259,17 @@ class TestDetectDiffuseExcitation:
         locs = {"front_left", "front_right", "rear"}
         possible = dict.fromkeys(locs, 30)
         matched = dict.fromkeys(locs, 20)
-        pts = [{"location": loc, "amp": 0.05} for loc in locs for _ in range(20)]
+        pts = [
+            OrderMatchObservation(
+                predicted_hz=50.0,
+                matched_hz=50.5,
+                rel_error=0.01,
+                amp=0.05,
+                location=loc,
+            )
+            for loc in locs
+            for _ in range(20)
+        ]
         is_diff, penalty = _detect_diffuse_excitation(locs, possible, matched, pts)
         assert is_diff, "Uniform rates + uniform amplitude should be diffuse"
         assert penalty < 1.0
@@ -254,8 +278,22 @@ class TestDetectDiffuseExcitation:
         locs = {"front_left", "rear"}
         possible = {"front_left": 20, "rear": 20}
         matched = {"front_left": 15, "rear": 14}
-        pts = [{"location": "front_left", "amp": 0.30}] * 15 + [
-            {"location": "rear", "amp": 0.05},
+        pts = [
+            OrderMatchObservation(
+                predicted_hz=50.0,
+                matched_hz=50.5,
+                rel_error=0.01,
+                amp=0.30,
+                location="front_left",
+            )
+        ] * 15 + [
+            OrderMatchObservation(
+                predicted_hz=50.0,
+                matched_hz=50.5,
+                rel_error=0.01,
+                amp=0.05,
+                location="rear",
+            ),
         ] * 14
         is_diff, penalty = _detect_diffuse_excitation(locs, possible, matched, pts)
         assert not is_diff, "Strong amplitude dominance should NOT be diffuse"
@@ -264,7 +302,15 @@ class TestDetectDiffuseExcitation:
         locs = {"front_left", "rear"}
         possible = {"front_left": 2, "rear": 2}
         matched = {"front_left": 2, "rear": 2}
-        pts = [{"location": "front_left", "amp": 0.05}] * 2
+        pts = [
+            OrderMatchObservation(
+                predicted_hz=50.0,
+                matched_hz=50.5,
+                rel_error=0.01,
+                amp=0.05,
+                location="front_left",
+            )
+        ] * 2
         is_diff, penalty = _detect_diffuse_excitation(locs, possible, matched, pts)
         assert not is_diff, "Too few samples should not trigger diffuse"
 
@@ -286,31 +332,31 @@ class TestSuppressEngineAliases:
 
     def test_no_wheel_no_suppression(self) -> None:
         findings = [
-            (1.0, make_finding_payload(suspected_source="engine", confidence=0.60)),
-            (0.5, make_finding_payload(suspected_source="driveshaft", confidence=0.40)),
+            (1.0, make_finding(suspected_source="engine", confidence=0.60, ranking_score=1.0)),
+            (0.5, make_finding(suspected_source="driveshaft", confidence=0.40, ranking_score=0.5)),
         ]
         result = _suppress_engine_aliases(findings)
-        assert any(f.get("suspected_source") == "engine" for f in result), (
+        assert any(str(f.suspected_source) == "engine" for f in result), (
             "Engine finding should survive when no wheel finding exists"
         )
 
     def test_engine_suppressed_by_stronger_wheel(self) -> None:
         findings = [
-            (1.0, make_finding_payload(suspected_source="wheel/tire", confidence=0.70)),
-            (0.8, make_finding_payload(suspected_source="engine", confidence=0.65)),
+            (1.0, make_finding(suspected_source="wheel/tire", confidence=0.70, ranking_score=1.0)),
+            (0.8, make_finding(suspected_source="engine", confidence=0.65, ranking_score=0.8)),
         ]
         result = _suppress_engine_aliases(findings)
-        engine_findings = [f for f in result if f.get("suspected_source") == "engine"]
+        engine_findings = [f for f in result if str(f.suspected_source) == "engine"]
         if engine_findings:
-            assert float(engine_findings[0]["confidence"]) < 0.65
+            assert engine_findings[0].effective_confidence < 0.65
 
     def test_strong_engine_not_suppressed(self) -> None:
         findings = [
-            (0.3, make_finding_payload(suspected_source="wheel/tire", confidence=0.30)),
-            (1.0, make_finding_payload(suspected_source="engine", confidence=0.90)),
+            (0.3, make_finding(suspected_source="wheel/tire", confidence=0.30, ranking_score=0.3)),
+            (1.0, make_finding(suspected_source="engine", confidence=0.90, ranking_score=1.0)),
         ]
         result = _suppress_engine_aliases(findings)
-        engine_findings = [f for f in result if f.get("suspected_source") == "engine"]
+        engine_findings = [f for f in result if str(f.suspected_source) == "engine"]
         assert engine_findings, "Strong engine should survive weak wheel"
 
     def test_empty_input(self) -> None:
@@ -318,7 +364,14 @@ class TestSuppressEngineAliases:
 
     def test_output_capped_at_5(self) -> None:
         findings = [
-            (i, make_finding_payload(suspected_source="wheel/tire", confidence=0.50 + i * 0.05))
+            (
+                i,
+                make_finding(
+                    suspected_source="wheel/tire",
+                    confidence=0.50 + i * 0.05,
+                    ranking_score=float(i),
+                ),
+            )
             for i in range(7)
         ]
         result = _suppress_engine_aliases(findings)
@@ -384,11 +437,11 @@ class TestBuildPhaseTimeline:
         findings = [Finding(finding_id="F001", confidence=0.60)]
         entries = _build_phase_timeline(segs, findings, min_confidence=0.25)
         assert len(entries) == 2
-        assert entries[0]["phase"] == "cruise"
+        assert entries[0].phase == DrivingPhase.CRUISE
         # has_fault_evidence is always False: phases_detected is not preserved
         # on the domain Finding (only cruise_fraction survives decode).
-        assert entries[0]["has_fault_evidence"] is False
-        assert entries[1]["has_fault_evidence"] is False
+        assert entries[0].has_fault_evidence is False
+        assert entries[1].has_fault_evidence is False
 
     @pytest.mark.parametrize(
         "finding",
@@ -406,7 +459,7 @@ class TestBuildPhaseTimeline:
     def test_finding_does_not_mark_phase(self, finding: Finding) -> None:
         """REF_ findings and below-threshold findings should not contribute."""
         entries = _build_phase_timeline([_FakeSeg()], [finding], min_confidence=0.25)
-        assert entries[0]["has_fault_evidence"] is False
+        assert entries[0].has_fault_evidence is False
 
 
 class TestComputeAccelStatistics:

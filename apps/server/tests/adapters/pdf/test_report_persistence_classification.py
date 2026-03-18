@@ -175,4 +175,4 @@ class TestTopPeaksTableRows:
         findings = build_findings(samples)
         target = next(iter(findings_at_freq(findings, "33")), None)
         assert target is not None
-        assert str(target.get("strongest_speed_band") or "") == typical_speed_band
+        assert str(target.strongest_speed_band or "") == typical_speed_band

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.domain import OrderMatchObservation
 from vibesensor.use_cases.diagnostics.order_analysis import (
     OrderAnalysisSession,
     OrderMatchAccumulator,
@@ -22,7 +23,15 @@ def _make_accumulator(
     """Build an accumulator with sensible defaults for testing."""
     if matched_points is None:
         matched_points = [
-            {"location": "front_left", "speed_kmh": 60.0, "amp": 0.05} for _ in range(matched)
+            OrderMatchObservation(
+                predicted_hz=50.0,
+                matched_hz=50.5,
+                rel_error=0.01,
+                amp=0.05,
+                location="front_left",
+                speed_kmh=60.0,
+            )
+            for _ in range(matched)
         ]
     return OrderMatchAccumulator(
         possible=possible,
@@ -56,9 +65,30 @@ class TestOrderMatchAccumulatorProperties:
 
     def test_unique_match_locations(self) -> None:
         points = [
-            {"location": "front_left", "speed_kmh": 60.0, "amp": 0.05},
-            {"location": "front_right", "speed_kmh": 60.0, "amp": 0.05},
-            {"location": "front_left", "speed_kmh": 70.0, "amp": 0.04},
+            OrderMatchObservation(
+                predicted_hz=50.0,
+                matched_hz=50.5,
+                rel_error=0.01,
+                amp=0.05,
+                location="front_left",
+                speed_kmh=60.0,
+            ),
+            OrderMatchObservation(
+                predicted_hz=50.0,
+                matched_hz=50.5,
+                rel_error=0.01,
+                amp=0.05,
+                location="front_right",
+                speed_kmh=60.0,
+            ),
+            OrderMatchObservation(
+                predicted_hz=50.0,
+                matched_hz=50.5,
+                rel_error=0.01,
+                amp=0.04,
+                location="front_left",
+                speed_kmh=70.0,
+            ),
         ]
         m = _make_accumulator(matched=3, matched_points=points)
         assert m.unique_match_locations == {"front_left", "front_right"}
@@ -72,11 +102,36 @@ class TestOrderMatchAccumulatorProperties:
         assert m.is_eligible() is True
 
     def test_is_eligible_false_low_possible(self) -> None:
-        m = _make_accumulator(possible=2, matched=2, matched_points=[{"location": "x"}] * 2)
+        m = _make_accumulator(
+            possible=2,
+            matched=2,
+            matched_points=[
+                OrderMatchObservation(
+                    predicted_hz=50.0,
+                    matched_hz=50.5,
+                    rel_error=0.01,
+                    amp=0.05,
+                    location="x",
+                )
+                for _ in range(2)
+            ],
+        )
         assert m.is_eligible() is False
 
     def test_is_eligible_false_low_matched(self) -> None:
-        m = _make_accumulator(possible=20, matched=1, matched_points=[{"location": "x"}])
+        m = _make_accumulator(
+            possible=20,
+            matched=1,
+            matched_points=[
+                OrderMatchObservation(
+                    predicted_hz=50.0,
+                    matched_hz=50.5,
+                    rel_error=0.01,
+                    amp=0.05,
+                    location="x",
+                ),
+            ],
+        )
         assert m.is_eligible() is False
 
 

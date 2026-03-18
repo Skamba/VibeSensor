@@ -18,8 +18,12 @@ __all__ = [
 ]
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from vibesensor.shared.types.json_types import JsonObject
+
+if TYPE_CHECKING:
+    from vibesensor.domain import Finding
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -136,7 +140,7 @@ class ReportTemplateData:
 
     # Rendering context — pre-computed during analysis so the report
     # renderer never needs to read raw samples or call analysis code.
-    findings: list[JsonObject] = field(default_factory=list)
-    top_causes: list[JsonObject] = field(default_factory=list)
+    findings: list[Finding] = field(default_factory=list)
+    top_causes: list[Finding] = field(default_factory=list)
     sensor_intensity_by_location: list[JsonObject] = field(default_factory=list)
     location_hotspot_rows: list[JsonObject] = field(default_factory=list)

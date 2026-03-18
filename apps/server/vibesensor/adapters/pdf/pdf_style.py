@@ -9,7 +9,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
-from vibesensor.domain import VibrationSource
+from vibesensor.domain import Finding, VibrationSource
 from vibesensor.report_i18n import tr as _tr
 
 # ── Theme ────────────────────────────────────────────────────────────────────
@@ -257,7 +257,7 @@ class PdfRenderContext:
     page_top: float
     lang: str
     location_rows: list
-    top_causes: list
+    top_causes: list[Finding]
     tr_fn: Callable[..., str]
     text_fn: Callable[[str, str], str]
 
@@ -267,7 +267,7 @@ class PdfRenderContext:
         data: ReportTemplateData,
         *,
         location_rows: list | None = None,
-        top_causes: list | None = None,
+        top_causes: list[Finding] | None = None,
         tr_fn: Callable[..., str] | None = None,
         text_fn: Callable[[str, str], str] | None = None,
     ) -> PdfRenderContext:

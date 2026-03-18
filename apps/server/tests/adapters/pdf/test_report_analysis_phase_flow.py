@@ -43,7 +43,7 @@ def test_build_order_findings_dominant_phase(
     ]
     findings = call_build_order_findings(samples, per_sample_phases=phases)
     assert len(findings) == 1
-    assert findings[0].get("dominant_phase") == expected_dominant_phase
+    assert findings[0].dominant_phase == expected_dominant_phase
 
 
 def test_build_order_findings_per_phase_confidence_key_present() -> None:
@@ -56,13 +56,11 @@ def test_build_order_findings_per_phase_confidence_key_present() -> None:
         engine_ref_sufficient=False,
     )
     assert findings
-    evidence_metrics = findings[0].get("evidence_metrics") or {}
-    assert "per_phase_confidence" in evidence_metrics
-    assert "phases_with_evidence" in evidence_metrics
-    per_phase_confidence = evidence_metrics["per_phase_confidence"]
-    assert isinstance(per_phase_confidence, dict)
+    evidence = findings[0].evidence
+    assert evidence is not None
+    per_phase_confidence = dict(evidence.phase_confidences)
     assert "cruise" in per_phase_confidence
-    assert evidence_metrics["phases_with_evidence"] >= 1
+    assert (evidence.phases_with_evidence or 0) >= 1
 
 
 def test_build_order_findings_no_phases_leaves_per_phase_confidence_none() -> None:
@@ -74,9 +72,11 @@ def test_build_order_findings_no_phases_leaves_per_phase_confidence_none() -> No
         engine_ref_sufficient=False,
     )
     assert findings
-    evidence_metrics = findings[0].get("evidence_metrics") or {}
-    assert evidence_metrics.get("per_phase_confidence") is None
-    assert evidence_metrics.get("phases_with_evidence") == 0
+    evidence = findings[0].evidence
+    if evidence is None:
+        return
+    assert not evidence.phase_confidences
+    assert (evidence.phases_with_evidence or 0) == 0
 
 
 def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() -> None:
@@ -99,10 +99,12 @@ def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() 
 
     assert single_findings
     assert multi_findings
-    conf_single = float(single_findings[0].get("confidence") or 0.0)
-    conf_multi = float(multi_findings[0].get("confidence") or 0.0)
+    conf_single = single_findings[0].effective_confidence
+    conf_multi = multi_findings[0].effective_confidence
     assert conf_multi >= conf_single
-    assert (multi_findings[0].get("evidence_metrics") or {}).get("phases_with_evidence", 0) >= 2
+    multi_evidence = multi_findings[0].evidence
+    assert multi_evidence is not None
+    assert (multi_evidence.phases_with_evidence or 0) >= 2
 
 
 def test_build_findings_per_phase_confidence_flows_through_pipeline() -> None:

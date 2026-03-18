@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 import pytest
 
+from vibesensor.adapters.pdf.presentation import strength_label
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.processing.fft import noise_floor
 from vibesensor.strength_bands import bucket_for_strength
@@ -16,7 +17,6 @@ from vibesensor.use_cases.diagnostics.helpers import _speed_stats
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     segment_run_phases,
 )
-from vibesensor.use_cases.diagnostics.strength_labels import strength_label
 from vibesensor.vibration_strength import (
     compute_vibration_strength_db,
     noise_floor_amp_p20_g,
@@ -188,13 +188,13 @@ class TestSteadySpeedSinglePoint:
     def test_single_point_is_steady(self):
         result = _speed_stats([80.0])
         # A single point tells us nothing about speed variation
-        assert result["steady_speed"] is True
-        assert result["stddev_kmh"] == 0.0
-        assert result["range_kmh"] == 0.0
+        assert result.steady_speed is True
+        assert result.stddev_kmh == 0.0
+        assert result.range_kmh == 0.0
 
     def test_empty_is_not_steady(self):
         result = _speed_stats([])
-        assert result["steady_speed"] is False
+        assert result.steady_speed is False
 
 
 class TestNoPipelineErrorIsolation:

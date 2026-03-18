@@ -101,9 +101,17 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
     primary = test_run.primary_finding
     origin_fb = analysis.get("most_likely_origin")
     fb_payload = dict(origin_fb) if isinstance(origin_fb, dict) else {}
-    projected["most_likely_origin"] = (
-        origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
-    )
+    if primary is None:
+        projected["most_likely_origin"] = fb_payload
+    else:
+        origin_payload = origin_payload_from_finding(primary)
+        origin_location = str(origin_payload.get("location") or "").strip().lower()
+        fallback_location = str(fb_payload.get("location") or "").strip().lower()
+        projected["most_likely_origin"] = (
+            fb_payload
+            if origin_location in {"", "unknown"} and fallback_location not in {"", "unknown"}
+            else origin_payload
+        )
     from vibesensor.shared.boundaries.finding import _has_structured_step_content
 
     if not _has_structured_step_content(analysis.get("test_plan")):

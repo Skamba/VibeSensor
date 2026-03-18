@@ -102,10 +102,9 @@ class TestPhaseSegmentation:
         ]
         _, segments = segment_run_phases(samples)
         info = phase_summary(segments)
-        assert "phase_counts" in info
-        assert "total_samples" in info
-        assert info["total_samples"] == 3
-        assert abs(sum(info["phase_pcts"].values()) - 100.0) < 0.01
+        assert info.phase_counts is not None
+        assert info.total_samples == 3
+        assert abs(sum(info.phase_pcts.values()) - 100.0) < 0.01
 
     def test_all_five_phases_can_be_detected(self) -> None:
         samples = []
@@ -129,9 +128,9 @@ class TestPhaseSegmentation:
         assert DrivingPhase.DECELERATION in phases_found or DrivingPhase.COAST_DOWN in phases_found
 
         info = phase_summary(segments)
-        assert info["has_cruise"]
-        assert info["has_acceleration"]
-        assert info["total_samples"] == len(samples)
+        assert info.has_cruise
+        assert info.has_acceleration
+        assert info.total_samples == len(samples)
 
     def test_empty_samples_returns_empty(self) -> None:
         per_sample, segments = segment_run_phases([])
@@ -172,7 +171,7 @@ class TestSensorIntensityPhaseContext:
         rows = _sensor_intensity_by_location(samples, per_sample_phases=per_sample_phases)
 
         for row in rows:
-            phase_intensity = row.get("phase_intensity")
+            phase_intensity = row.phase_intensity
             assert phase_intensity is not None
             assert len(phase_intensity) >= 1
             for stats in phase_intensity.values():
@@ -184,7 +183,7 @@ class TestSensorIntensityPhaseContext:
             [{"t_s": 0.0, "speed_kmh": 60.0, "vibration_strength_db": 22.0, "location_key": "fl"}],
         )
         for row in rows:
-            assert row.get("phase_intensity") is None
+            assert row.phase_intensity is None
 
     def test_summarize_run_data_includes_phase_intensity_in_location_rows(self) -> None:
         summary = summarize_run_data(

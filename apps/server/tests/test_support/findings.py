@@ -6,7 +6,31 @@ instead of defining local ``_make_finding`` helpers.
 
 from __future__ import annotations
 
-from vibesensor.use_cases.diagnostics._types import FindingPayload
+from dataclasses import replace
+
+from vibesensor.domain import Finding, VibrationSource
+from vibesensor.shared.boundaries.analysis_payload import FindingPayload
+
+
+def make_finding(
+    finding_id: str = "F_ORDER",
+    suspected_source: VibrationSource | str = VibrationSource.WHEEL_TIRE,
+    confidence: float | None = 0.75,
+    severity: str = "",
+    ranking_score: float = 1.0,
+    strongest_location: str | None = None,
+    **overrides: object,
+) -> Finding:
+    """Build a minimal domain ``Finding`` with sensible defaults."""
+    base = Finding(
+        finding_id=finding_id,
+        suspected_source=suspected_source,
+        confidence=confidence,
+        severity=severity,
+        ranking_score=ranking_score,
+        strongest_location=strongest_location,
+    )
+    return replace(base, **overrides)
 
 
 def make_finding_payload(

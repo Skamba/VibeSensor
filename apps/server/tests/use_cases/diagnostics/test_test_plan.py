@@ -5,6 +5,7 @@ from typing import Any
 from test_support.findings import make_finding_payload
 
 from vibesensor.domain import Finding
+from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics.findings import finalize_findings
 from vibesensor.use_cases.diagnostics.summary_builder import summarize_run_data
 
@@ -36,7 +37,7 @@ def test_summary_test_plan_ignores_payload_actions_and_projects_domain_plan() ->
     )
 
     def _findings_builder(**_: object) -> tuple[Finding, ...]:
-        return finalize_findings([payload])
+        return finalize_findings([finding_from_payload(payload)])
 
     summary = summarize_run_data(
         _MINIMAL_META,
@@ -58,7 +59,7 @@ def test_summary_test_plan_uses_boundary_step_shape_from_domain_actions() -> Non
         [],
         lang="en",
         findings_builder=lambda **_: finalize_findings(
-            [make_finding_payload(suspected_source="engine")]
+            [finding_from_payload(make_finding_payload(suspected_source="engine"))]
         ),
     )
 

@@ -12,17 +12,10 @@ findings.  The domain ``Finding`` lives in ``vibesensor.domain``.
 """
 
 from vibesensor.use_cases.diagnostics._types import (
-    IntensityRow,
-    MetadataDict,
     i18n_ref,
 )
 from vibesensor.use_cases.diagnostics.helpers import PHASE_I18N_KEYS
 from vibesensor.use_cases.diagnostics.order_bands import build_order_bands, vehicle_orders_hz
-from vibesensor.use_cases.diagnostics.plots import PeakTableRow
-from vibesensor.use_cases.diagnostics.strength_labels import (
-    strength_label,
-    strength_text,
-)
 from vibesensor.use_cases.diagnostics.summary_builder import (
     AnalysisResult,
     RunAnalysis,
@@ -33,16 +26,11 @@ from vibesensor.use_cases.diagnostics.summary_builder import (
 
 __all__ = [
     "AnalysisResult",
-    "IntensityRow",
-    "MetadataDict",
     "PHASE_I18N_KEYS",
-    "PeakTableRow",
     "RunAnalysis",
     "build_findings_for_samples",
     "build_order_bands",
     "i18n_ref",
-    "strength_label",
-    "strength_text",
     "summarize_log",
     "summarize_run_data",
     "vehicle_orders_hz",

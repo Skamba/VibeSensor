@@ -11,13 +11,14 @@ import asyncio
 import re
 from typing import TYPE_CHECKING, cast
 
+from typing_extensions import TypedDict
+
 from vibesensor.domain import RunStatus
 from vibesensor.shared.exceptions import (
     AnalysisNotReadyError,
     DataCorruptError,
     RunNotFoundError,
 )
-from vibesensor.shared.types.backend_types import HistoryRunPayload
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
 if TYPE_CHECKING:
@@ -26,13 +27,30 @@ if TYPE_CHECKING:
 _SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
 
 
+class HistoryRunRecord(TypedDict, total=False):
+    """History-run persistence record used only inside history workflows."""
+
+    run_id: str
+    status: str
+    start_time_utc: str
+    end_time_utc: str | None
+    metadata: JsonObject
+    analysis: JsonObject
+    analysis_corrupt: bool
+    error_message: str
+    created_at: str
+    sample_count: int
+    analysis_started_at: str
+    analysis_completed_at: str
+
+
 def safe_filename(name: str) -> str:
     """Sanitize *name* for use in Content-Disposition headers and zip entry names."""
     cleaned = _SAFE_FILENAME_RE.sub("_", name)[:200].lstrip(".")
     return cleaned or "download"
 
 
-def resolve_run_language(run: HistoryRunPayload, requested: str | None) -> str:
+def resolve_run_language(run: HistoryRunRecord, requested: str | None) -> str:
     """Resolve the effective language for a history run.
 
     Priority: explicit *requested* lang > run metadata ``language`` > ``"en"``.
@@ -47,14 +65,14 @@ def resolve_run_language(run: HistoryRunPayload, requested: str | None) -> str:
     return "en"
 
 
-async def async_require_run(history_db: HistoryDB, run_id: str) -> HistoryRunPayload:
+async def async_require_run(history_db: HistoryDB, run_id: str) -> HistoryRunRecord:
     """Fetch a history run in a thread or raise a domain exception."""
     run = await asyncio.to_thread(history_db.get_run, run_id)
     if run is None:
         raise RunNotFoundError(f"Run {run_id!r} not found")
     if not is_json_object(run):
         raise DataCorruptError(f"Run {run_id!r} data is corrupt")
-    return cast("HistoryRunPayload", run)
+    return cast("HistoryRunRecord", run)
 
 
 def strip_internal_fields(analysis: JsonObject) -> JsonObject:
@@ -62,7 +80,7 @@ def strip_internal_fields(analysis: JsonObject) -> JsonObject:
     return {key: value for key, value in analysis.items() if not key.startswith("_")}
 
 
-def require_analysis_ready(run: HistoryRunPayload) -> JsonObject:
+def require_analysis_ready(run: HistoryRunRecord) -> JsonObject:
     """Return the analysis dict or raise a domain exception."""
     if run["status"] == RunStatus.ANALYZING:
         raise AnalysisNotReadyError("Analysis is still in progress", status="in_progress")

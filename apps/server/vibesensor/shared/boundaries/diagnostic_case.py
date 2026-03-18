@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from vibesensor.domain.car import Car
+from vibesensor.domain.car import Car, OrderReferenceSpec
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
 from vibesensor.domain.finding import Finding
@@ -71,21 +71,13 @@ def run_suitability_payload(
 # ---------------------------------------------------------------------------
 
 
-def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun | None]:
-    """Round-trip an analysis dict through the domain model.
+def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]:
+    """Reconstruct and re-serialize analysis through the canonical domain boundary.
 
     Returns ``(projected, test_run)`` where *projected* is a shallow copy of
     *analysis* with findings, top causes, origin, test plan, and suitability
-    re-serialised from the domain ``TestRun``.
-
-    Summaries written by the current pipeline carry ``_summary_version == 2``
-    and are already fully projected, so the expensive round-trip is skipped.
-    The ``TestRun`` is returned as *None* in that case — callers that need
-    a domain aggregate (e.g. report rendering) reconstruct it themselves.
+    serialized from the domain ``TestRun``.
     """
-    if analysis.get("_summary_version") == 2:
-        return analysis, None
-
     test_run = test_run_from_summary(analysis)
     projected: JsonObject = dict(analysis)
     projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
@@ -95,13 +87,54 @@ def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun 
     primary = test_run.primary_finding
     origin_fb = analysis.get("most_likely_origin")
     fb_payload = dict(origin_fb) if isinstance(origin_fb, Mapping) else {}
-    projected["most_likely_origin"] = (
-        origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
-    )
+    if primary is None:
+        projected["most_likely_origin"] = fb_payload
+    else:
+        origin_payload = origin_payload_from_finding(primary)
+        origin_location = str(origin_payload.get("location") or "").strip().lower()
+        fallback_location = str(fb_payload.get("location") or "").strip().lower()
+        projected["most_likely_origin"] = (
+            fb_payload
+            if origin_location in {"", "unknown"} and fallback_location not in {"", "unknown"}
+            else origin_payload
+        )
     if not _has_structured_step_content(analysis.get("test_plan")):
         projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
     projected["run_suitability"] = run_suitability_payload(test_run.suitability)
     return projected, test_run
+
+
+def case_context_from_metadata(
+    metadata: Mapping[str, object],
+) -> tuple[Car | None, tuple[Symptom, ...]]:
+    """Build case-scoped car and symptoms from persisted metadata."""
+    car_name = str(metadata.get("car_name") or metadata.get("name") or "").strip()
+    car_type = str(metadata.get("car_type") or "").strip()
+    car_variant = str(metadata.get("car_variant") or metadata.get("variant") or "").strip()
+    order_reference_spec = OrderReferenceSpec.from_settings(metadata)
+    if car_name or car_type or car_variant or order_reference_spec is not None:
+        car = Car(
+            name=car_name or "Unnamed Car",
+            car_type=car_type or "sedan",
+            variant=car_variant or None,
+            order_reference_spec=order_reference_spec,
+        )
+    else:
+        car = None
+
+    complaint = str(metadata.get("symptom") or metadata.get("complaint") or "").strip()
+    if not complaint:
+        return car, (Symptom.unspecified(),)
+    return (
+        car,
+        (
+            Symptom(
+                description=complaint,
+                onset=str(metadata.get("symptom_onset") or "").strip(),
+                context=str(metadata.get("symptom_context") or "").strip(),
+            ),
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -318,22 +351,12 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
 def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCase:
     metadata = summary.get("metadata")
     meta = metadata if isinstance(metadata, Mapping) else {}
-    car = Car(
-        name=str(meta.get("car_name") or meta.get("name") or "Unnamed Car"),
-        car_type=str(meta.get("car_type") or "sedan"),
-        aspects={
-            key: float(value)
-            for key in ("tire_width_mm", "tire_aspect_pct", "rim_in")
-            if (value := meta.get(key)) is not None
-        },
-    )
-    symptom_text = str(meta.get("symptom") or meta.get("complaint") or "").strip()
-    symptom = Symptom(description=symptom_text) if symptom_text else Symptom.unspecified()
+    car, symptoms = case_context_from_metadata(meta)
     test_run = test_run_from_summary(summary)
     case = DiagnosticCase(
         case_id=_require_authoritative_case_id(summary),
         car=car,
-        symptoms=(symptom,),
+        symptoms=symptoms,
         test_plan=test_run.test_plan,
     )
     return case.add_run(test_run)

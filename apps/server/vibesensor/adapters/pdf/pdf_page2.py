@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 from collections.abc import Callable
 
 from reportlab.lib.units import mm
@@ -13,7 +12,6 @@ from vibesensor.adapters.pdf.pdf_drawing import (
     _cert_display,
     _draw_panel,
     _hex,
-    _norm,
     _safe,
     _strength_with_peak,
 )
@@ -45,6 +43,7 @@ from vibesensor.adapters.pdf.pdf_style import (
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_kv, _draw_section_block, _draw_text
 from vibesensor.adapters.pdf.report_data import NextStep, PatternEvidence, ReportTemplateData
+from vibesensor.domain import Finding
 from vibesensor.report_i18n import tr as _tr
 
 # -- Aspect-ratio helpers (merged from pdf_layout) ----------------------------
@@ -133,7 +132,7 @@ def _draw_car_visual_panel(
     w: float,
     h: float,
     location_rows: list,
-    top_causes: list,
+    top_causes: list[Finding],
     content_width: float,
 ) -> None:
     _draw_panel(c, x, y, w, h, tr_fn("EVIDENCE_AND_HOTSPOTS"))
@@ -160,7 +159,7 @@ def _draw_car_visual_panel(
     }
     findings = data.findings
     diagram = car_location_diagram(
-        top_causes or (findings if isinstance(findings, list) else []),  # type: ignore[arg-type]
+        top_causes or findings,
         render_summary,
         location_rows,
         content_width=content_width,
@@ -366,7 +365,7 @@ def _draw_additional_observations(
     y: float,
     w: float,
     h: float,
-    transient_findings: list[dict[str, object]],
+    transient_findings: list[Finding],
     tr: Callable[[str], str],
 ) -> None:
     """Draw transient-impact findings in the additional-observations panel."""
@@ -374,7 +373,6 @@ def _draw_additional_observations(
     c.setFillColor(_hex(MUTED_CLR))
     c.setFont(FONT, 6.5)
 
-    isfinite = math.isfinite
     x_pad = x + 4 * mm
     step = 3.5 * mm
     y_min = y + 2 * mm
@@ -382,15 +380,12 @@ def _draw_additional_observations(
     for finding in transient_findings[:3]:
         if y_cursor < y_min:
             break
-        order_label = str(finding.get("frequency_hz_or_order") or "").strip()
+        order_label = finding.order.strip()
+        if not order_label and finding.frequency_hz is not None:
+            order_label = f"{finding.frequency_hz:.1f} Hz"
         if not order_label:
             order_label = tr("SOURCE_TRANSIENT_IMPACT")
-        try:
-            confidence = float(finding.get("confidence") or 0.0)  # type: ignore[arg-type]
-        except (ValueError, TypeError):
-            confidence = 0.0
-        if not isfinite(confidence):
-            confidence = 0.0
+        confidence = finding.effective_confidence
         c.drawString(x_pad, y_cursor, f"\u2022 {order_label} ({confidence * 100.0:.0f}%)")
         y_cursor -= step
 
@@ -444,11 +439,10 @@ def _page2(
     transient_findings = [
         finding
         for finding in data.findings
-        if isinstance(finding, dict)
-        and _norm(finding.get("severity")) == "info"
+        if finding.severity == "info"
         and (
-            _norm(finding.get("suspected_source")) == "transient_impact"
-            or _norm(finding.get("peak_classification")) == "transient"
+            str(finding.suspected_source) == "transient_impact"
+            or finding.peak_classification == "transient"
         )
     ]
     layout = build_page2_layout(
@@ -508,7 +502,7 @@ def _page2(
             layout.observations_panel.y,
             layout.observations_panel.w,
             layout.observations_panel.h,
-            transient_findings,  # type: ignore[arg-type]
+            transient_findings,
             tr,
         )
         obs_y = layout.observations_panel.y

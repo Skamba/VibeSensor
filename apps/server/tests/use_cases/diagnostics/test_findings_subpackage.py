@@ -9,13 +9,19 @@ from __future__ import annotations
 from typing import get_type_hints
 
 import pytest
+from test_support.findings import make_finding
 
+from vibesensor.domain import OrderMatchObservation
+from vibesensor.shared.boundaries.analysis_payload import (
+    AmplitudeMetric,
+    FindingPayload,
+    MatchedPoint,
+)
 from vibesensor.shared.constants import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
-from vibesensor.use_cases.diagnostics._types import AmplitudeMetric, FindingPayload, MatchedPoint
 from vibesensor.use_cases.diagnostics.findings import (
     _build_findings,
     _classify_peak_type,
@@ -84,8 +90,9 @@ class TestCanonicalFindingModel:
 
     def test_main_finding_builders_return_canonical_model(self) -> None:
         assert _build_findings.__annotations__["return"] == "tuple[DomainFinding, ...]"
-        assert assemble_order_finding.__annotations__["return"] == "tuple[float, FindingPayload]"
-        assert get_type_hints(OrderMatchAccumulator)["matched_points"] == list[MatchedPoint]
+        assert assemble_order_finding.__annotations__["return"] == "tuple[float, DomainFinding]"
+        accumulator_hints = get_type_hints(OrderMatchAccumulator)
+        assert accumulator_hints["matched_points"] == list[OrderMatchObservation]
 
 
 # -- speed_profile tests ------------------------------------------------------
@@ -139,23 +146,11 @@ class TestReferenceMissingFinding:
         finding = _reference_missing_finding(
             finding_id="REF_SPEED",
             suspected_source="unknown",
-            evidence_summary="Speed missing",
-            quick_checks=["Check GPS", "Re-run"],
         )
-        assert finding["finding_id"] == "REF_SPEED"
-        assert finding["finding_kind"] == "reference"
-        assert finding["suspected_source"] == "unknown"
-        assert finding["confidence"] is None
-        assert len(finding["quick_checks"]) <= 3
-
-    def test_quick_checks_truncated_to_3(self) -> None:
-        finding = _reference_missing_finding(
-            finding_id="REF_TEST",
-            suspected_source="test",
-            evidence_summary="Test",
-            quick_checks=["a", "b", "c", "d", "e"],
-        )
-        assert len(finding["quick_checks"]) == 3
+        assert finding.finding_id == "REF_SPEED"
+        assert finding.is_reference is True
+        assert str(finding.suspected_source) == "unknown"
+        assert finding.confidence is None
 
 
 # -- _constants tests ---------------------------------------------------------
@@ -253,8 +248,20 @@ class TestDetectDiffuseExcitation:
         possible = {"front_left": 10, "front_right": 10}
         matched = {"front_left": 5, "front_right": 5}
         points = [
-            {"location": "front_left", "amp": 0.03},
-            {"location": "front_right", "amp": 0.03},
+            OrderMatchObservation(
+                predicted_hz=50.0,
+                matched_hz=50.5,
+                rel_error=0.01,
+                amp=0.03,
+                location="front_left",
+            ),
+            OrderMatchObservation(
+                predicted_hz=50.0,
+                matched_hz=50.5,
+                rel_error=0.01,
+                amp=0.03,
+                location="front_right",
+            ),
         ]
         is_diffuse, penalty = _detect_diffuse_excitation(locs, possible, matched, points)
         assert is_diffuse
@@ -316,25 +323,30 @@ class TestSuppressEngineAliases:
 
     def test_engine_suppressed_when_wheel_stronger(self) -> None:
         input_findings = [
-            (0.5, {"suspected_source": "wheel/tire", "confidence": 0.60}),
-            (0.4, {"suspected_source": "engine", "confidence": 0.50}),
+            (0.5, make_finding(suspected_source="wheel/tire", confidence=0.60, ranking_score=0.5)),
+            (0.4, make_finding(suspected_source="engine", confidence=0.50, ranking_score=0.4)),
         ]
         result = _suppress_engine_aliases(input_findings)
-        engine_results = [f for f in result if f["suspected_source"] == "engine"]
+        engine_results = [f for f in result if str(f.suspected_source) == "engine"]
         if engine_results:
-            assert engine_results[0]["confidence"] < 0.50
+            assert engine_results[0].effective_confidence < 0.50
 
     def test_engine_suppression_normalizes_source_tokens(self) -> None:
         input_findings = [
-            (0.5, {"suspected_source": " Wheel/Tire ", "confidence": 0.60}),
-            (0.4, {"suspected_source": " ENGINE ", "confidence": 0.50}),
+            (
+                0.5,
+                make_finding(
+                    suspected_source=" Wheel/Tire ",
+                    confidence=0.60,
+                    ranking_score=0.5,
+                ),
+            ),
+            (0.4, make_finding(suspected_source=" ENGINE ", confidence=0.50, ranking_score=0.4)),
         ]
         result = _suppress_engine_aliases(input_findings)
-        engine_results = [
-            f for f in result if str(f["suspected_source"]).strip().lower() == "engine"
-        ]
+        engine_results = [f for f in result if str(f.suspected_source).strip().lower() == "engine"]
         if engine_results:
-            assert engine_results[0]["confidence"] < 0.50
+            assert engine_results[0].effective_confidence < 0.50
 
 
 # -- intensity tests ----------------------------------------------------------
@@ -384,5 +396,5 @@ class TestSensorIntensityByLocation:
         ]
         rows = _sensor_intensity_by_location(samples)
         assert len(rows) == 1
-        assert rows[0]["location"] == "front_left"
-        assert rows[0]["sample_count"] == 2
+        assert rows[0].location == "front_left"
+        assert rows[0].sample_count == 2

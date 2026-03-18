@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import log1p
 
-from vibesensor.domain import OrderReferenceSpec
-from vibesensor.domain.finding import VibrationSource, speed_band_sort_key, speed_bin_label
+from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain import OrderMatchObservation, OrderReferenceSpec, VibrationOrigin
+from vibesensor.domain.finding import (
+    FindingEvidence,
+    FindingKind,
+    VibrationSource,
+    speed_band_sort_key,
+    speed_bin_label,
+)
 from vibesensor.shared.constants import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
@@ -27,12 +34,8 @@ from vibesensor.shared.constants import (
     SPEED_BIN_WIDTH_KMH,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (
-    FindingPayload,
-    LocationHotspotPayload,
-    MatchedPoint,
-    MetadataDict,
-    PhaseEvidence,
     PhaseLabels,
     Sample,
     i18n_ref,
@@ -57,43 +60,10 @@ from vibesensor.vibration_strength import (
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-def _location_result_to_payload(
-    result: object,
-) -> LocationHotspotPayload:
-    """Project LocationAnalysisResult to serialization payload at FindingPayload boundary."""
-    from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
-
-    r: LocationAnalysisResult = result  # type: ignore[assignment]
-    return {
-        "speed_range": r.speed_range,
-        "location": r.display_location,
-        "mean_amp": r.mean_amp,
-        "dominance_ratio": r.dominance_ratio,
-        "location_count": (
-            len(r.hotspot.alternative_locations) if r.hotspot.alternative_locations else 1
-        ),
-        "top_location": r.top_location,
-        "second_location": r.second_location,
-        "top_location_samples": r.top_location_samples,
-        "second_location_samples": r.second_location_samples,
-        "corroborated_by_n_sensors": r.corroborated_by_n_sensors,
-        "total_samples": r.total_samples,
-        "ambiguous_location": r.ambiguous_location,
-        "ambiguous_locations": (
-            list(r.hotspot.alternative_locations) if r.ambiguous_location else []
-        ),
-        "partial_coverage": r.partial_coverage,
-        "localization_confidence": r.localization_confidence,
-        "weak_spatial_separation": r.weak_spatial_separation,
-        "no_wheel_sensors": r.no_wheel_sensors,
-        "per_bin_results": [],
-    }
-
-
 def _wheel_hz(
     sample: Sample,
     tire_circumference_m: float | None,
-    metadata: MetadataDict | None = None,
+    metadata: JsonObject | None = None,
     order_reference_spec: OrderReferenceSpec | None = None,
 ) -> float | None:
     speed_kmh = _as_float(sample.get("speed_kmh"))
@@ -111,7 +81,7 @@ def _wheel_hz(
 
 def _driveshaft_hz(
     sample: Sample,
-    metadata: MetadataDict,
+    metadata: JsonObject,
     tire_circumference_m: float | None,
 ) -> float | None:
     speed_kmh = _as_float(sample.get("speed_kmh"))
@@ -137,7 +107,7 @@ def _driveshaft_hz(
 
 def _engine_hz(
     sample: Sample,
-    metadata: MetadataDict,
+    metadata: JsonObject,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     rpm, src = _effective_engine_rpm(sample, metadata, tire_circumference_m)
@@ -167,7 +137,7 @@ class OrderHypothesis:
     def predicted_hz(
         self,
         sample: Sample,
-        metadata: MetadataDict,
+        metadata: JsonObject,
         tire_circumference_m: float | None,
     ) -> tuple[float | None, str]:
         if self.order_label_base == "wheel":
@@ -238,7 +208,7 @@ class OrderMatchAccumulator:
     rel_errors: list[float]
     predicted_vals: list[float]
     measured_vals: list[float]
-    matched_points: list[MatchedPoint]
+    matched_points: list[OrderMatchObservation]
     ref_sources: set[str]
     possible_by_speed_bin: dict[str, int]
     matched_by_speed_bin: dict[str, int]
@@ -259,11 +229,7 @@ class OrderMatchAccumulator:
     @property
     def unique_match_locations(self) -> set[str]:
         """Set of distinct sensor locations that produced matches."""
-        return {
-            str(point.get("location") or "")
-            for point in self.matched_points
-            if point.get("location")
-        }
+        return {(point.location or "").strip() for point in self.matched_points if point.location}
 
     def is_eligible(
         self,
@@ -299,7 +265,7 @@ def match_samples_for_hypothesis(
     samples: list[Sample],
     cached_peaks: list[list[tuple[float, float]]],
     hypothesis: OrderHypothesis,
-    metadata: MetadataDict,
+    metadata: JsonObject,
     tire_circumference_m: float | None,
     per_sample_phases: PhaseLabels | None,
     lang: str,
@@ -312,7 +278,7 @@ def match_samples_for_hypothesis(
     rel_errors: list[float] = []
     predicted_vals: list[float] = []
     measured_vals: list[float] = []
-    matched_points: list[MatchedPoint] = []
+    matched_points: list[OrderMatchObservation] = []
     ref_sources: set[str] = set()
     possible_by_speed_bin: dict[str, int] = defaultdict(int)
     matched_by_speed_bin: dict[str, int] = defaultdict(int)
@@ -377,20 +343,20 @@ def match_samples_for_hypothesis(
         predicted_vals.append(predicted_hz)
         measured_vals.append(best_hz)
         matched_points.append(
-            {
-                "t_s": _as_float(sample.get("t_s")),
-                "speed_kmh": _as_float(sample.get("speed_kmh")),
-                "predicted_hz": predicted_hz,
-                "matched_hz": best_hz,
-                "rel_error": delta_hz / max(1e-9, predicted_hz),
-                "amp": best_amp,
-                "location": sample_location,
-                "phase": (
+            OrderMatchObservation(
+                t_s=_as_float(sample.get("t_s")),
+                speed_kmh=_as_float(sample.get("speed_kmh")),
+                predicted_hz=predicted_hz,
+                matched_hz=best_hz,
+                rel_error=delta_hz / max(1e-9, predicted_hz),
+                amp=best_amp,
+                location=sample_location,
+                phase=(
                     _phase_to_str(per_sample_phases[sample_idx])
                     if has_phases and per_sample_phases is not None
                     else None
                 ),
-            },
+            ),
         )
 
     return OrderMatchAccumulator(
@@ -469,15 +435,15 @@ def _mean(values: list[float]) -> float:
     return sum(values) / len(values)
 
 
-def _normalized_source(finding: FindingPayload) -> str:
-    return str(finding.get("suspected_source") or "").strip().lower()
+def _normalized_source(finding: DomainFinding) -> str:
+    return finding.source_normalized
 
 
 def detect_diffuse_excitation(
     connected_locations: set[str],
     possible_by_location: dict[str, int],
     matched_by_location: dict[str, int],
-    matched_points: list[MatchedPoint],
+    matched_points: list[OrderMatchObservation],
     *,
     min_match_points: int = ORDER_MIN_MATCH_POINTS,
 ) -> tuple[bool, float]:
@@ -493,11 +459,9 @@ def detect_diffuse_excitation(
         if loc_possible >= min_loc_points:
             loc_rates.append(loc_matched / max(1, loc_possible))
             loc_amps = [
-                amp_val
+                point.amp
                 for point in matched_points
-                if str(point.get("location") or "").strip() == location
-                and (amp_val := _as_float(point.get("amp"))) is not None
-                and amp_val > 0
+                if (point.location or "").strip() == location and point.amp > 0
             ]
             if loc_amps:
                 loc_mean_amps[location] = _mean(loc_amps)
@@ -604,14 +568,14 @@ def compute_order_confidence(
 
 
 def suppress_engine_aliases(
-    findings: list[tuple[float, FindingPayload]],
+    findings: list[tuple[float, DomainFinding]],
     *,
     min_confidence: float = ORDER_MIN_CONFIDENCE,
-) -> list[FindingPayload]:
+) -> list[DomainFinding]:
     """Suppress engine findings likely to be aliases of stronger wheel findings."""
     best_wheel_conf = max(
         (
-            _as_float(finding.get("confidence")) or 0.0
+            finding.effective_confidence
             for _, finding in findings
             if _normalized_source(finding) == VibrationSource.WHEEL_TIRE
         ),
@@ -621,19 +585,18 @@ def suppress_engine_aliases(
         for index, (ranking_score, finding) in enumerate(findings):
             if _normalized_source(finding) != VibrationSource.ENGINE:
                 continue
-            eng_conf = _as_float(finding.get("confidence")) or 0.0
+            eng_conf = finding.effective_confidence
             if eng_conf <= best_wheel_conf * _HARMONIC_ALIAS_RATIO:
                 suppressed = eng_conf * _ENGINE_ALIAS_SUPPRESSION
-                finding["confidence"] = suppressed
                 new_ranking_score = ranking_score * _ENGINE_ALIAS_SUPPRESSION
-                finding["ranking_score"] = new_ranking_score
+                finding = replace(
+                    finding,
+                    confidence=suppressed,
+                    ranking_score=new_ranking_score,
+                )
                 findings[index] = (new_ranking_score, finding)
     findings.sort(key=lambda item: item[0], reverse=True)
-    valid = [
-        item[1]
-        for item in findings
-        if (_as_float(item[1].get("confidence")) or 0.0) >= min_confidence
-    ]
+    valid = [item[1] for item in findings if item[1].effective_confidence >= min_confidence]
     return valid[:5]
 
 
@@ -651,22 +614,22 @@ _PHASE_ONSET_RELEVANT: frozenset[str] = frozenset(
 
 
 def compute_matched_speed_phase_evidence(
-    matched_points: list[MatchedPoint],
+    matched_points: list[OrderMatchObservation],
     *,
     focused_speed_band: str | None,
     hotspot_speed_band: str,
-) -> tuple[float | None, list[float], str | None, PhaseEvidence, str | None]:
+) -> tuple[float | None, list[float], str | None, dict[str, object], str | None]:
     """Derive speed-profile and phase-evidence from matched points."""
     cruise_value = DrivingPhase.CRUISE.value
     speed_points: list[tuple[float, float]] = []
     speed_phase_weights: list[float] = []
     for point in matched_points:
-        point_speed = _as_float(point.get("speed_kmh"))
-        point_amp = _as_float(point.get("amp"))
+        point_speed = point.speed_kmh
+        point_amp = point.amp
         if point_speed is None or point_amp is None:
             continue
         speed_points.append((point_speed, point_amp))
-        phase = str(point.get("phase") or "")
+        phase = str(point.phase or "")
         if phase == cruise_value:
             speed_phase_weights.append(3.0)
         elif phase in _PHASE_ONSET_RELEVANT:
@@ -684,11 +647,9 @@ def compute_matched_speed_phase_evidence(
     if focused_speed_band and not strongest_speed_band:
         strongest_speed_band = focused_speed_band
 
-    matched_phase_strs = [
-        str(point.get("phase") or "") for point in matched_points if point.get("phase")
-    ]
+    matched_phase_strs = [str(point.phase or "") for point in matched_points if point.phase]
     cruise_matched = sum(1 for phase in matched_phase_strs if phase == cruise_value)
-    phase_evidence: PhaseEvidence = {
+    phase_evidence: dict[str, object] = {
         "cruise_fraction": cruise_matched / len(matched_phase_strs) if matched_phase_strs else 0.0,
         "phases_detected": sorted(set(matched_phase_strs)),
     }
@@ -735,7 +696,7 @@ def compute_amplitude_and_error_stats(
     rel_errors: list[float],
     predicted_vals: list[float],
     measured_vals: list[float],
-    matched_points: list[MatchedPoint],
+    matched_points: list[OrderMatchObservation],
     *,
     constant_speed: bool,
 ) -> tuple[float, float, float, float, float | None]:
@@ -794,7 +755,7 @@ def assemble_order_finding(
     match: OrderMatchAccumulator,
     *,
     context: OrderFindingBuildContext,
-) -> tuple[float, FindingPayload]:
+) -> tuple[float, DomainFinding]:
     """Build a single order finding from a successful match result."""
     per_phase_confidence, phases_with_evidence = compute_phase_stats(
         match.has_phases,
@@ -826,6 +787,18 @@ def assemble_order_finding(
     )
     loc_result = location_hotspot  # LocationAnalysisResult | None
     domain_hotspot = loc_result.hotspot if loc_result is not None else None
+    if domain_hotspot is not None and loc_result is not None:
+        supporting_locations = list(domain_hotspot.alternative_locations)
+        if loc_result.second_location and loc_result.second_location not in supporting_locations:
+            supporting_locations.append(loc_result.second_location)
+        domain_hotspot = replace(
+            domain_hotspot,
+            alternative_locations=tuple(supporting_locations),
+            location_count=max(
+                1,
+                len({domain_hotspot.strongest_location, *supporting_locations} - {""}),
+            ),
+        )
     weak_spatial_separation = (
         domain_hotspot.weak_spatial_separation if domain_hotspot is not None else True
     )
@@ -917,56 +890,51 @@ def assemble_order_finding(
         focused_speed_band=context.focused_speed_band,
         hotspot_speed_band=hotspot_speed_band,
     )
-    finding: FindingPayload = {
-        "finding_id": "F_ORDER",
-        "finding_key": hypothesis.key,
-        "finding_kind": "diagnostic",
-        "suspected_source": hypothesis.suspected_source,
-        "evidence_summary": evidence,
-        "frequency_hz_or_order": _order_label(hypothesis.order, hypothesis.order_label_base),
-        "amplitude_metric": {
-            "name": "vibration_strength_db",
-            "value": absolute_strength_db,
-            "units": "dB",
-            "definition": i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
-        },
-        "confidence": confidence,
-        "quick_checks": [],
-        "matched_points": match.matched_points,
-        "location_hotspot": (
-            _location_result_to_payload(loc_result) if loc_result is not None else None
-        ),
-        "strongest_location": strongest_location or None,
-        "strongest_speed_band": strongest_speed_band or None,
-        "dominant_phase": dominant_phase,
-        "peak_speed_kmh": peak_speed_kmh,
-        "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
-        "dominance_ratio": dominance_ratio,
-        "localization_confidence": localization_confidence,
-        "weak_spatial_separation": weak_spatial_separation,
-        "corroborating_locations": corroborating_locations,
-        "diffuse_excitation": diffuse_excitation,
-        "phase_evidence": phase_evidence,
-        "evidence_metrics": {
-            "match_rate": context.effective_match_rate,
-            "global_match_rate": context.match_rate,
-            "focused_speed_band": context.focused_speed_band,
-            "mean_relative_error": mean_rel_err,
-            "mean_noise_floor_db": canonical_vibration_db(
+    finding = DomainFinding(
+        finding_id="F_ORDER",
+        finding_key=hypothesis.key,
+        suspected_source=hypothesis.suspected_source,
+        confidence=confidence,
+        order=_order_label(hypothesis.order, hypothesis.order_label_base),
+        strongest_location=strongest_location or None,
+        strongest_speed_band=strongest_speed_band or None,
+        kind=FindingKind.DIAGNOSTIC,
+        dominant_phase=dominant_phase,
+        ranking_score=ranking_score,
+        dominance_ratio=dominance_ratio,
+        diffuse_excitation=diffuse_excitation,
+        weak_spatial_separation=weak_spatial_separation,
+        vibration_strength_db=absolute_strength_db,
+        cruise_fraction=phase_evidence["cruise_fraction"],
+        phases_detected=tuple(phase_evidence.get("phases_detected") or ()),
+        matched_points=tuple(match.matched_points),
+        evidence=FindingEvidence(
+            match_rate=context.effective_match_rate,
+            global_match_rate=context.match_rate,
+            focused_speed_band=context.focused_speed_band,
+            mean_relative_error=mean_rel_err,
+            mean_noise_floor_db=canonical_vibration_db(
                 peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
                 floor_amp_g=MEMS_NOISE_FLOOR_G,
             ),
-            "vibration_strength_db": absolute_strength_db,
-            "possible_samples": match.possible,
-            "matched_samples": match.matched,
-            "frequency_correlation": corr,
-            "per_phase_confidence": per_phase_confidence,
-            "phases_with_evidence": phases_with_evidence,
-        },
-        "next_sensor_move": i18n_ref("NEXT_SENSOR_MOVE_DEFAULT"),
-        "actions": [],
-        "ranking_score": ranking_score,
-    }
+            possible_samples=match.possible,
+            matched_samples=match.matched,
+            frequency_correlation=corr or 0.0,
+            phases_with_evidence=phases_with_evidence,
+            phase_confidences=(
+                tuple(sorted(per_phase_confidence.items())) if per_phase_confidence else ()
+            ),
+            vibration_strength_db=absolute_strength_db,
+        ),
+        location=domain_hotspot,
+        origin=VibrationOrigin.from_analysis_inputs(
+            suspected_source=hypothesis.suspected_source,
+            hotspot=domain_hotspot,
+            dominance_ratio=dominance_ratio,
+            speed_band=strongest_speed_band or None,
+            dominant_phase=dominant_phase,
+        ),
+    )
     return ranking_score, finding
 
 
@@ -1040,7 +1008,7 @@ class OrderAnalysisSession:
     def __init__(
         self,
         *,
-        metadata: MetadataDict,
+        metadata: JsonObject,
         samples: list[Sample],
         speed_sufficient: bool,
         steady_speed: bool,
@@ -1069,12 +1037,12 @@ class OrderAnalysisSession:
             _sample_top_peaks(s) for s in samples
         ]
 
-    def analyze(self) -> list[FindingPayload]:
+    def analyze(self) -> list[DomainFinding]:
         """Run all hypothesis tests and return suppressed, ranked findings."""
         if self._raw_sample_rate_hz is None or self._raw_sample_rate_hz <= 0:
             return []
 
-        findings: list[tuple[float, FindingPayload]] = []
+        findings: list[tuple[float, DomainFinding]] = []
         for hypothesis in _order_hypotheses():
             if not self._should_test(hypothesis):
                 continue
@@ -1101,7 +1069,10 @@ class OrderAnalysisSession:
             return self._engine_ref_sufficient
         return True
 
-    def _test_hypothesis(self, hypothesis: OrderHypothesis) -> tuple[float, FindingPayload] | None:
+    def _test_hypothesis(
+        self,
+        hypothesis: OrderHypothesis,
+    ) -> tuple[float, DomainFinding] | None:
         """Match, evaluate, and assemble a finding for one hypothesis.
 
         Returns ``(ranking_score, finding)`` or ``None`` if the hypothesis
@@ -1160,7 +1131,7 @@ class OrderAnalysisSession:
 
 def _build_order_findings(
     *,
-    metadata: MetadataDict,
+    metadata: JsonObject,
     samples: list[Sample],
     speed_sufficient: bool,
     steady_speed: bool,
@@ -1171,7 +1142,7 @@ def _build_order_findings(
     connected_locations: set[str],
     lang: str,
     per_sample_phases: PhaseLabels | None = None,
-) -> list[FindingPayload]:
+) -> list[DomainFinding]:
     """Build order-tracking findings by testing all hypotheses.
 
     Delegates to :class:`OrderAnalysisSession` which owns the hypothesis

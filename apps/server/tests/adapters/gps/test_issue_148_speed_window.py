@@ -1,22 +1,34 @@
 from __future__ import annotations
 
+from vibesensor.domain import OrderMatchObservation
 from vibesensor.use_cases.diagnostics.findings import _speed_breakdown
 from vibesensor.use_cases.diagnostics.location_analysis import _location_speedbin_summary
 
 
+def _obs(speed_kmh: float, amp: float, location: str) -> OrderMatchObservation:
+    return OrderMatchObservation(
+        predicted_hz=100.0,
+        matched_hz=100.0,
+        rel_error=0.0,
+        amp=amp,
+        location=location,
+        speed_kmh=speed_kmh,
+    )
+
+
 def test_location_speed_window_handles_boundary_straddle() -> None:
     matches = [
-        {"speed_kmh": 74.0, "amp": 0.005, "location": "Front Left"},
-        {"speed_kmh": 75.0, "amp": 0.005, "location": "Front Left"},
-        {"speed_kmh": 76.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 77.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 78.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 79.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 80.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 81.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 82.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 83.0, "amp": 0.030, "location": "Front Left"},
-        {"speed_kmh": 84.0, "amp": 0.005, "location": "Front Left"},
+        _obs(74.0, 0.005, "Front Left"),
+        _obs(75.0, 0.005, "Front Left"),
+        _obs(76.0, 0.030, "Front Left"),
+        _obs(77.0, 0.030, "Front Left"),
+        _obs(78.0, 0.030, "Front Left"),
+        _obs(79.0, 0.030, "Front Left"),
+        _obs(80.0, 0.030, "Front Left"),
+        _obs(81.0, 0.030, "Front Left"),
+        _obs(82.0, 0.030, "Front Left"),
+        _obs(83.0, 0.030, "Front Left"),
+        _obs(84.0, 0.005, "Front Left"),
     ]
 
     _, hotspot = _location_speedbin_summary(matches, lang="en")

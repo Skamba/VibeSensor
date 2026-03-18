@@ -17,6 +17,7 @@ from test_support import make_speed_sweep_fault_samples as _make_speed_sweep_fau
 from test_support import standard_metadata as _standard_metadata
 from test_support import wheel_hz as _wheel_hz
 
+from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.locations import WHEEL_LOCATION_CODES, is_wheel_location
 from vibesensor.use_cases.diagnostics import build_findings_for_samples, summarize_run_data
 from vibesensor.use_cases.diagnostics.location_analysis import _location_speedbin_summary
@@ -152,23 +153,25 @@ class TestSourceAwareLocalization:
             whz = _wheel_hz(speed)
             # Cabin sensor: stronger signal
             matches.append(
-                {
-                    "speed_kmh": speed,
-                    "amp": 0.08,
-                    "location": "Driver Seat",
-                    "matched_hz": whz,
-                    "rel_error": 0.02,
-                },
+                OrderMatchObservation(
+                    predicted_hz=whz,
+                    matched_hz=whz,
+                    rel_error=0.02,
+                    amp=0.08,
+                    location="Driver Seat",
+                    speed_kmh=speed,
+                ),
             )
             # Wheel sensor: slightly weaker but valid
             matches.append(
-                {
-                    "speed_kmh": speed,
-                    "amp": 0.06,
-                    "location": "Front Left",
-                    "matched_hz": whz,
-                    "rel_error": 0.01,
-                },
+                OrderMatchObservation(
+                    predicted_hz=whz,
+                    matched_hz=whz,
+                    rel_error=0.01,
+                    amp=0.06,
+                    location="Front Left",
+                    speed_kmh=speed,
+                ),
             )
 
         _, hotspot = _location_speedbin_summary(
@@ -188,22 +191,24 @@ class TestSourceAwareLocalization:
         for i in range(20):
             speed = 60.0 + i * 2
             matches.append(
-                {
-                    "speed_kmh": speed,
-                    "amp": 0.08,
-                    "location": "Engine Bay",
-                    "matched_hz": 25.0,
-                    "rel_error": 0.02,
-                },
+                OrderMatchObservation(
+                    predicted_hz=25.0,
+                    matched_hz=25.0,
+                    rel_error=0.02,
+                    amp=0.08,
+                    location="Engine Bay",
+                    speed_kmh=speed,
+                ),
             )
             matches.append(
-                {
-                    "speed_kmh": speed,
-                    "amp": 0.04,
-                    "location": "Front Left",
-                    "matched_hz": 25.0,
-                    "rel_error": 0.03,
-                },
+                OrderMatchObservation(
+                    predicted_hz=25.0,
+                    matched_hz=25.0,
+                    rel_error=0.03,
+                    amp=0.04,
+                    location="Front Left",
+                    speed_kmh=speed,
+                ),
             )
 
         _, hotspot = _location_speedbin_summary(
@@ -222,22 +227,24 @@ class TestSourceAwareLocalization:
             speed = 50.0 + i * 3
             whz = _wheel_hz(speed)
             matches.append(
-                {
-                    "speed_kmh": speed,
-                    "amp": 0.07,
-                    "location": "Driver Seat",
-                    "matched_hz": whz,
-                    "rel_error": 0.02,
-                },
+                OrderMatchObservation(
+                    predicted_hz=whz,
+                    matched_hz=whz,
+                    rel_error=0.02,
+                    amp=0.07,
+                    location="Driver Seat",
+                    speed_kmh=speed,
+                ),
             )
             matches.append(
-                {
-                    "speed_kmh": speed,
-                    "amp": 0.03,
-                    "location": "Trunk",
-                    "matched_hz": whz,
-                    "rel_error": 0.03,
-                },
+                OrderMatchObservation(
+                    predicted_hz=whz,
+                    matched_hz=whz,
+                    rel_error=0.03,
+                    amp=0.03,
+                    location="Trunk",
+                    speed_kmh=speed,
+                ),
             )
 
         _, hotspot = _location_speedbin_summary(

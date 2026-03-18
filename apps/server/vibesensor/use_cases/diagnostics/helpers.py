@@ -6,10 +6,10 @@ from collections import defaultdict
 from collections.abc import Sequence
 from math import isfinite, sqrt
 from pathlib import Path
-from typing import TypedDict, cast
+from typing import TypedDict
 
 from vibesensor.adapters.persistence.runlog import read_jsonl_run
-from vibesensor.domain import OrderReferenceSpec, TireSpec
+from vibesensor.domain import OrderReferenceSpec, SpeedStatsSnapshot, TireSpec
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.shared.constants import (
     KMH_TO_MPS,
@@ -24,11 +24,8 @@ from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.locations import label_for_code as _label_for_code
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (
-    MetadataDict,
     PhaseLabel,
-    PhaseSpeedStats,
     Sample,
-    SpeedStats,
 )
 from vibesensor.vibration_strength import percentile
 
@@ -148,39 +145,32 @@ def _amplitude_weighted_speed_window(
     return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
 
 
-def _speed_stats(speed_values: list[float]) -> SpeedStats:
+def _speed_stats(speed_values: list[float]) -> SpeedStatsSnapshot:
     if not speed_values:
-        return {
-            "min_kmh": None,
-            "max_kmh": None,
-            "mean_kmh": None,
-            "stddev_kmh": None,
-            "range_kmh": None,
-            "steady_speed": False,
-        }
+        return SpeedStatsSnapshot()
     vmin = min(speed_values)
     vmax = max(speed_values)
     vmean, var = _mean_variance(speed_values)
     stddev = sqrt(var) if var is not None else 0.0
     vrange = max(0.0, vmax - vmin)
-    return {
-        "min_kmh": vmin,
-        "max_kmh": vmax,
-        "mean_kmh": vmean,
-        "stddev_kmh": stddev,
-        "range_kmh": vrange,
-        "steady_speed": stddev < STEADY_SPEED_STDDEV_KMH and vrange < STEADY_SPEED_RANGE_KMH,
-    }
+    return SpeedStatsSnapshot(
+        min_kmh=vmin,
+        max_kmh=vmax,
+        mean_kmh=vmean,
+        stddev_kmh=stddev,
+        range_kmh=vrange,
+        steady_speed=stddev < STEADY_SPEED_STDDEV_KMH and vrange < STEADY_SPEED_RANGE_KMH,
+    )
 
 
 def _speed_stats_by_phase(
     samples: list[Sample],
     per_sample_phases: Sequence[PhaseLabel],
-) -> dict[str, PhaseSpeedStats]:
+) -> dict[str, SpeedStatsSnapshot]:
     """Compute speed statistics broken down by driving phase.
 
-    Returns a dict mapping each phase label (string) to the same structure as
-    ``_speed_stats()`` extended with a ``sample_count`` key for the total
+    Returns a dict mapping each phase label (string) to a
+    :class:`SpeedStatsSnapshot` with ``sample_count`` set to the total
     number of samples assigned to that phase (regardless of speed availability).
     """
     phase_speeds: dict[str, list[float]] = defaultdict(list)
@@ -191,11 +181,18 @@ def _speed_stats_by_phase(
         speed = _as_float(sample.get("speed_kmh"))
         if speed is not None and speed > 0:
             phase_speeds[phase_key].append(speed)
-    result: dict[str, PhaseSpeedStats] = {}
+    result: dict[str, SpeedStatsSnapshot] = {}
     for phase_key in phase_sample_counts:
-        stats = dict(_speed_stats(phase_speeds.get(phase_key, [])))
-        stats["sample_count"] = phase_sample_counts[phase_key]
-        result[phase_key] = cast("PhaseSpeedStats", stats)
+        base = _speed_stats(phase_speeds.get(phase_key, []))
+        result[phase_key] = SpeedStatsSnapshot(
+            min_kmh=base.min_kmh,
+            max_kmh=base.max_kmh,
+            mean_kmh=base.mean_kmh,
+            stddev_kmh=base.stddev_kmh,
+            range_kmh=base.range_kmh,
+            steady_speed=base.steady_speed,
+            sample_count=phase_sample_counts[phase_key],
+        )
     return result
 
 
@@ -207,7 +204,7 @@ def _sensor_limit_g(sensor_model: object) -> float | None:
     return None
 
 
-def _tire_reference_from_metadata(metadata: MetadataDict) -> tuple[float | None, str | None]:
+def _tire_reference_from_metadata(metadata: JsonObject) -> tuple[float | None, str | None]:
     spec = _order_reference_spec_from_context(metadata)
     if spec is not None and spec.supports_wheel_reference:
         return spec.tire_circumference_m, "order_reference_spec"
@@ -231,7 +228,7 @@ def _tire_reference_from_metadata(metadata: MetadataDict) -> tuple[float | None,
 
 
 def _order_reference_spec_from_context(
-    metadata: MetadataDict,
+    metadata: JsonObject,
     sample: Sample | None = None,
 ) -> OrderReferenceSpec | None:
     settings: dict[str, object] = dict(metadata)
@@ -245,7 +242,7 @@ def _order_reference_spec_from_context(
 
 def _effective_engine_rpm(
     sample: Sample,
-    metadata: MetadataDict,
+    metadata: JsonObject,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     measured = _as_float(sample.get("engine_rpm"))

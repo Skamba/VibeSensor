@@ -15,9 +15,9 @@ from typing import TYPE_CHECKING, TypeGuard
 
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.json_utils import sanitize_for_json
-from vibesensor.shared.types.backend_types import HistoryRunPayload
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.use_cases.history.helpers import (
+    HistoryRunRecord,
     async_require_run,
     safe_filename,
     strip_internal_fields,
@@ -122,7 +122,7 @@ class HistoryExportService:
 
     def _build_zip_file(
         self,
-        run: HistoryRunPayload,
+        run: HistoryRunRecord,
         run_id: str,
     ) -> tempfile.SpooledTemporaryFile[bytes]:
         sample_count = 0
@@ -161,7 +161,7 @@ class HistoryExportService:
 
 
 def build_run_details_json(
-    run: HistoryRunPayload,
+    run: HistoryRunRecord,
     sample_count: int,
     run_id: str,
 ) -> str:

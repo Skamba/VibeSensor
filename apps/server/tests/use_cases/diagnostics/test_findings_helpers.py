@@ -190,5 +190,5 @@ class TestSensorIntensityByLocation:
         rows = _sensor_intensity_by_location(samples)
         assert len(rows) == 1
         row = rows[0]
-        assert row["queue_overflow_drops_delta"] == 8
-        assert row["dropped_frames_delta"] == 9
+        assert row.queue_overflow_drops_delta == 8
+        assert row.dropped_frames_delta == 9

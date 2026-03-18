@@ -9,33 +9,33 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import replace as _dc_replace
 from math import floor as _math_floor
 from math import log1p
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
-from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.domain import LocationIntensitySummary
+from vibesensor.domain.finding import (
+    FindingEvidence,
+    FindingKind,
+    VibrationSource,
+    speed_band_sort_key,
+    speed_bin_label,
+)
+from vibesensor.shared.boundaries.analysis_payload import (
+    PhaseSpeedBreakdownRow,
+    SpeedBreakdownRow,
+)
 from vibesensor.shared.constants import (
-    MEMS_NOISE_FLOOR_G,
     NEGLIGIBLE_STRENGTH_MAX_DB,
     ORDER_SUPPRESS_PERSISTENT_MIN_CONF,
     SNR_LOG_DIVISOR,
     SPEED_COVERAGE_MIN_PCT,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (
-    FindingEvidenceMetrics,
-    FindingPayload,
-    IntensityRow,
-    MetadataDict,
-    PhaseEvidence,
     PhaseLabels,
-    PhaseSpeedBreakdownRow,
     Sample,
-    SpeedBreakdownRow,
-    i18n_ref,
 )
 from vibesensor.use_cases.diagnostics.helpers import (
     _effective_baseline_floor,
@@ -68,36 +68,31 @@ from vibesensor.vibration_strength import (
 
 
 def finalize_findings(
-    findings: list[FindingPayload],
+    findings: list[DomainFinding],
 ) -> tuple[DomainFinding, ...]:
     """Partition, rank by confidence, and assign stable ``F###`` IDs.
 
     Returns domain ``Finding`` objects in canonical order: references first,
     then diagnostics sorted by confidence/score, then informational.
     """
-    pairs = [(f, finding_from_payload(f)) for f in findings]
-    refs = [(f, d) for f, d in pairs if d.is_reference]
+    refs = [finding for finding in findings if finding.is_reference]
     diags = sorted(
-        [(f, d) for f, d in pairs if d.is_diagnostic],
-        key=lambda p: p[1].rank_key,
+        [finding for finding in findings if finding.is_diagnostic],
+        key=lambda finding: finding.rank_key,
         reverse=True,
     )
     infos = sorted(
-        [(f, d) for f, d in pairs if d.is_informational],
-        key=lambda p: p[1].rank_key,
+        [finding for finding in findings if finding.is_informational],
+        key=lambda finding: finding.rank_key,
         reverse=True,
     )
     counter = 0
     result: list[DomainFinding] = []
-    for payload, domain_obj in refs + diags + infos:
-        if not domain_obj.is_reference:
+    for finding in refs + diags + infos:
+        if not finding.is_reference:
             counter += 1
-            domain_obj = domain_obj.with_id(f"F{counter:03d}")
-        # Preserve finding_key from the analysis pipeline
-        fk = str(payload.get("finding_key", "") or "")
-        if fk and not domain_obj.finding_key:
-            domain_obj = _dc_replace(domain_obj, finding_key=fk)
-        result.append(domain_obj)
+            finding = finding.with_id(f"F{counter:03d}")
+        result.append(finding)
     return tuple(result)
 
 
@@ -108,61 +103,36 @@ def finalize_findings(
 
 _MIN_DIAGNOSTIC_SAMPLES = 5
 
-_REF_MISSING: dict[str, str] = {"_i18n_key": "REFERENCE_MISSING"}
-_REF_MISSING_AMPLITUDE: dict[str, str] = {
-    "_i18n_key": "REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED",
-}
-
 
 def _reference_missing_finding(
     *,
     finding_id: str,
     suspected_source: str,
-    evidence_summary: JsonValue,
-    quick_checks: list[JsonValue],
-) -> FindingPayload:
-    return {
-        "finding_id": finding_id,
-        "finding_kind": "reference",
-        "suspected_source": suspected_source,
-        "evidence_summary": evidence_summary,
-        "frequency_hz_or_order": {**_REF_MISSING},
-        "amplitude_metric": {
-            "name": "not_available",
-            "value": None,
-            "units": "n/a",
-            "definition": {**_REF_MISSING_AMPLITUDE},
-        },
-        "confidence": None,
-        "quick_checks": quick_checks[:3],
-    }
+    kind: FindingKind = FindingKind.REFERENCE,
+) -> DomainFinding:
+    return DomainFinding(
+        finding_id=finding_id,
+        suspected_source=suspected_source,
+        confidence=None,
+        kind=kind,
+    )
 
 
 def build_reference_findings(
     *,
-    metadata: MetadataDict,
+    metadata: JsonObject,
     samples: list[Sample],
     speed_sufficient: bool,
-    speed_non_null_pct: float,
     tire_circumference_m: float | None,
     raw_sample_rate_hz: float | None,
-) -> tuple[list[FindingPayload], bool]:
+) -> tuple[list[DomainFinding], bool]:
     """Build reference-missing findings and return engine reference sufficiency."""
-    findings: list[FindingPayload] = []
+    findings: list[DomainFinding] = []
     if not speed_sufficient:
         findings.append(
             _reference_missing_finding(
                 finding_id="REF_SPEED",
                 suspected_source="unknown",
-                evidence_summary=i18n_ref(
-                    "VEHICLE_SPEED_COVERAGE_IS_SPEED_NON_NULL_PCT",
-                    speed_non_null_pct=speed_non_null_pct,
-                    threshold=SPEED_COVERAGE_MIN_PCT,
-                ),
-                quick_checks=[
-                    i18n_ref("RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR"),
-                    i18n_ref("VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM"),
-                ],
             ),
         )
 
@@ -171,13 +141,6 @@ def build_reference_findings(
             _reference_missing_finding(
                 finding_id="REF_WHEEL",
                 suspected_source="wheel/tire",
-                evidence_summary=i18n_ref(
-                    "VEHICLE_SPEED_IS_AVAILABLE_BUT_TIRE_CIRCUMFERENCE_REFERENCE",
-                ),
-                quick_checks=[
-                    i18n_ref("PROVIDE_TIRE_CIRCUMFERENCE_OR_TIRE_SIZE_WIDTH_ASPECT"),
-                    i18n_ref("RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE"),
-                ],
             ),
         )
 
@@ -187,23 +150,10 @@ def build_reference_findings(
         tire_circumference_m=tire_circumference_m,
     )
     if not engine_ref_sufficient:
-        engine_rpm_non_null_pct = engine_reference_coverage_pct(
-            samples,
-            metadata=metadata,
-            tire_circumference_m=tire_circumference_m,
-        )
         findings.append(
             _reference_missing_finding(
                 finding_id="REF_ENGINE",
                 suspected_source="engine",
-                evidence_summary=i18n_ref(
-                    "ENGINE_SPEED_REFERENCE_COVERAGE_IS_ENGINE_RPM_NON",
-                    engine_rpm_non_null_pct=engine_rpm_non_null_pct,
-                ),
-                quick_checks=[
-                    i18n_ref("LOG_ENGINE_RPM_FROM_CAN_OBD_FOR_THE"),
-                    i18n_ref("KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED"),
-                ],
             ),
         )
 
@@ -212,8 +162,6 @@ def build_reference_findings(
             _reference_missing_finding(
                 finding_id="REF_SAMPLE_RATE",
                 suspected_source="unknown",
-                evidence_summary=i18n_ref("RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT"),
-                quick_checks=[i18n_ref("RECORD_THE_TRUE_ACCELEROMETER_SAMPLE_RATE_IN_RUN")],
             ),
         )
     return findings, engine_ref_sufficient
@@ -222,7 +170,7 @@ def build_reference_findings(
 def engine_reference_coverage_pct(
     samples: list[Sample],
     *,
-    metadata: MetadataDict,
+    metadata: JsonObject,
     tire_circumference_m: float | None,
 ) -> float:
     """Compute engine reference coverage percentage from samples and metadata."""
@@ -237,7 +185,7 @@ def engine_reference_coverage_pct(
 def has_engine_reference(
     samples: list[Sample],
     *,
-    metadata: MetadataDict,
+    metadata: JsonObject,
     tire_circumference_m: float | None,
 ) -> bool:
     """Return whether the engine reference coverage is sufficient."""
@@ -278,21 +226,15 @@ def prepare_analysis_samples(
     return analysis_samples, analysis_phases, resolved_phases, use_filtered_samples
 
 
-def collect_order_frequencies(order_findings: list[FindingPayload]) -> set[float]:
+def collect_order_frequencies(order_findings: list[DomainFinding]) -> set[float]:
     """Collect matched order frequencies used to suppress duplicate persistent findings."""
     order_freqs: set[float] = set()
     for order_finding in order_findings:
-        raw_conf = order_finding.get("confidence")
-        conf = float(raw_conf) if raw_conf is not None else 0.0
+        conf = order_finding.effective_confidence
         if conf < ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
             continue
-        points = order_finding.get("matched_points")
-        if not isinstance(points, list):
-            continue
-        for point in points:
-            if not isinstance(point, dict):
-                continue
-            matched_hz = _as_float(point.get("matched_hz"))
+        for point in order_finding.matched_points:
+            matched_hz = point.matched_hz
             if matched_hz is not None and matched_hz > 0:
                 order_freqs.add(matched_hz)
     return order_freqs
@@ -517,18 +459,15 @@ def _build_persistent_peak_findings(
     freq_bin_hz: float = 2.0,
     per_sample_phases: PhaseLabels | None = None,
     run_noise_baseline_g: float | None = None,
-) -> list[FindingPayload]:
+) -> list[DomainFinding]:
     """Build findings for non-order persistent frequency peaks.
 
     Uses the same confidence-style scoring as order findings (presence_ratio,
     error/SNR) so the report is consistent.  Peaks already claimed by order
     findings are excluded.  Transient peaks are returned separately.
 
-    When ``per_sample_phases`` is provided, each finding includes a
-    ``phase_presence`` dict showing the per-phase presence ratio for that
-    frequency bin so callers can see which driving phases the peak is observed
-    in (IDLE, ACCELERATION, CRUISE, DECELERATION, COAST_DOWN).
-    Addresses TODO 4: ``_build_persistent_peak_findings()`` has no phase awareness.
+    When ``per_sample_phases`` is provided, each finding records
+    phase-aware cruise context through ``Finding.cruise_fraction``.
     """
     analyzer = PeakFindingAnalyzer(
         samples=samples,
@@ -550,7 +489,7 @@ class PeakBin:
     """Represents a single frequency bin with accumulated peak statistics.
 
     Owns presence ratio, burstiness, SNR, spatial/speed uniformity,
-    classification, confidence computation, and export to a ``FindingPayload`` dict.
+    classification, confidence computation, and export to a domain ``Finding``.
     Replaces the 200-line inner loop body that previously lived inside
     ``_build_persistent_peak_findings``.
     """
@@ -750,105 +689,53 @@ class PeakBin:
             floor_amp_g=self._effective_floor,
         )
 
-    # -- export to FindingPayload dict --------------------------------------------
+    # -- export to domain Finding ------------------------------------------
 
-    def to_finding(self) -> FindingPayload:
-        """Export this bin's analysis as a canonical ``FindingPayload`` dict."""
+    def to_finding(self) -> DomainFinding:
+        """Export this bin's analysis as a canonical domain ``Finding``."""
         peak_strength_db = self._peak_strength_db
-        peak_speed_kmh, speed_window_kmh, derived_speed_band = _speed_profile_from_points(
+        _peak_speed_kmh, _speed_window_kmh, derived_speed_band = _speed_profile_from_points(
             self._speed_amp_pairs,
         )
         speed_band = derived_speed_band or "-"
 
-        evidence = i18n_ref(
-            "EVIDENCE_PEAK_PRESENT",
-            freq=self._bin_center,
-            pct=self._presence_ratio,
-            p95=peak_strength_db,
-            units="dB",
-            burst=self._burstiness,
-            cls=self._peak_type,
-        )
-
         # Phase evidence
         _total_phase_hits = sum(self._phases_for_bin.values())
         _cruise_hits = self._phases_for_bin.get(_CRUISE_PHASE_VAL, 0)
-        peak_phase_evidence: PhaseEvidence = {
-            "cruise_fraction": (_cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0),
-            "phases_detected": sorted(k for k, v in self._phases_for_bin.items() if v > 0),
-        }
-        phase_presence: dict[str, float] | None = None
-        if self._has_phases and _total_phase_hits > 0:
-            phase_presence = {
-                phase_key: phase_hits / _total_phase_hits
-                for phase_key, phase_hits in self._phases_for_bin.items()
-                if phase_hits > 0
-            }
+        cruise_fraction = _cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0
 
-        evidence_metrics: FindingEvidenceMetrics = {
-            "presence_ratio": self._presence_ratio,
-            "median_intensity_db": canonical_vibration_db(
-                peak_band_rms_amp_g=self._median_amp,
-                floor_amp_g=self._effective_floor,
-            ),
-            "p95_intensity_db": peak_strength_db,
-            "max_intensity_db": canonical_vibration_db(
-                peak_band_rms_amp_g=self._max_amp,
-                floor_amp_g=self._effective_floor,
-            ),
-            "burstiness": self._burstiness,
-            "mean_noise_floor_db": canonical_vibration_db(
-                peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, self._mean_floor),
-                floor_amp_g=MEMS_NOISE_FLOOR_G,
-            ),
-            "run_noise_baseline_db": (
-                canonical_vibration_db(
-                    peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, self._run_noise_baseline_g),
-                    floor_amp_g=MEMS_NOISE_FLOOR_G,
-                )
-                if self._run_noise_baseline_g is not None
-                else None
-            ),
-            "median_relative_to_run_noise": self._median_amp / self._effective_floor,
-            "p95_relative_to_run_noise": self._p95_amp / self._effective_floor,
-            "sample_count": self._count,
-            "total_samples": 0,  # Set by PeakFindingAnalyzer._select_top_findings()
-            "spatial_concentration": self._spatial_concentration,
-            "spatial_uniformity": self._spatial_uniformity,
-            "speed_uniformity": self._speed_uniformity,
-        }
-        finding: FindingPayload = {
-            "finding_id": "F_PEAK",
-            "finding_key": f"peak_{self._bin_center:.0f}hz",
-            "finding_kind": "informational" if self._peak_type == "transient" else "diagnostic",
-            "severity": "info" if self._peak_type == "transient" else "diagnostic",
-            "suspected_source": (
-                "baseline_noise"
-                if self._peak_type == "baseline_noise"
-                else "transient_impact"
+        suspected_source = (
+            VibrationSource.BASELINE_NOISE
+            if self._peak_type == "baseline_noise"
+            else VibrationSource.TRANSIENT_IMPACT
+            if self._peak_type == "transient"
+            else VibrationSource.UNKNOWN_RESONANCE
+        )
+        return DomainFinding(
+            finding_id="F_PEAK",
+            finding_key=f"peak_{self._bin_center:.0f}hz",
+            suspected_source=suspected_source,
+            confidence=self.confidence,
+            order=f"{self._bin_center:.1f} Hz",
+            severity="info" if self._peak_type == "transient" else "diagnostic",
+            strongest_speed_band=speed_band if speed_band != "-" else None,
+            peak_classification=self._peak_type,
+            kind=(
+                FindingKind.INFORMATIONAL
                 if self._peak_type == "transient"
-                else "unknown_resonance"
+                else FindingKind.DIAGNOSTIC
             ),
-            "evidence_summary": evidence,
-            "frequency_hz_or_order": f"{self._bin_center:.1f} Hz",
-            "amplitude_metric": {
-                "name": "vibration_strength_db",
-                "value": peak_strength_db,
-                "units": "dB",
-                "definition": i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
-            },
-            "confidence": self.confidence,
-            "quick_checks": [],
-            "peak_classification": self._peak_type,
-            "phase_evidence": peak_phase_evidence,
-            "evidence_metrics": evidence_metrics,
-            "peak_speed_kmh": peak_speed_kmh,
-            "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
-            "strongest_speed_band": speed_band if speed_band != "-" else None,
-            "phase_presence": phase_presence,
-        }
-        finding["ranking_score"] = self.ranking_score
-        return finding
+            ranking_score=self.ranking_score,
+            vibration_strength_db=peak_strength_db,
+            cruise_fraction=cruise_fraction,
+            evidence=FindingEvidence(
+                presence_ratio=self._presence_ratio,
+                burstiness=self._burstiness,
+                spatial_concentration=self._spatial_concentration,
+                spatial_uniformity=self._spatial_uniformity or 0.0,
+                speed_uniformity=self._speed_uniformity or 0.0,
+            ),
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -890,7 +777,7 @@ class PeakFindingAnalyzer:
         self._per_sample_phases = per_sample_phases
         self._run_noise_baseline_g = run_noise_baseline_g
 
-    def analyze(self) -> list[FindingPayload]:
+    def analyze(self) -> list[DomainFinding]:
         """Run the full peak-finding analysis and return ordered findings."""
         freq_bin_hz = self._freq_bin_hz
         freq_bin_hz_half = freq_bin_hz * 0.5
@@ -950,7 +837,7 @@ class PeakFindingAnalyzer:
         return bins
 
     @staticmethod
-    def _select_top_findings(bins: list[PeakBin], *, n_samples: int) -> list[FindingPayload]:
+    def _select_top_findings(bins: list[PeakBin], *, n_samples: int) -> list[DomainFinding]:
         """Sort bins by ranking score and return top findings."""
         persistent: list[tuple[float, PeakBin]] = []
         transient: list[tuple[float, PeakBin]] = []
@@ -961,15 +848,12 @@ class PeakFindingAnalyzer:
         persistent.sort(key=lambda item: item[0], reverse=True)
         transient.sort(key=lambda item: item[0], reverse=True)
 
-        results: list[FindingPayload] = []
+        del n_samples
+        results: list[DomainFinding] = []
         for _score, peak_bin in persistent[:PERSISTENT_PEAK_MAX_FINDINGS]:
-            finding = peak_bin.to_finding()
-            finding["evidence_metrics"]["total_samples"] = n_samples
-            results.append(finding)
+            results.append(peak_bin.to_finding())
         for _score, peak_bin in transient[:PERSISTENT_PEAK_MAX_FINDINGS]:
-            finding = peak_bin.to_finding()
-            finding["evidence_metrics"]["total_samples"] = n_samples
-            results.append(finding)
+            results.append(peak_bin.to_finding())
         return results
 
 
@@ -1098,7 +982,7 @@ def _sensor_intensity_by_location(
     lang: str = "en",
     connected_locations: set[str] | None = None,
     per_sample_phases: list[DrivingPhase] | None = None,
-) -> list[IntensityRow]:
+) -> list[LocationIntensitySummary]:
     """Compute per-location vibration intensity statistics.
 
     When ``per_sample_phases`` is provided, also computes per-phase intensity
@@ -1153,7 +1037,7 @@ def _sensor_intensity_by_location(
             )
             strength_bucket_totals[location] += 1
 
-    rows: list[IntensityRow] = []
+    rows: list[LocationIntensitySummary] = []
     target_locations = set(sample_counts.keys())
     if include_locations is not None:
         target_locations |= set(include_locations)
@@ -1200,37 +1084,28 @@ def _sensor_intensity_by_location(
                 if phase_vals
             }
         rows.append(
-            {
-                "location": location,
-                "partial_coverage": partial_coverage,
-                "samples": sample_count,
-                "sample_count": sample_count,
-                "sample_coverage_ratio": sample_coverage_ratio,
-                "sample_coverage_warning": sample_coverage_warning,
-                "mean_intensity_db": _mean(values) if values else None,
-                "p50_intensity_db": percentile(values_sorted, 0.50) if values else None,
-                "p95_intensity_db": percentile(values_sorted, 0.95) if values else None,
-                "max_intensity_db": max(values) if values else None,
-                "dropped_frames_delta": dropped_delta,
-                "queue_overflow_drops_delta": overflow_delta,
-                "strength_bucket_distribution": bucket_distribution,
-                "phase_intensity": location_phase_intensity,
-            },
+            LocationIntensitySummary(
+                location=location,
+                partial_coverage=partial_coverage,
+                sample_count=sample_count,
+                sample_coverage_ratio=sample_coverage_ratio,
+                sample_coverage_warning=sample_coverage_warning,
+                mean_intensity_db=_mean(values) if values else None,
+                p50_intensity_db=percentile(values_sorted, 0.50) if values else None,
+                p95_intensity_db=percentile(values_sorted, 0.95) if values else None,
+                max_intensity_db=max(values) if values else None,
+                dropped_frames_delta=dropped_delta,
+                queue_overflow_drops_delta=overflow_delta,
+                strength_bucket_distribution=bucket_distribution,
+                phase_intensity=location_phase_intensity,
+            ),
         )
     rows.sort(
         key=lambda row: (
-            1 if not bool(row.get("partial_coverage")) else 0,
-            1 if not bool(row.get("sample_coverage_warning")) else 0,
-            (
-                row["p95_intensity_db"]
-                if isinstance(row.get("p95_intensity_db"), (int, float))
-                else 0.0
-            ),
-            (
-                row["max_intensity_db"]
-                if isinstance(row.get("max_intensity_db"), (int, float))
-                else 0.0
-            ),
+            0 if row.partial_coverage else 1,
+            0 if row.sample_coverage_warning else 1,
+            row.p95_intensity_db if isinstance(row.p95_intensity_db, (int, float)) else 0.0,
+            row.max_intensity_db if isinstance(row.max_intensity_db, (int, float)) else 0.0,
         ),
         reverse=True,
     )
@@ -1244,7 +1119,7 @@ def _sensor_intensity_by_location(
 
 def _build_findings(
     *,
-    metadata: MetadataDict,
+    metadata: JsonObject,
     samples: list[Sample],
     speed_sufficient: bool,
     steady_speed: bool,
@@ -1281,11 +1156,11 @@ def _build_findings(
 
     """
     tire_circumference_m, _ = _tire_reference_from_metadata(metadata)
+    findings: list[DomainFinding]
     findings, engine_ref_sufficient = build_reference_findings(
         metadata=metadata,
         samples=samples,
         speed_sufficient=speed_sufficient,
-        speed_non_null_pct=speed_non_null_pct,
         tire_circumference_m=tire_circumference_m,
         raw_sample_rate_hz=raw_sample_rate_hz,
     )

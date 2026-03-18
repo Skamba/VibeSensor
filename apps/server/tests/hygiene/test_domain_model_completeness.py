@@ -37,6 +37,13 @@ _REQUIRED_DOMAIN_EXPORTS = [
     "FindingEvidence",
     "LocationHotspot",
     "VibrationOrigin",
+    # Domain enums and value objects (already exported, now tracked)
+    "VibrationSource",
+    "FindingKind",
+    "SpeedSourceKind",
+    "TireSpec",
+    "Signature",
+    "VibrationReading",
     # Supporting typed internal concepts
     "OrderReferenceSpec",
     "AnalysisSettingsSnapshot",
@@ -46,6 +53,11 @@ _REQUIRED_DOMAIN_EXPORTS = [
     "StrengthPeak",
     "SpeedStatsSnapshot",
     "PhaseSummarySnapshot",
+    # New typed internal concepts (Phase A creates these)
+    "RunMetadataSnapshot",
+    "OrderMatchObservation",
+    "DrivingPhaseInterval",
+    "LocationIntensitySummary",
     # Lifecycle and support
     "RunStatus",
     "RUN_TRANSITIONS",

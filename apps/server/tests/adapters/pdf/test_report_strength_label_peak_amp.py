@@ -6,7 +6,7 @@ from test_support.report_helpers import minimal_summary
 
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
-from vibesensor.use_cases.diagnostics.strength_labels import strength_text
+from vibesensor.adapters.pdf.presentation import strength_text
 
 # ---------------------------------------------------------------------------
 # Shared top-cause / finding templates

@@ -85,9 +85,17 @@ def _reproject(analysis_blob: dict[str, Any]) -> dict[str, Any]:
     primary = test_run.primary_finding
     origin_fb = analysis_blob.get("most_likely_origin")
     fb_payload = dict(origin_fb) if isinstance(origin_fb, dict) else {}
-    projected["most_likely_origin"] = (
-        origin_payload_from_finding(primary, fb_payload) if primary is not None else fb_payload
-    )
+    if primary is None:
+        projected["most_likely_origin"] = fb_payload
+    else:
+        origin_payload = origin_payload_from_finding(primary)
+        origin_location = str(origin_payload.get("location") or "").strip().lower()
+        fallback_location = str(fb_payload.get("location") or "").strip().lower()
+        projected["most_likely_origin"] = (
+            fb_payload
+            if origin_location in {"", "unknown"} and fallback_location not in {"", "unknown"}
+            else origin_payload
+        )
     if not _has_structured_step_content(analysis_blob.get("test_plan")):
         projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
     projected["run_suitability"] = run_suitability_payload(test_run.suitability)

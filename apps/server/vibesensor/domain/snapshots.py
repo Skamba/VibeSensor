@@ -27,6 +27,7 @@ __all__ = [
     "AnalysisSettingsSnapshot",
     "PhaseSummarySnapshot",
     "RunContextSnapshot",
+    "RunMetadataSnapshot",
     "SpeedStatsSnapshot",
 ]
 
@@ -349,6 +350,18 @@ class SpeedStatsSnapshot:
             sample_count=_int_or(d, "sample_count"),
         )
 
+    def to_dict(self) -> dict[str, object]:
+        """Serialize to a plain dict suitable for JSON / boundary payloads."""
+        return {
+            "min_kmh": self.min_kmh,
+            "max_kmh": self.max_kmh,
+            "mean_kmh": self.mean_kmh,
+            "stddev_kmh": self.stddev_kmh,
+            "range_kmh": self.range_kmh,
+            "steady_speed": self.steady_speed,
+            "sample_count": self.sample_count,
+        }
+
 
 # ---------------------------------------------------------------------------
 # PhaseSummarySnapshot
@@ -376,6 +389,20 @@ class PhaseSummarySnapshot:
             object.__setattr__(self, "phase_counts", MappingProxyType(dict(self.phase_counts)))
         if not isinstance(self.phase_pcts, MappingProxyType):
             object.__setattr__(self, "phase_pcts", MappingProxyType(dict(self.phase_pcts)))
+
+    def to_dict(self) -> dict[str, object]:
+        """Serialize to a plain dict suitable for JSON / boundary payloads."""
+        return {
+            "phase_counts": dict(self.phase_counts),
+            "phase_pcts": dict(self.phase_pcts),
+            "total_samples": self.total_samples,
+            "segment_count": self.segment_count,
+            "has_cruise": self.has_cruise,
+            "has_acceleration": self.has_acceleration,
+            "cruise_pct": self.cruise_pct,
+            "idle_pct": self.idle_pct,
+            "speed_unknown_pct": self.speed_unknown_pct,
+        }
 
     @classmethod
     def from_dict(cls, d: Mapping[str, object]) -> PhaseSummarySnapshot:
@@ -424,4 +451,72 @@ class PhaseSummarySnapshot:
             cruise_pct=_pct_fb("cruise_pct", "cruise"),
             idle_pct=_pct_fb("idle_pct", "idle"),
             speed_unknown_pct=_pct_fb("speed_unknown_pct", "speed_unknown"),
+        )
+
+
+# ---------------------------------------------------------------------------
+# RunMetadataSnapshot
+# ---------------------------------------------------------------------------
+
+
+def _str_or(d: Mapping[str, object], key: str, default: str = "") -> str:
+    v = d.get(key)
+    if v is None:
+        return default
+    return str(v)
+
+
+def _opt_str(d: Mapping[str, object], key: str) -> str | None:
+    v = d.get(key)
+    if v is None:
+        return None
+    return str(v)
+
+
+def _opt_float_raw(d: Mapping[str, object], key: str) -> float | None:
+    v = d.get(key)
+    if v is None:
+        return None
+    try:
+        f = float(v)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    return f if math.isfinite(f) else None
+
+
+@dataclass(frozen=True, slots=True)
+class RunMetadataSnapshot:
+    """Typed internal representation of recording-identification metadata.
+
+    Covers fields NOT already owned by ``AnalysisSettingsSnapshot``,
+    ``CarSnapshot``, ``RunContextSnapshot``, or ``OrderReferenceSpec``.
+    """
+
+    run_id: str = ""
+    case_id: str = ""
+    sensor_mac: str | None = None
+    sensor_model: str | None = None
+    firmware_version: str | None = None
+    raw_sample_rate_hz: float | None = None
+    feature_interval_s: float | None = None
+    summary_version: int = 1
+
+    def __post_init__(self) -> None:
+        if not self.run_id:
+            raise ValueError("run_id must be a non-empty string")
+        if self.summary_version < 1:
+            raise ValueError("summary_version must be >= 1")
+
+    @classmethod
+    def from_dict(cls, raw: Mapping[str, object]) -> RunMetadataSnapshot:
+        """Parse from a raw metadata mapping."""
+        return cls(
+            run_id=_str_or(raw, "run_id", _str_or(raw, "recording_id", "")),
+            case_id=_str_or(raw, "case_id", ""),
+            sensor_mac=_opt_str(raw, "sensor_mac"),
+            sensor_model=_opt_str(raw, "sensor_model"),
+            firmware_version=_opt_str(raw, "firmware_version"),
+            raw_sample_rate_hz=_opt_float_raw(raw, "raw_sample_rate_hz"),
+            feature_interval_s=_opt_float_raw(raw, "feature_interval_s"),
+            summary_version=_int_or(raw, "_summary_version", 1),
         )
