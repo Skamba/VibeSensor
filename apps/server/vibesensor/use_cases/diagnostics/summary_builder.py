@@ -838,7 +838,7 @@ def build_run_suitability_bundle(
 
 @dataclass(frozen=True, slots=True)
 class AnalysisResult:
-    """Output coordinator: carries domain aggregates alongside the legacy summary dict.
+    """Output coordinator: carries domain aggregates alongside the boundary summary dict.
 
     Returned by :meth:`RunAnalysis.summarize`.  The ``summary`` dict is
     still needed for persistence (SQLite stores it as JSON) and many
@@ -923,7 +923,7 @@ class RunAnalysis:
         """Run the full analysis pipeline and return the output coordinator.
 
         Returns an :class:`AnalysisResult` carrying the domain aggregates
-        (``test_run``, ``diagnostic_case``) alongside the legacy
+        (``test_run``, ``diagnostic_case``) alongside the boundary
         ``summary`` dict.
         """
         reference_complete, run_suitability, overall_strength_band_key = (

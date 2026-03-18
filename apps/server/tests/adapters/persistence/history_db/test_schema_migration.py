@@ -259,7 +259,7 @@ def test_historydb_migrates_v8_database_without_manufacturing_case_id(tmp_path: 
     assert "case_id" not in run
     with pytest.raises(
         ValueError,
-        match="legacy summary without authoritative case_id",
+        match="summary without authoritative case_id",
     ):
         diagnostic_case_from_summary(run["analysis"])
     db.close()

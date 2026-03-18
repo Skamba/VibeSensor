@@ -1553,6 +1553,7 @@ _EXPECTED_DOMAIN_EXPORTS = [
     "AnalysisSettingsSnapshot",
     "DrivingPhaseSummary",
     "RunContextSnapshot",
+    "RunMetadataSnapshot",
     "SpeedProfileSummary",
     # Value objects — run and capture
     "ConfigurationSnapshot",
@@ -1566,6 +1567,8 @@ _EXPECTED_DOMAIN_EXPORTS = [
     "FindingEvidence",
     "FindingKind",
     "LocationHotspot",
+    "LocationIntensitySummary",
+    "OrderMatchObservation",
     "Signature",
     "StrengthMetrics",
     "StrengthPeak",
@@ -1573,6 +1576,7 @@ _EXPECTED_DOMAIN_EXPORTS = [
     "VibrationSource",
     # Value objects — run context
     "DrivingPhase",
+    "DrivingPhaseInterval",
     "DrivingPhaseSegment",
     "DrivingSegment",
     "RunStatus",

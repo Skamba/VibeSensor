@@ -245,7 +245,7 @@ def _require_authoritative_case_id(summary: Mapping[str, object]) -> str:
         if normalized_case_id:
             return normalized_case_id
     raise ValueError(
-        "Cannot decode DiagnosticCase from legacy summary without authoritative case_id"
+        "Cannot decode DiagnosticCase from summary without authoritative case_id"
     )
 
 

@@ -17,13 +17,17 @@ from vibesensor.domain import (
     CarSnapshot,
     DiagnosticCase,
     DrivingPhase,
+    DrivingPhaseInterval,
     DrivingPhaseSegment,
     DrivingPhaseSummary,
     DrivingSegment,
     FindingKind,
+    LocationIntensitySummary,
+    OrderMatchObservation,
     OrderReferenceSpec,
     RunCapture,
     RunContextSnapshot,
+    RunMetadataSnapshot,
     RunSetup,
     RunStatus,
     SpeedProfileSummary,
@@ -165,6 +169,25 @@ class TestPhaseSegmentNotDomain:
 
 
 # ---------------------------------------------------------------------------
+# T05b — DrivingPhaseSegment boundary isolation
+# ---------------------------------------------------------------------------
+
+
+class TestDrivingPhaseSegmentBoundaryIsolation:
+    """No adapter module may import DrivingPhaseSegment (internal diagnostics type)."""
+
+    def test_no_adapter_imports_driving_phase_segment(self) -> None:
+        adapters_dir = DOMAIN_PKG_DIR.parent / "adapters"
+        for py_file in adapters_dir.rglob("*.py"):
+            source = py_file.read_text()
+            assert "DrivingPhaseSegment" not in source, (
+                f"Adapter {py_file.relative_to(adapters_dir.parent)} imports "
+                "DrivingPhaseSegment — this is an internal diagnostics type "
+                "that must not cross the adapter boundary."
+            )
+
+
+# ---------------------------------------------------------------------------
 # T06 — No RunSample guardrails
 # ---------------------------------------------------------------------------
 
@@ -204,14 +227,18 @@ class TestNoRunSampleInDomain:
 _FROZEN_DOMAIN_TYPES = [
     AnalysisSettingsSnapshot,
     CarSnapshot,
-    RunContextSnapshot,
-    SpeedProfileSummary,
-    DrivingPhaseSummary,
+    DrivingPhaseInterval,
     DrivingPhaseSegment,
+    DrivingPhaseSummary,
+    DrivingSegment,
+    LocationIntensitySummary,
+    OrderMatchObservation,
+    OrderReferenceSpec,
+    RunContextSnapshot,
+    RunMetadataSnapshot,
+    SpeedProfileSummary,
     StrengthMetrics,
     StrengthPeak,
-    DrivingSegment,
-    OrderReferenceSpec,
     TireSpec,
 ]
 
