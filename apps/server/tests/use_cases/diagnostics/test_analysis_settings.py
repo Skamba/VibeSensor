@@ -4,6 +4,7 @@ from math import inf, nan, pi
 
 import pytest
 
+from vibesensor.domain import Car as _Car
 from vibesensor.domain import OrderReferenceSpec, TireSpec
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 
@@ -76,6 +77,24 @@ def test_tire_circumference_deflection_factor_above_one_ignored() -> None:
     above_one = _circ(285.0, 30.0, 21.0, df=1.5)
     assert no_deflection is not None and above_one is not None
     assert abs(above_one - no_deflection) < 1e-9  # factor ignored
+
+
+def test_car_tire_circumference_happy_path() -> None:
+    """Car.tire_circumference_m returns a plausible value for a complete 205/55 R16 spec."""
+    car = _Car(
+        name="Test",
+        aspects={"tire_width_mm": 205, "tire_aspect_pct": 55, "rim_in": 16},
+    )
+    circ = car.tire_circumference_m
+    assert circ is not None
+    # 205/55 R16: diameter ≈ 632 mm → circumference ≈ 1.985 m
+    assert 1.9 < circ < 2.1
+
+
+def test_car_tire_circumference_no_aspects_returns_none() -> None:
+    """Car.tire_circumference_m returns None when car has no tire aspects."""
+    car = _Car(name="No Tires")
+    assert car.tire_circumference_m is None
 
 
 def test_wheel_hz_returns_none_for_non_finite_speed() -> None:
