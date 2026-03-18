@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.adapters.pdf.pdf_diagram_render import (
     _build_sensor_render_plan,
+    _choose_label_plan,
     _estimate_text_width,
     _resolve_marker_states,
     car_location_diagram,
@@ -232,3 +235,23 @@ def test_render_plan_prefers_diagnosed_location_when_intensity_hotspot_differs()
     marker_by_name = {marker.name: marker for marker in markers}
     assert marker_by_name["front-left wheel"].fill == REPORT_COLORS["text_secondary"]
     assert marker_by_name["rear-left wheel"].fill == REPORT_COLORS["danger"]
+
+
+def test_choose_label_plan_raises_value_error_when_no_candidates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """_choose_label_plan raises ValueError when no label placement candidates exist."""
+    import vibesensor.adapters.pdf.pdf_diagram_render as mod
+
+    monkeypatch.setattr(mod, "_LABEL_CANDIDATES_RIGHT", ())
+    with pytest.raises(ValueError, match="No valid label placement found"):
+        _choose_label_plan(
+            name="front_left",
+            px=0.1,  # px < width * 0.5 → selects RIGHT candidates (now empty)
+            py=100.0,
+            width=200.0,
+            height=300.0,
+            occupied_boxes=[],
+            font_size=8.0,
+            color="#000000",
+        )
