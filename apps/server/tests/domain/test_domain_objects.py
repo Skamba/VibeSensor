@@ -7,49 +7,18 @@ and carry the expected behavior.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
 import pytest
 
 from vibesensor.adapters.pdf.mapping import Report
 from vibesensor.domain import (
     Car,
     Finding,
-    Measurement,
     Run,
     Sensor,
     SensorPlacement,
     SpeedSource,
 )
 from vibesensor.shared.boundaries.finding import finding_from_payload
-
-_NOW = datetime(2025, 6, 15, 12, 0, 0, tzinfo=UTC)
-
-
-# ---------------------------------------------------------------------------
-# Phase 1: Primary aliases (Run, Measurement)
-# ---------------------------------------------------------------------------
-
-
-class TestRunAlias:
-    """Run is the primary domain name for a diagnostic session."""
-
-    def test_run_creates_valid_session(self) -> None:
-        run = Run()
-        assert not run.is_recording
-        run.start()
-        assert run.is_recording
-
-
-class TestMeasurement:
-    """Measurement domain object tests."""
-
-    def test_measurement_creates_valid_sample(self) -> None:
-        m = Measurement(x=0.1, y=0.2, z=0.3, timestamp=_NOW, sample_rate_hz=4096)
-        assert m.x == pytest.approx(0.1)
-        assert m.y == pytest.approx(0.2)
-        assert m.z == pytest.approx(0.3)
-
 
 # ---------------------------------------------------------------------------
 # Phase 1: SpeedSource

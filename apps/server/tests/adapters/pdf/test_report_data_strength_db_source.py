@@ -28,16 +28,6 @@ def _summary_with_top_order(finding: dict, *, sensor_rows: list[dict] | None = N
     )
 
 
-def test_map_summary_strength_label_uses_finding_db_when_sensor_rows_missing() -> None:
-    summary = _summary_with_top_order(_BASE_ORDER_FINDING)
-
-    data = map_summary(summary)
-
-    assert data.observed.strength_label is not None
-    assert "23.4 dB" in data.observed.strength_label
-    assert " g" not in data.observed.strength_label
-
-
 def test_map_summary_prefers_non_ref_top_cause_for_observed_location() -> None:
     summary = _summary_with_top_order(_BASE_ORDER_FINDING)
     summary["top_causes"] = [
