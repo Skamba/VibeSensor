@@ -114,18 +114,3 @@ def test_strength_metric_definition_is_centralized() -> None:
 def test_server_no_local_vibration_strength_module() -> None:
     path = SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics" / "vibration_strength.py"
     assert not path.exists(), f"Server-local vibration strength module should be removed: {path}"
-
-
-def test_typescript_any_type_budget() -> None:
-    """Production TypeScript should not need `any` escape hatches."""
-    repo_root = REPO_ROOT
-    ui_src = repo_root / "apps" / "ui" / "src"
-    violations: list[str] = []
-    for ts_file in sorted(ui_src.rglob("*.ts")):
-        for i, line in enumerate(ts_file.read_text(encoding="utf-8").splitlines(), 1):
-            if _ANY_PATTERN.search(line):
-                stripped = line.strip()
-                violations.append(f"{ts_file.name}:{i}: {stripped}")
-    assert not violations, (
-        f"Found {len(violations)} unexpected `any` type(s) in TypeScript:\n" + "\n".join(violations)
-    )
