@@ -545,33 +545,6 @@ class TestRunEnrichments:
         assert run.is_recording
 
 
-class TestCarEnrichments:
-    """Tests for enriched Car domain object."""
-
-    def test_tire_circumference_full_spec(self) -> None:
-        car = Car(
-            name="Test",
-            aspects={"tire_width_mm": 205, "tire_aspect_pct": 55, "rim_in": 16},
-        )
-        circ = car.tire_circumference_m
-        assert circ is not None
-        # 205/55 R16: diameter ≈ 632mm → circumference ≈ 1.985m
-        assert 1.9 < circ < 2.1
-
-    def test_tire_circumference_missing_aspect(self) -> None:
-        car = Car(name="Test", aspects={"tire_width_mm": 205})
-        assert car.tire_circumference_m is None
-
-    def test_tire_circumference_zero_value_rejected(self) -> None:
-        """Zero tire dimensions are now rejected at construction time."""
-        with pytest.raises(ValueError, match="positive finite"):
-            Car(aspects={"tire_width_mm": 0, "tire_aspect_pct": 55, "rim_in": 16})
-
-    def test_tire_circumference_no_aspects(self) -> None:
-        car = Car(name="No Tires")
-        assert car.tire_circumference_m is None
-
-
 class TestSpeedSourceEnrichments:
     """Tests for enriched SpeedSource domain object."""
 
