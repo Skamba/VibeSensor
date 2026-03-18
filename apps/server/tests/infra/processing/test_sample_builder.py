@@ -16,7 +16,6 @@ from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
     build_sample_records,
     dominant_hz_from_strength,
-    extract_strength_data,
     firmware_version_for_run,
     resolve_speed_context,
     safe_metric,
@@ -48,84 +47,6 @@ class TestSafeMetric:
 
     def test_non_dict_axis(self) -> None:
         assert safe_metric({"x": "not_dict"}, "x", "rms") is None
-
-
-# ---------------------------------------------------------------------------
-# extract_strength_data
-# ---------------------------------------------------------------------------
-
-
-class TestExtractStrengthData:
-    def test_with_combined_strength_metrics(self) -> None:
-        metrics = {
-            "combined": {
-                "strength_metrics": {
-                    "vibration_strength_db": 22.0,
-                    "strength_bucket": "l2",
-                    "peak_amp_g": 0.15,
-                    "noise_floor_amp_g": 0.003,
-                    "top_peaks": [
-                        {
-                            "hz": 15.0,
-                            "amp": 0.12,
-                            "vibration_strength_db": 22.0,
-                            "strength_bucket": "l2",
-                        },
-                    ],
-                },
-            },
-        }
-        sm = extract_strength_data(metrics)
-        assert isinstance(sm, StrengthMetrics)
-        assert sm.vibration_strength_db == 22.0
-        assert sm.strength_bucket == "l2"
-        assert sm.peak_amp_g == 0.15
-        assert sm.noise_floor_amp_g == 0.003
-        assert sm.dominant_hz == 15.0
-        assert sm.to_peak_payloads(max_items=8) == [
-            {
-                "hz": 15.0,
-                "amp": 0.12,
-                "vibration_strength_db": 22.0,
-                "strength_bucket": "l2",
-            },
-        ]
-
-    def test_empty_metrics(self) -> None:
-        sm = extract_strength_data({})
-        assert isinstance(sm, StrengthMetrics)
-        assert sm.vibration_strength_db is None
-        assert sm.peak_amp_g is None
-        assert sm.noise_floor_amp_g is None
-        assert sm.to_peak_payloads(max_items=8) == []
-
-    def test_invalid_peak_skipped(self) -> None:
-        metrics = {
-            "combined": {
-                "strength_metrics": {
-                    "top_peaks": [
-                        {"hz": "bad", "amp": 0.1},  # non-numeric
-                        {"hz": 0, "amp": 0.1},  # zero hz
-                        {"hz": 10.0, "amp": float("nan")},  # nan amp
-                    ],
-                },
-            },
-        }
-        sm = extract_strength_data(metrics)
-        assert sm.dominant_hz is None
-        assert sm.to_peak_payloads(max_items=8) == []
-
-    def test_max_8_peaks(self) -> None:
-        metrics = {
-            "combined": {
-                "strength_metrics": {
-                    "top_peaks": [{"hz": float(i), "amp": 0.01} for i in range(1, 12)],
-                },
-            },
-        }
-        sm = extract_strength_data(metrics)
-        assert len(sm.top_peaks) == 11
-        assert len(sm.to_peak_payloads(max_items=8)) == 8
 
 
 # ---------------------------------------------------------------------------
