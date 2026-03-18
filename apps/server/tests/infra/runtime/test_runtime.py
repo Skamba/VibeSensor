@@ -11,7 +11,7 @@ import asyncio
 import os
 from dataclasses import dataclass
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -208,12 +208,9 @@ async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
             raise asyncio.CancelledError
         await original_sleep(0)
 
-    asyncio.sleep = _counting_sleep
-    try:
+    with patch("asyncio.sleep", _counting_sleep):
         with pytest.raises(asyncio.CancelledError):
             await rt.processing_loop.run()
-    finally:
-        asyncio.sleep = original_sleep
 
 
 @pytest.mark.asyncio
