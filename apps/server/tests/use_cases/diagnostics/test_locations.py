@@ -37,5 +37,5 @@ class TestSetLocationRequestAcceptsEmptyCode:
         assert req.location_code == code
 
     def test_too_long_rejected(self) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match=r"location_code"):
             self._Req(location_code="x" * 65)

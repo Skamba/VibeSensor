@@ -258,7 +258,7 @@ async def test_processing_loop_broadcasts_sync_clock() -> None:
 
     await _run_processing_loop(rt, max_ticks=6)
 
-    assert control_plane.broadcast_sync_clock.called
+    control_plane.broadcast_sync_clock.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +298,7 @@ async def test_start_creates_tasks(monkeypatch) -> None:
 
     await lifecycle.start()
     assert len(lifecycle.tasks) == 5
-    assert control_plane.start.called
+    control_plane.start.assert_called_once()
     assert rt.health_state.startup_state == "ready"
     assert rt.health_state.startup_phase == "ready"
 
@@ -402,9 +402,9 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
 
     await lifecycle.stop()
     assert lifecycle.tasks == []
-    assert run_recorder.shutdown_report.called
-    assert worker_pool.shutdown.called
-    assert history_db.close.called
+    run_recorder.shutdown_report.assert_called_once_with(5.0)
+    worker_pool.shutdown.assert_called_once_with(True)
+    history_db.close.assert_called_once()
 
 
 @pytest.mark.parametrize("attr", ["settings_store", "processing_loop", "ws_broadcast"])

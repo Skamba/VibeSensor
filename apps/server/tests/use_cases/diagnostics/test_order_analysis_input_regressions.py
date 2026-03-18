@@ -53,7 +53,7 @@ class TestSummaryFrequencyGuard:
 
     def test_non_numeric_frequency_skipped(self) -> None:
         row = {"frequency_hz": "invalid"}
-        with pytest.raises((ValueError, TypeError)):
+        with pytest.raises((ValueError, TypeError), match=r"could not convert"):
             float(row.get("frequency_hz") or 0.0)
 
     def test_none_frequency(self) -> None:
@@ -86,13 +86,13 @@ class TestOrderLabel:
         assert _order_label(order, base) == expected
 
     def test_wrong_arg_count_raises(self) -> None:
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError, match=r"missing.*positional argument"):
             _order_label()  # type: ignore[call-arg]
 
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError, match=r"missing.*positional argument"):
             _order_label(1)  # type: ignore[call-arg]
 
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError, match=r"takes 2 positional arguments"):
             _order_label(1, 2, 3, 4)  # type: ignore[call-arg]
 
 
