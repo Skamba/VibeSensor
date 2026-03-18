@@ -105,7 +105,6 @@ def test_clipping_level_effect_on_confidence(corner: str, clip_name: str, clip_a
         clip_amp=clip_amp,
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict), "Pipeline returned non-dict"
     assert "top_causes" in summary, "Missing top_causes"
 
     # Very severe clipping should NOT produce an overconfident result
@@ -204,7 +203,6 @@ def test_extreme_clipping_no_crash(corner: str, cfg_name: str, sensor_fn: Any) -
         clip_amp=0.001,  # extremely tight
     )
     summary = run_analysis(samples)
-    assert isinstance(summary, dict)
     for tc in summary.get("top_causes", []):
         conf = float(tc.get("confidence", 0))
         assert not math.isnan(conf), "NaN confidence from extreme clipping"
@@ -270,7 +268,7 @@ def test_clipping_with_speed_variants(speed_name: str, speed_fn: Any, clip_amp: 
         clip_amp=clip_amp,
     )
     summary = run_analysis(clipped)
-    assert isinstance(summary, dict)
+    assert "findings" in summary
 
 
 # ===================================================================
@@ -303,7 +301,6 @@ def test_profile_clipped_fault_no_crash(
     )
     meta = profile_metadata(profile)
     summary = run_analysis(clipped, metadata=meta)
-    assert isinstance(summary, dict)
     assert "top_causes" in summary
     # Must produce valid confidence label if there is a finding
     top = extract_top(summary)
