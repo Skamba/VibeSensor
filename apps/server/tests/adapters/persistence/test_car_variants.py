@@ -174,7 +174,7 @@ def test_car_library_variant_entry_requires_drivetrain() -> None:
     assert v.drivetrain == "RWD"
 
     # Missing drivetrain
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match=r"drivetrain"):
         CarLibraryVariantEntry(name="320i")  # type: ignore[call-arg]
 
 

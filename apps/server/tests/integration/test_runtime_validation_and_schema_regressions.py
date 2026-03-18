@@ -134,7 +134,7 @@ class TestApiModelValidationBounds:
 
     @pytest.mark.parametrize(("model", "kwargs"), _VALIDATION_REJECT_CASES)
     def test_out_of_bounds_rejected(self, model: type, kwargs: dict) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match=r"validation error"):
             model(**kwargs)
 
     def test_car_upsert_name_within_limit_ok(self) -> None:
