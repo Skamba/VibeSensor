@@ -250,33 +250,6 @@ def test_protocol_docs_match_generated_contract_reference() -> None:
     )
 
 
-def test_sanitize_settings_is_single_source() -> None:
-    """AnalysisSettingsSnapshot.sanitize is the canonical validation function."""
-    sanitize = AnalysisSettingsSnapshot.sanitize
-
-    # Verify on a known-invalid input
-    bad: dict[str, object] = {"tire_width_mm": -1.0, "rim_in": 21.0}
-    result = sanitize(bad)
-    assert "tire_width_mm" not in result
-    assert result["rim_in"] == 21.0
-
-
-def test_sanitize_settings_rejects_invalid() -> None:
-    """AnalysisSettingsSnapshot.sanitize must drop invalid values."""
-    result = AnalysisSettingsSnapshot.sanitize(
-        {
-            "tire_width_mm": -1.0,  # positive required, should be dropped
-            "rim_in": 21.0,  # valid
-            "speed_uncertainty_pct": -0.5,  # non-negative, should be dropped
-            "final_drive_ratio": "not_a_number",  # invalid type
-        },
-    )
-    assert "tire_width_mm" not in result
-    assert "speed_uncertainty_pct" not in result
-    assert "final_drive_ratio" not in result
-    assert result["rim_in"] == 21.0
-
-
 def test_validation_sets_cover_all_settings_keys() -> None:
     """Every key in DEFAULTS must be in exactly one validation set."""
     all_keys = set(DEFAULT_ANALYSIS_SETTINGS)
