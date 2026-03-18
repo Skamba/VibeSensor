@@ -164,12 +164,19 @@ Measurement -> Finding -> Report
   `CarSnapshot`, `RunContextSnapshot`, `RunMetadataSnapshot`
 - analysis reasoning values: `StrengthMetrics`, `StrengthPeak`,
   `OrderMatchObservation`
-- diagnostics interpretation summaries: `DrivingPhaseSummary`,
-  `SpeedProfileSummary`, `LocationIntensitySummary`
-- reconstruction interpretation snapshots: `SpeedStatsSnapshot`,
-  `PhaseSummarySnapshot`
+- diagnostics interpretation and reconstruction snapshots: `SpeedStatsSnapshot`
+  (also serves diagnostics speed-profile summary role),
+  `PhaseSummarySnapshot` (also serves diagnostics driving-phase summary role),
+  `LocationIntensitySummary`
 - reconstruction support intervals and segments: `DrivingPhaseInterval`,
-  `DrivingPhaseSegment`
+  `DrivingSegment` (also serves reconstruction/diagnostics segment role)
+
+> **Merge note (D1):** Three originally separate concepts were merged into
+> existing domain types with identical fields to avoid parallel implementations:
+> `DrivingPhaseSegment` → `DrivingSegment`, `SpeedProfileSummary` →
+> `SpeedStatsSnapshot`, `DrivingPhaseSummary` → `PhaseSummarySnapshot`.
+> `SpeedStatsSnapshot` is NOT the same concept as `SpeedProfile` (snapshot of
+> speed statistics vs live behavioral model).
 
 ### Analysis machinery
 
@@ -284,8 +291,9 @@ scope, centered on `OrderReferenceSpec`.
 - **`Run` vs `TestRun`:** `Run` is capture lifecycle; `TestRun` is analyzed
   diagnostic run; `RunCapture` bridges them.
 - **`DrivingSegment` vs analysis segments:** `DrivingSegment` is the domain
-  segment concept; `DrivingPhaseInterval` and `DrivingPhaseSegment` are typed
-  internal diagnostics/reconstruction support concepts; `PhaseSegment` remains
+  segment concept and also serves the diagnostics/reconstruction segment role
+  (merged from `DrivingPhaseSegment`); `DrivingPhaseInterval` is a typed
+  internal diagnostics/reconstruction support concept; `PhaseSegment` remains
   analysis machinery.
 - **`Car` context ownership:** `Car` owns case-scoped vehicle interpretive
   context. `OrderReferenceSpec` is a supporting typed value object within that
@@ -298,13 +306,15 @@ scope, centered on `OrderReferenceSpec`.
   snapshots; `RunMetadataSnapshot` is the typed internal diagnostics
   representation of reconstructed run metadata; `StrengthMetrics` and
   `StrengthPeak` are internal reasoning values; `OrderMatchObservation` is a
-  typed internal order/reference match observation; `DrivingPhaseSummary`,
-  `DrivingPhaseInterval`, and `DrivingPhaseSegment` are typed internal
-  diagnostics/reconstruction support objects for interpreted phase behavior;
-  `SpeedStatsSnapshot` and `PhaseSummarySnapshot` are internal reconstruction
-  snapshots; `SpeedProfileSummary` is an internal diagnostics summary and not
-  the same concept as `SpeedProfile`; `LocationIntensitySummary` is a typed
-  internal interpretation/report-preparation support object.
+  typed internal order/reference match observation; `DrivingPhaseInterval`
+  is a typed internal diagnostics/reconstruction support object for interpreted
+  phase behavior; `SpeedStatsSnapshot` and `PhaseSummarySnapshot` are internal
+  reconstruction snapshots that also serve diagnostics interpretation roles
+  (merged from `SpeedProfileSummary` and `DrivingPhaseSummary` respectively);
+  `DrivingSegment` also serves the reconstruction segment role (merged from
+  `DrivingPhaseSegment`); `SpeedStatsSnapshot` is NOT the same concept as
+  `SpeedProfile`; `LocationIntensitySummary` is a typed internal
+  interpretation/report-preparation support object.
 - **Typed internal concepts vs boundary maps:** these supporting objects replace
   generic dict-shaped diagnostics concepts inside diagnostics and reconstruction
   logic. Raw maps may still exist at storage, transport, and render boundaries.
