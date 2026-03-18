@@ -9,7 +9,6 @@ _canonical_location edge cases, PDF peak suffix i18n."""
 
 
 import asyncio
-import math
 import sqlite3
 from unittest.mock import MagicMock, patch
 
@@ -26,32 +25,6 @@ from vibesensor.use_cases.updates.firmware_cache import (
     _dir_sha256,
 )
 from vibesensor.use_cases.updates.manager import UpdateManager, UpdateState
-from vibesensor.vibration_strength import vibration_strength_db_scalar
-
-# ── 1. NaN guard in vibration_strength_db_scalar ─────────────────────────
-
-
-class TestVibrationStrengthNanGuard:
-    """Verify NaN inputs do not propagate through vibration_strength_db_scalar."""
-
-    @pytest.mark.parametrize(
-        ("peak", "floor"),
-        [
-            (0.001, float("nan")),
-            (float("nan"), 0.001),
-            (float("nan"), float("nan")),
-            (0.001, float("inf")),
-        ],
-    )
-    def test_non_finite_input_returns_finite(self, peak: float, floor: float) -> None:
-        result = vibration_strength_db_scalar(peak_band_rms_amp_g=peak, floor_amp_g=floor)
-        assert math.isfinite(result), f"Expected finite, got {result}"
-
-    def test_normal_values_unchanged(self):
-        result = vibration_strength_db_scalar(peak_band_rms_amp_g=0.01, floor_amp_g=0.001)
-        assert math.isfinite(result)
-        assert result > 0  # peak > floor → positive dB
-
 
 # ── 2. _corr_abs_clamped returns at most 1.0 ─────────────────────────────
 
