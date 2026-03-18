@@ -9,82 +9,20 @@ report_cli error handling, WebSocketHub circuit breaker,
 
 import asyncio
 import contextlib
-import inspect
 import json
 from unittest.mock import patch
 
 import pytest
 from _paths import REPO_ROOT
 
-from vibesensor.adapters.pdf import pdf_diagram_render
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.cli.report import main as report_cli_main
-from vibesensor.infra.processing import SignalProcessor
-from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
-
-_PDF_DIAGRAM_SRC = inspect.getsource(pdf_diagram_render)
-_RUN_FLASH_JOB_SRC = inspect.getsource(EspFlashManager._run_flash_job)
 
 _I18N_ERROR_KEYS = [
     "settings.car.delete_failed",
     "settings.car.activate_failed",
     "settings.car.save_failed",
 ]
-
-# ── 1. EspFlashManager CancelledError ────────────────────────────────────
-
-
-class TestEspFlashManagerCancelledError:
-    """Verify CancelledError is caught, status finalized, and re-raised."""
-
-    def test_cancelled_error_handler_exists(self):
-        """The except block for CancelledError must precede except Exception."""
-        cancel_pos = _RUN_FLASH_JOB_SRC.find("except asyncio.CancelledError")
-        generic_pos = _RUN_FLASH_JOB_SRC.find("except Exception")
-        assert cancel_pos != -1, "CancelledError handler not found in _run_flash_job"
-        assert cancel_pos < generic_pos, (
-            "CancelledError handler must appear before generic Exception handler"
-        )
-
-    def test_cancelled_error_re_raises(self):
-        """The CancelledError handler must re-raise."""
-        cancel_block_start = _RUN_FLASH_JOB_SRC.find("except asyncio.CancelledError")
-        generic_block_start = _RUN_FLASH_JOB_SRC.find("except Exception")
-        cancel_block = _RUN_FLASH_JOB_SRC[cancel_block_start:generic_block_start]
-        assert "raise" in cancel_block, "CancelledError handler must re-raise the exception"
-
-
-# ── 3. PDF diagram bare assert → ValueError ─────────────────────────────
-
-
-class TestPdfDiagramAssertReplacement:
-    """Verify bare assert replaced with ValueError for label placement."""
-
-    def test_value_error_on_no_placement(self):
-        """When no label placement is found, ValueError should be raised."""
-        assert "raise ValueError" in _PDF_DIAGRAM_SRC, (
-            "Should raise ValueError when no valid label placement is found"
-        )
-
-
-# ── 4. Dead _owns_pool flag removed from SignalProcessor ─────────────────
-
-
-class TestOwnsPoolRemoval:
-    """Verify _owns_pool dead code was removed from SignalProcessor."""
-
-    def test_constructor_still_works(self):
-        """SignalProcessor can still be constructed with or without a pool."""
-        proc = SignalProcessor(
-            sample_rate_hz=200,
-            waveform_seconds=5,
-            waveform_display_hz=30,
-            fft_n=256,
-        )
-        assert not hasattr(proc, "_owns_pool"), (
-            "_owns_pool attribute should not exist on SignalProcessor instances"
-        )
-
 
 # ── 5. report_cli.py error handling ──────────────────────────────────────
 

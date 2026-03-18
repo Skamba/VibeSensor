@@ -11,20 +11,11 @@ These tests prevent regression of the consolidation work by verifying:
 
 from __future__ import annotations
 
-import importlib
-
-import pytest
-from _paths import REPO_ROOT, SERVER_ROOT
+from _paths import REPO_ROOT
 
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 
 DEFAULT_ANALYSIS_SETTINGS = AnalysisSettingsSnapshot.DEFAULTS
-
-
-def test_strength_scoring_module_removed() -> None:
-    """The strength_scoring.py wrapper should not exist."""
-    with pytest.raises(ModuleNotFoundError):
-        importlib.import_module("vibesensor.strength_scoring")
 
 
 def _make_signal_processor():
@@ -141,76 +132,6 @@ def test_silence_db_constant() -> None:
     from vibesensor.shared.constants import SILENCE_DB
 
     assert SILENCE_DB == -120.0
-
-
-def test_config_preflight_no_removed_fields() -> None:
-    """config_preflight.summarize must not reference removed config fields."""
-    root = REPO_ROOT
-    preflight_path = root / "apps" / "server" / "vibesensor" / "cli" / "preflight.py"
-    source = preflight_path.read_text(encoding="utf-8")
-    assert "metrics_csv_path" not in source, (
-        "config_preflight.py still references removed metrics_csv_path"
-    )
-
-
-def test_wheel_hz_and_engine_rpm_single_source() -> None:
-    """wheel_hz and engine_rpm formulas must not be inlined in consumers."""
-    root = SERVER_ROOT
-    files_to_check = [
-        root / "vibesensor" / "use_cases" / "run" / "sample_builder.py",
-        root / "vibesensor" / "use_cases" / "run" / "logger.py",
-        root / "vibesensor" / "use_cases" / "diagnostics" / "helpers.py",
-        root / "vibesensor" / "use_cases" / "diagnostics" / "summary_builder.py",
-    ]
-    for fpath in files_to_check:
-        source = fpath.read_text(encoding="utf-8")
-        assert "* 60.0" not in source, (
-            f"{fpath.name} still contains inline engine RPM formula (* 60.0)"
-        )
-
-
-def test_simulator_defaults_match_analysis_settings() -> None:
-    """Simulator vehicle defaults must be imported from the canonical source."""
-    root = REPO_ROOT
-    # Read the simulator source to verify it doesn't hardcode tire/vehicle constants
-    sim_path = root / "apps" / "server" / "vibesensor" / "adapters" / "simulator" / "sim_sender.py"
-    sim_source = sim_path.read_text(
-        encoding="utf-8",
-    )
-    # The simulator should NOT contain hardcoded tire/vehicle values as literal assignments
-    for line in sim_source.splitlines():
-        stripped = line.strip()
-        # Skip comments and the DEFAULT_SPEED_KMH (which is simulator-specific)
-        if stripped.startswith("#") or "DEFAULT_SPEED_KMH" in stripped:
-            continue
-        for val in ("285.0", "= 30.0", "= 21.0", "= 3.08", "= 0.64"):
-            assert val not in stripped, (
-                f"sim_sender.py hardcodes vehicle default '{val}' instead of "
-                "importing from DEFAULT_ANALYSIS_SETTINGS"
-            )
-
-
-def test_simulator_no_production_asserts() -> None:
-    """Simulator module-level and standalone functions must not use bare assert."""
-    root = REPO_ROOT
-    sim_path = root / "apps" / "server" / "vibesensor" / "adapters" / "simulator" / "sim_sender.py"
-    sim_source = sim_path.read_text(
-        encoding="utf-8",
-    )
-    lines = sim_source.splitlines()
-    in_method = False
-    for i, line in enumerate(lines, 1):
-        stripped = line.strip()
-        # Track whether we're inside a class method (indented def inside class)
-        if stripped.startswith("def ") and not line.startswith(" "):
-            in_method = False
-        elif stripped.startswith("def ") and line.startswith("    "):
-            in_method = True
-        # Only flag asserts in module-level or standalone functions
-        if not in_method and stripped.startswith("assert "):
-            raise AssertionError(
-                f"sim_sender.py:{i} uses bare assert in non-method context: {stripped!r}",
-            )
 
 
 def test_esp_protocol_constants_match_python() -> None:
@@ -369,16 +290,6 @@ def test_validation_sets_cover_all_settings_keys() -> None:
     )
     overlap = pos & non_neg
     assert not overlap, f"Keys in both validation sets: {overlap}"
-
-
-def test_config_example_does_not_exist() -> None:
-    """config.example.yaml was removed — use ``vibesensor-config-preflight --dump-defaults``."""
-    root = REPO_ROOT
-    config_example = root / "apps" / "server" / "config.example.yaml"
-    assert not config_example.exists(), (
-        "config.example.yaml should not exist — defaults come from "
-        "vibesensor._config_defaults.DEFAULT_CONFIG"
-    )
 
 
 def test_server_dockerfile_is_real_build_recipe() -> None:

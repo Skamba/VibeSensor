@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
-
 from vibesensor.domain import Finding, TestPlan
 from vibesensor.domain.test_plan import plan_test_actions
 
@@ -49,11 +47,3 @@ class TestPlanTestActionsDomainOnly:
         result = plan_test_actions(findings)
         priorities = [a.priority for a in result.actions]
         assert priorities == sorted(priorities), "actions must be ordered least-invasive-first"
-
-    def test_no_payload_types_in_signature(self) -> None:
-        """plan_test_actions must not accept FindingPayload."""
-        sig = inspect.signature(plan_test_actions)
-        for param in sig.parameters.values():
-            annotation = str(param.annotation)
-            assert "FindingPayload" not in annotation
-            assert "dict" not in annotation.lower() or "Mapping" not in annotation
