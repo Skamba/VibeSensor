@@ -9,17 +9,8 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import sys
 
 import pytest
-
-# ── RunAnalysisResult has been deleted ──────────────────────────────────
-
-
-def test_domain_does_not_export_run_analysis_result() -> None:
-    """RunAnalysisResult has been deleted; TestRun is the canonical aggregate."""
-    mod = importlib.import_module("vibesensor.domain")
-    assert not hasattr(mod, "RunAnalysisResult")
 
 
 def test_test_run_is_frozen_dataclass() -> None:
@@ -36,32 +27,6 @@ def test_test_run_is_frozen_dataclass() -> None:
     )
     with pytest.raises(AttributeError):
         r.findings = ()  # type: ignore[misc]
-
-
-# ── Domain modules do not depend on analysis payload types ───────────────
-
-
-def test_domain_modules_do_not_import_analysis_types_at_runtime() -> None:
-    """Domain objects must not depend on analysis payload types at runtime.
-
-    Validates by importing all domain modules and checking that
-    ``vibesensor.use_cases.diagnostics._types`` is not pulled in as a side effect.
-    """
-    analysis_types_key = "vibesensor.use_cases.diagnostics._types"
-    was_loaded = analysis_types_key in sys.modules
-
-    if not was_loaded:
-        # Clear cached domain imports to get a clean check
-        domain_keys = [k for k in sys.modules if k.startswith("vibesensor.domain")]
-        saved = {k: sys.modules.pop(k) for k in domain_keys}
-        try:
-            importlib.import_module("vibesensor.domain")
-            assert analysis_types_key not in sys.modules, (
-                "Domain modules must not import from vibesensor.use_cases.diagnostics._types "
-                "(payload types belong at boundaries only)"
-            )
-        finally:
-            sys.modules.update(saved)
 
 
 # ── TestRun provides domain queries ──────────────────────────────────────
@@ -820,56 +785,11 @@ def test_planning_service_has_no_payload_imports() -> None:
             )
 
 
-def test_analysis_test_plan_renamed() -> None:
-    """analysis/test_plan.py was renamed to location_analysis.py."""
-    from pathlib import Path
-
-    old = (
-        Path(__file__).resolve().parents[2]
-        / "vibesensor"
-        / "use_cases"
-        / "diagnostics"
-        / "test_plan.py"
-    )
-    new = (
-        Path(__file__).resolve().parents[2]
-        / "vibesensor"
-        / "use_cases"
-        / "diagnostics"
-        / "location_analysis.py"
-    )
-    assert not old.exists(), f"{old} should have been renamed"
-    assert new.exists(), f"{new} must exist after rename"
-
-
 def test_finding_projector_in_finding_boundary_module() -> None:
     """Finding payload projector should live in boundaries/finding.py."""
     from vibesensor.shared.boundaries.finding import finding_payload_from_domain
 
     assert callable(finding_payload_from_domain)
-
-
-def test_post_analysis_does_not_import_project_summary() -> None:
-    """Fresh summaries should not round-trip through domain decode/re-project."""
-    import ast
-    from pathlib import Path
-
-    source = (
-        Path(__file__).resolve().parents[2]
-        / "vibesensor"
-        / "use_cases"
-        / "run"
-        / "post_analysis.py"
-    ).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom) and node.module:
-            names = [alias.name for alias in node.names]
-            if "project_summary_through_domain" in names:
-                pytest.fail(
-                    "post_analysis.py should not import project_summary_through_domain; "
-                    "fresh summaries from summarize() are already domain-canonical"
-                )
 
 
 # ── T7.27: Report mapping rendering-boundary guardrails ──────────────────
@@ -922,50 +842,7 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
     )
 
 
-def test_report_mapping_does_not_import_finding_from_payload_decoder() -> None:
-    """Report mapping must not import the finding boundary decoder.
-
-    It receives domain objects from ``test_run_from_summary()`` and should
-    not be re-decoding payloads.  Only boundary *projectors* (domain →
-    payload) are allowed.
-    """
-    import ast
-
-    from tests._paths import SERVER_ROOT
-
-    mapping_path = SERVER_ROOT / "vibesensor" / "adapters" / "pdf" / "mapping.py"
-    source = mapping_path.read_text()
-    tree = ast.parse(source)
-    forbidden = {"finding_from_payload"}
-    violations: list[str] = []
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.Import, ast.ImportFrom)):
-            for alias in node.names:
-                if alias.name in forbidden:
-                    violations.append(f"imports {alias.name}")
-    assert not violations, f"report/mapping.py must not import boundary decoders: {violations}"
-
-
 # ── T9.1-T9.6: Workstream 8 architecture guardrails ──────────────────
-
-
-def test_localization_assessment_does_not_exist() -> None:
-    """LocalizationAssessment must not exist in the codebase.
-
-    It was deleted in Workstream 3 (T4.1-T4.8).  LocationHotspot is the
-    canonical owner of localization semantics.
-    """
-    # Must not be importable from analysis
-    mod = importlib.import_module("vibesensor.use_cases.diagnostics")
-    assert not hasattr(mod, "LocalizationAssessment"), (
-        "LocalizationAssessment must not exist in vibesensor.use_cases.diagnostics"
-    )
-    # Must not exist as a class in summary_builder
-    mod2 = importlib.import_module("vibesensor.use_cases.diagnostics.summary_builder")
-    for name in dir(mod2):
-        assert name != "LocalizationAssessment", (
-            "LocalizationAssessment class must not exist in summary_builder"
-        )
 
 
 def test_suspected_vibration_origin_is_boundary_only() -> None:

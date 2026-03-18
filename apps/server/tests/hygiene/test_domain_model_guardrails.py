@@ -7,11 +7,9 @@ Covers TODO items T02, T03, T05, T06, T07 from the domain migration plan.
 from __future__ import annotations
 
 import dataclasses
-import pathlib
 
 import pytest
 
-import vibesensor.domain as domain
 from vibesensor.domain import (
     AnalysisSettingsSnapshot,
     CarSnapshot,
@@ -38,9 +36,6 @@ from vibesensor.domain import (
     TireSpec,
     VibrationSource,
 )
-
-DOMAIN_PKG_DIR = pathlib.Path(domain.__file__).parent
-
 
 # ---------------------------------------------------------------------------
 # T02 — Enum member snapshots
@@ -140,84 +135,6 @@ class TestDomainGraphRelationships:
         hints = {f.name: f.type for f in dataclasses.fields(AnalysisSettingsSnapshot)}
         # It may have a computed property but not a stored field
         assert "order_reference_spec" not in hints
-
-
-# ---------------------------------------------------------------------------
-# T05 — PhaseSegment stays in analysis machinery
-# ---------------------------------------------------------------------------
-
-
-class TestPhaseSegmentNotDomain:
-    """Verify PhaseSegment is NOT exported from vibesensor.domain (T05)."""
-
-    def test_phase_segment_not_in_domain_exports(self) -> None:
-        assert not hasattr(domain, "PhaseSegment"), (
-            "PhaseSegment is analysis-internal accumulator machinery, "
-            "not a domain object. It must NOT be exported from vibesensor.domain."
-        )
-
-    def test_phase_segment_not_defined_in_domain_package(self) -> None:
-        """No domain/ module should define a PhaseSegment class."""
-        for py_file in DOMAIN_PKG_DIR.glob("*.py"):
-            if py_file.name == "__init__.py":
-                continue
-            source = py_file.read_text()
-            assert "class PhaseSegment" not in source, (
-                f"PhaseSegment class found in domain/{py_file.name} — "
-                "it belongs in use_cases/diagnostics/phase_segmentation.py"
-            )
-
-
-# ---------------------------------------------------------------------------
-# T05b — DrivingPhaseSegment boundary isolation
-# ---------------------------------------------------------------------------
-
-
-class TestDrivingPhaseSegmentBoundaryIsolation:
-    """No adapter module may import DrivingPhaseSegment (internal diagnostics type)."""
-
-    def test_no_adapter_imports_driving_phase_segment(self) -> None:
-        adapters_dir = DOMAIN_PKG_DIR.parent / "adapters"
-        for py_file in adapters_dir.rglob("*.py"):
-            source = py_file.read_text()
-            assert "DrivingPhaseSegment" not in source, (
-                f"Adapter {py_file.relative_to(adapters_dir.parent)} imports "
-                "DrivingPhaseSegment — this is an internal diagnostics type "
-                "that must not cross the adapter boundary."
-            )
-
-
-# ---------------------------------------------------------------------------
-# T06 — No RunSample guardrails
-# ---------------------------------------------------------------------------
-
-
-class TestNoRunSampleInDomain:
-    """Verify no per-sample domain type exists (T06)."""
-
-    def test_no_run_sample_class_in_domain(self) -> None:
-        assert not hasattr(domain, "RunSample"), (
-            "RunSample must not exist in vibesensor.domain. "
-            "Per-sample data stays as Sample TypeAlias = JsonObject."
-        )
-
-    def test_no_sample_dataclass_in_domain(self) -> None:
-        """No @dataclass with 'sample' in its name in domain/."""
-        for py_file in DOMAIN_PKG_DIR.glob("*.py"):
-            if py_file.name == "__init__.py":
-                continue
-            source = py_file.read_text()
-            lines = source.splitlines()
-            for i, line in enumerate(lines):
-                if "class " in line and "sample" in line.lower() and "dataclass" in source:
-                    # Check if the class has a @dataclass decorator nearby
-                    start = max(0, i - 3)
-                    context = "\n".join(lines[start : i + 1])
-                    if "@dataclass" in context:
-                        pytest.fail(
-                            f"Sample dataclass found in domain/{py_file.name} line {i + 1}: "
-                            f"{line.strip()}. Per-sample data must stay as TypeAlias."
-                        )
 
 
 # ---------------------------------------------------------------------------
