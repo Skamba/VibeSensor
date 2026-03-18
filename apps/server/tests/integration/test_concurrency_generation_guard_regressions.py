@@ -97,7 +97,7 @@ class TestAutoStopGenerationGuard:
         logger, db = _make_logger(tmp_path)
         logger.start_recording()
         run_id = logger._run_id
-        assert run_id is not None
+        assert isinstance(run_id, str) and len(run_id) > 0
 
         logger.stop_recording(_only_if_run_id=run_id)
         assert logger.enabled is False
@@ -214,7 +214,7 @@ class TestFinalizeReturnGatesAnalysis:
 
         logger.start_recording()
         run_id = logger._run_id
-        assert run_id is not None
+        assert isinstance(run_id, str) and len(run_id) > 0
 
         # Simulate a run that created history and wrote samples
         db.create_run(run_id, "2026-01-01T00:00:00Z", {"run_id": run_id})
