@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 import uuid
 from collections.abc import Mapping
-from dataclasses import InitVar, dataclass, field
+from dataclasses import dataclass, field
 from types import MappingProxyType
 
 __all__ = [
@@ -398,7 +398,7 @@ def _str_or_none(v: object) -> str | None:
     return s if s else None
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, init=False)
 class Car:
     """The vehicle under test.
 
@@ -410,7 +410,6 @@ class Car:
     id: str = field(default_factory=lambda: uuid.uuid4().hex)
     name: str = "Unnamed Car"
     car_type: str = "sedan"
-    aspects: InitVar[Mapping[str, float] | None] = None
     variant: str | None = None
     order_reference_spec: OrderReferenceSpec | None = field(default=None, repr=False)
     _aspects: Mapping[str, float] = field(
@@ -418,6 +417,24 @@ class Car:
         repr=False,
         default_factory=lambda: MappingProxyType({}),
     )
+
+    def __init__(
+        self,
+        *,
+        id: str | None = None,
+        name: str = "Unnamed Car",
+        car_type: str = "sedan",
+        aspects: Mapping[str, float] | None = None,
+        variant: str | None = None,
+        order_reference_spec: OrderReferenceSpec | None = None,
+    ) -> None:
+        object.__setattr__(self, "id", id or uuid.uuid4().hex)
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "car_type", car_type)
+        object.__setattr__(self, "variant", variant)
+        object.__setattr__(self, "order_reference_spec", order_reference_spec)
+        object.__setattr__(self, "_aspects", MappingProxyType({}))
+        self.__post_init__(aspects)
 
     def __post_init__(self, aspects: Mapping[str, float] | None) -> None:
         if not self.name or not self.name.strip():
@@ -428,6 +445,10 @@ class Car:
         if spec is not None:
             normalized_aspects = spec.to_settings_dict()
         object.__setattr__(self, "_aspects", MappingProxyType(normalized_aspects))
+
+    @property
+    def aspects(self) -> Mapping[str, float]:
+        return self._aspects
 
     # -- queries -----------------------------------------------------------
 
@@ -447,14 +468,14 @@ class Car:
     @property
     def tire_width_mm(self) -> float | None:
         spec = self.order_reference_spec
-        if spec is not None and spec.supports_wheel_reference:
+        if spec is not None:
             return spec.tire_spec.width_mm
         return None
 
     @property
     def tire_aspect_pct(self) -> float | None:
         spec = self.order_reference_spec
-        if spec is not None and spec.supports_wheel_reference:
+        if spec is not None:
             return spec.tire_spec.aspect_pct
         return None
 
@@ -462,7 +483,7 @@ class Car:
     def rim_in(self) -> float | None:
         """Rim diameter in inches (aspects key ``rim_in``)."""
         spec = self.order_reference_spec
-        if spec is not None and spec.supports_wheel_reference:
+        if spec is not None:
             return spec.tire_spec.rim_in
         return None
 
@@ -474,13 +495,6 @@ class Car:
         """
         spec = self.order_reference_spec
         return spec.tire_circumference_m if spec is not None else None
-
-
-def _car_aspects(self: Car) -> Mapping[str, float]:
-    return self._aspects
-
-
-Car.aspects = property(_car_aspects)
 
 
 def _coerce_finite_float(value: object, *, default: float | None) -> float | None:

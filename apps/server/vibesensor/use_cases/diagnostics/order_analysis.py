@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from math import log1p
 
+from vibesensor.domain import OrderReferenceSpec
 from vibesensor.domain.finding import VibrationSource, speed_band_sort_key, speed_bin_label
 from vibesensor.shared.constants import (
     CONFIDENCE_CEILING,
@@ -93,14 +94,16 @@ def _wheel_hz(
     sample: Sample,
     tire_circumference_m: float | None,
     metadata: MetadataDict | None = None,
+    order_reference_spec: OrderReferenceSpec | None = None,
 ) -> float | None:
     speed_kmh = _as_float(sample.get("speed_kmh"))
     if speed_kmh is None or speed_kmh <= 0:
         return None
-    if metadata is not None:
+    spec = order_reference_spec
+    if spec is None and metadata is not None:
         spec = _order_reference_spec_from_context(metadata, sample)
-        if spec is not None and spec.supports_wheel_reference:
-            return spec.wheel_hz_from_speed_kmh(speed_kmh)
+    if spec is not None and spec.supports_wheel_reference:
+        return spec.wheel_hz_from_speed_kmh(speed_kmh)
     if tire_circumference_m is None or tire_circumference_m <= 0:
         return None
     return float(speed_kmh * KMH_TO_MPS / tire_circumference_m)
@@ -120,7 +123,12 @@ def _driveshaft_hz(
         and spec.supports_driveshaft_reference
     ):
         return spec.driveshaft_hz_from_speed_kmh(speed_kmh)
-    whz = _wheel_hz(sample, tire_circumference_m, metadata)
+    whz = _wheel_hz(
+        sample,
+        tire_circumference_m,
+        metadata,
+        order_reference_spec=spec,
+    )
     fd = _as_float(sample.get("final_drive_ratio")) or _as_float(metadata.get("final_drive_ratio"))
     if whz is None or fd is None or fd <= 0:
         return None
