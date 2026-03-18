@@ -26,11 +26,11 @@ class TestUpdateApiEndpoints:
 
         req = UpdateStartRequest(ssid="TestNet", password="pass123")
         assert req.ssid == "TestNet"
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match=r"ssid"):
             UpdateStartRequest(ssid="", password="pass")
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match=r"ssid"):
             UpdateStartRequest(ssid="x" * 65, password="pass")
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match=r"password"):
             UpdateStartRequest(ssid="Net", password="x" * 129)
         req = UpdateStartRequest(ssid="OpenNet")
         assert req.password == ""

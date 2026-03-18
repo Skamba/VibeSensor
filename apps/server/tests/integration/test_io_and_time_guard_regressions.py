@@ -109,7 +109,7 @@ class TestDownloadAssetFdLeakGuard:
                 fetcher._download_asset("https://example.com/fw.bin", dest)
 
             # os.close should have been called with the leaked fd
-            assert mock_close.called
+            mock_close.assert_called_once()
 
 
 # ------------------------------------------------------------------
