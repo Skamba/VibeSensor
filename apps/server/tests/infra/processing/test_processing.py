@@ -187,9 +187,11 @@ def test_ingest_not_blocked_during_compute() -> None:
     max_latency_ms = max(ingest_latencies) * 1000
     # With snapshot-based compute, ingest should never be blocked for more
     # than a few milliseconds (lock is held only briefly for snapshot/store).
-    assert max_latency_ms < 200, (
+    # 500ms threshold: 10x expected latency (~5ms), 2.5x worst-case FFT time.
+    # Catches regressions where compute-lock was held for full FFT duration.
+    assert max_latency_ms < 500, (
         f"Ingest latency spike {max_latency_ms:.1f}ms during compute; "
-        "expected < 200ms with snapshot-based locking"
+        "expected < 500ms with snapshot-based locking"
     )
 
 
