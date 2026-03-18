@@ -626,6 +626,57 @@ class TestExtractStrengthData:
         result = extract_strength_data(metrics)
         assert result.strength_bucket is None
 
+    def test_top_peaks_with_zero_amp_are_filtered(self) -> None:
+        """Peaks with amp <= 0 must be excluded from to_peak_payloads output."""
+        metrics: dict[str, object] = {
+            "combined": {
+                "strength_metrics": {
+                    "top_peaks": [
+                        {"hz": 100.0, "amp": 0.0},  # should be filtered
+                        {"hz": 200.0, "amp": -1.0},  # should be filtered
+                        {"hz": 300.0, "amp": 0.5},  # should be kept
+                    ],
+                },
+            },
+        }
+        result = extract_strength_data(metrics)
+        payloads = result.to_peak_payloads(max_items=8)
+        assert len(payloads) == 1
+        assert payloads[0]["hz"] == 300.0
+
+    def test_invalid_scalar_fields_degrade_to_none(self) -> None:
+        """Invalid scalar fields (non-numeric, nan) degrade to None on typed metrics."""
+        result = extract_strength_data(
+            {
+                "combined": {
+                    "strength_metrics": {
+                        "vibration_strength_db": "bad",
+                        "peak_amp_g": float("nan"),
+                        "noise_floor_amp_g": "invalid",
+                        "top_peaks": [{"hz": 50.0, "amp": 0.2}],
+                    },
+                },
+            },
+        )
+        assert result.vibration_strength_db is None
+        assert result.peak_amp_g is None
+        assert result.noise_floor_amp_g is None
+        assert result.dominant_hz == 50.0
+        assert result.to_peak_payloads(max_items=8) == [{"hz": 50.0, "amp": 0.2}]
+
+    def test_to_peak_payloads_respects_max_items(self) -> None:
+        """to_peak_payloads(max_items=N) truncates output to N items."""
+        metrics: dict[str, object] = {
+            "combined": {
+                "strength_metrics": {
+                    "top_peaks": [{"hz": float(i), "amp": 0.01} for i in range(1, 12)],
+                },
+            },
+        }
+        result = extract_strength_data(metrics)
+        assert len(result.top_peaks) == 11
+        assert len(result.to_peak_payloads(max_items=8)) == 8
+
 
 class TestResolveSpeedContext:
     """Tests for _resolve_speed_context via a minimal RunRecorder setup."""
