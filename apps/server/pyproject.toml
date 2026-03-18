@@ -71,6 +71,10 @@ markers = [
     "long_sim: longer simulated-run tests (>20 s of synthetic data)",
     "smoke: minimal critical path checks",
 ]
+filterwarnings = [
+    "ignore:cannot collect test class 'TestRun':pytest.PytestCollectionWarning",
+    "ignore:cannot collect test class 'TestPlan':pytest.PytestCollectionWarning",
+]
 
 [tool.ruff]
 line-length = 100
