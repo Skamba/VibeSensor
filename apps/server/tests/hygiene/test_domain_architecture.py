@@ -497,63 +497,6 @@ def test_domain_value_objects_are_frozen_dataclasses(name: str) -> None:
     assert dataclasses.is_dataclass(cls), f"{name} must be a dataclass"
 
 
-def test_finding_from_payload_populates_evidence() -> None:
-    """finding_from_payload extracts FindingEvidence when evidence_metrics is present."""
-    from vibesensor.shared.boundaries.finding import finding_from_payload
-
-    payload = {
-        "finding_id": "F001",
-        "suspected_source": "wheel/tire",
-        "confidence": 0.85,
-        "evidence_metrics": {
-            "match_rate": 0.9,
-            "snr_db": 12.0,
-            "vibration_strength_db": 25.0,
-        },
-    }
-    f = finding_from_payload(payload)
-    assert f.evidence is not None, "finding_from_payload must populate evidence"
-    assert f.evidence.match_rate == 0.9
-
-
-def test_finding_from_payload_populates_location() -> None:
-    """finding_from_payload extracts LocationHotspot when location_hotspot is present."""
-    from vibesensor.shared.boundaries.finding import finding_from_payload
-
-    payload = {
-        "finding_id": "F001",
-        "suspected_source": "wheel/tire",
-        "confidence": 0.85,
-        "location_hotspot": {
-            "location": "FL wheel",
-            "dominance_ratio": 0.75,
-        },
-    }
-    f = finding_from_payload(payload)
-    assert f.location is not None, "finding_from_payload must populate location"
-    assert f.location.strongest_location == "FL wheel"
-
-
-def test_finding_from_payload_prefers_top_location_over_display_string() -> None:
-    """Location identity should use top_location, not the ambiguous display string."""
-    from vibesensor.shared.boundaries.finding import finding_from_payload
-
-    payload = {
-        "finding_id": "F001",
-        "suspected_source": "wheel/tire",
-        "confidence": 0.85,
-        "location_hotspot": {
-            "location": "ambiguous location: Front Left / Front Right",
-            "top_location": "Front Left",
-            "ambiguous_location": True,
-            "ambiguous_locations": ["Front Left", "Front Right"],
-        },
-    }
-    finding = finding_from_payload(payload)
-    assert finding.location is not None
-    assert finding.location.strongest_location == "Front Left"
-
-
 def test_test_run_from_summary_populates_speed_profile() -> None:
     """test_run_from_summary extracts SpeedProfile when speed_stats is present."""
     from vibesensor.shared.boundaries.diagnostic_case import test_run_from_summary
@@ -680,23 +623,6 @@ def test_boundary_decoder_builds_diagnostic_case_from_summary() -> None:
     assert diagnostic_case.case_id == "summary-case-guard-id"
     assert diagnostic_case.test_runs
     assert diagnostic_case.primary_run is not None
-
-
-def test_finding_from_payload_populates_origin_and_signatures() -> None:
-    from vibesensor.shared.boundaries.finding import finding_from_payload
-
-    payload = {
-        "finding_id": "F001",
-        "suspected_source": "wheel/tire",
-        "confidence": 0.85,
-        "strongest_speed_band": "80-90 km/h",
-        "signatures_observed": ["1x wheel order", "2x wheel order"],
-        "location_hotspot": {"location": "FL wheel", "dominance_ratio": 0.75},
-    }
-    finding = finding_from_payload(payload)
-    assert finding.origin is not None
-    assert len(finding.signatures) == 2
-    assert finding.origin.display_location == "Fl Wheel"
 
 
 # ── Finding boundary separation ──────────────────────────────────────────

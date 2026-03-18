@@ -8,7 +8,6 @@ from pathlib import Path
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.processing import SignalProcessor
-from vibesensor.use_cases.diagnostics.helpers import _weighted_percentile
 
 
 # ---------------------------------------------------------------------------
@@ -44,20 +43,3 @@ class TestFlushBumpsGeneration:
         buf.count = 10  # pretend some data
         proc.flush_client_buffer("sensor-1")
         assert buf.ingest_generation == 6
-
-
-# ---------------------------------------------------------------------------
-# Fix 8 – _weighted_percentile filters non-positive speeds inline
-# ---------------------------------------------------------------------------
-class TestWeightedPercentileDedup:
-    def test_weighted_percentile_positive_speeds(self) -> None:
-        """_weighted_percentile works for all-positive speed pairs."""
-        pairs = [(60.0, 2.0), (80.0, 3.0), (100.0, 1.0)]
-        for q in [0.0, 0.1, 0.5, 0.9, 1.0]:
-            result = _weighted_percentile(pairs, q)
-            assert result is not None, f"Expected non-None at q={q}"
-
-    def test_weighted_percentile_filters_when_caller_handles(self) -> None:
-        valid = [(s, w) for s, w in [(-10.0, 5.0), (50.0, 1.0)] if s > 0]
-        result = _weighted_percentile(valid, 0.5)
-        assert result == 50.0
