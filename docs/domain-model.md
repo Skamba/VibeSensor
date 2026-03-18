@@ -22,25 +22,31 @@ VibeSensor is centered on one diagnostic aggregate hierarchy:
 `Car` provides case-scoped vehicle interpretive context across the entire
 investigation. `OrderReferenceSpec` is a supporting typed value object within
 that `Car` context for tire geometry and driveline/reference-order
-interpretation. It is important internal interpretive context, but it is not a
-peer aggregate or top-level headline domain concept.
+interpretation. It is important interpretive context, but it is not a peer
+aggregate or top-level headline domain concept.
 
-Supporting typed internal objects are part of the canonical model and remain
-subordinate to the aggregate hierarchy:
+The diagnostics / reconstruction / interpretation layer uses these supporting
+typed internal concepts:
 
-- run/capture interpretation context: `AnalysisSettingsSnapshot`,
-  `CarSnapshot`, `RunContextSnapshot`, `RunMetadataSnapshot`
-- analysis reasoning support: `StrengthMetrics`, `StrengthPeak`,
-  `OrderMatchObservation`, `LocationIntensitySummary`
-- reconstruction/interpretation support: `SpeedStatsSnapshot`,
-  `PhaseSummarySnapshot`, `DrivingPhaseInterval`, `DrivingSegment`
+- `RunMetadataSnapshot`
+- `OrderMatchObservation`
+- `DrivingPhaseSummary`
+- `DrivingPhaseInterval`
+- `DrivingPhaseSegment`
+- `SpeedProfileSummary`
+- `LocationIntensitySummary`
+
+These seven concepts are supporting typed internal diagnostics concepts. They
+are not aggregate roots, not API-first models, not persistence-first models,
+not report/view payloads by default, and not replacements for
+`DiagnosticCase`, `TestRun`, `Finding`, `Run`, `RunCapture`, or `RunSetup`.
 
 The model also draws an explicit internal performance boundary. Raw capture,
-signal-processing, and other high-volume sample-processing representations may
-remain simple arrays, compact records, or dict-like sample payloads inside that
-performance-sensitive subsystem. Above that boundary, stable interpreted
-diagnostics concepts use typed internal objects with explicit names and owned
-meaning.
+DSP, and other high-volume sample-processing representations may remain simple
+arrays, compact records, or dict-like sample payloads inside that
+performance-sensitive subsystem. No canonical per-sample typed object is
+introduced here, and `RunSample` is not part of this model. Stable diagnostics
+meaning sits above that boundary in typed concepts with owned meaning.
 
 `Report` and `HistoryRecord` are boundary-facing derived representations, not
 core diagnostic truth.
@@ -50,20 +56,18 @@ core diagnostic truth.
 The model uses explicit scope boundaries:
 
 - case scope: `DiagnosticCase`, `Car`, `Symptom`
-- car-scoped interpretive context: `OrderReferenceSpec` (owned within `Car`)
+- car-scoped interpretive context: `OrderReferenceSpec`
 - run diagnostic scope: `TestRun`, `Finding`, `DrivingSegment`,
-  `DrivingPhase`, `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`,
-  `SpeedProfile`, `TestPlan`
+  `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
+  `TestPlan`
 - finding scope: `ConfidenceAssessment`, `FindingEvidence`, `LocationHotspot`,
   `VibrationOrigin`
 - capture lifecycle scope: `Run`, `RunStatus`
 - captured evidence/setup scope: `RunCapture`, `RunSetup`, `Measurement`,
   `ConfigurationSnapshot`, `Sensor`, `SensorPlacement`, `SpeedSource`
-- internal typed interpretation context: `AnalysisSettingsSnapshot`,
-  `CarSnapshot`, `RunContextSnapshot`, `RunMetadataSnapshot`
-- internal typed analysis/reconstruction support: `StrengthMetrics`,
-  `StrengthPeak`, `OrderMatchObservation`, `DrivingPhaseInterval`,
-  `DrivingSegment`, `SpeedStatsSnapshot`, `PhaseSummarySnapshot`,
+- internal diagnostics / reconstruction / interpretation support:
+  `RunMetadataSnapshot`, `OrderMatchObservation`, `DrivingPhaseSummary`,
+  `DrivingPhaseInterval`, `DrivingPhaseSegment`, `SpeedProfileSummary`,
   `LocationIntensitySummary`
 - performance-sensitive raw capture / DSP / high-volume sample-processing
   subsystem: arrays, compact records, and dict-like sample payloads retained as
@@ -74,9 +78,9 @@ The model uses explicit scope boundaries:
   persistence shapes, export/render/template shapes, config transport shapes,
   archival/history shapes
 
-`DiagnosticCase` scopes zero or one `Car` context (a case may exist before
-car details are known), and every `TestRun`, `RunCapture`, and `RunSetup`
-in that case is interpreted within that same car context when present.
+`DiagnosticCase` scopes zero or one `Car` context (a case may exist before car
+details are known), and every `TestRun`, `RunCapture`, and `RunSetup` in that
+case is interpreted within that same car context when present.
 
 ## Aggregate hierarchy
 
@@ -89,12 +93,12 @@ The aggregate hierarchy is decisive:
 - `RunCapture` is immutable capture evidence from one completed `Run`.
 - `RunSetup` is canonical run-setup context for capture interpretation.
 
-Supporting typed objects (`OrderReferenceSpec`, snapshots, strength metrics,
-diagnostic observations, interpretation summaries, and reconstruction support
-objects) provide internal interpretation support and do not change aggregate
-ownership. The raw per-sample capture and DSP path remains a separate
-performance-sensitive subsystem and is not modeled as object-per-sample domain
-structure.
+Supporting typed diagnostics concepts provide internal interpretation support
+and do not change aggregate ownership. `DrivingSegment` remains a core
+run-level concept within `TestRun`. `DrivingPhaseSummary`,
+`DrivingPhaseInterval`, `DrivingPhaseSegment`, `RunMetadataSnapshot`,
+`OrderMatchObservation`, `SpeedProfileSummary`, and
+`LocationIntensitySummary` remain supporting diagnostics-layer concepts.
 
 ## Canonical domain graph
 
@@ -133,11 +137,10 @@ Measurement -> Finding -> Report
 ### Core diagnostic aggregates and entities
 
 `DiagnosticCase`, `TestRun`, `Finding`, `Run`, `RunCapture`, `RunSetup`,
-`Car`, `DrivingSegment`, `DrivingPhase`, `Measurement`, `Sensor`,
-`SensorPlacement`, `SpeedSource`, `SpeedSourceKind`, `Symptom`, `TestPlan`,
-`RecommendedAction`, `SpeedProfile`, `RunSuitability`, `SuitabilityCheck`,
-`ConfigurationSnapshot`, `ConfidenceAssessment`, `FindingEvidence`,
-`LocationHotspot`, `VibrationOrigin`, `RunStatus`.
+`Car`, `Symptom`, `DrivingSegment`, `Measurement`, `Sensor`,
+`SensorPlacement`, `SpeedSource`, `TestPlan`, `RecommendedAction`,
+`SpeedProfile`, `RunSuitability`, `SuitabilityCheck`,
+`ConfigurationSnapshot`, `ConfidenceAssessment`, `LocationHotspot`.
 
 ### Domain enums
 
@@ -156,33 +159,19 @@ Measurement -> Finding -> Report
 
 `VibrationReading`.
 
-### Supporting typed internal concepts
+### Supporting typed internal diagnostics concepts
 
-- car-scoped interpretive value context: `OrderReferenceSpec`
-- run/capture interpretation snapshots: `AnalysisSettingsSnapshot`,
-  `CarSnapshot`, `RunContextSnapshot`, `RunMetadataSnapshot`
-- analysis reasoning values: `StrengthMetrics`, `StrengthPeak`,
-  `OrderMatchObservation`
-- diagnostics interpretation and reconstruction snapshots: `SpeedStatsSnapshot`
-  (also serves diagnostics speed-profile summary role),
-  `PhaseSummarySnapshot` (also serves diagnostics driving-phase summary role),
-  `LocationIntensitySummary`
-- reconstruction support intervals and segments: `DrivingPhaseInterval`,
-  `DrivingSegment` (also serves reconstruction/diagnostics segment role)
-
-File locations for new typed internal concepts:
-
-- `RunMetadataSnapshot`: `apps/server/vibesensor/domain/snapshots.py`
-- `OrderMatchObservation`: `apps/server/vibesensor/domain/order_match.py`
-- `DrivingPhaseInterval`: `apps/server/vibesensor/domain/driving_segment.py`
-- `LocationIntensitySummary`: `apps/server/vibesensor/domain/location_hotspot.py`
-
-> **Merge note (D1):** Three originally separate concepts were merged into
-> existing domain types with identical fields to avoid parallel implementations:
-> `DrivingPhaseSegment` → `DrivingSegment`, `SpeedProfileSummary` →
-> `SpeedStatsSnapshot`, `DrivingPhaseSummary` → `PhaseSummarySnapshot`.
-> `SpeedStatsSnapshot` is NOT the same concept as `SpeedProfile` (snapshot of
-> speed statistics vs live behavioral model).
+- `RunMetadataSnapshot`: typed internal diagnostics/reconstruction metadata
+  concept, distinct from arbitrary raw metadata JSON
+- `OrderMatchObservation`: one observed match between measured behavior and an
+  order/reference hypothesis
+- `DrivingPhaseSummary`: typed internal summary of driving-phase behavior
+- `DrivingPhaseInterval`: one interval on the driving-phase timeline
+- `DrivingPhaseSegment`: one summarized segment of phase behavior
+- `SpeedProfileSummary`: typed internal summary of speed-profile statistics
+  used by diagnostics, distinct from `SpeedProfile`
+- `LocationIntensitySummary`: typed internal summary of intensity by vehicle
+  location or observation point
 
 ### Analysis machinery
 
@@ -210,32 +199,27 @@ representations.
 - `Run` owns recording lifecycle semantics.
 - `RunCapture` owns immutable captured evidence from one completed run.
 - `RunSetup` owns stable setup context used to interpret a run capture.
-- `AnalysisSettingsSnapshot` is a run-attached typed snapshot/projection used
-  during interpretation; it does not co-own `OrderReferenceSpec` and is not an
-  alternate source of truth for car interpretive ownership.
-- `CarSnapshot` and `RunContextSnapshot` own run-attached typed context
-  snapshots.
-- `RunMetadataSnapshot` owns the typed internal diagnostics representation of
-  persisted or reconstructed run metadata; it is distinct from raw stored
-  metadata maps and arbitrary metadata JSON at storage boundaries.
-- `StrengthMetrics` owns typed strength-analysis semantics and contains
-  `StrengthPeak` values.
-- `SpeedStatsSnapshot` and `PhaseSummarySnapshot` own typed internal
-  reconstruction summaries and diagnostics interpretation snapshots.
+- `DrivingSegment` owns run-level segmented driving behavior within `TestRun`.
+- `SpeedProfile` owns run-level speed behavior within the core diagnostic
+  model.
+- `RunMetadataSnapshot` owns typed internal diagnostics/reconstruction
+  metadata semantics and is distinct from raw stored metadata maps and
+  arbitrary metadata JSON at storage boundaries.
 - `OrderMatchObservation` owns one typed internal observed match between
   measured behavior and an order/reference hypothesis.
-- `DrivingPhaseInterval` owns the typed internal representation of one
-  interval on the driving-phase timeline.
-- `DrivingSegment` owns the typed internal representation of summarized phase
-  behavior used by both domain and diagnostics/reconstruction flows.
-- `SpeedStatsSnapshot` owns typed internal speed-profile statistics used by
-  diagnostics; it is not the same concept as the domain `SpeedProfile`.
-- `LocationIntensitySummary` owns the typed internal representation of
-  intensity summarized by location or observation point for diagnostics
-  interpretation and report-preparation support.
+- `DrivingPhaseSummary` owns typed internal summary semantics for
+  driving-phase behavior.
+- `DrivingPhaseInterval` owns one typed internal interval on the
+  driving-phase timeline.
+- `DrivingPhaseSegment` owns one typed internal summarized segment of phase
+  behavior.
+- `SpeedProfileSummary` owns typed internal speed-profile statistics used by
+  diagnostics and is distinct from the core `SpeedProfile`.
+- `LocationIntensitySummary` owns typed internal intensity summary by vehicle
+  location or observation point.
 - Performance-sensitive raw sample and DSP representations may remain simple
   high-volume structures inside that subsystem boundary and do not own
-  diagnostic meaning.
+  higher-level diagnostic meaning.
 - Boundary representations own no diagnostic meaning.
 
 ## Domain vs analysis machinery vs boundary representations
@@ -244,18 +228,21 @@ The model separates four layers:
 
 - **Domain truth:** aggregates and domain entities centered on
   `DiagnosticCase` -> `TestRun` -> `Finding`, with capture lifecycle/evidence
-  through `Run` -> `RunCapture` -> `RunSetup`.
-- **Internal typed support:** stable internal interpretive and reasoning
-  objects (`OrderReferenceSpec`, snapshots, strength metrics,
-  `RunMetadataSnapshot`, `OrderMatchObservation`, `DrivingPhaseInterval`,
-  `DrivingSegment`, `LocationIntensitySummary`) used by diagnostics,
-  reconstruction, and interpretation logic.
+  through `Run` -> `RunCapture` -> `RunSetup`, and case-scoped vehicle
+  interpretive context through `Car` -> `OrderReferenceSpec`.
+- **Internal typed diagnostics support:** `RunMetadataSnapshot`,
+  `OrderMatchObservation`, `DrivingPhaseSummary`, `DrivingPhaseInterval`,
+  `DrivingPhaseSegment`, `SpeedProfileSummary`, and
+  `LocationIntensitySummary`. These objects support diagnostics,
+  reconstruction, and interpretation. They do not replace the aggregates and
+  they are not boundary payloads.
 - **Performance-sensitive raw sample / DSP support:** high-volume raw capture,
   telemetry, and signal-processing representations that may remain simple
-  arrays, compact records, or dict-like sample payloads where per-sample object
-  modeling would add unnecessary allocation and overhead.
-- **Boundary representations:** transport/storage/export/presentation shapes,
-  including `Report` and `HistoryRecord`.
+  arrays, compact records, or dict-like sample payloads. There is no canonical
+  per-sample typed object in this model, and the raw sample / DSP layer does
+  not own stable diagnostic meaning.
+- **Boundary representations:** transport, storage, export, and presentation
+  shapes, including `Report` and `HistoryRecord`.
 
 Boundary shapes are projections of domain or internal typed meaning, never the
 owners of that meaning. The raw sample / DSP layer is a deliberate internal
@@ -263,69 +250,65 @@ performance boundary, not the owner of stable diagnostic interpretation.
 
 ## Strong OOP rules for this repo
 
-Stable internal concepts with invariants, interpretation, repeated derivation,
-or repeated behavioral use belong in typed internal objects.
+Stable internal concepts with meaning, repeated interpretation, repeated
+derivation, or repeated normalization belong in typed objects.
 
-The model distinguishes sharply between two internal layers:
+The model distinguishes sharply between three representation contexts:
 
-- high-volume raw sample processing, where simple arrays, compact records, and
-  dict-like sample payloads are intentionally retained for performance
-- interpreted diagnostics concepts, where typed objects are preferred because
-  they own stable meaning
+- high-volume raw capture / DSP / sample-processing internals, where simple
+  arrays, compact records, and dict-like sample payloads are intentionally
+  retained for performance
+- diagnostics / reconstruction / interpretation internals, where stable
+  meaning belongs in typed objects
+- storage, transport, render, and archival boundaries, where payload-shaped
+  representations may remain dict-like
 
-API request/response shapes, payloads, DTOs, persistence models,
-archival/history shapes, export/render/template shapes, and config transport
-shapes may remain dict-like or payload-like at boundaries.
+In this model, the canonical typed diagnostics concepts are
+`RunMetadataSnapshot`, `OrderMatchObservation`, `DrivingPhaseSummary`,
+`DrivingPhaseInterval`, `DrivingPhaseSegment`, `SpeedProfileSummary`, and
+`LocationIntensitySummary`.
 
-Raw maps may also remain inside the performance-sensitive raw capture / DSP
-subsystem when they serve high-volume transport or numeric processing. Above
-that boundary, interpreted summaries, observations, intervals, segments, and
-reconstructed metadata belong in typed internal concepts rather than generic
-dict aliases.
-
-Boundary shapes must not become owners of diagnostic meaning.
-
-`Car.aspects` is not the canonical internal model for vehicle interpretive
-context. Vehicle interpretive context is carried by typed objects in `Car`
-scope, centered on `OrderReferenceSpec`.
+Simple representations in the raw capture / DSP subsystem must not become the
+owners of higher-level diagnostic meaning. Boundary payloads must not become
+the owners of diagnostic meaning. `RunSample` is not a canonical object in
+this model.
 
 ## Model ambiguities resolved by this document
 
 - **`Run` vs `TestRun`:** `Run` is capture lifecycle; `TestRun` is analyzed
   diagnostic run; `RunCapture` bridges them.
-- **`DrivingSegment` vs analysis segments:** `DrivingSegment` is the domain
-  segment concept and also serves the diagnostics/reconstruction segment role
-  (merged from `DrivingPhaseSegment`); `DrivingPhaseInterval` is a typed
-  internal diagnostics/reconstruction support concept; `PhaseSegment` remains
-  analysis machinery.
+- **Core `DrivingSegment` vs diagnostics `DrivingPhaseSegment`:**
+  `DrivingSegment` is a core run-level domain concept within `TestRun`.
+  `DrivingPhaseSegment` is a supporting typed diagnostics/reconstruction
+  concept for summarized phase behavior. `PhaseSegment` remains analysis
+  machinery.
+- **`DrivingPhaseSummary` vs `DrivingPhaseInterval`:**
+  `DrivingPhaseSummary` is a typed internal summary of driving-phase behavior;
+  `DrivingPhaseInterval` is one interval on the driving-phase timeline.
+- **`SpeedProfile` vs `SpeedProfileSummary`:** `SpeedProfile` is a core
+  run-level domain concept; `SpeedProfileSummary` is a supporting typed
+  internal diagnostics summary of speed-profile statistics.
+- **`RunMetadataSnapshot` vs raw metadata maps:** `RunMetadataSnapshot` is the
+  typed internal diagnostics/reconstruction metadata concept; raw metadata
+  maps and arbitrary metadata JSON remain boundary or storage
+  representations.
+- **`OrderMatchObservation`:** `OrderMatchObservation` is one observed match
+  between measured behavior and an order/reference hypothesis.
+- **`LocationIntensitySummary` vs boundary intensity tables:**
+  `LocationIntensitySummary` is a typed internal diagnostics summary by
+  vehicle location or observation point; boundary tables or payload rows are
+  projections.
 - **`Car` context ownership:** `Car` owns case-scoped vehicle interpretive
   context. `OrderReferenceSpec` is a supporting typed value object within that
   context.
-- **`OrderReferenceSpec` ownership boundary:** `AnalysisSettingsSnapshot` may
-  carry run-attached projected fields aligned with order-reference
-  interpretation, but it does not co-own `OrderReferenceSpec`.
-- **Typed internal support objects:** `AnalysisSettingsSnapshot`,
-  `CarSnapshot`, and `RunContextSnapshot` are internal interpretation-context
-  snapshots; `RunMetadataSnapshot` is the typed internal diagnostics
-  representation of reconstructed run metadata; `StrengthMetrics` and
-  `StrengthPeak` are internal reasoning values; `OrderMatchObservation` is a
-  typed internal order/reference match observation; `DrivingPhaseInterval`
-  is a typed internal diagnostics/reconstruction support object for interpreted
-  phase behavior; `SpeedStatsSnapshot` and `PhaseSummarySnapshot` are internal
-  reconstruction snapshots that also serve diagnostics interpretation roles
-  (merged from `SpeedProfileSummary` and `DrivingPhaseSummary` respectively);
-  `DrivingSegment` also serves the reconstruction segment role (merged from
-  `DrivingPhaseSegment`); `SpeedStatsSnapshot` is NOT the same concept as
-  `SpeedProfile`; `LocationIntensitySummary` is a typed internal
-  interpretation/report-preparation support object.
-- **Typed internal concepts vs boundary maps:** these supporting objects replace
-  generic dict-shaped diagnostics concepts inside diagnostics and reconstruction
-  logic. Raw maps may still exist at storage, transport, and render boundaries.
+- **Typed internal concepts vs boundary maps:** the seven diagnostics concepts
+  carry stable internal diagnostics meaning. Raw maps may still exist at
+  storage, transport, and render boundaries.
 - **Performance boundary:** raw per-sample capture, signal-processing, and
   high-volume telemetry representations remain intentionally simple inside the
   performance-sensitive subsystem boundary. Stable higher-level diagnostics
-  meaning above that boundary is carried by typed internal concepts.
-- **No canonical `RunSample` object:** per-sample raw data is intentionally not
-  promoted to a canonical typed object in this model.
+  meaning above that boundary is carried by typed objects.
+- **No canonical `RunSample` object:** per-sample raw data is intentionally
+  not promoted to a canonical typed object in this model.
 - **`Report` vs `HistoryRecord`:** `Report` communicates conclusions;
   `HistoryRecord` archives state. Neither is core diagnostic truth.
