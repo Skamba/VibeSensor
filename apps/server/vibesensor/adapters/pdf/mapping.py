@@ -34,11 +34,13 @@ from vibesensor.domain import (
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
-from vibesensor.shared.boundaries.vibration_origin import vibration_origin_from_payload
+from vibesensor.shared.boundaries.vibration_origin import (
+    build_origin_explanation,
+    vibration_origin_from_payload,
+)
+from vibesensor.shared.constants import PHASE_I18N_KEYS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
-from vibesensor.use_cases.diagnostics import PHASE_I18N_KEYS
-from vibesensor.use_cases.diagnostics.summary_builder import build_origin_explanation
 
 __all__ = ["Report", "map_summary"]
 

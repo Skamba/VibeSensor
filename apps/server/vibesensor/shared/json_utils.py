@@ -16,6 +16,7 @@ __all__ = [
     "as_float_or_none",
     "as_int_or_none",
     "deep_merge",
+    "i18n_ref",
     "safe_json_dumps",
     "safe_json_loads",
     "sanitize_for_json",
@@ -161,3 +162,11 @@ def deep_merge(base: JsonObject, override: JsonObject) -> JsonObject:
         else:
             merged[key] = value
     return merged
+
+
+def i18n_ref(key: str, **params: JsonValue) -> JsonObject:
+    """Build a language-neutral i18n reference dict."""
+    ref: JsonObject = {"_i18n_key": key}
+    if params:
+        ref.update(params)
+    return ref

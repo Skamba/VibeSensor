@@ -6,8 +6,8 @@ boundary payload shapes.
 ``AnalysisSettingsSnapshot`` — typed analysis-settings context.
 ``RunContextSnapshot`` — run-attached interpretive snapshot containing
 settings and optional car context.
-``SpeedStatsSnapshot`` — speed summary for reconstruction/interpretation.
-``PhaseSummarySnapshot`` — phase summary for reconstruction/interpretation.
+``SpeedProfileSummary`` — speed summary for reconstruction/interpretation.
+``DrivingPhaseSummary`` — phase summary for reconstruction/interpretation.
 """
 
 from __future__ import annotations
@@ -20,15 +20,16 @@ from types import MappingProxyType
 from typing import ClassVar
 
 from .car import CarSnapshot, OrderReferenceSpec
+from .driving_segment import DrivingPhaseSegment
 
 _LOGGER = logging.getLogger(__name__)
 
 __all__ = [
     "AnalysisSettingsSnapshot",
-    "PhaseSummarySnapshot",
+    "DrivingPhaseSummary",
     "RunContextSnapshot",
     "RunMetadataSnapshot",
-    "SpeedStatsSnapshot",
+    "SpeedProfileSummary",
 ]
 
 
@@ -308,12 +309,12 @@ class RunContextSnapshot:
 
 
 # ---------------------------------------------------------------------------
-# SpeedStatsSnapshot
+# SpeedProfileSummary
 # ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True, slots=True)
-class SpeedStatsSnapshot:
+class SpeedProfileSummary:
     """Typed internal speed-summary snapshot for reconstruction and
     interpretation support.
     """
@@ -327,7 +328,7 @@ class SpeedStatsSnapshot:
     sample_count: int = 0
 
     @classmethod
-    def from_dict(cls, d: Mapping[str, object]) -> SpeedStatsSnapshot:
+    def from_dict(cls, d: Mapping[str, object]) -> SpeedProfileSummary:
         """Parse from flat mapping. Missing keys default sensibly."""
 
         def _opt_float(key: str) -> float | None:
@@ -364,12 +365,12 @@ class SpeedStatsSnapshot:
 
 
 # ---------------------------------------------------------------------------
-# PhaseSummarySnapshot
+# DrivingPhaseSummary
 # ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True, slots=True)
-class PhaseSummarySnapshot:
+class DrivingPhaseSummary:
     """Typed internal phase-summary snapshot for reconstruction and
     interpretation support.
     """
@@ -383,6 +384,7 @@ class PhaseSummarySnapshot:
     cruise_pct: float = 0.0
     idle_pct: float = 0.0
     speed_unknown_pct: float = 0.0
+    phase_type_summaries: tuple[DrivingPhaseSegment, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.phase_counts, MappingProxyType):
@@ -405,7 +407,7 @@ class PhaseSummarySnapshot:
         }
 
     @classmethod
-    def from_dict(cls, d: Mapping[str, object]) -> PhaseSummarySnapshot:
+    def from_dict(cls, d: Mapping[str, object]) -> DrivingPhaseSummary:
         """Parse from flat mapping. Missing keys default sensibly."""
         raw_counts = d.get("phase_counts")
         phase_counts: dict[str, int] = {}

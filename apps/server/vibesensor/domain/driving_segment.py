@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-__all__ = ["DrivingPhase", "DrivingPhaseInterval", "DrivingSegment"]
+__all__ = ["DrivingPhase", "DrivingPhaseInterval", "DrivingPhaseSegment", "DrivingSegment"]
 
 
 # ---------------------------------------------------------------------------
@@ -99,3 +99,26 @@ class DrivingPhaseInterval:
         if self.start_t_s is not None and self.end_t_s is not None:
             return self.end_t_s - self.start_t_s
         return None
+
+
+# ---------------------------------------------------------------------------
+# DrivingPhaseSegment
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class DrivingPhaseSegment:
+    """One summarized segment of phase behavior (per phase type).
+
+    Aggregates all contiguous segments of a single ``DrivingPhase`` into
+    a single summary record.  Unlike ``DrivingSegment`` (one per contiguous
+    time span), there is at most one ``DrivingPhaseSegment`` per phase type
+    in a run.
+    """
+
+    phase: DrivingPhase
+    duration_s: float
+    sample_count: int
+    speed_min_kmh: float | None = None
+    speed_max_kmh: float | None = None
+    fraction: float = 0.0

@@ -8,7 +8,9 @@ from typing import TypedDict
 from vibesensor.domain.finding import Finding, VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.vibration_origin import VibrationOrigin
+from vibesensor.shared.constants import PHASE_I18N_KEYS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonValue
 
 
@@ -156,3 +158,29 @@ def origin_payload_from_finding(
         "dominant_phase": origin.dominant_phase,
         "explanation": origin.explanation,
     }
+
+
+def build_origin_explanation(
+    *,
+    source: str,
+    speed_band: str,
+    location: str,
+    dominance: float | None,
+    weak: bool,
+    dominant_phase: str,
+) -> JsonValue:
+    """Build the language-neutral origin explanation block."""
+    explanation_parts: list[JsonValue] = [
+        i18n_ref(
+            "ORIGIN_EXPLANATION_FINDING_1",
+            source=source,
+            speed_band=speed_band or "unknown",
+            location=location,
+            dominance=f"{dominance:.2f}x" if dominance is not None else "n/a",
+        ),
+    ]
+    if weak:
+        explanation_parts.append(i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
+    if dominant_phase and dominant_phase in PHASE_I18N_KEYS:
+        explanation_parts.append(i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
+    return explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts

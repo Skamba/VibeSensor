@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 _SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
 
 
-class HistoryRunRecord(TypedDict, total=False):
+class HistoryRecord(TypedDict, total=False):
     """History-run persistence record used only inside history workflows."""
 
     run_id: str
@@ -50,7 +50,7 @@ def safe_filename(name: str) -> str:
     return cleaned or "download"
 
 
-def resolve_run_language(run: HistoryRunRecord, requested: str | None) -> str:
+def resolve_run_language(run: HistoryRecord, requested: str | None) -> str:
     """Resolve the effective language for a history run.
 
     Priority: explicit *requested* lang > run metadata ``language`` > ``"en"``.
@@ -65,14 +65,14 @@ def resolve_run_language(run: HistoryRunRecord, requested: str | None) -> str:
     return "en"
 
 
-async def async_require_run(history_db: HistoryDB, run_id: str) -> HistoryRunRecord:
+async def async_require_run(history_db: HistoryDB, run_id: str) -> HistoryRecord:
     """Fetch a history run in a thread or raise a domain exception."""
     run = await asyncio.to_thread(history_db.get_run, run_id)
     if run is None:
         raise RunNotFoundError(f"Run {run_id!r} not found")
     if not is_json_object(run):
         raise DataCorruptError(f"Run {run_id!r} data is corrupt")
-    return cast("HistoryRunRecord", run)
+    return cast("HistoryRecord", run)
 
 
 def strip_internal_fields(analysis: JsonObject) -> JsonObject:
@@ -80,7 +80,7 @@ def strip_internal_fields(analysis: JsonObject) -> JsonObject:
     return {key: value for key, value in analysis.items() if not key.startswith("_")}
 
 
-def require_analysis_ready(run: HistoryRunRecord) -> JsonObject:
+def require_analysis_ready(run: HistoryRecord) -> JsonObject:
     """Return the analysis dict or raise a domain exception."""
     if run["status"] == RunStatus.ANALYZING:
         raise AnalysisNotReadyError("Analysis is still in progress", status="in_progress")

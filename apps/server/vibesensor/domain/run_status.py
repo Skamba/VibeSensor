@@ -1,8 +1,8 @@
 """Run-status lifecycle as a domain concept.
 
 ``RunStatus`` is a ``StrEnum`` so its members compare equal to plain
-strings (``RunStatus.COMPLETE == "complete"``), preserving backward
-compatibility with SQLite storage and existing dict-based code paths.
+strings (``RunStatus.COMPLETE == "complete"``), enabling direct use as
+SQLite column values and in dict-based code paths.
 
 This tracks the *persisted* run lifecycle in the database.  The
 in-memory run lifecycle is tracked by ``Run`` in ``domain/run.py``

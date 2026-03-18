@@ -10,20 +10,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TypeAlias, TypedDict
 
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 
 Sample: TypeAlias = JsonObject
 """A single recorded sample row.  Alias for ``JsonObject``; used for
 semantic clarity across analysis modules, not additional type safety."""
-
-
-def i18n_ref(key: str, **params: JsonValue) -> JsonObject:
-    """Build a language-neutral i18n reference dict."""
-    ref: JsonObject = {"_i18n_key": key}
-    if params:
-        ref.update(params)
-    return ref
 
 
 class AccelStatistics(TypedDict):

@@ -10,11 +10,9 @@ from vibesensor.domain import LocationHotspot, OrderMatchObservation, VibrationS
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.shared.constants import MULTI_SENSOR_CORROBORATION_DB
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.locations import has_any_wheel_location, is_wheel_location
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.diagnostics._types import (
-    i18n_ref,
-)
 from vibesensor.use_cases.diagnostics.helpers import _weighted_percentile
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15

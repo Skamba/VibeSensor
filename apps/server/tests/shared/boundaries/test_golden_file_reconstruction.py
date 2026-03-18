@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from test_support import build_speed_sweep_fault_samples, standard_metadata
 
-from vibesensor.domain.snapshots import PhaseSummarySnapshot, SpeedStatsSnapshot
+from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
 from vibesensor.shared.boundaries.diagnostic_case import (
     speed_profile_from_stats,
 )
@@ -63,8 +63,8 @@ class TestGoldenFileReconstruction:
             pytest.skip("No speed_stats in golden summary")
 
         sp = speed_profile_from_stats(
-            SpeedStatsSnapshot.from_dict(raw_speed_stats),
-            PhaseSummarySnapshot.from_dict(raw_phase_info) if raw_phase_info else None,
+            SpeedProfileSummary.from_dict(raw_speed_stats),
+            DrivingPhaseSummary.from_dict(raw_phase_info) if raw_phase_info else None,
         )
         assert sp == test_run.speed_profile
 
@@ -73,28 +73,28 @@ class TestRoundTripParity:
     """Round-trip parity tests for snapshot from_dict factories."""
 
     def test_speed_stats_snapshot_from_dict_empty(self) -> None:
-        snap = SpeedStatsSnapshot.from_dict({})
+        snap = SpeedProfileSummary.from_dict({})
         assert snap.min_kmh is None
         assert snap.max_kmh is None
         assert snap.steady_speed is False
         assert snap.sample_count == 0
 
     def test_speed_stats_snapshot_from_dict_partial(self) -> None:
-        snap = SpeedStatsSnapshot.from_dict({"min_kmh": 30, "max_kmh": 80})
+        snap = SpeedProfileSummary.from_dict({"min_kmh": 30, "max_kmh": 80})
         assert snap.min_kmh == 30.0
         assert snap.max_kmh == 80.0
         assert snap.steady_speed is False
         assert snap.sample_count == 0
 
     def test_phase_summary_snapshot_from_dict_empty(self) -> None:
-        snap = PhaseSummarySnapshot.from_dict({})
+        snap = DrivingPhaseSummary.from_dict({})
         assert snap.has_cruise is False
         assert snap.has_acceleration is False
         assert snap.cruise_pct == 0.0
 
     def test_phase_summary_fallback_to_phase_counts(self) -> None:
         """When top-level has_cruise is missing, fall back to phase_counts."""
-        snap = PhaseSummarySnapshot.from_dict(
+        snap = DrivingPhaseSummary.from_dict(
             {
                 "phase_counts": {"cruise": 10, "acceleration": 5},
             }
@@ -104,7 +104,7 @@ class TestRoundTripParity:
 
     def test_phase_summary_fallback_to_phase_pcts(self) -> None:
         """When top-level cruise_pct is missing, fall back to phase_pcts."""
-        snap = PhaseSummarySnapshot.from_dict(
+        snap = DrivingPhaseSummary.from_dict(
             {
                 "phase_pcts": {"cruise": 45.0, "idle": 12.0, "speed_unknown": 8.0},
             }
@@ -114,7 +114,7 @@ class TestRoundTripParity:
         assert snap.speed_unknown_pct == pytest.approx(8.0)
 
     def test_speed_profile_from_stats_with_empty_snapshots(self) -> None:
-        sp = speed_profile_from_stats(SpeedStatsSnapshot())
+        sp = speed_profile_from_stats(SpeedProfileSummary())
         assert sp.min_kmh == 0.0
         assert sp.max_kmh == 0.0
         assert sp.steady_speed is False
