@@ -18,7 +18,7 @@ import math
 from dataclasses import dataclass
 
 from vibesensor.domain import DrivingPhase
-from vibesensor.domain.snapshots import PhaseSummarySnapshot
+from vibesensor.domain.snapshots import DrivingPhaseSummary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
 
@@ -266,7 +266,7 @@ def segment_run_phases(
     return per_sample, segments
 
 
-def phase_summary(segments: list[PhaseSegment]) -> PhaseSummarySnapshot:
+def phase_summary(segments: list[PhaseSegment]) -> DrivingPhaseSummary:
     """Return a typed snapshot suitable for embedding in the run summary."""
     phase_counts: dict[str, int] = {}
     total = 0
@@ -278,7 +278,7 @@ def phase_summary(segments: list[PhaseSegment]) -> PhaseSummarySnapshot:
     for phase, count in phase_counts.items():
         phase_pcts[phase] = (count / total * 100.0) if total > 0 else 0.0
 
-    return PhaseSummarySnapshot(
+    return DrivingPhaseSummary(
         phase_counts=phase_counts,
         phase_pcts=phase_pcts,
         total_samples=total,

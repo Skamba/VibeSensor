@@ -31,7 +31,7 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     Finding as DomainFinding,
 )
-from vibesensor.domain.snapshots import PhaseSummarySnapshot, SpeedStatsSnapshot
+from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedStatsSnapshot
 from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
@@ -510,7 +510,7 @@ def build_summary_payload(
     phase_timeline: list[DrivingPhaseInterval],
     speed_stats: SpeedStatsSnapshot,
     speed_stats_by_phase: dict[str, SpeedStatsSnapshot],
-    phase_info: PhaseSummarySnapshot,
+    phase_info: DrivingPhaseSummary,
     sensor_locations: list[str],
     connected_locations: set[str],
     sensor_intensity_by_location: list[LocationIntensitySummary],
@@ -735,7 +735,7 @@ def prepare_run_data(
     )
 
 
-def build_phase_summary(phase_segments: list[PhaseSegment]) -> PhaseSummarySnapshot:
+def build_phase_summary(phase_segments: list[PhaseSegment]) -> DrivingPhaseSummary:
     """Small wrapper to keep summary-building imports localized."""
     from vibesensor.use_cases.diagnostics.phase_segmentation import phase_summary
 

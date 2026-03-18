@@ -52,7 +52,7 @@ _REQUIRED_DOMAIN_EXPORTS = [
     "StrengthMetrics",
     "StrengthPeak",
     "SpeedStatsSnapshot",
-    "PhaseSummarySnapshot",
+    "DrivingPhaseSummary",
     # New typed internal concepts (Phase A creates these)
     "RunMetadataSnapshot",
     "OrderMatchObservation",

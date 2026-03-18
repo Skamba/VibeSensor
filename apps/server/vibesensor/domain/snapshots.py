@@ -7,7 +7,7 @@ boundary payload shapes.
 ``RunContextSnapshot`` — run-attached interpretive snapshot containing
 settings and optional car context.
 ``SpeedStatsSnapshot`` — speed summary for reconstruction/interpretation.
-``PhaseSummarySnapshot`` — phase summary for reconstruction/interpretation.
+``DrivingPhaseSummary`` — phase summary for reconstruction/interpretation.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 
 __all__ = [
     "AnalysisSettingsSnapshot",
-    "PhaseSummarySnapshot",
+    "DrivingPhaseSummary",
     "RunContextSnapshot",
     "RunMetadataSnapshot",
     "SpeedStatsSnapshot",
@@ -364,12 +364,12 @@ class SpeedStatsSnapshot:
 
 
 # ---------------------------------------------------------------------------
-# PhaseSummarySnapshot
+# DrivingPhaseSummary
 # ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True, slots=True)
-class PhaseSummarySnapshot:
+class DrivingPhaseSummary:
     """Typed internal phase-summary snapshot for reconstruction and
     interpretation support.
     """
@@ -405,7 +405,7 @@ class PhaseSummarySnapshot:
         }
 
     @classmethod
-    def from_dict(cls, d: Mapping[str, object]) -> PhaseSummarySnapshot:
+    def from_dict(cls, d: Mapping[str, object]) -> DrivingPhaseSummary:
         """Parse from flat mapping. Missing keys default sensibly."""
         raw_counts = d.get("phase_counts")
         phase_counts: dict[str, int] = {}

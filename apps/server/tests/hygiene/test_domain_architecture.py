@@ -1551,7 +1551,7 @@ _EXPECTED_DOMAIN_EXPORTS = [
     "TireSpec",
     # Value objects — snapshots
     "AnalysisSettingsSnapshot",
-    "PhaseSummarySnapshot",
+    "DrivingPhaseSummary",
     "RunContextSnapshot",
     "SpeedStatsSnapshot",
     # Value objects — run and capture

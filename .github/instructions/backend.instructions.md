@@ -12,7 +12,7 @@ Backend (python `apps/server/`)
 	- `apps/server/vibesensor/adapters/pdf/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
 	- `apps/server/vibesensor/domain/`: DDD-aligned domain model package. Primary domain objects live under `vibesensor/domain/`; closely related value objects may share a file with their parent aggregate. Includes `FindingKind` enum, `RunStatus` state machine, and all domain queries. Key domain files and types:
 		- `car.py`: Car, TireSpec, OrderReferenceSpec, CarSnapshot
-		- `snapshots.py`: AnalysisSettingsSnapshot, RunContextSnapshot, SpeedStatsSnapshot, PhaseSummarySnapshot
+		- `snapshots.py`: AnalysisSettingsSnapshot, RunContextSnapshot, SpeedStatsSnapshot, DrivingPhaseSummary
 		- `strength_metrics.py`: StrengthMetrics, StrengthPeak
 		- `finding.py`: Finding, FindingEvidence (with `from_metrics()` factory and `with_confidence_assessment()` method)
 		- See `docs/domain-model.md` for the full relationship map and file layout.

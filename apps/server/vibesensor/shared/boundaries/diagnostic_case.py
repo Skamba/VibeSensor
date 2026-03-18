@@ -15,7 +15,7 @@ from vibesensor.domain.finding import Finding
 from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture, RunSetup
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.sensor import Sensor
-from vibesensor.domain.snapshots import PhaseSummarySnapshot, SpeedStatsSnapshot
+from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedStatsSnapshot
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
@@ -144,10 +144,10 @@ def case_context_from_metadata(
 
 def speed_profile_from_stats(
     speed_stats: SpeedStatsSnapshot,
-    phase_summary: PhaseSummarySnapshot | None = None,
+    phase_summary: DrivingPhaseSummary | None = None,
 ) -> SpeedProfile:
     """Construct a ``SpeedProfile`` from typed speed-stats and phase-summary snapshots."""
-    ps = phase_summary or PhaseSummarySnapshot()
+    ps = phase_summary or DrivingPhaseSummary()
 
     def _or_zero(v: float | None) -> float:
         return v if v is not None else 0.0
@@ -272,7 +272,7 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     speed_profile = (
         speed_profile_from_stats(
             SpeedStatsSnapshot.from_dict(raw_speed_stats),
-            PhaseSummarySnapshot.from_dict(phase_info) if isinstance(phase_info, Mapping) else None,
+            DrivingPhaseSummary.from_dict(phase_info) if isinstance(phase_info, Mapping) else None,
         )
         if isinstance(raw_speed_stats, Mapping)
         else None

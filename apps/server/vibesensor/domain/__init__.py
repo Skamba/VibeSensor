@@ -56,7 +56,7 @@ from .run_suitability import RunSuitability, SuitabilityCheck
 from .sensor import Sensor, SensorPlacement
 from .snapshots import (
     AnalysisSettingsSnapshot,
-    PhaseSummarySnapshot,
+    DrivingPhaseSummary,
     RunContextSnapshot,
     RunMetadataSnapshot,
     SpeedStatsSnapshot,
@@ -80,7 +80,7 @@ __all__ = [
     "TireSpec",
     # Value objects — snapshots
     "AnalysisSettingsSnapshot",
-    "PhaseSummarySnapshot",
+    "DrivingPhaseSummary",
     "RunContextSnapshot",
     "RunMetadataSnapshot",
     "SpeedStatsSnapshot",

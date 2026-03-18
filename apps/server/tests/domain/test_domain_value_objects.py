@@ -39,7 +39,7 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     TestPlan as DomainTestPlan,
 )
-from vibesensor.domain.snapshots import PhaseSummarySnapshot, SpeedStatsSnapshot
+from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedStatsSnapshot
 from vibesensor.shared.boundaries.diagnostic_case import (
     run_suitability_from_payload,
     speed_profile_from_stats,
@@ -753,7 +753,7 @@ class TestSpeedProfile:
             steady_speed=True,
             sample_count=500,
         )
-        phase_summary = PhaseSummarySnapshot(
+        phase_summary = DrivingPhaseSummary(
             has_cruise=True,
             has_acceleration=True,
             cruise_pct=65.0,
@@ -797,7 +797,7 @@ class TestSpeedProfile:
                 max_kmh=60,
                 sample_count=50,
             ),
-            PhaseSummarySnapshot.from_dict(
+            DrivingPhaseSummary.from_dict(
                 {
                     "phase_counts": {"acceleration": 5, "cruise": 20},
                     "phase_pcts": {"cruise": 40.0, "idle": 15.0, "speed_unknown": 20.0},
