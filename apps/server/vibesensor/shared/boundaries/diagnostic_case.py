@@ -244,9 +244,7 @@ def _require_authoritative_case_id(summary: Mapping[str, object]) -> str:
         normalized_case_id = case_id.strip()
         if normalized_case_id:
             return normalized_case_id
-    raise ValueError(
-        "Cannot decode DiagnosticCase from summary without authoritative case_id"
-    )
+    raise ValueError("Cannot decode DiagnosticCase from summary without authoritative case_id")
 
 
 def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:

@@ -1514,23 +1514,17 @@ class TestDrivingPhaseSegment:
         assert seg.fraction == pytest.approx(0.6)
 
     def test_frozen_immutability(self) -> None:
-        seg = DrivingPhaseSegment(
-            phase=DrivingPhase.IDLE, duration_s=1.0, sample_count=10
-        )
+        seg = DrivingPhaseSegment(phase=DrivingPhase.IDLE, duration_s=1.0, sample_count=10)
         with pytest.raises(dataclasses.FrozenInstanceError):
             seg.sample_count = 99  # type: ignore[misc]
 
     def test_optional_speed_fields_default_none(self) -> None:
-        seg = DrivingPhaseSegment(
-            phase=DrivingPhase.ACCELERATION, duration_s=5.0, sample_count=100
-        )
+        seg = DrivingPhaseSegment(phase=DrivingPhase.ACCELERATION, duration_s=5.0, sample_count=100)
         assert seg.speed_min_kmh is None
         assert seg.speed_max_kmh is None
 
     def test_fraction_defaults_to_zero(self) -> None:
-        seg = DrivingPhaseSegment(
-            phase=DrivingPhase.DECELERATION, duration_s=2.0, sample_count=0
-        )
+        seg = DrivingPhaseSegment(phase=DrivingPhase.DECELERATION, duration_s=2.0, sample_count=0)
         assert seg.fraction == 0.0
 
     def test_has_slots(self) -> None:
