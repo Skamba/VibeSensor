@@ -4,13 +4,7 @@ from __future__ import annotations
 
 from vibesensor.adapters.pdf.mapping import (
     _origin_from_aggregate,
-    summary_end_time_utc,
-    summary_metadata,
-    summary_record_length,
-    summary_sensor_intensity_by_location,
-    summary_sensor_locations_active,
-    summary_start_time_utc,
-    summary_warnings,
+    prepare_report_mapping_context,
 )
 from vibesensor.domain import (
     Finding,
@@ -39,6 +33,7 @@ def _minimal_summary(**overrides: object) -> dict[str, object]:
         "duration_s": 5.0,
         "record_length": "0:05",
         "lang": "en",
+        "report_date": "2025-01-01T10:00:00Z",
         "metadata": {"car_name": "Test Car"},
         "findings": [],
         "top_causes": [],
@@ -75,21 +70,6 @@ def _minimal_summary(**overrides: object) -> dict[str, object]:
 
 
 class TestSummaryHelpers:
-    def test_metadata(self) -> None:
-        assert summary_metadata(_minimal_summary())["car_name"] == "Test Car"
-
-    def test_record_length(self) -> None:
-        assert summary_record_length(_minimal_summary(record_length="1:30")) == "1:30"
-
-    def test_record_length_none(self) -> None:
-        assert summary_record_length(_minimal_summary(record_length=None)) is None
-
-    def test_start_time_utc(self) -> None:
-        assert summary_start_time_utc(_minimal_summary()) == "2025-01-01T10:00:00Z"
-
-    def test_end_time_utc(self) -> None:
-        assert summary_end_time_utc(_minimal_summary()) == "2025-01-01T10:00:05Z"
-
     def test_report_origin_projection_reads_domain_vibration_origin(self) -> None:
         primary = Finding(
             finding_id="F001",
@@ -178,12 +158,14 @@ class TestSummaryHelpers:
         assert origin["speed_band"] == "80-90 km/h"
 
     def test_sensor_locations_active_prefers_connected(self) -> None:
-        assert summary_sensor_locations_active(_minimal_summary()) == ["front_left"]
+        ctx = prepare_report_mapping_context(_minimal_summary())  # type: ignore[arg-type]
+        assert ctx.sensor_locations_active == ["front_left"]
 
     def test_sensor_locations_active_fallback(self) -> None:
-        assert "front_left" in summary_sensor_locations_active(
-            _minimal_summary(sensor_locations_connected_throughout=[])
+        ctx = prepare_report_mapping_context(
+            _minimal_summary(sensor_locations_connected_throughout=[]),  # type: ignore[arg-type]
         )
+        assert "front_left" in ctx.sensor_locations_active
 
     def test_boundary_test_plan_payload_projects_semantic_action_fields(self) -> None:
         projected = step_payloads_from_plan(
@@ -259,15 +241,10 @@ class TestSummaryHelpers:
 
     def test_warnings(self) -> None:
         warns = [{"title": "Low data", "severity": "warn"}]
-        assert len(summary_warnings(_minimal_summary(warnings=warns))) == 1
+        s = _minimal_summary(warnings=warns)
+        assert len(s["warnings"]) == 1  # type: ignore[arg-type]
 
     def test_sensor_intensity_by_location(self) -> None:
         intensity = [{"location": "front_left", "p95_intensity_db": 25.0}]
-        assert (
-            len(
-                summary_sensor_intensity_by_location(
-                    _minimal_summary(sensor_intensity_by_location=intensity)
-                )
-            )
-            == 1
-        )
+        s = _minimal_summary(sensor_intensity_by_location=intensity)
+        assert len(s["sensor_intensity_by_location"]) == 1  # type: ignore[arg-type]

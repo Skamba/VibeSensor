@@ -223,47 +223,6 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
     return str(value).replace("_", " ").title()
 
 
-# ---------------------------------------------------------------------------
-# Context extraction
-# ---------------------------------------------------------------------------
-
-
-def summary_metadata(summary: AnalysisSummary) -> JsonObject:
-    return summary.get("metadata") or {}
-
-
-def summary_report_date(summary: AnalysisSummary) -> str:
-    return str(summary.get("report_date") or "")
-
-
-def summary_record_length(summary: AnalysisSummary) -> str | None:
-    return str(summary.get("record_length") or "") or None
-
-
-def summary_start_time_utc(summary: AnalysisSummary) -> str | None:
-    return str(summary.get("start_time_utc") or "").strip() or None
-
-
-def summary_end_time_utc(summary: AnalysisSummary) -> str | None:
-    return str(summary.get("end_time_utc") or "").strip() or None
-
-
-def summary_warnings(summary: AnalysisSummary) -> list[object]:
-    return list(summary.get("warnings", []))
-
-
-def summary_sensor_intensity_by_location(summary: AnalysisSummary) -> list[JsonObject]:
-    return [row for row in summary.get("sensor_intensity_by_location", []) if isinstance(row, dict)]
-
-
-def summary_sensor_locations_active(summary: AnalysisSummary) -> list[str]:
-    connected = summary.get("sensor_locations_connected_throughout", [])
-    active = [str(loc) for loc in connected if str(loc).strip()]
-    if not active:
-        active = [str(loc) for loc in summary.get("sensor_locations", []) if str(loc).strip()]
-    return active
-
-
 def _origin_from_aggregate(
     aggregate: TestRun | None,
     fallback: Mapping[str, Any] | None,
@@ -520,9 +479,7 @@ def build_data_trust_from_summary(
                     detail=_resolve_detail_text(proj.get("explanation"), lang=lang, tr=tr),
                 ),
             )
-    for warning in summary_warnings(summary):
-        if not isinstance(warning, dict):
-            continue
+    for warning in summary["warnings"]:
         data_trust.append(
             DataTrustItem(
                 check=_resolve_detail_text(warning.get("title"), lang=lang, tr=tr) or "",
@@ -771,13 +728,16 @@ def prepare_report_mapping_context(
     caller-provided aggregate is used directly (avoids double
     reconstruction when the caller already holds a ``TestRun``).
     """
-    meta = summary_metadata(summary)
+    meta = summary["metadata"]
     car_name = str(meta.get("car_name") or "").strip() or None
     car_type = str(meta.get("car_type") or "").strip() or None
-    report_date = summary_report_date(summary) or utc_now_iso()
+    report_date = str(summary["report_date"] or "") or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
-    sensor_locations_active = summary_sensor_locations_active(summary)
+    connected = summary["sensor_locations_connected_throughout"]
+    sensor_locations_active = [loc for loc in connected if loc.strip()]
+    if not sensor_locations_active:
+        sensor_locations_active = [loc for loc in summary["sensor_locations"] if loc.strip()]
 
     # Build domain aggregate for domain-first decisions downstream
     if test_run is None:
@@ -802,9 +762,9 @@ def prepare_report_mapping_context(
         origin=origin,
         origin_location=origin_location,
         sensor_locations_active=sensor_locations_active,
-        duration_text=summary_record_length(summary),
-        start_time_utc=summary_start_time_utc(summary),
-        end_time_utc=summary_end_time_utc(summary),
+        duration_text=summary["record_length"] or None,
+        start_time_utc=str(summary["start_time_utc"] or "").strip() or None,
+        end_time_utc=str(summary["end_time_utc"] or "").strip() or None,
         sample_rate_hz=f"{rate:g}" if rate is not None else None,
         tire_spec_text=tire_spec_text(meta),
         sample_count=domain_aggregate.capture.sample_count,
@@ -988,7 +948,7 @@ def _build_report_template_data(
     """
     context = prepare_report_mapping_context(summary, test_run=test_run)
     raw_sensor_intensity = filter_active_sensor_intensity(
-        summary_sensor_intensity_by_location(summary),
+        summary["sensor_intensity_by_location"],
         context.sensor_locations_active,
     )
     primary = resolve_primary_report_candidate(

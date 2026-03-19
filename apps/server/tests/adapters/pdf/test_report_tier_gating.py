@@ -92,6 +92,19 @@ def _make_summary(
         ],
         "sensor_count_used": sensor_count,
         "lang": lang,
+        "metadata": {},
+        "report_date": "",
+        "record_length": "",
+        "start_time_utc": "",
+        "end_time_utc": "",
+        "warnings": [],
+        "sensor_locations": [],
+        "sensor_locations_connected_throughout": [],
+        "sensor_intensity_by_location": [],
+        "most_likely_origin": {},
+        "speed_stats": {},
+        "run_suitability": [],
+        "plots": {},
     }
 
 

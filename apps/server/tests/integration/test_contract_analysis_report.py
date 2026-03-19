@@ -21,7 +21,6 @@ from vibesensor.adapters.pdf.mapping import (
     map_summary,
     prepare_report_mapping_context,
     resolve_primary_report_candidate,
-    summary_sensor_intensity_by_location,
 )
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.use_cases.diagnostics import RunAnalysis, summarize_run_data
@@ -129,7 +128,7 @@ def test_report_certainty_uses_confidence_assessment_reason() -> None:
     context = replace(context, domain_aggregate=analysis.test_run)
 
     sensor_intensity = filter_active_sensor_intensity(
-        summary_sensor_intensity_by_location(summary),
+        summary["sensor_intensity_by_location"],
         context.sensor_locations_active,
     )
     primary = resolve_primary_report_candidate(
