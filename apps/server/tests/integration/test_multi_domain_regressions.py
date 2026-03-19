@@ -24,7 +24,7 @@ from vibesensor.use_cases.diagnostics.findings import _sensor_intensity_by_locat
 from vibesensor.use_cases.diagnostics.helpers import _format_duration
 from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_window_label
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
-from vibesensor.use_cases.diagnostics.summary_builder import compute_run_timing
+from vibesensor.use_cases.diagnostics.statistics import compute_run_timing
 from vibesensor.use_cases.updates.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 
 
