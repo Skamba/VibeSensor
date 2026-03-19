@@ -74,7 +74,7 @@ class _PeakBinStats:
     """Accumulated per-frequency-bin statistics collected from samples.
 
     Populated by :func:`_accumulate_peak_bin_stats` and consumed by the
-    per-bin scoring loop inside :class:`PeakFindingAnalyzer`.
+    per-bin scoring loop in the findings orchestration layer.
     """
 
     __slots__ = (

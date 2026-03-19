@@ -17,24 +17,18 @@ from vibesensor.use_cases.diagnostics._types import (
 from vibesensor.use_cases.diagnostics.helpers import (
     _effective_engine_rpm,
     _locations_connected_throughout_run,
+    _phase_to_str,
     _run_noise_baseline_g,
+    _speed_profile_from_points,
     _tire_reference_from_metadata,
-)
-from vibesensor.use_cases.diagnostics.helpers import (
-    _phase_to_str as _phase_to_str_helper,
-)
-from vibesensor.use_cases.diagnostics.helpers import (
-    _speed_profile_from_points as _speed_profile_from_points_helper,
 )
 from vibesensor.use_cases.diagnostics.order_analysis import _build_order_findings
 from vibesensor.use_cases.diagnostics.peak_binning import (
     PERSISTENT_PEAK_MAX_FINDINGS,
     PeakBin,
     _accumulate_peak_bin_stats,
+    _classify_peak_type,
     _PeakBinStats,
-)
-from vibesensor.use_cases.diagnostics.peak_binning import (
-    _classify_peak_type as _classify_peak_type_impl,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
@@ -42,21 +36,30 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
     segment_run_phases,
 )
 from vibesensor.use_cases.diagnostics.signal_aggregation import (
-    _phase_speed_breakdown as _phase_speed_breakdown_impl,
-)
-from vibesensor.use_cases.diagnostics.signal_aggregation import (
-    _sensor_intensity_by_location as _sensor_intensity_by_location_impl,
-)
-from vibesensor.use_cases.diagnostics.signal_aggregation import (
-    _speed_breakdown as _speed_breakdown_impl,
+    _phase_speed_breakdown,
+    _sensor_intensity_by_location,
+    _speed_breakdown,
 )
 
-_classify_peak_type = _classify_peak_type_impl
-_phase_speed_breakdown = _phase_speed_breakdown_impl
-_phase_to_str = _phase_to_str_helper
-_sensor_intensity_by_location = _sensor_intensity_by_location_impl
-_speed_breakdown = _speed_breakdown_impl
-_speed_profile_from_points = _speed_profile_from_points_helper
+__all__ = [
+    "PeakBin",
+    "PeakFindingAnalyzer",
+    "build_reference_findings",
+    "collect_order_frequencies",
+    "engine_reference_coverage_pct",
+    "finalize_findings",
+    "has_engine_reference",
+    "prepare_analysis_samples",
+]
+
+_COMPAT_REEXPORTS = (
+    _classify_peak_type,
+    _phase_speed_breakdown,
+    _phase_to_str,
+    _sensor_intensity_by_location,
+    _speed_breakdown,
+    _speed_profile_from_points,
+)
 
 # ---------------------------------------------------------------------------
 # Finding finalization
