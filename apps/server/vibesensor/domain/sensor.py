@@ -15,6 +15,7 @@ from typing import Final
 __all__ = [
     "Sensor",
     "SensorPlacement",
+    "normalize_sensor_id",
 ]
 
 # Domain-internal location code registry.  The canonical external-facing
@@ -114,3 +115,24 @@ class Sensor:
             )
             for code in location_codes
         )
+
+
+# ---------------------------------------------------------------------------
+# Sensor ID normalisation
+# ---------------------------------------------------------------------------
+
+_SENSOR_ID_HEX_LEN: Final[int] = 12
+
+
+def normalize_sensor_id(sensor_id: str) -> str:
+    """Normalize a sensor MAC / hex string to canonical 12-char lowercase hex.
+
+    Accepts raw hex (``"AABBCCDDEEFF"``) or colon-separated
+    (``"AA:BB:CC:DD:EE:FF"``) formats.
+    """
+    compact = sensor_id.replace(":", "").strip().lower()
+    if len(compact) != _SENSOR_ID_HEX_LEN:
+        raise ValueError("sensor_id must be 12 hex chars")
+    # Validate hex by attempting conversion.
+    bytes.fromhex(compact)
+    return compact

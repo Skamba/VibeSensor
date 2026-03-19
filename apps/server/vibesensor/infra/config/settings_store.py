@@ -28,8 +28,14 @@ import sqlite3
 from threading import RLock
 from typing import TYPE_CHECKING, cast, get_args
 
-from vibesensor.adapters.udp.protocol import normalize_sensor_id
-from vibesensor.domain import Car, CarSnapshot, Sensor, SensorPlacement, SpeedSource
+from vibesensor.domain import (
+    Car,
+    CarSnapshot,
+    Sensor,
+    SensorPlacement,
+    SpeedSource,
+    normalize_sensor_id,
+)
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.exceptions import PersistenceError as PersistenceError
 from vibesensor.shared.types.backend_types import (

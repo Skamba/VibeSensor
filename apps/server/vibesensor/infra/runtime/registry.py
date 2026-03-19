@@ -20,7 +20,7 @@ from vibesensor.adapters.udp.protocol import (
     client_id_hex,
     client_id_mac,
 )
-from vibesensor.adapters.udp.protocol import normalize_sensor_id as _normalize_client_id
+from vibesensor.domain import normalize_sensor_id as _normalize_client_id
 from vibesensor.infra.processing.models import ClientMetrics
 from vibesensor.shared.types.payload_types import ClientApiRow
 
