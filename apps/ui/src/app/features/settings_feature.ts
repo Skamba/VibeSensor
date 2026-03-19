@@ -61,6 +61,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     "gear_uncertainty_pct",
     "min_abs_band_hz",
     "max_band_half_width_pct",
+    "tire_deflection_factor",
   ] as const satisfies readonly (keyof AnalysisSettingsPayload)[];
 
   const GPS_POLL_FAST = 2_000;
@@ -140,22 +141,10 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   async function syncAnalysisSettingsToServer(): Promise<void> {
-    const payload: Record<string, number> = {
-      tire_width_mm: state.vehicleSettings.tire_width_mm,
-      tire_aspect_pct: state.vehicleSettings.tire_aspect_pct,
-      rim_in: state.vehicleSettings.rim_in,
-      final_drive_ratio: state.vehicleSettings.final_drive_ratio,
-      current_gear_ratio: state.vehicleSettings.current_gear_ratio,
-      wheel_bandwidth_pct: state.vehicleSettings.wheel_bandwidth_pct,
-      driveshaft_bandwidth_pct: state.vehicleSettings.driveshaft_bandwidth_pct,
-      engine_bandwidth_pct: state.vehicleSettings.engine_bandwidth_pct,
-      speed_uncertainty_pct: state.vehicleSettings.speed_uncertainty_pct,
-      tire_diameter_uncertainty_pct: state.vehicleSettings.tire_diameter_uncertainty_pct,
-      final_drive_uncertainty_pct: state.vehicleSettings.final_drive_uncertainty_pct,
-      gear_uncertainty_pct: state.vehicleSettings.gear_uncertainty_pct,
-      min_abs_band_hz: state.vehicleSettings.min_abs_band_hz,
-      max_band_half_width_pct: state.vehicleSettings.max_band_half_width_pct,
-    };
+    const payload: Record<string, number> = {};
+    for (const key of ANALYSIS_SETTING_KEYS) {
+      payload[key] = state.vehicleSettings[key];
+    }
     try {
       await setAnalysisSettings(payload);
     } catch (_err) {
