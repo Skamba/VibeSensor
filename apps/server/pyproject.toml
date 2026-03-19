@@ -109,6 +109,7 @@ files = [
   "vibesensor/use_cases/diagnostics/helpers.py",
   "vibesensor/use_cases/diagnostics/top_cause_selection.py",
   "vibesensor/use_cases/diagnostics/order_bands.py",
+  "vibesensor/use_cases/diagnostics/plots.py",
 ]
 follow_imports = "skip"
 check_untyped_defs = true
