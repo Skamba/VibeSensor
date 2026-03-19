@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -34,7 +34,7 @@ def create_debug_routes(processor: SignalProcessor) -> APIRouter:
         if isinstance(result, dict) and "error" in result:
             raise HTTPException(
                 status_code=404,
-                detail=cast("DebugSpectrumErrorPayload", result)["error"],
+                detail=result["error"],
             )
         return result
 
@@ -49,7 +49,7 @@ def create_debug_routes(processor: SignalProcessor) -> APIRouter:
         if isinstance(result, dict) and "error" in result:
             raise HTTPException(
                 status_code=404,
-                detail=cast("RawSamplesErrorPayload", result)["error"],
+                detail=result["error"],
             )
         return result
 
