@@ -90,9 +90,7 @@ select = ["E", "F", "I", "UP", "B"]
 python_version = "3.11"
 files = [
   "vibesensor/app",
-  "vibesensor/domain/snapshots.py",
-  "vibesensor/domain/strength_metrics.py",
-  "vibesensor/domain/car.py",
+  "vibesensor/domain",
   "vibesensor/shared/types/api_models.py",
   "vibesensor/shared/types/backend_types.py",
   "vibesensor/adapters/gps/gps_speed.py",
@@ -102,8 +100,11 @@ files = [
   "vibesensor/shared/types/payload_types.py",
   "vibesensor/infra/runtime/registry.py",
   "vibesensor/shared/run_context.py",
+  "vibesensor/shared/boundaries",
   "vibesensor/infra/config/settings_store.py",
   "vibesensor/report_i18n.py",
+  "vibesensor/strength_bands.py",
+  "vibesensor/coerce.py",
   "vibesensor/use_cases/diagnostics/_types.py",
   "vibesensor/use_cases/diagnostics/helpers.py",
   "vibesensor/use_cases/diagnostics/top_cause_selection.py",
