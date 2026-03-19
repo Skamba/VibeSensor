@@ -41,7 +41,6 @@ __all__ = [
     "parse_data",
     "parse_data_ack",
     "parse_hello",
-    "normalize_sensor_id",
     "SensorFrame",
 ]
 
@@ -394,13 +393,8 @@ def pack_data_ack(client_id: bytes, last_seq_received: int) -> bytes:
 
 
 # ---------------------------------------------------------------------------
-# Sensor ID normalisation & JSONL SensorFrame
+# JSONL SensorFrame
 # ---------------------------------------------------------------------------
-
-
-def normalize_sensor_id(sensor_id: str) -> str:
-    """Normalize a sensor MAC / hex string to canonical lowercase hex."""
-    return str(parse_client_id(str(sensor_id)).hex())
 
 
 _VSD_KEY: str = "vibration_strength_db"
