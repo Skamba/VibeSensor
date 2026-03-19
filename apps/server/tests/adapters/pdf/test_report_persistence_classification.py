@@ -6,13 +6,13 @@ from test_support.report_helpers import analysis_sample_with_peaks as sample
 
 from vibesensor.use_cases.diagnostics.findings import _classify_peak_type
 from vibesensor.use_cases.diagnostics.plots import (
+    top_peaks_table_rows as _top_peaks_table_rows,
+)
+from vibesensor.use_cases.diagnostics.spectrogram import (
     aggregate_fft_spectrum as _aggregate_fft_spectrum,
 )
-from vibesensor.use_cases.diagnostics.plots import (
+from vibesensor.use_cases.diagnostics.spectrogram import (
     aggregate_fft_spectrum_raw as _aggregate_fft_spectrum_raw,
-)
-from vibesensor.use_cases.diagnostics.plots import (
-    top_peaks_table_rows as _top_peaks_table_rows,
 )
 
 
