@@ -113,7 +113,7 @@ class TestBoundedSampleNoHint:
     """Demonstrate the reactive doubling behavior without total_hint."""
 
     def test_reactive_doubling_wastes_work(self):
-        from vibesensor.adapters.persistence.runlog import bounded_sample
+        from vibesensor.shared.sampling import bounded_sample
 
         items = [{"v": i} for i in range(200)]
         # Without total_hint: starts with stride=1, collects all until overflow

@@ -7,13 +7,13 @@ import pytest
 
 from vibesensor.adapters.persistence.runlog import (
     RUN_METADATA_TYPE,
-    bounded_sample,
-    create_run_metadata,
     normalize_sample_record,
     read_jsonl_run,
 )
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
+from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.time_utils import parse_iso8601, utc_now_iso
+from vibesensor.use_cases.run.sample_builder import create_run_metadata
 
 # -- Helpers -------------------------------------------------------------------
 

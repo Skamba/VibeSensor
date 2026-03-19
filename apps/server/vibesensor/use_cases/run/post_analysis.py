@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from threading import RLock, Thread
 from typing import TYPE_CHECKING, Any
 
-from vibesensor.adapters.persistence.runlog import bounded_sample
+from vibesensor.shared.sampling import bounded_sample
 
 if TYPE_CHECKING:
     from vibesensor.adapters.persistence.history_db import HistoryDB

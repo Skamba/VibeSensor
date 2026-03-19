@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,7 +16,6 @@ from vibesensor.shared.types.backend_types import (
     RUN_END_TYPE,
     RUN_METADATA_TYPE,
     RUN_SAMPLE_TYPE,
-    RunMetadata,
 )
 from vibesensor.shared.types.json_types import JsonObject
 
@@ -27,8 +25,6 @@ __all__ = [
     "RUN_METADATA_TYPE",
     "RUN_SAMPLE_TYPE",
     "RunData",
-    "bounded_sample",
-    "create_run_metadata",
     "normalize_sample_record",
     "read_jsonl_run",
 ]
@@ -43,34 +39,6 @@ class RunData:
     source_path: Path
 
 
-def create_run_metadata(
-    *,
-    run_id: str,
-    start_time_utc: str,
-    sensor_model: str,
-    raw_sample_rate_hz: int | None,
-    feature_interval_s: float | None,
-    fft_window_size_samples: int | None,
-    accel_scale_g_per_lsb: float | None,
-    firmware_version: str | None = None,
-    end_time_utc: str | None = None,
-    incomplete_for_order_analysis: bool = False,
-) -> dict[str, object]:
-    """Build and return a run-metadata dict from the supplied fields."""
-    return RunMetadata.create(
-        run_id=run_id,
-        start_time_utc=start_time_utc,
-        sensor_model=sensor_model,
-        firmware_version=firmware_version,
-        raw_sample_rate_hz=raw_sample_rate_hz,
-        feature_interval_s=feature_interval_s,
-        fft_window_size_samples=fft_window_size_samples,
-        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
-        end_time_utc=end_time_utc,
-        incomplete_for_order_analysis=incomplete_for_order_analysis,
-    ).to_dict()
-
-
 def normalize_sample_record(record: JsonObject) -> JsonObject:
     """Normalize a raw sample dict into canonical form.
 
@@ -81,51 +49,6 @@ def normalize_sample_record(record: JsonObject) -> JsonObject:
     normalized = dict(record)
     normalized.update(frame.to_dict())  # type: ignore[arg-type]  # dict[str, object] → JsonObject
     return normalized
-
-
-def bounded_sample(
-    samples: Iterator[JsonObject],
-    *,
-    max_items: int,
-    total_hint: int = 0,
-) -> tuple[list[JsonObject], int, int]:
-    """Down-sample *samples* to at most *max_items*.
-
-    When *total_hint* is available the stride is computed upfront so
-    that we never over-collect and re-halve.
-
-    Returns
-    -------
-    tuple[list[JsonObject], int, int]
-        ``(kept_samples, total_count, final_stride)`` where
-        *kept_samples* is the down-sampled list, *total_count* is the
-        number of items consumed from the iterator, and *final_stride*
-        is the stride factor that was applied.
-
-    Raises
-    ------
-    ValueError
-        If *max_items* is not a positive integer.
-
-    """
-    if max_items <= 0:
-        raise ValueError(f"bounded_sample: max_items must be >= 1, got {max_items}")
-    stride: int = max(1, -(-total_hint // max_items)) if total_hint > max_items else 1
-    kept: list[JsonObject] = []
-    total = 0
-    for sample in samples:
-        total += 1
-        if (total - 1) % stride != 0:
-            continue
-        kept.append(sample)
-        if len(kept) > max_items:
-            kept = kept[::2]
-            stride *= 2
-    # Final trim: the halving loop can leave len(kept) == max_items + 1
-    # in edge cases (e.g. max_items=1).  Guarantee the contract.
-    if len(kept) > max_items:
-        kept = kept[:max_items]
-    return kept, total, stride
 
 
 def read_jsonl_run(path: Path) -> RunData:

@@ -20,6 +20,8 @@ from vibesensor.shared.run_context import (
     apply_run_context_snapshot,
     order_reference_context_complete,
 )
+from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.strength_bands import bucket_for_strength
 
 if TYPE_CHECKING:
@@ -245,6 +247,34 @@ def build_sample_records(
     return records
 
 
+def create_run_metadata(
+    *,
+    run_id: str,
+    start_time_utc: str,
+    sensor_model: str,
+    raw_sample_rate_hz: int | None,
+    feature_interval_s: float | None,
+    fft_window_size_samples: int | None,
+    accel_scale_g_per_lsb: float | None,
+    firmware_version: str | None = None,
+    end_time_utc: str | None = None,
+    incomplete_for_order_analysis: bool = False,
+) -> dict[str, object]:
+    """Build and return a run-metadata dict from the supplied fields."""
+    return RunMetadata.create(
+        run_id=run_id,
+        start_time_utc=start_time_utc,
+        sensor_model=sensor_model,
+        firmware_version=firmware_version,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        feature_interval_s=feature_interval_s,
+        fft_window_size_samples=fft_window_size_samples,
+        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+        end_time_utc=end_time_utc,
+        incomplete_for_order_analysis=incomplete_for_order_analysis,
+    ).to_dict()
+
+
 def build_run_metadata(
     *,
     run_id: str,
@@ -260,14 +290,12 @@ def build_run_metadata(
     language_provider: Callable[[], str] | None = None,
 ) -> dict[str, object]:
     """Assemble comprehensive run metadata."""
-    from vibesensor.adapters.persistence.runlog import create_run_metadata
-
     settings = asdict(analysis_settings_snapshot)
     order_reference_spec = analysis_settings_snapshot.order_reference_spec
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
     raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
     incomplete = raw_sample_rate_hz is None
-    metadata = create_run_metadata(
+    metadata: JsonObject = create_run_metadata(  # type: ignore[assignment]  # all values are JSON primitives
         run_id=run_id,
         start_time_utc=start_time_utc,
         sensor_model=sensor_model,

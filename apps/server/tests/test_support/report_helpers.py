@@ -8,9 +8,6 @@ from typing import Any
 
 import pytest
 
-from vibesensor.adapters.persistence.runlog import (
-    create_run_metadata,
-)
 from vibesensor.domain import LocationHotspot
 from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
 from vibesensor.use_cases.diagnostics import (
@@ -23,6 +20,7 @@ from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisR
 from vibesensor.use_cases.diagnostics.order_analysis import (
     _build_order_findings as _findings_build_order_findings,
 )
+from vibesensor.use_cases.run.sample_builder import create_run_metadata
 
 # Canonical run-end record reused across report tests.
 RUN_END = {"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"}
