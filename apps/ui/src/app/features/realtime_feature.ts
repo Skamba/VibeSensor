@@ -1,6 +1,7 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { UiDomElements } from "../ui_dom_registry";
-import type { AppState, LocationOption } from "../ui_app_state";
+import type { AppState } from "../ui_app_state";
+import type { LocationOption } from "../../api/types";
 import type { AdaptedClient } from "../../server_payload";
 import * as I18N from "../../i18n";
 import {

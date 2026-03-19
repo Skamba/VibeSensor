@@ -7,13 +7,9 @@ import type {
   CarRecord,
   HistoryEntry,
   HistoryInsightsPayload,
+  LocationOption,
   LoggingStatusPayload,
 } from "../api/types";
-
-export interface LocationOption {
-  code: string;
-  label: string;
-}
 
 export interface VehicleSettings {
   tire_width_mm: number;
