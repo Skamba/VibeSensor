@@ -11,6 +11,7 @@ Use this file as the human-facing source of truth for day-to-day development wor
 
 Primary references:
 
+- Documentation index: [docs/README.md](docs/README.md)
 - Repo structure: [docs/ai/repo-map.md](docs/ai/repo-map.md)
 - Server setup and deployment: [apps/server/README.md](apps/server/README.md)
 - Testing layout and commands: [docs/testing.md](docs/testing.md)
