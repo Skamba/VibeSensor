@@ -124,7 +124,7 @@ def _order_label(order: int, base: str) -> str:
 @dataclass(slots=True, frozen=True)
 class OrderHypothesis:
     key: str
-    suspected_source: str
+    suspected_source: VibrationSource
     order_label_base: str
     order: int
     # Path compliance factor: models how much the mechanical transmission
@@ -436,7 +436,8 @@ def _mean(values: list[float]) -> float:
 
 
 def _normalized_source(finding: DomainFinding) -> str:
-    return finding.source_normalized
+    src: str = finding.source_normalized
+    return src
 
 
 def detect_diffuse_excitation(
@@ -890,6 +891,8 @@ def assemble_order_finding(
         focused_speed_band=context.focused_speed_band,
         hotspot_speed_band=hotspot_speed_band,
     )
+    phases_raw = phase_evidence.get("phases_detected")
+    phases_detected = tuple(phases_raw) if isinstance(phases_raw, list) else ()
     finding = DomainFinding(
         finding_id="F_ORDER",
         finding_key=hypothesis.key,
@@ -905,8 +908,8 @@ def assemble_order_finding(
         diffuse_excitation=diffuse_excitation,
         weak_spatial_separation=weak_spatial_separation,
         vibration_strength_db=absolute_strength_db,
-        cruise_fraction=phase_evidence["cruise_fraction"],
-        phases_detected=tuple(phase_evidence.get("phases_detected") or ()),
+        cruise_fraction=_as_float(phase_evidence["cruise_fraction"]) or 0.0,
+        phases_detected=phases_detected,
         matched_points=tuple(match.matched_points),
         evidence=FindingEvidence(
             match_rate=context.effective_match_rate,

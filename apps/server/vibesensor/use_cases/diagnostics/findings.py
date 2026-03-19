@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.finding import (
     FindingKind,
+    VibrationSource,
 )
 from vibesensor.shared.constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF, SPEED_COVERAGE_MIN_PCT
 from vibesensor.shared.types.json_types import JsonObject
@@ -97,7 +98,7 @@ _MIN_DIAGNOSTIC_SAMPLES = 5
 def _reference_missing_finding(
     *,
     finding_id: str,
-    suspected_source: str,
+    suspected_source: VibrationSource,
     kind: FindingKind = FindingKind.REFERENCE,
 ) -> DomainFinding:
     return DomainFinding(
@@ -122,7 +123,7 @@ def build_reference_findings(
         findings.append(
             _reference_missing_finding(
                 finding_id="REF_SPEED",
-                suspected_source="unknown",
+                suspected_source=VibrationSource.UNKNOWN,
             ),
         )
 
@@ -130,7 +131,7 @@ def build_reference_findings(
         findings.append(
             _reference_missing_finding(
                 finding_id="REF_WHEEL",
-                suspected_source="wheel/tire",
+                suspected_source=VibrationSource.WHEEL_TIRE,
             ),
         )
 
@@ -143,7 +144,7 @@ def build_reference_findings(
         findings.append(
             _reference_missing_finding(
                 finding_id="REF_ENGINE",
-                suspected_source="engine",
+                suspected_source=VibrationSource.ENGINE,
             ),
         )
 
@@ -151,7 +152,7 @@ def build_reference_findings(
         findings.append(
             _reference_missing_finding(
                 finding_id="REF_SAMPLE_RATE",
-                suspected_source="unknown",
+                suspected_source=VibrationSource.UNKNOWN,
             ),
         )
     return findings, engine_ref_sufficient
