@@ -189,14 +189,10 @@ class FindingEvidence:
             mean_relative_error=_float_or_none("mean_relative_error"),
             mean_noise_floor_db=_float_or_none("mean_noise_floor_db"),
             possible_samples=(
-                int(d["possible_samples"])
-                if isinstance(d.get("possible_samples"), (int, float))
-                else None
+                int(ps) if isinstance((ps := d.get("possible_samples")), (int, float)) else None
             ),
             matched_samples=(
-                int(d["matched_samples"])
-                if isinstance(d.get("matched_samples"), (int, float))
-                else None
+                int(ms) if isinstance((ms := d.get("matched_samples")), (int, float)) else None
             ),
             snr_db=_float_or_none("snr_db"),
             presence_ratio=_float("presence_ratio"),
@@ -206,8 +202,8 @@ class FindingEvidence:
             speed_uniformity=_float("speed_uniformity"),
             spatial_uniformity=_float("spatial_uniformity"),
             phases_with_evidence=(
-                int(d["phases_with_evidence"])
-                if isinstance(d.get("phases_with_evidence"), (int, float))
+                int(pwe)
+                if isinstance((pwe := d.get("phases_with_evidence")), (int, float))
                 else None
             ),
             phase_confidences=phase_items,
