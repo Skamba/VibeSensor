@@ -68,11 +68,12 @@ def _localization_confidence(
     location_count: int,
     total_samples: int,
 ) -> float:
-    return LocationHotspot.compute_confidence(
+    confidence: float = LocationHotspot.compute_confidence(
         dominance_ratio=dominance_ratio,
         location_count=location_count,
         total_samples=total_samples,
     )
+    return confidence
 
 
 def _score_locations_in_bin(

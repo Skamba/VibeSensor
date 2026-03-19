@@ -111,6 +111,8 @@ files = [
   "vibesensor/use_cases/diagnostics/top_cause_selection.py",
   "vibesensor/use_cases/diagnostics/order_bands.py",
   "vibesensor/use_cases/diagnostics/plots.py",
+  "vibesensor/use_cases/diagnostics/location_analysis.py",
+  "vibesensor/use_cases/diagnostics/phase_segmentation.py",
   "vibesensor/adapters/websocket/hub.py",
 ]
 follow_imports = "skip"
