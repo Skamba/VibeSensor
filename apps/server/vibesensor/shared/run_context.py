@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from typing import cast
 
 from vibesensor.domain import (
     AnalysisSettingsSnapshot,
@@ -43,7 +44,7 @@ def apply_run_context_snapshot(
         analysis_settings_snapshot=analysis_settings_snapshot,
         active_car_snapshot=active_car_snapshot,
     )
-    metadata.update(context_snapshot.to_metadata_dict())
+    metadata.update(cast(JsonObject, context_snapshot.to_metadata_dict()))
     if context_snapshot.has_car_context:
         metadata["active_car_id"] = context_snapshot.active_car_id
         metadata["car_name"] = context_snapshot.car_name
