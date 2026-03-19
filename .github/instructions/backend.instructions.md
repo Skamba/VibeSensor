@@ -1,24 +1,12 @@
 ---
 applyTo: "apps/server/**"
 ---
-Backend (python `apps/server/`)
+Backend (scope: backend-specific behavioral rules and deltas; see `docs/ai/repo-map.md` for full package layout and entry points)
 - Shared workflow/validation rules live in `.github/instructions/general.instructions.md`; this file only captures backend-specific deltas.
-- Backend ownership boundaries:
-	- `apps/server/vibesensor/app/bootstrap.py`: FastAPI app factory and CLI-facing startup entry.
-	- `apps/server/vibesensor/app/container.py`: `build_runtime()` constructs the flat `RuntimeState`.
-	- `apps/server/vibesensor/adapters/http/`: HTTP and WebSocket route groups, assembled by `adapters/http/__init__.py`.
-	- `apps/server/vibesensor/infra/runtime/`: subsystem ownership, lifecycle coordination, processing loop, and websocket broadcast state; routes receive `RuntimeState` directly.
-	- `apps/server/vibesensor/adapters/persistence/history_db/`: SQLite-backed history and settings persistence.
-	- `apps/server/vibesensor/adapters/pdf/pdf_engine.py`: public PDF renderer entrypoint and page orchestration.
-	- `apps/server/vibesensor/domain/`: DDD-aligned domain model package. Primary domain objects live under `vibesensor/domain/`; closely related value objects may share a file with their parent aggregate. Includes `FindingKind` enum, `RunStatus` state machine, and all domain queries. Key domain files and types:
-		- `car.py`: Car, TireSpec, OrderReferenceSpec, CarSnapshot
-		- `snapshots.py`: AnalysisSettingsSnapshot, RunContextSnapshot, SpeedProfileSummary, DrivingPhaseSummary
-		- `strength_metrics.py`: StrengthMetrics, StrengthPeak
-		- `finding.py`: Finding, FindingEvidence (with `from_metrics()` factory and `with_confidence_assessment()` method)
-		- See `docs/domain-model.md` for the full relationship map and file layout.
+- Backend ownership boundaries: see `docs/ai/repo-map.md` § "Backend package layout" for the full module map and `docs/domain-model.md` for the domain object graph.
 - Domain-first modeling rules:
 	- Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
-	- Each primary domain object lives under `vibesensor/domain/`; closely related value objects may share a file with their parent aggregate. Consumers import from `vibesensor.domain`, not from individual module files.
+	- Consumers import from `vibesensor.domain`, not from individual module files.
 	- Analysis pipeline adapters delegate classification and ranking to domain `Finding`.
 	- Keep pure math, DSP, FFT, and signal-processing transforms functional; do not wrap them in classes unless a domain reason exists.
 	- Do not introduce forward-looking infrastructure types until their persistence and delivery requirements exist. Domain types that produce outputs consumed by no production code path are phantom infrastructure.
