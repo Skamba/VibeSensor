@@ -9,6 +9,7 @@ from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median as _median
+from typing import cast
 
 from vibesensor.domain import (
     ConfigurationSnapshot,
@@ -37,6 +38,7 @@ from vibesensor.shared.boundaries.analysis_payload import (
     AnalysisSummary,
     FindingPayload,
     PhaseSpeedBreakdownRow,
+    RunSuitabilityCheck,
     SpeedBreakdownRow,
 )
 from vibesensor.shared.boundaries.diagnostic_case import (
@@ -337,10 +339,11 @@ def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
     """Convert a run noise baseline amplitude in g to dB, or return None."""
     if run_noise_baseline_g is None:
         return None
-    return compute_db(
+    result: float = compute_db(
         max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
         MEMS_NOISE_FLOOR_G,
     )
+    return result
 
 
 def prepare_speed_and_phases(
@@ -541,14 +544,19 @@ def build_summary_payload(
             }
             for entry in phase_timeline
         ],
-        "speed_stats": speed_stats.to_dict(),
-        "speed_stats_by_phase": {k: v.to_dict() for k, v in speed_stats_by_phase.items()},
-        "phase_info": phase_info.to_dict(),
+        "speed_stats": cast(JsonObject, speed_stats.to_dict()),
+        "speed_stats_by_phase": {
+            k: cast(JsonObject, v.to_dict()) for k, v in speed_stats_by_phase.items()
+        },
+        "phase_info": cast(JsonObject, phase_info.to_dict()),
         "sensor_locations": sensor_locations,
         "sensor_locations_connected_throughout": sorted(connected_locations),
         "sensor_count_used": len(sensor_locations),
         "sensor_intensity_by_location": [asdict(row) for row in sensor_intensity_by_location],
-        "run_suitability": run_suitability_payload(run_suitability),
+        "run_suitability": cast(
+            list[RunSuitabilityCheck],
+            run_suitability_payload(run_suitability),
+        ),
         "samples": samples,
         "data_quality": build_data_quality_dict(
             samples,
@@ -659,7 +667,8 @@ class PreparedRunData:
     @property
     def is_steady_speed(self) -> bool:
         """Whether the run had steady speed (relevant to confidence scoring)."""
-        return self.speed_profile.steady_speed
+        steady: bool = self.speed_profile.steady_speed
+        return steady
 
     @property
     def speed_stddev_kmh(self) -> float | None:
@@ -910,7 +919,8 @@ class RunAnalysis:
 
     @property
     def language(self) -> str:
-        return self._language
+        lang: str = self._language
+        return lang
 
     @property
     def test_run(self) -> TestRun | None:
@@ -972,7 +982,9 @@ class RunAnalysis:
         configuration_snapshot = ConfigurationSnapshot.from_metadata(self._metadata)
         driving_segments = build_domain_driving_segments(self._prepared.phase_segments)
         domain_test_plan = plan_test_actions(domain_findings)
-        summary_test_plan = step_payloads_from_plan(domain_test_plan)
+        summary_test_plan: list[JsonObject] = cast(
+            list[JsonObject], step_payloads_from_plan(domain_test_plan)
+        )
         _raw_settings = self._metadata.get("analysis_settings")
         _scalar_settings: list[tuple[str, int | float | bool | str]] = []
         if isinstance(_raw_settings, dict):
@@ -1012,8 +1024,12 @@ class RunAnalysis:
         # Serialize domain findings to payloads for the summary
         from vibesensor.shared.boundaries.finding import finding_payload_from_domain
 
-        findings = [finding_payload_from_domain(f) for f in domain_findings]
-        top_causes = [finding_payload_from_domain(f) for f in final_top_causes]
+        findings: list[FindingPayload] = [
+            cast(FindingPayload, finding_payload_from_domain(f)) for f in domain_findings
+        ]
+        top_causes: list[FindingPayload] = [
+            cast(FindingPayload, finding_payload_from_domain(f)) for f in final_top_causes
+        ]
 
         summary = build_summary_payload(
             file_name=self._file_name,
@@ -1057,7 +1073,7 @@ class RunAnalysis:
             phase_segments=self._prepared.phase_segments,
         )
         annotate_peaks_with_order_labels(summary)
-        summary["_summary_version"] = 2
+        cast(dict[str, object], summary)["_summary_version"] = 2
         if not self._include_samples:
             summary.pop("samples", None)
         return AnalysisResult(
