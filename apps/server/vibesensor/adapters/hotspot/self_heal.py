@@ -11,6 +11,7 @@ import logging
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from vibesensor.adapters.hotspot.parsers import (
     HealStateStore,
@@ -23,7 +24,9 @@ from vibesensor.adapters.hotspot.parsers import (
     parse_port53_conflict,
     parse_rfkill_blocked,
 )
-from vibesensor.app.settings import APConfig, APSelfHealConfig, load_config
+
+if TYPE_CHECKING:
+    from vibesensor.app.settings import APConfig, APSelfHealConfig
 
 LOGGER = logging.getLogger("vibesensor.adapters.hotspot.selfheal")
 
@@ -548,11 +551,8 @@ def run_self_heal_once(
     return 0
 
 
-def run_self_heal(config_path: Path, diagnostics_only: bool = False) -> int:
-    """Load configuration from *config_path* and run one self-heal cycle."""
-    cfg = load_config(config_path)
-    ap = cfg.ap
-    self_heal = cfg.ap.self_heal
+def run_self_heal(ap: APConfig, self_heal: APSelfHealConfig, diagnostics_only: bool = False) -> int:
+    """Run one self-heal cycle with the given configuration."""
     runner = CommandRunner()
     store = HealStateStore(self_heal.state_file)
     return run_self_heal_once(ap, self_heal, runner, store, diagnostics_only=diagnostics_only)
@@ -580,7 +580,11 @@ def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    raise SystemExit(run_self_heal(args.config, diagnostics_only=args.mode == "diagnostics"))
+    from vibesensor.app.settings import load_config
+
+    cfg = load_config(args.config)
+    diag_only = args.mode == "diagnostics"
+    raise SystemExit(run_self_heal(cfg.ap, cfg.ap.self_heal, diagnostics_only=diag_only))
 
 
 if __name__ == "__main__":
