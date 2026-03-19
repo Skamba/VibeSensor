@@ -2,38 +2,32 @@ import {
   EXPECTED_SCHEMA_VERSION,
   type StrengthMetricPeak,
   type StrengthMetricsPayload,
+  type WsClientInfo,
   type WsOrderBand,
+  type WsRotationalSpeedValue,
+  type WsRotationalSpeeds,
 } from "./contracts/ws_payload_types";
 import type { SpectrumClientData } from "./app/ui_app_state";
 
 type UnknownRecord = Record<string, unknown>;
 
-export type AdaptedClient = {
-  id: string;
-  name: string;
-  connected: boolean;
-  mac_address: string;
-  location_code: string;
-  last_seen_age_ms: number | null;
-  dropped_frames: number | null;
-  frames_total: number | null;
-  sample_rate_hz: number;
-  firmware_version: string;
-};
+export type AdaptedClient = Pick<
+  WsClientInfo,
+  | "id"
+  | "name"
+  | "connected"
+  | "mac_address"
+  | "location_code"
+  | "last_seen_age_ms"
+  | "dropped_frames"
+  | "frames_total"
+  | "sample_rate_hz"
+  | "firmware_version"
+>;
 
-export type RotationalSpeedValue = {
-  rpm: number | null;
-  mode: string | null;
-  reason: string | null;
-};
+export type RotationalSpeedValue = WsRotationalSpeedValue;
 
-export type RotationalSpeeds = {
-  basis_speed_source: string | null;
-  wheel: RotationalSpeedValue;
-  driveshaft: RotationalSpeedValue;
-  engine: RotationalSpeedValue;
-  order_bands: OrderBand[] | null;
-};
+export type RotationalSpeeds = WsRotationalSpeeds;
 
 export type OrderBand = WsOrderBand;
 
@@ -148,8 +142,8 @@ function parseClient(value: unknown): AdaptedClient | null {
     mac_address: getString(record, "mac_address") ?? "",
     location_code: locationCode,
     last_seen_age_ms: getNumber(record, "last_seen_age_ms"),
-    dropped_frames: getNumber(record, "dropped_frames"),
-    frames_total: getNumber(record, "frames_total"),
+    dropped_frames: getNumber(record, "dropped_frames") ?? 0,
+    frames_total: getNumber(record, "frames_total") ?? 0,
     sample_rate_hz: getNumber(record, "sample_rate_hz") ?? 0,
     firmware_version: getString(record, "firmware_version") ?? "",
   };
