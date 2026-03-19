@@ -1,5 +1,7 @@
 # Repo map
 
+Scope: single source of truth for detailed file layout, entry points, package structure, and module ownership. Behavioral rules live in `.github/copilot-instructions.md` and `.github/instructions/*.instructions.md`.
+
 ## Primary entry points
 
 - Backend app: `apps/server/vibesensor/app/bootstrap.py`
