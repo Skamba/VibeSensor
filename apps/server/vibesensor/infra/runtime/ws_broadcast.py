@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
 
-from vibesensor.adapters.persistence.runlog import utc_now_iso
+from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.payload_types import SCHEMA_VERSION, LiveWsPayload, SpectraPayload
 
 

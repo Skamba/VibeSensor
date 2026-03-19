@@ -15,11 +15,11 @@ import pytest
 
 from vibesensor.adapters.pdf.mapping import order_label_human
 from vibesensor.adapters.pdf.mapping import resolve_i18n as resolve_i18n_impl
-from vibesensor.adapters.persistence.runlog import parse_iso8601
 from vibesensor.domain import Finding, SpeedSourceKind
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.report_i18n import tr
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
+from vibesensor.shared.time_utils import parse_iso8601
 from vibesensor.use_cases.diagnostics.findings import _sensor_intensity_by_location
 from vibesensor.use_cases.diagnostics.helpers import _format_duration
 from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_window_label

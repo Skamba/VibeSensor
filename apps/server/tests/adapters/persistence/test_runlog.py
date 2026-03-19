@@ -10,11 +10,10 @@ from vibesensor.adapters.persistence.runlog import (
     bounded_sample,
     create_run_metadata,
     normalize_sample_record,
-    parse_iso8601,
     read_jsonl_run,
-    utc_now_iso,
 )
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
+from vibesensor.shared.time_utils import parse_iso8601, utc_now_iso
 
 # -- Helpers -------------------------------------------------------------------
 
