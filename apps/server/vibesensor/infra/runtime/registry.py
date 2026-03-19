@@ -11,7 +11,7 @@ import sqlite3
 import time
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from vibesensor.adapters.udp.protocol import (
     AckMessage,
@@ -555,9 +555,7 @@ class ClientRegistry:
         if include_metrics:
             row["frame_samples"] = snapshot.frame_samples
             row["latest_metrics"] = (
-                snapshot.latest_metrics
-                if snapshot.latest_metrics is not None
-                else cast("ClientMetrics", {})
+                snapshot.latest_metrics if snapshot.latest_metrics is not None else ClientMetrics()
             )
             row["reset_count"] = snapshot.reset_count
             row["last_reset_time"] = snapshot.last_reset_time
