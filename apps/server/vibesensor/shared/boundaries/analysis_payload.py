@@ -76,24 +76,14 @@ class AmplitudeMetric(TypedDict):
 
 
 class LocationHotspotPayload(TypedDict, total=False):
-    speed_range: str
-    location: str
-    mean_amp: float
     dominance_ratio: float | None
     location_count: int
     top_location: str
     second_location: str | None
-    top_location_samples: int
-    second_location_samples: int
-    corroborated_by_n_sensors: int
-    total_samples: int
     ambiguous_location: bool
     ambiguous_locations: list[str]
-    partial_coverage: bool
     localization_confidence: float
     weak_spatial_separation: bool
-    no_wheel_sensors: bool
-    per_bin_results: list[LocationHotspotPayload]
 
 
 class FindingEvidenceMetrics(TypedDict, total=False):
