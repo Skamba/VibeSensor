@@ -25,7 +25,7 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
     monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "0")
     monkeypatch.setenv("VIBESENSOR_DISABLE_AUTO_APP", "1")
     from vibesensor import app as app_module
-    from vibesensor.infra.runtime import lifecycle as lifecycle_mod
+    from vibesensor.app import bootstrap as bootstrap_mod
 
     async def _fake_udp_receiver(*args, **kwargs):
         return None, None
@@ -38,7 +38,7 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
     def _fake_close(self):
         closed["value"] = True
 
-    monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp_receiver)
+    monkeypatch.setattr(bootstrap_mod, "start_udp_data_receiver", _fake_udp_receiver)
     monkeypatch.setattr(UDPControlPlane, "start", _fake_start)
     monkeypatch.setattr(HistoryDB, "close", _fake_close)
 

@@ -180,7 +180,7 @@ def _make_runtime(**overrides: Any):
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
     )
-    lifecycle = LifecycleManager(runtime=rt)
+    lifecycle = LifecycleManager(runtime=rt, start_udp_receiver=AsyncMock())
     if overrides:
         for name, value in overrides.items():
             setattr(rt, name, value)
@@ -266,12 +266,9 @@ async def test_processing_loop_broadcasts_sync_clock() -> None:
 @pytest.mark.asyncio
 async def test_start_creates_tasks(monkeypatch) -> None:
     """LifecycleManager.start() should populate the tasks list."""
-    from vibesensor.infra.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp(*args, **kwargs):
         return None, None
-
-    monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp)
 
     control_plane = MagicMock()
     control_plane.start = AsyncMock()
@@ -292,6 +289,7 @@ async def test_start_creates_tasks(monkeypatch) -> None:
         gps_monitor=gps_monitor,
         update_manager=update_manager,
     )
+    lifecycle._start_udp_receiver = _fake_udp
 
     await lifecycle.start()
     assert len(lifecycle.tasks) == 5
@@ -304,12 +302,8 @@ async def test_start_creates_tasks(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_start_records_background_task_failure(monkeypatch) -> None:
-    from vibesensor.infra.runtime import lifecycle as lifecycle_mod
-
     async def _fake_udp(*args, **kwargs):
         return None, None
-
-    monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp)
 
     control_plane = MagicMock()
     control_plane.start = AsyncMock()
@@ -334,6 +328,7 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
         gps_monitor=gps_monitor,
         update_manager=update_manager,
     )
+    lifecycle._start_udp_receiver = _fake_udp
 
     await lifecycle.start()
     failed_task = next(task for task in lifecycle.tasks if task.get_name() == "ws-broadcast")
@@ -347,12 +342,9 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
 @pytest.mark.asyncio
 async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     """LifecycleManager.stop() should cancel tasks, close DB and worker pool."""
-    from vibesensor.infra.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp(*args, **kwargs):
         return MagicMock(), None
-
-    monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp)
 
     run_recorder = MagicMock()
     run_recorder.shutdown_report = MagicMock(
@@ -393,6 +385,7 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
         history_db=history_db,
         worker_pool=worker_pool,
     )
+    lifecycle._start_udp_receiver = _fake_udp
 
     await lifecycle.start()
     assert len(lifecycle.tasks) > 0

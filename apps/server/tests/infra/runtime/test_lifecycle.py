@@ -26,7 +26,7 @@ def _make_lifecycle(db_path: str | None) -> tuple[LifecycleManager, RuntimeHealt
     runtime.config = config
     runtime.health_state = health_state
 
-    lifecycle = LifecycleManager(runtime=runtime)
+    lifecycle = LifecycleManager(runtime=runtime, start_udp_receiver=MagicMock())
     return lifecycle, health_state
 
 
