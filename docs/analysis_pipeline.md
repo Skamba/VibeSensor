@@ -1,127 +1,139 @@
 # Analysis Pipeline
 
-This document describes the VibeSensor post-stop analysis pipeline:
-its entrypoint, ordered steps, outputs, and architectural rules.
+Scope: architecture and data flow for the post-stop diagnostics pipeline in
+`apps/server/vibesensor/use_cases/diagnostics/`.
 
 ## Architectural Rules
 
 1. **Analysis runs only once** — after a recording is stopped.
    Report rendering and API endpoints use persisted results.
-2. **Single folder** — all analysis logic lives in
+2. **Single package** — all analysis logic lives in
    `apps/server/vibesensor/use_cases/diagnostics/`. No analysis helpers elsewhere.
-3. **Single entrypoint** — `summarize_run_data()` is the primary
-   pipeline function. All steps are called from there.
-4. **Public API** — external code should prefer `vibesensor.use_cases.diagnostics`
-   for stable entrypoints such as `summarize_run_data()`, `map_summary()`,
-   and `build_findings_for_samples()`.
+3. **Single entrypoint** — `RunAnalysis(...).summarize()` (or the procedural
+   wrapper `summarize_run_data()`) is the pipeline entrypoint.
+4. **Public API** — external code imports from `vibesensor.use_cases.diagnostics`:
+   `summarize_run_data()`, `build_findings_for_samples()`, `summarize_log()`,
+   `RunAnalysis`, `AnalysisResult`, `build_order_bands()`, `vehicle_orders_hz()`.
 5. **Renderer-only report package** — `vibesensor.adapters.pdf` must not
    import from `vibesensor.use_cases.diagnostics` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
-   (`processing/`) must not import from `analysis/`.
+   (`infra/processing/`) must not import from `use_cases/diagnostics/`.
 
 ## Live Processing vs Post-Stop Analysis
 
-The system has two distinct computational pipelines:
-
-| | Live Processing (`processing/`) | Post-Stop Analysis (`analysis/`) |
-|-|-----------------------------------|----------------------------------|
+| | Live Processing (`infra/processing/`) | Post-Stop Analysis (`use_cases/diagnostics/`) |
+|-|----------------------------------------|------------------------------------------------|
 | **When** | Continuously during recording (5–10 Hz) | Once, after recording stops |
 | **Input** | Raw accelerometer frames from UDP | Stored sample records from history DB |
 | **Output** | Per-tick metrics: FFT spectrum, peaks, strength_db, RMS, P2P | Diagnostic findings, rankings, reports |
 | **Purpose** | Data acquisition — transform raw signals into structured metrics | Diagnostic reasoning — classify, rank, and explain vibration causes |
 | **Stateless?** | Yes — each tick processes the current rolling window | Yes — processes all stored samples in one pass |
 
-`processing/` computes FFT spectra, peak detection, and vibration
-strength metrics in real time.  These are **measurement steps** that
-produce the sample records stored during recording.  The analysis
-pipeline then reads those stored records and applies diagnostic
-reasoning (pattern matching, order tracking, confidence scoring,
-localisation) to produce findings and reports.
-
-The mathematical primitives (e.g. `compute_vibration_strength_db`,
-`noise_floor_amp_p20_g`) live in the `vibesensor` package
-and are used by both layers — this is intentional code reuse, not
-duplication.
-
-Only the definitive post-stop run produces the persisted analysis.
-The live preview is a convenience feature that reuses analysis
-functions but does not replace or duplicate the post-stop pipeline.
+Mathematical primitives (e.g. `compute_vibration_strength_db`,
+`noise_floor_amp_p20_g`) live in the `vibesensor` top-level package
+and are shared by both layers.
 
 ## Trigger Flow
 
 ```
-stop_recording()                       # metrics_log/
-  └─ session_state.py                  # explicit recording-session state
-  └─ persistence.py                    # finalize current run + gate analysis scheduling
-  └─ _schedule_post_analysis(run_id)   # enqueue to background thread
-       └─ _analysis_worker_loop()      # daemon thread
-            └─ _run_post_analysis(run_id)
-                 ├─ read & downsample samples from history DB
-                 ├─ summarize_run_data(…)   ← analysis entrypoint
-                 ├─ map_summary(…)          ← build ReportTemplateData
-                 └─ store_analysis(…)       ← persist results
+RunRecorder.stop_recording()            # use_cases/run/logger.py
+  └─ schedule_post_analysis(run_id)
+       └─ PostAnalysisWorker.schedule() # use_cases/run/post_analysis.py
+            └─ _worker_loop()           # daemon thread, sequential queue
+                 └─ _run_post_analysis(run_id)
+                      ├─ load metadata + samples from HistoryDB
+                      ├─ RunAnalysis(metadata, samples, …).summarize()
+                      │     ← analysis entrypoint
+                      └─ history_db.store_analysis()
+                           ← persist results
 ```
 
 ## Pipeline Steps
 
-`summarize_run_data()` in `analysis/summary_builder.py` executes these steps
+`RunAnalysis.summarize()` in `summary_builder.py` executes these steps
 in order. Each step runs exactly once per analysis invocation.
 
-| # | Step | Key Function(s) | Purpose |
-|---|------|-----------------|---------|
-| 1 | Initialisation | `normalize_lang`, `_validate_required_strength_metrics` | Normalise language, validate that samples contain required strength metrics |
-| 2 | Run preparation | `prepare_run_data`, `_compute_run_timing`, `_run_noise_baseline_g` | Extract timing, speed statistics, phase segmentation, and speed-breakdown context once |
-| 4 | Phase segmentation | `_segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / COAST_DOWN / SPEED_UNKNOWN) |
-| 5 | Acceleration statistics | `_compute_accel_statistics` | Per-axis and magnitude accel stats, saturation detection |
-| 6 | Speed breakdown | `_speed_breakdown`, `_phase_speed_breakdown` | Frequency binning by speed range and driving phase |
-| 7 | Findings | `build_findings_bundle`, `_build_findings` | Core diagnostic engine: order tracking, pattern matching, scoring, localisation |
-| 8 | Origin & test plan | `summarize_origin`, `_merge_test_plan`, `_build_phase_timeline` | Determine most likely vibration source, generate action plan, timeline |
-| 9 | Run suitability | `build_run_suitability_bundle`, `_build_run_suitability_checks`, `compute_reference_completeness` | Check reference completeness plus data-quality and run-condition checks |
-| 10 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
-| 11 | Sensor analysis | `build_sensor_bundle`, `_sensor_intensity_by_location` | Per-location vibration intensity and connection stability |
-| 13 | Summary construction | `build_summary_payload` | Assemble the final summary dict |
-| 14 | Plot generation | `_plot_data`, `plots.py` | Build time/speed series, FFT aggregation, spectrograms, and peak table |
-| 15 | Peak annotation | `_annotate_peaks_with_order_labels` | Label peaks with human-readable order names |
+| # | Step | Key Function(s) | Module | Purpose |
+|---|------|-----------------|--------|---------|
+| 1 | Validation | `_validate_required_strength_metrics` | summary_builder | Validate samples contain required strength metrics |
+| 2 | Run preparation | `prepare_run_data`, `_compute_run_timing`, `_run_noise_baseline_g` | summary_builder | Extract timing, speed stats, phase segmentation, and speed context |
+| 3 | Phase segmentation | `segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | phase_segmentation | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / COAST_DOWN / SPEED_UNKNOWN) |
+| 4 | Acceleration statistics | `_compute_accel_statistics` | summary_builder | Per-axis and magnitude accel stats, saturation detection |
+| 5 | Findings bundle | `build_findings_bundle` → `_build_findings` | summary_builder, findings | Order tracking, pattern matching, scoring, localisation via `PeakFindingAnalyzer` and `OrderAnalysisSession` |
+| 6 | Origin & test plan | `summarize_origin`, `_build_phase_timeline` | summary_builder | Determine most likely vibration source, generate timeline |
+| 7 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
+| 8 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | summary_builder | Check reference completeness plus data-quality and run-condition checks |
+| 9 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
+| 10 | Summary construction | `build_summary_payload` | summary_builder | Assemble the final `AnalysisSummary` dict |
+| 11 | Plot generation | `_plot_data` | summary_builder, plots | Build time/speed series, FFT aggregation, spectrograms, and peak table |
+| 12 | Peak annotation | `_annotate_peaks_with_order_labels` | summary_builder | Label peaks with human-readable order names |
+
+## Module Responsibilities
+
+| Module | LOC | Responsibility |
+|--------|-----|---------------|
+| `__init__.py` | ~50 | Public API re-exports |
+| `_types.py` | ~50 | Local type aliases (`PhaseEvidence`, `FindingPayload`, `AnalysisSummary`) |
+| `summary_builder.py` | ~1100 | Top-level pipeline orchestration: `RunAnalysis`, `PreparedRunData`, `AnalysisResult`, `build_summary_payload` |
+| `findings.py` | ~400 | Finding construction and enrichment: `PeakFindingAnalyzer`, `finalize_findings`, `build_reference_findings`, `prepare_analysis_samples` |
+| `order_analysis.py` | ~1000 | Order-tracking engine: `OrderAnalysisSession`, hypothesis matching, confidence scoring, engine-alias suppression |
+| `peak_binning.py` | ~450 | Peak accumulation and scoring across samples |
+| `signal_aggregation.py` | ~250 | Speed/location aggregation helpers |
+| `phase_segmentation.py` | ~300 | Driving-phase classification (IDLE → COAST_DOWN) |
+| `location_analysis.py` | ~300 | Per-sensor-location vibration intensity and spatial analysis |
+| `top_cause_selection.py` | ~80 | Phase-adjusted finding ranking and grouping |
+| `order_bands.py` | ~150 | Tire/driveline order-frequency band computation |
+| `helpers.py` | ~500 | Shared formatting, axis helpers, statistics utilities |
+| `plots.py` | ~700 | Chart data shaping: FFT, spectrogram, time-series, peak table |
+
+## Data Flow
+
+```
+Input: samples (list[JsonObject]) + metadata (JsonObject)
+  │
+  ├─ prepare_run_data() → PreparedRunData
+  │    ├─ timing, speed stats, noise baseline
+  │    └─ phase_segmentation → phases + phase summaries
+  │
+  ├─ build_findings_bundle()
+  │    ├─ PeakFindingAnalyzer → peak-based findings
+  │    ├─ OrderAnalysisSession → order-matched findings
+  │    ├─ finalize_findings() → enriched domain Finding objects
+  │    └─ select_top_causes() → ranked top causes
+  │
+  ├─ build_summary_payload() → AnalysisSummary dict
+  │    ├─ findings, top causes, origin, test plan, suitability
+  │    └─ accel stats, speed breakdown, phase timeline
+  │
+  └─ plots + peak annotation → chart data + labeled peak table
+  │
+Output: AnalysisResult (TestRun, DiagnosticCase, AnalysisSummary)
+```
 
 ## Persisted Outputs
 
-After `summarize_run_data()` returns, the metrics pipeline coordinated by
-`metrics_log/logger.py` and `metrics_log/post_analysis.py`:
+After `RunAnalysis.summarize()` returns, `PostAnalysisWorker`:
 
 1. Adds `analysis_metadata` (sample count, stride info).
-2. Adds language-neutral trust warnings in `summary["warnings"]`
-   when the captured run context was incomplete for confident
-   order analysis.
+2. Adds language-neutral trust warnings when the captured run context
+   was incomplete for confident order analysis.
 3. Stores the summary via `history_db.store_analysis()` as a
    versioned persistence envelope.
 
 History readers unwrap the envelope back to the canonical summary shape.
-Report endpoints rebuild `ReportTemplateData` from that summary on demand,
-then add presentation-time warnings if the current active vehicle profile no
-longer matches the one captured with the run.
+Report endpoints rebuild `ReportTemplateData` from that summary on demand
+via `adapters/pdf/mapping.py:map_summary()`.
 
-Persisted post-stop analysis strength/intensity outputs are dB-only. Raw ingest/sample
-acceleration fields may still be expressed in g.
-
-## Module Map
-
-- `__init__.py`: package-level public API re-exports.
-- Summary orchestration: `summary_builder.py`.
-- Finding selection and ranking: `findings.py`, `peak_binning.py`, `signal_aggregation.py`, `ranking.py`, `top_cause_selection.py`.
-- Domain helpers: `order_analysis.py`, `phase_segmentation.py`, `helpers.py`, `strength_labels.py`, `test_plan.py`, `pattern_parts.py`.
-- Report mapping: `vibesensor/report/mapping.py`.
-- Plot shaping: `plots.py`.
+Persisted post-stop analysis strength/intensity outputs are dB-only.
+Raw ingest/sample acceleration fields may still be expressed in g.
 
 ## Adding a New Analysis Step
 
-1. Implement the step as a function in the appropriate analysis
-   sub-module (or create a new one under `analysis/`).
-2. Call it from `summarize_run_data()` at the correct point in the
-   pipeline.  Each step should have clear inputs (prior step outputs
-   or raw samples) and outputs (added to the summary dict).
+1. Implement the step as a function in the appropriate module
+   (or create a new one under `use_cases/diagnostics/`).
+2. Call it from `RunAnalysis.summarize()` at the correct point in the
+   pipeline.
 3. If the new output is needed by the renderer, update
-   `report/mapping.py:map_summary()` and the
-   `ReportTemplateData` dataclass.
-4. Export any new public symbol from `analysis/__init__.py`.
-5. Run `pytest apps/server/tests/analysis/test_analysis_architecture.py` to
-   verify architectural guardrails still pass.
+   `adapters/pdf/mapping.py:map_summary()` and `ReportTemplateData`.
+4. Export any new public symbol from `use_cases/diagnostics/__init__.py`.
+5. Run `pytest apps/server/tests/` to verify tests still pass.
