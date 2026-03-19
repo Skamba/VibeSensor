@@ -23,12 +23,8 @@ from vibesensor.shared.constants import (
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
 from vibesensor.use_cases.diagnostics.findings import (
-    _classify_peak_type,
-    _phase_speed_breakdown,
     _phase_to_str,
     _reference_missing_finding,
-    _sensor_intensity_by_location,
-    _speed_breakdown,
     _speed_profile_from_points,
 )
 from vibesensor.use_cases.diagnostics.order_analysis import (
@@ -43,7 +39,13 @@ from vibesensor.use_cases.diagnostics.order_analysis import (
 from vibesensor.use_cases.diagnostics.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
+from vibesensor.use_cases.diagnostics.peak_binning import _classify_peak_type
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
+from vibesensor.use_cases.diagnostics.signal_aggregation import (
+    _phase_speed_breakdown,
+    _sensor_intensity_by_location,
+    _speed_breakdown,
+)
 
 # -- Subpackage structure tests -----------------------------------------------
 
