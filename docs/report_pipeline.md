@@ -15,7 +15,7 @@ Recording stops
   → _run_post_analysis() [vibesensor.use_cases.run.post_analysis]
     → summarize_run_data() [vibesensor.use_cases.diagnostics.summary_builder]
       → summary_builder.py (phases, suitability, payload assembly)
-      → findings.py, ranking.py, top_cause_selection.py, plots.py
+      → findings.py, peak_binning.py, signal_aggregation.py, ranking.py, top_cause_selection.py, plots.py
     → map_summary() [vibesensor.adapters.pdf.mapping]
       → mapping.py (actions, peaks, systems)
     → store_analysis() [vibesensor.adapters.persistence.history_db]
