@@ -11,12 +11,17 @@ def test_prepare_report_mapping_context_prefers_connected_sensor_locations() -> 
         {
             "lang": "en",
             "metadata": {},
+            "report_date": "",
+            "record_length": "",
+            "start_time_utc": "",
+            "end_time_utc": "",
             "findings": [],
             "top_causes": [],
             "sensor_locations": ["front-left", "rear-right"],
             "sensor_locations_connected_throughout": ["rear-right"],
             "speed_stats": {},
             "most_likely_origin": {},
+            "run_suitability": [],
         },
     )
 
@@ -31,6 +36,10 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
             "sensor_intensity_by_location": [{"p95_intensity_db": 21.0}],
             "lang": "en",
             "metadata": {},
+            "report_date": "",
+            "record_length": "",
+            "start_time_utc": "",
+            "end_time_utc": "",
             "findings": [
                 {
                     "finding_id": "F001",
@@ -52,6 +61,9 @@ def test_resolve_primary_report_candidate_keeps_summary_confidence_context() -> 
             ],
             "speed_stats": {"steady_speed": False},
             "most_likely_origin": {},
+            "sensor_locations": [],
+            "sensor_locations_connected_throughout": [],
+            "run_suitability": [],
         },
     )
 
