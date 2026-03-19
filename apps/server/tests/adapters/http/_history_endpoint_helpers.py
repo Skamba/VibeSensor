@@ -15,8 +15,20 @@ from vibesensor.adapters.http import create_router
 from vibesensor.infra.runtime import RuntimeHealthState
 from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.history.exports import HistoryExportService
-from vibesensor.use_cases.history.reports import HistoryReportService
+from vibesensor.use_cases.history.reports import HistoryReportService, PdfRendererFn
 from vibesensor.use_cases.history.runs import HistoryRunService
+
+
+def _real_pdf_renderer(analysis_summary: dict, test_run: object | None) -> bytes:
+    """Default test renderer wiring the real adapter pipeline."""
+    from typing import cast
+
+    from vibesensor.adapters.pdf.mapping import map_summary
+    from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+    from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+
+    summary = cast(AnalysisSummary, analysis_summary)
+    return build_report_pdf(map_summary(summary, test_run=test_run))
 
 
 def make_metadata(**overrides: Any) -> dict[str, Any]:
@@ -138,7 +150,13 @@ class FakeWs:
 
 
 class FakeState:
-    def __init__(self, history_db: FakeHistoryDB, ws_hub: FakeWsHub) -> None:
+    def __init__(
+        self,
+        history_db: FakeHistoryDB,
+        ws_hub: FakeWsHub,
+        *,
+        pdf_renderer: PdfRendererFn = _real_pdf_renderer,
+    ) -> None:
         self.history_db = history_db
         self.ws_hub = ws_hub
         self.settings_store = type(
@@ -244,7 +262,9 @@ class FakeState:
         self.update_manager = MagicMock()
         self.esp_flash_manager = MagicMock()
         self.run_service = HistoryRunService(self.history_db, self.settings_store)
-        self.report_service = HistoryReportService(self.history_db, self.settings_store)
+        self.report_service = HistoryReportService(
+            self.history_db, self.settings_store, pdf_renderer=pdf_renderer
+        )
         self.export_service = HistoryExportService(self.history_db)
 
 
@@ -255,6 +275,7 @@ def make_router_and_state(
     metadata: dict[str, Any] | None = None,
     samples: list[dict[str, Any]] | None = None,
     analysis: dict[str, Any] | None = None,
+    pdf_renderer: PdfRendererFn = _real_pdf_renderer,
 ):
     metadata = metadata or make_metadata(language=language)
     samples = samples or [sample(i) for i in range(sample_count)]
@@ -264,7 +285,9 @@ def make_router_and_state(
         lang=language,
         include_samples=False,
     )
-    state = FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub())
+    state = FakeState(
+        FakeHistoryDB(metadata, samples, analysis), FakeWsHub(), pdf_renderer=pdf_renderer
+    )
     app = FastAPI()
     router = create_router(state)
     app.include_router(router)

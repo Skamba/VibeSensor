@@ -12,11 +12,11 @@ from dataclasses import dataclass, field
 from math import floor
 from typing import Any
 
-from vibesensor.adapters.pdf.report_types import PeakTableRow
 from vibesensor.shared.boundaries.analysis_payload import (
     AmpVsPhaseRow,
     FreqVsSpeedByFindingSeries,
     MatchedAmpVsSpeedSeries,
+    PeakTableRow,
     PhaseBoundary,
     PhaseSegmentOut,
     PlotDataResult,

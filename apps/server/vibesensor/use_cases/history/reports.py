@@ -13,12 +13,9 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-from vibesensor.adapters.pdf.mapping import map_summary
-from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.domain import CarSnapshot
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
@@ -35,6 +32,10 @@ if TYPE_CHECKING:
     from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.domain import TestRun
     from vibesensor.infra.config.settings_store import SettingsStore
+
+#: Callable that turns a persisted analysis dict into PDF bytes.
+#: Signature: ``(analysis_summary, test_run) -> bytes``.
+PdfRendererFn = Callable[[dict, "TestRun | None"], bytes]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -63,11 +64,18 @@ class HistoryReportRequest:
 class HistoryReportService:
     """Load persisted report data and coordinate cached PDF generation."""
 
-    __slots__ = ("_history_db", "_pdf_cache", "_settings_store")
+    __slots__ = ("_history_db", "_pdf_cache", "_pdf_renderer", "_settings_store")
 
-    def __init__(self, history_db: HistoryDB, settings_store: SettingsStore | None = None) -> None:
+    def __init__(
+        self,
+        history_db: HistoryDB,
+        settings_store: SettingsStore | None = None,
+        *,
+        pdf_renderer: PdfRendererFn,
+    ) -> None:
         self._history_db = history_db
         self._pdf_cache = HistoryReportPdfCache()
+        self._pdf_renderer = pdf_renderer
         self._settings_store = settings_store
 
     async def build_pdf(self, run_id: str, requested_lang: str | None) -> HistoryReportPdf:
@@ -78,9 +86,9 @@ class HistoryReportService:
 
         pdf = await self._pdf_cache.get_or_build(
             request.cache_key,
-            lambda: self._build_pdf_bytes(
+            lambda: self._pdf_renderer(
                 request.analysis_summary,
-                test_run=request.domain_test_run,
+                request.domain_test_run,
             ),
             run_id=run_id,
         )
@@ -119,23 +127,6 @@ class HistoryReportService:
             analysis_summary=analysis_summary,
             domain_test_run=domain_test_run,
         )
-
-    @staticmethod
-    def _build_pdf_bytes(
-        analysis_summary: JsonObject,
-        *,
-        test_run: TestRun | None = None,
-    ) -> bytes:
-        # analysis_summary comes from persistence as JsonObject but
-        # map_summary expects the AnalysisSummary TypedDict shape.
-        # The data has been validated upstream; cast at the boundary.
-        summary = cast(AnalysisSummary, analysis_summary)
-        mapped_summary = map_summary(
-            summary,
-            test_run=test_run,
-        )
-        pdf: bytes = build_report_pdf(mapped_summary)
-        return pdf
 
     @staticmethod
     def _metadata_cache_token(metadata: object) -> str:
