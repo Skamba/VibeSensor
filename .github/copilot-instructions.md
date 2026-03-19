@@ -1,10 +1,8 @@
-Repository overview
-- VibeSensor has a Python backend in `apps/server/`, a TypeScript/Vite dashboard in `apps/ui/`, simulator tooling in `apps/server/vibesensor/adapters/simulator/`, and device/firmware assets under `firmware/esp/`, `hardware/`, and `infra/pi-image/`.
-- Backend architecture is package-based: `app/bootstrap.py` creates the FastAPI app, `app/container.py` wires services into a flat RuntimeState, `adapters/http/` owns HTTP/WebSocket route groups, `infra/runtime/` owns runtime coordination, `adapters/persistence/history_db/` owns SQLite persistence, `adapters/pdf/` owns PDF rendering, and `use_cases/updates/` owns wheel-based update workflows.
-- Key runtime artifacts are `docker-compose.yml` at repo root and `apps/server/pyproject.toml` for backend packaging and CLI entry points.
+Repository overview (scope: high-level orientation and behavioral rules; see `docs/ai/repo-map.md` for detailed layout, entry points, and file ownership)
+- VibeSensor: Python backend (`apps/server/`), TypeScript/Vite dashboard (`apps/ui/`), ESP32 firmware (`firmware/esp/`), Pi image build (`infra/pi-image/`).
+- Key runtime artifacts: `docker-compose.yml` (local stack), `apps/server/pyproject.toml` (backend packaging and CLI entry points).
 - Units policy: raw ingest/sample acceleration values may use g, but post-stop analysis outputs (persisted summaries, findings, report-template artifacts) must expose vibration strength or intensity in dB only.
 - Canonical dB definition: `vibesensor/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
-- Domain file map highlights: `car.py` owns `Car`, `TireSpec`, `OrderReferenceSpec`, and `CarSnapshot`; `snapshots.py` owns `AnalysisSettingsSnapshot`, `RunContextSnapshot`, `RunMetadataSnapshot`, `SpeedProfileSummary`, and `DrivingPhaseSummary`; `order_match.py` owns `OrderMatchObservation`; `driving_segment.py` owns `DrivingSegment`, `DrivingPhase`, `DrivingPhaseInterval`, and `DrivingPhaseSegment`; `location_hotspot.py` owns `LocationHotspot` and `LocationIntensitySummary`; `strength_metrics.py` owns `StrengthMetrics` and `StrengthPeak`.
 
 Source-of-truth note
 - This file is the canonical short AI guide; `AGENTS.md` should remain a pointer to this file to prevent drift.
@@ -21,12 +19,10 @@ Architectural constraints
 - Internal shared logic belongs in the server package (`vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`), not in separate packages. Shared TS constants live directly in `apps/ui/src/constants.ts`.
 - Do not create runtime file-loading mechanisms for static configuration data. Use Python constants for values that don't change between deployments.
 
-Domain model
-- Domain objects own behavior (classification, ranking, lifecycle, computation).  Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
-- Each primary domain object lives under `vibesensor/domain/`; closely related value objects may share a file with their parent aggregate.  Consumers import from `vibesensor.domain`, not from individual module files.
-- The core diagnostic aggregates are `DiagnosticCase` and `TestRun`; boundary consumers reconstruct domain views via `shared/boundaries/diagnostic_case.py::test_run_from_summary()` and re-serialize via individual boundary serializers (`finding_payload_from_domain`, `origin_payload_from_finding`, etc.).
+Domain model (scope: behavioral rules only; see `docs/ai/repo-map.md` for file listings and `docs/domain-model.md` for the full relationship map)
+- Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
+- Consumers import from `vibesensor.domain`, not from individual module files.
 - Boundary decoders/serializers live under `apps/server/vibesensor/shared/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.
-- See `docs/domain-model.md` for the full relationship map, adapter inventory, and modeling rules.
 
 Common commands
 - `python -m pip install -e "./apps/server[dev]"`
