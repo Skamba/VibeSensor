@@ -243,6 +243,8 @@ class LocationIntensitySummary:
             v = raw.get(key)
             if v is None:
                 return None
+            if not isinstance(v, (int, float, str)):
+                return None
             try:
                 f = coerce_float(v)
             except (TypeError, ValueError):
