@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TypedDict
 
+from vibesensor.coerce import coerce_float, coerce_int
 from vibesensor.domain.finding import Finding, VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.vibration_origin import VibrationOrigin
@@ -30,7 +31,7 @@ def location_hotspot_from_payload(payload: dict[str, object]) -> LocationHotspot
     dominance_ratio: float | None = None
     if dom_raw is not None:
         try:
-            dominance_ratio = float(dom_raw)  # type: ignore[arg-type]
+            dominance_ratio = coerce_float(dom_raw)
         except (TypeError, ValueError):
             pass
 
@@ -38,7 +39,7 @@ def location_hotspot_from_payload(payload: dict[str, object]) -> LocationHotspot
     localization_confidence: float | None = None
     if loc_conf_raw is not None:
         try:
-            localization_confidence = float(loc_conf_raw)  # type: ignore[arg-type]
+            localization_confidence = coerce_float(loc_conf_raw)
         except (TypeError, ValueError):
             pass
 
@@ -46,7 +47,7 @@ def location_hotspot_from_payload(payload: dict[str, object]) -> LocationHotspot
     loc_count: int | None = None
     if loc_count_raw is not None:
         try:
-            loc_count = int(loc_count_raw)  # type: ignore[arg-type]
+            loc_count = coerce_int(loc_count_raw)
         except (TypeError, ValueError):
             pass
 

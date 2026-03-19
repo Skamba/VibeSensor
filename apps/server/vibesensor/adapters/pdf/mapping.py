@@ -23,6 +23,7 @@ from vibesensor.adapters.pdf.report_data import (
     SystemFindingCard,
 )
 from vibesensor.adapters.pdf.report_types import PeakTableRow
+from vibesensor.coerce import coerce_float
 from vibesensor.domain import (
     ConfidenceAssessment,
     Finding,
@@ -927,7 +928,7 @@ def build_report_from_summary(summary: dict[str, object]) -> Report:
     duration_s: float | None = None
     if duration_s_raw is not None:
         try:
-            duration_s = float(duration_s_raw)  # type: ignore[arg-type]
+            duration_s = coerce_float(duration_s_raw)
         except (TypeError, ValueError):
             pass
 

@@ -16,6 +16,8 @@ import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from vibesensor.coerce import coerce_float
+
 __all__ = [
     "StrengthMetrics",
     "StrengthPeak",
@@ -27,7 +29,7 @@ def _float_or(d: Mapping[str, object], key: str, default: float = 0.0) -> float:
     if v is None:
         return default
     try:
-        f = float(v)  # type: ignore[arg-type]
+        f = coerce_float(v)
     except (TypeError, ValueError):
         return default
     return f if math.isfinite(f) else default
@@ -38,7 +40,7 @@ def _float_or_none(d: Mapping[str, object], key: str) -> float | None:
     if v is None:
         return None
     try:
-        f = float(v)  # type: ignore[arg-type]
+        f = coerce_float(v)
     except (TypeError, ValueError):
         return None
     return f if math.isfinite(f) else None

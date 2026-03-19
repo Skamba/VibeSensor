@@ -19,6 +19,8 @@ from dataclasses import asdict, dataclass, field
 from types import MappingProxyType
 from typing import ClassVar
 
+from vibesensor.coerce import coerce_float
+
 from .car import CarSnapshot, OrderReferenceSpec
 from .driving_segment import DrivingPhaseSegment
 
@@ -38,7 +40,7 @@ def _float_or(d: Mapping[str, object], key: str, default: float = 0.0) -> float:
     if v is None:
         return default
     try:
-        f = float(v)  # type: ignore[arg-type]
+        f = coerce_float(v)
     except (TypeError, ValueError):
         return default
     return f if math.isfinite(f) else default
@@ -193,7 +195,7 @@ class AnalysisSettingsSnapshot:
             if raw is None:
                 continue
             try:
-                value = float(raw)  # type: ignore[arg-type]
+                value = coerce_float(raw)
             except (TypeError, ValueError):
                 _LOGGER.debug("Dropping non-numeric analysis setting %s=%r", key, raw)
                 continue
@@ -336,7 +338,7 @@ class SpeedProfileSummary:
             if v is None:
                 return None
             try:
-                f = float(v)  # type: ignore[arg-type]
+                f = coerce_float(v)
             except (TypeError, ValueError):
                 return None
             return f if math.isfinite(f) else None
@@ -480,7 +482,7 @@ def _opt_float_raw(d: Mapping[str, object], key: str) -> float | None:
     if v is None:
         return None
     try:
-        f = float(v)  # type: ignore[arg-type]
+        f = coerce_float(v)
     except (TypeError, ValueError):
         return None
     return f if math.isfinite(f) else None

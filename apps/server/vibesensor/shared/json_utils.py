@@ -10,6 +10,7 @@ import json
 import logging
 import math
 
+from vibesensor.coerce import coerce_float
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 
 __all__ = [
@@ -31,7 +32,7 @@ def as_float_or_none(value: object) -> float | None:
     if value in (None, "") or isinstance(value, bool):
         return None
     try:
-        out = float(value)  # type: ignore[arg-type]
+        out = coerce_float(value)
     except (TypeError, ValueError):
         return None
     if not _isfinite(out):

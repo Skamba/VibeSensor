@@ -12,6 +12,7 @@ from dataclasses import asdict
 from typing import TYPE_CHECKING, NamedTuple
 
 from vibesensor.adapters.udp.protocol import SensorFrame
+from vibesensor.coerce import coerce_float
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.domain.strength_metrics import StrengthMetrics
@@ -38,7 +39,7 @@ def _safe_float(d: Mapping[str, object], key: str) -> float | None:
     if raw is None:
         return None
     try:
-        out = float(raw)  # type: ignore[arg-type]
+        out = coerce_float(raw)
     except (TypeError, ValueError):
         return None
     return out if _isfinite(out) else None

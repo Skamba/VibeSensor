@@ -12,6 +12,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import ClassVar
 
+from vibesensor.coerce import coerce_float, coerce_int
+
 __all__ = ["LocationHotspot", "LocationIntensitySummary"]
 
 
@@ -242,20 +244,20 @@ class LocationIntensitySummary:
             if v is None:
                 return None
             try:
-                f = float(v)  # type: ignore[arg-type]
+                f = coerce_float(v)
             except (TypeError, ValueError):
                 return None
             return f
 
         sc = raw.get("sample_count", raw.get("samples", 0))
         try:
-            sample_count = int(sc)  # type: ignore[arg-type]
+            sample_count = coerce_int(sc)
         except (TypeError, ValueError):
             sample_count = 0
 
         scr = raw.get("sample_coverage_ratio", 0.0)
         try:
-            sample_coverage_ratio = float(scr)  # type: ignore[arg-type]
+            sample_coverage_ratio = coerce_float(scr)
         except (TypeError, ValueError):
             sample_coverage_ratio = 0.0
 
