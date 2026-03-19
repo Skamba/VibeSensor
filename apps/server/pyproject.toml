@@ -104,6 +104,10 @@ files = [
   "vibesensor/shared/run_context.py",
   "vibesensor/infra/config/settings_store.py",
   "vibesensor/report_i18n.py",
+  "vibesensor/use_cases/diagnostics/_types.py",
+  "vibesensor/use_cases/diagnostics/helpers.py",
+  "vibesensor/use_cases/diagnostics/top_cause_selection.py",
+  "vibesensor/use_cases/diagnostics/order_bands.py",
 ]
 follow_imports = "skip"
 check_untyped_defs = true
