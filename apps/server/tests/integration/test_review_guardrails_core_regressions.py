@@ -12,10 +12,10 @@ import time
 
 import pytest
 
-from vibesensor.adapters.persistence.runlog import bounded_sample
 from vibesensor.infra.runtime.registry import _sanitize_name
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
+from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.backend_types import new_car_id
 from vibesensor.use_cases.diagnostics.order_bands import build_order_bands
 
