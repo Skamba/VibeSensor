@@ -7,6 +7,7 @@ Also includes boundary functions for run suitability and speed profile
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import cast
 
 from vibesensor.domain.car import Car, OrderReferenceSpec
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
@@ -79,7 +80,9 @@ def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]
     serialized from the domain ``TestRun``.
     """
     test_run = test_run_from_summary(analysis)
-    projected: JsonObject = dict(analysis)
+    # Work with dict[str, object] to match boundary function return types;
+    # cast to JsonObject at the return boundary.
+    projected: dict[str, object] = dict(analysis)
     projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
     projected["top_causes"] = [
         finding_payload_from_domain(f) for f in test_run.effective_top_causes()
@@ -101,7 +104,7 @@ def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]
     if not _has_structured_step_content(analysis.get("test_plan")):
         projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
     projected["run_suitability"] = run_suitability_payload(test_run.suitability)
-    return projected, test_run
+    return cast(JsonObject, projected), test_run
 
 
 def case_context_from_metadata(
