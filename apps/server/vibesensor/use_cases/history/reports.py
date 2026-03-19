@@ -13,11 +13,12 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.domain import CarSnapshot
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
@@ -125,8 +126,12 @@ class HistoryReportService:
         *,
         test_run: TestRun | None = None,
     ) -> bytes:
+        # analysis_summary comes from persistence as JsonObject but
+        # map_summary expects the AnalysisSummary TypedDict shape.
+        # The data has been validated upstream; cast at the boundary.
+        summary = cast(AnalysisSummary, analysis_summary)
         mapped_summary = map_summary(
-            analysis_summary,
+            summary,
             test_run=test_run,
         )
         pdf: bytes = build_report_pdf(mapped_summary)

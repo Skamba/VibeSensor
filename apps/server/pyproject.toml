@@ -115,6 +115,15 @@ files = [
   "vibesensor/use_cases/diagnostics/phase_segmentation.py",
   "vibesensor/adapters/websocket/hub.py",
   "vibesensor/adapters/persistence/history_db",
+  "vibesensor/adapters/pdf/pdf_engine.py",
+  "vibesensor/adapters/pdf/report_data.py",
+  "vibesensor/adapters/pdf/report_types.py",
+  "vibesensor/adapters/pdf/presentation.py",
+  "vibesensor/adapters/pdf/pattern_parts.py",
+  "vibesensor/adapters/pdf/pdf_style.py",
+  "vibesensor/adapters/pdf/pdf_drawing.py",
+  "vibesensor/adapters/pdf/pdf_text.py",
+  "vibesensor/adapters/pdf/mapping.py",
 ]
 follow_imports = "skip"
 check_untyped_defs = true
