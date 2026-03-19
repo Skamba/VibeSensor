@@ -107,7 +107,7 @@ acceleration fields may still be expressed in g.
 
 - `__init__.py`: package-level public API re-exports.
 - Summary orchestration: `summary_builder.py`.
-- Finding selection and ranking: `findings.py`, `ranking.py`, `top_cause_selection.py`.
+- Finding selection and ranking: `findings.py`, `peak_binning.py`, `signal_aggregation.py`, `ranking.py`, `top_cause_selection.py`.
 - Domain helpers: `order_analysis.py`, `phase_segmentation.py`, `helpers.py`, `strength_labels.py`, `test_plan.py`, `pattern_parts.py`.
 - Report mapping: `vibesensor/report/mapping.py`.
 - Plot shaping: `plots.py`.
