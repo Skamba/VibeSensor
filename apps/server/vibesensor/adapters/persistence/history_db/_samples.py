@@ -117,7 +117,7 @@ def v2_row_to_dict(row: tuple[object, ...]) -> JsonObject:
         val = row[_V2_COL_OFFSET + i]
         if col in _json_cols:
             if val:
-                parsed = safe_json_loads(val, context=f"column {col}")  # type: ignore[arg-type]
+                parsed = safe_json_loads(str(val), context=f"column {col}")
                 if is_json_array(parsed):
                     d[col] = parsed
                 else:

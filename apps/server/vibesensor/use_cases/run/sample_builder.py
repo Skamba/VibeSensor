@@ -289,7 +289,7 @@ def build_run_metadata(
     accel_scale_g_per_lsb: float | None,
     active_car_snapshot: CarSnapshot | None = None,
     language_provider: Callable[[], str] | None = None,
-) -> dict[str, object]:
+) -> JsonObject:
     """Assemble comprehensive run metadata."""
     settings = asdict(analysis_settings_snapshot)
     order_reference_spec = analysis_settings_snapshot.order_reference_spec
