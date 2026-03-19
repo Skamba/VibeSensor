@@ -104,9 +104,10 @@ artifacts/**
 *.swo
 .DS_Store
 .coverage
-apps/ui/test-results/.last-run.json
+apps/ui/test-results/
 
 # Copilot working docs
 .copilot-work/
 .copilot-worktrees/
 tmp/
+.ai-temp/
