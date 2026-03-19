@@ -15,7 +15,7 @@ from typing import TypeAlias
 import numpy as np
 import numpy.typing as npt
 
-from vibesensor.infra.processing.models import AxisPeak, FftSpectrumResult, SpectrumByAxis
+from vibesensor.infra.processing.models import Axis, AxisPeak, FftSpectrumResult, SpectrumByAxis
 from vibesensor.shared.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 from vibesensor.vibration_strength import (
     PEAK_THRESHOLD_FLOOR_RATIO,
@@ -27,7 +27,7 @@ from vibesensor.vibration_strength import (
     noise_floor_amp_p20_g,
 )
 
-AXES = ("x", "y", "z")
+AXES: tuple[Axis, Axis, Axis] = ("x", "y", "z")
 
 FloatArray: TypeAlias = npt.NDArray[np.float32]
 IntIndexArray: TypeAlias = npt.NDArray[np.intp]
@@ -234,7 +234,7 @@ def compute_fft_spectrum(
         specs_all[:, -1] *= 0.5
 
     spectrum_by_axis: SpectrumByAxis = {}
-    axis_peaks: dict[str, list[AxisPeak]] = {}
+    axis_peaks: dict[Axis, list[AxisPeak]] = {}
 
     for axis_idx, axis in enumerate(AXES):
         amp_slice = specs_all[axis_idx, valid_idx]

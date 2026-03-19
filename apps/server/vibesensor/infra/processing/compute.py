@@ -4,7 +4,6 @@ import logging
 import math
 import time
 from threading import RLock
-from typing import cast
 
 import numpy as np
 
@@ -91,7 +90,7 @@ class SignalMetricsComputer:
             rms_vals = np.sqrt(np.mean(np.square(time_window_detrended, dtype=np.float64), axis=1))
             p2p_vals = np.max(time_window_detrended, axis=1) - np.min(time_window_detrended, axis=1)
             for axis_idx, axis in enumerate(AXES):
-                metrics[axis] = {  # type: ignore[literal-required]
+                metrics[axis] = {
                     "rms": _finite_or_zero(float(rms_vals[axis_idx])),
                     "p2p": _finite_or_zero(float(p2p_vals[axis_idx])),
                     "peaks": [],
@@ -121,13 +120,10 @@ class SignalMetricsComputer:
             freq_slice = fft_result["freq_slice"]
             spectrum_by_axis = fft_result["spectrum_by_axis"]
 
-            for axis in fft_result["axis_peaks"]:
+            for ax_key in fft_result["axis_peaks"]:
                 default_axis_metrics: AxisMetrics = {"rms": 0.0, "p2p": 0.0, "peaks": []}
-                axis_metrics = cast(
-                    "AxisMetrics",
-                    metrics.setdefault(axis, default_axis_metrics),  # type: ignore[misc]
-                )
-                axis_metrics["peaks"] = fft_result["axis_peaks"][axis]
+                axis_metrics = metrics.setdefault(ax_key, default_axis_metrics)
+                axis_metrics["peaks"] = fft_result["axis_peaks"][ax_key]
 
             if fft_result["spectrum_by_axis"]:
                 combined_amp = fft_result["combined_amp"]
