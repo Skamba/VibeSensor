@@ -49,6 +49,17 @@ def minimal_summary(**overrides: Any) -> dict:
     Callers can override or extend any key via keyword arguments.
     """
     base: dict = {
+        "metadata": {},
+        "report_date": "",
+        "record_length": "",
+        "start_time_utc": "",
+        "end_time_utc": "",
+        "warnings": [],
+        "sensor_locations": [],
+        "sensor_locations_connected_throughout": [],
+        "sensor_intensity_by_location": [],
+        "sensor_count_used": 0,
+        "most_likely_origin": {},
         "top_causes": [],
         "findings": [],
         "speed_stats": {},
