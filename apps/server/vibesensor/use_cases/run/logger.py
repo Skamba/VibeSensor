@@ -18,7 +18,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, TypedDict
 from uuid import uuid4
 
 from vibesensor.domain import Run
@@ -106,6 +106,25 @@ class RecorderShutdownReport:
     analysis_in_progress: bool
     write_error: str | None
     final_status: dict[str, object]
+
+
+class RunRecorderHealthSnapshot(TypedDict):
+    """Health snapshot dict returned by :meth:`RunRecorder.health_snapshot`."""
+
+    write_error: str | None
+    analysis_in_progress: bool
+    analysis_queue_depth: int
+    analysis_queue_max_depth: int
+    analysis_active_run_id: str | None
+    analysis_started_at: float | None
+    analysis_elapsed_s: float | None
+    analysis_queue_oldest_age_s: float | None
+    analyzing_run_count: int
+    analyzing_oldest_age_s: float | None
+    samples_written: int
+    samples_dropped: int
+    last_completed_run_id: str | None
+    last_completed_run_error: str | None
 
 
 class RunRecorder:
@@ -565,7 +584,7 @@ class RunRecorder:
             "last_completed_run_error": post_snapshot.last_completed_error,
         }
 
-    def health_snapshot(self) -> dict[str, Any]:
+    def health_snapshot(self) -> RunRecorderHealthSnapshot:
         snapshot = self._post_analysis.snapshot()
         analysis_elapsed_s = None
         if snapshot.active_started_at is not None:

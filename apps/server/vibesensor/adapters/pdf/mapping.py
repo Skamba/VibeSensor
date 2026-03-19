@@ -33,6 +33,7 @@ from vibesensor.domain import (
 )
 from vibesensor.report_i18n import human_source, is_i18n_ref, normalize_lang, resolve_i18n
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
 from vibesensor.shared.boundaries.vibration_origin import (
     build_origin_explanation,
@@ -227,35 +228,35 @@ def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def summary_metadata(summary: Mapping[str, Any]) -> dict[str, Any]:
+def summary_metadata(summary: AnalysisSummary) -> JsonObject:
     return summary.get("metadata") or {}
 
 
-def summary_report_date(summary: Mapping[str, Any]) -> str:
+def summary_report_date(summary: AnalysisSummary) -> str:
     return str(summary.get("report_date") or "")
 
 
-def summary_record_length(summary: Mapping[str, Any]) -> str | None:
+def summary_record_length(summary: AnalysisSummary) -> str | None:
     return str(summary.get("record_length") or "") or None
 
 
-def summary_start_time_utc(summary: Mapping[str, Any]) -> str | None:
+def summary_start_time_utc(summary: AnalysisSummary) -> str | None:
     return str(summary.get("start_time_utc") or "").strip() or None
 
 
-def summary_end_time_utc(summary: Mapping[str, Any]) -> str | None:
+def summary_end_time_utc(summary: AnalysisSummary) -> str | None:
     return str(summary.get("end_time_utc") or "").strip() or None
 
 
-def summary_warnings(summary: Mapping[str, Any]) -> list[object]:
+def summary_warnings(summary: AnalysisSummary) -> list[object]:
     return list(summary.get("warnings", []))
 
 
-def summary_sensor_intensity_by_location(summary: Mapping[str, Any]) -> list[JsonObject]:
+def summary_sensor_intensity_by_location(summary: AnalysisSummary) -> list[JsonObject]:
     return [row for row in summary.get("sensor_intensity_by_location", []) if isinstance(row, dict)]
 
 
-def summary_sensor_locations_active(summary: Mapping[str, Any]) -> list[str]:
+def summary_sensor_locations_active(summary: AnalysisSummary) -> list[str]:
     connected = summary.get("sensor_locations_connected_throughout", [])
     active = [str(loc) for loc in connected if str(loc).strip()]
     if not active:
@@ -333,7 +334,7 @@ def normalized_origin_location(origin: VibrationOrigin | None) -> str:
 
 
 def build_peak_rows_from_plots(
-    summary: Mapping[str, Any],
+    summary: AnalysisSummary,
     *,
     lang: str,
     tr: Callable,
@@ -436,7 +437,7 @@ def collect_location_intensity(sensor_intensity: list[dict]) -> dict[str, list[f
 
 
 def build_next_steps_from_summary(
-    summary: Mapping[str, Any],
+    summary: AnalysisSummary,
     *,
     aggregate: TestRun | None,
     tier: str,
@@ -499,7 +500,7 @@ def _resolve_optional_step_value(
 
 
 def build_data_trust_from_summary(
-    summary: Mapping[str, Any],
+    summary: AnalysisSummary,
     *,
     aggregate: TestRun | None,
     lang: str,
@@ -756,7 +757,7 @@ def build_version_marker() -> str:
 
 
 def prepare_report_mapping_context(
-    summary: Mapping[str, Any],
+    summary: AnalysisSummary,
     *,
     test_run: TestRun | None = None,
 ) -> ReportMappingContext:
@@ -905,7 +906,7 @@ def resolve_primary_report_candidate(
     )
 
 
-def build_report_from_summary(summary: dict[str, object]) -> Report:
+def build_report_from_summary(summary: AnalysisSummary) -> Report:
     """Create a domain Report from a ``SummaryData`` dict.
 
     Extracts run-level metadata.  Finding-level data is handled
@@ -950,7 +951,7 @@ def build_report_from_summary(summary: dict[str, object]) -> Report:
 
 
 def map_summary(
-    summary: Mapping[str, Any],
+    summary: AnalysisSummary,
     *,
     test_run: TestRun | None = None,
 ) -> ReportTemplateData:
@@ -964,7 +965,7 @@ def map_summary(
     skipped and the caller-provided aggregate is used directly.
     """
     lang = str(normalize_lang(summary.get("lang")))
-    report = build_report_from_summary(summary)  # type: ignore[arg-type]
+    report = build_report_from_summary(summary)
 
     def tr(key: str, **kw: object) -> str:
         return str(_tr(lang, key, **kw))
@@ -973,7 +974,7 @@ def map_summary(
 
 
 def _build_report_template_data(
-    summary: Mapping[str, Any],
+    summary: AnalysisSummary,
     *,
     report: Report,
     lang: str,
