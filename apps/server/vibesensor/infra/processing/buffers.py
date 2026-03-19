@@ -25,7 +25,7 @@ class ClientBuffer:
     write_idx: int = 0
     count: int = 0
     sample_rate_hz: int = 0
-    latest_metrics: ClientMetrics = field(default_factory=dict)  # type: ignore[assignment]
+    latest_metrics: ClientMetrics = field(default_factory=ClientMetrics)
     latest_spectrum: SpectrumByAxis = field(default_factory=dict)
     latest_strength_metrics: VibrationStrengthMetrics = field(
         default_factory=empty_vibration_strength_metrics
