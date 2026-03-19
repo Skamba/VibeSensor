@@ -1,12 +1,6 @@
 import uPlot from "uplot";
 
 import { escapeHtml } from "../../format";
-import {
-  combinedRelativeUncertainty,
-  parseTireSpec,
-  tireDiameterMeters,
-  toleranceForOrder,
-} from "../../vehicle_math";
 import { SpectrumChart } from "../../spectrum";
 import { chartSeriesPalette, orderBandFills } from "../../theme";
 import { areHeavyFramesCompatible, interpolateHeavyFrame, type SpectrumHeavyFrame } from "../spectrum_animation";
@@ -271,12 +265,6 @@ export class UiSpectrumController {
     return chartSeriesPalette[index % chartSeriesPalette.length];
   }
 
-  private effectiveSpeedMps(): number | null {
-    return typeof this.state.speedMps === "number" && this.state.speedMps > 0
-      ? this.state.speedMps
-      : null;
-  }
-
   private stopSpectrumTween(): void {
     if (this.spectrumTweenRaf !== null) {
       window.cancelAnimationFrame(this.spectrumTweenRaf);
@@ -290,59 +278,6 @@ export class UiSpectrumController {
     // Store a shallow snapshot for tween comparison.
     // The frame's arrays are not mutated after construction, so no deep clone needed.
     this.spectrumLastFrame = frame;
-  }
-
-  private vehicleOrdersHz(): {
-    wheelHz: number;
-    driveHz: number;
-    engineHz: number;
-    wheelUncertaintyPct: number;
-    driveUncertaintyPct: number;
-    engineUncertaintyPct: number;
-  } | null {
-    const speed = this.effectiveSpeedMps();
-    if (speed === null) return null;
-    const tire = parseTireSpec({
-      widthMm: this.state.vehicleSettings.tire_width_mm,
-      aspect: this.state.vehicleSettings.tire_aspect_pct,
-      rimIn: this.state.vehicleSettings.rim_in,
-    });
-    if (!tire) return null;
-    const wheelHz = speed / (Math.PI * tireDiameterMeters(tire));
-    const driveHz = wheelHz * this.state.vehicleSettings.final_drive_ratio;
-    const engineHz = driveHz * this.state.vehicleSettings.current_gear_ratio;
-    const speedUncertaintyPct = Math.max(0, this.state.vehicleSettings.speed_uncertainty_pct || 0)
-      / 100;
-    const tireUncertaintyPct = Math.max(
-      0,
-      this.state.vehicleSettings.tire_diameter_uncertainty_pct || 0,
-    ) / 100;
-    const finalDriveUncertaintyPct = Math.max(
-      0,
-      this.state.vehicleSettings.final_drive_uncertainty_pct || 0,
-    ) / 100;
-    const gearUncertaintyPct = Math.max(0, this.state.vehicleSettings.gear_uncertainty_pct || 0)
-      / 100;
-    const wheelUncertaintyPct = combinedRelativeUncertainty(
-      speedUncertaintyPct,
-      tireUncertaintyPct,
-    );
-    const driveUncertaintyPct = combinedRelativeUncertainty(
-      wheelUncertaintyPct,
-      finalDriveUncertaintyPct,
-    );
-    const engineUncertaintyPct = combinedRelativeUncertainty(
-      driveUncertaintyPct,
-      gearUncertaintyPct,
-    );
-    return {
-      wheelHz,
-      driveHz,
-      engineHz,
-      wheelUncertaintyPct,
-      driveUncertaintyPct,
-      engineUncertaintyPct,
-    };
   }
 
   private calculateBandsFromBackend(): ChartBand[] | null {
@@ -366,60 +301,7 @@ export class UiSpectrumController {
   }
 
   private calculateBands(): ChartBand[] {
-    const backendBands = this.calculateBandsFromBackend();
-    if (backendBands) return backendBands;
-
-    const orders = this.vehicleOrdersHz();
-    if (!orders) return [];
-
-    const makeBand = (label: string, center: number, spread: number, color: string): ChartBand => ({
-      label,
-      min_hz: Math.max(0, center * (1 - spread)),
-      max_hz: center * (1 + spread),
-      color,
-    });
-
-    const wheelSpread = toleranceForOrder(
-      this.state.vehicleSettings.wheel_bandwidth_pct,
-      orders.wheelHz,
-      orders.wheelUncertaintyPct,
-      this.state.vehicleSettings.min_abs_band_hz,
-      this.state.vehicleSettings.max_band_half_width_pct,
-    );
-    const driveSpread = toleranceForOrder(
-      this.state.vehicleSettings.driveshaft_bandwidth_pct,
-      orders.driveHz,
-      orders.driveUncertaintyPct,
-      this.state.vehicleSettings.min_abs_band_hz,
-      this.state.vehicleSettings.max_band_half_width_pct,
-    );
-    const engineSpread = toleranceForOrder(
-      this.state.vehicleSettings.engine_bandwidth_pct,
-      orders.engineHz,
-      orders.engineUncertaintyPct,
-      this.state.vehicleSettings.min_abs_band_hz,
-      this.state.vehicleSettings.max_band_half_width_pct,
-    );
-    const out: ChartBand[] = [
-      makeBand(this.t("bands.wheel_1x"), orders.wheelHz, wheelSpread, orderBandFills.wheel1),
-      makeBand(this.t("bands.wheel_2x"), orders.wheelHz * 2, wheelSpread, orderBandFills.wheel2),
-    ];
-    const overlapTolerance = Math.max(0.03, orders.driveUncertaintyPct + orders.engineUncertaintyPct);
-    if (Math.abs(orders.driveHz - orders.engineHz) / Math.max(1e-6, orders.engineHz) < overlapTolerance) {
-      out.push(
-        makeBand(
-          this.t("bands.driveshaft_engine_1x"),
-          orders.driveHz,
-          Math.max(driveSpread, engineSpread),
-          orderBandFills.driveshaftEngine1,
-        ),
-      );
-    } else {
-      out.push(makeBand(this.t("bands.driveshaft_1x"), orders.driveHz, driveSpread, orderBandFills.driveshaft1));
-      out.push(makeBand(this.t("bands.engine_1x"), orders.engineHz, engineSpread, orderBandFills.engine1));
-    }
-    out.push(makeBand(this.t("bands.engine_2x"), orders.engineHz * 2, engineSpread, orderBandFills.engine2));
-    return out;
+    return this.calculateBandsFromBackend() ?? [];
   }
 
   private bandPlugin(): uPlot.Plugin {
