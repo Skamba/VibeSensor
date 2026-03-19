@@ -25,6 +25,7 @@ from vibesensor.domain import Run
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.constants import NUMERIC_TYPES
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
@@ -691,7 +692,7 @@ class RunRecorder:
             self.schedule_post_analysis(run_id_to_analyze)
         return result
 
-    def _run_metadata_record(self, run_id: str, start_time_utc: str) -> dict[str, object]:
+    def _run_metadata_record(self, run_id: str, start_time_utc: str) -> JsonObject:
         return build_run_metadata(
             run_id=run_id,
             start_time_utc=start_time_utc,
