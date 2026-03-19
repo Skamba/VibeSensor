@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from typing import cast
 
 from vibesensor.domain import (
     AnalysisSettingsSnapshot,
@@ -205,6 +204,6 @@ def _resolve_optional_i18n(lang: str, value: object) -> str | None:
 def _resolve_i18n(lang: str, value: object) -> str:
     from functools import partial
 
-    from vibesensor.adapters.pdf.mapping import resolve_i18n
+    from vibesensor.report_i18n import resolve_i18n
 
-    return cast("str", resolve_i18n(lang, value, tr=partial(_tr, lang)))
+    return resolve_i18n(lang, value, tr=partial(_tr, lang))

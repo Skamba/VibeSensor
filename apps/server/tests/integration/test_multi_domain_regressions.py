@@ -14,9 +14,9 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.adapters.pdf.mapping import order_label_human
-from vibesensor.adapters.pdf.mapping import resolve_i18n as resolve_i18n_impl
 from vibesensor.domain import Finding, SpeedSourceKind
 from vibesensor.domain.finding import speed_bin_label
+from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.shared.time_utils import parse_iso8601
