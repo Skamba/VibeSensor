@@ -15,10 +15,19 @@ from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from math import floor
-from typing import Any, Literal, Required, TypedDict
+from typing import Any, Literal
 
 from vibesensor.adapters.pdf.report_types import PeakTableRow
 from vibesensor.domain.finding import speed_bin_label
+from vibesensor.shared.boundaries.analysis_payload import (
+    AmpVsPhaseRow,
+    FreqVsSpeedByFindingSeries,
+    MatchedAmpVsSpeedSeries,
+    PhaseBoundary,
+    PhaseSegmentOut,
+    PlotDataResult,
+    SpectrogramResult,
+)
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import Sample
@@ -41,23 +50,6 @@ from vibesensor.vibration_strength import compute_db, compute_db_or_none, percen
 # ---------------------------------------------------------------------------
 # Spectrum types & builders (formerly plot_spectrum.py)
 # ---------------------------------------------------------------------------
-
-
-class SpectrogramResult(TypedDict, total=False):
-    """Shape returned by spectrogram builders.
-
-    Required fields are always present; ``x_bin_width`` and ``y_bin_width``
-    are only set in non-empty results.
-    """
-
-    x_axis: Required[str]
-    x_label_key: Required[str]
-    x_bins: Required[list[float]]
-    y_bins: Required[list[float]]
-    cells: Required[list[list[float]]]
-    max_amp: Required[float]
-    x_bin_width: float
-    y_bin_width: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -335,47 +327,6 @@ def spectrogram_from_peaks_raw(
 # ---------------------------------------------------------------------------
 # Series types & builders (formerly plot_series.py)
 # ---------------------------------------------------------------------------
-
-
-class MatchedAmpVsSpeedSeries(TypedDict):
-    """Per-finding matched-point series for amp-vs-speed."""
-
-    label: str
-    points: list[tuple[float, float]]
-
-
-class FreqVsSpeedByFindingSeries(TypedDict):
-    """Per-finding frequency-vs-speed series with predicted overlay."""
-
-    label: str
-    matched: list[tuple[float, float]]
-    predicted: list[tuple[float, float]]
-
-
-class AmpVsPhaseRow(TypedDict):
-    """A single phase-grouped vibration row."""
-
-    phase: str
-    count: int
-    mean_vib_db: float
-    max_vib_db: float | None
-    mean_speed_kmh: float | None
-
-
-class PhaseSegmentOut(TypedDict):
-    """Serialised driving-phase segment for plot consumers."""
-
-    phase: str
-    start_t_s: float | None
-    end_t_s: float | None
-
-
-class PhaseBoundary(TypedDict):
-    """Phase boundary marker for plot overlay."""
-
-    phase: str
-    t_s: float | None
-    end_t_s: float | None
 
 
 @dataclass(frozen=True)
@@ -735,25 +686,6 @@ def top_peaks_table_rows(
 # ---------------------------------------------------------------------------
 # Plot-data orchestration (formerly plot_data.py)
 # ---------------------------------------------------------------------------
-
-
-class PlotDataResult(TypedDict):
-    """Shape returned by the plot-data orchestration layer."""
-
-    vib_magnitude: list[tuple[float, float, str]]
-    dominant_freq: list[tuple[float, float]]
-    amp_vs_speed: list[tuple[float, float]]
-    amp_vs_phase: list[AmpVsPhaseRow]
-    matched_amp_vs_speed: list[MatchedAmpVsSpeedSeries]
-    freq_vs_speed_by_finding: list[FreqVsSpeedByFindingSeries]
-    steady_speed_distribution: dict[str, float] | None
-    fft_spectrum: list[tuple[float, float]]
-    fft_spectrum_raw: list[tuple[float, float]]
-    peaks_spectrogram: SpectrogramResult
-    peaks_spectrogram_raw: SpectrogramResult
-    peaks_table: list[PeakTableRow]
-    phase_segments: list[PhaseSegmentOut]
-    phase_boundaries: list[PhaseBoundary]
 
 
 def _plot_data(
