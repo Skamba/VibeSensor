@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from vibesensor.coerce import coerce_float
+
 __all__ = ["OrderMatchObservation"]
 
 _CLOSE_MATCH_THRESHOLD = 0.05  # 5% relative error
@@ -52,7 +54,7 @@ class OrderMatchObservation:
             if v is None:
                 return None
             try:
-                return float(v)  # type: ignore[arg-type]
+                return coerce_float(v)
             except (TypeError, ValueError):
                 return None
 
@@ -61,7 +63,7 @@ class OrderMatchObservation:
             if v is None:
                 return default
             try:
-                return float(v)  # type: ignore[arg-type]
+                return coerce_float(v)
             except (TypeError, ValueError):
                 return default
 
