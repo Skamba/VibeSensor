@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from tests._paths import REPO_ROOT
+from vibesensor.domain.sensor import _LOCATION_CODES as DOMAIN_LOCATION_CODES
 from vibesensor.shared.locations import LOCATION_CODES
 
 _CONSTANTS_TS = REPO_ROOT / "apps" / "ui" / "src" / "constants.ts"
@@ -19,4 +20,11 @@ def test_frontend_location_codes_match_backend() -> None:
         f"Frontend/backend location code mismatch.\n"
         f"  Backend:  {backend_codes}\n"
         f"  Frontend: {frontend_codes}"
+    )
+
+
+def test_domain_location_codes_match_shared() -> None:
+    """Domain-internal _LOCATION_CODES must stay in sync with shared/locations."""
+    assert DOMAIN_LOCATION_CODES == LOCATION_CODES, (
+        "domain/sensor.py _LOCATION_CODES drifted from shared/locations.py LOCATION_CODES"
     )

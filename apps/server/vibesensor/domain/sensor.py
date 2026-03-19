@@ -10,11 +10,32 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Final
 
 __all__ = [
     "Sensor",
     "SensorPlacement",
 ]
+
+# Domain-internal location code registry.  The canonical external-facing
+# copy lives in ``shared/locations.py``; a hygiene test guards parity.
+_LOCATION_CODES: Final[dict[str, str]] = {
+    "front_left_wheel": "Front Left Wheel",
+    "front_right_wheel": "Front Right Wheel",
+    "rear_left_wheel": "Rear Left Wheel",
+    "rear_right_wheel": "Rear Right Wheel",
+    "transmission": "Transmission",
+    "driveshaft_tunnel": "Driveshaft Tunnel",
+    "engine_bay": "Engine Bay",
+    "front_subframe": "Front Subframe",
+    "rear_subframe": "Rear Subframe",
+    "driver_seat": "Driver Seat",
+    "front_passenger_seat": "Front Passenger Seat",
+    "rear_left_seat": "Rear Left Seat",
+    "rear_center_seat": "Rear Center Seat",
+    "rear_right_seat": "Rear Right Seat",
+    "trunk": "Trunk",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,13 +64,11 @@ class SensorPlacement:
     def from_code(cls, code: str) -> SensorPlacement:
         """Create a placement from a canonical location code.
 
-        Resolves the human-readable label from the location code registry
-        (``vibesensor.shared.locations.LOCATION_CODES``).  Falls back to a
-        title-cased version of the code if the code is not found.
+        Resolves the human-readable label from the domain-internal location
+        code registry.  Falls back to a title-cased version of the code if
+        the code is not found.
         """
-        from vibesensor.shared.locations import LOCATION_CODES
-
-        label = LOCATION_CODES.get(code, code.replace("_", " ").title())
+        label = _LOCATION_CODES.get(code, code.replace("_", " ").title())
         return cls(code=code, label=label)
 
 
