@@ -112,5 +112,8 @@ apps/ui/test-results/
 tmp/
 .ai-temp/
 
+# AI planning artifacts (keep only repo-map.md in docs/ai/)
+docs/ai/chunk*
+
 # Pi image build mount points
 \$MNT/
