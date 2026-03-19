@@ -294,7 +294,7 @@ def test_store_language_roundtrip() -> None:
 def test_store_corrupted_snapshot_falls_back_to_defaults(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     # Write invalid JSON directly into the settings_snapshot table
-    from vibesensor.adapters.persistence.runlog import utc_now_iso
+    from vibesensor.shared.time_utils import utc_now_iso
 
     with db._cursor() as cur:
         cur.execute(

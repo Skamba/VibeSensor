@@ -11,7 +11,6 @@ from pathlib import Path
 from statistics import median as _median
 from typing import Any
 
-from vibesensor.adapters.persistence.runlog import parse_iso8601, utc_now_iso
 from vibesensor.domain import (
     ConfigurationSnapshot,
     DiagnosticCase,
@@ -59,6 +58,7 @@ from vibesensor.shared.constants import (
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context import build_summary_warnings, order_reference_context_complete
+from vibesensor.shared.time_utils import parse_iso8601, utc_now_iso
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._types import (
