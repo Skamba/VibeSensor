@@ -73,8 +73,8 @@ def _make_nested_int_defaultdict() -> defaultdict:
 class _PeakBinStats:
     """Accumulated per-frequency-bin statistics collected from samples.
 
-    Populated by :func:`_accumulate_peak_bin_stats` and consumed by the
-    per-bin scoring loop in the findings orchestration layer.
+    Populated by :func:`_accumulate_peak_bin_stats` before each resulting
+    frequency bin is scored and converted into a finding.
     """
 
     __slots__ = (

@@ -17,9 +17,9 @@ from vibesensor.use_cases.diagnostics._types import (
 from vibesensor.use_cases.diagnostics.helpers import (
     _effective_engine_rpm,
     _locations_connected_throughout_run,
-    _phase_to_str,
+    _phase_to_str,  # noqa: F401
     _run_noise_baseline_g,
-    _speed_profile_from_points,
+    _speed_profile_from_points,  # noqa: F401
     _tire_reference_from_metadata,
 )
 from vibesensor.use_cases.diagnostics.order_analysis import _build_order_findings
@@ -27,7 +27,7 @@ from vibesensor.use_cases.diagnostics.peak_binning import (
     PERSISTENT_PEAK_MAX_FINDINGS,
     PeakBin,
     _accumulate_peak_bin_stats,
-    _classify_peak_type,
+    _classify_peak_type,  # noqa: F401
     _PeakBinStats,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
@@ -36,9 +36,9 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
     segment_run_phases,
 )
 from vibesensor.use_cases.diagnostics.signal_aggregation import (
-    _phase_speed_breakdown,
-    _sensor_intensity_by_location,
-    _speed_breakdown,
+    _phase_speed_breakdown,  # noqa: F401
+    _sensor_intensity_by_location,  # noqa: F401
+    _speed_breakdown,  # noqa: F401
 )
 
 __all__ = [
@@ -51,15 +51,6 @@ __all__ = [
     "has_engine_reference",
     "prepare_analysis_samples",
 ]
-
-_COMPAT_REEXPORTS = (
-    _classify_peak_type,
-    _phase_speed_breakdown,
-    _phase_to_str,
-    _sensor_intensity_by_location,
-    _speed_breakdown,
-    _speed_profile_from_points,
-)
 
 # ---------------------------------------------------------------------------
 # Finding finalization
