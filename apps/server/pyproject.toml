@@ -114,6 +114,7 @@ files = [
   "vibesensor/use_cases/diagnostics/location_analysis.py",
   "vibesensor/use_cases/diagnostics/phase_segmentation.py",
   "vibesensor/adapters/websocket/hub.py",
+  "vibesensor/adapters/persistence/history_db",
 ]
 follow_imports = "skip"
 check_untyped_defs = true
