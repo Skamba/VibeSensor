@@ -26,6 +26,7 @@ export interface VehicleSettings {
   gear_uncertainty_pct: number;
   min_abs_band_hz: number;
   max_band_half_width_pct: number;
+  tire_deflection_factor: number;
   [key: string]: number;
 }
 
@@ -143,20 +144,21 @@ export function createAppState(): AppState {
     },
     locationOptions: [],
     vehicleSettings: {
-      tire_width_mm: 285,
-      tire_aspect_pct: 30,
-      rim_in: 21,
+      tire_width_mm: 285.0,
+      tire_aspect_pct: 30.0,
+      rim_in: 21.0,
       final_drive_ratio: 3.08,
       current_gear_ratio: 0.64,
-      wheel_bandwidth_pct: 6.0,
-      driveshaft_bandwidth_pct: 5.6,
-      engine_bandwidth_pct: 6.2,
-      speed_uncertainty_pct: 0.6,
-      tire_diameter_uncertainty_pct: 1.2,
-      final_drive_uncertainty_pct: 0.2,
-      gear_uncertainty_pct: 0.5,
-      min_abs_band_hz: 0.4,
-      max_band_half_width_pct: 8.0,
+      wheel_bandwidth_pct: 5.0,
+      driveshaft_bandwidth_pct: 4.5,
+      engine_bandwidth_pct: 5.2,
+      speed_uncertainty_pct: 1.0,
+      tire_diameter_uncertainty_pct: 1.0,
+      final_drive_uncertainty_pct: 0.1,
+      gear_uncertainty_pct: 0.2,
+      min_abs_band_hz: 0.2,
+      max_band_half_width_pct: 6.0,
+      tire_deflection_factor: 0.97,
     },
     cars: [],
     activeCarId: null,
