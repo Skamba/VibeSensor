@@ -111,3 +111,6 @@ apps/ui/test-results/
 .copilot-worktrees/
 tmp/
 .ai-temp/
+
+# Pi image build mount points
+\$MNT/
