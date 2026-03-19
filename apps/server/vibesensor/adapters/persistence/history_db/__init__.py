@@ -31,7 +31,6 @@ from vibesensor.adapters.persistence.history_db._schema import (
     SCHEMA_SQL,
     SCHEMA_VERSION,
 )
-from vibesensor.adapters.persistence.runlog import utc_now_iso
 from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.domain.run_status import (
     RunStatus,
@@ -39,6 +38,7 @@ from vibesensor.domain.run_status import (
     transition_run,
 )
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
+from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
 # Re-export for public API.

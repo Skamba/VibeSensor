@@ -23,7 +23,6 @@ from vibesensor.adapters.pdf.report_data import (
     SystemFindingCard,
 )
 from vibesensor.adapters.pdf.report_types import PeakTableRow
-from vibesensor.adapters.persistence.runlog import utc_now_iso
 from vibesensor.domain import (
     ConfidenceAssessment,
     Finding,
@@ -40,6 +39,7 @@ from vibesensor.shared.boundaries.vibration_origin import (
 )
 from vibesensor.shared.constants import PHASE_I18N_KEYS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 __all__ = ["Report", "map_summary"]

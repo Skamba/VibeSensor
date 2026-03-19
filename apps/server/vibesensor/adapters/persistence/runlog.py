@@ -2,7 +2,6 @@
 
 Provides helpers for reading metric run files in JSONL format,
 plus normalisation helpers for canonical field name handling.
-``utc_now_iso()`` is canonically defined in this module.
 """
 
 from __future__ import annotations
@@ -11,7 +10,6 @@ import json
 import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 
 from vibesensor.adapters.udp.protocol import SensorFrame
@@ -32,9 +30,7 @@ __all__ = [
     "bounded_sample",
     "create_run_metadata",
     "normalize_sample_record",
-    "parse_iso8601",
     "read_jsonl_run",
-    "utc_now_iso",
 ]
 
 
@@ -45,25 +41,6 @@ class RunData:
     metadata: JsonObject
     samples: list[JsonObject]
     source_path: Path
-
-
-def utc_now_iso() -> str:
-    """Return the current UTC time as an ISO 8601 string."""
-    return datetime.now(UTC).isoformat()
-
-
-def parse_iso8601(value: object) -> datetime | None:
-    """Parse an ISO 8601 string into an aware ``datetime``, or return ``None``."""
-    if not isinstance(value, str) or not value.strip():
-        return None
-    try:
-        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-        # Ensure timezone-aware: assume UTC for naive timestamps
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=UTC)
-        return dt
-    except ValueError:
-        return None
 
 
 def create_run_metadata(

@@ -21,10 +21,10 @@ from threading import RLock
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from vibesensor.adapters.persistence.runlog import utc_now_iso
 from vibesensor.domain import Run
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.constants import NUMERIC_TYPES
+from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,

@@ -539,7 +539,7 @@ class FirmwareCache:
             validate_bundle(extract_dir)
 
             # Write metadata
-            from vibesensor.adapters.persistence.runlog import utc_now_iso
+            from vibesensor.shared.time_utils import utc_now_iso
 
             meta = BundleMeta(
                 tag=tag,
