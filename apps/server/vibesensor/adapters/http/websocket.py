@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from vibesensor.adapters.udp.protocol import normalize_sensor_id
+from vibesensor.domain import normalize_sensor_id
 
 if TYPE_CHECKING:
     from vibesensor.adapters.websocket.hub import WebSocketHub

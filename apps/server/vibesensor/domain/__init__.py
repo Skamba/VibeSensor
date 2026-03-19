@@ -53,7 +53,7 @@ from .run import Run
 from .run_capture import ConfigurationSnapshot, Measurement, RunCapture, RunSetup, VibrationReading
 from .run_status import RUN_TRANSITIONS, RunStatus, is_run_deletable, transition_run
 from .run_suitability import RunSuitability, SuitabilityCheck
-from .sensor import Sensor, SensorPlacement
+from .sensor import Sensor, SensorPlacement, normalize_sensor_id
 from .snapshots import (
     AnalysisSettingsSnapshot,
     DrivingPhaseSummary,
@@ -123,6 +123,7 @@ __all__ = [
     # Functions
     "RUN_TRANSITIONS",
     "is_run_deletable",
+    "normalize_sensor_id",
     "plan_test_actions",
     "speed_band_sort_key",
     "speed_bin_label",
