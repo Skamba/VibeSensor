@@ -266,6 +266,7 @@ async def test_processing_loop_broadcasts_sync_clock() -> None:
 @pytest.mark.asyncio
 async def test_start_creates_tasks(monkeypatch) -> None:
     """LifecycleManager.start() should populate the tasks list."""
+
     async def _fake_udp(*args, **kwargs):
         return None, None
 
@@ -341,6 +342,7 @@ async def test_start_records_background_task_failure(monkeypatch) -> None:
 @pytest.mark.asyncio
 async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     """LifecycleManager.stop() should cancel tasks, close DB and worker pool."""
+
     async def _fake_udp(*args, **kwargs):
         return MagicMock(), None
 
