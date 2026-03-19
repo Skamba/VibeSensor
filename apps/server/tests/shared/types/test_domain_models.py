@@ -1,4 +1,4 @@
-"""Tests for domain_models module: CarConfig, SensorConfig, SpeedSourceConfig,
+"""Tests for domain_models module: Car persistence, SensorConfig, SpeedSourceConfig,
 RunMetadata, and SensorFrame parsing/serialization.
 """
 
@@ -9,12 +9,13 @@ from typing import Any
 import pytest
 
 from vibesensor.adapters.udp.protocol import SensorFrame
+from vibesensor.domain import Car
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.types.backend_types import (
-    CarConfig,
     RunMetadata,
     SensorConfig,
     SpeedSourceConfig,
+    car_to_persistence_dict,
 )
 
 # ---------------------------------------------------------------------------
@@ -56,42 +57,41 @@ class TestAsIntOrNone:
 
 
 # ---------------------------------------------------------------------------
-# CarConfig
+# Car persistence (from_persisted_dict / car_to_persistence_dict)
 # ---------------------------------------------------------------------------
 
 
-class TestCarConfig:
+class TestCarPersistedDict:
     def test_from_dict_basic(self) -> None:
-        car = CarConfig.from_dict({"id": "c1", "name": "MyCar", "type": "sedan"})
+        car = Car.from_persisted_dict({"id": "c1", "name": "MyCar", "type": "sedan"})
         assert car.id == "c1"
         assert car.name == "MyCar"
         assert car.car_type == "sedan"
-        assert isinstance(car.aspects, dict)
 
     def test_from_dict_defaults(self) -> None:
-        car = CarConfig.from_dict({})
+        car = Car.from_persisted_dict({})
         assert car.name == "Unnamed Car"
         assert car.car_type == "sedan"
 
     def test_name_truncated_at_64(self) -> None:
         long = "A" * 100
-        car = CarConfig.from_dict({"name": long})
+        car = Car.from_persisted_dict({"name": long})
         assert len(car.name) <= 64
 
     @pytest.mark.smoke
     def test_roundtrip(self) -> None:
-        car = CarConfig.from_dict({"id": "x", "name": "Test", "type": "suv"})
-        d = car.to_dict()
+        car = Car.from_persisted_dict({"id": "x", "name": "Test", "type": "suv"})
+        d = car_to_persistence_dict(car)
         assert d["id"] == "x"
         assert d["name"] == "Test"
 
     def test_missing_id_gets_generated(self) -> None:
-        car = CarConfig.from_dict({"name": "Generated"})
+        car = Car.from_persisted_dict({"name": "Generated"})
         assert car.name == "Generated"
         assert car.id  # non-empty UUID
 
     def test_aspects_sanitized(self) -> None:
-        car = CarConfig.from_dict({"aspects": {"tire_width_mm": "not_a_number"}})
+        car = Car.from_persisted_dict({"aspects": {"tire_width_mm": "not_a_number"}})
         # Invalid aspect should be overridden by default
         assert isinstance(car.aspects.get("tire_width_mm"), (int, float))
 
@@ -110,7 +110,7 @@ class TestCarConfig:
         field: str,
         fallback: str,
     ) -> None:
-        car = CarConfig.from_dict(data)
+        car = Car.from_persisted_dict(data)
         assert getattr(car, field) == fallback
 
 

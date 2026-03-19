@@ -25,6 +25,7 @@ from pydantic import ValidationError
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.config.settings_store import SettingsStore
+from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.shared.types.api_models import CarUpsertRequest, SensorRequest, SpeedSourceRequest
 from vibesensor.use_cases.diagnostics.helpers import _corr_abs
@@ -177,16 +178,16 @@ class TestHistoryDbCorruptedSchemaVersion:
 
 
 # ------------------------------------------------------------------
-# 6. settings_store — dict rollback safety
+# 6. settings_store — car rollback safety
 # ------------------------------------------------------------------
 
 
 class TestSettingsStoreRollbackSafety:
-    """Car aspects rollback must use clear/update, not reassignment."""
+    """Car aspects rollback must restore original state on persist failure."""
 
     def test_rollback_preserves_dict_identity(self) -> None:
-        """After a failed persist, the car.aspects dict object
-        should still be the same object (not replaced).
+        """After a failed persist, the car should be restored
+        to its original state (same content).
         """
         store = SettingsStore(db=None)
         car_data = store.add_car({"name": "TestCar", "type": "sedan"})
@@ -195,22 +196,22 @@ class TestSettingsStoreRollbackSafety:
         # Set as active so _find_car works
         store.set_active_car(car_id)
 
-        # Get the aspects dict reference before update
+        # Get the aspects content before update
         with store._lock:
             car = store._find_car(car_id)
-            original_aspects_id = id(car.aspects)
+            original_aspects = dict(car.aspects)
 
-        # Force persist to fail
+        # Force persist to fail with PersistenceError (triggers rollback)
         with (
-            patch.object(store, "_persist", side_effect=Exception("disk full")),
-            contextlib.suppress(Exception),
+            patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
+            contextlib.suppress(PersistenceError),
         ):
             store.update_car(car_id, {"aspects": {"wheel": 1.0, "driveshaft": 0.5}})
 
-        # The aspects dict should still be the SAME object
+        # The aspects content should be unchanged
         with store._lock:
             car = store._find_car(car_id)
-            assert id(car.aspects) == original_aspects_id
+            assert dict(car.aspects) == original_aspects
 
 
 # ------------------------------------------------------------------
