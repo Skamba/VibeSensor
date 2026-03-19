@@ -81,6 +81,7 @@ class TestMypyEnforcement:
         [
             "vibesensor/report_i18n.py",
             "vibesensor/use_cases/run",
+            "vibesensor/infra/processing",
         ],
     )
     def test_module_in_mypy_files(self, mypy_files: list[str], module: str) -> None:
