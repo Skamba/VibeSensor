@@ -21,6 +21,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from vibesensor.adapters.http import create_router
+from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
 from vibesensor.app.container import build_runtime
 from vibesensor.app.settings import load_config
 from vibesensor.infra.runtime import RuntimeState
@@ -70,7 +71,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     config = load_config(config_path)
     _setup_file_logging(config.logging.app_log_path)
     runtime = build_runtime(config)
-    lifecycle = LifecycleManager(runtime=runtime)
+    lifecycle = LifecycleManager(runtime=runtime, start_udp_receiver=start_udp_data_receiver)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
