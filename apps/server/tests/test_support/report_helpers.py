@@ -11,10 +11,10 @@ import pytest
 from vibesensor.domain import LocationHotspot
 from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
 from vibesensor.use_cases.diagnostics import (
-    order_analysis as _order_analysis_module,
+    order_analysis as order_findings_module,
 )
 from vibesensor.use_cases.diagnostics import (
-    order_analysis as order_findings_module,
+    order_statistics as _order_statistics_module,
 )
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.order_analysis import (
@@ -295,7 +295,7 @@ def patch_order_hypothesis(
 ) -> None:
     """Apply standard order-hypothesis stubs to order-findings internals."""
     monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [HypothesisStub()])
-    monkeypatch.setattr(_order_analysis_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(_order_statistics_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
         _test_plan_module,
         "_location_speedbin_summary",

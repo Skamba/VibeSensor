@@ -1,13 +1,13 @@
-"""Order-tracking analysis: Hz helpers, hypotheses, matching, scoring, and assembly."""
+"""Order-tracking analysis: matching, scoring, heuristic filters, and assembly."""
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass, replace
 from math import log1p
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.domain import OrderMatchObservation, OrderReferenceSpec, VibrationOrigin
+from vibesensor.domain import OrderMatchObservation, VibrationOrigin
 from vibesensor.domain.finding import (
     FindingEvidence,
     FindingKind,
@@ -16,20 +16,14 @@ from vibesensor.domain.finding import (
     speed_bin_label,
 )
 from vibesensor.shared.constants import (
-    CONFIDENCE_CEILING,
-    CONFIDENCE_FLOOR,
     CONSTANT_SPEED_STDDEV_KMH,
-    KMH_TO_MPS,
-    LIGHT_STRENGTH_MAX_DB,
     MEMS_NOISE_FLOOR_G,
-    NEGLIGIBLE_STRENGTH_MAX_DB,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
     ORDER_MIN_COVERAGE_POINTS,
     ORDER_MIN_MATCH_POINTS,
     ORDER_TOLERANCE_MIN_HZ,
     ORDER_TOLERANCE_REL,
-    SECONDS_PER_MINUTE,
     SNR_LOG_DIVISOR,
     SPEED_BIN_WIDTH_KMH,
 )
@@ -41,152 +35,26 @@ from vibesensor.use_cases.diagnostics._types import (
     Sample,
 )
 from vibesensor.use_cases.diagnostics.helpers import (
-    _corr_abs_clamped,
-    _effective_engine_rpm,
     _estimate_strength_floor_amp_g,
     _location_label,
     _order_reference_spec_from_context,
     _phase_to_str,
     _sample_top_peaks,
-    _speed_profile_from_points,
 )
-from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
+from vibesensor.use_cases.diagnostics.order_statistics import (
+    compute_amplitude_and_error_stats,
+    compute_matched_speed_phase_evidence,
+    compute_order_confidence,
+    compute_phase_stats,
+)
+from vibesensor.use_cases.diagnostics.rotational_physics import (
+    OrderHypothesis,
+    _order_hypotheses,
+    _order_label,
+)
 from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Hz helpers, hypotheses, and action plans
-# ═══════════════════════════════════════════════════════════════════════════
-
-
-def _wheel_hz(
-    sample: Sample,
-    tire_circumference_m: float | None,
-    metadata: JsonObject | None = None,
-    order_reference_spec: OrderReferenceSpec | None = None,
-) -> float | None:
-    speed_kmh = _as_float(sample.get("speed_kmh"))
-    if speed_kmh is None or speed_kmh <= 0:
-        return None
-    spec = order_reference_spec
-    if spec is None and metadata is not None:
-        spec = _order_reference_spec_from_context(metadata, sample)
-    if spec is not None and spec.supports_wheel_reference:
-        return spec.wheel_hz_from_speed_kmh(speed_kmh)
-    if tire_circumference_m is None or tire_circumference_m <= 0:
-        return None
-    return float(speed_kmh * KMH_TO_MPS / tire_circumference_m)
-
-
-def _driveshaft_hz(
-    sample: Sample,
-    metadata: JsonObject,
-    tire_circumference_m: float | None,
-) -> float | None:
-    speed_kmh = _as_float(sample.get("speed_kmh"))
-    spec = _order_reference_spec_from_context(metadata, sample)
-    if (
-        speed_kmh is not None
-        and speed_kmh > 0
-        and spec is not None
-        and spec.supports_driveshaft_reference
-    ):
-        return spec.driveshaft_hz_from_speed_kmh(speed_kmh)
-    whz = _wheel_hz(
-        sample,
-        tire_circumference_m,
-        metadata,
-        order_reference_spec=spec,
-    )
-    fd = _as_float(sample.get("final_drive_ratio")) or _as_float(metadata.get("final_drive_ratio"))
-    if whz is None or fd is None or fd <= 0:
-        return None
-    return float(whz * fd)
-
-
-def _engine_hz(
-    sample: Sample,
-    metadata: JsonObject,
-    tire_circumference_m: float | None,
-) -> tuple[float | None, str]:
-    rpm, src = _effective_engine_rpm(sample, metadata, tire_circumference_m)
-    if rpm is None or rpm <= 0:
-        return None, src
-    return float(rpm / SECONDS_PER_MINUTE), src
-
-
-def _order_label(order: int, base: str) -> str:
-    """Return a language-neutral order label like ``'1x wheel'``."""
-    return f"{order}x {base}"
-
-
-@dataclass(slots=True, frozen=True)
-class OrderHypothesis:
-    key: str
-    suspected_source: VibrationSource
-    order_label_base: str
-    order: int
-    # Path compliance factor: models how much the mechanical transmission
-    # path between the vibration source and the sensor dampens/broadens
-    # the frequency peak.  1.0 = stiff direct coupling (driveshaft), higher
-    # values = softer compliant path (wheel through suspension bushings).
-    # Used to widen match tolerance and soften error/correlation penalties.
-    path_compliance: float = 1.0
-
-    def predicted_hz(
-        self,
-        sample: Sample,
-        metadata: JsonObject,
-        tire_circumference_m: float | None,
-    ) -> tuple[float | None, str]:
-        if self.order_label_base == "wheel":
-            base = _wheel_hz(sample, tire_circumference_m, metadata)
-            return (base * self.order, "speed+tire") if base is not None else (None, "missing")
-        if self.order_label_base == "driveshaft":
-            base = _driveshaft_hz(sample, metadata, tire_circumference_m)
-            if base is None:
-                return None, "missing"
-            return base * self.order, "speed+tire+final_drive"
-        if self.order_label_base == "engine":
-            base, src = _engine_hz(sample, metadata, tire_circumference_m)
-            return (base * self.order, src) if base is not None else (None, "missing")
-        return None, "missing"
-
-
-# Pre-built hypothesis objects – avoids re-creating 6 frozen dataclass
-# instances on every call.  The thin wrapper function below is kept so that
-# test monkeypatches (which replace the callable) keep working.
-_ORDER_HYPOTHESES: tuple[OrderHypothesis, ...] = (
-    # Wheel orders travel through tire sidewall → hub → knuckle → control
-    # arms → bushings → subframe → body → sensor.  Each rubber component
-    # broadens the peak and reduces tracking precision.
-    OrderHypothesis("wheel_1x", VibrationSource.WHEEL_TIRE, "wheel", 1, path_compliance=1.5),
-    OrderHypothesis("wheel_2x", VibrationSource.WHEEL_TIRE, "wheel", 2, path_compliance=1.5),
-    # Driveshaft has a shorter, stiffer path: shaft → diff → subframe → body.
-    OrderHypothesis(
-        "driveshaft_1x",
-        VibrationSource.DRIVELINE,
-        "driveshaft",
-        1,
-        path_compliance=1.0,
-    ),
-    OrderHypothesis(
-        "driveshaft_2x",
-        VibrationSource.DRIVELINE,
-        "driveshaft",
-        2,
-        path_compliance=1.0,
-    ),
-    # Engine is stiffly mounted on most vehicles.
-    OrderHypothesis("engine_1x", VibrationSource.ENGINE, "engine", 1, path_compliance=1.0),
-    OrderHypothesis("engine_2x", VibrationSource.ENGINE, "engine", 2, path_compliance=1.0),
-)
-
-
-def _order_hypotheses() -> tuple[OrderHypothesis, ...]:
-    return _ORDER_HYPOTHESES
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Models
@@ -381,12 +249,8 @@ def match_samples_for_hypothesis(
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Scoring
+# Scoring constants (local to heuristic filters in this module)
 # ═══════════════════════════════════════════════════════════════════════════
-
-# Local type bindings so mypy resolves correct types under follow_imports=skip.
-_CONF_FLOOR: float = CONFIDENCE_FLOOR
-_CONF_CEIL: float = CONFIDENCE_CEILING
 
 # ── Diffuse excitation detection constants ──────────────────────────────
 _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO = 2.0
@@ -395,35 +259,6 @@ _DIFFUSE_MIN_MEAN_RATE = 0.15
 _DIFFUSE_PENALTY_BASE = 0.85
 _DIFFUSE_PENALTY_PER_SENSOR = 0.04
 _DIFFUSE_PENALTY_FLOOR = 0.65
-_SINGLE_SENSOR_CONFIDENCE_SCALE = 0.85
-_DUAL_SENSOR_CONFIDENCE_SCALE = 0.92
-_CONF_BASE = 0.10
-_MATCH_BASE_WEIGHT = 0.35
-_ERROR_WEIGHT = 0.20
-_CORR_BASE_WEIGHT = 0.10
-_SNR_WEIGHT = 0.20
-_CORR_MAX_SHIFT = 0.05
-_CORR_COMPLIANCE_FACTOR = 0.10
-_NEGLIGIBLE_STRENGTH_CONF_CAP = 0.40
-_LIGHT_STRENGTH_PENALTY = 0.80
-_LOCALIZATION_BASE = 0.70
-_LOCALIZATION_SPREAD = 0.30
-_WEAK_SEP_DOMINANCE_THRESHOLD = 1.5
-_WEAK_SEP_STRONG_PENALTY = 0.90
-_WEAK_SEP_UNIFORM_DOMINANCE = 1.05
-_WEAK_SEP_UNIFORM_PENALTY = 0.70
-_WEAK_SEP_MILD_PENALTY = 0.80
-_NO_WHEEL_SENSOR_PENALTY = 0.75
-_CONSTANT_SPEED_PENALTY = 0.75
-_STEADY_SPEED_PENALTY = 0.82
-_SAMPLE_SATURATION_COUNT = 20
-_SAMPLE_WEIGHT_BASE = 0.70
-_SAMPLE_WEIGHT_RANGE = 0.30
-_CORROBORATING_3_BONUS = 1.08
-_CORROBORATING_2_BONUS = 1.04
-_PHASES_3_BONUS = 1.06
-_PHASES_2_BONUS = 1.03
-_LOCALIZATION_MIN_SCALE_THRESHOLD = 0.30
 _HARMONIC_ALIAS_RATIO = 1.15
 _ENGINE_ALIAS_SUPPRESSION = 0.60
 
@@ -489,85 +324,6 @@ def detect_diffuse_excitation(
     return False, 1.0
 
 
-def compute_order_confidence(
-    *,
-    effective_match_rate: float,
-    error_score: float,
-    corr_val: float,
-    snr_score: float,
-    absolute_strength_db: float,
-    localization_confidence: float,
-    weak_spatial_separation: bool,
-    dominance_ratio: float | None,
-    constant_speed: bool,
-    steady_speed: bool,
-    matched: int,
-    corroborating_locations: int,
-    phases_with_evidence: int,
-    is_diffuse_excitation: bool,
-    diffuse_penalty: float,
-    n_connected_locations: int,
-    no_wheel_sensors: bool = False,
-    path_compliance: float = 1.0,
-) -> float:
-    """Compute calibrated confidence for an order-tracking finding."""
-    corr_shift = max(
-        0.0,
-        min(_CORR_MAX_SHIFT, _CORR_COMPLIANCE_FACTOR * (path_compliance - 1.0)),
-    )
-    match_weight = _MATCH_BASE_WEIGHT + corr_shift
-    corr_weight = _CORR_BASE_WEIGHT - corr_shift
-    confidence = (
-        _CONF_BASE
-        + (match_weight * effective_match_rate)
-        + (_ERROR_WEIGHT * error_score)
-        + (corr_weight * corr_val)
-        + (_SNR_WEIGHT * snr_score)
-    )
-    if absolute_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB:
-        confidence = min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP)
-    elif absolute_strength_db < LIGHT_STRENGTH_MAX_DB:
-        confidence *= _LIGHT_STRENGTH_PENALTY
-    confidence *= _LOCALIZATION_BASE + (
-        _LOCALIZATION_SPREAD * max(0.0, min(1.0, localization_confidence))
-    )
-    if weak_spatial_separation:
-        if (
-            no_wheel_sensors
-            and dominance_ratio is not None
-            and dominance_ratio >= _WEAK_SEP_DOMINANCE_THRESHOLD
-        ):
-            confidence *= _WEAK_SEP_STRONG_PENALTY
-        else:
-            uniform = dominance_ratio is not None and dominance_ratio < _WEAK_SEP_UNIFORM_DOMINANCE
-            confidence *= _WEAK_SEP_UNIFORM_PENALTY if uniform else _WEAK_SEP_MILD_PENALTY
-    if no_wheel_sensors and not weak_spatial_separation:
-        confidence *= _NO_WHEEL_SENSOR_PENALTY
-    if constant_speed:
-        confidence *= _CONSTANT_SPEED_PENALTY
-    elif steady_speed:
-        confidence *= _STEADY_SPEED_PENALTY
-    sample_factor = min(1.0, matched / _SAMPLE_SATURATION_COUNT)
-    confidence = confidence * (_SAMPLE_WEIGHT_BASE + _SAMPLE_WEIGHT_RANGE * sample_factor)
-    if corroborating_locations >= 3:
-        confidence *= _CORROBORATING_3_BONUS
-    elif corroborating_locations >= 2:
-        confidence *= _CORROBORATING_2_BONUS
-    if phases_with_evidence >= 3:
-        confidence *= _PHASES_3_BONUS
-    elif phases_with_evidence >= 2:
-        confidence *= _PHASES_2_BONUS
-    if is_diffuse_excitation:
-        confidence *= diffuse_penalty
-    if n_connected_locations <= 1 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD:
-        confidence *= _SINGLE_SENSOR_CONFIDENCE_SCALE
-    elif (
-        n_connected_locations == 2 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD
-    ):
-        confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
-    return max(_CONF_FLOOR, min(_CONF_CEIL, confidence))
-
-
 def suppress_engine_aliases(
     findings: list[tuple[float, DomainFinding]],
     *,
@@ -602,114 +358,8 @@ def suppress_engine_aliases(
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Support helpers
+# Localization override
 # ═══════════════════════════════════════════════════════════════════════════
-
-_PHASE_ONSET_RELEVANT: frozenset[str] = frozenset(
-    {
-        DrivingPhase.ACCELERATION.value,
-        DrivingPhase.DECELERATION.value,
-        DrivingPhase.COAST_DOWN.value,
-    },
-)
-
-
-def compute_matched_speed_phase_evidence(
-    matched_points: list[OrderMatchObservation],
-    *,
-    focused_speed_band: str | None,
-    hotspot_speed_band: str,
-) -> tuple[float | None, list[float], str | None, dict[str, object], str | None]:
-    """Derive speed-profile and phase-evidence from matched points."""
-    cruise_value = DrivingPhase.CRUISE.value
-    speed_points: list[tuple[float, float]] = []
-    speed_phase_weights: list[float] = []
-    for point in matched_points:
-        point_speed = point.speed_kmh
-        point_amp = point.amp
-        if point_speed is None or point_amp is None:
-            continue
-        speed_points.append((point_speed, point_amp))
-        phase = str(point.phase or "")
-        if phase == cruise_value:
-            speed_phase_weights.append(3.0)
-        elif phase in _PHASE_ONSET_RELEVANT:
-            speed_phase_weights.append(0.3)
-        else:
-            speed_phase_weights.append(1.0)
-
-    peak_speed_kmh, speed_window_kmh, strongest_speed_band = _speed_profile_from_points(
-        speed_points,
-        allowed_speed_bins=[focused_speed_band] if focused_speed_band else None,
-        phase_weights=speed_phase_weights or None,
-    )
-    if not strongest_speed_band:
-        strongest_speed_band = hotspot_speed_band
-    if focused_speed_band and not strongest_speed_band:
-        strongest_speed_band = focused_speed_band
-
-    matched_phase_strs = [str(point.phase or "") for point in matched_points if point.phase]
-    cruise_matched = sum(1 for phase in matched_phase_strs if phase == cruise_value)
-    phase_evidence: dict[str, object] = {
-        "cruise_fraction": cruise_matched / len(matched_phase_strs) if matched_phase_strs else 0.0,
-        "phases_detected": sorted(set(matched_phase_strs)),
-    }
-    dominant_phase: str | None = None
-    onset_phase_labels = [phase for phase in matched_phase_strs if phase in _PHASE_ONSET_RELEVANT]
-    if onset_phase_labels and len(onset_phase_labels) >= max(2, len(matched_points) // 2):
-        top_phase, top_count = Counter(onset_phase_labels).most_common(1)[0]
-        if top_count / len(matched_points) >= 0.50:
-            dominant_phase = top_phase
-
-    return (
-        peak_speed_kmh,
-        list(speed_window_kmh) if speed_window_kmh is not None else [],
-        strongest_speed_band or None,
-        phase_evidence,
-        dominant_phase,
-    )
-
-
-def compute_phase_stats(
-    has_phases: bool,
-    possible_by_phase: dict[str, int],
-    matched_by_phase: dict[str, int],
-    *,
-    min_match_rate: float,
-    min_match_points: int = ORDER_MIN_MATCH_POINTS,
-) -> tuple[dict[str, float] | None, int]:
-    """Compute per-phase confidence and count phases with sufficient evidence."""
-    if not has_phases or not possible_by_phase:
-        return None, 0
-    per_phase_confidence: dict[str, float] = {}
-    phases_with_evidence = 0
-    for phase_key, phase_possible in possible_by_phase.items():
-        phase_matched = matched_by_phase.get(phase_key, 0)
-        per_phase_confidence[phase_key] = phase_matched / max(1, phase_possible)
-        if phase_matched >= min_match_points and per_phase_confidence[phase_key] >= min_match_rate:
-            phases_with_evidence += 1
-    return per_phase_confidence, phases_with_evidence
-
-
-def compute_amplitude_and_error_stats(
-    matched_amp: list[float],
-    matched_floor: list[float],
-    rel_errors: list[float],
-    predicted_vals: list[float],
-    measured_vals: list[float],
-    matched_points: list[OrderMatchObservation],
-    *,
-    constant_speed: bool,
-) -> tuple[float, float, float, float, float | None]:
-    """Compute amplitude, floor, relative-error, and correlation statistics."""
-    mean_amp = (sum(matched_amp) / len(matched_amp)) if matched_amp else 0.0
-    mean_floor = (sum(matched_floor) / len(matched_floor)) if matched_floor else 0.0
-    mean_rel_err = (sum(rel_errors) / len(rel_errors)) if rel_errors else 1.0
-    corr = _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
-    if constant_speed:
-        corr = None
-    corr_val = corr if corr is not None else 0.0
-    return mean_amp, mean_floor, mean_rel_err, corr_val, corr
 
 
 def apply_localization_override(

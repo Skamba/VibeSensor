@@ -21,8 +21,8 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _speed_stats,
     _speed_stats_by_phase,
 )
-from vibesensor.use_cases.diagnostics.order_analysis import _wheel_hz
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
+from vibesensor.use_cases.diagnostics.rotational_physics import _wheel_hz
 from vibesensor.vibration_strength import percentile
 
 # -- _as_float -----------------------------------------------------------------
