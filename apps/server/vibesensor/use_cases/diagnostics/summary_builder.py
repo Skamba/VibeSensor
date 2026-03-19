@@ -38,7 +38,6 @@ from vibesensor.shared.boundaries.analysis_payload import (
     AnalysisSummary,
     FindingPayload,
     PhaseSpeedBreakdownRow,
-    RunSuitabilityCheck,
     SpeedBreakdownRow,
 )
 from vibesensor.shared.boundaries.diagnostic_case import (
@@ -553,10 +552,7 @@ def build_summary_payload(
         "sensor_locations_connected_throughout": sorted(connected_locations),
         "sensor_count_used": len(sensor_locations),
         "sensor_intensity_by_location": [asdict(row) for row in sensor_intensity_by_location],
-        "run_suitability": cast(
-            list[RunSuitabilityCheck],
-            run_suitability_payload(run_suitability),
-        ),
+        "run_suitability": run_suitability_payload(run_suitability),
         "samples": samples,
         "data_quality": build_data_quality_dict(
             samples,
