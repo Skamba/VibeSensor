@@ -274,7 +274,8 @@ class PdfRenderContext:
         lang = data.lang
 
         def default_tr(key: str, **kw: object) -> str:
-            return _tr(lang, key, **kw)
+            result: str = _tr(lang, key, **kw)
+            return result
 
         def default_text(en: str, nl: str) -> str:
             return nl if lang == "nl" else en
