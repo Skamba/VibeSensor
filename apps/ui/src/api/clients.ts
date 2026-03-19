@@ -1,13 +1,5 @@
 import { apiJson } from "./http";
-
-export type LocationOption = {
-  code: string;
-  label: string;
-};
-
-export type ClientLocationsResponse = {
-  locations: LocationOption[];
-};
+import type { ClientLocationsResponse } from "./types";
 
 export async function getClientLocations(): Promise<ClientLocationsResponse> {
   return apiJson("/api/client-locations");
