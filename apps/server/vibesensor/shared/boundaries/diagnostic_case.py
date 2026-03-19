@@ -21,6 +21,7 @@ from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
+from vibesensor.shared.boundaries.analysis_payload import RunSuitabilityCheck
 from vibesensor.shared.boundaries.finding import (
     _has_structured_step_content,
     finding_from_payload,
@@ -29,7 +30,7 @@ from vibesensor.shared.boundaries.finding import (
 )
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 # ---------------------------------------------------------------------------
 # Run suitability (formerly run_suitability.py)
@@ -49,18 +50,18 @@ def run_suitability_from_payload(checks: Sequence[Mapping[str, object]]) -> RunS
     return RunSuitability(checks=domain_checks)
 
 
-def _payload_for_check(check: SuitabilityCheck) -> dict[str, object]:
+def _payload_for_check(check: SuitabilityCheck) -> RunSuitabilityCheck:
     return {
         "check": check.check_key,
         "check_key": check.check_key,
         "state": check.state,
-        "explanation": check.explanation_i18n_ref(),
+        "explanation": cast(JsonValue, check.explanation_i18n_ref()),
     }
 
 
 def run_suitability_payload(
     suitability: RunSuitability | None,
-) -> list[dict[str, object]]:
+) -> list[RunSuitabilityCheck]:
     """Project a domain RunSuitability into the persisted checklist payload shape."""
     if suitability is None:
         return []
