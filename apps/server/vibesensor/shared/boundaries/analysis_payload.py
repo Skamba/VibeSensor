@@ -14,19 +14,26 @@ from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 if TYPE_CHECKING:
+    from vibesensor.adapters.pdf.report_types import PeakTableRow
     from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
-    from vibesensor.use_cases.diagnostics.plots import PlotDataResult
 
 __all__ = [
+    "AmpVsPhaseRow",
     "AmplitudeMetric",
     "AnalysisSummary",
     "FindingEvidenceMetrics",
     "FindingPayload",
+    "FreqVsSpeedByFindingSeries",
     "LocationHotspotPayload",
+    "MatchedAmpVsSpeedSeries",
     "MatchedPoint",
+    "PhaseBoundary",
     "PhaseEvidence",
+    "PhaseSegmentOut",
     "PhaseSpeedBreakdownRow",
+    "PlotDataResult",
     "RunSuitabilityCheck",
+    "SpectrogramResult",
     "SpeedBreakdownRow",
     "matched_point_from_observation",
 ]
@@ -181,6 +188,84 @@ class FindingPayload(TypedDict, total=False):
     grouped_count: int
     order: str
     diagnostic_caveat: JsonValue
+
+
+# ---------------------------------------------------------------------------
+# Plot-data boundary shapes (moved from use_cases/diagnostics/plots.py)
+# ---------------------------------------------------------------------------
+
+
+class SpectrogramResult(TypedDict, total=False):
+    """Shape returned by spectrogram builders."""
+
+    x_axis: Required[str]
+    x_label_key: Required[str]
+    x_bins: Required[list[float]]
+    y_bins: Required[list[float]]
+    cells: Required[list[list[float]]]
+    max_amp: Required[float]
+    x_bin_width: float
+    y_bin_width: float
+
+
+class MatchedAmpVsSpeedSeries(TypedDict):
+    """Per-finding matched-point series for amp-vs-speed."""
+
+    label: str
+    points: list[tuple[float, float]]
+
+
+class FreqVsSpeedByFindingSeries(TypedDict):
+    """Per-finding frequency-vs-speed series with predicted overlay."""
+
+    label: str
+    matched: list[tuple[float, float]]
+    predicted: list[tuple[float, float]]
+
+
+class AmpVsPhaseRow(TypedDict):
+    """A single phase-grouped vibration row."""
+
+    phase: str
+    count: int
+    mean_vib_db: float
+    max_vib_db: float | None
+    mean_speed_kmh: float | None
+
+
+class PhaseSegmentOut(TypedDict):
+    """Serialised driving-phase segment for plot consumers."""
+
+    phase: str
+    start_t_s: float | None
+    end_t_s: float | None
+
+
+class PhaseBoundary(TypedDict):
+    """Phase boundary marker for plot overlay."""
+
+    phase: str
+    t_s: float | None
+    end_t_s: float | None
+
+
+class PlotDataResult(TypedDict):
+    """Shape returned by the plot-data orchestration layer."""
+
+    vib_magnitude: list[tuple[float, float, str]]
+    dominant_freq: list[tuple[float, float]]
+    amp_vs_speed: list[tuple[float, float]]
+    amp_vs_phase: list[AmpVsPhaseRow]
+    matched_amp_vs_speed: list[MatchedAmpVsSpeedSeries]
+    freq_vs_speed_by_finding: list[FreqVsSpeedByFindingSeries]
+    steady_speed_distribution: dict[str, float] | None
+    fft_spectrum: list[tuple[float, float]]
+    fft_spectrum_raw: list[tuple[float, float]]
+    peaks_spectrogram: SpectrogramResult
+    peaks_spectrogram_raw: SpectrogramResult
+    peaks_table: list[PeakTableRow]
+    phase_segments: list[PhaseSegmentOut]
+    phase_boundaries: list[PhaseBoundary]
 
 
 class AnalysisSummary(TypedDict):
