@@ -12,7 +12,8 @@ from vibesensor.adapters.persistence.car_library import (
     get_variants_for_model,
     resolve_variant,
 )
-from vibesensor.shared.types.backend_types import CarConfig
+from vibesensor.domain import Car
+from vibesensor.shared.types.backend_types import car_to_persistence_dict
 
 
 def _variant_label(entry: dict, variant: dict) -> str:
@@ -179,36 +180,36 @@ def test_car_library_variant_entry_requires_drivetrain() -> None:
 
 
 # ---------------------------------------------------------------------------
-# CarConfig domain model tests
+# Car persistence (from_persisted_dict) tests
 # ---------------------------------------------------------------------------
 
 
-def test_car_config_from_dict_without_variant() -> None:
-    """CarConfig.from_dict without variant sets variant to None."""
-    car = CarConfig.from_dict({"name": "Old Car", "type": "sedan"})
+def test_car_from_persisted_dict_without_variant() -> None:
+    """Car.from_persisted_dict without variant sets variant to None."""
+    car = Car.from_persisted_dict({"name": "Old Car", "type": "sedan"})
     assert car.variant is None
-    d = car.to_dict()
+    d = car_to_persistence_dict(car)
     assert "variant" not in d
 
 
-def test_car_config_from_dict_with_variant() -> None:
-    """CarConfig.from_dict with variant preserves it."""
-    car = CarConfig.from_dict({"name": "BMW 320i", "type": "Sedan", "variant": "320i"})
+def test_car_from_persisted_dict_with_variant() -> None:
+    """Car.from_persisted_dict with variant preserves it."""
+    car = Car.from_persisted_dict({"name": "BMW 320i", "type": "Sedan", "variant": "320i"})
     assert car.variant == "320i"
-    d = car.to_dict()
+    d = car_to_persistence_dict(car)
     assert d["variant"] == "320i"
 
 
-def test_car_config_from_dict_empty_variant() -> None:
+def test_car_from_persisted_dict_empty_variant() -> None:
     """Empty string variant is treated as None."""
-    car = CarConfig.from_dict({"name": "Car", "type": "sedan", "variant": ""})
+    car = Car.from_persisted_dict({"name": "Car", "type": "sedan", "variant": ""})
     assert car.variant is None
 
 
-def test_car_config_variant_truncated() -> None:
+def test_car_from_persisted_dict_variant_truncated() -> None:
     """Very long variant names are truncated to 64 chars."""
     long_name = "x" * 100
-    car = CarConfig.from_dict({"name": "Car", "type": "sedan", "variant": long_name})
+    car = Car.from_persisted_dict({"name": "Car", "type": "sedan", "variant": long_name})
     assert len(car.variant) == 64  # type: ignore[arg-type]
 
 

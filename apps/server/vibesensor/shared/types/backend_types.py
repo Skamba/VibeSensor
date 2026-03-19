@@ -11,18 +11,16 @@ from typing import TYPE_CHECKING, Final, Literal, TypeAlias
 
 from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.domain.speed_source import SpeedSourceKind as SpeedSourceKind
 from vibesensor.shared.constants import NUMERIC_TYPES
 
 if TYPE_CHECKING:
-    from vibesensor.domain import SpeedSource
+    from vibesensor.domain import Car, SpeedSource
 
 _isfinite = math.isfinite
 _LOGGER = logging.getLogger(__name__)
 
 __all__ = [
-    "CarConfig",
     "CarConfigPayload",
     "CarConfigUpdatePayload",
     "RUN_END_TYPE",
@@ -38,6 +36,7 @@ __all__ = [
     "SpeedSourcePayload",
     "SpeedSourceUpdatePayload",
     "VALID_SPEED_SOURCES",
+    "car_to_persistence_dict",
     "new_car_id",
 ]
 
@@ -151,53 +150,21 @@ def new_car_id() -> str:
 
 
 # ---------------------------------------------------------------------------
-# CarConfig
+# Persistence boundary helper
 # ---------------------------------------------------------------------------
 
 
-@dataclass(slots=True)
-class CarConfig:
-    """Persisted vehicle profile (ID, name, type, geometry aspects, variant)."""
-
-    id: str
-    name: str
-    car_type: str
-    aspects: dict[str, float]
-    variant: str | None
-
-    @classmethod
-    def from_dict(cls, data: Mapping[str, object]) -> CarConfig:
-        """Construct a :class:`CarConfig` from a raw dict (e.g., loaded from JSON)."""
-        car_id = str(data.get("id") or new_car_id())
-        name = str(data.get("name") or "Unnamed Car").strip()[:64] or "Unnamed Car"
-        car_type = str(data.get("type") or "sedan").strip()[:32] or "sedan"
-        raw_aspects = data.get("aspects") or {}
-        aspects = dict(AnalysisSettingsSnapshot.DEFAULTS)
-        if isinstance(raw_aspects, dict):
-            aspects.update(AnalysisSettingsSnapshot.sanitize(raw_aspects))
-        raw_variant = data.get("variant")
-        variant = (
-            str(raw_variant).strip()[:64] if isinstance(raw_variant, str) and raw_variant else None
-        )
-        return cls(
-            id=car_id,
-            name=name,
-            car_type=car_type,
-            aspects=aspects,
-            variant=variant or None,
-        )
-
-    def to_dict(self) -> CarConfigPayload:
-        """Serialise this car config to a plain dict for JSON persistence."""
-        d: CarConfigPayload = {
-            "id": self.id,
-            "name": self.name,
-            "type": self.car_type,
-            "aspects": dict(self.aspects),
-        }
-        if self.variant:
-            d["variant"] = self.variant
-        return d
+def car_to_persistence_dict(car: Car) -> CarConfigPayload:
+    """Serialise a domain ``Car`` to a plain dict for JSON persistence."""
+    d: CarConfigPayload = {
+        "id": car.id,
+        "name": car.name,
+        "type": car.car_type,
+        "aspects": dict(car.aspects),
+    }
+    if car.variant:
+        d["variant"] = car.variant
+    return d
 
 
 # ---------------------------------------------------------------------------

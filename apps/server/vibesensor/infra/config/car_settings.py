@@ -15,8 +15,8 @@ from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.types.backend_types import (
     AnalysisSettingsPayload,
-    CarConfig,
     CarConfigUpdatePayload,
+    car_to_persistence_dict,
     new_car_id,
 )
 
@@ -42,7 +42,7 @@ class CarSettingsMixin:
     # Declared for type-checker visibility; actual attributes live on SettingsStore.
     if TYPE_CHECKING:
         _lock: RLock
-        _cars: list[CarConfig]
+        _cars: list[Car]
         _active_car_id: str | None
         _sanitize_analysis: staticmethod
 
@@ -54,23 +54,14 @@ class CarSettingsMixin:
     def active_car(self) -> Car | None:
         """Return the active car as a domain ``Car`` value object."""
         with self._lock:
-            car_cfg = self._find_car(self._active_car_id)
-            if car_cfg is None:
-                return None
-            return Car(
-                id=car_cfg.id,
-                name=car_cfg.name,
-                car_type=car_cfg.car_type,
-                aspects=dict(car_cfg.aspects),
-                variant=car_cfg.variant,
-            )
+            return self._find_car(self._active_car_id)
 
     # -- car operations --------------------------------------------------------
 
     def get_cars(self) -> dict[str, object]:
         with self._lock:
             return {
-                "cars": [c.to_dict() for c in self._cars],
+                "cars": [car_to_persistence_dict(c) for c in self._cars],
                 "activeCarId": self._active_car_id,
             }
 
@@ -81,33 +72,26 @@ class CarSettingsMixin:
         (rejecting zero and negative values) fires on the hot path.
         """
         with self._lock:
-            car_cfg = self._find_car(self._active_car_id)
-            if car_cfg is None:
+            car = self._find_car(self._active_car_id)
+            if car is None:
                 return None
-            car = Car(
-                id=car_cfg.id,
-                name=car_cfg.name,
-                car_type=car_cfg.car_type,
-                aspects=dict(car_cfg.aspects),
-                variant=car_cfg.variant,
-            )
             return dict(car.aspects)
 
     def active_car_snapshot(self) -> CarSnapshot | None:
         """Return the active car profile as a typed domain snapshot."""
         with self._lock:
-            car_cfg = self._find_car(self._active_car_id)
-            if car_cfg is None:
+            car = self._find_car(self._active_car_id)
+            if car is None:
                 return None
             return CarSnapshot(
-                car_id=car_cfg.id,
-                name=car_cfg.name,
-                car_type=car_cfg.car_type,
-                variant=car_cfg.variant,
-                aspects=dict(car_cfg.aspects),
+                car_id=car.id,
+                name=car.name,
+                car_type=car.car_type,
+                variant=car.variant,
+                aspects=dict(car.aspects),
             )
 
-    def _find_car(self, car_id: str | None) -> CarConfig | None:
+    def _find_car(self, car_id: str | None) -> Car | None:
         if not car_id:
             return None
         return next((c for c in self._cars if c.id == car_id), None)
@@ -131,7 +115,7 @@ class CarSettingsMixin:
         with self._lock:
             payload: dict[str, object] = dict(car_data)
             payload["id"] = new_car_id()
-            car = CarConfig.from_dict(payload)
+            car = Car.from_persisted_dict(payload)
             self._cars.append(car)
             try:
                 self._persist()
@@ -146,34 +130,41 @@ class CarSettingsMixin:
             car = self._find_car(car_id)
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
-            # Snapshot for rollback
-            old_name, old_type = car.name, car.car_type
-            old_aspects = dict(car.aspects)
-            old_variant = car.variant
+            idx = next(i for i, c in enumerate(self._cars) if c.id == car_id)
+            # Build updated fields via reconstruction
+            new_name = car.name
             if "name" in car_data:
                 raw_name = car_data["name"]
                 if isinstance(raw_name, str):
-                    name = _clamp_str(raw_name, 64)
-                    if name:
-                        car.name = name
+                    clamped = _clamp_str(raw_name, 64)
+                    if clamped:
+                        new_name = clamped
+            new_car_type = car.car_type
             if "type" in car_data:
                 raw_type = car_data["type"]
                 if isinstance(raw_type, str):
-                    car_type = _clamp_str(raw_type, 32)
-                    if car_type:
-                        car.car_type = car_type
+                    clamped = _clamp_str(raw_type, 32)
+                    if clamped:
+                        new_car_type = clamped
+            new_aspects = dict(car.aspects)
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
-                car.aspects.update(AnalysisSettingsSnapshot.sanitize(car_data["aspects"]))
+                new_aspects.update(AnalysisSettingsSnapshot.sanitize(car_data["aspects"]))
+            new_variant = car.variant
             if "variant" in car_data:
                 raw = car_data["variant"]
-                car.variant = _clamp_str(raw, 64) or None if isinstance(raw, str) and raw else None
+                new_variant = _clamp_str(raw, 64) or None if isinstance(raw, str) and raw else None
+            updated = Car(
+                id=car.id,
+                name=new_name,
+                car_type=new_car_type,
+                aspects=new_aspects,
+                variant=new_variant,
+            )
+            self._cars[idx] = updated
             try:
                 self._persist()
             except PersistenceError:
-                car.name, car.car_type = old_name, old_type
-                car.aspects.clear()
-                car.aspects.update(old_aspects)
-                car.variant = old_variant
+                self._cars[idx] = car  # rollback
                 raise
             self._sync_analysis_settings()
             return self.get_cars()
@@ -186,16 +177,23 @@ class CarSettingsMixin:
             car = self._find_car(self._active_car_id)
             if car is None:
                 raise ValueError("No active car configured")
-            old_aspects = dict(car.aspects)
-            car.aspects.update(AnalysisSettingsSnapshot.sanitize(aspects))
+            idx = next(i for i, c in enumerate(self._cars) if c.id == car.id)
+            new_aspects = {**car.aspects, **AnalysisSettingsSnapshot.sanitize(aspects)}
+            updated = Car(
+                id=car.id,
+                name=car.name,
+                car_type=car.car_type,
+                aspects=new_aspects,
+                variant=car.variant,
+            )
+            self._cars[idx] = updated
             try:
                 self._persist()
             except PersistenceError:
-                car.aspects.clear()
-                car.aspects.update(old_aspects)
+                self._cars[idx] = car  # rollback
                 raise
             self._sync_analysis_settings()
-            return dict(car.aspects)
+            return dict(updated.aspects)
 
     def delete_car(self, car_id: str) -> dict[str, object]:
         with self._lock:

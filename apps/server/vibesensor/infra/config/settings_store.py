@@ -29,6 +29,7 @@ from threading import RLock
 from typing import TYPE_CHECKING, cast, get_args
 
 from vibesensor.domain import (
+    Car,
     Sensor,
     SensorPlacement,
     SpeedSource,
@@ -39,7 +40,6 @@ from vibesensor.infra.config.car_settings import CarSettingsMixin
 from vibesensor.infra.config.car_settings import _clamp_str as _clamp_str
 from vibesensor.shared.exceptions import PersistenceError as PersistenceError
 from vibesensor.shared.types.backend_types import (
-    CarConfig,
     LanguageCode,
     SensorConfig,
     SensorConfigUpdatePayload,
@@ -49,6 +49,7 @@ from vibesensor.shared.types.backend_types import (
     SpeedSourcePayload,
     SpeedSourceUpdatePayload,
     SpeedUnitCode,
+    car_to_persistence_dict,
 )
 from vibesensor.shared.types.json_types import JsonObject
 
@@ -118,7 +119,7 @@ class SettingsStore(CarSettingsMixin):
         self._sanitize_analysis = AnalysisSettingsSnapshot.sanitize
         self._analysis_values: dict[str, float] = dict(AnalysisSettingsSnapshot.DEFAULTS)
 
-        self._cars: list[CarConfig] = []
+        self._cars: list[Car] = []
         self._active_car_id: str | None = None
         self._speed_cfg = SpeedSourceConfig.default()
         self._language: LanguageCode = "en"
@@ -140,7 +141,7 @@ class SettingsStore(CarSettingsMixin):
             # Cars
             raw_cars = raw.get("cars")
             if isinstance(raw_cars, list) and raw_cars:
-                self._cars = [CarConfig.from_dict(c) for c in raw_cars if isinstance(c, dict)]
+                self._cars = [Car.from_persisted_dict(c) for c in raw_cars if isinstance(c, dict)]
 
             active_id = str(raw.get("activeCarId") or "")
             car_ids = {c.id for c in self._cars}
@@ -218,7 +219,7 @@ class SettingsStore(CarSettingsMixin):
     def snapshot(self) -> SettingsSnapshotPayload:
         with self._lock:
             return {
-                "cars": [c.to_dict() for c in self._cars],
+                "cars": [car_to_persistence_dict(c) for c in self._cars],
                 "activeCarId": self._active_car_id,
                 **self._speed_cfg.to_dict(),
                 "language": self._language,
