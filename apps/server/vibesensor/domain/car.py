@@ -6,7 +6,6 @@ encapsulates the three standard tire dimensions and derived geometry.
 ``OrderReferenceSpec`` owns tire geometry and driveline/reference-order
 interpretation.  ``CarSnapshot`` is typed internal car context attached
 to a run.
-Configuration and persistence details remain in ``CarConfig``.
 """
 
 from __future__ import annotations
@@ -406,7 +405,6 @@ class Car:
 
     Owns identity, user-facing name, vehicle type, and geometry aspects
     (tire dimensions, gear ratios) that drive order analysis.
-    Configuration and persistence details remain in ``CarConfig``.
     """
 
     id: str = field(default_factory=lambda: uuid.uuid4().hex)
@@ -449,6 +447,35 @@ class Car:
         if spec is not None:
             normalized_aspects = spec.to_settings_dict()
         object.__setattr__(self, "_aspects", MappingProxyType(normalized_aspects))
+
+    @classmethod
+    def from_persisted_dict(cls, data: Mapping[str, object]) -> Car:
+        """Construct a ``Car`` from a raw persisted dict (e.g., loaded from JSON).
+
+        Fills missing aspects from ``AnalysisSettingsSnapshot.DEFAULTS`` and
+        sanitises input values.
+        """
+        # Lazy import — snapshots.py imports from this module.
+        from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+
+        car_id = str(data.get("id") or str(uuid.uuid4()))
+        name = str(data.get("name") or "Unnamed Car").strip()[:64] or "Unnamed Car"
+        car_type = str(data.get("type") or "sedan").strip()[:32] or "sedan"
+        raw_aspects = data.get("aspects") or {}
+        aspects: dict[str, float] = dict(AnalysisSettingsSnapshot.DEFAULTS)
+        if isinstance(raw_aspects, dict):
+            aspects.update(AnalysisSettingsSnapshot.sanitize(raw_aspects))
+        raw_variant = data.get("variant")
+        variant = (
+            str(raw_variant).strip()[:64] if isinstance(raw_variant, str) and raw_variant else None
+        )
+        return cls(
+            id=car_id,
+            name=name,
+            car_type=car_type,
+            aspects=aspects,
+            variant=variant or None,
+        )
 
     @property
     def aspects(self) -> Mapping[str, float]:

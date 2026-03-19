@@ -5,15 +5,16 @@ from pathlib import Path
 import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.domain import Car
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.infra.config.settings_store import (
     PersistenceError,
     SettingsStore,
 )
 from vibesensor.shared.types.backend_types import (
-    CarConfig,
     SensorConfig,
     _parse_manual_speed,
+    car_to_persistence_dict,
 )
 
 DEFAULT_CAR_ASPECTS = AnalysisSettingsSnapshot.DEFAULTS
@@ -35,7 +36,7 @@ def _sabotaged_store(tmp_path: Path) -> SettingsStore:
 
 
 def test_validate_car_fills_defaults() -> None:
-    car = CarConfig.from_dict({}).to_dict()
+    car = car_to_persistence_dict(Car.from_persisted_dict({}))
     assert car["name"] == "Unnamed Car"
     assert car["type"] == "sedan"
     assert car["id"]
@@ -43,13 +44,13 @@ def test_validate_car_fills_defaults() -> None:
 
 
 def test_validate_car_preserves_aspects() -> None:
-    car = CarConfig.from_dict({"aspects": {"tire_width_mm": 245.0}}).to_dict()
+    car = car_to_persistence_dict(Car.from_persisted_dict({"aspects": {"tire_width_mm": 245.0}}))
     assert car["aspects"]["tire_width_mm"] == 245.0
     assert car["aspects"]["rim_in"] == DEFAULT_CAR_ASPECTS["rim_in"]
 
 
 def test_validate_car_truncates_name() -> None:
-    car = CarConfig.from_dict({"name": "x" * 100}).to_dict()
+    car = car_to_persistence_dict(Car.from_persisted_dict({"name": "x" * 100}))
     assert len(car["name"]) <= 64
 
 
