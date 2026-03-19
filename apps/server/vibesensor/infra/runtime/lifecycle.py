@@ -13,15 +13,19 @@ import asyncio
 import contextlib
 import logging
 import shutil
-from collections.abc import Coroutine
+from collections.abc import Callable, Coroutine
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
 from vibesensor.shared.constants import UI_PUSH_HZ
 
 if TYPE_CHECKING:
     from vibesensor.infra.runtime.state import RuntimeState
+
+    StartUdpReceiver = Callable[
+        ...,
+        Coroutine[object, object, tuple[asyncio.DatagramTransport, asyncio.Task[None]]],
+    ]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,12 +38,19 @@ class LifecycleManager:
         "_data_transport",
         "_health_state",
         "_runtime",
+        "_start_udp_receiver",
         "tasks",
     )
 
-    def __init__(self, *, runtime: RuntimeState) -> None:
+    def __init__(
+        self,
+        *,
+        runtime: RuntimeState,
+        start_udp_receiver: StartUdpReceiver,
+    ) -> None:
         self._runtime = runtime
         self._health_state = runtime.health_state
+        self._start_udp_receiver = start_udp_receiver
         self.tasks: list[asyncio.Task[object]] = []
         self._data_transport: asyncio.DatagramTransport | None = None
         self._data_consumer_task: asyncio.Task[object] | None = None
@@ -108,7 +119,7 @@ class LifecycleManager:
         try:
             phase = "udp_receiver"
             self._health_state.set_phase(phase)
-            self._data_transport, self._data_consumer_task = await start_udp_data_receiver(
+            self._data_transport, self._data_consumer_task = await self._start_udp_receiver(
                 host=self._runtime.config.udp.data_host,
                 port=self._runtime.config.udp.data_port,
                 registry=self._runtime.registry,

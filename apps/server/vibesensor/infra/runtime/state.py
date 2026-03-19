@@ -3,12 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
-from vibesensor.adapters.websocket.hub import WebSocketHub
-from vibesensor.app.settings import AppConfig
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
@@ -22,6 +18,13 @@ from vibesensor.use_cases.history.runs import HistoryRunService
 from vibesensor.use_cases.run import RunRecorder
 from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
+
+if TYPE_CHECKING:
+    from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
+    from vibesensor.adapters.websocket.hub import WebSocketHub
+    from vibesensor.app.settings import AppConfig
 
 
 @dataclass(slots=True)
