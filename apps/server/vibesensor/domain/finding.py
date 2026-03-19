@@ -20,6 +20,8 @@ from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import TYPE_CHECKING, ClassVar
 
+from vibesensor.coerce import coerce_float
+
 if TYPE_CHECKING:
     from vibesensor.domain.confidence_assessment import ConfidenceAssessment
     from vibesensor.domain.location_hotspot import LocationHotspot
@@ -154,7 +156,7 @@ class FindingEvidence:
             if raw is None:
                 return 0.0
             try:
-                return float(raw)  # type: ignore[arg-type]
+                return coerce_float(raw)
             except (TypeError, ValueError):
                 return 0.0
 
@@ -163,7 +165,7 @@ class FindingEvidence:
             if raw is None:
                 return None
             try:
-                return float(raw)  # type: ignore[arg-type]
+                return coerce_float(raw)
             except (TypeError, ValueError):
                 return None
 

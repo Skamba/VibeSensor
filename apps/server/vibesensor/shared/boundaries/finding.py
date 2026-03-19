@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from vibesensor.coerce import coerce_float
 from vibesensor.domain.finding import Finding, FindingEvidence, Signature, VibrationSource
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
@@ -87,7 +88,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     confidence: float | None = None
     if conf_raw is not None:
         try:
-            confidence = float(conf_raw)  # type: ignore[arg-type]
+            confidence = coerce_float(conf_raw)
         except (TypeError, ValueError):
             pass
 
@@ -96,7 +97,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     freq_or_order_label: str = ""
     if freq_raw is not None:
         try:
-            frequency_hz = float(freq_raw)  # type: ignore[arg-type]
+            frequency_hz = coerce_float(freq_raw)
         except (TypeError, ValueError):
             # Non-numeric value like "1x wheel" — preserve as order label
             freq_or_order_label = str(freq_raw).strip()
@@ -109,7 +110,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     ranking_score = 0.0
     if ranking_raw is not None:
         try:
-            ranking_score = float(ranking_raw)  # type: ignore[arg-type]
+            ranking_score = coerce_float(ranking_raw)
         except (TypeError, ValueError):
             pass
 
@@ -117,7 +118,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
     dominance_ratio: float | None = None
     if dominance_raw is not None:
         try:
-            dominance_ratio = float(dominance_raw)  # type: ignore[arg-type]
+            dominance_ratio = coerce_float(dominance_raw)
         except (TypeError, ValueError):
             pass
 
