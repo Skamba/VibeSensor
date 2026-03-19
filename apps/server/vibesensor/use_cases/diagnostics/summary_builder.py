@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median as _median
-from typing import Any
 
 from vibesensor.domain import (
     ConfigurationSnapshot,
@@ -567,7 +566,7 @@ def build_summary_payload(
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-def annotate_peaks_with_order_labels(summary: Mapping[str, Any]) -> None:
+def annotate_peaks_with_order_labels(summary: AnalysisSummary) -> None:
     """Back-fill peak-table order labels by matching order findings to peak rows."""
     plots = summary.get("plots")
     if not is_json_object(plots):
@@ -1075,7 +1074,7 @@ def summarize_run_data(
     file_name: str = "run",
     include_samples: bool = True,
     findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
-) -> dict[str, Any]:
+) -> AnalysisSummary:
     """Analyze pre-loaded run data and return the full summary dict.
 
     Delegates to :class:`RunAnalysis` which owns the full orchestration.
@@ -1090,7 +1089,7 @@ def summarize_run_data(
             findings_builder=findings_builder,
         )
         .summarize()
-        .summary  # type: ignore[return-value]
+        .summary
     )
 
 
@@ -1125,7 +1124,7 @@ def summarize_log(
     lang: str | None = None,
     include_samples: bool = True,
     findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
-) -> dict[str, Any]:
+) -> AnalysisSummary:
     """Read a JSONL run file and analyse it."""
     metadata, samples, _warnings = _load_run(log_path)
     return summarize_run_data(

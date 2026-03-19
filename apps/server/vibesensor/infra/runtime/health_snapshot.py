@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 from vibesensor.infra.runtime.processing_loop import ProcessingHealth
+from vibesensor.use_cases.run.logger import RunRecorderHealthSnapshot
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
@@ -14,13 +15,39 @@ if TYPE_CHECKING:
     from vibesensor.use_cases.run import RunRecorder
 
 
+class HealthSnapshotData(TypedDict):
+    """Typed snapshot returned by :func:`build_health_snapshot`."""
+
+    status: Literal["ok", "warn", "degraded"]
+    startup_state: str
+    startup_phase: str
+    startup_error: str | None
+    startup_warnings: list[str]
+    background_task_failures: dict[str, str]
+    processing_state: str
+    processing_failures: int
+    processing_failure_categories: dict[str, int]
+    processing_last_failure: str | None
+    sample_rate_mismatch_count: int
+    frame_size_mismatch_count: int
+    degradation_reasons: list[str]
+    data_loss: dict[str, int]
+    persistence: RunRecorderHealthSnapshot
+    intake_stats: dict[str, object]
+    tick_duration_s: float | None
+    max_tick_duration_s: float | None
+    tick_count: int
+    db_last_write_duration_s: float | None
+    db_max_write_duration_s: float | None
+
+
 def build_health_snapshot(
     loop_state: ProcessingLoopState,
     health_state: RuntimeHealthState,
     processor: SignalProcessor,
     registry: ClientRegistry,
     run_recorder: RunRecorder,
-) -> dict[str, Any]:
+) -> HealthSnapshotData:
     """Build the health snapshot dict."""
     failures = loop_state.processing_failure_count
     data_loss = registry.data_loss_snapshot()
