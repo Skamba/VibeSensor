@@ -31,13 +31,13 @@ from vibesensor.use_cases.diagnostics.order_analysis import (
     _compute_effective_match_rate,
 )
 from vibesensor.use_cases.diagnostics.order_analysis import (
-    compute_order_confidence as _compute_order_confidence,
-)
-from vibesensor.use_cases.diagnostics.order_analysis import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
 from vibesensor.use_cases.diagnostics.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
+)
+from vibesensor.use_cases.diagnostics.order_statistics import (
+    compute_order_confidence as _compute_order_confidence,
 )
 from vibesensor.use_cases.diagnostics.peak_binning import _classify_peak_type
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase

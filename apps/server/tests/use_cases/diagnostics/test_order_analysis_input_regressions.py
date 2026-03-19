@@ -16,7 +16,7 @@ import pytest
 
 from vibesensor.domain import OrderReferenceSpec
 from vibesensor.shared.json_utils import as_float_or_none
-from vibesensor.use_cases.diagnostics.order_analysis import _driveshaft_hz, _order_label
+from vibesensor.use_cases.diagnostics.rotational_physics import _driveshaft_hz, _order_label
 
 # ------------------------------------------------------------------
 # 1. pdf_engine confidence guard (integration-level)

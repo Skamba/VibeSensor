@@ -15,10 +15,10 @@ import pytest
 from test_support.findings import make_finding
 
 from vibesensor.use_cases.diagnostics.order_analysis import (
-    compute_order_confidence as _compute_order_confidence,
-)
-from vibesensor.use_cases.diagnostics.order_analysis import (
     suppress_engine_aliases as _suppress_engine_aliases,
+)
+from vibesensor.use_cases.diagnostics.order_statistics import (
+    compute_order_confidence as _compute_order_confidence,
 )
 
 # ---------------------------------------------------------------------------
