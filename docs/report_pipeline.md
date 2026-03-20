@@ -17,7 +17,7 @@ Recording stops
       → summary_builder.py (phases, suitability, payload assembly)
       → findings.py, peak_binning.py, signal_aggregation.py, ranking.py, top_cause_selection.py, plots.py
     → map_summary() [vibesensor.adapters.pdf.mapping]
-      → mapping.py + peak_table.py + report_sections.py (report shaping + orchestration)
+      → use_cases/history/report_interpretation.py + mapping.py + peak_table.py + report_sections.py (report-domain interpretation + report shaping + orchestration)
     → store_analysis() [vibesensor.adapters.persistence.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
@@ -54,6 +54,11 @@ The `vibesensor.adapters.pdf` package contains **only** rendering code:
 **Rule:** Report modules must not import from `vibesensor.use_cases.diagnostics` at
 module level.  A guardrail test (`test_report_analysis_separation.py`)
 enforces this.
+
+Pure report-domain interpretation that reads domain findings/test runs but
+does not perform i18n or PDF dataclass assembly lives in
+`vibesensor.use_cases.history.report_interpretation`, which `mapping.py`
+consumes during report shaping.
 
 ### ReportTemplateData schema
 

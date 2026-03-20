@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.adapters.pdf.mapping import (
-    _origin_from_aggregate,
-    prepare_report_mapping_context,
-)
+from vibesensor.adapters.pdf.mapping import prepare_report_mapping_context
 from vibesensor.domain import (
     Finding,
     LocationHotspot,
@@ -22,6 +19,7 @@ from vibesensor.shared.boundaries.diagnostic_case import (
 )
 from vibesensor.shared.boundaries.finding import step_payloads_from_plan
 from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
+from vibesensor.use_cases.history.report_interpretation import resolve_report_origin
 
 
 def _minimal_summary(**overrides: object) -> dict[str, object]:
@@ -103,7 +101,7 @@ class TestSummaryHelpers:
             findings=(primary,),
             top_causes=(primary,),
         )
-        origin = _origin_from_aggregate(aggregate, _minimal_summary()["most_likely_origin"])
+        origin = resolve_report_origin(aggregate, _minimal_summary()["most_likely_origin"])
         assert origin is not None
         assert origin.projected_location == "Front Left / Front Right"
         assert origin.alternative_locations == ("front_right",)

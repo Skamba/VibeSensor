@@ -4,11 +4,8 @@ from __future__ import annotations
 
 import logging
 import os
-from collections import defaultdict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from dataclasses import dataclass
-from statistics import mean as _mean
-from typing import Any
 
 from vibesensor import __version__
 from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern, why_parts_listed
@@ -34,13 +31,18 @@ from vibesensor.domain import (
 from vibesensor.report_i18n import human_source, normalize_lang, resolve_i18n
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.boundaries.vibration_origin import (
-    build_origin_explanation,
-    vibration_origin_from_payload,
-)
+from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.use_cases.history.report_interpretation import (
+    compute_location_hotspot_rows,
+    filter_active_sensor_intensity,
+    normalize_origin_location,
+    resolve_primary_report_facts,
+    resolve_report_origin,
+    tire_spec_text,
+)
 
 __all__ = ["Report", "map_summary"]
 
@@ -177,120 +179,9 @@ class PrimaryCandidateContext:
     tier: str
 
 
-def _origin_from_aggregate(
-    aggregate: TestRun | None,
-    fallback: Mapping[str, Any] | None,
-) -> VibrationOrigin | None:
-    fallback_origin: VibrationOrigin | None = None
-    if isinstance(fallback, Mapping):
-        raw_location = str(fallback.get("location") or "").strip()
-        alternatives_raw = fallback.get("alternative_locations")
-        alternatives = (
-            [str(location).strip() for location in alternatives_raw if str(location).strip()]
-            if isinstance(alternatives_raw, list)
-            else []
-        )
-
-        strongest_location = (
-            raw_location.split(" / ", maxsplit=1)[0].strip() if raw_location else ""
-        )
-        hotspot = None
-        if strongest_location and strongest_location.lower() != "unknown":
-            from vibesensor.domain import LocationHotspot
-
-            hotspot = LocationHotspot.from_analysis_inputs(
-                strongest_location=strongest_location,
-                dominance_ratio=_as_float(fallback.get("dominance_ratio")),
-                weak_spatial_separation=bool(fallback.get("weak_spatial_separation", False)),
-                ambiguous=bool(alternatives),
-                alternative_locations=alternatives,
-            )
-
-        speed_band = str(fallback.get("speed_band") or "").strip() or None
-        dominant_phase = str(fallback.get("dominant_phase") or "").strip() or None
-        dominance_ratio = _as_float(fallback.get("dominance_ratio"))
-        if (
-            hotspot is not None
-            or speed_band is not None
-            or dominant_phase is not None
-            or dominance_ratio is not None
-        ):
-            fallback_origin = vibration_origin_from_payload(
-                fallback,
-                hotspot=hotspot,
-                dominance_ratio=dominance_ratio,
-                speed_band=speed_band,
-            )
-
-    if aggregate is not None and aggregate.primary_finding is not None:
-        primary_origin = VibrationOrigin.from_finding(aggregate.primary_finding)
-        if primary_origin is None:
-            return fallback_origin
-        if not primary_origin.has_sufficient_location and fallback_origin is not None:
-            return fallback_origin
-        return primary_origin
-
-    return fallback_origin
-
-
-def normalized_origin_location(origin: VibrationOrigin | None) -> str:
-    """Return the report-ready origin location string."""
-    if origin is None:
-        return ""
-    raw = origin.projected_location.strip()
-    return "" if raw.lower() == "unknown" else raw
-
-
-def compute_location_hotspot_rows(sensor_intensity: list[dict]) -> list[dict]:
-    """Pre-compute location hotspot rows from sensor intensity data."""
-    if not sensor_intensity:
-        return []
-    amp_by_location = collect_location_intensity(sensor_intensity)
-    hotspot_rows = [
-        {
-            "location": location,
-            "count": len(amps),
-            "unit": "db",
-            "peak_value": max(amps),
-            "mean_value": _mean(amps),
-        }
-        for location, amps in amp_by_location.items()
-    ]
-    hotspot_rows.sort(
-        key=lambda row: (
-            _as_float(row.get("peak_value")) or 0.0,
-            _as_float(row.get("mean_value")) or 0.0,
-        ),
-        reverse=True,
-    )
-    return hotspot_rows
-
-
-def collect_location_intensity(sensor_intensity: list[dict]) -> dict[str, list[float]]:
-    """Collect per-location intensity values from summary sensor intensity rows."""
-    amp_by_location: dict[str, list[float]] = defaultdict(list)
-    for row in sensor_intensity:
-        if not isinstance(row, dict):
-            continue
-        location = str(row.get("location") or "").strip()
-        p95_val = _as_float(row.get("p95_intensity_db"))
-        p95 = p95_val if p95_val is not None else _as_float(row.get("mean_intensity_db"))
-        if location and p95 is not None and p95 > 0:
-            amp_by_location[location].append(p95)
-    return amp_by_location
-
-
 # ---------------------------------------------------------------------------
 # System, metadata, and strength helpers
 # ---------------------------------------------------------------------------
-
-
-def _sensor_fallback_strength_db(sensor_intensity: list[JsonObject]) -> float | None:
-    """Return the best sensor-intensity dB as a last-resort fallback."""
-    sensor_rows = [
-        _as_float(row.get("p95_intensity_db")) for row in sensor_intensity if isinstance(row, dict)
-    ]
-    return max((value for value in sensor_rows if value is not None), default=None)
 
 
 def build_system_cards(
@@ -442,38 +333,6 @@ def resolve_parts_context(
     return source_for_why, order_label
 
 
-def tire_spec_text(meta: dict) -> str | None:
-    """Format tire specification text from metadata when present."""
-    tire_width_mm = _as_float(meta.get("tire_width_mm"))
-    tire_aspect_pct = _as_float(meta.get("tire_aspect_pct"))
-    rim_in = _as_float(meta.get("rim_in"))
-    if not (
-        tire_width_mm is not None
-        and tire_aspect_pct is not None
-        and rim_in is not None
-        and tire_width_mm > 0
-        and tire_aspect_pct > 0
-        and rim_in > 0
-    ):
-        return None
-    return f"{tire_width_mm:g}/{tire_aspect_pct:g}R{rim_in:g}"
-
-
-def filter_active_sensor_intensity(
-    raw_sensor_intensity_all: list,
-    sensor_locations_active: list[str],
-) -> list[dict]:
-    """Filter sensor intensity rows to only active locations."""
-    active_locations = set(sensor_locations_active)
-    if active_locations:
-        return [
-            row
-            for row in raw_sensor_intensity_all
-            if isinstance(row, dict) and str(row.get("location") or "") in active_locations
-        ]
-    return [row for row in raw_sensor_intensity_all if isinstance(row, dict)]
-
-
 def build_version_marker() -> str:
     """Return the report version marker including the short git sha when present."""
     git_sha = str(os.getenv("GIT_SHA", "")).strip()
@@ -520,9 +379,9 @@ def prepare_report_mapping_context(
         domain_aggregate = test_run
 
     origin_fallback = summary.get("most_likely_origin")
-    origin = _origin_from_aggregate(domain_aggregate, origin_fallback)
+    origin = resolve_report_origin(domain_aggregate, origin_fallback)
 
-    origin_location = normalized_origin_location(origin)
+    origin_location = normalize_origin_location(origin)
 
     config_snap = domain_aggregate.capture.setup.configuration_snapshot
     rate = config_snap.raw_sample_rate_hz
@@ -560,52 +419,24 @@ def resolve_primary_report_candidate(
     Payload dicts supply rendering-level evidence detail only.
     """
     primary_candidate = context.top_report_candidate()
-    aggregate = context.domain_aggregate
-
-    primary_source: object = None
-    # Domain-first: derive all business fields from the aggregate
-    effective = aggregate.effective_top_causes()
-    domain_primary = effective[0] if effective else aggregate.primary_finding
-    if domain_primary:
-        primary_source = domain_primary.suspected_source
-        primary_system = human_source(primary_source, tr=tr)
-        primary_location = context.origin_location or (
-            domain_primary.strongest_location or tr("UNKNOWN")
-        )
-        primary_speed = str(
-            domain_primary.strongest_speed_band or tr("UNKNOWN"),
-        )
-        confidence = domain_primary.effective_confidence
-    else:
-        primary_system = tr("UNKNOWN")
-        primary_location = context.origin_location or tr("UNKNOWN")
-        primary_speed = tr("UNKNOWN")
-        confidence = 0.0
-
-    # Domain-first strength and reference gap detection
-    strength_db = aggregate.top_strength_db()
-    # Fall back to sensor intensity if domain aggregate has no strength
-    if strength_db is None:
-        strength_db = _sensor_fallback_strength_db(sensor_intensity)
-    has_ref_gaps = aggregate.has_relevant_reference_gap(
-        str(primary_source) if primary_source else "unknown",
+    facts = resolve_primary_report_facts(
+        aggregate=context.domain_aggregate,
+        origin_location=context.origin_location,
+        sensor_locations_active=context.sensor_locations_active,
+        sensor_intensity=sensor_intensity,
     )
-    effective = aggregate.effective_top_causes()
-    domain_primary = effective[0] if effective else aggregate.primary_finding
-    weak_spatial = domain_primary.weak_spatial_separation if domain_primary else False
-
-    strength_text_value = strength_text(strength_db, lang=lang)
-    sensor_count = len(context.sensor_locations_active) or len(
-        context.domain_aggregate.capture.setup.sensors
+    primary_system = (
+        human_source(facts.primary_source, tr=tr) if facts.primary_source else tr("UNKNOWN")
     )
-    strength_band_key = strength_label(strength_db)[0] if strength_db is not None else None
+    primary_location = facts.primary_location or tr("UNKNOWN")
+    primary_speed = str(facts.primary_speed or tr("UNKNOWN"))
+    strength_text_value = strength_text(facts.strength_db, lang=lang)
+    strength_band_key = (
+        strength_label(facts.strength_db)[0] if facts.strength_db is not None else None
+    )
 
-    # Use domain ConfidenceAssessment when available on the primary finding
-    effective = aggregate.effective_top_causes()
-    domain_primary = effective[0] if effective else aggregate.primary_finding
-
-    if domain_primary and domain_primary.confidence_assessment:
-        ca = domain_primary.confidence_assessment
+    if facts.domain_primary and facts.domain_primary.confidence_assessment:
+        ca = facts.domain_primary.confidence_assessment
         certainty_key = ca.label_key
         certainty_label_text = tr(ca.label_key)
         certainty_pct = ca.pct_text
@@ -616,18 +447,21 @@ def resolve_primary_report_candidate(
         certainty_label_text = tr("CONFIDENCE_LOW")
         certainty_pct = "0%"
         certainty_reason = ""
-        tier = ConfidenceAssessment.assess(confidence, strength_band_key=strength_band_key).tier
+        tier = ConfidenceAssessment.assess(
+            facts.confidence,
+            strength_band_key=strength_band_key,
+        ).tier
     return PrimaryCandidateContext(
         primary_candidate=primary_candidate,
-        primary_source=primary_source,
+        primary_source=facts.primary_source,
         primary_system=primary_system,
         primary_location=primary_location,
         primary_speed=primary_speed,
-        confidence=confidence,
-        sensor_count=sensor_count,
-        weak_spatial=weak_spatial,
-        has_reference_gaps=has_ref_gaps,
-        strength_db=strength_db,
+        confidence=facts.confidence,
+        sensor_count=facts.sensor_count,
+        weak_spatial=facts.weak_spatial,
+        has_reference_gaps=facts.has_reference_gaps,
+        strength_db=facts.strength_db,
         strength_text=strength_text_value,
         strength_band_key=strength_band_key,
         certainty_key=certainty_key,
