@@ -31,6 +31,7 @@ from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_persistence import RunPersistence
 from vibesensor.shared.types.signal_source import SignalSource
+from vibesensor.shared.types.speed_provider import SpeedProvider
 from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.sample_builder import (
@@ -41,7 +42,6 @@ from vibesensor.use_cases.run.sample_builder import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.infra.config.settings_store import SettingsStore
 
 LOGGER = logging.getLogger(__name__)
@@ -113,7 +113,7 @@ class RunRecorder:
         self,
         config: RunRecorderConfig,
         registry: ClientTracker,
-        gps_monitor: GPSSpeedMonitor,
+        gps_monitor: SpeedProvider,
         processor: SignalSource,
         history_db: RunPersistence | None = None,
         settings_store: SettingsStore | None = None,
