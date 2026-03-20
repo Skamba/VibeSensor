@@ -21,7 +21,7 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _run_noise_baseline_g,
     _tire_reference_from_metadata,
 )
-from vibesensor.use_cases.diagnostics.order_analysis import _build_order_findings
+from vibesensor.use_cases.diagnostics.order_pipeline import _build_order_findings
 from vibesensor.use_cases.diagnostics.peak_binning import (
     PERSISTENT_PEAK_MAX_FINDINGS,
     PeakBin,
