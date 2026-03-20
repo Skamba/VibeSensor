@@ -16,6 +16,86 @@
         "title": "ActiveCarRequest",
         "type": "object"
       },
+      "AmplitudeMetric": {
+        "additionalProperties": true,
+        "description": "HTTP contract for finding amplitude/strength metadata.\n\nThe runtime payload currently emits both a compact\n``{\"vibration_strength_db\": ...}`` shape and richer\n``{\"name\", \"value\", \"units\", \"definition\"}`` objects in tests/report helpers,\nso the schema keeps both representations legal without changing runtime behavior.",
+        "properties": {
+          "definition": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Definition"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "vibration_strength_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vibration Strength Db"
+          }
+        },
+        "title": "AmplitudeMetric",
+        "type": "object"
+      },
       "AnalysisSettingsRequest": {
         "description": "Request body for updating vehicle analysis settings (tire geometry, gear ratios, etc.).",
         "properties": {
@@ -1455,6 +1535,752 @@
         "title": "EspSerialPortResponse",
         "type": "object"
       },
+      "FindingEvidenceMetrics": {
+        "additionalProperties": true,
+        "description": "HTTP contract for serialized evidence metrics attached to a finding.",
+        "properties": {
+          "burstiness": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Burstiness"
+          },
+          "focused_speed_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Focused Speed Band"
+          },
+          "frequency_correlation": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency Correlation"
+          },
+          "global_match_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Global Match Rate"
+          },
+          "match_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Rate"
+          },
+          "matched_samples": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Samples"
+          },
+          "max_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Intensity Db"
+          },
+          "mean_noise_floor_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Noise Floor Db"
+          },
+          "mean_relative_error": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Relative Error"
+          },
+          "median_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Intensity Db"
+          },
+          "median_relative_to_run_noise": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Relative To Run Noise"
+          },
+          "p95_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Intensity Db"
+          },
+          "p95_relative_to_run_noise": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Relative To Run Noise"
+          },
+          "per_phase_confidence": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Phase Confidence"
+          },
+          "phases_with_evidence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phases With Evidence"
+          },
+          "possible_samples": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Possible Samples"
+          },
+          "presence_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Presence Ratio"
+          },
+          "run_noise_baseline_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Noise Baseline Db"
+          },
+          "sample_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Count"
+          },
+          "spatial_concentration": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spatial Concentration"
+          },
+          "spatial_uniformity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spatial Uniformity"
+          },
+          "speed_uniformity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Uniformity"
+          },
+          "total_samples": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Samples"
+          },
+          "vibration_strength_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vibration Strength Db"
+          }
+        },
+        "title": "FindingEvidenceMetrics",
+        "type": "object"
+      },
+      "FindingPayload": {
+        "additionalProperties": true,
+        "description": "HTTP contract for one serialized finding in analysis history payloads.",
+        "properties": {
+          "actions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "amplitude_metric": {
+            "$ref": "#/components/schemas/AmplitudeMetric"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "confidence_label_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Label Key"
+          },
+          "confidence_pct": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Pct"
+          },
+          "confidence_tone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Tone"
+          },
+          "corroborating_locations": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corroborating Locations"
+          },
+          "diagnostic_caveat": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnostic Caveat"
+          },
+          "diffuse_excitation": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diffuse Excitation"
+          },
+          "dominance_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominance Ratio"
+          },
+          "dominant_phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Phase"
+          },
+          "evidence_metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FindingEvidenceMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence_summary": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Summary"
+          },
+          "finding_id": {
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "finding_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Key"
+          },
+          "finding_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Kind"
+          },
+          "frequency_hz_or_order": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency Hz Or Order"
+          },
+          "grouped_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grouped Count"
+          },
+          "localization_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Localization Confidence"
+          },
+          "location_hotspot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocationHotspotPayload"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "matched_points": {
+            "items": {
+              "$ref": "#/components/schemas/MatchedPoint"
+            },
+            "title": "Matched Points",
+            "type": "array"
+          },
+          "next_sensor_move": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Sensor Move"
+          },
+          "order": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order"
+          },
+          "peak_classification": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Classification"
+          },
+          "peak_speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Speed Kmh"
+          },
+          "phase_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PhaseEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "phase_presence": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase Presence"
+          },
+          "quick_checks": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Quick Checks",
+            "type": "array"
+          },
+          "ranking_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ranking Score"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "signatures_observed": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Signatures Observed",
+            "type": "array"
+          },
+          "speed_window_kmh": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Window Kmh"
+          },
+          "strongest_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strongest Location"
+          },
+          "strongest_speed_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strongest Speed Band"
+          },
+          "suspected_source": {
+            "title": "Suspected Source",
+            "type": "string"
+          },
+          "weak_spatial_separation": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weak Spatial Separation"
+          }
+        },
+        "required": [
+          "finding_id",
+          "suspected_source",
+          "evidence_summary",
+          "frequency_hz_or_order",
+          "amplitude_metric",
+          "confidence",
+          "quick_checks"
+        ],
+        "title": "FindingPayload",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1859,6 +2685,13 @@
         "additionalProperties": true,
         "description": "Response body with aggregated diagnostic insights for a run.",
         "properties": {
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/FindingPayload"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
           "run_id": {
             "anyOf": [
               {
@@ -1880,6 +2713,13 @@
               }
             ],
             "title": "Status"
+          },
+          "top_causes": {
+            "items": {
+              "$ref": "#/components/schemas/FindingPayload"
+            },
+            "title": "Top Causes",
+            "type": "array"
           },
           "warnings": {
             "items": {
@@ -2073,6 +2913,98 @@
         "title": "LanguageResponse",
         "type": "object"
       },
+      "LocationHotspotPayload": {
+        "additionalProperties": true,
+        "description": "HTTP contract for serialized location-hotspot evidence.",
+        "properties": {
+          "ambiguous_location": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ambiguous Location"
+          },
+          "ambiguous_locations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ambiguous Locations",
+            "type": "array"
+          },
+          "dominance_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominance Ratio"
+          },
+          "localization_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Localization Confidence"
+          },
+          "location_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Count"
+          },
+          "second_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Second Location"
+          },
+          "top_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Location"
+          },
+          "weak_spatial_separation": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weak Spatial Separation"
+          }
+        },
+        "title": "LocationHotspotPayload",
+        "type": "object"
+      },
       "LocationOptionResponse": {
         "description": "A single sensor-location option (code + human-readable label).",
         "properties": {
@@ -2090,6 +3022,128 @@
           "label"
         ],
         "title": "LocationOptionResponse",
+        "type": "object"
+      },
+      "MatchedPoint": {
+        "additionalProperties": true,
+        "description": "HTTP contract for one serialized finding matched-point observation.",
+        "properties": {
+          "amp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amp"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "matched_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Hz"
+          },
+          "phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase"
+          },
+          "predicted_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Predicted Hz"
+          },
+          "rel_error": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rel Error"
+          },
+          "speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Kmh"
+          },
+          "t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T S"
+          }
+        },
+        "title": "MatchedPoint",
+        "type": "object"
+      },
+      "PhaseEvidence": {
+        "additionalProperties": true,
+        "description": "HTTP contract for optional driving-phase evidence attached to a finding.",
+        "properties": {
+          "cruise_fraction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cruise Fraction"
+          },
+          "phases_detected": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Phases Detected",
+            "type": "array"
+          }
+        },
+        "title": "PhaseEvidence",
         "type": "object"
       },
       "RawSamplesErrorPayload": {

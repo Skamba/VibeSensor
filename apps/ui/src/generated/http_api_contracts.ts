@@ -206,6 +206,30 @@ export interface components {
       carId: string;
     };
     /**
+     * AmplitudeMetric
+     * @description HTTP contract for finding amplitude/strength metadata.
+     *
+     * The runtime payload currently emits both a compact
+     * ``{"vibration_strength_db": ...}`` shape and richer
+     * ``{"name", "value", "units", "definition"}`` objects in tests/report helpers,
+     * so the schema keeps both representations legal without changing runtime behavior.
+     */
+    AmplitudeMetric: {
+      /** Definition */
+      definition?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Name */
+      name?: string | null;
+      /** Units */
+      units?: string | null;
+      /** Value */
+      value?: number | null;
+      /** Vibration Strength Db */
+      vibration_strength_db?: number | null;
+      [key: string]: unknown;
+    };
+    /**
      * AnalysisSettingsRequest
      * @description Request body for updating vehicle analysis settings (tire geometry, gear ratios, etc.).
      */
@@ -709,6 +733,152 @@ export interface components {
       /** Vid */
       vid?: number | null;
     };
+    /**
+     * FindingEvidenceMetrics
+     * @description HTTP contract for serialized evidence metrics attached to a finding.
+     */
+    FindingEvidenceMetrics: {
+      /** Burstiness */
+      burstiness?: number | null;
+      /** Focused Speed Band */
+      focused_speed_band?: string | null;
+      /** Frequency Correlation */
+      frequency_correlation?: number | null;
+      /** Global Match Rate */
+      global_match_rate?: number | null;
+      /** Match Rate */
+      match_rate?: number | null;
+      /** Matched Samples */
+      matched_samples?: number | null;
+      /** Max Intensity Db */
+      max_intensity_db?: number | null;
+      /** Mean Noise Floor Db */
+      mean_noise_floor_db?: number | null;
+      /** Mean Relative Error */
+      mean_relative_error?: number | null;
+      /** Median Intensity Db */
+      median_intensity_db?: number | null;
+      /** Median Relative To Run Noise */
+      median_relative_to_run_noise?: number | null;
+      /** P95 Intensity Db */
+      p95_intensity_db?: number | null;
+      /** P95 Relative To Run Noise */
+      p95_relative_to_run_noise?: number | null;
+      /** Per Phase Confidence */
+      per_phase_confidence?: {
+        [key: string]: number;
+      } | null;
+      /** Phases With Evidence */
+      phases_with_evidence?: number | null;
+      /** Possible Samples */
+      possible_samples?: number | null;
+      /** Presence Ratio */
+      presence_ratio?: number | null;
+      /** Run Noise Baseline Db */
+      run_noise_baseline_db?: number | null;
+      /** Sample Count */
+      sample_count?: number | null;
+      /** Spatial Concentration */
+      spatial_concentration?: number | null;
+      /** Spatial Uniformity */
+      spatial_uniformity?: number | null;
+      /** Speed Uniformity */
+      speed_uniformity?: number | null;
+      /** Total Samples */
+      total_samples?: number | null;
+      /** Vibration Strength Db */
+      vibration_strength_db?: number | null;
+      [key: string]: unknown;
+    };
+    /**
+     * FindingPayload
+     * @description HTTP contract for one serialized finding in analysis history payloads.
+     */
+    FindingPayload: {
+      /** Actions */
+      actions?: {
+          [key: string]: unknown;
+        }[];
+      amplitude_metric: components["schemas"]["AmplitudeMetric"];
+      /** Confidence */
+      confidence: number | null;
+      /** Confidence Label Key */
+      confidence_label_key?: string | null;
+      /** Confidence Pct */
+      confidence_pct?: string | null;
+      /** Confidence Tone */
+      confidence_tone?: string | null;
+      /** Corroborating Locations */
+      corroborating_locations?: number | null;
+      /** Diagnostic Caveat */
+      diagnostic_caveat?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Diffuse Excitation */
+      diffuse_excitation?: boolean | null;
+      /** Dominance Ratio */
+      dominance_ratio?: number | null;
+      /** Dominant Phase */
+      dominant_phase?: string | null;
+      evidence_metrics?: components["schemas"]["FindingEvidenceMetrics"] | null;
+      /** Evidence Summary */
+      evidence_summary: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Finding Id */
+      finding_id: string;
+      /** Finding Key */
+      finding_key?: string | null;
+      /** Finding Kind */
+      finding_kind?: string | null;
+      /** Frequency Hz Or Order */
+      frequency_hz_or_order: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Grouped Count */
+      grouped_count?: number | null;
+      /** Localization Confidence */
+      localization_confidence?: number | null;
+      location_hotspot?: components["schemas"]["LocationHotspotPayload"] | null;
+      /** Matched Points */
+      matched_points?: components["schemas"]["MatchedPoint"][];
+      /** Next Sensor Move */
+      next_sensor_move?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Order */
+      order?: string | null;
+      /** Peak Classification */
+      peak_classification?: string | null;
+      /** Peak Speed Kmh */
+      peak_speed_kmh?: number | null;
+      phase_evidence?: components["schemas"]["PhaseEvidence"] | null;
+      /** Phase Presence */
+      phase_presence?: {
+        [key: string]: number;
+      } | null;
+      /** Quick Checks */
+      quick_checks: (boolean | number | string | unknown[] | {
+          [key: string]: unknown;
+        } | null)[];
+      /** Ranking Score */
+      ranking_score?: number | null;
+      /** Severity */
+      severity?: string | null;
+      /** Signatures Observed */
+      signatures_observed?: string[];
+      /** Speed Window Kmh */
+      speed_window_kmh?: number[] | null;
+      /** Strongest Location */
+      strongest_location?: string | null;
+      /** Strongest Speed Band */
+      strongest_speed_band?: string | null;
+      /** Suspected Source */
+      suspected_source: string;
+      /** Weak Spatial Separation */
+      weak_spatial_separation?: boolean | null;
+      [key: string]: unknown;
+    };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
@@ -891,10 +1061,14 @@ export interface components {
      * @description Response body with aggregated diagnostic insights for a run.
      */
     HistoryInsightsResponse: {
+      /** Findings */
+      findings?: components["schemas"]["FindingPayload"][];
       /** Run Id */
       run_id?: string | null;
       /** Status */
       status?: string | null;
+      /** Top Causes */
+      top_causes?: components["schemas"]["FindingPayload"][];
       /** Warnings */
       warnings?: components["schemas"]["HistoryInsightWarningResponse"][];
       [key: string]: unknown;
@@ -987,6 +1161,29 @@ export interface components {
       language: string;
     };
     /**
+     * LocationHotspotPayload
+     * @description HTTP contract for serialized location-hotspot evidence.
+     */
+    LocationHotspotPayload: {
+      /** Ambiguous Location */
+      ambiguous_location?: boolean | null;
+      /** Ambiguous Locations */
+      ambiguous_locations?: string[];
+      /** Dominance Ratio */
+      dominance_ratio?: number | null;
+      /** Localization Confidence */
+      localization_confidence?: number | null;
+      /** Location Count */
+      location_count?: number | null;
+      /** Second Location */
+      second_location?: string | null;
+      /** Top Location */
+      top_location?: string | null;
+      /** Weak Spatial Separation */
+      weak_spatial_separation?: boolean | null;
+      [key: string]: unknown;
+    };
+    /**
      * LocationOptionResponse
      * @description A single sensor-location option (code + human-readable label).
      */
@@ -995,6 +1192,40 @@ export interface components {
       code: string;
       /** Label */
       label: string;
+    };
+    /**
+     * MatchedPoint
+     * @description HTTP contract for one serialized finding matched-point observation.
+     */
+    MatchedPoint: {
+      /** Amp */
+      amp?: number | null;
+      /** Location */
+      location?: string | null;
+      /** Matched Hz */
+      matched_hz?: number | null;
+      /** Phase */
+      phase?: string | null;
+      /** Predicted Hz */
+      predicted_hz?: number | null;
+      /** Rel Error */
+      rel_error?: number | null;
+      /** Speed Kmh */
+      speed_kmh?: number | null;
+      /** T S */
+      t_s?: number | null;
+      [key: string]: unknown;
+    };
+    /**
+     * PhaseEvidence
+     * @description HTTP contract for optional driving-phase evidence attached to a finding.
+     */
+    PhaseEvidence: {
+      /** Cruise Fraction */
+      cruise_fraction?: number | null;
+      /** Phases Detected */
+      phases_detected?: string[];
+      [key: string]: unknown;
     };
     /** RawSamplesErrorPayload */
     RawSamplesErrorPayload: {
