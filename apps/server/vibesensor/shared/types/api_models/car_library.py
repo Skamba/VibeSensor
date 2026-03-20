@@ -1,0 +1,71 @@
+"""Car-library HTTP API models."""
+
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+from .base import _ExtraAllowBase
+
+
+class CarLibraryBrandsResponse(BaseModel):
+    """Response body listing available car manufacturer brands."""
+
+    brands: list[str]
+
+
+class CarLibraryTypesResponse(BaseModel):
+    """Response body listing available car body types."""
+
+    types: list[str]
+
+
+class CarLibraryGearboxEntry(_ExtraAllowBase):
+    """A gearbox option from the car library (gear ratios)."""
+
+    name: str = Field(min_length=1)
+    final_drive_ratio: float = Field(gt=0)
+    top_gear_ratio: float = Field(gt=0)
+
+
+class CarLibraryTireOptionEntry(_ExtraAllowBase):
+    """A tire size option from the car library."""
+
+    name: str = Field(min_length=1)
+    tire_width_mm: float = Field(gt=0)
+    tire_aspect_pct: float = Field(gt=0)
+    rim_in: float = Field(gt=0)
+
+
+class CarLibraryVariantEntry(_ExtraAllowBase):
+    """A specific variant/trim of a car library model entry."""
+
+    name: str = Field(min_length=1)
+    engine: str | None = None
+    drivetrain: Literal["FWD", "RWD", "AWD"]
+    gearboxes: list[CarLibraryGearboxEntry] | None = None
+    tire_options: list[CarLibraryTireOptionEntry] | None = None
+    tire_width_mm: float | None = Field(default=None, gt=0)
+    tire_aspect_pct: float | None = Field(default=None, gt=0)
+    rim_in: float | None = Field(default=None, gt=0)
+
+
+class CarLibraryModelEntry(_ExtraAllowBase):
+    """A full car library entry with brand, model, tire options, and variants."""
+
+    brand: str
+    type: str
+    model: str
+    gearboxes: list[CarLibraryGearboxEntry] = Field(min_length=1)
+    tire_options: list[CarLibraryTireOptionEntry] = Field(min_length=1)
+    tire_width_mm: float = Field(gt=0)
+    tire_aspect_pct: float = Field(gt=0)
+    rim_in: float = Field(gt=0)
+    variants: list[CarLibraryVariantEntry] = Field(default_factory=list)
+
+
+class CarLibraryModelsResponse(BaseModel):
+    """Response body listing car library model entries."""
+
+    models: list[CarLibraryModelEntry]
