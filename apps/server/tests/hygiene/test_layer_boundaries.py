@@ -93,9 +93,7 @@ _KNOWN_VIOLATIONS: frozenset[tuple[str, str]] = frozenset(
         ("use_cases/history/runs.py", "vibesensor.infra.config.settings_store"),
         ("use_cases/run/logger.py", "vibesensor.infra.config.settings_store"),
         ("use_cases/run/logger.py", "vibesensor.infra.processing"),
-        ("use_cases/run/logger.py", "vibesensor.infra.runtime.registry"),
         ("use_cases/run/sample_builder.py", "vibesensor.infra.processing"),
-        ("use_cases/run/sample_builder.py", "vibesensor.infra.runtime.registry"),
         # infra → adapters
         ("infra/config/settings_store.py", "vibesensor.adapters.gps.gps_speed"),
         ("infra/config/settings_store.py", "vibesensor.adapters.persistence.history_db"),

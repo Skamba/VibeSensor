@@ -26,6 +26,7 @@ from uuid import uuid4
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.constants import NUMERIC_TYPES
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.client_tracker import ClientTracker
 from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_persistence import RunPersistence
@@ -42,7 +43,6 @@ if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.processing import SignalProcessor
-    from vibesensor.infra.runtime.registry import ClientRegistry
 
 LOGGER = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ class RunRecorder:
     def __init__(
         self,
         config: RunRecorderConfig,
-        registry: ClientRegistry,
+        registry: ClientTracker,
         gps_monitor: GPSSpeedMonitor,
         processor: SignalProcessor,
         history_db: RunPersistence | None = None,
