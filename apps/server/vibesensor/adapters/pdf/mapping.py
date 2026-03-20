@@ -12,29 +12,28 @@ from typing import Any
 
 from vibesensor import __version__
 from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern, why_parts_listed
-from vibesensor.adapters.pdf.presentation import strength_label, strength_text
+from vibesensor.adapters.pdf.peak_table import build_peak_rows_from_plots
+from vibesensor.adapters.pdf.presentation import order_label_human, strength_label, strength_text
 from vibesensor.adapters.pdf.report_data import (
-    DataTrustItem,
-    NextStep,
     PartSuggestion,
     PatternEvidence,
-    PeakRow,
     ReportTemplateData,
     SystemFindingCard,
 )
-from vibesensor.adapters.pdf.report_types import PeakTableRow
+from vibesensor.adapters.pdf.report_sections import (
+    build_data_trust_from_summary,
+    build_next_steps_from_summary,
+)
 from vibesensor.coerce import coerce_float
 from vibesensor.domain import (
     ConfidenceAssessment,
     Finding,
     TestRun,
     VibrationOrigin,
-    VibrationSource,
 )
-from vibesensor.report_i18n import human_source, is_i18n_ref, normalize_lang, resolve_i18n
+from vibesensor.report_i18n import human_source, normalize_lang, resolve_i18n
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
 from vibesensor.shared.boundaries.vibration_origin import (
     build_origin_explanation,
     vibration_origin_from_payload,
@@ -178,51 +177,6 @@ class PrimaryCandidateContext:
     tier: str
 
 
-# ---------------------------------------------------------------------------
-# Shared i18n and value-resolution helpers
-# ---------------------------------------------------------------------------
-
-_ORDER_LABEL_NAMES_NL: dict[str, str] = {
-    "wheel": "wielorde",
-    "engine": "motororde",
-    "driveshaft": "aandrijfasorde",
-}
-_ORDER_LABEL_NAMES_DEFAULT: dict[str, str] = {
-    "wheel": "wheel order",
-    "engine": "engine order",
-    "driveshaft": "driveshaft order",
-}
-
-_CLASSIFICATION_I18N_KEYS: dict[str, str] = {
-    "patterned": "CLASSIFICATION_PATTERNED",
-    "persistent": "CLASSIFICATION_PERSISTENT",
-    "transient": "CLASSIFICATION_TRANSIENT",
-    "baseline_noise": "CLASSIFICATION_BASELINE_NOISE",
-}
-
-
-def order_label_human(lang: str, label: str) -> str:
-    """Translate a language-neutral order label like ``1x wheel``."""
-    names = _ORDER_LABEL_NAMES_NL if lang == "nl" else _ORDER_LABEL_NAMES_DEFAULT
-    parts = label.strip().split(" ", 1)
-    if len(parts) == 2:
-        multiplier, base = parts
-        localized = names.get(base.lower(), base)
-        return f"{multiplier} {localized}"
-    return label
-
-
-def peak_classification_text(value: object, tr: Callable[..., str]) -> str:
-    """Map a peak classification code to report text."""
-    normalized = str(value or "").strip().lower()
-    i18n_key = _CLASSIFICATION_I18N_KEYS.get(normalized)
-    if i18n_key:
-        return tr(i18n_key)
-    if not normalized:
-        return tr("UNKNOWN")
-    return str(value).replace("_", " ").title()
-
-
 def _origin_from_aggregate(
     aggregate: TestRun | None,
     fallback: Mapping[str, Any] | None,
@@ -287,70 +241,6 @@ def normalized_origin_location(origin: VibrationOrigin | None) -> str:
     return "" if raw.lower() == "unknown" else raw
 
 
-# ---------------------------------------------------------------------------
-# Peak-row and location-hotspot shaping
-# ---------------------------------------------------------------------------
-
-
-def build_peak_rows_from_plots(
-    summary: AnalysisSummary,
-    *,
-    lang: str,
-    tr: Callable,
-) -> list[PeakRow]:
-    """Build peak-table rows from the plots section."""
-    plots = summary.get("plots")
-    if plots is None:
-        return []
-    raw_peaks = [row for row in (plots.get("peaks_table", []) or []) if isinstance(row, dict)]
-    above_noise = [row for row in raw_peaks if (_as_float(row.get("strength_db")) or 0.0) > 0]
-    ranked = above_noise or raw_peaks
-    return [build_peak_row(row, lang=lang, tr=tr) for row in ranked[:8]]
-
-
-def build_peak_row(row: PeakTableRow, *, lang: str, tr: Callable) -> PeakRow:
-    """Build one report peak row from a plot peak-table row."""
-    rank_val = _as_float(row.get("rank"))
-    rank = str(int(rank_val)) if rank_val is not None else "—"
-    freq_val = _as_float(row.get("frequency_hz"))
-    freq = f"{freq_val:.1f}" if freq_val is not None else "—"
-    classification = peak_classification_text(row.get("peak_classification"), tr=tr)
-    order_label_raw = str(row.get("order_label") or "").strip()
-    order = order_label_human(lang, order_label_raw) if order_label_raw else classification
-    peak_db_val = _as_float(row.get("p95_intensity_db"))
-    peak_db = f"{peak_db_val:.1f}" if peak_db_val is not None else "—"
-    strength_db_val = _as_float(row.get("strength_db"))
-    strength_db = f"{strength_db_val:.1f}" if strength_db_val is not None else "—"
-    speed = str(row.get("typical_speed_band") or "—")
-    presence = _as_float(row.get("presence_ratio")) or 0.0
-    score = _as_float(row.get("persistence_score")) or 0.0
-    return PeakRow(
-        rank=rank,
-        system=peak_row_system_label(row, tr=tr),
-        freq_hz=freq,
-        order=order,
-        peak_db=peak_db,
-        strength_db=strength_db,
-        speed_band=speed,
-        relevance=f"{classification} · {presence:.0%} {tr('PRESENCE')} · {tr('SCORE')} {score:.2f}",
-    )
-
-
-def peak_row_system_label(row: PeakTableRow, *, tr: Callable[..., str]) -> str:
-    """Resolve the system label shown for one peak row."""
-    source_hint = str(row.get("suspected_source") or "").strip().lower()
-    _SOURCE_MAP: dict[str, str] = {
-        VibrationSource.WHEEL_TIRE: "SOURCE_WHEEL_TIRE",
-        VibrationSource.ENGINE: "SOURCE_ENGINE",
-        VibrationSource.DRIVELINE: "SOURCE_DRIVELINE",
-        VibrationSource.TRANSIENT_IMPACT: "SOURCE_TRANSIENT_IMPACT",
-    }
-    i18n_key = _SOURCE_MAP.get(source_hint)
-    if i18n_key:
-        return str(tr(i18n_key))
-    return "\u2014"
-
-
 def compute_location_hotspot_rows(sensor_intensity: list[dict]) -> list[dict]:
     """Pre-compute location hotspot rows from sensor intensity data."""
     if not sensor_intensity:
@@ -388,124 +278,6 @@ def collect_location_intensity(sensor_intensity: list[dict]) -> dict[str, list[f
         if location and p95 is not None and p95 > 0:
             amp_by_location[location].append(p95)
     return amp_by_location
-
-
-# ---------------------------------------------------------------------------
-# Action and trust-list builders
-# ---------------------------------------------------------------------------
-
-
-def build_next_steps_from_summary(
-    summary: AnalysisSummary,
-    *,
-    aggregate: TestRun | None,
-    tier: str,
-    cert_reason: str,
-    lang: str,
-    tr: Callable,
-) -> list[NextStep]:
-    """Build next-step actions from a run summary dict."""
-    if tier == "A":
-        return [
-            NextStep(action=action, why=cert_reason)
-            for action in (
-                tr("TIER_A_CAPTURE_WIDER_SPEED"),
-                tr("TIER_A_CAPTURE_MORE_SENSORS"),
-                tr("TIER_A_CAPTURE_REFERENCE_DATA"),
-            )
-        ]
-
-    next_steps: list[NextStep] = []
-    if aggregate is not None and aggregate.recommended_actions:
-        for action in aggregate.recommended_actions:
-            next_steps.append(
-                NextStep(
-                    action=_resolve_step_value(action.instruction, lang=lang, tr=tr),
-                    why=_resolve_optional_step_value(action.rationale, lang=lang, tr=tr),
-                    confirm=_resolve_optional_step_value(
-                        action.confirmation_signal,
-                        lang=lang,
-                        tr=tr,
-                    ),
-                    falsify=_resolve_optional_step_value(
-                        action.falsification_signal,
-                        lang=lang,
-                        tr=tr,
-                    ),
-                    eta=action.estimated_duration,
-                ),
-            )
-    return next_steps
-
-
-def _resolve_step_value(value: object, *, lang: str, tr: Callable) -> str:
-    """Resolve a required step field into report text."""
-    if isinstance(value, str) and value.isupper() and "_" in value:
-        translated = str(tr(value))
-        if translated and translated != value:
-            return translated
-    return resolve_i18n(lang, value, tr=tr) if is_i18n_ref(value) else str(value or "")
-
-
-def _resolve_optional_step_value(
-    value: object,
-    *,
-    lang: str,
-    tr: Callable,
-) -> str | None:
-    """Resolve an optional step field into report text or ``None``."""
-    resolved = _resolve_step_value(value, lang=lang, tr=tr).strip()
-    return resolved or None
-
-
-def build_data_trust_from_summary(
-    summary: AnalysisSummary,
-    *,
-    aggregate: TestRun | None,
-    lang: str,
-    tr: Callable,
-) -> list[DataTrustItem]:
-    """Build the data-trust checklist from run_suitability items."""
-    data_trust: list[DataTrustItem] = []
-    if aggregate is not None and aggregate.suitability is not None:
-        projected = run_suitability_payload(
-            aggregate.suitability,
-        )
-        for proj in projected:
-            data_trust.append(
-                DataTrustItem(
-                    check=_resolve_check_text(proj.get("check_key"), lang=lang, tr=tr),
-                    state=str(proj.get("state") or "warn"),
-                    detail=_resolve_detail_text(proj.get("explanation"), lang=lang, tr=tr),
-                ),
-            )
-    for warning in summary["warnings"]:
-        data_trust.append(
-            DataTrustItem(
-                check=_resolve_detail_text(warning.get("title"), lang=lang, tr=tr) or "",
-                state=str(warning.get("severity") or "warn"),
-                detail=_resolve_detail_text(warning.get("detail"), lang=lang, tr=tr),
-            ),
-        )
-    return data_trust
-
-
-def _resolve_check_text(value: object, *, lang: str, tr: Callable[..., str]) -> str:
-    """Resolve the checklist label text."""
-    if is_i18n_ref(value):
-        return resolve_i18n(lang, value, tr=tr)
-    if isinstance(value, str) and value.startswith("SUITABILITY_CHECK_"):
-        return str(tr(value))
-    return str(value or "")
-
-
-def _resolve_detail_text(value: object, *, lang: str, tr: Callable) -> str | None:
-    """Resolve the checklist detail text."""
-    if is_i18n_ref(value) or isinstance(value, list):
-        resolved = resolve_i18n(lang, value, tr=tr).strip()
-    else:
-        resolved = str(value or "").strip()
-    return resolved or None
 
 
 # ---------------------------------------------------------------------------
