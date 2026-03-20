@@ -7,13 +7,13 @@ from collections import defaultdict
 
 from vibesensor.domain import LocationIntensitySummary
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
-from vibesensor.shared.boundaries.analysis_payload import (
-    PhaseSpeedBreakdownRow,
-    SpeedBreakdownRow,
-)
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.diagnostics._types import Sample
+from vibesensor.use_cases.diagnostics._types import (
+    PhaseSpeedBreakdownRowData,
+    Sample,
+    SpeedBreakdownRowData,
+)
 from vibesensor.use_cases.diagnostics.helpers import (
     _location_label,
     _primary_vibration_strength_db,
@@ -46,7 +46,7 @@ _EMPTY_BUCKET_COUNTS: dict[str, int] = {f"l{idx}": 0 for idx in range(6)}
 def _phase_speed_breakdown(
     samples: list[Sample],
     per_sample_phases: list[DrivingPhase],
-) -> list[PhaseSpeedBreakdownRow]:
+) -> list[PhaseSpeedBreakdownRowData]:
     """Group vibration statistics by driving phase (temporal context)."""
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     grouped_speeds: dict[str, list[float]] = defaultdict(list)
@@ -68,26 +68,26 @@ def _phase_speed_breakdown(
 
     phase_order = [p.value for p in DrivingPhase]
     phase_order_set = set(phase_order)
-    rows: list[PhaseSpeedBreakdownRow] = []
+    rows: list[PhaseSpeedBreakdownRowData] = []
     for phase_key in [*phase_order, *sorted(k for k in counts if k not in phase_order_set)]:
         if phase_key not in counts:
             continue
         amp_vals = grouped_amp.get(phase_key, [])
         speed_vals = grouped_speeds.get(phase_key, [])
         rows.append(
-            {
-                "phase": phase_key,
-                "count": counts[phase_key],
-                "mean_speed_kmh": _mean(speed_vals) if speed_vals else None,
-                "max_speed_kmh": max(speed_vals) if speed_vals else None,
-                "mean_vibration_strength_db": _mean(amp_vals) if amp_vals else None,
-                "max_vibration_strength_db": max(amp_vals) if amp_vals else None,
-            },
+            PhaseSpeedBreakdownRowData(
+                phase=phase_key,
+                count=counts[phase_key],
+                mean_speed_kmh=_mean(speed_vals) if speed_vals else None,
+                max_speed_kmh=max(speed_vals) if speed_vals else None,
+                mean_vibration_strength_db=_mean(amp_vals) if amp_vals else None,
+                max_vibration_strength_db=max(amp_vals) if amp_vals else None,
+            ),
         )
     return rows
 
 
-def _speed_breakdown(samples: list[Sample]) -> list[SpeedBreakdownRow]:
+def _speed_breakdown(samples: list[Sample]) -> list[SpeedBreakdownRowData]:
     grouped: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)
     _as_float_local = _as_float
@@ -103,16 +103,16 @@ def _speed_breakdown(samples: list[Sample]) -> list[SpeedBreakdownRow]:
         if amp is not None:
             grouped[label].append(amp)
 
-    rows: list[SpeedBreakdownRow] = []
+    rows: list[SpeedBreakdownRowData] = []
     for label in sorted(counts, key=speed_band_sort_key):
         values = grouped.get(label, [])
         rows.append(
-            {
-                "speed_range": label,
-                "count": counts[label],
-                "mean_vibration_strength_db": _mean(values) if values else None,
-                "max_vibration_strength_db": max(values) if values else None,
-            },
+            SpeedBreakdownRowData(
+                speed_range=label,
+                count=counts[label],
+                mean_vibration_strength_db=_mean(values) if values else None,
+                max_vibration_strength_db=max(values) if values else None,
+            ),
         )
     return rows
 
