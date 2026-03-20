@@ -24,19 +24,21 @@ from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics._types import AccelStatistics, Sample
 from vibesensor.use_cases.diagnostics.helpers import (
+    _primary_vibration_strength_db,
+    _sensor_limit_g,
+    counter_delta,
+)
+from vibesensor.use_cases.diagnostics.math_utils import (
     _mean_variance,
     _outlier_summary,
     _percent_missing,
-    _primary_vibration_strength_db,
-    _sensor_limit_g,
-    _speed_stats,
-    counter_delta,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     PhaseSegment,
     segment_run_phases,
 )
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
 from vibesensor.vibration_strength import compute_db
 
 # ── Constants ────────────────────────────────────────────────────────────

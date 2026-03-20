@@ -92,7 +92,9 @@ in order. Each step runs exactly once per analysis invocation.
 | `location_analysis.py` | ~300 | Per-sensor-location vibration intensity and spatial analysis |
 | `top_cause_selection.py` | ~80 | Phase-adjusted finding ranking and grouping |
 | `shared/order_bands.py` | ~150 | Shared tire/driveline order-frequency band computation for diagnostics and live telemetry |
-| `helpers.py` | ~500 | Shared formatting, axis helpers, statistics utilities |
+| `helpers.py` | ~300 | Diagnostics-specific run/sample extraction, metadata/reference helpers, and formatting utilities |
+| `math_utils.py` | ~100 | Generic statistics and correlation helpers reused across diagnostics modules |
+| `speed_profile_helpers.py` | ~150 | Speed-profile construction and phase/speed summary helpers |
 | `plots.py` | ~700 | Chart data shaping: FFT, spectrogram, time-series, peak table |
 
 ## Data Flow
