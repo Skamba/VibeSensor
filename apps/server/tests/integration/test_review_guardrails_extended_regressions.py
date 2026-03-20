@@ -28,7 +28,7 @@ from vibesensor.infra.config.settings_store import PersistenceError, SettingsSto
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.locations import is_wheel_location
-from vibesensor.use_cases.diagnostics.order_bands import (
+from vibesensor.shared.order_bands import (
     as_float_or_none as order_bands_as_float_or_none,
 )
 

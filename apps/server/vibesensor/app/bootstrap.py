@@ -23,8 +23,8 @@ from fastapi.staticfiles import StaticFiles
 from vibesensor.adapters.http import create_router
 from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
 from vibesensor.app.container import build_runtime
+from vibesensor.app.runtime_state import RuntimeState
 from vibesensor.app.settings import load_config
-from vibesensor.infra.runtime import RuntimeState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager
 
 __all__ = ["create_app", "main"]

@@ -1,4 +1,4 @@
-"""RuntimeState – top-level runtime assembly."""
+"""App-owned runtime assembly for the fully wired service graph."""
 
 from __future__ import annotations
 

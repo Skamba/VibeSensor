@@ -119,6 +119,7 @@ class _StubProcessor:
 def _make_runtime(**overrides: Any):
     """Build a RuntimeState with stubs for lifecycle testing."""
     import vibesensor.infra.runtime as runtime_module
+    from vibesensor.app.runtime_state import RuntimeState
     from vibesensor.infra.runtime.lifecycle import LifecycleManager
     from vibesensor.infra.runtime.processing_loop import (
         ProcessingLoop,
@@ -144,7 +145,7 @@ def _make_runtime(**overrides: Any):
     esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
     processing_state = ProcessingLoopState()
     health_state = runtime_module.RuntimeHealthState()
-    rt = runtime_module.RuntimeState(
+    rt = RuntimeState(
         config=config,
         registry=registry,
         processor=processor,
@@ -400,6 +401,6 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
 @pytest.mark.parametrize("attr", ["settings_store", "processing_loop", "ws_broadcast"])
 def test_runtime_state_has_public_attribute(attr: str) -> None:
     """Canonical import path should expose key public attributes."""
-    from vibesensor.infra.runtime import RuntimeState
+    from vibesensor.app.runtime_state import RuntimeState
 
     assert hasattr(RuntimeState, attr), f"RuntimeState missing {attr}"
