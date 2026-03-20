@@ -64,8 +64,6 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _location_label,
     _locations_connected_throughout_run,
     _run_noise_baseline_g,
-    _speed_stats,
-    _speed_stats_by_phase,
     _validate_required_strength_metrics,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
@@ -73,6 +71,10 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import (
     PhaseSegment,
 )
 from vibesensor.use_cases.diagnostics.plots import _plot_data
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
+    _speed_stats,
+    _speed_stats_by_phase,
+)
 from vibesensor.use_cases.diagnostics.statistics import (
     _strength_band_key,
     compute_accel_statistics,

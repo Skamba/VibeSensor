@@ -26,7 +26,6 @@ from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics.findings import _classify_peak_type
 from vibesensor.use_cases.diagnostics.helpers import (
-    _amplitude_weighted_speed_window,
     _effective_baseline_floor,
     _primary_vibration_strength_db,
     _run_noise_baseline_g,
@@ -43,6 +42,9 @@ from vibesensor.use_cases.diagnostics.spectrogram import (
     scan_peak_samples,
     spectrogram_from_peaks,
     spectrogram_from_peaks_raw,
+)
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
+    _amplitude_weighted_speed_window,
 )
 from vibesensor.vibration_strength import compute_db, compute_db_or_none, percentile
 

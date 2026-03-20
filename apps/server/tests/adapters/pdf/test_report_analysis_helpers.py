@@ -7,22 +7,26 @@ from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics.helpers import (
     MIN_ANALYSIS_FREQ_HZ,
-    _corr_abs,
     _effective_engine_rpm,
     _format_duration,
     _location_label,
     _locations_connected_throughout_run,
-    _mean_variance,
-    _outlier_summary,
-    _percent_missing,
     _primary_vibration_strength_db,
     _sample_top_peaks,
     _sensor_limit_g,
-    _speed_stats,
-    _speed_stats_by_phase,
+)
+from vibesensor.use_cases.diagnostics.math_utils import (
+    _corr_abs,
+    _mean_variance,
+    _outlier_summary,
+    _percent_missing,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.rotational_physics import _wheel_hz
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
+    _speed_stats,
+    _speed_stats_by_phase,
+)
 from vibesensor.vibration_strength import percentile
 
 # -- _as_float -----------------------------------------------------------------

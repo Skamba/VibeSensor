@@ -38,9 +38,9 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _estimate_strength_floor_amp_g,
     _location_label,
     _order_reference_spec_from_context,
-    _phase_to_str,
     _sample_top_peaks,
 )
+from vibesensor.use_cases.diagnostics.math_utils import _mean
 from vibesensor.use_cases.diagnostics.order_statistics import (
     compute_amplitude_and_error_stats,
     compute_matched_speed_phase_evidence,
@@ -52,6 +52,7 @@ from vibesensor.use_cases.diagnostics.rotational_physics import (
     _order_hypotheses,
     _order_label,
 )
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _phase_to_str
 from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
@@ -267,13 +268,6 @@ _MULTI_LOCATION_SPLIT_DOMINANCE = 2.0
 # Floor for dominance ratio when computing the secondary-location confidence
 # scale factor.  Prevents division by values at or below 1.0.
 _MIN_DOMINANCE_FOR_SCALE = 1.01
-
-
-def _mean(values: list[float]) -> float:
-    """Arithmetic mean returning 0.0 for empty inputs."""
-    if not values:
-        return 0.0
-    return sum(values) / len(values)
 
 
 def _normalized_source(finding: DomainFinding) -> str:

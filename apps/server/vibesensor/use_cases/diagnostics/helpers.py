@@ -3,30 +3,21 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Sequence
-from math import isfinite, sqrt
+from math import isfinite
 from pathlib import Path
-from typing import TypedDict
 
-from vibesensor.domain import OrderReferenceSpec, SpeedProfileSummary, TireSpec
-from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
+from vibesensor.domain import OrderReferenceSpec, TireSpec
 from vibesensor.shared.boundaries.run_log import read_jsonl_run
 from vibesensor.shared.constants import (
     KMH_TO_MPS,
     MEMS_NOISE_FLOOR_G,
     MIN_ANALYSIS_FREQ_HZ,
     SECONDS_PER_MINUTE,
-    SPEED_BIN_WIDTH_KMH,
-    STEADY_SPEED_RANGE_KMH,
-    STEADY_SPEED_STDDEV_KMH,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.locations import label_for_code as _label_for_code
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.diagnostics._types import (
-    PhaseLabel,
-    Sample,
-)
+from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.vibration_strength import percentile
 
 
@@ -54,137 +45,6 @@ def _format_duration(seconds: float) -> str:
     minutes = int(total // 60)
     rem = total - (minutes * 60)
     return f"{minutes:02d}:{rem:04.1f}"
-
-
-def _percent_missing(samples: list[Sample], key: str) -> float:
-    if not samples:
-        return 100.0
-    missing = sum(1 for sample in samples if sample.get(key) in (None, ""))
-    return (missing / len(samples)) * 100.0
-
-
-def _mean_variance(values: list[float]) -> tuple[float | None, float | None]:
-    if not values:
-        return None, None
-    n = len(values)
-    m = sum(values) / n
-    if n < 2:
-        return m, 0.0
-    var = sum((v - m) ** 2 for v in values) / (n - 1)
-    return m, var
-
-
-class _OutlierSummary(TypedDict):
-    """Return type of :func:`_outlier_summary`."""
-
-    count: int
-    outlier_count: int
-    outlier_pct: float
-    lower_bound: float | None
-    upper_bound: float | None
-
-
-def _outlier_summary(values: list[float]) -> _OutlierSummary:
-    if not values:
-        return {
-            "count": 0,
-            "outlier_count": 0,
-            "outlier_pct": 0.0,
-            "lower_bound": None,
-            "upper_bound": None,
-        }
-    sorted_vals = sorted(values)
-    q1 = float(percentile(sorted_vals, 0.25))
-    q3 = float(percentile(sorted_vals, 0.75))
-    iqr = max(0.0, q3 - q1)
-    low = q1 - (1.5 * iqr)
-    high = q3 + (1.5 * iqr)
-    outlier_count = sum(1 for v in sorted_vals if v < low or v > high)
-    return {
-        "count": len(sorted_vals),
-        "outlier_count": outlier_count,
-        "outlier_pct": (outlier_count / len(sorted_vals)) * 100.0,
-        "lower_bound": low,
-        "upper_bound": high,
-    }
-
-
-def _amplitude_weighted_speed_window(
-    speeds: list[float],
-    amplitudes: list[float],
-) -> tuple[float | None, float | None]:
-    """Return the dominant amplitude-weighted speed bin window.
-
-    Inputs are expected to be parallel observations for the same phenomenon.
-    """
-    bin_weight: dict[str, float] = defaultdict(float)
-    for speed, amp in zip(speeds, amplitudes, strict=False):
-        speed_val = _as_float(speed)
-        amp_val = _as_float(amp)
-        if speed_val is None or speed_val <= 0 or amp_val is None or amp_val <= 0:
-            continue
-        bin_weight[speed_bin_label(speed_val)] += amp_val
-
-    if not bin_weight:
-        return (None, None)
-
-    strongest_bin = max(
-        bin_weight.items(),
-        key=lambda item: (item[1], speed_band_sort_key(item[0])),
-    )[0]
-    low_kmh = float(speed_band_sort_key(strongest_bin))
-    return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
-
-
-def _speed_stats(speed_values: list[float]) -> SpeedProfileSummary:
-    if not speed_values:
-        return SpeedProfileSummary()
-    vmin = min(speed_values)
-    vmax = max(speed_values)
-    vmean, var = _mean_variance(speed_values)
-    stddev = sqrt(var) if var is not None else 0.0
-    vrange = max(0.0, vmax - vmin)
-    return SpeedProfileSummary(
-        min_kmh=vmin,
-        max_kmh=vmax,
-        mean_kmh=vmean,
-        stddev_kmh=stddev,
-        range_kmh=vrange,
-        steady_speed=stddev < STEADY_SPEED_STDDEV_KMH and vrange < STEADY_SPEED_RANGE_KMH,
-    )
-
-
-def _speed_stats_by_phase(
-    samples: list[Sample],
-    per_sample_phases: Sequence[PhaseLabel],
-) -> dict[str, SpeedProfileSummary]:
-    """Compute speed statistics broken down by driving phase.
-
-    Returns a dict mapping each phase label (string) to a
-    :class:`SpeedProfileSummary` with ``sample_count`` set to the total
-    number of samples assigned to that phase (regardless of speed availability).
-    """
-    phase_speeds: dict[str, list[float]] = defaultdict(list)
-    phase_sample_counts: dict[str, int] = defaultdict(int)
-    for sample, phase in zip(samples, per_sample_phases, strict=True):
-        phase_key = str(phase)
-        phase_sample_counts[phase_key] += 1
-        speed = _as_float(sample.get("speed_kmh"))
-        if speed is not None and speed > 0:
-            phase_speeds[phase_key].append(speed)
-    result: dict[str, SpeedProfileSummary] = {}
-    for phase_key in phase_sample_counts:
-        base = _speed_stats(phase_speeds.get(phase_key, []))
-        result[phase_key] = SpeedProfileSummary(
-            min_kmh=base.min_kmh,
-            max_kmh=base.max_kmh,
-            mean_kmh=base.mean_kmh,
-            stddev_kmh=base.stddev_kmh,
-            range_kmh=base.range_kmh,
-            steady_speed=base.steady_speed,
-            sample_count=phase_sample_counts[phase_key],
-        )
-    return result
 
 
 def _sensor_limit_g(sensor_model: object) -> float | None:
@@ -292,29 +152,6 @@ def _primary_vibration_strength_db(sample: Sample) -> float | None:
     return float(value) if value is not None else None
 
 
-def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:
-    if len(x_vals) != len(y_vals) or len(x_vals) < 3:
-        return None
-    n = len(x_vals)
-    mx = sum(x_vals) / n
-    my = sum(y_vals) / n
-    cov = 0.0
-    sx_sq = 0.0
-    sy_sq = 0.0
-    for x, y in zip(x_vals, y_vals, strict=False):
-        dx = x - mx
-        dy = y - my
-        cov += dx * dy
-        sx_sq += dx * dx
-        sy_sq += dy * dy
-    sx = sqrt(sx_sq)
-    sy = sqrt(sy_sq)
-    if sx <= 1e-9 or sy <= 1e-9:
-        return None
-    result = abs(cov / (sx * sy))
-    return result if isfinite(result) else None
-
-
 def _sample_top_peaks(sample: Sample) -> list[tuple[float, float]]:
     top_peaks = sample.get("top_peaks")
     out: list[tuple[float, float]] = []
@@ -333,21 +170,6 @@ def _sample_top_peaks(sample: Sample) -> list[tuple[float, float]]:
                 continue
             out.append((hz, amp))
     return out
-
-
-def _corr_abs_clamped(x: list[float], y: list[float]) -> float | None:
-    """Absolute Pearson correlation, clamped to [0, 1].
-
-    Delegates to ``_corr_abs`` and clamps the result to handle
-    floating-point overshoot (e.g. 1.0000000000000002) or undershoot.
-    Both bounds are applied: ``abs()`` in ``_corr_abs`` guarantees
-    non-negative values in theory, but the explicit lower clamp protects
-    against hypothetical floating-point edge cases.
-    """
-    raw = _corr_abs(x, y)
-    if raw is None:
-        return None
-    return max(0.0, min(1.0, raw))
 
 
 def _estimate_strength_floor_amp_g(sample: Sample) -> float | None:
@@ -473,34 +295,6 @@ def _locations_connected_throughout_run(samples: list[Sample], *, lang: str = "e
     return connected
 
 
-def _weighted_percentile(
-    pairs: list[tuple[float, float]],
-    q: float,
-) -> float | None:
-    """Return the *q*-th weighted percentile from *(value, weight)* pairs.
-
-    *q* is clamped to [0, 1].  Pairs with non-positive weights are ignored.
-    Returns ``None`` when no valid pairs remain.
-    """
-    if not pairs:
-        return None
-    q_clamped = max(0.0, min(1.0, q))
-    filtered = [(value, weight) for value, weight in pairs if weight > 0]
-    if not filtered:
-        return None
-    ordered = sorted(filtered)
-    total_weight = sum(weight for _, weight in ordered)
-    if total_weight <= 0:
-        return None
-    threshold = q_clamped * total_weight
-    cumulative = 0.0
-    for value, weight in ordered:
-        cumulative += weight
-        if cumulative >= threshold:
-            return value
-    return ordered[-1][0]
-
-
 def counter_delta(counter_values: list[float]) -> int:
     """Compute cumulative positive delta from a list of monotonic counter values.
 
@@ -517,76 +311,3 @@ def counter_delta(counter_values: list[float]) -> int:
         delta += max(0.0, current - prev)
         prev = current
     return int(delta)
-
-
-# ---------------------------------------------------------------------------
-# Phase-string and speed-profile helpers (formerly in findings_speed_profile)
-# ---------------------------------------------------------------------------
-
-_SENTINEL = object()
-
-
-def _phase_to_str(phase: object) -> str | None:
-    """Return the string value for a phase object (DrivingPhase or str)."""
-    if phase is None:
-        return None
-    val = getattr(phase, "value", _SENTINEL)
-    if val is _SENTINEL:
-        return str(phase)
-    return str(val)
-
-
-def _speed_profile_from_points(
-    points: list[tuple[float, float]],
-    *,
-    allowed_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
-    phase_weights: list[float] | None = None,
-) -> tuple[float | None, tuple[float, float] | None, str | None]:
-    allowed = set(allowed_speed_bins) if allowed_speed_bins is not None else None
-
-    _bin_label = speed_bin_label
-    _float_or_none = _as_float
-
-    valid: list[tuple[float, float]] = []
-    effective_amps: list[float] = []
-    speeds: list[float] = []
-    phase_weights_seq = phase_weights if phase_weights is not None else []
-    has_weights = phase_weights is not None
-    n_weights = len(phase_weights_seq)
-
-    for idx, (speed, amp) in enumerate(points):
-        if speed <= 0 or amp <= 0:
-            continue
-        if allowed is not None and _bin_label(speed) not in allowed:
-            continue
-        phase_weight = 1.0
-        if has_weights and idx < n_weights:
-            parsed_weight = _float_or_none(phase_weights_seq[idx])
-            if parsed_weight is not None and parsed_weight > 0:
-                phase_weight = parsed_weight
-        valid.append((speed, amp))
-        effective_amps.append(amp * phase_weight)
-        speeds.append(speed)
-
-    if not valid:
-        return None, None, None
-
-    peak_speed_kmh = max(valid, key=lambda item: item[1])[0]
-    low = _weighted_percentile(valid, 0.10)
-    high = _weighted_percentile(valid, 0.90)
-    if low is None or high is None:
-        return peak_speed_kmh, None, None
-    if high < low:
-        low, high = high, low
-    speed_window_kmh = (low, high)
-
-    low_speed, high_speed = _amplitude_weighted_speed_window(
-        speeds,
-        effective_amps,
-    )
-    strongest_speed_band = (
-        f"{low_speed:.0f}-{high_speed:.0f} km/h"
-        if low_speed is not None and high_speed is not None
-        else None
-    )
-    return peak_speed_kmh, speed_window_kmh, strongest_speed_band

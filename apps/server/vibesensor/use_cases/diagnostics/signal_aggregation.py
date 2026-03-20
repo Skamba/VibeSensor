@@ -16,17 +16,13 @@ from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import Sample
 from vibesensor.use_cases.diagnostics.helpers import (
     _location_label,
-    _phase_to_str,
     _primary_vibration_strength_db,
     counter_delta,
 )
+from vibesensor.use_cases.diagnostics.math_utils import _mean
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _phase_to_str
 from vibesensor.vibration_strength import percentile
-
-
-def _mean(vals: list[float]) -> float:
-    """Arithmetic mean for non-empty float lists (faster than statistics.mean)."""
-    return sum(vals) / len(vals)
 
 
 def _counter_delta(counter_values: list[tuple[float | None, float]]) -> int:
