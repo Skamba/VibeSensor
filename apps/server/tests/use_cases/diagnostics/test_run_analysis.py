@@ -8,13 +8,13 @@ import pytest
 
 from vibesensor.domain import SpeedProfile
 from vibesensor.shared.boundaries.diagnostic_case import speed_profile_from_stats
-from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
-from vibesensor.use_cases.diagnostics.summary_builder import (
+from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
-    RunAnalysis,
     build_phase_summary,
     prepare_run_data,
 )
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
+from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
 
 def _prepared_with_speed_profile(

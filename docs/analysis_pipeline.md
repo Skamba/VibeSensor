@@ -65,11 +65,11 @@ in order. Each step runs exactly once per analysis invocation.
 | # | Step | Key Function(s) | Module | Purpose |
 |---|------|-----------------|--------|---------|
 | 1 | Validation | `_validate_required_strength_metrics` | summary_builder | Validate samples contain required strength metrics |
-| 2 | Run preparation | `prepare_run_data`, `_compute_run_timing`, `_run_noise_baseline_g` | summary_builder | Extract timing, speed stats, phase segmentation, and speed context |
+| 2 | Run preparation | `prepare_run_data`, `compute_run_timing`, `_run_noise_baseline_g` | run_data_preparation, statistics, helpers | Extract timing, speed stats, phase segmentation, and speed context |
 | 3 | Phase segmentation | `segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | phase_segmentation | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / COAST_DOWN / SPEED_UNKNOWN) |
 | 4 | Acceleration statistics | `_compute_accel_statistics` | summary_builder | Per-axis and magnitude accel stats, saturation detection |
 | 5 | Findings bundle | `build_findings_bundle` → `_build_findings` | summary_builder, findings | Order tracking, pattern matching, scoring, localisation via `PeakFindingAnalyzer` and `OrderAnalysisSession` |
-| 6 | Origin & test plan | `summarize_origin`, `_build_phase_timeline` | summary_builder | Determine most likely vibration source, generate timeline |
+| 6 | Origin & test plan | `summarize_origin`, `build_phase_timeline` | summary_builder, run_data_preparation | Determine most likely vibration source, generate timeline |
 | 7 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
 | 8 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | summary_builder | Check reference completeness plus data-quality and run-condition checks |
 | 9 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
@@ -83,7 +83,8 @@ in order. Each step runs exactly once per analysis invocation.
 |--------|-----|---------------|
 | `__init__.py` | ~50 | Public API re-exports, including shared order-band helpers |
 | `_types.py` | ~50 | Local type aliases (`PhaseEvidence`, `FindingPayload`, `AnalysisSummary`) |
-| `summary_builder.py` | ~1100 | Top-level pipeline orchestration: `RunAnalysis`, `PreparedRunData`, `AnalysisResult`, `build_summary_payload` |
+| `summary_builder.py` | ~500 | Top-level pipeline orchestration: `RunAnalysis`, `AnalysisResult`, finding/suitability assembly, and final `AnalysisSummary` construction |
+| `run_data_preparation.py` | ~200 | Shared run timing/speed/phase/sensor preparation: `PreparedRunData`, `prepare_run_data`, phase timeline helpers |
 | `findings.py` | ~400 | Finding construction and enrichment: `PeakFindingAnalyzer`, `finalize_findings`, `build_reference_findings`, `prepare_analysis_samples` |
 | `order_analysis.py` | ~500 | Order-tracking core: hypothesis matching, confidence scoring, and finding assembly primitives |
 | `order_pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, multi-location split, and `_build_order_findings()` |
@@ -105,7 +106,7 @@ in order. Each step runs exactly once per analysis invocation.
 ```
 Input: samples (list[JsonObject]) + metadata (JsonObject)
   │
-  ├─ prepare_run_data() → PreparedRunData
+  ├─ run_data_preparation.prepare_run_data() → PreparedRunData
   │    ├─ timing, speed stats, noise baseline
   │    └─ phase_segmentation → phases + phase summaries
   │
