@@ -9,6 +9,7 @@ Import analysis symbols from ``vibesensor.use_cases.diagnostics`` directly.
 Module topology
 ---------------
 - **Data layer**: ``report_data.py`` (dataclasses).
+- **Mapping helpers**: ``peak_table.py`` (peak rows), ``report_sections.py`` (report sections), ``presentation.py`` (render-only labels), ``pattern_parts.py`` (parts suggestions).
 - **Engine**: ``pdf_engine.py`` (public entry, page orchestration, pagination).
 - **Pages**: ``pdf_page1.py``, ``pdf_page2.py``.
 - **Diagrams**: ``pdf_diagram_render.py`` (layout planning, drawing).

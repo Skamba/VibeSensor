@@ -5,7 +5,21 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern, why_parts_listed
-from vibesensor.adapters.pdf.presentation import strength_label, strength_text
+from vibesensor.adapters.pdf.peak_table import (
+    build_peak_row,
+    build_peak_rows_from_plots,
+    peak_row_system_label,
+)
+from vibesensor.adapters.pdf.presentation import (
+    order_label_human,
+    peak_classification_text,
+    strength_label,
+    strength_text,
+)
+from vibesensor.adapters.pdf.report_sections import (
+    build_data_trust_from_summary,
+    build_next_steps_from_summary,
+)
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 
 
@@ -45,6 +59,30 @@ def test_strength_text_value() -> None:
     txt = strength_text(22.0, lang="en")
     assert "Moderate" in txt
     assert "22.0 dB" in txt
+
+
+def test_order_label_human_localizes_order_names() -> None:
+    assert order_label_human("en", "1x wheel") == "1x wheel order"
+    assert order_label_human("nl", "2x engine") == "2x motororde"
+
+
+def test_peak_classification_text_uses_translations() -> None:
+    translated = peak_classification_text(
+        "persistent",
+        tr=lambda key, **_kw: {
+            "CLASSIFICATION_PERSISTENT": "Persistent",
+            "UNKNOWN": "Unknown",
+        }[key],
+    )
+    assert translated == "Persistent"
+
+
+def test_extracted_pdf_builders_are_importable() -> None:
+    assert callable(build_peak_rows_from_plots)
+    assert callable(build_peak_row)
+    assert callable(peak_row_system_label)
+    assert callable(build_next_steps_from_summary)
+    assert callable(build_data_trust_from_summary)
 
 
 @pytest.mark.parametrize(
