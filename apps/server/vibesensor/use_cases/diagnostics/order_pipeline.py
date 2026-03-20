@@ -1,0 +1,245 @@
+"""Order-analysis orchestration above the core matching and assembly helpers."""
+
+from __future__ import annotations
+
+from dataclasses import replace
+
+from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain.finding import VibrationSource
+from vibesensor.shared.constants import (
+    CONSTANT_SPEED_STDDEV_KMH,
+    ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
+    ORDER_MIN_CONFIDENCE,
+)
+from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.use_cases.diagnostics._types import PhaseLabels, Sample
+from vibesensor.use_cases.diagnostics.helpers import (
+    _order_reference_spec_from_context,
+    _sample_top_peaks,
+)
+from vibesensor.use_cases.diagnostics.order_analysis import (
+    OrderFindingBuildContext,
+    _compute_effective_match_rate,
+    assemble_order_finding,
+    match_samples_for_hypothesis,
+)
+from vibesensor.use_cases.diagnostics.order_heuristics import suppress_engine_aliases
+from vibesensor.use_cases.diagnostics.rotational_physics import OrderHypothesis, _order_hypotheses
+
+# Maximum dominance ratio for splitting a finding into per-location findings.
+# A ratio of 2.0 means the secondary location must be at least 50% as strong.
+_MULTI_LOCATION_SPLIT_DOMINANCE = 2.0
+# Floor for dominance ratio when computing the secondary-location confidence
+# scale factor. Prevents division by values at or below 1.0.
+_MIN_DOMINANCE_FOR_SCALE = 1.01
+
+
+def _split_multi_location_findings(
+    findings: list[tuple[float, DomainFinding]],
+) -> list[tuple[float, DomainFinding]]:
+    """Create per-location findings when a hypothesis matches at multiple strong corners.
+
+    If a wheel/tire finding has alternative locations stored in its hotspot
+    and the dominance ratio is below ``_MULTI_LOCATION_SPLIT_DOMINANCE``,
+    a secondary finding is emitted for each alternative location that differs
+    from the primary. The secondary finding receives a confidence scaled by
+    ``1 / dominance_ratio`` so the weaker corner ranks below the stronger one
+    while still surfacing in the findings list.
+    """
+    result: list[tuple[float, DomainFinding]] = list(findings)
+    for score, finding in findings:
+        if finding.source_normalized != VibrationSource.WHEEL_TIRE:
+            continue
+        hotspot = finding.location
+        if hotspot is None:
+            continue
+        dom = finding.dominance_ratio
+        if dom is None or dom >= _MULTI_LOCATION_SPLIT_DOMINANCE:
+            continue
+        primary = (finding.strongest_location or "").strip().lower()
+        for alt_loc in hotspot.alternative_locations:
+            alt_norm = alt_loc.strip().lower()
+            if not alt_norm or alt_norm == primary:
+                continue
+            scale = 1.0 / max(dom, _MIN_DOMINANCE_FOR_SCALE)
+            alt_hotspot = replace(
+                hotspot,
+                strongest_location=alt_loc,
+                alternative_locations=(),
+            )
+            alt_finding = replace(
+                finding,
+                strongest_location=alt_loc,
+                confidence=(finding.effective_confidence * scale),
+                ranking_score=score * scale,
+                location=alt_hotspot,
+            )
+            result.append((score * scale, alt_finding))
+    return result
+
+
+class OrderAnalysisSession:
+    """Coordinates hypothesis testing across samples to produce order findings."""
+
+    __slots__ = (
+        "_metadata",
+        "_samples",
+        "_speed_sufficient",
+        "_steady_speed",
+        "_speed_stddev_kmh",
+        "_tire_circumference_m",
+        "_engine_ref_sufficient",
+        "_raw_sample_rate_hz",
+        "_connected_locations",
+        "_lang",
+        "_per_sample_phases",
+        "_cached_peaks",
+        "_order_reference_spec",
+    )
+
+    def __init__(
+        self,
+        *,
+        metadata: JsonObject,
+        samples: list[Sample],
+        speed_sufficient: bool,
+        steady_speed: bool,
+        speed_stddev_kmh: float | None,
+        tire_circumference_m: float | None,
+        engine_ref_sufficient: bool,
+        raw_sample_rate_hz: float | None,
+        connected_locations: set[str],
+        lang: str,
+        per_sample_phases: PhaseLabels | None = None,
+    ) -> None:
+        self._metadata = metadata
+        self._samples = samples
+        self._speed_sufficient = speed_sufficient
+        self._steady_speed = steady_speed
+        self._speed_stddev_kmh = speed_stddev_kmh
+        self._tire_circumference_m = tire_circumference_m
+        self._engine_ref_sufficient = engine_ref_sufficient
+        self._raw_sample_rate_hz = raw_sample_rate_hz
+        self._connected_locations = connected_locations
+        self._lang = lang
+        self._per_sample_phases = per_sample_phases
+        self._order_reference_spec = _order_reference_spec_from_context(metadata)
+        self._cached_peaks: list[list[tuple[float, float]]] = [
+            _sample_top_peaks(sample) for sample in samples
+        ]
+
+    def analyze(self) -> list[DomainFinding]:
+        """Run all hypothesis tests and return suppressed, ranked findings."""
+        if self._raw_sample_rate_hz is None or self._raw_sample_rate_hz <= 0:
+            return []
+
+        findings: list[tuple[float, DomainFinding]] = []
+        for hypothesis in _order_hypotheses():
+            if not self._should_test(hypothesis):
+                continue
+            result = self._test_hypothesis(hypothesis)
+            if result is not None:
+                findings.append(result)
+
+        findings = _split_multi_location_findings(findings)
+        return suppress_engine_aliases(findings, min_confidence=ORDER_MIN_CONFIDENCE)
+
+    def _should_test(self, hypothesis: OrderHypothesis) -> bool:
+        """Whether to test this hypothesis given available references."""
+        spec = self._order_reference_spec
+        if hypothesis.key.startswith("wheel_"):
+            return self._speed_sufficient and (
+                (spec is not None and spec.supports_wheel_reference)
+                or (self._tire_circumference_m is not None and self._tire_circumference_m > 0)
+            )
+        if hypothesis.key.startswith("driveshaft_"):
+            return self._speed_sufficient and (
+                (spec is not None and spec.supports_driveshaft_reference)
+                or (self._tire_circumference_m is not None and self._tire_circumference_m > 0)
+            )
+        if hypothesis.key.startswith("engine_"):
+            return self._engine_ref_sufficient
+        return True
+
+    def _test_hypothesis(
+        self,
+        hypothesis: OrderHypothesis,
+    ) -> tuple[float, DomainFinding] | None:
+        """Match, evaluate, and assemble a finding for one hypothesis."""
+        match = match_samples_for_hypothesis(
+            self._samples,
+            self._cached_peaks,
+            hypothesis,
+            self._metadata,
+            self._tire_circumference_m,
+            self._per_sample_phases,
+            self._lang,
+        )
+        if not match.is_eligible():
+            return None
+
+        constant_speed = (
+            self._speed_stddev_kmh is not None
+            and self._speed_stddev_kmh < CONSTANT_SPEED_STDDEV_KMH
+        )
+        min_match_rate = ORDER_CONSTANT_SPEED_MIN_MATCH_RATE if constant_speed else 0.25
+
+        effective_match_rate, focused_speed_band, per_location_dominant = (
+            _compute_effective_match_rate(
+                match.match_rate,
+                min_match_rate,
+                match.possible_by_speed_bin,
+                match.matched_by_speed_bin,
+                match.possible_by_location,
+                match.matched_by_location,
+            )
+        )
+        if effective_match_rate < min_match_rate:
+            return None
+
+        return assemble_order_finding(
+            hypothesis,
+            match,
+            context=OrderFindingBuildContext(
+                effective_match_rate=effective_match_rate,
+                focused_speed_band=focused_speed_band,
+                per_location_dominant=per_location_dominant,
+                match_rate=match.match_rate,
+                min_match_rate=min_match_rate,
+                constant_speed=constant_speed,
+                steady_speed=self._steady_speed,
+                connected_locations=self._connected_locations,
+                lang=self._lang,
+            ),
+        )
+
+
+def _build_order_findings(
+    *,
+    metadata: JsonObject,
+    samples: list[Sample],
+    speed_sufficient: bool,
+    steady_speed: bool,
+    speed_stddev_kmh: float | None,
+    tire_circumference_m: float | None,
+    engine_ref_sufficient: bool,
+    raw_sample_rate_hz: float | None,
+    connected_locations: set[str],
+    lang: str,
+    per_sample_phases: PhaseLabels | None = None,
+) -> list[DomainFinding]:
+    """Build order-tracking findings by testing all hypotheses."""
+    session = OrderAnalysisSession(
+        metadata=metadata,
+        samples=samples,
+        speed_sufficient=speed_sufficient,
+        steady_speed=steady_speed,
+        speed_stddev_kmh=speed_stddev_kmh,
+        tire_circumference_m=tire_circumference_m,
+        engine_ref_sufficient=engine_ref_sufficient,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        connected_locations=connected_locations,
+        lang=lang,
+        per_sample_phases=per_sample_phases,
+    )
+    return session.analyze()
