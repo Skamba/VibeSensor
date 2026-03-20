@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
-from vibesensor.infra.runtime.health_snapshot import build_health_snapshot
+from vibesensor.adapters.http.health_snapshot import build_health_snapshot
 from vibesensor.shared.types.api_models import HealthResponse
 
 if TYPE_CHECKING:

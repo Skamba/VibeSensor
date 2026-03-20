@@ -4,13 +4,13 @@ import pytest
 
 from vibesensor.domain import OrderReferenceSpec
 from vibesensor.shared.json_utils import as_float_or_none
-from vibesensor.use_cases.diagnostics.helpers import _effective_engine_rpm
-from vibesensor.use_cases.diagnostics.order_bands import (
+from vibesensor.shared.order_bands import (
     build_diagnostic_settings,
     combined_relative_uncertainty,
     tolerance_for_order,
     vehicle_orders_hz,
 )
+from vibesensor.use_cases.diagnostics.helpers import _effective_engine_rpm
 
 # -- _as_float NaN/edge cases -------------------------------------------------
 

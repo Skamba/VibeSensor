@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from vibesensor.infra.runtime.health_snapshot import build_health_snapshot
+from vibesensor.adapters.http.health_snapshot import build_health_snapshot
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingHealth, ProcessingLoopState
 

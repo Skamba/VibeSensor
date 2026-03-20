@@ -18,13 +18,14 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
-from typing import TYPE_CHECKING, TypedDict, cast
+from typing import TYPE_CHECKING, cast
 from uuid import uuid4
 
 from vibesensor.domain import Run
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.constants import NUMERIC_TYPES
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.sample_builder import (
@@ -108,25 +109,6 @@ class RecorderShutdownReport:
     analysis_in_progress: bool
     write_error: str | None
     final_status: dict[str, object]
-
-
-class RunRecorderHealthSnapshot(TypedDict):
-    """Health snapshot dict returned by :meth:`RunRecorder.health_snapshot`."""
-
-    write_error: str | None
-    analysis_in_progress: bool
-    analysis_queue_depth: int
-    analysis_queue_max_depth: int
-    analysis_active_run_id: str | None
-    analysis_started_at: float | None
-    analysis_elapsed_s: float | None
-    analysis_queue_oldest_age_s: float | None
-    analyzing_run_count: int
-    analyzing_oldest_age_s: float | None
-    samples_written: int
-    samples_dropped: int
-    last_completed_run_id: str | None
-    last_completed_run_error: str | None
 
 
 class RunRecorder:

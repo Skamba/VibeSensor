@@ -11,7 +11,7 @@ High-level analysis entry points are re-exported here so callers can use
 findings.  The domain ``Finding`` lives in ``vibesensor.domain``.
 """
 
-from vibesensor.use_cases.diagnostics.order_bands import build_order_bands, vehicle_orders_hz
+from vibesensor.shared.order_bands import build_order_bands, vehicle_orders_hz
 from vibesensor.use_cases.diagnostics.summary_builder import (
     AnalysisResult,
     RunAnalysis,

@@ -7,8 +7,8 @@ combines them so that ``app.py`` only needs::
     from vibesensor.adapters.http import create_router
 
 Route modules receive only the specific services they need. The package-level
-assembler now depends on explicit route services instead of a broad runtime
-facade.
+assembler still accepts the app-owned runtime state, but immediately fans that
+out into explicit per-route dependencies.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from vibesensor.adapters.http.updates import create_update_routes
 from vibesensor.adapters.http.websocket import create_websocket_routes
 
 if TYPE_CHECKING:
-    from vibesensor.infra.runtime import RuntimeState
+    from vibesensor.app.runtime_state import RuntimeState
 
 
 def create_router(services: RuntimeState) -> APIRouter:
