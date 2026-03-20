@@ -23,7 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from vibesensor.adapters.http import create_router
 from vibesensor.adapters.udp.udp_data_rx import start_udp_data_receiver
 from vibesensor.app.container import build_runtime
-from vibesensor.app.runtime_state import RuntimeState
+from vibesensor.app.runtime_state import AppRuntime
 from vibesensor.app.settings import load_config
 from vibesensor.infra.runtime.lifecycle import LifecycleManager
 
@@ -71,7 +71,10 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     config = load_config(config_path)
     _setup_file_logging(config.logging.app_log_path)
     runtime = build_runtime(config)
-    lifecycle = LifecycleManager(runtime=runtime, start_udp_receiver=start_udp_data_receiver)
+    lifecycle = LifecycleManager(
+        runtime=runtime.lifecycle,
+        start_udp_receiver=start_udp_data_receiver,
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -91,7 +94,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
 
     app = FastAPI(title="VibeSensor", lifespan=lifespan)
     app.state.runtime = runtime
-    app.include_router(create_router(runtime))
+    app.include_router(create_router(runtime.router))
     if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
         static_dir = _PACKAGE_DIR / "static"
         if not (static_dir / "index.html").exists():
@@ -124,7 +127,7 @@ def main() -> None:
     args = parser.parse_args()
 
     runtime_app = create_app(config_path=args.config)
-    runtime: RuntimeState = runtime_app.state.runtime
+    runtime: AppRuntime = runtime_app.state.runtime
     host = runtime.config.server.host
     port = runtime.config.server.port
     try:

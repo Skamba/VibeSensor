@@ -12,6 +12,13 @@ from fastapi import FastAPI, WebSocketDisconnect
 from test_support import response_payload as _response_payload
 
 from vibesensor.adapters.http import create_router
+from vibesensor.adapters.http.dependencies import (
+    HistoryDeps,
+    RouterDeps,
+    SettingsDeps,
+    TelemetryDeps,
+    UpdateDeps,
+)
 from vibesensor.infra.runtime import RuntimeHealthState
 from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.history.exports import HistoryExportService
@@ -266,6 +273,49 @@ class FakeState:
             self.history_db, self.settings_store, pdf_renderer=pdf_renderer
         )
         self.export_service = HistoryExportService(self.history_db)
+
+    @property
+    def telemetry(self) -> TelemetryDeps:
+        return TelemetryDeps(
+            processing_loop_state=self.processing_loop_state,
+            health_state=self.health_state,
+            processor=self.processor,
+            registry=self.registry,
+            control_plane=self.control_plane,
+            run_recorder=self.run_recorder,
+            ws_hub=self.ws_hub,
+        )
+
+    @property
+    def settings(self) -> SettingsDeps:
+        return SettingsDeps(
+            settings_store=self.settings_store,
+            gps_monitor=self.gps_monitor,
+        )
+
+    @property
+    def history(self) -> HistoryDeps:
+        return HistoryDeps(
+            run_service=self.run_service,
+            report_service=self.report_service,
+            export_service=self.export_service,
+        )
+
+    @property
+    def updates(self) -> UpdateDeps:
+        return UpdateDeps(
+            update_manager=self.update_manager,
+            esp_flash_manager=self.esp_flash_manager,
+        )
+
+    @property
+    def router(self) -> RouterDeps:
+        return RouterDeps(
+            telemetry=self.telemetry,
+            settings=self.settings,
+            history=self.history,
+            updates=self.updates,
+        )
 
 
 def make_router_and_state(
