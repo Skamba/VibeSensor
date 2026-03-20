@@ -208,11 +208,6 @@ export interface components {
     /**
      * AmplitudeMetric
      * @description HTTP contract for finding amplitude/strength metadata.
-     *
-     * The runtime payload currently emits both a compact
-     * ``{"vibration_strength_db": ...}`` shape and richer
-     * ``{"name", "value", "units", "definition"}`` objects in tests/report helpers,
-     * so the schema keeps both representations legal without changing runtime behavior.
      */
     AmplitudeMetric: {
       /** Definition */
@@ -225,8 +220,6 @@ export interface components {
       units?: string | null;
       /** Value */
       value?: number | null;
-      /** Vibration Strength Db */
-      vibration_strength_db?: number | null;
       [key: string]: unknown;
     };
     /**

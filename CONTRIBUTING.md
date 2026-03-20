@@ -155,7 +155,7 @@ Then edit `config.yaml` as needed. The file is gitignored, so your local changes
 
 ## API contract sync
 
-Frontend TypeScript types are generated from the backend's OpenAPI schema. When you change backend API models (Pydantic models in `api_models.py`, route signatures), the frontend contracts must be regenerated.
+Frontend TypeScript types are generated from the backend's OpenAPI schema. When you change backend API models (the feature-scoped Pydantic modules in `apps/server/vibesensor/shared/types/api_models/`, route signatures), the frontend contracts must be regenerated.
 
 The sync runs automatically via `pretypecheck` and `prebuild` npm scripts, so `npm run build` and `npm run typecheck` always use fresh types. To run it manually:
 

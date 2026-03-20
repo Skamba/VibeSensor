@@ -8,7 +8,7 @@ Covers:
   2. pdf_diagram_render.py — next() with default for marker lookup
   3. pdf_engine.py — confidence NaN/Inf guard
   4. persistent_findings.py — type hint list[str] (compile-time only)
-  5. api_models.py — input validation bounds on request models
+    5. api_models/ — input validation bounds on request models
   6. history_db.py — corrupted schema version recovery
   7. settings_store.py — dict rollback safety
   8. json_utils.py — depth limit prevents infinite recursion
