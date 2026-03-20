@@ -176,7 +176,7 @@ def test_car_library_variant_entry_requires_drivetrain() -> None:
 
     # Missing drivetrain
     with pytest.raises(ValidationError, match=r"drivetrain"):
-        CarLibraryVariantEntry(name="320i")  # type: ignore[call-arg]
+        CarLibraryVariantEntry(name="320i")
 
 
 # ---------------------------------------------------------------------------
@@ -210,7 +210,7 @@ def test_car_from_persisted_dict_variant_truncated() -> None:
     """Very long variant names are truncated to 64 chars."""
     long_name = "x" * 100
     car = Car.from_persisted_dict({"name": "Car", "type": "sedan", "variant": long_name})
-    assert len(car.variant) == 64  # type: ignore[arg-type]
+    assert len(car.variant) == 64
 
 
 # ---------------------------------------------------------------------------

@@ -156,7 +156,7 @@ async def test_run_does_not_swallow_processing_programming_errors() -> None:
     def _raise_bug(payload: dict[str, object]) -> int:
         raise RuntimeError("bug")
 
-    monitor._tpv_mode = _raise_bug  # type: ignore[method-assign]
+    monitor._tpv_mode = _raise_bug
 
     async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         await reader.readline()

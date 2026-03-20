@@ -58,7 +58,7 @@ def _make_run_jsonl(tmp_path: Path, *, tire_circumference_m: float = 2.20) -> Pa
 # -- select_top_causes -------------------------------------------------------
 
 
-def _to_domain(*payloads: dict) -> tuple:  # type: ignore[type-arg]
+def _to_domain(*payloads: dict[str, object]) -> tuple[Finding, ...]:
     return tuple(finding_from_payload(p) for p in payloads)
 
 

@@ -69,7 +69,7 @@ def test_override_boundary_values(clear_value: float | None, expected: float | N
 def test_integer_speed_mps_treated_as_float() -> None:
     """speed_mps set to int should still be returned as float via effective_speed_mps."""
     m = GPSSpeedMonitor(gps_enabled=True)
-    m.speed_mps = 10  # type: ignore[assignment]
+    m.speed_mps = 10
     m.last_update_ts = time.monotonic()  # mark GPS data as fresh
     result = m.effective_speed_mps
     assert result is not None

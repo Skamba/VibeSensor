@@ -28,7 +28,7 @@ def _sabotaged_store(tmp_path: Path) -> SettingsStore:
     def _boom(payload: object) -> None:
         raise OSError("disk full")
 
-    db.set_settings_snapshot = _boom  # type: ignore[assignment]
+    db.set_settings_snapshot = _boom
     return store
 
 

@@ -172,7 +172,7 @@ class TestWorkerThreadRace:
         def _mock_analysis(run_id: str) -> None:
             seen.append(run_id)
 
-        logger._post_analysis._run_post_analysis = _mock_analysis  # type: ignore[assignment]
+        logger._post_analysis._run_post_analysis = _mock_analysis
         logger.schedule_post_analysis("run-1")
         logger.wait_for_post_analysis(timeout_s=2.0)
 
@@ -301,7 +301,7 @@ def test_recover_stale_does_not_touch_analyzing(db: HistoryDB) -> None:
 def test_build_report_pdf_rejects_invalid_type() -> None:
     """build_report_pdf raises TypeError for non-RTD input."""
     with pytest.raises(TypeError, match="expects ReportTemplateData"):
-        build_report_pdf("not a valid input")  # type: ignore[arg-type]
+        build_report_pdf("not a valid input")
 
 
 # ---------------------------------------------------------------------------

@@ -29,7 +29,7 @@ class TestRunCaptureConstruction:
     def test_immutable(self) -> None:
         rc = RunCapture(run_id="r1")
         with pytest.raises(AttributeError):
-            rc.run_id = "changed"  # type: ignore[misc]
+            rc.run_id = "changed"
 
     def test_analysis_settings_tuple(self) -> None:
         settings = (("floor_g", 0.002), ("enabled", True))

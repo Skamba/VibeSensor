@@ -45,4 +45,4 @@ class TestRunSetupImmutability:
     def test_frozen(self) -> None:
         setup = RunSetup()
         with pytest.raises(AttributeError):
-            setup.sensors = (Sensor(sensor_id="AA:BB:CC:DD:EE:FF"),)  # type: ignore[misc]
+            setup.sensors = (Sensor(sensor_id="AA:BB:CC:DD:EE:FF"),)

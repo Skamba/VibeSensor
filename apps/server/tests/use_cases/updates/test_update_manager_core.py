@@ -48,7 +48,7 @@ class TestUpdateManager:
                 return (0, "", "")
             return await original_run(args, timeout=timeout, env=env)
 
-        runner.run = slow_run  # type: ignore[assignment]
+        runner.run = slow_run
         runner.set_response("sudo -n true", 0)
         manager = UpdateManager(runner=runner, repo_path="/tmp/fakerepo")
 
@@ -77,7 +77,7 @@ class TestUpdateManager:
                 return (0, "", "")
             return await original_run(args, timeout=timeout, env=env)
 
-        runner.run = slow_run  # type: ignore[assignment]
+        runner.run = slow_run
         runner.set_response("sudo -n true", 0)
         manager = UpdateManager(runner=runner, repo_path="/tmp/fakerepo")
 

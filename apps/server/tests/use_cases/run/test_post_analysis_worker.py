@@ -26,7 +26,7 @@ def make_worker():
     def _factory(*, run_fn=None, history_db=_sentinel, **kwargs):
         worker = PostAnalysisWorker(history_db=history_db, **kwargs)
         if run_fn is not None:
-            worker._run_post_analysis = run_fn  # type: ignore[assignment]
+            worker._run_post_analysis = run_fn
         return worker
 
     return _factory

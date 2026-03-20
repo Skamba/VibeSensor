@@ -39,7 +39,7 @@ def _make_processing(**overrides: float | None) -> ProcessingConfig:
         "accel_scale_g_per_lsb": None,
     }
     defaults.update(overrides)
-    return ProcessingConfig(**defaults)  # type: ignore[arg-type]
+    return ProcessingConfig(**defaults)
 
 
 class TestPositiveIntegerClamping:

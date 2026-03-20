@@ -58,7 +58,7 @@ def _hello(client_id: bytes = _CLIENT_ID, **overrides: object) -> HelloMessage:
         "firmware_version": "fw",
     }
     defaults.update(overrides)
-    return HelloMessage(**defaults)  # type: ignore[arg-type]
+    return HelloMessage(**defaults)
 
 
 # ---------------------------------------------------------------------------

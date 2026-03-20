@@ -50,14 +50,14 @@ def _spec_with_circumference(circ_m: float) -> OrderReferenceSpec:
 
     return OrderReferenceSpec.from_settings(
         {**AnalysisSettingsSnapshot.DEFAULTS, "tire_circumference_m": circ_m},
-    )  # type: ignore[return-value]
+    )
 
 
 def _make_spec(circ_m: float) -> OrderReferenceSpec:
     """Build a spec using defaults — circumference comes from real tire dims."""
     from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 
-    return OrderReferenceSpec.from_settings(AnalysisSettingsSnapshot.DEFAULTS)  # type: ignore[return-value]
+    return OrderReferenceSpec.from_settings(AnalysisSettingsSnapshot.DEFAULTS)
 
 
 def test_wheel_hz_from_speed_kmh_basic() -> None:

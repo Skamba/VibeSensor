@@ -239,7 +239,7 @@ class TestSpeedResolution:
         assert r.source == "gps"
         # NamedTuple is immutable
         with pytest.raises(AttributeError):
-            r.speed_mps = 20.0  # type: ignore[misc]
+            r.speed_mps = 20.0
 
     def test_unpacking(self) -> None:
         speed, fb, src = SpeedResolution(None, True, "none")

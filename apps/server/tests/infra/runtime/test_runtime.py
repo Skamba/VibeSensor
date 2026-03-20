@@ -65,9 +65,9 @@ class _StubGpsConfig:
 @dataclass(slots=True)
 class _StubConfig:
     processing: _StubProcessingConfig
-    udp: _StubUDPConfig = None  # type: ignore[assignment]
-    logging: _StubLoggingConfig = None  # type: ignore[assignment]
-    gps: _StubGpsConfig = None  # type: ignore[assignment]
+    udp: _StubUDPConfig = None
+    logging: _StubLoggingConfig = None
+    gps: _StubGpsConfig = None
 
     def __post_init__(self) -> None:
         if self.udp is None:

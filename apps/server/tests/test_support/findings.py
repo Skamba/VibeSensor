@@ -63,7 +63,7 @@ def make_finding_payload(
     if strongest_location is not None:
         base["strongest_location"] = strongest_location
     if overrides:
-        base.update(overrides)  # type: ignore[typeddict-item]
+        base.update(overrides)
     return base
 
 

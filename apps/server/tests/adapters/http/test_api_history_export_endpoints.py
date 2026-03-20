@@ -68,7 +68,7 @@ async def test_history_export_single_pass_fixed_columns() -> None:
         call_count += 1
         return original_iter(*args, **kwargs)
 
-    db.iter_run_samples = counting_iter  # type: ignore[assignment]
+    db.iter_run_samples = counting_iter
     endpoint = route_endpoint(router, "/api/history/{run_id}/export")
     response = await endpoint("run-1")
     assert call_count == 1

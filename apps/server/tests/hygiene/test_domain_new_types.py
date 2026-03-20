@@ -42,7 +42,7 @@ class TestRunMetadataSnapshot:
     def test_frozen(self) -> None:
         snap = RunMetadataSnapshot(run_id="r1")
         with pytest.raises(dataclasses.FrozenInstanceError):
-            snap.run_id = "r2"  # type: ignore[misc]
+            snap.run_id = "r2"
 
     def test_has_slots(self) -> None:
         assert hasattr(RunMetadataSnapshot, "__slots__")
@@ -103,7 +103,7 @@ class TestOrderMatchObservation:
             predicted_hz=100.0, matched_hz=100.0, rel_error=0.0, amp=1.0, location="x"
         )
         with pytest.raises(dataclasses.FrozenInstanceError):
-            obs.amp = 2.0  # type: ignore[misc]
+            obs.amp = 2.0
 
     def test_has_slots(self) -> None:
         assert hasattr(OrderMatchObservation, "__slots__")
@@ -187,7 +187,7 @@ class TestDrivingPhaseInterval:
     def test_frozen(self) -> None:
         interval = DrivingPhaseInterval(phase=DrivingPhase.IDLE)
         with pytest.raises(dataclasses.FrozenInstanceError):
-            interval.phase = DrivingPhase.CRUISE  # type: ignore[misc]
+            interval.phase = DrivingPhase.CRUISE
 
     def test_has_slots(self) -> None:
         assert hasattr(DrivingPhaseInterval, "__slots__")
@@ -228,7 +228,7 @@ class TestLocationIntensitySummary:
     def test_frozen(self) -> None:
         summary = LocationIntensitySummary(location="x")
         with pytest.raises(dataclasses.FrozenInstanceError):
-            summary.location = "y"  # type: ignore[misc]
+            summary.location = "y"
 
     def test_has_slots(self) -> None:
         assert hasattr(LocationIntensitySummary, "__slots__")

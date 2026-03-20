@@ -66,7 +66,7 @@ def _minimal_summary(**overrides: object) -> dict[str, object]:
         "sensor_intensity_by_location": [],
     }
     base.update(overrides)
-    return base  # type: ignore[return-value]
+    return base
 
 
 class TestSummaryHelpers:
@@ -158,12 +158,12 @@ class TestSummaryHelpers:
         assert origin["speed_band"] == "80-90 km/h"
 
     def test_sensor_locations_active_prefers_connected(self) -> None:
-        ctx = prepare_report_mapping_context(_minimal_summary())  # type: ignore[arg-type]
+        ctx = prepare_report_mapping_context(_minimal_summary())
         assert ctx.sensor_locations_active == ["front_left"]
 
     def test_sensor_locations_active_fallback(self) -> None:
         ctx = prepare_report_mapping_context(
-            _minimal_summary(sensor_locations_connected_throughout=[]),  # type: ignore[arg-type]
+            _minimal_summary(sensor_locations_connected_throughout=[]),
         )
         assert "front_left" in ctx.sensor_locations_active
 
@@ -242,9 +242,9 @@ class TestSummaryHelpers:
     def test_warnings(self) -> None:
         warns = [{"title": "Low data", "severity": "warn"}]
         s = _minimal_summary(warnings=warns)
-        assert len(s["warnings"]) == 1  # type: ignore[arg-type]
+        assert len(s["warnings"]) == 1
 
     def test_sensor_intensity_by_location(self) -> None:
         intensity = [{"location": "front_left", "p95_intensity_db": 25.0}]
         s = _minimal_summary(sensor_intensity_by_location=intensity)
-        assert len(s["sensor_intensity_by_location"]) == 1  # type: ignore[arg-type]
+        assert len(s["sensor_intensity_by_location"]) == 1
