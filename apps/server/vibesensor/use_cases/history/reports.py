@@ -20,6 +20,7 @@ from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summar
 from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.shared.types.run_persistence import RunPersistence
 from vibesensor.use_cases.history.helpers import (
     HistoryRecord,
     async_require_run,
@@ -29,7 +30,6 @@ from vibesensor.use_cases.history.helpers import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.domain import TestRun
     from vibesensor.infra.config.settings_store import SettingsStore
 
@@ -68,7 +68,7 @@ class HistoryReportService:
 
     def __init__(
         self,
-        history_db: HistoryDB,
+        history_db: RunPersistence,
         settings_store: SettingsStore | None = None,
         *,
         pdf_renderer: PdfRendererFn,

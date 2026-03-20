@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from typing_extensions import TypedDict
 
@@ -20,9 +20,7 @@ from vibesensor.shared.exceptions import (
     RunNotFoundError,
 )
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
-
-if TYPE_CHECKING:
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.types.run_persistence import RunPersistence
 
 _SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
 
@@ -65,7 +63,7 @@ def resolve_run_language(run: HistoryRecord, requested: str | None) -> str:
     return "en"
 
 
-async def async_require_run(history_db: HistoryDB, run_id: str) -> HistoryRecord:
+async def async_require_run(history_db: RunPersistence, run_id: str) -> HistoryRecord:
     """Fetch a history run in a thread or raise a domain exception."""
     run = await asyncio.to_thread(history_db.get_run, run_id)
     if run is None:

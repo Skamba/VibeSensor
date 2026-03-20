@@ -14,12 +14,10 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock, Thread
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from vibesensor.shared.sampling import bounded_sample
-
-if TYPE_CHECKING:
-    from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.types.run_persistence import RunPersistence
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,7 +60,7 @@ class PostAnalysisWorker:
 
     def __init__(
         self,
-        history_db: HistoryDB | None,
+        history_db: RunPersistence | None,
         error_callback: Callable[[str], None] | None = None,
         clear_error_callback: Callable[[], None] | None = None,
     ) -> None:

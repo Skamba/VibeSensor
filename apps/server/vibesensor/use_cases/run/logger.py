@@ -27,6 +27,7 @@ from vibesensor.shared.constants import NUMERIC_TYPES
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.run_persistence import RunPersistence
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
@@ -37,7 +38,6 @@ from vibesensor.use_cases.run.sample_builder import (
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-    from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
@@ -125,7 +125,7 @@ class RunRecorder:
         registry: ClientRegistry,
         gps_monitor: GPSSpeedMonitor,
         processor: SignalProcessor,
-        history_db: HistoryDB | None = None,
+        history_db: RunPersistence | None = None,
         settings_store: SettingsStore | None = None,
         language_provider: Callable[[], str] | None = None,
     ):
