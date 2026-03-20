@@ -27,7 +27,7 @@ Scope: single source of truth for detailed file layout, entry points, package st
 
 ## Backend package layout
 
-- `app/`: startup and wiring. `bootstrap.py` creates the FastAPI app, `container.py` builds a lifecycle-focused `RuntimeState` plus the top-level `AppRuntime` bundle, `runtime_state.py` owns those app-facing runtime bundles, and `settings.py` owns YAML config loading and validation.
+- `app/`: startup and wiring. `bootstrap.py` creates the FastAPI app, `container.py` builds a lifecycle-focused `RuntimeState` plus the top-level `AppRuntime` bundle, `runtime_state.py` owns those app-facing runtime bundles and types eligible read-side runtime fields to the existing shared ports, and `settings.py` owns YAML config loading and validation.
 - `adapters/http/`: health, clients, settings, recording, history, websocket, updates, car library, and debug route groups; `adapters/http/dependencies.py` owns the grouped router dependency dataclasses and `adapters/http/__init__.py` assembles the router from them.
 - `adapters/websocket/hub.py`: live WebSocket connection fan-out and payload delivery.
 - `adapters/persistence/`: SQLite history DB (`history_db/` keeps `HistoryDB` as the public facade and splits internals across `_run_lifecycle.py`, `_sample_io.py`, `_queries.py`, `_schema.py`, and `_samples.py`) and the static car library loader (`car_library.py`).

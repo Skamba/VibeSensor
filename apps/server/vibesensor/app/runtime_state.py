@@ -1,4 +1,9 @@
-"""App-owned runtime assembly for lifecycle and router dependency bundles."""
+"""App-owned runtime assembly for lifecycle and router dependency bundles.
+
+The lifecycle runtime bag prefers focused shared ports where the existing
+protocols already match what downstream consumers need. ``container.py``
+remains the concrete composition root that instantiates the real adapters.
+"""
 
 from __future__ import annotations
 
@@ -6,13 +11,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.adapters.http.dependencies import RouterDeps
-from vibesensor.infra.config.settings_store import SettingsStore
-from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
-from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.shared.types.client_tracker import ClientTracker
+from vibesensor.shared.types.settings_reader import SettingsReader
+from vibesensor.shared.types.signal_source import SignalSource
 from vibesensor.use_cases.run import RunRecorder
 from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
@@ -30,11 +35,11 @@ class RuntimeState:
     """Lifecycle-focused runtime dependencies."""
 
     config: AppConfig
-    registry: ClientRegistry
-    processor: SignalProcessor
+    registry: ClientTracker
+    processor: SignalSource
     control_plane: UDPControlPlane
     worker_pool: WorkerPool
-    settings_store: SettingsStore
+    settings_store: SettingsReader
     gps_monitor: GPSSpeedMonitor
     history_db: HistoryDB
     processing_loop_state: ProcessingLoopState

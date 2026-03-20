@@ -19,7 +19,7 @@ ESP32 nodes -> adapters/udp/ -> infra/processing/ + use_cases/diagnostics/
 
 Backend ownership boundaries:
 
-- `app/`: FastAPI app factory (`bootstrap.py`), runtime container wiring (`container.py`), a lifecycle-focused `RuntimeState` plus top-level `AppRuntime` bundle (`runtime_state.py`), and YAML settings/config loading (`settings.py`).
+- `app/`: FastAPI app factory (`bootstrap.py`), runtime container wiring (`container.py`), a lifecycle-focused `RuntimeState` plus top-level `AppRuntime` bundle (`runtime_state.py`), and YAML settings/config loading (`settings.py`). `runtime_state.py` now types read-side runtime fields against the existing shared ports where they already fit lifecycle consumers, while `container.py` remains the concrete composition root.
 - `adapters/http/` and `adapters/websocket/`: HTTP route groups and live WebSocket delivery. `adapters/http/dependencies.py` owns the grouped router dependency dataclasses consumed by `adapters/http/__init__.py`.
 - `infra/runtime/`: lifecycle management, processing loop, runtime health state, and WebSocket broadcast coordination. `registry.py` now owns raw client tracking plus `client_snapshots()`, while `client_snapshot.py` owns the API/WS client-row presenter reused by both the HTTP clients route and live WebSocket broadcasting.
 - `infra/processing/`: signal processing pipeline.
