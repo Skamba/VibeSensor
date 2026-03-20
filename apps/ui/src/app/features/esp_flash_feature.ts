@@ -30,6 +30,8 @@ const STATE_TO_VARIANT: Readonly<Record<string, string>> = {
 export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature {
   const { els, t, escapeHtml } = ctx;
   let pollTimer: ReturnType<typeof setTimeout> | null = null;
+  let pollGeneration = 0;
+  let pollingActive = false;
   let nextLogIndex = 0;
 
   async function refreshPorts(): Promise<void> {
@@ -102,16 +104,35 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     els.espFlashHistoryPanel.innerHTML = `<ul>${rows.join("")}</ul>`;
   }
 
-  async function poll(): Promise<void> {
+  function clearPollTimer(): void {
+    if (pollTimer === null) return;
+    clearTimeout(pollTimer);
+    pollTimer = null;
+  }
+
+  function schedulePoll(delayMs: number, generation: number): void {
+    if (!pollingActive || generation !== pollGeneration) return;
+    clearPollTimer();
+    pollTimer = setTimeout(() => void poll(generation), delayMs);
+  }
+
+  async function poll(generation: number = pollGeneration): Promise<void> {
     try {
       const status = await getEspFlashStatus();
       renderStatus(status);
       await refreshLogs(status);
       await refreshHistory();
-      pollTimer = setTimeout(() => void poll(), status.state === "running" ? POLL_ACTIVE_MS : POLL_IDLE_MS);
+      schedulePoll(status.state === "running" ? POLL_ACTIVE_MS : POLL_IDLE_MS, generation);
     } catch {
-      pollTimer = setTimeout(() => void poll(), POLL_ACTIVE_MS);
+      schedulePoll(POLL_ACTIVE_MS, generation);
     }
+  }
+
+  function restartPolling(): void {
+    if (!pollingActive) return;
+    pollGeneration += 1;
+    clearPollTimer();
+    void poll(pollGeneration);
   }
 
   async function onStart(): Promise<void> {
@@ -122,7 +143,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       await startEspFlash(port, autoDetect);
       if (els.espFlashLogPanel) els.espFlashLogPanel.textContent = "";
       nextLogIndex = 0;
-      void poll();
+      restartPolling();
     } catch (err) {
       window.alert(`${t("settings.esp_flash.start_failed")}\n${err instanceof Error ? err.message : String(err)}`);
     }
@@ -134,7 +155,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
     } catch {
       // Cancel request may fail if the job already finished; poll to sync state.
     }
-    void poll();
+    restartPolling();
   }
 
   function bindHandlers(): void {
@@ -144,16 +165,17 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   }
 
   function startPolling(): void {
-    if (pollTimer !== null) return;
+    if (pollingActive) return;
+    pollingActive = true;
     void refreshPorts();
-    void poll();
+    restartPolling();
   }
 
   function stopPolling(): void {
-    if (pollTimer !== null) {
-      clearTimeout(pollTimer);
-      pollTimer = null;
-    }
+    if (!pollingActive && pollTimer === null) return;
+    pollingActive = false;
+    pollGeneration += 1;
+    clearPollTimer();
   }
 
   return { bindHandlers, startPolling, stopPolling };

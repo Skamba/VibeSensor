@@ -1,0 +1,294 @@
+import { expect, test } from "@playwright/test";
+
+import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
+import type { UiDomElements } from "../src/app/ui_dom_registry";
+
+type ClickListener = (() => void) | null;
+
+type TimerHarness = {
+  pendingDelays(): number[];
+  restore(): void;
+};
+
+type Deferred<T> = {
+  promise: Promise<T>;
+  resolve(value: T): void;
+};
+
+function createDeferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
+function jsonResponse(body: unknown): Response {
+  const payload = JSON.stringify(body);
+  return {
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    headers: new Headers({ "content-type": "application/json" }),
+    text: async () => payload,
+  } as unknown as Response;
+}
+
+function installTimerHarness(): TimerHarness {
+  const originalSetTimeout = globalThis.setTimeout;
+  const originalClearTimeout = globalThis.clearTimeout;
+  let nextId = 1;
+  const active = new Map<number, number>();
+
+  globalThis.setTimeout = ((handler: TimerHandler, delay?: number) => {
+    const id = nextId;
+    nextId += 1;
+    active.set(id, Number(delay ?? 0));
+    void handler;
+    return id as unknown as ReturnType<typeof setTimeout>;
+  }) as typeof setTimeout;
+
+  globalThis.clearTimeout = ((timeoutId?: ReturnType<typeof setTimeout>) => {
+    if (typeof timeoutId !== "number") return;
+    active.delete(timeoutId);
+  }) as typeof clearTimeout;
+
+  return {
+    pendingDelays(): number[] {
+      return Array.from(active.values()).sort((left, right) => left - right);
+    },
+    restore(): void {
+      globalThis.setTimeout = originalSetTimeout;
+      globalThis.clearTimeout = originalClearTimeout;
+    },
+  };
+}
+
+function pendingPollDelays(timers: TimerHarness): number[] {
+  return timers.pendingDelays().filter((delay) => delay !== 10_000);
+}
+
+function installFetchMock(
+  handler: (url: URL, method: string) => Promise<Response> | Response,
+): () => void {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (input: string | URL | RequestInfo, init?: RequestInit) => {
+    const requestUrl =
+      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    const requestMethod = init?.method ?? (input instanceof Request ? input.method : "GET");
+    return handler(new URL(requestUrl, "http://vibesensor.test"), requestMethod);
+  }) as typeof fetch;
+
+  return () => {
+    globalThis.fetch = originalFetch;
+  };
+}
+
+function createButton(): HTMLButtonElement {
+  let onClick: ClickListener = null;
+
+  return {
+    disabled: false,
+    hidden: false,
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
+      if (type !== "click") return;
+      onClick = () => {
+        const event = new Event("click");
+        if (typeof listener === "function") {
+          listener(event);
+          return;
+        }
+        listener.handleEvent(event);
+      };
+    },
+    click() {
+      onClick?.();
+    },
+    querySelector() {
+      return null;
+    },
+  } as unknown as HTMLButtonElement;
+}
+
+function createSelect(value: string): HTMLSelectElement {
+  return {
+    value,
+    disabled: false,
+    innerHTML: "",
+  } as unknown as HTMLSelectElement;
+}
+
+function createPanel(): HTMLElement {
+  return {
+    textContent: "",
+    innerHTML: "",
+    className: "",
+    scrollTop: 0,
+    scrollHeight: 0,
+  } as unknown as HTMLElement;
+}
+
+function createDeps() {
+  const espFlashPortSelect = createSelect("__auto__");
+  const espFlashRefreshPortsBtn = createButton();
+  const espFlashStartBtn = createButton();
+  const espFlashCancelBtn = createButton();
+  const espFlashStatusBanner = createPanel();
+  const espFlashLogPanel = createPanel();
+  const espFlashHistoryPanel = createPanel();
+
+  const els = {
+    menuButtons: [],
+    views: [],
+    settingsTabs: [],
+    settingsTabPanels: [],
+    espFlashPortSelect,
+    espFlashRefreshPortsBtn,
+    espFlashStartBtn,
+    espFlashCancelBtn,
+    espFlashStatusBanner,
+    espFlashLogPanel,
+    espFlashHistoryPanel,
+  } as unknown as UiDomElements;
+
+  return {
+    els,
+    espFlashStartBtn,
+    espFlashCancelBtn,
+    t: (key: string) => key,
+    escapeHtml: (value: unknown) => String(value ?? ""),
+  };
+}
+
+async function flushAsyncWork(rounds = 12): Promise<void> {
+  for (let index = 0; index < rounds; index += 1) {
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve);
+    });
+  }
+}
+
+async function expectPollDelays(timers: TimerHarness, expected: number[]): Promise<void> {
+  for (let attempt = 0; attempt < 25; attempt += 1) {
+    const actual = pendingPollDelays(timers);
+    if (actual.length === expected.length && actual.every((delay, index) => delay === expected[index])) {
+      expect(actual).toEqual(expected);
+      return;
+    }
+    await flushAsyncWork(1);
+  }
+  expect(pendingPollDelays(timers)).toEqual(expected);
+}
+
+test.describe("createEspFlashFeature polling", () => {
+  test.beforeEach(() => {
+    (globalThis as { window?: Window & typeof globalThis }).window = globalThis as unknown as Window &
+      typeof globalThis;
+    window.alert = (() => {}) as typeof window.alert;
+  });
+
+  test("start replaces the previous poll timeout instead of creating a second chain", async () => {
+    const timers = installTimerHarness();
+    const restoreFetch = installFetchMock(async (url, method) => {
+      if (url.pathname === "/api/esp-flash/ports") return jsonResponse({ ports: [] });
+      if (url.pathname === "/api/esp-flash/start" && method === "POST") {
+        return jsonResponse({ status: "started", job_id: 1 });
+      }
+      if (url.pathname === "/api/esp-flash/status") {
+        return jsonResponse({ state: "idle", log_count: 0, error: null });
+      }
+      if (url.pathname === "/api/esp-flash/logs") {
+        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
+      }
+      if (url.pathname === "/api/esp-flash/history") {
+        return jsonResponse({ attempts: [] });
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createDeps();
+      const feature = createEspFlashFeature(deps);
+
+      feature.bindHandlers();
+      feature.startPolling();
+      await expectPollDelays(timers, [4_000]);
+
+      deps.espFlashStartBtn.click();
+      await expectPollDelays(timers, [4_000]);
+    } finally {
+      restoreFetch();
+      timers.restore();
+    }
+  });
+
+  test("cancel replaces the previous poll timeout instead of creating a second chain", async () => {
+    const timers = installTimerHarness();
+    const restoreFetch = installFetchMock(async (url, method) => {
+      if (url.pathname === "/api/esp-flash/ports") return jsonResponse({ ports: [] });
+      if (url.pathname === "/api/esp-flash/cancel" && method === "POST") {
+        return jsonResponse({ status: "cancelled" });
+      }
+      if (url.pathname === "/api/esp-flash/status") {
+        return jsonResponse({ state: "idle", log_count: 0, error: null });
+      }
+      if (url.pathname === "/api/esp-flash/logs") {
+        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
+      }
+      if (url.pathname === "/api/esp-flash/history") {
+        return jsonResponse({ attempts: [] });
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createDeps();
+      const feature = createEspFlashFeature(deps);
+
+      feature.bindHandlers();
+      feature.startPolling();
+      await expectPollDelays(timers, [4_000]);
+
+      deps.espFlashCancelBtn.click();
+      await expectPollDelays(timers, [4_000]);
+    } finally {
+      restoreFetch();
+      timers.restore();
+    }
+  });
+
+  test("stopPolling prevents an in-flight poll from reviving the loop", async () => {
+    const timers = installTimerHarness();
+    const deferredStatus = createDeferred<Response>();
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/esp-flash/ports") return jsonResponse({ ports: [] });
+      if (url.pathname === "/api/esp-flash/status") return deferredStatus.promise;
+      if (url.pathname === "/api/esp-flash/logs") {
+        return jsonResponse({ from_index: 0, next_index: 0, lines: [] });
+      }
+      if (url.pathname === "/api/esp-flash/history") {
+        return jsonResponse({ attempts: [] });
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createDeps();
+      const feature = createEspFlashFeature(deps);
+
+      feature.startPolling();
+      await flushAsyncWork();
+      expect(pendingPollDelays(timers)).toEqual([]);
+
+      feature.stopPolling();
+      deferredStatus.resolve(jsonResponse({ state: "idle", log_count: 0, error: null }));
+      await flushAsyncWork();
+
+      expect(pendingPollDelays(timers)).toEqual([]);
+    } finally {
+      restoreFetch();
+      timers.restore();
+    }
+  });
+});
