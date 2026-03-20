@@ -5,19 +5,22 @@ history-DB persistence. Focused helpers live in:
 
 - :mod:`vibesensor.use_cases.run.persistence_writer` — history-write
   coordination, retry/backoff handling, and persistence health state.
+- :mod:`vibesensor.use_cases.run.sample_flush` — sample building, flush
+  decisions, and auto-stop timing checks.
 - :mod:`vibesensor.use_cases.run.lifecycle_state` — in-memory recording
   session lifecycle state.
 - :mod:`vibesensor.use_cases.run.sample_builder` — pure sample record
   construction.
 - :mod:`vibesensor.use_cases.run.post_analysis` — background analysis
   thread/queue plus the injected post-stop analysis boundary.
+- :mod:`vibesensor.use_cases.run.status_reporting` — status and health
+  payload assembly above persistence/post-analysis collaborators.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
-import sqlite3
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -42,16 +45,14 @@ from vibesensor.use_cases.run.persistence_writer import (
     _MAX_APPEND_RETRIES,
     _MAX_HISTORY_CREATE_RETRIES,
     _RETRY_COOLDOWN_BASE_S,
-    AppendRowsResult,
-    PersistenceStatusSnapshot,
     RunPersistenceWriter,
 )
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker, build_post_analysis_summary
-from vibesensor.use_cases.run.sample_builder import (
-    build_run_metadata,
-    build_sample_records,
-    firmware_version_for_run,
-    resolve_speed_context,
+from vibesensor.use_cases.run.sample_builder import build_run_metadata, firmware_version_for_run
+from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator
+from vibesensor.use_cases.run.status_reporting import (
+    build_run_recorder_health_snapshot,
+    build_run_recorder_status,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -101,6 +102,110 @@ class RecorderShutdownReport:
     final_status: dict[str, object]
 
 
+def _build_run_metadata_record(
+    recorder: RunRecorder,
+    run_id: str,
+    start_time_utc: str,
+) -> JsonObject:
+    return build_run_metadata(
+        run_id=run_id,
+        start_time_utc=start_time_utc,
+        analysis_settings_snapshot=recorder._analysis_settings_snapshot(),
+        sensor_model=recorder.sensor_model,
+        firmware_version=firmware_version_for_run(recorder.registry),
+        default_sample_rate_hz=recorder.default_sample_rate_hz,
+        metrics_log_hz=recorder.metrics_log_hz,
+        fft_window_size_samples=recorder.fft_window_size_samples,
+        accel_scale_g_per_lsb=recorder.accel_scale_g_per_lsb,
+        active_car_snapshot=(
+            recorder._settings_store.active_car_snapshot()
+            if recorder._settings_store is not None
+            else None
+        ),
+        language_provider=recorder._language_provider,
+    )
+
+
+def _shutdown_report(recorder: RunRecorder, timeout_s: float) -> RecorderShutdownReport:
+    with recorder._lock:
+        active_run_id_before_stop = recorder._run_id
+    recorder._lifecycle.shutdown_requested = True
+    try:
+        final_status = recorder.stop_recording()
+        analysis_completed = recorder.wait_for_post_analysis(timeout_s)
+        health = recorder.health_snapshot()
+        return RecorderShutdownReport(
+            completed=analysis_completed,
+            active_run_id_before_stop=active_run_id_before_stop,
+            analysis_queue_depth=health["analysis_queue_depth"],
+            analysis_active_run_id=health["analysis_active_run_id"],
+            analysis_queue_oldest_age_s=health["analysis_queue_oldest_age_s"],
+            analysis_in_progress=health["analysis_in_progress"],
+            write_error=health["write_error"],
+            final_status=final_status,
+        )
+    finally:
+        recorder._lifecycle.shutdown_requested = False
+
+
+async def _run_loop(recorder: RunRecorder) -> None:
+    interval = 1.0 / recorder.metrics_log_hz
+    while True:
+        try:
+            timestamp_utc = utc_now_iso()
+            with recorder._lock:
+                live_start = recorder._live_start_mono_s
+                run_id_for_live = recorder._run_id or "live"
+            live_t_s = max(0.0, time.monotonic() - live_start)
+            live_rows = await asyncio.wait_for(
+                asyncio.to_thread(
+                    recorder._sample_flush.build_sample_records,
+                    run_id=run_id_for_live,
+                    t_s=live_t_s,
+                    timestamp_utc=timestamp_utc,
+                ),
+                timeout=_DB_THREAD_TIMEOUT_S,
+            )
+            if not isinstance(live_rows, list):
+                LOGGER.warning(
+                    "Metrics logger sample builder returned %s instead of list; dropping tick.",
+                    type(live_rows).__name__,
+                )
+                live_rows = []
+            snapshot = recorder._session_snapshot()
+            if snapshot is not None:
+                no_data_timeout = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        recorder._sample_flush.append_records,
+                        snapshot.run_id,
+                        snapshot.start_time_utc,
+                        snapshot.start_mono_s,
+                        prebuilt_rows=live_rows,
+                    ),
+                    timeout=_DB_THREAD_TIMEOUT_S,
+                )
+                if no_data_timeout:
+                    LOGGER.info(
+                        "Auto-stopping run %s after %.1fs without new data",
+                        snapshot.run_id,
+                        recorder._lifecycle.no_data_timeout_s,
+                    )
+                    recorder.stop_recording(_only_if_run_id=snapshot.run_id)
+        except TimeoutError:
+            recorder._persistence.set_last_write_error("metrics logger DB call timed out")
+            LOGGER.warning(
+                "Metrics logger DB call exceeded %.1fs timeout; skipping tick.",
+                _DB_THREAD_TIMEOUT_S,
+            )
+        except Exception as exc:
+            recorder._persistence.set_last_write_error(f"metrics logger tick failed: {exc}")
+            LOGGER.warning(
+                "Metrics logger tick failed; will retry next interval.",
+                exc_info=True,
+            )
+        await asyncio.sleep(interval)
+
+
 class RunRecorder:
     """Manages recording of runs, post-analysis, and history persistence."""
 
@@ -144,7 +249,11 @@ class RunRecorder:
             history_db=history_db,
             persist_history_db_enabled=config.persist_history_db,
             run_id_matches=self._run_id_matches,
-            metadata_builder=self._run_metadata_record,
+            metadata_builder=lambda run_id, start_time_utc: _build_run_metadata_record(
+                self,
+                run_id,
+                start_time_utc,
+            ),
             monotonic=lambda: time.monotonic(),
             sleep=lambda seconds: time.sleep(seconds),
             logger_provider=lambda: LOGGER,
@@ -152,13 +261,33 @@ class RunRecorder:
 
         self._post_analysis = PostAnalysisWorker(
             history_db=history_db,
-            error_callback=lambda msg: setattr(self, "_persist_last_write_error", msg),
-            clear_error_callback=lambda: setattr(self, "_persist_last_write_error", None),
+            error_callback=self._persistence.set_last_write_error,
+            clear_error_callback=self._persistence.clear_last_write_error,
             analysis_runner=build_post_analysis_summary,
         )
 
+        self._sample_flush = SampleFlushOrchestrator(
+            registry=self.registry,
+            gps_monitor=self.gps_monitor,
+            processor=self.processor,
+            analysis_settings_snapshot=self._analysis_settings_snapshot,
+            default_sample_rate_hz=self.default_sample_rate_hz,
+            lifecycle=self._lifecycle,
+            persistence=self._persistence,
+            active_frames_total=self._active_frames_total,
+            current_run_id=lambda: self._run_id,
+            monotonic=lambda: time.monotonic(),
+        )
+
         with self._lock:
-            snapshot = self._start_new_run_locked()
+            snapshot = self._lifecycle.start_new_run(
+                run_id=uuid4().hex,
+                analysis_settings_snapshot=self._analysis_settings_snapshot(),
+                start_time_utc=utc_now_iso(),
+                start_mono_s=time.monotonic(),
+                current_total=self._active_frames_total(),
+            )
+            self._persistence.reset()
             self._live_start_mono_s = snapshot.start_mono_s
 
     # -----------------------------------------------------------------------
@@ -185,105 +314,10 @@ class RunRecorder:
         current = self._lifecycle.current_run
         return current is not None and current.run_id == run_id
 
-    @property
-    def _persist_history_run_created(self) -> bool:
-        return self._persistence.history_run_created
-
-    @_persist_history_run_created.setter
-    def _persist_history_run_created(self, value: bool) -> None:
-        self._persistence.history_run_created = value
-
-    @property
-    def _persist_history_create_fail_count(self) -> int:
-        return self._persistence.history_create_fail_count
-
-    @_persist_history_create_fail_count.setter
-    def _persist_history_create_fail_count(self, value: int) -> None:
-        self._persistence.history_create_fail_count = value
-
-    @property
-    def _persist_written_sample_count(self) -> int:
-        return self._persistence.written_sample_count
-
-    @_persist_written_sample_count.setter
-    def _persist_written_sample_count(self, value: int) -> None:
-        self._persistence.written_sample_count = value
-
-    @property
-    def _persist_dropped_sample_count(self) -> int:
-        return self._persistence.dropped_sample_count
-
-    @_persist_dropped_sample_count.setter
-    def _persist_dropped_sample_count(self, value: int) -> None:
-        self._persistence.dropped_sample_count = value
-
-    @property
-    def _persist_last_write_error(self) -> str | None:
-        return self._persistence.last_write_error
-
-    @_persist_last_write_error.setter
-    def _persist_last_write_error(self, value: str | None) -> None:
-        self._persistence.last_write_error = value
-
     def _analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         if self._settings_store is not None:
             return self._settings_store.analysis_settings_snapshot()
         return AnalysisSettingsSnapshot.from_dict(AnalysisSettingsSnapshot.DEFAULTS)
-
-    # -----------------------------------------------------------------------
-    # Persistence coordination
-    # -----------------------------------------------------------------------
-
-    def _persist_status_snapshot(self) -> PersistenceStatusSnapshot:
-        return self._persistence.status_snapshot()
-
-    def _persist_reset(self) -> None:
-        self._persistence.reset()
-
-    def _persist_ready_for_analysis(self, run_id: str | None) -> str | None:
-        return self._persistence.ready_for_analysis(run_id)
-
-    def _persist_ensure_history_run(
-        self,
-        run_id: str,
-        start_time_utc: str,
-    ) -> None:
-        self._persistence.ensure_history_run(run_id, start_time_utc)
-
-    def _persist_append_rows(
-        self,
-        *,
-        run_id: str,
-        start_time_utc: str,
-        rows: list[dict[str, object]],
-    ) -> AppendRowsResult:
-        return self._persistence.append_rows(
-            run_id=run_id,
-            start_time_utc=start_time_utc,
-            rows=rows,
-        )
-
-    def _persist_finalize_run(self, run_id: str, start_time_utc: str, end_utc: str) -> bool:
-        return self._persistence.finalize_run(run_id, start_time_utc, end_utc)
-
-    # -----------------------------------------------------------------------
-    # Internal helpers
-    # -----------------------------------------------------------------------
-
-    def _start_new_run_locked(self) -> ActiveRunSnapshot:
-        snapshot = self._lifecycle.start_new_run(
-            run_id=uuid4().hex,
-            analysis_settings_snapshot=self._analysis_settings_snapshot(),
-            start_time_utc=utc_now_iso(),
-            start_mono_s=time.monotonic(),
-            current_total=self._active_frames_total(),
-        )
-        self._persist_reset()
-        return snapshot
-
-    def _stop_session_locked(self) -> None:
-        self._lifecycle.stop()
-        self._persist_reset()
 
     def _active_frames_total(self) -> int:
         _get = self.registry.get
@@ -301,57 +335,20 @@ class RunRecorder:
     # -----------------------------------------------------------------------
 
     def status(self) -> dict[str, object]:
-        post_snapshot = self._post_analysis.snapshot()
-        persist = self._persist_status_snapshot()
-        return {
-            "enabled": self.enabled,
-            "current_file": None,
-            "run_id": self._run_id,
-            "write_error": persist.write_error,
-            "analysis_in_progress": self._post_analysis.is_active,
-            "samples_written": persist.written_sample_count,
-            "samples_dropped": persist.dropped_sample_count,
-            "last_completed_run_id": post_snapshot.last_completed_run_id,
-            "last_completed_run_error": post_snapshot.last_completed_error,
-        }
+        return build_run_recorder_status(
+            enabled=self.enabled,
+            run_id=self._run_id,
+            persistence=self._persistence,
+            post_analysis=self._post_analysis,
+        )
 
     def health_snapshot(self) -> RunRecorderHealthSnapshot:
-        snapshot = self._post_analysis.snapshot()
-        analysis_elapsed_s = None
-        if snapshot.active_started_at is not None:
-            analysis_elapsed_s = max(0.0, time.time() - snapshot.active_started_at)
-        queue_oldest_age_s = None
-        if snapshot.oldest_queued_at is not None:
-            queue_oldest_age_s = max(0.0, time.time() - snapshot.oldest_queued_at)
-        analyzing_run_count = 0
-        analyzing_oldest_age_s = None
-        if self._history_db is not None:
-            try:
-                analyzing_health = self._history_db.analyzing_run_health()
-                raw_count = analyzing_health.get("analyzing_run_count")
-                analyzing_run_count = int(raw_count) if isinstance(raw_count, int | float) else 0
-                raw_oldest_age = analyzing_health.get("analyzing_oldest_age_s")
-                if isinstance(raw_oldest_age, (int, float)):
-                    analyzing_oldest_age_s = max(0.0, float(raw_oldest_age))
-            except sqlite3.Error:
-                LOGGER.warning("Failed to read analyzing-run health snapshot", exc_info=True)
-        persist = self._persist_status_snapshot()
-        return {
-            "write_error": persist.write_error,
-            "analysis_in_progress": self._post_analysis.is_active,
-            "analysis_queue_depth": snapshot.queue_depth,
-            "analysis_queue_max_depth": snapshot.max_queue_depth,
-            "analysis_active_run_id": snapshot.active_run_id,
-            "analysis_started_at": snapshot.active_started_at,
-            "analysis_elapsed_s": analysis_elapsed_s,
-            "analysis_queue_oldest_age_s": queue_oldest_age_s,
-            "analyzing_run_count": analyzing_run_count,
-            "analyzing_oldest_age_s": analyzing_oldest_age_s,
-            "samples_written": persist.written_sample_count,
-            "samples_dropped": persist.dropped_sample_count,
-            "last_completed_run_id": snapshot.last_completed_run_id,
-            "last_completed_run_error": snapshot.last_completed_error,
-        }
+        return build_run_recorder_health_snapshot(
+            history_db=self._history_db,
+            persistence=self._persistence,
+            post_analysis=self._post_analysis,
+            logger=LOGGER,
+        )
 
     def start_recording(self) -> dict[str, object]:
         completed_run_id: str | None = None
@@ -363,25 +360,38 @@ class RunRecorder:
                 )
                 return self.status()
             if self.enabled and self._run_id:
-                flush_snapshot = self._pending_flush_snapshot_locked()
+                flush_snapshot = self._sample_flush.pending_flush_snapshot()
         if flush_snapshot is not None:
-            self._append_records(
+            self._sample_flush.append_records(
                 flush_snapshot.run_id,
                 flush_snapshot.start_time_utc,
                 flush_snapshot.start_mono_s,
             )
         with self._lock:
             if self.enabled and self._run_id:
-                completed_run_id = self._persist_ready_for_analysis(self._run_id)
-                if not self._finalize_run_locked():
+                run_id = self._run_id
+                completed_run_id = self._persistence.ready_for_analysis(run_id)
+                start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
+                if run_id and not self._persistence.finalize_run(
+                    run_id,
+                    start_time_utc,
+                    utc_now_iso(),
+                ):
                     # finalize_run may fail (e.g. DB unavailable), but
                     # store_analysis handles the RECORDING→COMPLETE bypass
                     # path, so schedule analysis anyway.
                     LOGGER.warning(
                         "finalize_run failed for %s; scheduling analysis anyway",
-                        completed_run_id,
+                        run_id,
                     )
-            snapshot = self._start_new_run_locked()
+            snapshot = self._lifecycle.start_new_run(
+                run_id=uuid4().hex,
+                analysis_settings_snapshot=self._analysis_settings_snapshot(),
+                start_time_utc=utc_now_iso(),
+                start_mono_s=time.monotonic(),
+                current_total=self._active_frames_total(),
+            )
+            self._persistence.reset()
             self._live_start_mono_s = snapshot.start_mono_s
             result = self.status()
         if completed_run_id and self._history_db is not None:
@@ -397,9 +407,9 @@ class RunRecorder:
         with self._lock:
             if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                 return self.status()
-            flush_snapshot = self._pending_flush_snapshot_locked()
+            flush_snapshot = self._sample_flush.pending_flush_snapshot()
         if flush_snapshot is not None:
-            self._append_records(
+            self._sample_flush.append_records(
                 flush_snapshot.run_id,
                 flush_snapshot.start_time_utc,
                 flush_snapshot.start_mono_s,
@@ -407,118 +417,27 @@ class RunRecorder:
         with self._lock:
             if _only_if_run_id is not None and self._run_id != _only_if_run_id:
                 return self.status()
-            run_id_to_analyze = self._persist_ready_for_analysis(self._run_id)
-            if self._run_id and not self._finalize_run_locked():
+            run_id = self._run_id
+            run_id_to_analyze = self._persistence.ready_for_analysis(run_id)
+            start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
+            if run_id and not self._persistence.finalize_run(
+                run_id,
+                start_time_utc,
+                utc_now_iso(),
+            ):
                 # finalize_run may fail (e.g. DB unavailable), but
                 # store_analysis handles the RECORDING→COMPLETE bypass
                 # path, so schedule analysis anyway.
                 LOGGER.warning(
                     "finalize_run failed for %s; scheduling analysis anyway",
-                    self._run_id,
+                    run_id,
                 )
-            self._stop_session_locked()
+            self._lifecycle.stop()
+            self._persistence.reset()
             result = self.status()
         if run_id_to_analyze and self._history_db is not None:
             self.schedule_post_analysis(run_id_to_analyze)
         return result
-
-    def _run_metadata_record(self, run_id: str, start_time_utc: str) -> JsonObject:
-        return build_run_metadata(
-            run_id=run_id,
-            start_time_utc=start_time_utc,
-            analysis_settings_snapshot=self._analysis_settings_snapshot(),
-            sensor_model=self.sensor_model,
-            firmware_version=firmware_version_for_run(self.registry),
-            default_sample_rate_hz=self.default_sample_rate_hz,
-            metrics_log_hz=self.metrics_log_hz,
-            fft_window_size_samples=self.fft_window_size_samples,
-            accel_scale_g_per_lsb=self.accel_scale_g_per_lsb,
-            active_car_snapshot=(
-                self._settings_store.active_car_snapshot()
-                if self._settings_store is not None
-                else None
-            ),
-            language_provider=self._language_provider,
-        )
-
-    def _build_sample_records(
-        self,
-        *,
-        run_id: str,
-        t_s: float,
-        timestamp_utc: str,
-    ) -> list[dict[str, object]]:
-        analysis_settings_snapshot = self._analysis_settings_snapshot()
-        speed_resolution = self.gps_monitor.resolve_speed()
-        return build_sample_records(
-            run_id=run_id,
-            t_s=t_s,
-            timestamp_utc=timestamp_utc,
-            registry=self.registry,
-            processor=self.processor,
-            speed_context=resolve_speed_context(
-                gps_speed_mps=self.gps_monitor.speed_mps,
-                resolved_speed_mps=speed_resolution.speed_mps,
-                resolved_speed_source=speed_resolution.source,
-                analysis_settings_snapshot=analysis_settings_snapshot,
-            ),
-            analysis_settings_snapshot=analysis_settings_snapshot,
-            default_sample_rate_hz=self.default_sample_rate_hz,
-        )
-
-    def _pending_flush_snapshot_locked(self) -> ActiveRunSnapshot | None:
-        return self._lifecycle.pending_flush_snapshot(
-            current_total=self._active_frames_total(),
-            history_run_created=self._persist_history_run_created,
-        )
-
-    def _append_records(
-        self,
-        run_id: str,
-        start_time_utc: str,
-        run_start_mono_s: float,
-        *,
-        prebuilt_rows: list[dict[str, object]] | None = None,
-    ) -> bool:
-        now_mono_s = time.monotonic()
-        if self._run_id != run_id:
-            return False
-        current_total = self._active_frames_total()
-        self._lifecycle.refresh_data_progress(now_mono_s=now_mono_s, current_total=current_total)
-        history_created = self._persist_history_run_created
-        t_s = max(0.0, now_mono_s - run_start_mono_s)
-        timestamp_utc = utc_now_iso()
-        if prebuilt_rows is not None:
-            rows = [{**row, "t_s": t_s, "timestamp_utc": timestamp_utc} for row in prebuilt_rows]
-        else:
-            rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
-        if (
-            prebuilt_rows is not None
-            and rows
-            and self._lifecycle.should_drop_prebuilt_rows(
-                current_total=current_total,
-                history_run_created=history_created,
-            )
-        ):
-            rows = []
-        if rows:
-            if self._run_id != run_id:
-                return False
-            self._lifecycle.mark_rows_written(now_mono_s=now_mono_s)
-            self._persist_append_rows(
-                run_id=run_id,
-                start_time_utc=start_time_utc,
-                rows=rows,
-            )
-        return (self._run_id == run_id) and self._lifecycle.should_auto_stop(now_mono_s=now_mono_s)
-
-    def _finalize_run_locked(self) -> bool:
-        run_id = self._run_id
-        if not run_id:
-            return True
-        start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
-        end_utc = utc_now_iso()
-        return self._persist_finalize_run(run_id, start_time_utc, end_utc)
 
     def schedule_post_analysis(self, run_id: str) -> None:
         self._post_analysis.schedule(run_id)
@@ -527,82 +446,10 @@ class RunRecorder:
         return self._post_analysis.wait(timeout_s)
 
     def shutdown_report(self, timeout_s: float = 30.0) -> RecorderShutdownReport:
-        with self._lock:
-            active_run_id_before_stop = self._run_id
-        self._lifecycle.shutdown_requested = True
-        try:
-            final_status = self.stop_recording()
-            analysis_completed = self.wait_for_post_analysis(timeout_s)
-            health = self.health_snapshot()
-            return RecorderShutdownReport(
-                completed=analysis_completed,
-                active_run_id_before_stop=active_run_id_before_stop,
-                analysis_queue_depth=health["analysis_queue_depth"],
-                analysis_active_run_id=health["analysis_active_run_id"],
-                analysis_queue_oldest_age_s=health["analysis_queue_oldest_age_s"],
-                analysis_in_progress=health["analysis_in_progress"],
-                write_error=health["write_error"],
-                final_status=final_status,
-            )
-        finally:
-            self._lifecycle.shutdown_requested = False
+        return _shutdown_report(self, timeout_s)
 
     def shutdown(self, timeout_s: float = 30.0) -> bool:
         return self.shutdown_report(timeout_s).completed
 
     async def run(self) -> None:
-        interval = 1.0 / self.metrics_log_hz
-        while True:
-            try:
-                timestamp_utc = utc_now_iso()
-                with self._lock:
-                    live_start = self._live_start_mono_s
-                    run_id_for_live = self._run_id or "live"
-                live_t_s = max(0.0, time.monotonic() - live_start)
-                live_rows = await asyncio.wait_for(
-                    asyncio.to_thread(
-                        self._build_sample_records,
-                        run_id=run_id_for_live,
-                        t_s=live_t_s,
-                        timestamp_utc=timestamp_utc,
-                    ),
-                    timeout=_DB_THREAD_TIMEOUT_S,
-                )
-                if not isinstance(live_rows, list):
-                    LOGGER.warning(
-                        "Metrics logger sample builder returned %s instead of list; dropping tick.",
-                        type(live_rows).__name__,
-                    )
-                    live_rows = []
-                snapshot = self._session_snapshot()
-                if snapshot is not None:
-                    no_data_timeout = await asyncio.wait_for(
-                        asyncio.to_thread(
-                            self._append_records,
-                            snapshot.run_id,
-                            snapshot.start_time_utc,
-                            snapshot.start_mono_s,
-                            prebuilt_rows=live_rows,
-                        ),
-                        timeout=_DB_THREAD_TIMEOUT_S,
-                    )
-                    if no_data_timeout:
-                        LOGGER.info(
-                            "Auto-stopping run %s after %.1fs without new data",
-                            snapshot.run_id,
-                            self._lifecycle.no_data_timeout_s,
-                        )
-                        self.stop_recording(_only_if_run_id=snapshot.run_id)
-            except TimeoutError:
-                self._persist_last_write_error = "metrics logger DB call timed out"
-                LOGGER.warning(
-                    "Metrics logger DB call exceeded %.1fs timeout; skipping tick.",
-                    _DB_THREAD_TIMEOUT_S,
-                )
-            except Exception as exc:
-                self._persist_last_write_error = f"metrics logger tick failed: {exc}"
-                LOGGER.warning(
-                    "Metrics logger tick failed; will retry next interval.",
-                    exc_info=True,
-                )
-            await asyncio.sleep(interval)
+        await _run_loop(self)
