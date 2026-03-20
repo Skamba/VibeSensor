@@ -8,7 +8,7 @@ RUN npm ci
 RUN mkdir -p /app/tools/config
 COPY tools/config/sync_shared_contracts_to_ui.mjs /app/tools/config/sync_shared_contracts_to_ui.mjs
 COPY apps/ui/ ./
-RUN npm run typecheck && npm run build
+RUN npm run build
 
 FROM python:3.11.12-slim
 

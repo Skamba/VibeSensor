@@ -76,21 +76,69 @@ class ShardResult:
     selected_tests: int
 
 
-def _assign_shards_by_file(collected: list[str], shard_count: int) -> list[list[str]]:
-    tests_by_file: dict[str, list[str]] = {}
-    for test_id in collected:
-        file_path = test_id.split("::", 1)[0]
-        tests_by_file.setdefault(file_path, []).append(test_id)
+# Duration hints (seconds) for known slow fast-E2E tests.
+# Tests exceeding SLOW_TEST_THRESHOLD get their own dedicated shard.
+SLOW_TEST_THRESHOLD = 5.0
+_DURATION_HINTS: dict[str, float] = {
+    "test_e2e_docker_user_journeys[clients_and_cars]": 17.1,
+    "test_e2e_docker_edge_cases.py::test_logging_start_while_recording_rollover": 11.5,
+    "test_e2e_docker_rear_left_wheel_fault.py::test_e2e_docker_rear_left_wheel_fault": 9.5,
+    "test_e2e_docker_user_journeys[language_pdf]": 8.9,
+    "test_e2e_docker_user_journeys[speed_export_delete]": 8.8,
+    "test_e2e_docker_edge_cases.py::test_delete_active_run_returns_409_e2e": 5.8,
+}
+_DEFAULT_DURATION = 3.0
 
-    shard_tests: list[list[str]] = [[] for _ in range(shard_count)]
-    shard_load: list[int] = [0 for _ in range(shard_count)]
-    file_groups = sorted(
-        tests_by_file.items(), key=lambda item: len(item[1]), reverse=True
-    )
-    for _, tests in file_groups:
-        target = min(range(shard_count), key=lambda idx: shard_load[idx])
-        shard_tests[target].extend(tests)
-        shard_load[target] += len(tests)
+
+def _estimate_duration(test_id: str) -> float:
+    """Return estimated duration for a test ID by matching against duration hints."""
+    for hint_key, duration in _DURATION_HINTS.items():
+        if hint_key in test_id:
+            return duration
+    return _DEFAULT_DURATION
+
+
+def _assign_shards_by_duration(
+    collected: list[str], min_shards: int
+) -> list[list[str]]:
+    """Assign tests to shards using duration-aware greedy bin-packing.
+
+    Tests with estimated duration > SLOW_TEST_THRESHOLD get dedicated shards.
+    Remaining tests are packed greedily into separate remainder shards.
+    The total shard count is at least *min_shards*.
+    """
+    slow_tests: list[tuple[str, float]] = []
+    fast_tests: list[tuple[str, float]] = []
+    for test_id in collected:
+        est = _estimate_duration(test_id)
+        if est > SLOW_TEST_THRESHOLD:
+            slow_tests.append((test_id, est))
+        else:
+            fast_tests.append((test_id, est))
+
+    # Sort slow tests by duration descending for consistent ordering.
+    slow_tests.sort(key=lambda t: t[1], reverse=True)
+
+    # Each slow test gets a dedicated shard.
+    dedicated: list[list[str]] = [[t[0]] for t in slow_tests]
+
+    # Pack remaining fast tests into separate remainder shards.
+    remainder_count = max(1, min_shards - len(dedicated))
+    remainder: list[list[str]] = [[] for _ in range(remainder_count)]
+    remainder_load: list[float] = [0.0] * remainder_count
+
+    fast_tests.sort(key=lambda t: t[1], reverse=True)
+    for test_id, est in fast_tests:
+        target = min(range(remainder_count), key=lambda idx: remainder_load[idx])
+        remainder[target].append(test_id)
+        remainder_load[target] += est
+
+    shard_tests = dedicated + remainder
+
+    # Remove any empty trailing shards.
+    while shard_tests and not shard_tests[-1]:
+        shard_tests.pop()
+
     return shard_tests
 
 
@@ -316,7 +364,10 @@ def _parse_args() -> argparse.Namespace:
         description="Run docker-backed e2e tests in isolated parallel shards."
     )
     parser.add_argument(
-        "--shards", type=int, default=2, help="Number of parallel shards."
+        "--shards",
+        type=int,
+        default=2,
+        help="Minimum number of parallel shards (actual count may be higher for duration balance).",
     )
     parser.add_argument(
         "--fast-e2e",
@@ -366,9 +417,13 @@ def main() -> int:
         marker = "e2e and not long_sim" if args.fast_e2e else "e2e"
 
     collected = collect_test_ids(["-m", marker, "apps/server/tests_e2e"])
+
+    shard_test_ids = _assign_shards_by_duration(collected, args.shards)
+    num_shards = len(shard_test_ids)
+
     _emit(
         f"[e2e-parallel] collected {len(collected)} tests for marker '{marker}' "
-        f"across {args.shards} shards"
+        f"across {num_shards} shards (min requested: {args.shards})"
     )
 
     build_rc = _build_image(args.docker_image)
@@ -380,13 +435,12 @@ def main() -> int:
         return build_rc
 
     pid = str(os.getpid())
-    shard_test_ids = _assign_shards_by_file(collected, args.shards)
     shards: list[ShardConfig] = []
-    for shard_index in range(1, args.shards + 1):
+    for shard_index in range(1, num_shards + 1):
         shards.append(
             ShardConfig(
                 index=shard_index,
-                count=args.shards,
+                count=num_shards,
                 tests=shard_test_ids[shard_index - 1],
                 container_name=f"vibesensor-e2e-shard-{pid}-{shard_index}",
                 data_dir=Path(
@@ -425,21 +479,21 @@ def main() -> int:
     elapsed = time.monotonic() - started
     _emit("\n=== e2e parallel summary ===")
     overall_ok = True
-    for shard_index in range(1, args.shards + 1):
+    for shard_index in range(1, num_shards + 1):
         result = results.get(shard_index)
         if result is None:
             overall_ok = False
-            _emit(f"- shard {shard_index}/{args.shards}: FAIL missing result")
+            _emit(f"- shard {shard_index}/{num_shards}: FAIL missing result")
             continue
         if result.return_code == 0:
             _emit(
-                f"- shard {result.index}/{args.shards}: PASS tests={result.selected_tests} "
+                f"- shard {result.index}/{num_shards}: PASS tests={result.selected_tests} "
                 f"time={result.duration_s:.1f}s log={result.log_path}"
             )
             continue
         overall_ok = False
         _emit(
-            f"- shard {result.index}/{args.shards}: FAIL tests={result.selected_tests} "
+            f"- shard {result.index}/{num_shards}: FAIL tests={result.selected_tests} "
             f"exit={result.return_code} time={result.duration_s:.1f}s log={result.log_path}"
         )
     _emit(f"total wall time: {elapsed:.1f}s")
