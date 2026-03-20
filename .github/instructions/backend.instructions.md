@@ -22,4 +22,4 @@ Backend (scope: backend-specific behavioral rules and deltas; see `docs/ai/repo-
 - Treat `Any` as a design smell by default: prefer `object` for untrusted inputs, shared JSON aliases for persisted payloads, `ParamSpec` for callable wrappers, and focused `TypedDict`/protocol contracts for nested state.
 - For live processing / WebSocket payloads, prefer shared contracts in `apps/server/vibesensor/shared/types/payload_types.py` and `vibesensor.vibration_strength` over ad-hoc `dict[str, Any]` bags.
 - i18n: Add/modify keys in `apps/server/data/report_i18n.json` when changing user-facing strings.
-- Documentation maintenance: when backend structure, commands, route ownership, persistence layout, report flow, or update flow changes, update `apps/server/README.md`, `docs/testing.md`, and the relevant `docs/ai/*.md` and `.github/*.instructions.md` files in the same change set.
+- Common backend documentation touchpoints include `apps/server/README.md`, `docs/testing.md`, and the relevant `docs/ai/*.md` or `.github/*.instructions.md` files.
