@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import TYPE_CHECKING
 
+from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
 from vibesensor.infra.runtime.processing_loop import STALE_DATA_AGE_S
 from vibesensor.infra.runtime.rotational_speeds import (
     build_rotational_speeds_payload,
@@ -78,7 +79,7 @@ class WsBroadcastService:
         self.include_heavy = (self.tick % heavy_every) == 0
 
     def _build_shared_payload(self) -> LiveWsPayload:
-        clients = self._registry.snapshot_for_api(include_metrics=False)
+        clients = snapshot_for_api(self._registry, include_metrics=False)
         client_ids = [c["id"] for c in clients]
         fresh_ids = self._processor.clients_with_recent_data(
             client_ids,

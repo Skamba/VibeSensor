@@ -1,7 +1,7 @@
 """Client registry — tracks active ESP32 sensor clients.
 
 Maintains per-client state (sequence numbers, dedup windows, last-seen
-timestamps) and exposes a snapshot API for connected clients.
+timestamps) and exposes raw client snapshots for transport presenters.
 """
 
 from __future__ import annotations
@@ -18,11 +18,10 @@ from vibesensor.adapters.udp.protocol import (
     DataMessage,
     HelloMessage,
     client_id_hex,
-    client_id_mac,
 )
 from vibesensor.domain import normalize_sensor_id as _normalize_client_id
-from vibesensor.infra.processing.models import ClientMetrics
-from vibesensor.shared.types.payload_types import ClientApiRow
+from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
+from vibesensor.shared.types.payload_types import ClientMetrics
 
 if TYPE_CHECKING:
     from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -82,30 +81,6 @@ class DataUpdateResult:
     is_duplicate: bool = False
 
 
-@dataclass
-class ClientSnapshot:
-    """Flattened view of a single client for the API snapshot response.
-
-    Collected by :meth:`ClientRegistry.snapshot_for_api` from a
-    :class:`ClientRecord` and passed to :meth:`ClientRegistry._client_api_row`
-    so that the row-builder receives a single structured argument instead of
-    many keyword parameters.
-    """
-
-    name: str
-    connected: bool
-    location_code: str = ""
-    firmware_version: str = ""
-    sample_rate_hz: int = 0
-    frame_samples: int = 0
-    last_seen_age_ms: int | None = None
-    frames_total: int = 0
-    dropped_frames: int = 0
-    latest_metrics: ClientMetrics | None = None
-    reset_count: int = 0
-    last_reset_time: float | None = None
-
-
 @dataclass(slots=True)
 class ClientRecord:
     """Per-client state: last-seen timestamps, dedup window, hello/firmware metadata."""
@@ -161,7 +136,7 @@ class ClientRecord:
 
 
 class ClientRegistry:
-    """Thread-safe registry of connected ESP32 clients with snapshot and snapshot helpers."""
+    """Thread-safe registry of connected ESP32 clients with raw snapshot helpers."""
 
     def __init__(
         self,
@@ -528,63 +503,27 @@ class ClientRegistry:
             record.last_ack_cmd_seq = cmd_seq
             record.last_ack_status = None
 
-    @staticmethod
-    def _client_api_row(
-        client_id: str,
-        snapshot: ClientSnapshot,
-        *,
-        include_metrics: bool = True,
-    ) -> ClientApiRow:
-        """Build a single client row for the API snapshot.
-
-        Centralises the dict shape so both connected and disconnected
-        branches produce identical key sets.
-        """
-        row: ClientApiRow = {
-            "id": client_id,
-            "mac_address": client_id_mac(client_id),
-            "name": snapshot.name,
-            "connected": snapshot.connected,
-            "location_code": snapshot.location_code,
-            "firmware_version": snapshot.firmware_version,
-            "sample_rate_hz": snapshot.sample_rate_hz,
-            "last_seen_age_ms": snapshot.last_seen_age_ms,
-            "frames_total": snapshot.frames_total,
-            "dropped_frames": snapshot.dropped_frames,
-        }
-        if include_metrics:
-            row["frame_samples"] = snapshot.frame_samples
-            row["latest_metrics"] = (
-                snapshot.latest_metrics if snapshot.latest_metrics is not None else ClientMetrics()
-            )
-            row["reset_count"] = snapshot.reset_count
-            row["last_reset_time"] = snapshot.last_reset_time
-        return row
-
-    def snapshot_for_api(
+    def client_snapshots(
         self,
         now: float | None = None,
         *,
         now_mono: float | None = None,
         metrics_by_client: dict[str, ClientMetrics] | None = None,
-        include_metrics: bool = True,
-    ) -> list[ClientApiRow]:
+    ) -> list[ClientSnapshot]:
+        """Return raw per-client snapshots for transport presenters."""
         with self._lock:
             now_ts = self._resolve_now_wall(now)
             mono_now = self._resolve_now_mono(now_mono)
-            rows: list[ClientApiRow] = []
+            snapshots: list[ClientSnapshot] = []
             all_client_ids = sorted(set(self._clients) | set(self._user_names))
             for client_id in all_client_ids:
                 record = self._clients.get(client_id)
                 if record is None:
-                    rows.append(
-                        self._client_api_row(
-                            client_id,
-                            ClientSnapshot(
-                                name=self._user_names.get(client_id, f"client-{client_id[-4:]}"),
-                                connected=False,
-                            ),
-                            include_metrics=include_metrics,
+                    snapshots.append(
+                        ClientSnapshot(
+                            client_id=client_id,
+                            name=self._user_names.get(client_id, f"client-{client_id[-4:]}"),
+                            connected=False,
                         ),
                     )
                     continue
@@ -595,28 +534,25 @@ class ClientRegistry:
                     record.last_seen_mono
                     and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds,
                 )
-                rows.append(
-                    self._client_api_row(
-                        record.client_id,
-                        ClientSnapshot(
-                            name=record.name,
-                            connected=connected,
-                            location_code=record.location_code,
-                            firmware_version=record.firmware_version,
-                            sample_rate_hz=record.sample_rate_hz,
-                            frame_samples=record.frame_samples,
-                            last_seen_age_ms=age_ms,
-                            frames_total=record.frames_total,
-                            dropped_frames=record.frames_dropped,
-                            latest_metrics=(
-                                metrics_by_client.get(record.client_id, {})
-                                if metrics_by_client is not None
-                                else {}
-                            ),
-                            reset_count=record.reset_count,
-                            last_reset_time=record.last_reset_time,
+                snapshots.append(
+                    ClientSnapshot(
+                        client_id=record.client_id,
+                        name=record.name,
+                        connected=connected,
+                        location_code=record.location_code,
+                        firmware_version=record.firmware_version,
+                        sample_rate_hz=record.sample_rate_hz,
+                        frame_samples=record.frame_samples,
+                        last_seen_age_ms=age_ms,
+                        frames_total=record.frames_total,
+                        dropped_frames=record.frames_dropped,
+                        latest_metrics=(
+                            metrics_by_client.get(record.client_id)
+                            if metrics_by_client is not None
+                            else None
                         ),
-                        include_metrics=include_metrics,
+                        reset_count=record.reset_count,
+                        last_reset_time=record.last_reset_time,
                     ),
                 )
-            return rows
+            return snapshots
