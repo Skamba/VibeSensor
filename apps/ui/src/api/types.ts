@@ -2,6 +2,7 @@ import type { components } from "../generated/http_api_contracts";
 
 type Schema<Name extends keyof components["schemas"]> = components["schemas"][Name];
 
+export type AnalysisSettingsRequest = Schema<"AnalysisSettingsRequest">;
 export type AnalysisSettingsPayload = Schema<"AnalysisSettingsResponse">;
 export type CarLibraryBrandsPayload = Schema<"CarLibraryBrandsResponse">;
 export type CarLibraryGearbox = Schema<"CarLibraryGearboxEntry">;
@@ -10,6 +11,7 @@ export type CarLibraryModelsPayload = Schema<"CarLibraryModelsResponse">;
 export type CarLibraryTireOption = Schema<"CarLibraryTireOptionEntry">;
 export type CarLibraryTypesPayload = Schema<"CarLibraryTypesResponse">;
 export type CarLibraryVariant = Schema<"CarLibraryVariantEntry">;
+export type CarUpsertRequest = Schema<"CarUpsertRequest">;
 export type CarRecord = Schema<"CarResponse">;
 export type CarsPayload = Schema<"CarsResponse">;
 export type ClientLocationsResponse = Schema<"ClientLocationsResponse">;
@@ -34,6 +36,8 @@ export type HistoryRunPayload = Schema<"HistoryRunResponse">;
 export type LanguagePayload = Schema<"LanguageResponse">;
 export type LocationOption = Schema<"LocationOptionResponse">;
 export type LoggingStatusPayload = Schema<"RecordingStatusResponse">;
+export type SpeedSourceKind = Schema<"SpeedSourceKind">;
+export type SpeedSourceRequest = Schema<"SpeedSourceRequest">;
 export type SpeedSourcePayload = Schema<"SpeedSourceResponse">;
 export type SpeedSourceStatusPayload = Schema<"SpeedSourceStatusResponse">;
 export type SpeedUnitPayload = Schema<"SpeedUnitResponse">;

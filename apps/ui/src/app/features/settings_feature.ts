@@ -2,8 +2,12 @@ import type { FeatureDepsBase } from "../feature_deps_base";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState } from "../ui_app_state";
 import type {
+  AnalysisSettingsRequest,
   AnalysisSettingsPayload,
+  CarUpsertRequest,
   CarsPayload,
+  SpeedSourceKind,
+  SpeedSourceRequest,
   SpeedSourcePayload,
   SpeedSourceStatusPayload,
 } from "../../api/types";
@@ -66,7 +70,12 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
 
   const GPS_POLL_FAST = 2_000;
   const GPS_POLL_SLOW = 10_000;
+  const SPEED_SOURCE_KINDS = ["gps", "manual", "obd2"] as const satisfies readonly SpeedSourceKind[];
   let gpsPollTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function isSpeedSourceKind(value: string): value is SpeedSourceKind {
+    return SPEED_SOURCE_KINDS.some((kind) => kind === value);
+  }
 
   function hasValidActiveCar(): boolean {
     return Boolean(state.activeCarId && state.cars.some((c) => c.id === state.activeCarId));
@@ -107,7 +116,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
 
   async function syncSpeedSourceToServer(): Promise<void> {
     try {
-      const payload: Record<string, unknown> = {
+      const payload: SpeedSourceRequest = {
         speedSource: state.speedSource,
         manualSpeedKph: state.manualSpeedKph,
       };
@@ -141,7 +150,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   async function syncAnalysisSettingsToServer(): Promise<void> {
-    const payload: Record<string, number> = {};
+    const payload: AnalysisSettingsRequest = {};
     for (const key of ANALYSIS_SETTING_KEYS) {
       payload[key] = state.vehicleSettings[key];
     }
@@ -277,8 +286,10 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
 
   function saveSpeedSourceFromInputs(): void {
     const radios = document.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]');
-    let src = "gps";
-    radios.forEach((r) => { if (r.checked) src = r.value; });
+    let src: SpeedSourceKind = "gps";
+    radios.forEach((r) => {
+      if (r.checked && isSpeedSourceKind(r.value)) src = r.value;
+    });
     const manual = Number(els.manualSpeedInput?.value);
     state.speedSource = src;
     state.manualSpeedKph = Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null;
@@ -336,7 +347,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   async function addCarFromWizard(name: string, carType: string, aspects: Record<string, number>, variant?: string): Promise<void> {
     try {
       const fullAspects = { ...state.vehicleSettings, ...aspects };
-      const payload: Record<string, unknown> = { name, type: carType, aspects: fullAspects };
+      const payload: CarUpsertRequest = { name, type: carType, aspects: fullAspects };
       if (variant) payload.variant = variant;
       const result = await addSettingsCar(payload);
       if (Array.isArray(result.cars)) {
