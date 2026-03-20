@@ -85,7 +85,8 @@ in order. Each step runs exactly once per analysis invocation.
 | `_types.py` | ~50 | Local type aliases (`PhaseEvidence`, `FindingPayload`, `AnalysisSummary`) |
 | `summary_builder.py` | ~1100 | Top-level pipeline orchestration: `RunAnalysis`, `PreparedRunData`, `AnalysisResult`, `build_summary_payload` |
 | `findings.py` | ~400 | Finding construction and enrichment: `PeakFindingAnalyzer`, `finalize_findings`, `build_reference_findings`, `prepare_analysis_samples` |
-| `order_analysis.py` | ~1000 | Order-tracking engine: `OrderAnalysisSession`, hypothesis matching, confidence scoring, engine-alias suppression |
+| `order_analysis.py` | ~750 | Order-tracking engine: `OrderAnalysisSession`, hypothesis matching, confidence scoring, and finding assembly |
+| `order_heuristics.py` | ~150 | Heuristic filters and tuning constants for diffuse excitation, localization overrides, and engine-alias suppression |
 | `peak_binning.py` | ~450 | Peak accumulation and scoring across samples |
 | `signal_aggregation.py` | ~250 | Speed/location aggregation helpers |
 | `phase_segmentation.py` | ~300 | Driving-phase classification (IDLE → COAST_DOWN) |

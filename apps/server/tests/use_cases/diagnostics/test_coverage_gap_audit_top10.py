@@ -19,10 +19,10 @@ from vibesensor.domain import (
 )
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.use_cases.diagnostics import summarize_run_data
-from vibesensor.use_cases.diagnostics.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
-from vibesensor.use_cases.diagnostics.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_heuristics import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
 from vibesensor.use_cases.diagnostics.order_statistics import (

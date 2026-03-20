@@ -27,13 +27,11 @@ from vibesensor.use_cases.diagnostics.findings import (
     _reference_missing_finding,
     _speed_profile_from_points,
 )
-from vibesensor.use_cases.diagnostics.order_analysis import (
-    _compute_effective_match_rate,
-)
-from vibesensor.use_cases.diagnostics.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_analysis import _compute_effective_match_rate
+from vibesensor.use_cases.diagnostics.order_heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )
-from vibesensor.use_cases.diagnostics.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_heuristics import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
 from vibesensor.use_cases.diagnostics.order_statistics import (
