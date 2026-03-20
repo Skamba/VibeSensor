@@ -1,8 +1,4 @@
-"""Order-band math and diagnostic settings.
-
-Computes vehicle-order frequencies (wheel, driveshaft, engine) and tolerance
-bands from speed and car-specification analysis settings.
-"""
+"""Shared vehicle-order math for live telemetry and diagnostics."""
 
 from __future__ import annotations
 
@@ -18,6 +14,16 @@ from vibesensor.shared.constants import (
 )
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.types.payload_types import OrderBandPayload
+
+__all__ = [
+    "as_float_or_none",
+    "build_diagnostic_settings",
+    "build_order_bands",
+    "combined_relative_uncertainty",
+    "order_tolerances",
+    "tolerance_for_order",
+    "vehicle_orders_hz",
+]
 
 
 def build_diagnostic_settings(overrides: Mapping[str, object] | None = None) -> dict[str, float]:
@@ -63,12 +69,7 @@ def order_tolerances(
     orders_hz: dict[str, float],
     order_reference_spec: OrderReferenceSpec,
 ) -> tuple[float, float, float]:
-    """Compute (wheel_tol, drive_tol, engine_tol) for the given order frequencies.
-
-    Both callers (build_order_bands and classify_peak_hz) need
-    the same trio of tolerance values.  Centralising the computation here avoids
-    repeating the five-parameter call pattern three times per site.
-    """
+    """Compute (wheel_tol, drive_tol, engine_tol) for the given order frequencies."""
     common = {
         "min_abs_band_hz": order_reference_spec.min_abs_band_hz,
         "max_band_half_width_pct": order_reference_spec.max_band_half_width_pct,
@@ -98,11 +99,7 @@ def build_order_bands(
     orders_hz: dict[str, float],
     analysis_settings: Mapping[str, object],
 ) -> list[OrderBandPayload]:
-    """Pre-compute order tolerance bands so the frontend doesn't duplicate this math.
-
-    This is a pure function that depends only on the order frequencies and
-    analysis settings — no runtime state required.
-    """
+    """Pre-compute order tolerance bands so the frontend doesn't duplicate this math."""
     resolved = build_diagnostic_settings(analysis_settings)
     order_reference_spec = OrderReferenceSpec.from_settings(resolved)
     if order_reference_spec is None:
@@ -141,10 +138,7 @@ def vehicle_orders_hz(
     speed_mps: float | None,
     settings: Mapping[str, object],
 ) -> dict[str, float] | None:
-    """Return per-order frequencies in Hz for the given speed and settings.
-
-    Returns ``None`` when *speed_mps* is unavailable or non-positive.
-    """
+    """Return per-order frequencies in Hz for the given speed and settings."""
     if speed_mps is None or not isfinite(speed_mps) or speed_mps <= 0:
         return None
     spec_settings = build_diagnostic_settings(settings)

@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 from vibesensor.shared.constants import UI_PUSH_HZ
 
 if TYPE_CHECKING:
-    from vibesensor.infra.runtime.state import RuntimeState
+    from vibesensor.app.runtime_state import RuntimeState
 
     StartUdpReceiver = Callable[
         ...,

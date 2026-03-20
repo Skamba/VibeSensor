@@ -7,13 +7,13 @@ from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
+from vibesensor.app.runtime_state import RuntimeState
 from vibesensor.app.settings import AppConfig
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.infra.runtime.state import RuntimeState
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL

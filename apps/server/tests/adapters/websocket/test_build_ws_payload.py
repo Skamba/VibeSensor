@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 from vibesensor.domain import AnalysisSettingsSnapshot
 
 if TYPE_CHECKING:
-    from vibesensor.infra.runtime import RuntimeState
+    from vibesensor.app.runtime_state import RuntimeState
 
 # ---------------------------------------------------------------------------
 # Minimal stubs – only implement methods called by build_ws_payload / on_ws_broadcast_tick
@@ -145,7 +145,8 @@ def _make_state(
     ui_push_hz: int = 10,
     ui_heavy_push_hz: int = 4,
 ) -> RuntimeState:
-    import vibesensor.infra.runtime as runtime_module
+    from vibesensor.app.runtime_state import RuntimeState
+    from vibesensor.infra.runtime import RuntimeHealthState
     from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
     from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 
@@ -154,14 +155,14 @@ def _make_state(
     gps_monitor = _StubGPS()
     settings_store = _StubSettingsStore()
     processing_state = ProcessingLoopState()
-    health_state = runtime_module.RuntimeHealthState()
+    health_state = RuntimeHealthState()
     config = _StubConfig(
         processing=_StubProcessingConfig(
             ui_push_hz=ui_push_hz,
             ui_heavy_push_hz=ui_heavy_push_hz,
         ),
     )
-    state = runtime_module.RuntimeState(
+    state = RuntimeState(
         config=config,
         registry=registry,
         processor=processor,

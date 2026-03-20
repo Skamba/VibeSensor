@@ -7,13 +7,17 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
 
 1. **Analysis runs only once** — after a recording is stopped.
    Report rendering and API endpoints use persisted results.
-2. **Single package** — all analysis logic lives in
-   `apps/server/vibesensor/use_cases/diagnostics/`. No analysis helpers elsewhere.
+2. **Diagnostics-first package** — diagnostic orchestration, ranking, and
+   post-stop reasoning live in `apps/server/vibesensor/use_cases/diagnostics/`.
+   The shared vehicle-order frequency math used by both diagnostics and live
+   telemetry lives in `apps/server/vibesensor/shared/order_bands.py`.
 3. **Single entrypoint** — `RunAnalysis(...).summarize()` (or the procedural
    wrapper `summarize_run_data()`) is the pipeline entrypoint.
 4. **Public API** — external code imports from `vibesensor.use_cases.diagnostics`:
    `summarize_run_data()`, `build_findings_for_samples()`, `summarize_log()`,
    `RunAnalysis`, `AnalysisResult`, `build_order_bands()`, `vehicle_orders_hz()`.
+   The diagnostics package re-exports the order-band helpers from
+   `vibesensor.shared.order_bands`.
 5. **Renderer-only report package** — `vibesensor.adapters.pdf` must not
    import from `vibesensor.use_cases.diagnostics` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
@@ -72,7 +76,7 @@ in order. Each step runs exactly once per analysis invocation.
 
 | Module | LOC | Responsibility |
 |--------|-----|---------------|
-| `__init__.py` | ~50 | Public API re-exports |
+| `__init__.py` | ~50 | Public API re-exports, including shared order-band helpers |
 | `_types.py` | ~50 | Local type aliases (`PhaseEvidence`, `FindingPayload`, `AnalysisSummary`) |
 | `summary_builder.py` | ~1100 | Top-level pipeline orchestration: `RunAnalysis`, `PreparedRunData`, `AnalysisResult`, `build_summary_payload` |
 | `findings.py` | ~400 | Finding construction and enrichment: `PeakFindingAnalyzer`, `finalize_findings`, `build_reference_findings`, `prepare_analysis_samples` |
@@ -82,7 +86,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `phase_segmentation.py` | ~300 | Driving-phase classification (IDLE → COAST_DOWN) |
 | `location_analysis.py` | ~300 | Per-sensor-location vibration intensity and spatial analysis |
 | `top_cause_selection.py` | ~80 | Phase-adjusted finding ranking and grouping |
-| `order_bands.py` | ~150 | Tire/driveline order-frequency band computation |
+| `shared/order_bands.py` | ~150 | Shared tire/driveline order-frequency band computation for diagnostics and live telemetry |
 | `helpers.py` | ~500 | Shared formatting, axis helpers, statistics utilities |
 | `plots.py` | ~700 | Chart data shaping: FFT, spectrogram, time-series, peak table |
 
