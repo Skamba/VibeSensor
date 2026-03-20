@@ -3,6 +3,10 @@
 ``PostAnalysisWorker`` manages a non-evicting queue of run IDs and a single
 daemon thread that processes them sequentially. It is entirely decoupled
 from the data-collection path and can be tested independently.
+
+Persistence access and write-error callbacks are supplied by the caller via
+constructor injection. The diagnostics analysis entrypoint itself is still the
+current locally wired implementation inside ``_run_post_analysis()``.
 """
 
 from __future__ import annotations
@@ -55,6 +59,12 @@ class PostAnalysisWorker:
         ``last_write_error`` attribute.
     clear_error_callback:
         Called (no args) when an error condition is resolved.
+
+    Notes
+    -----
+    The queue/thread orchestration depends only on the injected persistence
+    port plus the error callbacks. The analysis pipeline entrypoint is still
+    resolved inside ``_run_post_analysis()``.
 
     """
 
