@@ -91,6 +91,8 @@ class PhaseEvidence(TypedDict, total=False):
 
 
 class AmplitudeMetric(TypedDict):
+    """Presentation-only vibration-strength summary attached to a finding payload."""
+
     name: str
     value: float | None
     units: str
@@ -164,42 +166,51 @@ class RunSuitabilityCheck(TypedDict):
 
 
 class FindingPayload(TypedDict, total=False):
+    """Serialized finding payload used at transport and persistence boundaries.
+
+    This payload intentionally remains a superset of the domain
+    :class:`~vibesensor.domain.Finding`:
+
+    * direct domain fields are copied across unchanged,
+    * ``evidence_summary``, ``frequency_hz_or_order``, ``amplitude_metric``,
+      and the confidence label fields are presentation-oriented projections
+      computed during ``finding_payload_from_domain()``,
+    * ``matched_points``, ``phase_evidence``, ``evidence_metrics``,
+      ``location_hotspot``, and ``signatures_observed`` are boundary mirrors
+      of richer domain sub-objects.
+    """
+
+    # Direct domain-owned finding state.
     finding_id: Required[str]
-    suspected_source: Required[str]
-    evidence_summary: Required[JsonValue]
-    frequency_hz_or_order: Required[JsonValue]
-    amplitude_metric: Required[AmplitudeMetric]
-    confidence: Required[float | None]
-    quick_checks: Required[list[JsonValue]]
-    finding_kind: str
     finding_key: str
+    suspected_source: Required[str]
+    confidence: Required[float | None]
+    finding_kind: str
     severity: str
-    confidence_label_key: str
-    confidence_tone: str
-    confidence_pct: str
-    matched_points: list[MatchedPoint]
-    location_hotspot: LocationHotspotPayload | None
     strongest_location: str | None
     strongest_speed_band: str | None
     dominant_phase: str | None
-    peak_speed_kmh: float | None
-    speed_window_kmh: list[float] | None
     dominance_ratio: float | None
-    localization_confidence: float
     weak_spatial_separation: bool
-    corroborating_locations: int
     diffuse_excitation: bool
-    phase_evidence: PhaseEvidence | None
-    evidence_metrics: FindingEvidenceMetrics
-    next_sensor_move: JsonValue
-    actions: list[JsonObject]
     ranking_score: float
     peak_classification: str
-    phase_presence: dict[str, float] | None
-    signatures_observed: list[str]
-    grouped_count: int
     order: str
-    diagnostic_caveat: JsonValue
+
+    # Presentation-only projections computed from domain-owned data.
+    evidence_summary: Required[JsonValue]
+    frequency_hz_or_order: Required[JsonValue]
+    amplitude_metric: Required[AmplitudeMetric]
+    confidence_label_key: str
+    confidence_tone: str
+    confidence_pct: str
+
+    # Boundary mirrors of richer nested domain objects.
+    matched_points: list[MatchedPoint]
+    location_hotspot: LocationHotspotPayload | None
+    phase_evidence: PhaseEvidence | None
+    evidence_metrics: FindingEvidenceMetrics
+    signatures_observed: list[str]
 
 
 # ---------------------------------------------------------------------------

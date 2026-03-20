@@ -55,7 +55,6 @@ def make_finding_payload(
             "definition": {"_i18n_key": "METRIC"},
         },
         "confidence": confidence,
-        "quick_checks": [],
         "ranking_score": ranking_score,
     }
     if severity != "diagnostic":
