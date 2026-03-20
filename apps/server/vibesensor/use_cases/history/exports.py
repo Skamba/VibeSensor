@@ -15,8 +15,8 @@ from typing import TypeGuard
 
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.json_utils import sanitize_for_json
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
-from vibesensor.shared.types.run_persistence import RunPersistence
 from vibesensor.use_cases.history.helpers import (
     HistoryRecord,
     async_require_run,

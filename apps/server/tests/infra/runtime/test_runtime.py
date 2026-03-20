@@ -409,9 +409,7 @@ def test_runtime_state_uses_focused_ports_for_read_side_runtime_fields() -> None
     from vibesensor.app import runtime_state as runtime_state_module
     from vibesensor.app.runtime_state import RuntimeState
     from vibesensor.app.settings import AppConfig
-    from vibesensor.shared.types.client_tracker import ClientTracker
-    from vibesensor.shared.types.settings_reader import SettingsReader
-    from vibesensor.shared.types.signal_source import SignalSource
+    from vibesensor.shared.ports import ClientTracker, SettingsReader, SignalSource
 
     hints = get_type_hints(
         RuntimeState,

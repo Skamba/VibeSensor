@@ -18,10 +18,9 @@ from typing import TYPE_CHECKING
 from vibesensor.domain import CarSnapshot
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
+from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
-from vibesensor.shared.types.run_persistence import RunPersistence
-from vibesensor.shared.types.settings_reader import SettingsReader
 from vibesensor.use_cases.history.helpers import (
     HistoryRecord,
     async_require_run,

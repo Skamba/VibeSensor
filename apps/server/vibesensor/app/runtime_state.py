@@ -15,9 +15,7 @@ from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
-from vibesensor.shared.types.client_tracker import ClientTracker
-from vibesensor.shared.types.settings_reader import SettingsReader
-from vibesensor.shared.types.signal_source import SignalSource
+from vibesensor.shared.ports import ClientTracker, SettingsReader, SignalSource
 from vibesensor.use_cases.run import RunRecorder
 from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
