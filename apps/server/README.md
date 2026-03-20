@@ -26,7 +26,7 @@ Backend ownership boundaries:
 - `infra/config/`: runtime settings stores used by recording and runtime services.
 - `use_cases/diagnostics/`: post-stop analysis/findings logic.
 - `use_cases/run/`: recording orchestration and post-analysis queue.
-- `adapters/persistence/` and `use_cases/history/`: SQLite persistence, runlog I/O, car library loading, and history/report/export services.
+- `adapters/persistence/`, `shared/boundaries/`, and `use_cases/history/`: SQLite persistence, shared run-log decoding/normalization, car library loading, and history/report/export services.
 - `adapters/pdf/`: PDF/report rendering pipeline.
 - `use_cases/updates/`: wheel-based update flow.
 - `adapters/hotspot/`: Wi-Fi AP monitoring, parsing, and self-heal infrastructure.

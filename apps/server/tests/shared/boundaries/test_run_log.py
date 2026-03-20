@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.adapters.persistence.runlog import (
+from vibesensor.shared.boundaries.run_log import (
     RUN_METADATA_TYPE,
     normalize_sample_record,
     read_jsonl_run,
@@ -266,7 +266,7 @@ def test_read_jsonl_run_logs_warning_for_corrupt_lines(
     path.write_text("\n".join(lines) + "\n")
     import logging
 
-    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.persistence.runlog"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.shared.boundaries.run_log"):
         run_data = read_jsonl_run(path)
     assert len(run_data.samples) == 1
     assert "Skipping corrupt JSONL line 2" in caplog.text
@@ -327,7 +327,7 @@ def test_read_jsonl_run_warns_on_duplicate_metadata(
 
     import logging
 
-    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.persistence.runlog"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.shared.boundaries.run_log"):
         run_data = read_jsonl_run(path)
 
     # First metadata wins
@@ -356,7 +356,7 @@ def test_read_jsonl_run_end_record_without_end_time_utc_leaves_metadata_unchange
 
     import logging
 
-    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.persistence.runlog"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.shared.boundaries.run_log"):
         run_data = read_jsonl_run(path)
 
     # end_time_utc must NOT be set to None

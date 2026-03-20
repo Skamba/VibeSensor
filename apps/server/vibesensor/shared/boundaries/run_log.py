@@ -1,8 +1,4 @@
-"""Run-log I/O — reading and normalising JSONL run files.
-
-Provides helpers for reading metric run files in JSONL format,
-plus normalisation helpers for canonical field name handling.
-"""
+"""Shared JSONL run-log boundary decoder used by diagnostics and persistence."""
 
 from __future__ import annotations
 
@@ -12,15 +8,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.shared.types.backend_types import (
     RUN_END_TYPE,
     RUN_METADATA_TYPE,
     RUN_SAMPLE_TYPE,
 )
 from vibesensor.shared.types.json_types import JsonObject
-
-LOGGER = logging.getLogger(__name__)
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
     "RUN_METADATA_TYPE",
@@ -29,6 +23,8 @@ __all__ = [
     "normalize_sample_record",
     "read_jsonl_run",
 ]
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -41,11 +37,7 @@ class RunData:
 
 
 def normalize_sample_record(record: JsonObject) -> JsonObject:
-    """Normalize a raw sample dict into canonical form.
-
-    Delegates to :class:`SensorFrame` for field parsing.  Extra keys present
-    in *record* but not part of the SensorFrame schema are preserved.
-    """
+    """Normalize a raw sample dict into canonical form."""
     frame = SensorFrame.from_dict(record)
     normalized = dict(record)
     normalized.update(cast(JsonObject, frame.to_dict()))

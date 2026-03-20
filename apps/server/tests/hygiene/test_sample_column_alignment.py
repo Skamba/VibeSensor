@@ -3,7 +3,7 @@
 The same sample field set is defined independently in:
 - Schema DDL (``_schema.py`` ``samples_v2`` table)
 - Insertion columns (``_samples.py`` ``_V2_COLUMNS``)
-- Domain model (``domain_models.py`` ``SensorFrame``)
+- Shared typed sample schema (``shared/types/sensor_frame.py`` ``SensorFrame``)
 - CSV export (``exports.py`` ``EXPORT_CSV_COLUMNS``)
 
 A typo or omission in any of these produces silent NULL insertion or missing
@@ -17,7 +17,7 @@ import dataclasses
 
 from vibesensor.adapters.persistence.history_db._samples import _V2_COLUMNS
 from vibesensor.adapters.persistence.history_db._schema import SCHEMA_SQL
-from vibesensor.adapters.udp.protocol import SensorFrame
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import EXPORT_CSV_COLUMNS
 
 # Known source-specific columns that are intentionally absent from other sources.
