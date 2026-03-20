@@ -26,10 +26,7 @@ from vibesensor.domain import (
 from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.analysis_payload import (
-    AnalysisSummary,
-    FindingPayload,
-)
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.diagnostic_case import (
     case_context_from_metadata,
 )
@@ -68,8 +65,8 @@ from vibesensor.use_cases.diagnostics.statistics import (
     compute_reference_completeness,
 )
 from vibesensor.use_cases.diagnostics.summary_serialization import (
-    annotate_peaks_with_order_labels,
     build_summary_payload,
+    serialize_plot_data,
 )
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 
@@ -376,16 +373,6 @@ class RunAnalysis:
         summary_speed_stats = _speed_stats(self._prepared.speed_values)
         summary_phase_info = build_phase_summary(self._prepared.phase_segments)
 
-        # Serialize domain findings to payloads for the summary
-        from vibesensor.shared.boundaries.finding import finding_payload_from_domain
-
-        findings: list[FindingPayload] = [
-            cast(FindingPayload, finding_payload_from_domain(f)) for f in domain_findings
-        ]
-        top_causes: list[FindingPayload] = [
-            cast(FindingPayload, finding_payload_from_domain(f)) for f in final_top_causes
-        ]
-
         summary = build_summary_payload(
             file_name=self._file_name,
             run_id=self._prepared.run_id,
@@ -399,8 +386,8 @@ class RunAnalysis:
             phase_segments=self._prepared.phase_segments,
             run_noise_baseline_g=self._prepared.run_noise_baseline_g,
             speed_breakdown_skipped_reason=self._prepared.speed_breakdown_skipped_reason,
-            findings=findings,
-            top_causes=top_causes,
+            findings=domain_findings,
+            top_causes=final_top_causes,
             most_likely_origin=most_likely_origin,
             test_plan=summary_test_plan,
             phase_timeline=phase_timeline,
@@ -421,13 +408,19 @@ class RunAnalysis:
             reference_complete=reference_complete,
         )
         summary["report_date"] = self._metadata.get("end_time_utc") or utc_now_iso()
-        summary["plots"] = _plot_data(
-            summary,
-            run_noise_baseline_g=self._prepared.run_noise_baseline_g,
-            per_sample_phases=self._prepared.per_sample_phases,
-            phase_segments=self._prepared.phase_segments,
+        summary["plots"] = serialize_plot_data(
+            _plot_data(
+                samples=self._samples,
+                speed_breakdown=self._prepared.speed_breakdown,
+                phase_speed_breakdown=self._prepared.phase_speed_breakdown,
+                findings=domain_findings,
+                raw_sample_rate_hz=self._prepared.raw_sample_rate_hz,
+                steady_speed=self._prepared.is_steady_speed,
+                run_noise_baseline_g=self._prepared.run_noise_baseline_g,
+                per_sample_phases=self._prepared.per_sample_phases,
+                phase_segments=self._prepared.phase_segments,
+            ),
         )
-        annotate_peaks_with_order_labels(summary)
         cast(dict[str, object], summary)["_summary_version"] = 2
         if not self._include_samples:
             summary.pop("samples", None)

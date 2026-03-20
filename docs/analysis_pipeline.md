@@ -74,16 +74,16 @@ in order. Each step runs exactly once per analysis invocation.
 | 7 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
 | 8 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | summary_builder | Check reference completeness plus data-quality and run-condition checks |
 | 9 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
-| 10 | Summary construction | `build_summary_payload` | summary_builder | Assemble the final `AnalysisSummary` dict |
-| 11 | Plot generation | `_plot_data`, `top_peaks_table_rows` | summary_builder, plots, peak_table | Build time/speed series, FFT aggregation, spectrograms, and peak table rows |
-| 12 | Peak annotation | `_annotate_peaks_with_order_labels` | summary_builder | Label peaks with human-readable order names |
+| 10 | Summary construction | `build_summary_payload` | summary_builder, summary_serialization | Assemble the final `AnalysisSummary` dict and serialize domain/app artifacts at the boundary seam |
+| 11 | Plot generation | `_plot_data`, `top_peaks_table_rows` | summary_builder, plots, peak_table | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
+| 12 | Plot serialization | `serialize_plot_data`, `annotate_peak_rows_with_order_labels` | summary_builder, summary_serialization, peak_table | Serialize plot bundles for persistence/report payloads after internal order-label annotation |
 
 ## Module Responsibilities
 
 | Module | LOC | Responsibility |
 |--------|-----|---------------|
 | `__init__.py` | ~50 | Public API re-exports, including shared order-band helpers |
-| `_types.py` | ~50 | Local type aliases (`PhaseEvidence`, `FindingPayload`, `AnalysisSummary`) |
+| `_types.py` | ~150 | Diagnostics-local aliases and value objects (`AccelStatistics`, speed/phase breakdown rows, plot bundles, peak rows, spectrogram data) |
 | `summary_builder.py` | ~500 | Top-level pipeline orchestration: `RunAnalysis`, `AnalysisResult`, finding/suitability assembly, and final `AnalysisSummary` construction |
 | `run_data_preparation.py` | ~200 | Shared run timing/speed/phase/sensor preparation: `PreparedRunData`, `prepare_run_data`, phase timeline helpers |
 | `findings.py` | ~400 | Finding construction and enrichment: `PeakFindingAnalyzer`, `finalize_findings`, `build_reference_findings`, `prepare_analysis_samples` |
@@ -99,8 +99,9 @@ in order. Each step runs exactly once per analysis invocation.
 | `helpers.py` | ~300 | Diagnostics-specific run/sample extraction, metadata/reference helpers, and formatting utilities |
 | `math_utils.py` | ~100 | Generic statistics and correlation helpers reused across diagnostics modules |
 | `speed_profile_helpers.py` | ~150 | Speed-profile construction and phase/speed summary helpers |
-| `plots.py` | ~700 | Chart data shaping orchestration: time-series extraction plus FFT/spectrogram assembly |
-| `peak_table.py` | ~200 | Peak-table row ranking and persistence-weighted statistics |
+| `plots.py` | ~300 | Chart data shaping orchestration over diagnostics-local value objects: time-series extraction plus FFT/spectrogram assembly |
+| `peak_table.py` | ~250 | Peak-table row ranking, persistence-weighted statistics, and internal order-label annotation |
+| `summary_serialization.py` | ~350 | Dedicated serialization seam from domain/app diagnostics value objects to persisted `AnalysisSummary` payloads |
 
 ## Data Flow
 
@@ -118,10 +119,12 @@ Input: samples (list[JsonObject]) + metadata (JsonObject)
   │    └─ select_top_causes() → ranked top causes
   │
   ├─ build_summary_payload() → AnalysisSummary dict
-  │    ├─ findings, top causes, origin, test plan, suitability
-  │    └─ accel stats, speed breakdown, phase timeline
+  │    ├─ findings/top causes serialized from domain Finding
+  │    ├─ speed + phase breakdown rows serialized from diagnostics-local value objects
+  │    └─ origin, test plan, suitability, accel stats, phase timeline
   │
-  └─ plots + peak_table + peak annotation → chart data + labeled peak table
+  └─ _plot_data() → diagnostics-local PlotDataResultData
+       └─ serialize_plot_data() → persisted chart payload + labeled peak table
   │
 Output: AnalysisResult (TestRun, DiagnosticCase, AnalysisSummary)
 ```

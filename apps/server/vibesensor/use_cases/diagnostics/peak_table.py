@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Sequence
+from dataclasses import dataclass, field, replace
 from math import floor
+from statistics import median as _median
 
-from vibesensor.shared.boundaries.analysis_payload import PeakTableRow
+from vibesensor.domain import Finding as DomainFinding
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
-from vibesensor.use_cases.diagnostics._types import Sample
+from vibesensor.use_cases.diagnostics._types import PeakTableRowData, Sample
 from vibesensor.use_cases.diagnostics.findings import _classify_peak_type
 from vibesensor.use_cases.diagnostics.helpers import (
     _effective_baseline_floor,
@@ -58,7 +60,7 @@ def top_peaks_table_rows(
     freq_bin_hz: float = 1.0,
     run_noise_baseline_g: float | None = None,
     peak_scan: PeakSampleScan | None = None,
-) -> list[PeakTableRow]:
+) -> list[PeakTableRowData]:
     """Build ranked peak-table rows using persistence-weighted scoring."""
     resolved_scan = peak_scan or scan_peak_samples(samples)
     grouped: dict[float, _PeakBucket] = {}
@@ -156,7 +158,7 @@ def top_peaks_table_rows(
         reverse=True,
     )[:top_n]
 
-    rows: list[PeakTableRow] = []
+    rows: list[PeakTableRowData] = []
     for idx, item in enumerate(ordered, start=1):
         low_speed, high_speed = _amplitude_weighted_speed_window(item.speeds, item.speed_amps)
         speed_band = (
@@ -165,7 +167,7 @@ def top_peaks_table_rows(
             else "-"
         )
         rows.append(
-            PeakTableRow(
+            PeakTableRowData(
                 rank=idx,
                 frequency_hz=item.frequency_hz,
                 order_label="",
@@ -192,3 +194,54 @@ def top_peaks_table_rows(
             ),
         )
     return rows
+
+
+def annotate_peak_rows_with_order_labels(
+    rows: list[PeakTableRowData],
+    findings: Sequence[DomainFinding],
+) -> list[PeakTableRowData]:
+    """Back-fill peak-table order labels using domain findings before serialization."""
+    if not rows or not findings:
+        return rows
+
+    order_annotations: list[tuple[float, str, str]] = []
+    for finding in findings:
+        if finding.finding_id != "F_ORDER" or not finding.matched_points:
+            continue
+        label = finding.order.strip() or (
+            str(finding.frequency_hz) if finding.frequency_hz is not None else ""
+        )
+        if not label:
+            continue
+        matched_freqs = [
+            point.matched_hz for point in finding.matched_points if point.matched_hz > 0
+        ]
+        if matched_freqs:
+            order_annotations.append(
+                (_median(matched_freqs), label, str(finding.suspected_source).strip()),
+            )
+
+    if not order_annotations:
+        return rows
+
+    tolerance_hz = 2.0
+    annotated = list(rows)
+    used_rows: set[int] = set()
+    for median_hz, label, suspected_source in order_annotations:
+        best_idx: int | None = None
+        best_dist = tolerance_hz + 1.0
+        for idx, row in enumerate(annotated):
+            if idx in used_rows:
+                continue
+            dist = abs(row.frequency_hz - median_hz)
+            if dist < best_dist:
+                best_idx = idx
+                best_dist = dist
+        if best_idx is not None and best_dist <= tolerance_hz:
+            annotated[best_idx] = replace(
+                annotated[best_idx],
+                order_label=label,
+                suspected_source=suspected_source,
+            )
+            used_rows.add(best_idx)
+    return annotated

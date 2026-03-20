@@ -112,7 +112,7 @@ class TestSpectrogramPersistence:
 
         diagnostic = _spectrogram_from_peaks(samples)
         raw = _spectrogram_from_peaks_raw(samples)
-        assert diagnostic["max_amp"] < raw["max_amp"]
+        assert diagnostic.max_amp < raw.max_amp
 
     def test_diagnostic_spectrogram_suppresses_broadband_near_floor(self) -> None:
         samples = [
@@ -125,8 +125,8 @@ class TestSpectrogramPersistence:
         samples.append(sample(21.0, 90.0, broadband_peaks, strength_floor_amp_g=0.05))
 
         diagnostic = _spectrogram_from_peaks(samples)
-        noisy_col = len(diagnostic["x_bins"]) - 1
-        noisy_col_values = [row[noisy_col] for row in diagnostic["cells"]]
+        noisy_col = len(diagnostic.x_bins) - 1
+        noisy_col_values = [row[noisy_col] for row in diagnostic.cells]
         assert max(noisy_col_values) == 0.0
 
 
@@ -152,7 +152,7 @@ class TestRobustness:
 
     def test_peaks_table_has_max_intensity_db(self) -> None:
         rows = _top_peaks_table_rows(uniform_samples(5, 20.0, 0.05, dt=1.0))
-        assert "max_intensity_db" in rows[0]
+        assert hasattr(rows[0], "max_intensity_db")
 
     def test_build_findings_for_samples_works(self) -> None:
         findings = build_findings_for_samples(

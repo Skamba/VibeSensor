@@ -49,7 +49,7 @@ def test_speed_breakdown_stays_fixed_10kmh_bins() -> None:
     ]
 
     rows = _speed_breakdown(samples)
-    labels = {str(row.get("speed_range") or "") for row in rows}
+    labels = {row.speed_range for row in rows}
 
     assert "70-80 km/h" in labels
     assert "80-90 km/h" in labels

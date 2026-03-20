@@ -250,7 +250,7 @@ class TestPhaseSpeedBreakdown:
 
         per_sample_phases, _ = segment_run_phases(samples)
         rows = _phase_speed_breakdown(samples, per_sample_phases)
-        phase_names = {row["phase"] for row in rows}
+        phase_names = {row.phase for row in rows}
         assert DrivingPhase.IDLE.value in phase_names
         assert (
             DrivingPhase.CRUISE.value in phase_names
@@ -276,7 +276,7 @@ class TestPhaseSpeedBreakdown:
         samples = build_phased_samples([(5, 0.0, 0.0), (10, 50.0, 80.0), (5, 0.0, 0.0)])
         per_sample_phases, _ = segment_run_phases(samples)
         rows = _phase_speed_breakdown(samples, per_sample_phases)
-        assert sum(int(row["count"]) for row in rows) == len(samples)
+        assert sum(row.count for row in rows) == len(samples)
 
     def test_amp_vs_phase_in_plots(self) -> None:
         summary = summarize_run_data(
@@ -301,8 +301,8 @@ class TestPhaseSpeedBreakdown:
             {"t_s": 2.0, "speed_kmh": 60.0, "vibration_strength_db": 12.0},
         ]
         rows = _phase_speed_breakdown(samples, ["cruise"])
-        assert sum(int(row["count"]) for row in rows) == 3
-        assert any(str(row["phase"]) == "unknown" for row in rows)
+        assert sum(row.count for row in rows) == 3
+        assert any(row.phase == "unknown" for row in rows)
 
 
 class TestPhaseInfoInSummary:

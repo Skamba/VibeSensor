@@ -347,7 +347,7 @@ class TestSpeedBreakdown:
         ]
         rows = _speed_breakdown(samples)
         assert len(rows) == 1
-        assert rows[0]["count"] == 2
+        assert rows[0].count == 2
 
 
 class TestPhaseSpeedBreakdown:
@@ -360,9 +360,9 @@ class TestPhaseSpeedBreakdown:
         ]
         phases = [DrivingPhase.CRUISE, DrivingPhase.CRUISE]
         rows = _phase_speed_breakdown(samples, phases)
-        cruise_rows = [r for r in rows if r["phase"] == "cruise"]
+        cruise_rows = [r for r in rows if r.phase == "cruise"]
         assert len(cruise_rows) == 1
-        assert cruise_rows[0]["count"] == 2
+        assert cruise_rows[0].count == 2
 
 
 class TestSensorIntensityByLocation:
