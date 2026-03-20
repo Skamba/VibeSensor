@@ -1,6 +1,8 @@
 import { apiJson } from "./http";
 import type {
+  AnalysisSettingsRequest,
   AnalysisSettingsPayload,
+  CarUpsertRequest,
   CarsPayload,
   EspFlashCancelPayload,
   EspFlashHistoryPayload,
@@ -10,6 +12,7 @@ import type {
   EspFlashStatusPayload,
   HealthStatusPayload,
   LanguagePayload,
+  SpeedSourceRequest,
   SpeedSourcePayload,
   SpeedSourceStatusPayload,
   SpeedUnitPayload,
@@ -48,7 +51,7 @@ export async function getAnalysisSettings(): Promise<AnalysisSettingsPayload> {
   return apiJson("/api/settings/analysis");
 }
 
-export async function setAnalysisSettings(payload: Record<string, number>): Promise<AnalysisSettingsPayload> {
+export async function setAnalysisSettings(payload: AnalysisSettingsRequest): Promise<AnalysisSettingsPayload> {
   return apiJson("/api/settings/analysis", {
     method: "POST",
     headers: JSON_HEADERS,
@@ -60,7 +63,7 @@ export async function getSettingsCars(): Promise<CarsPayload> {
   return apiJson("/api/settings/cars");
 }
 
-export async function addSettingsCar(car: Record<string, unknown>): Promise<CarsPayload> {
+export async function addSettingsCar(car: CarUpsertRequest): Promise<CarsPayload> {
   return apiJson("/api/settings/cars", {
     method: "POST",
     headers: JSON_HEADERS,
@@ -68,7 +71,7 @@ export async function addSettingsCar(car: Record<string, unknown>): Promise<Cars
   });
 }
 
-export async function updateSettingsCar(carId: string, car: Record<string, unknown>): Promise<CarsPayload> {
+export async function updateSettingsCar(carId: string, car: CarUpsertRequest): Promise<CarsPayload> {
   return apiJson(`/api/settings/cars/${encodeURIComponent(carId)}`, {
     method: "PUT",
     headers: JSON_HEADERS,
@@ -94,7 +97,7 @@ export async function getSettingsSpeedSource(): Promise<SpeedSourcePayload> {
   return apiJson("/api/settings/speed-source");
 }
 
-export async function updateSettingsSpeedSource(data: Record<string, unknown>): Promise<SpeedSourcePayload> {
+export async function updateSettingsSpeedSource(data: SpeedSourceRequest): Promise<SpeedSourcePayload> {
   return apiJson("/api/settings/speed-source", {
     method: "POST",
     headers: JSON_HEADERS,
