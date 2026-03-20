@@ -1,8 +1,10 @@
 """Metrics recording orchestrator.
 
-``RunRecorder`` coordinates recording lifecycle, session state, and
-history-DB persistence in a single class.  Focused helpers live in:
+``RunRecorder`` coordinates the recording loop, lifecycle delegation, and
+history-DB persistence. Focused helpers live in:
 
+- :mod:`vibesensor.use_cases.run.lifecycle_state` — in-memory recording
+  session lifecycle state.
 - :mod:`vibesensor.use_cases.run.sample_builder` — pure sample record
   construction.
 - :mod:`vibesensor.use_cases.run.post_analysis` — background analysis
@@ -21,13 +23,13 @@ from threading import RLock
 from typing import TYPE_CHECKING, cast
 from uuid import uuid4
 
-from vibesensor.domain import Run
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.shared.constants import NUMERIC_TYPES
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_persistence import RunPersistence
+from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
@@ -57,13 +59,6 @@ blocking the metrics-logger event loop indefinitely."""
 # ---------------------------------------------------------------------------
 # Return-value dataclasses
 # ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True, slots=True)
-class ActiveRunSnapshot:
-    run_id: str
-    start_time_utc: str
-    start_mono_s: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,12 +107,7 @@ class RecorderShutdownReport:
 
 
 class RunRecorder:
-    """Manages recording of runs, post-analysis, and history persistence.
-
-    Session lifecycle and persistence coordination are handled inline;
-    focused helpers live in sibling modules (``sample_builder``,
-    ``post_analysis``).
-    """
+    """Manages recording of runs, post-analysis, and history persistence."""
 
     def __init__(
         self,
@@ -148,19 +138,10 @@ class RunRecorder:
         self._language_provider = language_provider
         self._live_start_mono_s = time.monotonic()
 
-        # --- Session state ---
-        # The Run domain object owns run identity
-        # (run_id) and lifecycle status (pending → running → stopped).
-        # Infrastructure-level concerns (monotonic timestamps, frame counts,
-        # timeout tracking) remain as standalone fields.
-        self._current_run: Run | None = None
-        self._run_no_data_timeout_s: float = max(1.0, float(config.no_data_timeout_s))
-        self._run_start_utc: str | None = None
-        self._run_start_mono_s: float | None = None
-        self._run_last_data_progress_mono_s: float | None = None
-        self._run_start_frames_total: int = 0
-        self._run_last_active_frames_total: int = 0
-        self._run_shutdown_requested: bool = False
+        # --- Session lifecycle ---
+        self._lifecycle = RunLifecycleState(
+            no_data_timeout_s=max(1.0, float(config.no_data_timeout_s)),
+        )
 
         # --- Persistence coordination ---
         self._persist_history_db_enabled: bool = bool(config.persist_history_db)
@@ -190,8 +171,7 @@ class RunRecorder:
 
     @property
     def enabled(self) -> bool:
-        run = self._current_run
-        return run is not None and run.is_recording
+        return self._lifecycle.enabled
 
     @property
     def last_write_duration_s(self) -> float:
@@ -203,119 +183,12 @@ class RunRecorder:
 
     @property
     def _run_id(self) -> str | None:
-        run = self._current_run
-        return run.run_id if run is not None else None
+        return self._lifecycle.run_id
 
     def _analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         if self._settings_store is not None:
             return self._settings_store.analysis_settings_snapshot()
         return AnalysisSettingsSnapshot.from_dict(AnalysisSettingsSnapshot.DEFAULTS)
-
-    # -----------------------------------------------------------------------
-    # Session state
-    # -----------------------------------------------------------------------
-
-    def _run_start_new(
-        self,
-        *,
-        run_id: str,
-        start_time_utc: str,
-        start_mono_s: float,
-        current_total: int,
-    ) -> ActiveRunSnapshot:
-        with self._lock:
-            session = Run(
-                run_id=run_id,
-                analysis_settings=self._analysis_settings_snapshot(),
-            )
-            session.start()
-            self._current_run = session
-            self._run_start_utc = start_time_utc
-            self._run_start_mono_s = start_mono_s
-            self._run_last_data_progress_mono_s = start_mono_s
-            self._run_start_frames_total = current_total
-            self._run_last_active_frames_total = current_total
-            return ActiveRunSnapshot(
-                run_id=run_id,
-                start_time_utc=start_time_utc,
-                start_mono_s=start_mono_s,
-            )
-
-    def _run_stop(self) -> None:
-        with self._lock:
-            run = self._current_run
-            if run is not None and run.is_recording:
-                run.stop()
-            self._current_run = None
-            self._run_start_utc = None
-            self._run_start_mono_s = None
-            self._run_last_data_progress_mono_s = None
-            self._run_start_frames_total = 0
-            self._run_last_active_frames_total = 0
-
-    def _run_snapshot(self) -> ActiveRunSnapshot | None:
-        with self._lock:
-            if (
-                not self.enabled
-                or not self._run_id
-                or not self._run_start_utc
-                or self._run_start_mono_s is None
-            ):
-                return None
-            return ActiveRunSnapshot(
-                run_id=self._run_id,
-                start_time_utc=self._run_start_utc,
-                start_mono_s=self._run_start_mono_s,
-            )
-
-    def _run_pending_flush_snapshot(
-        self,
-        *,
-        current_total: int,
-        history_run_created: bool,
-    ) -> ActiveRunSnapshot | None:
-        with self._lock:
-            run_id = self._run_id
-            if (
-                not self.enabled
-                or not run_id
-                or not self._run_start_utc
-                or self._run_start_mono_s is None
-            ):
-                return None
-            if history_run_created:
-                if current_total <= self._run_last_active_frames_total:
-                    return None
-            elif current_total <= self._run_start_frames_total:
-                return None
-            return ActiveRunSnapshot(
-                run_id=run_id,
-                start_time_utc=self._run_start_utc,
-                start_mono_s=self._run_start_mono_s,
-            )
-
-    def _run_should_drop_prebuilt_rows(
-        self, *, current_total: int, history_run_created: bool
-    ) -> bool:
-        with self._lock:
-            return (not history_run_created) and current_total <= self._run_start_frames_total
-
-    def _run_refresh_data_progress(self, *, now_mono_s: float, current_total: int) -> None:
-        with self._lock:
-            if current_total != self._run_last_active_frames_total:
-                self._run_last_active_frames_total = current_total
-                self._run_last_data_progress_mono_s = now_mono_s
-
-    def _run_mark_rows_written(self, *, now_mono_s: float) -> None:
-        with self._lock:
-            self._run_last_data_progress_mono_s = now_mono_s
-
-    def _run_should_auto_stop(self, *, now_mono_s: float) -> bool:
-        with self._lock:
-            if self._run_last_data_progress_mono_s is None:
-                return False
-            elapsed = now_mono_s - self._run_last_data_progress_mono_s
-            return elapsed >= self._run_no_data_timeout_s
 
     # -----------------------------------------------------------------------
     # Persistence coordination
@@ -352,7 +225,7 @@ class RunRecorder:
             return None
 
     def _persist_run_id_matches(self, run_id: str) -> bool:
-        current = self._current_run
+        current = self._lifecycle.current_run
         return current is not None and current.run_id == run_id
 
     def _persist_ensure_history_run(
@@ -525,8 +398,9 @@ class RunRecorder:
     # -----------------------------------------------------------------------
 
     def _start_new_run_locked(self) -> ActiveRunSnapshot:
-        snapshot = self._run_start_new(
+        snapshot = self._lifecycle.start_new_run(
             run_id=uuid4().hex,
+            analysis_settings_snapshot=self._analysis_settings_snapshot(),
             start_time_utc=utc_now_iso(),
             start_mono_s=time.monotonic(),
             current_total=self._active_frames_total(),
@@ -535,7 +409,7 @@ class RunRecorder:
         return snapshot
 
     def _stop_session_locked(self) -> None:
-        self._run_stop()
+        self._lifecycle.stop()
         self._persist_reset()
 
     def _active_frames_total(self) -> int:
@@ -547,7 +421,7 @@ class RunRecorder:
         )
 
     def _session_snapshot(self) -> ActiveRunSnapshot | None:
-        return self._run_snapshot()
+        return self._lifecycle.snapshot()
 
     # -----------------------------------------------------------------------
     # Public API
@@ -610,7 +484,7 @@ class RunRecorder:
         completed_run_id: str | None = None
         flush_snapshot: ActiveRunSnapshot | None = None
         with self._lock:
-            if self._run_shutdown_requested:
+            if self._lifecycle.shutdown_requested:
                 LOGGER.info(
                     "Ignoring start_recording() while metrics logger shutdown is in progress.",
                 )
@@ -720,7 +594,7 @@ class RunRecorder:
         )
 
     def _pending_flush_snapshot_locked(self) -> ActiveRunSnapshot | None:
-        return self._run_pending_flush_snapshot(
+        return self._lifecycle.pending_flush_snapshot(
             current_total=self._active_frames_total(),
             history_run_created=self._persist_history_run_created,
         )
@@ -737,7 +611,7 @@ class RunRecorder:
         if self._run_id != run_id:
             return False
         current_total = self._active_frames_total()
-        self._run_refresh_data_progress(now_mono_s=now_mono_s, current_total=current_total)
+        self._lifecycle.refresh_data_progress(now_mono_s=now_mono_s, current_total=current_total)
         history_created = self._persist_history_run_created
         t_s = max(0.0, now_mono_s - run_start_mono_s)
         timestamp_utc = utc_now_iso()
@@ -748,7 +622,7 @@ class RunRecorder:
         if (
             prebuilt_rows is not None
             and rows
-            and self._run_should_drop_prebuilt_rows(
+            and self._lifecycle.should_drop_prebuilt_rows(
                 current_total=current_total,
                 history_run_created=history_created,
             )
@@ -757,19 +631,19 @@ class RunRecorder:
         if rows:
             if self._run_id != run_id:
                 return False
-            self._run_mark_rows_written(now_mono_s=now_mono_s)
+            self._lifecycle.mark_rows_written(now_mono_s=now_mono_s)
             self._persist_append_rows(
                 run_id=run_id,
                 start_time_utc=start_time_utc,
                 rows=rows,
             )
-        return (self._run_id == run_id) and self._run_should_auto_stop(now_mono_s=now_mono_s)
+        return (self._run_id == run_id) and self._lifecycle.should_auto_stop(now_mono_s=now_mono_s)
 
     def _finalize_run_locked(self) -> bool:
         run_id = self._run_id
         if not run_id:
             return True
-        start_time_utc = self._run_start_utc or utc_now_iso()
+        start_time_utc = self._lifecycle.start_time_utc or utc_now_iso()
         end_utc = utc_now_iso()
         return self._persist_finalize_run(run_id, start_time_utc, end_utc)
 
@@ -782,7 +656,7 @@ class RunRecorder:
     def shutdown_report(self, timeout_s: float = 30.0) -> RecorderShutdownReport:
         with self._lock:
             active_run_id_before_stop = self._run_id
-        self._run_shutdown_requested = True
+        self._lifecycle.shutdown_requested = True
         try:
             final_status = self.stop_recording()
             analysis_completed = self.wait_for_post_analysis(timeout_s)
@@ -798,7 +672,7 @@ class RunRecorder:
                 final_status=final_status,
             )
         finally:
-            self._run_shutdown_requested = False
+            self._lifecycle.shutdown_requested = False
 
     def shutdown(self, timeout_s: float = 30.0) -> bool:
         return self.shutdown_report(timeout_s).completed
@@ -843,7 +717,7 @@ class RunRecorder:
                         LOGGER.info(
                             "Auto-stopping run %s after %.1fs without new data",
                             snapshot.run_id,
-                            self._run_no_data_timeout_s,
+                            self._lifecycle.no_data_timeout_s,
                         )
                         self.stop_recording(_only_if_run_id=snapshot.run_id)
             except TimeoutError:
