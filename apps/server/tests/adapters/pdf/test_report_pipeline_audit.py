@@ -5,7 +5,9 @@ from __future__ import annotations
 
 
 from vibesensor.adapters.pdf.mapping import map_summary
-from vibesensor.adapters.pdf.mapping import peak_classification_text as _peak_classification_text
+from vibesensor.adapters.pdf.presentation import (
+    peak_classification_text as _peak_classification_text,
+)
 from vibesensor.report_i18n import tr
 
 # ---------------------------------------------------------------------------
