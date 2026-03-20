@@ -74,7 +74,7 @@ in order. Each step runs exactly once per analysis invocation.
 | 8 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | summary_builder | Check reference completeness plus data-quality and run-condition checks |
 | 9 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
 | 10 | Summary construction | `build_summary_payload` | summary_builder | Assemble the final `AnalysisSummary` dict |
-| 11 | Plot generation | `_plot_data` | summary_builder, plots | Build time/speed series, FFT aggregation, spectrograms, and peak table |
+| 11 | Plot generation | `_plot_data`, `top_peaks_table_rows` | summary_builder, plots, peak_table | Build time/speed series, FFT aggregation, spectrograms, and peak table rows |
 | 12 | Peak annotation | `_annotate_peaks_with_order_labels` | summary_builder | Label peaks with human-readable order names |
 
 ## Module Responsibilities
@@ -97,7 +97,8 @@ in order. Each step runs exactly once per analysis invocation.
 | `helpers.py` | ~300 | Diagnostics-specific run/sample extraction, metadata/reference helpers, and formatting utilities |
 | `math_utils.py` | ~100 | Generic statistics and correlation helpers reused across diagnostics modules |
 | `speed_profile_helpers.py` | ~150 | Speed-profile construction and phase/speed summary helpers |
-| `plots.py` | ~700 | Chart data shaping: FFT, spectrogram, time-series, peak table |
+| `plots.py` | ~700 | Chart data shaping orchestration: time-series extraction plus FFT/spectrogram assembly |
+| `peak_table.py` | ~200 | Peak-table row ranking and persistence-weighted statistics |
 
 ## Data Flow
 
@@ -118,7 +119,7 @@ Input: samples (list[JsonObject]) + metadata (JsonObject)
   │    ├─ findings, top causes, origin, test plan, suitability
   │    └─ accel stats, speed breakdown, phase timeline
   │
-  └─ plots + peak annotation → chart data + labeled peak table
+  └─ plots + peak_table + peak annotation → chart data + labeled peak table
   │
 Output: AnalysisResult (TestRun, DiagnosticCase, AnalysisSummary)
 ```
