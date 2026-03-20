@@ -6,6 +6,7 @@ import numpy as np
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
+from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
 from vibesensor.infra.runtime.registry import ClientRegistry
 
 
@@ -29,7 +30,7 @@ def test_registry_sequence_gap(tmp_path: Path) -> None:
     registry.update_from_data(msg0, ("10.4.0.2", 50000), now=2.0)
     registry.update_from_data(msg1, ("10.4.0.2", 50000), now=3.0)
 
-    row = registry.snapshot_for_api(now=3.0)[0]
+    row = snapshot_for_api(registry, now=3.0)[0]
     assert row["frames_total"] == 2
     assert row["dropped_frames"] == 1
     assert row["mac_address"] == "aa:bb:cc:dd:ee:ff"
@@ -51,7 +52,7 @@ def test_registry_rename_persist(tmp_path: Path) -> None:
     )
     registry2.update_from_hello(hello, ("10.4.0.3", 9011), now=5.0)
 
-    row = registry2.snapshot_for_api(now=5.0)[0]
+    row = snapshot_for_api(registry2, now=5.0)[0]
     assert row["name"] == "rear"
 
 
@@ -64,7 +65,7 @@ def test_registry_rename_normalizes_client_id(tmp_path: Path) -> None:
     registry.set_name(lower_id, "rear")
     registry.set_name(upper_id, "rear-updated")
 
-    rows = registry.snapshot_for_api(now=1.0)
+    rows = snapshot_for_api(registry, now=1.0)
     assert len(rows) == 1
     assert rows[0]["id"] == lower_id
     assert rows[0]["name"] == "rear-updated"
@@ -77,7 +78,7 @@ def test_registry_snapshot_includes_persisted_offline_clients(tmp_path: Path) ->
     registry.set_name(offline_id, "rear-right-wheel")
 
     registry2 = ClientRegistry(db=db)
-    rows = {row["id"]: row for row in registry2.snapshot_for_api(now=10.0)}
+    rows = {row["id"]: row for row in snapshot_for_api(registry2, now=10.0)}
     assert rows[offline_id]["name"] == "rear-right-wheel"
     assert rows[offline_id]["connected"] is False
     assert rows[offline_id]["mac_address"] == "00:11:22:33:44:55"
@@ -113,7 +114,7 @@ def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
         now=4.0,
     )
 
-    rows = {row["id"]: row for row in registry2.snapshot_for_api(now=4.0)}
+    rows = {row["id"]: row for row in snapshot_for_api(registry2, now=4.0)}
     assert rows[offline_id]["name"] == "offline-node"
 
 
@@ -134,7 +135,7 @@ def test_registry_hello_uses_advertised_control_port(tmp_path: Path) -> None:
     assert record is not None
     assert record.control_addr == ("10.4.0.2", 9010)
 
-    row = registry.snapshot_for_api(now=1.0)[0]
+    row = snapshot_for_api(registry, now=1.0)[0]
     assert row["frame_samples"] == 200
 
 
@@ -189,7 +190,9 @@ def test_registry_staleness_uses_monotonic_clock_when_now_not_provided(
     now["mono"] = 105.0
 
     assert registry.active_client_ids() == ["001122334455"]
-    row = registry.snapshot_for_api()[0]
+    row = snapshot_for_api(
+        registry,
+    )[0]
     assert row["connected"] is True
 
     now["mono"] = 120.1
@@ -206,7 +209,7 @@ def test_registry_remove_client_clears_persisted_entry(tmp_path: Path) -> None:
     assert registry.remove_client(client_id) is False
 
     registry2 = ClientRegistry(db=db)
-    rows = registry2.snapshot_for_api(now=1.0)
+    rows = snapshot_for_api(registry2, now=1.0)
     assert rows == []
 
 
@@ -245,7 +248,7 @@ def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path
         ("10.4.0.2", 50000),
         now=3.0,
     )
-    row = registry.snapshot_for_api(now=3.0)[0]
+    row = snapshot_for_api(registry, now=3.0)[0]
     assert row["reset_count"] == 1
     assert row["dropped_frames"] == 0
 
@@ -297,7 +300,7 @@ def test_registry_clear_name_reverts_to_default(tmp_path: Path) -> None:
 
     # Verify persistence: the cleared name should NOT come back after reload
     registry2 = ClientRegistry(db=db)
-    rows = registry2.snapshot_for_api(now=1.0)
+    rows = snapshot_for_api(registry2, now=1.0)
     names = [r["name"] for r in rows if r["id"] == client_id]
     # After clearing, the client may or may not appear in snapshot (depending on
     # whether it's currently connected). If it appears, it should have the default name.
@@ -337,7 +340,7 @@ def test_set_location_populates_client_record(tmp_path: Path) -> None:
 
     hex_id = "aabbccddeeff"
     # Before assignment: location should be empty
-    row_before = registry.snapshot_for_api(now=1.0)[0]
+    row_before = snapshot_for_api(registry, now=1.0)[0]
     assert row_before["location_code"] == ""
 
     # Assign location
@@ -345,7 +348,7 @@ def test_set_location_populates_client_record(tmp_path: Path) -> None:
     assert record.location_code == "front_left_wheel"
 
     # After assignment: snapshot must expose the location
-    row_after = registry.snapshot_for_api(now=2.0)[0]
+    row_after = snapshot_for_api(registry, now=2.0)[0]
     assert row_after["location_code"] == "front_left_wheel"
 
 
@@ -354,7 +357,7 @@ def test_set_location_trims_whitespace(tmp_path: Path) -> None:
     registry = ClientRegistry(db=db)
     hex_id = "001122334455"
     registry.set_location(hex_id, "  rear_axle  ")
-    row = registry.snapshot_for_api(now=1.0)[0]
+    row = snapshot_for_api(registry, now=1.0)[0]
     assert row["location_code"] == "rear_axle"
 
 
@@ -407,7 +410,7 @@ def test_duplicate_seq_is_detected(tmp_path: Path) -> None:
     r2 = registry.update_from_data(msg, ("10.4.0.2", 50000), now=3.0)
     assert r2.is_duplicate is True
 
-    row = registry.snapshot_for_api(now=3.0)[0]
+    row = snapshot_for_api(registry, now=3.0)[0]
     assert row["frames_total"] == 1
     assert registry.get(client_id.hex()).duplicates_received == 1
 
@@ -425,7 +428,7 @@ def test_duplicate_does_not_inflate_frames_total(tmp_path: Path) -> None:
         msg = _data_msg(client_id, seq, seq * 10000)
         registry.update_from_data(msg, ("10.4.0.2", 50000), now=10.0 + seq)
 
-    row = registry.snapshot_for_api(now=15.0)[0]
+    row = snapshot_for_api(registry, now=15.0)[0]
     assert row["frames_total"] == 5
     assert registry.get(client_id.hex()).duplicates_received == 2
     assert row["dropped_frames"] == 0
@@ -444,7 +447,7 @@ def test_out_of_order_not_flagged_as_duplicate(tmp_path: Path) -> None:
     r = registry.update_from_data(msg1, ("10.4.0.2", 50000), now=5.0)
     assert r.is_duplicate is False
 
-    row = registry.snapshot_for_api(now=5.0)[0]
+    row = snapshot_for_api(registry, now=5.0)[0]
     assert row["frames_total"] == 3
     assert registry.get(client_id.hex()).duplicates_received == 0
 
@@ -468,7 +471,7 @@ def test_reset_clears_seen_seqs(tmp_path: Path) -> None:
     r2 = registry.update_from_data(msg_1, ("10.4.0.2", 50000), now=4.0)
     assert r2.is_duplicate is False
 
-    row = registry.snapshot_for_api(now=4.0)[0]
+    row = snapshot_for_api(registry, now=4.0)[0]
     assert row["frames_total"] == 3
     assert registry.get(client_id.hex()).duplicates_received == 0
 
@@ -486,7 +489,7 @@ def test_short_session_restart_not_flagged_as_duplicate(tmp_path: Path) -> None:
         msg = _data_msg(client_id, seq, seq * 10000)
         registry.update_from_data(msg, ("10.4.0.2", 50000), now=2.0 + seq * 0.01)
 
-    row = registry.snapshot_for_api(now=3.0)[0]
+    row = snapshot_for_api(registry, now=3.0)[0]
     assert row["frames_total"] == 50
     assert registry.get(client_id.hex()).duplicates_received == 0
 
@@ -496,6 +499,6 @@ def test_short_session_restart_not_flagged_as_duplicate(tmp_path: Path) -> None:
         r = registry.update_from_data(msg, ("10.4.0.2", 50000), now=5.0 + seq * 0.01)
         assert r.is_duplicate is False, f"seq={seq} wrongly flagged as duplicate"
 
-    row2 = registry.snapshot_for_api(now=6.0)[0]
+    row2 = snapshot_for_api(registry, now=6.0)[0]
     assert row2["frames_total"] == 100
     assert registry.get(client_id.hex()).duplicates_received == 0

@@ -45,10 +45,10 @@ def _make_state(**kwargs: Any) -> Any:
 
 def test_build_ws_payload_includes_schema_version() -> None:
     state = _make_state(
-        clients=[{"id": "aaa", "name": "front"}],
+        clients=[{"id": "aaaaaaaaaaaa", "name": "front"}],
         ws_include_heavy=True,
     )
-    payload = state.ws_broadcast.build_payload(selected_client="aaa")
+    payload = state.ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
     assert "schema_version" in payload
     assert payload["schema_version"] == SCHEMA_VERSION
 
