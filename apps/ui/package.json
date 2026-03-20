@@ -19,6 +19,7 @@
     "snapshot:update": "node update-snapshots.mjs"
   },
   "dependencies": {
+    "ajv": "^8.18.0",
     "uplot": "^1.6.31"
   },
   "devDependencies": {

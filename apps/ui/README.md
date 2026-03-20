@@ -66,14 +66,10 @@ and chart behavior.
 
 - `src/contracts/ws_payload_schema.json` is the canonical JSON Schema for live WS payloads.
 - `src/contracts/ws_payload_types.ts` is generated from that schema by `npm run sync:contracts`.
-- `src/server_payload.ts` is not just a type wrapper today: it also applies runtime normalization such as schema-version warnings, shared-`freq` fallback, partial `strength_metrics` defaults, and malformed-entry dropping before the rest of the UI sees a payload.
+- `src/ws_payload_validator.ts` compiles AJV against `ws_payload_schema.json` and validates the normalized live payload at runtime.
+- `src/server_payload.ts` now keeps the compatibility layer thin: it normalizes the small set of supported legacy `strength_metrics` quirks before validation, then adapts the validated `LiveWsPayload` with schema-version warnings and shared-`freq` fallback.
 
-Investigation summary for schema-generated runtime decoders:
-
-- Tested `ajv` directly against `src/contracts/ws_payload_schema.json`. The schema compiled successfully and correctly accepted a fully populated `LiveWsPayload` sample while rejecting bad field types.
-- The same AJV spike rejected payload shapes that the UI currently accepts and normalizes in `server_payload.ts`, especially spectra entries with partial `strength_metrics` objects that rely on UI-side defaulting.
-- Recommendation: prefer an AJV-backed boundary validator because the repo already has JSON Schema as the WS source of truth; keep a thin adapter layer after validation for shared-`freq` fallback, backwards-compatible defaults, and warning/log behavior instead of trying to replace `server_payload.ts` with a pure generated decoder in one step.
-- Effort estimate: **Medium**. A follow-up implementation needs to add and wire the validator, decide which legacy payload shapes remain supported, update WS fixtures/tests, and only then simplify the remaining manual adaptation logic.
+AJV-backed runtime validation now sits at the WebSocket boundary. The UI still preserves the intentionally supported compatibility behavior called out in the original investigation—partial `strength_metrics` defaults, malformed peak dropping, shared-`freq` fallback, and schema-version warning logging—but the rest of the payload now has to satisfy the canonical JSON Schema before the app state adapter accepts it.
 
 ## Visual Tests
 
