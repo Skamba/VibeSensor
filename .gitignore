@@ -51,6 +51,7 @@ __pycache__/
 # Runtime data
 apps/server/data/*.csv
 apps/server/data/*.jsonl
+apps/server/data/*.log
 apps/server/data/*.db
 apps/server/data/*.db-shm
 apps/server/data/*.db-wal

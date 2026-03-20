@@ -1,8 +1,0 @@
-2026-03-18 20:15:53,531 ERROR    vibesensor.app.container: Failed during early startup DB operations; closing DB.
-Traceback (most recent call last):
-  File "/home/psewu/repos/VibeSensor/apps/server/vibesensor/app/container.py", line 46, in create_history_db
-    recovered_runs = history_db.recover_stale_recording_runs()
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/psewu/repos/VibeSensor/apps/server/vibesensor/adapters/persistence/history_db/__init__.py", line 450, in recover_stale_recording_runs
-    cur.execute(
-sqlite3.OperationalError: attempt to write a readonly database
