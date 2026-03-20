@@ -8,9 +8,9 @@ from math import isfinite, sqrt
 from pathlib import Path
 from typing import TypedDict
 
-from vibesensor.adapters.persistence.runlog import read_jsonl_run
 from vibesensor.domain import OrderReferenceSpec, SpeedProfileSummary, TireSpec
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
+from vibesensor.shared.boundaries.run_log import read_jsonl_run
 from vibesensor.shared.constants import (
     KMH_TO_MPS,
     MEMS_NOISE_FLOOR_G,

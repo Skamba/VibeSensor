@@ -8,7 +8,6 @@ from typing import Any
 
 import pytest
 
-from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.domain import Car
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.types.backend_types import (
@@ -17,6 +16,7 @@ from vibesensor.shared.types.backend_types import (
     SpeedSourceConfig,
     car_to_persistence_dict,
 )
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 # ---------------------------------------------------------------------------
 # Helper parsers
