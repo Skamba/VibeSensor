@@ -41,7 +41,7 @@ in one step.
 | `ws.ts` | WebSocket client with auto-reconnect and stale detection |
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
 | `spectrum.ts` | uPlot chart wrapper for interactive spectrum visualization |
-| `server_payload.ts` | TypeScript type definitions for server messages |
+| `server_payload.ts` | Runtime WebSocket payload adaptation, normalization, and schema-version guardrails around the generated WS types |
 | `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
 | `vehicle_math.ts` | Tire diameter, order tolerance, and uncertainty calculations |
 | `format.ts` | Number, byte, and timestamp formatting utilities |
@@ -62,6 +62,19 @@ The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
 composition root instead of becoming a single-file owner for transport, shell,
 and chart behavior. If you change startup wiring or long-lived UI ownership,
 update this README and the AI repo maps in the same change set.
+
+## WebSocket contract boundary
+
+- `src/contracts/ws_payload_schema.json` is the canonical JSON Schema for live WS payloads.
+- `src/contracts/ws_payload_types.ts` is generated from that schema by `npm run sync:contracts`.
+- `src/server_payload.ts` is not just a type wrapper today: it also applies runtime normalization such as schema-version warnings, shared-`freq` fallback, partial `strength_metrics` defaults, and malformed-entry dropping before the rest of the UI sees a payload.
+
+Investigation summary for schema-generated runtime decoders:
+
+- Tested `ajv` directly against `src/contracts/ws_payload_schema.json`. The schema compiled successfully and correctly accepted a fully populated `LiveWsPayload` sample while rejecting bad field types.
+- The same AJV spike rejected payload shapes that the UI currently accepts and normalizes in `server_payload.ts`, especially spectra entries with partial `strength_metrics` objects that rely on UI-side defaulting.
+- Recommendation: prefer an AJV-backed boundary validator because the repo already has JSON Schema as the WS source of truth; keep a thin adapter layer after validation for shared-`freq` fallback, backwards-compatible defaults, and warning/log behavior instead of trying to replace `server_payload.ts` with a pure generated decoder in one step.
+- Effort estimate: **Medium**. A follow-up implementation needs to add and wire the validator, decide which legacy payload shapes remain supported, update WS fixtures/tests, and only then simplify the remaining manual adaptation logic.
 
 ## Visual Tests
 
