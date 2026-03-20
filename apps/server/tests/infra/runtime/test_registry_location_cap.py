@@ -13,7 +13,7 @@ from pathlib import Path
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
-from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.infra.runtime.registry import ClientRegistry, _resolve_now_mono
 
 _CLIENT_ID = "aabbccddeeff"
 
@@ -104,7 +104,7 @@ def test_resolve_now_mono_returns_provided_value() -> None:
     deterministic test injection impossible.
     """
     pinned = 42.0
-    result = ClientRegistry._resolve_now_mono(pinned)
+    result = _resolve_now_mono(pinned)
     assert result == pinned
 
 
@@ -113,7 +113,7 @@ def test_resolve_now_mono_none_returns_monotonic_like_value() -> None:
     import time
 
     before = time.monotonic()
-    result = ClientRegistry._resolve_now_mono(None)
+    result = _resolve_now_mono(None)
     after = time.monotonic()
     assert isinstance(result, float)
     assert before <= result <= after

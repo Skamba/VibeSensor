@@ -7,7 +7,6 @@ timestamps) and exposes raw client snapshots for transport presenters.
 from __future__ import annotations
 
 import logging
-import sqlite3
 import time
 from dataclasses import dataclass, field
 from threading import RLock
@@ -20,7 +19,12 @@ from vibesensor.adapters.udp.protocol import (
     client_id_hex,
 )
 from vibesensor.domain import normalize_sensor_id as _normalize_client_id
+from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
+from vibesensor.infra.runtime.registry_updates import (
+    DataUpdateResult,
+    apply_data_message_update,
+)
 from vibesensor.shared.types.payload_types import ClientMetrics
 
 if TYPE_CHECKING:
@@ -30,55 +34,17 @@ LOGGER = logging.getLogger(__name__)
 
 __all__ = ["ClientRecord", "ClientRegistry", "ClientSnapshot", "DataUpdateResult"]
 
-# Maximum number of recent sequence numbers tracked per client for
-# deduplication.  Bounds memory while covering the largest realistic
-# retransmit / out-of-order window on a local Wi-Fi link.
-_DEDUP_WINDOW = 128
-# Maximum backward distance (last_seq − incoming seq) that still looks
-# like a genuine retransmit / UDP duplicate.  Anything beyond this is
-# treated as a client restart so that the dedup window is cleared.
-_DEDUP_RESTART_GAP = 4
 
-# Magic-number extraction: sequence gap that indicates a client restarted
-# its firmware (as opposed to a minor out-of-order retransmit).
-_RESTART_SEQ_GAP = 1000
-"""If a DATA message's seq is more than this many steps behind last_seq,
-the client is assumed to have rebooted and counters are reset."""
+def _resolve_now_wall(now: float | None) -> float:
+    """Return wall-clock ``now`` if provided, else ``time.time()``."""
 
-# EMA smoothing factor for timing jitter tracking.
-_JITTER_EMA_ALPHA = 0.2
-"""Exponential moving-average smoothing factor (0–1) for per-client
-timing jitter estimates.  Smaller values smooth more; 0.2 gives ~5-sample
-effective window."""
-
-# 32-bit sequence-number arithmetic masks (used in update_from_data).
-_SEQ_MASK = 0xFFFFFFFF
-_SEQ_HALF = 0x80000000
+    return time.time() if now is None else now
 
 
-def _sanitize_name(name: str) -> str:
-    """Sanitize a client name: strip control chars, enforce 32 UTF-8 byte limit."""
-    # Strip control characters (U+0000–U+001F, U+007F) except common whitespace
-    clean = "".join(c for c in name if (o := ord(c)) >= 0x20 and o != 0x7F)
-    clean = clean.strip()
-    if not clean:
-        return ""
-    # Truncate to at most 32 UTF-8 bytes without splitting multi-byte characters.
-    # We slice at 32 bytes and decode with errors="ignore" which drops any
-    # incomplete trailing byte sequence — this is safe because the source is
-    # valid UTF-8 from ``str.encode()``.
-    encoded = clean.encode("utf-8", errors="ignore")
-    if len(encoded) <= 32:
-        return clean
-    return encoded[:32].decode("utf-8", errors="ignore")
+def _resolve_now_mono(now_mono: float | None) -> float:
+    """Return monotonic ``now_mono`` if provided, else ``time.monotonic()``."""
 
-
-@dataclass(slots=True)
-class DataUpdateResult:
-    """Return value of :meth:`ClientRegistry.update_from_data`."""
-
-    reset_detected: bool = False
-    is_duplicate: bool = False
+    return time.monotonic() if now_mono is None else now_mono
 
 
 @dataclass(slots=True)
@@ -144,64 +110,25 @@ class ClientRegistry:
         stale_ttl_seconds: float = 120.0,
     ):
         self._lock = RLock()
-        self._db = db
         self._stale_ttl_seconds = max(1.0, stale_ttl_seconds)
         self._clients: dict[str, ClientRecord] = {}
-        self._user_names: dict[str, str] = {}
-        self._load_persisted_names()
-
-    def _load_persisted_names(self) -> None:
-        if self._db is None:
-            return
-        try:
-            # Read from DB *outside* the registry lock so that incoming UDP
-            # frames during startup are not blocked waiting for DB I/O.
-            rows = self._db.list_client_names()
-        except sqlite3.Error as exc:
-            LOGGER.warning("Could not load persisted client names from DB: %s", exc)
-            return
-        with self._lock:
-            for client_id, name in rows.items():
-                clean = _sanitize_name(name)
-                if clean:
-                    self._user_names[client_id] = clean
-
-    def _persist_name(self, client_id: str, name: str) -> None:
-        if self._db is None:
-            return
-        try:
-            self._db.upsert_client_name(client_id, name)
-        except sqlite3.Error:
-            LOGGER.warning("Failed to persist client name to DB", exc_info=True)
-
-    def _delete_persisted_name(self, client_id: str) -> None:
-        if self._db is None:
-            return
-        try:
-            self._db.delete_client_name(client_id)
-        except sqlite3.Error:
-            LOGGER.warning("Failed to delete client name from DB", exc_info=True)
-
-    @staticmethod
-    def _resolve_now_wall(now: float | None) -> float:
-        """Return wall-clock ``now`` if provided, else ``time.time()``."""
-        return time.time() if now is None else now
-
-    @staticmethod
-    def _resolve_now_mono(now_mono: float | None) -> float:
-        """Return monotonic ``now_mono`` if provided, else ``time.monotonic()``.
-
-        Callers **must not** pass a wall-clock value here — the monotonic
-        and wall-clock domains are intentionally separate to avoid eviction
-        bugs when system time jumps.
-        """
-        return time.monotonic() if now_mono is None else now_mono
+        self._metadata = ClientMetadataManager(
+            lock=self._lock,
+            get_or_create=self._get_or_create,
+            list_client_names=(lambda: db.list_client_names()) if db is not None else None,
+            persist_client_name=(lambda client_id, name: db.upsert_client_name(client_id, name))
+            if db is not None
+            else None,
+            delete_client_name=(lambda client_id: db.delete_client_name(client_id))
+            if db is not None
+            else None,
+        )
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
         normalized = _normalize_client_id(client_id)
         record = self._clients.get(normalized)
         if record is None:
-            default_name = self._user_names.get(normalized, f"client-{normalized[-4:]}")
+            default_name = self._metadata.default_name_for(normalized)
             record = ClientRecord(client_id=normalized, name=default_name)
             self._clients[normalized] = record
         return record
@@ -215,8 +142,8 @@ class ClientRegistry:
         now_mono: float | None = None,
     ) -> None:
         with self._lock:
-            now_ts = self._resolve_now_wall(now)
-            mono = self._resolve_now_mono(now_mono)
+            now_ts = _resolve_now_wall(now)
+            mono = _resolve_now_mono(now_mono)
             client_id = client_id_hex(hello.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
@@ -231,10 +158,7 @@ class ClientRegistry:
                 record.clear_dedup()
             record.firmware_version = hello.firmware_version
             record.queue_overflow_drops = hello.queue_overflow_drops
-            if client_id not in self._user_names:
-                advertised = _sanitize_name(hello.name)
-                if advertised:
-                    record.name = advertised
+            self._metadata.apply_advertised_name(record, hello.name)
 
     def update_from_data(
         self,
@@ -251,88 +175,19 @@ class ClientRegistry:
         Duplicates are tracked but do not inflate counters or timing metrics.
         """
         with self._lock:
-            now_ts = self._resolve_now_wall(now)
-            mono = self._resolve_now_mono(now_mono)
+            now_ts = _resolve_now_wall(now)
+            mono = _resolve_now_mono(now_mono)
             client_id = client_id_hex(data_msg.client_id)
             record = self._get_or_create(client_id)
-            record.last_seen = now_ts
-            record.last_seen_mono = mono
-            record.data_addr = (addr[0], addr[1])
-
-            # Local-bind constants used in hot-path arithmetic below.
-            seq_mask = _SEQ_MASK
-            seq_half = _SEQ_HALF
-            dedup_window = _DEDUP_WINDOW
-            restart_gap = _RESTART_SEQ_GAP
-            dedup_restart_gap = _DEDUP_RESTART_GAP
-            jitter_alpha = _JITTER_EMA_ALPHA
-
-            # --- Deduplication check ---
-            if record.has_seq(data_msg.seq):
-                # Distinguish genuine retransmit from client restart.
-                # A retransmit has seq close to last_seq (backward ≤ gap).
-                # A restart reuses low seq numbers while last_seq is higher.
-                # Note: backward=0 covers same-seq retransmit (last_seq ==
-                # data_msg.seq) and forward duplicates — both are genuine dups.
-                # Wraparound is not handled; 32-bit seq wraps after ~4 billion
-                # frames which far exceeds any realistic session.
-                backward = (
-                    (record.last_seq - data_msg.seq)
-                    if record.last_seq is not None and record.last_seq > data_msg.seq
-                    else 0
-                )
-                if backward <= dedup_restart_gap:
-                    record.duplicates_received += 1
-                    return DataUpdateResult(is_duplicate=True)
-                # Likely client restart — clear dedup window and accept.
-                record.clear_dedup()
-
-            record.record_seq(data_msg.seq)
-            record.prune_seqs(dedup_window)
-
-            # --- Normal (non-duplicate) processing ---
-            record.frames_total += 1
-            reset_detected = False
-            if (
-                record.sample_rate_hz > 0
-                and data_msg.sample_count > 0
-                and record.last_t0_us is not None
-                and data_msg.t0_us >= record.last_t0_us
-            ):
-                expected_delta_us = (
-                    float(data_msg.sample_count) / float(record.sample_rate_hz)
-                ) * 1_000_000.0
-                actual_delta_us = float(data_msg.t0_us - record.last_t0_us)
-                jitter_us = actual_delta_us - expected_delta_us
-                record.timing_jitter_us_ema = (
-                    1.0 - jitter_alpha
-                ) * record.timing_jitter_us_ema + jitter_alpha * jitter_us
-                record.timing_drift_us_total += jitter_us
-            if record.last_seq is not None:
-                if (
-                    data_msg.seq < record.last_seq
-                    and (record.last_seq - data_msg.seq) > restart_gap
-                ):
-                    record.reset_count += 1
-                    record.last_reset_time = now_ts
-                    record.last_t0_us = None
-                    record.timing_jitter_us_ema = 0.0
-                    record.timing_drift_us_total = 0.0
-                    record.clear_dedup()
-                    record.record_seq(data_msg.seq)
-                    reset_detected = True
-                else:
-                    expected = (record.last_seq + 1) & seq_mask
-                    if data_msg.seq != expected:
-                        gap = (data_msg.seq - expected) & seq_mask
-                        if gap < seq_half:
-                            record.frames_dropped += gap
-            # Only advance last_seq forward to prevent out-of-order UDP
-            # packets from regressing the counter and inflating frames_dropped.
-            if record.last_seq is None or ((data_msg.seq - record.last_seq) & seq_mask) < seq_half:
-                record.last_seq = data_msg.seq
-            record.last_t0_us = data_msg.t0_us
-            return DataUpdateResult(reset_detected=reset_detected)
+            return apply_data_message_update(
+                record,
+                seq=data_msg.seq,
+                sample_count=data_msg.sample_count,
+                t0_us=data_msg.t0_us,
+                addr=addr,
+                now_ts=now_ts,
+                mono=mono,
+            )
 
     def update_from_ack(
         self,
@@ -342,8 +197,8 @@ class ClientRegistry:
         now_mono: float | None = None,
     ) -> None:
         with self._lock:
-            now_ts = self._resolve_now_wall(now)
-            mono = self._resolve_now_mono(now_mono)
+            now_ts = _resolve_now_wall(now)
+            mono = _resolve_now_mono(now_mono)
             client_id = client_id_hex(ack.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
@@ -370,25 +225,11 @@ class ClientRegistry:
         self._note_client_counter(client_id, "server_queue_drops")
 
     def set_name(self, client_id: str, name: str) -> ClientRecord:
-        clean = _sanitize_name(name)
-        if not clean:
-            raise ValueError("Name must be non-empty and <=32 UTF-8 bytes")
-        with self._lock:
-            record = self._get_or_create(client_id)
-            record.name = clean
-            self._user_names[record.client_id] = clean
-            self._persist_name(record.client_id, clean)
-            return record
+        return self._metadata.set_name(client_id, name)
 
     def clear_name(self, client_id: str) -> ClientRecord:
         """Remove the user-assigned name and revert to the default."""
-        with self._lock:
-            record = self._get_or_create(client_id)
-            default = f"client-{record.client_id[-4:]}"
-            record.name = default
-            self._user_names.pop(record.client_id, None)
-            self._delete_persisted_name(record.client_id)
-            return record
+        return self._metadata.clear_name(client_id)
 
     def set_location(self, client_id: str, location: str) -> ClientRecord:
         """Assign a location code (e.g. ``"front-left"``) to a sensor.
@@ -430,12 +271,10 @@ class ClientRegistry:
         except ValueError:
             return False
         with self._lock:
-            existed = normalized in self._clients or normalized in self._user_names
+            had_client = normalized in self._clients
             self._clients.pop(normalized, None)
-            self._user_names.pop(normalized, None)
-            if existed:
-                self._delete_persisted_name(normalized)
-            return existed
+        had_name = self._metadata.discard_name(normalized)
+        return had_client or had_name
 
     def get(self, client_id: str) -> ClientRecord | None:
         try:
@@ -452,7 +291,7 @@ class ClientRegistry:
         now_mono: float | None = None,
     ) -> list[str]:
         with self._lock:
-            mono_now = self._resolve_now_mono(now_mono)
+            mono_now = _resolve_now_mono(now_mono)
             return [
                 record.client_id
                 for record in self._clients.values()
@@ -486,7 +325,7 @@ class ClientRegistry:
 
     def evict_stale(self, now: float | None = None, *, now_mono: float | None = None) -> list[str]:
         with self._lock:
-            mono_now = self._resolve_now_mono(now_mono)
+            mono_now = _resolve_now_mono(now_mono)
             stale_ids = [
                 client_id
                 for client_id, record in self._clients.items()
@@ -512,17 +351,17 @@ class ClientRegistry:
     ) -> list[ClientSnapshot]:
         """Return raw per-client snapshots for transport presenters."""
         with self._lock:
-            now_ts = self._resolve_now_wall(now)
-            mono_now = self._resolve_now_mono(now_mono)
+            now_ts = _resolve_now_wall(now)
+            mono_now = _resolve_now_mono(now_mono)
             snapshots: list[ClientSnapshot] = []
-            all_client_ids = sorted(set(self._clients) | set(self._user_names))
+            all_client_ids = self._metadata.known_client_ids(self._clients)
             for client_id in all_client_ids:
                 record = self._clients.get(client_id)
                 if record is None:
                     snapshots.append(
                         ClientSnapshot(
                             client_id=client_id,
-                            name=self._user_names.get(client_id, f"client-{client_id[-4:]}"),
+                            name=self._metadata.default_name_for(client_id),
                             connected=False,
                         ),
                     )
