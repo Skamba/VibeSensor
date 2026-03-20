@@ -11,20 +11,18 @@ import tempfile
 import zipfile
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, TypeGuard
+from typing import TypeGuard
 
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
+from vibesensor.shared.types.run_persistence import RunPersistence
 from vibesensor.use_cases.history.helpers import (
     HistoryRecord,
     async_require_run,
     safe_filename,
     strip_internal_fields,
 )
-
-if TYPE_CHECKING:
-    from vibesensor.adapters.persistence.history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
 
@@ -106,7 +104,7 @@ class HistoryExportService:
 
     __slots__ = ("_history_db",)
 
-    def __init__(self, history_db: HistoryDB) -> None:
+    def __init__(self, history_db: RunPersistence) -> None:
         self._history_db = history_db
 
     async def build_export(self, run_id: str) -> HistoryExportDownload:

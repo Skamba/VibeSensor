@@ -87,13 +87,7 @@ _KNOWN_VIOLATIONS: frozenset[tuple[str, str]] = frozenset(
         ("domain/strength_metrics.py", "vibesensor.coerce"),
         # shared → adapters
         # use_cases → adapters
-        ("use_cases/history/exports.py", "vibesensor.adapters.persistence.history_db"),
-        ("use_cases/history/helpers.py", "vibesensor.adapters.persistence.history_db"),
-        ("use_cases/history/reports.py", "vibesensor.adapters.persistence.history_db"),
-        ("use_cases/history/runs.py", "vibesensor.adapters.persistence.history_db"),
         ("use_cases/run/logger.py", "vibesensor.adapters.gps.gps_speed"),
-        ("use_cases/run/logger.py", "vibesensor.adapters.persistence.history_db"),
-        ("use_cases/run/post_analysis.py", "vibesensor.adapters.persistence.history_db"),
         # use_cases → infra
         ("use_cases/history/reports.py", "vibesensor.infra.config.settings_store"),
         ("use_cases/history/runs.py", "vibesensor.infra.config.settings_store"),

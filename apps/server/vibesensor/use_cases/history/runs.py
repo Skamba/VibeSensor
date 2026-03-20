@@ -10,6 +10,7 @@ from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summar
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.run_context import add_current_context_warnings, localize_warning_list
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.shared.types.run_persistence import RunPersistence
 from vibesensor.use_cases.history.helpers import (
     HistoryRecord,
     async_require_run,
@@ -19,7 +20,6 @@ from vibesensor.use_cases.history.helpers import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.persistence.history_db import HistoryDB
     from vibesensor.infra.config.settings_store import SettingsStore
 
 
@@ -28,7 +28,11 @@ class HistoryRunService:
 
     __slots__ = ("_history_db", "_settings_store")
 
-    def __init__(self, history_db: HistoryDB, settings_store: SettingsStore | None = None) -> None:
+    def __init__(
+        self,
+        history_db: RunPersistence,
+        settings_store: SettingsStore | None = None,
+    ) -> None:
         self._history_db = history_db
         self._settings_store = settings_store
 

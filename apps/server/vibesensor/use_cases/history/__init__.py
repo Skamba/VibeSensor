@@ -1,4 +1,4 @@
-"""History services — domain-logic layer above HistoryDB.
+"""History services — domain logic above the run-persistence boundary.
 
 Sub-modules
 -----------
