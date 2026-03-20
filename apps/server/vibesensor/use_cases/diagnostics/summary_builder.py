@@ -31,6 +31,10 @@ from vibesensor.shared.boundaries.diagnostic_case import (
     case_context_from_metadata,
 )
 from vibesensor.shared.boundaries.finding import step_payloads_from_plan
+from vibesensor.shared.boundaries.summary_serialization import (
+    build_summary_payload,
+    serialize_plot_data,
+)
 from vibesensor.shared.run_context import build_summary_warnings
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import JsonObject
@@ -63,10 +67,6 @@ from vibesensor.use_cases.diagnostics.statistics import (
     compute_accel_statistics,
     compute_frame_integrity_counts,
     compute_reference_completeness,
-)
-from vibesensor.use_cases.diagnostics.summary_serialization import (
-    build_summary_payload,
-    serialize_plot_data,
 )
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 

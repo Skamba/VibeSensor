@@ -73,6 +73,6 @@ def test_summary_builder_keeps_finding_projection_in_serializer_seam() -> None:
         ):
             violations.append(f"L{node.lineno}: finding_payload_from_domain")
     assert not violations, (
-        "summary_builder.py must leave finding serialization in summary_serialization.py:\n  "
+        "summary_builder.py must leave finding serialization in the boundary serializer seam:\n  "
         + "\n  ".join(violations)
     )

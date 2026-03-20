@@ -14,11 +14,9 @@ from vibesensor.shared.constants import (
     STEADY_SPEED_STDDEV_KMH,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.shared.statistics_utils import _mean_variance
 from vibesensor.use_cases.diagnostics._types import PhaseLabel, Sample
-from vibesensor.use_cases.diagnostics.math_utils import (
-    _mean_variance,
-    _weighted_percentile,
-)
+from vibesensor.use_cases.diagnostics.math_utils import _weighted_percentile
 
 
 def _amplitude_weighted_speed_window(
