@@ -148,3 +148,69 @@ test("assigning a sensor location preserves the original sensor name", async ({ 
   await expect(locationSelect).toHaveValue("front_left_wheel");
   await expect(row.locator("strong")).toHaveText("Chassis Sensor A");
 });
+
+test("failed speed-source save reverts the UI and shows an error", async ({ page }) => {
+  let dialogMessage = "";
+  page.on("dialog", async (dialog) => {
+    dialogMessage = dialog.message();
+    await dialog.accept();
+  });
+
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "GET /api/settings/language": { language: "en" },
+      "GET /api/settings/speed-unit": { speedUnit: "kmh" },
+      "GET /api/settings/speed-source": { speedSource: "gps", manualSpeedKph: null, staleTimeoutS: 5 },
+      "POST /api/settings/speed-source": async (route) => {
+        await route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({ detail: "Speed source save failed" }),
+        });
+      },
+    }),
+  });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await page.locator('input[name="speedSourceRadio"][value="manual"]').check();
+  await page.locator("#manualSpeedInput").fill("45");
+  await page.locator("#saveSpeedSourceBtn").click();
+
+  await expect.poll(() => dialogMessage).toContain("Speed source save failed");
+  await expect(page.locator('input[name="speedSourceRadio"][value="gps"]')).toBeChecked();
+  await expect(page.locator('input[name="speedSourceRadio"][value="manual"]')).not.toBeChecked();
+  await expect(page.locator("#manualSpeedInput")).toHaveValue("");
+});
+
+test("failed language save reverts the selector and shows an error", async ({ page }) => {
+  let dialogMessage = "";
+  page.on("dialog", async (dialog) => {
+    dialogMessage = dialog.message();
+    await dialog.accept();
+  });
+
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "GET /api/settings/language": { language: "en" },
+      "POST /api/settings/language": async (route) => {
+        await route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({ detail: "Language save failed" }),
+        });
+      },
+      "GET /api/settings/speed-unit": { speedUnit: "kmh" },
+    }),
+  });
+  await installFakeWebSocket(page);
+
+  await page.goto("/");
+  await page.locator("#languageSelect").selectOption("nl");
+
+  await expect.poll(() => dialogMessage).toContain("Language save failed");
+  await expect(page.locator("#languageSelect")).toHaveValue("en");
+  await expect(page.locator("#tab-settings")).toContainText("Settings");
+});

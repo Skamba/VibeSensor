@@ -241,14 +241,40 @@ export class UiShellController {
     return raw === "mps" ? "mps" : "kmh";
   }
 
-  private saveLanguage(lang: string): void {
-    this.state.lang = I18N.normalizeLang(lang);
-    void setSettingsLanguage(this.state.lang).catch(() => {});
+  private async saveLanguage(lang: string): Promise<void> {
+    const previousLang = this.state.lang;
+    const nextLang = I18N.normalizeLang(lang);
+    try {
+      const payload = await setSettingsLanguage(nextLang);
+      this.state.lang = I18N.normalizeLang(payload?.language || nextLang);
+      if (this.els.languageSelect) {
+        this.els.languageSelect.value = this.state.lang;
+      }
+      this.applyLanguage(true);
+    } catch (error) {
+      if (this.els.languageSelect) {
+        this.els.languageSelect.value = previousLang;
+      }
+      window.alert(error instanceof Error ? error.message : this.t("settings.save_failed"));
+    }
   }
 
-  private saveSpeedUnit(unit: string): void {
-    this.state.speedUnit = this.normalizeSpeedUnit(unit);
-    void setSettingsSpeedUnit(this.state.speedUnit).catch(() => {});
+  private async saveSpeedUnit(unit: string): Promise<void> {
+    const previousUnit = this.state.speedUnit;
+    const nextUnit = this.normalizeSpeedUnit(unit);
+    try {
+      const payload = await setSettingsSpeedUnit(nextUnit);
+      this.state.speedUnit = this.normalizeSpeedUnit(payload?.speedUnit || nextUnit);
+      if (this.els.speedUnitSelect) {
+        this.els.speedUnitSelect.value = this.state.speedUnit;
+      }
+      this.renderSpeedReadout();
+    } catch (error) {
+      if (this.els.speedUnitSelect) {
+        this.els.speedUnitSelect.value = previousUnit;
+      }
+      window.alert(error instanceof Error ? error.message : this.t("settings.save_failed"));
+    }
   }
 
   private speedValueInSelectedUnit(speedMps: number | null): number | null {
@@ -357,15 +383,13 @@ export class UiShellController {
     if (this.els.languageSelect) {
       this.els.languageSelect.value = this.state.lang;
       this.els.languageSelect.addEventListener("change", () => {
-        this.saveLanguage(this.els.languageSelect!.value);
-        this.applyLanguage(true);
+        void this.saveLanguage(this.els.languageSelect!.value);
       });
     }
     if (this.els.speedUnitSelect) {
       this.els.speedUnitSelect.value = this.state.speedUnit;
       this.els.speedUnitSelect.addEventListener("change", () => {
-        this.saveSpeedUnit(this.els.speedUnitSelect!.value);
-        this.renderSpeedReadout();
+        void this.saveSpeedUnit(this.els.speedUnitSelect!.value);
       });
     }
   }

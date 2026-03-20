@@ -114,26 +114,32 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     if (els.maxBandHalfWidthInput) els.maxBandHalfWidthInput.value = String(state.vehicleSettings.max_band_half_width_pct);
   }
 
-  async function syncSpeedSourceToServer(): Promise<void> {
+  function showSettingsSaveError(error: unknown): void {
+    window.alert(error instanceof Error ? error.message : t("settings.save_failed"));
+  }
+
+  function applySpeedSourcePayload(payload: SpeedSourcePayload): void {
+    state.speedSource = payload.speedSource;
+    state.manualSpeedKph = payload.manualSpeedKph;
+    if (els.staleTimeoutInput) els.staleTimeoutInput.value = String(payload.staleTimeoutS);
+    syncSpeedSourceInputs();
+    ctx.renderSpeedReadout();
+  }
+
+  async function syncSpeedSourceToServer(payload: SpeedSourceRequest): Promise<void> {
     try {
-      const payload: SpeedSourceRequest = {
-        speedSource: state.speedSource,
-        manualSpeedKph: state.manualSpeedKph,
-      };
-      const staleVal = Number(els.staleTimeoutInput?.value);
-      if (staleVal >= 3 && staleVal <= 120) payload.staleTimeoutS = staleVal;
-      await updateSettingsSpeedSource(payload);
-    } catch (_err) { /* ignore */ }
+      const saved = await updateSettingsSpeedSource(payload);
+      applySpeedSourcePayload(saved);
+    } catch (error) {
+      void loadSpeedSourceFromServer();
+      showSettingsSaveError(error);
+    }
   }
 
   async function loadSpeedSourceFromServer(): Promise<void> {
     try {
       const payload: SpeedSourcePayload = await getSettingsSpeedSource();
-      state.speedSource = payload.speedSource;
-      state.manualSpeedKph = payload.manualSpeedKph;
-      if (els.staleTimeoutInput) els.staleTimeoutInput.value = String(payload.staleTimeoutS);
-      syncSpeedSourceInputs();
-      ctx.renderSpeedReadout();
+      applySpeedSourcePayload(payload);
     } catch (_err) { /* ignore */ }
   }
 
@@ -149,15 +155,22 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     }
   }
 
-  async function syncAnalysisSettingsToServer(): Promise<void> {
-    const payload: AnalysisSettingsRequest = {};
+  function applyAnalysisSettingsPayload(serverSettings: AnalysisSettingsPayload): void {
     for (const key of ANALYSIS_SETTING_KEYS) {
-      payload[key] = state.vehicleSettings[key];
+      const value = serverSettings[key];
+      if (typeof value === "number") state.vehicleSettings[key] = value;
     }
+    syncSettingsInputs();
+    ctx.renderSpectrum();
+  }
+
+  async function syncAnalysisSettingsToServer(payload: AnalysisSettingsRequest): Promise<void> {
     try {
-      await setAnalysisSettings(payload);
-    } catch (_err) {
-      console.warn("Failed to save analysis settings", _err);
+      const saved = await setAnalysisSettings(payload);
+      applyAnalysisSettingsPayload(saved);
+    } catch (error) {
+      syncSettingsInputs();
+      showSettingsSaveError(error);
     }
   }
 
@@ -165,12 +178,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     try {
       const serverSettings = await getAnalysisSettings();
       if (serverSettings) {
-        for (const key of ANALYSIS_SETTING_KEYS) {
-          const value = serverSettings[key];
-          if (typeof value === "number") state.vehicleSettings[key] = value;
-        }
-        syncSettingsInputs();
-        ctx.renderSpectrum();
+        applyAnalysisSettingsPayload(serverSettings);
       }
     } catch (_err) { /* ignore */ }
   }
@@ -271,17 +279,23 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       window.alert(t("settings.validation_error"));
       return;
     }
-    state.vehicleSettings.wheel_bandwidth_pct = wheelBandwidth;
-    state.vehicleSettings.driveshaft_bandwidth_pct = driveshaftBandwidth;
-    state.vehicleSettings.engine_bandwidth_pct = engineBandwidth;
-    state.vehicleSettings.speed_uncertainty_pct = speedUncertainty;
-    state.vehicleSettings.tire_diameter_uncertainty_pct = tireDiameterUncertainty;
-    state.vehicleSettings.final_drive_uncertainty_pct = finalDriveUncertainty;
-    state.vehicleSettings.gear_uncertainty_pct = gearUncertainty;
-    state.vehicleSettings.min_abs_band_hz = minAbsBandHz;
-    state.vehicleSettings.max_band_half_width_pct = maxBandHalfWidth;
-    void syncAnalysisSettingsToServer();
-    ctx.renderSpectrum();
+    const payload: AnalysisSettingsRequest = {
+      wheel_bandwidth_pct: wheelBandwidth,
+      driveshaft_bandwidth_pct: driveshaftBandwidth,
+      engine_bandwidth_pct: engineBandwidth,
+      speed_uncertainty_pct: speedUncertainty,
+      tire_diameter_uncertainty_pct: tireDiameterUncertainty,
+      final_drive_uncertainty_pct: finalDriveUncertainty,
+      gear_uncertainty_pct: gearUncertainty,
+      min_abs_band_hz: minAbsBandHz,
+      max_band_half_width_pct: maxBandHalfWidth,
+    };
+    for (const key of ANALYSIS_SETTING_KEYS) {
+      if (!(key in payload)) {
+        payload[key] = state.vehicleSettings[key];
+      }
+    }
+    void syncAnalysisSettingsToServer(payload);
   }
 
   function saveSpeedSourceFromInputs(): void {
@@ -291,19 +305,24 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       if (r.checked && isSpeedSourceKind(r.value)) src = r.value;
     });
     const manual = Number(els.manualSpeedInput?.value);
-    state.speedSource = src;
-    state.manualSpeedKph = Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null;
-    void syncSpeedSourceToServer();
-    ctx.renderSpeedReadout();
+    const payload: SpeedSourceRequest = {
+      speedSource: src,
+      manualSpeedKph: Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null,
+    };
+    const staleVal = Number(els.staleTimeoutInput?.value);
+    if (staleVal >= 3 && staleVal <= 120) payload.staleTimeoutS = staleVal;
+    void syncSpeedSourceToServer(payload);
   }
 
   function saveHeaderManualSpeedFromInput(): void {
     const manual = Number(els.headerManualSpeedInput?.value);
-    state.speedSource = "manual";
-    state.manualSpeedKph = Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null;
-    syncSpeedSourceInputs();
-    void syncSpeedSourceToServer();
-    ctx.renderSpeedReadout();
+    const payload: SpeedSourceRequest = {
+      speedSource: "manual",
+      manualSpeedKph: Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null,
+    };
+    const staleVal = Number(els.staleTimeoutInput?.value);
+    if (staleVal >= 3 && staleVal <= 120) payload.staleTimeoutS = staleVal;
+    void syncSpeedSourceToServer(payload);
   }
 
   function setActiveSettingsTab(tabId: string): void {

@@ -103,6 +103,7 @@
   "settings.car.delete_failed": "Failed to delete car.",
   "settings.car.activate_failed": "Failed to activate car.",
   "settings.car.save_failed": "Failed to save settings.",
+  "settings.save_failed": "Failed to save settings.",
   "settings.car.step_brand": "Select Brand",
   "settings.car.step_type": "Select Type",
   "settings.car.step_model": "Select Model",
