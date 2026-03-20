@@ -134,6 +134,9 @@ files = [
   "vibesensor/adapters/pdf/report_types.py",
   "vibesensor/adapters/pdf/presentation.py",
   "vibesensor/adapters/pdf/pattern_parts.py",
+  "vibesensor/adapters/pdf/pdf_page1.py",
+  "vibesensor/adapters/pdf/pdf_page2.py",
+  "vibesensor/adapters/pdf/pdf_diagram_render.py",
   "vibesensor/adapters/pdf/pdf_style.py",
   "vibesensor/adapters/pdf/pdf_drawing.py",
   "vibesensor/adapters/pdf/pdf_text.py",
@@ -166,7 +169,6 @@ module = [
   "vibesensor.adapters.udp.protocol",
   "vibesensor.adapters.http.settings",
   "vibesensor.adapters.http.history",
-  "vibesensor.adapters.pdf.pdf_page2",
   "vibesensor.infra.runtime.health_snapshot",
 ]
 ignore_errors = true
