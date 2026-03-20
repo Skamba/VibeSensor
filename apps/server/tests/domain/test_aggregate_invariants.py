@@ -218,7 +218,7 @@ class TestImpossibleFindingStates:
 
     def test_unknown_source_string_coerced_to_unknown(self) -> None:
         """An unrecognised source string is auto-coerced to VibrationSource.UNKNOWN."""
-        f = Finding(finding_id="F001", suspected_source="banana_motor")  # type: ignore[arg-type]
+        f = Finding(finding_id="F001", suspected_source="banana_motor")
         assert f.suspected_source is VibrationSource.UNKNOWN
 
     def test_kind_auto_derived_reference(self) -> None:

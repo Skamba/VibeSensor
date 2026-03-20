@@ -118,7 +118,7 @@ def _draw_title_bar(c: Canvas, *, title: str, width: float, page_top: float) -> 
     c.setFillColor(_hex(TEXT_CLR))
     c.setFont(FONT_B, 11)
     c.drawString(MARGIN + 4 * mm, layout.title_bar.y + 3.5 * mm, title)
-    return layout.title_bar.y - GAP  # type: ignore[no-any-return]
+    return float(layout.title_bar.y - GAP)
 
 
 def _draw_car_visual_panel(

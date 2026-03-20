@@ -43,7 +43,7 @@ def findings_at_freq(findings: tuple | list, *freq_strs: str) -> list:
             if finding.frequency_hz is not None:
                 sources.append(str(finding.frequency_hz))
             return any(fs in s for s in sources for fs in freq_strs)
-        return any(fs in str(finding.get("frequency_hz_or_order", "")) for fs in freq_strs)  # type: ignore[union-attr]
+        return any(fs in str(finding.get("frequency_hz_or_order", "")) for fs in freq_strs)
 
     return [f for f in findings if _matches(f)]
 

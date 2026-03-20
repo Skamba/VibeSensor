@@ -27,7 +27,7 @@ def _make_finding(**overrides: object) -> Finding:
         "strongest_location": "front_left",
     }
     defaults.update(overrides)
-    return Finding(**defaults)  # type: ignore[arg-type]
+    return Finding(**defaults)
 
 
 def _make_test_run(
@@ -65,7 +65,7 @@ def _make_context(**overrides: object) -> ReportMappingContext:
         "firmware_version": None,
     }
     defaults.update(overrides)
-    return ReportMappingContext(**defaults)  # type: ignore[arg-type]
+    return ReportMappingContext(**defaults)
 
 
 # ---------------------------------------------------------------------------
@@ -118,7 +118,7 @@ class TestHasSignificantLocationIntensity:
 
     def test_with_non_dict_rows(self) -> None:
         context = _make_context()
-        assert context.has_significant_location_intensity(["not a dict"]) is False  # type: ignore[list-item]
+        assert context.has_significant_location_intensity(["not a dict"]) is False
 
 
 # ---------------------------------------------------------------------------

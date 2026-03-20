@@ -46,7 +46,7 @@ class TestMeasurement:
     def test_frozen(self) -> None:
         sample = Measurement(x=0.0, y=0.0, z=0.0, timestamp=_NOW, sample_rate_hz=4096)
         with pytest.raises(AttributeError):
-            sample.x = 1.0  # type: ignore[misc]
+            sample.x = 1.0
 
     def test_to_vibration_reading_db_formula(self) -> None:
         """Verify the dB conversion matches the canonical formula."""
@@ -106,7 +106,7 @@ class TestVibrationReading:
     def test_frozen(self) -> None:
         reading = VibrationReading(timestamp=_NOW, intensity_db=10.0, frequency_hz=50.0)
         with pytest.raises(AttributeError):
-            reading.intensity_db = 20.0  # type: ignore[misc]
+            reading.intensity_db = 20.0
 
     @pytest.mark.parametrize(
         ("db", "expected_level"),

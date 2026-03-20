@@ -23,7 +23,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from math import isfinite, log10, sqrt
 from statistics import median as _stdlib_median
-from typing import Final
+from typing import Final, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -148,7 +148,7 @@ def combined_spectrum_amp_g(
         else max(1.0, float(arr.shape[0]))
     )
     result: npt.NDArray[np.floating] = np.sqrt(np.sum(arr**2, axis=0) / divisor)
-    return result.tolist()  # type: ignore[no-any-return]  # numpy tolist() untyped
+    return cast(list[float], result.tolist())
 
 
 def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: ArrayLike) -> float:

@@ -224,7 +224,7 @@ class TestNoPipelineErrorIsolation:
             for i in range(20)
         ]
 
-        def _failing_findings_builder(**_kwargs: object) -> tuple:  # type: ignore[type-arg]
+        def _failing_findings_builder(**_kwargs: object) -> tuple[()]:
             raise RuntimeError("simulated findings failure")
 
         with pytest.raises(RuntimeError, match="simulated findings failure"):

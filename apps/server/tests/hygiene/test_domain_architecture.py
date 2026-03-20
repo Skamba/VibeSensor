@@ -26,7 +26,7 @@ def test_test_run_is_frozen_dataclass() -> None:
         top_causes=(),
     )
     with pytest.raises(AttributeError):
-        r.findings = ()  # type: ignore[misc]
+        r.findings = ()
 
 
 # ── TestRun provides domain queries ──────────────────────────────────────
@@ -324,7 +324,7 @@ def test_finding_is_frozen_dataclass() -> None:
     assert dataclasses.is_dataclass(Finding)
     f = Finding(finding_id="F001", confidence=0.80, suspected_source="wheel/tire")
     with pytest.raises(AttributeError):
-        f.confidence = 0.50  # type: ignore[misc]
+        f.confidence = 0.50
 
 
 def test_finding_tuples_are_immutable() -> None:
@@ -371,7 +371,7 @@ def test_build_system_cards_uses_domain_findings() -> None:
         car_name=None,
         car_type=None,
         date_str="",
-        origin={},  # type: ignore[typeddict-item]
+        origin={},
         origin_location="",
         sensor_locations_active=[],
         duration_text=None,
@@ -442,7 +442,7 @@ def test_map_summary_produces_report_with_domain_findings() -> None:
         "top_causes": [make_finding_payload(finding_id="F001", confidence=0.80)],
         "sensor_count_used": 2,
     }
-    template = map_summary(summary)  # type: ignore[arg-type]
+    template = map_summary(summary)
     assert template.run_id == "test-map"
 
 
@@ -1366,7 +1366,7 @@ def test_lifecycle_mutability_rules() -> None:
     # Derived/immutable objects must be frozen
     for cls in (RunCapture, RunSetup, TestRun):
         assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
-        frozen = cls.__dataclass_params__.frozen  # type: ignore[attr-defined]
+        frozen = cls.__dataclass_params__.frozen
         assert frozen, f"{cls.__name__} must be frozen (immutable once produced)"
 
 
@@ -1710,7 +1710,7 @@ def _find_enclosing_function(tree: object, target_lineno: int) -> str | None:
 
     best: str | None = None
     best_line = 0
-    for node in _ast.walk(tree):  # type: ignore[arg-type]
+    for node in _ast.walk(tree):
         if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
             end = getattr(node, "end_lineno", None) or float("inf")
             if node.lineno <= target_lineno <= end and node.lineno >= best_line:

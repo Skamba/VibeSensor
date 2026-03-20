@@ -37,7 +37,7 @@ def test_send_identify_accepts_hex_and_mac_client_ids(
     )
 
     plane = UDPControlPlane(registry=registry, bind_host="127.0.0.1", bind_port=9001)
-    plane.transport = fake_transport  # type: ignore[assignment]
+    plane.transport = fake_transport
 
     ok, cmd_seq = plane.send_identify(client_id_input, 1500)
 

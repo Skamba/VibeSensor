@@ -27,7 +27,7 @@ def test_resolve_speed_ignores_bool_override() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
     monitor.manual_source_selected = True
     # Bypass the typed setter to test the guard directly
-    monitor.override_speed_mps = True  # type: ignore[assignment]
+    monitor.override_speed_mps = True
 
     resolved = monitor.resolve_speed()
     # Should NOT treat bool True as 1.0 m/s; should fall through to "none"
@@ -38,7 +38,7 @@ def test_resolve_speed_ignores_bool_override() -> None:
 def test_fallback_speed_value_ignores_bool() -> None:
     """_fallback_speed_value() must not convert bool to float speed."""
     monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor.override_speed_mps = False  # type: ignore[assignment]
+    monitor.override_speed_mps = False
     assert monitor._fallback_speed_value() is None
 
 

@@ -242,7 +242,7 @@ class TestCarSnapshot:
     def test_aspects_frozen(self) -> None:
         snap = CarSnapshot(aspects={"a": 1.0})
         try:
-            snap.aspects["b"] = 2.0  # type: ignore[index]
+            snap.aspects["b"] = 2.0
             raise AssertionError("Should not allow mutation")  # noqa: TRY301
         except TypeError:
             pass  # MappingProxyType raises TypeError on mutation
