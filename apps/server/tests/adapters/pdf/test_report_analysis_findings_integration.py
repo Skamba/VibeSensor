@@ -30,7 +30,7 @@ def test_speed_breakdown_basic() -> None:
     ]
     rows = _speed_breakdown(samples)
     assert len(rows) == 2
-    labels = [row["speed_range"] for row in rows]
+    labels = [row.speed_range for row in rows]
     assert "80-90 km/h" in labels
     assert "90-100 km/h" in labels
 
@@ -275,8 +275,8 @@ def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> No
     order_band = wheel_finding.strongest_speed_band or ""
     persistent_band = persistent.strongest_speed_band or ""
     rows = _top_peaks_table_rows(samples, top_n=6, freq_bin_hz=1.0)
-    target_row = min(rows, key=lambda row: abs(float(row.get("frequency_hz") or 0.0) - 43.0))
-    peak_table_band = str(target_row.get("typical_speed_band") or "")
+    target_row = min(rows, key=lambda row: abs(row.frequency_hz - 43.0))
+    peak_table_band = str(target_row.typical_speed_band or "")
 
     assert order_band
     assert persistent_band

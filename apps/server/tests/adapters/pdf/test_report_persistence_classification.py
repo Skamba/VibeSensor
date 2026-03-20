@@ -86,29 +86,25 @@ class TestTopPeaksTableRows:
 
         rows = _top_peaks_table_rows(samples)
         assert len(rows) >= 2
-        assert rows[0]["frequency_hz"] == 30.0
-        assert rows[0]["presence_ratio"] > 0.5
+        assert rows[0].frequency_hz == 30.0
+        assert rows[0].presence_ratio > 0.5
 
     def test_persistence_metadata_present(self) -> None:
         rows = _top_peaks_table_rows(uniform_samples(5, 15.0, 0.05, dt=1.0))
         assert len(rows) == 1
         row = rows[0]
-        for key in (
-            "presence_ratio",
-            "median_intensity_db",
-            "p95_intensity_db",
-            "burstiness",
-            "persistence_score",
-            "peak_classification",
-        ):
-            assert key in row
-        assert row["presence_ratio"] == 1.0
+        assert row.presence_ratio == 1.0
+        assert hasattr(row, "median_intensity_db")
+        assert hasattr(row, "p95_intensity_db")
+        assert row.burstiness >= 0.0
+        assert row.persistence_score >= 0.0
+        assert row.peak_classification
 
     def test_single_sample_still_works(self) -> None:
         rows = _top_peaks_table_rows([sample(0.0, 80.0, [{"hz": 20.0, "amp": 0.1}])])
         assert len(rows) == 1
-        assert "max_intensity_db" in rows[0]
-        assert rows[0]["presence_ratio"] == 1.0
+        assert hasattr(rows[0], "max_intensity_db")
+        assert rows[0].presence_ratio == 1.0
 
     def test_damped_ringdown_ranks_below_sustained(self) -> None:
         samples = []
@@ -119,7 +115,7 @@ class TestTopPeaksTableRows:
             samples.append(sample(float(i) * 0.5, 85.0, sustained_peaks))
 
         rows = _top_peaks_table_rows(samples)
-        freq_ranks = {row["frequency_hz"]: row["rank"] for row in rows}
+        freq_ranks = {row.frequency_hz: row.rank for row in rows}
         assert freq_ranks.get(25.0, 999) < freq_ranks.get(60.0, 999)
 
     def test_strength_db_uses_recorded_floor_and_p95_amp(self) -> None:
@@ -130,8 +126,8 @@ class TestTopPeaksTableRows:
         rows = _top_peaks_table_rows(samples)
         assert rows
         row = rows[0]
-        assert row["strength_floor_db"] is not None
-        assert row["strength_db"] is not None
+        assert row.strength_floor_db is not None
+        assert row.strength_db is not None
 
     def test_typical_speed_band_uses_amplitude_weighting(self) -> None:
         speeds = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0]
@@ -141,7 +137,7 @@ class TestTopPeaksTableRows:
             for idx, (speed_kmh, amp) in enumerate(zip(speeds, amps, strict=False))
         ]
         rows = _top_peaks_table_rows(samples, top_n=1, freq_bin_hz=1.0)
-        assert rows[0]["typical_speed_band"] == "80-90 km/h"
+        assert rows[0].typical_speed_band == "80-90 km/h"
 
     def test_typical_speed_band_uses_amplitude_weighted_window(self) -> None:
         samples = []
@@ -151,7 +147,7 @@ class TestTopPeaksTableRows:
             samples.append(sample(float(i), speed, [{"hz": 33.0, "amp": amp}]))
 
         rows = _top_peaks_table_rows(samples)
-        assert rows[0]["typical_speed_band"] == "100-110 km/h"
+        assert rows[0].typical_speed_band == "100-110 km/h"
 
     def test_frequency_binning_matches_floor_based_spectrum_rules(self) -> None:
         samples = [
@@ -159,7 +155,7 @@ class TestTopPeaksTableRows:
             sample(0.5, 60.0, [{"hz": 10.52, "amp": 0.07}]),
         ]
         rows = _top_peaks_table_rows(samples, top_n=1, freq_bin_hz=1.0)
-        assert rows[0]["frequency_hz"] == 10.0
+        assert rows[0].frequency_hz == 10.0
 
     def test_typical_and_strongest_speed_bands_stay_consistent(self) -> None:
         samples = []
@@ -169,7 +165,7 @@ class TestTopPeaksTableRows:
             samples.append(sample(float(i), speed, [{"hz": 33.0, "amp": amp}]))
 
         rows = _top_peaks_table_rows(samples)
-        typical_speed_band = str(rows[0].get("typical_speed_band") or "")
+        typical_speed_band = str(rows[0].typical_speed_band or "")
         assert typical_speed_band == "100-110 km/h"
 
         findings = build_findings(samples)

@@ -19,15 +19,15 @@ from vibesensor.domain import (
     Finding as DomainFinding,
 )
 from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
-from vibesensor.shared.boundaries.analysis_payload import (
-    PhaseSpeedBreakdownRow,
-    SpeedBreakdownRow,
-)
 from vibesensor.shared.boundaries.diagnostic_case import speed_profile_from_stats
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.diagnostics._types import Sample
+from vibesensor.use_cases.diagnostics._types import (
+    PhaseSpeedBreakdownRowData,
+    Sample,
+    SpeedBreakdownRowData,
+)
 from vibesensor.use_cases.diagnostics.findings import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
@@ -150,9 +150,9 @@ class PreparedRunData:
     run_noise_baseline_g: float | None
     speed_profile: SpeedProfile
     speed_stats_by_phase: dict[str, SpeedProfileSummary]
-    speed_breakdown: list[SpeedBreakdownRow]
+    speed_breakdown: list[SpeedBreakdownRowData]
     speed_breakdown_skipped_reason: JsonObject | None
-    phase_speed_breakdown: list[PhaseSpeedBreakdownRow]
+    phase_speed_breakdown: list[PhaseSpeedBreakdownRowData]
 
     @property
     def is_steady_speed(self) -> bool:

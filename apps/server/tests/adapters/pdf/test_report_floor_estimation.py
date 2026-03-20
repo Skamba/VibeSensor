@@ -48,5 +48,5 @@ def test_run_noise_baseline_and_peak_table_share_floor_estimate() -> None:
     assert baseline == pytest.approx(0.01)
 
     rows = _top_peaks_table_rows(samples, top_n=12, freq_bin_hz=1.0, run_noise_baseline_g=baseline)
-    row_30 = next(row for row in rows if float(row["frequency_hz"]) == 30.0)
-    assert row_30["strength_floor_db"] is not None
+    row_30 = next(row for row in rows if row.frequency_hz == 30.0)
+    assert row_30.strength_floor_db is not None

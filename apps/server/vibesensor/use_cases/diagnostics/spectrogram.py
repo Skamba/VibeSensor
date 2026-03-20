@@ -13,10 +13,9 @@ from math import floor
 from typing import Literal
 
 from vibesensor.domain.finding import speed_bin_label
-from vibesensor.shared.boundaries.analysis_payload import SpectrogramResult
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.use_cases.diagnostics._types import Sample
+from vibesensor.use_cases.diagnostics._types import Sample, SpectrogramResultData
 from vibesensor.use_cases.diagnostics.helpers import (
     _effective_baseline_floor,
     _estimate_strength_floor_amp_g,
@@ -179,7 +178,7 @@ def spectrogram_from_peaks(
     aggregation: Literal["persistence", "max"] = "persistence",
     run_noise_baseline_g: float | None = None,
     peak_scan: PeakSampleScan | None = None,
-) -> SpectrogramResult:
+) -> SpectrogramResultData:
     """Build a 2-D spectrogram grid from per-sample peak lists."""
     resolved_scan = peak_scan or scan_peak_samples(samples)
     peak_rows: list[tuple[float, float, float, float | None]] = []
@@ -196,7 +195,7 @@ def spectrogram_from_peaks(
                 peak_rows.append((row.speed_kmh, hz, amp, row.floor_amp_g))
 
     use_time = bool(time_values)
-    empty_result = SpectrogramResult(
+    empty_result = SpectrogramResultData(
         x_axis="none",
         x_label_key="TIME_S",
         x_bins=[],
@@ -221,9 +220,14 @@ def spectrogram_from_peaks(
 
     peak_freqs = [hz for _x, hz, _amp, _floor in peak_rows]
     if not peak_freqs:
-        empty_result["x_axis"] = x_axis
-        empty_result["x_label_key"] = x_label_key
-        return empty_result
+        return SpectrogramResultData(
+            x_axis=x_axis,
+            x_label_key=x_label_key,
+            x_bins=[],
+            y_bins=[],
+            cells=[],
+            max_amp=0.0,
+        )
 
     observed_max_hz = max(peak_freqs)
     freq_cap_hz = min(200.0, max(40.0, observed_max_hz))
@@ -248,9 +252,14 @@ def spectrogram_from_peaks(
     x_bins = sorted({x for x, _y in cell_by_bin})
     y_bins = sorted({y for _x, y in cell_by_bin})
     if not x_bins or not y_bins:
-        empty_result["x_axis"] = x_axis
-        empty_result["x_label_key"] = x_label_key
-        return empty_result
+        return SpectrogramResultData(
+            x_axis=x_axis,
+            x_label_key=x_label_key,
+            x_bins=[],
+            y_bins=[],
+            cells=[],
+            max_amp=0.0,
+        )
 
     x_index = {value: idx for idx, value in enumerate(x_bins)}
     y_index = {value: idx for idx, value in enumerate(y_bins)}
@@ -286,7 +295,7 @@ def spectrogram_from_peaks(
         cells[yi][xi] = val
         max_amp = max(max_amp, val)
 
-    return SpectrogramResult(
+    return SpectrogramResultData(
         x_axis=x_axis,
         x_label_key=x_label_key,
         x_bin_width=x_bin_width,
@@ -303,7 +312,7 @@ def spectrogram_from_peaks_raw(
     *,
     run_noise_baseline_g: float | None = None,
     peak_scan: PeakSampleScan | None = None,
-) -> SpectrogramResult:
+) -> SpectrogramResultData:
     """Build the raw/max-amplitude spectrogram view."""
     return spectrogram_from_peaks(
         samples,
