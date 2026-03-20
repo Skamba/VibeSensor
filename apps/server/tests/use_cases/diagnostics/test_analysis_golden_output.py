@@ -283,7 +283,7 @@ def test_characterization_driveline_summary_contract() -> None:
     assert _first_action_id(summary) == "driveline_mounts_and_fasteners"
 
 
-def test_characterization_engine_order_currently_falls_back_to_baseline_noise() -> None:
+def test_characterization_engine_order_detected_as_engine() -> None:
     summary = summarize_run_data(
         standard_metadata(),
         make_engine_order_samples(sensors=ALL_SENSORS, speed_kmh=80.0, n_samples=30),
@@ -293,14 +293,13 @@ def test_characterization_engine_order_currently_falls_back_to_baseline_noise() 
 
     origin = summary["most_likely_origin"]
 
-    assert summary["top_causes"] == []
-    assert origin["location"] == "unknown"
-    assert origin["alternative_locations"] == []
-    assert origin["suspected_source"] == "baseline_noise"
-    assert origin["weak_spatial_separation"] is False
+    assert len(summary["top_causes"]) >= 1
+    assert summary["top_causes"][0]["suspected_source"] == "engine"
+    assert origin["suspected_source"] == "engine"
+    assert origin["weak_spatial_separation"] is True
     assert origin["dominant_phase"] is None
     assert _run_suitability_state(summary, "SUITABILITY_CHECK_SPEED_VARIATION") == "warn"
-    assert _first_action_id(summary) == "general_mechanical_inspection"
+    assert _first_action_id(summary) == "engine_mounts_and_accessories"
 
 
 def test_characterization_diffuse_uniform_excitation_stays_unlocalized() -> None:
