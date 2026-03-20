@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from vibesensor.shared.types.api_models import (
     CarLibraryBrandsResponse,
+    CarLibraryModelEntry,
     CarLibraryModelsResponse,
     CarLibraryTypesResponse,
 )
@@ -48,6 +49,11 @@ def create_car_library_routes() -> APIRouter:
                 status_code=404,
                 detail=f"Unknown type {car_type!r} for brand {brand!r}",
             )
-        return CarLibraryModelsResponse(models=get_models_for_brand_type(brand, car_type))
+        return CarLibraryModelsResponse(
+            models=[
+                CarLibraryModelEntry.model_validate(model)
+                for model in get_models_for_brand_type(brand, car_type)
+            ]
+        )
 
     return router

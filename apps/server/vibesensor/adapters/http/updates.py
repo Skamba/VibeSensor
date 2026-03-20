@@ -39,7 +39,7 @@ def create_update_routes(
 
     @router.get("/api/update/status", response_model=UpdateStatusResponse)
     async def get_update_status() -> UpdateStatusResponse:
-        return UpdateStatusResponse(**update_manager.status.to_dict())
+        return UpdateStatusResponse.model_validate(update_manager.status.to_dict())
 
     @router.post("/api/update/start", response_model=UpdateStartResponse)
     async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
@@ -56,7 +56,7 @@ def create_update_routes(
     @router.get("/api/esp-flash/ports", response_model=EspFlashPortsResponse)
     async def list_esp_flash_ports() -> EspFlashPortsResponse:
         ports = await esp_flash_manager.list_ports()
-        return EspFlashPortsResponse(ports=ports)
+        return EspFlashPortsResponse.model_validate({"ports": ports})
 
     @router.post("/api/esp-flash/start", response_model=EspFlashStartResponse)
     async def start_esp_flash(req: EspFlashStartRequest) -> EspFlashStartResponse:
@@ -66,11 +66,11 @@ def create_update_routes(
 
     @router.get("/api/esp-flash/status", response_model=EspFlashStatusResponse)
     async def get_esp_flash_status() -> EspFlashStatusResponse:
-        return EspFlashStatusResponse(**esp_flash_manager.status.to_dict())
+        return EspFlashStatusResponse.model_validate(esp_flash_manager.status.to_dict())
 
     @router.get("/api/esp-flash/logs", response_model=EspFlashLogsResponse)
     async def get_esp_flash_logs(after: int = Query(default=0, ge=0)) -> EspFlashLogsResponse:
-        return EspFlashLogsResponse(**esp_flash_manager.logs_since(after))
+        return EspFlashLogsResponse.model_validate(esp_flash_manager.logs_since(after))
 
     @router.post("/api/esp-flash/cancel", response_model=EspFlashCancelResponse)
     async def cancel_esp_flash() -> EspFlashCancelResponse:
@@ -78,6 +78,6 @@ def create_update_routes(
 
     @router.get("/api/esp-flash/history", response_model=EspFlashHistoryResponse)
     async def get_esp_flash_history() -> EspFlashHistoryResponse:
-        return EspFlashHistoryResponse(attempts=esp_flash_manager.history())
+        return EspFlashHistoryResponse.model_validate({"attempts": esp_flash_manager.history()})
 
     return router
