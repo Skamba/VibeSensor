@@ -148,7 +148,7 @@ def combined_spectrum_amp_g(
         else max(1.0, float(arr.shape[0]))
     )
     result: npt.NDArray[np.floating] = np.sqrt(np.sum(arr**2, axis=0) / divisor)
-    return result.tolist()
+    return result.tolist()  # type: ignore[no-any-return]  # numpy tolist() untyped
 
 
 def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: ArrayLike) -> float:

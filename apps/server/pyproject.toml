@@ -128,7 +128,7 @@ files = [
   "vibesensor/adapters/pdf/pdf_text.py",
   "vibesensor/adapters/pdf/mapping.py",
 ]
-follow_imports = "skip"
+follow_imports = "normal"
 check_untyped_defs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
@@ -146,3 +146,21 @@ module = [
 ]
 ignore_missing_imports = true
 disallow_any_unimported = false
+
+# Files followed via imports but not yet under strict checking.
+# Remove entries as each module is brought up to full type compliance.
+[[tool.mypy.overrides]]
+module = [
+  "vibesensor.adapters.udp.protocol",
+  "vibesensor.adapters.http.updates",
+  "vibesensor.adapters.http.car_library",
+  "vibesensor.adapters.http.debug",
+  "vibesensor.adapters.http.settings",
+  "vibesensor.adapters.http.clients",
+  "vibesensor.adapters.http.history",
+  "vibesensor.adapters.http.recording",
+  "vibesensor.adapters.http.health",
+  "vibesensor.adapters.pdf.pdf_page2",
+  "vibesensor.infra.runtime.health_snapshot",
+]
+ignore_errors = true
