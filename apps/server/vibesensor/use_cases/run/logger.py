@@ -31,6 +31,7 @@ from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
     build_sample_records,
     firmware_version_for_run,
+    resolve_speed_context,
 )
 
 if TYPE_CHECKING:
@@ -718,14 +719,21 @@ class RunRecorder:
         t_s: float,
         timestamp_utc: str,
     ) -> list[dict[str, object]]:
+        analysis_settings_snapshot = self._analysis_settings_snapshot()
+        speed_resolution = self.gps_monitor.resolve_speed()
         return build_sample_records(
             run_id=run_id,
             t_s=t_s,
             timestamp_utc=timestamp_utc,
             registry=self.registry,
             processor=self.processor,
-            gps_monitor=self.gps_monitor,
-            analysis_settings_snapshot=self._analysis_settings_snapshot(),
+            speed_context=resolve_speed_context(
+                gps_speed_mps=self.gps_monitor.speed_mps,
+                resolved_speed_mps=speed_resolution.speed_mps,
+                resolved_speed_source=speed_resolution.source,
+                analysis_settings_snapshot=analysis_settings_snapshot,
+            ),
+            analysis_settings_snapshot=analysis_settings_snapshot,
             default_sample_rate_hz=self.default_sample_rate_hz,
         )
 

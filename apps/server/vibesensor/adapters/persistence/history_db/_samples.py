@@ -1,7 +1,7 @@
 """Sample serialisation helpers for the ``samples_v2`` table.
 
 Pure functions and schema constants that convert between in-memory sample
-dicts / :class:`~vibesensor.domain_models.SensorFrame` objects and flat
+dicts / :class:`~vibesensor.shared.types.sensor_frame.SensorFrame` objects and flat
 SQLite row tuples.  Extracted from :mod:`vibesensor.adapters.persistence.history_db` to keep the
 schema-specific column definitions and conversion logic in one place.
 """
@@ -12,9 +12,9 @@ import logging
 import math
 from typing import TypeGuard
 
-from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_array, is_json_object
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
 

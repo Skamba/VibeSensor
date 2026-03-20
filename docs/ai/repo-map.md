@@ -30,7 +30,7 @@ Scope: single source of truth for detailed file layout, entry points, package st
 - `app/`: startup and wiring. `bootstrap.py` creates the FastAPI app, `container.py` builds the flat `RuntimeState`, and `settings.py` owns YAML config loading and validation.
 - `adapters/http/`: health, clients, settings, recording, history, websocket, updates, car library, and debug route groups; `adapters/http/__init__.py` assembles the router.
 - `adapters/websocket/hub.py`: live WebSocket connection fan-out and payload delivery.
-- `adapters/persistence/`: SQLite history DB (`history_db/`), JSONL runlog I/O (`runlog.py`), and the static car library loader (`car_library.py`).
+- `adapters/persistence/`: SQLite history DB (`history_db/`) and the static car library loader (`car_library.py`).
 - `adapters/pdf/`: PDF/report rendering pipeline and report mapping entrypoints.
 - `adapters/udp/`, `adapters/gps/`, `adapters/simulator/`, `adapters/hotspot/`: UDP protocol transport, GPS speed ingestion, simulator tooling, and hotspot/AP operational adapters.
 - `infra/runtime/`: flat `RuntimeState`, lifecycle management, processing loop, health snapshots, and WebSocket broadcast coordination.
@@ -41,7 +41,7 @@ Scope: single source of truth for detailed file layout, entry points, package st
 - `use_cases/history/`: run query/delete, PDF report generation, CSV/ZIP exports, and history-facing helper orchestration above persistence. `helpers.py` owns the local `HistoryRecord` TypedDict used only inside history workflows.
 - `use_cases/run/`: recording pipeline orchestration; `logger.py` owns `RunRecorder`, `post_analysis.py` owns the background analysis queue, and `sample_builder.py` owns pure sample-building helpers.
 - `use_cases/updates/`: wheel-based updater workflow orchestration, firmware cache, ESP flashing, release discovery, install, rollback, runner, Wi-Fi, and status tracking.
-- `shared/`: cross-cutting typed payloads (`shared/types/`), boundary serializers/decoders (`shared/boundaries/`), exceptions (`shared/exceptions.py`), JSON helpers (`shared/json_utils.py`), location identifiers (`shared/locations.py`), and run-context helpers. `shared/boundaries/diagnostic_case.py` owns summary projection, typed speed/suitability decoding, and shared metadata-to-case reconstruction (`case_context_from_metadata`).
+- `shared/`: cross-cutting typed payloads (`shared/types/`), boundary serializers/decoders (`shared/boundaries/`), exceptions (`shared/exceptions.py`), JSON helpers (`shared/json_utils.py`), location identifiers (`shared/locations.py`), and run-context helpers. `shared/types/sensor_frame.py` owns the canonical typed sample-record shape used by recording and persistence, while `shared/boundaries/run_log.py` owns JSONL run-log decoding/normalization shared by diagnostics and persistence. `shared/boundaries/diagnostic_case.py` owns summary projection, typed speed/suitability decoding, and shared metadata-to-case reconstruction (`case_context_from_metadata`).
 - `domain/`: DDD-aligned domain model package. Primary domain objects
   live under `vibesensor/domain/`; closely related value objects share
   a file with their parent aggregate:

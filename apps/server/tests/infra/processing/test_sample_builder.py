@@ -13,6 +13,7 @@ import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, StrengthMetrics
 from vibesensor.use_cases.run.sample_builder import (
+    SpeedContext,
     build_run_metadata,
     build_sample_records,
     dominant_hz_from_strength,
@@ -205,10 +206,6 @@ class TestBuildSampleRecords:
     def test_no_active_clients(self) -> None:
         reg = MagicMock()
         proc = MagicMock()
-        gps = MagicMock()
-        gps.speed_mps = None
-        gps.effective_speed_mps = None
-        gps.resolve_speed.return_value = MagicMock(source="none")
         proc.clients_with_recent_data.return_value = []
         records = build_sample_records(
             run_id="r1",
@@ -216,7 +213,7 @@ class TestBuildSampleRecords:
             timestamp_utc="2026-01-01T00:00:00Z",
             registry=reg,
             processor=proc,
-            gps_monitor=gps,
+            speed_context=SpeedContext(None, None, "none", None),
             analysis_settings_snapshot=AnalysisSettingsSnapshot(),
             default_sample_rate_hz=800,
         )
@@ -263,17 +260,13 @@ class TestBuildSampleRecords:
         proc.latest_sample_xyz.return_value = (0.1, 0.2, 0.3)
         proc.latest_sample_rate_hz.return_value = 400
 
-        gps = MagicMock()
-        gps.speed_mps = None
-        gps.resolve_speed.return_value = MagicMock(source="none", speed_mps=None)
-
         records = build_sample_records(
             run_id="r1",
             t_s=1.25,
             timestamp_utc="2026-01-01T00:00:00Z",
             registry=reg,
             processor=proc,
-            gps_monitor=gps,
+            speed_context=SpeedContext(None, None, "none", None),
             analysis_settings_snapshot=AnalysisSettingsSnapshot(),
             default_sample_rate_hz=800,
         )
