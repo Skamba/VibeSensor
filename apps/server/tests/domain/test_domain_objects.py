@@ -48,7 +48,7 @@ class TestSpeedSource:
     def test_frozen(self) -> None:
         src = SpeedSource()
         with pytest.raises(AttributeError):
-            src.kind = "manual"  # type: ignore[misc]
+            src.kind = "manual"
 
     def test_rejects_zero_manual_speed(self) -> None:
         with pytest.raises(ValueError, match="positive manual_speed_kmh"):
@@ -82,7 +82,7 @@ class TestSensorPlacement:
     def test_frozen(self) -> None:
         p = SensorPlacement(code="trunk")
         with pytest.raises(AttributeError):
-            p.code = "engine_bay"  # type: ignore[misc]
+            p.code = "engine_bay"
 
 
 # ---------------------------------------------------------------------------
@@ -112,7 +112,7 @@ class TestSensor:
     def test_frozen(self) -> None:
         s = Sensor(sensor_id="aabbccddeeff")
         with pytest.raises(AttributeError):
-            s.name = "new"  # type: ignore[misc]
+            s.name = "new"
 
 
 # ---------------------------------------------------------------------------
@@ -151,7 +151,7 @@ class TestCar:
     def test_frozen(self) -> None:
         car = Car()
         with pytest.raises(AttributeError):
-            car.name = "new"  # type: ignore[misc]
+            car.name = "new"
 
     def test_rejects_zero_tire_dimension(self) -> None:
         with pytest.raises(ValueError, match="positive finite"):
@@ -203,7 +203,7 @@ class TestFindingDomainObject:
     def test_frozen(self) -> None:
         f = Finding(finding_id="F001")
         with pytest.raises(AttributeError):
-            f.finding_id = "F002"  # type: ignore[misc]
+            f.finding_id = "F002"
 
     def test_ref_prefix_override_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
         """When explicit kind overrides REF_ prefix, a warning is logged."""
@@ -279,7 +279,7 @@ class TestReport:
     def test_frozen(self) -> None:
         r = Report(run_id="abc")
         with pytest.raises(AttributeError):
-            r.title = "new"  # type: ignore[misc]
+            r.title = "new"
 
     def test_from_summary(self) -> None:
         from vibesensor.adapters.pdf.mapping import build_report_from_summary

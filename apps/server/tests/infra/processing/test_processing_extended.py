@@ -165,7 +165,7 @@ def test_payload_reuses_cached_conversion(
     payload_fn = getattr(proc, method_name)
     first = payload_fn("client1")
 
-    def _fail_float_list(*_a, **_kw):  # type: ignore[no-untyped-def]
+    def _fail_float_list(*_a: object, **_kw: object) -> None:
         raise AssertionError(f"float_list should not be called for cached {method_name}")
 
     monkeypatch.setattr(
@@ -215,7 +215,7 @@ def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
     proc.compute_metrics("c1", sample_rate_hz=200)
     proc.compute_metrics("c2", sample_rate_hz=200)
 
-    def _fail_asarray(*args, **kwargs):  # type: ignore[no-untyped-def]
+    def _fail_asarray(*args: object, **kwargs: object) -> None:
         raise AssertionError("np.asarray should not be used in multi_spectrum_payload")
 
     monkeypatch.setattr("vibesensor.infra.processing.payload.np.asarray", _fail_asarray)

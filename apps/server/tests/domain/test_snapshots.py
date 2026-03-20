@@ -300,9 +300,9 @@ class TestDrivingPhaseSummaryFromDict:
     def test_phase_counts_immutable(self) -> None:
         snap = DrivingPhaseSummary.from_dict({"phase_counts": {"cruise": 5}})
         with pytest.raises(TypeError):
-            snap.phase_counts["new"] = 1  # type: ignore[index]
+            snap.phase_counts["new"] = 1
 
     def test_phase_pcts_immutable(self) -> None:
         snap = DrivingPhaseSummary.from_dict({"phase_pcts": {"cruise": 0.5}})
         with pytest.raises(TypeError):
-            snap.phase_pcts["new"] = 0.1  # type: ignore[index]
+            snap.phase_pcts["new"] = 0.1

@@ -272,8 +272,8 @@ def _make_logger(
         config,
         registry=reg,
         gps_monitor=gps_monitor or _FakeGPSMonitor(),
-        processor=processor or _FakeProcessor(registry=reg),  # type: ignore[arg-type]
-        settings_store=settings_store or _FakeAnalysisSettings(),  # type: ignore[arg-type]
+        processor=processor or _FakeProcessor(registry=reg),
+        settings_store=settings_store or _FakeAnalysisSettings(),
         history_db=history_db,
         **extra,
     )

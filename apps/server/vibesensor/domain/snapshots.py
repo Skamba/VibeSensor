@@ -59,10 +59,12 @@ def _int_or(d: Mapping[str, object], key: str, default: int = 0) -> int:
     v = d.get(key)
     if v is None:
         return default
-    try:
-        return int(v)  # type: ignore[call-overload,no-any-return]
-    except (TypeError, ValueError):
-        return default
+    if isinstance(v, (int, float, str)):
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return default
+    return default
 
 
 # ---------------------------------------------------------------------------

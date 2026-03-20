@@ -29,8 +29,12 @@ from vibesensor.shared.types.json_types import JsonObject
 
 def render_contract_reference_markdown() -> str:
     """Render the public API contract reference as a Markdown string."""
-    udp: JsonObject = DEFAULT_CONFIG["udp"]  # type: ignore[assignment]
-    srv: JsonObject = DEFAULT_CONFIG["server"]  # type: ignore[assignment]
+    udp_raw = DEFAULT_CONFIG["udp"]
+    srv_raw = DEFAULT_CONFIG["server"]
+    assert isinstance(udp_raw, dict), "DEFAULT_CONFIG['udp'] must be a dict"
+    assert isinstance(srv_raw, dict), "DEFAULT_CONFIG['server'] must be a dict"
+    udp: JsonObject = udp_raw
+    srv: JsonObject = srv_raw
     data_port = int(str(udp["data_port"]))
     control_port = int(str(udp["control_port"]))
     server_http_port = int(str(srv["port"]))

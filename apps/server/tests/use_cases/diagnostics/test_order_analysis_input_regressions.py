@@ -87,13 +87,13 @@ class TestOrderLabel:
 
     def test_wrong_arg_count_raises(self) -> None:
         with pytest.raises(TypeError, match=r"missing.*positional argument"):
-            _order_label()  # type: ignore[call-arg]
+            _order_label()
 
         with pytest.raises(TypeError, match=r"missing.*positional argument"):
-            _order_label(1)  # type: ignore[call-arg]
+            _order_label(1)
 
         with pytest.raises(TypeError, match=r"takes 2 positional arguments"):
-            _order_label(1, 2, 3, 4)  # type: ignore[call-arg]
+            _order_label(1, 2, 3, 4)
 
 
 # ------------------------------------------------------------------
@@ -144,7 +144,7 @@ class TestDriveshaftHz:
         monkeypatch.setattr(
             OrderReferenceSpec,
             "from_settings",
-            lambda data: _FakeSpec(),  # type: ignore[return-value]
+            lambda data: _FakeSpec(),
         )
 
         result = _driveshaft_hz({"speed_kmh": 72.0}, {}, tire_circumference_m=None)

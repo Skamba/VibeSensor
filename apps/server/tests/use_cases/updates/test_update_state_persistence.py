@@ -77,10 +77,10 @@ def update_env(
 
     def _make_mgr(**kw: object) -> UpdateManager:
         return UpdateManager(
-            runner=kw.pop("runner", runner),  # type: ignore[arg-type]
-            repo_path=kw.pop("repo_path", str(tmp_path / "repo")),  # type: ignore[arg-type]
-            rollback_dir=kw.pop("rollback_dir", str(tmp_path / "rollback")),  # type: ignore[arg-type]
-            state_store=kw.pop("state_store", store),  # type: ignore[arg-type]
+            runner=kw.pop("runner", runner),
+            repo_path=kw.pop("repo_path", str(tmp_path / "repo")),
+            rollback_dir=kw.pop("rollback_dir", str(tmp_path / "rollback")),
+            state_store=kw.pop("state_store", store),
         )
 
     return state_path, store, runner, _make_mgr

@@ -9,7 +9,7 @@ domain-level identity instead of living in boundary TypedDicts.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import ClassVar
 
 from vibesensor.coerce import coerce_float, coerce_int
@@ -220,7 +220,7 @@ class LocationIntensitySummary:
     max_intensity_db: float | None = None
     dropped_frames_delta: float | None = None
     queue_overflow_drops_delta: float | None = None
-    strength_bucket_distribution: Mapping[str, object] = ()  # type: ignore[assignment]
+    strength_bucket_distribution: Mapping[str, object] = field(default_factory=dict)
     phase_intensity: Mapping[str, object] | None = None
 
     def __post_init__(self) -> None:
@@ -230,9 +230,7 @@ class LocationIntensitySummary:
             raise ValueError("sample_coverage_ratio must be in [0.0, 1.0]")
         # Normalize strength_bucket_distribution from any input to a dict
         sbd = self.strength_bucket_distribution
-        if isinstance(sbd, tuple) and not sbd:
-            object.__setattr__(self, "strength_bucket_distribution", {})
-        elif not isinstance(sbd, dict):
+        if not isinstance(sbd, dict):
             object.__setattr__(self, "strength_bucket_distribution", dict(sbd))
 
     @classmethod

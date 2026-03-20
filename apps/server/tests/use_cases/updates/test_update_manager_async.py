@@ -123,7 +123,7 @@ class TestUpdateManagerAsync:
                     return (10, "", "Error: No network with SSID 'TestNet' found.\n")
             return await original_run(args, timeout=timeout, env=env)
 
-        runner.run = run_with_retry  # type: ignore[assignment]
+        runner.run = run_with_retry
         with (
             patch("shutil.which", mock_which),
             patch(
@@ -167,7 +167,7 @@ class TestUpdateManagerAsync:
                     return (1, "", "Temporary failure in name resolution")
             return await original_run(args, timeout=timeout, env=env)
 
-        runner.run = run_with_dns_retry  # type: ignore[assignment]
+        runner.run = run_with_dns_retry
         with (
             patch_release_fetcher() as mock_fetcher,
             patch("vibesensor.use_cases.updates.manager.DNS_READY_MIN_WAIT_S", 0.2),
@@ -315,7 +315,7 @@ class TestUpdateManagerAsync:
                 return (0, "", "")
             return await original_run(args, timeout=timeout, env=env)
 
-        runner.run = slow_run  # type: ignore[assignment]
+        runner.run = slow_run
         with (
             patch("shutil.which", mock_which),
             patch("vibesensor.use_cases.updates.manager.UPDATE_TIMEOUT_S", 0.5),

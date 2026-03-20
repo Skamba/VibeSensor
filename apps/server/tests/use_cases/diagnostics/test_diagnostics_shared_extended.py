@@ -133,7 +133,7 @@ def test_vehicle_orders_projects_boundary_settings_into_order_reference_spec(
 
     def _fake_from_settings(data: dict[str, object]) -> OrderReferenceSpec | None:
         captured.update(data)
-        return _FakeSpec()  # type: ignore[return-value]
+        return _FakeSpec()
 
     monkeypatch.setattr(OrderReferenceSpec, "from_settings", _fake_from_settings)
 
@@ -164,7 +164,7 @@ def test_effective_engine_rpm_prefers_order_reference_spec(
     monkeypatch.setattr(
         OrderReferenceSpec,
         "from_settings",
-        lambda data: _FakeSpec(),  # type: ignore[return-value]
+        lambda data: _FakeSpec(),
     )
 
     rpm, source = _effective_engine_rpm(

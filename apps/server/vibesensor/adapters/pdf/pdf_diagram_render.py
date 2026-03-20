@@ -234,12 +234,12 @@ def _build_sensor_render_plan(
         key=lambda value: (location_points[value][1], location_points[value][0]),
     ):
         px, py = location_points[name]
-        marker = marker_by_name.get(name)  # type: ignore[assignment]
-        if marker is None:
+        found_marker = marker_by_name.get(name)
+        if found_marker is None:
             continue
-        if marker.state == "connected-active":
+        if found_marker.state == "connected-active":
             color = REPORT_COLORS["ink"]
-        elif marker.state == "connected-inactive":
+        elif found_marker.state == "connected-inactive":
             color = REPORT_COLORS["text_secondary"]
         else:
             color = REPORT_COLORS["text_muted"]

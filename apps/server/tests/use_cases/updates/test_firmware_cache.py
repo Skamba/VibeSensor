@@ -104,7 +104,7 @@ def test_find_release_prefers_combined_release_assets(
     releases: list[dict],
 ) -> None:
     fetcher = _make_fetcher(channel)
-    fetcher._api_get = lambda _url: releases  # type: ignore[method-assign]
+    fetcher._api_get = lambda _url: releases
     selected = fetcher.find_release()
     assert selected["tag_name"] == expected_tag
 
@@ -126,7 +126,7 @@ def test_find_release_raises_when_no_firmware_assets() -> None:
         },
     ]
 
-    fetcher._api_get = lambda _url: releases  # type: ignore[method-assign]
+    fetcher._api_get = lambda _url: releases
 
     with pytest.raises(ValueError, match="No eligible firmware release found"):
         fetcher.find_release()

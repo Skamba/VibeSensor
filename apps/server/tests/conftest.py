@@ -109,5 +109,5 @@ def route_paths(fake_state: FakeState) -> set[str]:
     """All registered URL paths from the assembled router."""
     from vibesensor.adapters.http import create_router
 
-    router = create_router(fake_state)  # type: ignore[arg-type]
+    router = create_router(fake_state)
     return {r.path for r in router.routes}

@@ -162,17 +162,17 @@ def _make_state(
         ),
     )
     state = runtime_module.RuntimeState(
-        config=config,  # type: ignore[arg-type]
-        registry=registry,  # type: ignore[arg-type]
-        processor=processor,  # type: ignore[arg-type]
-        control_plane=_SENTINEL,  # type: ignore[arg-type]
-        worker_pool=_SENTINEL,  # type: ignore[arg-type]
-        settings_store=settings_store,  # type: ignore[arg-type]
-        gps_monitor=gps_monitor,  # type: ignore[arg-type]
-        history_db=_SENTINEL,  # type: ignore[arg-type]
-        run_service=_SENTINEL,  # type: ignore[arg-type]
-        report_service=_SENTINEL,  # type: ignore[arg-type]
-        export_service=_SENTINEL,  # type: ignore[arg-type]
+        config=config,
+        registry=registry,
+        processor=processor,
+        control_plane=_SENTINEL,
+        worker_pool=_SENTINEL,
+        settings_store=settings_store,
+        gps_monitor=gps_monitor,
+        history_db=_SENTINEL,
+        run_service=_SENTINEL,
+        report_service=_SENTINEL,
+        export_service=_SENTINEL,
         processing_loop_state=processing_state,
         health_state=health_state,
         processing_loop=ProcessingLoop(
@@ -180,21 +180,21 @@ def _make_state(
             fft_update_hz=4,
             sample_rate_hz=800,
             fft_n=2048,
-            registry=registry,  # type: ignore[arg-type]
-            processor=processor,  # type: ignore[arg-type]
+            registry=registry,
+            processor=processor,
         ),
-        ws_hub=_SENTINEL,  # type: ignore[arg-type]
+        ws_hub=_SENTINEL,
         ws_broadcast=WsBroadcastService(
             ui_push_hz=ui_push_hz,
             ui_heavy_push_hz=ui_heavy_push_hz,
-            registry=registry,  # type: ignore[arg-type]
-            processor=processor,  # type: ignore[arg-type]
-            gps_monitor=gps_monitor,  # type: ignore[arg-type]
-            settings_store=settings_store,  # type: ignore[arg-type]
+            registry=registry,
+            processor=processor,
+            gps_monitor=gps_monitor,
+            settings_store=settings_store,
         ),
-        run_recorder=_StubRunRecorder(),  # type: ignore[arg-type]
-        update_manager=_SENTINEL,  # type: ignore[arg-type]
-        esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
+        run_recorder=_StubRunRecorder(),
+        update_manager=_SENTINEL,
+        esp_flash_manager=_SENTINEL,
     )
     state.ws_broadcast.include_heavy = ws_include_heavy
     return state

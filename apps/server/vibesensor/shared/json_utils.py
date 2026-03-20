@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+from typing import cast
 
 from vibesensor.coerce import coerce_float
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
@@ -89,7 +90,7 @@ def sanitize_for_json(obj: object, *, _max_depth: int = 128) -> tuple[object, bo
             v = v.item()
             t = type(v)
         if t is float:
-            if _isfinite(v):  # type: ignore[arg-type]
+            if _isfinite(cast(float, v)):
                 return v
             found_non_finite = True
             return None
@@ -135,7 +136,8 @@ def safe_json_loads(value: str | None, *, context: str) -> JsonValue | None:
     if not value:
         return None
     try:
-        return json.loads(value)  # type: ignore[no-any-return]
+        result: JsonValue = json.loads(value)
+        return result
     except json.JSONDecodeError:
         LOGGER.warning("Skipping invalid JSON payload while reading %s", context, exc_info=True)
         return None

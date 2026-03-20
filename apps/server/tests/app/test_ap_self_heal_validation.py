@@ -25,7 +25,7 @@ def _make_self_heal(**overrides) -> APSelfHealConfig:
         "state_file": Path("/tmp/vibesensor_ap_state.json"),
     }
     defaults.update(overrides)
-    return APSelfHealConfig(**defaults)  # type: ignore[arg-type]
+    return APSelfHealConfig(**defaults)
 
 
 class TestAPSelfHealDiagnosticsLookback:

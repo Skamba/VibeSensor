@@ -35,7 +35,7 @@ def test_append_samples_in_chunks(tmp_path: Path) -> None:
 
             yield _CursorProxy(cur)
 
-    db.write_transaction_cursor = _wrapped_write_transaction  # type: ignore[method-assign]
+    db.write_transaction_cursor = _wrapped_write_transaction
     samples = [{"i": i, "x": 0.1} for i in range(700)]
     db.append_samples("run-1", samples)
     assert sum(calls) == 700
@@ -219,7 +219,7 @@ def test_append_samples_rolls_back_when_metadata_update_fails(tmp_path: Path) ->
 
             yield _CursorProxy(cur)
 
-    db.write_transaction_cursor = _wrapped_write_transaction  # type: ignore[method-assign]
+    db.write_transaction_cursor = _wrapped_write_transaction
 
     with pytest.raises(sqlite3.OperationalError, match="simulated sample_count failure"):
         db.append_samples("run-rollback", [{"i": 1}, {"i": 2}])
@@ -340,7 +340,7 @@ def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
             return self._conn.commit()
 
     proxy = _ConnProxy(db._conn)
-    db._conn = proxy  # type: ignore[assignment]
+    db._conn = proxy
 
     _ = db.get_run("run-ro")
     _ = db.list_runs()

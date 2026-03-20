@@ -13,6 +13,7 @@ import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, cast
 
 from fastapi import FastAPI
 
@@ -51,7 +52,7 @@ def _build_openapi_app() -> FastAPI:
         health_state=placeholder,
     )
     app = FastAPI(title="VibeSensor HTTP API")
-    app.include_router(create_router(services))  # type: ignore[arg-type]
+    app.include_router(create_router(cast(Any, services)))
     return app
 
 

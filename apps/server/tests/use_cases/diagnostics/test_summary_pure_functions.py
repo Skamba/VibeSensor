@@ -99,7 +99,7 @@ class TestSelectTopCauses:
     """Direct unit tests for select_top_causes grouping and drop-off."""
 
     @staticmethod
-    def _to_domain(*payloads: dict) -> tuple[Finding, ...]:  # type: ignore[type-arg]
+    def _to_domain(*payloads: dict[str, object]) -> tuple[Finding, ...]:
         return tuple(finding_from_payload(p) for p in payloads)
 
     def test_empty_findings_returns_empty(self) -> None:

@@ -90,7 +90,7 @@ class TestFindingEvidence:
     def test_frozen(self) -> None:
         e = FindingEvidence()
         with pytest.raises(dataclasses.FrozenInstanceError):
-            e.match_rate = 0.5  # type: ignore[misc]
+            e.match_rate = 0.5
 
     def test_defaults(self) -> None:
         e = FindingEvidence()
@@ -172,7 +172,7 @@ class TestLocationHotspot:
     def test_frozen(self) -> None:
         h = LocationHotspot()
         with pytest.raises(dataclasses.FrozenInstanceError):
-            h.strongest_location = "foo"  # type: ignore[misc]
+            h.strongest_location = "foo"
 
     def test_defaults(self) -> None:
         h = LocationHotspot()
@@ -542,7 +542,7 @@ class TestConfidenceAssessment:
     def test_frozen(self) -> None:
         ca = ConfidenceAssessment.assess(0.8)
         with pytest.raises(dataclasses.FrozenInstanceError):
-            ca.raw_confidence = 0.5  # type: ignore[misc]
+            ca.raw_confidence = 0.5
 
     def test_high_confidence(self) -> None:
         ca = ConfidenceAssessment.assess(0.85)
@@ -675,7 +675,7 @@ class TestSpeedProfile:
     def test_frozen(self) -> None:
         sp = SpeedProfile()
         with pytest.raises(dataclasses.FrozenInstanceError):
-            sp.min_kmh = 10.0  # type: ignore[misc]
+            sp.min_kmh = 10.0
 
     def test_defaults(self) -> None:
         sp = SpeedProfile()
@@ -819,7 +819,7 @@ class TestSuitabilityCheck:
     def test_frozen(self) -> None:
         c = SuitabilityCheck(check_key="test", state="pass")
         with pytest.raises(dataclasses.FrozenInstanceError):
-            c.state = "fail"  # type: ignore[misc]
+            c.state = "fail"
 
     def test_properties(self) -> None:
         assert SuitabilityCheck(check_key="a", state="pass").passed
@@ -932,7 +932,7 @@ class TestRunSuitability:
     def test_frozen(self) -> None:
         rs = RunSuitability()
         with pytest.raises(dataclasses.FrozenInstanceError):
-            rs.checks = ()  # type: ignore[misc]
+            rs.checks = ()
 
     def test_overall_pass(self) -> None:
         rs = RunSuitability(
@@ -1377,7 +1377,7 @@ class TestConfigurationSnapshot:
         snap = ConfigurationSnapshot.from_metadata({"sensor_model": "MPU6050"})
         assert isinstance(snap.metadata, MappingProxyType)
         with pytest.raises(TypeError):
-            snap.metadata["new_key"] = "value"  # type: ignore[index]
+            snap.metadata["new_key"] = "value"
 
     def test_empty_snapshot_equality(self) -> None:
         assert ConfigurationSnapshot() == ConfigurationSnapshot()
@@ -1530,7 +1530,7 @@ class TestDrivingPhaseSegment:
     def test_frozen_immutability(self) -> None:
         seg = DrivingPhaseSegment(phase=DrivingPhase.IDLE, duration_s=1.0, sample_count=10)
         with pytest.raises(dataclasses.FrozenInstanceError):
-            seg.sample_count = 99  # type: ignore[misc]
+            seg.sample_count = 99
 
     def test_optional_speed_fields_default_none(self) -> None:
         seg = DrivingPhaseSegment(phase=DrivingPhase.ACCELERATION, duration_s=5.0, sample_count=100)

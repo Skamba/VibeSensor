@@ -84,7 +84,7 @@ _ATR_DEFAULTS: dict[str, object] = {
 
 def _atr(**overrides: object) -> tuple[float, float, bool] | None:
     """Call ``analysis_time_range`` with shared defaults + overrides."""
-    return analysis_time_range(**{**_ATR_DEFAULTS, **overrides})  # type: ignore[arg-type]
+    return analysis_time_range(**{**_ATR_DEFAULTS, **overrides})
 
 
 class TestAnalysisTimeRange:

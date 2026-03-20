@@ -55,7 +55,7 @@ from vibesensor.report_i18n import tr as _tr
 def _label_width(c: Canvas, label: str, *, default_w: float, col_w: float) -> float:
     measured = c.stringWidth(f"{label}:", FONT, FS_BODY) + 1.2 * mm
     max_allowed = max(default_w, col_w - 20 * mm)
-    return min(max(default_w, measured), max_allowed)  # type: ignore[no-any-return]
+    return float(min(max(default_w, measured), max_allowed))
 
 
 def _column_height(
@@ -212,7 +212,7 @@ def _draw_header_panel(
         header_columns.meta_row_gap,
     )
     _draw_kv_column(c, meta_right, meta_y0, right_rows, right_col_w, header_columns.meta_row_gap)
-    return layout.header.y - GAP  # type: ignore[no-any-return]
+    return float(layout.header.y - GAP)
 
 
 def _draw_observed_signature_panel(
@@ -312,7 +312,7 @@ def _draw_observed_signature_panel(
         size=FS_SMALL,
         color=MUTED_CLR,
     )
-    return obs_y - GAP  # type: ignore[no-any-return]
+    return float(obs_y - GAP)
 
 
 def _draw_systems_panel(
@@ -353,7 +353,7 @@ def _draw_systems_panel(
             cx = inner_x + idx * (card_w + card_gap)
             cy = cards_y + 3 * mm
             _draw_system_card(c, cx, cy, card_w, card_h, card, tr=tr)
-    return cards_y - GAP  # type: ignore[no-any-return]
+    return float(cards_y - GAP)
 
 
 def _draw_data_trust_panel(

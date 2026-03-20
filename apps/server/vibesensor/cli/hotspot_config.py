@@ -10,7 +10,9 @@ from vibesensor.app.settings import DEFAULT_CONFIG
 
 def main() -> None:
     config_path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("/etc/vibesensor/config.yaml")
-    defaults = {k: v for k, v in DEFAULT_CONFIG["ap"].items() if k != "self_heal"}  # type: ignore[union-attr]
+    ap_defaults = DEFAULT_CONFIG["ap"]
+    assert isinstance(ap_defaults, dict), "DEFAULT_CONFIG['ap'] must be a dict"
+    defaults = {k: v for k, v in ap_defaults.items() if k != "self_heal"}
 
     cfg: dict[str, object] = {}
     if config_path.exists():

@@ -10,6 +10,7 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.shared.types.backend_types import (
@@ -47,7 +48,7 @@ def normalize_sample_record(record: JsonObject) -> JsonObject:
     """
     frame = SensorFrame.from_dict(record)
     normalized = dict(record)
-    normalized.update(frame.to_dict())  # type: ignore[arg-type]  # dict[str, object] → JsonObject
+    normalized.update(cast(JsonObject, frame.to_dict()))
     return normalized
 
 
