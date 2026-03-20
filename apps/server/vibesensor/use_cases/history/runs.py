@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Never
+from typing import Never
 
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
@@ -11,6 +11,7 @@ from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.run_context import add_current_context_warnings, localize_warning_list
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.shared.types.run_persistence import RunPersistence
+from vibesensor.shared.types.settings_reader import SettingsReader
 from vibesensor.use_cases.history.helpers import (
     HistoryRecord,
     async_require_run,
@@ -18,9 +19,6 @@ from vibesensor.use_cases.history.helpers import (
     resolve_run_language,
     strip_internal_fields,
 )
-
-if TYPE_CHECKING:
-    from vibesensor.infra.config.settings_store import SettingsStore
 
 
 class HistoryRunService:
@@ -31,7 +29,7 @@ class HistoryRunService:
     def __init__(
         self,
         history_db: RunPersistence,
-        settings_store: SettingsStore | None = None,
+        settings_store: SettingsReader | None = None,
     ) -> None:
         self._history_db = history_db
         self._settings_store = settings_store
