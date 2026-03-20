@@ -27,7 +27,7 @@ from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
 
 if TYPE_CHECKING:
-    from vibesensor.infra.processing import SignalProcessor
+    from vibesensor.shared.types.signal_source import SignalSource
 
 _isfinite = math.isfinite
 
@@ -152,7 +152,7 @@ def build_sample_records(
     t_s: float,
     timestamp_utc: str,
     registry: ClientTracker,
-    processor: SignalProcessor,
+    processor: SignalSource,
     speed_context: SpeedContext,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     default_sample_rate_hz: int,
