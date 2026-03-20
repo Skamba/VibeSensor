@@ -109,7 +109,7 @@ files = [
   "vibesensor/use_cases/diagnostics/_types.py",
   "vibesensor/use_cases/diagnostics/helpers.py",
   "vibesensor/use_cases/diagnostics/top_cause_selection.py",
-  "vibesensor/use_cases/diagnostics/order_bands.py",
+  "vibesensor/shared/order_bands.py",
   "vibesensor/use_cases/diagnostics/plots.py",
   "vibesensor/use_cases/diagnostics/location_analysis.py",
   "vibesensor/use_cases/diagnostics/phase_segmentation.py",

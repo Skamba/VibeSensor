@@ -19,14 +19,14 @@ ESP32 nodes -> adapters/udp/ -> infra/processing/ + use_cases/diagnostics/
 
 Backend ownership boundaries:
 
-- `app/`: FastAPI app factory (`bootstrap.py`), runtime container wiring (`container.py`), and YAML settings/config loading (`settings.py`).
+- `app/`: FastAPI app factory (`bootstrap.py`), runtime container wiring (`container.py`), app-owned `RuntimeState` (`runtime_state.py`), and YAML settings/config loading (`settings.py`).
 - `adapters/http/` and `adapters/websocket/`: HTTP route groups and live WebSocket delivery.
-- `infra/runtime/`: flat `RuntimeState`, lifecycle management, processing loop, health snapshots, and WebSocket broadcast coordination.
+- `infra/runtime/`: lifecycle management, processing loop, runtime health state, and WebSocket broadcast coordination.
 - `infra/processing/`: signal processing pipeline.
 - `infra/config/`: runtime settings stores used by recording and runtime services.
-- `use_cases/diagnostics/`: post-stop analysis/findings logic.
+- `use_cases/diagnostics/`: post-stop analysis/findings logic; the package-level API still re-exports shared vehicle-order helpers used by live telemetry.
 - `use_cases/run/`: recording orchestration and post-analysis queue.
-- `adapters/persistence/`, `shared/boundaries/`, and `use_cases/history/`: SQLite persistence, shared run-log decoding/normalization, car library loading, and history/report/export services.
+- `adapters/persistence/`, `shared/`, and `use_cases/history/`: SQLite persistence, shared typed contracts/pure helpers (including run-log decoding and vehicle-order math), car library loading, and history/report/export services.
 - `adapters/pdf/`: PDF/report rendering pipeline.
 - `use_cases/updates/`: wheel-based update flow.
 - `adapters/hotspot/`: Wi-Fi AP monitoring, parsing, and self-heal infrastructure.

@@ -6,7 +6,7 @@ respect the layer dependency DAG:
     domain → (nothing)
     shared → {domain}
     use_cases → {domain, shared}
-    infra → {domain, shared, use_cases}
+    infra → {domain, shared}
     adapters → {domain, shared, infra, use_cases}
     app → (everything)
 
@@ -34,7 +34,7 @@ _ALLOWED_IMPORTS: dict[str, frozenset[str]] = {
     "domain": frozenset(),
     "shared": frozenset({"domain"}),
     "use_cases": frozenset({"domain", "shared"}),
-    "infra": frozenset({"domain", "shared", "use_cases"}),
+    "infra": frozenset({"domain", "shared"}),
     "adapters": frozenset({"domain", "shared", "infra", "use_cases"}),
     "app": frozenset({"domain", "shared", "use_cases", "infra", "adapters"}),
 }
@@ -109,13 +109,12 @@ _KNOWN_VIOLATIONS: frozenset[tuple[str, str]] = frozenset(
         ("infra/runtime/registry.py", "vibesensor.adapters.udp.protocol"),
         ("infra/runtime/registry.py", "vibesensor.adapters.persistence.history_db"),
         ("infra/runtime/rotational_speeds.py", "vibesensor.adapters.gps.gps_speed"),
-        ("infra/runtime/state.py", "vibesensor.adapters.gps.gps_speed"),
-        ("infra/runtime/state.py", "vibesensor.adapters.persistence.history_db"),
-        ("infra/runtime/state.py", "vibesensor.adapters.udp.udp_control_tx"),
-        ("infra/runtime/state.py", "vibesensor.adapters.websocket.hub"),
         ("infra/runtime/ws_broadcast.py", "vibesensor.adapters.gps.gps_speed"),
-        # infra → app
-        ("infra/runtime/state.py", "vibesensor.app.settings"),
+        # adapters/infra → app
+        # RuntimeState now lives in app/, but router/lifecycle still consume the
+        # flat app-owned runtime bag until issue #752 splits those dependency groups.
+        ("adapters/http/__init__.py", "vibesensor.app.runtime_state"),
+        ("infra/runtime/lifecycle.py", "vibesensor.app.runtime_state"),
         # adapters → app
         ("adapters/hotspot/self_heal.py", "vibesensor.app.settings"),
     }

@@ -43,13 +43,13 @@ apps/server/tests/
 | `vibesensor/analysis/*` | `apps/server/tests/analysis/` |
 | `vibesensor/report/*`, `report_i18n.py` | `apps/server/tests/report/` |
 | `vibesensor/routes/*` | `apps/server/tests/api/` |
-| `vibesensor/app.py`, `runtime/*`, `worker_pool.py` | `apps/server/tests/app/` |
+| `vibesensor/app/runtime_state.py`, `vibesensor/infra/runtime/*`, `worker_pool.py` | `apps/server/tests/infra/runtime/` |
 | `vibesensor/history_db/*`, `history_services/*` | `apps/server/tests/history/` |
 | `vibesensor/update/*` | `apps/server/tests/update/` |
 | `vibesensor/processing/*` | `apps/server/tests/processing/` |
 | `vibesensor/ws_hub.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
 | `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
-| `vibesensor/analysis/order_bands.py` | `apps/server/tests/diagnostics/` |
+| `vibesensor/shared/order_bands.py` | `apps/server/tests/use_cases/diagnostics/` |
 | `vibesensor/domain/*`, `vibesensor/boundaries/*`, `backend_types.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |
 | `vibesensor/shared/boundaries/*`, `vibesensor/shared/types/sensor_frame.py` | `apps/server/tests/shared/` |
 | `vibesensor/gps_speed.py` | `apps/server/tests/gps/` |

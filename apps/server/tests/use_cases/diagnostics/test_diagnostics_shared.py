@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from math import inf, nan
 
-from vibesensor.use_cases.diagnostics.order_bands import (
+from vibesensor.shared.order_bands import (
     build_diagnostic_settings,
     tolerance_for_order,
     vehicle_orders_hz,
