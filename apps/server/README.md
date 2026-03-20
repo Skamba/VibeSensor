@@ -25,7 +25,7 @@ Backend ownership boundaries:
 - `infra/processing/`: signal processing pipeline.
 - `infra/config/`: runtime settings stores used by recording and runtime services.
 - `use_cases/diagnostics/`: post-stop analysis/findings logic; the package-level API still re-exports shared vehicle-order helpers used by live telemetry.
-- `use_cases/run/`: recording orchestration and post-analysis queue.
+- `use_cases/run/`: recording orchestration; `lifecycle_state.py` owns the in-memory run session state, `logger.py` owns the coordinator, and `post_analysis.py` owns the background analysis queue.
 - `adapters/persistence/`, `shared/`, and `use_cases/history/`: SQLite persistence, shared typed contracts/pure helpers (including run-log decoding, the `RunPersistence` port, and vehicle-order math), car library loading, and history/report/export services. `adapters/persistence/history_db/` keeps `HistoryDB` as the public facade while `_run_lifecycle.py`, `_sample_io.py`, and `_queries.py` own the internal run-write, sample-streaming, and read/query sections above shared `_schema.py` and `_samples.py` helpers.
 - `adapters/pdf/`: PDF/report rendering pipeline.
 - `use_cases/updates/`: wheel-based update flow.
