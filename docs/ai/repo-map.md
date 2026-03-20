@@ -76,7 +76,3 @@ Scope: single source of truth for detailed file layout, entry points, package st
 - Regression tests live in the feature directory they primarily test, or in `integration/` for cross-cutting regressions.
 - Shared test support lives at the test root (`conftest.py`, `_paths.py`, focused helper modules, and the `test_support/` package including `findings.py` for canonical finding-payload factories).
 - Full map: `docs/testing.md`.
-
-## Source-of-truth rule
-
-When code movement changes this map, update `docs/ai/repo-map.md`, `.github/copilot-instructions.md`, and the affected README or instruction file in the same change set.

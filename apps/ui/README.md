@@ -60,8 +60,7 @@ in one step.
 
 The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
 composition root instead of becoming a single-file owner for transport, shell,
-and chart behavior. If you change startup wiring or long-lived UI ownership,
-update this README and the AI repo maps in the same change set.
+and chart behavior.
 
 ## WebSocket contract boundary
 
