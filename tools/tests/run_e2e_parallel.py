@@ -80,11 +80,11 @@ class ShardResult:
 # Tests exceeding SLOW_TEST_THRESHOLD get their own dedicated shard.
 SLOW_TEST_THRESHOLD = 5.0
 _DURATION_HINTS: dict[str, float] = {
-    "test_e2e_docker_user_journeys[clients_and_cars]": 17.1,
+    "test_e2e_docker_user_journeys.py::test_e2e_docker_user_journeys[clients_and_cars]": 17.1,
     "test_e2e_docker_edge_cases.py::test_logging_start_while_recording_rollover": 11.5,
     "test_e2e_docker_rear_left_wheel_fault.py::test_e2e_docker_rear_left_wheel_fault": 9.5,
-    "test_e2e_docker_user_journeys[language_pdf]": 8.9,
-    "test_e2e_docker_user_journeys[speed_export_delete]": 8.8,
+    "test_e2e_docker_user_journeys.py::test_e2e_docker_user_journeys[language_pdf]": 8.9,
+    "test_e2e_docker_user_journeys.py::test_e2e_docker_user_journeys[speed_export_delete]": 8.8,
     "test_e2e_docker_edge_cases.py::test_delete_active_run_returns_409_e2e": 5.8,
 }
 _DEFAULT_DURATION = 3.0
