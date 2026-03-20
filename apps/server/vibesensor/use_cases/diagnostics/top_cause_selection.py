@@ -25,6 +25,10 @@ def group_findings_by_source(
 ) -> list[tuple[float, Finding]]:
     """Group findings by source and return ranked representatives.
 
+    Wheel/tire findings at distinct ``strongest_location`` values are kept
+    in separate groups so that multi-corner faults surface independently.
+    Other sources group by ``source_normalized`` only.
+
     Collects unique order labels from all members of a source group
     and attaches them as signatures on the representative Finding.
 
@@ -33,7 +37,12 @@ def group_findings_by_source(
     """
     groups: dict[str, list[Finding]] = defaultdict(list)
     for f in findings:
-        groups[f.source_normalized].append(f)
+        loc_norm = (f.strongest_location or "").strip().lower()
+        if f.source_normalized == "wheel/tire" and loc_norm:
+            key = f"{f.source_normalized}::{loc_norm}"
+        else:
+            key = f.source_normalized
+        groups[key].append(f)
 
     grouped: list[tuple[float, Finding]] = []
     for members in groups.values():

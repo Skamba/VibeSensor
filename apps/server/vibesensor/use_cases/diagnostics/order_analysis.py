@@ -261,6 +261,9 @@ _DIFFUSE_PENALTY_PER_SENSOR = 0.04
 _DIFFUSE_PENALTY_FLOOR = 0.65
 _HARMONIC_ALIAS_RATIO = 1.15
 _ENGINE_ALIAS_SUPPRESSION = 0.60
+# Maximum dominance ratio for splitting a finding into per-location findings.
+# A ratio of 2.0 means the secondary location must be at least 50% as strong.
+_MULTI_LOCATION_SPLIT_DOMINANCE = 2.0
 
 
 def _mean(values: list[float]) -> float:
@@ -329,7 +332,13 @@ def suppress_engine_aliases(
     *,
     min_confidence: float = ORDER_MIN_CONFIDENCE,
 ) -> list[DomainFinding]:
-    """Suppress engine findings likely to be aliases of stronger wheel findings."""
+    """Suppress engine findings likely to be aliases of stronger wheel findings.
+
+    Engine findings whose ranking score is at least as high as the best wheel
+    finding are kept intact — a better ranking score indicates superior
+    frequency tracking, meaning the engine hypothesis is a better physical
+    explanation than the coincidentally close wheel harmonic.
+    """
     best_wheel_conf = max(
         (
             finding.effective_confidence
@@ -338,9 +347,19 @@ def suppress_engine_aliases(
         ),
         default=0.0,
     )
+    best_wheel_ranking = max(
+        (
+            score
+            for score, finding in findings
+            if _normalized_source(finding) == VibrationSource.WHEEL_TIRE
+        ),
+        default=0.0,
+    )
     if best_wheel_conf > 0:
         for index, (ranking_score, finding) in enumerate(findings):
             if _normalized_source(finding) != VibrationSource.ENGINE:
+                continue
+            if ranking_score >= best_wheel_ranking:
                 continue
             eng_conf = finding.effective_confidence
             if eng_conf <= best_wheel_conf * _HARMONIC_ALIAS_RATIO:
@@ -487,6 +506,13 @@ def assemble_order_finding(
         match.matched_by_location,
         match.matched_points,
     )
+    # Engine and driveline vibrations naturally propagate to all sensors,
+    # so uniform sensor coverage is expected – not a reason to penalise.
+    _source_expects_diffuse = hypothesis.suspected_source in (
+        VibrationSource.ENGINE,
+        VibrationSource.DRIVELINE,
+    )
+    effective_diffuse_penalty = 1.0 if _source_expects_diffuse else diffuse_penalty
     confidence = compute_order_confidence(
         effective_match_rate=context.effective_match_rate,
         error_score=error_score,
@@ -502,7 +528,7 @@ def assemble_order_finding(
         corroborating_locations=corroborating_locations,
         phases_with_evidence=phases_with_evidence,
         is_diffuse_excitation=diffuse_excitation,
-        diffuse_penalty=diffuse_penalty,
+        diffuse_penalty=effective_diffuse_penalty,
         n_connected_locations=len(context.connected_locations),
         no_wheel_sensors=no_wheel_override,
         path_compliance=match.compliance,
@@ -635,6 +661,50 @@ def _compute_effective_match_rate(
     return effective_match_rate, focused_speed_band, per_location_dominant
 
 
+def _split_multi_location_findings(
+    findings: list[tuple[float, DomainFinding]],
+) -> list[tuple[float, DomainFinding]]:
+    """Create per-location findings when a hypothesis matches at multiple strong corners.
+
+    If a wheel/tire finding has alternative locations stored in its hotspot
+    and the dominance ratio is below ``_MULTI_LOCATION_SPLIT_DOMINANCE``,
+    a secondary finding is emitted for each alternative location that differs
+    from the primary.  The secondary finding receives a confidence scaled by
+    ``1 / dominance_ratio`` so the weaker corner ranks below the stronger one
+    while still surfacing in the findings list.
+    """
+    result: list[tuple[float, DomainFinding]] = list(findings)
+    for score, finding in findings:
+        if finding.source_normalized != VibrationSource.WHEEL_TIRE:
+            continue
+        hotspot = finding.location
+        if hotspot is None:
+            continue
+        dom = finding.dominance_ratio
+        if dom is None or dom >= _MULTI_LOCATION_SPLIT_DOMINANCE:
+            continue
+        primary = (finding.strongest_location or "").strip().lower()
+        for alt_loc in hotspot.alternative_locations:
+            alt_norm = alt_loc.strip().lower()
+            if not alt_norm or alt_norm == primary:
+                continue
+            scale = 1.0 / max(dom, 1.01)
+            alt_hotspot = replace(
+                hotspot,
+                strongest_location=alt_loc,
+                alternative_locations=(),
+            )
+            alt_finding = replace(
+                finding,
+                strongest_location=alt_loc,
+                confidence=(finding.effective_confidence * scale),
+                ranking_score=score * scale,
+                location=alt_hotspot,
+            )
+            result.append((score * scale, alt_finding))
+    return result
+
+
 class OrderAnalysisSession:
     """Coordinates hypothesis testing across samples to produce order findings.
 
@@ -702,6 +772,8 @@ class OrderAnalysisSession:
             result = self._test_hypothesis(hypothesis)
             if result is not None:
                 findings.append(result)
+
+        findings = _split_multi_location_findings(findings)
 
         return suppress_engine_aliases(findings, min_confidence=ORDER_MIN_CONFIDENCE)
 
