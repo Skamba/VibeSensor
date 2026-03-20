@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
+import { createUpdateFeature } from "../src/app/features/update_feature";
 import type { UiDomElements } from "../src/app/ui_dom_registry";
 
 type ClickListener = (() => void) | null;
@@ -119,6 +120,15 @@ function createSelect(value: string): HTMLSelectElement {
   } as unknown as HTMLSelectElement;
 }
 
+function createInput(value = "", type = "text"): HTMLInputElement {
+  return {
+    value,
+    type,
+    disabled: false,
+    focus() {},
+  } as unknown as HTMLInputElement;
+}
+
 function createPanel(): HTMLElement {
   return {
     textContent: "",
@@ -169,16 +179,96 @@ async function flushAsyncWork(rounds = 12): Promise<void> {
   }
 }
 
-async function expectPollDelays(timers: TimerHarness, expected: number[]): Promise<void> {
+async function expectDelays(readDelays: () => number[], expected: number[]): Promise<void> {
   for (let attempt = 0; attempt < 25; attempt += 1) {
-    const actual = pendingPollDelays(timers);
+    const actual = readDelays();
     if (actual.length === expected.length && actual.every((delay, index) => delay === expected[index])) {
       expect(actual).toEqual(expected);
       return;
     }
     await flushAsyncWork(1);
   }
-  expect(pendingPollDelays(timers)).toEqual(expected);
+  expect(readDelays()).toEqual(expected);
+}
+
+async function expectPollDelays(timers: TimerHarness, expected: number[]): Promise<void> {
+  await expectDelays(() => pendingPollDelays(timers), expected);
+}
+
+async function expectTimerDelays(timers: TimerHarness, expected: number[]): Promise<void> {
+  await expectDelays(() => timers.pendingDelays(), expected);
+}
+
+function createIdleUpdateStatus() {
+  return {
+    state: "idle",
+    phase: "idle",
+    ssid: null,
+    started_at: null,
+    phase_started_at: null,
+    phase_elapsed_s: null,
+    finished_at: null,
+    last_success_at: null,
+    issues: [],
+    log_tail: [],
+    runtime: null,
+  };
+}
+
+function createHealthyUpdateStatus() {
+  return {
+    status: "ok",
+    processing_state: "idle",
+    processing_failures: 0,
+    degradation_reasons: [],
+    data_loss: {
+      affected_clients: 0,
+      tracked_clients: 0,
+      frames_dropped: 0,
+      queue_overflow_drops: 0,
+      server_queue_drops: 0,
+      parse_errors: 0,
+    },
+    persistence: {
+      analysis_in_progress: false,
+      analysis_queue_depth: 0,
+      write_error: null,
+      analysis_active_run_id: null,
+      analysis_started_at: null,
+      analysis_elapsed_s: null,
+    },
+  };
+}
+
+function createUpdateDeps() {
+  const updateSsidInput = createInput("MyWiFi");
+  const updatePasswordInput = createInput("secret", "password");
+  const updateTogglePasswordBtn = createButton();
+  const updateStartBtn = createButton();
+  const updateCancelBtn = createButton();
+  const updateStatusPanel = createPanel();
+
+  const els = {
+    menuButtons: [],
+    views: [],
+    settingsTabs: [],
+    settingsTabPanels: [],
+    updateSsidInput,
+    updatePasswordInput,
+    updateTogglePasswordBtn,
+    updateStartBtn,
+    updateCancelBtn,
+    updateStatusPanel,
+  } as unknown as UiDomElements;
+
+  return {
+    els,
+    updatePasswordInput,
+    updateStartBtn,
+    updateCancelBtn,
+    t: (key: string) => key,
+    escapeHtml: (value: unknown) => String(value ?? ""),
+  };
 }
 
 test.describe("createEspFlashFeature polling", () => {
@@ -286,6 +376,104 @@ test.describe("createEspFlashFeature polling", () => {
       await flushAsyncWork();
 
       expect(pendingPollDelays(timers)).toEqual([]);
+    } finally {
+      restoreFetch();
+      timers.restore();
+    }
+  });
+});
+
+test.describe("createUpdateFeature polling", () => {
+  test.beforeEach(() => {
+    (globalThis as { window?: Window & typeof globalThis }).window = globalThis as unknown as Window &
+      typeof globalThis;
+    window.alert = (() => {}) as typeof window.alert;
+  });
+
+  test("start replaces the previous update poll timeout instead of creating a second chain", async () => {
+    const timers = installTimerHarness();
+    const restoreFetch = installFetchMock(async (url, method) => {
+      if (url.pathname === "/api/update/start" && method === "POST") {
+        return jsonResponse({ status: "started" });
+      }
+      if (url.pathname === "/api/update/status") {
+        return jsonResponse(createIdleUpdateStatus());
+      }
+      if (url.pathname === "/api/health") {
+        return jsonResponse(createHealthyUpdateStatus());
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createUpdateDeps();
+      const feature = createUpdateFeature(deps);
+
+      feature.bindUpdateHandlers();
+      feature.startPolling();
+      await expectTimerDelays(timers, [10_000]);
+
+      deps.updateStartBtn.click();
+      await expectTimerDelays(timers, [10_000]);
+      expect(deps.updatePasswordInput.value).toBe("");
+    } finally {
+      restoreFetch();
+      timers.restore();
+    }
+  });
+
+  test("cancel replaces the previous update poll timeout instead of creating a second chain", async () => {
+    const timers = installTimerHarness();
+    const restoreFetch = installFetchMock(async (url, method) => {
+      if (url.pathname === "/api/update/cancel" && method === "POST") {
+        return jsonResponse({ status: "cancelled" });
+      }
+      if (url.pathname === "/api/update/status") {
+        return jsonResponse(createIdleUpdateStatus());
+      }
+      if (url.pathname === "/api/health") {
+        return jsonResponse(createHealthyUpdateStatus());
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createUpdateDeps();
+      const feature = createUpdateFeature(deps);
+
+      feature.bindUpdateHandlers();
+      feature.startPolling();
+      await expectTimerDelays(timers, [10_000]);
+
+      deps.updateCancelBtn.click();
+      await expectTimerDelays(timers, [10_000]);
+    } finally {
+      restoreFetch();
+      timers.restore();
+    }
+  });
+
+  test("stopPolling prevents an in-flight update poll from reviving the loop", async () => {
+    const timers = installTimerHarness();
+    const deferredStatus = createDeferred<Response>();
+    const restoreFetch = installFetchMock(async (url) => {
+      if (url.pathname === "/api/update/status") return deferredStatus.promise;
+      if (url.pathname === "/api/health") {
+        return jsonResponse(createHealthyUpdateStatus());
+      }
+      return jsonResponse({});
+    });
+
+    try {
+      const deps = createUpdateDeps();
+      const feature = createUpdateFeature(deps);
+
+      feature.startPolling();
+      await expectTimerDelays(timers, [10_000]);
+
+      feature.stopPolling();
+      deferredStatus.resolve(jsonResponse(createIdleUpdateStatus()));
+      await expectTimerDelays(timers, []);
     } finally {
       restoreFetch();
       timers.restore();
