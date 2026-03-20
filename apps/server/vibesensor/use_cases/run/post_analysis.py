@@ -19,9 +19,9 @@ from dataclasses import dataclass
 from threading import RLock, Thread
 from typing import Protocol, cast
 
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.types.run_persistence import RunPersistence
 
 LOGGER = logging.getLogger(__name__)
 

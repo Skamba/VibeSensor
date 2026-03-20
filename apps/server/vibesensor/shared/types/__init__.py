@@ -1,1 +1,1 @@
-"""Shared typed payloads, ports, and API models."""
+"""Shared typed payloads and API models."""
