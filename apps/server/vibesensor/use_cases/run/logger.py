@@ -10,7 +10,7 @@ history-DB persistence. Focused helpers live in:
 - :mod:`vibesensor.use_cases.run.sample_builder` — pure sample record
   construction.
 - :mod:`vibesensor.use_cases.run.post_analysis` — background analysis
-  thread/queue.
+  thread/queue plus the injected post-stop analysis boundary.
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ from vibesensor.use_cases.run.persistence_writer import (
     PersistenceStatusSnapshot,
     RunPersistenceWriter,
 )
-from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
+from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker, build_post_analysis_summary
 from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
     build_sample_records,
@@ -152,6 +152,7 @@ class RunRecorder:
             history_db=history_db,
             error_callback=lambda msg: setattr(self, "_persist_last_write_error", msg),
             clear_error_callback=lambda: setattr(self, "_persist_last_write_error", None),
+            analysis_runner=build_post_analysis_summary,
         )
 
         with self._lock:

@@ -543,7 +543,6 @@ def test_shutdown_report_exposes_timeout_state(
 def test_post_analysis_uses_run_language_from_metadata(
     make_logger,
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db, language_provider=lambda: "nl")
@@ -556,10 +555,31 @@ def test_post_analysis_uses_run_language_from_metadata(
     start_mono = snapshot.start_mono_s
     logger._append_records(run_id, start_time_utc, start_mono)
 
-    def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
-        return {"lang": lang, "row_count": len(samples)}
+    def _analysis_runner(
+        *,
+        run_id: str,
+        metadata,
+        samples,
+        language: str,
+        total_sample_count: int,
+        stride: int,
+    ):
+        assert run_id == snapshot.run_id
+        assert metadata["language"] == "nl"
+        assert total_sample_count == len(samples)
+        assert stride == 1
+        return {
+            "lang": language,
+            "row_count": len(samples),
+            "analysis_metadata": {
+                "analyzed_sample_count": len(samples),
+                "total_sample_count": total_sample_count,
+                "sampling_method": "full",
+            },
+            "run_suitability": [],
+        }
 
-    monkeypatch.setattr("vibesensor.use_cases.diagnostics.summarize_run_data", _summary)
+    logger._post_analysis._analysis_runner = _analysis_runner
     logger.stop_recording()
 
     def _status():
@@ -648,19 +668,38 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     for _ in range(cap + 50):
         logger._append_records(run_id, start_time_utc, start_mono)
 
-    class _FakeRunAnalysis:
-        def __init__(self, metadata, samples, **kwargs):
-            self._sample_count = len(samples)
+    def _analysis_runner(
+        *,
+        run_id: str,
+        metadata,
+        samples,
+        language: str,
+        total_sample_count: int,
+        stride: int,
+    ):
+        assert run_id == snapshot.run_id
+        assert language == "en"
+        return {
+            "row_count": len(samples),
+            "analysis_metadata": {
+                "analyzed_sample_count": len(samples),
+                "total_sample_count": total_sample_count,
+                "sampling_method": "full" if stride == 1 else f"stride_{stride}",
+            },
+            "run_suitability": (
+                [
+                    {
+                        "check_key": "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+                        "state": "warn",
+                        "explanation": f"stride={stride}",
+                    }
+                ]
+                if stride > 1
+                else []
+            ),
+        }
 
-        def summarize(self):
-            from types import SimpleNamespace
-
-            return SimpleNamespace(
-                summary={"row_count": self._sample_count, "run_suitability": []},
-                diagnostic_case=SimpleNamespace(case_id="mock-case"),
-            )
-
-    monkeypatch.setattr("vibesensor.use_cases.diagnostics.RunAnalysis", _FakeRunAnalysis)
+    logger._post_analysis._analysis_runner = _analysis_runner
     logger.stop_recording()
 
     def _status():

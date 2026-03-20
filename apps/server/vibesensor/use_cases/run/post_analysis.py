@@ -4,9 +4,8 @@
 daemon thread that processes them sequentially. It is entirely decoupled
 from the data-collection path and can be tested independently.
 
-Persistence access and write-error callbacks are supplied by the caller via
-constructor injection. The diagnostics analysis entrypoint itself is still the
-current locally wired implementation inside ``_run_post_analysis()``.
+Persistence access, the post-stop analysis entrypoint, and write-error
+callbacks are supplied by the caller via constructor injection.
 """
 
 from __future__ import annotations
@@ -18,9 +17,10 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock, Thread
-from typing import Any
+from typing import Protocol, cast
 
 from vibesensor.shared.sampling import bounded_sample
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_persistence import RunPersistence
 
 LOGGER = logging.getLogger(__name__)
@@ -46,6 +46,77 @@ class PostAnalysisHealthSnapshot:
     last_completed_error: str | None
 
 
+class PostAnalysisRunner(Protocol):
+    """Injected boundary for building the stored post-stop analysis summary."""
+
+    def __call__(
+        self,
+        *,
+        run_id: str,
+        metadata: JsonObject,
+        samples: list[JsonObject],
+        language: str,
+        total_sample_count: int,
+        stride: int,
+    ) -> JsonObject: ...
+
+
+def build_post_analysis_summary(
+    *,
+    run_id: str,
+    metadata: JsonObject,
+    samples: list[JsonObject],
+    language: str,
+    total_sample_count: int,
+    stride: int,
+) -> JsonObject:
+    """Run diagnostics analysis and return the persisted summary payload."""
+    from vibesensor.domain import SuitabilityCheck
+    from vibesensor.report_i18n import tr
+    from vibesensor.use_cases.diagnostics import RunAnalysis
+
+    result = RunAnalysis(
+        metadata,
+        samples,
+        lang=language,
+        file_name=run_id,
+        include_samples=False,
+    ).summarize()
+    summary = cast(JsonObject, dict(result.summary))
+    summary["case_id"] = result.diagnostic_case.case_id
+
+    analysis_metadata: JsonObject = {
+        "analyzed_sample_count": len(samples),
+        "total_sample_count": total_sample_count,
+        "sampling_method": "full" if stride == 1 else f"stride_{stride}",
+    }
+    summary["analysis_metadata"] = analysis_metadata
+
+    if stride > 1:
+        stride_check = SuitabilityCheck(
+            check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+            state="warn",
+            details=(("stride", stride),),
+        )
+        explanation = tr(
+            language,
+            "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
+            stride=str(stride),
+        )
+        run_suitability = summary.get("run_suitability")
+        if not isinstance(run_suitability, list):
+            run_suitability = []
+            summary["run_suitability"] = run_suitability
+        warning_payload: JsonObject = {
+            "check_key": stride_check.check_key,
+            "state": stride_check.state,
+            "explanation": explanation,
+        }
+        run_suitability.append(warning_payload)
+
+    return summary
+
+
 class PostAnalysisWorker:
     """Threaded worker that runs post-analysis on completed recording runs.
 
@@ -59,12 +130,15 @@ class PostAnalysisWorker:
         ``last_write_error`` attribute.
     clear_error_callback:
         Called (no args) when an error condition is resolved.
+    analysis_runner:
+        Callable that builds the persisted analysis summary once metadata and
+        samples have been loaded. `RunRecorder` injects the concrete
+        diagnostics implementation.
 
     Notes
     -----
     The queue/thread orchestration depends only on the injected persistence
-    port plus the error callbacks. The analysis pipeline entrypoint is still
-    resolved inside ``_run_post_analysis()``.
+    port, analysis runner, and error callbacks.
 
     """
 
@@ -73,10 +147,12 @@ class PostAnalysisWorker:
         history_db: RunPersistence | None,
         error_callback: Callable[[str], None] | None = None,
         clear_error_callback: Callable[[], None] | None = None,
+        analysis_runner: PostAnalysisRunner = build_post_analysis_summary,
     ) -> None:
         self._history_db = history_db
         self._error_cb = error_callback or (lambda _msg: None)
         self._clear_error_cb = clear_error_callback or (lambda: None)
+        self._analysis_runner = analysis_runner
         self._lock = RLock()
         self._analysis_thread: Thread | None = None
         self._analysis_queue: deque[_QueuedRun] = deque()
@@ -218,8 +294,6 @@ class PostAnalysisWorker:
         analysis_start = time.monotonic()
         LOGGER.info("Analysis started for run %s", run_id)
         try:
-            from vibesensor.use_cases.diagnostics import RunAnalysis
-
             metadata = db.get_run_metadata(run_id)
             if metadata is None:
                 error_msg = "Metadata not found or corrupt; cannot analyse"
@@ -253,41 +327,14 @@ class PostAnalysisWorker:
                     self._last_completed_error = error_msg
                 db.store_analysis_error(run_id, error_msg)
                 return
-            result = RunAnalysis(
-                metadata,
-                samples,
-                lang=language,
-                file_name=run_id,
-                include_samples=False,
-            ).summarize()
-            summary: dict[str, Any] = dict(result.summary)
-            summary["case_id"] = result.diagnostic_case.case_id
-            summary["analysis_metadata"] = {
-                "analyzed_sample_count": len(samples),
-                "total_sample_count": total_sample_count,
-                "sampling_method": "full" if stride == 1 else f"stride_{stride}",
-            }
-            if stride > 1:
-                from vibesensor.domain import SuitabilityCheck
-                from vibesensor.report_i18n import tr as _tr
-
-                stride_check = SuitabilityCheck(
-                    check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
-                    state="warn",
-                    details=(("stride", stride),),
-                )
-                explanation = _tr(
-                    language,
-                    "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
-                    stride=str(stride),
-                )
-                summary.setdefault("run_suitability", []).append(
-                    {
-                        "check_key": stride_check.check_key,
-                        "state": stride_check.state,
-                        "explanation": explanation,
-                    },
-                )
+            summary = self._analysis_runner(
+                run_id=run_id,
+                metadata=metadata,
+                samples=samples,
+                language=language,
+                total_sample_count=total_sample_count,
+                stride=stride,
+            )
             db.store_analysis(run_id, summary)
 
             duration_s = time.monotonic() - analysis_start
