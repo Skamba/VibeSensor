@@ -12,7 +12,7 @@ import time
 
 import pytest
 
-from vibesensor.infra.runtime.registry import _sanitize_name
+from vibesensor.infra.runtime.client_metadata import sanitize_client_name
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.order_bands import build_order_bands
@@ -114,29 +114,29 @@ class TestWorkerPoolSubmitTiming:
 
 
 # ---------------------------------------------------------------------------
-# Item 6: _sanitize_name truncation
+# Item 6: sanitize_client_name truncation
 # ---------------------------------------------------------------------------
 
 
 class TestSanitizeName:
     def test_ascii_within_limit(self) -> None:
-        assert _sanitize_name("Hello") == "Hello"
+        assert sanitize_client_name("Hello") == "Hello"
 
     def test_truncation_at_32_bytes(self) -> None:
-        assert _sanitize_name("A" * 32) == "A" * 32
-        assert _sanitize_name("A" * 33) == "A" * 32
+        assert sanitize_client_name("A" * 32) == "A" * 32
+        assert sanitize_client_name("A" * 33) == "A" * 32
 
     def test_multibyte_truncation(self) -> None:
         # Each '€' is 3 UTF-8 bytes.  10 × 3 = 30 bytes → fits in 32.
         # 11 × 3 = 33 bytes → must truncate without splitting.
         name = "€" * 11
-        result = _sanitize_name(name)
+        result = sanitize_client_name(name)
         assert len(result.encode("utf-8")) <= 32
         assert result == "€" * 10
 
     def test_control_chars_stripped(self) -> None:
-        assert _sanitize_name("hel\x00lo") == "hello"
-        assert _sanitize_name("\x01\x02\x03") == ""
+        assert sanitize_client_name("hel\x00lo") == "hello"
+        assert sanitize_client_name("\x01\x02\x03") == ""
 
 
 # ---------------------------------------------------------------------------

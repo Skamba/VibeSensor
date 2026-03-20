@@ -218,8 +218,8 @@ class TestFinalizeReturnGatesAnalysis:
 
         # Simulate a run that created history and wrote samples
         db.create_run(run_id, "2026-01-01T00:00:00Z", {"run_id": run_id})
-        logger._persist_history_run_created = True
-        logger._persist_written_sample_count = 5
+        logger._persistence.history_run_created = True
+        logger._persistence.written_sample_count = 5
 
         # Sabotage finalize_run to simulate a DB crash
         monkeypatch.setattr(
