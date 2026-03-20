@@ -42,7 +42,6 @@ Every documentation file in the repository, its scope, intended audience, and au
 | `docs/intake_buffering.md` | Sample intake and buffering strategy | Both | Source of truth for intake design |
 | `docs/time_alignment.md` | Multi-sensor time alignment approach | Both | Source of truth for time alignment |
 | `docs/multithreading_performance.md` | Threading model and performance considerations | Both | Source of truth for threading design |
-| `docs/ssh-root-cause.md` | SSH connectivity root-cause analysis | Human | Supplementary |
 
 ## Testing
 
