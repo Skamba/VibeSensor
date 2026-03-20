@@ -13,7 +13,8 @@ The report generation pipeline has two distinct phases:
 ```text
 Recording stops
   → _run_post_analysis() [vibesensor.use_cases.run.post_analysis]
-    → summarize_run_data() [vibesensor.use_cases.diagnostics.summary_builder]
+    → build_post_analysis_summary() [vibesensor.use_cases.run.post_analysis]
+      → RunAnalysis(...).summarize() [vibesensor.use_cases.diagnostics.summary_builder]
       → run_data_preparation.py + summary_builder.py (preparation, phases, suitability, payload assembly)
       → findings.py, peak_binning.py, signal_aggregation.py, ranking.py, top_cause_selection.py, plots.py, peak_table.py
     → map_summary() [vibesensor.adapters.pdf.mapping]
