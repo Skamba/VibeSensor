@@ -3,6 +3,8 @@
 ``RunRecorder`` coordinates the recording loop, lifecycle delegation, and
 history-DB persistence. Focused helpers live in:
 
+- :mod:`vibesensor.use_cases.run.persistence_writer` — history-write
+  coordination, retry/backoff handling, and persistence health state.
 - :mod:`vibesensor.use_cases.run.lifecycle_state` — in-memory recording
   session lifecycle state.
 - :mod:`vibesensor.use_cases.run.sample_builder` — pure sample record
@@ -20,7 +22,6 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
-from typing import cast
 from uuid import uuid4
 
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
@@ -34,6 +35,15 @@ from vibesensor.shared.types.settings_reader import SettingsReader
 from vibesensor.shared.types.signal_source import SignalSource
 from vibesensor.shared.types.speed_provider import SpeedProvider
 from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
+from vibesensor.use_cases.run.persistence_writer import (
+    _APPEND_RETRY_DELAYS_S,
+    _MAX_APPEND_RETRIES,
+    _MAX_HISTORY_CREATE_RETRIES,
+    _RETRY_COOLDOWN_BASE_S,
+    AppendRowsResult,
+    PersistenceStatusSnapshot,
+    RunPersistenceWriter,
+)
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 from vibesensor.use_cases.run.sample_builder import (
     build_run_metadata,
@@ -44,34 +54,19 @@ from vibesensor.use_cases.run.sample_builder import (
 
 LOGGER = logging.getLogger(__name__)
 
-_MAX_HISTORY_CREATE_RETRIES = 5
-_RETRY_COOLDOWN_BASE_S = 2.0
-"""Base seconds for exponential backoff between retry cycles (doubles each cycle, capped at 10s)."""
-_MAX_APPEND_RETRIES = 3
-_APPEND_RETRY_DELAYS_S = (0.1, 0.3)
+__all__ = [
+    "RecorderShutdownReport",
+    "RunRecorder",
+    "RunRecorderConfig",
+    "_APPEND_RETRY_DELAYS_S",
+    "_MAX_APPEND_RETRIES",
+    "_MAX_HISTORY_CREATE_RETRIES",
+    "_RETRY_COOLDOWN_BASE_S",
+]
+
 _DB_THREAD_TIMEOUT_S: float = 10.0
 """Timeout for DB-bound asyncio.to_thread() calls; prevents a stalled DB from
 blocking the metrics-logger event loop indefinitely."""
-
-
-# ---------------------------------------------------------------------------
-# Return-value dataclasses
-# ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True, slots=True)
-class PersistenceStatusSnapshot:
-    """Bulk snapshot of persistence status fields (single lock acquisition)."""
-
-    write_error: str | None
-    written_sample_count: int
-    dropped_sample_count: int
-
-
-@dataclass(frozen=True, slots=True)
-class AppendRowsResult:
-    history_created: bool
-    rows_written: int
 
 
 # ---------------------------------------------------------------------------
@@ -142,16 +137,16 @@ class RunRecorder:
         )
 
         # --- Persistence coordination ---
-        self._persist_history_db_enabled: bool = bool(config.persist_history_db)
-        self._persist_history_run_created: bool = False
-        self._persist_history_create_fail_count: int = 0
-        self._persist_retry_cycle_count: int = 0
-        self._persist_written_sample_count: int = 0
-        self._persist_dropped_sample_count: int = 0
-        self._persist_last_write_error: str | None = None
-        self._persist_retry_after_mono_s: float = 0.0
-        self._persist_last_write_duration_s: float = 0.0
-        self._persist_max_write_duration_s: float = 0.0
+        self._persistence = RunPersistenceWriter(
+            lock=self._lock,
+            history_db=history_db,
+            persist_history_db_enabled=config.persist_history_db,
+            run_id_matches=self._run_id_matches,
+            metadata_builder=self._run_metadata_record,
+            monotonic=lambda: time.monotonic(),
+            sleep=lambda seconds: time.sleep(seconds),
+            logger_provider=lambda: LOGGER,
+        )
 
         self._post_analysis = PostAnalysisWorker(
             history_db=history_db,
@@ -173,15 +168,59 @@ class RunRecorder:
 
     @property
     def last_write_duration_s(self) -> float:
-        return self._persist_last_write_duration_s
+        return self._persistence.last_write_duration_s
 
     @property
     def max_write_duration_s(self) -> float:
-        return self._persist_max_write_duration_s
+        return self._persistence.max_write_duration_s
 
     @property
     def _run_id(self) -> str | None:
         return self._lifecycle.run_id
+
+    def _run_id_matches(self, run_id: str) -> bool:
+        current = self._lifecycle.current_run
+        return current is not None and current.run_id == run_id
+
+    @property
+    def _persist_history_run_created(self) -> bool:
+        return self._persistence.history_run_created
+
+    @_persist_history_run_created.setter
+    def _persist_history_run_created(self, value: bool) -> None:
+        self._persistence.history_run_created = value
+
+    @property
+    def _persist_history_create_fail_count(self) -> int:
+        return self._persistence.history_create_fail_count
+
+    @_persist_history_create_fail_count.setter
+    def _persist_history_create_fail_count(self, value: int) -> None:
+        self._persistence.history_create_fail_count = value
+
+    @property
+    def _persist_written_sample_count(self) -> int:
+        return self._persistence.written_sample_count
+
+    @_persist_written_sample_count.setter
+    def _persist_written_sample_count(self, value: int) -> None:
+        self._persistence.written_sample_count = value
+
+    @property
+    def _persist_dropped_sample_count(self) -> int:
+        return self._persistence.dropped_sample_count
+
+    @_persist_dropped_sample_count.setter
+    def _persist_dropped_sample_count(self, value: int) -> None:
+        self._persistence.dropped_sample_count = value
+
+    @property
+    def _persist_last_write_error(self) -> str | None:
+        return self._persistence.last_write_error
+
+    @_persist_last_write_error.setter
+    def _persist_last_write_error(self, value: str | None) -> None:
+        self._persistence.last_write_error = value
 
     def _analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         if self._settings_store is not None:
@@ -193,107 +232,20 @@ class RunRecorder:
     # -----------------------------------------------------------------------
 
     def _persist_status_snapshot(self) -> PersistenceStatusSnapshot:
-        """Read all status-relevant fields under a single lock acquisition."""
-        with self._lock:
-            return PersistenceStatusSnapshot(
-                write_error=self._persist_last_write_error,
-                written_sample_count=self._persist_written_sample_count,
-                dropped_sample_count=self._persist_dropped_sample_count,
-            )
+        return self._persistence.status_snapshot()
 
     def _persist_reset(self) -> None:
-        with self._lock:
-            self._persist_history_run_created = False
-            self._persist_history_create_fail_count = 0
-            self._persist_retry_cycle_count = 0
-            self._persist_written_sample_count = 0
-            self._persist_dropped_sample_count = 0
-            self._persist_last_write_error = None
-            self._persist_retry_after_mono_s = 0.0
+        self._persistence.reset()
 
     def _persist_ready_for_analysis(self, run_id: str | None) -> str | None:
-        with self._lock:
-            ready = (
-                run_id
-                and self._persist_history_run_created
-                and self._persist_written_sample_count > 0
-            )
-            if ready:
-                return run_id
-            return None
-
-    def _persist_run_id_matches(self, run_id: str) -> bool:
-        current = self._lifecycle.current_run
-        return current is not None and current.run_id == run_id
+        return self._persistence.ready_for_analysis(run_id)
 
     def _persist_ensure_history_run(
         self,
         run_id: str,
         start_time_utc: str,
     ) -> None:
-        with self._lock:
-            if not self._persist_run_id_matches(run_id):
-                return
-            if self._history_db is None or self._persist_history_run_created:
-                return
-            if self._persist_history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
-                if time.monotonic() < self._persist_retry_after_mono_s:
-                    return
-                self._persist_retry_cycle_count += 1
-                LOGGER.info(
-                    "Retry cooldown expired for run %s; resetting "
-                    "failure counter and retrying (cycle %d)",
-                    run_id,
-                    self._persist_retry_cycle_count,
-                )
-                self._persist_history_create_fail_count = 0
-        metadata = self._run_metadata_record(run_id, start_time_utc)
-        try:
-            self._history_db.create_run(run_id, start_time_utc, metadata)
-            with self._lock:
-                if not self._persist_run_id_matches(run_id):
-                    return
-                self._persist_history_run_created = True
-                self._persist_history_create_fail_count = 0
-                self._persist_retry_cycle_count = 0
-                self._persist_retry_after_mono_s = 0.0
-            self._persist_last_write_error = None
-        except (sqlite3.Error, OSError) as exc:
-            with self._lock:
-                if not self._persist_run_id_matches(run_id):
-                    return
-                self._persist_history_create_fail_count += 1
-                fail_count = self._persist_history_create_fail_count
-                if fail_count >= _MAX_HISTORY_CREATE_RETRIES:
-                    cooldown = min(
-                        10.0,
-                        _RETRY_COOLDOWN_BASE_S * (2**self._persist_retry_cycle_count),
-                    )
-                    self._persist_retry_after_mono_s = time.monotonic() + cooldown
-                else:
-                    cooldown = None
-            msg = (
-                f"history create_run failed"
-                f" (attempt {fail_count}"
-                f"/{_MAX_HISTORY_CREATE_RETRIES}): {exc}"
-            )
-            self._persist_last_write_error = msg
-            if cooldown is not None:
-                LOGGER.error(
-                    "Persistent DB failure after %d attempts for run %s — "
-                    "samples will be dropped until retry in %.1fs. Error: %s",
-                    fail_count,
-                    run_id,
-                    cooldown,
-                    exc,
-                    exc_info=True,
-                )
-            else:
-                LOGGER.warning(
-                    "Failed to create history run in DB (attempt %d)",
-                    fail_count,
-                    exc_info=True,
-                )
+        self._persistence.ensure_history_run(run_id, start_time_utc)
 
     def _persist_append_rows(
         self,
@@ -302,94 +254,14 @@ class RunRecorder:
         start_time_utc: str,
         rows: list[dict[str, object]],
     ) -> AppendRowsResult:
-        if not rows:
-            return AppendRowsResult(
-                history_created=self._persist_history_run_created,
-                rows_written=0,
-            )
-        if self._history_db is not None and self._persist_history_db_enabled:
-            self._persist_ensure_history_run(
-                run_id,
-                start_time_utc,
-            )
-            with self._lock:
-                if not self._persist_run_id_matches(run_id):
-                    return AppendRowsResult(history_created=False, rows_written=0)
-                history_created = self._persist_history_run_created
-            if history_created:
-                last_exc: Exception | None = None
-                for attempt in range(_MAX_APPEND_RETRIES):
-                    try:
-                        write_start = time.monotonic()
-                        self._history_db.append_samples(run_id, cast(list[JsonObject], rows))
-                        write_dur = time.monotonic() - write_start
-                        with self._lock:
-                            if not self._persist_run_id_matches(run_id):
-                                return AppendRowsResult(history_created=True, rows_written=0)
-                            self._persist_written_sample_count += len(rows)
-                            self._persist_last_write_duration_s = write_dur
-                            if write_dur > self._persist_max_write_duration_s:
-                                self._persist_max_write_duration_s = write_dur
-                        self._persist_last_write_error = None
-                        return AppendRowsResult(history_created=True, rows_written=len(rows))
-                    except (sqlite3.Error, OSError) as exc:
-                        last_exc = exc
-                        if attempt < _MAX_APPEND_RETRIES - 1:
-                            time.sleep(_APPEND_RETRY_DELAYS_S[attempt])
-                with self._lock:
-                    self._persist_dropped_sample_count += len(rows)
-                self._persist_last_write_error = f"history append_samples failed: {last_exc}"
-                LOGGER.warning(
-                    "Failed to append %d samples to history DB after %d attempts",
-                    len(rows),
-                    _MAX_APPEND_RETRIES,
-                    exc_info=True,
-                )
-                return AppendRowsResult(history_created=True, rows_written=0)
-            with self._lock:
-                self._persist_dropped_sample_count += len(rows)
-                fail_count = self._persist_history_create_fail_count
-            LOGGER.warning(
-                "Dropping %d sample(s) for run %s: history run not created (fail count %d/%d)",
-                len(rows),
-                run_id,
-                fail_count,
-                _MAX_HISTORY_CREATE_RETRIES,
-            )
-            return AppendRowsResult(history_created=False, rows_written=0)
-        with self._lock:
-            if not self._persist_run_id_matches(run_id):
-                return AppendRowsResult(history_created=False, rows_written=0)
-            self._persist_written_sample_count += len(rows)
-        return AppendRowsResult(history_created=False, rows_written=len(rows))
+        return self._persistence.append_rows(
+            run_id=run_id,
+            start_time_utc=start_time_utc,
+            rows=rows,
+        )
 
     def _persist_finalize_run(self, run_id: str, start_time_utc: str, end_utc: str) -> bool:
-        with self._lock:
-            if not self._persist_history_run_created:
-                return True
-        if self._history_db is None:
-            return True
-        try:
-            latest_metadata = self._run_metadata_record(run_id, start_time_utc)
-            latest_metadata["end_time_utc"] = end_utc
-            finalized = self._history_db.finalize_run(
-                run_id,
-                end_utc,
-                metadata=latest_metadata,
-            )
-            if finalized is False:
-                self._persist_last_write_error = "history finalize_run skipped due to invalid state"
-                LOGGER.warning(
-                    "History DB finalize_run skipped for run %s",
-                    run_id,
-                )
-                return False
-            self._persist_last_write_error = None
-            return True
-        except (sqlite3.Error, OSError) as exc:
-            self._persist_last_write_error = f"history finalize_run failed: {exc}"
-            LOGGER.warning("Failed to finalize run in history DB", exc_info=True)
-            return False
+        return self._persistence.finalize_run(run_id, start_time_utc, end_utc)
 
     # -----------------------------------------------------------------------
     # Internal helpers
