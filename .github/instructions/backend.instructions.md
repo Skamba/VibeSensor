@@ -2,7 +2,6 @@
 applyTo: "apps/server/**"
 ---
 Backend (scope: backend-specific behavioral rules and deltas; see `docs/ai/repo-map.md` for full package layout and entry points)
-- Shared workflow/validation rules live in `.github/instructions/general.instructions.md`; this file only captures backend-specific deltas.
 - Backend ownership boundaries: see `docs/ai/repo-map.md` § "Backend package layout" for the full module map and `docs/domain-model.md` for the domain object graph.
 - Domain-first modeling rules:
 	- Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
@@ -18,12 +17,9 @@ Backend (scope: backend-specific behavioral rules and deltas; see `docs/ai/repo-
 	- Validate report-facing output (rendered/report API/PDF text and ordering), not just internal helper outputs.
 	- When user-facing report text changes, update `apps/server/data/report_i18n.json`.
 	- `apps/server/vibesensor/use_cases/updates/`: wheel-based updater package; `manager.py` is the public facade with workflow orchestration and validation; other modules handle Wi-Fi, releases, ESP flash, firmware cache, release validation, install and rollback, and status. Do not add backward-compatibility shims, static method passthroughs, or module-level aliases in `use_cases/updates/`; when methods move to sub-modules, update callers directly.
-- Install: `python -m pip install -e "./apps/server[dev]"` (used by CI).
-- Backend type gate: `make typecheck-backend` runs the enforced mypy slice for the reorganized `app/`, `shared/`, `domain/`, `infra/`, `use_cases/`, and `adapters/` packages.
+- Use the canonical backend command list in `.github/copilot-instructions.md`; its backend type gate is the enforced mypy slice for the reorganized `app/`, `shared/`, `domain/`, `infra/`, `use_cases/`, and `adapters/` packages, and `docs/testing.md` covers backend test placement and command details.
 - Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject` aliases) over broad `Any` when shaping analysis, report, and persistence data.
 - Treat `Any` as a design smell by default: prefer `object` for untrusted inputs, shared JSON aliases for persisted payloads, `ParamSpec` for callable wrappers, and focused `TypedDict`/protocol contracts for nested state.
 - For live processing / WebSocket payloads, prefer shared contracts in `apps/server/vibesensor/shared/types/payload_types.py` and `vibesensor.vibration_strength` over ad-hoc `dict[str, Any]` bags.
-- Tests: add tests in the matching `tests/<module>/` subdirectory (see `docs/testing.md`); use `tests/integration/` for cross-cutting scenarios and regressions. Run a single area with `pytest -q apps/server/tests/<module>/`.
 - i18n: Add/modify keys in `apps/server/data/report_i18n.json` when changing user-facing strings.
-- Styling/lint: `ruff` is enforced in CI; follow existing `ruff` conventions.
 - Documentation maintenance: when backend structure, commands, route ownership, persistence layout, report flow, or update flow changes, update `apps/server/README.md`, `docs/testing.md`, and the relevant `docs/ai/*.md` and `.github/*.instructions.md` files in the same change set.

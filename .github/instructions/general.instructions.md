@@ -62,25 +62,11 @@ Updater deployment policy
 
 Validation (always required)
 - Pull request default mode: after opening or updating a PR, check CI/review status, fix all blocking issues, push updates, and keep monitoring until required checks are green.
-- For every PR, use `python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor` as the default monitor.
+- Use the canonical command list in `.github/copilot-instructions.md` for PR check watching, lint/type checks, CI-parity runs, single-area pytest runs, and local Docker bring-up; use `docs/testing.md` for test layout, CI limitations, and the optional `act` wrapper, and follow targeted → broader → local-GitHub-workflow validation before finalizing any task.
 - Treat watcher exit `RESULT=NON_GREEN` as immediate action: inspect the latest failing run promptly, determine root cause, implement the smallest complete maintainable fix, push, and restart the watcher.
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
-- Test in this order: targeted tests first, then broader relevant suites.
-- CI-parity suite for fast iteration: `make test-all` (`python3 tools/tests/run_ci_parallel.py`). Mirrors all CI jobs including Docker-backed e2e; use `--job` flags to run a subset without Docker.
-- Required pre-finalization CI gate: `act -W .github/workflows/ci.yml` runs the real GitHub workflow locally in Docker. All supported jobs must pass before finalizing any task. See `docs/testing.md` for known limitations and the optional wrapper at `tools/tests/run_ci_with_act.sh`.
-- Optional focused CI subset for faster loops: `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests`.
-- Run a single feature area: `pytest -q apps/server/tests/<module>/` (e.g., `tests/analysis/`, `tests/report/`).
-- Test layout: feature-based subdirectories mirror source modules; see `docs/testing.md`.
 - If an intentional refactor changes function-level seams or helper boundaries, refactor the affected tests in the same change set so they validate current behavior instead of pinning obsolete internals.
-- Run lint (`ruff check`) and backend type checks (`make typecheck-backend`) before pushing changes.
-- After any backend or frontend change, rebuild and test via Docker before considering the work done:
-  1. `docker compose build --pull`
-  2. `docker compose up -d`
-  3. `docker compose ps`
-  4. `vibesensor-sim --count 5 --duration 10 --no-interactive`
-  5. confirm `http://127.0.0.1` updates live while the simulator runs (`:80` default; if `:80` is not serving in the current config, try `http://127.0.0.1:8000` as the backup/dev port),
-  6. verify updates stop after the simulator stops (no stale-data artifacts),
-  7. check `docker compose logs --tail 50` if needed.
+- After any backend or frontend change, exercise the local Docker stack with the canonical commands, confirm `http://127.0.0.1` updates live while `vibesensor-sim --count 5 --duration 10 --no-interactive` runs (`:8000` fallback if `:80` is not serving), then verify updates stop once the simulator stops; inspect `docker compose logs --tail 50` if needed.
 - Breaking changes are allowed when intentional.
 - No-backward-compatibility policy: we own the full codebase end to end. Do not add or preserve backward-compatibility layers (deprecated paths, adapters, fallbacks, shims, version-bridging logic, or legacy schema support) unless explicitly asked. Remove them when encountered. Standardize on the current contract, schema, config, and runtime path. Do not add new compatibility code "just in case". If compatibility seems necessary, flag it explicitly rather than implementing it silently.
 
@@ -92,8 +78,6 @@ Docs (`docs/`)
 - When architecture, file ownership, commands, or workflows change, update the matching repo maps, runbooks, READMEs, and instruction files in the same change set.
 
 Infra / Docker / CI (`docker-compose.yml`, `.github/workflows/`)
-- Local dev: `docker compose build --pull` then `docker compose up -d`.
 - CI: `.github/workflows/ci.yml` is authoritative for blocking job commands (`backend-quality`, `backend-typecheck`, `frontend-typecheck`, `ui-smoke`, `backend-tests`, `e2e`).
-- Local CI-parity run: `make test-all` (runs `python3 tools/tests/run_ci_parallel.py`, which mirrors those CI job command groups in parallel).
 - Keep CI steps maintainable; larger CI/workflow updates are allowed when needed. If adding new test dependencies, update `apps/server/pyproject.toml` so CI installs them via the editable install.
 - Avoid embedding secrets in workflow files; use repository secrets for tokens.

@@ -24,7 +24,8 @@ Domain model (scope: behavioral rules only; see `docs/ai/repo-map.md` for file l
 - Consumers import from `vibesensor.domain`, not from individual module files.
 - Boundary decoders/serializers live under `apps/server/vibesensor/shared/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.
 
-Common commands
+Canonical commands
+- This is the single source of truth for recurring local and CI command invocations; other AI guidance should reference this list instead of repeating it.
 - `python -m pip install -e "./apps/server[dev]"`
 - `make lint`
 - `make typecheck-backend`
