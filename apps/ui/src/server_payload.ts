@@ -59,10 +59,18 @@ function getBoolean(record: UnknownRecord, key: string): boolean {
   return Boolean(record[key]);
 }
 
-function asFiniteNumberArray(value: unknown): number[] {
-  return Array.isArray(value)
-    ? value.filter((entry): entry is number => typeof entry === "number" && Number.isFinite(entry))
-    : [];
+function parseFiniteNumberArray(value: unknown): number[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+  const numbers: number[] = [];
+  for (const entry of value) {
+    if (typeof entry !== "number" || !Number.isFinite(entry)) {
+      return null;
+    }
+    numbers.push(entry);
+  }
+  return numbers;
 }
 
 function emptyStrengthMetrics(): StrengthMetricsPayload {
@@ -129,11 +137,23 @@ function normalizePayloadForValidation(payload: UnknownRecord): LiveWsPayload {
       normalizedSpectraClients[clientId] = { value: spectrum };
       continue;
     }
+    const normalizedFreq = Array.isArray(spectrumRecord.freq)
+      ? parseFiniteNumberArray(spectrumRecord.freq)
+      : undefined;
+    if (Array.isArray(spectrumRecord.freq) && normalizedFreq === null) {
+      continue;
+    }
+    const normalizedCombinedSpectrum = Array.isArray(spectrumRecord.combined_spectrum_amp_g)
+      ? parseFiniteNumberArray(spectrumRecord.combined_spectrum_amp_g)
+      : undefined;
+    if (Array.isArray(spectrumRecord.combined_spectrum_amp_g) && normalizedCombinedSpectrum === null) {
+      continue;
+    }
     const normalizedSpectrum: UnknownRecord = {
       ...spectrumRecord,
-      ...(Array.isArray(spectrumRecord.freq) ? { freq: asFiniteNumberArray(spectrumRecord.freq) } : {}),
-      ...(Array.isArray(spectrumRecord.combined_spectrum_amp_g)
-        ? { combined_spectrum_amp_g: asFiniteNumberArray(spectrumRecord.combined_spectrum_amp_g) }
+      ...(normalizedFreq ? { freq: normalizedFreq } : {}),
+      ...(normalizedCombinedSpectrum
+        ? { combined_spectrum_amp_g: normalizedCombinedSpectrum }
         : {}),
     };
     const normalizedStrengthMetrics = normalizeStrengthMetrics(spectrumRecord.strength_metrics);
@@ -145,11 +165,15 @@ function normalizePayloadForValidation(payload: UnknownRecord): LiveWsPayload {
     normalizedSpectraClients[clientId] = normalizedSpectrum;
   }
 
+  const normalizedSharedFreq = Array.isArray(spectraRecord.freq)
+    ? parseFiniteNumberArray(spectraRecord.freq)
+    : undefined;
+
   return {
     ...payload,
     spectra: {
       ...spectraRecord,
-      ...(Array.isArray(spectraRecord.freq) ? { freq: asFiniteNumberArray(spectraRecord.freq) } : {}),
+      ...(normalizedSharedFreq ? { freq: normalizedSharedFreq } : {}),
       clients: normalizedSpectraClients,
     },
   } as LiveWsPayload;
@@ -195,7 +219,9 @@ function adaptSpectra(spectra: LiveWsPayload["spectra"]): AdaptedPayload["spectr
     const freq = rawPerClientFreq.length > 0 ? rawPerClientFreq : sharedFreq;
     const combined = spectrum.combined_spectrum_amp_g ?? [];
     const strengthMetrics = spectrum.strength_metrics ?? null;
-    if (!freq.length || !combined.length || strengthMetrics === null) continue;
+    if (!freq.length || !combined.length || strengthMetrics === null || freq.length !== combined.length) {
+      continue;
+    }
     adaptedClients[clientId] = {
       freq,
       combined,

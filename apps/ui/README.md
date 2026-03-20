@@ -67,9 +67,9 @@ and chart behavior.
 - `src/contracts/ws_payload_schema.json` is the canonical JSON Schema for live WS payloads.
 - `src/contracts/ws_payload_types.ts` is generated from that schema by `npm run sync:contracts`.
 - `src/ws_payload_validator.ts` compiles AJV against `ws_payload_schema.json` and validates the normalized live payload at runtime.
-- `src/server_payload.ts` now keeps the compatibility layer thin: it normalizes the small set of supported legacy `strength_metrics` quirks before validation, then adapts the validated `LiveWsPayload` with schema-version warnings and shared-`freq` fallback.
+- `src/server_payload.ts` now keeps the compatibility layer thin: it normalizes the small set of supported legacy `strength_metrics` quirks before validation, then adapts the validated `LiveWsPayload` with schema-version warnings, shared-`freq` fallback, and malformed/misaligned spectrum rejection.
 
-AJV-backed runtime validation now sits at the WebSocket boundary. The UI still preserves the intentionally supported compatibility behavior called out in the original investigation—partial `strength_metrics` defaults, malformed peak dropping, shared-`freq` fallback, and schema-version warning logging—but the rest of the payload now has to satisfy the canonical JSON Schema before the app state adapter accepts it.
+AJV-backed runtime validation now sits at the WebSocket boundary. The UI still preserves the intentionally supported compatibility behavior called out in the original investigation—partial `strength_metrics` defaults, malformed peak dropping, shared-`freq` fallback, schema-version warning logging, and dropping malformed spectrum series before they can misalign bins—but the rest of the payload now has to satisfy the canonical JSON Schema before the app state adapter accepts it.
 
 ## Visual Tests
 
