@@ -22,14 +22,14 @@ def create_recording_routes(
 
     @router.get("/api/recording/status", response_model=RecordingStatusResponse)
     async def get_logging_status() -> RecordingStatusResponse:
-        return RecordingStatusResponse(**run_recorder.status())
+        return RecordingStatusResponse.model_validate(run_recorder.status())
 
     @router.post("/api/recording/start", response_model=RecordingStatusResponse)
     async def start_logging() -> RecordingStatusResponse:
-        return RecordingStatusResponse(**run_recorder.start_recording())
+        return RecordingStatusResponse.model_validate(run_recorder.start_recording())
 
     @router.post("/api/recording/stop", response_model=RecordingStatusResponse)
     async def stop_logging() -> RecordingStatusResponse:
-        return RecordingStatusResponse(**run_recorder.stop_recording())
+        return RecordingStatusResponse.model_validate(run_recorder.stop_recording())
 
     return router
