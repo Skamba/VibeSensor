@@ -17,7 +17,7 @@ import pytest
 from test_support.findings import make_finding
 
 from vibesensor.adapters.http.clients import create_client_routes
-from vibesensor.use_cases.diagnostics.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_heuristics import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
