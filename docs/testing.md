@@ -215,7 +215,6 @@ The default CI-parity suite now mirrors these blocking GitHub checks:
 2. Keep files focused on one behavior, scenario family, or maintenance boundary.
 3. Reuse shared helpers only when multiple files need the same setup or assertions.
 4. Import `SERVER_ROOT` and `REPO_ROOT` from `_paths.py` instead of using fragile parent traversals.
-5. If a refactor changes test placement or ownership boundaries, update this file in the same change set.
 
 ## Markers
 

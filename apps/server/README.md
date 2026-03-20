@@ -95,8 +95,6 @@ Current route groups:
 - `car_library.py`
 - `debug.py`
 
-When route ownership changes, update this README and the AI repo maps in the same change set.
-
 ## Reports
 
 Generate a PDF from a saved run:

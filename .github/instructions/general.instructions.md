@@ -50,8 +50,7 @@ Complexity hygiene
 - Do not duplicate utility functions across modules. Maintain a single canonical implementation and import from it. Exception: standalone tooling scripts (e.g. ``tools/build_ui_static.py``) that must run without the server package installed may carry a local copy; mark it with a comment pointing at the canonical source.
 
 Documentation maintenance (always required)
-- After every meaningful code change, check whether docs, repo maps, runbooks, READMEs, and instruction files that reference the touched area are now stale.
-- Update stale documentation in the same change set; do not leave documentation drift for later unless the user explicitly asks you not to touch docs.
+- Before merging, review whether docs, repo maps, runbooks, READMEs, and instruction files that reference the touched area have gone stale, and update the relevant ones unless the user explicitly asks you not to touch docs.
 - Remove or rewrite obsolete guidance instead of layering caveats on top of it.
 - Keep human-facing docs and AI-facing guidance aligned with the live code, paths, commands, and ownership boundaries.
 
@@ -75,7 +74,6 @@ Docs (`docs/`)
 - For any user-visible text changes, update `apps/server/data/report_i18n.json` and mention new keys in docs.
 - Rewrite or remove stale sections aggressively; do not keep contradictory historical guidance in place.
 - Prefer direct pointers to current source-of-truth files over long prose that will drift.
-- When architecture, file ownership, commands, or workflows change, update the matching repo maps, runbooks, READMEs, and instruction files in the same change set.
 
 Infra / Docker / CI (`docker-compose.yml`, `.github/workflows/`)
 - CI: `.github/workflows/ci.yml` is authoritative for blocking job commands (`backend-quality`, `backend-typecheck`, `frontend-typecheck`, `ui-smoke`, `backend-tests`, `e2e`).
