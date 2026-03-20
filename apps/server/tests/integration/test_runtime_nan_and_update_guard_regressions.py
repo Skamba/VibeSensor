@@ -18,7 +18,7 @@ from vibesensor.adapters.pdf.pdf_diagram_render import _canonical_location
 from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
 from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 from vibesensor.report_i18n import tr
-from vibesensor.use_cases.diagnostics.helpers import _corr_abs_clamped
+from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
 from vibesensor.use_cases.updates.firmware_cache import (
     FirmwareCacheConfig,
     GitHubReleaseFetcher,

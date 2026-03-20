@@ -1,4 +1,4 @@
-"""Unit tests for under-tested helpers in vibesensor.use_cases.diagnostics.helpers.
+"""Unit tests for under-tested diagnostics helper modules.
 
 Covers:
 - _amplitude_weighted_speed_window (dominant-bin speed finder)
@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.use_cases.diagnostics.helpers import _amplitude_weighted_speed_window
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
+    _amplitude_weighted_speed_window,
+)
 
 # ---------------------------------------------------------------------------
 # _amplitude_weighted_speed_window

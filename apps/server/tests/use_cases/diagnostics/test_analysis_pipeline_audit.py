@@ -13,10 +13,10 @@ from vibesensor.adapters.pdf.presentation import strength_label
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.processing.fft import noise_floor
 from vibesensor.strength_bands import bucket_for_strength
-from vibesensor.use_cases.diagnostics.helpers import _speed_stats
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     segment_run_phases,
 )
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
 from vibesensor.vibration_strength import (
     compute_vibration_strength_db,
     noise_floor_amp_p20_g,

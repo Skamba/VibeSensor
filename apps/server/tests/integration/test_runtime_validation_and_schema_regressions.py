@@ -4,7 +4,7 @@ from __future__ import annotations
 """Runtime validation and schema-recovery regressions.
 
 Covers:
-  1. _corr_abs — NaN propagation guard (helpers.py)
+  1. _corr_abs — NaN propagation guard (math_utils.py)
   2. pdf_diagram_render.py — next() with default for marker lookup
   3. pdf_engine.py — confidence NaN/Inf guard
   4. persistent_findings.py — type hint list[str] (compile-time only)
@@ -28,7 +28,7 @@ from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.shared.types.api_models import CarUpsertRequest, SensorRequest, SpeedSourceRequest
-from vibesensor.use_cases.diagnostics.helpers import _corr_abs
+from vibesensor.use_cases.diagnostics.math_utils import _corr_abs
 
 # ------------------------------------------------------------------
 # 1. _corr_abs — NaN propagation guard

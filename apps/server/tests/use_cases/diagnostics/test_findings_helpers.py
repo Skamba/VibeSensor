@@ -1,11 +1,11 @@
-"""Tests for findings module internal helpers: _weighted_percentile, _speed_profile_from_points."""
+"""Tests for diagnostics math and speed-profile helpers."""
 
 from __future__ import annotations
 
 import pytest
 
 from vibesensor.use_cases.diagnostics.findings import _speed_profile_from_points
-from vibesensor.use_cases.diagnostics.helpers import _weighted_percentile
+from vibesensor.use_cases.diagnostics.math_utils import _weighted_percentile
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
 
 # ---------------------------------------------------------------------------
