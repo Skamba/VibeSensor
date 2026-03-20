@@ -13,7 +13,6 @@ Every documentation file in the repository and a short description of what it co
 | `.github/instructions/frontend.instructions.md` | Frontend-specific rules and deltas for AI work. |
 | `.github/instructions/tests.instructions.md` | Test-specific conventions and commands for AI work. |
 | `AGENTS.md` | Routes readers to `.github/copilot-instructions.md`. |
-| `docs/ai/chunk*.md` | Supporting task-planning context for multi-step AI work. |
 
 ## Architecture & Design
 
