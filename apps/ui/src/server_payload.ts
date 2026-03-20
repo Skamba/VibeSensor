@@ -1,5 +1,6 @@
 import {
   EXPECTED_SCHEMA_VERSION,
+  type LiveWsPayload,
   type StrengthMetricPeak,
   type StrengthMetricsPayload,
   type WsClientInfo,
@@ -8,6 +9,7 @@ import {
   type WsRotationalSpeeds,
 } from "./contracts/ws_payload_types";
 import type { SpectrumClientData } from "./app/ui_app_state";
+import { validateLiveWsPayload } from "./ws_payload_validator";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -57,9 +59,9 @@ function getBoolean(record: UnknownRecord, key: string): boolean {
   return Boolean(record[key]);
 }
 
-function asNumberArray(value: unknown): number[] {
+function asFiniteNumberArray(value: unknown): number[] {
   return Array.isArray(value)
-    ? value.map((v) => Number(v)).filter((v) => Number.isFinite(v))
+    ? value.filter((entry): entry is number => typeof entry === "number" && Number.isFinite(entry))
     : [];
 }
 
@@ -88,9 +90,9 @@ function parseStrengthMetricPeak(value: unknown): StrengthMetricPeak | null {
   };
 }
 
-function parseStrengthMetrics(value: unknown): StrengthMetricsPayload | null {
+function normalizeStrengthMetrics(value: unknown): StrengthMetricsPayload | undefined {
   const record = asRecord(value);
-  if (!record) return null;
+  if (!record) return undefined;
   const defaults = emptyStrengthMetrics();
   const topPeaks = Array.isArray(record.top_peaks)
     ? record.top_peaks
@@ -106,64 +108,93 @@ function parseStrengthMetrics(value: unknown): StrengthMetricsPayload | null {
   };
 }
 
-function parseRotationalSpeedValue(value: unknown): RotationalSpeedValue {
-  const record = asRecord(value);
-  if (!record) {
-    return { rpm: null, mode: null, reason: null };
+function normalizePayloadForValidation(payload: UnknownRecord): LiveWsPayload {
+  const spectraRecord = asRecord(payload.spectra);
+  if (!spectraRecord) {
+    return payload as LiveWsPayload;
   }
-  return {
-    rpm: getNumber(record, "rpm"),
-    mode: getString(record, "mode"),
-    reason: getString(record, "reason"),
-  };
-}
 
-function parseOrderBand(value: unknown): OrderBand | null {
-  const record = asRecord(value);
-  if (!record) return null;
-  const key = getString(record, "key");
-  const centerHz = getNumber(record, "center_hz");
-  const tolerance = getNumber(record, "tolerance");
-  if (key === null || centerHz === null || tolerance === null) return null;
-  return { key, center_hz: centerHz, tolerance };
-}
+  const clientsRecord = asRecord(spectraRecord.clients);
+  if (!clientsRecord) {
+    return {
+      ...payload,
+      spectra: spectraRecord as LiveWsPayload["spectra"],
+    } as LiveWsPayload;
+  }
 
-function parseClient(value: unknown): AdaptedClient | null {
-  const record = asRecord(value);
-  if (!record) return null;
-  const id = getString(record, "id");
-  const name = getString(record, "name");
-  if (id === null || name === null) return null;
-  const locationCode = getString(record, "location_code") ?? "";
-  return {
-    id,
-    name,
-    connected: getBoolean(record, "connected"),
-    mac_address: getString(record, "mac_address") ?? "",
-    location_code: locationCode,
-    last_seen_age_ms: getNumber(record, "last_seen_age_ms"),
-    dropped_frames: getNumber(record, "dropped_frames") ?? 0,
-    frames_total: getNumber(record, "frames_total") ?? 0,
-    sample_rate_hz: getNumber(record, "sample_rate_hz") ?? 0,
-    firmware_version: getString(record, "firmware_version") ?? "",
-  };
-}
-
-function parseSpectra(value: unknown): AdaptedPayload["spectra"] | null {
-  const record = asRecord(value);
-  if (!record) return null;
-  const sharedFreq = asNumberArray(record.freq);
-  const clientsRecord = asRecord(record.clients);
-  if (!clientsRecord) return null;
-
-  const adaptedClients: Record<string, SpectrumClientData> = {};
+  const normalizedSpectraClients: Record<string, UnknownRecord> = {};
   for (const [clientId, spectrum] of Object.entries(clientsRecord)) {
     const spectrumRecord = asRecord(spectrum);
-    if (!spectrumRecord) continue;
-    const rawPerClientFreq = asNumberArray(spectrumRecord.freq);
+    if (!spectrumRecord) {
+      normalizedSpectraClients[clientId] = { value: spectrum };
+      continue;
+    }
+    const normalizedSpectrum: UnknownRecord = {
+      ...spectrumRecord,
+      ...(Array.isArray(spectrumRecord.freq) ? { freq: asFiniteNumberArray(spectrumRecord.freq) } : {}),
+      ...(Array.isArray(spectrumRecord.combined_spectrum_amp_g)
+        ? { combined_spectrum_amp_g: asFiniteNumberArray(spectrumRecord.combined_spectrum_amp_g) }
+        : {}),
+    };
+    const normalizedStrengthMetrics = normalizeStrengthMetrics(spectrumRecord.strength_metrics);
+    if (normalizedStrengthMetrics) {
+      normalizedSpectrum.strength_metrics = normalizedStrengthMetrics;
+    } else {
+      delete normalizedSpectrum.strength_metrics;
+    }
+    normalizedSpectraClients[clientId] = normalizedSpectrum;
+  }
+
+  return {
+    ...payload,
+    spectra: {
+      ...spectraRecord,
+      ...(Array.isArray(spectraRecord.freq) ? { freq: asFiniteNumberArray(spectraRecord.freq) } : {}),
+      clients: normalizedSpectraClients,
+    },
+  } as LiveWsPayload;
+}
+
+function adaptClient(client: WsClientInfo): AdaptedClient {
+  return {
+    id: client.id,
+    name: client.name,
+    connected: client.connected,
+    mac_address: client.mac_address,
+    location_code: client.location_code,
+    last_seen_age_ms: client.last_seen_age_ms,
+    dropped_frames: client.dropped_frames,
+    frames_total: client.frames_total,
+    sample_rate_hz: client.sample_rate_hz,
+    firmware_version: client.firmware_version,
+  };
+}
+
+function adaptRotationalSpeeds(
+  rotationalSpeeds: LiveWsPayload["rotational_speeds"],
+): RotationalSpeeds | null {
+  if (!rotationalSpeeds) {
+    return null;
+  }
+  return {
+    basis_speed_source: rotationalSpeeds.basis_speed_source,
+    wheel: rotationalSpeeds.wheel,
+    driveshaft: rotationalSpeeds.driveshaft,
+    engine: rotationalSpeeds.engine,
+    order_bands: rotationalSpeeds.order_bands?.map((band: WsOrderBand): OrderBand => band) ?? null,
+  };
+}
+
+function adaptSpectra(spectra: LiveWsPayload["spectra"]): AdaptedPayload["spectra"] | null {
+  if (!spectra?.clients) return null;
+  const sharedFreq = spectra.freq ?? [];
+
+  const adaptedClients: Record<string, SpectrumClientData> = {};
+  for (const [clientId, spectrum] of Object.entries(spectra.clients)) {
+    const rawPerClientFreq = spectrum.freq ?? [];
     const freq = rawPerClientFreq.length > 0 ? rawPerClientFreq : sharedFreq;
-    const combined = asNumberArray(spectrumRecord.combined_spectrum_amp_g);
-    const strengthMetrics = parseStrengthMetrics(spectrumRecord.strength_metrics);
+    const combined = spectrum.combined_spectrum_amp_g ?? [];
+    const strengthMetrics = spectrum.strength_metrics ?? null;
     if (!freq.length || !combined.length || strengthMetrics === null) continue;
     adaptedClients[clientId] = {
       freq,
@@ -183,7 +214,9 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
     throw new Error("Missing websocket payload.");
   }
 
-  const schemaVersion = getString(payloadRecord, "schema_version");
+  const validatedPayload = validateLiveWsPayload(normalizePayloadForValidation(payloadRecord));
+
+  const schemaVersion = validatedPayload.schema_version ?? null;
   if (
     schemaVersion !== null &&
     schemaVersion !== EXPECTED_SCHEMA_VERSION &&
@@ -197,31 +230,10 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
     );
   }
 
-  const clients = Array.isArray(payloadRecord.clients)
-    ? payloadRecord.clients
-        .map((client) => parseClient(client))
-        .filter((client): client is AdaptedClient => client !== null)
-    : [];
-
-  const rotationalRecord = asRecord(payloadRecord.rotational_speeds);
-  const rotationalSpeeds: RotationalSpeeds | null = rotationalRecord
-    ? {
-        basis_speed_source: getString(rotationalRecord, "basis_speed_source"),
-        wheel: parseRotationalSpeedValue(rotationalRecord.wheel),
-        driveshaft: parseRotationalSpeedValue(rotationalRecord.driveshaft),
-        engine: parseRotationalSpeedValue(rotationalRecord.engine),
-        order_bands: Array.isArray(rotationalRecord.order_bands)
-          ? rotationalRecord.order_bands
-              .map((band) => parseOrderBand(band))
-              .filter((band): band is OrderBand => band !== null)
-          : null,
-      }
-    : null;
-
   return {
-    clients,
-    speed_mps: getNumber(payloadRecord, "speed_mps"),
-    rotational_speeds: rotationalSpeeds,
-    spectra: parseSpectra(payloadRecord.spectra),
+    clients: validatedPayload.clients?.map(adaptClient) ?? [],
+    speed_mps: validatedPayload.speed_mps ?? null,
+    rotational_speeds: adaptRotationalSpeeds(validatedPayload.rotational_speeds),
+    spectra: adaptSpectra(validatedPayload.spectra),
   };
 }

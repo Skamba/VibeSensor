@@ -12,6 +12,7 @@ const requireFromUi = createRequire(resolve(root, 'apps/ui/package.json'));
 const httpSchemaSrc = resolve(root, 'apps/ui/src/contracts/http_api_schema.json');
 const httpTypesDst = resolve(root, 'apps/ui/src/generated/http_api_contracts.ts');
 const wsSchemaSrc = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.json');
+const wsSchemaTsDst = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.generated.ts');
 const wsTypesDst = resolve(root, 'apps/ui/src/contracts/ws_payload_types.ts');
 
 function writeGenerated(filePath, content, checkMode) {
@@ -119,6 +120,18 @@ async function generateWsTypes() {
 	);
 }
 
+function generateWsSchemaModule() {
+	const wsSchema = JSON.parse(readFileSync(wsSchemaSrc, 'utf8'));
+	return (
+		'// Generated from apps/ui/src/contracts/ws_payload_schema.json\n'
+		+ '// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs\n\n'
+		+ 'export const wsPayloadSchema = '
+		+ `${JSON.stringify(wsSchema, null, 2)}`
+		+ ' as const;\n\n'
+		+ 'export default wsPayloadSchema;\n'
+	);
+}
+
 async function main() {
 	const checkMode = process.argv.includes('--check');
 
@@ -128,6 +141,9 @@ async function main() {
 	const wsGenerated = await generateWsTypes();
 	writeGenerated(wsTypesDst, wsGenerated, checkMode);
 
+	const wsSchemaModule = generateWsSchemaModule();
+	writeGenerated(wsSchemaTsDst, wsSchemaModule, checkMode);
+
 	if (checkMode) {
 		console.log('Generated UI contract files are up to date.');
 		return;
@@ -135,6 +151,7 @@ async function main() {
 
 	console.log(`Generated ${httpSchemaSrc} -> ${httpTypesDst}`);
 	console.log(`Generated ${wsSchemaSrc} -> ${wsTypesDst}`);
+	console.log(`Generated ${wsSchemaSrc} -> ${wsSchemaTsDst}`);
 }
 
 await main();
