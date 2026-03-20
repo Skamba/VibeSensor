@@ -88,67 +88,13 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
 python_version = "3.11"
-files = [
-  "vibesensor/app",
-  "vibesensor/domain",
-  "vibesensor/shared/types/api_models.py",
-  "vibesensor/shared/types/backend_types.py",
-  "vibesensor/adapters/gps/gps_speed.py",
-  "vibesensor/use_cases/history",
-  "vibesensor/use_cases/run",
-  "vibesensor/shared/types/json_types.py",
-  "vibesensor/shared/types/payload_types.py",
-  "vibesensor/infra/processing",
-  "vibesensor/infra/runtime/registry.py",
-  "vibesensor/infra/runtime/processing_loop.py",
-  "vibesensor/infra/runtime/lifecycle.py",
-  "vibesensor/infra/runtime/ws_broadcast.py",
-  "vibesensor/shared/run_context.py",
-  "vibesensor/shared/boundaries",
-  "vibesensor/infra/config/settings_store.py",
-  "vibesensor/report_i18n.py",
-  "vibesensor/strength_bands.py",
-  "vibesensor/coerce.py",
-  "vibesensor/vibration_strength.py",
-  "vibesensor/use_cases/updates",
-  "vibesensor/use_cases/diagnostics/_types.py",
-  "vibesensor/use_cases/diagnostics/helpers.py",
-  "vibesensor/use_cases/diagnostics/top_cause_selection.py",
-  "vibesensor/shared/order_bands.py",
-  "vibesensor/use_cases/diagnostics/plots.py",
-  "vibesensor/use_cases/diagnostics/location_analysis.py",
-  "vibesensor/use_cases/diagnostics/phase_segmentation.py",
-  "vibesensor/use_cases/diagnostics/rotational_physics.py",
-  "vibesensor/use_cases/diagnostics/spectrogram.py",
-  "vibesensor/use_cases/diagnostics/order_statistics.py",
-  "vibesensor/use_cases/diagnostics/peak_binning.py",
-  "vibesensor/use_cases/diagnostics/signal_aggregation.py",
-  "vibesensor/use_cases/diagnostics/statistics.py",
-  "vibesensor/use_cases/diagnostics/findings.py",
-  "vibesensor/use_cases/diagnostics/order_analysis.py",
-  "vibesensor/use_cases/diagnostics/summary_builder.py",
-  "vibesensor/adapters/websocket/hub.py",
-  "vibesensor/adapters/simulator/sim_sender.py",
-  "vibesensor/adapters/persistence/history_db",
-  "vibesensor/cli/server.py",
-  "vibesensor/cli/report.py",
-  "vibesensor/cli/http_api_schema_export.py",
-  "vibesensor/cli/ws_schema_export.py",
-  "vibesensor/cli/contract_reference_doc.py",
-  "vibesensor/cli/preflight.py",
-  "vibesensor/cli/hotspot_config.py",
-  "vibesensor/adapters/pdf/pdf_engine.py",
-  "vibesensor/adapters/pdf/report_data.py",
-  "vibesensor/adapters/pdf/report_types.py",
-  "vibesensor/adapters/pdf/presentation.py",
-  "vibesensor/adapters/pdf/pattern_parts.py",
-  "vibesensor/adapters/pdf/pdf_page1.py",
-  "vibesensor/adapters/pdf/pdf_page2.py",
-  "vibesensor/adapters/pdf/pdf_diagram_render.py",
-  "vibesensor/adapters/pdf/pdf_style.py",
-  "vibesensor/adapters/pdf/pdf_drawing.py",
-  "vibesensor/adapters/pdf/pdf_text.py",
-  "vibesensor/adapters/pdf/mapping.py",
+packages = ["vibesensor"]
+exclude = [
+  # Legacy HTTP history/settings routes still need dedicated typing cleanup for
+  # their boundary payload shaping and response assembly.
+  "^vibesensor/adapters/http/(?:history|settings)\\.py$",
+  # UDP protocol decoding still relies on looser wire-payload contracts.
+  "^vibesensor/adapters/udp/protocol\\.py$",
 ]
 follow_imports = "normal"
 check_untyped_defs = true
@@ -177,6 +123,5 @@ module = [
   "vibesensor.adapters.udp.protocol",
   "vibesensor.adapters.http.settings",
   "vibesensor.adapters.http.history",
-  "vibesensor.infra.runtime.health_snapshot",
 ]
 ignore_errors = true
