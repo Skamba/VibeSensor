@@ -111,7 +111,6 @@ When a single shard fails in CI, run the corresponding focused suite locally fir
 ## Pull requests and merge expectations
 
 - Work on a branch, not directly on `main`.
-- Keep docs in sync with meaningful code changes.
 - Before asking for merge, run the relevant local validation plus the smallest broader suite that matches your change.
 - After opening or updating a PR, monitor checks until they are green:
 
@@ -123,7 +122,7 @@ python3 tools/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/Vi
 
 ## Documentation expectations
 
-When you change ownership boundaries, commands, or workflows, update the matching docs in the same change set. Common touchpoints are:
+When you change ownership boundaries, commands, or workflows, review the matching docs before merging and update any that became stale. Common touchpoints are:
 
 - [README.md](README.md)
 - [apps/server/README.md](apps/server/README.md)
