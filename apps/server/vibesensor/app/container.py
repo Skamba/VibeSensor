@@ -4,10 +4,17 @@ import logging
 from typing import TYPE_CHECKING
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+from vibesensor.adapters.http.dependencies import (
+    HistoryDeps,
+    RouterDeps,
+    SettingsDeps,
+    TelemetryDeps,
+    UpdateDeps,
+)
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
 from vibesensor.adapters.websocket.hub import WebSocketHub
-from vibesensor.app.runtime_state import RuntimeState
+from vibesensor.app.runtime_state import AppRuntime, RuntimeState
 from vibesensor.app.settings import AppConfig
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
@@ -70,8 +77,8 @@ def create_history_db(config: AppConfig) -> HistoryDB:
     return history_db
 
 
-def build_runtime(config: AppConfig) -> RuntimeState:
-    """Construct all services and return a wired RuntimeState."""
+def build_runtime(config: AppConfig) -> AppRuntime:
+    """Construct all services and return the app runtime bundle."""
     accel_scale_g_per_lsb = resolve_accel_scale_g_per_lsb(config)
 
     # DB + settings
@@ -167,7 +174,9 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         rollback_dir=str(config.update.rollback_dir),
     )
 
-    runtime = RuntimeState(
+    esp_flash_manager = EspFlashManager()
+
+    lifecycle = RuntimeState(
         config=config,
         registry=registry,
         processor=processor,
@@ -176,9 +185,6 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         settings_store=settings_store,
         gps_monitor=gps_monitor,
         history_db=history_db,
-        run_service=run_service,
-        report_service=report_service,
-        export_service=export_service,
         processing_loop_state=processing_loop_state,
         health_state=health_state,
         processing_loop=processing_loop,
@@ -186,7 +192,31 @@ def build_runtime(config: AppConfig) -> RuntimeState:
         ws_broadcast=ws_broadcast,
         run_recorder=run_recorder,
         update_manager=update_manager,
-        esp_flash_manager=EspFlashManager(),
+        esp_flash_manager=esp_flash_manager,
+    )
+    router = RouterDeps(
+        telemetry=TelemetryDeps(
+            processing_loop_state=processing_loop_state,
+            health_state=health_state,
+            processor=processor,
+            registry=registry,
+            control_plane=control_plane,
+            run_recorder=run_recorder,
+            ws_hub=ws_hub,
+        ),
+        settings=SettingsDeps(
+            settings_store=settings_store,
+            gps_monitor=gps_monitor,
+        ),
+        history=HistoryDeps(
+            run_service=run_service,
+            report_service=report_service,
+            export_service=export_service,
+        ),
+        updates=UpdateDeps(
+            update_manager=update_manager,
+            esp_flash_manager=esp_flash_manager,
+        ),
     )
     settings_store.sync_all()
-    return runtime
+    return AppRuntime(lifecycle=lifecycle, router=router)

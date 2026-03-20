@@ -12,12 +12,18 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Any, cast
+from typing import Any
 
 from fastapi import FastAPI
 
 from vibesensor.adapters.http import create_router
+from vibesensor.adapters.http.dependencies import (
+    HistoryDeps,
+    RouterDeps,
+    SettingsDeps,
+    TelemetryDeps,
+    UpdateDeps,
+)
 
 _DEFAULT_OUT = (
     Path(__file__).resolve().parents[4]
@@ -30,29 +36,33 @@ _DEFAULT_OUT = (
 
 
 def _build_openapi_app() -> FastAPI:
-    placeholder = object()
-    services = SimpleNamespace(
-        registry=placeholder,
-        processor=placeholder,
-        control_plane=placeholder,
-        settings_store=placeholder,
-        gps_monitor=placeholder,
-        analysis_settings=placeholder,
-        apply_car_settings=placeholder,
-        apply_speed_source_settings=placeholder,
-        run_recorder=placeholder,
-        history_db=placeholder,
-        run_service=placeholder,
-        report_service=placeholder,
-        export_service=placeholder,
-        ws_hub=placeholder,
-        update_manager=placeholder,
-        esp_flash_manager=placeholder,
-        processing_loop_state=placeholder,
-        health_state=placeholder,
+    placeholder: Any = object()
+    services = RouterDeps(
+        telemetry=TelemetryDeps(
+            processing_loop_state=placeholder,
+            health_state=placeholder,
+            processor=placeholder,
+            registry=placeholder,
+            control_plane=placeholder,
+            run_recorder=placeholder,
+            ws_hub=placeholder,
+        ),
+        settings=SettingsDeps(
+            settings_store=placeholder,
+            gps_monitor=placeholder,
+        ),
+        history=HistoryDeps(
+            run_service=placeholder,
+            report_service=placeholder,
+            export_service=placeholder,
+        ),
+        updates=UpdateDeps(
+            update_manager=placeholder,
+            esp_flash_manager=placeholder,
+        ),
     )
     app = FastAPI(title="VibeSensor HTTP API")
-    app.include_router(create_router(cast(Any, services)))
+    app.include_router(create_router(services))
     return app
 
 

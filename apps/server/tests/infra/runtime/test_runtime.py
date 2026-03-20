@@ -137,9 +137,6 @@ def _make_runtime(**overrides: Any):
     settings_store = overrides.pop("settings_store", MagicMock())
     gps_monitor = overrides.pop("gps_monitor", MagicMock())
     history_db = overrides.pop("history_db", MagicMock())
-    run_service = overrides.pop("run_service", MagicMock())
-    report_service = overrides.pop("report_service", MagicMock())
-    export_service = overrides.pop("export_service", MagicMock())
     diagnostics = overrides.pop("run_recorder", MagicMock())
     update_manager = overrides.pop("update_manager", MagicMock())
     esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
@@ -154,9 +151,6 @@ def _make_runtime(**overrides: Any):
         settings_store=settings_store,
         gps_monitor=gps_monitor,
         history_db=history_db,
-        run_service=run_service,
-        report_service=report_service,
-        export_service=export_service,
         processing_loop_state=processing_state,
         health_state=health_state,
         processing_loop=ProcessingLoop(
