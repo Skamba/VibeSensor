@@ -9,6 +9,7 @@ import type {
   HistoryInsightsPayload,
   LocationOption,
   LoggingStatusPayload,
+  SpeedSourceKind,
 } from "../api/types";
 
 export interface VehicleSettings {
@@ -103,7 +104,7 @@ export interface AppState {
   vehicleSettings: VehicleSettings;
   cars: CarRecord[];
   activeCarId: string | null;
-  speedSource: string;
+  speedSource: SpeedSourceKind;
   manualSpeedKph: number | null;
   gpsFallbackActive: boolean;
   chartBands: ChartBand[];
