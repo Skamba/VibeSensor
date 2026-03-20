@@ -5,7 +5,7 @@ Verifies:
 - SettingsStore._coerce_language handles locale variants (e.g. "nl-BE")
 - ClientRegistry uses normalize_sensor_id (no private duplicate)
 - ClassificationResult TypedDict returned from classify_peak_hz
-- mypy enforcement list includes the expanded module set
+- mypy enforcement uses package-level discovery with a targeted denylist
 """
 
 from __future__ import annotations
@@ -67,22 +67,21 @@ class TestNormalizeLangConsolidation:
 
 
 class TestMypyEnforcement:
-    """pyproject.toml [tool.mypy] files list includes expanded modules."""
+    """pyproject.toml [tool.mypy] uses package discovery plus a small denylist."""
 
     @pytest.fixture
-    def mypy_files(self) -> list[str]:
+    def mypy_config(self) -> dict[str, object]:
         import tomllib
 
         data = tomllib.loads(_PYPROJECT.read_text())
-        return data["tool"]["mypy"]["files"]
+        return data["tool"]["mypy"]
 
-    @pytest.mark.parametrize(
-        "module",
-        [
-            "vibesensor/report_i18n.py",
-            "vibesensor/use_cases/run",
-            "vibesensor/infra/processing",
-        ],
-    )
-    def test_module_in_mypy_files(self, mypy_files: list[str], module: str) -> None:
-        assert module in mypy_files, f"{module} not in pyproject.toml [tool.mypy] files"
+    def test_mypy_uses_package_level_discovery(self, mypy_config: dict[str, object]) -> None:
+        assert mypy_config.get("packages") == ["vibesensor"]
+        assert "files" not in mypy_config
+
+    def test_mypy_discovery_exclude_stays_targeted(self, mypy_config: dict[str, object]) -> None:
+        assert mypy_config.get("exclude") == [
+            r"^vibesensor/adapters/http/(?:history|settings)\.py$",
+            r"^vibesensor/adapters/udp/protocol\.py$",
+        ]
