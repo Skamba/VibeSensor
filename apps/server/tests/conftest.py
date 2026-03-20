@@ -57,7 +57,11 @@ class FakeState:
         if self.run_service is None:
             self.run_service = HistoryRunService(self.history_db, self.settings_store)
         if self.report_service is None:
-            self.report_service = HistoryReportService(self.history_db, self.settings_store)
+            self.report_service = HistoryReportService(
+                self.history_db,
+                self.settings_store,
+                pdf_renderer=lambda _summary, _test_run: b"%PDF-stub",
+            )
         if self.export_service is None:
             self.export_service = HistoryExportService(self.history_db)
 
