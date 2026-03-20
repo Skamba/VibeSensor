@@ -205,7 +205,10 @@ def packaged_static_index_path() -> Path:
             os.environ.pop("VIBESENSOR_DISABLE_AUTO_APP", None)
         else:
             os.environ["VIBESENSOR_DISABLE_AUTO_APP"] = previous_disable_auto_app
-    return Path(app_module.__file__).resolve().parent.parent / "static" / "index.html"
+    module_file = app_module.__file__
+    if module_file is None:
+        raise RuntimeError("vibesensor.app module is missing __file__")
+    return Path(module_file).resolve().parent.parent / "static" / "index.html"
 
 
 def validate_packaged_static_assets() -> Path:
