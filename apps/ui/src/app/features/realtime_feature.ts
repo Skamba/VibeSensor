@@ -256,8 +256,6 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     }
     const client = state.clients.find((c) => c.id === clientId);
     if (client) {
-      const selected = state.locationOptions.find((loc) => loc.code === locationCode);
-      client.name = selected ? selected.label : "";
       client.location_code = locationCode;
       maybeRenderSensorsSettingsList();
     }
