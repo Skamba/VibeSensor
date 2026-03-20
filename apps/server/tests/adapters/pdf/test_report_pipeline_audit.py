@@ -59,7 +59,7 @@ def _make_peaks_table_row(
     spatial_uniformity: float | None = None,
     speed_uniformity: float | None = None,
 ) -> dict:
-    """Build a single peaks-table row dict as produced by plot_data._top_peaks_table_rows."""
+    """Build a single peaks-table row dict as produced by diagnostics peak-table builders."""
     if strength_db is None:
         strength_db = p95_intensity_db  # mirrors the current (buggy) behavior
     return {
