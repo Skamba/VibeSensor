@@ -793,12 +793,13 @@ export interface components {
     /**
      * FindingPayload
      * @description HTTP contract for one serialized finding in analysis history payloads.
+     *
+     * This schema mirrors ``shared.boundaries.analysis_payload.FindingPayload``.
+     * It intentionally includes a few presentation-oriented projections
+     * (``evidence_summary``, ``frequency_hz_or_order``, ``amplitude_metric``,
+     * and the confidence label fields) alongside the domain-owned finding data.
      */
     FindingPayload: {
-      /** Actions */
-      actions?: {
-          [key: string]: unknown;
-        }[];
       amplitude_metric: components["schemas"]["AmplitudeMetric"];
       /** Confidence */
       confidence: number | null;
@@ -808,12 +809,6 @@ export interface components {
       confidence_pct?: string | null;
       /** Confidence Tone */
       confidence_tone?: string | null;
-      /** Corroborating Locations */
-      corroborating_locations?: number | null;
-      /** Diagnostic Caveat */
-      diagnostic_caveat?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
       /** Diffuse Excitation */
       diffuse_excitation?: boolean | null;
       /** Dominance Ratio */
@@ -835,40 +830,20 @@ export interface components {
       frequency_hz_or_order: boolean | number | string | unknown[] | {
         [key: string]: unknown;
       } | null;
-      /** Grouped Count */
-      grouped_count?: number | null;
-      /** Localization Confidence */
-      localization_confidence?: number | null;
       location_hotspot?: components["schemas"]["LocationHotspotPayload"] | null;
       /** Matched Points */
       matched_points?: components["schemas"]["MatchedPoint"][];
-      /** Next Sensor Move */
-      next_sensor_move?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
       /** Order */
       order?: string | null;
       /** Peak Classification */
       peak_classification?: string | null;
-      /** Peak Speed Kmh */
-      peak_speed_kmh?: number | null;
       phase_evidence?: components["schemas"]["PhaseEvidence"] | null;
-      /** Phase Presence */
-      phase_presence?: {
-        [key: string]: number;
-      } | null;
-      /** Quick Checks */
-      quick_checks: (boolean | number | string | unknown[] | {
-          [key: string]: unknown;
-        } | null)[];
       /** Ranking Score */
       ranking_score?: number | null;
       /** Severity */
       severity?: string | null;
       /** Signatures Observed */
       signatures_observed?: string[];
-      /** Speed Window Kmh */
-      speed_window_kmh?: number[] | null;
       /** Strongest Location */
       strongest_location?: string | null;
       /** Strongest Speed Band */

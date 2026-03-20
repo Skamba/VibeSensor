@@ -77,6 +77,18 @@ def test_export_schema_contains_finding_components_for_history_insights(
         "evidence_metrics",
         "matched_points",
     }.issubset(finding_payload["properties"])
+    assert {
+        "quick_checks",
+        "peak_speed_kmh",
+        "speed_window_kmh",
+        "localization_confidence",
+        "corroborating_locations",
+        "next_sensor_move",
+        "actions",
+        "phase_presence",
+        "grouped_count",
+        "diagnostic_caveat",
+    }.isdisjoint(finding_payload["properties"])
     assert finding_payload["properties"]["evidence_metrics"]["anyOf"] == [
         {"$ref": "#/components/schemas/FindingEvidenceMetrics"},
         {"type": "null"},
