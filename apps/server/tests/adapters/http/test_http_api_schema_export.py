@@ -56,3 +56,31 @@ def test_export_schema_contains_typed_history_list_entry(schema_dict: dict[str, 
     assert history_response["properties"]["runs"]["items"] == {
         "$ref": "#/components/schemas/HistoryListEntryResponse",
     }
+
+
+def test_export_schema_contains_finding_components_for_history_insights(
+    schema_dict: dict[str, Any],
+) -> None:
+    history_insights = schema_dict["components"]["schemas"]["HistoryInsightsResponse"]
+    finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
+
+    assert history_insights["properties"]["findings"]["items"] == {
+        "$ref": "#/components/schemas/FindingPayload",
+    }
+    assert history_insights["properties"]["top_causes"]["items"] == {
+        "$ref": "#/components/schemas/FindingPayload",
+    }
+    assert {
+        "finding_id",
+        "suspected_source",
+        "amplitude_metric",
+        "evidence_metrics",
+        "matched_points",
+    }.issubset(finding_payload["properties"])
+    assert finding_payload["properties"]["evidence_metrics"]["anyOf"] == [
+        {"$ref": "#/components/schemas/FindingEvidenceMetrics"},
+        {"type": "null"},
+    ]
+    assert finding_payload["properties"]["matched_points"]["items"] == {
+        "$ref": "#/components/schemas/MatchedPoint",
+    }
