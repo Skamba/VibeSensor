@@ -21,6 +21,7 @@ from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,
     vibration_origin_from_payload,
 )
+from vibesensor.shared.json_utils import i18n_ref
 
 _MAX_SIGNATURES_PER_FINDING: int = 3
 
@@ -58,6 +59,16 @@ def step_payload_from_action(action: RecommendedAction) -> dict[str, object]:
 def step_payloads_from_plan(test_plan: TestPlan) -> list[dict[str, object]]:
     """Project a semantic TestPlan into the persisted TestStep payload list."""
     return [step_payload_from_action(action) for action in test_plan.prioritized_actions]
+
+
+def _amplitude_metric_payload(finding: Finding) -> dict[str, object]:
+    """Project the canonical presentation-only amplitude summary for a finding."""
+    return {
+        "name": "vibration_strength_db",
+        "value": finding.vibration_strength_db,
+        "units": "dB",
+        "definition": i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -230,10 +241,10 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
 def finding_payload_from_domain(
     finding: Finding,
 ) -> dict[str, object]:
-    """Project a domain Finding to a complete payload dict.
+    """Project a domain Finding to the current persisted/public payload dict.
 
-    Produces all FindingPayload fields from domain objects alone,
-    without pass-through shortcuts to original payload dicts.
+    Produces the documented ``FindingPayload`` contract from domain objects
+    alone, without pass-through shortcuts to original payload dicts.
     """
     payload: dict[str, object] = {
         "finding_id": finding.finding_id,
@@ -252,8 +263,7 @@ def finding_payload_from_domain(
         "frequency_hz_or_order": (
             finding.frequency_hz if finding.frequency_hz is not None else finding.order or ""
         ),
-        "amplitude_metric": {"vibration_strength_db": finding.vibration_strength_db},
-        "quick_checks": [],
+        "amplitude_metric": _amplitude_metric_payload(finding),
     }
     if finding.severity:
         payload["severity"] = finding.severity

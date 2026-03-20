@@ -229,7 +229,7 @@ class TestFindingDomainObject:
             "peak_classification": "harmonic",
             # Extra payload-only fields should be ignored
             "evidence_summary": "some evidence",
-            "quick_checks": [],
+            "legacy_unused_field": [],
         }
         f = finding_from_payload(payload)
         assert f.finding_id == "F001"
