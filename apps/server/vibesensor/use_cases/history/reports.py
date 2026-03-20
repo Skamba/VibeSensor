@@ -21,6 +21,7 @@ from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.shared.types.run_persistence import RunPersistence
+from vibesensor.shared.types.settings_reader import SettingsReader
 from vibesensor.use_cases.history.helpers import (
     HistoryRecord,
     async_require_run,
@@ -31,7 +32,6 @@ from vibesensor.use_cases.history.helpers import (
 
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun
-    from vibesensor.infra.config.settings_store import SettingsStore
 
 #: Callable that turns a persisted analysis dict into PDF bytes.
 #: Signature: ``(analysis_summary, test_run) -> bytes``.
@@ -69,7 +69,7 @@ class HistoryReportService:
     def __init__(
         self,
         history_db: RunPersistence,
-        settings_store: SettingsStore | None = None,
+        settings_store: SettingsReader | None = None,
         *,
         pdf_renderer: PdfRendererFn,
     ) -> None:

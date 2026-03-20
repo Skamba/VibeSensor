@@ -20,7 +20,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
-from typing import TYPE_CHECKING, cast
+from typing import cast
 from uuid import uuid4
 
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
@@ -30,6 +30,7 @@ from vibesensor.shared.types.client_tracker import ClientTracker
 from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.run_persistence import RunPersistence
+from vibesensor.shared.types.settings_reader import SettingsReader
 from vibesensor.shared.types.signal_source import SignalSource
 from vibesensor.shared.types.speed_provider import SpeedProvider
 from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
@@ -40,9 +41,6 @@ from vibesensor.use_cases.run.sample_builder import (
     firmware_version_for_run,
     resolve_speed_context,
 )
-
-if TYPE_CHECKING:
-    from vibesensor.infra.config.settings_store import SettingsStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -116,7 +114,7 @@ class RunRecorder:
         gps_monitor: SpeedProvider,
         processor: SignalSource,
         history_db: RunPersistence | None = None,
-        settings_store: SettingsStore | None = None,
+        settings_store: SettingsReader | None = None,
         language_provider: Callable[[], str] | None = None,
     ):
         self.metrics_log_hz = max(1, config.metrics_log_hz)
