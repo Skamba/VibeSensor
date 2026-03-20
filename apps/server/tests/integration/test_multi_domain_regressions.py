@@ -19,9 +19,8 @@ from vibesensor.domain.finding import speed_bin_label
 from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
-from vibesensor.shared.time_utils import parse_iso8601
+from vibesensor.shared.time_utils import format_duration_mm_ss, parse_iso8601
 from vibesensor.use_cases.diagnostics.findings import _sensor_intensity_by_location
-from vibesensor.use_cases.diagnostics.helpers import _format_duration
 from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_window_label
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
 from vibesensor.use_cases.diagnostics.statistics import compute_run_timing
@@ -79,17 +78,17 @@ class TestBug02TrMissingArgs:
 
 
 # ---------------------------------------------------------------------------
-# Bug 3: _format_duration crashes on inf/NaN
+# Bug 3: format_duration_mm_ss crashes on inf/NaN
 # ---------------------------------------------------------------------------
 
 
 class TestBug03FormatDurationNonFinite:
     @pytest.mark.parametrize("value", [float("inf"), float("nan")])
     def test_non_finite_returns_zero(self, value: float) -> None:
-        assert _format_duration(value) == "00:00.0"
+        assert format_duration_mm_ss(value) == "00:00.0"
 
     def test_normal_value_formats_correctly(self) -> None:
-        assert _format_duration(125.3) == "02:05.3"
+        assert format_duration_mm_ss(125.3) == "02:05.3"
 
 
 # ---------------------------------------------------------------------------

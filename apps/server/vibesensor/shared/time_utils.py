@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from math import isfinite
 
 
 def utc_now_iso() -> str:
@@ -22,3 +23,11 @@ def parse_iso8601(value: object) -> datetime | None:
         return dt
     except ValueError:
         return None
+
+
+def format_duration_mm_ss(seconds: float) -> str:
+    """Format a duration as ``MM:SS.s`` while clamping invalid inputs to zero."""
+    total = max(0.0, round(float(seconds), 1)) if isfinite(seconds) else 0.0
+    minutes = int(total // 60)
+    remainder = total - (minutes * 60)
+    return f"{minutes:02d}:{remainder:04.1f}"

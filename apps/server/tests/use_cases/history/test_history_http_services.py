@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 
+from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
 from vibesensor.use_cases.history.reports import HistoryReportPdfCache, HistoryReportService
@@ -42,7 +43,10 @@ def test_raise_delete_run_error_maps_unknown_reason_to_domain_error() -> None:
 
 @pytest.mark.asyncio
 async def test_delete_service_uses_delete_reason_mapping() -> None:
-    service = HistoryRunService(_HistoryDbStub(delete_result=(False, "active")))
+    service = HistoryRunService(
+        _HistoryDbStub(delete_result=(False, "active")),
+        analysis_projector=project_analysis_summary,
+    )
 
     with pytest.raises(AnalysisNotReadyError, match="Cannot delete the active run"):
         await service.delete_run("run-1")
@@ -61,6 +65,7 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
                 "analysis": {"lang": "nl", "findings": [], "title": "X"},
             },
         ),
+        analysis_projector=project_analysis_summary,
         pdf_renderer=lambda _s, _t: b"%PDF-stub",
     )
 
@@ -98,6 +103,7 @@ async def test_run_service_projects_persisted_summary_through_domain() -> None:
                 },
             },
         ),
+        analysis_projector=project_analysis_summary,
     )
 
     run = await service.get_run("run-1")
@@ -134,6 +140,7 @@ def test_build_run_details_json_strips_internal_analysis_fields() -> None:
             },
             sample_count=5,
             run_id="run-1",
+            analysis_projector=project_analysis_summary,
         ),
     )
 
@@ -163,6 +170,7 @@ def test_build_run_details_json_projects_analysis_through_domain() -> None:
             },
             sample_count=5,
             run_id="run-1",
+            analysis_projector=project_analysis_summary,
         ),
     )
 
@@ -184,6 +192,7 @@ def test_build_run_details_json_sanitizes_non_finite_floats() -> None:
         },
         sample_count=3,
         run_id="run-nan",
+        analysis_projector=project_analysis_summary,
     )
 
     # Must be parseable by json.loads (no NaN/Infinity)
@@ -199,6 +208,7 @@ def test_export_archive_builder_creates_csv_and_json_entries() -> None:
         _HistoryDbStub(
             samples=[{"run_id": "run-1", "t_s": 1.0, "custom": "x"}],
         ),
+        analysis_projector=project_analysis_summary,
     )
 
     spool = service._build_zip_file(

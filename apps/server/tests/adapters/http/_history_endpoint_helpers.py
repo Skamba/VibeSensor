@@ -20,6 +20,7 @@ from vibesensor.adapters.http.dependencies import (
     UpdateDeps,
 )
 from vibesensor.infra.runtime import RuntimeHealthState
+from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService, PdfRendererFn
@@ -271,11 +272,21 @@ class FakeState:
         self.health_state.mark_ready()
         self.update_manager = MagicMock()
         self.esp_flash_manager = MagicMock()
-        self.run_service = HistoryRunService(self.history_db, self.settings_store)
-        self.report_service = HistoryReportService(
-            self.history_db, self.settings_store, pdf_renderer=pdf_renderer
+        self.run_service = HistoryRunService(
+            self.history_db,
+            self.settings_store,
+            analysis_projector=project_analysis_summary,
         )
-        self.export_service = HistoryExportService(self.history_db)
+        self.report_service = HistoryReportService(
+            self.history_db,
+            self.settings_store,
+            analysis_projector=project_analysis_summary,
+            pdf_renderer=pdf_renderer,
+        )
+        self.export_service = HistoryExportService(
+            self.history_db,
+            analysis_projector=project_analysis_summary,
+        )
 
     @property
     def telemetry(self) -> TelemetryDeps:
