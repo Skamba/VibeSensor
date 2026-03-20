@@ -13,11 +13,11 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import TypeGuard
 
-from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.use_cases.history.helpers import (
+    AnalysisProjector,
     HistoryRecord,
     async_require_run,
     safe_filename,
@@ -102,9 +102,15 @@ class HistoryExportDownload:
 class HistoryExportService:
     """Build ZIP exports for history runs without route-local business logic."""
 
-    __slots__ = ("_history_db",)
+    __slots__ = ("_analysis_projector", "_history_db")
 
-    def __init__(self, history_db: RunPersistence) -> None:
+    def __init__(
+        self,
+        history_db: RunPersistence,
+        *,
+        analysis_projector: AnalysisProjector,
+    ) -> None:
+        self._analysis_projector = analysis_projector
         self._history_db = history_db
 
     async def build_export(self, run_id: str) -> HistoryExportDownload:
@@ -148,7 +154,12 @@ class HistoryExportService:
 
                 archive.writestr(
                     f"{safe_name}.json",
-                    build_run_details_json(run, sample_count, run_id),
+                    build_run_details_json(
+                        run,
+                        sample_count,
+                        run_id,
+                        analysis_projector=self._analysis_projector,
+                    ),
                 )
 
             spool.seek(0)
@@ -162,6 +173,8 @@ def build_run_details_json(
     run: HistoryRecord,
     sample_count: int,
     run_id: str,
+    *,
+    analysis_projector: AnalysisProjector,
 ) -> str:
     """Build the exported JSON metadata document for a history run."""
     run_details: JsonObject = {}
@@ -174,7 +187,7 @@ def build_run_details_json(
         has_findings = isinstance(analysis.get("findings"), list)
         has_top_causes = isinstance(analysis.get("top_causes"), list)
         if has_findings or has_top_causes:
-            projected, _ = project_analysis_summary(analysis)
+            projected, _ = analysis_projector(analysis)
             run_details["analysis"] = strip_internal_fields(projected)
         else:
             run_details["analysis"] = strip_internal_fields(dict(analysis))

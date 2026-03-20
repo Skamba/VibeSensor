@@ -101,7 +101,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `speed_profile_helpers.py` | ~150 | Speed-profile construction and phase/speed summary helpers |
 | `plots.py` | ~300 | Chart data shaping orchestration over diagnostics-local value objects: time-series extraction plus FFT/spectrogram assembly |
 | `peak_table.py` | ~250 | Peak-table row ranking, persistence-weighted statistics, and internal order-label annotation |
-| `summary_serialization.py` | ~350 | Dedicated serialization seam from domain/app diagnostics value objects to persisted `AnalysisSummary` payloads |
+| `shared/boundaries/summary_serialization.py` | ~350 | Dedicated serialization seam from domain/app diagnostics value objects to persisted `AnalysisSummary` payloads |
 
 ## Data Flow
 
@@ -118,7 +118,7 @@ Input: samples (list[JsonObject]) + metadata (JsonObject)
   │    ├─ finalize_findings() → enriched domain Finding objects
   │    └─ select_top_causes() → ranked top causes
   │
-  ├─ build_summary_payload() → AnalysisSummary dict
+  ├─ shared.boundaries.summary_serialization.build_summary_payload() → AnalysisSummary dict
   │    ├─ findings/top causes serialized from domain Finding
   │    ├─ speed + phase breakdown rows serialized from diagnostics-local value objects
   │    └─ origin, test plan, suitability, accel stats, phase timeline

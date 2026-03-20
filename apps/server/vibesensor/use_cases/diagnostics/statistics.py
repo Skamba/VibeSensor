@@ -1,8 +1,8 @@
 """Pure computation helpers for run statistics.
 
 Side-effect-free, independently testable functions extracted from
-``summary_builder.py``: acceleration statistics, data quality metrics,
-run timing, speed/phase preparation, and noise baseline conversion.
+``summary_builder.py``: acceleration statistics, run timing, frame
+integrity, reference completeness, and speed/phase preparation.
 """
 
 from __future__ import annotations
@@ -13,12 +13,12 @@ from datetime import datetime, timedelta
 
 from vibesensor.domain.snapshots import SpeedProfileSummary
 from vibesensor.shared.constants import (
-    MEMS_NOISE_FLOOR_G,
     SPEED_COVERAGE_MIN_PCT,
     SPEED_MIN_POINTS,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.run_context import order_reference_context_complete
+from vibesensor.shared.statistics_utils import _mean_variance
 from vibesensor.shared.time_utils import parse_iso8601
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.strength_bands import bucket_for_strength
@@ -28,18 +28,12 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _sensor_limit_g,
     counter_delta,
 )
-from vibesensor.use_cases.diagnostics.math_utils import (
-    _mean_variance,
-    _outlier_summary,
-    _percent_missing,
-)
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     PhaseSegment,
     segment_run_phases,
 )
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
-from vibesensor.vibration_strength import compute_db
 
 # ── Constants ────────────────────────────────────────────────────────────
 
@@ -64,18 +58,6 @@ def _strength_band_key(db_value: float | None) -> str | None:
     if db_value is None or not math.isfinite(db_value):
         return None
     return _STRENGTH_LABEL_KEY_BY_BUCKET.get(bucket_for_strength(db_value), "very_strong")
-
-
-def _json_outlier_summary(values: list[float]) -> JsonObject:
-    """Convert the local outlier summary helper output into the shared JSON shape."""
-    summary = _outlier_summary(values)
-    return {
-        "count": summary["count"],
-        "outlier_count": summary["outlier_count"],
-        "outlier_pct": summary["outlier_pct"],
-        "lower_bound": summary["lower_bound"],
-        "upper_bound": summary["upper_bound"],
-    }
 
 
 # ── Acceleration statistics ──────────────────────────────────────────────
@@ -164,65 +146,6 @@ def compute_frame_integrity_counts(samples: list[Sample]) -> tuple[int, int]:
 def compute_reference_completeness(metadata: JsonObject) -> bool:
     """Return True when enough reference metadata is present for order analysis."""
     return bool(order_reference_context_complete(metadata))
-
-
-# ── Data quality ─────────────────────────────────────────────────────────
-
-
-def build_data_quality_dict(
-    samples: list[Sample],
-    speed_values: list[float],
-    speed_stats: SpeedProfileSummary,
-    speed_non_null_pct: float,
-    accel_stats: AccelStatistics,
-    amp_metric_values: list[float],
-) -> JsonObject:
-    """Build the ``data_quality`` sub-dict for the run summary."""
-    return {
-        "required_missing_pct": {
-            "t_s": _percent_missing(samples, "t_s"),
-            "speed_kmh": _percent_missing(samples, "speed_kmh"),
-            "accel_x": _percent_missing(samples, "accel_x_g"),
-            "accel_y": _percent_missing(samples, "accel_y_g"),
-            "accel_z": _percent_missing(samples, "accel_z_g"),
-        },
-        "speed_coverage": {
-            "non_null_pct": speed_non_null_pct,
-            "min_kmh": min(speed_values) if speed_values else None,
-            "max_kmh": max(speed_values) if speed_values else None,
-            "mean_kmh": speed_stats.mean_kmh,
-            "stddev_kmh": speed_stats.stddev_kmh,
-            "count_non_null": len(speed_values),
-        },
-        "accel_sanity": {
-            "x_mean": accel_stats["x_mean"],
-            "x_variance": accel_stats["x_var"],
-            "y_mean": accel_stats["y_mean"],
-            "y_variance": accel_stats["y_var"],
-            "z_mean": accel_stats["z_mean"],
-            "z_variance": accel_stats["z_var"],
-            "sensor_limit": accel_stats["sensor_limit"],
-            "saturation_count": accel_stats["sat_count"],
-        },
-        "outliers": {
-            "accel_magnitude": _json_outlier_summary(accel_stats["accel_mag_vals"]),
-            "amplitude_metric": _json_outlier_summary(amp_metric_values),
-        },
-    }
-
-
-# ── Noise baseline ───────────────────────────────────────────────────────
-
-
-def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
-    """Convert a run noise baseline amplitude in g to dB, or return None."""
-    if run_noise_baseline_g is None:
-        return None
-    result: float = compute_db(
-        max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
-        MEMS_NOISE_FLOOR_G,
-    )
-    return result
 
 
 # ── Speed and phase preparation ──────────────────────────────────────────

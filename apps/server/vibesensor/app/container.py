@@ -27,6 +27,7 @@ from vibesensor.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
 
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun
+from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.constants import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -90,9 +91,21 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     )
 
     # persistence services
-    run_service = HistoryRunService(history_db, settings_store)
-    report_service = HistoryReportService(history_db, settings_store, pdf_renderer=_build_pdf_bytes)
-    export_service = HistoryExportService(history_db)
+    run_service = HistoryRunService(
+        history_db,
+        settings_store,
+        analysis_projector=project_analysis_summary,
+    )
+    report_service = HistoryReportService(
+        history_db,
+        settings_store,
+        analysis_projector=project_analysis_summary,
+        pdf_renderer=_build_pdf_bytes,
+    )
+    export_service = HistoryExportService(
+        history_db,
+        analysis_projector=project_analysis_summary,
+    )
 
     # ingress
     registry = ClientRegistry(
