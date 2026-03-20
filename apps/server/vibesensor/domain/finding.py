@@ -259,7 +259,8 @@ class Finding:
     """One diagnostic conclusion or cause candidate from analysis.
 
     This is the first-class domain object for a finding.
-    ``FindingPayload`` (the TypedDict in ``analysis._types``) remains as
+    ``FindingPayload`` (the TypedDict in
+    ``vibesensor.shared.boundaries.analysis_payload``) remains as
     the serialization/payload shape; use
     :func:`~vibesensor.shared.boundaries.finding.finding_from_payload` to create
     a domain ``Finding`` from a payload dict.

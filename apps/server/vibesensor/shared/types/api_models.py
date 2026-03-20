@@ -542,17 +542,22 @@ class FindingEvidenceMetrics(_ExtraAllowBase):
 
 
 class FindingPayload(_ExtraAllowBase):
-    """HTTP contract for one serialized finding in analysis history payloads."""
+    """HTTP contract for one serialized finding in analysis history payloads.
+
+    This schema mirrors ``shared.boundaries.analysis_payload.FindingPayload``.
+    It intentionally includes a few presentation-oriented projections
+    (``evidence_summary``, ``frequency_hz_or_order``, ``amplitude_metric``,
+    and the confidence label fields) alongside the domain-owned finding data.
+    """
 
     finding_id: str
+    finding_key: str | None = None
     suspected_source: str
     evidence_summary: ApiPayloadValue
     frequency_hz_or_order: ApiPayloadValue
     amplitude_metric: AmplitudeMetric
     confidence: float | None
-    quick_checks: list[ApiPayloadValue]
     finding_kind: str | None = None
-    finding_key: str | None = None
     severity: str | None = None
     confidence_label_key: str | None = None
     confidence_tone: str | None = None
@@ -562,24 +567,15 @@ class FindingPayload(_ExtraAllowBase):
     strongest_location: str | None = None
     strongest_speed_band: str | None = None
     dominant_phase: str | None = None
-    peak_speed_kmh: float | None = None
-    speed_window_kmh: list[float] | None = None
     dominance_ratio: float | None = None
-    localization_confidence: float | None = None
     weak_spatial_separation: bool | None = None
-    corroborating_locations: int | None = None
     diffuse_excitation: bool | None = None
     phase_evidence: PhaseEvidence | None = None
     evidence_metrics: FindingEvidenceMetrics | None = None
-    next_sensor_move: ApiPayloadValue = None
-    actions: list[ApiPayloadObject] = Field(default_factory=list)
     ranking_score: float | None = None
     peak_classification: str | None = None
-    phase_presence: dict[str, float] | None = None
     signatures_observed: list[str] = Field(default_factory=list)
-    grouped_count: int | None = None
     order: str | None = None
-    diagnostic_caveat: ApiPayloadValue = None
 
 
 class HistoryInsightsResponse(_ExtraAllowBase):

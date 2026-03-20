@@ -58,12 +58,23 @@ def test_finding_typed_dict_exposes_core_contract() -> None:
         "frequency_hz_or_order",
         "amplitude_metric",
         "confidence",
-        "quick_checks",
         "evidence_metrics",
         "phase_evidence",
     }.issubset(hints)
     assert hints["amplitude_metric"] == AmplitudeMetric
     assert hints["matched_points"] == list[MatchedPoint]
+    assert {
+        "quick_checks",
+        "peak_speed_kmh",
+        "speed_window_kmh",
+        "localization_confidence",
+        "corroborating_locations",
+        "next_sensor_move",
+        "actions",
+        "phase_presence",
+        "grouped_count",
+        "diagnostic_caveat",
+    }.isdisjoint(hints)
 
 
 # -- speed_profile tests ------------------------------------------------------

@@ -1812,16 +1812,8 @@
       },
       "FindingPayload": {
         "additionalProperties": true,
-        "description": "HTTP contract for one serialized finding in analysis history payloads.",
+        "description": "HTTP contract for one serialized finding in analysis history payloads.\n\nThis schema mirrors ``shared.boundaries.analysis_payload.FindingPayload``.\nIt intentionally includes a few presentation-oriented projections\n(``evidence_summary``, ``frequency_hz_or_order``, ``amplitude_metric``,\nand the confidence label fields) alongside the domain-owned finding data.",
         "properties": {
-          "actions": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "title": "Actions",
-            "type": "array"
-          },
           "amplitude_metric": {
             "$ref": "#/components/schemas/AmplitudeMetric"
           },
@@ -1868,45 +1860,6 @@
               }
             ],
             "title": "Confidence Tone"
-          },
-          "corroborating_locations": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Corroborating Locations"
-          },
-          "diagnostic_caveat": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Diagnostic Caveat"
           },
           "diffuse_excitation": {
             "anyOf": [
@@ -2033,28 +1986,6 @@
             ],
             "title": "Frequency Hz Or Order"
           },
-          "grouped_count": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Grouped Count"
-          },
-          "localization_confidence": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Localization Confidence"
-          },
           "location_hotspot": {
             "anyOf": [
               {
@@ -2071,34 +2002,6 @@
             },
             "title": "Matched Points",
             "type": "array"
-          },
-          "next_sensor_move": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Next Sensor Move"
           },
           "order": {
             "anyOf": [
@@ -2122,17 +2025,6 @@
             ],
             "title": "Peak Classification"
           },
-          "peak_speed_kmh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Peak Speed Kmh"
-          },
           "phase_evidence": {
             "anyOf": [
               {
@@ -2142,51 +2034,6 @@
                 "type": "null"
               }
             ]
-          },
-          "phase_presence": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Phase Presence"
-          },
-          "quick_checks": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "title": "Quick Checks",
-            "type": "array"
           },
           "ranking_score": {
             "anyOf": [
@@ -2216,20 +2063,6 @@
             },
             "title": "Signatures Observed",
             "type": "array"
-          },
-          "speed_window_kmh": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Speed Window Kmh"
           },
           "strongest_location": {
             "anyOf": [
@@ -2275,8 +2108,7 @@
           "evidence_summary",
           "frequency_hz_or_order",
           "amplitude_metric",
-          "confidence",
-          "quick_checks"
+          "confidence"
         ],
         "title": "FindingPayload",
         "type": "object"
