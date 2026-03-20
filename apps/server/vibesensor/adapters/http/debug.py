@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeGuard
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -18,6 +18,12 @@ if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
 
 __all__ = ["create_debug_routes"]
+
+
+def _is_raw_samples_error_payload(
+    payload: RawSamplesPayload | RawSamplesErrorPayload,
+) -> TypeGuard[RawSamplesErrorPayload]:
+    return "error" in payload
 
 
 def create_debug_routes(processor: SignalProcessor) -> APIRouter:
@@ -46,7 +52,7 @@ def create_debug_routes(processor: SignalProcessor) -> APIRouter:
         """Raw time-domain samples in g for offline analysis."""
         normalized = normalize_client_id_or_400(client_id)
         result = processor.raw_samples(normalized, n_samples=n)
-        if isinstance(result, dict) and "error" in result:
+        if _is_raw_samples_error_payload(result):
             raise HTTPException(
                 status_code=404,
                 detail=result["error"],
