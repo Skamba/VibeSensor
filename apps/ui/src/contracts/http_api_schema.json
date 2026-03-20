@@ -18,7 +18,7 @@
       },
       "AmplitudeMetric": {
         "additionalProperties": true,
-        "description": "HTTP contract for finding amplitude/strength metadata.\n\nThe runtime payload currently emits both a compact\n``{\"vibration_strength_db\": ...}`` shape and richer\n``{\"name\", \"value\", \"units\", \"definition\"}`` objects in tests/report helpers,\nso the schema keeps both representations legal without changing runtime behavior.",
+        "description": "HTTP contract for finding amplitude/strength metadata.",
         "properties": {
           "definition": {
             "anyOf": [
@@ -80,17 +80,6 @@
               }
             ],
             "title": "Value"
-          },
-          "vibration_strength_db": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Vibration Strength Db"
           }
         },
         "title": "AmplitudeMetric",
