@@ -12,16 +12,22 @@ application settings and client names in a single SQLite file located at
 | Efficient long recordings | Keyset pagination (`id > ?`), streaming iterator, no full-run memory load |
 | Queryable time-series | Typed columns for accel, speed, frequency, strength; indexed by `(run_id, t_s)` |
 
+## Module organization
+
+`adapters/persistence/history_db/` keeps `HistoryDB` as the public facade and
+splits internal responsibilities across focused modules:
+
+- `__init__.py`: shared SQLite connection/lock/cursor ownership, schema
+  initialization/migrations, settings snapshot persistence, and client-name persistence.
+- `_run_lifecycle.py`: run creation/finalization, sample appends, analysis writes, delete
+  flows, and stale-recording recovery.
+- `_sample_io.py`: batched sample reads and keyset-pagination helpers.
+- `_queries.py`: run listing/detail queries, metadata reads, health reads, and integrity
+  checks.
+- `_samples.py`: row-serialization helpers for `samples_v2`.
+- `_schema.py`: schema DDL and `SCHEMA_VERSION`.
+
 ## Tables
-
-### `schema_meta`
-
-Single-row key-value table tracking the schema version.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `key` | TEXT PK | Always `'version'` |
-| `value` | TEXT | Current schema version (`'10'`) |
 
 ### `runs`
 
@@ -103,17 +109,18 @@ Maps sensor client IDs to human-readable names.
 
 ## Schema upgrades / migrations
 
-Schema versioning uses the `schema_meta` table. On startup `HistoryDB`
-checks the stored version (the text value of the `'version'` key):
+Schema versioning uses SQLite's `PRAGMA user_version`. On startup `HistoryDB`
+creates the current tables first, then checks the stored integer version:
 
 | Stored version | Action |
 |----------------|--------|
-| No row (fresh DB, `schema_meta` table just created) | Create all tables, insert version `'10'` |
-| `'10'` | No action needed |
-| `'9'` | Migrate `settings_kv` → `settings_snapshot` single-row table |
-| `'8'` | Chain migrate: add `case_id` column (v8→v9), then `settings_kv` → `settings_snapshot` (v9→v10) |
-| Older (e.g. `'5'`) | Raise `RuntimeError` directing the user to delete the database file |
-| Newer than `'10'` | Raise `RuntimeError` (downgrade not supported) |
+| `0` on a fresh DB | Create all tables, stamp `user_version = 10` |
+| `0` with a legacy `schema_meta` table present | Raise `RuntimeError` directing the user to delete the incompatible DB |
+| `10` | No action needed |
+| `9` | Migrate `settings_kv` → `settings_snapshot` single-row table |
+| `8` | Chain migrate: add `case_id` column (v8→v9), then `settings_kv` → `settings_snapshot` (v9→v10) |
+| Older unsupported values (for example `1` or `4`) | Raise `RuntimeError` directing the user to delete the database file |
+| Newer than `10` | Raise `RuntimeError` (downgrade not supported) |
 
 ### Schema versioning policy
 
