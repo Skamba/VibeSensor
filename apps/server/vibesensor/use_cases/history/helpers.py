@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import asyncio
 import re
-from typing import cast
+from collections.abc import Callable
+from typing import TYPE_CHECKING, cast
 
 from typing_extensions import TypedDict
 
@@ -22,7 +23,11 @@ from vibesensor.shared.exceptions import (
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
+if TYPE_CHECKING:
+    from vibesensor.domain import TestRun
+
 _SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
+AnalysisProjector = Callable[[JsonObject], tuple[JsonObject, "TestRun"]]
 
 
 class HistoryRecord(TypedDict, total=False):

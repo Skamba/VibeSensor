@@ -21,6 +21,7 @@ from vibesensor.adapters.http.dependencies import (
     UpdateDeps,
 )
 from vibesensor.infra.runtime import ProcessingLoopState, RuntimeHealthState
+from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService
@@ -61,15 +62,23 @@ class FakeState:
     def __post_init__(self) -> None:
         self.health_state.mark_ready()
         if self.run_service is None:
-            self.run_service = HistoryRunService(self.history_db, self.settings_store)
+            self.run_service = HistoryRunService(
+                self.history_db,
+                self.settings_store,
+                analysis_projector=project_analysis_summary,
+            )
         if self.report_service is None:
             self.report_service = HistoryReportService(
                 self.history_db,
                 self.settings_store,
+                analysis_projector=project_analysis_summary,
                 pdf_renderer=lambda _summary, _test_run: b"%PDF-stub",
             )
         if self.export_service is None:
-            self.export_service = HistoryExportService(self.history_db)
+            self.export_service = HistoryExportService(
+                self.history_db,
+                analysis_projector=project_analysis_summary,
+            )
 
     @property
     def telemetry(self) -> TelemetryDeps:

@@ -3,10 +3,6 @@
 from __future__ import annotations
 
 from math import isfinite, sqrt
-from typing import TypedDict
-
-from vibesensor.use_cases.diagnostics._types import Sample
-from vibesensor.vibration_strength import percentile
 
 
 def _mean(values: list[float]) -> float:
@@ -14,59 +10,6 @@ def _mean(values: list[float]) -> float:
     if not values:
         return 0.0
     return sum(values) / len(values)
-
-
-def _percent_missing(samples: list[Sample], key: str) -> float:
-    if not samples:
-        return 100.0
-    missing = sum(1 for sample in samples if sample.get(key) in (None, ""))
-    return (missing / len(samples)) * 100.0
-
-
-def _mean_variance(values: list[float]) -> tuple[float | None, float | None]:
-    if not values:
-        return None, None
-    n = len(values)
-    m = sum(values) / n
-    if n < 2:
-        return m, 0.0
-    var = sum((v - m) ** 2 for v in values) / (n - 1)
-    return m, var
-
-
-class _OutlierSummary(TypedDict):
-    """Return type of :func:`_outlier_summary`."""
-
-    count: int
-    outlier_count: int
-    outlier_pct: float
-    lower_bound: float | None
-    upper_bound: float | None
-
-
-def _outlier_summary(values: list[float]) -> _OutlierSummary:
-    if not values:
-        return {
-            "count": 0,
-            "outlier_count": 0,
-            "outlier_pct": 0.0,
-            "lower_bound": None,
-            "upper_bound": None,
-        }
-    sorted_vals = sorted(values)
-    q1 = float(percentile(sorted_vals, 0.25))
-    q3 = float(percentile(sorted_vals, 0.75))
-    iqr = max(0.0, q3 - q1)
-    low = q1 - (1.5 * iqr)
-    high = q3 + (1.5 * iqr)
-    outlier_count = sum(1 for v in sorted_vals if v < low or v > high)
-    return {
-        "count": len(sorted_vals),
-        "outlier_count": outlier_count,
-        "outlier_pct": (outlier_count / len(sorted_vals)) * 100.0,
-        "lower_bound": low,
-        "upper_bound": high,
-    }
 
 
 def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:

@@ -8,11 +8,13 @@ analysis-local diagnostics value objects into the JSON-serialisable
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict
 from statistics import median as _median
-from typing import cast
+from typing import Protocol, cast
 
 from vibesensor.domain import (
+    DrivingPhase,
     DrivingPhaseInterval,
     LocationIntensitySummary,
     RunSuitability,
@@ -42,29 +44,328 @@ from vibesensor.shared.boundaries.vibration_origin import (
     SuspectedVibrationOrigin,
     build_origin_explanation,
 )
+from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
+from vibesensor.shared.statistics_utils import _json_outlier_summary, _percent_missing
+from vibesensor.shared.time_utils import format_duration_mm_ss
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
-from vibesensor.use_cases.diagnostics._types import (
-    AccelStatistics,
-    PeakTableRowData,
-    PhaseSpeedBreakdownRowData,
-    PlotDataResultData,
-    Sample,
-    SpectrogramResultData,
-    SpeedBreakdownRowData,
-)
-from vibesensor.use_cases.diagnostics.helpers import _format_duration
-from vibesensor.use_cases.diagnostics.phase_segmentation import PhaseSegment
-from vibesensor.use_cases.diagnostics.statistics import (
-    build_data_quality_dict,
-    noise_baseline_db,
-)
+from vibesensor.vibration_strength import compute_db
+
+AccelStatisticsLike = Mapping[str, object]
+
+
+class SpeedBreakdownRowLike(Protocol):
+    @property
+    def speed_range(self) -> str: ...
+
+    @property
+    def count(self) -> int: ...
+
+    @property
+    def mean_vibration_strength_db(self) -> float | None: ...
+
+    @property
+    def max_vibration_strength_db(self) -> float | None: ...
+
+
+class PhaseSpeedBreakdownRowLike(Protocol):
+    @property
+    def phase(self) -> str: ...
+
+    @property
+    def count(self) -> int: ...
+
+    @property
+    def mean_speed_kmh(self) -> float | None: ...
+
+    @property
+    def max_speed_kmh(self) -> float | None: ...
+
+    @property
+    def mean_vibration_strength_db(self) -> float | None: ...
+
+    @property
+    def max_vibration_strength_db(self) -> float | None: ...
+
+
+class PeakTableRowLike(Protocol):
+    @property
+    def rank(self) -> int: ...
+
+    @property
+    def frequency_hz(self) -> float: ...
+
+    @property
+    def order_label(self) -> str: ...
+
+    @property
+    def suspected_source(self) -> str: ...
+
+    @property
+    def max_intensity_db(self) -> float | None: ...
+
+    @property
+    def median_intensity_db(self) -> float | None: ...
+
+    @property
+    def p95_intensity_db(self) -> float | None: ...
+
+    @property
+    def run_noise_baseline_db(self) -> float | None: ...
+
+    @property
+    def median_vs_run_noise_ratio(self) -> float: ...
+
+    @property
+    def p95_vs_run_noise_ratio(self) -> float: ...
+
+    @property
+    def strength_floor_db(self) -> float | None: ...
+
+    @property
+    def strength_db(self) -> float | None: ...
+
+    @property
+    def presence_ratio(self) -> float: ...
+
+    @property
+    def burstiness(self) -> float: ...
+
+    @property
+    def persistence_score(self) -> float: ...
+
+    @property
+    def peak_classification(self) -> str: ...
+
+    @property
+    def typical_speed_band(self) -> str: ...
+
+
+class SpectrogramResultLike(Protocol):
+    @property
+    def x_axis(self) -> str: ...
+
+    @property
+    def x_label_key(self) -> str: ...
+
+    @property
+    def x_bins(self) -> Sequence[float]: ...
+
+    @property
+    def y_bins(self) -> Sequence[float]: ...
+
+    @property
+    def cells(self) -> Sequence[Sequence[float]]: ...
+
+    @property
+    def max_amp(self) -> float: ...
+
+    @property
+    def x_bin_width(self) -> float | None: ...
+
+    @property
+    def y_bin_width(self) -> float | None: ...
+
+
+class AmpVsPhaseRowLike(Protocol):
+    @property
+    def phase(self) -> str: ...
+
+    @property
+    def count(self) -> int: ...
+
+    @property
+    def mean_vib_db(self) -> float: ...
+
+    @property
+    def max_vib_db(self) -> float | None: ...
+
+    @property
+    def mean_speed_kmh(self) -> float | None: ...
+
+
+class MatchedAmpVsSpeedSeriesLike(Protocol):
+    @property
+    def label(self) -> str: ...
+
+    @property
+    def points(self) -> Sequence[tuple[float, float]]: ...
+
+
+class FreqVsSpeedByFindingSeriesLike(Protocol):
+    @property
+    def label(self) -> str: ...
+
+    @property
+    def matched(self) -> Sequence[tuple[float, float]]: ...
+
+    @property
+    def predicted(self) -> Sequence[tuple[float, float]]: ...
+
+
+class PhaseSegmentPlotLike(Protocol):
+    @property
+    def phase(self) -> str: ...
+
+    @property
+    def start_t_s(self) -> float | None: ...
+
+    @property
+    def end_t_s(self) -> float | None: ...
+
+
+class PhaseBoundaryLike(Protocol):
+    @property
+    def phase(self) -> str: ...
+
+    @property
+    def t_s(self) -> float | None: ...
+
+    @property
+    def end_t_s(self) -> float | None: ...
+
+
+class PlotDataResultLike(Protocol):
+    @property
+    def vib_magnitude(self) -> Sequence[tuple[float, float, str]]: ...
+
+    @property
+    def dominant_freq(self) -> Sequence[tuple[float, float]]: ...
+
+    @property
+    def amp_vs_speed(self) -> Sequence[tuple[float, float]]: ...
+
+    @property
+    def amp_vs_phase(self) -> Sequence[AmpVsPhaseRowLike]: ...
+
+    @property
+    def matched_amp_vs_speed(self) -> Sequence[MatchedAmpVsSpeedSeriesLike]: ...
+
+    @property
+    def freq_vs_speed_by_finding(self) -> Sequence[FreqVsSpeedByFindingSeriesLike]: ...
+
+    @property
+    def steady_speed_distribution(self) -> dict[str, float] | None: ...
+
+    @property
+    def fft_spectrum(self) -> Sequence[tuple[float, float]]: ...
+
+    @property
+    def fft_spectrum_raw(self) -> Sequence[tuple[float, float]]: ...
+
+    @property
+    def peaks_spectrogram(self) -> SpectrogramResultLike: ...
+
+    @property
+    def peaks_spectrogram_raw(self) -> SpectrogramResultLike: ...
+
+    @property
+    def peaks_table(self) -> Sequence[PeakTableRowLike]: ...
+
+    @property
+    def phase_segments(self) -> Sequence[PhaseSegmentPlotLike]: ...
+
+    @property
+    def phase_boundaries(self) -> Sequence[PhaseBoundaryLike]: ...
+
+
+class PhaseSegmentLike(Protocol):
+    @property
+    def phase(self) -> DrivingPhase: ...
+
+    @property
+    def start_idx(self) -> int: ...
+
+    @property
+    def end_idx(self) -> int: ...
+
+    @property
+    def start_t_s(self) -> float: ...
+
+    @property
+    def end_t_s(self) -> float: ...
+
+    @property
+    def speed_min_kmh(self) -> float | None: ...
+
+    @property
+    def speed_max_kmh(self) -> float | None: ...
+
+    @property
+    def sample_count(self) -> int: ...
+
+
+def _float_list(stats: AccelStatisticsLike, key: str) -> list[float]:
+    value = stats.get(key)
+    if not isinstance(value, list):
+        return []
+    return [float(item) for item in value if isinstance(item, (int, float))]
+
+
+def _int_value(stats: AccelStatisticsLike, key: str) -> int | None:
+    value = stats.get(key)
+    return int(value) if isinstance(value, (int, float)) else None
+
+
+def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
+    """Convert a run noise baseline amplitude in g to dB, or return None."""
+    if run_noise_baseline_g is None:
+        return None
+    result: float = compute_db(
+        max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
+        MEMS_NOISE_FLOOR_G,
+    )
+    return result
+
+
+def build_data_quality_dict(
+    samples: Sequence[JsonObject],
+    speed_values: list[float],
+    speed_stats: SpeedProfileSummary,
+    speed_non_null_pct: float,
+    accel_stats: AccelStatisticsLike,
+    amp_metric_values: list[float],
+) -> JsonObject:
+    """Build the ``data_quality`` sub-dict for the persisted run summary."""
+    sample_rows = list(samples)
+    return {
+        "required_missing_pct": {
+            "t_s": _percent_missing(sample_rows, "t_s"),
+            "speed_kmh": _percent_missing(sample_rows, "speed_kmh"),
+            "accel_x": _percent_missing(sample_rows, "accel_x_g"),
+            "accel_y": _percent_missing(sample_rows, "accel_y_g"),
+            "accel_z": _percent_missing(sample_rows, "accel_z_g"),
+        },
+        "speed_coverage": {
+            "non_null_pct": speed_non_null_pct,
+            "min_kmh": min(speed_values) if speed_values else None,
+            "max_kmh": max(speed_values) if speed_values else None,
+            "mean_kmh": speed_stats.mean_kmh,
+            "stddev_kmh": speed_stats.stddev_kmh,
+            "count_non_null": len(speed_values),
+        },
+        "accel_sanity": {
+            "x_mean": _as_float(accel_stats.get("x_mean")),
+            "x_variance": _as_float(accel_stats.get("x_var")),
+            "y_mean": _as_float(accel_stats.get("y_mean")),
+            "y_variance": _as_float(accel_stats.get("y_var")),
+            "z_mean": _as_float(accel_stats.get("z_mean")),
+            "z_variance": _as_float(accel_stats.get("z_var")),
+            "sensor_limit": _as_float(accel_stats.get("sensor_limit")),
+            "saturation_count": _int_value(accel_stats, "sat_count"),
+        },
+        "outliers": {
+            "accel_magnitude": _json_outlier_summary(_float_list(accel_stats, "accel_mag_vals")),
+            "amplitude_metric": _json_outlier_summary(amp_metric_values),
+        },
+    }
+
 
 # ── Phase segment serialization ──────────────────────────────────────────
 
 
-def serialize_phase_segments(phase_segments: list[PhaseSegment]) -> list[JsonObject]:
+def serialize_phase_segments(phase_segments: Sequence[PhaseSegmentLike]) -> list[JsonObject]:
     """Serialize phase segments to JSON-safe dicts."""
     return [
         {
@@ -138,7 +439,7 @@ def serialize_findings(findings: tuple[DomainFinding, ...]) -> list[FindingPaylo
 
 
 def serialize_speed_breakdown(
-    rows: list[SpeedBreakdownRowData],
+    rows: Sequence[SpeedBreakdownRowLike],
 ) -> list[SpeedBreakdownRow]:
     payload_rows: list[SpeedBreakdownRow] = []
     for row in rows:
@@ -153,7 +454,7 @@ def serialize_speed_breakdown(
 
 
 def serialize_phase_speed_breakdown(
-    rows: list[PhaseSpeedBreakdownRowData],
+    rows: Sequence[PhaseSpeedBreakdownRowLike],
 ) -> list[PhaseSpeedBreakdownRow]:
     payload_rows: list[PhaseSpeedBreakdownRow] = []
     for row in rows:
@@ -170,7 +471,7 @@ def serialize_phase_speed_breakdown(
 
 
 def serialize_peak_table(
-    rows: list[PeakTableRowData],
+    rows: Sequence[PeakTableRowLike],
 ) -> list[PeakTableRow]:
     payload_rows: list[PeakTableRow] = []
     for row in rows:
@@ -197,7 +498,7 @@ def serialize_peak_table(
     return payload_rows
 
 
-def serialize_spectrogram(result: SpectrogramResultData) -> SpectrogramResult:
+def serialize_spectrogram(result: SpectrogramResultLike) -> SpectrogramResult:
     payload: SpectrogramResult = {
         "x_axis": result.x_axis,
         "x_label_key": result.x_label_key,
@@ -213,7 +514,7 @@ def serialize_spectrogram(result: SpectrogramResultData) -> SpectrogramResult:
     return payload
 
 
-def serialize_plot_data(plot_data: PlotDataResultData) -> PlotDataResult:
+def serialize_plot_data(plot_data: PlotDataResultLike) -> PlotDataResult:
     amp_vs_phase: list[AmpVsPhaseRow] = []
     for phase_row in plot_data.amp_vs_phase:
         phase_payload: AmpVsPhaseRow = {
@@ -285,14 +586,14 @@ def build_summary_payload(
     *,
     file_name: str,
     run_id: str,
-    samples: list[Sample],
+    samples: list[JsonObject],
     duration_s: float,
     language: str,
     metadata: JsonObject,
     raw_sample_rate_hz: float | None,
-    speed_breakdown: list[SpeedBreakdownRowData],
-    phase_speed_breakdown: list[PhaseSpeedBreakdownRowData],
-    phase_segments: list[PhaseSegment],
+    speed_breakdown: Sequence[SpeedBreakdownRowLike],
+    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowLike],
+    phase_segments: Sequence[PhaseSegmentLike],
     run_noise_baseline_g: float | None,
     speed_breakdown_skipped_reason: JsonObject | None,
     findings: tuple[DomainFinding, ...],
@@ -309,7 +610,7 @@ def build_summary_payload(
     run_suitability: RunSuitability | None,
     speed_values: list[float],
     speed_non_null_pct: float,
-    accel_stats: AccelStatistics,
+    accel_stats: AccelStatisticsLike,
     amp_metric_values: list[float],
 ) -> AnalysisSummary:
     """Assemble the final summary payload from already-computed artifacts."""
@@ -318,7 +619,7 @@ def build_summary_payload(
         "run_id": run_id,
         "rows": len(samples),
         "duration_s": duration_s,
-        "record_length": _format_duration(duration_s),
+        "record_length": format_duration_mm_ss(duration_s),
         "lang": language,
         "report_date": metadata.get("end_time_utc") or metadata.get("report_date"),
         "start_time_utc": metadata.get("start_time_utc"),

@@ -12,12 +12,12 @@ from test_support.report_helpers import (
     analysis_sample_with_peaks as sample,
 )
 
+from vibesensor.shared.boundaries.summary_serialization import annotate_peaks_with_order_labels
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics.peak_table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
-from vibesensor.use_cases.diagnostics.summary_serialization import annotate_peaks_with_order_labels
 
 
 class TestBuildPersistentPeakFindings:

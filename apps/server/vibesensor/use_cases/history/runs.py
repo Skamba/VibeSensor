@@ -6,12 +6,12 @@ import asyncio
 from typing import Never
 
 from vibesensor.domain import RunStatus
-from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.shared.run_context import add_current_context_warnings, localize_warning_list
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.use_cases.history.helpers import (
+    AnalysisProjector,
     HistoryRecord,
     async_require_run,
     require_analysis_ready,
@@ -23,13 +23,16 @@ from vibesensor.use_cases.history.helpers import (
 class HistoryRunService:
     """Run queries and delete operations used by history endpoints."""
 
-    __slots__ = ("_history_db", "_settings_store")
+    __slots__ = ("_analysis_projector", "_history_db", "_settings_store")
 
     def __init__(
         self,
         history_db: RunPersistence,
         settings_store: SettingsReader | None = None,
+        *,
+        analysis_projector: AnalysisProjector,
     ) -> None:
+        self._analysis_projector = analysis_projector
         self._history_db = history_db
         self._settings_store = settings_store
 
@@ -43,7 +46,7 @@ class HistoryRunService:
             if isinstance(analysis.get("findings"), list) or isinstance(
                 analysis.get("top_causes"), list
             ):
-                projected, _ = project_analysis_summary(analysis)
+                projected, _ = self._analysis_projector(analysis)
                 updated_run: HistoryRecord = {
                     **run,
                     "analysis": strip_internal_fields(projected),
@@ -67,7 +70,7 @@ class HistoryRunService:
         if isinstance(raw_analysis.get("findings"), list) or isinstance(
             raw_analysis.get("top_causes"), list
         ):
-            analysis, _ = project_analysis_summary(raw_analysis)
+            analysis, _ = self._analysis_projector(raw_analysis)
         current_active_car_snapshot = (
             self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )
