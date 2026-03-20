@@ -11,13 +11,13 @@ import pytest
 from vibesensor.domain import LocationHotspot
 from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
 from vibesensor.use_cases.diagnostics import (
-    order_analysis as order_findings_module,
+    order_pipeline as order_findings_module,
 )
 from vibesensor.use_cases.diagnostics import (
     order_statistics as _order_statistics_module,
 )
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
-from vibesensor.use_cases.diagnostics.order_analysis import (
+from vibesensor.use_cases.diagnostics.order_pipeline import (
     _build_order_findings as _findings_build_order_findings,
 )
 from vibesensor.use_cases.run.sample_builder import create_run_metadata

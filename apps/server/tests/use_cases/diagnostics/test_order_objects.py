@@ -5,10 +5,8 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain import OrderMatchObservation
-from vibesensor.use_cases.diagnostics.order_analysis import (
-    OrderAnalysisSession,
-    OrderMatchAccumulator,
-)
+from vibesensor.use_cases.diagnostics.order_analysis import OrderMatchAccumulator
+from vibesensor.use_cases.diagnostics.order_pipeline import OrderAnalysisSession
 
 # ===========================================================================
 # OrderMatchAccumulator computed properties
