@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from vibesensor.domain.finding import VibrationSource
-from vibesensor.shared.boundaries.finding import finding_from_payload
+from vibesensor.domain.finding import Finding, FindingEvidence, VibrationSource
+from vibesensor.shared.boundaries.finding import finding_from_payload, finding_payload_from_domain
 
 
 class TestLegacySourceAlias:
@@ -44,3 +44,17 @@ class TestLegacySnrRatioAlias:
         # snr_db should be None because the normalization was removed
         assert finding.evidence is not None
         assert finding.evidence.snr_db is None
+
+    def test_projection_uses_only_canonical_snr_db_key(self) -> None:
+        finding = Finding(
+            finding_id="F-snr",
+            suspected_source=VibrationSource.DRIVELINE,
+            evidence=FindingEvidence(snr_db=12.5),
+        )
+
+        payload = finding_payload_from_domain(finding)
+
+        evidence_metrics = payload["evidence_metrics"]
+        assert isinstance(evidence_metrics, dict)
+        assert evidence_metrics["snr_db"] == 12.5
+        assert "snr_ratio" not in evidence_metrics
