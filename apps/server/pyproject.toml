@@ -164,14 +164,8 @@ disallow_any_unimported = false
 [[tool.mypy.overrides]]
 module = [
   "vibesensor.adapters.udp.protocol",
-  "vibesensor.adapters.http.updates",
-  "vibesensor.adapters.http.car_library",
-  "vibesensor.adapters.http.debug",
   "vibesensor.adapters.http.settings",
-  "vibesensor.adapters.http.clients",
   "vibesensor.adapters.http.history",
-  "vibesensor.adapters.http.recording",
-  "vibesensor.adapters.http.health",
   "vibesensor.adapters.pdf.pdf_page2",
   "vibesensor.infra.runtime.health_snapshot",
 ]

@@ -29,8 +29,8 @@ def create_health_routes(
 
     @router.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
-        return HealthResponse(
-            **build_health_snapshot(loop_state, health_state, processor, registry, run_recorder)
+        return HealthResponse.model_validate(
+            build_health_snapshot(loop_state, health_state, processor, registry, run_recorder)
         )
 
     return router

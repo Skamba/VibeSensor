@@ -23,6 +23,10 @@ def build_health_snapshot(
     run_recorder: RunRecorder,
 ) -> HealthSnapshotData:
     """Build the health snapshot dict."""
+
+    def _coerce_duration(value: float | None) -> float:
+        return value if value is not None else 0.0
+
     failures = loop_state.processing_failure_count
     data_loss = registry.data_loss_snapshot()
     persistence = run_recorder.health_snapshot()
@@ -90,9 +94,9 @@ def build_health_snapshot(
         "data_loss": data_loss,
         "persistence": persistence,
         "intake_stats": processor.intake_stats(),
-        "tick_duration_s": loop_state.last_tick_duration_s,
-        "max_tick_duration_s": loop_state.max_tick_duration_s,
+        "tick_duration_s": _coerce_duration(loop_state.last_tick_duration_s),
+        "max_tick_duration_s": _coerce_duration(loop_state.max_tick_duration_s),
         "tick_count": loop_state.tick_count,
-        "db_last_write_duration_s": run_recorder.last_write_duration_s,
-        "db_max_write_duration_s": run_recorder.max_write_duration_s,
+        "db_last_write_duration_s": _coerce_duration(run_recorder.last_write_duration_s),
+        "db_max_write_duration_s": _coerce_duration(run_recorder.max_write_duration_s),
     }

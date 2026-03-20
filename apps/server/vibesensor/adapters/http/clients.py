@@ -16,6 +16,7 @@ from vibesensor.shared.types.api_models import (
     ClientsResponse,
     IdentifyRequest,
     IdentifyResponse,
+    LocationOptionResponse,
     RemoveClientResponse,
     SetClientLocationResponse,
     SetLocationRequest,
@@ -45,7 +46,11 @@ def create_client_routes(
 
     @router.get("/api/client-locations", response_model=ClientLocationsResponse)
     async def get_client_locations() -> ClientLocationsResponse:
-        return ClientLocationsResponse(locations=all_locations())
+        return ClientLocationsResponse(
+            locations=[
+                LocationOptionResponse.model_validate(location) for location in all_locations()
+            ]
+        )
 
     @router.post("/api/clients/{client_id}/identify", response_model=IdentifyResponse)
     async def identify_client(client_id: str, req: IdentifyRequest) -> IdentifyResponse:
@@ -90,7 +95,7 @@ def create_client_routes(
             registry.clear_name(normalized_client_id)
 
         updated = registry.get(normalized_client_id)
-        name = updated.name if updated else None
+        name = updated.name if updated and updated.name is not None else ""
         mac = client_id_mac(normalized_client_id)
         await asyncio.to_thread(settings_store.set_sensor, mac, {"location_code": code})
         return SetClientLocationResponse(
