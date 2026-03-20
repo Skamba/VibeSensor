@@ -140,6 +140,40 @@ test.describe("shared freq optimization", () => {
     expect(Object.keys(adapted.spectra!.clients)).toHaveLength(0);
   });
 
+  test("skips client when per-client freq contains malformed numeric elements", () => {
+    const adapted = adaptServerPayload({
+      ...basePayload,
+      spectra: {
+        clients: {
+          sensor1: {
+            freq: [10, "bad", 30],
+            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            strength_metrics: { vibration_strength_db: 12 },
+          },
+        },
+      },
+    });
+    expect(adapted.spectra).not.toBeNull();
+    expect(Object.keys(adapted.spectra!.clients)).toHaveLength(0);
+  });
+
+  test("skips client when freq and amplitude bin counts differ", () => {
+    const adapted = adaptServerPayload({
+      ...basePayload,
+      spectra: {
+        clients: {
+          sensor1: {
+            freq: [10, 20],
+            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            strength_metrics: { vibration_strength_db: 12 },
+          },
+        },
+      },
+    });
+    expect(adapted.spectra).not.toBeNull();
+    expect(Object.keys(adapted.spectra!.clients)).toHaveLength(0);
+  });
+
   test("handles mixed: some clients with per-client freq, some without", () => {
     const adapted = adaptServerPayload({
       ...basePayload,
