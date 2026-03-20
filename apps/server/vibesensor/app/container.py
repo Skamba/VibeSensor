@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -16,6 +17,9 @@ from vibesensor.infra.runtime.state import RuntimeState
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
+
+if TYPE_CHECKING:
+    from vibesensor.domain import TestRun
 from vibesensor.shared.constants import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -33,6 +37,19 @@ from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _build_pdf_bytes(analysis_summary: dict, test_run: TestRun | None) -> bytes:
+    """Compose adapters/pdf pipeline into a single callable for injection."""
+    from typing import cast
+
+    from vibesensor.adapters.pdf.mapping import map_summary
+    from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+    from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+
+    summary = cast(AnalysisSummary, analysis_summary)
+    mapped = map_summary(summary, test_run=test_run)
+    return build_report_pdf(mapped)
 
 
 def resolve_accel_scale_g_per_lsb(config: AppConfig) -> float:
@@ -67,7 +84,7 @@ def build_runtime(config: AppConfig) -> RuntimeState:
 
     # persistence services
     run_service = HistoryRunService(history_db, settings_store)
-    report_service = HistoryReportService(history_db, settings_store)
+    report_service = HistoryReportService(history_db, settings_store, pdf_renderer=_build_pdf_bytes)
     export_service = HistoryExportService(history_db)
 
     # ingress

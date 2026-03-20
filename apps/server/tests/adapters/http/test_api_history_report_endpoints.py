@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from io import BytesIO
-from unittest.mock import patch
 
 import pytest
 from _history_endpoint_helpers import (
     FakeHistoryDB,
     FakeState,
     FakeWsHub,
+    _real_pdf_renderer,
     make_metadata,
     make_router_and_state,
     make_status_router,
@@ -76,22 +76,25 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     analysis = summarize_run_data(metadata, samples, lang="nl", include_samples=False)
     analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
 
+    render_count = 0
+    real_renderer = _real_pdf_renderer
+
+    def counting_renderer(summary: dict, test_run: object | None) -> bytes:
+        nonlocal render_count
+        render_count += 1
+        return real_renderer(summary, test_run)
+
     db = FakeHistoryDB(metadata, samples, analysis)
-    state = FakeState(db, FakeWsHub())
+    state = FakeState(db, FakeWsHub(), pdf_renderer=counting_renderer)
     app = FastAPI()
     router = create_router(state)
     app.include_router(router)
     endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
 
-    with patch("vibesensor.use_cases.history.reports.map_summary") as patched_map_summary:
-        patched_map_summary.side_effect = lambda summary, **kwargs: __import__(
-            "vibesensor.adapters.pdf.mapping",
-            fromlist=["map_summary"],
-        ).map_summary(summary, **kwargs)
-        nl = await endpoint("run-1", "nl")
-        en = await endpoint("run-1", "en")
+    nl = await endpoint("run-1", "nl")
+    en = await endpoint("run-1", "en")
 
-    assert patched_map_summary.call_count == 1
+    assert render_count == 1
 
     assert nl.body.startswith(b"%PDF")
     assert en.body.startswith(b"%PDF")
@@ -108,18 +111,18 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
 
 @pytest.mark.asyncio
 async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> None:
-    router, _ = make_router_and_state(language="en")
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
     call_count = 0
 
-    def fake_pdf(_summary: dict[str, object]) -> bytes:
+    def fake_renderer(_summary: dict, _test_run: object | None) -> bytes:
         nonlocal call_count
         call_count += 1
         return b"%PDF-cached"
 
-    with patch("vibesensor.use_cases.history.reports.build_report_pdf", side_effect=fake_pdf):
-        first = await endpoint("run-1", "en")
-        second = await endpoint("run-1", "en")
+    router, _ = make_router_and_state(language="en", pdf_renderer=fake_renderer)
+    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
+
+    first = await endpoint("run-1", "en")
+    second = await endpoint("run-1", "en")
 
     assert call_count == 1
     assert first.body == second.body == b"%PDF-cached"
@@ -127,19 +130,19 @@ async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> 
 
 @pytest.mark.asyncio
 async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persisted() -> None:
-    router, state = make_router_and_state(language="nl")
-    state.history_db.analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
     call_count = 0
 
-    def fake_pdf(_data) -> bytes:
+    def fake_renderer(_summary: dict, _test_run: object | None) -> bytes:
         nonlocal call_count
         call_count += 1
         return b"%PDF-cached-cross-lang"
 
-    with patch("vibesensor.use_cases.history.reports.build_report_pdf", side_effect=fake_pdf):
-        first = await endpoint("run-1", "en")
-        second = await endpoint("run-1", "nl")
+    router, state = make_router_and_state(language="nl", pdf_renderer=fake_renderer)
+    state.history_db.analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
+    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
+
+    first = await endpoint("run-1", "en")
+    second = await endpoint("run-1", "nl")
 
     assert call_count == 1
     assert first.body == second.body == b"%PDF-cached-cross-lang"
@@ -168,19 +171,21 @@ async def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes()
             result["analysis_completed_at"] = ts
             return result
 
-    state = FakeState(TimestampFlipDB(metadata, samples, analysis), FakeWsHub())
-    router = create_router(state)
-    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
     call_count = 0
 
-    def fake_pdf(_summary: dict[str, object]) -> bytes:
+    def fake_renderer(_summary: dict, _test_run: object | None) -> bytes:
         nonlocal call_count
         call_count += 1
         return b"%PDF-versioned"
 
-    with patch("vibesensor.use_cases.history.reports.build_report_pdf", side_effect=fake_pdf):
-        await endpoint("run-1", "en")
-        await endpoint("run-1", "en")
+    state = FakeState(
+        TimestampFlipDB(metadata, samples, analysis), FakeWsHub(), pdf_renderer=fake_renderer
+    )
+    router = create_router(state)
+    endpoint = route_endpoint(router, "/api/history/{run_id}/report.pdf")
+
+    await endpoint("run-1", "en")
+    await endpoint("run-1", "en")
 
     assert call_count == 2
 

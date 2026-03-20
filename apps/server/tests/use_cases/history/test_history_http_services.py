@@ -61,6 +61,7 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
                 "analysis": {"lang": "nl", "findings": [], "title": "X"},
             },
         ),
+        pdf_renderer=lambda _s, _t: b"%PDF-stub",
     )
 
     request = await service.load_report_request("run-1", "en")

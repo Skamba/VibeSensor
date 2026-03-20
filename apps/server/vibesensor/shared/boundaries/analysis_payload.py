@@ -14,7 +14,6 @@ from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.pdf.report_types import PeakTableRow
     from vibesensor.shared.boundaries.vibration_origin import SuspectedVibrationOrigin
 
 __all__ = [
@@ -27,6 +26,7 @@ __all__ = [
     "LocationHotspotPayload",
     "MatchedAmpVsSpeedSeries",
     "MatchedPoint",
+    "PeakTableRow",
     "PhaseBoundary",
     "PhaseEvidence",
     "PhaseSegmentOut",
@@ -42,6 +42,28 @@ __all__ = [
 # ---------------------------------------------------------------------------
 # Small leaf shapes (no forward-references)
 # ---------------------------------------------------------------------------
+
+
+class PeakTableRow(TypedDict):
+    """Shape of a single row in the ranked peak table."""
+
+    rank: int
+    frequency_hz: float
+    order_label: str
+    max_intensity_db: float | None
+    median_intensity_db: float | None
+    p95_intensity_db: float | None
+    run_noise_baseline_db: float | None
+    median_vs_run_noise_ratio: float
+    p95_vs_run_noise_ratio: float
+    strength_floor_db: float | None
+    strength_db: float | None
+    presence_ratio: float
+    burstiness: float
+    persistence_score: float
+    suspected_source: str
+    peak_classification: str
+    typical_speed_band: str
 
 
 class MatchedPoint(TypedDict, total=False):
