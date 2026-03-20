@@ -130,9 +130,11 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     tire_circ = _tire.circumference_m
 
     logger.start_recording()
-    run_id = str(logger._run_id)
-    start_utc = str(logger._run_start_utc)
-    start_mono = float(logger._run_start_mono_s)
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    run_id = snapshot.run_id
+    start_utc = snapshot.start_time_utc
+    start_mono = snapshot.start_mono_s
     seq = 1
 
     for step in range(70):

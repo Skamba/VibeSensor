@@ -35,7 +35,7 @@ from vibesensor.use_cases.run.post_analysis import _WARN_QUEUE_DEPTH, PostAnalys
 def _make_persist_logger(make_logger, *, history_db: object, run_id: str = "run-1") -> RunRecorder:
     """Build a RunRecorder with the given DB and set up persistence for *run_id*."""
     logger = make_logger(history_db=history_db)
-    logger._current_run = Run(run_id=run_id)
+    logger._lifecycle.current_run = Run(run_id=run_id)
     logger._persist_reset()
     return logger
 
@@ -256,7 +256,7 @@ class TestRetryCooldown:
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
             logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        logger._current_run = Run(run_id="run-2")
+        logger._lifecycle.current_run = Run(run_id="run-2")
         logger._persist_reset()
         assert logger._persist_history_create_fail_count == 0
         # Should be able to retry immediately after reset
