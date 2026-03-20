@@ -15,7 +15,7 @@ import pytest
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.adapters.persistence.runlog import normalize_sample_record
+from vibesensor.shared.boundaries.run_log import normalize_sample_record
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.use_cases.diagnostics import build_findings_for_samples, summarize_run_data
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig

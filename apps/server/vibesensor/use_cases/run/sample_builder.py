@@ -11,7 +11,6 @@ from collections.abc import Callable, Mapping
 from dataclasses import asdict
 from typing import TYPE_CHECKING, NamedTuple, cast
 
-from vibesensor.adapters.udp.protocol import SensorFrame
 from vibesensor.coerce import coerce_float
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
@@ -23,10 +22,10 @@ from vibesensor.shared.run_context import (
 )
 from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
 
@@ -98,23 +97,23 @@ class SpeedContext(NamedTuple):
 
 
 def resolve_speed_context(
-    gps_monitor: GPSSpeedMonitor,
+    *,
+    gps_speed_mps: float | None,
+    resolved_speed_mps: float | None,
+    resolved_speed_source: str,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
 ) -> SpeedContext:
-    """Resolve current speed/vehicle state into sample-record values."""
+    """Resolve a concrete speed snapshot into sample-record values."""
     order_reference_spec = analysis_settings_snapshot.order_reference_spec
-    gps_speed_mps = gps_monitor.speed_mps
-    resolution = gps_monitor.resolve_speed()
-    effective_speed_mps = resolution.speed_mps
     gps_speed_kmh = (
         (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, NUMERIC_TYPES) else None
     )
     speed_kmh = (
-        (float(effective_speed_mps) * MPS_TO_KMH)
-        if isinstance(effective_speed_mps, NUMERIC_TYPES)
+        (float(resolved_speed_mps) * MPS_TO_KMH)
+        if isinstance(resolved_speed_mps, NUMERIC_TYPES)
         else None
     )
-    speed_source = _SPEED_SOURCE_MAP.get(resolution.source, "none")
+    speed_source = _SPEED_SOURCE_MAP.get(resolved_speed_source, "none")
     engine_rpm_estimated = None
     if speed_kmh is not None and order_reference_spec is not None:
         engine_rpm_estimated = order_reference_spec.engine_rpm_from_speed_kmh(speed_kmh)
@@ -154,7 +153,7 @@ def build_sample_records(
     timestamp_utc: str,
     registry: ClientRegistry,
     processor: SignalProcessor,
-    gps_monitor: GPSSpeedMonitor,
+    speed_context: SpeedContext,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     default_sample_rate_hz: int,
 ) -> list[dict[str, object]]:
@@ -164,7 +163,7 @@ def build_sample_records(
         gps_speed_kmh,
         speed_source,
         engine_rpm_estimated,
-    ) = resolve_speed_context(gps_monitor, analysis_settings_snapshot)
+    ) = speed_context
     order_reference_spec = analysis_settings_snapshot.order_reference_spec
     final_drive_ratio = (
         order_reference_spec.final_drive_ratio if order_reference_spec is not None else None
