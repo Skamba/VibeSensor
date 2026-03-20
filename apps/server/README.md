@@ -21,7 +21,7 @@ Backend ownership boundaries:
 
 - `app/`: FastAPI app factory (`bootstrap.py`), runtime container wiring (`container.py`), a lifecycle-focused `RuntimeState` plus top-level `AppRuntime` bundle (`runtime_state.py`), and YAML settings/config loading (`settings.py`).
 - `adapters/http/` and `adapters/websocket/`: HTTP route groups and live WebSocket delivery. `adapters/http/dependencies.py` owns the grouped router dependency dataclasses consumed by `adapters/http/__init__.py`.
-- `infra/runtime/`: lifecycle management, processing loop, runtime health state, and WebSocket broadcast coordination.
+- `infra/runtime/`: lifecycle management, processing loop, runtime health state, and WebSocket broadcast coordination. `registry.py` now owns raw client tracking plus `client_snapshots()`, while `client_snapshot.py` owns the API/WS client-row presenter reused by both the HTTP clients route and live WebSocket broadcasting.
 - `infra/processing/`: signal processing pipeline.
 - `infra/config/`: runtime settings stores used by recording and runtime services.
 - `use_cases/diagnostics/`: post-stop analysis/findings logic; `order_analysis.py` now keeps the core matching/scoring/assembly primitives, `order_pipeline.py` owns the order-finding orchestration/session flow above those primitives, `order_heuristics.py` owns the pure scoring/filter heuristics, and the package-level API still re-exports shared vehicle-order helpers used by live telemetry.

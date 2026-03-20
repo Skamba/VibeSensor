@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
 
 if TYPE_CHECKING:
     from vibesensor.app.runtime_state import RuntimeState
@@ -25,16 +26,33 @@ class _StubRegistry:
     def active_client_ids(self) -> list[str]:
         return [c["id"] for c in self._clients if "id" in c]
 
-    def snapshot_for_api(
+    def client_snapshots(
         self,
         now: float | None = None,
         *,
         now_mono: float | None = None,
         metrics_by_client: dict[str, Any] | None = None,
-        include_metrics: bool = True,
-    ) -> list[dict[str, Any]]:
+    ) -> list[ClientSnapshot]:
+        del now, now_mono, metrics_by_client
         self.snapshot_calls += 1
-        return list(self._clients)
+        return [
+            ClientSnapshot(
+                client_id=str(client["id"]),
+                name=str(client.get("name", "")),
+                connected=bool(client.get("connected", False)),
+                location_code=str(client.get("location_code", "")),
+                firmware_version=str(client.get("firmware_version", "")),
+                sample_rate_hz=int(client.get("sample_rate_hz", 0)),
+                frame_samples=int(client.get("frame_samples", 0)),
+                last_seen_age_ms=client.get("last_seen_age_ms"),
+                frames_total=int(client.get("frames_total", 0)),
+                dropped_frames=int(client.get("dropped_frames", 0)),
+                latest_metrics=client.get("latest_metrics"),
+                reset_count=int(client.get("reset_count", 0)),
+                last_reset_time=client.get("last_reset_time"),
+            )
+            for client in self._clients
+        ]
 
 
 class _StubProcessor:
@@ -203,8 +221,8 @@ def _make_state(
 # ---------------------------------------------------------------------------
 
 _TWO_CLIENTS = [
-    {"id": "aaa", "name": "front-left"},
-    {"id": "bbb", "name": "rear-right"},
+    {"id": "aaaaaaaaaaaa", "name": "front-left"},
+    {"id": "bbbbbbbbbbbb", "name": "rear-right"},
 ]
 
 _ROTATIONAL_KEYS = ("wheel", "driveshaft", "engine")
@@ -232,7 +250,7 @@ def _assert_rotational(
 
 def test_build_ws_payload_returns_required_keys() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
-    payload = state.ws_broadcast.build_payload(selected_client="aaa")
+    payload = state.ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
 
     # Always-present keys
     for key in ("server_time", "speed_mps", "clients", "selected_client_id", "rotational_speeds"):
@@ -242,14 +260,14 @@ def test_build_ws_payload_returns_required_keys() -> None:
     assert "spectra" in payload, "missing heavy key: spectra"
 
     assert payload["speed_mps"] == 12.5
-    assert payload["selected_client_id"] == "aaa"
+    assert payload["selected_client_id"] == "aaaaaaaaaaaa"
     assert len(payload["clients"]) == 2
     _assert_rotational(payload["rotational_speeds"], rpm_positive=True)
 
 
 def test_build_ws_payload_light_tick_omits_spectra_and_selected() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
-    payload = state.ws_broadcast.build_payload(selected_client="aaa")
+    payload = state.ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
 
     assert "spectra" not in payload
 
@@ -258,7 +276,7 @@ def test_build_ws_payload_auto_selects_first_client() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
     payload = state.ws_broadcast.build_payload(selected_client=None)
 
-    assert payload["selected_client_id"] == "aaa"
+    assert payload["selected_client_id"] == "aaaaaaaaaaaa"
 
 
 def test_build_ws_payload_no_clients() -> None:
@@ -281,11 +299,11 @@ def test_build_ws_payload_reuses_shared_payload_per_tick() -> None:
     assert isinstance(settings_store, _StubSettingsStore)
 
     state.ws_broadcast.tick = 77
-    payload_aaa = state.ws_broadcast.build_payload(selected_client="aaa")
-    payload_bbb = state.ws_broadcast.build_payload(selected_client="bbb")
+    payload_aaa = state.ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
+    payload_bbb = state.ws_broadcast.build_payload(selected_client="bbbbbbbbbbbb")
 
-    assert payload_aaa["selected_client_id"] == "aaa"
-    assert payload_bbb["selected_client_id"] == "bbb"
+    assert payload_aaa["selected_client_id"] == "aaaaaaaaaaaa"
+    assert payload_bbb["selected_client_id"] == "bbbbbbbbbbbb"
     assert payload_aaa["server_time"] == payload_bbb["server_time"]
     assert payload_aaa["clients"] == payload_bbb["clients"]
     assert registry.snapshot_calls == 1
@@ -316,5 +334,5 @@ def test_build_ws_payload_rotational_speeds_include_reason_when_speed_unavailabl
     assert isinstance(gps, _StubGPS)
     gps.effective_speed_mps = None
 
-    payload = state.ws_broadcast.build_payload(selected_client="aaa")
+    payload = state.ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
     _assert_rotational(payload["rotational_speeds"], reason="speed_unavailable")

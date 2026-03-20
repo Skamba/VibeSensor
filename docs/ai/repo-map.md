@@ -33,7 +33,7 @@ Scope: single source of truth for detailed file layout, entry points, package st
 - `adapters/persistence/`: SQLite history DB (`history_db/` keeps `HistoryDB` as the public facade and splits internals across `_run_lifecycle.py`, `_sample_io.py`, `_queries.py`, `_schema.py`, and `_samples.py`) and the static car library loader (`car_library.py`).
 - `adapters/pdf/`: PDF/report rendering pipeline and report mapping entrypoints.
 - `adapters/udp/`, `adapters/gps/`, `adapters/simulator/`, `adapters/hotspot/`: UDP protocol transport, GPS speed ingestion, simulator tooling, and hotspot/AP operational adapters.
-- `infra/runtime/`: lifecycle management, processing loop, runtime health state, and WebSocket broadcast coordination.
+- `infra/runtime/`: lifecycle management, processing loop, runtime health state, and WebSocket broadcast coordination. `registry.py` owns raw `ClientRegistry` state tracking plus `client_snapshots()`, while `client_snapshot.py` owns the client-row presenter reused by `/api/clients` and `ws_broadcast.py`.
 - `infra/processing/`: signal processing pipeline (buffers, FFT, payload shaping, and processor facade).
 - `infra/config/`: runtime settings store (single `SettingsStore` owns both analysis and device settings) used by runtime wiring and exposed to use-cases through focused shared read ports.
 - `infra/workers/`: worker-pool infrastructure.
