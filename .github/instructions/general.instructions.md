@@ -34,19 +34,8 @@ Complexity hygiene
 - Maintain a single source of truth for default values; do not duplicate defaults across files.
 - Do not add forward-extensibility machinery (overflow columns, plugin hooks, generic registries) until a concrete second consumer exists.
 - Prefer flat, direct structures. Only introduce grouping or wrapping when more than three consumers benefit from the indirection.
-- Do not create sub-packages for single-consumer, single-export modules. A flat module file is preferred until 3+ distinct consumers exist.
-- Do not create Protocol types for single-implementor classes. Use the concrete type directly.
-- Do not add compatibility aliases or shims when refactoring. Update all consumers directly in the same change set.
-- Do not create wrapper dataclasses for one-shot operations (constructed only to call a single method and then discarded).
-- Do not create TypedDict mirrors of Pydantic models. Use Pydantic for HTTP boundaries and TypedDicts only for WebSocket/non-Pydantic dict construction.
 - Route handlers must be thin HTTP translators. Extract business logic into service functions that are independently testable.
 - Do not create duplicate API endpoints for the same operation.
-- Do not create standalone Python scripts for simple pytest flag combinations. Use Makefile recipes directly.
-- Do not create Makefile aliases that are documented as "use X instead". Remove the alias.
-- Prefer few large modules over many tiny modules when the modules serve a single consumer.
-- Do not create private helper classes within a module when the helper has a single consumer class in the same module. Inline the logic directly and use section comments for organization.
-- Do not create separate modules for fewer than 3 functions with fewer than 2 distinct production consumers. Merge into the consumer module instead.
-- Do not add dead re-exports or speculative private-alias re-exports to package ``__init__.py`` files. Only export symbols that are actually imported by external consumers.
 - Do not duplicate utility functions across modules. Maintain a single canonical implementation and import from it. Exception: standalone tooling scripts (e.g. ``tools/build_ui_static.py``) that must run without the server package installed may carry a local copy; mark it with a comment pointing at the canonical source.
 
 Documentation maintenance (always required)
