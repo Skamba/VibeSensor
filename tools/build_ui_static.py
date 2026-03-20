@@ -8,6 +8,7 @@ runs *before* ``pip install``).  Do not import from ``vibesensor`` here.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import shutil
@@ -50,7 +51,22 @@ def _run(command: list[str], cwd: Path) -> None:
     subprocess.run(command, cwd=cwd, check=True)
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(
+        description="Build and sync the UI static assets into the server package."
+    )
+    parser.add_argument(
+        "--skip-npm-ci",
+        action="store_true",
+        help="Force-skip npm ci even if the lock file hash changed.",
+    )
+    parser.add_argument(
+        "--skip-typecheck",
+        action="store_true",
+        help="Skip npm run typecheck (useful when CI already validates types).",
+    )
+    args = parser.parse_args(argv)
+
     repo_root = Path(__file__).resolve().parents[1]
     ui_dir = repo_root / "apps" / "ui"
     dist_dir = ui_dir / "dist"
@@ -65,14 +81,15 @@ def main() -> None:
         else ""
     )
 
-    should_run_npm_ci = (
+    should_run_npm_ci = not args.skip_npm_ci and (
         not (ui_dir / "node_modules").exists() or lock_hash != previous_lock_hash
     )
 
     if should_run_npm_ci:
         _run(["npm", "ci"], cwd=ui_dir)
         lock_hash_file.write_text(lock_hash, encoding="utf-8")
-    _run(["npm", "run", "typecheck"], cwd=ui_dir)
+    if not args.skip_typecheck:
+        _run(["npm", "run", "typecheck"], cwd=ui_dir)
     _run(["npm", "run", "build"], cwd=ui_dir)
 
     shutil.rmtree(static_dir, ignore_errors=True)
