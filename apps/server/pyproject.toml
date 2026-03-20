@@ -148,7 +148,8 @@ ignore_missing_imports = true
 disallow_any_unimported = false
 
 # Files followed via imports but not yet under strict checking.
-# Remove entries as each module is brought up to full type compliance.
+# Their exported types now flow to checked callers, but internal errors
+# are suppressed until each module is brought up to full type compliance.
 [[tool.mypy.overrides]]
 module = [
   "vibesensor.adapters.udp.protocol",
