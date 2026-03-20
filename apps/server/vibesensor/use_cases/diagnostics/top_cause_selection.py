@@ -13,7 +13,7 @@ from collections import defaultdict
 from dataclasses import replace as _dc_replace
 
 from vibesensor.domain import Finding
-from vibesensor.domain.finding import Signature
+from vibesensor.domain.finding import Signature, VibrationSource
 
 # ---------------------------------------------------------------------------
 # Source grouping (domain-first)
@@ -38,7 +38,7 @@ def group_findings_by_source(
     groups: dict[str, list[Finding]] = defaultdict(list)
     for f in findings:
         loc_norm = (f.strongest_location or "").strip().lower()
-        if f.source_normalized == "wheel/tire" and loc_norm:
+        if f.source_normalized == VibrationSource.WHEEL_TIRE and loc_norm:
             key = f"{f.source_normalized}::{loc_norm}"
         else:
             key = f.source_normalized

@@ -264,6 +264,9 @@ _ENGINE_ALIAS_SUPPRESSION = 0.60
 # Maximum dominance ratio for splitting a finding into per-location findings.
 # A ratio of 2.0 means the secondary location must be at least 50% as strong.
 _MULTI_LOCATION_SPLIT_DOMINANCE = 2.0
+# Floor for dominance ratio when computing the secondary-location confidence
+# scale factor.  Prevents division by values at or below 1.0.
+_MIN_DOMINANCE_FOR_SCALE = 1.01
 
 
 def _mean(values: list[float]) -> float:
@@ -688,7 +691,7 @@ def _split_multi_location_findings(
             alt_norm = alt_loc.strip().lower()
             if not alt_norm or alt_norm == primary:
                 continue
-            scale = 1.0 / max(dom, 1.01)
+            scale = 1.0 / max(dom, _MIN_DOMINANCE_FOR_SCALE)
             alt_hotspot = replace(
                 hotspot,
                 strongest_location=alt_loc,
