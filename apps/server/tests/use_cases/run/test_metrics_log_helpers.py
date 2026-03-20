@@ -10,6 +10,7 @@ from test_support.core import wait_until
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
+from vibesensor.use_cases.run.logger import _build_run_metadata_record
 from vibesensor.use_cases.run.post_analysis import PostAnalysisHealthSnapshot
 from vibesensor.use_cases.run.sample_builder import safe_metric
 
@@ -49,7 +50,7 @@ def test_safe_metric(metrics: dict, axis: str, key: str, expected: float | None)
 def test_build_sample_records_uses_only_active_clients(make_logger) -> None:
     logger = make_logger()
 
-    rows = logger._build_sample_records(
+    rows = logger._sample_flush.build_sample_records(
         run_id="run-1",
         t_s=1.0,
         timestamp_utc="2026-02-16T12:00:00+00:00",
@@ -80,7 +81,7 @@ def test_build_sample_records_caps_combined_and_axis_peak_lists(make_logger, fak
 
     logger = make_logger(registry=fake_registry)
 
-    rows = logger._build_sample_records(
+    rows = logger._sample_flush.build_sample_records(
         run_id="run-1",
         t_s=1.0,
         timestamp_utc="2026-02-16T12:00:00+00:00",
@@ -114,7 +115,7 @@ def test_speed_source_reports(
 
     logger = make_logger(gps_monitor=fake_gps_monitor)
 
-    rows = logger._build_sample_records(
+    rows = logger._sample_flush.build_sample_records(
         run_id="run-1",
         t_s=1.0,
         timestamp_utc="2026-02-16T12:00:00+00:00",
@@ -151,13 +152,13 @@ def test_append_records_ignores_stale_recent_metrics_without_new_frames(
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
-    stale_rows = logger._build_sample_records(
+    stale_rows = logger._sample_flush.build_sample_records(
         run_id=run_id,
         t_s=0.25,
         timestamp_utc="2026-02-16T12:00:00+00:00",
     )
 
-    timed_out = logger._append_records(
+    timed_out = logger._sample_flush.append_records(
         run_id,
         start_time_utc,
         start_mono,
@@ -180,7 +181,7 @@ def test_history_run_created_on_first_sample_append(make_logger, fake_history_db
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
 
-    timed_out = logger._append_records(
+    timed_out = logger._sample_flush.append_records(
         run_id,
         start_time_utc,
         start_mono,
@@ -251,7 +252,7 @@ def test_finalize_refreshes_run_metadata_from_latest_settings(
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
     mutable_fake_settings.values["tire_width_mm"] = 315.0
     logger.stop_recording()
@@ -275,7 +276,7 @@ def test_append_records_surfaces_create_run_failure_in_status(
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
 
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
     status = logger.status()
 
     assert status["write_error"] is not None
@@ -296,12 +297,12 @@ def test_append_records_clears_write_error_after_successful_retry(
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
 
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
     failed_status = logger.status()
     assert failed_status["write_error"] is not None
     assert "history append_samples failed" in str(failed_status["write_error"])
 
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
     recovered_status = logger.status()
     assert recovered_status["write_error"] is None
 
@@ -320,7 +321,7 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(
     start_mono = snapshot.start_mono_s
     logger._lifecycle.last_data_progress_mono_s = 0.0
 
-    timed_out = logger._append_records(
+    timed_out = logger._sample_flush.append_records(
         run_id,
         start_time_utc,
         start_mono,
@@ -345,7 +346,7 @@ def test_append_records_does_not_timeout_on_brief_gap(
     monkeypatch.setattr("vibesensor.use_cases.run.logger.time.monotonic", lambda: 100.0)
     logger._lifecycle.last_data_progress_mono_s = 95.0
 
-    timed_out = logger._append_records(
+    timed_out = logger._sample_flush.append_records(
         run_id,
         start_time_utc,
         start_mono,
@@ -374,7 +375,7 @@ def test_stop_recording_does_not_block_on_post_analysis(
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
     summary_started = threading.Event()
     allow_summary_finish = threading.Event()
@@ -424,7 +425,7 @@ def test_post_analysis_failure_sets_persistent_error_status(
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
     def _failing_init(*args, **kwargs):
         raise RuntimeError("analysis exploded")
@@ -553,7 +554,7 @@ def test_post_analysis_uses_run_language_from_metadata(
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
     def _analysis_runner(
         *,
@@ -619,7 +620,7 @@ def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
     )()
     logger = make_logger(settings_store=settings_store)
 
-    metadata = logger._run_metadata_record("run-1", "2026-01-01T00:00:00Z")
+    metadata = _build_run_metadata_record(logger, "run-1", "2026-01-01T00:00:00Z")
 
     assert metadata["car_name"] == "Primary"
     assert metadata["car_type"] == "sedan"
@@ -640,7 +641,7 @@ def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
     logger.stop_recording()
 
     assert history_db.get_run(run_id) is not None
@@ -666,7 +667,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
     for _ in range(cap + 50):
-        logger._append_records(run_id, start_time_utc, start_mono)
+        logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
     def _analysis_runner(
         *,
@@ -741,4 +742,4 @@ async def test_run_offloads_append_records_with_to_thread(
     with pytest.raises(asyncio.CancelledError):
         await logger.run()
 
-    assert captured.get("func") == logger._append_records
+    assert captured.get("func") == logger._sample_flush.append_records

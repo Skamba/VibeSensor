@@ -157,7 +157,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
             if registry.get(cid) is not None
         }
         processor.compute_all(active_ids, sample_rates_hz=rates)
-        logger._append_records(
+        logger._sample_flush.append_records(
             run_id,
             start_utc,
             start_mono,

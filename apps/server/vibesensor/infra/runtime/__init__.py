@@ -3,6 +3,8 @@
 Submodules
 ----------
 - ``builders``: focused service builders
+- ``client_metadata``: persisted/user-assigned client metadata helpers
+- ``registry_updates``: DATA-message dedup/reset bookkeeping
 - ``processing_loop``: ProcessingLoop (async tick loop + failure tracking)
 - ``ws_broadcast``: WsBroadcastService (payload assembly + cache)
 - ``lifecycle``: LifecycleManager (start/stop + task management)

@@ -36,7 +36,7 @@ def _make_persist_logger(make_logger, *, history_db: object, run_id: str = "run-
     """Build a RunRecorder with the given DB and set up persistence for *run_id*."""
     logger = make_logger(history_db=history_db)
     logger._lifecycle.current_run = Run(run_id=run_id)
-    logger._persist_reset()
+    logger._persistence.reset()
     return logger
 
 
@@ -113,7 +113,7 @@ class _FailNThenSucceedDB:
 class TestDropCounting:
     def test_initial_drop_count_is_zero(self, make_logger) -> None:
         logger = _make_persist_logger(make_logger, history_db=_SucceedingDB())
-        assert logger._persist_dropped_sample_count == 0
+        assert logger._persistence.dropped_sample_count == 0
 
     def test_drops_counted_when_create_run_exhausted(self, make_logger) -> None:
         """After max create retries, appending rows counts them as dropped."""
@@ -121,89 +121,89 @@ class TestDropCounting:
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+            logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        assert logger._persist_history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES
+        assert logger._persistence.history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES
 
         # Now append — should be dropped and counted
-        result = logger._persist_append_rows(
+        result = logger._persistence.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"sample": 1}, {"sample": 2}, {"sample": 3}],
         )
         assert result.rows_written == 0
-        assert logger._persist_dropped_sample_count == 3
+        assert logger._persistence.dropped_sample_count == 3
 
     def test_drops_counted_on_append_failure(self, make_logger) -> None:
         """When append_samples throws on all retries, dropped count is incremented."""
         logger = _make_persist_logger(make_logger, history_db=_FailingAppendDB())
 
-        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
-        assert logger._persist_history_run_created
+        logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        assert logger._persistence.history_run_created
 
-        result = logger._persist_append_rows(
+        result = logger._persistence.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
         )
         assert result.rows_written == 0
-        assert logger._persist_dropped_sample_count == 2
+        assert logger._persistence.dropped_sample_count == 2
 
     def test_append_retries_on_transient_failure(self, make_logger) -> None:
         """Append retries on transient SQLite errors and succeeds."""
         db = _FailNAppendThenSucceedDB(fail_count=1)
         logger = _make_persist_logger(make_logger, history_db=db)
 
-        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
-        assert logger._persist_history_run_created
+        logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        assert logger._persistence.history_run_created
 
-        result = logger._persist_append_rows(
+        result = logger._persistence.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
         )
         assert result.rows_written == 2
-        assert logger._persist_dropped_sample_count == 0
+        assert logger._persistence.dropped_sample_count == 0
         assert db.appended == [("run-1", 2)]
 
     def test_drops_accumulate_across_calls(self, make_logger) -> None:
         """Drop count accumulates across multiple append calls."""
         logger = _make_persist_logger(make_logger, history_db=_FailingAppendDB())
-        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
         for _ in range(3):
-            logger._persist_append_rows(
+            logger._persistence.append_rows(
                 run_id="run-1",
                 start_time_utc="2025-01-01T00:00:00Z",
                 rows=[{"s": 1}],
             )
-        assert logger._persist_dropped_sample_count == 3
+        assert logger._persistence.dropped_sample_count == 3
 
     def test_drops_reset_on_new_session(self, make_logger) -> None:
         """Drop count resets to 0 when a new session starts."""
         logger = _make_persist_logger(make_logger, history_db=_FailingAppendDB())
-        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
-        logger._persist_append_rows(
+        logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        logger._persistence.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
         )
-        assert logger._persist_dropped_sample_count == 2
+        assert logger._persistence.dropped_sample_count == 2
 
-        logger._persist_reset()
-        assert logger._persist_dropped_sample_count == 0
+        logger._persistence.reset()
+        assert logger._persistence.dropped_sample_count == 0
 
     def test_successful_writes_do_not_increment_drops(self, make_logger) -> None:
         """Normal successful writes don't affect drop counter."""
         logger = _make_persist_logger(make_logger, history_db=_SucceedingDB())
-        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
-        result = logger._persist_append_rows(
+        logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        result = logger._persistence.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
             rows=[{"s": 1}, {"s": 2}],
         )
         assert result.rows_written == 2
-        assert logger._persist_dropped_sample_count == 0
+        assert logger._persistence.dropped_sample_count == 0
 
 
 # ---------------------------------------------------------------------------
@@ -220,22 +220,22 @@ class TestRetryCooldown:
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+            logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        assert not logger._persist_history_run_created
-        assert logger._persist_history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES
+        assert not logger._persistence.history_run_created
+        assert logger._persistence.history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES
 
         # Before cooldown — should still be blocked
-        logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
-        assert not logger._persist_history_run_created
+        logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+        assert not logger._persistence.history_run_created
 
         # Fast-forward past cooldown
         with patch("vibesensor.use_cases.run.logger.time") as mock_time:
             # First call: check if past cooldown (return time after cooldown)
             mock_time.monotonic.return_value = time.monotonic() + _RETRY_COOLDOWN_BASE_S + 1
-            logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+            logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        assert logger._persist_history_run_created
+        assert logger._persistence.history_run_created
         assert db.created == ["run-1"]
 
     def test_no_cooldown_during_initial_retries(self, make_logger) -> None:
@@ -244,9 +244,9 @@ class TestRetryCooldown:
         logger = _make_persist_logger(make_logger, history_db=db)
 
         for _ in range(4):
-            logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+            logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
-        assert logger._persist_history_run_created
+        assert logger._persistence.history_run_created
 
     def test_cooldown_resets_on_new_session(self, make_logger) -> None:
         """Cooldown state resets when a new session starts."""
@@ -254,15 +254,15 @@ class TestRetryCooldown:
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            logger._persist_ensure_history_run("run-1", "2025-01-01T00:00:00Z")
+            logger._persistence.ensure_history_run("run-1", "2025-01-01T00:00:00Z")
 
         logger._lifecycle.current_run = Run(run_id="run-2")
-        logger._persist_reset()
-        assert logger._persist_history_create_fail_count == 0
+        logger._persistence.reset()
+        assert logger._persistence.history_create_fail_count == 0
         # Should be able to retry immediately after reset
-        logger._persist_ensure_history_run("run-2", "2025-01-01T00:00:00Z")
+        logger._persistence.ensure_history_run("run-2", "2025-01-01T00:00:00Z")
         # Will fail (DB still failing), but it should attempt (count incremented)
-        assert logger._persist_history_create_fail_count == 1
+        assert logger._persistence.history_create_fail_count == 1
 
 
 # ---------------------------------------------------------------------------
@@ -498,7 +498,7 @@ class TestHealthSnapshotEnrichment:
         snapshot = logger._session_snapshot()
         assert snapshot is not None
 
-        logger._append_records(
+        logger._sample_flush.append_records(
             snapshot.run_id,
             snapshot.start_time_utc,
             snapshot.start_mono_s,
