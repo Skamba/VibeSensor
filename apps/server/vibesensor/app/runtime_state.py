@@ -1,10 +1,11 @@
-"""App-owned runtime assembly for the fully wired service graph."""
+"""App-owned runtime assembly for lifecycle and router dependency bundles."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from vibesensor.adapters.http.dependencies import RouterDeps
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
@@ -12,9 +13,6 @@ from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingL
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
-from vibesensor.use_cases.history.exports import HistoryExportService
-from vibesensor.use_cases.history.reports import HistoryReportService
-from vibesensor.use_cases.history.runs import HistoryRunService
 from vibesensor.use_cases.run import RunRecorder
 from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
 from vibesensor.use_cases.updates.manager import UpdateManager
@@ -29,30 +27,33 @@ if TYPE_CHECKING:
 
 @dataclass(slots=True)
 class RuntimeState:
-    """Top-level runtime with flat field access."""
+    """Lifecycle-focused runtime dependencies."""
 
     config: AppConfig
-    # ingress
     registry: ClientRegistry
     processor: SignalProcessor
     control_plane: UDPControlPlane
     worker_pool: WorkerPool
-    # settings
     settings_store: SettingsStore
     gps_monitor: GPSSpeedMonitor
-    # persistence
     history_db: HistoryDB
-    run_service: HistoryRunService
-    report_service: HistoryReportService
-    export_service: HistoryExportService
-    # processing
     processing_loop_state: ProcessingLoopState
     health_state: RuntimeHealthState
     processing_loop: ProcessingLoop
-    # websocket
     ws_hub: WebSocketHub
     ws_broadcast: WsBroadcastService
-    # top-level
     run_recorder: RunRecorder
     update_manager: UpdateManager
     esp_flash_manager: EspFlashManager
+
+
+@dataclass(slots=True)
+class AppRuntime:
+    """Top-level app runtime bundle used by bootstrap and CLI entrypoints."""
+
+    lifecycle: RuntimeState
+    router: RouterDeps
+
+    @property
+    def config(self) -> AppConfig:
+        return self.lifecycle.config

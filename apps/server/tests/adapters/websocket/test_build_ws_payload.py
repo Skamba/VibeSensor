@@ -171,9 +171,6 @@ def _make_state(
         settings_store=settings_store,
         gps_monitor=gps_monitor,
         history_db=_SENTINEL,
-        run_service=_SENTINEL,
-        report_service=_SENTINEL,
-        export_service=_SENTINEL,
         processing_loop_state=processing_state,
         health_state=health_state,
         processing_loop=ProcessingLoop(

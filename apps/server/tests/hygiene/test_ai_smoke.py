@@ -35,24 +35,45 @@ def install_pi_text() -> str:
 @pytest.mark.smoke
 def test_smoke_health_route_registered() -> None:
     state = MagicMock()
-    state.registry = MagicMock()
-    state.processor = MagicMock()
-    state.control_plane = MagicMock()
-    state.worker_pool = MagicMock()
-    state.settings_store = MagicMock()
-    state.gps_monitor = MagicMock()
-    state.run_recorder = MagicMock()
-    state.history_db = MagicMock()
-    state.run_service = MagicMock()
-    state.report_service = MagicMock()
-    state.export_service = MagicMock()
-    state.ws_hub = MagicMock()
-    state.ws_broadcast = MagicMock()
-    state.processing_loop_state = MagicMock()
-    state.health_state = MagicMock()
-    state.processing_loop = MagicMock()
-    state.update_manager = MagicMock()
-    state.esp_flash_manager = MagicMock()
+    placeholder = MagicMock()
+    state.telemetry = type(
+        "Telemetry",
+        (),
+        {
+            "control_plane": placeholder,
+            "health_state": placeholder,
+            "processing_loop_state": placeholder,
+            "processor": placeholder,
+            "registry": placeholder,
+            "run_recorder": placeholder,
+            "ws_hub": placeholder,
+        },
+    )()
+    state.settings = type(
+        "Settings",
+        (),
+        {
+            "gps_monitor": placeholder,
+            "settings_store": placeholder,
+        },
+    )()
+    state.history = type(
+        "History",
+        (),
+        {
+            "export_service": placeholder,
+            "report_service": placeholder,
+            "run_service": placeholder,
+        },
+    )()
+    state.updates = type(
+        "Updates",
+        (),
+        {
+            "esp_flash_manager": placeholder,
+            "update_manager": placeholder,
+        },
+    )()
     router = create_router(state)
     routes = {r.path: r.methods for r in router.routes if hasattr(r, "methods")}
     assert "/api/health" in routes, "Missing /api/health route"

@@ -13,6 +13,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from vibesensor.adapters.http.dependencies import (
+    HistoryDeps,
+    RouterDeps,
+    SettingsDeps,
+    TelemetryDeps,
+    UpdateDeps,
+)
 from vibesensor.infra.runtime import ProcessingLoopState, RuntimeHealthState
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService
@@ -25,11 +32,10 @@ from vibesensor.use_cases.history.runs import HistoryRunService
 
 @dataclass
 class FakeState:
-    """Minimal stand-in for RuntimeState used by ``create_router``.
+    """Minimal stand-in for router assembly tests.
 
-    Provides the same flat fields as the production ``RuntimeState``
-    so that shape drift between test fixtures and production code is
-    caught at construction time rather than via obscure test failures.
+    Keeps the convenient flat fields used throughout tests while exposing the
+    grouped dependency attributes consumed by ``create_router``.
     """
 
     config: object = field(default_factory=MagicMock)
@@ -64,6 +70,49 @@ class FakeState:
             )
         if self.export_service is None:
             self.export_service = HistoryExportService(self.history_db)
+
+    @property
+    def telemetry(self) -> TelemetryDeps:
+        return TelemetryDeps(
+            processing_loop_state=self.processing_loop_state,
+            health_state=self.health_state,
+            processor=self.processor,
+            registry=self.registry,
+            control_plane=self.control_plane,
+            run_recorder=self.run_recorder,
+            ws_hub=self.ws_hub,
+        )
+
+    @property
+    def settings(self) -> SettingsDeps:
+        return SettingsDeps(
+            settings_store=self.settings_store,
+            gps_monitor=self.gps_monitor,
+        )
+
+    @property
+    def history(self) -> HistoryDeps:
+        return HistoryDeps(
+            run_service=self.run_service,
+            report_service=self.report_service,
+            export_service=self.export_service,
+        )
+
+    @property
+    def updates(self) -> UpdateDeps:
+        return UpdateDeps(
+            update_manager=self.update_manager,
+            esp_flash_manager=self.esp_flash_manager,
+        )
+
+    @property
+    def router(self) -> RouterDeps:
+        return RouterDeps(
+            telemetry=self.telemetry,
+            settings=self.settings,
+            history=self.history,
+            updates=self.updates,
+        )
 
 
 @pytest.fixture
