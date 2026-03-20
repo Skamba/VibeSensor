@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -354,7 +354,7 @@ def _extract_amp_by_location(
     return connected_locations, amp_by_location
 
 
-def _highlight_map(top_findings: list[Finding | Mapping[str, object]]) -> dict[str, str]:
+def _highlight_map(top_findings: Sequence[Finding | Mapping[str, object]]) -> dict[str, str]:
     highlight: dict[str, str] = {}
     for finding in top_findings[:3]:
         if isinstance(finding, Mapping):
@@ -569,7 +569,7 @@ def _draw_source_legend(
 
 
 def car_location_diagram(
-    top_findings: list[Finding | Mapping[str, object]],
+    top_findings: Sequence[Finding | Mapping[str, object]],
     summary: dict[str, object],
     location_rows: list[dict[str, object]],
     *,
