@@ -2,6 +2,7 @@ import type { FeatureDepsBase } from "../feature_deps_base";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState, RunDetail } from "../ui_app_state";
 import type {
+  FindingPayload,
   HistoryEntry,
   HistoryInsightWarningPayload,
   HistoryInsightsPayload,
@@ -29,6 +30,21 @@ export interface HistoryFeature {
   onHistoryTableAction(action: string, runId: string): Promise<void>;
   toggleRunDetails(runId: string): void;
   reloadExpandedRunOnLanguageChange(): void;
+}
+
+interface LocationIntensityRow {
+  location?: string | null;
+  p50_intensity_db?: number | null;
+  p95_intensity_db?: number | null;
+  mean_intensity_db?: number | null;
+  max_intensity_db?: number | null;
+  p50?: number | null;
+  p95?: number | null;
+  dropped_frames_delta?: number | null;
+  frames_dropped_delta?: number | null;
+  queue_overflow_drops_delta?: number | null;
+  sample_count?: number | null;
+  samples?: number | null;
 }
 
 export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
@@ -70,9 +86,8 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     }
   }
 
-  function summarizeFindings(summary: HistoryInsightsPayload | null): Record<string, unknown>[] {
-    const findings = summary !== null && Array.isArray(summary.findings) ? summary.findings : [];
-    return findings.slice(0, 3);
+  function summarizeFindings(summary: HistoryInsightsPayload | null): FindingPayload[] {
+    return summary?.findings?.slice(0, 3) ?? [];
   }
 
   function summarizeWarnings(payload: HistoryInsightsPayload | null): HistoryInsightWarningPayload[] {
@@ -102,19 +117,27 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     return raw;
   }
 
-  function metricFromLocationStat(row: Record<string, unknown>): number | null {
-    if (!row || typeof row !== "object") return null;
+  function isLocationIntensityRow(value: unknown): value is LocationIntensityRow {
+    return typeof value === "object" && value !== null;
+  }
+
+  function sensorIntensityRows(summary: HistoryInsightsPayload | null): LocationIntensityRow[] {
+    if (!Array.isArray(summary?.sensor_intensity_by_location)) {
+      return [];
+    }
+    return summary.sensor_intensity_by_location.filter(isLocationIntensityRow);
+  }
+
+  function metricFromLocationStat(row: LocationIntensityRow): number | null {
     const value = Number(row.p95_intensity_db ?? row.p95 ?? row.mean_intensity_db ?? row.max_intensity_db);
     return Number.isFinite(value) ? value : null;
   }
 
   function renderPreviewHeatmap(summary: HistoryInsightsPayload): string {
-    const statsRows = Array.isArray(summary?.sensor_intensity_by_location)
-      ? (summary.sensor_intensity_by_location as Record<string, unknown>[])
-      : [];
+    const statsRows = sensorIntensityRows(summary);
     const metricByLocation: Record<string, number> = {};
     for (const row of statsRows) {
-      const key = normalizeLogLocationKey(row?.location);
+      const key = normalizeLogLocationKey(row.location);
       const metric = metricFromLocationStat(row);
       if (key && typeof metric === "number" && Number.isFinite(metric)) {
         metricByLocation[key] = metric;
@@ -143,9 +166,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   }
 
   function renderPreviewStats(summary: HistoryInsightsPayload): string {
-    const rows = Array.isArray(summary?.sensor_intensity_by_location)
-      ? (summary.sensor_intensity_by_location as Record<string, unknown>[])
-      : [];
+    const rows = sensorIntensityRows(summary);
     if (!rows.length) {
       return `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
     }
@@ -166,9 +187,10 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     const findingsMarkup = findings.length
       ? findings
           .map((finding) => {
-            const source = finding?.suspected_source || t("report.missing");
-            const confidence = typeof finding?.confidence === "number" ? fmt(finding.confidence, 2) : "--";
-            return `<li><strong>${escapeHtml(source)}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}) - ${escapeHtml(finding?.evidence_summary || "")}</li>`;
+            const source = finding.suspected_source || t("report.missing");
+            const confidence = typeof finding.confidence === "number" ? fmt(finding.confidence, 2) : "--";
+            const evidenceSummary = String(finding.evidence_summary ?? "");
+            return `<li><strong>${escapeHtml(source)}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}) - ${escapeHtml(evidenceSummary)}</li>`;
           })
           .join("")
       : `<li>${escapeHtml(t("report.no_findings_for_run"))}</li>`;
