@@ -467,7 +467,7 @@ class RunRecorder:
                 for attempt in range(_MAX_APPEND_RETRIES):
                     try:
                         write_start = time.monotonic()
-                        self._history_db.append_samples(run_id, rows)
+                        self._history_db.append_samples(run_id, rows)  # type: ignore[arg-type]  # dict value variance
                         write_dur = time.monotonic() - write_start
                         with self._lock:
                             if not self._persist_run_id_matches(run_id):
