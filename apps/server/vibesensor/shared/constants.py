@@ -239,10 +239,11 @@ where higher consistency is expected."""
 # ---------------------------------------------------------------------------
 # Type-check helpers
 # ---------------------------------------------------------------------------
-NUMERIC_TYPES: Final[tuple[type, ...]] = (int, float)
+NUMERIC_TYPES: Final = (int, float)
 """Cached type-tuple for ``isinstance`` checks against numeric types.
 
-Avoids creating a fresh ``(int, float)`` tuple on every call."""
+The annotation is left to inference (``tuple[type[int], type[float]]``) so
+that mypy can narrow ``isinstance(x, NUMERIC_TYPES)`` to ``int | float``."""
 
 
 # ---------------------------------------------------------------------------
