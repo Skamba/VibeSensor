@@ -46,16 +46,17 @@ RunRecorder.stop_recording()            # use_cases/run/logger.py
             └─ _worker_loop()           # daemon thread, sequential queue
                  └─ _run_post_analysis(run_id)
                       ├─ load metadata + samples via injected RunPersistence
-                      ├─ RunAnalysis(metadata, samples, …).summarize()
-                      │     ← current diagnostics entrypoint
+                      ├─ analysis_runner(...)
+                      │    ← injected by RunRecorder
+                      │      └─ RunAnalysis(metadata, samples, …).summarize()
                       └─ history_db.store_analysis()
-                           ← persist results via injected RunPersistence
+                            ← persist results via injected RunPersistence
 ```
 
-`PostAnalysisWorker` already receives persistence access and write-error
-callbacks via constructor injection from `RunRecorder`. The remaining direct
-coupling in this path is the diagnostics analysis entrypoint that
-`_run_post_analysis()` still resolves locally.
+`PostAnalysisWorker` receives persistence access, the post-stop analysis
+runner, and write-error callbacks via constructor injection from
+`RunRecorder`. The worker now owns only queue/thread orchestration plus the
+load/store boundary around the injected analysis dependency.
 
 ## Pipeline Steps
 

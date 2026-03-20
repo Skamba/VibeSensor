@@ -151,6 +151,74 @@ class TestPostAnalysisWorkerWait:
 
 
 class TestPostAnalysisWorkerErrorHandling:
+    def test_injected_analysis_runner_receives_loaded_run_inputs(self) -> None:
+        captured: dict[str, object] = {}
+        stored: dict[str, object] = {}
+
+        class FakeDB:
+            def get_run_metadata(self, run_id):
+                assert run_id == "run-ok"
+                return {"language": "nl"}
+
+            def iter_run_samples(self, run_id, batch_size=1024):
+                assert run_id == "run-ok"
+                yield [
+                    {"t_s": 1.0, "vibration_strength_db": 10.0},
+                    {"t_s": 2.0, "vibration_strength_db": 11.0},
+                ]
+
+            def store_analysis(self, run_id, analysis):
+                stored["run_id"] = run_id
+                stored["analysis"] = analysis
+
+            def store_analysis_error(self, run_id, msg):
+                raise AssertionError(f"unexpected error storage for {run_id}: {msg}")
+
+        def _analysis_runner(
+            *,
+            run_id: str,
+            metadata,
+            samples,
+            language: str,
+            total_sample_count: int,
+            stride: int,
+        ):
+            captured.update(
+                {
+                    "run_id": run_id,
+                    "metadata": metadata,
+                    "samples": samples,
+                    "language": language,
+                    "total_sample_count": total_sample_count,
+                    "stride": stride,
+                }
+            )
+            return {
+                "lang": language,
+                "row_count": len(samples),
+                "analysis_metadata": {
+                    "analyzed_sample_count": len(samples),
+                    "total_sample_count": total_sample_count,
+                    "sampling_method": "full" if stride == 1 else f"stride_{stride}",
+                },
+                "run_suitability": [],
+            }
+
+        worker = PostAnalysisWorker(
+            history_db=FakeDB(),
+            analysis_runner=_analysis_runner,
+        )
+        worker.schedule("run-ok")
+        assert worker.wait(timeout_s=3.0)
+
+        assert captured["run_id"] == "run-ok"
+        assert captured["language"] == "nl"
+        assert captured["total_sample_count"] == 2
+        assert captured["stride"] == 1
+        assert len(captured["samples"]) == 2
+        assert stored["run_id"] == "run-ok"
+        assert stored["analysis"]["lang"] == "nl"
+
     def test_error_callback_on_failure(self) -> None:
         """Error callback is invoked when analysis raises."""
         errors: list[str] = []

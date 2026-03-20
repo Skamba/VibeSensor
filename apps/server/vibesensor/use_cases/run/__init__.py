@@ -8,8 +8,8 @@
 - :mod:`~vibesensor.use_cases.run.sample_builder` — pure functions for
   building sample records from sensor metrics.
 - :mod:`~vibesensor.use_cases.run.post_analysis` — ``PostAnalysisWorker``:
-  background analysis thread/queue manager above the injected persistence
-  and error-state boundary.
+  background analysis thread/queue manager above the injected persistence,
+  analysis, and error-state boundaries.
 - :mod:`~vibesensor.use_cases.run.logger` — ``RunRecorder``: single
   coordinator that owns the recording loop plus delegation to persistence
   and post-analysis helpers.
