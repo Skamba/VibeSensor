@@ -28,6 +28,10 @@ from vibesensor.use_cases.updates.status import (
     UpdateStatusTracker,
     collect_runtime_details,
 )
+from vibesensor.use_cases.updates.validation import (
+    MIN_FREE_DISK_BYTES,
+    validate_prerequisites,
+)
 from vibesensor.use_cases.updates.wifi import (
     DNS_PROBE_HOST,
     DNS_READY_MIN_WAIT_S,
@@ -48,7 +52,6 @@ LOGGER = logging.getLogger(__name__)
 
 UPDATE_TIMEOUT_S = 600
 REINSTALL_OP_TIMEOUT_S = 180
-MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
 ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
@@ -416,91 +419,6 @@ class UpdateManager:
             config=self._installer_config,
         )
         return await installer.rollback()
-
-
-# ---------------------------------------------------------------------------
-# Prerequisite validation
-# ---------------------------------------------------------------------------
-
-
-def _probe_rollback_dir(rollback_dir: Path) -> None:
-    rollback_dir.mkdir(parents=True, exist_ok=True)
-    probe_handle = tempfile.NamedTemporaryFile(
-        prefix=".rollback-write-probe-",
-        dir=rollback_dir,
-        delete=False,
-    )
-    probe_path = Path(probe_handle.name)
-    try:
-        probe_handle.write(b"ok")
-        probe_handle.flush()
-    finally:
-        probe_handle.close()
-    probe_path.unlink(missing_ok=True)
-
-
-async def validate_prerequisites(
-    *,
-    commands: UpdateCommandExecutor,
-    tracker: UpdateStatusTracker,
-    config: UpdateValidationConfig,
-    ssid: str,
-) -> bool:
-    """Validate tool availability, privilege access, and disk space."""
-    tracker.log(f"Starting update with SSID: {ssid}")
-    for tool in ("nmcli", "python3"):
-        if not shutil.which(tool):
-            tracker.fail("validating", f"Required tool not found: {tool}")
-            return False
-
-    if os.geteuid() != 0:
-        rc, _, _ = await commands.run(
-            ["sudo", "-n", "true"],
-            phase="validating",
-            timeout=5,
-            sudo=False,
-        )
-        if rc != 0:
-            tracker.fail(
-                "validating",
-                "Insufficient privileges",
-                "Cannot run sudo non-interactively. In dev/Docker "
-                "environments, hotspot management is not available.",
-            )
-            return False
-
-    try:
-        _probe_rollback_dir(config.rollback_dir)
-    except OSError as exc:
-        tracker.fail(
-            "validating",
-            "Rollback directory is not writable",
-            f"{config.rollback_dir}: {exc}",
-        )
-        return False
-
-    try:
-        disk_check_path = config.rollback_dir.parent
-        if not disk_check_path.exists():
-            disk_check_path = Path("/var/lib") if Path("/var/lib").exists() else Path("/")
-        free_bytes = shutil.disk_usage(disk_check_path).free
-        if free_bytes < config.min_free_disk_bytes:
-            free_mb = free_bytes // (1024 * 1024)
-            min_mb = config.min_free_disk_bytes // (1024 * 1024)
-            tracker.fail(
-                "validating",
-                f"Insufficient disk space: {free_mb} MiB free, {min_mb} MiB required",
-            )
-            return False
-    except OSError as exc:
-        tracker.fail(
-            "validating",
-            "Could not verify free disk space",
-            str(exc),
-        )
-        return False
-
-    return True
 
 
 # ---------------------------------------------------------------------------
