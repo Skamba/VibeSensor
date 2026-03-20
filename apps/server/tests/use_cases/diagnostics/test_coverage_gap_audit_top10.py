@@ -29,11 +29,11 @@ from vibesensor.use_cases.diagnostics.order_statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
+from vibesensor.use_cases.diagnostics.run_data_preparation import (
+    build_phase_timeline as _build_phase_timeline,
+)
 from vibesensor.use_cases.diagnostics.statistics import (
     compute_accel_statistics as _compute_accel_statistics,
-)
-from vibesensor.use_cases.diagnostics.summary_builder import (
-    build_phase_timeline as _build_phase_timeline,
 )
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 from vibesensor.use_cases.run.sample_builder import extract_strength_data, resolve_speed_context
