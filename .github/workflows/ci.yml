@@ -123,8 +123,6 @@ jobs:
     name: UI smoke tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs:
-      - frontend-typecheck
 
     steps:
       - uses: actions/checkout@v4
@@ -151,10 +149,6 @@ jobs:
     name: Release smoke
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs:
-      - backend-quality
-      - backend-typecheck
-      - frontend-typecheck
 
     steps:
       - uses: actions/checkout@v4
@@ -181,9 +175,6 @@ jobs:
     name: Backend tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs:
-      - backend-quality
-      - backend-typecheck
 
     steps:
       - uses: actions/checkout@v4
@@ -209,10 +200,6 @@ jobs:
     name: E2E (docker)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs:
-      - backend-quality
-      - backend-typecheck
-      - frontend-typecheck
 
     steps:
       - uses: actions/checkout@v4

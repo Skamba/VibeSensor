@@ -28,19 +28,12 @@ def _resolve_repo_path(repo_root: Path, raw_path: str) -> Path:
 def _build_server_wheel(repo_root: Path) -> Path:
     dist_dir = repo_root / "apps" / "server" / "dist"
     shutil.rmtree(dist_dir, ignore_errors=True)
-    with tempfile.TemporaryDirectory(
-        prefix="vibesensor-release-build-venv-"
-    ) as venv_text:
-        build_venv = Path(venv_text)
-        venv.EnvBuilder(with_pip=True).create(build_venv)
-        build_python = _venv_python(build_venv)
-        _run(
-            [str(build_python), "-m", "pip", "install", "--upgrade", "pip", "build"],
-            cwd=repo_root,
-        )
-        _run(
-            [str(build_python), "-m", "build", "--wheel", "apps/server/"], cwd=repo_root
-        )
+    python_cmd = sys.executable
+    _run(
+        [python_cmd, "-m", "pip", "install", "--upgrade", "pip", "build"],
+        cwd=repo_root,
+    )
+    _run([python_cmd, "-m", "build", "--wheel", "apps/server/"], cwd=repo_root)
     wheels = sorted(dist_dir.glob("*.whl"))
     if not wheels:
         raise RuntimeError(f"No wheel produced in {dist_dir}")
@@ -81,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     python_cmd = sys.executable
 
     if not args.skip_ui_build:
-        build_ui_cmd = [python_cmd, "tools/build_ui_static.py"]
+        build_ui_cmd = [python_cmd, "tools/build_ui_static.py", "--skip-typecheck"]
         if args.skip_npm_ci:
             build_ui_cmd.append("--skip-npm-ci")
         _run(build_ui_cmd, cwd=repo_root)
