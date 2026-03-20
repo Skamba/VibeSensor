@@ -33,7 +33,12 @@ def test_run_release_smoke_builds_ui_and_wheel_then_runs_smoke(monkeypatch, tmp_
     exit_code = module.main(["--skip-npm-ci"])
 
     assert exit_code == 0
-    assert commands[0][0] == [module.sys.executable, "tools/build_ui_static.py", "--skip-npm-ci"]
+    assert commands[0][0] == [
+        module.sys.executable,
+        "tools/build_ui_static.py",
+        "--skip-typecheck",
+        "--skip-npm-ci",
+    ]
     assert commands[0][1] == repo_root
     assert any(command[0][-1] == str(built_wheel) for command in commands)
     smoke_command = commands[-1]
