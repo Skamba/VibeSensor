@@ -21,13 +21,13 @@ from vibesensor.shared.run_context import (
     order_reference_context_complete,
 )
 from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.client_tracker import ClientTracker
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
 
 if TYPE_CHECKING:
     from vibesensor.infra.processing import SignalProcessor
-    from vibesensor.infra.runtime.registry import ClientRegistry
 
 _isfinite = math.isfinite
 
@@ -126,7 +126,7 @@ def resolve_speed_context(
     )
 
 
-def firmware_version_for_run(registry: ClientRegistry) -> str | None:
+def firmware_version_for_run(registry: ClientTracker) -> str | None:
     """Collect firmware version string(s) from active clients."""
     versions: set[str] = set()
     for client_id in registry.active_client_ids():
@@ -151,7 +151,7 @@ def build_sample_records(
     run_id: str,
     t_s: float,
     timestamp_utc: str,
-    registry: ClientRegistry,
+    registry: ClientTracker,
     processor: SignalProcessor,
     speed_context: SpeedContext,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
