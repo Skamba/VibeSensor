@@ -103,6 +103,7 @@
   "settings.car.delete_failed": "Kan auto niet verwijderen.",
   "settings.car.activate_failed": "Kan auto niet activeren.",
   "settings.car.save_failed": "Instellingen opslaan mislukt.",
+  "settings.save_failed": "Instellingen opslaan mislukt.",
   "settings.car.step_brand": "Selecteer merk",
   "settings.car.step_type": "Selecteer type",
   "settings.car.step_model": "Selecteer model",
