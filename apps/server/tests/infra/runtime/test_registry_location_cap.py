@@ -12,6 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
 from vibesensor.infra.runtime.registry import ClientRegistry
 
 _CLIENT_ID = "aabbccddeeff"
@@ -86,7 +87,7 @@ def test_set_location_visible_on_snapshot(tmp_path: Path) -> None:
     """The location is visible in the registry snapshot after set_location."""
     registry = _make_registry(tmp_path)
     registry.set_location(_CLIENT_ID, "rear-right")
-    snapshot = registry.snapshot_for_api(now=1.0)
+    snapshot = snapshot_for_api(registry, now=1.0)
     matched = [s for s in snapshot if s.get("id") == _CLIENT_ID]
     assert matched, "client_id not found in snapshot"
     assert matched[0].get("location_code") == "rear-right"

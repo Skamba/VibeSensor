@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 
 from vibesensor.adapters.http._helpers import normalize_client_id_or_400
 from vibesensor.adapters.udp.protocol import client_id_mac
+from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
 from vibesensor.shared.locations import all_locations, label_for_code
 from vibesensor.shared.types.api_models import (
     ClientLocationsResponse,
@@ -40,7 +41,7 @@ def create_client_routes(
     async def get_clients() -> ClientsResponse:
         active_ids = registry.active_client_ids()
         metrics = processor.all_latest_metrics(active_ids)
-        return ClientsResponse(clients=registry.snapshot_for_api(metrics_by_client=metrics))
+        return ClientsResponse(clients=snapshot_for_api(registry, metrics_by_client=metrics))
 
     @router.get("/api/client-locations", response_model=ClientLocationsResponse)
     async def get_client_locations() -> ClientLocationsResponse:
