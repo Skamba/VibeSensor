@@ -17,7 +17,7 @@ Recording stops
       → summary_builder.py (phases, suitability, payload assembly)
       → findings.py, peak_binning.py, signal_aggregation.py, ranking.py, top_cause_selection.py, plots.py
     → map_summary() [vibesensor.adapters.pdf.mapping]
-      → mapping.py (actions, peaks, systems)
+      → mapping.py + peak_table.py + report_sections.py (report shaping + orchestration)
     → store_analysis() [vibesensor.adapters.persistence.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
@@ -46,6 +46,10 @@ The `vibesensor.adapters.pdf` package contains **only** rendering code:
 | `pdf_drawing.py`, `pdf_text.py` | Shared drawing and text helpers |
 | `pdf_diagram_render.py` | Diagram planning, drawing, and location canonicalisation |
 | `report_data.py` | Dataclass definitions (pure data) |
+| `presentation.py` | Rendering-only label helpers (strength/order/classification text) |
+| `peak_table.py` | Peak-row builders for the report evidence table |
+| `report_sections.py` | Next-step and data-trust section builders |
+| `pattern_parts.py` | Pattern-to-parts suggestion helpers |
 
 **Rule:** Report modules must not import from `vibesensor.use_cases.diagnostics` at
 module level.  A guardrail test (`test_report_analysis_separation.py`)

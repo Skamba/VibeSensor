@@ -1074,12 +1074,12 @@ def test_next_steps_domain_path_is_primary() -> None:
     """
     from tests._paths import SERVER_ROOT
 
-    mapping_path = SERVER_ROOT / "vibesensor" / "adapters" / "pdf" / "mapping.py"
-    source = mapping_path.read_text()
+    sections_path = SERVER_ROOT / "vibesensor" / "adapters" / "pdf" / "report_sections.py"
+    source = sections_path.read_text()
 
     # Find the function body
     func_start = source.find("def build_next_steps_from_summary(")
-    assert func_start != -1, "build_next_steps_from_summary not found in mapping.py"
+    assert func_start != -1, "build_next_steps_from_summary not found in report_sections.py"
 
     # Find end of function (next top-level def or end of file)
     next_def = source.find("\ndef ", func_start + 1)
