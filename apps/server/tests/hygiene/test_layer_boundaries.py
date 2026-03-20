@@ -110,10 +110,9 @@ _KNOWN_VIOLATIONS: frozenset[tuple[str, str]] = frozenset(
         ("infra/runtime/registry.py", "vibesensor.adapters.persistence.history_db"),
         ("infra/runtime/rotational_speeds.py", "vibesensor.adapters.gps.gps_speed"),
         ("infra/runtime/ws_broadcast.py", "vibesensor.adapters.gps.gps_speed"),
-        # adapters/infra → app
-        # RuntimeState now lives in app/, but router/lifecycle still consume the
-        # flat app-owned runtime bag until issue #752 splits those dependency groups.
-        ("adapters/http/__init__.py", "vibesensor.app.runtime_state"),
+        # infra → app
+        # RuntimeState is now lifecycle-focused, but LifecycleManager still consumes
+        # the app-owned runtime bag directly.
         ("infra/runtime/lifecycle.py", "vibesensor.app.runtime_state"),
         # adapters → app
         ("adapters/hotspot/self_heal.py", "vibesensor.app.settings"),

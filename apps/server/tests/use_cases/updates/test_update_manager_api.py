@@ -5,6 +5,13 @@ from unittest.mock import MagicMock
 import pytest
 from pydantic import ValidationError
 
+from vibesensor.adapters.http.dependencies import (
+    HistoryDeps,
+    RouterDeps,
+    SettingsDeps,
+    TelemetryDeps,
+    UpdateDeps,
+)
 from vibesensor.use_cases.updates.manager import UpdateManager
 
 
@@ -12,9 +19,31 @@ class TestUpdateApiEndpoints:
     def test_status_endpoint_exists(self) -> None:
         from vibesensor.adapters.http import create_router
 
-        state = MagicMock()
-        state.update_manager = UpdateManager()
-        state.esp_flash_manager = MagicMock()
+        placeholder = MagicMock()
+        state = RouterDeps(
+            telemetry=TelemetryDeps(
+                processing_loop_state=placeholder,
+                health_state=placeholder,
+                processor=placeholder,
+                registry=placeholder,
+                control_plane=placeholder,
+                run_recorder=placeholder,
+                ws_hub=placeholder,
+            ),
+            settings=SettingsDeps(
+                settings_store=placeholder,
+                gps_monitor=placeholder,
+            ),
+            history=HistoryDeps(
+                run_service=placeholder,
+                report_service=placeholder,
+                export_service=placeholder,
+            ),
+            updates=UpdateDeps(
+                update_manager=UpdateManager(),
+                esp_flash_manager=MagicMock(),
+            ),
+        )
         router = create_router(state)
         paths = [route.path for route in router.routes]
         assert "/api/update/status" in paths

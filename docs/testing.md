@@ -43,7 +43,7 @@ apps/server/tests/
 | `vibesensor/analysis/*` | `apps/server/tests/analysis/` |
 | `vibesensor/report/*`, `report_i18n.py` | `apps/server/tests/report/` |
 | `vibesensor/routes/*` | `apps/server/tests/api/` |
-| `vibesensor/app/runtime_state.py`, `vibesensor/infra/runtime/*`, `worker_pool.py` | `apps/server/tests/infra/runtime/` |
+| `vibesensor/app/runtime_state.py`, `vibesensor/adapters/http/dependencies.py`, `vibesensor/infra/runtime/*`, `worker_pool.py` | `apps/server/tests/infra/runtime/` and `apps/server/tests/adapters/http/` |
 | `vibesensor/adapters/persistence/history_db/*`, `vibesensor/use_cases/history/*` | `apps/server/tests/adapters/persistence/history_db/` and `apps/server/tests/use_cases/history/` |
 | `vibesensor/update/*` | `apps/server/tests/update/` |
 | `vibesensor/processing/*` | `apps/server/tests/processing/` |
