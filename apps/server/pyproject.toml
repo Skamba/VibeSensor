@@ -109,6 +109,7 @@ files = [
   "vibesensor/report_i18n.py",
   "vibesensor/strength_bands.py",
   "vibesensor/coerce.py",
+  "vibesensor/use_cases/updates",
   "vibesensor/use_cases/diagnostics/_types.py",
   "vibesensor/use_cases/diagnostics/helpers.py",
   "vibesensor/use_cases/diagnostics/top_cause_selection.py",
