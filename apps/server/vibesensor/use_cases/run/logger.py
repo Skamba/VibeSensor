@@ -18,7 +18,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, TypedDict, cast
 from uuid import uuid4
 
 from vibesensor.domain import Run
@@ -467,7 +467,7 @@ class RunRecorder:
                 for attempt in range(_MAX_APPEND_RETRIES):
                     try:
                         write_start = time.monotonic()
-                        self._history_db.append_samples(run_id, rows)  # type: ignore[arg-type]  # dict value variance
+                        self._history_db.append_samples(run_id, cast(list[JsonObject], rows))
                         write_dur = time.monotonic() - write_start
                         with self._lock:
                             if not self._persist_run_id_matches(run_id):

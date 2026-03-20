@@ -63,6 +63,8 @@ def transition_run(
         If *current_status* → *target_status* is not a valid transition
         according to :data:`RUN_TRANSITIONS`.
     """
-    if target_status in RUN_TRANSITIONS.get(current_status, frozenset()):  # type: ignore[arg-type]
+    # Normalize to RunStatus (or None) for the transition-table lookup.
+    current_key = RunStatus(current_status) if current_status is not None else None
+    if target_status in RUN_TRANSITIONS.get(current_key, frozenset()):
         return RunStatus(target_status)
     raise ValueError(f"Invalid run transition: {current_status!r} → {target_status!r}")

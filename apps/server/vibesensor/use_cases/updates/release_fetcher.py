@@ -191,10 +191,11 @@ class ServerReleaseFetcher(GitHubAPIClient):
     @staticmethod
     def _find_wheel_asset(release: dict[str, Any]) -> dict[str, Any] | None:
         """Find a .whl asset in a release."""
-        for asset in release.get("assets", []):
+        assets: list[dict[str, Any]] = release.get("assets", [])
+        for asset in assets:
             name = asset.get("name", "")
             if name.startswith("vibesensor") and name.endswith(".whl"):
-                return asset  # type: ignore[no-any-return]
+                return asset
         return None
 
     def download_wheel(
