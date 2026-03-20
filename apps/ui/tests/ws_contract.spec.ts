@@ -42,6 +42,15 @@ test.describe("schema_version handling", () => {
     expect(adapted).toBeDefined();
   });
 
+  test("rejects invalid field types via AJV validation", () => {
+    expect(() =>
+      adaptServerPayload({
+        ...basePayload,
+        speed_mps: "10",
+      }),
+    ).toThrow(/Invalid websocket payload/);
+  });
+
   test("EXPECTED_SCHEMA_VERSION is string '1'", () => {
     expect(EXPECTED_SCHEMA_VERSION).toBe("1");
   });
@@ -71,6 +80,9 @@ test.describe("shared freq optimization", () => {
     expect(adapted.spectra).not.toBeNull();
     expect(adapted.spectra!.clients.sensor1.freq).toEqual([10, 20, 30]);
     expect(adapted.spectra!.clients.sensor2.freq).toEqual([10, 20, 30]);
+    expect(adapted.spectra!.clients.sensor1.strength_metrics.peak_amp_g).toBe(0);
+    expect(adapted.spectra!.clients.sensor1.strength_metrics.noise_floor_amp_g).toBe(0);
+    expect(adapted.spectra!.clients.sensor1.strength_metrics.top_peaks).toEqual([]);
   });
 
   test("prefers per-client freq over shared when both present", () => {
@@ -151,5 +163,32 @@ test.describe("shared freq optimization", () => {
     expect(adapted.spectra!.clients.sensor1.freq).toEqual([10, 20, 30]);
     // sensor2 uses its own per-client freq
     expect(adapted.spectra!.clients.sensor2.freq).toEqual([15, 25, 35]);
+  });
+
+  test("drops malformed strength metric peaks before validation", () => {
+    const adapted = adaptServerPayload({
+      ...basePayload,
+      spectra: {
+        freq: [10, 20, 30],
+        clients: {
+          sensor1: {
+            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            strength_metrics: {
+              vibration_strength_db: 12,
+              peak_amp_g: 0.2,
+              noise_floor_amp_g: 0.01,
+              top_peaks: [
+                { hz: 10, amp: 0.1, vibration_strength_db: 12, strength_bucket: "l2" },
+                { hz: 20, amp: 0.2 },
+              ],
+            },
+          },
+        },
+      },
+    });
+    expect(adapted.spectra).not.toBeNull();
+    expect(adapted.spectra!.clients.sensor1.strength_metrics.top_peaks).toEqual([
+      { hz: 10, amp: 0.1, vibration_strength_db: 12, strength_bucket: "l2" },
+    ]);
   });
 });

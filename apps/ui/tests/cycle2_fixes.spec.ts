@@ -13,7 +13,7 @@
 
 import { expect, test } from "@playwright/test";
 import { adaptServerPayload } from "../src/server_payload";
-import { applySpectrumTick } from "../src/app/state/ui_app_state";
+import { applySpectrumTick } from "../src/app/ui_app_state";
 import { areHeavyFramesCompatible, interpolateHeavyFrame } from "../src/app/spectrum_animation";
 
 // ---------------------------------------------------------------------------
