@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from threading import RLock
 from typing import cast
 
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.types.run_persistence import RunPersistence
 
 __all__ = [
     "AppendRowsResult",

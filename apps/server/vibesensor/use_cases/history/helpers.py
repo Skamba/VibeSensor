@@ -19,8 +19,8 @@ from vibesensor.shared.exceptions import (
     DataCorruptError,
     RunNotFoundError,
 )
+from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
-from vibesensor.shared.types.run_persistence import RunPersistence
 
 _SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
 

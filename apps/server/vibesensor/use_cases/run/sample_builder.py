@@ -16,18 +16,18 @@ from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.constants import MPS_TO_KMH, NUMERIC_TYPES
+from vibesensor.shared.ports import ClientTracker
 from vibesensor.shared.run_context import (
     apply_run_context_snapshot,
     order_reference_context_complete,
 )
 from vibesensor.shared.types.backend_types import RunMetadata
-from vibesensor.shared.types.client_tracker import ClientTracker
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
 
 if TYPE_CHECKING:
-    from vibesensor.shared.types.signal_source import SignalSource
+    from vibesensor.shared.ports import SignalSource
 
 _isfinite = math.isfinite
 
