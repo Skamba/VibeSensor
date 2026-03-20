@@ -30,7 +30,7 @@ Scope: single source of truth for detailed file layout, entry points, package st
 - `app/`: startup and wiring. `bootstrap.py` creates the FastAPI app, `container.py` builds the flat app-owned `RuntimeState`, `runtime_state.py` owns that fully wired service graph, and `settings.py` owns YAML config loading and validation.
 - `adapters/http/`: health, clients, settings, recording, history, websocket, updates, car library, and debug route groups; `adapters/http/__init__.py` assembles the router.
 - `adapters/websocket/hub.py`: live WebSocket connection fan-out and payload delivery.
-- `adapters/persistence/`: SQLite history DB (`history_db/`) and the static car library loader (`car_library.py`).
+- `adapters/persistence/`: SQLite history DB (`history_db/` keeps `HistoryDB` as the public facade and splits internals across `_run_lifecycle.py`, `_sample_io.py`, `_queries.py`, `_schema.py`, and `_samples.py`) and the static car library loader (`car_library.py`).
 - `adapters/pdf/`: PDF/report rendering pipeline and report mapping entrypoints.
 - `adapters/udp/`, `adapters/gps/`, `adapters/simulator/`, `adapters/hotspot/`: UDP protocol transport, GPS speed ingestion, simulator tooling, and hotspot/AP operational adapters.
 - `infra/runtime/`: lifecycle management, processing loop, runtime health state, and WebSocket broadcast coordination.
