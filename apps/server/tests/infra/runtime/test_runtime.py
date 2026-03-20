@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import os
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, get_type_hints
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -398,3 +398,32 @@ def test_runtime_state_has_public_attribute(attr: str) -> None:
     from vibesensor.app.runtime_state import RuntimeState
 
     assert hasattr(RuntimeState, attr), f"RuntimeState missing {attr}"
+
+
+def test_runtime_state_uses_focused_ports_for_read_side_runtime_fields() -> None:
+    """RuntimeState should expose existing shared ports for read-side services."""
+    from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
+    from vibesensor.adapters.websocket.hub import WebSocketHub
+    from vibesensor.app import runtime_state as runtime_state_module
+    from vibesensor.app.runtime_state import RuntimeState
+    from vibesensor.app.settings import AppConfig
+    from vibesensor.shared.types.client_tracker import ClientTracker
+    from vibesensor.shared.types.settings_reader import SettingsReader
+    from vibesensor.shared.types.signal_source import SignalSource
+
+    hints = get_type_hints(
+        RuntimeState,
+        globalns={
+            **vars(runtime_state_module),
+            "AppConfig": AppConfig,
+            "GPSSpeedMonitor": GPSSpeedMonitor,
+            "HistoryDB": HistoryDB,
+            "UDPControlPlane": UDPControlPlane,
+            "WebSocketHub": WebSocketHub,
+        },
+    )
+    assert hints["registry"] is ClientTracker
+    assert hints["processor"] is SignalSource
+    assert hints["settings_store"] is SettingsReader
