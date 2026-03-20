@@ -18,9 +18,7 @@ from vibesensor.use_cases.diagnostics._types import (
 from vibesensor.use_cases.diagnostics.helpers import (
     _effective_engine_rpm,
     _locations_connected_throughout_run,
-    _phase_to_str,  # noqa: F401
     _run_noise_baseline_g,
-    _speed_profile_from_points,  # noqa: F401
     _tire_reference_from_metadata,
 )
 from vibesensor.use_cases.diagnostics.order_analysis import _build_order_findings
@@ -40,6 +38,10 @@ from vibesensor.use_cases.diagnostics.signal_aggregation import (
     _phase_speed_breakdown,  # noqa: F401
     _sensor_intensity_by_location,  # noqa: F401
     _speed_breakdown,  # noqa: F401
+)
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
+    _phase_to_str,  # noqa: F401
+    _speed_profile_from_points,  # noqa: F401
 )
 
 __all__ = [

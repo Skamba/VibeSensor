@@ -20,11 +20,13 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _effective_baseline_floor,
     _estimate_strength_floor_amp_g,
     _location_label,
-    _phase_to_str,
     _sample_top_peaks,
-    _speed_profile_from_points,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
+    _phase_to_str,
+    _speed_profile_from_points,
+)
 from vibesensor.vibration_strength import percentile
 from vibesensor.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,

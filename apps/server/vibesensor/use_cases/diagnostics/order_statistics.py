@@ -16,11 +16,9 @@ from vibesensor.shared.constants import (
     NEGLIGIBLE_STRENGTH_MAX_DB,
     ORDER_MIN_MATCH_POINTS,
 )
-from vibesensor.use_cases.diagnostics.helpers import (
-    _corr_abs_clamped,
-    _speed_profile_from_points,
-)
+from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_profile_from_points
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Scoring constants
