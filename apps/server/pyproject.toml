@@ -90,9 +90,9 @@ select = ["E", "F", "I", "UP", "B"]
 python_version = "3.11"
 packages = ["vibesensor"]
 exclude = [
-  # Legacy HTTP history/settings routes still need dedicated typing cleanup for
+  # Legacy HTTP settings routes still need dedicated typing cleanup for
   # their boundary payload shaping and response assembly.
-  "^vibesensor/adapters/http/(?:history|settings)\\.py$",
+  "^vibesensor/adapters/http/settings\\.py$",
   # UDP protocol decoding still relies on looser wire-payload contracts.
   "^vibesensor/adapters/udp/protocol\\.py$",
 ]
@@ -122,6 +122,5 @@ disallow_any_unimported = false
 module = [
   "vibesensor.adapters.udp.protocol",
   "vibesensor.adapters.http.settings",
-  "vibesensor.adapters.http.history",
 ]
 ignore_errors = true
