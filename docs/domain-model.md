@@ -2,7 +2,7 @@
 
 ## Purpose of this document
 
-This document defines the canonical VibeSensor domain model.
+This document defines the VibeSensor domain model.
 
 It is a model reference, not a progress log, migration journal, implementation
 inventory, or roadmap.
@@ -17,7 +17,7 @@ VibeSensor is centered on one diagnostic aggregate hierarchy:
 - `Run` is the recording-time lifecycle object.
 - `RunCapture` is the immutable captured-evidence object produced by one
   completed run.
-- `RunSetup` is the canonical setup context used to interpret that capture.
+- `RunSetup` is the setup context used to interpret that capture.
 
 `Car` provides case-scoped vehicle interpretive context across the entire
 investigation. `OrderReferenceSpec` is a supporting typed value object within
@@ -44,7 +44,7 @@ not report/view payloads by default, and not replacements for
 The model also draws an explicit internal performance boundary. Raw capture,
 DSP, and other high-volume sample-processing representations may remain simple
 arrays, compact records, or dict-like sample payloads inside that
-performance-sensitive subsystem. No canonical per-sample typed object is
+performance-sensitive subsystem. No per-sample typed object is
 introduced here, and `RunSample` is not part of this model. Stable diagnostics
 meaning sits above that boundary in typed concepts with owned meaning.
 
@@ -91,7 +91,7 @@ The aggregate hierarchy is decisive:
 - `Finding` is a run-level conclusion object contained by `TestRun`.
 - `Run` is capture lifecycle, not analyzed diagnostic meaning.
 - `RunCapture` is immutable capture evidence from one completed `Run`.
-- `RunSetup` is canonical run-setup context for capture interpretation.
+- `RunSetup` is the run-setup context for capture interpretation.
 
 Supporting typed diagnostics concepts provide internal interpretation support
 and do not change aggregate ownership. `DrivingSegment` remains a core
@@ -100,7 +100,7 @@ run-level concept within `TestRun`. `DrivingPhaseSummary`,
 `OrderMatchObservation`, `SpeedProfileSummary`, and
 `LocationIntensitySummary` remain supporting diagnostics-layer concepts.
 
-## Canonical domain graph
+## Domain graph
 
 ```text
 DiagnosticCase
@@ -176,7 +176,7 @@ Measurement -> Finding -> Report
 ### Analysis machinery
 
 `PhaseSegment` and low-level numeric/signal-processing helpers support the
-model but are not canonical domain concepts. The raw capture / DSP /
+model but are not domain concepts in this model. The raw capture / DSP /
 high-volume sample-processing subsystem is intentionally performance-sensitive;
 its per-sample transport and signal-processing representations may remain
 simple arrays, compact records, or dict-like sample payloads rather than
@@ -238,7 +238,7 @@ The model separates four layers:
   they are not boundary payloads.
 - **Performance-sensitive raw sample / DSP support:** high-volume raw capture,
   telemetry, and signal-processing representations that may remain simple
-  arrays, compact records, or dict-like sample payloads. There is no canonical
+  arrays, compact records, or dict-like sample payloads. There is no
   per-sample typed object in this model, and the raw sample / DSP layer does
   not own stable diagnostic meaning.
 - **Boundary representations:** transport, storage, export, and presentation
@@ -263,14 +263,14 @@ The model distinguishes sharply between three representation contexts:
 - storage, transport, render, and archival boundaries, where payload-shaped
   representations may remain dict-like
 
-In this model, the canonical typed diagnostics concepts are
+In this model, the typed diagnostics concepts are
 `RunMetadataSnapshot`, `OrderMatchObservation`, `DrivingPhaseSummary`,
 `DrivingPhaseInterval`, `DrivingPhaseSegment`, `SpeedProfileSummary`, and
 `LocationIntensitySummary`.
 
 Simple representations in the raw capture / DSP subsystem must not become the
 owners of higher-level diagnostic meaning. Boundary payloads must not become
-the owners of diagnostic meaning. `RunSample` is not a canonical object in
+the owners of diagnostic meaning. `RunSample` is not a typed object in
 this model.
 
 ## Model ambiguities resolved by this document
@@ -308,7 +308,7 @@ this model.
   high-volume telemetry representations remain intentionally simple inside the
   performance-sensitive subsystem boundary. Stable higher-level diagnostics
   meaning above that boundary is carried by typed objects.
-- **No canonical `RunSample` object:** per-sample raw data is intentionally
-  not promoted to a canonical typed object in this model.
+- **No `RunSample` object:** per-sample raw data is intentionally
+  not promoted to a typed object in this model.
 - **`Report` vs `HistoryRecord`:** `Report` communicates conclusions;
   `HistoryRecord` archives state. Neither is core diagnostic truth.

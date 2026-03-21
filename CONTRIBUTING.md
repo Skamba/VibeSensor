@@ -52,8 +52,8 @@ Current hook behavior:
 Two tiers: use `make test` during iteration, `make test-all` before pushing.
 
 For the recurring repo-wide commands (lint, type checks, docs lint, focused
-pytest, CI-parity runs, PR watching, and Docker bring-up), use the canonical
-command list in [.github/copilot-instructions.md](.github/copilot-instructions.md)
+pytest, CI-parity runs, PR watching, and Docker bring-up), use the command
+list in [.github/copilot-instructions.md](.github/copilot-instructions.md)
 § "Commands". Use [docs/testing.md](docs/testing.md) for the test-layout map
 and CI-parity guidance.
 
@@ -66,10 +66,10 @@ Additional local-only convenience commands:
 
 ## CI jobs and local reproduction
 
-The authoritative blocking-job list lives in
-[.github/workflows/ci.yml](.github/workflows/ci.yml). Use the canonical command
-list in [.github/copilot-instructions.md](.github/copilot-instructions.md)
-§ "Commands" plus [docs/testing.md](docs/testing.md) when you need the matching
+The blocking jobs live in
+[.github/workflows/ci.yml](.github/workflows/ci.yml). Use the command list in
+[.github/copilot-instructions.md](.github/copilot-instructions.md) §
+"Commands" plus [docs/testing.md](docs/testing.md) when you need the matching
 local reproduction flow.
 
 `backend-quality` includes docs lint, so documentation drift and broken local
@@ -101,6 +101,9 @@ When you change ownership boundaries, commands, or workflows, review the matchin
 - [docs/ai/repo-map.md](docs/ai/repo-map.md)
 - [docs/operational-runbooks.md](docs/operational-runbooks.md)
 
+Prefer plain pointers to the files that own commands or workflows. Call out
+ownership boundaries only when that distinction matters to maintenance.
+
 ## Configuration
 
 The backend uses a layered config system. Values are merged in this order (later wins):
@@ -126,7 +129,7 @@ Then edit `config.yaml` as needed. The file is gitignored, so your local changes
 
 ## API contract sync
 
-The canonical contract-sync flow lives in
+The contract-sync flow lives in
 [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync). Use that
 section for what `npm run sync:contracts` regenerates, what it intentionally
 does not touch (`apps/ui/src/constants.ts`), and what to do when CI reports
