@@ -12,8 +12,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import replace as _dc_replace
 
-from vibesensor.domain import Finding
-from vibesensor.domain.finding import Signature, VibrationSource
+from vibesensor.domain import Finding, Signature, VibrationSource
 
 # ---------------------------------------------------------------------------
 # Source grouping (domain-first)

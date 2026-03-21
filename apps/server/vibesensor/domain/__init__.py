@@ -34,21 +34,16 @@ RunSuitability
     Whether a run is trustworthy enough for diagnosis.
 """
 
-from .car import Car, CarSnapshot, OrderReferenceSpec, TireSpec
+from .car import Car, CarSnapshot
 from .confidence_assessment import ConfidenceAssessment
 from .diagnostic_case import DiagnosticCase, Symptom
 from .driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingPhaseSegment, DrivingSegment
-from .finding import (
-    Finding,
-    FindingEvidence,
-    FindingKind,
-    Signature,
-    VibrationSource,
-    speed_band_sort_key,
-    speed_bin_label,
-)
+from .finding import Finding, speed_band_sort_key, speed_bin_label
+from .finding_evidence import FindingEvidence, Signature
+from .finding_types import FindingKind, VibrationSource
 from .location_hotspot import LocationHotspot, LocationIntensitySummary
 from .order_match import OrderMatchObservation
+from .order_reference import OrderReferenceSpec
 from .run import Run
 from .run_capture import ConfigurationSnapshot, Measurement, RunCapture, RunSetup, VibrationReading
 from .run_status import RUN_TRANSITIONS, RunStatus, is_run_deletable, transition_run
@@ -66,6 +61,7 @@ from .speed_source import SpeedSource, SpeedSourceKind
 from .strength_metrics import StrengthMetrics, StrengthPeak
 from .test_plan import RecommendedAction, TestPlan, plan_test_actions
 from .test_run import TestRun
+from .tire_spec import TireSpec
 from .vibration_origin import VibrationOrigin
 
 __all__ = [

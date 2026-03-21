@@ -5,8 +5,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 
-from vibesensor.domain import LocationIntensitySummary
-from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
+from vibesensor.domain import LocationIntensitySummary, speed_band_sort_key, speed_bin_label
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (

@@ -9,8 +9,7 @@ from test_support.report_helpers import (
     wheel_metadata,
 )
 
-from vibesensor.domain import LocationHotspot
-from vibesensor.domain.finding import Finding
+from vibesensor.domain import Finding, LocationHotspot
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics import findings as findings_builder_module
