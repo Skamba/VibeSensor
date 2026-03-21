@@ -18,7 +18,7 @@ Recording stops
       → run_data_preparation.py + summary_builder.py (preparation, phases, suitability, payload assembly)
       → findings.py, peak_binning.py, signal_aggregation.py, ranking.py, top_cause_selection.py, plots.py, peak_table.py
     → map_summary() [vibesensor.adapters.pdf.mapping]
-      → use_cases/history/report_interpretation.py + mapping.py + peak_table.py + report_sections.py (report-domain interpretation + report shaping + orchestration)
+      → report_context.py (context assembly, card decisions) + mapping.py (thin template mapper) + peak_table.py + report_sections.py
     → store_analysis() [vibesensor.adapters.persistence.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
@@ -47,6 +47,8 @@ The `vibesensor.adapters.pdf` package contains **only** rendering code:
 | `pdf_drawing.py`, `pdf_text.py` | Shared drawing and text helpers |
 | `pdf_diagram_render.py` | Diagram planning, drawing, and location canonicalisation |
 | `report_data.py` | Dataclass definitions (pure data) |
+| `report_context.py` | Context assembly, data-prep, card-assembly (bridges domain/use-case and adapter) |
+| `mapping.py` | Thin mapper: context → `ReportTemplateData` |
 | `presentation.py` | Rendering-only label helpers (strength/order/classification text) |
 | `peak_table.py` | Peak-row builders for the report evidence table |
 | `report_sections.py` | Next-step and data-trust section builders |
@@ -58,8 +60,9 @@ enforces this.
 
 Pure report-domain interpretation that reads domain findings/test runs but
 does not perform i18n or PDF dataclass assembly lives in
-`vibesensor.use_cases.history.report_interpretation`, which `mapping.py`
-consumes during report shaping.
+`vibesensor.use_cases.history.report_interpretation`, which `report_context.py`
+consumes during context assembly.  `mapping.py` itself does **not** import
+from `use_cases/` — `report_context.py` bridges that boundary.
 
 ### ReportTemplateData schema
 

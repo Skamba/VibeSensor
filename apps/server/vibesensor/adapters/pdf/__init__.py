@@ -9,6 +9,9 @@ Import analysis symbols from ``vibesensor.use_cases.diagnostics`` directly.
 Module topology
 ---------------
 - **Data layer**: ``report_data.py`` (dataclasses).
+- **Context assembly**: ``report_context.py`` (context dataclasses, data-prep,
+  card-assembly — bridges domain/use-case preparation and adapter rendering).
+- **Mapping**: ``mapping.py`` (thin mapper: context → ``ReportTemplateData``).
 - **Mapping helpers**: ``peak_table.py`` (peak rows), ``report_sections.py`` (report sections), ``presentation.py`` (render-only labels), ``pattern_parts.py`` (parts suggestions).
 - **Engine**: ``pdf_engine.py`` (public entry, page orchestration, pagination).
 - **Pages**: ``pdf_page1.py``, ``pdf_page2.py``.
@@ -18,4 +21,6 @@ Module topology
 
 Dependency rule: pages → primitives → data; diagrams → primitives → data.
 Modules must not import from ``vibesensor.use_cases.diagnostics`` sub-modules.
+``mapping.py`` must not import from ``vibesensor.use_cases`` —
+``report_context.py`` handles that bridge.
 """
