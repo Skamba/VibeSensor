@@ -18,19 +18,9 @@ ESP32 nodes -> adapters/udp/ -> infra/processing/ + use_cases/diagnostics/
 ```
 
 Backend ownership boundaries:
-
-- `app/`: FastAPI app factory (`bootstrap.py`), runtime container wiring (`container.py`), a lifecycle-focused `RuntimeState` plus top-level `AppRuntime` bundle (`runtime_state.py`), and YAML settings/config loading (`settings.py`). `runtime_state.py` now types read-side runtime fields against the shared ports in `shared/ports.py` where they already fit lifecycle consumers, while `container.py` remains the concrete composition root.
-- `adapters/http/` and `adapters/websocket/`: HTTP route groups and live WebSocket delivery. `adapters/http/dependencies.py` owns the grouped router dependency dataclasses consumed by `adapters/http/__init__.py`.
-- `infra/runtime/`: lifecycle management, processing loop, runtime health state, and WebSocket broadcast coordination. `registry.py` now stays focused on the thread-safe live client-state map and orchestration, `client_metadata.py` owns persisted/user-assigned client-name handling, `registry_updates.py` owns DATA-message dedup/reset bookkeeping, and `client_snapshot.py` owns the API/WS client-row presenter reused by both the HTTP clients route and live WebSocket broadcasting.
-- `infra/processing/`: signal processing pipeline.
-- `infra/config/`: runtime settings stores used by recording and runtime services.
-- `use_cases/diagnostics/`: post-stop analysis/findings logic; `run_data_preparation.py` owns `PreparedRunData` plus timing/speed/phase/sensor preparation, `order_analysis.py` now keeps the core matching/scoring/assembly primitives, `order_pipeline.py` owns the order-finding orchestration/session flow above those primitives, `order_heuristics.py` owns the pure scoring/filter heuristics, `peak_table.py` owns peak-table row ranking for persisted/report payloads, `plots.py` keeps plot-series plus FFT/spectrogram orchestration, and the package-level API still re-exports shared vehicle-order helpers used by live telemetry.
-- `use_cases/run/`: recording orchestration; `lifecycle_state.py` owns the in-memory run session state, `persistence_writer.py` owns history-write coordination and retry bookkeeping, `sample_flush.py` owns sample-building/flush decisions and auto-stop checks, `status_reporting.py` owns status/health payload assembly, `logger.py` owns the thin `RunRecorder` coordinator, and `post_analysis.py` owns the background analysis queue above the injected persistence/analysis/error boundary.
-- `adapters/persistence/`, `shared/`, and `use_cases/history/`: SQLite persistence, shared typed contracts/pure helpers (including run-log decoding, the `shared/ports.py` module for `RunPersistence`, `ClientTracker`, `SignalSource`, `SpeedProvider`, and `SettingsReader`, and vehicle-order math), car library loading, and history/report/export services. `shared/types/` now stays focused on payload/model types, with feature-scoped Pydantic HTTP contracts in `shared/types/api_models/`, while `use_cases/history/report_interpretation.py` owns pure report-domain interpretation used by PDF mapping and `adapters/persistence/history_db/` keeps `HistoryDB` as the public facade above internal `_run_lifecycle.py`, `_sample_io.py`, and `_queries.py` sections plus shared `_schema.py` and `_samples.py` helpers.
-- `adapters/pdf/`: PDF/report rendering pipeline.
-- `use_cases/updates/`: wheel-based update flow; `firmware_cache.py` now stays a thin public cache facade and CLI owner above `firmware_types.py` (cache/release contracts), `firmware_bundle.py` (bundle filesystem validation/extraction/metadata), and `firmware_release_fetcher.py` (GitHub firmware HTTP access).
-- `adapters/simulator/`: simulator tooling; `sim_client.py` owns pure sensor/frame generation, `sim_scene.py` owns pure road-scene mutations, `sim_runtime.py` owns asyncio UDP/runtime loops, and `sim_sender.py` stays the CLI/orchestration entry point.
-- `adapters/hotspot/`: Wi-Fi AP monitoring, parsing, and self-heal infrastructure.
+See [docs/ai/repo-map.md#backend-package-layout](../../docs/ai/repo-map.md#backend-package-layout)
+for the detailed backend ownership map. This README stays focused on
+backend-specific setup, configuration, routes, updates, and testing.
 
 ## Important directories
 
@@ -54,18 +44,9 @@ apps/server/
 
 ## Local development
 
-From the repository root:
-
-```bash
-python3 -m pip install -e "./apps/server[dev]"
-vibesensor-server --config apps/server/config.dev.yaml
-```
-
-Or run the local stack through Docker:
-
-```bash
-docker compose up --build
-```
+Use the top-level [README quickstart](../../README.md#quick-start) for the
+supported Docker and native bootstrap commands, then come back here for
+backend-specific configuration and CLI details.
 
 The local development configs default the HTTP listener to port `8000`.
 
@@ -118,13 +99,10 @@ Production devices use the wheel-based updater in `apps/server/vibesensor/use_ca
 
 ## Testing
 
-```bash
-make lint
-make typecheck-backend
-pytest -q apps/server/tests
-python3 tools/tests/pytest_progress.py --show-test-names apps/server/tests
-make test-all
-```
+Use [.github/copilot-instructions.md](../../.github/copilot-instructions.md)
+§ "Commands" for the canonical backend validation commands, and
+[docs/testing.md](../../docs/testing.md) for the full test map and command
+selection guidance.
 
 `make typecheck-backend` is the enforced backend static-typing gate for the `vibesensor` package. It now checks new backend files by default, with only a small temporary denylist for legacy modules that still need dedicated typing cleanup. Use `docs/testing.md` for the full test map. Start with the matching mirrored feature directory under `apps/server/tests/`, then add `integration/` coverage when the behavior crosses package boundaries.
 

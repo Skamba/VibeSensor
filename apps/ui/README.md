@@ -26,6 +26,19 @@ The built output in `dist/` is copied to `apps/server/vibesensor/static/` for se
 Use `python tools/build_ui_static.py` from the repo root to build and sync
 in one step.
 
+## Contract sync
+
+`npm run sync:contracts` is the canonical frontend contract-sync flow.
+
+It regenerates:
+
+- `src/generated/http_api_contracts.ts`
+- `src/contracts/ws_payload_types.ts`
+- `src/contracts/ws_payload_schema.generated.ts`
+
+It does **not** rewrite `src/constants.ts`; backend hygiene tests guard drift
+for `LOCATION_CODES` and `METRIC_FIELDS` there.
+
 ## Source Modules
 
 | File | Purpose |
@@ -66,7 +79,8 @@ and chart behavior.
 ## WebSocket contract boundary
 
 - `src/contracts/ws_payload_schema.json` is the canonical JSON Schema for live WS payloads.
-- `src/contracts/ws_payload_types.ts` is generated from that schema by `npm run sync:contracts`.
+- `src/contracts/ws_payload_types.ts` is generated from that schema by the
+  [contract sync flow](#contract-sync).
 - `src/ws_payload_normalization.ts` keeps the pre-validation compatibility shim small: it only normalizes the supported legacy `strength_metrics` and malformed-spectra quirks before AJV runs.
 - `src/ws_payload_validator.ts` compiles AJV against `ws_payload_schema.json` and validates that normalized live payload at runtime.
 - `src/server_payload.ts` then adapts the validated `LiveWsPayload` with schema-version warnings, shared-`freq` fallback, and malformed/misaligned spectrum rejection.
