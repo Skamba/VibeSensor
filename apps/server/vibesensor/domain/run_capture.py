@@ -10,13 +10,12 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
+from math import sqrt
 from types import MappingProxyType
 
 from vibesensor.domain.car import TireSpec
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_source import SpeedSource
-
-from ._vibration_strength import bucket_for_strength, vibration_strength_db_scalar
 
 __all__ = ["ConfigurationSnapshot", "Measurement", "RunCapture", "RunSetup", "VibrationReading"]
 
@@ -41,14 +40,18 @@ class Measurement:
         if self.sample_rate_hz <= 0:
             raise ValueError(f"sample_rate_hz must be positive, got {self.sample_rate_hz}")
 
-    def to_vibration_reading(self, noise_floor: float) -> VibrationReading:
-        from math import sqrt
+    def peak_amplitude_g(self) -> float:
+        """Return the Euclidean acceleration magnitude in g."""
+        return sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
 
-        peak_amplitude = sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
-        intensity_db = vibration_strength_db_scalar(
-            peak_band_rms_amp_g=peak_amplitude,
-            floor_amp_g=noise_floor,
-        )
+    def to_vibration_reading(
+        self,
+        noise_floor: float,
+        *,
+        intensity_db: float,
+        strength_bucket: str | None = None,
+    ) -> VibrationReading:
+        peak_amplitude = self.peak_amplitude_g()
         return VibrationReading(
             timestamp=self.timestamp,
             intensity_db=intensity_db,
@@ -56,6 +59,7 @@ class Measurement:
             peak_amplitude_g=peak_amplitude,
             noise_floor_g=noise_floor,
             sensor_id=self.sensor_id,
+            strength_bucket=strength_bucket,
         )
 
 
@@ -69,9 +73,10 @@ class VibrationReading:
     peak_amplitude_g: float = 0.0
     noise_floor_g: float = 0.0
     sensor_id: str = ""
+    strength_bucket: str | None = None
 
     def get_severity_level(self) -> str:
-        return bucket_for_strength(self.intensity_db)
+        return self.strength_bucket or "l0"
 
 
 # ---------------------------------------------------------------------------
