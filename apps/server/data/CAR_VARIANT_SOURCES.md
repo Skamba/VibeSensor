@@ -386,6 +386,9 @@ and the confidence level of the data.
 | 30 TFSI | 1.0L I3 TFSI Turbo | FWD | Audi press release | High |
 | 35 TFSI | 1.5L I4 TFSI Turbo | FWD | Audi press release | High |
 | 40 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi press release | High |
+| 1.6 TDI | 1.6L I4 TDI Diesel | FWD | Audi owner manual / brochure archive | Medium |
+| 2.0 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / brochure archive / ETKA Europe | Medium |
+| 2.0 TDI quattro | 2.0L I4 TDI Diesel | AWD | Audi owner manual / brochure archive / ETKA Europe | Medium |
 
 ### A3 (8Y, 2021-2026)
 
@@ -394,6 +397,8 @@ and the confidence level of the data.
 | 30 TFSI | 1.0L I3 TFSI Turbo | FWD | Audi press release | High |
 | 35 TFSI | 1.5L I4 TFSI Turbo | FWD | Audi press release | High |
 | 40 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi press release | High |
+| 30 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / ETKA Europe | Medium |
+| 35 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / ETKA Europe | Medium |
 
 ### A4 (B8, 2011-2016)
 
@@ -403,6 +408,9 @@ and the confidence level of the data.
 | 2.0 TFSI | 2.0L I4 TFSI Turbo | FWD | Audi press release | High |
 | 2.0 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi press release | High |
 | 3.0 TFSI quattro | 3.0L V6 Supercharged | AWD | Audi press release | High |
+| 2.0 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / brochure archive / ETKA Europe | Medium |
+| 2.0 TDI quattro | 2.0L I4 TDI Diesel | AWD | Audi owner manual / brochure archive / ETKA Europe | Medium |
+| 3.0 TDI quattro | 3.0L V6 TDI Diesel | AWD | Audi owner manual / brochure archive / ETKA Europe | Medium |
 
 ### A4 (B9, 2016-2024)
 
@@ -411,6 +419,8 @@ and the confidence level of the data.
 | 35 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.234 | Audi MediaCenter eTD technical data | High |
 | 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.234 | Audi MediaCenter eTD / Audi UK technical data | High |
 | 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 4.410 | Audi MediaCenter eTD technical data | High |
+| 30 TDI | 2.0L I4 TDI Diesel | FWD | – | Audi owner manual / ETKA Europe | Medium |
+| 35 TDI | 2.0L I4 TDI Diesel | FWD | – | Audi owner manual / ETKA Europe | Medium |
 
 ### A5 (B8, 2012-2016)
 
@@ -485,6 +495,8 @@ and the confidence level of the data.
 |---------|--------|------------|--------|------------|
 | 1.4 TFSI | 1.4L I4 TFSI Turbo | FWD | Audi press release | High |
 | 2.0 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi press release | High |
+| 2.0 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / brochure archive / ETKA Europe | Medium |
+| 2.0 TDI quattro | 2.0L I4 TDI Diesel | AWD | Audi owner manual / brochure archive / ETKA Europe | Medium |
 
 ### Q3 (F3, 2019-2026)
 
@@ -493,6 +505,8 @@ and the confidence level of the data.
 | 35 TFSI | 1.5L I4 TFSI Turbo | FWD | Audi press release | High |
 | 40 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi press release | High |
 | 45 TFSI e | 1.4L I4 TFSI Turbo PHEV | FWD | Audi press release | High |
+| 35 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / ETKA Europe | Medium |
+| 40 TDI quattro | 2.0L I4 TDI Diesel | AWD | Audi owner manual / ETKA Europe | Medium |
 
 ### Q5 (8R, 2011-2017)
 
@@ -509,6 +523,8 @@ and the confidence level of the data.
 | 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 5.302 | Audi MediaCenter eTD technical data | High |
 | 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 5.302 | Audi MediaCenter eTD / Audi UK technical data | High |
 | 55 TFSI e quattro | 2.0L I4 TFSI Turbo PHEV | AWD | 7-speed S tronic FD 5.302 | Audi MediaCenter / technical data PDF | High |
+| 35 TDI quattro | 2.0L I4 TDI Diesel | AWD | – | Audi owner manual / technical data | Medium |
+| 40 TDI quattro | 2.0L I4 TDI Diesel | AWD | – | Audi owner manual / technical data | Medium |
 
 ### Q7 (4M, 2016-2026)
 
@@ -594,5 +610,4 @@ and the confidence level of the data.
 
 ## TODOs
 
-- [ ] Add diesel (TDI) variants for European-market Audi models where relevant
 - [ ] Research and verify electric vehicle motor specifications
