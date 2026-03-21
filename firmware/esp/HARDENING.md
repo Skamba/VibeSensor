@@ -1,5 +1,8 @@
 # ESP Firmware hardening notes
 
+Runtime ownership now lives in `src/runtime_*.{h,cpp}`, with `src/main.cpp`
+reduced to startup wiring and cooperative loop orchestration.
+
 ## What was fixed
 
 - Added compile-time guardrails for runtime tuning:
