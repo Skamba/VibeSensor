@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from vibesensor.coerce import coerce_float
-
 __all__ = ["OrderMatchObservation"]
+
+from ._numeric import coerce_float
 
 _CLOSE_MATCH_THRESHOLD = 0.05  # 5% relative error
 

@@ -6,8 +6,9 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import ClassVar
 
-from vibesensor.coerce import coerce_float
 from vibesensor.domain.finding_types import VibrationSource
+
+from ._numeric import coerce_float
 
 __all__ = [
     "FindingEvidence",
