@@ -3,10 +3,6 @@
 Owns :class:`ReportMappingContext` plus
 :func:`prepare_report_mapping_context`, which bridge persisted analysis
 summaries into normalized context consumed by ``mapping.py``.
-
-Focused helper implementations now live in ``_card_builder.py``,
-``_candidate_resolver.py``, and ``report_data.py``. Compatibility
-re-exports are kept at the bottom of this module.
 """
 
 from __future__ import annotations
@@ -24,8 +20,6 @@ from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.use_cases.history.report_interpretation import (
-    compute_location_hotspot_rows,
-    filter_active_sensor_intensity,
     normalize_origin_location,
     resolve_report_origin,
     tire_spec_text,
@@ -35,16 +29,8 @@ if TYPE_CHECKING:
     from vibesensor.adapters.pdf._candidate_resolver import PrimaryCandidateContext
 
 __all__ = [
-    "PrimaryCandidateContext",
-    "Report",
     "ReportMappingContext",
-    "build_report_from_summary",
-    "build_system_cards",
-    "compute_location_hotspot_rows",
-    "filter_active_sensor_intensity",
-    "humanize_signatures",
     "prepare_report_mapping_context",
-    "resolve_primary_report_candidate",
 ]
 
 
@@ -183,15 +169,3 @@ def prepare_report_mapping_context(
         firmware_version=config_snap.firmware_version,
         domain_aggregate=domain_aggregate,
     )
-
-
-# Legacy compatibility re-exports. New implementations live in focused modules.
-from vibesensor.adapters.pdf._candidate_resolver import (  # noqa: E402
-    PrimaryCandidateContext,
-    resolve_primary_report_candidate,
-)
-from vibesensor.adapters.pdf._card_builder import (  # noqa: E402
-    build_system_cards,
-    humanize_signatures,
-)
-from vibesensor.adapters.pdf.report_data import Report, build_report_from_summary  # noqa: E402
