@@ -151,6 +151,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         registry=registry,
         processor=processor,
         gps_monitor=gps_monitor,
+        gps_enabled=config.gps.gps_enabled,
         settings_store=settings_store,
     )
 
