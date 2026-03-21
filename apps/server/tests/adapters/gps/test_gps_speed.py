@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import math
-import time
 
 import pytest
+from test_support.gps import set_gps_snapshot_age
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 
@@ -36,7 +36,7 @@ def test_manual_selected_with_override_returns_override() -> None:
     monitor.manual_source_selected = True
     monitor.override_speed_mps = 25.0
     monitor.speed_mps = 30.0
-    monitor.last_update_ts = time.monotonic()
+    set_gps_snapshot_age(monitor)
 
     assert abs((monitor.effective_speed_mps or 0.0) - 25.0) < 1e-9
     assert monitor.fallback_active is False
@@ -48,7 +48,7 @@ def test_manual_selected_no_override_falls_through_to_gps() -> None:
     monitor.manual_source_selected = True
     # No override set
     monitor.speed_mps = 30.0
-    monitor.last_update_ts = time.monotonic()
+    set_gps_snapshot_age(monitor)
 
     # Should return GPS speed instead of None
     assert monitor.effective_speed_mps is not None
@@ -69,7 +69,7 @@ def test_resolve_speed_default_override_has_priority() -> None:
     assert monitor.manual_source_selected is True
     monitor.override_speed_mps = 12.0
     monitor.speed_mps = 20.0
-    monitor.last_update_ts = time.monotonic()
+    set_gps_snapshot_age(monitor)
 
     resolved = monitor.resolve_speed()
     assert resolved.speed_mps == 12.0
@@ -81,7 +81,7 @@ def test_resolve_speed_stale_gps_falls_back_to_manual_override() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
     monitor.manual_source_selected = False
     monitor.speed_mps = 22.0
-    monitor.last_update_ts = time.monotonic() - 30.0
+    set_gps_snapshot_age(monitor, age_s=30.0)
     monitor.override_speed_mps = 11.0
     monitor.connection_state = "connected"
     monitor.stale_timeout_s = 5.0
