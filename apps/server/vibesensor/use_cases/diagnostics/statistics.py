@@ -11,7 +11,7 @@ import math
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from vibesensor.domain.snapshots import SpeedProfileSummary
+from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.shared.constants import (
     SPEED_COVERAGE_MIN_PCT,
     SPEED_MIN_POINTS,

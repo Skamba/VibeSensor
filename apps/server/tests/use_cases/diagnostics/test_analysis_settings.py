@@ -6,7 +6,7 @@ import pytest
 
 from vibesensor.domain import Car as _Car
 from vibesensor.domain import OrderReferenceSpec, TireSpec
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
 DEFAULT_ANALYSIS_SETTINGS = AnalysisSettingsSnapshot.DEFAULTS
 sanitize_settings = AnalysisSettingsSnapshot.sanitize

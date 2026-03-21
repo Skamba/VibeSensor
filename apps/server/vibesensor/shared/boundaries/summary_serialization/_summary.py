@@ -10,7 +10,8 @@ from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, Ru
 from vibesensor.domain import (
     Finding as DomainFinding,
 )
-from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
+from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
+from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.analysis_payload import (
     AnalysisSummary,

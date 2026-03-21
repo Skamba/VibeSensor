@@ -36,7 +36,7 @@ from vibesensor.domain import (
     SpeedSource,
     normalize_sensor_id,
 )
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.config.car_settings import CarSettingsMixin
 from vibesensor.infra.config.car_settings import _clamp_str as _clamp_str
 from vibesensor.shared.exceptions import PersistenceError as PersistenceError

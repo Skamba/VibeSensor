@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from _paths import REPO_ROOT
 
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
 DEFAULT_ANALYSIS_SETTINGS = AnalysisSettingsSnapshot.DEFAULTS
 
