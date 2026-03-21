@@ -1,0 +1,11 @@
+# This image is tuned for Raspberry Pi 3 A+ deployments.
+IMG_NAME='vibesensor-rpi3a-plus-bookworm-lite'
+IMG_SUFFIX='__IMG_SUFFIX__'
+RELEASE='bookworm'
+FIRST_USER_NAME='__VS_FIRST_USER_NAME__'
+FIRST_USER_PASS='__VS_FIRST_USER_PASS__'
+DISABLE_FIRST_BOOT_USER_RENAME=1
+WPA_COUNTRY='__VS_WPA_COUNTRY__'
+ENABLE_SSH=1
+PUBKEY_ONLY_SSH=0
+STAGE_LIST="stage0 stage1 stage2 stage-vibesensor"

@@ -34,6 +34,16 @@ BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh
 BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
 ```
 
+Standalone validation against an existing image artifact:
+
+```bash
+# validate the latest artifact in infra/pi-image/pi-gen/out/
+./infra/pi-image/pi-gen/validate-image.sh
+
+# or validate a specific .img / .img.xz / .zip artifact
+./infra/pi-image/pi-gen/validate-image.sh infra/pi-image/pi-gen/out/your-image.img.xz
+```
+
 Artifacts:
 - app artifacts: `infra/pi-image/pi-gen/out/app-artifacts/`
 - image: `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
@@ -85,6 +95,7 @@ The image contains:
 - systemd services enabled at boot:
   - `vibesensor.service` — FastAPI server
   - `vibesensor-hotspot.service` — Wi-Fi AP setup via NetworkManager
+  - `vibesensor-rfkill-unblock.service` — unblocks Wi-Fi before NetworkManager starts
   - `vibesensor-hotspot-self-heal.timer` — periodic AP health check (every 2 min)
 
 ## Flash
@@ -95,12 +106,34 @@ Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to write the
 Insert the card into a Raspberry Pi 3 A+ and power on. The hotspot and server
 start automatically on first boot.
 
+## Pipeline layout
+
+The pi-image pipeline now has three explicit ownership layers:
+
+- `build.sh` — thin coordinator for `BUILD_MODE=app|image|all`
+- `lib/*.sh` — focused host-side helpers for prerequisites, mirror selection,
+  app artifact build, pi-gen repo prep, stage assembly, artifact selection, and
+  validation helpers
+- `templates/` — tracked stage/config source files copied into `.cache/pi-gen/`
+  instead of being emitted as long heredocs from `build.sh`
+
+`validate-image.sh` is the standalone mount/chroot/QEMU validator. `build.sh`
+invokes it automatically when `VALIDATE=1`, and you can rerun it separately
+against an already-built artifact.
+
+During pi-gen repo preparation, the build also patches upstream
+`export-image/prerun.sh` to size the boot partition at `1 GiB`. Current
+Raspberry Pi kernel/security updates overflow the stock `512 MiB` bootfs during
+export-image upgrades.
+
 ## How It Works
 
-`build.sh` uses [pi-gen](https://github.com/RPi-Distro/pi-gen) in Docker to
-produce the image. It adds a custom stage that:
+`build.sh` still uses [pi-gen](https://github.com/RPi-Distro/pi-gen) in Docker
+to produce the image. The current flow is:
 
-1. builds app artifacts (UI bundle + `vibesensor-*.whl`),
-2. copies runtime repo + app artifacts into the image stage,
-3. builds an ARM wheelhouse and installs the server from the prebuilt wheel (non-editable),
-4. enables the hotspot and self-heal services.
+1. build app artifacts (UI bundle + `vibesensor-*.whl`),
+2. sync runtime repo + app artifacts into the tracked stage templates,
+3. copy those templates into the generated `pi-gen` stage tree,
+4. build an ARM wheelhouse and install the server from the prebuilt wheel (non-editable),
+5. enable the hotspot and self-heal services,
+6. run the standalone validator when post-build validation is enabled.

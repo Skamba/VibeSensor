@@ -1,0 +1,8 @@
+network-manager
+dnsmasq
+rfkill
+iw
+gpsd
+python3-venv
+libopenblas0-pthread
+libopenjp2-7
