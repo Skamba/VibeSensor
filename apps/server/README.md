@@ -110,6 +110,6 @@ Use [.github/copilot-instructions.md](../../.github/copilot-instructions.md)
 [docs/testing.md](../../docs/testing.md) for the full test map and command
 selection guidance.
 
-`make typecheck-backend` is the enforced backend static-typing gate for the `vibesensor` package. It now checks new backend files by default, with only a small temporary denylist for legacy modules that still need dedicated typing cleanup. Use `docs/testing.md` for the full test map. Start with the matching mirrored feature directory under `apps/server/tests/`, then add `integration/` coverage when the behavior crosses package boundaries.
+`make typecheck-backend` is the enforced backend static-typing gate for the `vibesensor` package. It checks backend files by default without an internal module denylist. Use `docs/testing.md` for the full test map. Start with the matching mirrored feature directory under `apps/server/tests/`, then add `integration/` coverage when the behavior crosses package boundaries.
 
 When tightening Python types, treat `Any` as a smell rather than a shortcut: prefer shared `JsonValue`/`JsonObject` aliases for persisted JSON, `TypedDict`/dataclass contracts for nested payloads, and `ParamSpec` for generic callable wrappers so mypy reflects the real runtime contract instead of a permissive fallback.
