@@ -4,8 +4,7 @@ Sub-modules
 -----------
 - :mod:`~vibesensor.adapters.hotspot.parsers` — text-parsing helpers for hostapd,
   dnsmasq, NetworkManager, iw, and rfkill output.
-- :mod:`~vibesensor.adapters.hotspot.self_heal` — hotspot watchdog manager with
-  CLI entry point.
+- :mod:`~vibesensor.adapters.hotspot.self_heal` — hotspot watchdog manager.
 """
 
 from vibesensor.adapters.hotspot.parsers import (
@@ -22,7 +21,6 @@ from vibesensor.adapters.hotspot.parsers import (
 from vibesensor.adapters.hotspot.self_heal import (
     CommandResult,
     CommandRunner,
-    main,
 )
 
 __all__ = [
@@ -30,7 +28,6 @@ __all__ = [
     "CommandRunner",
     "HealStateStore",
     "expected_ip_match",
-    "main",
     "nm_log_signals",
     "parse_active_conn_device",
     "parse_active_connection_names",

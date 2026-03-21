@@ -83,8 +83,6 @@ _KNOWN_VIOLATIONS: frozenset[tuple[str, str]] = frozenset(
         # use_cases → infra
         # infra → adapters
         # infra → app
-        # adapters → app
-        ("adapters/hotspot/self_heal.py", "vibesensor.app.settings"),
     }
 )
 
