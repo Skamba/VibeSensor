@@ -3,6 +3,7 @@ import type {
   DeleteHistoryRunPayload,
   HistoryInsightsPayload,
   HistoryListPayload,
+  HistoryRunPayload,
 } from "./types";
 
 export function historyExportUrl(runId: string): string {
@@ -19,6 +20,10 @@ export async function getHistory(): Promise<HistoryListPayload> {
 
 export async function deleteHistoryRun(runId: string): Promise<DeleteHistoryRunPayload> {
   return apiJson(`/api/history/${encodeURIComponent(runId)}`, { method: "DELETE" });
+}
+
+export async function getHistoryRun(runId: string): Promise<HistoryRunPayload> {
+  return apiJson(`/api/history/${encodeURIComponent(runId)}`);
 }
 
 export async function getHistoryInsights(

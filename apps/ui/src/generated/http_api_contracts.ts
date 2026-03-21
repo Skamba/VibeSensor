@@ -206,6 +206,22 @@ export interface components {
       carId: string;
     };
     /**
+     * AmpVsPhaseRow
+     * @description Typed HTTP contract for one phase-grouped vibration aggregate row.
+     */
+    AmpVsPhaseRow: {
+      /** Count */
+      count: number;
+      /** Max Vib Db */
+      max_vib_db: number | null;
+      /** Mean Speed Kmh */
+      mean_speed_kmh: number | null;
+      /** Mean Vib Db */
+      mean_vib_db: number;
+      /** Phase */
+      phase: string;
+    };
+    /**
      * AmplitudeMetric
      * @description HTTP contract for finding amplitude/strength metadata.
      */
@@ -293,6 +309,139 @@ export interface components {
       tire_width_mm: number;
       /** Wheel Bandwidth Pct */
       wheel_bandwidth_pct: number;
+    };
+    /**
+     * AnalysisSummaryResponse
+     * @description Typed HTTP contract for the persisted analysis summary on one history run.
+     */
+    AnalysisSummaryResponse: {
+      /** Accel Scale G Per Lsb */
+      accel_scale_g_per_lsb: number | null;
+      /** Analysis Metadata */
+      analysis_metadata?: {
+        [key: string]: unknown;
+      };
+      /** Data Quality */
+      data_quality: {
+        [key: string]: unknown;
+      };
+      /** Duration S */
+      duration_s: number;
+      /** End Time Utc */
+      end_time_utc?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Feature Interval S */
+      feature_interval_s: number | null;
+      /** Fft Window Size Samples */
+      fft_window_size_samples?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Fft Window Type */
+      fft_window_type?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** File Name */
+      file_name: string;
+      /** Findings */
+      findings: components["schemas"]["FindingPayload"][];
+      /** Firmware Version */
+      firmware_version?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Incomplete For Order Analysis */
+      incomplete_for_order_analysis: boolean;
+      /** Lang */
+      lang: string;
+      /** Metadata */
+      metadata: {
+        [key: string]: unknown;
+      };
+      most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
+      /** Peak Picker Method */
+      peak_picker_method?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Phase Info */
+      phase_info: {
+        [key: string]: unknown;
+      };
+      /** Phase Segments */
+      phase_segments: {
+          [key: string]: unknown;
+        }[];
+      /** Phase Speed Breakdown */
+      phase_speed_breakdown: components["schemas"]["PhaseSpeedBreakdownRow"][];
+      /** Phase Timeline */
+      phase_timeline: {
+          [key: string]: unknown;
+        }[];
+      plots?: components["schemas"]["PlotDataResult"] | null;
+      /** Raw Sample Rate Hz */
+      raw_sample_rate_hz: number | null;
+      /** Record Length */
+      record_length: string;
+      /** Report Date */
+      report_date?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Rows */
+      rows: number;
+      /** Run Id */
+      run_id: string;
+      /** Run Noise Baseline Db */
+      run_noise_baseline_db: number | null;
+      /** Run Suitability */
+      run_suitability: components["schemas"]["RunSuitabilityCheck"][];
+      /** Samples */
+      samples?: {
+          [key: string]: unknown;
+        }[];
+      /** Sensor Count Used */
+      sensor_count_used: number;
+      /** Sensor Intensity By Location */
+      sensor_intensity_by_location: {
+          [key: string]: unknown;
+        }[];
+      /** Sensor Locations */
+      sensor_locations: string[];
+      /** Sensor Locations Connected Throughout */
+      sensor_locations_connected_throughout: string[];
+      /** Sensor Model */
+      sensor_model?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Speed Breakdown */
+      speed_breakdown: components["schemas"]["SpeedBreakdownRow"][];
+      /** Speed Breakdown Skipped Reason */
+      speed_breakdown_skipped_reason: {
+        [key: string]: unknown;
+      } | null;
+      /** Speed Stats */
+      speed_stats: {
+        [key: string]: unknown;
+      };
+      /** Speed Stats By Phase */
+      speed_stats_by_phase: {
+        [key: string]: {
+          [key: string]: unknown;
+        };
+      };
+      /** Start Time Utc */
+      start_time_utc?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Test Plan */
+      test_plan: {
+          [key: string]: unknown;
+        }[];
+      /** Top Causes */
+      top_causes: components["schemas"]["FindingPayload"][];
+      /** Warnings */
+      warnings: {
+          [key: string]: unknown;
+        }[];
+      [key: string]: unknown;
     };
     /** AxisMetrics */
     AxisMetrics: {
@@ -847,6 +996,18 @@ export interface components {
       weak_spatial_separation?: boolean | null;
       [key: string]: unknown;
     };
+    /**
+     * FreqVsSpeedByFindingSeries
+     * @description Typed HTTP contract for one finding's freq-vs-speed series.
+     */
+    FreqVsSpeedByFindingSeries: {
+      /** Label */
+      label: string;
+      /** Matched */
+      matched: [number, number][];
+      /** Predicted */
+      predicted: [number, number][];
+    };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
@@ -1075,9 +1236,7 @@ export interface components {
      */
     HistoryRunResponse: {
       /** Analysis */
-      analysis?: {
-        [key: string]: unknown;
-      } | null;
+      analysis?: components["schemas"]["AnalysisSummaryResponse"] | null;
       /** Metadata */
       metadata?: {
         [key: string]: unknown;
@@ -1162,6 +1321,16 @@ export interface components {
       label: string;
     };
     /**
+     * MatchedAmpVsSpeedSeries
+     * @description Typed HTTP contract for one finding's amp-vs-speed series.
+     */
+    MatchedAmpVsSpeedSeries: {
+      /** Label */
+      label: string;
+      /** Points */
+      points: [number, number][];
+    };
+    /**
      * MatchedPoint
      * @description HTTP contract for one serialized finding matched-point observation.
      */
@@ -1185,6 +1354,59 @@ export interface components {
       [key: string]: unknown;
     };
     /**
+     * PeakTableRow
+     * @description Typed HTTP contract for one ranked peak table row.
+     */
+    PeakTableRow: {
+      /** Burstiness */
+      burstiness: number;
+      /** Frequency Hz */
+      frequency_hz: number;
+      /** Max Intensity Db */
+      max_intensity_db: number | null;
+      /** Median Intensity Db */
+      median_intensity_db: number | null;
+      /** Median Vs Run Noise Ratio */
+      median_vs_run_noise_ratio: number;
+      /** Order Label */
+      order_label: string;
+      /** P95 Intensity Db */
+      p95_intensity_db: number | null;
+      /** P95 Vs Run Noise Ratio */
+      p95_vs_run_noise_ratio: number;
+      /** Peak Classification */
+      peak_classification: string;
+      /** Persistence Score */
+      persistence_score: number;
+      /** Presence Ratio */
+      presence_ratio: number;
+      /** Rank */
+      rank: number;
+      /** Run Noise Baseline Db */
+      run_noise_baseline_db: number | null;
+      /** Strength Db */
+      strength_db: number | null;
+      /** Strength Floor Db */
+      strength_floor_db: number | null;
+      /** Suspected Source */
+      suspected_source: string;
+      /** Typical Speed Band */
+      typical_speed_band: string;
+      [key: string]: unknown;
+    };
+    /**
+     * PhaseBoundary
+     * @description Typed HTTP contract for a phase-boundary marker.
+     */
+    PhaseBoundary: {
+      /** End T S */
+      end_t_s: number | null;
+      /** Phase */
+      phase: string;
+      /** T S */
+      t_s: number | null;
+    };
+    /**
      * PhaseEvidence
      * @description HTTP contract for optional driving-phase evidence attached to a finding.
      */
@@ -1193,6 +1415,71 @@ export interface components {
       cruise_fraction?: number | null;
       /** Phases Detected */
       phases_detected?: string[];
+      [key: string]: unknown;
+    };
+    /**
+     * PhaseSegmentOut
+     * @description Typed HTTP contract for a serialized driving-phase segment.
+     */
+    PhaseSegmentOut: {
+      /** End T S */
+      end_t_s: number | null;
+      /** Phase */
+      phase: string;
+      /** Start T S */
+      start_t_s: number | null;
+    };
+    /**
+     * PhaseSpeedBreakdownRow
+     * @description Typed HTTP contract for one phase-aware speed aggregate row.
+     */
+    PhaseSpeedBreakdownRow: {
+      /** Count */
+      count: number;
+      /** Max Speed Kmh */
+      max_speed_kmh: number | null;
+      /** Max Vibration Strength Db */
+      max_vibration_strength_db: number | null;
+      /** Mean Speed Kmh */
+      mean_speed_kmh: number | null;
+      /** Mean Vibration Strength Db */
+      mean_vibration_strength_db: number | null;
+      /** Phase */
+      phase: string;
+    };
+    /**
+     * PlotDataResult
+     * @description Typed HTTP contract for serialized plot data attached to a run summary.
+     */
+    PlotDataResult: {
+      /** Amp Vs Phase */
+      amp_vs_phase: components["schemas"]["AmpVsPhaseRow"][];
+      /** Amp Vs Speed */
+      amp_vs_speed: [number, number][];
+      /** Dominant Freq */
+      dominant_freq: [number, number][];
+      /** Fft Spectrum */
+      fft_spectrum: [number, number][];
+      /** Fft Spectrum Raw */
+      fft_spectrum_raw: [number, number][];
+      /** Freq Vs Speed By Finding */
+      freq_vs_speed_by_finding: components["schemas"]["FreqVsSpeedByFindingSeries"][];
+      /** Matched Amp Vs Speed */
+      matched_amp_vs_speed: components["schemas"]["MatchedAmpVsSpeedSeries"][];
+      peaks_spectrogram: components["schemas"]["SpectrogramResult"];
+      peaks_spectrogram_raw: components["schemas"]["SpectrogramResult"];
+      /** Peaks Table */
+      peaks_table: components["schemas"]["PeakTableRow"][];
+      /** Phase Boundaries */
+      phase_boundaries: components["schemas"]["PhaseBoundary"][];
+      /** Phase Segments */
+      phase_segments: components["schemas"]["PhaseSegmentOut"][];
+      /** Steady Speed Distribution */
+      steady_speed_distribution: {
+        [key: string]: number;
+      } | null;
+      /** Vib Magnitude */
+      vib_magnitude: [number, number, string][];
       [key: string]: unknown;
     };
     /** RawSamplesErrorPayload */
@@ -1258,6 +1545,23 @@ export interface components {
       status: string;
     };
     /**
+     * RunSuitabilityCheck
+     * @description Typed HTTP contract for one run-suitability diagnostic check.
+     */
+    RunSuitabilityCheck: {
+      /** Check */
+      check: string;
+      /** Check Key */
+      check_key: string;
+      /** Explanation */
+      explanation?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** State */
+      state: string;
+      [key: string]: unknown;
+    };
+    /**
      * SensorConfigResponse
      * @description Response body with persisted config for a single sensor (name, location_code).
      */
@@ -1308,6 +1612,43 @@ export interface components {
     SetLocationRequest: {
       /** Location Code */
       location_code: string;
+    };
+    /**
+     * SpectrogramResult
+     * @description Typed HTTP contract for a serialized spectrogram grid.
+     */
+    SpectrogramResult: {
+      /** Cells */
+      cells: number[][];
+      /** Max Amp */
+      max_amp: number;
+      /** X Axis */
+      x_axis: string;
+      /** X Bin Width */
+      x_bin_width?: number | null;
+      /** X Bins */
+      x_bins: number[];
+      /** X Label Key */
+      x_label_key: string;
+      /** Y Bin Width */
+      y_bin_width?: number | null;
+      /** Y Bins */
+      y_bins: number[];
+      [key: string]: unknown;
+    };
+    /**
+     * SpeedBreakdownRow
+     * @description Typed HTTP contract for one speed-band aggregate row.
+     */
+    SpeedBreakdownRow: {
+      /** Count */
+      count: number;
+      /** Max Vibration Strength Db */
+      max_vibration_strength_db: number | null;
+      /** Mean Vibration Strength Db */
+      mean_vibration_strength_db: number | null;
+      /** Speed Range */
+      speed_range: string;
     };
     /**
      * SpeedSourceKind
@@ -1415,6 +1756,31 @@ export interface components {
       strength_bucket: string | null;
       /** Vibration Strength Db */
       vibration_strength_db: number;
+    };
+    /**
+     * SuspectedVibrationOriginPayload
+     * @description Typed HTTP contract for the serialized likely-origin payload.
+     */
+    SuspectedVibrationOriginPayload: {
+      /** Alternative Locations */
+      alternative_locations?: string[];
+      /** Dominance Ratio */
+      dominance_ratio?: number | null;
+      /** Dominant Phase */
+      dominant_phase?: string | null;
+      /** Explanation */
+      explanation?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Location */
+      location?: string | null;
+      /** Speed Band */
+      speed_band?: string | null;
+      /** Suspected Source */
+      suspected_source?: string | null;
+      /** Weak Spatial Separation */
+      weak_spatial_separation?: boolean | null;
+      [key: string]: unknown;
     };
     /**
      * UpdateCancelResponse
