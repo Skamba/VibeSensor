@@ -17,7 +17,7 @@ analysis.summarize_run_data(meta, samples)
           → PDF bytes
 ```
 
-`summary["warnings"]` is part of the persisted canonical analysis contract.
+`summary["warnings"]` is part of the persisted analysis contract.
 These entries are stored as language-neutral i18n references so history APIs and
 report rendering can localize them at read time.
 

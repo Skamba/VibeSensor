@@ -60,9 +60,10 @@ Validation (always required)
 Docs (`docs/`)
 - Keep `docs/` short and focused. Add design changes (e.g. report layout) to `docs/design_language.md`.
 - Rewrite or remove stale sections aggressively; do not keep contradictory historical guidance in place.
-- Prefer direct pointers to current source-of-truth files over long prose that will drift.
+- Prefer direct pointers to the files that own current commands or workflows over long prose that will drift.
+- Keep ownership-language rare. Use it only when a file genuinely owns a fact that other docs should not restate.
 
 Infra / Docker / CI (`docker-compose.yml`, `.github/workflows/`)
-- CI: `.github/workflows/ci.yml` is authoritative for blocking job names and job commands; do not duplicate that list elsewhere.
+- CI: see `.github/workflows/ci.yml` for blocking job names and job commands; do not duplicate that list elsewhere.
 - Keep CI steps maintainable; larger CI/workflow updates are allowed when needed. If adding new test dependencies, update `apps/server/pyproject.toml` so CI installs them via the editable install.
 - Avoid embedding secrets in workflow files; use repository secrets for tokens.

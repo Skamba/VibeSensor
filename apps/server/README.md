@@ -106,7 +106,7 @@ Production devices use the wheel-based updater in `apps/server/vibesensor/use_ca
 ## Testing
 
 Use [.github/copilot-instructions.md](../../.github/copilot-instructions.md)
-§ "Commands" for the canonical backend validation commands, and
+§ "Commands" for backend validation commands, and
 [docs/testing.md](../../docs/testing.md) for the full test map and command
 selection guidance.
 

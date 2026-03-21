@@ -145,7 +145,7 @@ After `RunAnalysis.summarize()` returns, `PostAnalysisWorker`:
 3. Stores the summary via `history_db.store_analysis()` as a
    versioned persistence envelope.
 
-History readers unwrap the envelope back to the canonical summary shape.
+History readers unwrap the envelope back to the summary shape.
 Report endpoints rebuild `ReportTemplateData` from that summary on demand
 via `adapters/pdf/mapping.py:map_summary()`.
 

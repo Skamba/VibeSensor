@@ -40,7 +40,7 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 
 ## Units
 
-See [docs/metrics.md](docs/metrics.md) for the canonical unit rules and
+See [docs/metrics.md](docs/metrics.md) for the unit rules and
 vibration-metric definitions used throughout the repo.
 
 ## System Architecture

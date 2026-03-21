@@ -28,7 +28,7 @@ in one step.
 
 ## Contract sync
 
-`npm run sync:contracts` is the canonical frontend contract-sync flow.
+Use `npm run sync:contracts` to refresh the generated frontend contracts.
 
 It regenerates:
 
@@ -61,7 +61,7 @@ for `LOCATION_CODES` and `METRIC_FIELDS` there.
 | `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
 | `vehicle_math.ts` | Tire diameter, order tolerance, and uncertainty calculations |
 | `format.ts` | Number, byte, and timestamp formatting utilities |
-| `constants.ts` | Sensor location codes and canonical strength field names, with backend hygiene tests guarding drift |
+| `constants.ts` | Sensor location codes and shared strength field names, with backend hygiene tests guarding drift |
 | `theme.ts` | Chart color palette and order band fill colors |
 | `styles/app.css` | Full CSS with light/dark theme tokens |
 
@@ -82,14 +82,14 @@ HTML rendering helpers and event-target decoding for reusable panels.
 
 ## WebSocket contract boundary
 
-- `src/contracts/ws_payload_schema.json` is the canonical JSON Schema for live WS payloads.
+- `src/contracts/ws_payload_schema.json` defines the JSON Schema for live WS payloads.
 - `src/contracts/ws_payload_types.ts` is generated from that schema by the
   [contract sync flow](#contract-sync).
 - `src/ws_payload_normalization.ts` keeps the pre-validation compatibility shim small: it only normalizes the supported legacy `strength_metrics` and malformed-spectra quirks before AJV runs.
 - `src/ws_payload_validator.ts` compiles AJV against `ws_payload_schema.json` and validates that normalized live payload at runtime.
 - `src/server_payload.ts` then adapts the validated `LiveWsPayload` with schema-version warnings, shared-`freq` fallback, and malformed/misaligned spectrum rejection.
 
-AJV-backed runtime validation now sits at the WebSocket boundary. The UI still preserves the intentionally supported compatibility behavior called out in the original investigation—partial `strength_metrics` defaults, malformed peak dropping, shared-`freq` fallback, schema-version warning logging, and dropping malformed spectrum series before they can misalign bins—but the rest of the payload now has to satisfy the canonical JSON Schema before the app state adapter accepts it.
+AJV-backed runtime validation now sits at the WebSocket boundary. The UI still preserves the intentionally supported compatibility behavior called out in the original investigation—partial `strength_metrics` defaults, malformed peak dropping, shared-`freq` fallback, schema-version warning logging, and dropping malformed spectrum series before they can misalign bins—but the rest of the payload now has to satisfy that JSON Schema before the app state adapter accepts it.
 
 ## Visual Tests
 

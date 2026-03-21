@@ -1,9 +1,9 @@
 # Testing
 
-## Source of truth
+## Key locations
 
 - Server tests live under `apps/server/tests/`.
-- The canonical CI-parity runner is `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
+- Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for CI-parity runs.
 - The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`).
 - Python test configuration lives in `apps/server/pyproject.toml`.
 
@@ -67,7 +67,7 @@ Use cross-cutting directories when a test is intentionally broader than one pack
 Regression tests live alongside the feature they primarily test. Cross-cutting
 regressions that span multiple subsystems go in `integration/`.
 
-Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `findings.py` (canonical finding-payload factories), `report_helpers.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
+Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `findings.py` (shared finding-payload factories), `report_helpers.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
 
 ## Contract bridge tests
 
