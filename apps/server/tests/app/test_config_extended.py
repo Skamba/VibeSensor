@@ -5,11 +5,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.app.settings import (
-    _read_config_file,
-    _resolve_config_path,
-    load_config,
-)
+from vibesensor.app.config_loader import _read_config_file, _resolve_config_path
+from vibesensor.app.settings import load_config
 from vibesensor.shared.json_utils import deep_merge as _deep_merge
 
 # -- _deep_merge ---------------------------------------------------------------
