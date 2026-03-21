@@ -13,6 +13,7 @@ from vibesensor.domain import (
     RunContextSnapshot,
 )
 from vibesensor.report_i18n import tr as _tr
+from vibesensor.shared.boundaries.analysis_payload import SummaryWarningPayload
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
@@ -75,9 +76,9 @@ def build_summary_warnings(
     metadata: Mapping[str, object],
     *,
     reference_complete: bool,
-) -> list[JsonObject]:
+) -> list[SummaryWarningPayload]:
     """Build language-neutral trust warnings stored with the analysis summary."""
-    warnings: list[JsonObject] = []
+    warnings: list[SummaryWarningPayload] = []
     if not reference_complete or bool(metadata.get("incomplete_for_order_analysis")):
         warnings.append(
             {

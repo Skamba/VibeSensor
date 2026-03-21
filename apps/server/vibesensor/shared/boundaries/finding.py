@@ -16,7 +16,10 @@ from vibesensor.coerce import coerce_float
 from vibesensor.domain import Finding, FindingEvidence, Signature, VibrationSource
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
-from vibesensor.shared.boundaries.analysis_payload import matched_point_from_observation
+from vibesensor.shared.boundaries.analysis_payload import (
+    TestPlanStepPayload,
+    matched_point_from_observation,
+)
 from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,
     vibration_origin_from_payload,
@@ -44,7 +47,7 @@ def _has_structured_step_content(steps: object) -> bool:
     return False
 
 
-def step_payload_from_action(action: RecommendedAction) -> dict[str, object]:
+def step_payload_from_action(action: RecommendedAction) -> TestPlanStepPayload:
     """Project one semantic action into the persisted TestStep shape."""
     return {
         "action_id": action.action_id,
@@ -56,7 +59,7 @@ def step_payload_from_action(action: RecommendedAction) -> dict[str, object]:
     }
 
 
-def step_payloads_from_plan(test_plan: TestPlan) -> list[dict[str, object]]:
+def step_payloads_from_plan(test_plan: TestPlan) -> list[TestPlanStepPayload]:
     """Project a semantic TestPlan into the persisted TestStep payload list."""
     return [step_payload_from_action(action) for action in test_plan.prioritized_actions]
 

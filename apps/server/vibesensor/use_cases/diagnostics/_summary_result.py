@@ -106,7 +106,7 @@ def build_analysis_result(
     summary_speed_stats = _speed_stats(prepared.speed_values)
     summary_phase_info = build_phase_summary(prepared.phase_segments)
     domain_test_plan = plan_test_actions(domain_findings)
-    summary_test_plan = cast(list[JsonObject], step_payloads_from_plan(domain_test_plan))
+    summary_test_plan = step_payloads_from_plan(domain_test_plan)
 
     test_run = TestRun(
         capture=RunCapture(
