@@ -4118,17 +4118,6 @@
             "title": "Analysis In Progress",
             "type": "boolean"
           },
-          "current_file": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Current File"
-          },
           "enabled": {
             "title": "Enabled",
             "type": "boolean"
@@ -4190,7 +4179,6 @@
         },
         "required": [
           "enabled",
-          "current_file",
           "run_id",
           "write_error",
           "analysis_in_progress"

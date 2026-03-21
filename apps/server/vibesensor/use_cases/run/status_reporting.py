@@ -28,7 +28,6 @@ def build_run_recorder_status(
     persist = persistence.status_snapshot()
     return {
         "enabled": enabled,
-        "current_file": None,
         "run_id": run_id,
         "write_error": persist.write_error,
         "analysis_in_progress": post_analysis.is_active,

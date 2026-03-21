@@ -63,7 +63,7 @@ export async function fulfillJson(route: Route, body: unknown): Promise<void> {
 
 export async function installCommonRoutes(page: Page, options: CommonRouteOptions = {}): Promise<void> {
   await page.route("**/api/recording/status", async (route) => {
-    await fulfillJson(route, { enabled: false, current_file: null });
+    await fulfillJson(route, { enabled: false, run_id: null });
   });
   await page.route("**/api/history**", async (route) => {
     if (!requestPath(route).startsWith("/api/history")) {

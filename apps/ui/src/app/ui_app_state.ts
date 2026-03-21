@@ -138,7 +138,6 @@ export function createAppState(): AppState {
     runDetailsById: {},
     loggingStatus: {
       enabled: false,
-      current_file: null,
       run_id: null,
       write_error: null,
       analysis_in_progress: false,

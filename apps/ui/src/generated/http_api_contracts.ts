@@ -1511,8 +1511,6 @@ export interface components {
     RecordingStatusResponse: {
       /** Analysis In Progress */
       analysis_in_progress: boolean;
-      /** Current File */
-      current_file: string | null;
       /** Enabled */
       enabled: boolean;
       /** Last Completed Run Error */
