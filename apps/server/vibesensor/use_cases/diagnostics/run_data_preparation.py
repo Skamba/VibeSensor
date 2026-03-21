@@ -19,7 +19,6 @@ from vibesensor.domain import (
     Finding as DomainFinding,
 )
 from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
-from vibesensor.shared.boundaries.diagnostic_case import speed_profile_from_stats
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject
@@ -203,7 +202,7 @@ def prepare_run_data(
         per_sample_phases=per_sample_phases,
         phase_segments=phase_segments,
         run_noise_baseline_g=run_noise_baseline_g,
-        speed_profile=speed_profile_from_stats(
+        speed_profile=SpeedProfile.from_stats(
             speed_stats,
             phase_info,
         ),
