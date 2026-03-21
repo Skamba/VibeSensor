@@ -15,6 +15,7 @@ import pytest
 from vibesensor.cli.ws_schema_export import export_schema
 from vibesensor.infra.processing import ClientBuffer, SignalProcessor
 from vibesensor.shared.types.payload_types import SCHEMA_VERSION
+from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 # ---------------------------------------------------------------------------
 # Schema export check
@@ -89,7 +90,10 @@ class TestMultiSpectrumFreqDedup:
                 "z": {"freq": freq, "amp": amp},
                 "combined": {"freq": freq, "amp": amp},
             }
-            buf.latest_strength_metrics = {"vibration_strength_db": 5.0}
+            buf.latest_strength_metrics = {
+                **empty_vibration_strength_metrics(),
+                "vibration_strength_db": 5.0,
+            }
             buf.spectrum_generation = 1
             proc._store.buffers[cid] = buf
         return proc

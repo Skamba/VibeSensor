@@ -1,4 +1,4 @@
-import { METRIC_FIELDS } from "../constants";
+import { EXPECTED_SCHEMA_VERSION } from "../contracts/ws_payload_types";
 
 type DemoDeps = {
   state: { wsState: string; hasReceivedPayload: boolean };
@@ -19,11 +19,66 @@ export function runDemoMode(deps: DemoDeps): void {
   renderWsState();
 
   const demoClients = [
-    { id: "aabbcc001122", name: "Front Left Wheel", mac_address: "AA:BB:CC:00:11:22", connected: true, last_seen_age_ms: 42, dropped_frames: 0, frames_total: 8400 },
-    { id: "aabbcc001133", name: "Front Right Wheel", mac_address: "AA:BB:CC:00:11:33", connected: true, last_seen_age_ms: 38, dropped_frames: 1, frames_total: 8395 },
-    { id: "aabbcc001144", name: "Rear Left Wheel", mac_address: "AA:BB:CC:00:11:44", connected: true, last_seen_age_ms: 45, dropped_frames: 0, frames_total: 8388 },
-    { id: "aabbcc001155", name: "Rear Right Wheel", mac_address: "AA:BB:CC:00:11:55", connected: true, last_seen_age_ms: 51, dropped_frames: 0, frames_total: 8401 },
-    { id: "aabbcc001166", name: "Engine Bay", mac_address: "AA:BB:CC:00:11:66", connected: true, last_seen_age_ms: 39, dropped_frames: 2, frames_total: 8390 },
+    {
+      id: "aabbcc001122",
+      name: "Front Left Wheel",
+      mac_address: "AA:BB:CC:00:11:22",
+      connected: true,
+      last_seen_age_ms: 42,
+      dropped_frames: 0,
+      frames_total: 8400,
+      location_code: "front_left_wheel",
+      firmware_version: "demo-1.0.0",
+      sample_rate_hz: 800,
+    },
+    {
+      id: "aabbcc001133",
+      name: "Front Right Wheel",
+      mac_address: "AA:BB:CC:00:11:33",
+      connected: true,
+      last_seen_age_ms: 38,
+      dropped_frames: 1,
+      frames_total: 8395,
+      location_code: "front_right_wheel",
+      firmware_version: "demo-1.0.0",
+      sample_rate_hz: 800,
+    },
+    {
+      id: "aabbcc001144",
+      name: "Rear Left Wheel",
+      mac_address: "AA:BB:CC:00:11:44",
+      connected: true,
+      last_seen_age_ms: 45,
+      dropped_frames: 0,
+      frames_total: 8388,
+      location_code: "rear_left_wheel",
+      firmware_version: "demo-1.0.0",
+      sample_rate_hz: 800,
+    },
+    {
+      id: "aabbcc001155",
+      name: "Rear Right Wheel",
+      mac_address: "AA:BB:CC:00:11:55",
+      connected: true,
+      last_seen_age_ms: 51,
+      dropped_frames: 0,
+      frames_total: 8401,
+      location_code: "rear_right_wheel",
+      firmware_version: "demo-1.0.0",
+      sample_rate_hz: 800,
+    },
+    {
+      id: "aabbcc001166",
+      name: "Engine Bay",
+      mac_address: "AA:BB:CC:00:11:66",
+      connected: true,
+      last_seen_age_ms: 39,
+      dropped_frames: 2,
+      frames_total: 8390,
+      location_code: "engine_bay",
+      firmware_version: "demo-1.0.0",
+      sample_rate_hz: 800,
+    },
   ];
 
   const freqCount = 256;
@@ -60,13 +115,24 @@ export function runDemoMode(deps: DemoDeps): void {
       freq: freqArr,
       combined_spectrum_amp_g: combined,
       strength_metrics: {
-        [METRIC_FIELDS.vibration_strength_db]: pk.db,
-        [METRIC_FIELDS.strength_bucket]: pk.bucket,
+        vibration_strength_db: pk.db,
+        peak_amp_g: pk.amp,
+        noise_floor_amp_g: 0.0,
+        strength_bucket: pk.bucket,
+        top_peaks: [
+          {
+            hz: pk.hz,
+            amp: pk.amp,
+            vibration_strength_db: pk.db,
+            strength_bucket: pk.bucket,
+          },
+        ],
       },
     };
   });
 
   const demoPayload = {
+    schema_version: EXPECTED_SCHEMA_VERSION,
     server_time: new Date().toISOString(),
     clients: demoClients,
     speed_mps: 22.2,

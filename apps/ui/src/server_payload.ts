@@ -8,7 +8,6 @@ import {
 } from "./contracts/ws_payload_types";
 import type { SpectrumClientData } from "./app/ui_app_state";
 import { validateLiveWsPayload } from "./ws_payload_validator";
-import { normalizePayloadForValidation } from "./ws_payload_normalization";
 
 export type AdaptedClient = Pick<
   WsClientInfo,
@@ -84,9 +83,7 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
     throw new Error("Missing websocket payload.");
   }
 
-  const validatedPayload = validateLiveWsPayload(
-    normalizePayloadForValidation(payload as Record<string, unknown>),
-  );
+  const validatedPayload = validateLiveWsPayload(payload);
   warnOnUnknownSchemaVersion(validatedPayload.schema_version ?? null);
 
   return {

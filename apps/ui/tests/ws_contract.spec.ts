@@ -10,7 +10,20 @@
 
 import { expect, test } from "@playwright/test";
 import { adaptServerPayload } from "../src/server_payload";
-import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
+import { EXPECTED_SCHEMA_VERSION, type StrengthMetricsPayload } from "../src/contracts/ws_payload_types";
+
+function makeStrengthMetrics(
+  overrides: Partial<StrengthMetricsPayload> = {},
+): StrengthMetricsPayload {
+  return {
+    vibration_strength_db: 0,
+    peak_amp_g: 0,
+    noise_floor_amp_g: 0,
+    strength_bucket: null,
+    top_peaks: [],
+    ...overrides,
+  };
+}
 
 const basePayload = {
   schema_version: EXPECTED_SCHEMA_VERSION,
@@ -51,6 +64,23 @@ test.describe("schema_version handling", () => {
     ).toThrow(/Invalid websocket payload/);
   });
 
+  test("rejects partial strength_metrics instead of defaulting missing fields", () => {
+    expect(() =>
+      adaptServerPayload({
+        ...basePayload,
+        spectra: {
+          freq: [10, 20, 30],
+          clients: {
+            sensor1: {
+              combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+              strength_metrics: { vibration_strength_db: 12 },
+            },
+          },
+        },
+      }),
+    ).toThrow(/Invalid websocket payload/);
+  });
+
   test("EXPECTED_SCHEMA_VERSION is string '1'", () => {
     expect(EXPECTED_SCHEMA_VERSION).toBe("1");
   });
@@ -68,11 +98,11 @@ test.describe("shared freq optimization", () => {
         clients: {
           sensor1: {
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: { vibration_strength_db: 12 },
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
           },
           sensor2: {
             combined_spectrum_amp_g: [0.04, 0.05, 0.06],
-            strength_metrics: { vibration_strength_db: 8 },
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 8 }),
           },
         },
       },
@@ -94,7 +124,7 @@ test.describe("shared freq optimization", () => {
           sensor1: {
             freq: [15, 25, 35],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: { vibration_strength_db: 12 },
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
           },
         },
       },
@@ -113,7 +143,7 @@ test.describe("shared freq optimization", () => {
           sensor1: {
             freq: [10, 20, 30],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: { vibration_strength_db: 12 },
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
           },
         },
       },
@@ -130,7 +160,7 @@ test.describe("shared freq optimization", () => {
         clients: {
           sensor1: {
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: { vibration_strength_db: 12 },
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
           },
         },
       },
@@ -148,7 +178,7 @@ test.describe("shared freq optimization", () => {
           sensor1: {
             freq: [10, "bad", 30],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: { vibration_strength_db: 12 },
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
           },
         },
       },
@@ -165,7 +195,7 @@ test.describe("shared freq optimization", () => {
           sensor1: {
             freq: [10, 20],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: { vibration_strength_db: 12 },
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
           },
         },
       },
@@ -182,12 +212,12 @@ test.describe("shared freq optimization", () => {
         clients: {
           sensor1: {
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: { vibration_strength_db: 12 },
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
           },
           sensor2: {
             freq: [15, 25, 35],
             combined_spectrum_amp_g: [0.04, 0.05, 0.06],
-            strength_metrics: { vibration_strength_db: 8 },
+            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 8 }),
           },
         },
       },
@@ -199,30 +229,29 @@ test.describe("shared freq optimization", () => {
     expect(adapted.spectra!.clients.sensor2.freq).toEqual([15, 25, 35]);
   });
 
-  test("drops malformed strength metric peaks before validation", () => {
-    const adapted = adaptServerPayload({
-      ...basePayload,
-      spectra: {
-        freq: [10, 20, 30],
-        clients: {
-          sensor1: {
-            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: {
-              vibration_strength_db: 12,
-              peak_amp_g: 0.2,
-              noise_floor_amp_g: 0.01,
-              top_peaks: [
-                { hz: 10, amp: 0.1, vibration_strength_db: 12, strength_bucket: "l2" },
-                { hz: 20, amp: 0.2 },
-              ],
+  test("rejects malformed strength metric peaks instead of dropping them", () => {
+    expect(() =>
+      adaptServerPayload({
+        ...basePayload,
+        spectra: {
+          freq: [10, 20, 30],
+          clients: {
+            sensor1: {
+              combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+              strength_metrics: {
+                vibration_strength_db: 12,
+                peak_amp_g: 0.2,
+                noise_floor_amp_g: 0.01,
+                strength_bucket: null,
+                top_peaks: [
+                  { hz: 10, amp: 0.1, vibration_strength_db: 12, strength_bucket: "l2" },
+                  { hz: 20, amp: 0.2 },
+                ],
+              },
             },
           },
         },
-      },
-    });
-    expect(adapted.spectra).not.toBeNull();
-    expect(adapted.spectra!.clients.sensor1.strength_metrics.top_peaks).toEqual([
-      { hz: 10, amp: 0.1, vibration_strength_db: 12, strength_bucket: "l2" },
-    ]);
+      }),
+    ).toThrow(/Invalid websocket payload/);
   });
 });
