@@ -1,8 +1,8 @@
 # VibeSensor Metrics Reference
 
-## Canonical Vibration Strength
+## Vibration Strength
 
-**`vibration_strength_db`** (dB) — the single authoritative "how strong is the vibration" metric.
+**`vibration_strength_db`** (dB) — the repo-wide "how strong is the vibration" metric.
 
 ### Formula
 
@@ -22,12 +22,12 @@ This formula measures how far the dominant peak stands above the noise floor, ex
 A value of 0 dB means the peak is at the noise floor level; positive values indicate vibration
 above the floor.
 
-### Source of truth
+### Implementation
 
-The canonical implementation lives in `apps/server/vibesensor/vibration_strength.py`:
+The implementation lives in `apps/server/vibesensor/vibration_strength.py`:
 
 - `compute_vibration_strength_db()` — full pipeline (spectrum → peaks → dB metric)
-- `vibration_strength_db_scalar()` — low-level scalar helper (canonical)
+- `vibration_strength_db_scalar()` — low-level scalar helper
 
 No other module may re-implement this formula. Use `bucket_for_strength()` for severity
 classification — never compare raw dB values against band thresholds inline.
@@ -61,13 +61,13 @@ Hysteresis and persistence logic is handled in `severity.severity_from_peak()`:
 
 ## JSONL Run Log Fields
 
-The canonical field written to `.jsonl` run files is `vibration_strength_db` (dB).
+The field written to `.jsonl` run files is `vibration_strength_db` (dB).
 
 ### Current fields (v2 schema)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `vibration_strength_db` | float | Canonical vibration strength (dB above noise floor) |
+| `vibration_strength_db` | float | Vibration strength (dB above noise floor) |
 | `strength_bucket` | str \| null | Severity band key (`l1`–`l5`) or `null` |
 | `top_peaks` | list | Up to 8 combined-spectrum peaks: `[{hz, amp, vibration_strength_db, strength_bucket}]` |
 | `dominant_freq_hz` | float | Frequency of dominant peak (Hz) |
@@ -103,4 +103,3 @@ The `spectrum_payload` endpoint includes:
   }
 }
 ```
-

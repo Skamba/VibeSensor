@@ -45,7 +45,7 @@ The `vibesensor.adapters.pdf` package contains **only** rendering code:
 | `pdf_page1.py`, `pdf_page2.py` | Page-level composition (including section renderers and aspect-ratio helpers) |
 | `pdf_style.py` | Page geometry, layout calculations, color tokens, styling constants, and render context |
 | `pdf_drawing.py`, `pdf_text.py` | Shared drawing and text helpers |
-| `pdf_diagram_render.py` | Diagram planning, drawing, and location canonicalisation |
+| `pdf_diagram_render.py` | Diagram planning, drawing, and location normalization |
 | `report_data.py` | Dataclass definitions (pure data) |
 | `report_context.py` | Context assembly, data-prep, card-assembly (bridges domain/use-case and adapter) |
 | `mapping.py` | Thin mapper: context → `ReportTemplateData` |
@@ -67,7 +67,7 @@ from `use_cases/` — `report_context.py` bridges that boundary.
 ### ReportTemplateData schema
 
 `ReportTemplateData` (defined in `vibesensor.adapters.pdf.report_data`) is the
-canonical rendering artifact.  It contains everything the PDF renderer
+rendering artifact.  It contains everything the PDF renderer
 needs:
 
 - **Display metadata**: title, dates, sensor info, version marker
