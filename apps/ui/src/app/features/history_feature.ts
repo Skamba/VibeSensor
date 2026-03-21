@@ -1,12 +1,6 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState, RunDetail } from "../ui_app_state";
-import type {
-  FindingPayload,
-  HistoryEntry,
-  HistoryInsightWarningPayload,
-  HistoryInsightsPayload,
-} from "../../api/types";
+import type { HistoryInsightsPayload } from "../../api/types";
 import {
   deleteHistoryRun as deleteHistoryRunApi,
   getHistory,
@@ -14,7 +8,12 @@ import {
   historyExportUrl,
   historyReportPdfUrl,
 } from "../../api";
-import { normalizeUnit, heatColor } from "./heat_utils";
+import {
+  getHistoryTableAction,
+  getHistoryTableRowRunId,
+  renderHistoryEmptyState,
+  renderHistoryTable as renderHistoryTableView,
+} from "../views/history_table_view";
 
 export interface HistoryFeatureDeps extends FeatureDepsBase {
   state: AppState;
@@ -24,6 +23,7 @@ export interface HistoryFeatureDeps extends FeatureDepsBase {
 }
 
 export interface HistoryFeature {
+  bindHandlers(): void;
   renderHistoryTable(): void;
   refreshHistory(): Promise<void>;
   deleteAllRuns(): Promise<void>;
@@ -32,35 +32,10 @@ export interface HistoryFeature {
   reloadExpandedRunOnLanguageChange(): void;
 }
 
-interface LocationIntensityRow {
-  location?: string | null;
-  p50_intensity_db?: number | null;
-  p95_intensity_db?: number | null;
-  mean_intensity_db?: number | null;
-  max_intensity_db?: number | null;
-  p50?: number | null;
-  p95?: number | null;
-  dropped_frames_delta?: number | null;
-  frames_dropped_delta?: number | null;
-  queue_overflow_drops_delta?: number | null;
-  sample_count?: number | null;
-  samples?: number | null;
-}
-
 export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   const { state, els, t, escapeHtml, fmt, fmtTs, formatInt } = ctx;
   const DOWNLOAD_REVOKE_DELAY_MS = 1000;
-
-  const HEATMAP_POSITIONS = [
-    { key: "front-left wheel", top: 23, left: 20 },
-    { key: "front-right wheel", top: 23, left: 80 },
-    { key: "rear-left wheel", top: 76, left: 20 },
-    { key: "rear-right wheel", top: 76, left: 80 },
-    { key: "engine bay", top: 30, left: 50 },
-    { key: "driveshaft tunnel", top: 51, left: 50 },
-    { key: "driver seat", top: 43, left: 40 },
-    { key: "trunk", top: 86, left: 50 },
-  ];
+  let handlersBound = false;
 
   function ensureRunDetail(runId: string): RunDetail {
     if (!state.runDetailsById[runId]) {
@@ -86,181 +61,42 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     }
   }
 
-  function summarizeFindings(summary: HistoryInsightsPayload | null): FindingPayload[] {
-    return summary?.findings?.slice(0, 3) ?? [];
-  }
-
-  function summarizeWarnings(payload: HistoryInsightsPayload | null): HistoryInsightWarningPayload[] {
-    const warnings = Array.isArray(payload?.warnings) ? payload.warnings : [];
-    return warnings.filter((warning): warning is HistoryInsightWarningPayload => {
-      return typeof warning?.code === "string"
-        && typeof warning?.severity === "string"
-        && typeof warning?.title === "string";
-    });
-  }
-
-  function normalizeLogLocationKey(location: unknown): string {
-    const raw = String(location || "")
-      .toLowerCase()
-      .replace(/[_-]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    if (!raw) return "";
-    if (raw.includes("front left") && raw.includes("wheel")) return "front-left wheel";
-    if (raw.includes("front right") && raw.includes("wheel")) return "front-right wheel";
-    if (raw.includes("rear left") && raw.includes("wheel")) return "rear-left wheel";
-    if (raw.includes("rear right") && raw.includes("wheel")) return "rear-right wheel";
-    if (raw.includes("engine")) return "engine bay";
-    if (raw.includes("drive") && raw.includes("tunnel")) return "driveshaft tunnel";
-    if (raw.includes("driver") && raw.includes("seat")) return "driver seat";
-    if (raw.includes("trunk")) return "trunk";
-    return raw;
-  }
-
-  function isLocationIntensityRow(value: unknown): value is LocationIntensityRow {
-    return typeof value === "object" && value !== null;
-  }
-
-  function sensorIntensityRows(summary: HistoryInsightsPayload | null): LocationIntensityRow[] {
-    if (!Array.isArray(summary?.sensor_intensity_by_location)) {
-      return [];
-    }
-    return summary.sensor_intensity_by_location.filter(isLocationIntensityRow);
-  }
-
-  function metricFromLocationStat(row: LocationIntensityRow): number | null {
-    const value = Number(row.p95_intensity_db ?? row.p95 ?? row.mean_intensity_db ?? row.max_intensity_db);
-    return Number.isFinite(value) ? value : null;
-  }
-
-  function renderPreviewHeatmap(summary: HistoryInsightsPayload): string {
-    const statsRows = sensorIntensityRows(summary);
-    const metricByLocation: Record<string, number> = {};
-    for (const row of statsRows) {
-      const key = normalizeLogLocationKey(row.location);
-      const metric = metricFromLocationStat(row);
-      if (key && typeof metric === "number" && Number.isFinite(metric)) {
-        metricByLocation[key] = metric;
-      }
-    }
-    const values = Object.values(metricByLocation).filter((value) => typeof value === "number");
-    const min = values.length ? Math.min(...values) : null;
-    const max = values.length ? Math.max(...values) : null;
-    const knownPositionKeys = new Set(HEATMAP_POSITIONS.map((point) => point.key));
-    const unmappedLocationKeys = Object.keys(metricByLocation).filter((key) => !knownPositionKeys.has(key));
-    const dots = HEATMAP_POSITIONS
-      .map((point) => {
-        const value = metricByLocation[point.key];
-        const hasValue = typeof value === "number" && Number.isFinite(value);
-        if (!hasValue || min === null || max === null) return "";
-        const norm = normalizeUnit(value, min, max);
-        const fill = heatColor(norm);
-        const valueLabel = `${fmt(value, 1)} dB`;
-        return `<div class="mini-car-dot" style="top:${point.top}%;left:${point.left}%;background:${fill}" title="${escapeHtml(point.key)}: ${escapeHtml(valueLabel)}"></div>`;
-      })
-      .join("");
-    const unmappedSummary = unmappedLocationKeys.length
-      ? `<div class="subtle">${escapeHtml(unmappedLocationKeys.join(", "))}</div>`
-      : "";
-    return `\n      <div class="mini-car-wrap">\n        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>\n        <div class="mini-car">${dots}</div>\n        ${unmappedSummary}\n      </div>\n    `;
-  }
-
-  function renderPreviewStats(summary: HistoryInsightsPayload): string {
-    const rows = sensorIntensityRows(summary);
-    if (!rows.length) {
-      return `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
-    }
-    const body = rows
-      .map((row) => {
-        const dropped = row?.dropped_frames_delta ?? row?.frames_dropped_delta;
-        const overflow = row?.queue_overflow_drops_delta;
-        return `\n          <tr>\n            <td>${escapeHtml(row.location || "--")}</td>\n            <td class="numeric">${fmt(Number(row.p50_intensity_db ?? row.p50), 1)}</td>\n            <td class="numeric">${fmt(Number(row.p95_intensity_db ?? row.p95), 1)}</td>\n            <td class="numeric">${fmt(Number(row.max_intensity_db), 1)}</td>\n            <td class="numeric">${typeof dropped === "number" ? formatInt(dropped) : "--"}</td>\n            <td class="numeric">${typeof overflow === "number" ? formatInt(overflow) : "--"}</td>\n            <td class="numeric">${formatInt(Number(row.sample_count ?? row.samples))}</td>\n          </tr>`;
-      })
-      .join("");
-    return `\n      <div class="history-preview-stats">\n        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>\n        <table class="history-preview-table">\n          <thead>\n            <tr>\n              <th>${escapeHtml(t("history.table.location"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.p50_db"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.p95_db"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.max_db"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.dropped_delta"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.overflow_delta"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.samples"))}</th>\n            </tr>\n          </thead>\n          <tbody>${body}</tbody>\n        </table>\n      </div>\n    `;
-  }
-
-  function renderInsightsBlock(detail: RunDetail): string {
-    const findings = summarizeFindings(detail.insights);
-    const ctaLabel = detail.insights ? t("history.reload_insights") : t("history.load_insights");
-    const loading = detail.insightsLoading;
-    const findingsMarkup = findings.length
-      ? findings
-          .map((finding) => {
-            const source = finding.suspected_source || t("report.missing");
-            const confidence = typeof finding.confidence === "number" ? fmt(finding.confidence, 2) : "--";
-            const evidenceSummary = String(finding.evidence_summary ?? "");
-            return `<li><strong>${escapeHtml(source)}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}) - ${escapeHtml(evidenceSummary)}</li>`;
-          })
-          .join("")
-      : `<li>${escapeHtml(t("report.no_findings_for_run"))}</li>`;
-    return `\n      <div class="history-insights-block">\n        <div class="history-insights-actions">\n          <button class="btn btn--primary" data-run-action="load-insights" ${loading ? "disabled" : ""}>${escapeHtml(loading ? t("history.loading_insights") : ctaLabel)}</button>\n          ${detail.insightsError ? `<span class="history-inline-error">${escapeHtml(detail.insightsError)}</span>` : ""}\n        </div>\n        ${detail.insights ? `<ul class="history-findings-list">${findingsMarkup}</ul>` : ""}\n      </div>\n    `;
-  }
-
-  function renderWarningBanners(detail: RunDetail): string {
-    const warnings = summarizeWarnings(detail.preview).concat(summarizeWarnings(detail.insights));
-    const uniqueWarnings = warnings.filter(
-      (warning, index) => warnings.findIndex((candidate) => candidate.code === warning.code) === index,
-    );
-    if (!uniqueWarnings.length) return "";
-    return `\n      <div class="history-warning-list">\n        ${uniqueWarnings
-          .map((warning) => {
-            const detailText = warning.detail
-              ? `<div class="history-warning-banner__detail">${escapeHtml(warning.detail)}</div>`
-              : "";
-            return `<div class="history-warning-banner history-warning-banner--${escapeHtml(warning.severity)}"><strong>${escapeHtml(warning.title)}</strong>${detailText}</div>`;
-          })
-          .join("")}\n      </div>\n    `;
-  }
-
-  function renderRunDetailsRow(run: HistoryEntry, detail: RunDetail): string {
-    if (!detail) return "";
-    const summary = detail.preview;
-    const runSummary = summary
-      ? [
-          `${t("report.run_id")}: ${run.run_id}`,
-          `${t("history.summary_created")}: ${fmtTs(summary.start_time_utc as string)}`,
-          `${t("history.summary_updated")}: ${fmtTs(run.end_time_utc ?? "")}`,
-          `${t("history.summary_size")}: ${fmt(summary.duration_s as number, 1)} s`,
-          `${t("history.summary_sensor_count")}: ${formatInt(summary.sensor_count_used as number)}`,
-        ].join(" · ")
-      : "";
-    let previewMarkup = "";
-    if (detail.previewLoading) {
-      previewMarkup = `<p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>`;
-    } else if (detail.previewError) {
-      previewMarkup = `<p class="history-inline-error">${escapeHtml(detail.previewError)}</p>`;
-    } else if (summary) {
-      previewMarkup = `\n        <div class="history-details-preview">\n          ${renderPreviewHeatmap(summary)}\n          ${renderPreviewStats(summary)}\n        </div>\n      `;
-    } else {
-      previewMarkup = `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
-    }
-    return `\n      <tr class="history-details-row">\n        <td colspan="4">\n          <div class="history-details-card">\n            ${runSummary ? `<div class="history-run-summary">${escapeHtml(runSummary)}</div>` : ""}\n            ${previewMarkup}\n            ${renderInsightsBlock(detail)}\n          </div>\n        </td>\n      </tr>\n    `;
-  }
-
   function renderHistoryTable(): void {
     if (els.deleteAllRunsBtn) {
       els.deleteAllRunsBtn.disabled = state.deleteAllRunsInFlight || state.runs.length === 0;
     }
     if (!state.runs.length) {
-      if (els.historySummary) els.historySummary.textContent = t("history.none");
-      if (els.historyTableBody) els.historyTableBody.innerHTML = `<tr><td colspan="4">${escapeHtml(t("history.none_found"))}</td></tr>`;
+      if (els.historySummary) {
+        els.historySummary.textContent = t("history.none");
+      }
+      if (els.historyTableBody) {
+        renderHistoryEmptyState(els.historyTableBody, escapeHtml(t("history.none_found")));
+      }
       collapseExpandedRun();
       return;
     }
     if (state.expandedRunId && !state.runs.some((row) => row.run_id === state.expandedRunId)) {
       collapseExpandedRun();
     }
-    if (els.historySummary) els.historySummary.textContent = t("history.available_count", { count: state.runs.length });
-    const rows: string[] = [];
-    for (const run of state.runs) {
-      const detail = ensureRunDetail(run.run_id);
-      const pdfLabel = detail.pdfLoading ? t("history.generating_pdf") : t("history.generate_pdf");
-      const rowError = detail.pdfError ? `<div class="history-inline-error">${escapeHtml(detail.pdfError)}</div>` : "";
-      rows.push(`\n        <tr class="history-row${state.expandedRunId === run.run_id ? " history-row--expanded" : ""}" data-run-row="1" data-run="${escapeHtml(run.run_id)}">\n          <td>${escapeHtml(run.run_id)}</td>\n          <td>${fmtTs(run.start_time_utc)}</td>\n          <td class="numeric">${formatInt(run.sample_count)}</td>\n          <td>\n            <div class="table-actions">\n              <button class="btn btn--success" data-run-action="download-pdf" data-run="${escapeHtml(run.run_id)}" ${detail.pdfLoading ? "disabled" : ""}>${escapeHtml(pdfLabel)}</button>\n              <a class="btn btn--muted" href="${historyExportUrl(run.run_id)}" download="${escapeHtml(run.run_id)}.zip" data-run-action="download-raw" data-run="${escapeHtml(run.run_id)}">${escapeHtml(t("history.export"))}</a>\n              <button class="btn btn--danger" data-run-action="delete-run" data-run="${escapeHtml(run.run_id)}">${escapeHtml(t("history.delete"))}</button>\n            </div>\n            ${rowError}\n          </td>\n        </tr>`);
-      if (state.expandedRunId === run.run_id) rows.push(renderRunDetailsRow(run, detail));
+    if (els.historySummary) {
+      els.historySummary.textContent = t("history.available_count", { count: state.runs.length });
     }
-    if (els.historyTableBody) els.historyTableBody.innerHTML = rows.join("");
+    for (const run of state.runs) {
+      ensureRunDetail(run.run_id);
+    }
+    if (els.historyTableBody) {
+      renderHistoryTableView(els.historyTableBody, {
+        runs: state.runs,
+        expandedRunId: state.expandedRunId,
+        runDetailsById: state.runDetailsById,
+        t,
+        escapeHtml,
+        fmt,
+        fmtTs,
+        formatInt,
+        historyExportUrl,
+      });
+    }
   }
 
   async function refreshHistory(): Promise<void> {
@@ -269,7 +105,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       state.runs = payload.runs ?? [];
       renderHistoryTable();
     } catch (_err) {
-      // Keep stale data on transient errors — do not wipe the run list.
       renderHistoryTable();
     }
   }
@@ -284,7 +119,9 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       window.alert(err instanceof Error ? err.message : t("history.delete_failed"));
       return;
     }
-    if (state.expandedRunId === runId) collapseExpandedRun();
+    if (state.expandedRunId === runId) {
+      collapseExpandedRun();
+    }
     await refreshHistory();
   }
 
@@ -304,10 +141,14 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         await deleteHistoryRunApi(name);
         deleted += 1;
         delete state.runDetailsById[name];
-        if (state.expandedRunId === name) collapseExpandedRun();
+        if (state.expandedRunId === name) {
+          collapseExpandedRun();
+        }
       } catch (err) {
         failed += 1;
-        if (!firstError) firstError = err instanceof Error ? err.message : t("history.delete_failed");
+        if (!firstError) {
+          firstError = err instanceof Error ? err.message : t("history.delete_failed");
+        }
       }
     }
     state.deleteAllRunsInFlight = false;
@@ -356,7 +197,11 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (!headerValue) return fallback;
     const utf8Match = headerValue.match(/filename\*=UTF-8''([^;]+)/i);
     if (utf8Match && utf8Match[1]) {
-      try { return decodeURIComponent(utf8Match[1]); } catch { /* fall through to simple match */ }
+      try {
+        return decodeURIComponent(utf8Match[1]);
+      } catch {
+        /* fall through to simple match */
+      }
     }
     const simpleMatch = headerValue.match(/filename="?([^";]+)"?/i);
     if (simpleMatch && simpleMatch[1]) return simpleMatch[1];
@@ -370,11 +215,16 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       try {
         const payload = await response.json();
         if (payload && typeof payload.detail === "string") detail = payload.detail;
-      } catch (_err) { /* ignore */ }
+      } catch (_err) {
+        /* ignore */
+      }
       throw new Error(detail);
     }
     const blob = await response.blob();
-    const fileName = filenameFromDisposition(response.headers.get("content-disposition"), fallbackName || "download.bin");
+    const fileName = filenameFromDisposition(
+      response.headers.get("content-disposition"),
+      fallbackName || "download.bin",
+    );
     const objectUrl = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = objectUrl;
@@ -418,7 +268,33 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (!action || !runId) return;
     if (action === "download-pdf") return downloadReportPdfForRun(runId);
     if (action === "delete-run") return deleteRun(runId);
-    if (action === "load-insights") await loadRunInsights(runId, true);
+    if (action === "load-insights") {
+      await loadRunInsights(runId, true);
+    }
+  }
+
+  function bindHandlers(): void {
+    if (handlersBound) {
+      return;
+    }
+    handlersBound = true;
+    els.refreshHistoryBtn?.addEventListener("click", () => void refreshHistory());
+    els.deleteAllRunsBtn?.addEventListener("click", () => void deleteAllRuns());
+    els.historyTableBody?.addEventListener("click", (event) => {
+      const action = getHistoryTableAction(event.target);
+      if (action) {
+        if (action.action !== "download-raw") {
+          event.preventDefault();
+        }
+        event.stopPropagation();
+        void onHistoryTableAction(action.action, action.runId ?? state.expandedRunId ?? "");
+        return;
+      }
+      const runId = getHistoryTableRowRunId(event.target);
+      if (runId) {
+        toggleRunDetails(runId);
+      }
+    });
   }
 
   function reloadExpandedRunOnLanguageChange(): void {
@@ -428,9 +304,19 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     const shouldReloadInsights = Boolean(detail?.insights);
     delete state.runDetailsById[runId];
     void loadRunPreview(runId, true).then(() => {
-      if (shouldReloadInsights) void loadRunInsights(runId, true);
+      if (shouldReloadInsights) {
+        void loadRunInsights(runId, true);
+      }
     });
   }
 
-  return { renderHistoryTable, refreshHistory, deleteAllRuns, onHistoryTableAction, toggleRunDetails, reloadExpandedRunOnLanguageChange };
+  return {
+    bindHandlers,
+    renderHistoryTable,
+    refreshHistory,
+    deleteAllRuns,
+    onHistoryTableAction,
+    toggleRunDetails,
+    reloadExpandedRunOnLanguageChange,
+  };
 }

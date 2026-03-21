@@ -1,5 +1,4 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState } from "../ui_app_state";
 import type {
   AnalysisSettingsRequest,
@@ -22,6 +21,10 @@ import {
   setAnalysisSettings,
   updateSettingsSpeedSource,
 } from "../../api";
+import {
+  getSettingsCarListAction,
+  renderSettingsCarList,
+} from "../views/settings_car_list_view";
 
 export interface SettingsFeatureDeps extends FeatureDepsBase {
   state: AppState;
@@ -32,6 +35,7 @@ export interface SettingsFeatureDeps extends FeatureDepsBase {
 }
 
 export interface SettingsFeature {
+  bindHandlers(): void;
   syncSettingsInputs(): void;
   loadSpeedSourceFromServer(): Promise<void>;
   loadAnalysisSettingsFromServer(): Promise<void>;
@@ -41,7 +45,6 @@ export interface SettingsFeature {
   saveAnalysisFromInputs(): void;
   saveSpeedSourceFromInputs(): void;
   saveHeaderManualSpeedFromInput(): void;
-  bindSettingsTabs(): void;
   addCarFromWizard(name: string, carType: string, aspects: Record<string, number>, variant?: string): Promise<void>;
   startGpsStatusPolling(): void;
   stopGpsStatusPolling(): void;
@@ -72,6 +75,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   const GPS_POLL_SLOW = 10_000;
   const SPEED_SOURCE_KINDS = ["gps", "manual", "obd2"] as const satisfies readonly SpeedSourceKind[];
   let gpsPollTimer: ReturnType<typeof setTimeout> | null = null;
+  let handlersBound = false;
 
   function isSpeedSourceKind(value: string): value is SpeedSourceKind {
     return SPEED_SOURCE_KINDS.some((kind) => kind === value);
@@ -192,54 +196,43 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     } catch (_err) { /* ignore */ }
   }
 
+  async function handleActivateCar(carId: string): Promise<void> {
+    if (!carId) return;
+    try {
+      const result = await setActiveSettingsCar(carId);
+      applyCarsPayload(result);
+      syncActiveCarToInputs();
+      renderCarList();
+      ctx.renderSpectrum();
+    } catch (_err) {
+      window.alert(t("settings.car.activate_failed"));
+    }
+  }
+
+  async function handleDeleteCar(carId: string): Promise<void> {
+    if (!carId) return;
+    const car = state.cars.find((entry) => entry.id === carId);
+    const ok = window.confirm(t("settings.car.delete_confirm", { name: car?.name || "" }));
+    if (!ok) return;
+    try {
+      const result = await deleteSettingsCar(carId);
+      applyCarsPayload(result);
+      syncActiveCarToInputs();
+      renderCarList();
+      ctx.renderSpectrum();
+    } catch (_err) {
+      window.alert(t("settings.car.delete_failed"));
+    }
+  }
+
   function renderCarList(): void {
     if (!els.carListBody) return;
-    if (!state.cars.length) {
-      els.carListBody.innerHTML = `<tr><td colspan="7">${escapeHtml(t("settings.car.no_cars"))}</td></tr>`;
-      return;
-    }
-    els.carListBody.innerHTML = state.cars.map((car) => {
-      const isActive = car.id === state.activeCarId;
-      const a = car.aspects || {};
-      const tireStr = `${a.tire_width_mm || "?"}/${a.tire_aspect_pct || "?"}R${a.rim_in || "?"}`;
-      const driveStr = `${fmt(a.final_drive_ratio, 2)}`;
-      const gearStr = `${fmt(a.current_gear_ratio, 2)}`;
-      return `<tr data-car-id="${escapeHtml(car.id)}"><td><span class="car-active-pill ${isActive ? "active" : "inactive"}">${isActive ? escapeHtml(t("settings.car.active_label")) : escapeHtml(t("settings.car.inactive_label"))}</span></td><td><strong>${escapeHtml(car.name)}</strong></td><td>${escapeHtml(car.type)}</td><td><code>${escapeHtml(tireStr)}</code></td><td>${escapeHtml(driveStr)}</td><td>${escapeHtml(gearStr)}</td><td class="car-list-actions">${isActive ? "" : `<button class="btn btn--success car-activate-btn" data-car-id="${escapeHtml(car.id)}">${escapeHtml(t("settings.car.activate"))}</button>`}<button class="btn btn--danger car-delete-btn" data-car-id="${escapeHtml(car.id)}">${escapeHtml(t("settings.car.delete"))}</button></td></tr>`;
-    }).join("");
-
-    els.carListBody.querySelectorAll(".car-activate-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const carId = btn.getAttribute("data-car-id");
-        if (!carId) return;
-        try {
-          const result = await setActiveSettingsCar(carId);
-          applyCarsPayload(result);
-          syncActiveCarToInputs();
-          renderCarList();
-          ctx.renderSpectrum();
-        } catch (_err) {
-          window.alert(t("settings.car.activate_failed"));
-        }
-      });
-    });
-
-    els.carListBody.querySelectorAll(".car-delete-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const carId = btn.getAttribute("data-car-id");
-        if (!carId) return;
-        const car = state.cars.find((c) => c.id === carId);
-        const ok = window.confirm(t("settings.car.delete_confirm", { name: car?.name || "" }));
-        if (!ok) return;
-        try {
-          const result = await deleteSettingsCar(carId);
-          applyCarsPayload(result);
-          syncActiveCarToInputs();
-          renderCarList();
-          ctx.renderSpectrum();
-        } catch (_err) {
-          window.alert(t("settings.car.delete_failed"));
-        }
-      });
+    renderSettingsCarList(els.carListBody, {
+      cars: state.cars,
+      activeCarId: state.activeCarId,
+      t,
+      escapeHtml,
+      fmt,
     });
   }
 
@@ -339,6 +332,21 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     });
   }
 
+  function bindCarListEvents(): void {
+    if (!els.carListBody) return;
+    els.carListBody.addEventListener("click", (event) => {
+      const action = getSettingsCarListAction(event.target);
+      if (!action) {
+        return;
+      }
+      if (action.type === "activate") {
+        void handleActivateCar(action.carId);
+        return;
+      }
+      void handleDeleteCar(action.carId);
+    });
+  }
+
   function bindSettingsTabs(): void {
     const activateTabByIndex = (index: number): void => {
       if (!els.settingsTabs.length) return;
@@ -360,6 +368,23 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         if (ev.key === "Home") { ev.preventDefault(); activateTabByIndex(0); return; }
         if (ev.key === "End") { ev.preventDefault(); activateTabByIndex(els.settingsTabs.length - 1); }
       });
+    });
+  }
+
+  function bindHandlers(): void {
+    if (handlersBound) {
+      return;
+    }
+    handlersBound = true;
+    bindSettingsTabs();
+    bindCarListEvents();
+    els.saveAnalysisBtn?.addEventListener("click", saveAnalysisFromInputs);
+    els.saveSpeedSourceBtn?.addEventListener("click", saveSpeedSourceFromInputs);
+    els.headerManualSpeedSaveBtn?.addEventListener("click", saveHeaderManualSpeedFromInput);
+    els.headerManualSpeedInput?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        saveHeaderManualSpeedFromInput();
+      }
     });
   }
 
@@ -483,6 +508,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   return {
+    bindHandlers,
     syncSettingsInputs,
     loadSpeedSourceFromServer,
     loadAnalysisSettingsFromServer,
@@ -492,7 +518,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     saveAnalysisFromInputs,
     saveSpeedSourceFromInputs,
     saveHeaderManualSpeedFromInput,
-    bindSettingsTabs,
     addCarFromWizard,
     startGpsStatusPolling,
     stopGpsStatusPolling,
