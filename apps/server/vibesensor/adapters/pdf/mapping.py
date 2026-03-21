@@ -27,8 +27,6 @@ from vibesensor.adapters.pdf.peak_table import build_peak_rows_from_plots
 from vibesensor.adapters.pdf.presentation import order_label_human
 from vibesensor.adapters.pdf.report_context import (
     ReportMappingContext,
-    compute_location_hotspot_rows,
-    filter_active_sensor_intensity,
     prepare_report_mapping_context,
 )
 from vibesensor.adapters.pdf.report_data import (
@@ -51,6 +49,10 @@ from vibesensor.report_i18n import human_source, normalize_lang, resolve_i18n
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
+from vibesensor.use_cases.history.report_interpretation import (
+    compute_location_hotspot_rows,
+    filter_active_sensor_intensity,
+)
 
 __all__ = [
     "PrimaryCandidateContext",
