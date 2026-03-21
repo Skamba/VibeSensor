@@ -16,12 +16,12 @@ import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from vibesensor.coerce import coerce_float
-
 __all__ = [
     "StrengthMetrics",
     "StrengthPeak",
 ]
+
+from ._numeric import coerce_float
 
 
 def _float_or(d: Mapping[str, object], key: str, default: float = 0.0) -> float:

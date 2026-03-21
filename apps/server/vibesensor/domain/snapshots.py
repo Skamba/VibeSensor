@@ -19,8 +19,7 @@ from dataclasses import asdict, dataclass, field
 from types import MappingProxyType
 from typing import ClassVar
 
-from vibesensor.coerce import coerce_float
-
+from ._numeric import coerce_float
 from .car import CarSnapshot, OrderReferenceSpec
 from .driving_segment import DrivingPhaseSegment
 
