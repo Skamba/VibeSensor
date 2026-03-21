@@ -1,6 +1,9 @@
+// Generated from apps/server/vibesensor/shared/locations.py and apps/server/vibesensor/shared/strength_fields.py
+// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs
+
 export const METRIC_FIELDS = {
-  vibration_strength_db: "vibration_strength_db",
-  strength_bucket: "strength_bucket",
+  "vibration_strength_db": "vibration_strength_db",
+  "strength_bucket": "strength_bucket"
 } as const;
 
 export const LOCATION_CODES = [
@@ -18,7 +21,7 @@ export const LOCATION_CODES = [
   "rear_left_seat",
   "rear_center_seat",
   "rear_right_seat",
-  "trunk",
+  "trunk"
 ] as const;
 
 export const defaultLocationCodes = LOCATION_CODES;

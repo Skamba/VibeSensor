@@ -131,13 +131,13 @@ Then edit `config.yaml` as needed. The file is gitignored, so your local changes
 
 The contract-sync flow lives in
 [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync). Use that
-section for what `npm run sync:contracts` regenerates, what it intentionally
-does not touch (`apps/ui/src/constants.ts`), and what to do when CI reports
-frontend contract drift.
+section for what `npm run sync:contracts` regenerates (including
+`apps/ui/src/constants.ts`) and what to do when CI reports frontend contract
+drift.
 
 ## Common failure cases
 
 - Hook warning about missing `privacy_guard.py`: this is non-blocking; run the documented validation commands directly.
 - Port confusion: production-style access is usually `http://127.0.0.1`, while native dev often uses `http://127.0.0.1:8000`.
-- UI contract drift: follow [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync) for the generated HTTP/WS contract flow and the backend hygiene guard for `apps/ui/src/constants.ts`.
+- UI contract drift: follow [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync) for the generated HTTP/WS/constants sync flow and rerun `npm run sync:contracts`.
 - Slow or failing end-to-end runs: check Docker status and the operational runbook before debugging application logic.

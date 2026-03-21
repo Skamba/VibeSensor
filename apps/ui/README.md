@@ -28,16 +28,16 @@ in one step.
 
 ## Contract sync
 
-Use `npm run sync:contracts` to refresh the generated frontend contracts.
+Use `npm run sync:contracts` to refresh the generated frontend contracts and shared constants.
 
 It regenerates:
 
 - `src/generated/http_api_contracts.ts`
 - `src/contracts/ws_payload_types.ts`
 - `src/contracts/ws_payload_schema.generated.ts`
+- `src/constants.ts`
 
-It does **not** rewrite `src/constants.ts`; backend hygiene tests guard drift
-for `LOCATION_CODES` and `METRIC_FIELDS` there.
+`npm run check:contracts` fails if any of those generated files are stale.
 
 ## Source Modules
 
@@ -61,7 +61,7 @@ for `LOCATION_CODES` and `METRIC_FIELDS` there.
 | `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
 | `vehicle_math.ts` | Tire diameter, order tolerance, and uncertainty calculations |
 | `format.ts` | Number, byte, and timestamp formatting utilities |
-| `constants.ts` | Sensor location codes and shared strength field names, with backend hygiene tests guarding drift |
+| `constants.ts` | Generated sensor location codes and shared strength field names from backend sources |
 | `theme.ts` | Chart color palette and order band fill colors |
 | `styles/app.css` | Full CSS with light/dark theme tokens |
 
