@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from vibesensor.domain import OrderMatchObservation
-from vibesensor.use_cases.diagnostics.findings import _speed_breakdown
 from vibesensor.use_cases.diagnostics.location_analysis import _location_speedbin_summary
+from vibesensor.use_cases.diagnostics.signal_aggregation import _speed_breakdown
 
 
 def _obs(speed_kmh: float, amp: float, location: str) -> OrderMatchObservation:
