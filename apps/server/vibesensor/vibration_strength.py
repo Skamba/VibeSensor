@@ -21,7 +21,7 @@ combined_spectrum_amp_g
 from __future__ import annotations
 
 from collections.abc import Sequence
-from math import isfinite, log10, sqrt
+from math import isfinite, sqrt
 from statistics import median as _stdlib_median
 from typing import Final, cast
 
@@ -29,6 +29,13 @@ import numpy as np
 import numpy.typing as npt
 from typing_extensions import TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
+from vibesensor.domain._vibration_strength import (
+    STRENGTH_EPSILON_FLOOR_RATIO,
+    STRENGTH_EPSILON_MIN_G,
+    compute_db,
+    compute_db_or_none,
+    vibration_strength_db_scalar,
+)
 from vibesensor.strength_bands import bucket_for_strength
 
 __all__ = [
@@ -54,9 +61,6 @@ __all__ = [
 
 PEAK_BANDWIDTH_HZ: Final[float] = 1.2
 PEAK_SEPARATION_HZ: Final[float] = 1.2
-
-STRENGTH_EPSILON_MIN_G: Final[float] = 1e-9
-STRENGTH_EPSILON_FLOOR_RATIO: Final[float] = 0.05
 PEAK_THRESHOLD_FLOOR_RATIO: Final[float] = 2.6
 
 ArrayLike = Sequence[float] | npt.NDArray[np.floating]
@@ -242,30 +246,6 @@ def peak_band_rms_amp_g(
     return sqrt(sq_sum / count)
 
 
-def vibration_strength_db_scalar(
-    *,
-    peak_band_rms_amp_g: float,
-    floor_amp_g: float,
-    epsilon_g: float | None = None,
-) -> float:
-    """Compute vibration strength in dB: ``20*log10((peak+eps)/(floor+eps))``.
-
-    *epsilon_g* defaults to ``max(1e-9, floor * 0.05)`` to avoid log(0)
-    and to set a meaningful dynamic range floor.
-    """
-    _floor_raw = float(floor_amp_g)
-    _band_raw = float(peak_band_rms_amp_g)
-    # Guard against NaN inputs: max(0.0, NaN) returns NaN in CPython.
-    floor = max(0.0, _floor_raw) if isfinite(_floor_raw) else 0.0
-    band = max(0.0, _band_raw) if isfinite(_band_raw) else 0.0
-    eps = (
-        max(STRENGTH_EPSILON_MIN_G, floor * STRENGTH_EPSILON_FLOOR_RATIO)
-        if epsilon_g is None
-        else max(STRENGTH_EPSILON_MIN_G, float(epsilon_g))
-    )
-    return 20.0 * log10((band + eps) / (floor + eps))
-
-
 def compute_vibration_strength_db(
     *,
     freq_hz: ArrayLike,
@@ -385,29 +365,3 @@ def compute_vibration_strength_db(
 # ---------------------------------------------------------------------------
 # Convenience wrappers for callers that already have amplitude pairs
 # ---------------------------------------------------------------------------
-
-
-def compute_db(peak_amplitude_g: float, noise_floor_g: float) -> float:
-    """Compute vibration strength in dB from an amplitude pair.
-
-    Uses the canonical formula:
-    ``20 × log₁₀((peak + ε) / (floor + ε))``
-    where ``ε = max(1e-9, floor × 0.05)``.
-    """
-    return vibration_strength_db_scalar(
-        peak_band_rms_amp_g=peak_amplitude_g,
-        floor_amp_g=noise_floor_g,
-    )
-
-
-def compute_db_or_none(
-    peak_amplitude_g: float | None,
-    noise_floor_g: float | None,
-) -> float | None:
-    """Like :func:`compute_db` but returns ``None`` when either input is ``None``."""
-    if peak_amplitude_g is None or noise_floor_g is None:
-        return None
-    return vibration_strength_db_scalar(
-        peak_band_rms_amp_g=peak_amplitude_g,
-        floor_amp_g=noise_floor_g,
-    )

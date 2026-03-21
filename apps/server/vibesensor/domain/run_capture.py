@@ -15,8 +15,8 @@ from types import MappingProxyType
 from vibesensor.domain.car import TireSpec
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_source import SpeedSource
-from vibesensor.strength_bands import bucket_for_strength
-from vibesensor.vibration_strength import vibration_strength_db_scalar
+
+from ._vibration_strength import bucket_for_strength, vibration_strength_db_scalar
 
 __all__ = ["ConfigurationSnapshot", "Measurement", "RunCapture", "RunSetup", "VibrationReading"]
 
