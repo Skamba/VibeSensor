@@ -1,9 +1,10 @@
 """report_mapping – thin mapper from report context to template data.
 
 Context assembly (domain aggregate reconstruction, primary-candidate
-resolution, system-card building) lives in :mod:`report_context`.
-This module receives a pre-computed context and maps it to
-:class:`ReportTemplateData` for the PDF renderer.
+preparation) lives in :mod:`report_context`, with focused helper logic in
+``_candidate_resolver.py`` and ``_card_builder.py``. This module receives
+a pre-computed context and maps it to :class:`ReportTemplateData` for the
+PDF renderer.
 """
 
 from __future__ import annotations
@@ -13,25 +14,29 @@ import os
 from collections.abc import Callable
 
 from vibesensor import __version__
+from vibesensor.adapters.pdf._candidate_resolver import (
+    PrimaryCandidateContext,
+    resolve_primary_report_candidate,
+)
+from vibesensor.adapters.pdf._card_builder import (
+    build_system_cards,
+    humanize_signatures,
+)
 from vibesensor.adapters.pdf.pattern_parts import why_parts_listed
 from vibesensor.adapters.pdf.peak_table import build_peak_rows_from_plots
 from vibesensor.adapters.pdf.presentation import order_label_human
 from vibesensor.adapters.pdf.report_context import (
-    PrimaryCandidateContext,
-    Report,
     ReportMappingContext,
-    build_report_from_summary,
-    build_system_cards,
     compute_location_hotspot_rows,
     filter_active_sensor_intensity,
-    humanize_signatures,
     prepare_report_mapping_context,
-    resolve_primary_report_candidate,
 )
 from vibesensor.adapters.pdf.report_data import (
     FindingPresentation,
     PatternEvidence,
+    Report,
     ReportTemplateData,
+    build_report_from_summary,
 )
 from vibesensor.adapters.pdf.report_sections import (
     build_data_trust_from_summary,
