@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.domain.finding import Finding, FindingEvidence, VibrationSource
+from vibesensor.domain import Finding, FindingEvidence, VibrationSource
 from vibesensor.shared.boundaries.finding import finding_from_payload, finding_payload_from_domain
 
 

@@ -1497,8 +1497,8 @@ def test_domain_code_does_not_access_raw_tire_fields() -> None:
     raw_tire_fields = {"tire_width_mm", "tire_aspect_pct", "rim_in"}
     violations: list[str] = []
     for py_file in domain_dir.glob("*.py"):
-        if py_file.name in ("snapshots.py", "car.py"):
-            continue  # snapshots.py defines these fields; car.py uses TireSpec's own fields
+        if py_file.name in ("snapshots.py", "car.py", "tire_spec.py", "order_reference.py"):
+            continue  # these modules legitimately own typed tire/order-reference field access
         source = py_file.read_text()
         try:
             tree = ast.parse(source)
