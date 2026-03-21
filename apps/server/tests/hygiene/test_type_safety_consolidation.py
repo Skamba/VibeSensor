@@ -82,6 +82,6 @@ class TestMypyEnforcement:
 
     def test_mypy_discovery_exclude_stays_targeted(self, mypy_config: dict[str, object]) -> None:
         assert mypy_config.get("exclude") == [
-            r"^vibesensor/adapters/http/(?:history|settings)\.py$",
+            r"^vibesensor/adapters/http/settings\.py$",
             r"^vibesensor/adapters/udp/protocol\.py$",
         ]
