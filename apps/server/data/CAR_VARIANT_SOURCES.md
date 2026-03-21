@@ -129,8 +129,8 @@ and the confidence level of the data.
 | 520i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
 | 530i xDrive | B48 2.0L I4 Turbo | AWD | BMW press release | High |
 | 540i xDrive | B58 3.0L I6 Turbo | AWD | BMW press release | High |
-| i5 eDrive40 | Electric Single Motor | RWD | BMW press release | High |
-| i5 M60 xDrive | Electric Dual Motor | AWD | BMW press release | High |
+| i5 eDrive40 | Electric Single Motor | RWD | BMW technical data | High |
+| i5 M60 xDrive | Electric Dual Motor | AWD | BMW technical data / BMW M model page | High |
 
 ### 6 Series Gran Coupe (F06, 2013-2018)
 
@@ -169,8 +169,8 @@ and the confidence level of the data.
 |---------|--------|------------|--------|------------|
 | 740i | B58 3.0L I6 Turbo | RWD | BMW press release | High |
 | 760i xDrive | N63 4.4L V8 Turbo | AWD | BMW press release | High |
-| i7 eDrive50 | Electric Single Motor | RWD | BMW press release | High |
-| i7 M70 xDrive | Electric Dual Motor | AWD | BMW press release | High |
+| i7 eDrive50 | Electric Single Motor | RWD | BMW technical data | High |
+| i7 M70 xDrive | Electric Dual Motor | AWD | BMW technical data | High |
 
 ### 8 Series Coupe (G15, 2019-2025)
 
@@ -207,7 +207,7 @@ and the confidence level of the data.
 |---------|--------|------------|--------|------------|
 | sDrive18i | B38 1.5L I3 Turbo | FWD | BMW press release | High |
 | xDrive23i | B48 2.0L I4 Turbo | AWD | BMW press release | High |
-| iX1 xDrive30 | Electric Dual Motor | AWD | BMW press release | High |
+| iX1 xDrive30 | Electric Dual Motor | AWD | BMW PressClub / model overview | High |
 
 ### X2 (F39, 2018-2023)
 
@@ -222,7 +222,7 @@ and the confidence level of the data.
 |---------|--------|------------|--------|------------|
 | sDrive20i | B48 2.0L I4 Turbo | FWD | BMW press release | High |
 | xDrive25e | B48 2.0L I4 Turbo PHEV | AWD | BMW press release | High |
-| iX2 xDrive30 | Electric Dual Motor | AWD | BMW press release | High |
+| iX2 xDrive30 | Electric Dual Motor | AWD | BMW technical data / model overview | High |
 
 ### X3 (F25, 2011-2017)
 
@@ -351,16 +351,16 @@ and the confidence level of the data.
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
-| xDrive40 | Electric Dual Motor | AWD | BMW press release | High |
-| xDrive50 | Electric Dual Motor | AWD | BMW press release | High |
-| M60 | Electric Dual Motor (Performance) | AWD | BMW press release | High |
+| xDrive40 | Electric Dual Motor | AWD | BMW technical data | High |
+| xDrive50 | Electric Dual Motor | AWD | BMW technical data | High |
+| M60 | Electric Dual Motor (Performance) | AWD | BMW technical data | High |
 
 ### i4 (G26, 2022-2026)
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
-| eDrive40 | Electric Single Motor | RWD | BMW press release | High |
-| M50 | Electric Dual Motor | AWD | BMW press release | High |
+| eDrive40 | Electric Single Motor | RWD | BMW technical data | High |
+| M50 | Electric Dual Motor | AWD | BMW technical data | High |
 
 ## Audi
 
@@ -596,18 +596,12 @@ and the confidence level of the data.
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
-| e-tron GT quattro | Electric Dual Motor | AWD | Audi press release | High |
-| RS e-tron GT | Electric Dual Motor (Performance) | AWD | Audi press release | High |
+| e-tron GT quattro | Electric Dual Motor | AWD | Audi MediaCenter technical data | High |
+| RS e-tron GT | Electric Dual Motor (Performance) | AWD | Audi MediaCenter technical data | High |
 
 ### Q4 e-tron (FZ, 2022-2026)
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
-| 40 e-tron | Electric Single Motor | RWD | Audi press release | High |
-| 50 e-tron quattro | Electric Dual Motor | AWD | Audi press release | High |
-
----
-
-## TODOs
-
-- [ ] Research and verify electric vehicle motor specifications
+| 40 e-tron | Electric Single Motor | RWD | Audi Technology Portal / MediaCenter | High |
+| 50 e-tron quattro | Electric Dual Motor | AWD | Audi Technology Portal / MediaCenter | High |
