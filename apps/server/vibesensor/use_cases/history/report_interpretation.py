@@ -6,10 +6,8 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from statistics import mean as _mean
-from typing import Any
 
-from vibesensor.domain import Finding, LocationHotspot, TestRun, VibrationOrigin
-from vibesensor.shared.boundaries.vibration_origin import vibration_origin_from_payload
+from vibesensor.domain import Finding, TestRun, VibrationOrigin
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
 
@@ -31,57 +29,11 @@ class PrimaryReportFacts:
 
 def resolve_report_origin(
     aggregate: TestRun | None,
-    fallback: Mapping[str, Any] | None,
 ) -> VibrationOrigin | None:
-    """Resolve report origin from the domain aggregate with payload fallback."""
-    fallback_origin: VibrationOrigin | None = None
-    if isinstance(fallback, Mapping):
-        raw_location = str(fallback.get("location") or "").strip()
-        alternatives_raw = fallback.get("alternative_locations")
-        alternatives = (
-            [str(location).strip() for location in alternatives_raw if str(location).strip()]
-            if isinstance(alternatives_raw, list)
-            else []
-        )
-
-        strongest_location = (
-            raw_location.split(" / ", maxsplit=1)[0].strip() if raw_location else ""
-        )
-        hotspot = None
-        if strongest_location and strongest_location.lower() != "unknown":
-            hotspot = LocationHotspot.from_analysis_inputs(
-                strongest_location=strongest_location,
-                dominance_ratio=_as_float(fallback.get("dominance_ratio")),
-                weak_spatial_separation=bool(fallback.get("weak_spatial_separation", False)),
-                ambiguous=bool(alternatives),
-                alternative_locations=alternatives,
-            )
-
-        speed_band = str(fallback.get("speed_band") or "").strip() or None
-        dominant_phase = str(fallback.get("dominant_phase") or "").strip() or None
-        dominance_ratio = _as_float(fallback.get("dominance_ratio"))
-        if (
-            hotspot is not None
-            or speed_band is not None
-            or dominant_phase is not None
-            or dominance_ratio is not None
-        ):
-            fallback_origin = vibration_origin_from_payload(
-                fallback,
-                hotspot=hotspot,
-                dominance_ratio=dominance_ratio,
-                speed_band=speed_band,
-            )
-
-    if aggregate is not None and aggregate.primary_finding is not None:
-        primary_origin = VibrationOrigin.from_finding(aggregate.primary_finding)
-        if primary_origin is None:
-            return fallback_origin
-        if not primary_origin.has_sufficient_location and fallback_origin is not None:
-            return fallback_origin
-        return primary_origin
-
-    return fallback_origin
+    """Resolve report origin from the domain aggregate only."""
+    if aggregate is None or aggregate.primary_finding is None:
+        return None
+    return VibrationOrigin.from_finding(aggregate.primary_finding)
 
 
 def normalize_origin_location(origin: VibrationOrigin | None) -> str:

@@ -15,6 +15,9 @@ from vibesensor.domain import (
     TestPlan as DomainTestPlan,
 )
 from vibesensor.shared.boundaries.diagnostic_case import (
+    project_analysis_summary,
+)
+from vibesensor.shared.boundaries.diagnostic_case import (
     test_run_from_summary as _test_run_from_summary,
 )
 from vibesensor.shared.boundaries.finding import step_payloads_from_plan
@@ -101,7 +104,7 @@ class TestSummaryHelpers:
             findings=(primary,),
             top_causes=(primary,),
         )
-        origin = resolve_report_origin(aggregate, _minimal_summary()["most_likely_origin"])
+        origin = resolve_report_origin(aggregate)
         assert origin is not None
         assert origin.projected_location == "Front Left / Front Right"
         assert origin.alternative_locations == ("front_right",)
@@ -154,6 +157,109 @@ class TestSummaryHelpers:
         assert origin["alternative_locations"] == ["front_right"]
         assert origin["dominant_phase"] == "acceleration"
         assert origin["speed_band"] == "80-90 km/h"
+
+    def test_test_run_from_summary_enriches_primary_origin_from_summary_payload(self) -> None:
+        summary = _minimal_summary(
+            top_causes=[
+                {
+                    "finding_id": "F001",
+                    "suspected_source": "wheel/tire",
+                    "strongest_location": "rear left",
+                    "strongest_speed_band": "80-90 km/h",
+                    "confidence": 0.83,
+                }
+            ],
+            most_likely_origin={
+                "location": "rear left / front right",
+                "alternative_locations": ["front right"],
+                "weak_spatial_separation": True,
+                "dominance_ratio": 1.3,
+            },
+        )
+        test_run = _test_run_from_summary(summary)
+        primary = test_run.primary_finding
+        assert primary is not None
+        assert primary.location is not None
+        assert primary.origin is not None
+        assert primary.origin.projected_location == "Rear Left / Front Right"
+        assert primary.origin.has_sufficient_location is True
+
+    def test_project_analysis_summary_uses_domain_enriched_origin(self) -> None:
+        summary = _minimal_summary(
+            top_causes=[
+                {
+                    "finding_id": "F001",
+                    "suspected_source": "wheel/tire",
+                    "strongest_location": "rear left",
+                    "strongest_speed_band": "80-90 km/h",
+                    "confidence": 0.83,
+                }
+            ],
+            most_likely_origin={
+                "location": "rear left / front right",
+                "alternative_locations": ["front right"],
+                "weak_spatial_separation": True,
+            },
+        )
+        projected, test_run = project_analysis_summary(summary)
+        primary = test_run.primary_finding
+        assert primary is not None
+        assert primary.origin is not None
+        assert primary.origin.projected_location == "Rear Left / Front Right"
+        assert projected["most_likely_origin"]["location"] == primary.origin.projected_location
+
+    def test_summary_origin_enrichment_skips_other_duplicate_f_peak_findings(self) -> None:
+        summary = _minimal_summary(
+            findings=[
+                {
+                    "finding_id": "F_PEAK",
+                    "finding_key": "peak_a",
+                    "suspected_source": "wheel/tire",
+                    "strongest_location": "rear left",
+                    "strongest_speed_band": "80-90 km/h",
+                    "confidence": 0.83,
+                    "frequency_hz": 13.2,
+                },
+                {
+                    "finding_id": "F_PEAK",
+                    "finding_key": "peak_b",
+                    "suspected_source": "wheel/tire",
+                    "strongest_location": "front right",
+                    "strongest_speed_band": "80-90 km/h",
+                    "confidence": 0.62,
+                    "frequency_hz": 26.4,
+                },
+            ],
+            top_causes=[
+                {
+                    "finding_id": "F_PEAK",
+                    "finding_key": "peak_a",
+                    "suspected_source": "wheel/tire",
+                    "strongest_location": "rear left",
+                    "strongest_speed_band": "80-90 km/h",
+                    "confidence": 0.83,
+                    "frequency_hz": 13.2,
+                }
+            ],
+            most_likely_origin={
+                "location": "rear left / front right",
+                "alternative_locations": ["front right"],
+                "weak_spatial_separation": True,
+            },
+        )
+        test_run = _test_run_from_summary(summary)
+        primary = test_run.primary_finding
+        assert primary is not None
+        assert primary.origin is not None
+        assert primary.origin.projected_location == "Rear Left / Front Right"
+
+        findings_by_key = {finding.finding_key: finding for finding in test_run.findings}
+        secondary = findings_by_key["peak_b"]
+        assert secondary.origin is not None
+        assert secondary.origin.has_sufficient_location is False
+        assert secondary.origin.projected_location == "Unknown"
+        assert secondary.location is None
+        assert secondary.strongest_location == "front right"
 
     def test_sensor_locations_active_prefers_connected(self) -> None:
         ctx = prepare_report_mapping_context(_minimal_summary())
