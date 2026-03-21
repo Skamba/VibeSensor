@@ -133,7 +133,8 @@ class PreparedRunData:
 
     Retained as the canonical input coordinator for the analysis pipeline.
     Computed once by :func:`prepare_run_data` and consumed by
-    :func:`build_findings_bundle`, :func:`build_run_suitability_bundle`,
+    :func:`vibesensor.use_cases.diagnostics._summary_steps.build_findings_bundle`,
+    :func:`vibesensor.use_cases.diagnostics._summary_steps.build_run_suitability_bundle`,
     and :class:`vibesensor.use_cases.diagnostics.summary_builder.RunAnalysis`.
     """
 

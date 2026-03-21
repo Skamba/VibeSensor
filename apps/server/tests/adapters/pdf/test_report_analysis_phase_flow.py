@@ -150,7 +150,7 @@ def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
         return segment_run_phases(sequence)
 
     with patch(
-        "vibesensor.use_cases.diagnostics.findings.segment_run_phases",
+        "vibesensor.use_cases.diagnostics._peak_findings.segment_run_phases",
         side_effect=_patched_segment_run_phases,
     ):
         _findings_build_findings(
@@ -188,7 +188,7 @@ def test_summarize_run_data_passes_phases_to_build_findings() -> None:
         recompute_calls.append(1)
         return segment_run_phases(sequence)
 
-    patch_target = "vibesensor.use_cases.diagnostics.findings.segment_run_phases"
+    patch_target = "vibesensor.use_cases.diagnostics._peak_findings.segment_run_phases"
     with patch(patch_target, side_effect=_patched_srp):
         summary = summarize_run_data(metadata, samples, include_samples=False)
 

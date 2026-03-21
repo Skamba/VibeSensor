@@ -84,6 +84,8 @@ class HistoryRunService:
             lang=response_lang,
         )
         analysis["warnings"] = list(localized_warnings)
+        analysis["run_id"] = str(run.get("run_id") or run_id)
+        analysis["status"] = RunStatus.COMPLETE.value
 
         return strip_internal_fields(analysis)
 
