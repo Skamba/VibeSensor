@@ -22,7 +22,7 @@ import pytest
 
 from vibesensor.domain import speed_bin_label
 from vibesensor.use_cases.diagnostics.order_analysis import _compute_effective_match_rate
-from vibesensor.use_cases.run.logger import _run_loop
+from vibesensor.use_cases.run._recorder_runtime import run_loop as _run_loop
 from vibesensor.use_cases.updates.status import hash_tree
 
 # ------------------------------------------------------------------

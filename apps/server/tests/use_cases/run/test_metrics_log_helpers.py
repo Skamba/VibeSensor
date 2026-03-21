@@ -10,7 +10,7 @@ from test_support.core import wait_until
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
-from vibesensor.use_cases.run.logger import _build_run_metadata_record
+from vibesensor.use_cases.run._recorder_types import _build_run_metadata_record
 from vibesensor.use_cases.run.post_analysis import PostAnalysisHealthSnapshot
 from vibesensor.use_cases.run.sample_builder import safe_metric
 
@@ -736,8 +736,14 @@ async def test_run_offloads_append_records_with_to_thread(
     async def _cancel_sleep(_interval: float) -> None:
         raise asyncio.CancelledError()
 
-    monkeypatch.setattr("vibesensor.use_cases.run.logger.asyncio.to_thread", _fake_to_thread)
-    monkeypatch.setattr("vibesensor.use_cases.run.logger.asyncio.sleep", _cancel_sleep)
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run._recorder_runtime.asyncio.to_thread",
+        _fake_to_thread,
+    )
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run._recorder_runtime.asyncio.sleep",
+        _cancel_sleep,
+    )
 
     with pytest.raises(asyncio.CancelledError):
         await logger.run()
