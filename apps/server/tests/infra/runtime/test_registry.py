@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -8,6 +9,98 @@ from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import DataMessage, HelloMessage
 from vibesensor.infra.runtime.client_snapshot import snapshot_for_api
 from vibesensor.infra.runtime.registry import ClientRegistry
+
+
+@dataclass(slots=True)
+class _FakeHelloMessage:
+    client_id: bytes
+    control_port: int
+    sample_rate_hz: int
+    name: str
+    firmware_version: str
+    frame_samples: int = 0
+    queue_overflow_drops: int = 0
+
+
+@dataclass(slots=True)
+class _FakeDataMessage:
+    client_id: bytes
+    seq: int
+    t0_us: int
+    sample_count: int
+
+
+@dataclass(slots=True)
+class _FakeAckMessage:
+    client_id: bytes
+    cmd_seq: int
+    status: int
+
+
+class _FakeClientNameStore:
+    def __init__(self) -> None:
+        self._names: dict[str, str] = {}
+
+    def list_client_names(self) -> dict[str, str]:
+        return dict(self._names)
+
+    def upsert_client_name(self, client_id: str, name: str) -> None:
+        self._names[client_id] = name
+
+    def delete_client_name(self, client_id: str) -> bool:
+        return self._names.pop(client_id, None) is not None
+
+
+def test_registry_accepts_protocol_shaped_messages() -> None:
+    registry = ClientRegistry()
+    client_id = bytes.fromhex("aabbccddeeff")
+    hello = _FakeHelloMessage(
+        client_id=client_id,
+        control_port=9010,
+        sample_rate_hz=800,
+        name="node-1",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
+
+    result = registry.update_from_data(
+        _FakeDataMessage(client_id=client_id, seq=5, t0_us=10, sample_count=200),
+        ("10.4.0.2", 50000),
+        now=2.0,
+    )
+    registry.update_from_ack(
+        _FakeAckMessage(client_id=client_id, cmd_seq=77, status=1),
+        now=3.0,
+    )
+
+    record = registry.get("aabbccddeeff")
+    assert record is not None
+    assert result.is_duplicate is False
+    assert record.frames_total == 1
+    assert record.last_ack_cmd_seq == 77
+    assert record.last_ack_status == 1
+
+
+def test_registry_persists_names_with_protocol_shaped_store() -> None:
+    store = _FakeClientNameStore()
+    registry = ClientRegistry(db=store)
+    registry.set_name("001122334455", "rear")
+
+    reloaded = ClientRegistry(db=store)
+    reloaded.update_from_hello(
+        _FakeHelloMessage(
+            client_id=bytes.fromhex("001122334455"),
+            control_port=9011,
+            sample_rate_hz=800,
+            name="ignored",
+            firmware_version="fw2",
+        ),
+        ("10.4.0.3", 9011),
+        now=5.0,
+    )
+
+    row = snapshot_for_api(reloaded, now=5.0)[0]
+    assert row["name"] == "rear"
 
 
 def test_registry_sequence_gap(tmp_path: Path) -> None:

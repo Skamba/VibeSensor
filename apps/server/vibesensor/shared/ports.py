@@ -12,6 +12,10 @@ from vibesensor.shared.types.json_types import JsonObject
 __all__ = [
     "ClockSyncBroadcaster",
     "ClientTracker",
+    "ClientNamePersistence",
+    "RegistryAckMessage",
+    "RegistryDataMessage",
+    "RegistryHelloMessage",
     "ResolvedSpeedSnapshot",
     "RunPersistence",
     "SettingsReader",
@@ -125,6 +129,45 @@ class ClientTracker(Protocol):
         *,
         now_mono: float | None = None,
     ) -> list[str]: ...
+
+
+class ClientNamePersistence(Protocol):
+    """Minimal persisted client-name operations needed by ClientRegistry."""
+
+    def list_client_names(self) -> dict[str, str]: ...
+
+    def upsert_client_name(self, client_id: str, name: str) -> None: ...
+
+    def delete_client_name(self, client_id: str) -> bool | None: ...
+
+
+class RegistryHelloMessage(Protocol):
+    """Decoded HELLO message surface that ClientRegistry consumes."""
+
+    client_id: bytes
+    control_port: int
+    sample_rate_hz: int
+    name: str
+    firmware_version: str
+    frame_samples: int
+    queue_overflow_drops: int
+
+
+class RegistryDataMessage(Protocol):
+    """Decoded DATA message surface that ClientRegistry consumes."""
+
+    client_id: bytes
+    seq: int
+    t0_us: int
+    sample_count: int
+
+
+class RegistryAckMessage(Protocol):
+    """Decoded ACK message surface that ClientRegistry consumes."""
+
+    client_id: bytes
+    cmd_seq: int
+    status: int
 
 
 class ResolvedSpeedSnapshot(Protocol):
