@@ -10,6 +10,7 @@ from vibesensor.shared.types.backend_types import ResolvedSpeedSource
 from vibesensor.shared.types.json_types import JsonObject
 
 __all__ = [
+    "ClockSyncBroadcaster",
     "ClientTracker",
     "ResolvedSpeedSnapshot",
     "RunPersistence",
@@ -20,6 +21,12 @@ __all__ = [
     "SpeedSourceSync",
     "TrackedClient",
 ]
+
+
+class ClockSyncBroadcaster(Protocol):
+    """Minimal control-plane surface needed to broadcast sync-clock messages."""
+
+    def broadcast_sync_clock(self) -> int: ...
 
 
 class RunPersistence(Protocol):
