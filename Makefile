@@ -12,6 +12,7 @@ lint:
 	ruff check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools
 	ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools
 	python3 tools/dev/check_hygiene.py
+	cd apps/server && python3 ../../tools/dev/verify_backend_static_guards.py
 	vibesensor-config-preflight apps/server/config.dev.yaml
 	vibesensor-config-preflight apps/server/config.docker.yaml
 	vibesensor-config-preflight apps/server/config.pi.yaml

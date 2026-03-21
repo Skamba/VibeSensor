@@ -6,6 +6,7 @@
 - Use `make test-all` (`python3 tools/tests/run_ci_parallel.py`) for CI-parity runs.
 - The full Docker-backed verification runner is `make test-full-suite` (`python3 tools/tests/run_e2e_parallel.py --shards 1`).
 - Python test configuration lives in `apps/server/pyproject.toml`.
+- Backend structural AST/import guards live in `tools/dev/verify_backend_static_guards.py` and run via `make lint` (or directly with `cd apps/server && python3 ../../tools/dev/verify_backend_static_guards.py`).
 
 ## Layout
 
@@ -68,6 +69,8 @@ Regression tests live alongside the feature they primarily test. Cross-cutting
 regressions that span multiple subsystems go in `integration/`.
 
 Prefer focused files grouped by behavior or maintenance boundary. Shared helpers live in `test_support/` — including `findings.py` (shared finding-payload factories), `report_helpers.py`, `scenario_ground_truth.py`, `sample_scenarios.py`, plus focused modules for synthetic data, assertions, and fault/perturbation scenarios. Per-directory helper modules (like `_report_pdf_test_helpers.py`, `_report_persistence_helpers.py`) stay local to their test directories.
+
+If a guard needs AST or source-text inspection of production modules, put it in `tools/dev/verify_backend_static_guards.py` instead of pytest. Tests should exercise behavior, outputs, side effects, and errors through stable interfaces.
 
 ## Contract bridge tests
 
@@ -203,7 +206,7 @@ Coverage guidance:
 
 The default CI-parity suite now mirrors these blocking GitHub checks:
 
-- `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, docs lint, WS schema sync, and HTTP API schema sync.
+- `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, backend static guards, docs lint, WS schema sync, and HTTP API schema sync.
 - `backend-typecheck`: mypy on the `vibesensor` backend package; package discovery keeps new backend files checked by default without an internal module denylist.
 - `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
 - `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
