@@ -34,9 +34,11 @@ RunSuitability
     Whether a run is trustworthy enough for diagnosis.
 """
 
+from .analysis_settings import AnalysisSettingsSnapshot
 from .car import Car, CarSnapshot
 from .confidence_assessment import ConfidenceAssessment
 from .diagnostic_case import DiagnosticCase, Symptom
+from .driving_phase_summary import DrivingPhaseSummary
 from .driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingPhaseSegment, DrivingSegment
 from .finding import Finding, speed_band_sort_key, speed_bin_label
 from .finding_evidence import FindingEvidence, Signature
@@ -46,17 +48,13 @@ from .order_match import OrderMatchObservation
 from .order_reference import OrderReferenceSpec
 from .run import Run
 from .run_capture import ConfigurationSnapshot, Measurement, RunCapture, RunSetup, VibrationReading
+from .run_context import RunContextSnapshot
+from .run_metadata import RunMetadataSnapshot
 from .run_status import RUN_TRANSITIONS, RunStatus, is_run_deletable, transition_run
 from .run_suitability import RunSuitability, SuitabilityCheck
 from .sensor import Sensor, SensorPlacement, normalize_sensor_id
-from .snapshots import (
-    AnalysisSettingsSnapshot,
-    DrivingPhaseSummary,
-    RunContextSnapshot,
-    RunMetadataSnapshot,
-    SpeedProfileSummary,
-)
 from .speed_profile import SpeedProfile
+from .speed_profile_summary import SpeedProfileSummary
 from .speed_source import SpeedSource, SpeedSourceKind
 from .strength_metrics import StrengthMetrics, StrengthPeak
 from .test_plan import RecommendedAction, TestPlan, plan_test_actions

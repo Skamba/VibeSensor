@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from tests._paths import REPO_ROOT
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
 _UI_APP_STATE_TS = REPO_ROOT / "apps" / "ui" / "src" / "app" / "ui_app_state.ts"
 _SETTINGS_FEATURE_TS = (

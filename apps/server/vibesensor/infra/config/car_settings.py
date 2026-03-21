@@ -11,7 +11,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import Car, CarSnapshot
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.types.backend_types import (
     AnalysisSettingsPayload,

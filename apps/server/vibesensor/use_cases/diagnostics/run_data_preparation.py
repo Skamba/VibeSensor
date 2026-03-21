@@ -18,7 +18,8 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     Finding as DomainFinding,
 )
-from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
+from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
+from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject

@@ -143,7 +143,7 @@ class Car:
         sanitises input values.
         """
         # Lazy import — snapshots.py imports from this module.
-        from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+        from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
         car_id = str(data.get("id") or str(uuid.uuid4()))
         name = str(data.get("name") or "Unnamed Car").strip()[:64] or "Unnamed Car"

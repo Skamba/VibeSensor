@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 
 from vibesensor.domain import CarSnapshot
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------

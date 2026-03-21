@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.use_cases.run.lifecycle_state import RunLifecycleState
 
 

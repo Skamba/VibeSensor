@@ -11,7 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
-from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
+from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
+from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 
 __all__ = ["SpeedProfile"]
 

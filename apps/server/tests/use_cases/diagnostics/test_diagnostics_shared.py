@@ -33,7 +33,7 @@ def test_tolerance_for_order_honors_floor_and_cap() -> None:
 
 def test_vehicle_orders_hz_uses_tire_deflection_factor() -> None:
     """vehicle_orders_hz should compute frequencies with the deflected circumference."""
-    from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+    from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
     settings_no_deflection = dict(AnalysisSettingsSnapshot.DEFAULTS)
     settings_no_deflection["tire_deflection_factor"] = 1.0

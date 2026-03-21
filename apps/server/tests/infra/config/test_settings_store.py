@@ -6,7 +6,7 @@ import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import Car
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.config.settings_store import (
     PersistenceError,
     SettingsStore,

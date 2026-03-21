@@ -35,7 +35,7 @@ from vibesensor.use_cases.run.status_reporting import (
 from . import _recorder_runtime, _recorder_types
 
 if TYPE_CHECKING:
-    from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+    from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
     from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
     from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot
 

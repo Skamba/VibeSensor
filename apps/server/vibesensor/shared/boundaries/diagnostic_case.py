@@ -13,12 +13,13 @@ from typing import cast
 
 from vibesensor.domain import Car, Finding, LocationHotspot, VibrationOrigin
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
+from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
 from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture, RunSetup
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.sensor import Sensor
-from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
 from vibesensor.domain.speed_profile import SpeedProfile
+from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun

@@ -18,8 +18,8 @@ import math
 from dataclasses import dataclass
 
 from vibesensor.domain import DrivingPhase
+from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhaseSegment
-from vibesensor.domain.snapshots import DrivingPhaseSummary
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
 
