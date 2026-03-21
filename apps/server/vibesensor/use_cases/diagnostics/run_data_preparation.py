@@ -27,11 +27,6 @@ from vibesensor.use_cases.diagnostics._types import (
     Sample,
     SpeedBreakdownRowData,
 )
-from vibesensor.use_cases.diagnostics.findings import (
-    _phase_speed_breakdown,
-    _sensor_intensity_by_location,
-    _speed_breakdown,
-)
 from vibesensor.use_cases.diagnostics.helpers import (
     _location_label,
     _locations_connected_throughout_run,
@@ -40,6 +35,11 @@ from vibesensor.use_cases.diagnostics.helpers import (
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     PhaseSegment,
+)
+from vibesensor.use_cases.diagnostics.signal_aggregation import (
+    _phase_speed_breakdown,
+    _sensor_intensity_by_location,
+    _speed_breakdown,
 )
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats_by_phase
 from vibesensor.use_cases.diagnostics.statistics import (

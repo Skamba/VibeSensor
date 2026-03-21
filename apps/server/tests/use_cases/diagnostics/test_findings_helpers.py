@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.use_cases.diagnostics.findings import _speed_profile_from_points
 from vibesensor.use_cases.diagnostics.math_utils import _weighted_percentile
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_profile_from_points
 
 # ---------------------------------------------------------------------------
 # _weighted_percentile

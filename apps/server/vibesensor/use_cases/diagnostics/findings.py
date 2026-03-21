@@ -1,4 +1,4 @@
-"""Findings orchestration and compatibility re-exports for diagnostics helpers."""
+"""Findings orchestration for diagnostics."""
 
 from __future__ import annotations
 
@@ -16,16 +16,6 @@ from ._peak_findings import (
 from ._types import PhaseLabels, Sample
 from .helpers import _locations_connected_throughout_run, _tire_reference_from_metadata
 from .order_pipeline import _build_order_findings
-from .peak_binning import _classify_peak_type  # noqa: F401
-from .signal_aggregation import (
-    _phase_speed_breakdown,  # noqa: F401
-    _sensor_intensity_by_location,  # noqa: F401
-    _speed_breakdown,  # noqa: F401
-)
-from .speed_profile_helpers import (
-    _phase_to_str,  # noqa: F401
-    _speed_profile_from_points,  # noqa: F401
-)
 
 __all__ = [
     "PeakBin",

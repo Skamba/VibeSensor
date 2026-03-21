@@ -14,11 +14,11 @@ from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics import findings as findings_builder_module
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
-from vibesensor.use_cases.diagnostics.findings import _speed_breakdown
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.peak_table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
+from vibesensor.use_cases.diagnostics.signal_aggregation import _speed_breakdown
 
 
 def test_speed_breakdown_basic() -> None:

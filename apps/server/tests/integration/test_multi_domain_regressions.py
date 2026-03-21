@@ -19,9 +19,9 @@ from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.report_i18n import tr
 from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float_or_none
 from vibesensor.shared.time_utils import format_duration_mm_ss, parse_iso8601
-from vibesensor.use_cases.diagnostics.findings import _sensor_intensity_by_location
 from vibesensor.use_cases.diagnostics.location_analysis import _weighted_speed_window_label
 from vibesensor.use_cases.diagnostics.phase_segmentation import segment_run_phases
+from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
 from vibesensor.use_cases.diagnostics.statistics import compute_run_timing
 from vibesensor.use_cases.updates.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 

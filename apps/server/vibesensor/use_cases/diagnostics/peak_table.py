@@ -10,11 +10,11 @@ from statistics import median as _median
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.use_cases.diagnostics._types import PeakTableRowData, Sample
-from vibesensor.use_cases.diagnostics.findings import _classify_peak_type
 from vibesensor.use_cases.diagnostics.helpers import (
     _effective_baseline_floor,
     _run_noise_baseline_g,
 )
+from vibesensor.use_cases.diagnostics.peak_binning import _classify_peak_type
 from vibesensor.use_cases.diagnostics.spectrogram import (
     PeakSampleScan,
     safe_percentile,

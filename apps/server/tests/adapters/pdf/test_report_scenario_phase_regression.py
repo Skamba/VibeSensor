@@ -12,15 +12,15 @@ from test_support.sample_scenarios import (
 )
 
 from vibesensor.use_cases.diagnostics import build_findings_for_samples, summarize_run_data
-from vibesensor.use_cases.diagnostics.findings import (
-    _phase_speed_breakdown,
-    _sensor_intensity_by_location,
-)
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,
     phase_summary,
     segment_run_phases,
+)
+from vibesensor.use_cases.diagnostics.signal_aggregation import (
+    _phase_speed_breakdown,
+    _sensor_intensity_by_location,
 )
 
 

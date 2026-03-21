@@ -4,7 +4,7 @@ import pytest
 from _report_persistence_helpers import build_findings, findings_at_freq, uniform_samples
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
-from vibesensor.use_cases.diagnostics.findings import _classify_peak_type
+from vibesensor.use_cases.diagnostics.peak_binning import _classify_peak_type
 from vibesensor.use_cases.diagnostics.peak_table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )

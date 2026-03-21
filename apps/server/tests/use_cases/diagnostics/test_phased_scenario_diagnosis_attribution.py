@@ -12,7 +12,7 @@ from test_support import (
 )
 
 from vibesensor.use_cases.diagnostics import summarize_run_data
-from vibesensor.use_cases.diagnostics.findings import _classify_peak_type
+from vibesensor.use_cases.diagnostics.peak_binning import _classify_peak_type
 
 
 class TestSpeedBandAttribution:
