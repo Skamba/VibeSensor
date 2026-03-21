@@ -655,7 +655,7 @@ export interface components {
     };
     /**
      * ClientsResponse
-     * @description Response body listing all currently-connected sensor clients.
+     * @description Response body listing known sensor clients and their live connection state.
      */
     ClientsResponse: {
       /** Clients */

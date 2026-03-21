@@ -22,7 +22,7 @@ class SetLocationRequest(_FrozenBase):
 
 
 class ClientsResponse(BaseModel):
-    """Response body listing all currently-connected sensor clients."""
+    """Response body listing known sensor clients and their live connection state."""
 
     clients: list[ClientApiRow]
 

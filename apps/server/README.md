@@ -54,6 +54,12 @@ The local development configs default the HTTP listener to port `8000`.
 
 Configuration is YAML-based. Run `vibesensor-config-preflight --dump-defaults` to see all available keys with defaults. Use `apps/server/config.dev.yaml` or `apps/server/config.docker.yaml` for local overrides.
 
+For live sensor presence, `processing.client_live_ttl_seconds` controls how long
+`/api/clients` and `/ws` keep reporting `connected: true` after the last
+packet. `processing.client_ttl_seconds` is the longer retention/eviction window
+for keeping stale clients and their metadata available after they stop sending
+traffic.
+
 Common runtime files under `apps/server/data/` include:
 
 - `history.db`: persisted run history and settings.

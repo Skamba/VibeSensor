@@ -141,7 +141,7 @@ def test_registry_hello_uses_advertised_control_port(tmp_path: Path) -> None:
 
 def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db, stale_ttl_seconds=2.0)
+    registry = ClientRegistry(db=db, live_ttl_seconds=2.0, retention_ttl_seconds=2.0)
 
     fresh = HelloMessage(
         client_id=bytes.fromhex("001122334455"),
@@ -171,7 +171,7 @@ def test_registry_staleness_uses_monotonic_clock_when_now_not_provided(
     monkeypatch,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db, stale_ttl_seconds=10.0)
+    registry = ClientRegistry(db=db, live_ttl_seconds=10.0, retention_ttl_seconds=30.0)
     now = {"wall": 1_000.0, "mono": 100.0}
 
     monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
@@ -197,6 +197,32 @@ def test_registry_staleness_uses_monotonic_clock_when_now_not_provided(
 
     now["mono"] = 120.1
     assert registry.active_client_ids() == []
+    stale_row = snapshot_for_api(registry)[0]
+    assert stale_row["connected"] is False
+    assert stale_row["last_seen_age_ms"] is not None
+
+
+def test_registry_retains_stale_client_until_retention_ttl(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db, live_ttl_seconds=5.0, retention_ttl_seconds=30.0)
+    hello = HelloMessage(
+        client_id=bytes.fromhex("001122334455"),
+        control_port=9010,
+        sample_rate_hz=800,
+        name="sensor",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0, now_mono=1.0)
+
+    assert registry.active_client_ids(now_mono=4.0) == ["001122334455"]
+    stale_row = snapshot_for_api(registry, now=9.0, now_mono=9.0)[0]
+    assert stale_row["connected"] is False
+    assert stale_row["last_seen_age_ms"] == 8000
+    assert registry.active_client_ids(now_mono=9.0) == []
+    assert registry.evict_stale(now_mono=9.0) == []
+
+    assert registry.evict_stale(now_mono=32.0) == ["001122334455"]
+    assert registry.get("001122334455") is None
 
 
 def test_registry_remove_client_clears_persisted_entry(tmp_path: Path) -> None:
