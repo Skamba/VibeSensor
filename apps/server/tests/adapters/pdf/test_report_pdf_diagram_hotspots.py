@@ -241,9 +241,9 @@ def test_choose_label_plan_raises_value_error_when_no_candidates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """_choose_label_plan raises ValueError when no label placement candidates exist."""
-    import vibesensor.adapters.pdf.pdf_diagram_render as mod
+    import vibesensor.adapters.pdf.diagram_layout as layout_mod
 
-    monkeypatch.setattr(mod, "_LABEL_CANDIDATES_RIGHT", ())
+    monkeypatch.setattr(layout_mod, "_LABEL_CANDIDATES_RIGHT", ())
     with pytest.raises(ValueError, match="No valid label placement found"):
         _choose_label_plan(
             name="front_left",
