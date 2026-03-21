@@ -85,7 +85,7 @@ class TestSimulatorDeterminism:
             assert 0.11 <= client.common_event_gain <= 0.13
 
     def test_road_scene_single_mode_keeps_non_active_sensors_alive(self) -> None:
-        from vibesensor.adapters.simulator.sim_sender import RoadSceneController
+        from vibesensor.adapters.simulator.sim_scene import RoadSceneController
 
         clients = [_FakeSimClient(name, profile_name="rough_road") for name in ALL_SENSORS]
         controller = RoadSceneController(clients)
@@ -102,7 +102,7 @@ class TestSimulatorDeterminism:
             assert client.common_event_gain >= 0.10
 
     def test_sensor_noise_floor_stays_present_even_when_scene_gain_is_zero(self) -> None:
-        from vibesensor.adapters.simulator.sim_sender import SimClient, make_client_id
+        from vibesensor.adapters.simulator.sim_client import SimClient, make_client_id
 
         client = SimClient(
             name="front-left",

@@ -19,7 +19,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
 
-from vibesensor.use_cases.updates.firmware_cache import FirmwareCache, validate_bundle
+from vibesensor.use_cases.updates.firmware_bundle import validate_bundle
+from vibesensor.use_cases.updates.firmware_cache import FirmwareCache
 
 LOGGER = logging.getLogger(__name__)
 
