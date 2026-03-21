@@ -13,6 +13,18 @@ def _make_default_snapshot() -> AnalysisSettingsSnapshot:
     return AnalysisSettingsSnapshot(**AnalysisSettingsSnapshot.DEFAULTS)
 
 
+def _make_car_payload(
+    car_id: str = "car-1",
+    name: str = "Test Car",
+) -> dict[str, object]:
+    return {
+        "id": car_id,
+        "name": name,
+        "type": "sedan",
+        "aspects": {"tire_width_mm": 225.0},
+    }
+
+
 def _find_endpoint(router, path: str, method: str = "GET"):
     for route in router.routes:
         if getattr(route, "path", "") == path:
@@ -28,8 +40,8 @@ def _settings_router(fake_state):
 
     fake_state.settings_store.analysis_settings_snapshot.return_value = _make_default_snapshot()
     fake_state.settings_store.get_cars.return_value = {
-        "cars": [{"id": "car-1", "name": "Test Car"}],
-        "activeCar": {"id": "car-1", "name": "Test Car"},
+        "cars": [_make_car_payload()],
+        "activeCarId": "car-1",
     }
     return create_settings_routes(
         fake_state.settings_store,
@@ -74,7 +86,7 @@ class TestDeleteCarEndpoint:
 
         state.settings_store.get_cars.return_value = {
             "cars": [],
-            "activeCar": None,
+            "activeCarId": None,
         }
 
         with pytest.raises(HTTPException) as exc_info:
@@ -88,8 +100,8 @@ class TestDeleteCarEndpoint:
         assert endpoint is not None
 
         state.settings_store.get_cars.return_value = {
-            "cars": [{"id": "car-1", "name": "Test Car"}],
-            "activeCar": {"id": "car-1", "name": "Test Car"},
+            "cars": [_make_car_payload()],
+            "activeCarId": "car-1",
         }
         state.settings_store.delete_car.return_value = {
             "cars": [],
@@ -108,8 +120,8 @@ class TestDeleteCarEndpoint:
         assert endpoint is not None
 
         state.settings_store.get_cars.return_value = {
-            "cars": [{"id": "car-1", "name": "Test Car"}],
-            "activeCar": {"id": "car-1", "name": "Test Car"},
+            "cars": [_make_car_payload()],
+            "activeCarId": "car-1",
         }
         state.settings_store.delete_car.side_effect = ValueError("cannot delete last car")
 
@@ -132,6 +144,118 @@ class TestSetActiveCarEndpoint:
         with pytest.raises(HTTPException) as exc_info:
             await endpoint(req=ActiveCarRequest(carId="no-such-car"))
         assert exc_info.value.status_code == 404
+
+
+class TestCarsEndpoint:
+    @pytest.mark.asyncio
+    async def test_get_cars_response_shape(self, _settings_router) -> None:
+        router, _ = _settings_router
+        endpoint = _find_endpoint(router, "/api/settings/cars", "GET")
+        assert endpoint is not None
+
+        result = response_payload(await endpoint())
+
+        assert result["activeCarId"] == "car-1"
+        assert result["cars"][0]["type"] == "sedan"
+        assert result["cars"][0]["aspects"]["tire_width_mm"] == 225.0
+
+    @pytest.mark.asyncio
+    async def test_add_car_passes_only_non_null_fields(self, _settings_router) -> None:
+        router, state = _settings_router
+        endpoint = _find_endpoint(router, "/api/settings/cars", "POST")
+        assert endpoint is not None
+
+        from vibesensor.shared.types.api_models import CarUpsertRequest
+
+        state.settings_store.add_car.return_value = {
+            "cars": [_make_car_payload(), _make_car_payload(car_id="car-2", name="Second")],
+            "activeCarId": "car-1",
+        }
+
+        await endpoint(req=CarUpsertRequest(name="Second", variant="Sport"))
+
+        state.settings_store.add_car.assert_called_once_with({"name": "Second", "variant": "Sport"})
+
+
+class TestSpeedSourceEndpoint:
+    @pytest.mark.asyncio
+    async def test_update_speed_source_passes_only_non_null_fields(self, _settings_router) -> None:
+        router, state = _settings_router
+        endpoint = _find_endpoint(router, "/api/settings/speed-source", "POST")
+        assert endpoint is not None
+
+        from vibesensor.shared.types.api_models import SpeedSourceRequest
+
+        state.settings_store.update_speed_source.return_value = {
+            "speedSource": "manual",
+            "manualSpeedKph": 42.0,
+            "staleTimeoutS": 15.0,
+        }
+
+        await endpoint(req=SpeedSourceRequest(speedSource="manual", manualSpeedKph=42.0))
+
+        state.settings_store.update_speed_source.assert_called_once_with(
+            {"speedSource": "manual", "manualSpeedKph": 42.0}
+        )
+
+    @pytest.mark.asyncio
+    async def test_speed_source_status_response_shape(self, _settings_router) -> None:
+        router, state = _settings_router
+        endpoint = _find_endpoint(router, "/api/settings/speed-source/status", "GET")
+        assert endpoint is not None
+
+        state.gps_monitor.status_dict.return_value = {
+            "gps_enabled": True,
+            "connection_state": "connected",
+            "device": "/dev/ttyUSB0",
+            "fix_mode": 3,
+            "fix_dimension": "3d",
+            "speed_confidence": "high",
+            "epx_m": 1.2,
+            "epy_m": 1.3,
+            "epv_m": 2.4,
+            "last_update_age_s": 0.5,
+            "raw_speed_kmh": 48.2,
+            "effective_speed_kmh": 48.2,
+            "last_error": None,
+            "reconnect_delay_s": None,
+            "fallback_active": False,
+            "speed_source": "gps",
+            "stale_timeout_s": 8.0,
+        }
+
+        result = response_payload(await endpoint())
+
+        assert result["speed_source"] == "gps"
+        assert result["fix_dimension"] == "3d"
+
+
+class TestSensorEndpoint:
+    @pytest.mark.asyncio
+    async def test_update_sensor_passes_normalized_mac_and_non_null_fields(
+        self,
+        _settings_router,
+    ) -> None:
+        router, state = _settings_router
+        endpoint = _find_endpoint(router, "/api/settings/sensors/{mac}", "POST")
+        assert endpoint is not None
+
+        from vibesensor.shared.types.api_models import SensorRequest
+
+        normalized_mac = "aabbccddeeff"
+        state.settings_store.get_sensors.return_value = {
+            normalized_mac: {"name": "Wheel sensor", "location_code": "front_left"}
+        }
+
+        await endpoint(
+            mac="AA:BB:CC:DD:EE:FF",
+            req=SensorRequest(name="Wheel sensor", location_code="front_left"),
+        )
+
+        state.settings_store.set_sensor.assert_called_once_with(
+            normalized_mac,
+            {"name": "Wheel sensor", "location_code": "front_left"},
+        )
 
 
 class TestSetAnalysisSettingsEndpoint:
@@ -159,7 +283,9 @@ class TestSetAnalysisSettingsEndpoint:
 
         await endpoint(req=AnalysisSettingsRequest(tire_width_mm=265.0))
 
-        state.settings_store.update_active_car_aspects.assert_called_once()
+        state.settings_store.update_active_car_aspects.assert_called_once_with(
+            {"tire_width_mm": 265.0}
+        )
 
     @pytest.mark.asyncio
     async def test_get_analysis_settings_response_shape(self, _settings_router) -> None:
