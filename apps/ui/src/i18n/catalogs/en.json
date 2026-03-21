@@ -181,7 +181,6 @@
   "status.running": "Running",
   "status.stopped": "Stopped",
   "status.unavailable": "Unavailable",
-  "status.current_file": "Current file: {value}",
   "speed.gps": "Speed: {value} {unit} (GPS)",
   "speed.override": "Speed: {value} {unit} (Override)",
   "speed.none": "Speed: -- {unit}",

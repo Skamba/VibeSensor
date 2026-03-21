@@ -18,7 +18,6 @@ export interface UiDomElements {
   rotationalEngineValue: HTMLElement | null;
   rotationalEngineMode: HTMLElement | null;
   loggingStatus: HTMLElement | null;
-  currentLogFile: HTMLElement | null;
   startLoggingBtn: HTMLButtonElement | null;
   stopLoggingBtn: HTMLButtonElement | null;
   refreshHistoryBtn: HTMLButtonElement | null;
@@ -122,7 +121,6 @@ export function createUiDomRegistry(): UiDomElements {
     rotationalEngineValue: el("rotationalEngineValue"),
     rotationalEngineMode: el("rotationalEngineMode"),
     loggingStatus: el("loggingStatus"),
-    currentLogFile: el("currentLogFile"),
     startLoggingBtn: btnEl("startLoggingBtn"),
     stopLoggingBtn: btnEl("stopLoggingBtn"),
     refreshHistoryBtn: btnEl("refreshHistoryBtn"),

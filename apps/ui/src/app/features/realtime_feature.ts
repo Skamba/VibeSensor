@@ -145,7 +145,6 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     } else {
       setPillState(els.loggingStatus, on ? "ok" : "muted", on ? t("status.running") : t("status.stopped"));
     }
-    if (els.currentLogFile) els.currentLogFile.textContent = t("status.current_file", { value: status.current_file || "--" });
     if (els.startLoggingBtn) els.startLoggingBtn.disabled = on || !hasActiveClients;
     if (els.stopLoggingBtn) els.stopLoggingBtn.disabled = !on;
   }
