@@ -15,7 +15,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 
-python -m vibesensor.app --config "${PI_DIR}/config.dev.yaml" &
+vibesensor-server --config "${PI_DIR}/config.dev.yaml" &
 SERVER_PID=$!
 
 vibesensor-sim --count 5 --server-host 127.0.0.1 &

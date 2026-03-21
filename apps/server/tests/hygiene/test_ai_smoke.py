@@ -18,8 +18,15 @@ def hotspot_script_text() -> str:
 
 
 @pytest.fixture(scope="module")
-def build_sh_text() -> str:
-    return (REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "build.sh").read_text(encoding="utf-8")
+def pi_gen_source_text() -> str:
+    pi_gen_root = REPO_ROOT / "infra" / "pi-image" / "pi-gen"
+    paths = [
+        pi_gen_root / "build.sh",
+        pi_gen_root / "validate-image.sh",
+        *sorted((pi_gen_root / "lib").glob("*.sh")),
+        *sorted(path for path in (pi_gen_root / "templates").rglob("*") if path.is_file()),
+    ]
+    return "\n".join(path.read_text(encoding="utf-8") for path in paths)
 
 
 @pytest.fixture(scope="module")
@@ -125,11 +132,39 @@ _BUILD_WRAPPER_CHECKS: list[tuple[str, str]] = [
     ids=[c[0][:40] for c in _BUILD_WRAPPER_CHECKS],
 )
 def test_smoke_build_wrapper_asserts_requirement(
-    build_sh_text: str,
+    pi_gen_source_text: str,
     substring: str,
     msg: str,
 ) -> None:
-    assert substring in build_sh_text, msg
+    assert substring in pi_gen_source_text, msg
+
+
+@pytest.mark.smoke
+def test_smoke_pi_gen_pipeline_split_files_exist() -> None:
+    pi_gen_root = REPO_ROOT / "infra" / "pi-image" / "pi-gen"
+
+    assert (pi_gen_root / "validate-image.sh").is_file()
+    assert (pi_gen_root / "lib" / "app_artifacts.sh").is_file()
+    assert (pi_gen_root / "lib" / "stage_assembly.sh").is_file()
+    assert (pi_gen_root / "lib" / "image_validation.sh").is_file()
+    assert (
+        pi_gen_root / "templates" / "stage-vibesensor" / "00-vibesensor" / "00-run.sh.template"
+    ).is_file()
+    assert (
+        REPO_ROOT / "apps" / "server" / "systemd" / "vibesensor-rfkill-unblock.service"
+    ).is_file()
+
+
+@pytest.mark.smoke
+def test_smoke_server_systemd_uses_console_script_entrypoint() -> None:
+    service_text = (REPO_ROOT / "apps" / "server" / "systemd" / "vibesensor.service").read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        "ExecStart=__VENV_DIR__/bin/vibesensor-server --config /etc/vibesensor/config.yaml"
+        in service_text
+    )
 
 
 # ---------------------------------------------------------------------------
