@@ -4,8 +4,8 @@ from __future__ import annotations
 """Runtime NaN handling and update-manager guard regressions:
 NaN guards, correlation clamp, persist rollback,
 firmware cache streaming, CancelledError re-raise,
-_weighted_percentile direct import, _dir_sha256 separators, _corr_abs_clamped,
-_canonical_location edge cases, PDF peak suffix i18n."""
+ _weighted_percentile direct import, _dir_sha256 separators, _corr_abs_clamped,
+ canonical_location edge cases, PDF peak suffix i18n."""
 
 
 import asyncio
@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibesensor.adapters.pdf.pdf_diagram_render import _canonical_location
+from vibesensor.adapters.pdf.diagram_layout import canonical_location
 from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
 from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 from vibesensor.report_i18n import tr
@@ -213,11 +213,11 @@ class TestDirSha256Separators:
         assert h1 != h2, "Hashes should differ when path/content boundaries differ"
 
 
-# ── 9. _canonical_location edge cases ─────────────────────────────────────
+# ── 9. canonical_location edge cases ─────────────────────────────────────
 
 
 class TestCanonicalLocation:
-    """Dedicated edge-case tests for _canonical_location."""
+    """Dedicated edge-case tests for canonical_location."""
 
     @pytest.mark.parametrize(
         ("raw", "expected"),
@@ -246,7 +246,7 @@ class TestCanonicalLocation:
         ],
     )
     def test_canonical(self, raw, expected):
-        assert _canonical_location(raw) == expected
+        assert canonical_location(raw) == expected
 
 
 # ── 10. PDF _strength_with_peak i18n suffix ───────────────────────────────

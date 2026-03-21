@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.adapters.pdf.pdf_diagram_render import (
-    _build_sensor_render_plan,
-    _choose_label_plan,
-    _estimate_text_width,
-    _resolve_marker_states,
-    car_location_diagram,
+from vibesensor.adapters.pdf import pdf_diagram_render
+from vibesensor.adapters.pdf.diagram_layout import (
+    build_sensor_render_plan,
+    choose_label_plan,
+    estimate_text_width,
+    resolve_marker_states,
 )
+from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_style import REPORT_COLORS
 
 
@@ -27,7 +28,7 @@ def _assert_no_pairwise_overlap(boxes: list[tuple[float, float, float, float]]) 
 
 
 def test_sensor_state_mapping_connected_active_inactive_and_disconnected() -> None:
-    states = _resolve_marker_states(
+    states = resolve_marker_states(
         ["front-left wheel", "front-right wheel", "engine bay"],
         connected_locations={"front-left wheel", "front-right wheel"},
         amp_by_location={"front-left wheel": 21.0},
@@ -45,7 +46,7 @@ def test_marker_colors_follow_diagnostic_highlight_and_use_single_color_markers(
         "rear-left wheel": (40.0, 80.0),
         "engine bay": (100.0, 140.0),
     }
-    markers, _, _ = _build_sensor_render_plan(
+    markers, _, _ = build_sensor_render_plan(
         location_points=location_points,
         drawing_width=220.0,
         drawing_height=252.0,
@@ -56,6 +57,7 @@ def test_marker_colors_follow_diagnostic_highlight_and_use_single_color_markers(
             "rear-left wheel": 15.0,
         },
         highlight={"rear-left wheel": REPORT_COLORS["danger"]},
+        colors=REPORT_COLORS,
     )
     marker_by_name = {marker.name: marker for marker in markers}
 
@@ -80,13 +82,14 @@ def test_label_placement_stays_in_bounds_and_avoids_overlap_for_dense_layout() -
         "driver seat": (78.0, 145.0),
         "trunk": (100.0, 102.0),
     }
-    markers, labels, _ = _build_sensor_render_plan(
+    markers, labels, _ = build_sensor_render_plan(
         location_points=location_points,
         drawing_width=200.0,
         drawing_height=252.0,
         connected_locations=set(location_points.keys()),
         amp_by_location={name: 10.0 + idx for idx, name in enumerate(location_points.keys())},
         highlight={"front-left wheel": REPORT_COLORS["success"]},
+        colors=REPORT_COLORS,
     )
 
     marker_boxes = {
@@ -140,13 +143,14 @@ def test_sparse_layout_renders_only_connected_sensor_labels() -> None:
 
 def test_single_sensor_uses_diagnostic_highlight_color() -> None:
     location_points = {"front-left wheel": (40.0, 180.0)}
-    markers, _, single_sensor = _build_sensor_render_plan(
+    markers, _, single_sensor = build_sensor_render_plan(
         location_points=location_points,
         drawing_width=220.0,
         drawing_height=252.0,
         connected_locations={"front-left wheel"},
         amp_by_location={"front-left wheel": 25.0},
         highlight={"front-left wheel": REPORT_COLORS["danger"]},
+        colors=REPORT_COLORS,
     )
 
     assert single_sensor is True
@@ -203,7 +207,7 @@ def test_legend_shows_diagnostic_source_only_and_source_labels_do_not_overlap() 
         x = float(getattr(item, "x", 0.0))
         y = float(getattr(item, "y", 0.0))
         size = float(getattr(item, "fontSize", 5.5))
-        width = _estimate_text_width(text, font_size=size)
+        width = estimate_text_width(text, font_size=size)
         box = (x, y - 1.0, x + width, y + size + 1.0)
         boxes.append(box)
         assert box[0] >= 0.0
@@ -219,7 +223,7 @@ def test_render_plan_prefers_diagnosed_location_when_intensity_hotspot_differs()
         "rear-left wheel": (40.0, 80.0),
         "rear-right wheel": (160.0, 80.0),
     }
-    markers, _, _ = _build_sensor_render_plan(
+    markers, _, _ = build_sensor_render_plan(
         location_points=location_points,
         drawing_width=220.0,
         drawing_height=252.0,
@@ -231,6 +235,7 @@ def test_render_plan_prefers_diagnosed_location_when_intensity_hotspot_differs()
             "rear-right wheel": 26.0,
         },
         highlight={"rear-left wheel": REPORT_COLORS["danger"]},
+        colors=REPORT_COLORS,
     )
     marker_by_name = {marker.name: marker for marker in markers}
     assert marker_by_name["front-left wheel"].fill == REPORT_COLORS["text_secondary"]
@@ -240,12 +245,12 @@ def test_render_plan_prefers_diagnosed_location_when_intensity_hotspot_differs()
 def test_choose_label_plan_raises_value_error_when_no_candidates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """_choose_label_plan raises ValueError when no label placement candidates exist."""
+    """choose_label_plan raises ValueError when no label placement candidates exist."""
     import vibesensor.adapters.pdf.diagram_layout as layout_mod
 
     monkeypatch.setattr(layout_mod, "_LABEL_CANDIDATES_RIGHT", ())
     with pytest.raises(ValueError, match="No valid label placement found"):
-        _choose_label_plan(
+        choose_label_plan(
             name="front_left",
             px=0.1,  # px < width * 0.5 → selects RIGHT candidates (now empty)
             py=100.0,
@@ -255,3 +260,17 @@ def test_choose_label_plan_raises_value_error_when_no_candidates(
             font_size=8.0,
             color="#000000",
         )
+
+
+def test_pdf_diagram_render_module_no_longer_reexports_layout_helpers() -> None:
+    removed_names = (
+        "LabelRenderPlan",
+        "MarkerRenderPlan",
+        "MarkerState",
+        "_estimate_text_width",
+        "_choose_label_plan",
+        "_resolve_marker_states",
+        "_canonical_location",
+    )
+    for name in removed_names:
+        assert not hasattr(pdf_diagram_render, name)

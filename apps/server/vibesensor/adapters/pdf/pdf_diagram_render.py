@@ -11,16 +11,10 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 from vibesensor.adapters.pdf.diagram_layout import (
-    LabelRenderPlan,
-    MarkerRenderPlan,
-    MarkerState,
     build_sensor_render_plan,
-    canonical_location,
-    choose_label_plan,
     estimate_text_width,
     extract_amp_by_location,
     highlight_map,
-    resolve_marker_states,
 )
 from vibesensor.adapters.pdf.diagram_layout import (
     location_points as _location_points,
@@ -40,20 +34,9 @@ from vibesensor.shared.json_utils import as_float_or_none as _as_float
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
-# Re-export public layout symbols so existing consumers (tests, other modules)
-# that import from this module keep working.
-__all__ = [
-    "LabelRenderPlan",
-    "MarkerRenderPlan",
-    "MarkerState",
-    "car_location_diagram",
-]
+    from vibesensor.adapters.pdf.diagram_layout import LabelRenderPlan, MarkerRenderPlan
 
-# Underscore-prefixed aliases for backward compatibility with tests.
-_estimate_text_width = estimate_text_width
-_choose_label_plan = choose_label_plan
-_resolve_marker_states = resolve_marker_states
-_canonical_location = canonical_location
+__all__ = ["car_location_diagram"]
 
 
 def _build_sensor_render_plan(
