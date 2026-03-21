@@ -121,6 +121,5 @@ disallow_any_unimported = false
 [[tool.mypy.overrides]]
 module = [
   "vibesensor.adapters.udp.protocol",
-  "vibesensor.adapters.http.settings",
 ]
 ignore_errors = true
