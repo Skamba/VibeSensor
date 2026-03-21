@@ -15,7 +15,11 @@ Module topology
 - **Operations**: ``installer.py`` (install/rollback), ``wifi.py`` (Wi-Fi
   connect/restore, diagnostics, network constants), ``releases.py``
   (GitHub release discovery), ``runner.py`` (process execution and
-  command helpers).
+  command helpers), ``firmware_release_fetcher.py`` (GitHub firmware HTTP
+  discovery/download), ``firmware_bundle.py`` (firmware bundle filesystem
+  validation/extraction/metadata), ``firmware_types.py`` (firmware cache
+  and release payload types), and ``firmware_cache.py`` (thin public cache
+  facade plus CLI entry points).
 - **State**: ``status.py`` (progress tracking, persistent state store,
   and runtime detail collection), ``models.py`` (data models).
 """

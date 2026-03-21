@@ -19,11 +19,9 @@ from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
 from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 from vibesensor.report_i18n import tr
 from vibesensor.use_cases.diagnostics.math_utils import _corr_abs_clamped
-from vibesensor.use_cases.updates.firmware_cache import (
-    FirmwareCacheConfig,
-    GitHubReleaseFetcher,
-    _dir_sha256,
-)
+from vibesensor.use_cases.updates.firmware_bundle import dir_sha256
+from vibesensor.use_cases.updates.firmware_release_fetcher import GitHubReleaseFetcher
+from vibesensor.use_cases.updates.firmware_types import FirmwareCacheConfig
 from vibesensor.use_cases.updates.manager import UpdateManager, UpdateState
 
 # ── 2. _corr_abs_clamped returns at most 1.0 ─────────────────────────────
@@ -149,7 +147,10 @@ class TestFirmwareCacheStreamingDownload:
         mock_resp.__enter__ = lambda s: s
         mock_resp.__exit__ = lambda s, *a: None
 
-        with patch("vibesensor.use_cases.updates.firmware_cache.urlopen", return_value=mock_resp):
+        with patch(
+            "vibesensor.use_cases.updates.firmware_release_fetcher.urlopen",
+            return_value=mock_resp,
+        ):
             fetcher._download_asset("https://example.com/fw.bin", dest)
 
         assert dest.exists()
@@ -190,11 +191,11 @@ class TestUpdateManagerCancelledError:
             await mgr._run_update("ssid", "pass")
 
 
-# ── 7. _dir_sha256 uses separators ────────────────────────────────────────
+# ── 7. dir_sha256 uses separators ────────────────────────────────────────
 
 
 class TestDirSha256Separators:
-    """Verify _dir_sha256 uses null-byte separators between path and content."""
+    """Verify dir_sha256 uses null-byte separators between path and content."""
 
     def test_different_layouts_produce_different_hashes(self, tmp_path):
         # Layout 1: file "a" with content "bc"
@@ -207,8 +208,8 @@ class TestDirSha256Separators:
         d2.mkdir()
         (d2 / "ab").write_text("c")
 
-        h1 = _dir_sha256(d1)
-        h2 = _dir_sha256(d2)
+        h1 = dir_sha256(d1)
+        h2 = dir_sha256(d2)
         assert h1 != h2, "Hashes should differ when path/content boundaries differ"
 
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 Covers:
   1. firmware_cache.refresh() – target/old_current initialised before try
-  2. firmware_cache._download_asset() – fd leak guard when os.fdopen fails
+  2. firmware_release_fetcher._download_asset() – fd leak guard when os.fdopen fails
   3. gps_speed.resolve_speed() – TOCTOU snapshot of speed_mps
   4. gps_speed._is_gps_stale() – TOCTOU snapshot of last_update_ts
   5. report_cli.main() – PDF generation errors return 1 instead of traceback
@@ -23,11 +23,9 @@ import pytest
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.cli.report import main as report_cli_main
-from vibesensor.use_cases.updates.firmware_cache import (
-    FirmwareCache,
-    FirmwareCacheConfig,
-    GitHubReleaseFetcher,
-)
+from vibesensor.use_cases.updates.firmware_cache import FirmwareCache
+from vibesensor.use_cases.updates.firmware_release_fetcher import GitHubReleaseFetcher
+from vibesensor.use_cases.updates.firmware_types import FirmwareCacheConfig
 
 
 def _make_summary(report_date: str, **overrides: Any) -> dict[str, Any]:
@@ -68,7 +66,7 @@ class TestFirmwareCacheRefreshUnboundGuard:
     """
 
     def test_exception_before_activation_does_not_raise_unbound(self, tmp_path: Path) -> None:
-        """If download_bundle raises, the except block should not crash."""
+        """If download_asset raises, the except block should not crash."""
         cfg = FirmwareCacheConfig(
             firmware_repo="test/repo",
             cache_dir=str(tmp_path / "fw"),
@@ -79,7 +77,7 @@ class TestFirmwareCacheRefreshUnboundGuard:
         fetcher = MagicMock()
         fetcher.find_release.return_value = {"tag_name": "v999"}
         fetcher.find_firmware_asset.return_value = {"name": "fw.zip"}
-        fetcher.download_bundle.side_effect = RuntimeError("download failed")
+        fetcher.download_asset.side_effect = RuntimeError("download failed")
 
         with pytest.raises(RuntimeError, match="download failed"):
             cache.refresh(fetcher=fetcher)
@@ -88,7 +86,7 @@ class TestFirmwareCacheRefreshUnboundGuard:
 
 
 # ------------------------------------------------------------------
-# 2. firmware_cache._download_asset() – fd leak guard
+# 2. firmware_release_fetcher._download_asset() – fd leak guard
 # ------------------------------------------------------------------
 
 
@@ -108,7 +106,10 @@ class TestDownloadAssetFdLeakGuard:
         fake_resp.__exit__ = lambda s, *a: None
 
         with (
-            patch("vibesensor.use_cases.updates.firmware_cache.urlopen", return_value=fake_resp),
+            patch(
+                "vibesensor.use_cases.updates.firmware_release_fetcher.urlopen",
+                return_value=fake_resp,
+            ),
             patch("os.fdopen", side_effect=OSError("mock fdopen failure")),
             patch("os.close") as mock_close,
         ):
