@@ -11,7 +11,7 @@ Scope: single source of truth for detailed file layout, entry points, package st
 - UI runtime/composition root: `apps/ui/src/app/ui_app_runtime.ts`
 - UI runtime owners: `apps/ui/src/app/runtime/`
 - Simulator CLI: `apps/server/vibesensor/adapters/simulator/sim_sender.py` (thin CLI/orchestrator over `sim_client.py`, `sim_scene.py`, and `sim_runtime.py`)
-- Firmware app: `firmware/esp/src/main.cpp`
+- Firmware app: `firmware/esp/src/main.cpp` (thin orchestrator) plus `firmware/esp/src/runtime_*.{h,cpp}`
 - Pi image build: `infra/pi-image/pi-gen/build.sh` (thin entrypoint), `infra/pi-image/pi-gen/lib/`, `infra/pi-image/pi-gen/templates/`, and `infra/pi-image/pi-gen/validate-image.sh`
 - Local stack entry point: `docker-compose.yml`
 
@@ -19,7 +19,7 @@ Scope: single source of truth for detailed file layout, entry points, package st
 
 - `apps/server/`: backend package, configs, tests, scripts, systemd units, public UI assets, simulator, and config tooling.
 - `apps/ui/`: TypeScript/Vite dashboard and Playwright tests.
-- `firmware/esp/`: ESP32 firmware.
+- `firmware/esp/`: ESP32 firmware. `src/main.cpp` owns setup/loop orchestration, while `src/runtime_*.{h,cpp}` owns queue, sampling, transport, Wi-Fi, LED, config, and status logic.
 - `cli/`: CLI entry points — `server.py` (main server), `report.py` (report generation), `preflight.py` (config preflight), `hotspot_config.py` (hotspot config export for shell scripts), `http_api_schema_export.py`, `ws_schema_export.py`.
 - `vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`: shared vibration math and unit logic. Hot-path functions accept numpy arrays; scalar functions remain pure Python.
 - `infra/pi-image/pi-gen/`: Raspberry Pi image build pipeline. `build.sh` is the thin entrypoint for `BUILD_MODE=app|image|all`; `lib/` owns focused host-side helpers (prereqs, mirror selection, app artifacts, pi-gen repo prep, stage assembly, artifact selection, validation helpers); `templates/` owns tracked stage/config source files copied into `.cache/pi-gen/`; and `validate-image.sh` reruns the post-build mount/chroot/QEMU validator against an existing artifact.
