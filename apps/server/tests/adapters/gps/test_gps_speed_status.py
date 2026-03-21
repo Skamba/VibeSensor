@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import time
-
 import pytest
+from test_support.gps import set_gps_snapshot_age
 
 from vibesensor.adapters.gps.gps_speed import (
     DEFAULT_STALE_TIMEOUT_S,
@@ -41,7 +40,7 @@ class TestStatusDict:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
         m.speed_mps = 10.0  # 36 km/h
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         s = m.status_dict()
         assert s["gps_enabled"] is True
         assert s["connection_state"] == "connected"
@@ -70,7 +69,7 @@ class TestStatusDict:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
         m.speed_mps = 5.0
-        m.last_update_ts = time.monotonic() - 999  # way older than stale timeout
+        set_gps_snapshot_age(m, age_s=999)  # way older than stale timeout
         s = m.status_dict()
         assert s["connection_state"] == "stale"
 
@@ -84,7 +83,7 @@ class TestStatusDict:
     def test_connected_hides_reconnect_delay(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         s = m.status_dict()
         assert s["reconnect_delay_s"] is None
 
@@ -110,7 +109,7 @@ class TestFallback:
     def test_fresh_gps_no_fallback(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         assert m.effective_speed_mps == pytest.approx(10.0)
         assert m.fallback_active is False
 
@@ -121,7 +120,7 @@ class TestFallback:
         """
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic() - 999
+        set_gps_snapshot_age(m, age_s=999)
         # No override set → stale GPS → fallback path → None
         assert m.effective_speed_mps is None
         assert m.fallback_active is True
@@ -129,7 +128,7 @@ class TestFallback:
     def test_stale_gps_no_override_returns_none(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic() - 999
+        set_gps_snapshot_age(m, age_s=999)
         # No override set
         assert m.effective_speed_mps is None
         assert m.fallback_active is True
@@ -155,7 +154,7 @@ class TestFallback:
         m.manual_source_selected = True
         m.override_speed_mps = 25.0
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         assert m.effective_speed_mps == pytest.approx(25.0)
 
     def test_default_override_wins(self) -> None:
@@ -164,7 +163,7 @@ class TestFallback:
         assert m.manual_source_selected is True
         m.override_speed_mps = 25.0
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         assert m.effective_speed_mps == pytest.approx(25.0)
         assert m.fallback_active is False
 
@@ -173,12 +172,12 @@ class TestFallback:
         m.stale_timeout_s = 5.0
         m.speed_mps = 10.0
         # Just under stale threshold
-        m.last_update_ts = time.monotonic() - 4.0
+        set_gps_snapshot_age(m, age_s=4.0)
         assert m.effective_speed_mps == pytest.approx(10.0)
         assert m.fallback_active is False
 
         # Over stale threshold — no override set → fallback returns None
-        m.last_update_ts = time.monotonic() - 6.0
+        set_gps_snapshot_age(m, age_s=6.0)
         assert m.effective_speed_mps is None
         assert m.fallback_active is True
 
@@ -227,12 +226,12 @@ class TestIsGpsStale:
 
     def test_fresh_update_not_stale(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         assert m._is_gps_stale() is False
 
     def test_old_update_is_stale(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
-        m.last_update_ts = time.monotonic() - m.stale_timeout_s - 1
+        set_gps_snapshot_age(m, age_s=m.stale_timeout_s + 1)
         assert m._is_gps_stale() is True
 
 
