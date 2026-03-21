@@ -11,8 +11,8 @@ from fastapi import HTTPException
 from test_support import response_payload
 
 from vibesensor.adapters.http.updates import create_update_routes
-from vibesensor.use_cases.updates.esp_flash_manager import (
-    EspFlashManager,
+from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
+from vibesensor.use_cases.updates.esp_flash_types import (
     FlashCommandRunner,
     SerialPortInfo,
     SerialPortProvider,
