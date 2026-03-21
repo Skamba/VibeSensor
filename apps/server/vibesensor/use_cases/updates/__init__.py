@@ -18,8 +18,11 @@ Module topology
   command helpers), ``firmware_release_fetcher.py`` (GitHub firmware HTTP
   discovery/download), ``firmware_bundle.py`` (firmware bundle filesystem
   validation/extraction/metadata), ``firmware_types.py`` (firmware cache
-  and release payload types), and ``firmware_cache.py`` (thin public cache
-  facade plus CLI entry points).
+  and release payload types), ``firmware_cache.py`` (thin public cache
+  facade plus CLI entry points), ``esp_flash_manager.py`` (ESP flash
+  orchestration), ``esp_flash_types.py`` (ESP flash contracts/state), and
+  ``esp_serial.py`` / ``esp_flash_runner.py`` (serial discovery and flash
+  process execution helpers).
 - **State**: ``status.py`` (progress tracking, persistent state store,
   and runtime detail collection), ``models.py`` (data models).
 """

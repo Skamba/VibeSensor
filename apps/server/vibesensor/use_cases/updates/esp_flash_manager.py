@@ -1,24 +1,27 @@
-"""ESP32 firmware flash manager.
-
-Manages detection of connected ESP32 devices, flashing firmware via
-``esptool``, and tracking flash state/history through ``EspFlashManager``.
-"""
+"""ESP32 firmware flash orchestration."""
 
 from __future__ import annotations
 
 import asyncio
-import contextlib
-import enum
 import importlib.util
 import logging
 import shutil
 import sys
 import time
-from collections.abc import Callable
-from dataclasses import dataclass
 from pathlib import Path
-from typing import TypedDict
 
+from vibesensor.use_cases.updates.esp_flash_runner import SubprocessFlashCommandRunner
+from vibesensor.use_cases.updates.esp_flash_types import (
+    EspFlashHistoryEntry,
+    EspFlashHistoryEntryDict,
+    EspFlashState,
+    EspFlashStatus,
+    FlashCommandRunner,
+    FlashLogResponse,
+    SerialPortInfoDict,
+    SerialPortProvider,
+)
+from vibesensor.use_cases.updates.esp_serial import PyserialPortProvider, resolve_selected_port
 from vibesensor.use_cases.updates.firmware_bundle import validate_bundle
 from vibesensor.use_cases.updates.firmware_cache import FirmwareCache
 
@@ -44,222 +47,6 @@ def _esptool_base_cmd() -> list[str] | None:
     return None
 
 
-class EspFlashState(enum.StrEnum):
-    """State machine values for an ESP32 flash job."""
-
-    idle = "idle"
-    running = "running"
-    success = "success"
-    failed = "failed"
-    cancelled = "cancelled"
-
-
-class SerialPortInfoDict(TypedDict):
-    """Serialised shape of :class:`SerialPortInfo` for API responses."""
-
-    port: str
-    description: str
-    vid: int | None
-    pid: int | None
-    serial_number: str | None
-
-
-class EspFlashHistoryEntryDict(TypedDict):
-    """Serialised shape of :class:`EspFlashHistoryEntry` for API responses."""
-
-    job_id: int
-    state: str
-    selected_port: str | None
-    auto_detect: bool
-    started_at: float
-    finished_at: float | None
-    exit_code: int | None
-    error: str | None
-
-
-class EspFlashStatusDict(TypedDict):
-    """Serialised shape of :class:`EspFlashStatus` for API responses."""
-
-    state: str
-    phase: str
-    job_id: int | None
-    selected_port: str | None
-    auto_detect: bool
-    started_at: float | None
-    finished_at: float | None
-    last_success_at: float | None
-    exit_code: int | None
-    error: str | None
-    log_count: int
-
-
-class FlashLogResponse(TypedDict):
-    """Response shape for the flash log polling endpoint."""
-
-    from_index: int
-    next_index: int
-    lines: list[str]
-
-
-@dataclass
-class SerialPortInfo:
-    """Metadata about a detected serial port (USB device)."""
-
-    port: str
-    description: str = ""
-    vid: int | None = None
-    pid: int | None = None
-    serial_number: str | None = None
-
-    def to_dict(self) -> SerialPortInfoDict:
-        """Serialise serial port info to a plain dict for API responses."""
-        return SerialPortInfoDict(
-            port=self.port,
-            description=self.description,
-            vid=self.vid,
-            pid=self.pid,
-            serial_number=self.serial_number,
-        )
-
-
-@dataclass
-class EspFlashHistoryEntry:
-    """Record of a completed or cancelled ESP32 flash job."""
-
-    job_id: int
-    state: EspFlashState
-    selected_port: str | None
-    auto_detect: bool
-    started_at: float
-    finished_at: float | None
-    exit_code: int | None
-    error: str | None
-
-    def to_dict(self) -> EspFlashHistoryEntryDict:
-        """Serialise flash history entry to a plain dict for API responses."""
-        return EspFlashHistoryEntryDict(
-            job_id=self.job_id,
-            state=self.state.value,
-            selected_port=self.selected_port,
-            auto_detect=self.auto_detect,
-            started_at=self.started_at,
-            finished_at=self.finished_at,
-            exit_code=self.exit_code,
-            error=self.error,
-        )
-
-
-@dataclass
-class EspFlashStatus:
-    """Current real-time status of the ESP32 flash manager."""
-
-    state: EspFlashState = EspFlashState.idle
-    phase: str = "idle"
-    job_id: int | None = None
-    selected_port: str | None = None
-    auto_detect: bool = False
-    started_at: float | None = None
-    finished_at: float | None = None
-    last_success_at: float | None = None
-    exit_code: int | None = None
-    error: str | None = None
-    log_count: int = 0
-
-    def to_dict(self) -> EspFlashStatusDict:
-        return EspFlashStatusDict(
-            state=self.state.value,
-            phase=self.phase,
-            job_id=self.job_id,
-            selected_port=self.selected_port,
-            auto_detect=self.auto_detect,
-            started_at=self.started_at,
-            finished_at=self.finished_at,
-            last_success_at=self.last_success_at,
-            exit_code=self.exit_code,
-            error=self.error,
-            log_count=self.log_count,
-        )
-
-
-class SerialPortProvider:
-    """Serial port discovery abstraction for testability."""
-
-    async def list_ports(self) -> list[SerialPortInfo]:
-        # Use pyserial (bundled with esptool) for port discovery.
-        try:
-            from serial.tools import list_ports as serial_list_ports  # type: ignore[import-untyped]
-
-            pyserial_ports: list[SerialPortInfo] = []
-            for row in serial_list_ports.comports():
-                port = str(getattr(row, "device", "") or "").strip()
-                if not port:
-                    continue
-                pyserial_ports.append(
-                    SerialPortInfo(
-                        port=port,
-                        description=str(getattr(row, "description", "") or ""),
-                        vid=getattr(row, "vid", None),
-                        pid=getattr(row, "pid", None),
-                        serial_number=str(getattr(row, "serial_number", "") or "") or None,
-                    ),
-                )
-            return pyserial_ports
-        except (ImportError, OSError):
-            LOGGER.warning("Serial port enumeration failed; returning empty list.", exc_info=True)
-            return []
-
-
-class FlashCommandRunner:
-    """Process runner abstraction for streaming command output."""
-
-    async def run(
-        self,
-        args: list[str],
-        *,
-        cwd: str,
-        line_cb: Callable[[str], None],
-        cancel_event: asyncio.Event,
-        timeout_s: float | None = None,
-    ) -> int:
-        proc = await asyncio.create_subprocess_exec(
-            *args,
-            cwd=cwd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-        )
-        if proc.stdout is None:  # pragma: no cover – PIPE always sets stdout
-            raise RuntimeError("subprocess stdout is None despite PIPE setting")
-        started_at = time.monotonic()
-
-        while proc.returncode is None:
-            if cancel_event.is_set():
-                proc.terminate()
-                break
-            if timeout_s is not None and (time.monotonic() - started_at) > timeout_s:
-                line_cb(f"Command timed out after {int(timeout_s)}s")
-                proc.terminate()
-                await proc.wait()
-                return 124
-            try:
-                line = await asyncio.wait_for(proc.stdout.readline(), timeout=0.25)
-            except TimeoutError:
-                continue
-            if not line:
-                await proc.wait()
-                break
-            line_cb(line.decode("utf-8", errors="replace").rstrip("\n"))
-        # Wait for the process to exit; guard against a process that ignores
-        # SIGTERM by escalating to SIGKILL after a short grace period.
-        try:
-            await asyncio.wait_for(proc.wait(), timeout=5.0)
-        except TimeoutError:
-            LOGGER.warning("Process did not exit after SIGTERM; sending SIGKILL.")
-            with contextlib.suppress(ProcessLookupError):
-                proc.kill()
-            await proc.wait()
-        return proc.returncode or 0
-
-
 class EspFlashManager:
     """Manages ESP32 firmware flash jobs: detect ports, run esptool, track history."""
 
@@ -271,8 +58,8 @@ class EspFlashManager:
         firmware_cache: FirmwareCache | None = None,
         repo_path: str | None = None,
     ) -> None:
-        self._runner = runner or FlashCommandRunner()
-        self._ports = port_provider or SerialPortProvider()
+        self._runner = runner or SubprocessFlashCommandRunner()
+        self._ports = port_provider or PyserialPortProvider()
         self._firmware_cache = firmware_cache or FirmwareCache()
         self._status = EspFlashStatus()
         self._task: asyncio.Task[None] | None = None
@@ -335,24 +122,6 @@ class EspFlashManager:
             del self._logs[:-_FLASH_LOG_TRIM_TO]
         self._status.log_count = len(self._logs)
         LOGGER.debug("esp flash [%d]: %s", self._status.log_count, line)
-
-    async def _resolve_port(self) -> str:
-        configured = self._status.selected_port
-        ports = await self._ports.list_ports()
-        if configured:
-            if any(p.port == configured for p in ports):
-                return configured
-            raise ValueError(
-                f"Selected serial port {configured} not found. Check cable/permissions and retry.",
-            )
-        if not ports:
-            raise ValueError("No serial ports detected. Connect your ESP board and retry.")
-        if len(ports) == 1:
-            return ports[0].port
-        usb_like = [p for p in ports if p.vid is not None or "usb" in p.description.lower()]
-        if len(usb_like) == 1:
-            return usb_like[0].port
-        raise ValueError("Multiple serial ports detected. Select the ESP port explicitly.")
 
     async def _run_flash_step(
         self,
@@ -419,7 +188,6 @@ class EspFlashManager:
             self._finalize(state=EspFlashState.failed, error="esptool is not installed")
             return
 
-        # Locate active firmware bundle (downloaded cache > baseline > fail fast)
         bundle_dir = self._firmware_cache.active_bundle_dir()
         if bundle_dir is None:
             self._status.exit_code = 1
@@ -444,17 +212,9 @@ class EspFlashManager:
             self._append_log(
                 f"Using {source_label} firmware bundle (tag={tag_label}) from {bundle_dir}",
             )
-
-            # Load and validate manifest
             manifest = validate_bundle(bundle_dir)
-
-            # Use first environment (typically m5stack_atom)
-            # validate_bundle() already raises ValueError if environments is empty,
-            # so manifest.environments is guaranteed non-empty here.
             env = manifest.environments[0]
             self._append_log(f"Flashing environment: {env.name}")
-
-            # Build write_flash arguments from manifest segments
             flash_args: list[str] = []
             for seg in env.segments:
                 seg_path = bundle_dir / seg.file
@@ -469,7 +229,10 @@ class EspFlashManager:
                 return
 
             try:
-                selected_port = await self._resolve_port()
+                selected_port = resolve_selected_port(
+                    self._status.selected_port,
+                    await self._ports.list_ports(),
+                )
             except ValueError as exc:
                 self._status.exit_code = 2
                 self._append_log(str(exc))
