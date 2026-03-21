@@ -78,8 +78,6 @@ def _import_target_layer(module: str) -> str | None:
 _KNOWN_VIOLATIONS: frozenset[tuple[str, str]] = frozenset(
     {
         # domain → shared (root-level utilities)
-        ("domain/run_capture.py", "vibesensor.strength_bands"),
-        ("domain/run_capture.py", "vibesensor.vibration_strength"),
         # shared → adapters
         # use_cases → adapters
         # use_cases → infra

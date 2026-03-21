@@ -54,7 +54,6 @@ __all__ = [
 
 PEAK_BANDWIDTH_HZ: Final[float] = 1.2
 PEAK_SEPARATION_HZ: Final[float] = 1.2
-
 STRENGTH_EPSILON_MIN_G: Final[float] = 1e-9
 STRENGTH_EPSILON_FLOOR_RATIO: Final[float] = 0.05
 PEAK_THRESHOLD_FLOOR_RATIO: Final[float] = 2.6
@@ -255,7 +254,6 @@ def vibration_strength_db_scalar(
     """
     _floor_raw = float(floor_amp_g)
     _band_raw = float(peak_band_rms_amp_g)
-    # Guard against NaN inputs: max(0.0, NaN) returns NaN in CPython.
     floor = max(0.0, _floor_raw) if isfinite(_floor_raw) else 0.0
     band = max(0.0, _band_raw) if isfinite(_band_raw) else 0.0
     eps = (

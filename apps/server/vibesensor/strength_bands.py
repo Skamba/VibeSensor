@@ -40,7 +40,6 @@ HYSTERESIS_DB: Final[float] = 2.0
 PERSISTENCE_TICKS: Final[int] = 3
 DECAY_TICKS: Final[int] = 5
 
-# Pre-built lookup dicts for O(1) band access
 _BAND_BY_KEY: dict[str, StrengthBand] = {b["key"]: b for b in BANDS}
 _BAND_RANK: dict[str, int] = {b["key"]: i for i, b in enumerate(BANDS)}
 
@@ -51,11 +50,10 @@ def bucket_for_strength(vibration_strength_db: float) -> str:
     Returns ``"l0"`` for sub-zero dB values (treated as negligible).
     Always returns a non-None string.
     """
-    # Reverse-iterate sorted bands; first match is the highest qualifying band.
     for band in reversed(BANDS):
         if vibration_strength_db >= band["min_db"]:
             return band["key"]
-    return "l0"  # sub-zero dB defaults to negligible
+    return "l0"
 
 
 def band_by_key(key: str) -> StrengthBand | None:
