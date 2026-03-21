@@ -1,0 +1,91 @@
+"""Recorder configuration and lifecycle helper types."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from vibesensor.shared.types.json_types import JsonObject
+
+from .sample_builder import build_run_metadata, firmware_version_for_run
+
+if TYPE_CHECKING:
+    from vibesensor.use_cases.run.logger import RunRecorder
+
+__all__ = [
+    "RecorderShutdownReport",
+    "RunRecorderConfig",
+    "_build_run_metadata_record",
+    "_shutdown_report",
+]
+
+
+@dataclass
+class RunRecorderConfig:
+    """Static configuration bundle for :class:`RunRecorder`."""
+
+    metrics_log_hz: int
+    sensor_model: str
+    default_sample_rate_hz: int
+    fft_window_size_samples: int
+    accel_scale_g_per_lsb: float | None = None
+    persist_history_db: bool = True
+    no_data_timeout_s: float = 15.0
+
+
+@dataclass(frozen=True, slots=True)
+class RecorderShutdownReport:
+    completed: bool
+    active_run_id_before_stop: str | None
+    analysis_queue_depth: int
+    analysis_active_run_id: str | None
+    analysis_queue_oldest_age_s: float | None
+    analysis_in_progress: bool
+    write_error: str | None
+    final_status: dict[str, object]
+
+
+def _build_run_metadata_record(
+    recorder: RunRecorder,
+    run_id: str,
+    start_time_utc: str,
+) -> JsonObject:
+    return build_run_metadata(
+        run_id=run_id,
+        start_time_utc=start_time_utc,
+        analysis_settings_snapshot=recorder._analysis_settings_snapshot(),
+        sensor_model=recorder.sensor_model,
+        firmware_version=firmware_version_for_run(recorder.registry),
+        default_sample_rate_hz=recorder.default_sample_rate_hz,
+        metrics_log_hz=recorder.metrics_log_hz,
+        fft_window_size_samples=recorder.fft_window_size_samples,
+        accel_scale_g_per_lsb=recorder.accel_scale_g_per_lsb,
+        active_car_snapshot=(
+            recorder._settings_store.active_car_snapshot()
+            if recorder._settings_store is not None
+            else None
+        ),
+        language_provider=recorder._language_provider,
+    )
+
+
+def _shutdown_report(recorder: RunRecorder, timeout_s: float) -> RecorderShutdownReport:
+    with recorder._lock:
+        active_run_id_before_stop = recorder._run_id
+    recorder._lifecycle.shutdown_requested = True
+    try:
+        final_status = recorder.stop_recording()
+        analysis_completed = recorder.wait_for_post_analysis(timeout_s)
+        health = recorder.health_snapshot()
+        return RecorderShutdownReport(
+            completed=analysis_completed,
+            active_run_id_before_stop=active_run_id_before_stop,
+            analysis_queue_depth=health["analysis_queue_depth"],
+            analysis_active_run_id=health["analysis_active_run_id"],
+            analysis_queue_oldest_age_s=health["analysis_queue_oldest_age_s"],
+            analysis_in_progress=health["analysis_in_progress"],
+            write_error=health["write_error"],
+            final_status=final_status,
+        )
+    finally:
+        recorder._lifecycle.shutdown_requested = False

@@ -22,9 +22,9 @@ from vibesensor.shared.constants import (
     CONFIDENCE_FLOOR,
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
+from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
 from vibesensor.use_cases.diagnostics.findings import (
     _phase_to_str,
-    _reference_missing_finding,
     _speed_profile_from_points,
 )
 from vibesensor.use_cases.diagnostics.order_analysis import _compute_effective_match_rate
