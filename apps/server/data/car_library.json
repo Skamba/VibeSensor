@@ -453,7 +453,7 @@
         "gearboxes": [
           {
             "name": "8-speed automatic (ZF 8HP)",
-            "final_drive_ratio": 3.077,
+            "final_drive_ratio": 2.813,
             "top_gear_ratio": 0.667
           }
         ]

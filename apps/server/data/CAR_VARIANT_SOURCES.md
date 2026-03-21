@@ -82,9 +82,9 @@ and the confidence level of the data.
 |---------|--------|------------|------------------|--------|------------|
 | 320i | B48 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
 | 330i | B48 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
-| 330i xDrive | B48 2.0L I4 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 3.077 | BMW press release / technical data | Medium |
+| 330i xDrive | B48 2.0L I4 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 2.813 | BMW PressClub technical data | High |
 | M340i | B58 3.0L I6 Turbo | RWD | – | BMW press release / technical data | High |
-| M340i xDrive | B58 3.0L I6 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 3.077 | BMW press release / technical data | Medium |
+| M340i xDrive | B58 3.0L I6 Turbo | AWD | – | BMW UK model listing / technical data context | Medium |
 
 ### 4 Series (F32, 2014-2020)
 
@@ -594,8 +594,6 @@ and the confidence level of the data.
 
 ## TODOs
 
-- [ ] Verify xDrive final drive ratio overrides for BMW G20 variants against
-  official BMW technical documentation
 - [ ] Cross-check S tronic final drive ratios for Audi B9/FY platforms
 - [ ] Add diesel (TDI) variants for European-market Audi models where relevant
 - [ ] Research and verify electric vehicle motor specifications

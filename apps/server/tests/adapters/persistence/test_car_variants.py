@@ -138,6 +138,23 @@ def test_resolve_variant_overrides_gearboxes() -> None:
         raise AssertionError("M3 G80 not found")
 
 
+def test_resolve_variant_g20_330i_xdrive_uses_verified_automatic_ratio() -> None:
+    """G20 330i xDrive keeps the automatic-only gearbox override with the verified ratio."""
+    for entry in CAR_LIBRARY:
+        if entry["brand"] == "BMW" and entry["model"] == "3 Series (G20, 2019-2025)":
+            resolved = resolve_variant(entry, "330i xDrive")
+            assert resolved["gearboxes"] == [
+                {
+                    "name": "8-speed automatic (ZF 8HP)",
+                    "final_drive_ratio": pytest.approx(2.813),
+                    "top_gear_ratio": pytest.approx(0.667),
+                }
+            ]
+            break
+    else:
+        raise AssertionError("BMW G20 330i xDrive not found")
+
+
 def test_resolve_variant_unknown_name_returns_base() -> None:
     """resolve_variant with unknown name returns base entry unchanged."""
     base = CAR_LIBRARY[0]
