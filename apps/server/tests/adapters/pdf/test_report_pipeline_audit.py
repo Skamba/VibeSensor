@@ -122,7 +122,7 @@ class TestNextStepFieldsNotRendered:
     that are populated by the builder but the PDF renderer only reads
     step.action and step.why.
 
-    Evidence: pdf_page1.py — only action and why are used.
+    Evidence: `_panel_trust_steps.py` is the panel-level next-steps renderer.
     Impact: actionable diagnostic guidance is lost in PDF output.
     """
 
@@ -239,9 +239,9 @@ class TestSystemFindingCardToneUnused:
     """SystemFindingCard.tone is set by the builder but the PDF renderer
     never reads it — cards are always drawn with SOFT_BG background.
 
-    Evidence: pdf_page1.py _draw_system_card uses fixed SOFT_BG;
+    Evidence: `_panel_systems.py` _draw_system_card uses fixed SOFT_BG;
               theme.py defines card_success_bg/card_warn_bg/card_error_bg
-              which are never referenced by pdf_page1.py.
+              which are never referenced by `_panel_systems.py`.
     """
 
     def test_tone_is_populated_by_builder(self) -> None:
@@ -280,7 +280,7 @@ class TestPeaksTableFixedHeight:
     how many rows it contains.  _draw_peaks_table uses a y_bottom guard
     to limit visible rows to what fits in the panel height.
 
-    Evidence: pdf_page2.py: y - row_h < y_bottom: break
+    Evidence: `_panel_peaks.py`: y - row_h < y_bottom: break
     """
 
     def test_fixed_height_with_many_rows(self) -> None:
