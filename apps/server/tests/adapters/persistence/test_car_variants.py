@@ -155,6 +155,37 @@ def test_resolve_variant_g20_330i_xdrive_uses_verified_automatic_ratio() -> None
         raise AssertionError("BMW G20 330i xDrive not found")
 
 
+@pytest.mark.parametrize(
+    ("model", "variant", "expected_final_drive_ratio"),
+    [
+        ("A4 (B9, 2016-2025)", "35 TFSI", 4.234),
+        ("A4 (B9, 2016-2025)", "40 TFSI", 4.234),
+        ("A4 (B9, 2016-2025)", "45 TFSI quattro", 4.410),
+        ("A5 (B9, 2017-2024)", "40 TFSI", 4.234),
+        ("A5 (B9, 2017-2024)", "45 TFSI quattro", 4.410),
+        ("Q5 (FY, 2017-2026)", "40 TFSI", 5.302),
+        ("Q5 (FY, 2017-2026)", "45 TFSI quattro", 5.302),
+        ("Q5 (FY, 2017-2026)", "55 TFSI e quattro", 5.302),
+    ],
+)
+def test_resolve_variant_audi_b9_fy_s_tronic_uses_verified_final_drives(
+    model: str, variant: str, expected_final_drive_ratio: float
+) -> None:
+    """Audi B9/FY S tronic entries keep the verified final-drive ratios from Audi docs."""
+    for entry in CAR_LIBRARY:
+        if entry["brand"] == "Audi" and entry["model"] == model:
+            resolved = resolve_variant(entry, variant)
+            s_tronic = next(
+                gearbox
+                for gearbox in resolved["gearboxes"]
+                if "s tronic" in gearbox["name"].lower()
+            )
+            assert s_tronic["final_drive_ratio"] == pytest.approx(expected_final_drive_ratio)
+            break
+    else:
+        raise AssertionError(f"Audi model not found: {model}")
+
+
 def test_resolve_variant_unknown_name_returns_base() -> None:
     """resolve_variant with unknown name returns base entry unchanged."""
     base = CAR_LIBRARY[0]
