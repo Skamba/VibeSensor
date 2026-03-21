@@ -11,6 +11,7 @@ from typing import get_type_hints
 import pytest
 from test_support.findings import make_finding
 
+import vibesensor.use_cases.diagnostics.findings as findings_module
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.boundaries.analysis_payload import (
     AmplitudeMetric,
@@ -23,10 +24,6 @@ from vibesensor.shared.constants import (
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
 from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
-from vibesensor.use_cases.diagnostics.findings import (
-    _phase_to_str,
-    _speed_profile_from_points,
-)
 from vibesensor.use_cases.diagnostics.order_analysis import _compute_effective_match_rate
 from vibesensor.use_cases.diagnostics.order_heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
@@ -44,8 +41,26 @@ from vibesensor.use_cases.diagnostics.signal_aggregation import (
     _sensor_intensity_by_location,
     _speed_breakdown,
 )
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
+    _phase_to_str,
+    _speed_profile_from_points,
+)
 
 # -- Subpackage structure tests -----------------------------------------------
+
+
+def test_findings_module_no_longer_reexports_helper_names() -> None:
+    helper_names = (
+        "_classify_peak_type",
+        "_phase_speed_breakdown",
+        "_sensor_intensity_by_location",
+        "_speed_breakdown",
+        "_phase_to_str",
+        "_speed_profile_from_points",
+    )
+
+    for helper_name in helper_names:
+        assert not hasattr(findings_module, helper_name)
 
 
 def test_finding_typed_dict_exposes_core_contract() -> None:
