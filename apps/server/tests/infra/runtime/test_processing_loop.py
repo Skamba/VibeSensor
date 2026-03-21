@@ -65,12 +65,22 @@ class _StubProcessor:
         pass
 
 
+class _StubControlPlane:
+    def __init__(self) -> None:
+        self.broadcast_calls = 0
+
+    def broadcast_sync_clock(self) -> int:
+        self.broadcast_calls += 1
+        return 1
+
+
 def _make_loop(
     *,
     processor: Any = None,
     registry: Any = None,
     sample_rate_hz: int = 800,
     fft_n: int = 2048,
+    control_plane: Any = None,
 ) -> tuple[ProcessingLoop, ProcessingLoopState]:
     state = ProcessingLoopState()
     proc = processor if processor is not None else _StubProcessor()
@@ -82,6 +92,7 @@ def _make_loop(
         fft_n=fft_n,
         registry=reg,
         processor=proc,
+        control_plane=control_plane,
     )
     return loop, state
 
@@ -194,6 +205,17 @@ class TestProcessingLoopFailureTracking:
 
 
 class TestProcessingLoopMismatchDetection:
+    @pytest.mark.asyncio
+    async def test_sync_clock_uses_control_plane_broadcaster(self) -> None:
+        """Sync-clock ticks use the injected control-plane broadcaster seam."""
+        processor = _StubProcessor()
+        control_plane = _StubControlPlane()
+        loop, _state = _make_loop(processor=processor, control_plane=control_plane)
+
+        await loop._run_tick(sync_clock=True)
+
+        assert control_plane.broadcast_calls == 1
+
     @pytest.mark.asyncio
     async def test_sample_rate_mismatch_logged_once(self) -> None:
         """Sample-rate mismatch for a client is recorded in state exactly once."""

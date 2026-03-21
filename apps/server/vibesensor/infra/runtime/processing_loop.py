@@ -15,9 +15,9 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from vibesensor.shared.exceptions import ProcessingError
+from vibesensor.shared.ports import ClockSyncBroadcaster
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
 
@@ -94,7 +94,7 @@ class ProcessingLoop:
         fft_n: int,
         registry: ClientRegistry,
         processor: SignalProcessor,
-        control_plane: UDPControlPlane | None = None,
+        control_plane: ClockSyncBroadcaster | None = None,
     ) -> None:
         self.state = state
         self._fft_update_hz = fft_update_hz
