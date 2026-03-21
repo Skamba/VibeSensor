@@ -7,20 +7,7 @@ import type {
 import type { RunDetail } from "../ui_app_state";
 import { heatColor, normalizeUnit } from "../features/heat_utils";
 
-interface LocationIntensityRow {
-  location?: string | null;
-  p50_intensity_db?: number | null;
-  p95_intensity_db?: number | null;
-  mean_intensity_db?: number | null;
-  max_intensity_db?: number | null;
-  p50?: number | null;
-  p95?: number | null;
-  dropped_frames_delta?: number | null;
-  frames_dropped_delta?: number | null;
-  queue_overflow_drops_delta?: number | null;
-  sample_count?: number | null;
-  samples?: number | null;
-}
+type LocationIntensityRow = HistoryInsightsPayload["sensor_intensity_by_location"][number];
 
 const EMPTY_RUN_DETAIL: RunDetail = {
   preview: null,
@@ -66,12 +53,7 @@ function summarizeFindings(summary: HistoryInsightsPayload | null): FindingPaylo
 }
 
 function summarizeWarnings(payload: HistoryInsightsPayload | null): HistoryInsightWarningPayload[] {
-  const warnings = Array.isArray(payload?.warnings) ? payload.warnings : [];
-  return warnings.filter((warning): warning is HistoryInsightWarningPayload => {
-    return typeof warning?.code === "string"
-      && typeof warning?.severity === "string"
-      && typeof warning?.title === "string";
-  });
+  return payload?.warnings ?? [];
 }
 
 function normalizeLogLocationKey(location: unknown): string {
@@ -92,19 +74,12 @@ function normalizeLogLocationKey(location: unknown): string {
   return raw;
 }
 
-function isLocationIntensityRow(value: unknown): value is LocationIntensityRow {
-  return typeof value === "object" && value !== null;
-}
-
 function sensorIntensityRows(summary: HistoryInsightsPayload | null): LocationIntensityRow[] {
-  if (!Array.isArray(summary?.sensor_intensity_by_location)) {
-    return [];
-  }
-  return summary.sensor_intensity_by_location.filter(isLocationIntensityRow);
+  return summary?.sensor_intensity_by_location ?? [];
 }
 
 function metricFromLocationStat(row: LocationIntensityRow): number | null {
-  const value = Number(row.p95_intensity_db ?? row.p95 ?? row.mean_intensity_db ?? row.max_intensity_db);
+  const value = Number(row.p95_intensity_db ?? row.mean_intensity_db ?? row.max_intensity_db);
   return Number.isFinite(value) ? value : null;
 }
 
@@ -161,17 +136,17 @@ function renderPreviewStats(
   }
   const body = rows
     .map((row) => {
-      const dropped = row?.dropped_frames_delta ?? row?.frames_dropped_delta;
-      const overflow = row?.queue_overflow_drops_delta;
+      const dropped = row.dropped_frames_delta;
+      const overflow = row.queue_overflow_drops_delta;
       return `
           <tr>
             <td>${escapeHtml(row.location || "--")}</td>
-            <td class="numeric">${fmt(Number(row.p50_intensity_db ?? row.p50), 1)}</td>
-            <td class="numeric">${fmt(Number(row.p95_intensity_db ?? row.p95), 1)}</td>
+            <td class="numeric">${fmt(Number(row.p50_intensity_db), 1)}</td>
+            <td class="numeric">${fmt(Number(row.p95_intensity_db), 1)}</td>
             <td class="numeric">${fmt(Number(row.max_intensity_db), 1)}</td>
             <td class="numeric">${typeof dropped === "number" ? formatInt(dropped) : "--"}</td>
             <td class="numeric">${typeof overflow === "number" ? formatInt(overflow) : "--"}</td>
-            <td class="numeric">${formatInt(Number(row.sample_count ?? row.samples))}</td>
+            <td class="numeric">${formatInt(Number(row.sample_count))}</td>
           </tr>`;
     })
     .join("");

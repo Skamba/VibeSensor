@@ -426,9 +426,7 @@
             "type": "object"
           },
           "data_quality": {
-            "additionalProperties": true,
-            "title": "Data Quality",
-            "type": "object"
+            "$ref": "#/components/schemas/DataQualityResponse"
           },
           "duration_s": {
             "title": "Duration S",
@@ -613,14 +611,11 @@
             "title": "Peak Picker Method"
           },
           "phase_info": {
-            "additionalProperties": true,
-            "title": "Phase Info",
-            "type": "object"
+            "$ref": "#/components/schemas/PhaseInfoResponse"
           },
           "phase_segments": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/PhaseSegmentSummaryResponse"
             },
             "title": "Phase Segments",
             "type": "array"
@@ -634,8 +629,7 @@
           },
           "phase_timeline": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/PhaseTimelineEntryResponse"
             },
             "title": "Phase Timeline",
             "type": "array"
@@ -733,8 +727,7 @@
           },
           "sensor_intensity_by_location": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/LocationIntensitySummaryResponse"
             },
             "title": "Sensor Intensity By Location",
             "type": "array"
@@ -801,14 +794,11 @@
             "title": "Speed Breakdown Skipped Reason"
           },
           "speed_stats": {
-            "additionalProperties": true,
-            "title": "Speed Stats",
-            "type": "object"
+            "$ref": "#/components/schemas/SpeedStatsResponse"
           },
           "speed_stats_by_phase": {
             "additionalProperties": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/SpeedStatsResponse"
             },
             "title": "Speed Stats By Phase",
             "type": "object"
@@ -843,8 +833,7 @@
           },
           "test_plan": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/TestPlanStepResponse"
             },
             "title": "Test Plan",
             "type": "array"
@@ -858,8 +847,7 @@
           },
           "warnings": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/SummaryWarningResponse"
             },
             "title": "Warnings",
             "type": "array"
@@ -877,7 +865,6 @@
           "accel_scale_g_per_lsb",
           "incomplete_for_order_analysis",
           "metadata",
-          "warnings",
           "speed_breakdown",
           "phase_speed_breakdown",
           "phase_segments",
@@ -896,7 +883,8 @@
           "sensor_count_used",
           "sensor_intensity_by_location",
           "run_suitability",
-          "data_quality"
+          "data_quality",
+          "warnings"
         ],
         "title": "AnalysisSummaryResponse",
         "type": "object"
@@ -1520,6 +1508,254 @@
           }
         },
         "title": "CombinedMetrics",
+        "type": "object"
+      },
+      "DataQualityAccelSanityResponse": {
+        "description": "Response body for acceleration sanity diagnostics.",
+        "properties": {
+          "saturation_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saturation Count"
+          },
+          "sensor_limit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sensor Limit"
+          },
+          "x_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X Mean"
+          },
+          "x_variance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X Variance"
+          },
+          "y_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Y Mean"
+          },
+          "y_variance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Y Variance"
+          },
+          "z_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z Mean"
+          },
+          "z_variance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z Variance"
+          }
+        },
+        "required": [
+          "x_mean",
+          "x_variance",
+          "y_mean",
+          "y_variance",
+          "z_mean",
+          "z_variance",
+          "sensor_limit",
+          "saturation_count"
+        ],
+        "title": "DataQualityAccelSanityResponse",
+        "type": "object"
+      },
+      "DataQualityOutliersResponse": {
+        "description": "Response body for grouped outlier summaries.",
+        "properties": {
+          "accel_magnitude": {
+            "$ref": "#/components/schemas/OutlierSummaryResponse"
+          },
+          "amplitude_metric": {
+            "$ref": "#/components/schemas/OutlierSummaryResponse"
+          }
+        },
+        "required": [
+          "accel_magnitude",
+          "amplitude_metric"
+        ],
+        "title": "DataQualityOutliersResponse",
+        "type": "object"
+      },
+      "DataQualityRequiredMissingPctResponse": {
+        "description": "Response body for required-field missing percentages.",
+        "properties": {
+          "accel_x": {
+            "title": "Accel X",
+            "type": "number"
+          },
+          "accel_y": {
+            "title": "Accel Y",
+            "type": "number"
+          },
+          "accel_z": {
+            "title": "Accel Z",
+            "type": "number"
+          },
+          "speed_kmh": {
+            "title": "Speed Kmh",
+            "type": "number"
+          },
+          "t_s": {
+            "title": "T S",
+            "type": "number"
+          }
+        },
+        "required": [
+          "t_s",
+          "speed_kmh",
+          "accel_x",
+          "accel_y",
+          "accel_z"
+        ],
+        "title": "DataQualityRequiredMissingPctResponse",
+        "type": "object"
+      },
+      "DataQualityResponse": {
+        "description": "Response body for run-level data-quality diagnostics.",
+        "properties": {
+          "accel_sanity": {
+            "$ref": "#/components/schemas/DataQualityAccelSanityResponse"
+          },
+          "outliers": {
+            "$ref": "#/components/schemas/DataQualityOutliersResponse"
+          },
+          "required_missing_pct": {
+            "$ref": "#/components/schemas/DataQualityRequiredMissingPctResponse"
+          },
+          "speed_coverage": {
+            "$ref": "#/components/schemas/DataQualitySpeedCoverageResponse"
+          }
+        },
+        "required": [
+          "required_missing_pct",
+          "speed_coverage",
+          "accel_sanity",
+          "outliers"
+        ],
+        "title": "DataQualityResponse",
+        "type": "object"
+      },
+      "DataQualitySpeedCoverageResponse": {
+        "description": "Response body for summarized speed-coverage statistics.",
+        "properties": {
+          "count_non_null": {
+            "title": "Count Non Null",
+            "type": "integer"
+          },
+          "max_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Kmh"
+          },
+          "mean_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Kmh"
+          },
+          "min_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Kmh"
+          },
+          "non_null_pct": {
+            "title": "Non Null Pct",
+            "type": "number"
+          },
+          "stddev_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stddev Kmh"
+          }
+        },
+        "required": [
+          "non_null_pct",
+          "min_kmh",
+          "max_kmh",
+          "mean_kmh",
+          "stddev_kmh",
+          "count_non_null"
+        ],
+        "title": "DataQualitySpeedCoverageResponse",
         "type": "object"
       },
       "DebugSpectrumErrorPayload": {
@@ -3098,8 +3334,130 @@
       },
       "HistoryInsightsResponse": {
         "additionalProperties": true,
-        "description": "Response body with aggregated diagnostic insights for a run.",
+        "description": "Response body for the localized history insights endpoint payload.",
         "properties": {
+          "accel_scale_g_per_lsb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accel Scale G Per Lsb"
+          },
+          "analysis_metadata": {
+            "additionalProperties": true,
+            "title": "Analysis Metadata",
+            "type": "object"
+          },
+          "data_quality": {
+            "$ref": "#/components/schemas/DataQualityResponse"
+          },
+          "duration_s": {
+            "title": "Duration S",
+            "type": "number"
+          },
+          "end_time_utc": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time Utc"
+          },
+          "feature_interval_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature Interval S"
+          },
+          "fft_window_size_samples": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fft Window Size Samples"
+          },
+          "fft_window_type": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fft Window Type"
+          },
+          "file_name": {
+            "title": "File Name",
+            "type": "string"
+          },
           "findings": {
             "items": {
               "$ref": "#/components/schemas/FindingPayload"
@@ -3107,16 +3465,298 @@
             "title": "Findings",
             "type": "array"
           },
-          "run_id": {
+          "firmware_version": {
             "anyOf": [
               {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
                 "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Run Id"
+            "title": "Firmware Version"
+          },
+          "incomplete_for_order_analysis": {
+            "title": "Incomplete For Order Analysis",
+            "type": "boolean"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "most_likely_origin": {
+            "$ref": "#/components/schemas/SuspectedVibrationOriginPayload"
+          },
+          "peak_picker_method": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Picker Method"
+          },
+          "phase_info": {
+            "$ref": "#/components/schemas/PhaseInfoResponse"
+          },
+          "phase_segments": {
+            "items": {
+              "$ref": "#/components/schemas/PhaseSegmentSummaryResponse"
+            },
+            "title": "Phase Segments",
+            "type": "array"
+          },
+          "phase_speed_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/PhaseSpeedBreakdownRow"
+            },
+            "title": "Phase Speed Breakdown",
+            "type": "array"
+          },
+          "phase_timeline": {
+            "items": {
+              "$ref": "#/components/schemas/PhaseTimelineEntryResponse"
+            },
+            "title": "Phase Timeline",
+            "type": "array"
+          },
+          "plots": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlotDataResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raw_sample_rate_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Sample Rate Hz"
+          },
+          "record_length": {
+            "title": "Record Length",
+            "type": "string"
+          },
+          "report_date": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Date"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "run_noise_baseline_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Noise Baseline Db"
+          },
+          "run_suitability": {
+            "items": {
+              "$ref": "#/components/schemas/RunSuitabilityCheck"
+            },
+            "title": "Run Suitability",
+            "type": "array"
+          },
+          "samples": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Samples",
+            "type": "array"
+          },
+          "sensor_count_used": {
+            "title": "Sensor Count Used",
+            "type": "integer"
+          },
+          "sensor_intensity_by_location": {
+            "items": {
+              "$ref": "#/components/schemas/LocationIntensitySummaryResponse"
+            },
+            "title": "Sensor Intensity By Location",
+            "type": "array"
+          },
+          "sensor_locations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sensor Locations",
+            "type": "array"
+          },
+          "sensor_locations_connected_throughout": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sensor Locations Connected Throughout",
+            "type": "array"
+          },
+          "sensor_model": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sensor Model"
+          },
+          "speed_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/SpeedBreakdownRow"
+            },
+            "title": "Speed Breakdown",
+            "type": "array"
+          },
+          "speed_breakdown_skipped_reason": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Breakdown Skipped Reason"
+          },
+          "speed_stats": {
+            "$ref": "#/components/schemas/SpeedStatsResponse"
+          },
+          "speed_stats_by_phase": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SpeedStatsResponse"
+            },
+            "title": "Speed Stats By Phase",
+            "type": "object"
+          },
+          "start_time_utc": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time Utc"
           },
           "status": {
             "anyOf": [
@@ -3128,6 +3768,13 @@
               }
             ],
             "title": "Status"
+          },
+          "test_plan": {
+            "items": {
+              "$ref": "#/components/schemas/TestPlanStepResponse"
+            },
+            "title": "Test Plan",
+            "type": "array"
           },
           "top_causes": {
             "items": {
@@ -3144,6 +3791,38 @@
             "type": "array"
           }
         },
+        "required": [
+          "file_name",
+          "run_id",
+          "rows",
+          "duration_s",
+          "record_length",
+          "lang",
+          "raw_sample_rate_hz",
+          "feature_interval_s",
+          "accel_scale_g_per_lsb",
+          "incomplete_for_order_analysis",
+          "metadata",
+          "speed_breakdown",
+          "phase_speed_breakdown",
+          "phase_segments",
+          "run_noise_baseline_db",
+          "speed_breakdown_skipped_reason",
+          "findings",
+          "top_causes",
+          "most_likely_origin",
+          "test_plan",
+          "phase_timeline",
+          "speed_stats",
+          "speed_stats_by_phase",
+          "phase_info",
+          "sensor_locations",
+          "sensor_locations_connected_throughout",
+          "sensor_count_used",
+          "sensor_intensity_by_location",
+          "run_suitability",
+          "data_quality"
+        ],
         "title": "HistoryInsightsResponse",
         "type": "object"
       },
@@ -3419,6 +4098,130 @@
         "title": "LocationHotspotPayload",
         "type": "object"
       },
+      "LocationIntensitySummaryResponse": {
+        "description": "Response body for one sensor-location intensity summary row.",
+        "properties": {
+          "dropped_frames_delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dropped Frames Delta"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "max_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Intensity Db"
+          },
+          "mean_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Intensity Db"
+          },
+          "p50_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P50 Intensity Db"
+          },
+          "p95_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Intensity Db"
+          },
+          "partial_coverage": {
+            "title": "Partial Coverage",
+            "type": "boolean"
+          },
+          "phase_intensity": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/PhaseIntensityStatsResponse"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase Intensity"
+          },
+          "queue_overflow_drops_delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Overflow Drops Delta"
+          },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "sample_coverage_ratio": {
+            "title": "Sample Coverage Ratio",
+            "type": "number"
+          },
+          "sample_coverage_warning": {
+            "title": "Sample Coverage Warning",
+            "type": "boolean"
+          },
+          "strength_bucket_distribution": {
+            "$ref": "#/components/schemas/StrengthBucketDistributionResponse"
+          }
+        },
+        "required": [
+          "location",
+          "partial_coverage",
+          "sample_count",
+          "sample_coverage_ratio",
+          "sample_coverage_warning",
+          "mean_intensity_db",
+          "p50_intensity_db",
+          "p95_intensity_db",
+          "max_intensity_db",
+          "dropped_frames_delta",
+          "queue_overflow_drops_delta",
+          "strength_bucket_distribution"
+        ],
+        "title": "LocationIntensitySummaryResponse",
+        "type": "object"
+      },
       "LocationOptionResponse": {
         "description": "A single sensor-location option (code + human-readable label).",
         "properties": {
@@ -3564,6 +4367,54 @@
           }
         },
         "title": "MatchedPoint",
+        "type": "object"
+      },
+      "OutlierSummaryResponse": {
+        "description": "Response body for an outlier-summary bucket.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "lower_bound": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lower Bound"
+          },
+          "outlier_count": {
+            "title": "Outlier Count",
+            "type": "integer"
+          },
+          "outlier_pct": {
+            "title": "Outlier Pct",
+            "type": "number"
+          },
+          "upper_bound": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper Bound"
+          }
+        },
+        "required": [
+          "count",
+          "outlier_count",
+          "outlier_pct",
+          "lower_bound",
+          "upper_bound"
+        ],
+        "title": "OutlierSummaryResponse",
         "type": "object"
       },
       "PeakTableRow": {
@@ -3767,6 +4618,104 @@
         "title": "PhaseEvidence",
         "type": "object"
       },
+      "PhaseInfoResponse": {
+        "description": "Response body for aggregate driving-phase coverage metrics.",
+        "properties": {
+          "cruise_pct": {
+            "title": "Cruise Pct",
+            "type": "number"
+          },
+          "has_acceleration": {
+            "title": "Has Acceleration",
+            "type": "boolean"
+          },
+          "has_cruise": {
+            "title": "Has Cruise",
+            "type": "boolean"
+          },
+          "idle_pct": {
+            "title": "Idle Pct",
+            "type": "number"
+          },
+          "phase_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Phase Counts",
+            "type": "object"
+          },
+          "phase_pcts": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Phase Pcts",
+            "type": "object"
+          },
+          "segment_count": {
+            "title": "Segment Count",
+            "type": "integer"
+          },
+          "speed_unknown_pct": {
+            "title": "Speed Unknown Pct",
+            "type": "number"
+          },
+          "total_samples": {
+            "title": "Total Samples",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "phase_counts",
+          "phase_pcts",
+          "total_samples",
+          "segment_count",
+          "has_cruise",
+          "has_acceleration",
+          "cruise_pct",
+          "idle_pct",
+          "speed_unknown_pct"
+        ],
+        "title": "PhaseInfoResponse",
+        "type": "object"
+      },
+      "PhaseIntensityStatsResponse": {
+        "description": "Response body for per-phase intensity aggregates at one location.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "max_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Intensity Db"
+          },
+          "mean_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Intensity Db"
+          }
+        },
+        "required": [
+          "count",
+          "mean_intensity_db",
+          "max_intensity_db"
+        ],
+        "title": "PhaseIntensityStatsResponse",
+        "type": "object"
+      },
       "PhaseSegmentOut": {
         "description": "Typed HTTP contract for a serialized driving-phase segment.",
         "properties": {
@@ -3803,6 +4752,83 @@
           "end_t_s"
         ],
         "title": "PhaseSegmentOut",
+        "type": "object"
+      },
+      "PhaseSegmentSummaryResponse": {
+        "description": "Typed HTTP contract for a summarized driving-phase segment.",
+        "properties": {
+          "end_idx": {
+            "title": "End Idx",
+            "type": "integer"
+          },
+          "end_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End T S"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "speed_max_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Max Kmh"
+          },
+          "speed_min_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Min Kmh"
+          },
+          "start_idx": {
+            "title": "Start Idx",
+            "type": "integer"
+          },
+          "start_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start T S"
+          }
+        },
+        "required": [
+          "phase",
+          "start_idx",
+          "end_idx",
+          "start_t_s",
+          "end_t_s",
+          "speed_min_kmh",
+          "speed_max_kmh",
+          "sample_count"
+        ],
+        "title": "PhaseSegmentSummaryResponse",
         "type": "object"
       },
       "PhaseSpeedBreakdownRow": {
@@ -3870,6 +4896,73 @@
           "max_vibration_strength_db"
         ],
         "title": "PhaseSpeedBreakdownRow",
+        "type": "object"
+      },
+      "PhaseTimelineEntryResponse": {
+        "description": "Response body for one summarized phase-timeline interval.",
+        "properties": {
+          "end_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End T S"
+          },
+          "has_fault_evidence": {
+            "title": "Has Fault Evidence",
+            "type": "boolean"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "speed_max_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Max Kmh"
+          },
+          "speed_min_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Min Kmh"
+          },
+          "start_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start T S"
+          }
+        },
+        "required": [
+          "phase",
+          "start_t_s",
+          "end_t_s",
+          "speed_min_kmh",
+          "speed_max_kmh",
+          "has_fault_evidence"
+        ],
+        "title": "PhaseTimelineEntryResponse",
         "type": "object"
       },
       "PlotDataResult": {
@@ -4751,6 +5844,85 @@
         "title": "SpeedSourceStatusResponse",
         "type": "object"
       },
+      "SpeedStatsResponse": {
+        "description": "Response body for one summarized speed-profile snapshot.",
+        "properties": {
+          "max_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Kmh"
+          },
+          "mean_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Kmh"
+          },
+          "min_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Kmh"
+          },
+          "range_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Range Kmh"
+          },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "stddev_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stddev Kmh"
+          },
+          "steady_speed": {
+            "title": "Steady Speed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "min_kmh",
+          "max_kmh",
+          "mean_kmh",
+          "stddev_kmh",
+          "range_kmh",
+          "steady_speed",
+          "sample_count"
+        ],
+        "title": "SpeedStatsResponse",
+        "type": "object"
+      },
       "SpeedUnitRequest": {
         "description": "Request body for changing the displayed speed unit.",
         "properties": {
@@ -4781,6 +5953,58 @@
           "speedUnit"
         ],
         "title": "SpeedUnitResponse",
+        "type": "object"
+      },
+      "StrengthBucketDistributionResponse": {
+        "description": "Response body for per-location strength-bucket coverage.",
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "percent_time_l0": {
+            "title": "Percent Time L0",
+            "type": "number"
+          },
+          "percent_time_l1": {
+            "title": "Percent Time L1",
+            "type": "number"
+          },
+          "percent_time_l2": {
+            "title": "Percent Time L2",
+            "type": "number"
+          },
+          "percent_time_l3": {
+            "title": "Percent Time L3",
+            "type": "number"
+          },
+          "percent_time_l4": {
+            "title": "Percent Time L4",
+            "type": "number"
+          },
+          "percent_time_l5": {
+            "title": "Percent Time L5",
+            "type": "number"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "counts",
+          "percent_time_l0",
+          "percent_time_l1",
+          "percent_time_l2",
+          "percent_time_l3",
+          "percent_time_l4",
+          "percent_time_l5"
+        ],
+        "title": "StrengthBucketDistributionResponse",
         "type": "object"
       },
       "StrengthPeak": {
@@ -4816,6 +6040,91 @@
           "strength_bucket"
         ],
         "title": "StrengthPeak",
+        "type": "object"
+      },
+      "SummaryWarningResponse": {
+        "description": "Response body for a persisted summary warning before localization.",
+        "properties": {
+          "applies_to": {
+            "title": "Applies To",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "severity": {
+            "enum": [
+              "warn",
+              "error"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "applies_to",
+          "title"
+        ],
+        "title": "SummaryWarningResponse",
         "type": "object"
       },
       "SuspectedVibrationOriginPayload": {
@@ -4925,6 +6234,73 @@
           }
         },
         "title": "SuspectedVibrationOriginPayload",
+        "type": "object"
+      },
+      "TestPlanStepResponse": {
+        "description": "Response body for one recommended next-step action.",
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "confirm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirm"
+          },
+          "eta": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta"
+          },
+          "falsify": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Falsify"
+          },
+          "what": {
+            "title": "What",
+            "type": "string"
+          },
+          "why": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Why"
+          }
+        },
+        "required": [
+          "action_id",
+          "what",
+          "why",
+          "confirm",
+          "falsify",
+          "eta"
+        ],
+        "title": "TestPlanStepResponse",
         "type": "object"
       },
       "UpdateCancelResponse": {

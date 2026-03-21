@@ -70,6 +70,12 @@ def test_export_schema_contains_finding_components_for_history_insights(
     assert history_insights["properties"]["top_causes"]["items"] == {
         "$ref": "#/components/schemas/FindingPayload",
     }
+    assert history_insights["properties"]["warnings"]["items"] == {
+        "$ref": "#/components/schemas/HistoryInsightWarningResponse",
+    }
+    assert history_insights["properties"]["sensor_intensity_by_location"]["items"] == {
+        "$ref": "#/components/schemas/LocationIntensitySummaryResponse",
+    }
     assert {
         "finding_id",
         "suspected_source",
@@ -120,6 +126,33 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
     }
     assert analysis_summary["properties"]["phase_speed_breakdown"]["items"] == {
         "$ref": "#/components/schemas/PhaseSpeedBreakdownRow",
+    }
+    assert analysis_summary["properties"]["warnings"]["items"] == {
+        "$ref": "#/components/schemas/SummaryWarningResponse",
+    }
+    assert analysis_summary["properties"]["phase_segments"]["items"] == {
+        "$ref": "#/components/schemas/PhaseSegmentSummaryResponse",
+    }
+    assert analysis_summary["properties"]["test_plan"]["items"] == {
+        "$ref": "#/components/schemas/TestPlanStepResponse",
+    }
+    assert analysis_summary["properties"]["phase_timeline"]["items"] == {
+        "$ref": "#/components/schemas/PhaseTimelineEntryResponse",
+    }
+    assert analysis_summary["properties"]["speed_stats"] == {
+        "$ref": "#/components/schemas/SpeedStatsResponse",
+    }
+    assert analysis_summary["properties"]["speed_stats_by_phase"]["additionalProperties"] == {
+        "$ref": "#/components/schemas/SpeedStatsResponse",
+    }
+    assert analysis_summary["properties"]["phase_info"] == {
+        "$ref": "#/components/schemas/PhaseInfoResponse",
+    }
+    assert analysis_summary["properties"]["sensor_intensity_by_location"]["items"] == {
+        "$ref": "#/components/schemas/LocationIntensitySummaryResponse",
+    }
+    assert analysis_summary["properties"]["data_quality"] == {
+        "$ref": "#/components/schemas/DataQualityResponse",
     }
     assert analysis_summary["properties"]["run_suitability"]["items"] == {
         "$ref": "#/components/schemas/RunSuitabilityCheck",

@@ -12,12 +12,12 @@ from vibesensor.shared.boundaries.analysis_payload import (
     PeakTableRow,
     PhaseBoundary,
     PhaseSegmentOut,
+    PhaseSegmentSummaryPayload,
     PhaseSpeedBreakdownRow,
     PlotDataResult,
     SpectrogramResult,
     SpeedBreakdownRow,
 )
-from vibesensor.shared.types.json_types import JsonObject
 
 from ._contracts import (
     PeakTableRowLike,
@@ -29,7 +29,9 @@ from ._contracts import (
 )
 
 
-def serialize_phase_segments(phase_segments: Sequence[PhaseSegmentLike]) -> list[JsonObject]:
+def serialize_phase_segments(
+    phase_segments: Sequence[PhaseSegmentLike],
+) -> list[PhaseSegmentSummaryPayload]:
     """Serialize phase segments to JSON-safe dicts."""
     return [
         {

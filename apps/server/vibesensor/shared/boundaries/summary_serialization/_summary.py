@@ -12,7 +12,16 @@ from vibesensor.domain import (
 )
 from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.boundaries.analysis_payload import (
+    AnalysisSummary,
+    DataQualityPayload,
+    LocationIntensitySummaryPayload,
+    OutlierSummaryPayload,
+    PhaseInfoPayload,
+    PhaseTimelineEntryPayload,
+    SpeedStatsPayload,
+    TestPlanStepPayload,
+)
 from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
 from vibesensor.shared.boundaries.vibration_origin import (
     SuspectedVibrationOrigin,
@@ -70,7 +79,7 @@ def build_data_quality_dict(
     speed_non_null_pct: float,
     accel_stats: AccelStatisticsLike,
     amp_metric_values: list[float],
-) -> JsonObject:
+) -> DataQualityPayload:
     """Build the ``data_quality`` sub-dict for the persisted run summary."""
     sample_rows = list(samples)
     return {
@@ -100,8 +109,14 @@ def build_data_quality_dict(
             "saturation_count": _int_value(accel_stats, "sat_count"),
         },
         "outliers": {
-            "accel_magnitude": _json_outlier_summary(_float_list(accel_stats, "accel_mag_vals")),
-            "amplitude_metric": _json_outlier_summary(amp_metric_values),
+            "accel_magnitude": cast(
+                OutlierSummaryPayload,
+                _json_outlier_summary(_float_list(accel_stats, "accel_mag_vals")),
+            ),
+            "amplitude_metric": cast(
+                OutlierSummaryPayload,
+                _json_outlier_summary(amp_metric_values),
+            ),
         },
     }
 
@@ -163,7 +178,7 @@ def build_summary_payload(
     findings: tuple[DomainFinding, ...],
     top_causes: tuple[DomainFinding, ...],
     most_likely_origin: VibrationOrigin | None,
-    test_plan: list[JsonObject],
+    test_plan: list[TestPlanStepPayload],
     phase_timeline: list[DrivingPhaseInterval],
     speed_stats: SpeedProfileSummary,
     speed_stats_by_phase: dict[str, SpeedProfileSummary],
@@ -178,6 +193,17 @@ def build_summary_payload(
     amp_metric_values: list[float],
 ) -> AnalysisSummary:
     """Assemble the final summary payload from already-computed artifacts."""
+    phase_timeline_payload: list[PhaseTimelineEntryPayload] = [
+        {
+            "phase": entry.phase.value,
+            "start_t_s": entry.start_t_s,
+            "end_t_s": entry.end_t_s,
+            "speed_min_kmh": entry.speed_min_kmh,
+            "speed_max_kmh": entry.speed_max_kmh,
+            "has_fault_evidence": entry.has_fault_evidence,
+        }
+        for entry in phase_timeline
+    ]
     return {
         "file_name": file_name,
         "run_id": run_id,
@@ -208,26 +234,19 @@ def build_summary_payload(
         "top_causes": serialize_findings(top_causes),
         "most_likely_origin": serialize_origin_summary(most_likely_origin),
         "test_plan": test_plan,
-        "phase_timeline": [
-            {
-                "phase": entry.phase.value,
-                "start_t_s": entry.start_t_s,
-                "end_t_s": entry.end_t_s,
-                "speed_min_kmh": entry.speed_min_kmh,
-                "speed_max_kmh": entry.speed_max_kmh,
-                "has_fault_evidence": entry.has_fault_evidence,
-            }
-            for entry in phase_timeline
-        ],
-        "speed_stats": cast(JsonObject, speed_stats.to_dict()),
+        "phase_timeline": phase_timeline_payload,
+        "speed_stats": cast(SpeedStatsPayload, speed_stats.to_dict()),
         "speed_stats_by_phase": {
-            k: cast(JsonObject, v.to_dict()) for k, v in speed_stats_by_phase.items()
+            k: cast(SpeedStatsPayload, v.to_dict()) for k, v in speed_stats_by_phase.items()
         },
-        "phase_info": cast(JsonObject, phase_info.to_dict()),
+        "phase_info": cast(PhaseInfoPayload, phase_info.to_dict()),
         "sensor_locations": sensor_locations,
         "sensor_locations_connected_throughout": sorted(connected_locations),
         "sensor_count_used": len(sensor_locations),
-        "sensor_intensity_by_location": [asdict(row) for row in sensor_intensity_by_location],
+        "sensor_intensity_by_location": [
+            cast(LocationIntensitySummaryPayload, asdict(row))
+            for row in sensor_intensity_by_location
+        ],
         "run_suitability": run_suitability_payload(run_suitability),
         "samples": samples,
         "data_quality": build_data_quality_dict(
