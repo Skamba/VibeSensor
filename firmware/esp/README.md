@@ -23,7 +23,14 @@ Authoritative protocol and port contract: `docs/protocol.md`
 ```
 firmware/esp/
 ├── src/
-│   └── main.cpp              Firmware entry point
+│   ├── main.cpp              Setup/loop orchestration only
+│   ├── runtime_config.h      Runtime constants and build-flag overrides
+│   ├── runtime_status.*      Shared counters and status reporting
+│   ├── runtime_queue.*       Frame queue state and ACK compaction
+│   ├── runtime_sampling.*    ADXL345 sampling, prefetch, and catch-up logic
+│   ├── runtime_transport.*   HELLO/DATA/ACK send/receive handling
+│   ├── runtime_wifi.*        Wi-Fi scan, connect, and retry flow
+│   └── runtime_led.*         Identify LED state machine
 ├── lib/
 │   ├── adxl345/              I2C driver for ADXL345 accelerometer
 │   └── vibesensor_proto/     Protocol packet builder
@@ -33,11 +40,24 @@ firmware/esp/
 └── platformio.ini            PlatformIO build config
 ```
 
+## Runtime module layout
+
+- `main.cpp` owns only startup wiring and the cooperative scheduler order.
+- `runtime_queue.*` owns buffered frame state, enqueue/drop behavior, and ACK
+  compaction.
+- `runtime_sampling.*` owns the ADXL345 runtime, prefetch ring, sensor re-init,
+  and sample scheduling.
+- `runtime_transport.*` owns HELLO, DATA, ACK, and control-packet handling.
+- `runtime_wifi.*` owns target AP discovery plus reconnect/backoff behavior.
+- `runtime_led.*` owns identify blinking for the single onboard RGB LED.
+- `runtime_status.*` owns counters, last-error tracking, and periodic status
+  snapshots.
+
 ## Error Handling
 
 - **I2C init**: Every register write during `ADXL345::begin()` is validated;
-  if any write fails the sensor is marked unavailable and sampling falls back
-  to holding the last real sample (or zeros until one real sample exists).
+  if any write fails the sensor is marked unavailable and production firmware
+  skips that sampling slot instead of injecting held or synthetic samples.
 - **I2C reads**: `read_reg()` and `read_multi()` return zeros on bus errors.
   This is safe because the caller (`read_samples()`) only processes FIFO
   entries reported by the hardware status register.
@@ -104,7 +124,7 @@ build_flags =
   -D VIBESENSOR_WIFI_RETRY_INTERVAL_MS=2500
 ```
 
-Settings that still remain in `src/main.cpp`:
+Settings that still remain in `src/runtime_config.h`:
 
 - `kClientName`
 - I2C settings (`kI2cSdaPin`, `kI2cSclPin`, `kAdxlI2cAddr`)
