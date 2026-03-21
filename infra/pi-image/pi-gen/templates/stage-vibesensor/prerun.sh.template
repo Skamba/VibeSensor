@@ -1,0 +1,13 @@
+#!/bin/bash -e
+
+# Always start stage-vibesensor from a clean copy of stage2's rootfs so that
+# incremental builds (with stage0/1/2 skipped) still produce a correct image.
+rm -rf "${ROOTFS_DIR}"
+copy_previous
+
+# Retarget stale apt source entries in reused rootfs snapshots when upstream
+# mirrors are unavailable.
+if [ -d "${ROOTFS_DIR}/etc/apt" ]; then
+  find "${ROOTFS_DIR}/etc/apt" -type f \( -name '*.list' -o -name '*.sources' \) -print0 \
+    | xargs -0 -r sed -i 's#http://raspbian.raspberrypi.com/raspbian/#__RASPBIAN_MIRROR__#g'
+fi

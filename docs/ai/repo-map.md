@@ -12,7 +12,7 @@ Scope: single source of truth for detailed file layout, entry points, package st
 - UI runtime owners: `apps/ui/src/app/runtime/`
 - Simulator CLI: `apps/server/vibesensor/adapters/simulator/sim_sender.py` (thin CLI/orchestrator over `sim_client.py`, `sim_scene.py`, and `sim_runtime.py`)
 - Firmware app: `firmware/esp/src/main.cpp`
-- Pi image build: `infra/pi-image/pi-gen/build.sh`
+- Pi image build: `infra/pi-image/pi-gen/build.sh` (thin entrypoint), `infra/pi-image/pi-gen/lib/`, `infra/pi-image/pi-gen/templates/`, and `infra/pi-image/pi-gen/validate-image.sh`
 - Local stack entry point: `docker-compose.yml`
 
 ## Top-level layout
@@ -22,7 +22,7 @@ Scope: single source of truth for detailed file layout, entry points, package st
 - `firmware/esp/`: ESP32 firmware.
 - `cli/`: CLI entry points — `server.py` (main server), `report.py` (report generation), `preflight.py` (config preflight), `hotspot_config.py` (hotspot config export for shell scripts), `http_api_schema_export.py`, `ws_schema_export.py`.
 - `vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`: shared vibration math and unit logic. Hot-path functions accept numpy arrays; scalar functions remain pure Python.
-- `infra/pi-image/pi-gen/`: Raspberry Pi image build pipeline.
+- `infra/pi-image/pi-gen/`: Raspberry Pi image build pipeline. `build.sh` is the thin entrypoint for `BUILD_MODE=app|image|all`; `lib/` owns focused host-side helpers (prereqs, mirror selection, app artifacts, pi-gen repo prep, stage assembly, artifact selection, validation helpers); `templates/` owns tracked stage/config source files copied into `.cache/pi-gen/`; and `validate-image.sh` reruns the post-build mount/chroot/QEMU validator against an existing artifact.
 - `docs/`: human-facing docs plus AI repo maps and runbooks.
 
 ## Backend package layout

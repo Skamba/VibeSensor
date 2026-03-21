@@ -1,0 +1,307 @@
+#!/bin/bash -e
+
+install -d "${ROOTFS_DIR}/opt"
+cp -a files/opt/. "${ROOTFS_DIR}/opt/"
+
+install -d "${ROOTFS_DIR}/etc/vibesensor"
+install -d -o 1000 -g 1000 "${ROOTFS_DIR}/var/lib/vibesensor" "${ROOTFS_DIR}/var/log/vibesensor"
+install -d "${ROOTFS_DIR}/var/log/wifi"
+install -d "${ROOTFS_DIR}/etc/systemd/system"
+install -d "${ROOTFS_DIR}/etc/NetworkManager/conf.d"
+install -d "${ROOTFS_DIR}/etc/tmpfiles.d"
+install -d "${ROOTFS_DIR}/etc/ssh/sshd_config.d"
+install -d "${ROOTFS_DIR}/etc/systemd/system/ssh.service.d"
+install -d "${ROOTFS_DIR}/etc/sudoers.d"
+# Updater runs as pi and uses a restricted sudo wrapper for privileged ops.
+cat >"${ROOTFS_DIR}/etc/sudoers.d/vibesensor-update" <<'SUDOERS'
+pi ALL=(root) NOPASSWD: /opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh
+SUDOERS
+chmod 0440 "${ROOTFS_DIR}/etc/sudoers.d/vibesensor-update"
+
+# Build the Python virtualenv inside the ARM rootfs via QEMU chroot emulation.
+on_chroot << 'CHROOT_EOF'
+set -e
+PIP_TMP_CACHE=/tmp/vibesensor-pip-cache
+WHEELHOUSE=/tmp/vibesensor-wheelhouse
+PREBUILT_WHEEL="/opt/vibesensor-artifacts/wheels/__APP_WHEEL_FILE__"
+BUILD_DEPS=(python3-dev)
+
+if [ ! -f "${PREBUILT_WHEEL}" ]; then
+  echo "ERROR: missing prebuilt app wheel at ${PREBUILT_WHEEL}"
+  exit 1
+fi
+
+echo "Installing transient build deps for wheel compilation"
+apt-get update
+apt-get install -y --no-install-recommends "${BUILD_DEPS[@]}"
+
+echo "Rebuilding ARM wheelhouse (wheel-first runtime)"
+rm -rf "${WHEELHOUSE}"
+mkdir -p "${WHEELHOUSE}"
+mkdir -p "${PIP_TMP_CACHE}"
+python3 -m venv /tmp/vibesensor-wheel-build
+/tmp/vibesensor-wheel-build/bin/pip install --upgrade pip --quiet
+/tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
+  --prefer-binary \
+  --cache-dir "${PIP_TMP_CACHE}" \
+  "${PREBUILT_WHEEL}[esp]"
+/tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
+  --prefer-binary \
+  --cache-dir "${PIP_TMP_CACHE}" \
+  "setuptools>=68" \
+  "wheel>=0.38"
+rm -rf /tmp/vibesensor-wheel-build
+
+python3 -m venv /opt/VibeSensor/apps/server/.venv
+/opt/VibeSensor/apps/server/.venv/bin/pip install --upgrade pip --quiet
+/opt/VibeSensor/apps/server/.venv/bin/pip install \
+  --no-index \
+  --find-links "${WHEELHOUSE}" \
+  "setuptools>=68" \
+  "wheel>=0.38" \
+  --quiet
+VIBESENSOR_WHEEL="$(find "${WHEELHOUSE}" -maxdepth 1 -type f -name 'vibesensor-*.whl' | sort -V | tail -n 1)"
+if [ -z "${VIBESENSOR_WHEEL}" ]; then
+  echo "ERROR: no vibesensor wheel found in ${WHEELHOUSE}"
+  exit 1
+fi
+/opt/VibeSensor/apps/server/.venv/bin/pip install \
+  --no-index \
+  --find-links "${WHEELHOUSE}" \
+  --force-reinstall \
+  --no-build-isolation \
+  "${VIBESENSOR_WHEEL}[esp]" \
+  --quiet
+echo "Purging transient build deps"
+apt-get purge -y "${BUILD_DEPS[@]}"
+apt-get autoremove -y --purge
+
+# Trim image-only bloat that is not needed on Raspberry Pi 3 A+ runtime:
+# - non-Broadcom firmware families,
+# - kernel header packages (dev-only).
+TRIM_PACKAGES=(
+  firmware-atheros
+  firmware-libertas
+  firmware-mediatek
+  firmware-realtek
+  gpsd-tools
+  build-essential
+  gcc
+  g++
+  cpp
+  gdb
+  libc6-dbg
+  manpages-dev
+  mkvtoolnix
+  iso-codes
+  p7zip-full
+)
+while IFS= read -r pkg; do
+  if [ -n "${pkg}" ]; then
+    TRIM_PACKAGES+=("${pkg}")
+  fi
+done < <(dpkg-query -W -f='${Package}\n' 'linux-headers-*' 2>/dev/null || true)
+INSTALLED_TRIM_PACKAGES=()
+for pkg in "${TRIM_PACKAGES[@]}"; do
+  if dpkg-query -W -f='${Status}' "${pkg}" 2>/dev/null | grep -q "install ok installed"; then
+    INSTALLED_TRIM_PACKAGES+=("${pkg}")
+  fi
+done
+if [ "${#INSTALLED_TRIM_PACKAGES[@]}" -gt 0 ]; then
+  echo "Purging trim-only packages: ${INSTALLED_TRIM_PACKAGES[*]}"
+  apt-get purge -y --auto-remove "${INSTALLED_TRIM_PACKAGES[@]}"
+fi
+SITE_PACKAGES="$(/opt/VibeSensor/apps/server/.venv/bin/python - <<'PY'
+import site
+print(site.getsitepackages()[0])
+PY
+)"
+rm -rf "${SITE_PACKAGES}/data" "${SITE_PACKAGES}/public" "${SITE_PACKAGES}/static"
+cp -a /opt/VibeSensor/apps/server/data "${SITE_PACKAGES}/data"
+# Keep runtime assets/scripts/config while ensuring Python code comes from wheels.
+rm -rf \
+  /opt/VibeSensor/apps/server/vibesensor \
+  /opt/VibeSensor/apps/server/tests \
+  /opt/VibeSensor/apps/server/tests_e2e \
+  "${WHEELHOUSE}" \
+  "${PIP_TMP_CACHE}" \
+  /opt/vibesensor-artifacts \
+  '/opt/VibeSensor/$MNT' \
+  /opt/VibeSensor/.git \
+  /opt/VibeSensor/.github \
+  /opt/VibeSensor/infra/pi-image/pi-gen/.pip-cache-stage
+# Strip docs/manpages/locales from the appliance image to reduce size.
+rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/lintian/* /usr/share/linda/*
+find /usr/share/locale -mindepth 1 -maxdepth 1 \
+  ! -name 'en*' \
+  ! -name 'C' \
+  ! -name 'POSIX' \
+  ! -name 'locale.alias' \
+  -exec rm -rf {} +
+rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /var/cache/apt/archives/partial/*
+install -d -o 1000 -g 1000 /var/lib/vibesensor/firmware
+# Embed baseline ESP firmware bundle from the latest GitHub Release.
+# This enables first-boot flashing without running the updater.
+cat >/tmp/vibesensor-fw-baseline.sh <<'FW_BASELINE_EOF'
+#!/bin/bash
+set -euo pipefail
+
+VENV_PYTHON="/opt/VibeSensor/apps/server/.venv/bin/python"
+VENV_FW_REFRESH="/opt/VibeSensor/apps/server/.venv/bin/vibesensor-fw-refresh"
+FW_CACHE_DIR="/var/lib/vibesensor/firmware"
+
+echo "Refreshing ESP firmware cache (embedding baseline)..."
+"${VENV_FW_REFRESH}" \
+  --cache-dir "${FW_CACHE_DIR}" 2>&1 || true
+
+# If refresh succeeded, copy the downloaded cache as the baseline
+if [ -d "${FW_CACHE_DIR}/current" ] && [ -f "${FW_CACHE_DIR}/current/flash.json" ]; then
+  rm -rf "${FW_CACHE_DIR}/baseline"
+  cp -a "${FW_CACHE_DIR}/current" "${FW_CACHE_DIR}/baseline"
+  # Update source in baseline metadata
+  if [ -f "${FW_CACHE_DIR}/baseline/_meta.json" ]; then
+    "${VENV_PYTHON}" -c "
+import json, pathlib
+p = pathlib.Path('${FW_CACHE_DIR}/baseline/_meta.json')
+d = json.loads(p.read_text())
+d['source'] = 'baseline'
+p.write_text(json.dumps(d, indent=2) + '\n')
+"
+  fi
+  echo "Baseline firmware embedded successfully."
+else
+  echo "WARNING: Could not embed baseline firmware (no release found or network unavailable)."
+  echo "First-boot flashing will require running the updater while online."
+fi
+FW_BASELINE_EOF
+chown 1000:1000 /tmp/vibesensor-fw-baseline.sh
+chmod +x /tmp/vibesensor-fw-baseline.sh
+su - pi -c '/tmp/vibesensor-fw-baseline.sh'
+rm -f /tmp/vibesensor-fw-baseline.sh
+chown -R 1000:1000 /var/lib/vibesensor
+chown -R 1000:1000 /opt/VibeSensor/apps/server/.venv
+CHROOT_EOF
+
+cat >"${ROOTFS_DIR}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf" <<'NMCONF'
+[main]
+dns=dnsmasq
+NMCONF
+
+install -m 0644 \
+  "${ROOTFS_DIR}/opt/VibeSensor/infra/pi-image/pi-gen/assets/vibesensor-wifi.conf" \
+  "${ROOTFS_DIR}/etc/tmpfiles.d/vibesensor-wifi.conf"
+
+if [ ! -f "${ROOTFS_DIR}/etc/vibesensor/config.yaml" ]; then
+  install -m 0644 \
+    "${ROOTFS_DIR}/opt/VibeSensor/apps/server/config.pi.yaml" \
+    "${ROOTFS_DIR}/etc/vibesensor/config.yaml"
+fi
+
+SYSTEMD_SRC="${ROOTFS_DIR}/opt/VibeSensor/apps/server/systemd"
+
+sed \
+  -e 's#__PI_DIR__#/opt/VibeSensor/apps/server#g' \
+  -e 's#__VENV_DIR__#/opt/VibeSensor/apps/server/.venv#g' \
+  -e 's#__SERVICE_USER__#pi#g' \
+  "${SYSTEMD_SRC}/vibesensor-hotspot.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot.service"
+
+install -m 0644 \
+  "${SYSTEMD_SRC}/vibesensor-rfkill-unblock.service" \
+  "${ROOTFS_DIR}/etc/systemd/system/vibesensor-rfkill-unblock.service"
+
+sed \
+  -e 's#__VENV_DIR__#/opt/VibeSensor/apps/server/.venv#g' \
+  "${SYSTEMD_SRC}/vibesensor-hotspot-self-heal.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot-self-heal.service"
+
+install -m 0644 \
+  "${SYSTEMD_SRC}/vibesensor-hotspot-self-heal.timer" \
+  "${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot-self-heal.timer"
+
+sed \
+  -e 's#__PI_DIR__#/opt/VibeSensor/apps/server#g' \
+  -e 's#__VENV_DIR__#/opt/VibeSensor/apps/server/.venv#g' \
+  -e 's#__SERVICE_USER__#pi#g' \
+  "${SYSTEMD_SRC}/vibesensor.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor.service"
+
+mkdir -p "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants"
+ln -sf /etc/systemd/system/vibesensor.service \
+  "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/vibesensor.service"
+ln -sf /etc/systemd/system/vibesensor-hotspot.service \
+  "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/vibesensor-hotspot.service"
+mkdir -p "${ROOTFS_DIR}/etc/systemd/system/NetworkManager.service.wants"
+ln -sf /etc/systemd/system/vibesensor-rfkill-unblock.service \
+  "${ROOTFS_DIR}/etc/systemd/system/NetworkManager.service.wants/vibesensor-rfkill-unblock.service"
+mkdir -p "${ROOTFS_DIR}/etc/systemd/system/timers.target.wants"
+ln -sf /etc/systemd/system/vibesensor-hotspot-self-heal.timer \
+  "${ROOTFS_DIR}/etc/systemd/system/timers.target.wants/vibesensor-hotspot-self-heal.timer"
+
+# Force password SSH auth for the first user so hotspot-only deployments can
+# always recover the device without pre-provisioned SSH keys.
+cat >"${ROOTFS_DIR}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf" <<'SSHCONF'
+PasswordAuthentication yes
+KbdInteractiveAuthentication no
+UsePAM yes
+SSHCONF
+
+# Make first-boot SSH deterministic when host keys are intentionally absent in
+# the baked image; generate device-unique keys before sshd starts.
+cat >"${ROOTFS_DIR}/etc/systemd/system/ssh.service.d/10-vibesensor-hostkeys.conf" <<'SSHUNIT'
+[Unit]
+Wants=regenerate_ssh_host_keys.service
+After=regenerate_ssh_host_keys.service
+
+[Service]
+ExecStartPre=/bin/sh -c 'if ! ls /etc/ssh/ssh_host_*_key >/dev/null 2>&1; then /usr/bin/ssh-keygen -A; fi'
+SSHUNIT
+
+if [ "__SSH_FIRST_BOOT_DEBUG__" = "1" ]; then
+  install -d "${ROOTFS_DIR}/usr/local/sbin"
+  cat >"${ROOTFS_DIR}/usr/local/sbin/vibesensor-ssh-debug" <<'SSHDEBUG'
+#!/bin/sh
+set -eu
+
+FWLOC=""
+if FWLOC="$(/usr/lib/raspberrypi-sys-mods/get_fw_loc 2>/dev/null)"; then
+  :
+elif [ -d /boot/firmware ]; then
+  FWLOC=/boot/firmware
+else
+  FWLOC=/boot
+fi
+
+OUT="${FWLOC}/ssh-debug.txt"
+
+{
+  echo "=== vibesensor ssh debug ($(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
+  echo "-- ssh service status --"
+  systemctl --no-pager --full status ssh || true
+  echo
+  echo "-- regenerate_ssh_host_keys service status --"
+  systemctl --no-pager --full status regenerate_ssh_host_keys || true
+  echo
+  echo "-- last boot journal (ssh units) --"
+  journalctl -b --no-pager -u regenerate_ssh_host_keys -u ssh || true
+  echo
+  echo "-- host key files --"
+  ls -la /etc/ssh/ssh_host_* || true
+} >"${OUT}" 2>&1
+SSHDEBUG
+  chmod 0755 "${ROOTFS_DIR}/usr/local/sbin/vibesensor-ssh-debug"
+
+  cat >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-ssh-debug.service" <<'SSHDEBUGUNIT'
+[Unit]
+Description=Write first-boot SSH diagnostics to firmware partition
+After=multi-user.target
+Wants=ssh.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/vibesensor-ssh-debug
+
+[Install]
+WantedBy=multi-user.target
+SSHDEBUGUNIT
+
+  ln -sf /etc/systemd/system/vibesensor-ssh-debug.service \
+    "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/vibesensor-ssh-debug.service"
+fi
