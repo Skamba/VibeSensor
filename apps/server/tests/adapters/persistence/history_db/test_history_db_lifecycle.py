@@ -58,6 +58,27 @@ def test_history_db_thread_safe_appends(tmp_path: Path) -> None:
     assert len(db.get_run_samples("run-2")) == 400
 
 
+def test_close_uses_lock_and_clears_connection(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    events: list[str] = []
+
+    class RecordingLock:
+        def __enter__(self) -> None:
+            events.append("enter")
+            return None
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            events.append("exit")
+            return False
+
+    db._lock = RecordingLock()  # type: ignore[assignment]
+
+    db.close()
+
+    assert events == ["enter", "exit"]
+    assert db._conn is None
+
+
 def test_schema_version_ancient_no_migration_fails_fast(tmp_path: Path) -> None:
     """A DB with a very old version that has no migration path should raise."""
     db_path = tmp_path / "history.db"

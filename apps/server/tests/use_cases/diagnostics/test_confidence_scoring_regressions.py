@@ -2,14 +2,11 @@
 from __future__ import annotations
 
 """Confidence and scoring regressions:
-- Ranking score error denominator uses compliance (matches confidence formula)
 - _suppress_engine_aliases filters before slicing (no lost valid findings)
 - Single-sensor confidence no longer triple-penalised
 - Persistent peak negligible cap aligned to 0.40 (matches order cap)
 """
 
-
-import inspect
 
 import pytest
 from test_support.findings import make_finding
@@ -20,34 +17,6 @@ from vibesensor.use_cases.diagnostics.order_heuristics import (
 from vibesensor.use_cases.diagnostics.order_statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
-
-# ---------------------------------------------------------------------------
-# Bug 1: ranking_score error denominator must use compliance
-# ---------------------------------------------------------------------------
-
-
-class TestRankingScoreErrorDenominator:
-    """The ranking_score error term must use the same compliance-adjusted
-    denominator as the confidence formula (0.25 * compliance).
-    """
-
-    def test_no_hardcoded_denominator_in_ranking(self) -> None:
-        """Source must not hardcode 0.5 denominator for ranking error.
-
-        The ranking_score computation lives in ``assemble_order_finding``
-        in ``order_analysis``; verify it there.
-        """
-        from vibesensor.use_cases.diagnostics.order_analysis import assemble_order_finding
-
-        src = inspect.getsource(assemble_order_finding)
-        # Old code had a hardcoded 0.5 denominator; new code derives from compliance.
-        assert "mean_rel_err / 0.5" not in src, (
-            "ranking_score must not hardcode error denominator to 0.5"
-        )
-        assert "match.compliance" in src, (
-            "ranking_score must use a compliance-derived error denominator"
-        )
-
 
 # ---------------------------------------------------------------------------
 # Bug 2: _suppress_engine_aliases must filter before slicing

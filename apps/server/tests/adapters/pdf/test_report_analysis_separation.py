@@ -6,13 +6,10 @@ package is renderer-only and never imports from ``vibesensor.use_cases.diagnosti
 
 from __future__ import annotations
 
-import ast
 import importlib
 import sys
 from io import BytesIO
-from pathlib import Path
 
-import pytest
 from _paths import SERVER_ROOT
 from pypdf import PdfReader
 
@@ -24,65 +21,14 @@ from vibesensor.adapters.pdf.report_data import (
 )
 
 # ---------------------------------------------------------------------------
-# 1.  Static import guard — report modules must not import analysis modules
+# 1.  Runtime import guard — verify the report package can be loaded
+#     without pulling in the analysis package.
 # ---------------------------------------------------------------------------
 
 _REPORT_DIR = SERVER_ROOT / "vibesensor" / "adapters" / "pdf"
-_ANALYSIS_PKG = "vibesensor.use_cases.diagnostics"
-
-# Modules in the report package that should be checked.
-# mapping.py is excluded: it is the intentional analysis→report bridge.
 _REPORT_MODULES = [
     p for p in _REPORT_DIR.glob("*.py") if p.name not in ("__init__.py", "mapping.py")
 ]
-
-
-@pytest.mark.parametrize("module_path", _REPORT_MODULES, ids=lambda p: p.name)
-def test_report_module_does_not_import_analysis(module_path: Path) -> None:
-    """No ``report/*.py`` file may statically import from ``vibesensor.use_cases.diagnostics``.
-
-    Lazy imports inside function bodies are allowed.  Only module-level
-    (top-of-file) imports are flagged.
-    """
-    source = module_path.read_text(encoding="utf-8")
-    tree = ast.parse(source, filename=str(module_path))
-
-    violations: list[str] = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom) and node.module:
-            # Skip imports inside function/method bodies.
-            if _is_inside_function(tree, node):
-                continue
-
-            full = node.module
-            if node.level and node.level > 0:
-                if full.startswith("analysis"):
-                    violations.append(
-                        f"line {node.lineno}: from {'.' * node.level}{full} import ...",
-                    )
-            elif "analysis" in full.split("."):
-                violations.append(f"line {node.lineno}: from {full} import ...")
-
-    assert not violations, (
-        f"{module_path.name} imports from analysis at module level "
-        f"(violates renderer-only rule):\n" + "\n".join(violations)
-    )
-
-
-def _is_inside_function(tree: ast.Module, target: ast.AST) -> bool:
-    """Return True if *target* is nested inside a function or method body."""
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            for child in ast.walk(node):
-                if child is target:
-                    return True
-    return False
-
-
-# ---------------------------------------------------------------------------
-# 2.  Runtime import guard — verify the report package can be loaded
-#     without pulling in the analysis package.
-# ---------------------------------------------------------------------------
 
 
 def test_report_package_imports_without_analysis() -> None:
@@ -103,14 +49,14 @@ def test_report_package_imports_without_analysis() -> None:
     analysis_modules_after = {
         name for name in sys.modules if name.startswith("vibesensor.use_cases.diagnostics")
     }
-    # Statically-enforced by the AST test above.  This runtime check catches
-    # module-level side-effect imports that the AST scan cannot detect.
+    # The explicit static-guard tool covers import structure. This runtime check
+    # still catches module-level side-effect imports.
     new_analysis = analysis_modules_after - analysis_modules_before
     assert not new_analysis, f"Importing report modules pulled in analysis modules: {new_analysis}"
 
 
 # ---------------------------------------------------------------------------
-# 3.  Report generation fails clearly when ReportData is missing
+# 2.  Report generation fails clearly when ReportData is missing
 # ---------------------------------------------------------------------------
 
 
@@ -126,7 +72,7 @@ def test_build_report_pdf_accepts_report_template_data() -> None:
 
 
 # ---------------------------------------------------------------------------
-# 4.  Report output fidelity — rendered facts match ReportData
+# 3.  Report output fidelity — rendered facts match ReportData
 # ---------------------------------------------------------------------------
 
 

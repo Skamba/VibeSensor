@@ -208,6 +208,31 @@ class TestComputeFftSpectrum:
         max_without = float(np.max(without_filter["combined_amp"]))
         assert max_without > max_with
 
+    def test_preserves_first_analysis_bin_when_slice_starts_above_zero(self) -> None:
+        sr = 512
+        fft_n = 512
+        t = np.arange(fft_n, dtype=np.float32) / sr
+        signal = 0.5 * np.sin(2 * np.pi * 6 * t)
+        block = np.stack([signal, signal, signal], axis=0)
+
+        window = np.hanning(fft_n).astype(np.float32)
+        scale = float(2.0 / max(1.0, float(np.sum(window))))
+        freqs = np.fft.rfftfreq(fft_n, d=1.0 / sr)
+        valid = (freqs >= 6.0) & (freqs <= 100.0)
+
+        result = compute_fft_spectrum(
+            block,
+            sr,
+            fft_window=window,
+            fft_scale=scale,
+            freq_slice=freqs[valid].astype(np.float32),
+            valid_idx=np.flatnonzero(valid),
+        )
+
+        assert result["freq_slice"][0] == pytest.approx(6.0)
+        assert float(result["spectrum_by_axis"]["x"]["amp"][0]) > 0.0
+        assert float(result["combined_amp"][0]) > 0.0
+
     def test_returns_expected_keys(self) -> None:
         sr = 256
         fft_n = 256

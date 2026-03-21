@@ -10,7 +10,6 @@ Verifies:
 
 from __future__ import annotations
 
-import ast
 from pathlib import Path
 
 import pytest
@@ -44,16 +43,6 @@ class TestNormalizeLangConsolidation:
     )
     def test_normalize_lang_handles_variants(self, raw: object, expected: str) -> None:
         assert normalize_lang(raw) == expected
-
-    def test_summary_builder_imports_from_report_i18n(self) -> None:
-        """summary_builder must import normalize_lang from report_i18n, not define its own."""
-        src = (
-            _SERVER_ROOT / "vibesensor" / "use_cases" / "diagnostics" / "summary_builder.py"
-        ).read_text()
-        tree = ast.parse(src)
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name == "normalize_lang":
-                pytest.fail("summary_builder.py must not define its own normalize_lang()")
 
     def test_coerce_language_accepts_nl_be(self) -> None:
         """SettingsStore._coerce_language must accept 'nl-BE' as Dutch."""

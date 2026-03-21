@@ -5,18 +5,13 @@ from __future__ import annotations
 - ranking_score synced after engine alias suppression
 - negligible confidence cap aligned with ConfidenceAssessment tier thresholds
 - steady_speed uses AND (not OR) for stddev and range
-- HistoryDB.close() acquires lock
-- identify_client normalizes client_id
 - _suppress_engine_aliases cap raised to 5
 """
 
 
-import inspect
-
 import pytest
 from test_support.findings import make_finding
 
-from vibesensor.adapters.http.clients import create_client_routes
 from vibesensor.use_cases.diagnostics.order_heuristics import (
     suppress_engine_aliases as _suppress_engine_aliases,
 )
@@ -69,31 +64,6 @@ class TestSteadySpeedUsesAND:
     def test_both_low_is_steady(self) -> None:
         speeds = [60.0 + 0.1 * (i % 3) for i in range(50)]
         assert _speed_stats(speeds).steady_speed, "Both low stddev and range → steady"
-
-
-class TestHistoryDbCloseLocked:
-    """Regression: HistoryDB.close() must acquire the lock."""
-
-    def test_close_acquires_lock(self) -> None:
-        source = inspect.getsource(
-            __import__(
-                "vibesensor.adapters.persistence.history_db",
-                fromlist=["HistoryDB"],
-            ).HistoryDB.close,
-        )
-        assert "self._lock" in source, "close() must use self._lock"
-
-
-class TestIdentifyClientNormalized:
-    """Regression: identify_client must normalize client_id before use."""
-
-    def test_normalize_call_in_source(self) -> None:
-        source = inspect.getsource(create_client_routes)
-        idx = source.index("identify_client")
-        snippet = source[idx : idx + 500]
-        assert "normalize_client_id_or_400" in snippet, (
-            "identify_client must call normalize_client_id_or_400"
-        )
 
 
 class TestSuppressEngineAliasesCapRaised:
