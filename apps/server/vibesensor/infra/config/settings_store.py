@@ -9,15 +9,16 @@ Boundary note
 Settings management spans two layers:
 
 - ``settings_store.py`` (this module) — user-facing settings (cars, speed
-  source, language, unit, sensors) persisted to ``HistoryDB``.
-  Also owns the in-memory analysis parameter cache
+  source, language, unit, sensors) persisted through a narrow snapshot
+  persistence port. Also owns the in-memory analysis parameter cache
   (tire_diameter, tire_aspect, etc.) recomputed from the active car's
   aspects whenever car settings change.
-- ``history_db/`` — ``get_settings_snapshot()`` / ``set_settings_snapshot()``
-  persist settings as a single JSON blob.
+- concrete adapters such as ``history_db/`` implement
+  ``get_settings_snapshot()`` / ``set_settings_snapshot()`` and persist
+  settings as a single JSON blob.
 
 ``SettingsStore`` owns the semantic meaning of settings, delegates
-persistence to ``HistoryDB``, and is the canonical source for
+persistence to its injected snapshot-store collaborator, and is the canonical source for
 runtime settings queries.
 """
 
@@ -26,7 +27,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 from threading import RLock
-from typing import TYPE_CHECKING, cast, get_args
+from typing import cast, get_args
 
 from vibesensor.domain import (
     Car,
@@ -39,6 +40,7 @@ from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
 from vibesensor.infra.config.car_settings import CarSettingsMixin
 from vibesensor.infra.config.car_settings import _clamp_str as _clamp_str
 from vibesensor.shared.exceptions import PersistenceError as PersistenceError
+from vibesensor.shared.ports import SettingsSnapshotPersistence, SpeedSourceSync
 from vibesensor.shared.types.backend_types import (
     LanguageCode,
     SensorConfig,
@@ -52,10 +54,6 @@ from vibesensor.shared.types.backend_types import (
     car_to_persistence_dict,
 )
 from vibesensor.shared.types.json_types import JsonObject
-
-if TYPE_CHECKING:
-    from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-    from vibesensor.adapters.persistence.history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
 
@@ -102,15 +100,15 @@ def _validated_speed_unit(value: object) -> SpeedUnitCode | None:
 class SettingsStore(CarSettingsMixin):
     """Holds the full app settings: cars, speed source, and sensors.
 
-    Persistence is backed by a :class:`HistoryDB` instance (SQLite).
+    Persistence is backed by a snapshot-store collaborator.
     When no *db* is provided the store operates in memory only (useful for tests).
     """
 
     def __init__(
         self,
-        db: HistoryDB | None = None,
+        db: SettingsSnapshotPersistence | None = None,
         *,
-        gps_monitor: GPSSpeedMonitor | None = None,
+        gps_monitor: SpeedSourceSync | None = None,
     ) -> None:
         """Initialise the settings store, loading persisted settings from *db* if provided."""
         self._lock = RLock()

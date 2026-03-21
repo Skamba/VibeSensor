@@ -1,4 +1,4 @@
-"""Use-case-facing ports shared across recording, history, and runtime code."""
+"""Cross-layer ports shared across recording, history, runtime, and config code."""
 
 from __future__ import annotations
 
@@ -14,8 +14,10 @@ __all__ = [
     "ResolvedSpeedSnapshot",
     "RunPersistence",
     "SettingsReader",
+    "SettingsSnapshotPersistence",
     "SignalSource",
     "SpeedProvider",
+    "SpeedSourceSync",
     "TrackedClient",
 ]
 
@@ -66,6 +68,14 @@ class SettingsReader(Protocol):
     def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot: ...
 
     def active_car_snapshot(self) -> CarSnapshot | None: ...
+
+
+class SettingsSnapshotPersistence(Protocol):
+    """Minimal settings snapshot persistence surface needed by SettingsStore."""
+
+    def get_settings_snapshot(self) -> JsonObject | None: ...
+
+    def set_settings_snapshot(self, snapshot: JsonObject) -> None: ...
 
 
 class SignalSource(Protocol):
@@ -126,3 +136,17 @@ class SpeedProvider(Protocol):
     speed_mps: float | None
 
     def resolve_speed(self) -> ResolvedSpeedSnapshot: ...
+
+
+class SpeedSourceSync(Protocol):
+    """Minimal speed-source sync surface needed by SettingsStore."""
+
+    def set_manual_source_selected(self, selected: bool) -> None: ...
+
+    def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None: ...
+
+    def set_fallback_settings(
+        self,
+        stale_timeout_s: float | None = None,
+        **kwargs: object,
+    ) -> None: ...
