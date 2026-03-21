@@ -6,6 +6,7 @@ from dataclasses import dataclass, replace
 from typing import cast
 
 from vibesensor.domain import (
+    Car,
     ConfigurationSnapshot,
     DiagnosticCase,
     DrivingPhaseInterval,
@@ -15,13 +16,13 @@ from vibesensor.domain import (
     RunSuitability,
     Sensor,
     SpeedSource,
+    Symptom,
     TestRun,
 )
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.boundaries.diagnostic_case import case_context_from_metadata
 from vibesensor.shared.boundaries.finding import step_payloads_from_plan
 from vibesensor.shared.boundaries.summary_serialization import (
     build_summary_payload,
@@ -126,7 +127,8 @@ def build_analysis_result(
         suitability=run_suitability,
         test_plan=domain_test_plan,
     )
-    domain_car, domain_symptoms = case_context_from_metadata(metadata)
+    domain_car = Car.from_metadata(metadata)
+    domain_symptoms = (Symptom.from_metadata(metadata),)
     diagnostic_case = DiagnosticCase.start(
         car=domain_car,
         symptoms=domain_symptoms,

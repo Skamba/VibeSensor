@@ -1,7 +1,8 @@
-"""Domain <-> summary boundary conversions for diagnostic cases and runs.
+"""Decode persisted diagnostic summaries and project canonical summary payloads.
 
-Also includes boundary functions for run suitability and speed profile
-(formerly in separate modules).
+This module is the boundary decoder/projection layer for persisted analysis
+summaries. Construction from already-typed internal metadata or speed snapshots
+belongs on the domain objects themselves.
 """
 
 from __future__ import annotations
@@ -9,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import cast
 
-from vibesensor.domain import Car, Finding, OrderReferenceSpec
+from vibesensor.domain import Car, Finding
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
 from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture, RunSetup
@@ -107,76 +108,6 @@ def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]
     return cast(JsonObject, projected), test_run
 
 
-def case_context_from_metadata(
-    metadata: Mapping[str, object],
-) -> tuple[Car | None, tuple[Symptom, ...]]:
-    """Build case-scoped car and symptoms from persisted metadata."""
-    car_name = str(metadata.get("car_name") or metadata.get("name") or "").strip()
-    car_type = str(metadata.get("car_type") or "").strip()
-    car_variant = str(metadata.get("car_variant") or metadata.get("variant") or "").strip()
-    order_reference_spec = OrderReferenceSpec.from_settings(metadata)
-    if car_name or car_type or car_variant or order_reference_spec is not None:
-        car = Car(
-            name=car_name or "Unnamed Car",
-            car_type=car_type or "sedan",
-            variant=car_variant or None,
-            order_reference_spec=order_reference_spec,
-        )
-    else:
-        car = None
-
-    complaint = str(metadata.get("symptom") or metadata.get("complaint") or "").strip()
-    if not complaint:
-        return car, (Symptom.unspecified(),)
-    return (
-        car,
-        (
-            Symptom(
-                description=complaint,
-                onset=str(metadata.get("symptom_onset") or "").strip(),
-                context=str(metadata.get("symptom_context") or "").strip(),
-            ),
-        ),
-    )
-
-
-# ---------------------------------------------------------------------------
-# Speed profile (formerly speed_profile.py)
-# ---------------------------------------------------------------------------
-
-
-def speed_profile_from_stats(
-    speed_stats: SpeedProfileSummary,
-    phase_summary: DrivingPhaseSummary | None = None,
-) -> SpeedProfile:
-    """Construct a ``SpeedProfile`` from typed speed-stats and phase-summary snapshots."""
-    ps = phase_summary or DrivingPhaseSummary()
-
-    def _or_zero(v: float | None) -> float:
-        return v if v is not None else 0.0
-
-    return SpeedProfile(
-        min_kmh=_or_zero(speed_stats.min_kmh),
-        max_kmh=_or_zero(speed_stats.max_kmh),
-        mean_kmh=_or_zero(speed_stats.mean_kmh),
-        stddev_kmh=_or_zero(speed_stats.stddev_kmh),
-        steady_speed=speed_stats.steady_speed,
-        has_cruise=ps.has_cruise,
-        has_acceleration=ps.has_acceleration,
-        cruise_fraction=min(1.0, max(0.0, ps.cruise_pct / 100.0)) if ps.cruise_pct else 0.0,
-        idle_fraction=min(1.0, max(0.0, ps.idle_pct / 100.0)) if ps.idle_pct else 0.0,
-        speed_unknown_fraction=(
-            min(1.0, max(0.0, ps.speed_unknown_pct / 100.0)) if ps.speed_unknown_pct else 0.0
-        ),
-        sample_count=speed_stats.sample_count,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Diagnostic case / test run reconstruction
-# ---------------------------------------------------------------------------
-
-
 def _actions_from_steps(steps: object) -> tuple[RecommendedAction, ...]:
     if not isinstance(steps, list):
         return ()
@@ -271,7 +202,7 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     if not isinstance(phase_info, Mapping):
         phase_info = summary.get("phase_summary")
     speed_profile = (
-        speed_profile_from_stats(
+        SpeedProfile.from_stats(
             SpeedProfileSummary.from_dict(raw_speed_stats),
             DrivingPhaseSummary.from_dict(phase_info) if isinstance(phase_info, Mapping) else None,
         )
@@ -352,7 +283,8 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
 def diagnostic_case_from_summary(summary: Mapping[str, object]) -> DiagnosticCase:
     metadata = summary.get("metadata")
     meta = metadata if isinstance(metadata, Mapping) else {}
-    car, symptoms = case_context_from_metadata(meta)
+    car = Car.from_metadata(meta)
+    symptoms = (Symptom.from_metadata(meta),)
     test_run = test_run_from_summary(summary)
     case = DiagnosticCase(
         case_id=_require_authoritative_case_id(summary),

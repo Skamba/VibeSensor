@@ -23,6 +23,7 @@ Domain model (scope: behavioral rules only; see `docs/domain-model.md` for the f
 - Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
 - Consumers import from `vibesensor.domain`, not from individual module files.
 - Boundary decoders/serializers live under `apps/server/vibesensor/shared/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.
+- Factories that build domain objects from already-typed internal metadata, snapshots, or computed state belong on domain objects (or the owning use-case), not in `shared/boundaries/`.
 
 Commands
 - Other AI guidance and docs should reference this list instead of repeating it.

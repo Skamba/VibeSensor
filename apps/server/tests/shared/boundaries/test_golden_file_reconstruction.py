@@ -5,10 +5,8 @@ from __future__ import annotations
 import pytest
 from test_support import build_speed_sweep_fault_samples, standard_metadata
 
+from vibesensor.domain import SpeedProfile
 from vibesensor.domain.snapshots import DrivingPhaseSummary, SpeedProfileSummary
-from vibesensor.shared.boundaries.diagnostic_case import (
-    speed_profile_from_stats,
-)
 from vibesensor.shared.boundaries.diagnostic_case import (
     test_run_from_summary as _reconstruct,
 )
@@ -62,7 +60,7 @@ class TestGoldenFileReconstruction:
         if raw_speed_stats is None:
             pytest.skip("No speed_stats in golden summary")
 
-        sp = speed_profile_from_stats(
+        sp = SpeedProfile.from_stats(
             SpeedProfileSummary.from_dict(raw_speed_stats),
             DrivingPhaseSummary.from_dict(raw_phase_info) if raw_phase_info else None,
         )
@@ -113,8 +111,8 @@ class TestRoundTripParity:
         assert snap.idle_pct == pytest.approx(12.0)
         assert snap.speed_unknown_pct == pytest.approx(8.0)
 
-    def test_speed_profile_from_stats_with_empty_snapshots(self) -> None:
-        sp = speed_profile_from_stats(SpeedProfileSummary())
+    def test_speed_profile_from_typed_snapshots_with_empty_inputs(self) -> None:
+        sp = SpeedProfile.from_stats(SpeedProfileSummary())
         assert sp.min_kmh == 0.0
         assert sp.max_kmh == 0.0
         assert sp.steady_speed is False

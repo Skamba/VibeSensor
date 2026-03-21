@@ -164,6 +164,22 @@ class Car:
             variant=variant or None,
         )
 
+    @classmethod
+    def from_metadata(cls, metadata: Mapping[str, object]) -> Car | None:
+        """Build optional case-scoped car context from submitted metadata."""
+        car_name = str(metadata.get("car_name") or metadata.get("name") or "").strip()
+        car_type = str(metadata.get("car_type") or "").strip()
+        car_variant = str(metadata.get("car_variant") or metadata.get("variant") or "").strip()
+        order_reference_spec = OrderReferenceSpec.from_settings(metadata)
+        if not (car_name or car_type or car_variant or order_reference_spec is not None):
+            return None
+        return cls(
+            name=car_name or "Unnamed Car",
+            car_type=car_type or "sedan",
+            variant=car_variant or None,
+            order_reference_spec=order_reference_spec,
+        )
+
     @property
     def aspects(self) -> Mapping[str, float]:
         return self._aspects
