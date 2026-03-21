@@ -236,6 +236,32 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
 
 
 @pytest.mark.asyncio
+async def test_history_run_preserves_missing_optional_analysis_fields() -> None:
+    metadata = make_metadata()
+    samples = [sample(0)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis.pop("plots", None)
+    analysis.pop("analysis_metadata", None)
+    db = FakeHistoryDB(metadata, samples, analysis)
+    router = create_router(FakeState(db, FakeWsHub()))
+    endpoint = route_endpoint(router, "/api/history/{run_id}")
+    route = next(
+        route
+        for route in router.routes
+        if getattr(route, "path", "") == "/api/history/{run_id}"
+        and "GET" in getattr(route, "methods", set())
+    )
+
+    result = await endpoint("run-1")
+    payload = result.model_dump(exclude_unset=True)["analysis"]
+    assert getattr(route, "response_model_exclude_unset", False) is True
+    assert "findings" in payload
+    assert "samples" not in payload
+    assert "plots" not in payload
+    assert "analysis_metadata" not in payload
+
+
+@pytest.mark.asyncio
 async def test_history_insights_analyzing_returns_202_json_response() -> None:
     from fastapi.responses import JSONResponse
 

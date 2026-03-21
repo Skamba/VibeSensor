@@ -96,3 +96,44 @@ def test_export_schema_contains_finding_components_for_history_insights(
     assert finding_payload["properties"]["matched_points"]["items"] == {
         "$ref": "#/components/schemas/MatchedPoint",
     }
+
+
+def test_export_schema_contains_typed_analysis_summary_for_history_run(
+    schema_dict: dict[str, Any],
+) -> None:
+    history_run = schema_dict["components"]["schemas"]["HistoryRunResponse"]
+    analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummaryResponse"]
+    plot_data = schema_dict["components"]["schemas"]["PlotDataResult"]
+
+    assert history_run["properties"]["analysis"]["anyOf"] == [
+        {"$ref": "#/components/schemas/AnalysisSummaryResponse"},
+        {"type": "null"},
+    ]
+    assert analysis_summary["properties"]["findings"]["items"] == {
+        "$ref": "#/components/schemas/FindingPayload",
+    }
+    assert analysis_summary["properties"]["top_causes"]["items"] == {
+        "$ref": "#/components/schemas/FindingPayload",
+    }
+    assert analysis_summary["properties"]["speed_breakdown"]["items"] == {
+        "$ref": "#/components/schemas/SpeedBreakdownRow",
+    }
+    assert analysis_summary["properties"]["phase_speed_breakdown"]["items"] == {
+        "$ref": "#/components/schemas/PhaseSpeedBreakdownRow",
+    }
+    assert analysis_summary["properties"]["run_suitability"]["items"] == {
+        "$ref": "#/components/schemas/RunSuitabilityCheck",
+    }
+    assert analysis_summary["properties"]["plots"]["anyOf"] == [
+        {"$ref": "#/components/schemas/PlotDataResult"},
+        {"type": "null"},
+    ]
+    assert plot_data["properties"]["peaks_table"]["items"] == {
+        "$ref": "#/components/schemas/PeakTableRow",
+    }
+    assert plot_data["properties"]["peaks_spectrogram"] == {
+        "$ref": "#/components/schemas/SpectrogramResult",
+    }
+    assert plot_data["properties"]["peaks_spectrogram_raw"] == {
+        "$ref": "#/components/schemas/SpectrogramResult",
+    }
