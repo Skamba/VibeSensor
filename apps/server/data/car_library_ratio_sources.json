@@ -5496,66 +5496,29 @@
     },
     "Audi|A4 (B9, 2016-2024)": {
       "car_index": 47,
-      "decision_summary": "No safe EU-only ratio update applied in fallback pass; retained existing entry and flagged for manual evidence-backed review. Second pass completed with additional official-source discovery; ratios remain unchanged unless explicitly confirmed in prior high-confidence evidence. Full-library redo completed with official-source and Wikipedia-overview cross-checking; ratio fields remain unchanged unless explicitly evidence-confirmed.",
+      "decision_summary": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. The shared FWD S tronic entry and the 35/40 TFSI variant overrides now use 4.234, while the 45 TFSI quattro override now uses the officially documented 4.410.",
       "unresolved": [
         {
-          "item": "Audi A4 (B9, 2016-2024) EU ratio-relevant variant mapping",
-          "reason": "Fallback pass without per-model authoritative ratio extraction; no-guess policy kept existing values."
-        },
-        {
-          "item": "Audi A4 (B9, 2016-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi A4 (B9, 2016-2024) top_gear_ratio confirmation",
+          "reason": "This pass re-verified final_drive_ratio only; existing top_gear_ratio values were left unchanged."
         }
       ],
       "sources": {
-        "fallback_official_lookup": [
+        "final_drive_verification": [
           {
-            "url": "https://www.audi.com/en.html",
-            "note": "Audi global official portal entrypoint for model documentation paths.",
-            "confidence": "medium"
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/816/file_en/cd22704fc6ea58ac2814dabc5a480bbf42a32691/eTD-Audi-A4-Sedan-35-TFSI-S_tronic-110kW-MHEV_240320.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter eTD confirming A4 Sedan 35 TFSI S tronic final-drive ratio 4.234.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.audi-mediacenter.com/en",
-            "note": "Audi official media source used for technical releases/spec references.",
-            "confidence": "medium"
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/818/file_en/fffc493e2134c00cc79e6b7030ab5b05a0b8601d/eTD-Audi-A4-Sedan-40-TFSI-S_tronic-150kW-MHEV_240613.pdf",
+            "note": "Official Audi MediaCenter eTD confirming A4 Sedan 40 TFSI S tronic final-drive ratio 4.234.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A4+%28B9%2C+2016-2024%29+technical+data+Europe",
-            "note": "Targeted lookup for official Audi media technical documents for this model.",
-            "confidence": "low"
-          }
-        ],
-        "second_pass_official_enrichment": [
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=B9",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          }
-        ],
-        "official_redo_lookup": [
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=B9",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/models-4",
-            "note": "Audi MediaCenter official model hub (entry point for model-specific documents).",
-            "confidence": "medium"
-          }
-        ],
-        "wikipedia_overview": [
-          {
-            "url": "https://en.wikipedia.org/wiki/Audi_A4",
-            "note": "Wikipedia overview used to cross-check model/engine/variant availability across production years.",
-            "confidence": "medium"
-          }
-        ],
-        "wikipedia_variant_tables": [
-          {
-            "url": "https://en.wikipedia.org/wiki/Audi_A4",
-            "note": "Wikipedia model/table page used to cross-check variant completeness (names + engine context).",
-            "confidence": "medium"
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/930/file_en/b54efbc79b4cb52e6b91dffee6593c055c5d0e8c/eTD-Audi-A4-Sedan-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf?1718355094&disposition=attachment",
+            "note": "Official Audi MediaCenter eTD confirming A4 Sedan 45 TFSI quattro S tronic final-drive ratio 4.410.",
+            "confidence": "high"
           }
         ]
       }
@@ -5628,66 +5591,34 @@
     },
     "Audi|A5 (B9, 2017-2024)": {
       "car_index": 49,
-      "decision_summary": "No safe EU-only ratio update applied in fallback pass; retained existing entry and flagged for manual evidence-backed review. Second pass completed with additional official-source discovery; ratios remain unchanged unless explicitly confirmed in prior high-confidence evidence. Full-library redo completed with official-source and Wikipedia-overview cross-checking; ratio fields remain unchanged unless explicitly evidence-confirmed.",
+      "decision_summary": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. The shared FWD S tronic entry now uses 4.234, and the 45 TFSI quattro variant now carries the officially documented 4.410 override.",
       "unresolved": [
         {
-          "item": "Audi A5 (B9, 2017-2024) EU ratio-relevant variant mapping",
-          "reason": "Fallback pass without per-model authoritative ratio extraction; no-guess policy kept existing values."
-        },
-        {
-          "item": "Audi A5 (B9, 2017-2024) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi A5 (B9, 2017-2024) top_gear_ratio confirmation",
+          "reason": "This pass re-verified final_drive_ratio only; existing top_gear_ratio values were left unchanged."
         }
       ],
       "sources": {
-        "fallback_official_lookup": [
+        "final_drive_verification": [
           {
-            "url": "https://www.audi.com/en.html",
-            "note": "Audi global official portal entrypoint for model documentation paths.",
-            "confidence": "medium"
+            "url": "https://press.audi.co.uk/assets/documents/original/4945-AudiA5Sportback40TFSIUKTechnicalDataDecember2020.pdf",
+            "note": "Official Audi UK technical data confirming A5 Sportback 40 TFSI S tronic final-drive ratio 4.234.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.audi-mediacenter.com/en",
-            "note": "Audi official media source used for technical releases/spec references.",
-            "confidence": "medium"
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/970/file_en/3929d8c79ac5796cab7777c7f0cf691d95d6ec56/eTD-Audi-A5-Coupe-40-TFSI-S_tronic-150kW-MHEV_240320.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter eTD confirming A5 Coupe 40 TFSI S tronic final-drive ratio 4.234.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A5+%28B9%2C+2017-2024%29+technical+data+Europe",
-            "note": "Targeted lookup for official Audi media technical documents for this model.",
-            "confidence": "low"
-          }
-        ],
-        "second_pass_official_enrichment": [
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=B9",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          }
-        ],
-        "official_redo_lookup": [
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=B9",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
-            "confidence": "medium"
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1076/file_en/be71d58f33a992b656581fe5b38cb3e4bb830973/eTD-Audi-A5-Coupe-45-TFSI-quattro-S_tronic-195kW-MHEV_240320.pdf?1711380891&disposition=attachment",
+            "note": "Official Audi MediaCenter eTD confirming A5 Coupe 45 TFSI quattro S tronic final-drive ratio 4.410.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.audi-mediacenter.com/en/models-4",
-            "note": "Audi MediaCenter official model hub (entry point for model-specific documents).",
-            "confidence": "medium"
-          }
-        ],
-        "wikipedia_overview": [
-          {
-            "url": "https://en.wikipedia.org/w/index.php?search=Audi+A5+%28B9%2C+2017-2024%29",
-            "note": "Wikipedia search fallback for model overview when exact page match was not auto-resolved.",
-            "confidence": "low"
-          }
-        ],
-        "wikipedia_variant_tables": [
-          {
-            "url": "https://en.wikipedia.org/wiki/Audi_S5",
-            "note": "Wikipedia model/table page used to cross-check variant completeness (names + engine context).",
-            "confidence": "medium"
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1073/file_en/5b4b65c8ae72cd8942fa0df105e4c3743645d7ab/eTD-Audi-A5-Sportback-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf?disposition=attachment",
+            "note": "Official Audi MediaCenter eTD confirming A5 Sportback 45 TFSI quattro S tronic final-drive ratio 4.410.",
+            "confidence": "high"
           }
         ]
       }
@@ -6404,66 +6335,29 @@
     },
     "Audi|Q5 (FY, 2017-2026)": {
       "car_index": 60,
-      "decision_summary": "No safe EU-only ratio update applied in fallback pass; retained existing entry and flagged for manual evidence-backed review. Second pass completed with additional official-source discovery; ratios remain unchanged unless explicitly confirmed in prior high-confidence evidence. Full-library redo completed with official-source and Wikipedia-overview cross-checking; ratio fields remain unchanged unless explicitly evidence-confirmed.",
+      "decision_summary": "Verified Audi Q5 FY S tronic final-drive ratios from official Audi MediaCenter and Audi technical data PDFs. The shared Q5 FY S tronic entry now uses 5.302, and the stored 45 TFSI quattro override was corrected to the same officially documented value.",
       "unresolved": [
         {
-          "item": "Audi Q5 (FY, 2017-2026) EU ratio-relevant variant mapping",
-          "reason": "Fallback pass without per-model authoritative ratio extraction; no-guess policy kept existing values."
-        },
-        {
-          "item": "Audi Q5 (FY, 2017-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Audi Q5 (FY, 2017-2026) top_gear_ratio confirmation",
+          "reason": "This pass re-verified final_drive_ratio only; existing top_gear_ratio values were left unchanged."
         }
       ],
       "sources": {
-        "fallback_official_lookup": [
+        "final_drive_verification": [
           {
-            "url": "https://www.audi.com/en.html",
-            "note": "Audi global official portal entrypoint for model documentation paths.",
-            "confidence": "medium"
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1452/file_en/1f20ec6b2a7e7f74193b6d77c5513468059560e8/eTD-Audi-Q5-SUV-TFSI-S_tronic-150kW_250327.pdf?1743428500",
+            "note": "Official Audi MediaCenter eTD confirming Q5 SUV TFSI S tronic 150 kW front-wheel-drive final-drive ratio 5.302.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.audi-mediacenter.com/en",
-            "note": "Audi official media source used for technical releases/spec references.",
-            "confidence": "medium"
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1492/file_en/4a1e342f888aea17a9948fbe1277a50752c89d4b/eTD-Audi-Q5-45-TFSI-quattro-S_tronic-195kW-MHEV_240604.pdf?1741620897",
+            "note": "Official Audi MediaCenter eTD confirming Q5 45 TFSI quattro S tronic final-drive ratio 5.302.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+Q5+%28FY%2C+2017-2026%29+technical+data+Europe",
-            "note": "Targeted lookup for official Audi media technical documents for this model.",
-            "confidence": "low"
-          }
-        ],
-        "second_pass_official_enrichment": [
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=FY",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          }
-        ],
-        "official_redo_lookup": [
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=FY",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/models-4",
-            "note": "Audi MediaCenter official model hub (entry point for model-specific documents).",
-            "confidence": "medium"
-          }
-        ],
-        "wikipedia_overview": [
-          {
-            "url": "https://en.wikipedia.org/wiki/Audi_A3",
-            "note": "Wikipedia overview used to cross-check model/engine/variant availability across production years.",
-            "confidence": "medium"
-          }
-        ],
-        "wikipedia_variant_tables": [
-          {
-            "url": "https://en.wikipedia.org/w/index.php?search=Audi+Q5+%28FY%2C+2017-2026%29",
-            "note": "Wikipedia model/table page used to cross-check variant completeness (names + engine context).",
-            "confidence": "medium"
+            "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline_info_Q5_TFSI_e.pdf",
+            "note": "Official Audi technical data confirming Q5 55 TFSI e quattro S tronic final-drive ratio 5.302.",
+            "confidence": "high"
           }
         ]
       }
