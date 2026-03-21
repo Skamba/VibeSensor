@@ -8,9 +8,11 @@ Import analysis symbols from ``vibesensor.use_cases.diagnostics`` directly.
 
 Module topology
 ---------------
-- **Data layer**: ``report_data.py`` (dataclasses).
-- **Context assembly**: ``report_context.py`` (context dataclasses, data-prep,
-  card-assembly — bridges domain/use-case preparation and adapter rendering).
+- **Data layer**: ``report_data.py`` (report metadata and renderer dataclasses).
+- **Context assembly**: ``report_context.py`` (``ReportMappingContext`` and
+  summary/data-prep bridge to adapter rendering).
+- **Context helpers**: ``_candidate_resolver.py`` (primary candidate),
+  ``_card_builder.py`` (system cards and signature humanization).
 - **Mapping**: ``mapping.py`` (thin mapper: context → ``ReportTemplateData``).
 - **Mapping helpers**: ``peak_table.py`` (peak rows), ``report_sections.py`` (report sections), ``presentation.py`` (render-only labels), ``pattern_parts.py`` (parts suggestions).
 - **Engine**: ``pdf_engine.py`` (public entry, page orchestration, pagination).
