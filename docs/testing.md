@@ -204,7 +204,7 @@ Coverage guidance:
 The default CI-parity suite now mirrors these blocking GitHub checks:
 
 - `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, docs lint, WS schema sync, and HTTP API schema sync.
-- `backend-typecheck`: mypy on the `vibesensor` backend package with a small temporary denylist for legacy modules that still need dedicated typing cleanup, so new backend files are checked by default.
+- `backend-typecheck`: mypy on the `vibesensor` backend package; package discovery keeps new backend files checked by default without an internal module denylist.
 - `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
 - `release-smoke`: builds packaged UI and a server wheel, then runs the release smoke validator against the built artifact.
 - `ui-smoke`, `backend-tests`, `e2e`: required test jobs.

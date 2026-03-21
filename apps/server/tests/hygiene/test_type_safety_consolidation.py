@@ -5,7 +5,7 @@ Verifies:
 - SettingsStore._coerce_language handles locale variants (e.g. "nl-BE")
 - ClientRegistry uses normalize_sensor_id (no private duplicate)
 - ClassificationResult TypedDict returned from classify_peak_hz
-- mypy enforcement uses package-level discovery with a targeted denylist
+- mypy enforcement uses package-level discovery without internal denylist exceptions
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ class TestNormalizeLangConsolidation:
 
 
 class TestMypyEnforcement:
-    """pyproject.toml [tool.mypy] uses package discovery plus a small denylist."""
+    """pyproject.toml [tool.mypy] uses package discovery without internal denylists."""
 
     @pytest.fixture
     def mypy_config(self) -> dict[str, object]:
@@ -80,8 +80,21 @@ class TestMypyEnforcement:
         assert mypy_config.get("packages") == ["vibesensor"]
         assert "files" not in mypy_config
 
-    def test_mypy_discovery_exclude_stays_targeted(self, mypy_config: dict[str, object]) -> None:
-        assert mypy_config.get("exclude") == [
-            r"^vibesensor/adapters/http/settings\.py$",
-            r"^vibesensor/adapters/udp/protocol\.py$",
-        ]
+    def test_mypy_discovery_has_no_internal_exclude(self, mypy_config: dict[str, object]) -> None:
+        assert mypy_config.get("exclude") in (None, [])
+
+    def test_mypy_has_no_internal_ignore_errors_override(
+        self,
+        mypy_config: dict[str, object],
+    ) -> None:
+        overrides = mypy_config.get("overrides")
+        assert isinstance(overrides, list)
+        assert not any(
+            isinstance(override, dict)
+            and override.get("ignore_errors") is True
+            and any(
+                isinstance(module_name, str) and module_name.startswith("vibesensor.")
+                for module_name in override.get("module", [])
+            )
+            for override in overrides
+        )
