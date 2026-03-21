@@ -17,11 +17,9 @@ from vibesensor.use_cases.updates.esp_flash_manager import (
     SerialPortInfo,
     SerialPortProvider,
 )
-from vibesensor.use_cases.updates.firmware_cache import (
-    FirmwareCache,
-    FirmwareCacheConfig,
-    validate_bundle,
-)
+from vibesensor.use_cases.updates.firmware_bundle import validate_bundle
+from vibesensor.use_cases.updates.firmware_cache import FirmwareCache
+from vibesensor.use_cases.updates.firmware_types import FirmwareCacheConfig
 
 # ── Constants ──
 

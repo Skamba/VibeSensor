@@ -6,11 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.use_cases.updates.firmware_cache import (
-    FirmwareCacheConfig,
-    GitHubReleaseFetcher,
-    _safe_extractall,
-)
+from vibesensor.use_cases.updates.firmware_bundle import safe_extractall
+from vibesensor.use_cases.updates.firmware_release_fetcher import GitHubReleaseFetcher
+from vibesensor.use_cases.updates.firmware_types import FirmwareCacheConfig
 
 
 def _make_fetcher(channel: str = "stable") -> GitHubReleaseFetcher:
@@ -133,7 +131,7 @@ def test_find_release_raises_when_no_firmware_assets() -> None:
 
 
 # ---------------------------------------------------------------------------
-# _safe_extractall
+# safe_extractall
 # ---------------------------------------------------------------------------
 
 
@@ -146,7 +144,7 @@ def test_safe_extractall_rejects_path_traversal(tmp_path: Path) -> None:
         zipfile.ZipFile(buf) as zf,
         pytest.raises(ValueError, match="outside the target directory"),
     ):
-        _safe_extractall(zf, dest)
+        safe_extractall(zf, dest)
 
 
 def test_safe_extractall_allows_normal_entries(tmp_path: Path) -> None:
@@ -155,6 +153,6 @@ def test_safe_extractall_allows_normal_entries(tmp_path: Path) -> None:
     dest = tmp_path / "extract"
     dest.mkdir()
     with zipfile.ZipFile(buf) as zf:
-        _safe_extractall(zf, dest)
+        safe_extractall(zf, dest)
     assert (dest / "firmware" / "main.bin").is_file()
     assert (dest / "flash.json").is_file()
