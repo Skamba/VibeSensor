@@ -83,18 +83,9 @@ artifacts/     Build/runtime artifacts (non-source)
 
 Each component has its own README with setup instructions and details.
 
-## Docs Index (source of truth)
+## Docs Index
 
-- Developer contribution guide: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Setup & deployment: [README.md](README.md), [apps/server/README.md](apps/server/README.md), [firmware/esp/README.md](firmware/esp/README.md), [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md)
-- Updater architecture & policy: [apps/server/README.md](apps/server/README.md)
-- Wire protocol and ports: [docs/protocol.md](docs/protocol.md)
-- Run/report schema: [docs/run_schema_v2.md](docs/run_schema_v2.md)
-- Report/design language: [docs/design_language.md](docs/design_language.md)
-- Testing workflow and coverage: [docs/testing.md](docs/testing.md)
-- Operational runbooks: [docs/operational-runbooks.md](docs/operational-runbooks.md)
-- CI and release automation: [.github/workflows/ci.yml](.github/workflows/ci.yml), [.github/workflows/main-release.yml](.github/workflows/main-release.yml)
-- AI guidance (canonical): [docs/ai/repo-map.md](docs/ai/repo-map.md), [.github/instructions/general.instructions.md](.github/instructions/general.instructions.md), [.github/copilot-instructions.md](.github/copilot-instructions.md)
+See [docs/README.md](docs/README.md) for the complete documentation index.
 
 ## Quick Start
 
