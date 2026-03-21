@@ -6,12 +6,11 @@ by restarting ``hostapd``/``dnsmasq`` when the hotspot becomes unreachable.
 
 from __future__ import annotations
 
-import argparse
 import logging
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Protocol
 
 from vibesensor.adapters.hotspot.parsers import (
     HealStateStore,
@@ -25,9 +24,6 @@ from vibesensor.adapters.hotspot.parsers import (
     parse_rfkill_blocked,
 )
 
-if TYPE_CHECKING:
-    from vibesensor.app.settings import APConfig, APSelfHealConfig
-
 LOGGER = logging.getLogger("vibesensor.adapters.hotspot.selfheal")
 
 _DHCP_BAD_SIGNALS: frozenset[str] = frozenset(
@@ -35,6 +31,21 @@ _DHCP_BAD_SIGNALS: frozenset[str] = frozenset(
 )
 
 _FALLBACK_CHANNELS: tuple[int, ...] = (1, 6, 11)
+
+
+class HotspotSelfHealConfig(Protocol):
+    diagnostics_lookback_minutes: int
+    min_restart_interval_seconds: int
+    state_file: Path
+
+
+class HotspotApConfig(Protocol):
+    ssid: str
+    psk: str
+    ip: str
+    channel: int
+    ifname: str
+    con_name: str
 
 
 @dataclass(slots=True)
@@ -137,7 +148,11 @@ def _find_port53_conflict(runner: CommandRunner) -> str | None:
     return parse_port53_conflict(ss.stdout)
 
 
-def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRunner) -> HealthState:
+def collect_health(
+    ap: HotspotApConfig,
+    self_heal: HotspotSelfHealConfig,
+    runner: CommandRunner,
+) -> HealthState:
     """Collect the current hotspot health state by running diagnostic commands."""
     issues: list[str] = []
 
@@ -236,7 +251,9 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
     )
 
 
-def _ensure_ap_connection(ap: APConfig, runner: CommandRunner, channel: int | None = None) -> bool:
+def _ensure_ap_connection(
+    ap: HotspotApConfig, runner: CommandRunner, channel: int | None = None
+) -> bool:
     configured_channel = channel if channel is not None else ap.channel
     con_names = parse_active_connection_names(
         runner.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], timeout_s=8).stdout,
@@ -304,13 +321,13 @@ def _ensure_ap_connection(ap: APConfig, runner: CommandRunner, channel: int | No
     return up.returncode == 0
 
 
-def _bounce_connection(ap: APConfig, runner: CommandRunner) -> None:
+def _bounce_connection(ap: HotspotApConfig, runner: CommandRunner) -> None:
     runner.run(["nmcli", "connection", "down", ap.con_name], timeout_s=8)
     runner.run(["ip", "link", "set", ap.ifname, "up"], timeout_s=5)
     runner.run(["nmcli", "--wait", "10", "connection", "up", ap.con_name], timeout_s=12)
 
 
-def _recreate_connection(ap: APConfig, runner: CommandRunner) -> bool:
+def _recreate_connection(ap: HotspotApConfig, runner: CommandRunner) -> bool:
     runner.run(["nmcli", "connection", "delete", ap.con_name], timeout_s=8)
     return _ensure_ap_connection(ap, runner)
 
@@ -342,7 +359,7 @@ def _handle_port53_conflict(
 
 
 def _emit_diagnostics(
-    ap: APConfig,
+    ap: HotspotApConfig,
     lookback_minutes: int,
     runner: CommandRunner,
     logger: logging.Logger,
@@ -371,7 +388,7 @@ def _emit_diagnostics(
     logger.warning("hotspot diagnostics end")
 
 
-def _log_summary(status: str, ap: APConfig, health: HealthState) -> None:
+def _log_summary(status: str, ap: HotspotApConfig, health: HealthState) -> None:
     LOGGER.info(
         "hotspot health status=%s active=%s iface=%s ip_ok=%s channel=%s last_error=%s issues=%s",
         status,
@@ -385,8 +402,8 @@ def _log_summary(status: str, ap: APConfig, health: HealthState) -> None:
 
 
 def run_self_heal_once(
-    ap: APConfig,
-    self_heal: APSelfHealConfig,
+    ap: HotspotApConfig,
+    self_heal: HotspotSelfHealConfig,
     runner: CommandRunner,
     state_store: HealStateStore,
     diagnostics_only: bool = False,
@@ -551,41 +568,12 @@ def run_self_heal_once(
     return 0
 
 
-def run_self_heal(ap: APConfig, self_heal: APSelfHealConfig, diagnostics_only: bool = False) -> int:
+def run_self_heal(
+    ap: HotspotApConfig,
+    self_heal: HotspotSelfHealConfig,
+    diagnostics_only: bool = False,
+) -> int:
     """Run one self-heal cycle with the given configuration."""
     runner = CommandRunner()
     store = HealStateStore(self_heal.state_file)
     return run_self_heal_once(ap, self_heal, runner, store, diagnostics_only=diagnostics_only)
-
-
-def main() -> None:
-    """Entry point for the ``vibesensor-hotspot-heal`` CLI tool."""
-    parser = argparse.ArgumentParser(description="VibeSensor hotspot health check and self-healing")
-    parser.add_argument(
-        "--config",
-        type=Path,
-        default=Path("/etc/vibesensor/config.yaml"),
-        help="Path to config.yaml",
-    )
-    parser.add_argument(
-        "--mode",
-        choices=["check-heal", "diagnostics"],
-        default="check-heal",
-        help="check-heal: health check + remediation, diagnostics: collect diagnostics only",
-    )
-    args = parser.parse_args()
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
-
-    from vibesensor.app.settings import load_config
-
-    cfg = load_config(args.config)
-    diag_only = args.mode == "diagnostics"
-    raise SystemExit(run_self_heal(cfg.ap, cfg.ap.self_heal, diagnostics_only=diag_only))
-
-
-if __name__ == "__main__":
-    main()
