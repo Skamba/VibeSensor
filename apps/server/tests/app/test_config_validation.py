@@ -35,6 +35,7 @@ def _make_processing(**overrides: float | None) -> ProcessingConfig:
     defaults: dict[str, float | None] = {
         "sample_rate_hz": 800,
         "waveform_seconds": 8,
+        "client_live_ttl_seconds": 10,
         "client_ttl_seconds": 120,
         "accel_scale_g_per_lsb": None,
     }
@@ -50,6 +51,7 @@ class TestPositiveIntegerClamping:
         [
             "sample_rate_hz",
             "waveform_seconds",
+            "client_live_ttl_seconds",
             "client_ttl_seconds",
         ],
     )
@@ -63,6 +65,7 @@ class TestPositiveIntegerClamping:
         [
             "sample_rate_hz",
             "waveform_seconds",
+            "client_live_ttl_seconds",
             "client_ttl_seconds",
         ],
     )
@@ -91,6 +94,13 @@ class TestLoadConfigValidation:
         cfg = load_config(config_path)
         assert cfg.processing.sample_rate_hz == 800
         assert cfg.processing.waveform_seconds == 8
+        assert cfg.processing.client_live_ttl_seconds == 10
+        assert cfg.processing.client_ttl_seconds == 120
+
+    def test_retention_ttl_is_clamped_to_live_ttl(self) -> None:
+        cfg = _make_processing(client_live_ttl_seconds=15, client_ttl_seconds=5)
+        assert cfg.client_live_ttl_seconds == 15
+        assert cfg.client_ttl_seconds == 15
 
 
 # ---------------------------------------------------------------------------

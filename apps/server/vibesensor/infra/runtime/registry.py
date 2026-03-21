@@ -102,15 +102,17 @@ class ClientRecord:
 
 
 class ClientRegistry:
-    """Thread-safe registry of connected ESP32 clients with raw snapshot helpers."""
+    """Thread-safe registry of live and recently-retained ESP32 clients."""
 
     def __init__(
         self,
         db: HistoryDB | None = None,
-        stale_ttl_seconds: float = 120.0,
+        live_ttl_seconds: float = 10.0,
+        retention_ttl_seconds: float = 120.0,
     ):
         self._lock = RLock()
-        self._stale_ttl_seconds = max(1.0, stale_ttl_seconds)
+        self._live_ttl_seconds = max(1.0, live_ttl_seconds)
+        self._retention_ttl_seconds = max(self._live_ttl_seconds, retention_ttl_seconds)
         self._clients: dict[str, ClientRecord] = {}
         self._metadata = ClientMetadataManager(
             lock=self._lock,
@@ -122,6 +124,17 @@ class ClientRegistry:
             delete_client_name=(lambda client_id: db.delete_client_name(client_id))
             if db is not None
             else None,
+        )
+
+    def _is_live_unlocked(self, record: ClientRecord, mono_now: float) -> bool:
+        return bool(
+            record.last_seen_mono and (mono_now - record.last_seen_mono) <= self._live_ttl_seconds,
+        )
+
+    def _is_retained_unlocked(self, record: ClientRecord, mono_now: float) -> bool:
+        return bool(
+            record.last_seen_mono
+            and (mono_now - record.last_seen_mono) <= self._retention_ttl_seconds,
         )
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
@@ -295,8 +308,7 @@ class ClientRegistry:
             return [
                 record.client_id
                 for record in self._clients.values()
-                if record.last_seen_mono
-                and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds
+                if self._is_live_unlocked(record, mono_now)
             ]
 
     def data_loss_snapshot(self) -> dict[str, int]:
@@ -329,8 +341,7 @@ class ClientRegistry:
             stale_ids = [
                 client_id
                 for client_id, record in self._clients.items()
-                if record.last_seen_mono
-                and (mono_now - record.last_seen_mono) > self._stale_ttl_seconds
+                if record.last_seen_mono and not self._is_retained_unlocked(record, mono_now)
             ]
             for client_id in stale_ids:
                 self._clients.pop(client_id, None)
@@ -369,10 +380,7 @@ class ClientRegistry:
                 age_ms = (
                     int(max(0.0, now_ts - record.last_seen) * 1000) if record.last_seen else None
                 )
-                connected = bool(
-                    record.last_seen_mono
-                    and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds,
-                )
+                connected = self._is_live_unlocked(record, mono_now)
                 snapshots.append(
                     ClientSnapshot(
                         client_id=record.client_id,
