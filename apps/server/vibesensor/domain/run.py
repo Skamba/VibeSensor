@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+    from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
 __all__ = [
     "Run",

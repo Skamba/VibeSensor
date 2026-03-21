@@ -248,7 +248,7 @@ class TestRun:
             session.stop()
 
     def test_analysis_settings(self) -> None:
-        from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+        from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
         snapshot = AnalysisSettingsSnapshot(tire_width_mm=285.0, final_drive_ratio=3.08)
         session = Run(analysis_settings=snapshot)

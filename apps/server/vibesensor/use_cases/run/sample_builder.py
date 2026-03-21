@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, NamedTuple, cast
 
 from vibesensor.coerce import coerce_float
 from vibesensor.domain import CarSnapshot
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.shared.constants import MPS_TO_KMH, NUMERIC_TYPES
 from vibesensor.shared.ports import ClientTracker

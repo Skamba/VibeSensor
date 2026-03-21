@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from math import isfinite, sqrt
 
 from vibesensor.domain import OrderReferenceSpec
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.constants import (
     FREQUENCY_EPSILON_HZ,
     HARMONIC_2X,

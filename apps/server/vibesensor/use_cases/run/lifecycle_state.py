@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.domain import Run
-from vibesensor.domain.snapshots import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
 __all__ = ["ActiveRunSnapshot", "RunLifecycleState"]
 
