@@ -181,7 +181,6 @@
   "status.running": "Lopend",
   "status.stopped": "Gestopt",
   "status.unavailable": "Niet beschikbaar",
-  "status.current_file": "Huidig bestand: {value}",
   "speed.gps": "Snelheid: {value} {unit} (GPS)",
   "speed.override": "Snelheid: {value} {unit} (Handmatig)",
   "speed.none": "Snelheid: -- {unit}",

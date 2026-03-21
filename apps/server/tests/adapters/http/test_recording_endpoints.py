@@ -7,7 +7,6 @@ from test_support import response_payload
 
 _RECORDING_STATUS_DICT = {
     "enabled": True,
-    "current_file": None,
     "run_id": "run-abc",
     "write_error": None,
     "analysis_in_progress": False,
@@ -19,7 +18,6 @@ _RECORDING_STATUS_DICT = {
 
 _IDLE_STATUS_DICT = {
     "enabled": False,
-    "current_file": None,
     "run_id": None,
     "write_error": None,
     "analysis_in_progress": False,
@@ -63,6 +61,7 @@ class TestRecordingStatusEndpoint:
         assert "samples_written" in result
         assert "samples_dropped" in result
         assert "last_completed_run_id" in result
+        assert "current_file" not in result
 
     @pytest.mark.asyncio
     async def test_status_idle_enabled_false(self, _recording_router) -> None:
