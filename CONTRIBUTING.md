@@ -1,6 +1,6 @@
 # Contributing
 
-Use this file as the human-facing source of truth for day-to-day development workflow. Detailed architecture and area-specific rules still live in the focused docs it links to.
+Use this file as the human-facing guide for day-to-day development workflow. Detailed architecture and area-specific rules still live in the focused docs it links to.
 
 ## Choose your setup path
 
@@ -16,16 +16,13 @@ Primary references:
 - Server setup and deployment: [apps/server/README.md](apps/server/README.md)
 - Testing layout and commands: [docs/testing.md](docs/testing.md)
 - Operational runbooks: [docs/operational-runbooks.md](docs/operational-runbooks.md)
+- Full command reference: [.github/copilot-instructions.md](.github/copilot-instructions.md) § "Commands"
 
 ## Local setup
 
 ### Docker path
 
-```bash
-docker compose up --build
-python3 -m pip install -e "./apps/server[dev]"
-vibesensor-sim --count 5 --server-host 127.0.0.1
-```
+Follow the [Quick Start](README.md#docker-fastest) in the README.
 
 ### Native backend path
 
@@ -41,6 +38,9 @@ In another terminal:
 cd apps/ui && npm run dev
 vibesensor-sim --count 5 --server-host 127.0.0.1 --no-auto-server
 ```
+
+Open http://localhost:8000. If you prefer a static UI build instead of the dev
+server, run `python tools/build_ui_static.py` and skip `npm run dev`.
 
 ## Hooks and local safeguards
 
