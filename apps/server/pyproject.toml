@@ -89,13 +89,6 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.mypy]
 python_version = "3.11"
 packages = ["vibesensor"]
-exclude = [
-  # Legacy HTTP settings routes still need dedicated typing cleanup for
-  # their boundary payload shaping and response assembly.
-  "^vibesensor/adapters/http/settings\\.py$",
-  # UDP protocol decoding still relies on looser wire-payload contracts.
-  "^vibesensor/adapters/udp/protocol\\.py$",
-]
 follow_imports = "normal"
 check_untyped_defs = true
 disallow_untyped_defs = true
@@ -114,12 +107,3 @@ module = [
 ]
 ignore_missing_imports = true
 disallow_any_unimported = false
-
-# Files followed via imports but not yet under strict checking.
-# Their exported types now flow to checked callers, but internal errors
-# are suppressed until each module is brought up to full type compliance.
-[[tool.mypy.overrides]]
-module = [
-  "vibesensor.adapters.udp.protocol",
-]
-ignore_errors = true
