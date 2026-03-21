@@ -4293,11 +4293,6 @@
         "name": "RS e-tron GT",
         "engine": "Electric Dual Motor (Performance)",
         "drivetrain": "AWD"
-      },
-      {
-        "name": "e-tron GT",
-        "engine": "Electric Dual Motor",
-        "drivetrain": "AWD"
       }
     ]
   },
@@ -4339,11 +4334,6 @@
         "name": "50 e-tron quattro",
         "engine": "Electric Dual Motor",
         "drivetrain": "AWD"
-      },
-      {
-        "name": "50 e-tron",
-        "engine": "Electric Dual Motor",
-        "drivetrain": "RWD"
       }
     ]
   }
