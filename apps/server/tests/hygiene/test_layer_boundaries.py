@@ -82,7 +82,6 @@ _KNOWN_VIOLATIONS: frozenset[tuple[str, str]] = frozenset(
         # use_cases → adapters
         # use_cases → infra
         # infra → adapters
-        ("infra/runtime/processing_loop.py", "vibesensor.adapters.udp.udp_control_tx"),
         ("infra/runtime/registry.py", "vibesensor.adapters.udp.protocol"),
         ("infra/runtime/registry.py", "vibesensor.adapters.persistence.history_db"),
         ("infra/runtime/rotational_speeds.py", "vibesensor.adapters.gps.gps_speed"),
