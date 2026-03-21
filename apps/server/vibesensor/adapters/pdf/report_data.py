@@ -9,6 +9,7 @@ from __future__ import annotations
 
 __all__ = [
     "DataTrustItem",
+    "FindingPresentation",
     "NextStep",
     "PartSuggestion",
     "PatternEvidence",
@@ -18,12 +19,8 @@ __all__ = [
 ]
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from vibesensor.shared.types.json_types import JsonObject
-
-if TYPE_CHECKING:
-    from vibesensor.domain import Finding
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -109,6 +106,23 @@ class PeakRow:
     relevance: str = ""
 
 
+@dataclass(frozen=True)
+class FindingPresentation:
+    """Presentation-ready snapshot of a domain Finding for the PDF renderer.
+
+    All fields are pre-resolved strings/floats so that the rendering layer
+    never needs to import or understand domain objects.
+    """
+
+    suspected_source: str = ""
+    severity: str = ""
+    strongest_location: str | None = None
+    peak_classification: str = ""
+    order: str = ""
+    frequency_hz: float | None = None
+    effective_confidence: float = 0.0
+
+
 @dataclass
 class ReportTemplateData:
     """All data needed to render a diagnostic PDF report."""
@@ -138,9 +152,9 @@ class ReportTemplateData:
     lang: str = "en"
     certainty_tier_key: str = "A"
 
-    # Rendering context — pre-computed during analysis so the report
+    # Rendering context — pre-computed during mapping so the report
     # renderer never needs to read raw samples or call analysis code.
-    findings: list[Finding] = field(default_factory=list)
-    top_causes: list[Finding] = field(default_factory=list)
+    findings: list[FindingPresentation] = field(default_factory=list)
+    top_causes: list[FindingPresentation] = field(default_factory=list)
     sensor_intensity_by_location: list[JsonObject] = field(default_factory=list)
     location_hotspot_rows: list[JsonObject] = field(default_factory=list)
