@@ -122,7 +122,7 @@ def _make_runtime(**overrides: Any):
     """Build a RuntimeState with stubs for lifecycle testing."""
     import vibesensor.infra.runtime as runtime_module
     from vibesensor.app.runtime_state import RuntimeState
-    from vibesensor.infra.runtime.lifecycle import LifecycleManager
+    from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
     from vibesensor.infra.runtime.processing_loop import (
         ProcessingLoop,
         ProcessingLoopState,
@@ -178,7 +178,29 @@ def _make_runtime(**overrides: Any):
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
     )
-    lifecycle = LifecycleManager(runtime=rt, start_udp_receiver=AsyncMock())
+    lifecycle_runtime = LifecycleRuntime(
+        health_state=health_state,
+        history_db_path=config.logging.history_db_path,
+        udp_data_host=config.udp.data_host,
+        udp_data_port=config.udp.data_port,
+        udp_data_queue_maxsize=config.udp.data_queue_maxsize,
+        gpsd_host=config.gps.gpsd_host,
+        gpsd_port=config.gps.gpsd_port,
+        shutdown_analysis_timeout_s=config.logging.shutdown_analysis_timeout_s,
+        registry=registry,
+        processor=processor,
+        control_plane=control_plane,
+        processing_loop=rt.processing_loop,
+        ws_hub=rt.ws_hub,
+        ws_broadcast=rt.ws_broadcast,
+        run_recorder=diagnostics,
+        gps_monitor=gps_monitor,
+        update_manager=update_manager,
+        esp_flash_manager=esp_flash_manager,
+        worker_pool=worker_pool,
+        history_db=history_db,
+    )
+    lifecycle = LifecycleManager(runtime=lifecycle_runtime, start_udp_receiver=AsyncMock())
     if overrides:
         for name, value in overrides.items():
             setattr(rt, name, value)

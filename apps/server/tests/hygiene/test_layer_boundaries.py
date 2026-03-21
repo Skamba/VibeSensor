@@ -83,9 +83,6 @@ _KNOWN_VIOLATIONS: frozenset[tuple[str, str]] = frozenset(
         # use_cases → infra
         # infra → adapters
         # infra → app
-        # RuntimeState is now lifecycle-focused, but LifecycleManager still consumes
-        # the app-owned runtime bag directly.
-        ("infra/runtime/lifecycle.py", "vibesensor.app.runtime_state"),
         # adapters → app
         ("adapters/hotspot/self_heal.py", "vibesensor.app.settings"),
     }

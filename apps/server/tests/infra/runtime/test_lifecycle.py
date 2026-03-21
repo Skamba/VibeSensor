@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from types import SimpleNamespace
+from typing import get_type_hints
 from unittest.mock import MagicMock, patch
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.lifecycle import LifecycleManager
+from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
 
 # ---------------------------------------------------------------------------
 # Minimal stubs
@@ -19,12 +19,28 @@ def _make_lifecycle(db_path: str | None) -> tuple[LifecycleManager, RuntimeHealt
     health_state = RuntimeHealthState()
     health_state.mark_ready()
 
-    logging_cfg = SimpleNamespace(history_db_path=db_path)
-    config = SimpleNamespace(logging=logging_cfg)
-
-    runtime = MagicMock()
-    runtime.config = config
-    runtime.health_state = health_state
+    runtime = LifecycleRuntime(
+        health_state=health_state,
+        history_db_path=db_path,
+        udp_data_host="0.0.0.0",
+        udp_data_port=9000,
+        udp_data_queue_maxsize=64,
+        gpsd_host="127.0.0.1",
+        gpsd_port=2947,
+        shutdown_analysis_timeout_s=5.0,
+        registry=MagicMock(),
+        processor=MagicMock(),
+        control_plane=MagicMock(),
+        processing_loop=MagicMock(),
+        ws_hub=MagicMock(),
+        ws_broadcast=MagicMock(),
+        run_recorder=MagicMock(),
+        gps_monitor=MagicMock(),
+        update_manager=MagicMock(job_task=None),
+        esp_flash_manager=MagicMock(job_task=None),
+        worker_pool=MagicMock(),
+        history_db=MagicMock(),
+    )
 
     lifecycle = LifecycleManager(runtime=runtime, start_udp_receiver=MagicMock())
     return lifecycle, health_state
@@ -93,3 +109,14 @@ class TestValidateStartupDiskCheck:
 
         mock_usage.assert_not_called()
         assert health_state.startup_warnings == []
+
+
+def test_lifecycle_manager_uses_lifecycle_owned_runtime_contract() -> None:
+    import vibesensor.infra.runtime.lifecycle as lifecycle_module
+
+    hints = get_type_hints(
+        LifecycleManager.__init__,
+        globalns=vars(lifecycle_module),
+    )
+
+    assert hints["runtime"] is lifecycle_module.LifecycleRuntime
