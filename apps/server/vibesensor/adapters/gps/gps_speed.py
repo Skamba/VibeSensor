@@ -151,11 +151,6 @@ class GPSSpeedMonitor:
         """Read timestamp from the atomic snapshot."""
         return self._speed_snapshot[1]
 
-    @last_update_ts.setter
-    def last_update_ts(self, value: float | None) -> None:
-        """Write timestamp via legacy setter — preserves current speed."""
-        self._speed_snapshot = (self._speed_snapshot[0], value)
-
     def _effective_connection_state(self) -> str:
         """Return the effective connection state **without** mutating ``self``."""
         if self.gps_enabled and self.connection_state == "connected" and self._is_gps_stale():

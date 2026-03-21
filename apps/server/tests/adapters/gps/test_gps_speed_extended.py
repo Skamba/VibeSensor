@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import time
 
 import pytest
+from test_support.gps import set_gps_snapshot_age
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 
@@ -13,7 +13,7 @@ from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 def test_gps_used_as_fallback_when_no_override() -> None:
     m = GPSSpeedMonitor(gps_enabled=True)
     m.speed_mps = 10.0
-    m.last_update_ts = time.monotonic()  # mark GPS data as fresh
+    set_gps_snapshot_age(m)  # mark GPS data as fresh
     assert m.effective_speed_mps == 10.0
 
 
@@ -70,7 +70,7 @@ def test_integer_speed_mps_treated_as_float() -> None:
     """speed_mps set to int should still be returned as float via effective_speed_mps."""
     m = GPSSpeedMonitor(gps_enabled=True)
     m.speed_mps = 10
-    m.last_update_ts = time.monotonic()  # mark GPS data as fresh
+    set_gps_snapshot_age(m)  # mark GPS data as fresh
     result = m.effective_speed_mps
     assert result is not None
     assert isinstance(result, float)

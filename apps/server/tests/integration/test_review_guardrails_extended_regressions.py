@@ -13,6 +13,7 @@ import time
 from unittest.mock import patch
 
 import pytest
+from test_support.gps import set_gps_snapshot_age
 
 import vibesensor.adapters.udp.udp_control_tx as udp_control_tx_mod
 import vibesensor.shared.locations as locations_mod
@@ -132,10 +133,10 @@ class TestResolveSpeedAtomicSnapshot:
         assert r.source == "gps"
 
     def test_resolve_speed_snapshot_consistency(self) -> None:
-        """Setting speed_mps and last_update_ts both update the snapshot."""
+        """Setting speed_mps and the test snapshot helper both update the snapshot."""
         m = _make_gps_monitor()
         m.speed_mps = 15.0
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         r = m.resolve_speed()
         assert r.speed_mps == 15.0
         assert r.source == "gps"

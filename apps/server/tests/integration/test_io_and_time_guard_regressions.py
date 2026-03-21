@@ -12,13 +12,12 @@ Covers:
   6. report_mapping_pipeline date_str – includes UTC suffix
 """
 
-
-import time
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+from test_support.gps import set_gps_snapshot_age
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.pdf.mapping import map_summary
@@ -131,7 +130,7 @@ class TestResolveSpeedTOCTOU:
     def test_speed_snapshot_used_for_gps_return(self) -> None:
         mon = GPSSpeedMonitor(gps_enabled=True)
         mon.speed_mps = 10.5
-        mon.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(mon)
         mon.connection_state = "connected"
 
         result = mon.resolve_speed()
@@ -141,7 +140,7 @@ class TestResolveSpeedTOCTOU:
     def test_speed_none_after_stale(self) -> None:
         mon = GPSSpeedMonitor(gps_enabled=True)
         mon.speed_mps = 5.0
-        mon.last_update_ts = time.monotonic() - 999  # very stale
+        set_gps_snapshot_age(mon, age_s=999)  # very stale
         mon.connection_state = "connected"
 
         result = mon.resolve_speed()
@@ -167,11 +166,11 @@ class TestIsGpsStaleTOCTOU:
     def test_is_gps_stale(self, ts: Any, expected: bool) -> None:
         mon = GPSSpeedMonitor(gps_enabled=True)
         if ts == "fresh":
-            mon.last_update_ts = time.monotonic()
+            set_gps_snapshot_age(mon)
         elif ts == "old":
-            mon.last_update_ts = time.monotonic() - 999
+            set_gps_snapshot_age(mon, age_s=999)
         else:
-            mon.last_update_ts = None
+            set_gps_snapshot_age(mon, age_s=None)
         assert mon._is_gps_stale() is expected
 
 

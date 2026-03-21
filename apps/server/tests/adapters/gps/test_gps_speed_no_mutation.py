@@ -11,9 +11,9 @@ Verifies that:
 from __future__ import annotations
 
 import copy
-import time
 
 import pytest
+from test_support.gps import set_gps_snapshot_age
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor, SpeedResolution
 
@@ -31,14 +31,14 @@ def _snapshot(m: GPSSpeedMonitor) -> dict:
 def _make_fresh_gps() -> GPSSpeedMonitor:
     m = GPSSpeedMonitor(gps_enabled=True)
     m.speed_mps = 10.0
-    m.last_update_ts = time.monotonic()
+    set_gps_snapshot_age(m)
     return m
 
 
 def _make_stale_gps() -> GPSSpeedMonitor:
     m = GPSSpeedMonitor(gps_enabled=True)
     m.speed_mps = 10.0
-    m.last_update_ts = time.monotonic() - 999
+    set_gps_snapshot_age(m, age_s=999)
     return m
 
 
@@ -60,7 +60,7 @@ def _make_override_plus_gps() -> GPSSpeedMonitor:
     m.manual_source_selected = True
     m.override_speed_mps = 25.0
     m.speed_mps = 10.0
-    m.last_update_ts = time.monotonic()
+    set_gps_snapshot_age(m)
     return m
 
 
@@ -91,7 +91,7 @@ class TestEffectiveSpeedNoMutation:
     def test_effective_speed_does_not_mutate(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         before = _snapshot(m)
         _ = m.effective_speed_mps
         assert _snapshot(m) == before
@@ -99,7 +99,7 @@ class TestEffectiveSpeedNoMutation:
     def test_effective_speed_stale_does_not_mutate(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic() - 999
+        set_gps_snapshot_age(m, age_s=999)
         before = _snapshot(m)
         _ = m.effective_speed_mps
         assert _snapshot(m) == before
@@ -118,7 +118,7 @@ class TestStatusDictNoMutation:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
         m.speed_mps = 5.0
-        m.last_update_ts = time.monotonic() - 999  # stale
+        set_gps_snapshot_age(m, age_s=999)  # stale
 
         s = m.status_dict()
         # The dict should report "stale" ...
@@ -130,7 +130,7 @@ class TestStatusDictNoMutation:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
 
         s = m.status_dict()
         assert s["connection_state"] == "connected"
@@ -146,7 +146,7 @@ class TestFallbackActiveConsistency:
     def test_fallback_active_consistent_with_speed_fresh_gps(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         r = m.resolve_speed()
         assert r.speed_mps == 10.0
         assert r.fallback_active is False
@@ -159,7 +159,7 @@ class TestFallbackActiveConsistency:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.manual_source_selected = False  # GPS primary, override is fallback only
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic() - 999
+        set_gps_snapshot_age(m, age_s=999)
         m.override_speed_mps = 25.0
         r = m.resolve_speed()
         assert r.fallback_active is True
@@ -197,7 +197,7 @@ class TestMultipleReadsConsistent:
     def test_repeated_reads_consistent_fresh(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         results = [m.resolve_speed() for _ in range(5)]
         assert all(r == results[0] for r in results)
 
@@ -205,7 +205,7 @@ class TestMultipleReadsConsistent:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.manual_source_selected = False  # GPS primary, override is fallback only
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic() - 999
+        set_gps_snapshot_age(m, age_s=999)
         m.override_speed_mps = 25.0
         results = [m.resolve_speed() for _ in range(5)]
         assert all(r == results[0] for r in results)
@@ -214,7 +214,7 @@ class TestMultipleReadsConsistent:
         """Reading effective_speed_mps and fallback_active in any order must agree."""
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic() - 999
+        set_gps_snapshot_age(m, age_s=999)
 
         # Read in different orders — all should be consistent
         speed1 = m.effective_speed_mps
@@ -265,14 +265,14 @@ class TestGPSTransitions:
 
         # Stage 1: fresh GPS
         m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         r1 = m.resolve_speed()
         assert r1.speed_mps == 10.0
         assert r1.fallback_active is False
         assert r1.source == "gps"
 
         # Stage 2: GPS becomes stale (simulate by backdating last_update_ts)
-        m.last_update_ts = time.monotonic() - m.stale_timeout_s - 5
+        set_gps_snapshot_age(m, age_s=m.stale_timeout_s + 5)
         r2 = m.resolve_speed()
         assert r2.speed_mps == 25.0  # fallback to override
         assert r2.fallback_active is True
@@ -280,7 +280,7 @@ class TestGPSTransitions:
 
         # Stage 3: fresh GPS data arrives
         m.speed_mps = 15.0
-        m.last_update_ts = time.monotonic()
+        set_gps_snapshot_age(m)
         r3 = m.resolve_speed()
         assert r3.speed_mps == 15.0
         assert r3.fallback_active is False
