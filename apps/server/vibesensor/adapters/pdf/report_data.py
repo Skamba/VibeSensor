@@ -2,7 +2,8 @@
 
 Pure data-class definitions consumed by the Canvas-based PDF renderer.
 The ``map_summary()`` builder that populates these classes lives in
-``vibesensor.adapters.pdf.mapping.pipeline``.
+``vibesensor.adapters.pdf.mapping``, with context assembly in
+``vibesensor.adapters.pdf.report_context``.
 """
 
 from __future__ import annotations
