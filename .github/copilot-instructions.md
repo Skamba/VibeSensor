@@ -5,7 +5,7 @@ Repository overview (scope: high-level orientation and behavioral rules; see `do
 - Canonical dB definition: `vibesensor/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
 
 Source-of-truth note
-- This file is the canonical short AI guide; `AGENTS.md` should remain a pointer to this file to prevent drift.
+- This file is the canonical short AI guide.
 - AI guidance lives in this file, `.github/instructions/*.instructions.md`, and `docs/ai/repo-map.md`. Do not create additional guidance files in `docs/ai/`.
 
 Canonical instruction sources
@@ -19,7 +19,7 @@ Architectural constraints
 - Internal shared logic belongs in the server package (`vibesensor/vibration_strength.py`, `vibesensor/strength_bands.py`), not in separate packages. Shared TS constants live directly in `apps/ui/src/constants.ts`.
 - Do not create runtime file-loading mechanisms for static configuration data. Use Python constants for values that don't change between deployments.
 
-Domain model (scope: behavioral rules only; see `docs/ai/repo-map.md` for file listings and `docs/domain-model.md` for the full relationship map)
+Domain model (scope: behavioral rules only; see `docs/domain-model.md` for the full domain object catalog and relationship map)
 - Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
 - Consumers import from `vibesensor.domain`, not from individual module files.
 - Boundary decoders/serializers live under `apps/server/vibesensor/shared/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.

@@ -50,7 +50,7 @@ Updater deployment policy
 
 Validation (always required)
 - Pull request default mode: after opening or updating a PR, check CI/review status, fix all blocking issues, push updates, and keep monitoring until required checks are green.
-- Use the canonical command list in `.github/copilot-instructions.md` for PR check watching, lint/type checks, CI-parity runs, single-area pytest runs, and local Docker bring-up; use `docs/testing.md` for test layout, CI limitations, and the optional `act` wrapper, and follow targeted → broader → local-GitHub-workflow validation before finalizing any task.
+- Use the canonical command list (defined in the "Canonical commands" section of the copilot instructions) for PR check watching, lint/type checks, CI-parity runs, single-area pytest runs, and local Docker bring-up; use `docs/testing.md` for test layout, CI limitations, and the optional `act` wrapper, and follow targeted → broader → local-GitHub-workflow validation before finalizing any task.
 - Treat watcher exit `RESULT=NON_GREEN` as immediate action: inspect the latest failing run promptly, determine root cause, implement the smallest complete maintainable fix, push, and restart the watcher.
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - If an intentional refactor changes function-level seams or helper boundaries, refactor the affected tests in the same change set so they validate current behavior instead of pinning obsolete internals.
