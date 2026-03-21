@@ -12,7 +12,6 @@ Every documentation file in the repository and a short description of what it co
 | `.github/instructions/backend.instructions.md` | Backend-specific coding rules and deltas for AI work. |
 | `.github/instructions/frontend.instructions.md` | Frontend-specific rules and deltas for AI work. |
 | `.github/instructions/tests.instructions.md` | Test-specific conventions and commands for AI work. |
-| `AGENTS.md` | Routes readers to `.github/copilot-instructions.md`. |
 
 ## Architecture & Design
 
@@ -64,21 +63,3 @@ Every documentation file in the repository and a short description of what it co
 |------|-------------|
 | `apps/server/data/CAR_VARIANT_SOURCES.md` | Car variant data sourcing notes. |
 
-## Topic → quick reference
-
-| Topic | Primary reference |
-|-------|-------------------|
-| Repo structure / file ownership | `docs/ai/repo-map.md` |
-| Domain model | `docs/domain-model.md` |
-| Analysis pipeline | `docs/analysis_pipeline.md` |
-| Report pipeline | `docs/report_pipeline.md` |
-| Metrics & units | `docs/metrics.md` |
-| Wire protocol | `docs/protocol.md` |
-| DB schema | `docs/history_db_schema.md` |
-| Testing conventions | `docs/testing.md` |
-| AI guide | `.github/copilot-instructions.md` |
-| Backend coding rules | `.github/instructions/backend.instructions.md` |
-| Frontend coding rules | `.github/instructions/frontend.instructions.md` |
-| Contributor workflow | `CONTRIBUTING.md` |
-| Server setup | `apps/server/README.md` |
-| Design language | `docs/design_language.md` |

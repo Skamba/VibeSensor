@@ -1,6 +1,6 @@
 # Repo map
 
-Scope: single source of truth for detailed file layout, entry points, package structure, and module ownership. Behavioral rules live in `.github/copilot-instructions.md` and `.github/instructions/*.instructions.md`.
+Scope: single source of truth for detailed file layout, entry points, package structure, and module ownership.
 
 ## Primary entry points
 
@@ -42,31 +42,7 @@ Scope: single source of truth for detailed file layout, entry points, package st
 - `use_cases/run/`: recording pipeline orchestration; `lifecycle_state.py` owns `RunLifecycleState` plus the active-run snapshot, `persistence_writer.py` owns history-write coordination/retry bookkeeping, `sample_flush.py` owns sample-building/flush decisions and auto-stop checks, `status_reporting.py` owns the status/health payload helpers, `logger.py` owns the thin `RunRecorder` orchestrator, `post_analysis.py` owns the background analysis queue above the injected run-persistence/analysis/error boundary, and `sample_builder.py` owns pure sample-building helpers.
 - `use_cases/updates/`: wheel-based updater workflow orchestration, runtime prerequisite validation, firmware cache, ESP flashing, release discovery, install, rollback, runner, Wi-Fi, and status tracking. `firmware_cache.py` now stays the thin public cache/CLI facade, `firmware_types.py` owns firmware cache/release contracts, `firmware_bundle.py` owns bundle filesystem validation/extraction/metadata helpers, and `firmware_release_fetcher.py` owns GitHub firmware HTTP access.
 - `shared/`: cross-cutting typed payloads and ports (`shared/types/` and `shared/ports.py`), boundary serializers/decoders (`shared/boundaries/`), exceptions (`shared/exceptions.py`), JSON helpers (`shared/json_utils.py`), location identifiers (`shared/locations.py`), run-context helpers, and shared pure vehicle-order math (`shared/order_bands.py`). `shared/ports.py` owns the current run-history persistence, active-client lookup, latest-sample/latest-metrics, resolved-speed, and read-only settings ports used by runtime/history/recording flows; `shared/types/` stays focused on payload/model types such as `sensor_frame.py`, `health_snapshot.py`, the feature-scoped Pydantic HTTP contract package `shared/types/api_models/`, and the typed backend/API payloads; `shared/boundaries/run_log.py` owns JSONL run-log decoding/normalization shared by diagnostics and persistence; and `shared/boundaries/diagnostic_case.py` owns summary projection, typed speed/suitability decoding, and shared metadata-to-case reconstruction (`case_context_from_metadata`).
-- `domain/`: DDD-aligned domain model package. Primary domain objects
-  live under `vibesensor/domain/`; closely related value objects share
-  a file with their parent aggregate:
-  `car.py` (Car, TireSpec, OrderReferenceSpec, CarSnapshot),
-  `sensor.py` (Sensor, SensorPlacement),
-  `run.py` (Run lifecycle), `test_run.py` (TestRun aggregate),
-  `diagnostic_case.py` (DiagnosticCase aggregate, Symptom),
-  `run_capture.py` (RunCapture, RunSetup, ConfigurationSnapshot, Measurement, VibrationReading),
-  `test_plan.py` (TestPlan, RecommendedAction + planning service functions),
-  `driving_segment.py` (DrivingSegment, DrivingPhase, DrivingPhaseInterval, DrivingPhaseSegment),
-  `vibration_origin.py`,
-  `speed_source.py` (SpeedSource),
-  `finding.py` (FindingKind, VibrationSource, Finding, FindingEvidence, Signature),
-  `confidence_assessment.py` (ConfidenceAssessment),
-  `location_hotspot.py` (LocationHotspot, LocationIntensitySummary),
-  `order_match.py` (OrderMatchObservation),
-  `speed_profile.py` (SpeedProfile),
-  `run_suitability.py` (RunSuitability, SuitabilityCheck),
-  `run_status.py` (RunStatus, RUN_TRANSITIONS),
-  `snapshots.py` (AnalysisSettingsSnapshot, RunContextSnapshot, RunMetadataSnapshot, SpeedProfileSummary, DrivingPhaseSummary),
-  `strength_metrics.py` (StrengthMetrics, StrengthPeak).
-  Domain objects own
-  classification, ranking, actionability, surfacing, lifecycle, and
-  query logic; diagnostics use cases delegate to them. See
-  `docs/domain-model.md` for the full relationship map and modeling rules.
+- `domain/`: DDD-aligned domain model package. Primary domain objects live under `vibesensor/domain/`; closely related value objects share a file with their parent aggregate. Domain objects own classification, ranking, actionability, surfacing, lifecycle, and query logic; diagnostics use cases delegate to them. See `docs/domain-model.md` for the full domain object catalog, relationship map, and modeling rules.
 - `apps/ui/src/app/runtime/`: explicit UI runtime owners for shell/chrome state, live transport/payload application, and spectrum/chart orchestration beneath the `UiAppRuntime` composition root.
 
 ## Test layout
