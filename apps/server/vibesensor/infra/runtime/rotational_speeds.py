@@ -3,34 +3,29 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
 
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.shared.constants import SECONDS_PER_MINUTE
 from vibesensor.shared.order_bands import build_order_bands, vehicle_orders_hz
+from vibesensor.shared.types.backend_types import ResolvedSpeedSource
 from vibesensor.shared.types.payload_types import (
     RotationalSpeedsPayload,
     RotationalSpeedValuePayload,
 )
 
-if TYPE_CHECKING:
-    from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-    from vibesensor.infra.config.settings_store import SettingsStore
-
 
 def rotational_basis_speed_source(
-    settings_store: SettingsStore,
-    gps_monitor: GPSSpeedMonitor,
+    selected_source: str,
     *,
-    resolution_source: str | None = None,
+    gps_enabled: bool,
+    fallback_active: bool = False,
+    resolution_source: ResolvedSpeedSource | None = None,
 ) -> str:
     """Determine the basis speed source label for rotational RPM display."""
-    speed_source = settings_store.get_speed_source()
-    selected_source = str(speed_source.get("speedSource") or "gps")
     return SpeedSource.resolve_basis_label(
-        selected_source,
-        gps_enabled=gps_monitor.gps_enabled,
-        fallback_active=gps_monitor.fallback_active,
+        str(selected_source or "gps"),
+        gps_enabled=gps_enabled,
+        fallback_active=fallback_active,
         resolution_source=resolution_source,
     )
 

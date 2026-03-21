@@ -98,6 +98,10 @@ class _StubGPS:
         self.resolve_calls += 1
         return _SpeedResolution(self.effective_speed_mps, self.fallback_active, "gps")
 
+    @property
+    def speed_mps(self) -> float | None:
+        return self.effective_speed_mps
+
     def update_speed_state(self) -> None:
         pass
 
@@ -207,6 +211,7 @@ def _make_state(
             registry=registry,
             processor=processor,
             gps_monitor=gps_monitor,
+            gps_enabled=gps_monitor.gps_enabled,
             settings_store=settings_store,
         ),
         run_recorder=_StubRunRecorder(),
@@ -369,6 +374,7 @@ def test_build_ws_payload_marks_retained_stale_clients_disconnected(
         registry=registry,
         processor=_StubProcessor(),
         gps_monitor=_StubGPS(),
+        gps_enabled=True,
         settings_store=_StubSettingsStore(),
     )
     payload = ws_broadcast.build_payload(selected_client=None)

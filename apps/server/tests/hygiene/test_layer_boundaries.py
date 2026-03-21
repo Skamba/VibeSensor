@@ -82,8 +82,6 @@ _KNOWN_VIOLATIONS: frozenset[tuple[str, str]] = frozenset(
         # use_cases → adapters
         # use_cases → infra
         # infra → adapters
-        ("infra/runtime/rotational_speeds.py", "vibesensor.adapters.gps.gps_speed"),
-        ("infra/runtime/ws_broadcast.py", "vibesensor.adapters.gps.gps_speed"),
         # infra → app
         # RuntimeState is now lifecycle-focused, but LifecycleManager still consumes
         # the app-owned runtime bag directly.
