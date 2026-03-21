@@ -12,9 +12,9 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-from vibesensor.coerce import coerce_float, coerce_int
-
 __all__ = ["LocationHotspot", "LocationIntensitySummary"]
+
+from ._numeric import coerce_float, coerce_int
 
 
 @dataclass(frozen=True, slots=True)
