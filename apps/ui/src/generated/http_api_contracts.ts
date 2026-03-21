@@ -321,10 +321,7 @@ export interface components {
       analysis_metadata?: {
         [key: string]: unknown;
       };
-      /** Data Quality */
-      data_quality: {
-        [key: string]: unknown;
-      };
+      data_quality: components["schemas"]["DataQualityResponse"];
       /** Duration S */
       duration_s: number;
       /** End Time Utc */
@@ -362,20 +359,13 @@ export interface components {
       peak_picker_method?: boolean | number | string | unknown[] | {
         [key: string]: unknown;
       } | null;
-      /** Phase Info */
-      phase_info: {
-        [key: string]: unknown;
-      };
+      phase_info: components["schemas"]["PhaseInfoResponse"];
       /** Phase Segments */
-      phase_segments: {
-          [key: string]: unknown;
-        }[];
+      phase_segments: components["schemas"]["PhaseSegmentSummaryResponse"][];
       /** Phase Speed Breakdown */
       phase_speed_breakdown: components["schemas"]["PhaseSpeedBreakdownRow"][];
       /** Phase Timeline */
-      phase_timeline: {
-          [key: string]: unknown;
-        }[];
+      phase_timeline: components["schemas"]["PhaseTimelineEntryResponse"][];
       plots?: components["schemas"]["PlotDataResult"] | null;
       /** Raw Sample Rate Hz */
       raw_sample_rate_hz: number | null;
@@ -400,9 +390,7 @@ export interface components {
       /** Sensor Count Used */
       sensor_count_used: number;
       /** Sensor Intensity By Location */
-      sensor_intensity_by_location: {
-          [key: string]: unknown;
-        }[];
+      sensor_intensity_by_location: components["schemas"]["LocationIntensitySummaryResponse"][];
       /** Sensor Locations */
       sensor_locations: string[];
       /** Sensor Locations Connected Throughout */
@@ -417,30 +405,21 @@ export interface components {
       speed_breakdown_skipped_reason: {
         [key: string]: unknown;
       } | null;
-      /** Speed Stats */
-      speed_stats: {
-        [key: string]: unknown;
-      };
+      speed_stats: components["schemas"]["SpeedStatsResponse"];
       /** Speed Stats By Phase */
       speed_stats_by_phase: {
-        [key: string]: {
-          [key: string]: unknown;
-        };
+        [key: string]: components["schemas"]["SpeedStatsResponse"];
       };
       /** Start Time Utc */
       start_time_utc?: boolean | number | string | unknown[] | {
         [key: string]: unknown;
       } | null;
       /** Test Plan */
-      test_plan: {
-          [key: string]: unknown;
-        }[];
+      test_plan: components["schemas"]["TestPlanStepResponse"][];
       /** Top Causes */
       top_causes: components["schemas"]["FindingPayload"][];
       /** Warnings */
-      warnings: {
-          [key: string]: unknown;
-        }[];
+      warnings: components["schemas"]["SummaryWarningResponse"][];
       [key: string]: unknown;
     };
     /** AxisMetrics */
@@ -670,6 +649,80 @@ export interface components {
       vib_mag_p2p?: number;
       /** Vib Mag Rms */
       vib_mag_rms?: number;
+    };
+    /**
+     * DataQualityAccelSanityResponse
+     * @description Response body for acceleration sanity diagnostics.
+     */
+    DataQualityAccelSanityResponse: {
+      /** Saturation Count */
+      saturation_count: number | null;
+      /** Sensor Limit */
+      sensor_limit: number | null;
+      /** X Mean */
+      x_mean: number | null;
+      /** X Variance */
+      x_variance: number | null;
+      /** Y Mean */
+      y_mean: number | null;
+      /** Y Variance */
+      y_variance: number | null;
+      /** Z Mean */
+      z_mean: number | null;
+      /** Z Variance */
+      z_variance: number | null;
+    };
+    /**
+     * DataQualityOutliersResponse
+     * @description Response body for grouped outlier summaries.
+     */
+    DataQualityOutliersResponse: {
+      accel_magnitude: components["schemas"]["OutlierSummaryResponse"];
+      amplitude_metric: components["schemas"]["OutlierSummaryResponse"];
+    };
+    /**
+     * DataQualityRequiredMissingPctResponse
+     * @description Response body for required-field missing percentages.
+     */
+    DataQualityRequiredMissingPctResponse: {
+      /** Accel X */
+      accel_x: number;
+      /** Accel Y */
+      accel_y: number;
+      /** Accel Z */
+      accel_z: number;
+      /** Speed Kmh */
+      speed_kmh: number;
+      /** T S */
+      t_s: number;
+    };
+    /**
+     * DataQualityResponse
+     * @description Response body for run-level data-quality diagnostics.
+     */
+    DataQualityResponse: {
+      accel_sanity: components["schemas"]["DataQualityAccelSanityResponse"];
+      outliers: components["schemas"]["DataQualityOutliersResponse"];
+      required_missing_pct: components["schemas"]["DataQualityRequiredMissingPctResponse"];
+      speed_coverage: components["schemas"]["DataQualitySpeedCoverageResponse"];
+    };
+    /**
+     * DataQualitySpeedCoverageResponse
+     * @description Response body for summarized speed-coverage statistics.
+     */
+    DataQualitySpeedCoverageResponse: {
+      /** Count Non Null */
+      count_non_null: number;
+      /** Max Kmh */
+      max_kmh: number | null;
+      /** Mean Kmh */
+      mean_kmh: number | null;
+      /** Min Kmh */
+      min_kmh: number | null;
+      /** Non Null Pct */
+      non_null_pct: number;
+      /** Stddev Kmh */
+      stddev_kmh: number | null;
     };
     /** DebugSpectrumErrorPayload */
     DebugSpectrumErrorPayload: {
@@ -1187,17 +1240,114 @@ export interface components {
     };
     /**
      * HistoryInsightsResponse
-     * @description Response body with aggregated diagnostic insights for a run.
+     * @description Response body for the localized history insights endpoint payload.
      */
     HistoryInsightsResponse: {
+      /** Accel Scale G Per Lsb */
+      accel_scale_g_per_lsb: number | null;
+      /** Analysis Metadata */
+      analysis_metadata?: {
+        [key: string]: unknown;
+      };
+      data_quality: components["schemas"]["DataQualityResponse"];
+      /** Duration S */
+      duration_s: number;
+      /** End Time Utc */
+      end_time_utc?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Feature Interval S */
+      feature_interval_s: number | null;
+      /** Fft Window Size Samples */
+      fft_window_size_samples?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Fft Window Type */
+      fft_window_type?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** File Name */
+      file_name: string;
       /** Findings */
-      findings?: components["schemas"]["FindingPayload"][];
+      findings: components["schemas"]["FindingPayload"][];
+      /** Firmware Version */
+      firmware_version?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Incomplete For Order Analysis */
+      incomplete_for_order_analysis: boolean;
+      /** Lang */
+      lang: string;
+      /** Metadata */
+      metadata: {
+        [key: string]: unknown;
+      };
+      most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
+      /** Peak Picker Method */
+      peak_picker_method?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      phase_info: components["schemas"]["PhaseInfoResponse"];
+      /** Phase Segments */
+      phase_segments: components["schemas"]["PhaseSegmentSummaryResponse"][];
+      /** Phase Speed Breakdown */
+      phase_speed_breakdown: components["schemas"]["PhaseSpeedBreakdownRow"][];
+      /** Phase Timeline */
+      phase_timeline: components["schemas"]["PhaseTimelineEntryResponse"][];
+      plots?: components["schemas"]["PlotDataResult"] | null;
+      /** Raw Sample Rate Hz */
+      raw_sample_rate_hz: number | null;
+      /** Record Length */
+      record_length: string;
+      /** Report Date */
+      report_date?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Rows */
+      rows: number;
       /** Run Id */
-      run_id?: string | null;
+      run_id: string;
+      /** Run Noise Baseline Db */
+      run_noise_baseline_db: number | null;
+      /** Run Suitability */
+      run_suitability: components["schemas"]["RunSuitabilityCheck"][];
+      /** Samples */
+      samples?: {
+          [key: string]: unknown;
+        }[];
+      /** Sensor Count Used */
+      sensor_count_used: number;
+      /** Sensor Intensity By Location */
+      sensor_intensity_by_location: components["schemas"]["LocationIntensitySummaryResponse"][];
+      /** Sensor Locations */
+      sensor_locations: string[];
+      /** Sensor Locations Connected Throughout */
+      sensor_locations_connected_throughout: string[];
+      /** Sensor Model */
+      sensor_model?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /** Speed Breakdown */
+      speed_breakdown: components["schemas"]["SpeedBreakdownRow"][];
+      /** Speed Breakdown Skipped Reason */
+      speed_breakdown_skipped_reason: {
+        [key: string]: unknown;
+      } | null;
+      speed_stats: components["schemas"]["SpeedStatsResponse"];
+      /** Speed Stats By Phase */
+      speed_stats_by_phase: {
+        [key: string]: components["schemas"]["SpeedStatsResponse"];
+      };
+      /** Start Time Utc */
+      start_time_utc?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
       /** Status */
       status?: string | null;
+      /** Test Plan */
+      test_plan: components["schemas"]["TestPlanStepResponse"][];
       /** Top Causes */
-      top_causes?: components["schemas"]["FindingPayload"][];
+      top_causes: components["schemas"]["FindingPayload"][];
       /** Warnings */
       warnings?: components["schemas"]["HistoryInsightWarningResponse"][];
       [key: string]: unknown;
@@ -1311,6 +1461,39 @@ export interface components {
       [key: string]: unknown;
     };
     /**
+     * LocationIntensitySummaryResponse
+     * @description Response body for one sensor-location intensity summary row.
+     */
+    LocationIntensitySummaryResponse: {
+      /** Dropped Frames Delta */
+      dropped_frames_delta: number | null;
+      /** Location */
+      location: string;
+      /** Max Intensity Db */
+      max_intensity_db: number | null;
+      /** Mean Intensity Db */
+      mean_intensity_db: number | null;
+      /** P50 Intensity Db */
+      p50_intensity_db: number | null;
+      /** P95 Intensity Db */
+      p95_intensity_db: number | null;
+      /** Partial Coverage */
+      partial_coverage: boolean;
+      /** Phase Intensity */
+      phase_intensity?: {
+        [key: string]: components["schemas"]["PhaseIntensityStatsResponse"];
+      } | null;
+      /** Queue Overflow Drops Delta */
+      queue_overflow_drops_delta: number | null;
+      /** Sample Count */
+      sample_count: number;
+      /** Sample Coverage Ratio */
+      sample_coverage_ratio: number;
+      /** Sample Coverage Warning */
+      sample_coverage_warning: boolean;
+      strength_bucket_distribution: components["schemas"]["StrengthBucketDistributionResponse"];
+    };
+    /**
      * LocationOptionResponse
      * @description A single sensor-location option (code + human-readable label).
      */
@@ -1352,6 +1535,22 @@ export interface components {
       /** T S */
       t_s?: number | null;
       [key: string]: unknown;
+    };
+    /**
+     * OutlierSummaryResponse
+     * @description Response body for an outlier-summary bucket.
+     */
+    OutlierSummaryResponse: {
+      /** Count */
+      count: number;
+      /** Lower Bound */
+      lower_bound: number | null;
+      /** Outlier Count */
+      outlier_count: number;
+      /** Outlier Pct */
+      outlier_pct: number;
+      /** Upper Bound */
+      upper_bound: number | null;
     };
     /**
      * PeakTableRow
@@ -1418,6 +1617,46 @@ export interface components {
       [key: string]: unknown;
     };
     /**
+     * PhaseInfoResponse
+     * @description Response body for aggregate driving-phase coverage metrics.
+     */
+    PhaseInfoResponse: {
+      /** Cruise Pct */
+      cruise_pct: number;
+      /** Has Acceleration */
+      has_acceleration: boolean;
+      /** Has Cruise */
+      has_cruise: boolean;
+      /** Idle Pct */
+      idle_pct: number;
+      /** Phase Counts */
+      phase_counts: {
+        [key: string]: number;
+      };
+      /** Phase Pcts */
+      phase_pcts: {
+        [key: string]: number;
+      };
+      /** Segment Count */
+      segment_count: number;
+      /** Speed Unknown Pct */
+      speed_unknown_pct: number;
+      /** Total Samples */
+      total_samples: number;
+    };
+    /**
+     * PhaseIntensityStatsResponse
+     * @description Response body for per-phase intensity aggregates at one location.
+     */
+    PhaseIntensityStatsResponse: {
+      /** Count */
+      count: number;
+      /** Max Intensity Db */
+      max_intensity_db: number | null;
+      /** Mean Intensity Db */
+      mean_intensity_db: number | null;
+    };
+    /**
      * PhaseSegmentOut
      * @description Typed HTTP contract for a serialized driving-phase segment.
      */
@@ -1426,6 +1665,28 @@ export interface components {
       end_t_s: number | null;
       /** Phase */
       phase: string;
+      /** Start T S */
+      start_t_s: number | null;
+    };
+    /**
+     * PhaseSegmentSummaryResponse
+     * @description Typed HTTP contract for a summarized driving-phase segment.
+     */
+    PhaseSegmentSummaryResponse: {
+      /** End Idx */
+      end_idx: number;
+      /** End T S */
+      end_t_s: number | null;
+      /** Phase */
+      phase: string;
+      /** Sample Count */
+      sample_count: number;
+      /** Speed Max Kmh */
+      speed_max_kmh: number | null;
+      /** Speed Min Kmh */
+      speed_min_kmh: number | null;
+      /** Start Idx */
+      start_idx: number;
       /** Start T S */
       start_t_s: number | null;
     };
@@ -1446,6 +1707,24 @@ export interface components {
       mean_vibration_strength_db: number | null;
       /** Phase */
       phase: string;
+    };
+    /**
+     * PhaseTimelineEntryResponse
+     * @description Response body for one summarized phase-timeline interval.
+     */
+    PhaseTimelineEntryResponse: {
+      /** End T S */
+      end_t_s: number | null;
+      /** Has Fault Evidence */
+      has_fault_evidence: boolean;
+      /** Phase */
+      phase: string;
+      /** Speed Max Kmh */
+      speed_max_kmh: number | null;
+      /** Speed Min Kmh */
+      speed_min_kmh: number | null;
+      /** Start T S */
+      start_t_s: number | null;
     };
     /**
      * PlotDataResult
@@ -1726,6 +2005,26 @@ export interface components {
       stale_timeout_s: number;
     };
     /**
+     * SpeedStatsResponse
+     * @description Response body for one summarized speed-profile snapshot.
+     */
+    SpeedStatsResponse: {
+      /** Max Kmh */
+      max_kmh: number | null;
+      /** Mean Kmh */
+      mean_kmh: number | null;
+      /** Min Kmh */
+      min_kmh: number | null;
+      /** Range Kmh */
+      range_kmh: number | null;
+      /** Sample Count */
+      sample_count: number;
+      /** Stddev Kmh */
+      stddev_kmh: number | null;
+      /** Steady Speed */
+      steady_speed: boolean;
+    };
+    /**
      * SpeedUnitRequest
      * @description Request body for changing the displayed speed unit.
      */
@@ -1744,6 +2043,30 @@ export interface components {
       /** Speedunit */
       speedUnit: string;
     };
+    /**
+     * StrengthBucketDistributionResponse
+     * @description Response body for per-location strength-bucket coverage.
+     */
+    StrengthBucketDistributionResponse: {
+      /** Counts */
+      counts: {
+        [key: string]: number;
+      };
+      /** Percent Time L0 */
+      percent_time_l0: number;
+      /** Percent Time L1 */
+      percent_time_l1: number;
+      /** Percent Time L2 */
+      percent_time_l2: number;
+      /** Percent Time L3 */
+      percent_time_l3: number;
+      /** Percent Time L4 */
+      percent_time_l4: number;
+      /** Percent Time L5 */
+      percent_time_l5: number;
+      /** Total */
+      total: number;
+    };
     /** StrengthPeak */
     StrengthPeak: {
       /** Amp */
@@ -1754,6 +2077,29 @@ export interface components {
       strength_bucket: string | null;
       /** Vibration Strength Db */
       vibration_strength_db: number;
+    };
+    /**
+     * SummaryWarningResponse
+     * @description Response body for a persisted summary warning before localization.
+     */
+    SummaryWarningResponse: {
+      /** Applies To */
+      applies_to: string;
+      /** Code */
+      code: string;
+      /** Detail */
+      detail?: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
+      /**
+       * Severity
+       * @enum {string}
+       */
+      severity: "warn" | "error";
+      /** Title */
+      title: boolean | number | string | unknown[] | {
+        [key: string]: unknown;
+      } | null;
     };
     /**
      * SuspectedVibrationOriginPayload
@@ -1779,6 +2125,24 @@ export interface components {
       /** Weak Spatial Separation */
       weak_spatial_separation?: boolean | null;
       [key: string]: unknown;
+    };
+    /**
+     * TestPlanStepResponse
+     * @description Response body for one recommended next-step action.
+     */
+    TestPlanStepResponse: {
+      /** Action Id */
+      action_id: string;
+      /** Confirm */
+      confirm: string | null;
+      /** Eta */
+      eta: string | null;
+      /** Falsify */
+      falsify: string | null;
+      /** What */
+      what: string;
+      /** Why */
+      why: string | null;
     };
     /**
      * UpdateCancelResponse
