@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from vibesensor.coerce import coerce_float
-from vibesensor.domain.finding import Finding, FindingEvidence, Signature, VibrationSource
+from vibesensor.domain import Finding, FindingEvidence, Signature, VibrationSource
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.shared.boundaries.analysis_payload import matched_point_from_observation

@@ -6,8 +6,12 @@ from collections import defaultdict
 from dataclasses import dataclass, replace
 from math import ceil, floor, log1p, pow
 
-from vibesensor.domain import LocationHotspot, OrderMatchObservation, VibrationSource
-from vibesensor.domain.finding import speed_bin_label
+from vibesensor.domain import (
+    LocationHotspot,
+    OrderMatchObservation,
+    VibrationSource,
+    speed_bin_label,
+)
 from vibesensor.shared.constants import MULTI_SENSOR_CORROBORATION_DB
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref

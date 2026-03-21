@@ -9,10 +9,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import cast
 
-from vibesensor.domain.car import Car, OrderReferenceSpec
+from vibesensor.domain import Car, Finding, OrderReferenceSpec
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
-from vibesensor.domain.finding import Finding
 from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture, RunSetup
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.sensor import Sensor

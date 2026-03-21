@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import dataclasses
 
-from vibesensor.domain.finding import Finding, FindingEvidence
+from vibesensor.domain import Finding, FindingEvidence
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.run_suitability import SuitabilityCheck

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from math import floor
 from typing import Literal
 
-from vibesensor.domain.finding import speed_bin_label
+from vibesensor.domain import speed_bin_label
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import Sample, SpectrogramResultData
