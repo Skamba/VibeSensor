@@ -1,9 +1,9 @@
 """Intermediate data model for the diagnostic PDF report.
 
-Pure data-class definitions consumed by the Canvas-based PDF renderer.
-The ``map_summary()`` builder that populates these classes lives in
-``vibesensor.adapters.pdf.mapping``, with context assembly in
-``vibesensor.adapters.pdf.report_context``.
+Holds the lightweight dataclasses used during report mapping and PDF
+rendering. ``Report`` captures run-level metadata for the mapper, while
+``ReportTemplateData`` and related dataclasses are consumed by the
+Canvas-based renderer.
 """
 
 from __future__ import annotations
@@ -15,17 +15,42 @@ __all__ = [
     "PartSuggestion",
     "PatternEvidence",
     "PeakRow",
+    "Report",
     "ReportTemplateData",
     "SystemFindingCard",
+    "build_report_from_summary",
 ]
 
 from dataclasses import dataclass, field
 
+from vibesensor.coerce import coerce_float
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
 
 # ---------------------------------------------------------------------------
 # Data model
 # ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Report:
+    """Run-level metadata carrier consumed by the report mapping pipeline."""
+
+    run_id: str
+    title: str = ""
+    lang: str = "en"
+    car_name: str | None = None
+    car_type: str | None = None
+    report_date: str | None = None
+    duration_s: float | None = None
+    sample_count: int = 0
+    sensor_count: int = 0
+
+    def __post_init__(self) -> None:
+        if not self.run_id:
+            raise ValueError("run_id must be non-empty")
+        if self.duration_s is not None and self.duration_s < 0:
+            raise ValueError("duration_s must be non-negative")
 
 
 @dataclass
@@ -159,3 +184,43 @@ class ReportTemplateData:
     top_causes: list[FindingPresentation] = field(default_factory=list)
     sensor_intensity_by_location: list[JsonObject] = field(default_factory=list)
     location_hotspot_rows: list[JsonObject] = field(default_factory=list)
+
+
+def build_report_from_summary(summary: AnalysisSummary) -> Report:
+    """Create a ``Report`` metadata object from an analysis summary."""
+    meta = summary.get("metadata") or {}
+    if not isinstance(meta, dict):
+        meta = {}
+
+    car_name = str(meta.get("car_name") or "").strip() or None
+    car_type = str(meta.get("car_type") or "").strip() or None
+
+    rows = summary.get("rows")
+    sample_count = int(rows) if isinstance(rows, (int, float, str)) else 0
+
+    sensor_count_raw = summary.get("sensor_count_used")
+    sensor_count = int(sensor_count_raw) if isinstance(sensor_count_raw, (int, float, str)) else 0
+
+    duration_s_raw = summary.get("duration_s")
+    duration_s: float | None = None
+    if duration_s_raw is not None:
+        try:
+            duration_s = coerce_float(duration_s_raw)
+        except (TypeError, ValueError):
+            pass
+
+    report_date = summary.get("report_date")
+    report_date_str = str(report_date) if isinstance(report_date, str) else None
+
+    run_id = str(summary.get("run_id", ""))
+
+    return Report(
+        run_id=run_id or "unknown",
+        lang=str(summary.get("lang", "en")),
+        car_name=car_name,
+        car_type=car_type,
+        report_date=report_date_str,
+        duration_s=duration_s,
+        sample_count=sample_count,
+        sensor_count=sensor_count,
+    )
