@@ -37,7 +37,7 @@ BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
 Standalone validation against an existing image artifact:
 
 ```bash
-# validate the latest artifact in infra/pi-image/pi-gen/out/
+# validate the current artifact in infra/pi-image/pi-gen/out/
 ./infra/pi-image/pi-gen/validate-image.sh
 
 # or validate a specific .img / .img.xz / .zip artifact

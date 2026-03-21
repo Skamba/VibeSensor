@@ -20,12 +20,6 @@ choose_final_artifact() {
     return 0
   fi
 
-  candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "*${IMG_SUFFIX}*.zip" ! -name "latest${IMG_SUFFIX}.*" | sort -r | head -n 1 || true)"
-  if [ -n "${candidate}" ]; then
-    printf '%s\n' "${candidate}"
-    return 0
-  fi
-
   return 1
 }
 
