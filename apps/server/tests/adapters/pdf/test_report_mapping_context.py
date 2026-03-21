@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.adapters.pdf import report_context
 from vibesensor.adapters.pdf.mapping import (
     PrimaryCandidateContext,
     ReportMappingContext,
@@ -183,3 +184,18 @@ class TestTypedMetadata:
         assert context.sample_count == 500
         assert context.sensor_model == "ESP32"
         assert context.firmware_version == "1.0.0"
+
+
+def test_report_context_module_no_longer_reexports_pdf_helper_facade() -> None:
+    removed_names = (
+        "PrimaryCandidateContext",
+        "Report",
+        "build_report_from_summary",
+        "build_system_cards",
+        "compute_location_hotspot_rows",
+        "filter_active_sensor_intensity",
+        "humanize_signatures",
+        "resolve_primary_report_candidate",
+    )
+    for name in removed_names:
+        assert not hasattr(report_context, name)
