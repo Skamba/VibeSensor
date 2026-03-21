@@ -16,6 +16,54 @@
         "title": "ActiveCarRequest",
         "type": "object"
       },
+      "AmpVsPhaseRow": {
+        "description": "Typed HTTP contract for one phase-grouped vibration aggregate row.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "max_vib_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Vib Db"
+          },
+          "mean_speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Speed Kmh"
+          },
+          "mean_vib_db": {
+            "title": "Mean Vib Db",
+            "type": "number"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phase",
+          "count",
+          "mean_vib_db",
+          "max_vib_db",
+          "mean_speed_kmh"
+        ],
+        "title": "AmpVsPhaseRow",
+        "type": "object"
+      },
       "AmplitudeMetric": {
         "additionalProperties": true,
         "description": "HTTP contract for finding amplitude/strength metadata.",
@@ -355,6 +403,502 @@
           "tire_deflection_factor"
         ],
         "title": "AnalysisSettingsResponse",
+        "type": "object"
+      },
+      "AnalysisSummaryResponse": {
+        "additionalProperties": true,
+        "description": "Typed HTTP contract for the persisted analysis summary on one history run.",
+        "properties": {
+          "accel_scale_g_per_lsb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accel Scale G Per Lsb"
+          },
+          "analysis_metadata": {
+            "additionalProperties": true,
+            "title": "Analysis Metadata",
+            "type": "object"
+          },
+          "data_quality": {
+            "additionalProperties": true,
+            "title": "Data Quality",
+            "type": "object"
+          },
+          "duration_s": {
+            "title": "Duration S",
+            "type": "number"
+          },
+          "end_time_utc": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time Utc"
+          },
+          "feature_interval_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature Interval S"
+          },
+          "fft_window_size_samples": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fft Window Size Samples"
+          },
+          "fft_window_type": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fft Window Type"
+          },
+          "file_name": {
+            "title": "File Name",
+            "type": "string"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/FindingPayload"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "firmware_version": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Firmware Version"
+          },
+          "incomplete_for_order_analysis": {
+            "title": "Incomplete For Order Analysis",
+            "type": "boolean"
+          },
+          "lang": {
+            "title": "Lang",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "most_likely_origin": {
+            "$ref": "#/components/schemas/SuspectedVibrationOriginPayload"
+          },
+          "peak_picker_method": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Picker Method"
+          },
+          "phase_info": {
+            "additionalProperties": true,
+            "title": "Phase Info",
+            "type": "object"
+          },
+          "phase_segments": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Phase Segments",
+            "type": "array"
+          },
+          "phase_speed_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/PhaseSpeedBreakdownRow"
+            },
+            "title": "Phase Speed Breakdown",
+            "type": "array"
+          },
+          "phase_timeline": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Phase Timeline",
+            "type": "array"
+          },
+          "plots": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlotDataResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raw_sample_rate_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Sample Rate Hz"
+          },
+          "record_length": {
+            "title": "Record Length",
+            "type": "string"
+          },
+          "report_date": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Date"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "run_noise_baseline_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Noise Baseline Db"
+          },
+          "run_suitability": {
+            "items": {
+              "$ref": "#/components/schemas/RunSuitabilityCheck"
+            },
+            "title": "Run Suitability",
+            "type": "array"
+          },
+          "samples": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Samples",
+            "type": "array"
+          },
+          "sensor_count_used": {
+            "title": "Sensor Count Used",
+            "type": "integer"
+          },
+          "sensor_intensity_by_location": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Sensor Intensity By Location",
+            "type": "array"
+          },
+          "sensor_locations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sensor Locations",
+            "type": "array"
+          },
+          "sensor_locations_connected_throughout": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sensor Locations Connected Throughout",
+            "type": "array"
+          },
+          "sensor_model": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sensor Model"
+          },
+          "speed_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/SpeedBreakdownRow"
+            },
+            "title": "Speed Breakdown",
+            "type": "array"
+          },
+          "speed_breakdown_skipped_reason": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Breakdown Skipped Reason"
+          },
+          "speed_stats": {
+            "additionalProperties": true,
+            "title": "Speed Stats",
+            "type": "object"
+          },
+          "speed_stats_by_phase": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Speed Stats By Phase",
+            "type": "object"
+          },
+          "start_time_utc": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time Utc"
+          },
+          "test_plan": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Test Plan",
+            "type": "array"
+          },
+          "top_causes": {
+            "items": {
+              "$ref": "#/components/schemas/FindingPayload"
+            },
+            "title": "Top Causes",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "file_name",
+          "run_id",
+          "rows",
+          "duration_s",
+          "record_length",
+          "lang",
+          "raw_sample_rate_hz",
+          "feature_interval_s",
+          "accel_scale_g_per_lsb",
+          "incomplete_for_order_analysis",
+          "metadata",
+          "warnings",
+          "speed_breakdown",
+          "phase_speed_breakdown",
+          "phase_segments",
+          "run_noise_baseline_db",
+          "speed_breakdown_skipped_reason",
+          "findings",
+          "top_causes",
+          "most_likely_origin",
+          "test_plan",
+          "phase_timeline",
+          "speed_stats",
+          "speed_stats_by_phase",
+          "phase_info",
+          "sensor_locations",
+          "sensor_locations_connected_throughout",
+          "sensor_count_used",
+          "sensor_intensity_by_location",
+          "run_suitability",
+          "data_quality"
+        ],
+        "title": "AnalysisSummaryResponse",
         "type": "object"
       },
       "AxisMetrics": {
@@ -2102,6 +2646,56 @@
         "title": "FindingPayload",
         "type": "object"
       },
+      "FreqVsSpeedByFindingSeries": {
+        "description": "Typed HTTP contract for one finding's freq-vs-speed series.",
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "matched": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Matched",
+            "type": "array"
+          },
+          "predicted": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Predicted",
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "matched",
+          "predicted"
+        ],
+        "title": "FreqVsSpeedByFindingSeries",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2633,8 +3227,7 @@
           "analysis": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "$ref": "#/components/schemas/AnalysisSummaryResponse"
               },
               {
                 "type": "null"
@@ -2845,6 +3438,38 @@
         "title": "LocationOptionResponse",
         "type": "object"
       },
+      "MatchedAmpVsSpeedSeries": {
+        "description": "Typed HTTP contract for one finding's amp-vs-speed series.",
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "points"
+        ],
+        "title": "MatchedAmpVsSpeedSeries",
+        "type": "object"
+      },
       "MatchedPoint": {
         "additionalProperties": true,
         "description": "HTTP contract for one serialized finding matched-point observation.",
@@ -2941,6 +3566,181 @@
         "title": "MatchedPoint",
         "type": "object"
       },
+      "PeakTableRow": {
+        "additionalProperties": true,
+        "description": "Typed HTTP contract for one ranked peak table row.",
+        "properties": {
+          "burstiness": {
+            "title": "Burstiness",
+            "type": "number"
+          },
+          "frequency_hz": {
+            "title": "Frequency Hz",
+            "type": "number"
+          },
+          "max_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Intensity Db"
+          },
+          "median_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Intensity Db"
+          },
+          "median_vs_run_noise_ratio": {
+            "title": "Median Vs Run Noise Ratio",
+            "type": "number"
+          },
+          "order_label": {
+            "title": "Order Label",
+            "type": "string"
+          },
+          "p95_intensity_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Intensity Db"
+          },
+          "p95_vs_run_noise_ratio": {
+            "title": "P95 Vs Run Noise Ratio",
+            "type": "number"
+          },
+          "peak_classification": {
+            "title": "Peak Classification",
+            "type": "string"
+          },
+          "persistence_score": {
+            "title": "Persistence Score",
+            "type": "number"
+          },
+          "presence_ratio": {
+            "title": "Presence Ratio",
+            "type": "number"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "run_noise_baseline_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Noise Baseline Db"
+          },
+          "strength_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strength Db"
+          },
+          "strength_floor_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strength Floor Db"
+          },
+          "suspected_source": {
+            "title": "Suspected Source",
+            "type": "string"
+          },
+          "typical_speed_band": {
+            "title": "Typical Speed Band",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rank",
+          "frequency_hz",
+          "order_label",
+          "max_intensity_db",
+          "median_intensity_db",
+          "p95_intensity_db",
+          "run_noise_baseline_db",
+          "median_vs_run_noise_ratio",
+          "p95_vs_run_noise_ratio",
+          "strength_floor_db",
+          "strength_db",
+          "presence_ratio",
+          "burstiness",
+          "persistence_score",
+          "suspected_source",
+          "peak_classification",
+          "typical_speed_band"
+        ],
+        "title": "PeakTableRow",
+        "type": "object"
+      },
+      "PhaseBoundary": {
+        "description": "Typed HTTP contract for a phase-boundary marker.",
+        "properties": {
+          "end_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End T S"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T S"
+          }
+        },
+        "required": [
+          "phase",
+          "t_s",
+          "end_t_s"
+        ],
+        "title": "PhaseBoundary",
+        "type": "object"
+      },
       "PhaseEvidence": {
         "additionalProperties": true,
         "description": "HTTP contract for optional driving-phase evidence attached to a finding.",
@@ -2965,6 +3765,285 @@
           }
         },
         "title": "PhaseEvidence",
+        "type": "object"
+      },
+      "PhaseSegmentOut": {
+        "description": "Typed HTTP contract for a serialized driving-phase segment.",
+        "properties": {
+          "end_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End T S"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "start_t_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start T S"
+          }
+        },
+        "required": [
+          "phase",
+          "start_t_s",
+          "end_t_s"
+        ],
+        "title": "PhaseSegmentOut",
+        "type": "object"
+      },
+      "PhaseSpeedBreakdownRow": {
+        "description": "Typed HTTP contract for one phase-aware speed aggregate row.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "max_speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Speed Kmh"
+          },
+          "max_vibration_strength_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Vibration Strength Db"
+          },
+          "mean_speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Speed Kmh"
+          },
+          "mean_vibration_strength_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Vibration Strength Db"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phase",
+          "count",
+          "mean_speed_kmh",
+          "max_speed_kmh",
+          "mean_vibration_strength_db",
+          "max_vibration_strength_db"
+        ],
+        "title": "PhaseSpeedBreakdownRow",
+        "type": "object"
+      },
+      "PlotDataResult": {
+        "additionalProperties": true,
+        "description": "Typed HTTP contract for serialized plot data attached to a run summary.",
+        "properties": {
+          "amp_vs_phase": {
+            "items": {
+              "$ref": "#/components/schemas/AmpVsPhaseRow"
+            },
+            "title": "Amp Vs Phase",
+            "type": "array"
+          },
+          "amp_vs_speed": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Amp Vs Speed",
+            "type": "array"
+          },
+          "dominant_freq": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Dominant Freq",
+            "type": "array"
+          },
+          "fft_spectrum": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Fft Spectrum",
+            "type": "array"
+          },
+          "fft_spectrum_raw": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Fft Spectrum Raw",
+            "type": "array"
+          },
+          "freq_vs_speed_by_finding": {
+            "items": {
+              "$ref": "#/components/schemas/FreqVsSpeedByFindingSeries"
+            },
+            "title": "Freq Vs Speed By Finding",
+            "type": "array"
+          },
+          "matched_amp_vs_speed": {
+            "items": {
+              "$ref": "#/components/schemas/MatchedAmpVsSpeedSeries"
+            },
+            "title": "Matched Amp Vs Speed",
+            "type": "array"
+          },
+          "peaks_spectrogram": {
+            "$ref": "#/components/schemas/SpectrogramResult"
+          },
+          "peaks_spectrogram_raw": {
+            "$ref": "#/components/schemas/SpectrogramResult"
+          },
+          "peaks_table": {
+            "items": {
+              "$ref": "#/components/schemas/PeakTableRow"
+            },
+            "title": "Peaks Table",
+            "type": "array"
+          },
+          "phase_boundaries": {
+            "items": {
+              "$ref": "#/components/schemas/PhaseBoundary"
+            },
+            "title": "Phase Boundaries",
+            "type": "array"
+          },
+          "phase_segments": {
+            "items": {
+              "$ref": "#/components/schemas/PhaseSegmentOut"
+            },
+            "title": "Phase Segments",
+            "type": "array"
+          },
+          "steady_speed_distribution": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steady Speed Distribution"
+          },
+          "vib_magnitude": {
+            "items": {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Vib Magnitude",
+            "type": "array"
+          }
+        },
+        "required": [
+          "vib_magnitude",
+          "dominant_freq",
+          "amp_vs_speed",
+          "amp_vs_phase",
+          "matched_amp_vs_speed",
+          "freq_vs_speed_by_finding",
+          "steady_speed_distribution",
+          "fft_spectrum",
+          "fft_spectrum_raw",
+          "peaks_spectrogram",
+          "peaks_spectrogram_raw",
+          "peaks_table",
+          "phase_segments",
+          "phase_boundaries"
+        ],
+        "title": "PlotDataResult",
         "type": "object"
       },
       "RawSamplesErrorPayload": {
@@ -3138,6 +4217,59 @@
         "title": "RemoveClientResponse",
         "type": "object"
       },
+      "RunSuitabilityCheck": {
+        "additionalProperties": true,
+        "description": "Typed HTTP contract for one run-suitability diagnostic check.",
+        "properties": {
+          "check": {
+            "title": "Check",
+            "type": "string"
+          },
+          "check_key": {
+            "title": "Check Key",
+            "type": "string"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check",
+          "check_key",
+          "state"
+        ],
+        "title": "RunSuitabilityCheck",
+        "type": "object"
+      },
       "SensorConfigResponse": {
         "description": "Response body with persisted config for a single sensor (name, location_code).",
         "properties": {
@@ -3249,6 +4381,123 @@
           "location_code"
         ],
         "title": "SetLocationRequest",
+        "type": "object"
+      },
+      "SpectrogramResult": {
+        "additionalProperties": true,
+        "description": "Typed HTTP contract for a serialized spectrogram grid.",
+        "properties": {
+          "cells": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "max_amp": {
+            "title": "Max Amp",
+            "type": "number"
+          },
+          "x_axis": {
+            "title": "X Axis",
+            "type": "string"
+          },
+          "x_bin_width": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X Bin Width"
+          },
+          "x_bins": {
+            "items": {
+              "type": "number"
+            },
+            "title": "X Bins",
+            "type": "array"
+          },
+          "x_label_key": {
+            "title": "X Label Key",
+            "type": "string"
+          },
+          "y_bin_width": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Y Bin Width"
+          },
+          "y_bins": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Y Bins",
+            "type": "array"
+          }
+        },
+        "required": [
+          "x_axis",
+          "x_label_key",
+          "x_bins",
+          "y_bins",
+          "cells",
+          "max_amp"
+        ],
+        "title": "SpectrogramResult",
+        "type": "object"
+      },
+      "SpeedBreakdownRow": {
+        "description": "Typed HTTP contract for one speed-band aggregate row.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "max_vibration_strength_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Vibration Strength Db"
+          },
+          "mean_vibration_strength_db": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Vibration Strength Db"
+          },
+          "speed_range": {
+            "title": "Speed Range",
+            "type": "string"
+          }
+        },
+        "required": [
+          "speed_range",
+          "count",
+          "mean_vibration_strength_db",
+          "max_vibration_strength_db"
+        ],
+        "title": "SpeedBreakdownRow",
         "type": "object"
       },
       "SpeedSourceKind": {
@@ -3579,6 +4828,115 @@
           "strength_bucket"
         ],
         "title": "StrengthPeak",
+        "type": "object"
+      },
+      "SuspectedVibrationOriginPayload": {
+        "additionalProperties": true,
+        "description": "Typed HTTP contract for the serialized likely-origin payload.",
+        "properties": {
+          "alternative_locations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Alternative Locations",
+            "type": "array"
+          },
+          "dominance_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominance Ratio"
+          },
+          "dominant_phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Phase"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "speed_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Band"
+          },
+          "suspected_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suspected Source"
+          },
+          "weak_spatial_separation": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weak Spatial Separation"
+          }
+        },
+        "title": "SuspectedVibrationOriginPayload",
         "type": "object"
       },
       "UpdateCancelResponse": {

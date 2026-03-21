@@ -28,6 +28,7 @@ export {
   historyExportUrl,
   historyReportPdfUrl,
   getHistory,
+  getHistoryRun,
   deleteHistoryRun,
   getHistoryInsights,
 } from "./api/history";
