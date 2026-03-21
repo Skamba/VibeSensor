@@ -46,7 +46,7 @@ in one step.
 | `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
 | `vehicle_math.ts` | Tire diameter, order tolerance, and uncertainty calculations |
 | `format.ts` | Number, byte, and timestamp formatting utilities |
-| `constants.ts` | Sensor location codes and vibration source columns |
+| `constants.ts` | Sensor location codes and canonical strength field names, with backend hygiene tests guarding drift |
 | `theme.ts` | Chart color palette and order band fill colors |
 | `styles/app.css` | Full CSS with light/dark theme tokens |
 
