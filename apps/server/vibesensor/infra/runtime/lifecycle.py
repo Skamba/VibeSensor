@@ -14,18 +14,117 @@ import contextlib
 import logging
 import shutil
 from collections.abc import Callable, Coroutine
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Protocol
 
+from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.shared.constants import UI_PUSH_HZ
+from vibesensor.shared.types.payload_types import LiveWsPayload
 
-if TYPE_CHECKING:
-    from vibesensor.app.runtime_state import RuntimeState
+StartUdpReceiver = Callable[
+    ...,
+    Coroutine[object, object, tuple[asyncio.DatagramTransport, asyncio.Task[None]]],
+]
 
-    StartUdpReceiver = Callable[
-        ...,
-        Coroutine[object, object, tuple[asyncio.DatagramTransport, asyncio.Task[None]]],
-    ]
+
+class LifecycleControlPlane(Protocol):
+    async def start(self) -> None: ...
+
+    def close(self) -> None: ...
+
+
+class LifecycleProcessingLoop(Protocol):
+    async def run(self) -> object: ...
+
+
+class LifecycleWsBroadcast(Protocol):
+    def build_payload(self, selected_client: str | None) -> LiveWsPayload: ...
+
+    def on_tick(self) -> None: ...
+
+
+class LifecycleWsHub(Protocol):
+    async def run(
+        self,
+        hz: int,
+        payload_builder: Callable[[str | None], LiveWsPayload],
+        on_tick: Callable[[], None] | None = None,
+    ) -> None: ...
+
+
+class LifecycleShutdownReport(Protocol):
+    @property
+    def completed(self) -> bool: ...
+
+    @property
+    def analysis_queue_depth(self) -> int: ...
+
+    @property
+    def analysis_active_run_id(self) -> str | None: ...
+
+    @property
+    def analysis_queue_oldest_age_s(self) -> float | None: ...
+
+    @property
+    def active_run_id_before_stop(self) -> str | None: ...
+
+    @property
+    def write_error(self) -> str | None: ...
+
+
+class LifecycleRunRecorder(Protocol):
+    async def run(self) -> object: ...
+
+    def shutdown_report(self, timeout_s: float = ...) -> LifecycleShutdownReport: ...
+
+
+class LifecycleGpsMonitor(Protocol):
+    async def run(self, *, host: str, port: int) -> object: ...
+
+
+class LifecycleManagedJobs(Protocol):
+    @property
+    def job_task(self) -> asyncio.Task[None] | None: ...
+
+
+class LifecycleUpdateManager(LifecycleManagedJobs, Protocol):
+    async def startup_recover(self) -> object: ...
+
+
+class LifecycleWorkerPool(Protocol):
+    def shutdown(self, wait: bool) -> None: ...
+
+
+class LifecycleHistoryDb(Protocol):
+    def close(self) -> None: ...
+
+
+@dataclass(slots=True)
+class LifecycleRuntime:
+    """Lifecycle-owned dependency bundle consumed by LifecycleManager."""
+
+    health_state: RuntimeHealthState
+    history_db_path: str | Path | None
+    udp_data_host: str
+    udp_data_port: int
+    udp_data_queue_maxsize: int
+    gpsd_host: str
+    gpsd_port: int
+    shutdown_analysis_timeout_s: float
+    registry: object
+    processor: object
+    control_plane: LifecycleControlPlane
+    processing_loop: LifecycleProcessingLoop
+    ws_hub: LifecycleWsHub
+    ws_broadcast: LifecycleWsBroadcast
+    run_recorder: LifecycleRunRecorder
+    gps_monitor: LifecycleGpsMonitor
+    update_manager: LifecycleUpdateManager
+    esp_flash_manager: LifecycleManagedJobs
+    worker_pool: LifecycleWorkerPool
+    history_db: LifecycleHistoryDb
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,7 +144,7 @@ class LifecycleManager:
     def __init__(
         self,
         *,
-        runtime: RuntimeState,
+        runtime: LifecycleRuntime,
         start_udp_receiver: StartUdpReceiver,
     ) -> None:
         self._runtime = runtime
@@ -93,7 +192,7 @@ class LifecycleManager:
     def _validate_startup(self) -> None:
         """Run lightweight startup precondition checks (warnings only)."""
         try:
-            db_path = self._runtime.config.logging.history_db_path
+            db_path = self._runtime.history_db_path
             data_dir = Path(db_path).parent if db_path else None
         except (AttributeError, TypeError):
             return
@@ -120,11 +219,11 @@ class LifecycleManager:
             phase = "udp_receiver"
             self._health_state.set_phase(phase)
             self._data_transport, self._data_consumer_task = await self._start_udp_receiver(
-                host=self._runtime.config.udp.data_host,
-                port=self._runtime.config.udp.data_port,
+                host=self._runtime.udp_data_host,
+                port=self._runtime.udp_data_port,
                 registry=self._runtime.registry,
                 processor=self._runtime.processor,
-                queue_maxsize=self._runtime.config.udp.data_queue_maxsize,
+                queue_maxsize=self._runtime.udp_data_queue_maxsize,
             )
 
             phase = "control_plane"
@@ -159,8 +258,8 @@ class LifecycleManager:
             self.tasks.append(
                 self._start_task(
                     self._runtime.gps_monitor.run(
-                        host=self._runtime.config.gps.gpsd_host,
-                        port=self._runtime.config.gps.gpsd_port,
+                        host=self._runtime.gpsd_host,
+                        port=self._runtime.gpsd_port,
                     ),
                     name=phase,
                 ),
@@ -224,7 +323,7 @@ class LifecycleManager:
                 with contextlib.suppress(asyncio.CancelledError, Exception):
                     await asyncio.wait_for(asyncio.shield(managed_task), timeout=10.0)
 
-        analysis_timeout_s = self._runtime.config.logging.shutdown_analysis_timeout_s
+        analysis_timeout_s = self._runtime.shutdown_analysis_timeout_s
         shutdown_report = await asyncio.to_thread(
             self._runtime.run_recorder.shutdown_report,
             analysis_timeout_s,
