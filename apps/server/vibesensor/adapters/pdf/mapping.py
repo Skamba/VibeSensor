@@ -12,6 +12,7 @@ from vibesensor.adapters.pdf.pattern_parts import parts_for_pattern, why_parts_l
 from vibesensor.adapters.pdf.peak_table import build_peak_rows_from_plots
 from vibesensor.adapters.pdf.presentation import order_label_human, strength_label, strength_text
 from vibesensor.adapters.pdf.report_data import (
+    FindingPresentation,
     PartSuggestion,
     PatternEvidence,
     ReportTemplateData,
@@ -539,6 +540,19 @@ def map_summary(
     return _build_report_template_data(summary, report=report, lang=lang, tr=tr, test_run=test_run)
 
 
+def _finding_to_presentation(f: Finding) -> FindingPresentation:
+    """Convert a domain ``Finding`` to a presentation-ready snapshot."""
+    return FindingPresentation(
+        suspected_source=str(f.suspected_source),
+        severity=f.severity,
+        strongest_location=f.strongest_location,
+        peak_classification=f.peak_classification,
+        order=f.order,
+        frequency_hz=f.frequency_hz,
+        effective_confidence=f.effective_confidence,
+    )
+
+
 def _build_report_template_data(
     summary: AnalysisSummary,
     *,
@@ -620,8 +634,10 @@ def _build_report_template_data(
         version_marker=version_marker,
         lang=report.lang,
         certainty_tier_key=primary.tier,
-        findings=list(context.domain_aggregate.findings),
-        top_causes=list(context.domain_aggregate.effective_top_causes()),
+        findings=[_finding_to_presentation(f) for f in context.domain_aggregate.findings],
+        top_causes=[
+            _finding_to_presentation(f) for f in context.domain_aggregate.effective_top_causes()
+        ],
         sensor_intensity_by_location=raw_sensor_intensity,
         location_hotspot_rows=hotspot_rows,
     )

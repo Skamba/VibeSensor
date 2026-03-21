@@ -42,8 +42,12 @@ from vibesensor.adapters.pdf.pdf_style import (
     build_page2_layout,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_kv, _draw_section_block, _draw_text
-from vibesensor.adapters.pdf.report_data import NextStep, PatternEvidence, ReportTemplateData
-from vibesensor.domain import Finding
+from vibesensor.adapters.pdf.report_data import (
+    FindingPresentation,
+    NextStep,
+    PatternEvidence,
+    ReportTemplateData,
+)
 from vibesensor.report_i18n import tr as _tr
 
 # -- Aspect-ratio helpers (merged from pdf_layout) ----------------------------
@@ -132,7 +136,7 @@ def _draw_car_visual_panel(
     w: float,
     h: float,
     location_rows: list,
-    top_causes: list[Finding],
+    top_causes: list[FindingPresentation],
     content_width: float,
 ) -> None:
     _draw_panel(c, x, y, w, h, tr_fn("EVIDENCE_AND_HOTSPOTS"))
@@ -365,7 +369,7 @@ def _draw_additional_observations(
     y: float,
     w: float,
     h: float,
-    transient_findings: list[Finding],
+    transient_findings: list[FindingPresentation],
     tr: Callable[[str], str],
 ) -> None:
     """Draw transient-impact findings in the additional-observations panel."""

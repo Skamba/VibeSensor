@@ -8,8 +8,7 @@ from dataclasses import dataclass
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 
-from vibesensor.adapters.pdf.report_data import ReportTemplateData
-from vibesensor.domain import Finding, VibrationSource
+from vibesensor.adapters.pdf.report_data import FindingPresentation, ReportTemplateData
 from vibesensor.report_i18n import tr as _tr
 
 # ── Theme ────────────────────────────────────────────────────────────────────
@@ -40,11 +39,11 @@ REPORT_COLORS = {
     "card_error_border": "#f5a6a2",
 }
 
-FINDING_SOURCE_COLORS = {
-    VibrationSource.WHEEL_TIRE: "#0f9d58",
-    VibrationSource.DRIVELINE: "#7c3aed",
-    VibrationSource.ENGINE: "#c5221f",
-    VibrationSource.UNKNOWN: "#52555e",
+FINDING_SOURCE_COLORS: dict[str, str] = {
+    "wheel/tire": "#0f9d58",
+    "driveline": "#7c3aed",
+    "engine": "#c5221f",
+    "unknown": "#52555e",
 }
 
 # ── Style Constants ──────────────────────────────────────────────────────────
@@ -257,7 +256,7 @@ class PdfRenderContext:
     page_top: float
     lang: str
     location_rows: list
-    top_causes: list[Finding]
+    top_causes: list[FindingPresentation]
     tr_fn: Callable[..., str]
     text_fn: Callable[[str, str], str]
 
@@ -267,7 +266,7 @@ class PdfRenderContext:
         data: ReportTemplateData,
         *,
         location_rows: list | None = None,
-        top_causes: list[Finding] | None = None,
+        top_causes: list[FindingPresentation] | None = None,
         tr_fn: Callable[..., str] | None = None,
         text_fn: Callable[[str, str], str] | None = None,
     ) -> PdfRenderContext:
