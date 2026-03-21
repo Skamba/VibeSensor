@@ -15,6 +15,7 @@ from vibesensor.adapters.pdf.diagram_layout import (
     MarkerRenderPlan,
     MarkerState,
     build_sensor_render_plan,
+    canonical_location,
     choose_label_plan,
     estimate_text_width,
     extract_amp_by_location,
@@ -52,6 +53,7 @@ __all__ = [
 _estimate_text_width = estimate_text_width
 _choose_label_plan = choose_label_plan
 _resolve_marker_states = resolve_marker_states
+_canonical_location = canonical_location
 
 
 def _build_sensor_render_plan(
