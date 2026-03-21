@@ -28,7 +28,8 @@ Backend ownership boundaries:
 - `use_cases/run/`: recording orchestration; `lifecycle_state.py` owns the in-memory run session state, `persistence_writer.py` owns history-write coordination and retry bookkeeping, `sample_flush.py` owns sample-building/flush decisions and auto-stop checks, `status_reporting.py` owns status/health payload assembly, `logger.py` owns the thin `RunRecorder` coordinator, and `post_analysis.py` owns the background analysis queue above the injected persistence/analysis/error boundary.
 - `adapters/persistence/`, `shared/`, and `use_cases/history/`: SQLite persistence, shared typed contracts/pure helpers (including run-log decoding, the `shared/ports.py` module for `RunPersistence`, `ClientTracker`, `SignalSource`, `SpeedProvider`, and `SettingsReader`, and vehicle-order math), car library loading, and history/report/export services. `shared/types/` now stays focused on payload/model types, with feature-scoped Pydantic HTTP contracts in `shared/types/api_models/`, while `use_cases/history/report_interpretation.py` owns pure report-domain interpretation used by PDF mapping and `adapters/persistence/history_db/` keeps `HistoryDB` as the public facade above internal `_run_lifecycle.py`, `_sample_io.py`, and `_queries.py` sections plus shared `_schema.py` and `_samples.py` helpers.
 - `adapters/pdf/`: PDF/report rendering pipeline.
-- `use_cases/updates/`: wheel-based update flow.
+- `use_cases/updates/`: wheel-based update flow; `firmware_cache.py` now stays a thin public cache facade and CLI owner above `firmware_types.py` (cache/release contracts), `firmware_bundle.py` (bundle filesystem validation/extraction/metadata), and `firmware_release_fetcher.py` (GitHub firmware HTTP access).
+- `adapters/simulator/`: simulator tooling; `sim_client.py` owns pure sensor/frame generation, `sim_scene.py` owns pure road-scene mutations, `sim_runtime.py` owns asyncio UDP/runtime loops, and `sim_sender.py` stays the CLI/orchestration entry point.
 - `adapters/hotspot/`: Wi-Fi AP monitoring, parsing, and self-heal infrastructure.
 
 ## Important directories
@@ -108,6 +109,8 @@ The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`
 ## Updates
 
 Production devices use the wheel-based updater in `apps/server/vibesensor/use_cases/updates/`, with `manager.py` as the public facade over the focused updater modules.
+
+`firmware_cache.py` is now the thin public cache/CLI surface, while `firmware_release_fetcher.py` owns GitHub firmware HTTP access, `firmware_bundle.py` owns bundle extraction/validation/metadata helpers, and `firmware_types.py` owns the updater-local cache/release contracts.
 
 - Normal delivery should go through release wheels.
 - Do not rely on manual edits inside deployed `site-packages` as a normal workflow.
