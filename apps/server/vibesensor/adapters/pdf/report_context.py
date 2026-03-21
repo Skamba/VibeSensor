@@ -144,8 +144,7 @@ def prepare_report_mapping_context(
     else:
         domain_aggregate = test_run
 
-    origin_fallback = summary.get("most_likely_origin")
-    origin = resolve_report_origin(domain_aggregate, origin_fallback)
+    origin = resolve_report_origin(domain_aggregate)
 
     origin_location = normalize_origin_location(origin)
 
