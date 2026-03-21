@@ -2,11 +2,16 @@ FROM node:22.14-slim AS ui-build
 
 WORKDIR /app/apps/ui
 
+RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
+
 COPY apps/ui/package*.json ./
 RUN npm ci
 
-RUN mkdir -p /app/tools/config
+RUN mkdir -p /app/tools/config /app/apps/server/vibesensor/shared
 COPY tools/config/sync_shared_contracts_to_ui.mjs /app/tools/config/sync_shared_contracts_to_ui.mjs
+COPY tools/config/generate_ui_shared_constants.py /app/tools/config/generate_ui_shared_constants.py
+COPY apps/server/vibesensor/shared/locations.py /app/apps/server/vibesensor/shared/locations.py
+COPY apps/server/vibesensor/shared/strength_fields.py /app/apps/server/vibesensor/shared/strength_fields.py
 COPY apps/ui/ ./
 RUN npm run build
 
