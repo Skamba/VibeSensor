@@ -16,8 +16,41 @@ from vibesensor.shared.types.backend_types import (
     _parse_manual_speed,
     car_to_persistence_dict,
 )
+from vibesensor.shared.types.json_types import JsonObject
 
 DEFAULT_CAR_ASPECTS = AnalysisSettingsSnapshot.DEFAULTS
+
+
+class FakeSettingsSnapshotStore:
+    def __init__(self, snapshot: JsonObject | None = None) -> None:
+        self.snapshot = snapshot
+
+    def get_settings_snapshot(self) -> JsonObject | None:
+        return self.snapshot
+
+    def set_settings_snapshot(self, snapshot: JsonObject) -> None:
+        self.snapshot = snapshot
+
+
+class FakeSpeedSourceSync:
+    def __init__(self) -> None:
+        self.manual_selected: bool | None = None
+        self.override_kmh: float | None = None
+        self.stale_timeout_s: float | None = None
+
+    def set_manual_source_selected(self, selected: bool) -> None:
+        self.manual_selected = selected
+
+    def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None:
+        self.override_kmh = speed_kmh
+        return speed_kmh
+
+    def set_fallback_settings(
+        self,
+        stale_timeout_s: float | None = None,
+        **_kwargs: object,
+    ) -> None:
+        self.stale_timeout_s = stale_timeout_s
 
 
 def _sabotaged_store(tmp_path: Path) -> SettingsStore:
@@ -240,6 +273,37 @@ def test_store_handles_no_db() -> None:
     store = SettingsStore()
     assert store.snapshot()["cars"] == []
     assert store.snapshot()["activeCarId"] is None
+
+
+def test_store_persists_with_protocol_shaped_snapshot_store() -> None:
+    snapshot_store = FakeSettingsSnapshotStore()
+    store = SettingsStore(db=snapshot_store)
+    created = store.add_car({"name": "Protocol Car", "type": "suv"})
+    car_id = created["cars"][0]["id"]
+    store.set_active_car(car_id)
+
+    reloaded = SettingsStore(db=snapshot_store)
+    snap = reloaded.snapshot()
+    assert len(snap["cars"]) == 1
+    assert snap["cars"][0]["name"] == "Protocol Car"
+    assert snap["activeCarId"] == car_id
+
+
+def test_store_syncs_speed_source_with_protocol_shaped_monitor() -> None:
+    gps_monitor = FakeSpeedSourceSync()
+    store = SettingsStore(gps_monitor=gps_monitor)
+
+    store.update_speed_source(
+        {
+            "speedSource": "manual",
+            "manualSpeedKph": 80,
+            "staleTimeoutS": 17,
+        }
+    )
+
+    assert gps_monitor.manual_selected is True
+    assert gps_monitor.override_kmh == pytest.approx(80.0)
+    assert gps_monitor.stale_timeout_s == pytest.approx(17.0)
 
 
 def test_parse_manual_speed_returns_none_for_invalid() -> None:
