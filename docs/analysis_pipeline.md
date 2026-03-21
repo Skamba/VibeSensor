@@ -76,7 +76,7 @@ in order. Each step runs exactly once per analysis invocation.
 | 9 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
 | 10 | Summary construction | `build_summary_payload` | summary_builder, summary_serialization | Assemble the final `AnalysisSummary` dict and serialize domain/app artifacts at the boundary seam |
 | 11 | Plot generation | `_plot_data`, `top_peaks_table_rows` | summary_builder, plots, peak_table | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
-| 12 | Plot serialization | `serialize_plot_data`, `annotate_peak_rows_with_order_labels` | summary_builder, summary_serialization, peak_table | Serialize plot bundles for persistence/report payloads after internal order-label annotation |
+| 12 | Plot serialization | `serialize_plot_data`, `annotate_peaks_with_order_labels` | summary_builder, summary_serialization, peak_table | Serialize plot bundles for persistence/report payloads after internal order-label annotation |
 
 ## Module Responsibilities
 
@@ -101,7 +101,7 @@ in order. Each step runs exactly once per analysis invocation.
 | `speed_profile_helpers.py` | ~150 | Speed-profile construction and phase/speed summary helpers |
 | `plots.py` | ~300 | Chart data shaping orchestration over diagnostics-local value objects: time-series extraction plus FFT/spectrogram assembly |
 | `peak_table.py` | ~250 | Peak-table row ranking, persistence-weighted statistics, and internal order-label annotation |
-| `shared/boundaries/summary_serialization.py` | ~350 | Dedicated serialization seam from domain/app diagnostics value objects to persisted `AnalysisSummary` payloads |
+| `shared/boundaries/summary_serialization/` | ~350 | Dedicated serialization seam package from domain/app diagnostics value objects to persisted `AnalysisSummary` payloads (`_contracts.py`, `_findings.py`, `_plots.py`, `_summary.py`) |
 
 ## Data Flow
 
