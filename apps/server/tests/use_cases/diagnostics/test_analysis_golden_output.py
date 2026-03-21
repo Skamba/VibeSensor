@@ -13,15 +13,9 @@ from test_support import (
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
 from vibesensor.shared.boundaries.diagnostic_case import (
-    test_run_from_summary as _test_run_from_summary,
+    project_analysis_summary,
 )
-from vibesensor.shared.boundaries.finding import (
-    finding_payload_from_domain,
-    step_payloads_from_plan,
-)
-from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import RunAnalysis, summarize_run_data
 
@@ -92,32 +86,8 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
     assert run is not None
     analysis = run.get("analysis")
     assert isinstance(analysis, dict)
-    test_run = _test_run_from_summary(analysis)
-    projected: dict[str, Any] = dict(analysis)
-    projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
-    projected["top_causes"] = [
-        finding_payload_from_domain(f) for f in test_run.effective_top_causes()
-    ]
-    primary = test_run.primary_finding
-    origin_fb = analysis.get("most_likely_origin")
-    fb_payload = dict(origin_fb) if isinstance(origin_fb, dict) else {}
-    if primary is None:
-        projected["most_likely_origin"] = fb_payload
-    else:
-        origin_payload = origin_payload_from_finding(primary)
-        origin_location = str(origin_payload.get("location") or "").strip().lower()
-        fallback_location = str(fb_payload.get("location") or "").strip().lower()
-        projected["most_likely_origin"] = (
-            fb_payload
-            if origin_location in {"", "unknown"} and fallback_location not in {"", "unknown"}
-            else origin_payload
-        )
-    from vibesensor.shared.boundaries.finding import _has_structured_step_content
-
-    if not _has_structured_step_content(analysis.get("test_plan")):
-        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
-    projected["run_suitability"] = run_suitability_payload(test_run.suitability)
-    return projected
+    projected, _ = project_analysis_summary(analysis)
+    return dict(projected)
 
 
 def _driveline_samples() -> list[dict[str, Any]]:

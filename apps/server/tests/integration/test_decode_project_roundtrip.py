@@ -22,19 +22,7 @@ from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
-from vibesensor.shared.boundaries.diagnostic_case import (
-    project_analysis_summary,
-    run_suitability_payload,
-)
-from vibesensor.shared.boundaries.diagnostic_case import (
-    test_run_from_summary as _test_run_from_summary,
-)
-from vibesensor.shared.boundaries.finding import (
-    _has_structured_step_content,
-    finding_payload_from_domain,
-    step_payloads_from_plan,
-)
-from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
+from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.use_cases.diagnostics import AnalysisResult, RunAnalysis
 from vibesensor.use_cases.history.exports import build_run_details_json
 
@@ -77,30 +65,8 @@ def _persist_and_reload(tmp_path: Path, summary: dict[str, Any]) -> dict[str, An
 
 def _reproject(analysis_blob: dict[str, Any]) -> dict[str, Any]:
     """Re-serialize domain-owned fields through TestRun reconstruction."""
-    test_run = _test_run_from_summary(analysis_blob)
-    projected: dict[str, Any] = dict(analysis_blob)
-    projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
-    projected["top_causes"] = [
-        finding_payload_from_domain(f) for f in test_run.effective_top_causes()
-    ]
-    primary = test_run.primary_finding
-    origin_fb = analysis_blob.get("most_likely_origin")
-    fb_payload = dict(origin_fb) if isinstance(origin_fb, dict) else {}
-    if primary is None:
-        projected["most_likely_origin"] = fb_payload
-    else:
-        origin_payload = origin_payload_from_finding(primary)
-        origin_location = str(origin_payload.get("location") or "").strip().lower()
-        fallback_location = str(fb_payload.get("location") or "").strip().lower()
-        projected["most_likely_origin"] = (
-            fb_payload
-            if origin_location in {"", "unknown"} and fallback_location not in {"", "unknown"}
-            else origin_payload
-        )
-    if not _has_structured_step_content(analysis_blob.get("test_plan")):
-        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
-    projected["run_suitability"] = run_suitability_payload(test_run.suitability)
-    return projected
+    projected, _ = project_analysis_summary(analysis_blob)
+    return dict(projected)
 
 
 def _extract_domain_meaning(summary: dict[str, Any]) -> dict[str, Any]:
