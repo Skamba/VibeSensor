@@ -11,9 +11,9 @@ from test_support.report_helpers import RUN_END, write_jsonl
 from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
+from vibesensor.adapters.pdf._panel_diagram import assert_aspect_preserved, fit_rect_preserve_aspect
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.adapters.pdf.pdf_page2 import assert_aspect_preserved, fit_rect_preserve_aspect
 from vibesensor.use_cases.diagnostics import summarize_log
 
 

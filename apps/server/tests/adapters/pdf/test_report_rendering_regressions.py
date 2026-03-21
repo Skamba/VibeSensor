@@ -9,8 +9,8 @@ import pytest
 from _paths import SERVER_ROOT
 from reportlab.pdfgen.canvas import Canvas
 
-from vibesensor.adapters.pdf import pdf_page1
-from vibesensor.adapters.pdf.pdf_page1 import _draw_next_steps_table
+import vibesensor.adapters.pdf._panel_trust_steps as panel_trust_steps
+from vibesensor.adapters.pdf._panel_trust_steps import _draw_next_steps_table
 from vibesensor.adapters.pdf.report_data import NextStep
 
 
@@ -60,7 +60,7 @@ class TestNextStepFieldsRendered:
         def capture_text(*args, **kwargs) -> None:
             captured.append(args[4])
 
-        monkeypatch.setattr(pdf_page1, "_draw_text", capture_text)
+        monkeypatch.setattr(panel_trust_steps, "_draw_text", capture_text)
         _draw_next_steps_table(
             _make_canvas(),
             0,
