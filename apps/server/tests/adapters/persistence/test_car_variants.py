@@ -186,6 +186,43 @@ def test_resolve_variant_audi_b9_fy_s_tronic_uses_verified_final_drives(
         raise AssertionError(f"Audi model not found: {model}")
 
 
+@pytest.mark.parametrize(
+    ("model", "variant", "expected_engine", "expected_drivetrain"),
+    [
+        ("A3 (8V, 2013-2020)", "1.6 TDI", "1.6L I4 TDI Diesel", "FWD"),
+        ("A3 (8V, 2013-2020)", "2.0 TDI", "2.0L I4 TDI Diesel", "FWD"),
+        ("A3 (8V, 2013-2020)", "2.0 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
+        ("A3 (8Y, 2021-2026)", "30 TDI", "2.0L I4 TDI Diesel", "FWD"),
+        ("A3 (8Y, 2021-2026)", "35 TDI", "2.0L I4 TDI Diesel", "FWD"),
+        ("A4 (B8, 2008-2016)", "2.0 TDI", "2.0L I4 TDI Diesel", "FWD"),
+        ("A4 (B8, 2008-2016)", "2.0 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
+        ("A4 (B8, 2008-2016)", "3.0 TDI quattro", "3.0L V6 TDI Diesel", "AWD"),
+        ("A4 (B9, 2016-2025)", "30 TDI", "2.0L I4 TDI Diesel", "FWD"),
+        ("A4 (B9, 2016-2025)", "35 TDI", "2.0L I4 TDI Diesel", "FWD"),
+        ("Q3 (8U, 2012-2018)", "2.0 TDI", "2.0L I4 TDI Diesel", "FWD"),
+        ("Q3 (8U, 2012-2018)", "2.0 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
+        ("Q3 (F3, 2019-2026)", "35 TDI", "2.0L I4 TDI Diesel", "FWD"),
+        ("Q3 (F3, 2019-2026)", "40 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
+        ("Q5 (FY, 2017-2026)", "35 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
+        ("Q5 (FY, 2017-2026)", "40 TDI quattro", "2.0L I4 TDI Diesel", "AWD"),
+    ],
+)
+def test_audi_models_include_verified_tdi_variants(
+    model: str, variant: str, expected_engine: str, expected_drivetrain: str
+) -> None:
+    """Audi core European-market models keep the verified TDI coverage added for #974."""
+    for entry in CAR_LIBRARY:
+        if entry["brand"] == "Audi" and entry["model"] == model:
+            variant_entry = next(
+                candidate for candidate in entry["variants"] if candidate["name"] == variant
+            )
+            assert variant_entry["engine"] == expected_engine
+            assert variant_entry["drivetrain"] == expected_drivetrain
+            break
+    else:
+        raise AssertionError(f"Audi model not found: {model}")
+
+
 def test_resolve_variant_unknown_name_returns_base() -> None:
     """resolve_variant with unknown name returns base entry unchanged."""
     base = CAR_LIBRARY[0]

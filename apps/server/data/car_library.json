@@ -2811,6 +2811,21 @@
         "name": "40 TFSI quattro",
         "engine": "2.0L I4 TFSI Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "1.6 TDI",
+        "engine": "1.6L I4 TDI Diesel",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "2.0 TDI",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "2.0 TDI quattro",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "AWD"
       }
     ]
   },
@@ -2868,6 +2883,16 @@
         "name": "40 TFSI quattro",
         "engine": "2.0L I4 TFSI Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "30 TDI",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "35 TDI",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -2934,6 +2959,21 @@
       {
         "name": "3.0 TFSI quattro",
         "engine": "3.0L V6 Supercharged",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "2.0 TDI",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "2.0 TDI quattro",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "3.0 TDI quattro",
+        "engine": "3.0L V6 TDI Diesel",
         "drivetrain": "AWD"
       }
     ]
@@ -3017,6 +3057,16 @@
       {
         "name": "45 TFSI",
         "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "30 TDI",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "35 TDI",
+        "engine": "2.0L I4 TDI Diesel",
         "drivetrain": "FWD"
       }
     ]
@@ -3550,6 +3600,16 @@
         "name": "2.0 TFSI quattro",
         "engine": "2.0L I4 TFSI Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "2.0 TDI",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "2.0 TDI quattro",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "AWD"
       }
     ]
   },
@@ -3602,6 +3662,16 @@
         "name": "45 TFSI e",
         "engine": "1.4L I4 TFSI Turbo PHEV",
         "drivetrain": "FWD"
+      },
+      {
+        "name": "35 TDI",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "40 TDI quattro",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "AWD"
       }
     ]
   },
@@ -3717,6 +3787,16 @@
       {
         "name": "55 TFSI e quattro",
         "engine": "2.0L I4 TFSI Turbo PHEV",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "35 TDI quattro",
+        "engine": "2.0L I4 TDI Diesel",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "40 TDI quattro",
+        "engine": "2.0L I4 TDI Diesel",
         "drivetrain": "AWD"
       }
     ]
