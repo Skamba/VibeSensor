@@ -10,14 +10,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import TYPE_CHECKING
 
-from vibesensor.adapters.udp.protocol import (
-    AckMessage,
-    DataMessage,
-    HelloMessage,
-    client_id_hex,
-)
 from vibesensor.domain import normalize_sensor_id as _normalize_client_id
 from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.infra.runtime.client_snapshot import ClientSnapshot
@@ -25,10 +18,13 @@ from vibesensor.infra.runtime.registry_updates import (
     DataUpdateResult,
     apply_data_message_update,
 )
+from vibesensor.shared.ports import (
+    ClientNamePersistence,
+    RegistryAckMessage,
+    RegistryDataMessage,
+    RegistryHelloMessage,
+)
 from vibesensor.shared.types.payload_types import ClientMetrics
-
-if TYPE_CHECKING:
-    from vibesensor.adapters.persistence.history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
 
@@ -106,7 +102,7 @@ class ClientRegistry:
 
     def __init__(
         self,
-        db: HistoryDB | None = None,
+        db: ClientNamePersistence | None = None,
         live_ttl_seconds: float = 10.0,
         retention_ttl_seconds: float = 120.0,
     ):
@@ -125,6 +121,10 @@ class ClientRegistry:
             if db is not None
             else None,
         )
+
+    @staticmethod
+    def _normalize_wire_client_id(client_id: bytes) -> str:
+        return _normalize_client_id(client_id.hex())
 
     def _is_live_unlocked(self, record: ClientRecord, mono_now: float) -> bool:
         return bool(
@@ -148,7 +148,7 @@ class ClientRegistry:
 
     def update_from_hello(
         self,
-        hello: HelloMessage,
+        hello: RegistryHelloMessage,
         addr: tuple[str, int],
         now: float | None = None,
         *,
@@ -157,7 +157,7 @@ class ClientRegistry:
         with self._lock:
             now_ts = _resolve_now_wall(now)
             mono = _resolve_now_mono(now_mono)
-            client_id = client_id_hex(hello.client_id)
+            client_id = self._normalize_wire_client_id(hello.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
             record.last_seen_mono = mono
@@ -175,7 +175,7 @@ class ClientRegistry:
 
     def update_from_data(
         self,
-        data_msg: DataMessage,
+        data_msg: RegistryDataMessage,
         addr: tuple[str, int],
         now: float | None = None,
         *,
@@ -190,7 +190,7 @@ class ClientRegistry:
         with self._lock:
             now_ts = _resolve_now_wall(now)
             mono = _resolve_now_mono(now_mono)
-            client_id = client_id_hex(data_msg.client_id)
+            client_id = self._normalize_wire_client_id(data_msg.client_id)
             record = self._get_or_create(client_id)
             return apply_data_message_update(
                 record,
@@ -204,7 +204,7 @@ class ClientRegistry:
 
     def update_from_ack(
         self,
-        ack: AckMessage,
+        ack: RegistryAckMessage,
         now: float | None = None,
         *,
         now_mono: float | None = None,
@@ -212,7 +212,7 @@ class ClientRegistry:
         with self._lock:
             now_ts = _resolve_now_wall(now)
             mono = _resolve_now_mono(now_mono)
-            client_id = client_id_hex(ack.client_id)
+            client_id = self._normalize_wire_client_id(ack.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
             record.last_seen_mono = mono
