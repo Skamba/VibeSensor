@@ -2,6 +2,14 @@ import { expect, test } from "@playwright/test";
 
 import { fulfillJson, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
 
+const strengthMetrics = {
+  vibration_strength_db: 12,
+  peak_amp_g: 0.2,
+  noise_floor_amp_g: 0.01,
+  strength_bucket: null,
+  top_peaks: [],
+};
+
 test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) => {
   let startCalls = 0;
   let stopCalls = 0;
@@ -49,7 +57,15 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
           firmware_version: "fw-1.0.0",
         },
       ],
-      spectra: { clients: { "001122334455": { freq: [1, 2, 3], combined_spectrum_amp_g: [0.1, 0.2, 0.15], strength_metrics: { vibration_strength_db: 12 } } } },
+      spectra: {
+        clients: {
+          "001122334455": {
+            freq: [1, 2, 3],
+            combined_spectrum_amp_g: [0.1, 0.2, 0.15],
+            strength_metrics: strengthMetrics,
+          },
+        },
+      },
     },
   });
 

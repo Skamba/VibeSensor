@@ -16,6 +16,16 @@ import { adaptServerPayload } from "../src/server_payload";
 import { applySpectrumTick } from "../src/app/ui_app_state";
 import { areHeavyFramesCompatible, interpolateHeavyFrame } from "../src/app/spectrum_animation";
 
+function makeStrengthMetrics(vibrationStrengthDb: number) {
+  return {
+    vibration_strength_db: vibrationStrengthDb,
+    peak_amp_g: 0,
+    noise_floor_amp_g: 0,
+    strength_bucket: null,
+    top_peaks: [],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // 1. adaptServerPayload – spectra null yields null, not stale data
 // ---------------------------------------------------------------------------
@@ -38,7 +48,7 @@ test.describe("adaptServerPayload spectra handling", () => {
           sensor1: {
             freq: [1, 2, 3],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: { vibration_strength_db: 12 },
+            strength_metrics: makeStrengthMetrics(12),
           },
         },
       },
@@ -57,7 +67,7 @@ test.describe("adaptServerPayload spectra handling", () => {
           good: {
             freq: [1, 2],
             combined_spectrum_amp_g: [0.01, 0.02],
-            strength_metrics: { vibration_strength_db: 5 },
+            strength_metrics: makeStrengthMetrics(5),
           },
         },
       },
@@ -74,7 +84,7 @@ test.describe("applySpectrumTick heavy/light handling", () => {
       sensor1: {
         freq: [1, 2, 3],
         combined: [0.01, 0.02, 0.03],
-        strength_metrics: { vibration_strength_db: 12 },
+        strength_metrics: makeStrengthMetrics(12),
       },
     },
   };

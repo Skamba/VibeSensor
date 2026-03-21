@@ -57,7 +57,6 @@ It regenerates:
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
 | `spectrum.ts` | uPlot chart wrapper for interactive spectrum visualization |
 | `server_payload.ts` | Runtime WebSocket payload adaptation and schema-version guardrails around the generated WS types |
-| `ws_payload_normalization.ts` | Small pre-AJV compatibility shim for legacy spectra and `strength_metrics` payload quirks |
 | `diagnostics.ts` | Strength band normalization and vibration matrix helpers |
 | `vehicle_math.ts` | Tire diameter, order tolerance, and uncertainty calculations |
 | `format.ts` | Number, byte, and timestamp formatting utilities |
@@ -85,11 +84,10 @@ HTML rendering helpers and event-target decoding for reusable panels.
 - `src/contracts/ws_payload_schema.json` defines the JSON Schema for live WS payloads.
 - `src/contracts/ws_payload_types.ts` is generated from that schema by the
   [contract sync flow](#contract-sync).
-- `src/ws_payload_normalization.ts` keeps the pre-validation compatibility shim small: it only normalizes the supported legacy `strength_metrics` and malformed-spectra quirks before AJV runs.
-- `src/ws_payload_validator.ts` compiles AJV against `ws_payload_schema.json` and validates that normalized live payload at runtime.
+- `src/ws_payload_validator.ts` compiles AJV against `ws_payload_schema.json` and validates raw live payloads at runtime.
 - `src/server_payload.ts` then adapts the validated `LiveWsPayload` with schema-version warnings, shared-`freq` fallback, and malformed/misaligned spectrum rejection.
 
-AJV-backed runtime validation now sits at the WebSocket boundary. The UI still preserves the intentionally supported compatibility behavior called out in the original investigation—partial `strength_metrics` defaults, malformed peak dropping, shared-`freq` fallback, schema-version warning logging, and dropping malformed spectrum series before they can misalign bins—but the rest of the payload now has to satisfy that JSON Schema before the app state adapter accepts it.
+AJV-backed runtime validation now sits at the WebSocket boundary. Live payloads must satisfy that JSON Schema directly before the app-state adapter accepts them. The remaining UI-side handling is limited to current, explicit adapter behavior: schema-version warning logging, shared-`freq` fallback when the canonical shared axis is used, and dropping spectrum series that still cannot produce aligned bins for rendering.
 
 ## Visual Tests
 
