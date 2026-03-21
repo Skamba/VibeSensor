@@ -2945,7 +2945,7 @@
     "gearboxes": [
       {
         "name": "7-speed S tronic (DL382)",
-        "final_drive_ratio": 3.564,
+        "final_drive_ratio": 4.234,
         "top_gear_ratio": 0.725
       },
       {
@@ -2985,7 +2985,7 @@
         "gearboxes": [
           {
             "name": "7-speed S tronic",
-            "final_drive_ratio": 4.769,
+            "final_drive_ratio": 4.234,
             "top_gear_ratio": 0.734
           }
         ]
@@ -2997,7 +2997,7 @@
         "gearboxes": [
           {
             "name": "7-speed S tronic",
-            "final_drive_ratio": 4.769,
+            "final_drive_ratio": 4.234,
             "top_gear_ratio": 0.734
           }
         ]
@@ -3009,7 +3009,7 @@
         "gearboxes": [
           {
             "name": "7-speed S tronic",
-            "final_drive_ratio": 3.76,
+            "final_drive_ratio": 4.41,
             "top_gear_ratio": 0.734
           }
         ]
@@ -3085,7 +3085,7 @@
     "gearboxes": [
       {
         "name": "7-speed S tronic (DL382)",
-        "final_drive_ratio": 3.564,
+        "final_drive_ratio": 4.234,
         "top_gear_ratio": 0.725
       }
     ],
@@ -3121,7 +3121,14 @@
       {
         "name": "45 TFSI quattro",
         "engine": "2.0L I4 TFSI Turbo",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "7-speed S tronic",
+            "final_drive_ratio": 4.41,
+            "top_gear_ratio": 0.725
+          }
+        ]
       }
     ]
   },
@@ -3662,7 +3669,7 @@
     "gearboxes": [
       {
         "name": "7-speed S tronic (DL382)",
-        "final_drive_ratio": 3.564,
+        "final_drive_ratio": 5.302,
         "top_gear_ratio": 0.725
       }
     ],
@@ -3702,7 +3709,7 @@
         "gearboxes": [
           {
             "name": "7-speed S tronic",
-            "final_drive_ratio": 4.27,
+            "final_drive_ratio": 5.302,
             "top_gear_ratio": 0.734
           }
         ]

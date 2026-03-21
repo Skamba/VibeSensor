@@ -408,9 +408,9 @@ and the confidence level of the data.
 
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
-| 35 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.769 | Audi press release / technical data | Medium |
-| 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.769 | Audi press release / technical data | Medium |
-| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 3.76 | Audi press release / technical data | Medium |
+| 35 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.234 | Audi MediaCenter eTD technical data | High |
+| 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.234 | Audi MediaCenter eTD / Audi UK technical data | High |
+| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 4.410 | Audi MediaCenter eTD technical data | High |
 
 ### A5 (B8, 2012-2016)
 
@@ -422,10 +422,10 @@ and the confidence level of the data.
 
 ### A5 (B9, 2017-2024)
 
-| Variant | Engine | Drivetrain | Source | Confidence |
-|---------|--------|------------|--------|------------|
-| 40 TFSI | 2.0L I4 TFSI Turbo | FWD | Audi press release | High |
-| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | Audi press release | High |
+| Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
+|---------|--------|------------|------------------|--------|------------|
+| 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 4.234 | Audi UK technical data / MediaCenter eTD | High |
+| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 4.410 | Audi MediaCenter eTD technical data | High |
 
 ### A6 (C7, 2011-2018)
 
@@ -506,9 +506,9 @@ and the confidence level of the data.
 
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
-| 40 TFSI | 2.0L I4 TFSI Turbo | FWD | – | Audi press release / technical data | High |
-| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 4.27 | Audi press release / technical data | Medium |
-| 55 TFSI e quattro | 2.0L I4 TFSI Turbo PHEV | AWD | – | Audi press release / technical data | High |
+| 40 TFSI | 2.0L I4 TFSI Turbo | FWD | 7-speed S tronic FD 5.302 | Audi MediaCenter eTD technical data | High |
+| 45 TFSI quattro | 2.0L I4 TFSI Turbo | AWD | 7-speed S tronic FD 5.302 | Audi MediaCenter eTD / Audi UK technical data | High |
+| 55 TFSI e quattro | 2.0L I4 TFSI Turbo PHEV | AWD | 7-speed S tronic FD 5.302 | Audi MediaCenter / technical data PDF | High |
 
 ### Q7 (4M, 2016-2026)
 
@@ -594,6 +594,5 @@ and the confidence level of the data.
 
 ## TODOs
 
-- [ ] Cross-check S tronic final drive ratios for Audi B9/FY platforms
 - [ ] Add diesel (TDI) variants for European-market Audi models where relevant
 - [ ] Research and verify electric vehicle motor specifications
