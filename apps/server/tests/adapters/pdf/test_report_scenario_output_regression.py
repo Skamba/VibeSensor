@@ -11,7 +11,7 @@ from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import summarize_run_data
-from vibesensor.use_cases.diagnostics.findings import _reference_missing_finding
+from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 
 

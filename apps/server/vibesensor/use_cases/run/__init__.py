@@ -11,6 +11,10 @@
   health payload helpers used by ``RunRecorder``.
 - :mod:`~vibesensor.use_cases.run.sample_builder` — pure functions for
   building sample records from sensor metrics.
+- :mod:`~vibesensor.use_cases.run._recorder_types` — recorder configuration
+  and shutdown-report helpers shared around ``RunRecorder``.
+- :mod:`~vibesensor.use_cases.run._recorder_runtime` — periodic loop and
+  recorder-runtime helpers shared around ``RunRecorder``.
 - :mod:`~vibesensor.use_cases.run.post_analysis` — ``PostAnalysisWorker``:
   background analysis thread/queue manager above the injected persistence,
   analysis, and error-state boundaries.
@@ -19,11 +23,8 @@
   focused helpers above.
 """
 
-from .logger import (
-    RecorderShutdownReport,
-    RunRecorder,
-    RunRecorderConfig,
-)
+from ._recorder_types import RecorderShutdownReport, RunRecorderConfig
+from .logger import RunRecorder
 
 __all__ = [
     "RunRecorder",

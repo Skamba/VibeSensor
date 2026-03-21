@@ -150,6 +150,22 @@ async def test_history_insights_does_not_mutate_db_analysis() -> None:
 
 
 @pytest.mark.asyncio
+async def test_history_insights_complete_response_includes_status_and_run_id() -> None:
+    metadata = make_metadata()
+    samples = [sample(i) for i in range(5)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis.pop("status", None)
+    analysis.pop("run_id", None)
+    router = create_router(FakeState(FakeHistoryDB(metadata, samples, analysis), FakeWsHub()))
+    endpoint = route_endpoint(router, "/api/history/{run_id}/insights")
+
+    payload = response_payload(await endpoint("run-1"))
+
+    assert payload["status"] == "complete"
+    assert payload["run_id"] == "run-1"
+
+
+@pytest.mark.asyncio
 async def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
     metadata = make_metadata(
         active_car_snapshot={

@@ -68,15 +68,15 @@ in order. Each step runs exactly once per analysis invocation.
 | 1 | Validation | `_validate_required_strength_metrics` | summary_builder | Validate samples contain required strength metrics |
 | 2 | Run preparation | `prepare_run_data`, `compute_run_timing`, `_run_noise_baseline_g` | run_data_preparation, statistics, helpers | Extract timing, speed stats, phase segmentation, and speed context |
 | 3 | Phase segmentation | `segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | phase_segmentation | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / COAST_DOWN / SPEED_UNKNOWN) |
-| 4 | Acceleration statistics | `_compute_accel_statistics` | summary_builder | Per-axis and magnitude accel stats, saturation detection |
-| 5 | Findings bundle | `build_findings_bundle` → `_build_findings` | summary_builder, findings | Order tracking, pattern matching, scoring, localisation via `PeakFindingAnalyzer` and `OrderAnalysisSession` |
+| 4 | Acceleration statistics | `compute_accel_statistics` | statistics | Per-axis and magnitude accel stats, saturation detection |
+| 5 | Findings bundle | `build_findings_bundle` → `_build_findings` | `_summary_steps`, findings, `_peak_findings` | Order tracking, pattern matching, scoring, localisation via `PeakFindingAnalyzer` and `OrderAnalysisSession` |
 | 6 | Origin & test plan | `summarize_origin`, `build_phase_timeline` | summary_builder, run_data_preparation | Determine most likely vibration source, generate timeline |
 | 7 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
-| 8 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | summary_builder | Check reference completeness plus data-quality and run-condition checks |
+| 8 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | `_summary_steps`, statistics | Check reference completeness plus data-quality and run-condition checks |
 | 9 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
-| 10 | Summary construction | `build_summary_payload` | summary_builder, summary_serialization | Assemble the final `AnalysisSummary` dict and serialize domain/app artifacts at the boundary seam |
-| 11 | Plot generation | `_plot_data`, `top_peaks_table_rows` | summary_builder, plots, peak_table | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
-| 12 | Plot serialization | `serialize_plot_data`, `annotate_peaks_with_order_labels` | summary_builder, summary_serialization, peak_table | Serialize plot bundles for persistence/report payloads after internal order-label annotation |
+| 10 | Summary construction | `build_analysis_result`, `build_summary_payload` | `_summary_result`, summary_serialization | Assemble `AnalysisResult`, `TestRun`, and the final persisted `AnalysisSummary` payload |
+| 11 | Plot generation | `_plot_data`, `top_peaks_table_rows` | `_summary_result`, plots, peak_table | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
+| 12 | Plot serialization | `serialize_plot_data`, `annotate_peaks_with_order_labels` | `_summary_result`, summary_serialization, peak_table | Serialize plot bundles for persistence/report payloads after internal order-label annotation |
 
 ## Module Responsibilities
 
@@ -84,9 +84,13 @@ in order. Each step runs exactly once per analysis invocation.
 |--------|-----|---------------|
 | `__init__.py` | ~50 | Public API re-exports, including shared order-band helpers |
 | `_types.py` | ~150 | Diagnostics-local aliases and value objects (`AccelStatistics`, speed/phase breakdown rows, plot bundles, peak rows, spectrogram data) |
-| `summary_builder.py` | ~500 | Top-level pipeline orchestration: `RunAnalysis`, `AnalysisResult`, finding/suitability assembly, and final `AnalysisSummary` construction |
+| `summary_builder.py` | ~250 | Top-level pipeline orchestration: `RunAnalysis`, `summarize_origin`, and public summary/findings entrypoints |
+| `_summary_steps.py` | ~150 | Findings, sensor, and suitability step builders consumed by `RunAnalysis` |
+| `_summary_result.py` | ~200 | `AnalysisResult` plus final `TestRun` / `DiagnosticCase` / persisted-summary assembly |
 | `run_data_preparation.py` | ~200 | Shared run timing/speed/phase/sensor preparation: `PreparedRunData`, `prepare_run_data`, phase timeline helpers |
-| `findings.py` | ~400 | Finding construction and enrichment: `PeakFindingAnalyzer`, `finalize_findings`, `build_reference_findings`, `prepare_analysis_samples` |
+| `findings.py` | ~150 | Top-level finding orchestration and finalization around order + persistent-peak helpers |
+| `_peak_findings.py` | ~200 | Persistent-peak support: `PeakFindingAnalyzer`, phase filtering, and duplicate-suppression helpers |
+| `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
 | `order_analysis.py` | ~500 | Order-tracking core: hypothesis matching, confidence scoring, and finding assembly primitives |
 | `order_pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, multi-location split, and `_build_order_findings()` |
 | `order_heuristics.py` | ~150 | Heuristic filters and tuning constants for diffuse excitation, localization overrides, and engine-alias suppression |
@@ -112,18 +116,20 @@ Input: samples (list[JsonObject]) + metadata (JsonObject)
   │    ├─ timing, speed stats, noise baseline
   │    └─ phase_segmentation → phases + phase summaries
   │
-  ├─ build_findings_bundle()
-  │    ├─ PeakFindingAnalyzer → peak-based findings
+  ├─ _summary_steps.build_findings_bundle()
+  │    ├─ _peak_findings.PeakFindingAnalyzer → peak-based findings
   │    ├─ OrderAnalysisSession → order-matched findings
+  │    ├─ _reference_findings.build_reference_findings() → reference sufficiency findings
   │    ├─ finalize_findings() → enriched domain Finding objects
   │    └─ select_top_causes() → ranked top causes
   │
-  ├─ shared.boundaries.summary_serialization.build_summary_payload() → AnalysisSummary dict
+  ├─ _summary_result.build_analysis_result()
+  │    └─ shared.boundaries.summary_serialization.build_summary_payload() → AnalysisSummary dict
   │    ├─ findings/top causes serialized from domain Finding
   │    ├─ speed + phase breakdown rows serialized from diagnostics-local value objects
   │    └─ origin, test plan, suitability, accel stats, phase timeline
   │
-  └─ _plot_data() → diagnostics-local PlotDataResultData
+  └─ _summary_result._plot_data() → diagnostics-local PlotDataResultData
        └─ serialize_plot_data() → persisted chart payload + labeled peak table
   │
 Output: AnalysisResult (TestRun, DiagnosticCase, AnalysisSummary)
