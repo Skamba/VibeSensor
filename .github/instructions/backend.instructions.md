@@ -3,9 +3,8 @@ applyTo: "apps/server/**"
 ---
 Backend (scope: backend-specific behavioral rules and deltas; see `docs/ai/repo-map.md` for full package layout and entry points)
 - Backend ownership boundaries: see `docs/ai/repo-map.md` § "Backend package layout" for the full module map and `docs/domain-model.md` for the domain object graph.
+- Shared domain-model authority lives in `.github/copilot-instructions.md` § "Domain model"; the bullets below are backend-specific deltas on top of that baseline.
 - Domain-first modeling rules:
-	- Domain objects own behavior (classification, ranking, lifecycle, computation). Adapters at persistence/transport/rendering boundaries bridge to/from domain objects but do not duplicate domain logic.
-	- Consumers import from `vibesensor.domain`, not from individual module files.
 	- Analysis pipeline adapters delegate classification and ranking to domain `Finding`.
 	- Keep pure math, DSP, FFT, and signal-processing transforms functional; do not wrap them in classes unless a domain reason exists.
 	- Do not introduce forward-looking infrastructure types until their persistence and delivery requirements exist. Domain types that produce outputs consumed by no production code path are phantom infrastructure.
@@ -21,5 +20,4 @@ Backend (scope: backend-specific behavioral rules and deltas; see `docs/ai/repo-
 - Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject` aliases) over broad `Any` when shaping analysis, report, and persistence data.
 - Treat `Any` as a design smell by default: prefer `object` for untrusted inputs, shared JSON aliases for persisted payloads, `ParamSpec` for callable wrappers, and focused `TypedDict`/protocol contracts for nested state.
 - For live processing / WebSocket payloads, prefer shared contracts in `apps/server/vibesensor/shared/types/payload_types.py` and `vibesensor.vibration_strength` over ad-hoc `dict[str, Any]` bags.
-- i18n: Add/modify keys in `apps/server/data/report_i18n.json` when changing user-facing strings.
 - Common backend documentation touchpoints include `apps/server/README.md`, `docs/testing.md`, and the relevant `docs/ai/*.md` or `.github/*.instructions.md` files.

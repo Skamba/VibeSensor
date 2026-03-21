@@ -4,9 +4,12 @@ Every documentation file in the repository and a short description of what it co
 
 ## AI Guidance
 
+Start with `.github/copilot-instructions.md`; it is the AI entry point and
+links onward to the scoped instruction files and repo map below.
+
 | File | Description |
 |------|-------------|
-| `.github/copilot-instructions.md` | AI guide: high-level orientation, behavioral rules, and common commands. |
+| `.github/copilot-instructions.md` | AI entry point: high-level orientation, instruction sources, and common commands. |
 | `docs/ai/repo-map.md` | Detailed repo layout, entry points, and module ownership. |
 | `.github/instructions/general.instructions.md` | Shared workflow, validation, and execution guardrails for AI work. |
 | `.github/instructions/backend.instructions.md` | Backend-specific coding rules and deltas for AI work. |
@@ -62,4 +65,3 @@ Every documentation file in the repository and a short description of what it co
 | File | Description |
 |------|-------------|
 | `apps/server/data/CAR_VARIANT_SOURCES.md` | Car variant data sourcing notes. |
-

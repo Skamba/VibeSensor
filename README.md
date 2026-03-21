@@ -40,8 +40,8 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 
 ## Units
 
-Raw sensor samples use acceleration in g; all post-stop analysis outputs are dB-only.
-See `apps/server/vibesensor/vibration_strength.py` for the definition and formula.
+See [docs/metrics.md](docs/metrics.md) for the canonical unit rules and
+vibration-metric definitions used throughout the repo.
 
 ## System Architecture
 
@@ -105,8 +105,24 @@ Open http://localhost:8000.
 
 ### Native Python
 
-See [CONTRIBUTING.md](CONTRIBUTING.md#native-backend-path) for the full native
-setup (includes frontend dev server and simulator options).
+```bash
+python3 -m pip install -e "./apps/server[dev]"
+cd apps/ui && npm ci
+vibesensor-server --config apps/server/config.dev.yaml
+```
+
+In another terminal:
+
+```bash
+cd apps/ui && npm run dev
+vibesensor-sim --count 5 --server-host 127.0.0.1 --no-auto-server
+```
+
+Open http://localhost:8000. If you prefer a static UI build instead of the dev
+server, run `python tools/build_ui_static.py` and skip `npm run dev`.
+
+Use [CONTRIBUTING.md](CONTRIBUTING.md) for the full validation, CI reproduction,
+and workflow guidance.
 
 The simulator supports interactive commands — type `help` to see options like
 `list`, `set <sensor> profile <name>`, `pulse`, `pause`, `resume`.
