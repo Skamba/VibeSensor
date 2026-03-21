@@ -11,6 +11,8 @@ const root = resolve(__dirname, '../..');
 const requireFromUi = createRequire(resolve(root, 'apps/ui/package.json'));
 const httpSchemaSrc = resolve(root, 'apps/ui/src/contracts/http_api_schema.json');
 const httpTypesDst = resolve(root, 'apps/ui/src/generated/http_api_contracts.ts');
+const constantsGeneratorSrc = resolve(root, 'tools/config/generate_ui_shared_constants.py');
+const constantsDst = resolve(root, 'apps/ui/src/constants.ts');
 const wsSchemaSrc = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.json');
 const wsSchemaTsDst = resolve(root, 'apps/ui/src/contracts/ws_payload_schema.generated.ts');
 const wsTypesDst = resolve(root, 'apps/ui/src/contracts/ws_payload_types.ts');
@@ -132,6 +134,21 @@ function generateWsSchemaModule() {
 	);
 }
 
+function generateSharedConstants() {
+	const pythonCmd = process.env.PYTHON || 'python3';
+	const result = spawnSync(pythonCmd, [constantsGeneratorSrc], {
+		cwd: root,
+		encoding: 'utf8',
+	});
+	if (result.error) {
+		throw result.error;
+	}
+	if (result.status !== 0) {
+		throw new Error(result.stderr || result.stdout || 'Shared constants generation failed');
+	}
+	return result.stdout;
+}
+
 async function main() {
 	const checkMode = process.argv.includes('--check');
 
@@ -144,6 +161,9 @@ async function main() {
 	const wsSchemaModule = generateWsSchemaModule();
 	writeGenerated(wsSchemaTsDst, wsSchemaModule, checkMode);
 
+	const sharedConstants = generateSharedConstants();
+	writeGenerated(constantsDst, sharedConstants, checkMode);
+
 	if (checkMode) {
 		console.log('Generated UI contract files are up to date.');
 		return;
@@ -152,6 +172,7 @@ async function main() {
 	console.log(`Generated ${httpSchemaSrc} -> ${httpTypesDst}`);
 	console.log(`Generated ${wsSchemaSrc} -> ${wsTypesDst}`);
 	console.log(`Generated ${wsSchemaSrc} -> ${wsSchemaTsDst}`);
+	console.log(`Generated ${constantsGeneratorSrc} -> ${constantsDst}`);
 }
 
 await main();
