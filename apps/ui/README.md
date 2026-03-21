@@ -50,6 +50,8 @@ for `LOCATION_CODES` and `METRIC_FIELDS` there.
 | `app/runtime/ui_live_transport_controller.ts` | Demo/WebSocket transport, payload adaptation, and throttled live-session rendering |
 | `app/runtime/ui_spectrum_controller.ts` | Spectrum chart lifecycle, overlays, order-band calculation, and animation |
 | `app/app_feature_bundle.ts` | Feature composition for dashboard, realtime, settings, cars, history, update, and ESP flash flows |
+| `app/features/` | Feature owners for state changes, API calls, polling loops, and delegated UI event wiring |
+| `app/views/` | Focused DOM rendering and event-target decoding for settings, realtime, history, and update panels |
 | `api.ts` | REST API client with typed request/response interfaces |
 | `ws.ts` | WebSocket client with auto-reconnect and stale detection |
 | `i18n.ts` | Internationalization dictionary (English, Dutch) |
@@ -74,7 +76,9 @@ for `LOCATION_CODES` and `METRIC_FIELDS` there.
 
 The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
 composition root instead of becoming a single-file owner for transport, shell,
-and chart behavior.
+chart behavior, or feature-specific DOM rendering. Feature modules own state,
+network calls, and delegated event binding, while `app/views/` owns focused
+HTML rendering helpers and event-target decoding for reusable panels.
 
 ## WebSocket contract boundary
 

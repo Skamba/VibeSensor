@@ -209,7 +209,6 @@ export class UiShellController {
   bindUiEvents(): void {
     this.bindMenuEvents();
     this.bindFeatureEvents();
-    this.bindHistoryTableEvents();
     this.bindPreferenceEvents();
   }
 
@@ -335,48 +334,12 @@ export class UiShellController {
 
   private bindFeatureEvents(): void {
     const features = this.requireFeatures();
-    features.settings.bindSettingsTabs();
+    features.settings.bindHandlers();
     features.cars.bindWizardHandlers();
+    features.realtime.bindHandlers();
+    features.history.bindHandlers();
     features.update.bindUpdateHandlers();
     features.espFlash.bindHandlers();
-    this.els.saveAnalysisBtn?.addEventListener("click", features.settings.saveAnalysisFromInputs);
-    this.els.saveSpeedSourceBtn?.addEventListener(
-      "click",
-      features.settings.saveSpeedSourceFromInputs,
-    );
-    this.els.headerManualSpeedSaveBtn?.addEventListener(
-      "click",
-      features.settings.saveHeaderManualSpeedFromInput,
-    );
-    this.els.headerManualSpeedInput?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        features.settings.saveHeaderManualSpeedFromInput();
-      }
-    });
-    this.els.startLoggingBtn?.addEventListener("click", features.realtime.startLogging);
-    this.els.stopLoggingBtn?.addEventListener("click", features.realtime.stopLogging);
-    this.els.refreshHistoryBtn?.addEventListener("click", features.history.refreshHistory);
-    this.els.deleteAllRunsBtn?.addEventListener("click", () => void features.history.deleteAllRuns());
-  }
-
-  private bindHistoryTableEvents(): void {
-    const features = this.requireFeatures();
-    this.els.historyTableBody?.addEventListener("click", (event) => {
-      const target = event.target as HTMLElement;
-      const actionElement = target?.closest?.("[data-run-action]") as HTMLElement | null;
-      if (actionElement) {
-        const action = actionElement.getAttribute("data-run-action");
-        const runId = actionElement.getAttribute("data-run") || this.state.expandedRunId || "";
-        if (action !== "download-raw") event.preventDefault();
-        event.stopPropagation();
-        void features.history.onHistoryTableAction(action || "", runId);
-        return;
-      }
-      const rowElement = target?.closest?.('tr[data-run-row="1"]') as HTMLElement | null;
-      if (rowElement) {
-        features.history.toggleRunDetails(rowElement.getAttribute("data-run") || "");
-      }
-    });
   }
 
   private bindPreferenceEvents(): void {

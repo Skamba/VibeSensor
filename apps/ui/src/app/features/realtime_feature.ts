@@ -1,5 +1,4 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
-import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState } from "../ui_app_state";
 import type { LocationOption } from "../../api/types";
 import type { AdaptedClient } from "../../server_payload";
@@ -14,6 +13,11 @@ import {
   stopLoggingRun,
 } from "../../api";
 import { defaultLocationCodes } from "../../constants";
+import {
+  getRealtimeSensorTableClickAction,
+  getRealtimeSensorTableLocationChange,
+  renderRealtimeSensorTable,
+} from "../views/realtime_sensor_table_view";
 
 export interface RealtimeFeatureDeps extends FeatureDepsBase {
   state: AppState;
@@ -25,6 +29,7 @@ export interface RealtimeFeatureDeps extends FeatureDepsBase {
 }
 
 export interface RealtimeFeature {
+  bindHandlers(): void;
   buildLocationOptions(codes: readonly string[]): LocationOption[];
   maybeRenderSensorsSettingsList(force?: boolean): void;
   updateClientSelection(): void;
@@ -39,6 +44,7 @@ export interface RealtimeFeature {
 
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
   const { state, els, t, escapeHtml, formatInt, setPillState } = ctx;
+  let handlersBound = false;
 
   const SHORTHAND_LOCATION_MAP: Record<string, string> = {
     "front left": "front_left_wheel",
@@ -77,15 +83,6 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     return match ? match.code : "";
   }
 
-  function locationOptionsMarkup(selectedCode: string): string {
-    const opts = [`<option value="">${escapeHtml(t("settings.select_location"))}</option>`];
-    for (const loc of state.locationOptions) {
-      const selectedAttr = loc.code === selectedCode ? " selected" : "";
-      opts.push(`<option value="${escapeHtml(loc.code)}"${selectedAttr}>${escapeHtml(loc.label)}</option>`);
-    }
-    return opts.join("");
-  }
-
   function sensorsSettingsSignature(): string {
     const clientPart = state.clients
       .map((client) => {
@@ -116,57 +113,12 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   function renderSensorsSettingsList(): void {
     if (!els.sensorsSettingsBody) return;
-    if (!state.clients.length) {
-      els.sensorsSettingsBody.innerHTML = `<tr><td colspan="5">${escapeHtml(t("settings.sensors.no_sensors"))}</td></tr>`;
-      return;
-    }
-    els.sensorsSettingsBody.innerHTML = state.clients
-      .map((client) => {
-        const selectedCode = locationCodeForClient(client);
-        const connected = Boolean(client.connected);
-        const statusText = connected ? t("status.online") : t("status.offline");
-        const statusClass = connected ? "online" : "offline";
-        const macAddress = client.mac_address || client.id;
-        return `<tr data-client-id="${escapeHtml(client.id)}"><td><strong>${escapeHtml(client.name || client.id)}</strong><div class="subtle">${escapeHtml(client.id)}</div><div class="status-pill ${statusClass}">${statusText}</div></td><td><code>${escapeHtml(macAddress)}</code></td><td><select class="row-location-select" data-client-id="${escapeHtml(client.id)}">${locationOptionsMarkup(selectedCode)}</select></td><td><button class="btn btn--primary row-identify" data-client-id="${escapeHtml(client.id)}"${connected ? "" : " disabled"}>${escapeHtml(t("actions.identify"))}</button></td><td><button class="btn btn--danger row-remove" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("actions.remove"))}</button></td></tr>`;
-      })
-      .join("");
-
-    els.sensorsSettingsBody.querySelectorAll<HTMLSelectElement>(".row-location-select").forEach((select) => {
-      select.addEventListener("change", async () => {
-        const clientId = select.getAttribute("data-client-id");
-        if (!clientId) return;
-        const locationCode = select.value || "";
-        try {
-          await setClientLocation(clientId, locationCode);
-        } catch (_e) {
-          /* location update failed – UI reflects current server state on next refresh */
-        }
-      });
-    });
-
-    els.sensorsSettingsBody.querySelectorAll<HTMLButtonElement>(".row-identify").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (btn.disabled) return;
-        const clientId = btn.getAttribute("data-client-id");
-        if (!clientId) return;
-        try {
-          await identifyClient(clientId);
-        } catch (_e) {
-          /* identify failed – non-critical */
-        }
-      });
-    });
-
-    els.sensorsSettingsBody.querySelectorAll(".row-remove").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const clientId = btn.getAttribute("data-client-id");
-        if (!clientId) return;
-        try {
-          await removeClient(clientId);
-        } catch (_e) {
-          /* remove failed – non-critical */
-        }
-      });
+    renderRealtimeSensorTable(els.sensorsSettingsBody, {
+      clients: state.clients,
+      locationOptions: state.locationOptions,
+      locationCodeForClient,
+      t,
+      escapeHtml,
     });
   }
 
@@ -285,7 +237,35 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     if (prevSelected !== state.selectedClientId) ctx.sendSelection();
   }
 
+  function bindHandlers(): void {
+    if (handlersBound) {
+      return;
+    }
+    handlersBound = true;
+    els.startLoggingBtn?.addEventListener("click", () => void startLogging());
+    els.stopLoggingBtn?.addEventListener("click", () => void stopLogging());
+    els.sensorsSettingsBody?.addEventListener("change", (event) => {
+      const change = getRealtimeSensorTableLocationChange(event.target);
+      if (!change) {
+        return;
+      }
+      void setClientLocation(change.clientId, change.locationCode);
+    });
+    els.sensorsSettingsBody?.addEventListener("click", (event) => {
+      const action = getRealtimeSensorTableClickAction(event.target);
+      if (!action) {
+        return;
+      }
+      if (action.type === "identify") {
+        void identifyClient(action.clientId);
+        return;
+      }
+      void removeClient(action.clientId);
+    });
+  }
+
   return {
+    bindHandlers,
     buildLocationOptions,
     maybeRenderSensorsSettingsList,
     updateClientSelection,
