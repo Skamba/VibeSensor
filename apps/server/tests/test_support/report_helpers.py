@@ -355,7 +355,7 @@ def call_build_order_findings(
 
 def max_non_ref_confidence(findings: tuple | list) -> float:
     """Return the highest confidence among non-reference findings."""
-    from vibesensor.domain.finding import Finding
+    from vibesensor.domain import Finding
 
     return max(
         float(f.confidence or 0.0) if isinstance(f, Finding) else float(f.get("confidence") or 0.0)

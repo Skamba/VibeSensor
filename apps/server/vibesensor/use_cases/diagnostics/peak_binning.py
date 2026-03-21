@@ -7,7 +7,7 @@ from math import floor as _math_floor
 from math import log1p
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.domain.finding import (
+from vibesensor.domain import (
     FindingEvidence,
     FindingKind,
     VibrationSource,

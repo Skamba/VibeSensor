@@ -7,10 +7,11 @@ from dataclasses import dataclass, replace
 from math import log1p
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.domain import OrderMatchObservation, VibrationOrigin
-from vibesensor.domain.finding import (
+from vibesensor.domain import (
     FindingEvidence,
     FindingKind,
+    OrderMatchObservation,
+    VibrationOrigin,
     VibrationSource,
     speed_band_sort_key,
     speed_bin_label,

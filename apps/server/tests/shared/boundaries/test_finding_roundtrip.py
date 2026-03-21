@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain.finding import (
+from vibesensor.domain import (
     Finding,
     FindingEvidence,
     FindingKind,

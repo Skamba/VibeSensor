@@ -6,8 +6,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from math import sqrt
 
-from vibesensor.domain import SpeedProfileSummary
-from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
+from vibesensor.domain import SpeedProfileSummary, speed_band_sort_key, speed_bin_label
 from vibesensor.shared.constants import (
     SPEED_BIN_WIDTH_KMH,
     STEADY_SPEED_RANGE_KMH,

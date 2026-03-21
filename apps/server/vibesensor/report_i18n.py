@@ -12,7 +12,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from vibesensor.domain.finding import VibrationSource
+from vibesensor.domain import VibrationSource
 from vibesensor.shared.constants import PHASE_I18N_KEYS
 from vibesensor.shared.types.json_types import JsonValue
 

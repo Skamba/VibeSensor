@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.domain.finding import (
+from vibesensor.domain import (
     FindingKind,
     VibrationSource,
 )

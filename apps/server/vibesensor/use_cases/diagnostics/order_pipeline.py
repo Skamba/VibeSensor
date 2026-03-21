@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.domain.finding import VibrationSource
+from vibesensor.domain import VibrationSource
 from vibesensor.shared.constants import (
     CONSTANT_SPEED_STDDEV_KMH,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
