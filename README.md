@@ -40,11 +40,8 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 
 ## Units
 
-- Raw sensor samples may contain acceleration values in g (for example `accel_x_g`, `accel_y_g`, `accel_z_g`) and related ingest-time/raw-spectrum amplitudes.
-- Post-stop analysis outputs (persisted analysis summaries, findings metrics, report-template artifacts, and report-facing strength fields) are dB-only.
-- The canonical vibration-strength definition is implemented in `apps/server/vibesensor/vibration_strength.py` via `vibration_strength_db_scalar()` and follows:
-  - `20*log10((peak_band_rms_amp_g + eps) / (floor_amp_g + eps))`
-  - `eps = max(1e-9, floor_amp_g * 0.05)`
+Raw sensor samples use acceleration in g; all post-stop analysis outputs are dB-only.
+See `apps/server/vibesensor/vibration_strength.py` for the definition and formula.
 
 ## System Architecture
 
@@ -108,19 +105,8 @@ Open http://localhost:8000.
 
 ### Native Python
 
-```bash
-pip install -e "./apps/server[dev]"
-python tools/build_ui_static.py
-vibesensor-server --config apps/server/config.dev.yaml
-```
-
-In another terminal:
-
-```bash
-vibesensor-sim --count 5 --server-host 127.0.0.1
-```
-
-Open http://localhost:8000.
+See [CONTRIBUTING.md](CONTRIBUTING.md#native-backend-path) for the full native
+setup (includes frontend dev server and simulator options).
 
 The simulator supports interactive commands — type `help` to see options like
 `list`, `set <sensor> profile <name>`, `pulse`, `pause`, `resume`.
@@ -192,30 +178,12 @@ Full field layout: [docs/protocol.md](docs/protocol.md).
 
 ## Development
 
-### Lint and format
-
-```bash
-ruff check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
-ruff format --check apps/server/vibesensor apps/server/tests tools/dev tools/tests tools/ci
-```
-
-### Tests
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full validation workflow
+(lint, type checking, test suites, and CI job reproduction).
 
 Tests are organized in feature-based subdirectories under `apps/server/tests/`
 mirroring source modules. See [docs/testing.md](docs/testing.md) for the full
 layout, mapping rules, and how to add new tests.
-
-```bash
-# Full suite
-pytest -q apps/server/tests
-
-# Single feature area
-pytest -q apps/server/tests/analysis/
-pytest -q apps/server/tests/report/
-
-# UI typecheck + build
-cd apps/ui && npm run typecheck && npm run build
-```
 
 ### Visual snapshot tests
 

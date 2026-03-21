@@ -5,10 +5,10 @@ Repository overview (scope: high-level orientation and behavioral rules; see `do
 - Canonical dB definition: `vibesensor/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
 
 Source-of-truth note
-- This file is the canonical short AI guide.
+- This file is the short AI guide.
 - AI guidance lives in this file, `.github/instructions/*.instructions.md`, and `docs/ai/repo-map.md`. Do not create additional guidance files in `docs/ai/`.
 
-Canonical instruction sources
+Instruction sources
 - Read `docs/ai/repo-map.md` first.
 - Shared workflow, validation, and execution guardrails live in `.github/instructions/general.instructions.md` — do not duplicate them here.
 - Area-specific deltas live in `.github/instructions/{backend,frontend,tests}.instructions.md`.
@@ -24,8 +24,8 @@ Domain model (scope: behavioral rules only; see `docs/domain-model.md` for the f
 - Consumers import from `vibesensor.domain`, not from individual module files.
 - Boundary decoders/serializers live under `apps/server/vibesensor/shared/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.
 
-Canonical commands
-- This is the single source of truth for recurring local and CI command invocations; other AI guidance should reference this list instead of repeating it.
+Commands
+- Other AI guidance and docs should reference this list instead of repeating it.
 - `python -m pip install -e "./apps/server[dev]"`
 - `make lint`
 - `make typecheck-backend`

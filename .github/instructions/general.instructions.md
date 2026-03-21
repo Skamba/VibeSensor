@@ -1,8 +1,7 @@
 ---
 applyTo: "**"
 ---
-Canonical agent workflow (shared source of truth)
-- Read `docs/ai/repo-map.md` first.
+Agent workflow
 - For medium/large tasks, always start with an explicit checklist plan. Use highly descriptive titles that include the problem, the fix, and user impact.
 - Work in iterative loops until done: `plan → verify current behavior → root cause → blast radius scan → implement complete maintainable fix → targeted tests → broader relevant tests → re-plan`.
 - Verify existing behavior before rewriting code; investigate root cause before patching symptoms.
@@ -31,12 +30,12 @@ Canonical agent workflow (shared source of truth)
 
 Complexity hygiene
 - Remove config fields that are not read by any code path. Do not add speculative config knobs.
-- Maintain a single source of truth for default values; do not duplicate defaults across files.
+- Maintain one definition for each default value; do not duplicate defaults across files.
 - Do not add forward-extensibility machinery (overflow columns, plugin hooks, generic registries) until a concrete second consumer exists.
 - Prefer flat, direct structures. Only introduce grouping or wrapping when more than three consumers benefit from the indirection.
 - Route handlers must be thin HTTP translators. Extract business logic into service functions that are independently testable.
 - Do not create duplicate API endpoints for the same operation.
-- Do not duplicate utility functions across modules. Maintain a single canonical implementation and import from it. Exception: standalone tooling scripts (e.g. ``tools/build_ui_static.py``) that must run without the server package installed may carry a local copy; mark it with a comment pointing at the canonical source.
+- Do not duplicate utility functions across modules. Maintain one implementation and import from it. Exception: standalone tooling scripts (e.g. ``tools/build_ui_static.py``) that must run without the server package installed may carry a local copy; mark it with a comment pointing at the primary source.
 
 Documentation maintenance (always required)
 - Before merging, review whether docs, repo maps, runbooks, READMEs, and instruction files that reference the touched area have gone stale, and update the relevant ones unless the user explicitly asks you not to touch docs.
@@ -50,11 +49,11 @@ Updater deployment policy
 
 Validation (always required)
 - Pull request default mode: after opening or updating a PR, check CI/review status, fix all blocking issues, push updates, and keep monitoring until required checks are green.
-- Use the canonical command list (defined in the "Canonical commands" section of the copilot instructions) for PR check watching, lint/type checks, CI-parity runs, single-area pytest runs, and local Docker bring-up; use `docs/testing.md` for test layout, CI limitations, and the optional `act` wrapper, and follow targeted → broader → local-GitHub-workflow validation before finalizing any task.
+- Use the command list (defined in the copilot instructions "Commands" section) for PR check watching, lint/type checks, CI-parity runs, single-area pytest runs, and local Docker bring-up; use `docs/testing.md` for test layout, CI limitations, and the optional `act` wrapper, and follow targeted → broader → local-GitHub-workflow validation before finalizing any task.
 - Treat watcher exit `RESULT=NON_GREEN` as immediate action: inspect the latest failing run promptly, determine root cause, implement the smallest complete maintainable fix, push, and restart the watcher.
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - If an intentional refactor changes function-level seams or helper boundaries, refactor the affected tests in the same change set so they validate current behavior instead of pinning obsolete internals.
-- After any backend or frontend change, exercise the local Docker stack with the canonical commands, confirm `http://127.0.0.1` updates live while `vibesensor-sim --count 5 --duration 10 --no-interactive` runs (`:8000` fallback if `:80` is not serving), then verify updates stop once the simulator stops; inspect `docker compose logs --tail 50` if needed.
+- After any backend or frontend change, exercise the local Docker stack with the commands listed in copilot-instructions (compose up + simulator), confirm `http://127.0.0.1` updates live (`:8000` fallback if `:80` is not serving), then verify updates stop once the simulator stops; inspect container logs if needed.
 - Breaking changes are allowed when intentional.
 - No-backward-compatibility policy: we own the full codebase end to end. Do not add or preserve backward-compatibility layers (deprecated paths, adapters, fallbacks, shims, version-bridging logic, or legacy schema support) unless explicitly asked. Remove them when encountered. Standardize on the current contract, schema, config, and runtime path. Do not add new compatibility code "just in case". If compatibility seems necessary, flag it explicitly rather than implementing it silently.
 
