@@ -7,7 +7,6 @@ from datetime import UTC, datetime
 import pytest
 
 from vibesensor.domain import SpeedProfile
-from vibesensor.shared.boundaries.diagnostic_case import speed_profile_from_stats
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
     build_phase_summary,
@@ -84,7 +83,7 @@ class TestPreparedRunDataProperties:
         speed_stats = _speed_stats(prepared.speed_values)
         phase_info = build_phase_summary(prepared.phase_segments)
 
-        assert prepared.speed_profile == speed_profile_from_stats(
+        assert prepared.speed_profile == SpeedProfile.from_stats(
             speed_stats,
             phase_info,
         )

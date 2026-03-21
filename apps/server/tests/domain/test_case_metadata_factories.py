@@ -1,0 +1,59 @@
+from __future__ import annotations
+
+import pytest
+
+from vibesensor.domain import Car, Symptom
+
+
+def test_car_from_metadata_returns_none_without_case_context() -> None:
+    assert Car.from_metadata({}) is None
+
+
+def test_car_from_metadata_builds_context_from_vehicle_fields() -> None:
+    car = Car.from_metadata(
+        {
+            "car_name": "Golf",
+            "car_type": "hatchback",
+            "car_variant": "GTI",
+        }
+    )
+
+    assert car is not None
+    assert car.name == "Golf"
+    assert car.car_type == "hatchback"
+    assert car.variant == "GTI"
+
+
+def test_car_from_metadata_keeps_order_reference_context_without_names() -> None:
+    car = Car.from_metadata(
+        {
+            "tire_width_mm": 225,
+            "tire_aspect_pct": 40,
+            "rim_in": 18,
+        }
+    )
+
+    assert car is not None
+    assert car.name == "Unnamed Car"
+    assert car.car_type == "sedan"
+    assert car.tire_width_mm == pytest.approx(225.0)
+    assert car.tire_aspect_pct == pytest.approx(40.0)
+    assert car.rim_in == pytest.approx(18.0)
+
+
+def test_symptom_from_metadata_defaults_to_unspecified() -> None:
+    assert Symptom.from_metadata({}).is_unspecified is True
+
+
+def test_symptom_from_metadata_reads_aliases_and_context() -> None:
+    symptom = Symptom.from_metadata(
+        {
+            "complaint": "whine under load",
+            "symptom_onset": "after 60 km/h",
+            "symptom_context": "during acceleration",
+        }
+    )
+
+    assert symptom.description == "whine under load"
+    assert symptom.onset == "after 60 km/h"
+    assert symptom.context == "during acceleration"
