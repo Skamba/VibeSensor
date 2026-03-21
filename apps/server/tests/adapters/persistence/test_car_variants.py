@@ -223,6 +223,83 @@ def test_audi_models_include_verified_tdi_variants(
         raise AssertionError(f"Audi model not found: {model}")
 
 
+@pytest.mark.parametrize(
+    ("model", "expected_electric_variants"),
+    [
+        (
+            "5 Series (G60, 2024-2026)",
+            {
+                "i5 eDrive40": ("Electric Single Motor", "RWD"),
+                "i5 M60 xDrive": ("Electric Dual Motor", "AWD"),
+            },
+        ),
+        (
+            "7 Series (G70, 2023-2026)",
+            {
+                "i7 eDrive50": ("Electric Single Motor", "RWD"),
+                "i7 M70 xDrive": ("Electric Dual Motor", "AWD"),
+            },
+        ),
+        (
+            "X1 (U11, 2023-2026)",
+            {
+                "iX1 xDrive30": ("Electric Dual Motor", "AWD"),
+            },
+        ),
+        (
+            "X2 (U10, 2024-2026)",
+            {
+                "iX2 xDrive30": ("Electric Dual Motor", "AWD"),
+            },
+        ),
+        (
+            "iX (I20, 2022-2026)",
+            {
+                "xDrive40": ("Electric Dual Motor", "AWD"),
+                "xDrive50": ("Electric Dual Motor", "AWD"),
+                "M60": ("Electric Dual Motor (Performance)", "AWD"),
+            },
+        ),
+        (
+            "i4 (G26, 2022-2026)",
+            {
+                "eDrive40": ("Electric Single Motor", "RWD"),
+                "M50": ("Electric Dual Motor", "AWD"),
+            },
+        ),
+        (
+            "e-tron GT (J1, 2022-2026)",
+            {
+                "e-tron GT quattro": ("Electric Dual Motor", "AWD"),
+                "RS e-tron GT": ("Electric Dual Motor (Performance)", "AWD"),
+            },
+        ),
+        (
+            "Q4 e-tron (FZ, 2022-2026)",
+            {
+                "40 e-tron": ("Electric Single Motor", "RWD"),
+                "50 e-tron quattro": ("Electric Dual Motor", "AWD"),
+            },
+        ),
+    ],
+)
+def test_bev_models_match_verified_motor_layouts(
+    model: str, expected_electric_variants: dict[str, tuple[str, str]]
+) -> None:
+    """Supported BEV entries keep the verified motor-layout variants from issue #975."""
+    for entry in CAR_LIBRARY:
+        if entry["model"] == model:
+            actual_electric_variants = {
+                variant["name"]: (variant["engine"], variant["drivetrain"])
+                for variant in entry["variants"]
+                if variant["engine"].startswith("Electric")
+            }
+            assert actual_electric_variants == expected_electric_variants
+            break
+    else:
+        raise AssertionError(f"EV model not found: {model}")
+
+
 def test_resolve_variant_unknown_name_returns_base() -> None:
     """resolve_variant with unknown name returns base entry unchanged."""
     base = CAR_LIBRARY[0]

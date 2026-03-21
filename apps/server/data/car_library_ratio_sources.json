@@ -7040,142 +7040,53 @@
     },
     "Audi|e-tron GT (J1, 2022-2026)": {
       "car_index": 71,
-      "decision_summary": "No safe EU-only ratio update applied in fallback pass; retained existing entry and flagged for manual evidence-backed review. Second pass completed with additional official-source discovery; ratios remain unchanged unless explicitly confirmed in prior high-confidence evidence. Full-library redo completed with official-source and Wikipedia-overview cross-checking; ratio fields remain unchanged unless explicitly evidence-confirmed.",
+      "decision_summary": "Manual official-source review for issue #975 confirmed the EU BEV variant mapping for Audi e-tron GT J1: the supported base variant is `e-tron GT quattro`, and the standalone `e-tron GT` alias was removed from the car library. Ratio fields remain unchanged because this issue verified variant naming and motor layout, not EV reduction-ratio mapping into the current schema.",
       "unresolved": [
         {
-          "item": "Audi e-tron GT (J1, 2022-2026) EU ratio-relevant variant mapping",
-          "reason": "Fallback pass without per-model authoritative ratio extraction; no-guess policy kept existing values."
-        },
-        {
           "item": "Audi e-tron GT (J1, 2022-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "reason": "Official Audi sources confirmed the supported EU variant set and dual-motor AWD layout, but this issue did not remap EV reduction data into the current final_drive_ratio/top_gear_ratio schema."
         }
       ],
       "sources": {
-        "fallback_official_lookup": [
+        "issue_975_official_variant_mapping": [
           {
-            "url": "https://www.audi.com/en.html",
-            "note": "Audi global official portal entrypoint for model documentation paths.",
-            "confidence": "medium"
+            "url": "https://www.audi-mediacenter.com/en/audi-e-tron-gt-13716",
+            "note": "Audi MediaCenter model hub confirms the current e-tron GT family and treats `e-tron GT quattro` as the named base variant.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.audi-mediacenter.com/en",
-            "note": "Audi official media source used for technical releases/spec references.",
-            "confidence": "medium"
+            "url": "https://www.audi.co.uk/en/models/etrongt/audi-e-tron-gt/design-and-specification/",
+            "note": "Official Audi UK model page lists the base model as `e-tron GT quattro`, with no distinct standalone `e-tron GT` variant page.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+e-tron+GT+%28J1%2C+2022-2026%29+technical+data+Europe",
-            "note": "Targeted lookup for official Audi media technical documents for this model.",
-            "confidence": "low"
-          }
-        ],
-        "second_pass_official_enrichment": [
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=J1",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/videos/video/performance-platform-j1-animation-4825",
-            "note": "Audi MediaCenter official detail page discovered in second pass.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/photos/detail/j1-performance-platform-84908",
-            "note": "Audi MediaCenter official detail page discovered in second pass.",
-            "confidence": "medium"
-          }
-        ],
-        "official_redo_lookup": [
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=J1",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/models-4",
-            "note": "Audi MediaCenter official model hub (entry point for model-specific documents).",
-            "confidence": "medium"
-          }
-        ],
-        "wikipedia_overview": [
-          {
-            "url": "https://en.wikipedia.org/w/index.php?search=Audi+e-tron+GT+%28J1%2C+2022-2026%29",
-            "note": "Wikipedia search fallback for model overview when exact page match was not auto-resolved.",
-            "confidence": "low"
-          }
-        ],
-        "wikipedia_variant_tables": [
-          {
-            "url": "https://en.wikipedia.org/w/index.php?search=Audi+e-tron+GT+%28J1%2C+2022-2026%29",
-            "note": "Wikipedia model/table page used to cross-check variant completeness (names + engine context).",
-            "confidence": "medium"
+            "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1236/file_en/6d6ceb7f7cd108885f3c22d6922b5cad38407103/eTD_Audi_e-tron_GT_quattro_350kW_231016.pdf?1698933959",
+            "note": "Official technical data PDF for `e-tron GT quattro` confirms all-wheel drive with two electric motors for the supported base variant.",
+            "confidence": "high"
           }
         ]
       }
     },
     "Audi|Q4 e-tron (FZ, 2022-2026)": {
       "car_index": 72,
-      "decision_summary": "No safe EU-only ratio update applied in fallback pass; retained existing entry and flagged for manual evidence-backed review. Second pass completed with additional official-source discovery; ratios remain unchanged unless explicitly confirmed in prior high-confidence evidence. Full-library redo completed with official-source and Wikipedia-overview cross-checking; ratio fields remain unchanged unless explicitly evidence-confirmed.",
+      "decision_summary": "Manual official-source review for issue #975 confirmed the supported EU Q4 e-tron BEV variant mapping: `40 e-tron` is the single-motor RWD entry and `50 e-tron quattro` is the dual-motor AWD entry. The unsupported non-quattro `50 e-tron` alias was removed from the car library. Ratio fields remain unchanged because this issue verified variant naming and motor layout, not EV reduction-ratio mapping into the current schema.",
       "unresolved": [
         {
-          "item": "Audi Q4 e-tron (FZ, 2022-2026) EU ratio-relevant variant mapping",
-          "reason": "Fallback pass without per-model authoritative ratio extraction; no-guess policy kept existing values."
-        },
-        {
           "item": "Audi Q4 e-tron (FZ, 2022-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "reason": "Official Audi sources confirmed the supported EU variant set plus single-motor RWD vs dual-motor AWD layouts, but this issue did not remap EV reduction data into the current final_drive_ratio/top_gear_ratio schema."
         }
       ],
       "sources": {
-        "fallback_official_lookup": [
+        "issue_975_official_variant_mapping": [
           {
-            "url": "https://www.audi.com/en.html",
-            "note": "Audi global official portal entrypoint for model documentation paths.",
-            "confidence": "medium"
+            "url": "https://www.audi-technology-portal.de/en/drivetrain/electric-drives/audi-q4-e-tron-modular-electric-platform",
+            "note": "Official Audi Technology Portal page confirms Q4 40 e-tron as rear-wheel drive with one rear motor and Q4 50 e-tron quattro as dual-motor all-wheel drive.",
+            "confidence": "high"
           },
           {
-            "url": "https://www.audi-mediacenter.com/en",
-            "note": "Audi official media source used for technical releases/spec references.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+Q4+e-tron+%28FZ%2C+2022-2026%29+technical+data+Europe",
-            "note": "Targeted lookup for official Audi media technical documents for this model.",
-            "confidence": "low"
-          }
-        ],
-        "second_pass_official_enrichment": [
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=FZ",
-            "note": "Audi MediaCenter official search page used in second-pass lookup.",
-            "confidence": "medium"
-          }
-        ],
-        "official_redo_lookup": [
-          {
-            "url": "https://www.audi-mediacenter.com/en/search?query=FZ",
-            "note": "Audi MediaCenter official search for model-code technical releases.",
-            "confidence": "medium"
-          },
-          {
-            "url": "https://www.audi-mediacenter.com/en/models-4",
-            "note": "Audi MediaCenter official model hub (entry point for model-specific documents).",
-            "confidence": "medium"
-          }
-        ],
-        "wikipedia_overview": [
-          {
-            "url": "https://en.wikipedia.org/wiki/Audi_A3",
-            "note": "Wikipedia overview used to cross-check model/engine/variant availability across production years.",
-            "confidence": "medium"
-          }
-        ],
-        "wikipedia_variant_tables": [
-          {
-            "url": "https://en.wikipedia.org/wiki/Audi_Q4_e-tron",
-            "note": "Wikipedia model/table page used to cross-check variant completeness (names + engine context).",
-            "confidence": "medium"
+            "url": "https://www.audi-mediacenter.com/en/electric-suvs-in-the-premium-compact-segment-the-audi-q4-e-tron-and-the-q4-sportback-e-tron-13887/electric-motors-and-electric-all-wheel-drive-13900",
+            "note": "Audi MediaCenter drivetrain page documents the Q4 e-tron launch mix and confirms there is no non-quattro `Q4 50 e-tron` RWD variant in the supported EU set.",
+            "confidence": "high"
           }
         ]
       }
