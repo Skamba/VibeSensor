@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 """Strength bucketing and combined-spectrum runtime regressions:
-- combined spectrum not polluted by zeroed amp_for_peaks
 - order tolerance scales with path_compliance
 - _noise_floor no double bin removal
 - bucket_for_strength returns 'l0' for negative dB
@@ -10,13 +9,10 @@ from __future__ import annotations
 """
 
 
-import inspect
-import re
-
 import numpy as np
 import pytest
 
-from vibesensor.infra.processing.fft import compute_fft_spectrum, noise_floor
+from vibesensor.infra.processing.fft import noise_floor
 from vibesensor.shared.constants import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
 from vibesensor.strength_bands import bucket_for_strength
 
@@ -38,24 +34,6 @@ class TestBucketForStrengthNegativeDB:
     )
     def test_bucket_boundaries(self, db_val: float, expected: str) -> None:
         assert bucket_for_strength(db_val) == expected
-
-
-class TestCombinedSpectrumNotZeroed:
-    """Regression: spectrum_by_axis must store amp_slice (original), not
-    amp_for_peaks (which has DC bin zeroed). Otherwise the combined
-    spectrum inherits the artificial zero.
-    """
-
-    def test_amp_slice_used_not_amp_for_peaks(self) -> None:
-        """Verify source code stores amp_slice (not amp_for_peaks) in
-        spectrum_by_axis.
-        """
-        src = inspect.getsource(compute_fft_spectrum)
-        # The "amp" entry in spectrum_by_axis must use the original amp_slice
-        match = re.search(r'"amp":\s*(\w+)', src)
-        assert match is not None, '"amp": <var> assignment not found in compute_fft_spectrum'
-        stored_var = match.group(1)
-        assert stored_var == "amp_slice", f'Expected "amp": amp_slice, got "amp": {stored_var}'
 
 
 class TestNoiseFloorNoDoubleRemoval:

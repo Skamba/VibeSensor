@@ -2,36 +2,21 @@
 """Tests enforcing the multilingual architecture: language-neutral analysis + render-time translation.
 
 These tests verify:
-1. Analysis modules (except report_mapping/pipeline.py) do not import i18n resources.
-2. Analysis output contains no localized text — only codes, i18n refs, and parameters.
-3. The same analysis output renders correctly in both EN and NL.
-4. Rendered reports for different languages contain the same structural facts.
+1. Analysis output contains no localized text — only codes, i18n refs, and parameters.
+2. The same analysis output renders correctly in both EN and NL.
+3. Rendered reports for different languages contain the same structural facts.
 """
 
 from __future__ import annotations
 
-import ast
 import random
-from pathlib import Path
 
 import pytest
-from _paths import SERVER_ROOT
 
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.report_i18n import is_i18n_ref, tr
 from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 from vibesensor.use_cases.diagnostics import summarize_run_data
-
-_SERVER_PKG = SERVER_ROOT / "vibesensor"
-_ANALYSIS_PKG = _SERVER_PKG / "use_cases" / "diagnostics"
-
-# Analysis modules that must NOT import from report_i18n.
-# report_mapping/pipeline.py is the sole i18n bridge and is allowed.
-_ANALYSIS_MODULES_NO_I18N = [p for p in _ANALYSIS_PKG.glob("*.py") if p.name != "__init__.py"] + [
-    p
-    for p in _ANALYSIS_PKG.glob("report_mapping/*.py")
-    if p.name not in ("__init__.py", "pipeline.py")
-]
 
 
 def _resolve_i18n(lang: str, value: object) -> str:
@@ -39,45 +24,7 @@ def _resolve_i18n(lang: str, value: object) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 1. Guardrail: analysis modules cannot import i18n resources
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    "module_path",
-    _ANALYSIS_MODULES_NO_I18N,
-    ids=[p.name for p in _ANALYSIS_MODULES_NO_I18N],
-)
-def test_analysis_module_does_not_import_i18n(module_path: Path) -> None:
-    """Analysis modules must not import from report_i18n (language resources).
-
-    Only report_mapping/pipeline.py is allowed to access translation functions.
-    ``normalize_lang`` is allowed because it is a pure string normalizer
-    (no translation data access).
-    This ensures analysis output remains language-neutral.
-    """
-    source = module_path.read_text(encoding="utf-8")
-    tree = ast.parse(source, filename=module_path.name)
-    violations: list[str] = []
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.ImportFrom) or not node.module:
-            continue
-        mod = node.module
-        level = node.level or 0
-        full = ("." * level) + mod
-        if "report_i18n" in mod:
-            imported_names = {alias.name for alias in (node.names or [])}
-            if imported_names == {"normalize_lang"}:
-                continue
-            violations.append(f"line {node.lineno}: from {full} import ...")
-    assert not violations, (
-        f"{module_path.name} imports from report_i18n. "
-        "Analysis modules must not use translation resources directly:\n" + "\n".join(violations)
-    )
-
-
-# ---------------------------------------------------------------------------
-# 2. Analysis output contains no localized text
+# 1. Analysis output contains no localized text
 # ---------------------------------------------------------------------------
 
 

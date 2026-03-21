@@ -119,6 +119,41 @@ async def test_identify_client_200_when_sensor_reachable() -> None:
 
 
 @pytest.mark.asyncio
+async def test_identify_client_normalizes_client_id_before_registry_and_control_plane() -> None:
+    from vibesensor.adapters.http.clients import create_client_routes
+
+    class RecordingRegistry:
+        def __init__(self) -> None:
+            self.requested_ids: list[str] = []
+
+        def get(self, client_id: str) -> object:
+            self.requested_ids.append(client_id)
+            return object()
+
+    class RecordingControlPlane:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, int]] = []
+
+        def send_identify(self, client_id: str, duration_ms: int) -> tuple[bool, int]:
+            self.calls.append((client_id, duration_ms))
+            return True, 7
+
+    registry = RecordingRegistry()
+    control_plane = RecordingControlPlane()
+    settings_store = MagicMock()
+    router = create_client_routes(registry, control_plane, settings_store, MagicMock())
+    endpoint = route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
+
+    resp = response_payload(
+        await endpoint(" AA:BB:CC:DD:EE:FF ", type("Req", (), {"duration_ms": 1000})()),
+    )
+
+    assert registry.requested_ids == ["aabbccddeeff"]
+    assert control_plane.calls == [("aabbccddeeff", 1000)]
+    assert resp == {"status": "sent", "cmd_seq": 7}
+
+
+@pytest.mark.asyncio
 async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
     tmp_path: Path,
     monkeypatch,
