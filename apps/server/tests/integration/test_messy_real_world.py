@@ -33,7 +33,6 @@ from test_support import (
     make_clock_skew_samples,
     make_dropout_samples,
     make_out_of_order_samples,
-    make_profile_dual_fault_samples,
     make_profile_engine_order_samples,
     make_profile_fault_samples,
     make_profile_gain_mismatch_samples,
@@ -218,17 +217,21 @@ def test_dual_fault_detection(pair: tuple[str, str], primary: str, profile: dict
 
     The analysis must detect both faults and report multiple causes.
     """
-    samples = make_profile_dual_fault_samples(
+    samples = make_profile_fault_samples(
         profile=profile,
-        fault_sensor_1=pair[0],
-        fault_sensor_2=pair[1],
+        fault_sensor=pair[0],
         sensors=_4S,
         speed_kmh=SPEED_HIGH,
         n_samples=40,
-        fault_amp_1=0.07,
-        fault_amp_2=0.04,
-        fault_vib_db_1=28.0,
-        fault_vib_db_2=22.0,
+        fault_amp=0.07,
+        fault_vib_db=28.0,
+        additional_faults=[
+            {
+                "sensor": pair[1],
+                "amp": 0.04,
+                "vibration_strength_db": 22.0,
+            }
+        ],
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
