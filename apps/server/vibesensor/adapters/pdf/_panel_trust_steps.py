@@ -1,0 +1,215 @@
+"""Data-trust and next-steps panels for the PDF report."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+
+from reportlab.lib.units import mm
+from reportlab.pdfgen.canvas import Canvas
+
+from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
+from vibesensor.adapters.pdf.pdf_style import (
+    DATA_TRUST_LABEL_W,
+    FONT,
+    FONT_B,
+    FS_BODY,
+    FS_SMALL,
+    LINE_CLR,
+    MARGIN,
+    PAGE_H,
+    PAGE_W,
+    PANEL_BG,
+    PANEL_HEADER_H,
+    SOFT_BG,
+    SUB_CLR,
+    TEXT_CLR,
+    build_page1_layout,
+    build_page2_layout,
+)
+from vibesensor.adapters.pdf.pdf_text import _draw_kv, _draw_text, _wrap_lines
+from vibesensor.adapters.pdf.report_data import NextStep, ReportTemplateData
+
+
+def _draw_data_trust_panel(
+    c: Canvas,
+    data: ReportTemplateData,
+    *,
+    tr: Callable[[str], str],
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    na: str,
+) -> None:
+    _draw_panel(c, x, y, w, h, tr("DATA_TRUST"))
+    tx = x + 4 * mm
+    ty = y + h - PANEL_HEADER_H
+    trust_val_w = w - 8 * mm - DATA_TRUST_LABEL_W
+    if data.data_trust:
+        for item in data.data_trust[:6]:
+            icon = "✓" if item.state == "pass" else "⚠"
+            state_lbl = tr("PASS") if item.state == "pass" else tr("WARN_SHORT")
+            value = f"{icon} {state_lbl}"
+            if item.state != "pass" and item.detail:
+                value = f"{icon} {item.detail}"
+            new_ty = _draw_kv(
+                c,
+                tx,
+                ty,
+                item.check,
+                value,
+                label_w=DATA_TRUST_LABEL_W,
+                fs=FS_SMALL,
+                value_w=trust_val_w,
+            )
+            ty = new_ty - 1.0 * mm
+    else:
+        c.setFillColor(_hex(SUB_CLR))
+        c.setFont(FONT, FS_SMALL)
+        c.drawString(tx, ty, na)
+
+
+def _draw_next_steps_table(
+    c: Canvas,
+    x: float,
+    y_top: float,
+    w: float,
+    y_bottom: float,
+    steps: list[NextStep],
+    *,
+    start_number: int = 1,
+) -> int:
+    """Draw ordered next-step rows with multi-line wrapping."""
+    col1_w = 12 * mm
+    text_w = w - col1_w - 4
+    min_row_h = 6.6 * mm
+    fs = 7
+    leading = fs + 2
+
+    soft_bg = _hex(SOFT_BG)
+    panel_bg = _hex(PANEL_BG)
+    line_clr = _hex(LINE_CLR)
+    text_clr = _hex(TEXT_CLR)
+    row_pad = 2 * mm
+    number_y_off = 4.4 * mm
+
+    y = y_top
+    drawn = 0
+    for idx, step in enumerate(steps, start=start_number):
+        action_text = step.action
+        if step.why:
+            action_text += f" — {step.why}"
+        if step.confirm:
+            action_text += f"  ✓ {step.confirm}"
+        if step.falsify:
+            action_text += f"  ✗ {step.falsify}"
+        if step.eta:
+            action_text += f"  ⏱ {step.eta}"
+
+        lines = _wrap_lines(action_text, text_w, fs)
+        row_h = max(min_row_h, max(len(lines), 1) * leading + row_pad)
+        if y - row_h < y_bottom:
+            break
+
+        c.setFillColor(soft_bg if idx % 2 == 0 else panel_bg)
+        c.setStrokeColor(line_clr)
+        c.rect(x, y - row_h, w, row_h, stroke=1, fill=1)
+
+        c.setFillColor(text_clr)
+        c.setFont(FONT_B, fs)
+        c.drawString(x + 2, y - number_y_off, f"{idx}.")
+
+        _draw_text(
+            c,
+            x + col1_w,
+            y - 2 * mm,
+            text_w,
+            action_text,
+            font=FONT,
+            size=fs,
+            color=TEXT_CLR,
+        )
+        y -= row_h
+        drawn += 1
+    return drawn
+
+
+def _draw_bottom_row_panels(
+    c: Canvas,
+    data: ReportTemplateData,
+    *,
+    tr: Callable[[str], str],
+    width: float,
+    y_cursor: float,
+    na: str,
+) -> list[NextStep]:
+    layout = build_page1_layout(
+        width=width,
+        page_top=PAGE_H - MARGIN,
+        header_content_height=0.0,
+        observed_rows=5 + (1 if data.observed.certainty_reason else 0),
+        y_after_systems_source=y_cursor,
+    )
+    next_panel = layout.bottom.next_steps
+    trust_panel = layout.bottom.data_trust
+
+    _draw_panel(c, next_panel.x, next_panel.y, next_panel.w, next_panel.h, tr("NEXT_STEPS"))
+    nx = next_panel.x + 4 * mm
+    ny = next_panel.y + next_panel.h - 11 * mm
+    if not data.next_steps:
+        c.setFillColor(_hex(SUB_CLR))
+        c.setFont(FONT, FS_BODY)
+        c.drawString(nx, ny, tr("NO_NEXT_STEPS"))
+        remaining_next_steps: list[NextStep] = []
+    else:
+        drawn_steps = _draw_next_steps_table(
+            c,
+            nx,
+            ny,
+            next_panel.w - 8 * mm,
+            next_panel.y + 3 * mm,
+            data.next_steps,
+        )
+        remaining_next_steps = data.next_steps[drawn_steps:]
+
+    _draw_data_trust_panel(
+        c,
+        data,
+        tr=tr,
+        x=trust_panel.x,
+        y=trust_panel.y,
+        w=trust_panel.w,
+        h=trust_panel.h,
+        na=na,
+    )
+    return remaining_next_steps
+
+
+def _draw_continued_next_steps(
+    c: Canvas,
+    *,
+    y_top: float,
+    next_steps_continued: list[NextStep],
+    start_number: int,
+    tr: Callable[[str], str],
+) -> None:
+    layout = build_page2_layout(
+        width=PAGE_W - 2 * MARGIN,
+        page_top=PAGE_H - MARGIN,
+        has_transient_findings=y_top < (PAGE_H - MARGIN),
+        has_next_steps_continued=True,
+    )
+    if layout.continued_next_steps is None:
+        return
+
+    panel = layout.continued_next_steps
+    _draw_panel(c, panel.x, panel.y, panel.w, panel.h, tr("NEXT_STEPS"))
+    _draw_next_steps_table(
+        c,
+        panel.x + 4 * mm,
+        panel.y + panel.h - 11 * mm,
+        panel.w - 8 * mm,
+        panel.y + 3 * mm,
+        next_steps_continued,
+        start_number=start_number,
+    )
