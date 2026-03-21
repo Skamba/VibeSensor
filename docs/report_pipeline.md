@@ -74,8 +74,8 @@ needs:
 - **Data trust items**: suitability checks
 - **Pattern evidence**: matched systems, certainty label, interpretation
 - **Peak rows**: top diagnostic peaks with classification
-- **Rendering context**: pre-computed findings, top causes,
-  sensor intensity, location hotspot rows
+- **Rendering context**: pre-computed findings (as ``FindingPresentation``
+  snapshots), top causes, sensor intensity, location hotspot rows
 
 ### Mapping examples
 
