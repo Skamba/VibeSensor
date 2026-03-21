@@ -141,6 +141,7 @@ class _StubProcessingConfig:
     fft_update_hz: int = 4
     fft_n: int = 2048
     spectrum_max_hz: int = 200
+    client_live_ttl_seconds: int = 10
     client_ttl_seconds: int = 120
     accel_scale_g_per_lsb: float | None = None
 
@@ -336,3 +337,41 @@ def test_build_ws_payload_rotational_speeds_include_reason_when_speed_unavailabl
 
     payload = state.ws_broadcast.build_payload(selected_client="aaaaaaaaaaaa")
     _assert_rotational(payload["rotational_speeds"], reason="speed_unavailable")
+
+
+def test_build_ws_payload_marks_retained_stale_clients_disconnected(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.udp.protocol import HelloMessage
+    from vibesensor.infra.runtime.registry import ClientRegistry
+    from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
+
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db, live_ttl_seconds=5.0, retention_ttl_seconds=30.0)
+    hello = HelloMessage(
+        client_id=bytes.fromhex("001122334455"),
+        control_port=9010,
+        sample_rate_hz=800,
+        name="sensor",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0, now_mono=1.0)
+
+    now = {"wall": 9.0, "mono": 9.0}
+    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
+    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: now["mono"])
+
+    ws_broadcast = WsBroadcastService(
+        ui_push_hz=10,
+        ui_heavy_push_hz=4,
+        registry=registry,
+        processor=_StubProcessor(),
+        gps_monitor=_StubGPS(),
+        settings_store=_StubSettingsStore(),
+    )
+    payload = ws_broadcast.build_payload(selected_client=None)
+    assert len(payload["clients"]) == 1
+    assert payload["clients"][0]["connected"] is False
+    assert payload["clients"][0]["last_seen_age_ms"] == 8000

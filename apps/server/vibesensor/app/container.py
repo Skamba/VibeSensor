@@ -110,7 +110,8 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     # ingress
     registry = ClientRegistry(
         db=history_db,
-        stale_ttl_seconds=config.processing.client_ttl_seconds,
+        live_ttl_seconds=config.processing.client_live_ttl_seconds,
+        retention_ttl_seconds=config.processing.client_ttl_seconds,
     )
     worker_pool = WorkerPool(max_workers=4, thread_name_prefix="vibesensor-fft")
     processor = SignalProcessor(

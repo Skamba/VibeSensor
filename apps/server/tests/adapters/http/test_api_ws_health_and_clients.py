@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -115,3 +116,57 @@ async def test_identify_client_200_when_sensor_reachable() -> None:
         await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})()),
     )
     assert resp == {"status": "sent", "cmd_seq": 7}
+
+
+@pytest.mark.asyncio
+async def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from vibesensor.adapters.http.clients import create_client_routes
+    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.udp.protocol import HelloMessage
+    from vibesensor.infra.runtime.registry import ClientRegistry
+
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db, live_ttl_seconds=5.0, retention_ttl_seconds=30.0)
+    hello = HelloMessage(
+        client_id=bytes.fromhex("001122334455"),
+        control_port=9010,
+        sample_rate_hz=800,
+        name="sensor",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0, now_mono=1.0)
+
+    now = {"wall": 9.0, "mono": 9.0}
+    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.time", lambda: now["wall"])
+    monkeypatch.setattr("vibesensor.infra.runtime.registry.time.monotonic", lambda: now["mono"])
+
+    control_plane = MagicMock()
+    settings_store = MagicMock()
+    processor = MagicMock()
+    processor.all_latest_metrics.return_value = {}
+    router = create_client_routes(registry, control_plane, settings_store, processor)
+    endpoint = route_endpoint(router, "/api/clients")
+
+    resp = response_payload(await endpoint())
+    assert processor.all_latest_metrics.call_args.args == ([],)
+    assert resp["clients"] == [
+        {
+            "id": "001122334455",
+            "mac_address": "00:11:22:33:44:55",
+            "name": "sensor",
+            "connected": False,
+            "location_code": "",
+            "firmware_version": "fw",
+            "sample_rate_hz": 800,
+            "frame_samples": 0,
+            "last_seen_age_ms": 8000,
+            "frames_total": 0,
+            "dropped_frames": 0,
+            "latest_metrics": {},
+            "reset_count": 0,
+            "last_reset_time": None,
+        },
+    ]

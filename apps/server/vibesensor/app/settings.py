@@ -65,6 +65,7 @@ DEFAULT_CONFIG: JsonObject = {
     "processing": {
         "sample_rate_hz": 800,
         "waveform_seconds": 8,
+        "client_live_ttl_seconds": 10,
         "client_ttl_seconds": 120,
         "accel_scale_g_per_lsb": None,
     },
@@ -118,6 +119,7 @@ LOGGER = logging.getLogger(__name__)
 _PROCESSING_POS_FIELDS: tuple[str, ...] = (
     "sample_rate_hz",
     "waveform_seconds",
+    "client_live_ttl_seconds",
     "client_ttl_seconds",
 )
 _PROCESSING_POS_MIN: int = 1
@@ -217,10 +219,11 @@ class UDPConfig:
 
 @dataclass(slots=True)
 class ProcessingConfig:
-    """Signal processing parameters (sample rate, buffer size, client TTL)."""
+    """Signal processing parameters plus live-vs-retained client timing."""
 
     sample_rate_hz: int
     waveform_seconds: int
+    client_live_ttl_seconds: int
     client_ttl_seconds: int
     accel_scale_g_per_lsb: float | None
 
@@ -252,6 +255,16 @@ class ProcessingConfig:
                 clamped_seconds,
             )
             object.__setattr__(self, "waveform_seconds", clamped_seconds)
+
+        if self.client_ttl_seconds < self.client_live_ttl_seconds:
+            LOGGER.warning(
+                "processing.client_ttl_seconds=%s is below "
+                "processing.client_live_ttl_seconds=%s — clamping retention TTL to %s",
+                self.client_ttl_seconds,
+                self.client_live_ttl_seconds,
+                self.client_live_ttl_seconds,
+            )
+            object.__setattr__(self, "client_ttl_seconds", self.client_live_ttl_seconds)
 
 
 @dataclass(slots=True)
@@ -441,6 +454,10 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             waveform_seconds=_coerce_int(
                 processing_cfg["waveform_seconds"],
                 "processing.waveform_seconds",
+            ),
+            client_live_ttl_seconds=_coerce_int(
+                processing_cfg["client_live_ttl_seconds"],
+                "processing.client_live_ttl_seconds",
             ),
             client_ttl_seconds=_coerce_int(
                 processing_cfg["client_ttl_seconds"],

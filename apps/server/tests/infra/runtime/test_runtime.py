@@ -33,6 +33,7 @@ class _StubProcessingConfig:
     waveform_seconds: int = 8
     waveform_display_hz: int = 120
     spectrum_max_hz: int = 200
+    client_live_ttl_seconds: int = 10
     client_ttl_seconds: int = 120
     accel_scale_g_per_lsb: float | None = None
     spectrum_min_hz: int = 5
