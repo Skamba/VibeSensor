@@ -59,6 +59,7 @@ class _StubLoggingConfig:
 
 @dataclass(slots=True)
 class _StubGpsConfig:
+    gps_enabled: bool = True
     gpsd_host: str = "127.0.0.1"
     gpsd_port: int = 2947
 
@@ -170,6 +171,7 @@ def _make_runtime(**overrides: Any):
             registry=registry,
             processor=processor,
             gps_monitor=gps_monitor,
+            gps_enabled=config.gps.gps_enabled,
             settings_store=settings_store,
         ),
         run_recorder=diagnostics,

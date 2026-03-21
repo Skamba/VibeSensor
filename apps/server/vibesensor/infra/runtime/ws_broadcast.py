@@ -19,9 +19,9 @@ from vibesensor.infra.runtime.rotational_speeds import (
     build_rotational_speeds_payload,
     rotational_basis_speed_source,
 )
+from vibesensor.shared.ports import SpeedProvider
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
     from vibesensor.infra.config.settings_store import SettingsStore
     from vibesensor.infra.processing import SignalProcessor
     from vibesensor.infra.runtime.registry import ClientRegistry
@@ -34,6 +34,7 @@ class WsBroadcastService:
     """WebSocket payload assembly: tick management and cached payload building."""
 
     __slots__ = (
+        "_gps_enabled",
         "_gps_monitor",
         "_processor",
         "_registry",
@@ -54,7 +55,8 @@ class WsBroadcastService:
         ui_heavy_push_hz: int,
         registry: ClientRegistry,
         processor: SignalProcessor,
-        gps_monitor: GPSSpeedMonitor,
+        gps_monitor: SpeedProvider,
+        gps_enabled: bool,
         settings_store: SettingsStore,
     ) -> None:
         self.tick = 0
@@ -62,6 +64,7 @@ class WsBroadcastService:
         self._shared_payload: LiveWsPayload | None = None
         self._shared_payload_tick: int = -1
         self._shared_payload_heavy: bool = True
+        self._gps_enabled = gps_enabled
         self._ui_push_hz = ui_push_hz
         self._ui_heavy_push_hz = ui_heavy_push_hz
         self._registry = registry
@@ -95,9 +98,10 @@ class WsBroadcastService:
             "clients": clients,
         }
         analysis_settings_snapshot = self._settings_store.analysis_settings_snapshot()
+        speed_source = self._settings_store.get_speed_source()
         basis = rotational_basis_speed_source(
-            self._settings_store,
-            self._gps_monitor,
+            str(speed_source.get("speedSource") or "gps"),
+            gps_enabled=self._gps_enabled,
             resolution_source=resolution.source,
         )
         payload["rotational_speeds"] = build_rotational_speeds_payload(
