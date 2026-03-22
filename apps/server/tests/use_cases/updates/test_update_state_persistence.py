@@ -335,8 +335,8 @@ class TestStartupRecovery:
         mgr = make_mgr()
 
         with (
-            patch("vibesensor.use_cases.updates.wifi.HOTSPOT_RESTORE_RETRIES", 1),
-            patch("vibesensor.use_cases.updates.wifi.HOTSPOT_RESTORE_DELAY_S", 0),
+            patch("vibesensor.use_cases.updates.wifi_config.HOTSPOT_RESTORE_RETRIES", 1),
+            patch("vibesensor.use_cases.updates.wifi_config.HOTSPOT_RESTORE_DELAY_S", 0),
         ):
             await mgr.startup_recover()
 

@@ -17,7 +17,11 @@ Module topology
   ``rollback_snapshot.py`` (rollback metadata + stored wheels),
   ``firmware_refresh.py`` (ESP firmware cache refresh),
   ``venv_paths.py`` (reinstall venv discovery),
-  ``wifi.py`` (Wi-Fi connect/restore, diagnostics, and default-config assembly),
+  ``wifi.py`` (thin Wi-Fi workflow coordination), ``wifi_config.py`` (default
+  config/constants), ``wifi_uplink_setup.py`` (SSID scan + uplink provisioning),
+  ``wifi_readiness.py`` (uplink retry/readiness policy),
+  ``wifi_hotspot_recovery.py`` (hotspot stop/cleanup/restore), and
+  ``wifi_diagnostics.py`` (post-failure diagnostics parsing),
   ``releases.py`` (GitHub release discovery), ``runner.py`` (process execution and
   command helpers), ``firmware_release_fetcher.py`` (GitHub firmware HTTP
   discovery/download), ``firmware_bundle.py`` (firmware bundle filesystem
