@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
@@ -16,13 +17,16 @@ from vibesensor.shared.constants import (
     SPEED_COVERAGE_MIN_PCT,
     SPEED_MIN_POINTS,
 )
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.run_context import order_reference_context_complete
 from vibesensor.shared.statistics_utils import _mean_variance
 from vibesensor.shared.time_utils import parse_iso8601
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.strength_bands import bucket_for_strength
-from vibesensor.use_cases.diagnostics._types import AccelStatistics, Sample
+from vibesensor.use_cases.diagnostics._types import (
+    AccelStatistics,
+    AnalysisSampleInput,
+    ensure_analysis_samples,
+)
 from vibesensor.use_cases.diagnostics.helpers import (
     _primary_vibration_strength_db,
     _sensor_limit_g,
@@ -64,10 +68,11 @@ def _strength_band_key(db_value: float | None) -> str | None:
 
 
 def compute_accel_statistics(
-    samples: list[Sample],
+    samples: Sequence[AnalysisSampleInput],
     sensor_model: object,
 ) -> AccelStatistics:
     """Compute per-axis values, aggregate amplitude metrics, and saturation counts."""
+    typed_samples = ensure_analysis_samples(samples)
     sensor_limit = _sensor_limit_g(sensor_model)
     sat_threshold = sensor_limit * _SATURATION_FRACTION if sensor_limit is not None else None
 
@@ -78,10 +83,10 @@ def compute_accel_statistics(
     amp_metric_values: list[float] = []
     sat_count = 0
 
-    for sample in samples:
-        x = _as_float(sample.get("accel_x_g"))
-        y = _as_float(sample.get("accel_y_g"))
-        z = _as_float(sample.get("accel_z_g"))
+    for sample in typed_samples:
+        x = sample.accel_x_g
+        y = sample.accel_y_g
+        z = sample.accel_z_g
         if x is not None:
             accel_x_vals.append(x)
         if y is not None:
@@ -121,18 +126,19 @@ def compute_accel_statistics(
 # ── Frame integrity ──────────────────────────────────────────────────────
 
 
-def compute_frame_integrity_counts(samples: list[Sample]) -> tuple[int, int]:
+def compute_frame_integrity_counts(samples: Sequence[AnalysisSampleInput]) -> tuple[int, int]:
     """Compute ``(total_dropped, total_overflow)`` across all client sensors."""
+    typed_samples = ensure_analysis_samples(samples)
     per_client_dropped: dict[str, list[float]] = defaultdict(list)
     per_client_overflow: dict[str, list[float]] = defaultdict(list)
-    for sample in samples:
-        client_id = str(sample.get("client_id") or "")
+    for sample in typed_samples:
+        client_id = sample.client_id
         if not client_id:
             continue
-        dropped = _as_float(sample.get("frames_dropped_total"))
+        dropped = sample.frames_dropped_total
         if dropped is not None:
             per_client_dropped[client_id].append(dropped)
-        overflow = _as_float(sample.get("queue_overflow_drops"))
+        overflow = sample.queue_overflow_drops
         if overflow is not None:
             per_client_overflow[client_id].append(overflow)
     total_dropped = sum(counter_delta(values) for values in per_client_dropped.values())
@@ -152,20 +158,21 @@ def compute_reference_completeness(metadata: JsonObject) -> bool:
 
 
 def prepare_speed_and_phases(
-    samples: list[Sample],
+    samples: Sequence[AnalysisSampleInput],
 ) -> tuple[list[float], SpeedProfileSummary, float, bool, list[DrivingPhase], list[PhaseSegment]]:
     """Compute speed stats and phase segmentation shared by multiple entry points."""
+    typed_samples = ensure_analysis_samples(samples)
     speed_values = [
         speed
-        for speed in (_as_float(sample.get("speed_kmh")) for sample in samples)
+        for speed in (sample.speed_kmh for sample in typed_samples)
         if speed is not None and speed > 0
     ]
     speed_stats = _speed_stats(speed_values)
-    speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
+    speed_non_null_pct = (len(speed_values) / len(typed_samples) * 100.0) if typed_samples else 0.0
     speed_sufficient = (
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
     )
-    per_sample_phases, phase_segments = segment_run_phases(samples)
+    per_sample_phases, phase_segments = segment_run_phases(typed_samples)
     return (
         speed_values,
         speed_stats,
@@ -181,22 +188,23 @@ def prepare_speed_and_phases(
 
 def compute_run_timing(
     metadata: JsonObject,
-    samples: list[Sample],
+    samples: Sequence[AnalysisSampleInput],
     file_name: str,
 ) -> tuple[str, datetime | None, datetime | None, float]:
     """Extract run_id, start/end timestamps and duration from metadata+samples."""
+    typed_samples = ensure_analysis_samples(samples)
     run_id = str(metadata.get("run_id") or f"run-{file_name}")
     start_ts = parse_iso8601(metadata.get("start_time_utc"))
     end_ts = parse_iso8601(metadata.get("end_time_utc"))
 
-    if end_ts is None and samples:
-        sample_max_t = max((_as_float(sample.get("t_s")) or 0.0) for sample in samples)
+    if end_ts is None and typed_samples:
+        sample_max_t = max((sample.t_s or 0.0) for sample in typed_samples)
         if start_ts is not None:
             end_ts = start_ts + timedelta(seconds=sample_max_t)
     duration_s = 0.0
     if start_ts is not None and end_ts is not None:
         duration_s = max(0.0, (end_ts - start_ts).total_seconds())
-    elif samples:
-        duration_s = max((_as_float(sample.get("t_s")) or 0.0) for sample in samples)
+    elif typed_samples:
+        duration_s = max((sample.t_s or 0.0) for sample in typed_samples)
 
     return run_id, start_ts, end_ts, duration_s

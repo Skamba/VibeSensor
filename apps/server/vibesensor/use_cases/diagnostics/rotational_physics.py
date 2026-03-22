@@ -12,7 +12,11 @@ from vibesensor.domain import OrderReferenceSpec, VibrationSource
 from vibesensor.shared.constants import KMH_TO_MPS, SECONDS_PER_MINUTE
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.diagnostics._types import Sample
+from vibesensor.use_cases.diagnostics._types import (
+    AnalysisSampleInput,
+    Sample,
+    ensure_analysis_sample,
+)
 from vibesensor.use_cases.diagnostics.helpers import (
     _effective_engine_rpm,
     _order_reference_spec_from_context,
@@ -24,17 +28,18 @@ from vibesensor.use_cases.diagnostics.helpers import (
 
 
 def _wheel_hz(
-    sample: Sample,
+    sample: AnalysisSampleInput,
     tire_circumference_m: float | None,
     metadata: JsonObject | None = None,
     order_reference_spec: OrderReferenceSpec | None = None,
 ) -> float | None:
-    speed_kmh = _as_float(sample.get("speed_kmh"))
+    typed_sample = ensure_analysis_sample(sample)
+    speed_kmh = typed_sample.speed_kmh
     if speed_kmh is None or speed_kmh <= 0:
         return None
     spec = order_reference_spec
     if spec is None and metadata is not None:
-        spec = _order_reference_spec_from_context(metadata, sample)
+        spec = _order_reference_spec_from_context(metadata, typed_sample)
     if spec is not None and spec.supports_wheel_reference:
         return spec.wheel_hz_from_speed_kmh(speed_kmh)
     if tire_circumference_m is None or tire_circumference_m <= 0:
@@ -43,12 +48,13 @@ def _wheel_hz(
 
 
 def _driveshaft_hz(
-    sample: Sample,
+    sample: AnalysisSampleInput,
     metadata: JsonObject,
     tire_circumference_m: float | None,
 ) -> float | None:
-    speed_kmh = _as_float(sample.get("speed_kmh"))
-    spec = _order_reference_spec_from_context(metadata, sample)
+    typed_sample = ensure_analysis_sample(sample)
+    speed_kmh = typed_sample.speed_kmh
+    spec = _order_reference_spec_from_context(metadata, typed_sample)
     if (
         speed_kmh is not None
         and speed_kmh > 0
@@ -57,23 +63,27 @@ def _driveshaft_hz(
     ):
         return spec.driveshaft_hz_from_speed_kmh(speed_kmh)
     whz = _wheel_hz(
-        sample,
+        typed_sample,
         tire_circumference_m,
         metadata,
         order_reference_spec=spec,
     )
-    fd = _as_float(sample.get("final_drive_ratio")) or _as_float(metadata.get("final_drive_ratio"))
+    fd = typed_sample.final_drive_ratio or _as_float(metadata.get("final_drive_ratio"))
     if whz is None or fd is None or fd <= 0:
         return None
     return float(whz * fd)
 
 
 def _engine_hz(
-    sample: Sample,
+    sample: AnalysisSampleInput,
     metadata: JsonObject,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
-    rpm, src = _effective_engine_rpm(sample, metadata, tire_circumference_m)
+    rpm, src = _effective_engine_rpm(
+        ensure_analysis_sample(sample),
+        metadata,
+        tire_circumference_m,
+    )
     if rpm is None or rpm <= 0:
         return None, src
     return float(rpm / SECONDS_PER_MINUTE), src

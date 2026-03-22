@@ -7,6 +7,7 @@ from typing import Any
 from test_support.core import _stable_hash
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.strength_bands import bucket_for_strength
+from vibesensor.use_cases.diagnostics._types import AnalysisSample
 
 
 def make_sample(
@@ -51,6 +52,12 @@ def make_sample(
     if strength_peak_amp_g is not None:
         sample["strength_peak_amp_g"] = strength_peak_amp_g
     return sample
+
+
+def make_analysis_sample(**kwargs: Any) -> AnalysisSample:
+    """Build one typed diagnostics sample from the shared raw sample builder."""
+
+    return AnalysisSample.from_dict(make_sample(**kwargs))
 
 
 def make_noise_samples(
