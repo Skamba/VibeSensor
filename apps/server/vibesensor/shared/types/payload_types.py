@@ -1,16 +1,37 @@
 from __future__ import annotations
 
-from typing import TypeAlias
-
 from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 
 # Bump this when the payload shape changes in a backwards-incompatible way.
 SCHEMA_VERSION: str = "1"
 
-IntakeStatsPayload: TypeAlias = JsonObject
+
+class WorkerPoolStats(TypedDict):
+    max_workers: int
+    max_queue_size: int
+    max_pending_tasks: int
+    total_tasks: int
+    pending_tasks: int
+    queued_tasks: int
+    running_tasks: int
+    rejected_tasks: int
+    total_run_s: float
+    avg_run_s: float
+    total_submit_wait_s: float
+    avg_submit_wait_s: float
+    default_submit_timeout_s: float | None
+    alive: bool
+
+
+class IntakeStatsPayload(TypedDict):
+    total_ingested_samples: int
+    total_compute_calls: int
+    last_compute_duration_s: float
+    last_compute_all_duration_s: float
+    last_ingest_duration_s: float
+    worker_pool: NotRequired[WorkerPoolStats]
 
 
 class AxisPeak(TypedDict, total=False):
