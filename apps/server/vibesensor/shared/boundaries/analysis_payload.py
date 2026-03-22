@@ -1,15 +1,31 @@
 """Boundary serialization types for analysis payloads.
 
 These TypedDicts define the wire/persistence shapes for analysis data
-that crosses the domain-adapter boundary.  Internal analysis logic uses
-domain objects (e.g. ``OrderMatchObservation``); these types exist only
-for serialization into ``FindingPayload`` and similar boundary payloads.
+that crosses the domain-adapter boundary. Stable exact history/view shapes
+shared with the HTTP layer live in ``shared.types.analysis_views``; this
+module keeps the boundary-specific wrappers and composite payload owners.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, NotRequired, Required, TypedDict
 
+from vibesensor.shared.types.analysis_views import (
+    AmpVsPhaseRow,
+    FindingEvidenceMetrics,
+    FreqVsSpeedByFindingSeries,
+    LocationHotspotPayload,
+    MatchedAmpVsSpeedSeries,
+    MatchedPoint,
+    PeakTableRow,
+    PhaseBoundary,
+    PhaseEvidence,
+    PhaseSegmentOut,
+    PhaseSpeedBreakdownRow,
+    PlotDataResult,
+    SpectrogramResult,
+    SpeedBreakdownRow,
+)
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 if TYPE_CHECKING:
@@ -37,57 +53,6 @@ __all__ = [
 ]
 
 
-# ---------------------------------------------------------------------------
-# Small leaf shapes (no forward-references)
-# ---------------------------------------------------------------------------
-
-
-class PeakTableRow(TypedDict):
-    """Shape of a single row in the ranked peak table."""
-
-    rank: int
-    frequency_hz: float
-    order_label: str
-    max_intensity_db: float | None
-    median_intensity_db: float | None
-    p95_intensity_db: float | None
-    run_noise_baseline_db: float | None
-    median_vs_run_noise_ratio: float
-    p95_vs_run_noise_ratio: float
-    strength_floor_db: float | None
-    strength_db: float | None
-    presence_ratio: float
-    burstiness: float
-    persistence_score: float
-    suspected_source: str
-    peak_classification: str
-    typical_speed_band: str
-
-
-class MatchedPoint(TypedDict, total=False):
-    """Serialization shape for a single matched frequency observation.
-
-    This is the boundary representation stored in ``FindingPayload.matched_points``.
-    Internal analysis code uses :class:`~vibesensor.domain.OrderMatchObservation`.
-    """
-
-    t_s: float | None
-    speed_kmh: float | None
-    predicted_hz: float
-    matched_hz: float
-    rel_error: float
-    amp: float
-    location: str
-    phase: str | None
-
-
-class PhaseEvidence(TypedDict, total=False):
-    """Phase context evidence attached to a finding (serialization shape)."""
-
-    cruise_fraction: float
-    phases_detected: list[str]
-
-
 class AmplitudeMetric(TypedDict):
     """Presentation-only vibration-strength summary attached to a finding payload."""
 
@@ -95,60 +60,6 @@ class AmplitudeMetric(TypedDict):
     value: float | None
     units: str
     definition: JsonValue
-
-
-class LocationHotspotPayload(TypedDict, total=False):
-    dominance_ratio: float | None
-    location_count: int
-    top_location: str
-    second_location: str | None
-    ambiguous_location: bool
-    ambiguous_locations: list[str]
-    localization_confidence: float
-    weak_spatial_separation: bool
-
-
-class FindingEvidenceMetrics(TypedDict, total=False):
-    match_rate: float
-    global_match_rate: float
-    focused_speed_band: str | None
-    mean_relative_error: float
-    mean_noise_floor_db: float
-    vibration_strength_db: float
-    possible_samples: int
-    matched_samples: int
-    frequency_correlation: float | None
-    per_phase_confidence: dict[str, float] | None
-    phases_with_evidence: int
-    presence_ratio: float
-    median_intensity_db: float
-    p95_intensity_db: float
-    max_intensity_db: float
-    burstiness: float
-    run_noise_baseline_db: float | None
-    median_relative_to_run_noise: float
-    p95_relative_to_run_noise: float
-    sample_count: int
-    total_samples: int
-    spatial_concentration: float
-    spatial_uniformity: float | None
-    speed_uniformity: float | None
-
-
-class SpeedBreakdownRow(TypedDict):
-    speed_range: str
-    count: int
-    mean_vibration_strength_db: float | None
-    max_vibration_strength_db: float | None
-
-
-class PhaseSpeedBreakdownRow(TypedDict):
-    phase: str
-    count: int
-    mean_speed_kmh: float | None
-    max_speed_kmh: float | None
-    mean_vibration_strength_db: float | None
-    max_vibration_strength_db: float | None
 
 
 class RunSuitabilityCheck(TypedDict):
@@ -349,84 +260,6 @@ class FindingPayload(TypedDict, total=False):
     phase_evidence: PhaseEvidence | None
     evidence_metrics: FindingEvidenceMetrics
     signatures_observed: list[str]
-
-
-# ---------------------------------------------------------------------------
-# Plot-data boundary shapes (moved from use_cases/diagnostics/plots.py)
-# ---------------------------------------------------------------------------
-
-
-class SpectrogramResult(TypedDict, total=False):
-    """Shape returned by spectrogram builders."""
-
-    x_axis: Required[str]
-    x_label_key: Required[str]
-    x_bins: Required[list[float]]
-    y_bins: Required[list[float]]
-    cells: Required[list[list[float]]]
-    max_amp: Required[float]
-    x_bin_width: float
-    y_bin_width: float
-
-
-class MatchedAmpVsSpeedSeries(TypedDict):
-    """Per-finding matched-point series for amp-vs-speed."""
-
-    label: str
-    points: list[tuple[float, float]]
-
-
-class FreqVsSpeedByFindingSeries(TypedDict):
-    """Per-finding frequency-vs-speed series with predicted overlay."""
-
-    label: str
-    matched: list[tuple[float, float]]
-    predicted: list[tuple[float, float]]
-
-
-class AmpVsPhaseRow(TypedDict):
-    """A single phase-grouped vibration row."""
-
-    phase: str
-    count: int
-    mean_vib_db: float
-    max_vib_db: float | None
-    mean_speed_kmh: float | None
-
-
-class PhaseSegmentOut(TypedDict):
-    """Serialised driving-phase segment for plot consumers."""
-
-    phase: str
-    start_t_s: float | None
-    end_t_s: float | None
-
-
-class PhaseBoundary(TypedDict):
-    """Phase boundary marker for plot overlay."""
-
-    phase: str
-    t_s: float | None
-    end_t_s: float | None
-
-
-class PlotDataResult(TypedDict):
-    """Shape returned by the plot-data orchestration layer."""
-
-    vib_magnitude: list[tuple[float, float, str]]
-    dominant_freq: list[tuple[float, float]]
-    amp_vs_speed: list[tuple[float, float]]
-    amp_vs_phase: list[AmpVsPhaseRow]
-    matched_amp_vs_speed: list[MatchedAmpVsSpeedSeries]
-    freq_vs_speed_by_finding: list[FreqVsSpeedByFindingSeries]
-    steady_speed_distribution: dict[str, float] | None
-    fft_spectrum: list[tuple[float, float]]
-    fft_spectrum_raw: list[tuple[float, float]]
-    peaks_spectrogram: SpectrogramResult
-    peaks_spectrogram_raw: SpectrogramResult
-    peaks_table: list[PeakTableRow]
-    phase_segments: list[PhaseSegmentOut]
-    phase_boundaries: list[PhaseBoundary]
 
 
 class AnalysisSummary(TypedDict):
