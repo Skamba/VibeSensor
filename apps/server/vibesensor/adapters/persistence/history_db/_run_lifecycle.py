@@ -8,10 +8,13 @@ from contextlib import AbstractContextManager
 
 from vibesensor.adapters.persistence.history_db._samples import V2_INSERT_SQL, sample_to_v2_row
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.boundaries.persisted_analysis_codec import (
+    persisted_analysis_to_summary,
+)
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
@@ -145,9 +148,10 @@ class _HistoryDBRunLifecycleMixin:
     def store_analysis(
         self,
         run_id: str,
-        analysis: AnalysisSummary,
+        analysis: PersistedAnalysis,
     ) -> bool:
-        missing = _EXPECTED_ANALYSIS_KEYS - analysis.keys()
+        summary_payload = persisted_analysis_to_summary(analysis)
+        missing = _EXPECTED_ANALYSIS_KEYS - summary_payload.keys()
         if missing:
             LOGGER.warning(
                 "store_analysis %s: summary missing expected keys: %s",
@@ -177,7 +181,7 @@ class _HistoryDBRunLifecycleMixin:
                 "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
                 "WHERE run_id = ?",
                 (
-                    safe_json_dumps(analysis),
+                    safe_json_dumps(summary_payload),
                     now,
                     now,
                     run_id,

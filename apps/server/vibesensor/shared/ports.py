@@ -6,7 +6,6 @@ from collections.abc import Iterator
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.types.backend_types import (
     ResolvedSpeedSource,
     RunMetadata,
@@ -18,6 +17,7 @@ from vibesensor.shared.types.history_records import (
     StoredHistoryRun,
 )
 from vibesensor.shared.types.payload_types import ClientMetrics
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
@@ -77,7 +77,7 @@ class RunPersistence(Protocol):
         metadata: RunMetadata | None = None,
     ) -> bool: ...
 
-    def store_analysis(self, run_id: str, analysis: AnalysisSummary) -> bool: ...
+    def store_analysis(self, run_id: str, analysis: PersistedAnalysis) -> bool: ...
 
     def store_analysis_error(self, run_id: str, error: str) -> bool: ...
 

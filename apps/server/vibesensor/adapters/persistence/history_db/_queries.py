@@ -6,10 +6,8 @@ import logging
 import sqlite3
 from contextlib import AbstractContextManager
 from datetime import UTC, datetime
-from typing import cast
 
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.json_utils import safe_json_loads
 from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_records import (
@@ -18,6 +16,7 @@ from vibesensor.shared.types.history_records import (
     StoredHistoryRun,
 )
 from vibesensor.shared.types.json_types import is_json_object
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
 LOGGER = logging.getLogger(__name__)
 
@@ -117,12 +116,12 @@ class _HistoryDBQueryMixin:
                 start_time_utc=str(start),
                 end_time_utc=str(end) if end is not None else None,
             )
-        analysis: AnalysisSummary | None = None
+        analysis: PersistedAnalysis | None = None
         analysis_corrupt = False
         if analysis_json:
             parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
             if is_json_object(parsed_analysis):
-                analysis = cast(AnalysisSummary, parsed_analysis)
+                analysis = PersistedAnalysis.from_json_object(parsed_analysis)
             else:
                 analysis_corrupt = True
         return StoredHistoryRun(

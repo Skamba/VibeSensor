@@ -54,7 +54,7 @@ def project_history_run_record(run: StoredHistoryRun) -> JsonObject:
     payload = run.to_json_object()
     if run.analysis is None:
         return payload
-    projected, _ = _project_history_analysis(run.analysis, strip_internal=True)
+    projected, _ = _project_history_analysis(run.analysis.to_json_object(), strip_internal=True)
     payload["analysis"] = projected
     return payload
 
@@ -82,7 +82,7 @@ def build_projected_run_details_json(
     analysis = run.analysis
     if analysis is None:
         return build_run_details_json(run, sample_count, run_id)
-    projected, _ = _project_history_analysis(analysis, strip_internal=True)
+    projected, _ = _project_history_analysis(analysis.to_json_object(), strip_internal=True)
     payload = run.to_json_object()
     payload["analysis"] = projected
     return serialize_run_details_json(

@@ -13,7 +13,6 @@ from collections.abc import Mapping
 from typing import cast
 
 from vibesensor.domain import RunStatus
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.exceptions import (
     AnalysisNotReadyError,
     RunNotFoundError,
@@ -21,6 +20,7 @@ from vibesensor.shared.exceptions import (
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
 _SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
 
@@ -57,8 +57,8 @@ def strip_internal_fields(analysis: Mapping[str, object]) -> JsonObject:
     )
 
 
-def require_analysis_ready(run: StoredHistoryRun) -> AnalysisSummary:
-    """Return the typed analysis summary or raise a domain exception."""
+def require_analysis_ready(run: StoredHistoryRun) -> PersistedAnalysis:
+    """Return the internal persisted-analysis object or raise a domain exception."""
     if run.status == RunStatus.ANALYZING:
         raise AnalysisNotReadyError("Analysis is still in progress", status="in_progress")
     if run.status == RunStatus.ERROR:

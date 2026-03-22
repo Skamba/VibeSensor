@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import pytest
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.history import (
     ProjectedHistoryExportService,
@@ -82,7 +83,11 @@ def _stored_run(run: dict[str, Any]) -> StoredHistoryRun:
         created_at=str(run.get("created_at") or "2026-01-01T00:00:00Z"),
         sample_count=int(run.get("sample_count") or 0),
         case_id=cast(str | None, run.get("case_id")),
-        analysis=cast(AnalysisSummary | None, run.get("analysis")),
+        analysis=(
+            make_persisted_analysis(cast(dict[str, object], run["analysis"]))
+            if run.get("analysis") is not None
+            else None
+        ),
         analysis_corrupt=bool(run.get("analysis_corrupt", False)),
         error_message=cast(str | None, run.get("error_message")),
         analysis_started_at=cast(str | None, run.get("analysis_started_at")),
@@ -175,7 +180,10 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
     request = await loader.load_report_request("run-1", "en")
 
     assert request.analysis_summary is not persisted_analysis
-    assert [warning["code"] for warning in persisted_analysis["warnings"]] == [
+    stored_analysis = loader._history_db.get_run("run-1")
+    assert stored_analysis is not None
+    assert stored_analysis.analysis is not None
+    assert [warning["code"] for warning in stored_analysis.analysis["warnings"]] == [
         WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
     ]
     assert [warning["code"] for warning in request.analysis_summary["warnings"]] == [

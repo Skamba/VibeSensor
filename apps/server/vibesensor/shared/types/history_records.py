@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import cast
 
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
 __all__ = [
     "AnalyzingRunHealth",
@@ -55,7 +54,7 @@ class StoredHistoryRun:
     created_at: str
     sample_count: int
     case_id: str | None = None
-    analysis: AnalysisSummary | None = None
+    analysis: PersistedAnalysis | None = None
     analysis_corrupt: bool = False
     error_message: str | None = None
     analysis_started_at: str | None = None
@@ -74,7 +73,7 @@ class StoredHistoryRun:
         if self.case_id is not None:
             payload["case_id"] = self.case_id
         if self.analysis is not None:
-            payload["analysis"] = cast(JsonObject, dict(self.analysis))
+            payload["analysis"] = self.analysis.to_json_object()
         if self.analysis_corrupt:
             payload["analysis_corrupt"] = True
         if self.error_message is not None:

@@ -17,6 +17,7 @@ from test_support import (
     make_noise_samples,
     standard_metadata,
 )
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.adapters.history import build_projected_run_details_json
@@ -68,7 +69,7 @@ def _persist_and_reload(tmp_path: Path, summary: dict[str, Any]) -> StoredHistor
             ),
         )
         db.finalize_run(_RUN_ID, "2026-01-01T00:01:00Z")
-        db.store_analysis(_RUN_ID, summary)
+        db.store_analysis(_RUN_ID, make_persisted_analysis(summary))
         run = db.get_run(_RUN_ID)
     finally:
         db.close()
@@ -141,8 +142,8 @@ def test_persist_reload_project_preserves_domain_meaning(tmp_path: Path) -> None
     run = _persist_and_reload(tmp_path, direct_summary)
 
     analysis_blob = run.analysis
-    assert isinstance(analysis_blob, dict)
-    reconstructed = _reproject(analysis_blob)
+    assert analysis_blob is not None
+    reconstructed = _reproject(analysis_blob.to_json_object())
 
     direct_meaning = _extract_domain_meaning(direct_summary)
     reloaded_meaning = _extract_domain_meaning(reconstructed)
@@ -171,8 +172,8 @@ def test_report_from_reconstructed_aggregate(tmp_path: Path) -> None:
     run = _persist_and_reload(tmp_path, direct_summary)
 
     analysis_blob = run.analysis
-    assert isinstance(analysis_blob, dict)
-    reconstructed = _reproject(analysis_blob)
+    assert analysis_blob is not None
+    reconstructed = _reproject(analysis_blob.to_json_object())
 
     direct_report = map_summary(direct_summary)
     reloaded_report = map_summary(reconstructed)
@@ -230,8 +231,8 @@ def test_cross_boundary_domain_meaning_consistency(tmp_path: Path) -> None:
     run = _persist_and_reload(tmp_path, direct_summary)
 
     analysis_blob = run.analysis
-    assert isinstance(analysis_blob, dict)
-    reconstructed = _reproject(analysis_blob)
+    assert analysis_blob is not None
+    reconstructed = _reproject(analysis_blob.to_json_object())
 
     # 1. Summary-level consistency
     direct_meaning = _extract_domain_meaning(direct_summary)

@@ -50,7 +50,7 @@ class HistoryRunService:
             return None
 
         raw_analysis = require_analysis_ready(run)
-        analysis = strip_internal_fields(raw_analysis)
+        analysis = strip_internal_fields(raw_analysis.to_json_object())
         current_active_car_snapshot = (
             self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )

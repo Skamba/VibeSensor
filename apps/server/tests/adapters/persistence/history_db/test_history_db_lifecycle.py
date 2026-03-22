@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
@@ -244,7 +245,7 @@ def test_run_status_transitions(tmp_path: Path) -> None:
     db.finalize_run("run-st", "2026-01-01T00:10:00Z")
     assert db.get_run("run-st").status.value == "analyzing"
 
-    db.store_analysis("run-st", _analysis("run-st", score=42))
+    db.store_analysis("run-st", make_persisted_analysis(_analysis("run-st", score=42)))
     assert db.get_run("run-st").status.value == "complete"
 
     db.create_run("run-err", "2026-01-01T00:00:00Z", _metadata("run-err"))
@@ -258,7 +259,7 @@ def test_store_analysis_allows_direct_recording_to_complete(tmp_path: Path) -> N
     db.create_run("run-recording", "2026-01-01T00:00:00Z", _metadata("run-recording"))
 
     analysis = _analysis("run-recording", score=42)
-    stored = db.store_analysis("run-recording", analysis)
+    stored = db.store_analysis("run-recording", make_persisted_analysis(analysis))
 
     assert stored is True
     run = db.get_run("run-recording")

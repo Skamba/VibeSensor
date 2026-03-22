@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from test_support.core import wait_until
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 
@@ -28,11 +29,13 @@ def test_start_append_stop_produces_complete_run_in_db(
     }
     monkeypatch.setattr(
         "vibesensor.use_cases.run.logger.build_post_analysis_summary",
-        lambda **_: {
-            **fake_analysis,
-            "analysis_metadata": {},
-            "case_id": "mock-case",
-        },
+        lambda **_: make_persisted_analysis(
+            {
+                **fake_analysis,
+                "analysis_metadata": {},
+                "case_id": "mock-case",
+            }
+        ),
     )
     logger = make_logger(history_db=history_db)
 

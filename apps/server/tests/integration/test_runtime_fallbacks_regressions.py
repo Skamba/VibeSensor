@@ -13,6 +13,7 @@ import math
 
 import pytest
 from _paths import SERVER_ROOT
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.types.backend_types import RunMetadata
@@ -96,7 +97,7 @@ class TestStoreAnalysisErrorGuard:
         db.create_run(run_id, "2024-01-01T00:00:00", _metadata(run_id, test=True))
 
         # Complete the analysis
-        db.store_analysis(run_id, {"result": "ok"})
+        db.store_analysis(run_id, make_persisted_analysis({"result": "ok"}))
         run_before = db.get_run(run_id)
         assert run_before is not None
         assert run_before.status.value == "complete"
