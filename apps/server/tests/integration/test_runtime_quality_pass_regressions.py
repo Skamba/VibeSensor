@@ -56,7 +56,7 @@ def _seeded_history_db(
     """Create a HistoryDB with one run containing *n_samples* rows."""
     db = _make_history_db(tmp_path, name)
     db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, src="test"))
-    db.append_samples(run_id, [{"t_s": float(i)} for i in range(n_samples)])
+    db.append_samples(run_id, [SensorFrame.from_dict({"t_s": float(i)}) for i in range(n_samples)])
     return db
 
 

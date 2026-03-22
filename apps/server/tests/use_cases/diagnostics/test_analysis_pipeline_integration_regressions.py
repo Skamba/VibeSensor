@@ -381,7 +381,7 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     assert run.status.value == "recording"
 
     samples = _simple_samples(30)
-    db.append_samples(run_id, samples)
+    db.append_samples(run_id, [normalize_sample_record(sample) for sample in samples])
 
     db.finalize_run(run_id, _END)
     run = db.get_run(run_id)
