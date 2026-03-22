@@ -16,10 +16,10 @@ import os
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 from urllib.request import Request, urlopen
 
 from vibesensor.shared.constants import GITHUB_REPO
+from vibesensor.shared.types.json_types import JsonValue, is_json_array, is_json_object
 
 LOGGER = logging.getLogger(__name__)
 
@@ -73,6 +73,65 @@ class ReleaseInfo:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class GitHubReleaseAsset:
+    """Typed GitHub asset row used by the server release fetcher."""
+
+    name: str
+    url: str
+
+    @classmethod
+    def from_api_payload(cls, raw: object) -> GitHubReleaseAsset | None:
+        if not is_json_object(raw):
+            return None
+        name = raw.get("name")
+        url = raw.get("url")
+        if not isinstance(name, str) or not isinstance(url, str):
+            return None
+        return cls(name=name, url=url)
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubRelease:
+    """Typed GitHub release row used by the server release fetcher."""
+
+    tag_name: str
+    draft: bool
+    prerelease: bool
+    published_at: str
+    assets: tuple[GitHubReleaseAsset, ...]
+
+    @classmethod
+    def from_api_payload(cls, raw: object) -> GitHubRelease | None:
+        if not is_json_object(raw):
+            return None
+        tag_name = raw.get("tag_name")
+        draft = raw.get("draft")
+        prerelease = raw.get("prerelease")
+        assets_raw = raw.get("assets")
+        if (
+            not isinstance(tag_name, str)
+            or not isinstance(draft, bool)
+            or not isinstance(prerelease, bool)
+            or not is_json_array(assets_raw)
+        ):
+            return None
+        published_at_raw = raw.get("published_at")
+        assets: list[GitHubReleaseAsset] = []
+        for item in assets_raw:
+            asset = GitHubReleaseAsset.from_api_payload(item)
+            if asset is None:
+                return None
+            assets.append(asset)
+        return cls(
+            tag_name=tag_name,
+            draft=draft,
+            prerelease=prerelease,
+            published_at=published_at_raw if isinstance(published_at_raw, str) else "",
+            assets=tuple(assets),
+        )
+
+
 def validate_https_url(url: str, *, context: str = "operation") -> None:
     """Raise ``ValueError`` if *url* does not use the HTTPS scheme."""
     if not url.startswith("https://"):
@@ -106,7 +165,7 @@ class GitHubAPIClient:
     def _api_headers(self) -> dict[str, str]:
         return github_api_headers(self._github_token)
 
-    def _api_get(self, url: str) -> Any:
+    def _api_get(self, url: str) -> JsonValue:
         """GET *url* and return the parsed JSON response."""
         validate_https_url(url, context=self._api_context)
         req = Request(url, headers=self._api_headers())
@@ -161,14 +220,20 @@ class ServerReleaseFetcher(GitHubAPIClient):
         owner, repo = self._config.server_repo.split("/", 1)
         url = f"https://api.github.com/repos/{owner}/{repo}/releases?per_page=50"
         LOGGER.info("Querying releases from %s/%s", owner, repo)
-        releases = self._api_get(url)
-        if not isinstance(releases, list):
+        releases_raw = self._api_get(url)
+        if not is_json_array(releases_raw):
             raise ValueError("Unexpected GitHub API response format")
+        releases: list[GitHubRelease] = []
+        for item in releases_raw:
+            release = GitHubRelease.from_api_payload(item)
+            if release is None:
+                raise ValueError("Unexpected GitHub API response format")
+            releases.append(release)
 
         for release in releases:
-            if release.get("draft", False):
+            if release.draft:
                 continue
-            tag = release.get("tag_name", "")
+            tag = release.tag_name
             if not tag.startswith("server-v"):
                 continue
             version = tag.removeprefix("server-v")
@@ -178,10 +243,10 @@ class ServerReleaseFetcher(GitHubAPIClient):
             return ReleaseInfo(
                 tag=tag,
                 version=version,
-                asset_name=asset.get("name", ""),
-                asset_url=asset.get("url", ""),
+                asset_name=asset.name,
+                asset_url=asset.url,
                 sha256="",
-                published_at=release.get("published_at", ""),
+                published_at=release.published_at,
             )
 
         raise ValueError(
@@ -189,11 +254,10 @@ class ServerReleaseFetcher(GitHubAPIClient):
         )
 
     @staticmethod
-    def _find_wheel_asset(release: dict[str, Any]) -> dict[str, Any] | None:
+    def _find_wheel_asset(release: GitHubRelease) -> GitHubReleaseAsset | None:
         """Find a .whl asset in a release."""
-        assets: list[dict[str, Any]] = release.get("assets", [])
-        for asset in assets:
-            name = asset.get("name", "")
+        for asset in release.assets:
+            name = asset.name
             if name.startswith("vibesensor") and name.endswith(".whl"):
                 return asset
         return None
