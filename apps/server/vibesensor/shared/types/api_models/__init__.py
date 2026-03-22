@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .base import ApiPayloadObject, ApiPayloadValue, _ExtraAllowBase, _FrozenBase
+from .base import ApiPayloadObject, ApiPayloadValue, _ExtraAllowBase, _FrozenBase, _StrictBase
 from .car_library import (
     CarLibraryBrandsResponse,
     CarLibraryGearboxEntry,
@@ -36,6 +36,7 @@ from .history import (
     FindingEvidenceMetrics,
     FindingPayload,
     FreqVsSpeedByFindingSeries,
+    HistoryInsightsAnalyzingResponse,
     HistoryInsightsResponse,
     HistoryInsightWarningResponse,
     HistoryListEntryResponse,
@@ -130,6 +131,7 @@ __all__ = [
     "HistoryListResponse",
     "HistoryRunResponse",
     "AnalysisSummaryResponse",
+    "HistoryInsightsAnalyzingResponse",
     "HistoryInsightWarningResponse",
     "AmpVsPhaseRow",
     "AmplitudeMetric",
@@ -174,5 +176,6 @@ __all__ = [
     "ApiPayloadObject",
     "ApiPayloadValue",
     "_FrozenBase",
+    "_StrictBase",
     "_ExtraAllowBase",
 ]

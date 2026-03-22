@@ -44,8 +44,8 @@ export function createUiShellPreferencesModule(
     }
     try {
       const speedUnitResponse = await getSettingsSpeedUnit();
-      if (speedUnitResponse?.speedUnit) {
-        state.speedUnit = normalizeSpeedUnit(speedUnitResponse.speedUnit);
+      if (speedUnitResponse?.speed_unit) {
+        state.speedUnit = normalizeSpeedUnit(speedUnitResponse.speed_unit);
         if (els.speedUnitSelect) {
           els.speedUnitSelect.value = state.speedUnit;
         }
@@ -79,7 +79,7 @@ export function createUiShellPreferencesModule(
     const nextUnit = normalizeSpeedUnit(unit);
     try {
       const payload = await setSettingsSpeedUnit(nextUnit);
-      state.speedUnit = normalizeSpeedUnit(payload?.speedUnit || nextUnit);
+      state.speedUnit = normalizeSpeedUnit(payload?.speed_unit || nextUnit);
       if (els.speedUnitSelect) {
         els.speedUnitSelect.value = state.speedUnit;
       }

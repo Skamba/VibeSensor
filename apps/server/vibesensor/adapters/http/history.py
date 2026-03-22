@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from vibesensor.adapters.http._helpers import domain_errors_to_http
 from vibesensor.shared.types.api_models import (
     DeleteHistoryRunResponse,
+    HistoryInsightsAnalyzingResponse,
     HistoryInsightsResponse,
     HistoryListResponse,
     HistoryRunResponse,
@@ -47,7 +48,11 @@ def create_history_routes(
         with domain_errors_to_http():
             return HistoryRunResponse.model_validate(await run_service.get_run(run_id))
 
-    @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
+    @router.get(
+        "/api/history/{run_id}/insights",
+        response_model=HistoryInsightsResponse,
+        responses={202: {"model": HistoryInsightsAnalyzingResponse}},
+    )
     async def get_history_insights(
         run_id: str,
         lang: str | None = Query(default=None),
@@ -55,9 +60,10 @@ def create_history_routes(
         with domain_errors_to_http():
             result = await run_service.get_insights(run_id, requested_lang=lang)
         if result is None:
+            analyzing_response = HistoryInsightsAnalyzingResponse(run_id=run_id, status="analyzing")
             return JSONResponse(
                 status_code=202,
-                content={"run_id": run_id, "status": "analyzing"},
+                content=analyzing_response.model_dump(),
             )
         return HistoryInsightsResponse.model_validate(result)
 

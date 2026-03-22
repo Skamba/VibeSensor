@@ -27,7 +27,8 @@ export function createHistoryDetailModule(ctx: HistoryDetailModuleDeps): History
     detail.previewError = "";
     ctx.renderHistoryTable();
     try {
-      detail.preview = await getHistoryInsights(runId, state.lang);
+      const response = await getHistoryInsights(runId, state.lang);
+      detail.preview = response.status === "complete" ? response : null;
     } catch (err) {
       detail.previewError = err instanceof Error ? err.message : t("report.unable_load_insights");
     } finally {
@@ -44,7 +45,8 @@ export function createHistoryDetailModule(ctx: HistoryDetailModuleDeps): History
     detail.insightsError = "";
     ctx.renderHistoryTable();
     try {
-      detail.insights = await getHistoryInsights(runId, state.lang);
+      const response = await getHistoryInsights(runId, state.lang);
+      detail.insights = response.status === "complete" ? response : null;
     } catch (err) {
       detail.insightsError = err instanceof Error ? err.message : t("report.unable_load_insights");
     } finally {

@@ -34,6 +34,9 @@ from vibesensor.shared.types.backend_types import (
     SensorConfigUpdatePayload,
     SpeedSourceUpdatePayload,
 )
+from vibesensor.shared.types.backend_types import (
+    SpeedSourcePayload as BackendSpeedSourcePayload,
+)
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
@@ -60,7 +63,14 @@ def create_settings_routes(
     def _cars_response(snapshot: CarsSnapshot) -> CarsResponse:
         return CarsResponse(
             cars=[_car_response(car) for car in snapshot.cars],
-            activeCarId=snapshot.active_car_id,
+            active_car_id=snapshot.active_car_id,
+        )
+
+    def _speed_source_response(payload: BackendSpeedSourcePayload) -> SpeedSourceResponse:
+        return SpeedSourceResponse(
+            speed_source=payload["speedSource"],
+            manual_speed_kph=payload["manualSpeedKph"],
+            stale_timeout_s=payload["staleTimeoutS"],
         )
 
     def _speed_source_status_response(
@@ -100,12 +110,12 @@ def create_settings_routes(
 
     def _speed_source_update_payload(req: SpeedSourceRequest) -> SpeedSourceUpdatePayload:
         payload: SpeedSourceUpdatePayload = {}
-        if req.speedSource is not None:
-            payload["speedSource"] = req.speedSource
-        if req.manualSpeedKph is not None:
-            payload["manualSpeedKph"] = req.manualSpeedKph
-        if req.staleTimeoutS is not None:
-            payload["staleTimeoutS"] = req.staleTimeoutS
+        if req.speed_source is not None:
+            payload["speedSource"] = req.speed_source
+        if req.manual_speed_kph is not None:
+            payload["manualSpeedKph"] = req.manual_speed_kph
+        if req.stale_timeout_s is not None:
+            payload["staleTimeoutS"] = req.stale_timeout_s
         return payload
 
     def _sensor_update_payload(req: SensorRequest) -> SensorConfigUpdatePayload:
@@ -191,7 +201,7 @@ def create_settings_routes(
 
     @router.post("/api/settings/cars/active", response_model=CarsResponse)
     async def set_active_car(req: ActiveCarRequest) -> CarsResponse:
-        car_id = req.carId
+        car_id = req.car_id
         with domain_errors_to_http(catch_value_error=404):
             result = await asyncio.to_thread(settings_store.set_active_car, car_id)
         return _cars_response(result)
@@ -204,11 +214,11 @@ def create_settings_routes(
             settings_store.update_speed_source,
             payload,
         )
-        return SpeedSourceResponse.model_validate(result)
+        return _speed_source_response(result)
 
     @router.get("/api/settings/speed-source", response_model=SpeedSourceResponse)
     async def get_speed_source() -> SpeedSourceResponse:
-        return SpeedSourceResponse.model_validate(settings_store.get_speed_source())
+        return _speed_source_response(settings_store.get_speed_source())
 
     @router.post("/api/settings/speed-source", response_model=SpeedSourceResponse)
     async def update_speed_source(req: SpeedSourceRequest) -> SpeedSourceResponse:
@@ -221,7 +231,7 @@ def create_settings_routes(
     # -- sensors ---------------------------------------------------------------
 
     def _sensors_response() -> SensorsResponse:
-        return SensorsResponse.model_validate({"sensorsByMac": settings_store.get_sensors()})
+        return SensorsResponse.model_validate({"sensors_by_mac": settings_store.get_sensors()})
 
     @router.get("/api/settings/sensors", response_model=SensorsResponse)
     async def get_sensors() -> SensorsResponse:
@@ -262,13 +272,13 @@ def create_settings_routes(
 
     @router.get("/api/settings/speed-unit", response_model=SpeedUnitResponse)
     async def get_speed_unit() -> SpeedUnitResponse:
-        return SpeedUnitResponse(speedUnit=settings_store.speed_unit)
+        return SpeedUnitResponse(speed_unit=settings_store.speed_unit)
 
     @router.post("/api/settings/speed-unit", response_model=SpeedUnitResponse)
     async def set_speed_unit(req: SpeedUnitRequest) -> SpeedUnitResponse:
         with domain_errors_to_http(catch_value_error=400):
-            unit = await asyncio.to_thread(settings_store.set_speed_unit, req.speedUnit)
-        return SpeedUnitResponse(speedUnit=unit)
+            unit = await asyncio.to_thread(settings_store.set_speed_unit, req.speed_unit)
+        return SpeedUnitResponse(speed_unit=unit)
 
     # -- analysis settings -----------------------------------------------------
 

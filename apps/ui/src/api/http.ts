@@ -32,7 +32,15 @@ function formatBodySnippet(text: string): string {
   return compact.slice(0, 160);
 }
 
-export async function apiJson<T = unknown>(path: string, init?: RequestInit): Promise<T> {
+export interface ApiJsonResponse<T> {
+  status: number;
+  body: T | undefined;
+}
+
+export async function apiJsonResponse<T = unknown>(
+  path: string,
+  init?: RequestInit,
+): Promise<ApiJsonResponse<T>> {
   const timeoutMs = DEFAULT_TIMEOUT_MS;
   const timeoutController = new AbortController();
   const timeoutId = window.setTimeout(() => timeoutController.abort(), timeoutMs);
@@ -54,15 +62,24 @@ export async function apiJson<T = unknown>(path: string, init?: RequestInit): Pr
     }
     throw new Error(detail);
   }
-  if (response.status === 204 || !bodyText.trim()) return undefined as T;
+  if (response.status === 204 || !bodyText.trim()) {
+    return { status: response.status, body: undefined };
+  }
 
   const contentType = response.headers.get("content-type") || "";
-  if (!contentType.includes("application/json")) return bodyText as T;
+  if (!contentType.includes("application/json")) {
+    return { status: response.status, body: bodyText as T };
+  }
 
   try {
-    return JSON.parse(bodyText) as T;
+    return { status: response.status, body: JSON.parse(bodyText) as T };
   } catch {
     const status = `${response.status} ${response.statusText}`;
     throw new Error(`Invalid JSON response (${status}): ${formatBodySnippet(bodyText)}`);
   }
+}
+
+export async function apiJson<T = unknown>(path: string, init?: RequestInit): Promise<T> {
+  const response = await apiJsonResponse<T>(path, init);
+  return response.body as T;
 }

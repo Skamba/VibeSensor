@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { createSettingsHandlerFromMap, fulfillJson, gpsStatus, installCommonRoutes, installFakeWebSocket, requestPath } from "./smoke.helpers";
 
 test("gps status uses selected speed unit in settings panel", async ({ page }) => {
-  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "/api/settings/language": { language: "en" }, "/api/settings/speed-unit": { speedUnit: "mps" }, "/api/settings/speed-source/status": gpsStatus({ last_update_age_s: 0.333, raw_speed_kmh: 36 }) }) });
+  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "/api/settings/language": { language: "en" }, "/api/settings/speed-unit": { speed_unit: "mps" }, "/api/settings/speed-source/status": gpsStatus({ last_update_age_s: 0.333, raw_speed_kmh: 36 }) }) });
   await installFakeWebSocket(page);
   await page.goto("/");
   await page.locator("#tab-settings").click();
@@ -13,7 +13,7 @@ test("gps status uses selected speed unit in settings panel", async ({ page }) =
 });
 
 test("gps status polling does not override websocket speed readout", async ({ page }) => {
-  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "/api/settings/language": { language: "en" }, "/api/settings/speed-unit": { speedUnit: "kmh" }, "/api/settings/speed-source/status": gpsStatus({}) }) });
+  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "/api/settings/language": { language: "en" }, "/api/settings/speed-unit": { speed_unit: "kmh" }, "/api/settings/speed-source/status": gpsStatus({}) }) });
   await installFakeWebSocket(page, { payload: { server_time: new Date().toISOString(), speed_mps: 20, clients: [], spectra: { clients: {} } } });
   await page.goto("/");
   await expect(page.locator("#speed")).toContainText("72.0 km/h");
@@ -22,7 +22,7 @@ test("gps status polling does not override websocket speed readout", async ({ pa
 });
 
 test("spectrum title updates when switching language", async ({ page }) => {
-  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/language": { language: "en" }, "POST /api/settings/language": { language: "nl" }, "/api/settings/speed-unit": { speedUnit: "kmh" }, "/api/settings/speed-source/status": gpsStatus({ raw_speed_kmh: 72, effective_speed_kmh: 72 }) }) });
+  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/language": { language: "en" }, "POST /api/settings/language": { language: "nl" }, "/api/settings/speed-unit": { speed_unit: "kmh" }, "/api/settings/speed-source/status": gpsStatus({ raw_speed_kmh: 72, effective_speed_kmh: 72 }) }) });
   await installFakeWebSocket(page, {
     payload: {
       server_time: new Date().toISOString(),
@@ -53,7 +53,7 @@ test("spectrum title updates when switching language", async ({ page }) => {
 test("manual speed save uses settings endpoint only (no speed-override call)", async ({ page }) => {
   let speedSourcePostCalls = 0;
   let speedOverrideCalls = 0;
-  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/speed-source": { speedSource: "gps", manualSpeedKph: null, staleTimeoutS: 5 }, "POST /api/settings/speed-source": async (route) => { speedSourcePostCalls += 1; return route.request().postDataJSON(); } }) });
+  await installCommonRoutes(page, { settingsHandler: createSettingsHandlerFromMap({ "GET /api/settings/speed-source": { speed_source: "gps", manual_speed_kph: null, stale_timeout_s: 5 }, "POST /api/settings/speed-source": async (route) => { speedSourcePostCalls += 1; return route.request().postDataJSON(); } }) });
   await page.route("**/api/speed-override", async (route) => {
     speedOverrideCalls += 1;
     await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ detail: "missing" }) });
@@ -72,7 +72,7 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
 test("analysis bandwidth and uncertainty settings persist through API round-trip", async ({ page }) => {
   let persistedAnalysisSettings: Record<string, number> = {};
   let analysisPostCalls = 0;
-  await installCommonRoutes(page, { settingsHandler: async (route) => { if (requestPath(route).startsWith("/api/settings/cars")) { await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], activeCarId: "car-1" }); return; } await fulfillJson(route, {}); } });
+  await installCommonRoutes(page, { settingsHandler: async (route) => { if (requestPath(route).startsWith("/api/settings/cars")) { await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" }); return; } await fulfillJson(route, {}); } });
   await page.route("**/api/settings/analysis", async (route) => {
     const method = route.request().method();
     if (method === "POST") {
@@ -159,8 +159,8 @@ test("failed speed-source save reverts the UI and shows an error", async ({ page
   await installCommonRoutes(page, {
     settingsHandler: createSettingsHandlerFromMap({
       "GET /api/settings/language": { language: "en" },
-      "GET /api/settings/speed-unit": { speedUnit: "kmh" },
-      "GET /api/settings/speed-source": { speedSource: "gps", manualSpeedKph: null, staleTimeoutS: 5 },
+      "GET /api/settings/speed-unit": { speed_unit: "kmh" },
+      "GET /api/settings/speed-source": { speed_source: "gps", manual_speed_kph: null, stale_timeout_s: 5 },
       "POST /api/settings/speed-source": async (route) => {
         await route.fulfill({
           status: 500,
@@ -202,7 +202,7 @@ test("failed language save reverts the selector and shows an error", async ({ pa
           body: JSON.stringify({ detail: "Language save failed" }),
         });
       },
-      "GET /api/settings/speed-unit": { speedUnit: "kmh" },
+      "GET /api/settings/speed-unit": { speed_unit: "kmh" },
     }),
   });
   await installFakeWebSocket(page);

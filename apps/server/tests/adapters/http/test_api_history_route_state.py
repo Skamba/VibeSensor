@@ -232,7 +232,6 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
             result = super().get_run(run_id)
             assert result is not None
             analysis = dict(result.analysis.to_json_object() if result.analysis is not None else {})
-            analysis["some_field"] = 42
             analysis["_internal_secret"] = "should-not-appear"
             analysis["_report_template_data"] = {"lang": "en"}
             return replace(result, analysis=make_persisted_analysis(analysis))
@@ -244,10 +243,10 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
     endpoint = route_endpoint(router, "/api/history/{run_id}")
 
     result = response_payload(await endpoint("run-1"))
+    assert set(result.keys()) == {"run_id", "status", "metadata", "analysis"}
     analysis = result.get("analysis", {})
     assert "_internal_secret" not in analysis
     assert "_report_template_data" not in analysis
-    assert analysis.get("some_field") == 42
 
 
 @pytest.mark.asyncio

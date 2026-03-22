@@ -61,9 +61,18 @@ def test_export_schema_contains_typed_history_list_entry(schema_dict: dict[str, 
 def test_export_schema_contains_finding_components_for_history_insights(
     schema_dict: dict[str, Any],
 ) -> None:
+    history_insights_route = schema_dict["paths"]["/api/history/{run_id}/insights"]["get"]
     history_insights = schema_dict["components"]["schemas"]["HistoryInsightsResponse"]
+    analyzing_response = schema_dict["components"]["schemas"]["HistoryInsightsAnalyzingResponse"]
     finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
 
+    assert history_insights_route["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/HistoryInsightsResponse",
+    }
+    assert history_insights_route["responses"]["202"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/HistoryInsightsAnalyzingResponse",
+    }
+    assert analyzing_response["required"] == ["run_id", "status"]
     assert history_insights["properties"]["findings"]["items"] == {
         "$ref": "#/components/schemas/FindingPayload",
     }
@@ -109,10 +118,32 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
 ) -> None:
     history_run = schema_dict["components"]["schemas"]["HistoryRunResponse"]
     analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummaryResponse"]
+    finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
+    car_gearbox = schema_dict["components"]["schemas"]["CarLibraryGearboxEntry"]
     plot_data = schema_dict["components"]["schemas"]["PlotDataResult"]
 
     assert history_run["properties"]["analysis"]["anyOf"] == [
         {"$ref": "#/components/schemas/AnalysisSummaryResponse"},
+        {"type": "null"},
+    ]
+    assert history_run["additionalProperties"] is False
+    assert analysis_summary["additionalProperties"] is False
+    assert finding_payload["additionalProperties"] is False
+    assert analysis_summary["properties"]["report_date"]["anyOf"] == [
+        {"type": "string"},
+        {"type": "null"},
+    ]
+    assert analysis_summary["properties"]["fft_window_size_samples"]["anyOf"] == [
+        {"type": "integer"},
+        {"type": "null"},
+    ]
+    assert car_gearbox["additionalProperties"] is False
+    assert car_gearbox["properties"]["gear_ratios"]["anyOf"] == [
+        {
+            "items": {"type": "number"},
+            "minItems": 1,
+            "type": "array",
+        },
         {"type": "null"},
     ]
     assert analysis_summary["properties"]["findings"]["items"] == {
@@ -170,3 +201,32 @@ def test_export_schema_contains_typed_analysis_summary_for_history_run(
     assert plot_data["properties"]["peaks_spectrogram_raw"] == {
         "$ref": "#/components/schemas/SpectrogramResult",
     }
+
+
+def test_export_schema_uses_snake_case_settings_contract_fields(
+    schema_dict: dict[str, Any],
+) -> None:
+    active_car_request = schema_dict["components"]["schemas"]["ActiveCarRequest"]
+    cars_response = schema_dict["components"]["schemas"]["CarsResponse"]
+    sensors_response = schema_dict["components"]["schemas"]["SensorsResponse"]
+    speed_source_request = schema_dict["components"]["schemas"]["SpeedSourceRequest"]
+    speed_source_response = schema_dict["components"]["schemas"]["SpeedSourceResponse"]
+    speed_unit_request = schema_dict["components"]["schemas"]["SpeedUnitRequest"]
+    speed_unit_response = schema_dict["components"]["schemas"]["SpeedUnitResponse"]
+
+    assert "car_id" in active_car_request["properties"]
+    assert "carId" not in active_car_request["properties"]
+    assert "active_car_id" in cars_response["properties"]
+    assert "activeCarId" not in cars_response["properties"]
+    assert "sensors_by_mac" in sensors_response["properties"]
+    assert "sensorsByMac" not in sensors_response["properties"]
+    assert {"speed_source", "manual_speed_kph", "stale_timeout_s"} == set(
+        speed_source_request["properties"],
+    )
+    assert {"speed_source", "manual_speed_kph", "stale_timeout_s"} == set(
+        speed_source_response["properties"],
+    )
+    assert "speed_unit" in speed_unit_request["properties"]
+    assert "speedUnit" not in speed_unit_request["properties"]
+    assert "speed_unit" in speed_unit_response["properties"]
+    assert "speedUnit" not in speed_unit_response["properties"]

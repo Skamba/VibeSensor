@@ -4,7 +4,7 @@
  * Validates:
  *  1. adaptServerPayload uses shared top-level freq when per-client freq is absent
  *  2. adaptServerPayload prefers per-client freq when present (mismatch case)
- *  3. adaptServerPayload accepts schema_version without throwing
+ *  3. adaptServerPayload rejects payloads that omit required top-level fields
  *  4. EXPECTED_SCHEMA_VERSION matches the server's current version
  */
 
@@ -27,7 +27,10 @@ function makeStrengthMetrics(
 
 const basePayload = {
   schema_version: EXPECTED_SCHEMA_VERSION,
+  server_time: "2026-01-01T00:00:00Z",
   clients: [],
+  selected_client_id: null,
+  rotational_speeds: null,
   speed_mps: 10,
 };
 
@@ -41,10 +44,9 @@ test.describe("schema_version handling", () => {
     expect(adapted.speed_mps).toBe(10);
   });
 
-  test("accepts payload without schema_version (backwards compat)", () => {
+  test("rejects payload without schema_version", () => {
     const { schema_version: _, ...noVersion } = basePayload;
-    const adapted = adaptServerPayload(noVersion);
-    expect(adapted).toBeDefined();
+    expect(() => adaptServerPayload(noVersion)).toThrow(/Invalid websocket payload/);
   });
 
   test("accepts unknown schema_version (logs warning, does not throw)", () => {
@@ -170,21 +172,21 @@ test.describe("shared freq optimization", () => {
     expect(Object.keys(adapted.spectra!.clients)).toHaveLength(0);
   });
 
-  test("skips client when per-client freq contains malformed numeric elements", () => {
-    const adapted = adaptServerPayload({
-      ...basePayload,
-      spectra: {
-        clients: {
-          sensor1: {
-            freq: [10, "bad", 30],
-            combined_spectrum_amp_g: [0.01, 0.02, 0.03],
-            strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
+  test("rejects malformed per-client freq elements instead of skipping the client", () => {
+    expect(() =>
+      adaptServerPayload({
+        ...basePayload,
+        spectra: {
+          clients: {
+            sensor1: {
+              freq: [10, "bad", 30],
+              combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+              strength_metrics: makeStrengthMetrics({ vibration_strength_db: 12 }),
+            },
           },
         },
-      },
-    });
-    expect(adapted.spectra).not.toBeNull();
-    expect(Object.keys(adapted.spectra!.clients)).toHaveLength(0);
+      }),
+    ).toThrow(/Invalid websocket payload/);
   });
 
   test("skips client when freq and amplitude bin counts differ", () => {

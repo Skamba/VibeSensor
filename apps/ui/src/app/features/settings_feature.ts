@@ -101,7 +101,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
 
   function applyCarsPayload(payload: CarsPayload): void {
     state.cars = payload.cars;
-    const requestedActiveCarId = payload.activeCarId;
+    const requestedActiveCarId = payload.active_car_id;
     const hasRequestedActive = requestedActiveCarId
       ? state.cars.some((car) => car.id === requestedActiveCarId)
       : false;

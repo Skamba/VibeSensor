@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import BaseModel, Field
-from pydantic.json_schema import SkipJsonSchema
 
 from vibesensor.shared.types.analysis_views import (
     AmpVsPhaseRow,
@@ -29,7 +28,7 @@ from vibesensor.shared.types.analysis_views import (
     SpeedBreakdownRow,
 )
 
-from .base import ApiPayloadObject, ApiPayloadValue, _ExtraAllowBase
+from .base import ApiPayloadObject, ApiPayloadValue, _StrictBase
 
 __all__ = [
     "AmpVsPhaseRow",
@@ -67,13 +66,13 @@ class HistoryListResponse(BaseModel):
     runs: list[HistoryListEntryResponse]
 
 
-class HistoryRunResponse(_ExtraAllowBase):
+class HistoryRunResponse(_StrictBase):
     """Response body for a single history run with metadata and optional analysis."""
 
     run_id: str
     status: str
     metadata: ApiPayloadObject = Field(default_factory=dict)
-    analysis: AnalysisSummaryResponse | SkipJsonSchema[ApiPayloadObject] | None = None
+    analysis: AnalysisSummaryResponse | None = None
 
 
 class HistoryInsightWarningResponse(BaseModel):
@@ -243,7 +242,7 @@ class LocationIntensitySummaryResponse(BaseModel):
     phase_intensity: dict[str, PhaseIntensityStatsResponse] | None = None
 
 
-class AmplitudeMetric(_ExtraAllowBase):
+class AmplitudeMetric(_StrictBase):
     """HTTP contract for finding amplitude/strength metadata."""
 
     name: str | None = None
@@ -252,7 +251,7 @@ class AmplitudeMetric(_ExtraAllowBase):
     definition: ApiPayloadValue = None
 
 
-class FindingPayload(_ExtraAllowBase):
+class FindingPayload(_StrictBase):
     """HTTP contract for one serialized finding in analysis history payloads.
 
     This schema mirrors ``shared.boundaries.analysis_payload.FindingPayload``.
@@ -289,7 +288,7 @@ class FindingPayload(_ExtraAllowBase):
     order: str | None = None
 
 
-class RunSuitabilityCheck(_ExtraAllowBase):
+class RunSuitabilityCheck(_StrictBase):
     """Typed HTTP contract for one run-suitability diagnostic check."""
 
     check: str
@@ -311,7 +310,7 @@ class PhaseSegmentSummaryResponse(BaseModel):
     sample_count: int
 
 
-class SuspectedVibrationOriginPayload(_ExtraAllowBase):
+class SuspectedVibrationOriginPayload(_StrictBase):
     """Typed HTTP contract for the serialized likely-origin payload."""
 
     location: str | None = None
@@ -324,7 +323,7 @@ class SuspectedVibrationOriginPayload(_ExtraAllowBase):
     explanation: ApiPayloadValue = None
 
 
-class _AnalysisSummaryCoreResponse(_ExtraAllowBase):
+class _AnalysisSummaryCoreResponse(_StrictBase):
     """Shared typed HTTP contract fields used by history-run analysis payloads."""
 
     file_name: str
@@ -333,16 +332,16 @@ class _AnalysisSummaryCoreResponse(_ExtraAllowBase):
     duration_s: float
     record_length: str
     lang: str
-    report_date: ApiPayloadValue = None
-    start_time_utc: ApiPayloadValue = None
-    end_time_utc: ApiPayloadValue = None
-    sensor_model: ApiPayloadValue = None
-    firmware_version: ApiPayloadValue = None
+    report_date: str | None = None
+    start_time_utc: str | None = None
+    end_time_utc: str | None = None
+    sensor_model: str | None = None
+    firmware_version: str | None = None
     raw_sample_rate_hz: float | None
     feature_interval_s: float | None
-    fft_window_size_samples: ApiPayloadValue = None
-    fft_window_type: ApiPayloadValue = None
-    peak_picker_method: ApiPayloadValue = None
+    fft_window_size_samples: int | None = None
+    fft_window_type: str | None = None
+    peak_picker_method: str | None = None
     accel_scale_g_per_lsb: float | None
     incomplete_for_order_analysis: bool
     metadata: ApiPayloadObject
@@ -376,10 +375,17 @@ class AnalysisSummaryResponse(_AnalysisSummaryCoreResponse):
     warnings: list[SummaryWarningResponse]
 
 
+class HistoryInsightsAnalyzingResponse(BaseModel):
+    """Response body for a history run whose analysis is still in progress."""
+
+    run_id: str
+    status: Literal["analyzing"]
+
+
 class HistoryInsightsResponse(_AnalysisSummaryCoreResponse):
     """Response body for the localized history insights endpoint payload."""
 
-    status: str | None = None
+    status: Literal["complete"] = "complete"
     warnings: list[HistoryInsightWarningResponse] = Field(default_factory=list)
 
 
