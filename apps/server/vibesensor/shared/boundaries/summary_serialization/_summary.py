@@ -23,7 +23,7 @@ from vibesensor.shared.boundaries.analysis_payload import (
     SpeedStatsPayload,
     TestPlanStepPayload,
 )
-from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
+from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 from vibesensor.shared.boundaries.vibration_origin import (
     SuspectedVibrationOrigin,
     build_origin_explanation,

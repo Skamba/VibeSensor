@@ -8,7 +8,7 @@ from vibesensor.adapters.pdf.report_data import DataTrustItem, NextStep
 from vibesensor.domain import TestRun
 from vibesensor.report_i18n import is_i18n_ref, resolve_i18n
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.boundaries.diagnostic_case import run_suitability_payload
+from vibesensor.shared.boundaries.run_suitability import run_suitability_payload
 
 __all__ = [
     "build_data_trust_from_summary",

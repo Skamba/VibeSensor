@@ -24,7 +24,7 @@ from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
-from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
+from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.use_cases.diagnostics import AnalysisResult, RunAnalysis
 
 # -- helpers ---------------------------------------------------------------

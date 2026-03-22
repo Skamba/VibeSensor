@@ -1,106 +1,26 @@
-"""Decode persisted diagnostic summaries and project canonical summary payloads.
-
-This module is the boundary decoder/projection layer for persisted analysis
-summaries. Construction from already-typed internal metadata or speed snapshots
-belongs on the domain objects themselves.
-"""
+"""Decode persisted diagnostic summaries into domain DiagnosticCase/TestRun models."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import replace
-from typing import cast
 
 from vibesensor.domain import Car, Finding, LocationHotspot, VibrationOrigin
 from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingSegment
 from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture, RunSetup
-from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.analysis_payload import RunSuitabilityCheck
+from vibesensor.shared.boundaries import run_suitability as _run_suitability_boundary
 from vibesensor.shared.boundaries.finding import (
-    _has_structured_step_content,
     finding_from_payload,
-    finding_payload_from_domain,
-    step_payloads_from_plan,
 )
-from vibesensor.shared.boundaries.vibration_origin import origin_payload_from_finding
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.json_types import JsonObject, JsonValue
-
-# ---------------------------------------------------------------------------
-# Run suitability (formerly run_suitability.py)
-# ---------------------------------------------------------------------------
-
-
-def run_suitability_from_payload(checks: Sequence[Mapping[str, object]]) -> RunSuitability:
-    """Decode persisted checklist payloads into the domain RunSuitability shape."""
-    domain_checks = tuple(
-        SuitabilityCheck(
-            check_key=str(c.get("check_key", c.get("check", ""))),
-            state=str(c.get("state", "pass")),
-        )
-        for c in checks
-        if isinstance(c, Mapping)
-    )
-    return RunSuitability(checks=domain_checks)
-
-
-def _payload_for_check(check: SuitabilityCheck) -> RunSuitabilityCheck:
-    return {
-        "check": check.check_key,
-        "check_key": check.check_key,
-        "state": check.state,
-        "explanation": cast(JsonValue, check.explanation_i18n_ref()),
-    }
-
-
-def run_suitability_payload(
-    suitability: RunSuitability | None,
-) -> list[RunSuitabilityCheck]:
-    """Project a domain RunSuitability into the persisted checklist payload shape."""
-    if suitability is None:
-        return []
-    return [_payload_for_check(check) for check in suitability.checks]
-
-
-# ---------------------------------------------------------------------------
-# Analysis summary projection (shared by history services)
-# ---------------------------------------------------------------------------
-
-
-def project_analysis_summary(analysis: JsonObject) -> tuple[JsonObject, TestRun]:
-    """Reconstruct and re-serialize analysis through the canonical domain boundary.
-
-    Returns ``(projected, test_run)`` where *projected* is a shallow copy of
-    *analysis* with findings, top causes, origin, test plan, and suitability
-    serialized from the domain ``TestRun``.
-    """
-    test_run = test_run_from_summary(analysis)
-    # Work with dict[str, object] to match boundary function return types;
-    # cast to JsonObject at the return boundary.
-    projected: dict[str, object] = dict(analysis)
-    projected["findings"] = [finding_payload_from_domain(f) for f in test_run.findings]
-    projected["top_causes"] = [
-        finding_payload_from_domain(f) for f in test_run.effective_top_causes()
-    ]
-    primary = test_run.primary_finding
-    origin_fb = analysis.get("most_likely_origin")
-    fb_payload = dict(origin_fb) if isinstance(origin_fb, Mapping) else {}
-    if primary is None:
-        projected["most_likely_origin"] = fb_payload
-    else:
-        projected["most_likely_origin"] = origin_payload_from_finding(primary)
-    if not _has_structured_step_content(analysis.get("test_plan")):
-        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
-    projected["run_suitability"] = run_suitability_payload(test_run.suitability)
-    return cast(JsonObject, projected), test_run
 
 
 def _actions_from_steps(steps: object) -> tuple[RecommendedAction, ...]:
@@ -333,7 +253,7 @@ def test_run_from_summary(summary: Mapping[str, object]) -> TestRun:
     )
     raw_suitability_payload = summary.get("run_suitability")
     suitability = (
-        run_suitability_from_payload(raw_suitability_payload)
+        _run_suitability_boundary.run_suitability_from_payload(raw_suitability_payload)
         if isinstance(raw_suitability_payload, list)
         else None
     )
