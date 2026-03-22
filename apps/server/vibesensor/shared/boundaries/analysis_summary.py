@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Mapping, Sequence
+from copy import deepcopy
 from typing import Protocol, cast
 
 from vibesensor.domain import (
@@ -71,6 +72,17 @@ def _amp_metric_values(accel_stats: AccelStatisticsLike) -> list[float]:
     if not isinstance(raw_values, list):
         return []
     return [float(value) for value in raw_values if isinstance(value, (int, float))]
+
+
+def analysis_summary_with_warnings(
+    summary: AnalysisSummary,
+    warnings: object,
+) -> AnalysisSummary:
+    """Return a typed summary copy with report-facing warning payloads replaced."""
+
+    updated_summary = deepcopy(summary)
+    updated_summary["warnings"] = summary_warning_payloads(warnings)
+    return updated_summary
 
 
 def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:

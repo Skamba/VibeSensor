@@ -14,9 +14,13 @@ from vibesensor.adapters.history import (
     ProjectedHistoryRunService,
     build_projected_run_details_json,
 )
-from vibesensor.domain import RunStatus
+from vibesensor.domain import CarSnapshot, RunStatus
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.exceptions import AnalysisNotReadyError
+from vibesensor.shared.run_context import (
+    WARNING_CODE_CAR_SETTINGS_CHANGED,
+    WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
+)
 from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.sensor_frame import SensorFrame
@@ -47,6 +51,14 @@ class _HistoryDbStub:
         ]
         for start in range(0, len(rows), batch_size):
             yield rows[start : start + batch_size]
+
+
+@dataclass
+class _SettingsStoreStub:
+    active_car: CarSnapshot | None
+
+    def active_car_snapshot(self) -> CarSnapshot | None:
+        return self.active_car
 
 
 def _stored_run(run: dict[str, Any]) -> StoredHistoryRun:
@@ -113,6 +125,63 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
     assert request.filename == "run-1_report.pdf"
     assert request.cache_key[1] == "nl"
     assert request.analysis_summary["lang"] == "nl"
+
+
+@pytest.mark.asyncio
+async def test_report_service_load_report_request_keeps_persisted_summary_immutable() -> None:
+    persisted_analysis = cast(
+        AnalysisSummary,
+        {
+            "lang": "en",
+            "findings": [],
+            "top_causes": [],
+            "warnings": [
+                {
+                    "code": WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
+                    "severity": "warn",
+                    "applies_to": "order_analysis",
+                    "title": "Persisted warning",
+                }
+            ],
+            "metadata": {
+                "active_car_snapshot": {
+                    "id": "car-a",
+                    "name": "Track Car",
+                    "type": "coupe",
+                    "aspects": {"tire_width_mm": 245.0},
+                }
+            },
+        },
+    )
+    loader = HistoryReportRequestLoader(
+        _HistoryDbStub(
+            run={
+                "run_id": "run-1",
+                "status": "complete",
+                "metadata": {"language": "en"},
+                "analysis": persisted_analysis,
+            }
+        ),
+        settings_store=_SettingsStoreStub(
+            active_car=CarSnapshot(
+                car_id="car-b",
+                name="Daily Car",
+                car_type="wagon",
+                aspects={"tire_width_mm": 225.0},
+            )
+        ),
+    )
+
+    request = await loader.load_report_request("run-1", "en")
+
+    assert request.analysis_summary is not persisted_analysis
+    assert [warning["code"] for warning in persisted_analysis["warnings"]] == [
+        WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
+    ]
+    assert [warning["code"] for warning in request.analysis_summary["warnings"]] == [
+        WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
+        WARNING_CODE_CAR_SETTINGS_CHANGED,
+    ]
 
 
 @pytest.mark.asyncio

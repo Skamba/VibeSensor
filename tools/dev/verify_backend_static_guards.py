@@ -404,6 +404,37 @@ def _check_history_services_do_not_import_httpexception() -> list[str]:
     return violations
 
 
+def _check_history_report_loader_avoids_analysis_dict_rewrap() -> list[str]:
+    path = VIBESENSOR_DIR / "use_cases" / "history" / "report_loader.py"
+    tree = _parse_python(path)
+    if tree is None:
+        return []
+    violations: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            if (
+                node.func.id == "dict"
+                and len(node.args) == 1
+                and isinstance(node.args[0], ast.Name)
+                and node.args[0].id == "analysis"
+            ):
+                violations.append(
+                    f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
+                    "HistoryReportRequestLoader must not re-wrap AnalysisSummary with dict(analysis)"
+                )
+            if (
+                node.func.id == "cast"
+                and len(node.args) >= 2
+                and isinstance(node.args[0], ast.Name)
+                and node.args[0].id == "AnalysisSummary"
+            ):
+                violations.append(
+                    f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
+                    "HistoryReportRequestLoader must use a typed AnalysisSummary helper instead of cast(...) re-wraps"
+                )
+    return violations
+
+
 _FORBIDDEN_DOMAIN_IMPORTS = (
     "vibesensor.adapters",
     "vibesensor.infra",
@@ -1168,6 +1199,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "History services avoid HTTPException",
         _check_history_services_do_not_import_httpexception,
+    ),
+    (
+        "History report loader avoids AnalysisSummary dict re-wraps",
+        _check_history_report_loader_avoids_analysis_dict_rewrap,
     ),
     ("Domain modules avoid outer-layer imports", _collect_domain_import_violations),
     (
