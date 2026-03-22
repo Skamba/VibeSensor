@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Mapping, Sequence
+from copy import deepcopy
 from typing import Protocol, cast
 
 from vibesensor.domain import (
@@ -79,7 +80,7 @@ def analysis_summary_with_warnings(
 ) -> AnalysisSummary:
     """Return a typed summary copy with report-facing warning payloads replaced."""
 
-    updated_summary = summary.copy()
+    updated_summary = deepcopy(summary)
     updated_summary["warnings"] = summary_warning_payloads(warnings)
     return updated_summary
 
