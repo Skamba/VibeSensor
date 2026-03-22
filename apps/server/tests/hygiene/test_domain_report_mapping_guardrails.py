@@ -101,7 +101,7 @@ def test_map_summary_produces_report_with_domain_findings() -> None:
     """map_summary must produce report data using domain-first pipeline."""
     from test_support.findings import make_finding_payload
 
-    from vibesensor.adapters.pdf.mapping import map_summary
+    from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 
     summary = {
         "run_id": "test-map",
@@ -126,7 +126,7 @@ def test_map_summary_produces_report_with_domain_findings() -> None:
         "top_causes": [make_finding_payload(finding_id="F001", confidence=0.80)],
         "sensor_count_used": 2,
     }
-    template = map_summary(summary)
+    template = map_summary(prepare_report_input(summary))
     assert template.run_id == "test-map"
 
 

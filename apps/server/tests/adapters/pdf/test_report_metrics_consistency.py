@@ -34,7 +34,7 @@ from test_support.sample_scenarios import (
     make_transient_samples,
 )
 
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 
@@ -51,7 +51,7 @@ ScenarioPair = tuple[dict, ReportTemplateData]
 
 def _build_report_data(summary: dict) -> ReportTemplateData:
     """Build ReportTemplateData from a summary dict."""
-    return map_summary(summary)
+    return map_summary(prepare_report_input(summary))
 
 
 # ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@ from __future__ import annotations
 """Report pipeline audit – rendering and data consistency regressions."""
 
 
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.presentation import (
     peak_classification_text as _peak_classification_text,
 )
@@ -98,7 +98,7 @@ class TestPeakDbEqualsStrengthDb:
         """Confirm the assignment in plot_data produces identical values."""
         row = _make_peaks_table_row(p95_intensity_db=22.3, strength_db=22.3)
         summary = _make_minimal_summary(overrides={"plots": {"peaks_table": [row]}})
-        data = map_summary(summary)
+        data = map_summary(prepare_report_input(summary))
         assert len(data.peak_rows) == 1
         pr = data.peak_rows[0]
         # Currently both are identical — this test documents the bug
@@ -111,7 +111,7 @@ class TestPeakDbEqualsStrengthDb:
         # Simulate a hypothetical fix where strength_db ≠ p95_intensity_db
         row = _make_peaks_table_row(p95_intensity_db=22.3, strength_db=15.1)
         summary = _make_minimal_summary(overrides={"plots": {"peaks_table": [row]}})
-        data = map_summary(summary)
+        data = map_summary(prepare_report_input(summary))
         pr = data.peak_rows[0]
         assert pr.peak_db == "22.3"
         assert pr.strength_db == "15.1"
@@ -162,7 +162,7 @@ class TestNextStepFieldsNotRendered:
                 "top_causes": [top_cause],
             },
         )
-        data = map_summary(summary)
+        data = map_summary(prepare_report_input(summary))
         # Find the step that came from our test_plan (not Tier A guidance)
         matching = [ns for ns in data.next_steps if "bearing" in ns.action.lower()]
         assert len(matching) == 1, f"Expected 1 bearing step, got {len(matching)}"
@@ -211,7 +211,7 @@ class TestTopCausesFallbackBypassesPersistenceRanking:
                 "top_causes": [],  # empty → forces fallback
             },
         )
-        data = map_summary(summary)
+        data = map_summary(prepare_report_input(summary))
         # The observed primary system comes from findings_non_ref[0],
         # which is the first finding by list order, NOT the highest-confidence one.
         # This documents the fallback bypass.
@@ -269,7 +269,7 @@ class TestSystemFindingCardToneUnused:
                 ],
             },
         )
-        data = map_summary(summary)
+        data = map_summary(prepare_report_input(summary))
         assert len(data.system_cards) >= 1
         # tone is populated but never rendered
         assert data.system_cards[0].tone in {"neutral", "success", "warn"}
@@ -289,6 +289,6 @@ class TestPeaksTableFixedHeight:
         """
         rows = [_make_peaks_table_row(rank=i, frequency_hz=20.0 + i * 5) for i in range(1, 9)]
         summary = _make_minimal_summary(overrides={"plots": {"peaks_table": rows}})
-        data = map_summary(summary)
+        data = map_summary(prepare_report_input(summary))
         # Builder forwards up to 8 above-noise peaks
         assert len(data.peak_rows) == 8

@@ -13,11 +13,7 @@ from test_support import response_payload as _response_payload
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.adapters.history import (
-    ProjectedHistoryExportService,
-    ProjectedHistoryRunService,
-    prepare_history_report_analysis,
-)
+from vibesensor.adapters.history import ProjectedHistoryExportService, ProjectedHistoryRunService
 from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.dependencies import (
     HistoryDeps,
@@ -38,15 +34,13 @@ from vibesensor.use_cases.history.reports import HistoryReportService, PdfRender
 from vibesensor.use_cases.history.runs import HistoryRunService
 
 
-def _real_pdf_renderer(analysis_summary: AnalysisSummary, test_run: object | None) -> bytes:
+def _real_pdf_renderer(prepared: object) -> bytes:
     """Default test renderer wiring the real adapter pipeline."""
-    from vibesensor.adapters.pdf.mapping import map_summary
+    from vibesensor.adapters.pdf.mapping import PreparedReportInput, map_summary
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
-    projected_summary, projected_test_run = prepare_history_report_analysis(analysis_summary)
-    if projected_test_run is not None:
-        test_run = projected_test_run
-    return build_report_pdf(map_summary(projected_summary, test_run=test_run))
+    assert isinstance(prepared, PreparedReportInput)
+    return build_report_pdf(map_summary(prepared))
 
 
 def make_metadata(**overrides: Any) -> dict[str, Any]:

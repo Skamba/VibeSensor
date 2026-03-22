@@ -10,7 +10,7 @@ import pytest
 from pypdf import PdfReader
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
@@ -201,7 +201,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     assert set(by_location) >= _SENSOR_LOCATIONS
     assert max(by_location, key=by_location.get) == "front-left"
 
-    pdf_bytes = build_report_pdf(map_summary(analysis))
+    pdf_bytes = build_report_pdf(map_summary(prepare_report_input(analysis)))
     assert pdf_bytes.startswith(b"%PDF-")
     assert len(pdf_bytes) > 1000
     pdf_text = "\n".join(

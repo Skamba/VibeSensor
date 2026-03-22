@@ -9,19 +9,17 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
+from vibesensor.use_cases.history.report_preparation import (
+    PreparedReportInput,
+    prepare_report_input,
+)
 
-if TYPE_CHECKING:
-    from vibesensor.domain import TestRun
-
-#: Callable that turns a persisted analysis dict into PDF bytes.
-#: Signature: ``(analysis_summary, test_run) -> bytes``.
-PdfRendererFn = Callable[[AnalysisSummary, "TestRun | None"], bytes]
+#: Callable that turns a prepared report input into PDF bytes.
+PdfRendererFn = Callable[[PreparedReportInput], bytes]
 
 
 @dataclass(frozen=True)
@@ -61,8 +59,12 @@ class HistoryReportService:
         pdf = await self._pdf_cache.get_or_build(
             request.cache_key,
             lambda: self._pdf_renderer(
-                request.analysis_summary,
-                request.domain_test_run,
+                prepare_report_input(
+                    request.analysis_summary,
+                    filename=request.filename,
+                    language=request.language,
+                    cache_key=request.cache_key,
+                )
             ),
             run_id=run_id,
         )
