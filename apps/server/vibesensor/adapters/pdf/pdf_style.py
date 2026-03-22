@@ -9,6 +9,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 
 from vibesensor.adapters.pdf.report_data import FindingPresentation, ReportTemplateData
+from vibesensor.domain import LocationHotspotRow
 from vibesensor.report_i18n import tr as _tr
 
 # ── Theme ────────────────────────────────────────────────────────────────────
@@ -255,7 +256,7 @@ class PdfRenderContext:
     width: float
     page_top: float
     lang: str
-    location_rows: list
+    location_rows: list[LocationHotspotRow]
     top_causes: list[FindingPresentation]
     tr_fn: Callable[..., str]
     text_fn: Callable[[str, str], str]
@@ -265,7 +266,7 @@ class PdfRenderContext:
         cls,
         data: ReportTemplateData,
         *,
-        location_rows: list | None = None,
+        location_rows: list[LocationHotspotRow] | None = None,
         top_causes: list[FindingPresentation] | None = None,
         tr_fn: Callable[..., str] | None = None,
         text_fn: Callable[[str, str], str] | None = None,

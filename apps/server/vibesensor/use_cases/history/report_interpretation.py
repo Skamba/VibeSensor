@@ -7,9 +7,14 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from statistics import mean as _mean
 
-from vibesensor.domain import Finding, TestRun, VibrationOrigin
+from vibesensor.domain import (
+    Finding,
+    LocationHotspotRow,
+    LocationIntensitySummary,
+    TestRun,
+    VibrationOrigin,
+)
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.json_types import JsonObject
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,54 +50,50 @@ def normalize_origin_location(origin: VibrationOrigin | None) -> str:
 
 
 def collect_location_intensity(
-    sensor_intensity: Sequence[JsonObject],
+    sensor_intensity: Sequence[LocationIntensitySummary],
 ) -> dict[str, list[float]]:
     """Collect per-location intensity values from summary sensor intensity rows."""
     amp_by_location: dict[str, list[float]] = defaultdict(list)
     for row in sensor_intensity:
-        if not isinstance(row, dict):
-            continue
-        location = str(row.get("location") or "").strip()
-        p95_val = _as_float(row.get("p95_intensity_db"))
-        p95 = p95_val if p95_val is not None else _as_float(row.get("mean_intensity_db"))
+        location = row.location.strip()
+        p95 = row.p95_intensity_db if row.p95_intensity_db is not None else row.mean_intensity_db
         if location and p95 is not None and p95 > 0:
             amp_by_location[location].append(p95)
     return amp_by_location
 
 
 def compute_location_hotspot_rows(
-    sensor_intensity: Sequence[JsonObject],
-) -> list[JsonObject]:
+    sensor_intensity: Sequence[LocationIntensitySummary],
+) -> list[LocationHotspotRow]:
     """Pre-compute location hotspot rows from sensor intensity data."""
     if not sensor_intensity:
         return []
     amp_by_location = collect_location_intensity(sensor_intensity)
-    hotspot_rows: list[JsonObject] = [
-        {
-            "location": location,
-            "count": len(amps),
-            "unit": "db",
-            "peak_value": max(amps),
-            "mean_value": _mean(amps),
-        }
+    hotspot_rows = [
+        LocationHotspotRow(
+            location=location,
+            count=len(amps),
+            unit="db",
+            peak_value=max(amps),
+            mean_value=_mean(amps),
+        )
         for location, amps in amp_by_location.items()
     ]
     hotspot_rows.sort(
-        key=lambda row: (
-            _as_float(row.get("peak_value")) or 0.0,
-            _as_float(row.get("mean_value")) or 0.0,
-        ),
+        key=lambda row: (row.peak_value, row.mean_value),
         reverse=True,
     )
     return hotspot_rows
 
 
-def sensor_fallback_strength_db(sensor_intensity: Sequence[JsonObject]) -> float | None:
+def sensor_fallback_strength_db(
+    sensor_intensity: Sequence[LocationIntensitySummary],
+) -> float | None:
     """Return the best sensor-intensity dB as a last-resort fallback."""
-    sensor_rows = [
-        _as_float(row.get("p95_intensity_db")) for row in sensor_intensity if isinstance(row, dict)
-    ]
-    return max((value for value in sensor_rows if value is not None), default=None)
+    return max(
+        (row.p95_intensity_db for row in sensor_intensity if row.p95_intensity_db is not None),
+        default=None,
+    )
 
 
 def tire_spec_text(meta: Mapping[str, object]) -> str | None:
@@ -115,16 +116,21 @@ def tire_spec_text(meta: Mapping[str, object]) -> str | None:
 def filter_active_sensor_intensity(
     raw_sensor_intensity_all: Sequence[object],
     sensor_locations_active: Sequence[str],
-) -> list[JsonObject]:
+) -> list[LocationIntensitySummary]:
     """Filter sensor intensity rows to only active locations."""
     active_locations = set(sensor_locations_active)
-    if active_locations:
-        return [
-            row
-            for row in raw_sensor_intensity_all
-            if isinstance(row, dict) and str(row.get("location") or "") in active_locations
-        ]
-    return [row for row in raw_sensor_intensity_all if isinstance(row, dict)]
+    rows: list[LocationIntensitySummary] = []
+    for row in raw_sensor_intensity_all:
+        if isinstance(row, LocationIntensitySummary):
+            typed_row = row
+        elif isinstance(row, Mapping):
+            typed_row = LocationIntensitySummary.from_dict(row)
+        else:
+            continue
+        if active_locations and typed_row.location not in active_locations:
+            continue
+        rows.append(typed_row)
+    return rows
 
 
 def resolve_primary_report_facts(
@@ -132,7 +138,7 @@ def resolve_primary_report_facts(
     aggregate: TestRun,
     origin_location: str,
     sensor_locations_active: Sequence[str],
-    sensor_intensity: Sequence[JsonObject],
+    sensor_intensity: Sequence[LocationIntensitySummary],
 ) -> PrimaryReportFacts:
     """Resolve the domain-derived facts for the report's primary candidate."""
     effective = aggregate.effective_top_causes()

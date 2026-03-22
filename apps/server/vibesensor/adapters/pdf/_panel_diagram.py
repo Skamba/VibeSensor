@@ -18,6 +18,7 @@ from vibesensor.adapters.pdf.pdf_style import (
     build_page2_layout,
 )
 from vibesensor.adapters.pdf.report_data import FindingPresentation, ReportTemplateData
+from vibesensor.domain import LocationHotspotRow
 
 
 def fit_rect_preserve_aspect(
@@ -78,7 +79,7 @@ def _draw_car_visual_panel(
     y: float,
     w: float,
     h: float,
-    location_rows: list[dict[str, object]],
+    location_rows: list[LocationHotspotRow],
     top_causes: list[FindingPresentation],
     content_width: float,
 ) -> None:

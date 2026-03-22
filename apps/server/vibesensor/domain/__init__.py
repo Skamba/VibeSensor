@@ -43,7 +43,13 @@ from .driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingPhaseSeg
 from .finding import Finding, speed_band_sort_key, speed_bin_label
 from .finding_evidence import FindingEvidence, Signature
 from .finding_types import FindingKind, VibrationSource
-from .location_hotspot import LocationHotspot, LocationIntensitySummary
+from .location_hotspot import (
+    LocationHotspot,
+    LocationHotspotRow,
+    LocationIntensitySummary,
+    PhaseIntensitySummary,
+    StrengthBucketDistribution,
+)
 from .order_match import OrderMatchObservation
 from .order_reference import OrderReferenceSpec
 from .run import Run
@@ -90,9 +96,12 @@ __all__ = [
     "FindingEvidence",
     "FindingKind",
     "LocationHotspot",
+    "LocationHotspotRow",
     "LocationIntensitySummary",
     "OrderMatchObservation",
+    "PhaseIntensitySummary",
     "Signature",
+    "StrengthBucketDistribution",
     "StrengthMetrics",
     "StrengthPeak",
     "VibrationOrigin",
