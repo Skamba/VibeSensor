@@ -926,7 +926,7 @@ def _check_domain_vos_have_no_dict_accepting_factory_methods() -> list[str]:
 
 
 def _check_post_analysis_uses_suitability_check() -> list[str]:
-    path = VIBESENSOR_DIR / "use_cases" / "run" / "post_analysis.py"
+    path = VIBESENSOR_DIR / "use_cases" / "run" / "post_analysis_summary.py"
     source = _read_text(path)
     if "SuitabilityCheck" not in source:
         return [
@@ -1345,7 +1345,7 @@ CHECKS: tuple[Check, ...] = (
         _check_domain_vos_have_no_dict_accepting_factory_methods,
     ),
     (
-        "post_analysis uses SuitabilityCheck domain objects",
+        "post_analysis_summary uses SuitabilityCheck domain objects",
         _check_post_analysis_uses_suitability_check,
     ),
     (

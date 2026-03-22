@@ -25,7 +25,8 @@ from vibesensor.use_cases.run.persistence_writer import (
     _RETRY_COOLDOWN_BASE_S,
     RunPersistenceWriter,
 )
-from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker, build_post_analysis_summary
+from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
+from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator
 from vibesensor.use_cases.run.status_reporting import (
     RunRecorderStatusSnapshot,
