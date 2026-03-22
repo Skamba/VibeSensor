@@ -26,16 +26,18 @@ __all__ = [
 ]
 
 
-def build_diagnostic_settings(overrides: Mapping[str, object] | None = None) -> dict[str, float]:
-    """Return analysis settings merged with validated *overrides*."""
+def build_diagnostic_settings(
+    overrides: Mapping[str, object] | None = None,
+) -> AnalysisSettingsSnapshot:
+    """Return analysis settings merged with validated *overrides* as a snapshot."""
     out = dict(AnalysisSettingsSnapshot.DEFAULTS)
     if not overrides:
-        return out
+        return AnalysisSettingsSnapshot.from_dict(out)
     for key in AnalysisSettingsSnapshot.DEFAULTS:
         parsed = as_float_or_none(overrides.get(key))
         if parsed is not None:
             out[key] = parsed
-    return out
+    return AnalysisSettingsSnapshot.from_dict(out)
 
 
 def combined_relative_uncertainty(*parts: float) -> float:
@@ -97,11 +99,10 @@ def order_tolerances(
 
 def build_order_bands(
     orders_hz: dict[str, float],
-    analysis_settings: Mapping[str, object],
+    analysis_settings: AnalysisSettingsSnapshot,
 ) -> list[OrderBandPayload]:
     """Pre-compute order tolerance bands so the frontend doesn't duplicate this math."""
-    resolved = build_diagnostic_settings(analysis_settings)
-    order_reference_spec = OrderReferenceSpec.from_settings(resolved)
+    order_reference_spec = analysis_settings.order_reference_spec
     if order_reference_spec is None:
         return []
     wheel_hz = float(orders_hz["wheel_hz"])
@@ -136,13 +137,12 @@ def build_order_bands(
 def vehicle_orders_hz(
     *,
     speed_mps: float | None,
-    settings: Mapping[str, object],
+    settings: AnalysisSettingsSnapshot,
 ) -> dict[str, float] | None:
     """Return per-order frequencies in Hz for the given speed and settings."""
     if speed_mps is None or not isfinite(speed_mps) or speed_mps <= 0:
         return None
-    spec_settings = build_diagnostic_settings(settings)
-    order_reference_spec = OrderReferenceSpec.from_settings(spec_settings)
+    order_reference_spec = settings.order_reference_spec
     if order_reference_spec is None:
         return None
     return order_reference_spec.orders_hz_from_speed_mps(speed_mps)

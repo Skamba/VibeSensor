@@ -38,18 +38,18 @@ def test_as_float_non_convertible() -> None:
 
 def test_build_diagnostic_settings_defaults() -> None:
     result = build_diagnostic_settings(None)
-    assert result["tire_width_mm"] == 285.0
-    assert result["rim_in"] == 21.0
+    assert result.tire_width_mm == 285.0
+    assert result.rim_in == 21.0
 
 
 def test_build_diagnostic_settings_override() -> None:
     result = build_diagnostic_settings({"tire_width_mm": 225.0})
-    assert result["tire_width_mm"] == 225.0
+    assert result.tire_width_mm == 225.0
 
 
 def test_build_diagnostic_settings_ignores_unknown() -> None:
     result = build_diagnostic_settings({"unknown_key": 99.0})
-    assert "unknown_key" not in result
+    assert not hasattr(result, "unknown_key")
 
 
 # -- combined_relative_uncertainty ---------------------------------------------
@@ -90,13 +90,14 @@ def test_tolerance_for_order_basic() -> None:
 
 
 def test_vehicle_orders_no_speed() -> None:
-    assert vehicle_orders_hz(speed_mps=None, settings={}) is None
-    assert vehicle_orders_hz(speed_mps=0.0, settings={}) is None
-    assert vehicle_orders_hz(speed_mps=-1.0, settings={}) is None
+    settings = build_diagnostic_settings({})
+    assert vehicle_orders_hz(speed_mps=None, settings=settings) is None
+    assert vehicle_orders_hz(speed_mps=0.0, settings=settings) is None
+    assert vehicle_orders_hz(speed_mps=-1.0, settings=settings) is None
 
 
 def test_vehicle_orders_with_defaults() -> None:
-    result = vehicle_orders_hz(speed_mps=25.0, settings={})
+    result = vehicle_orders_hz(speed_mps=25.0, settings=build_diagnostic_settings({}))
     assert result is not None
     assert result["wheel_hz"] > 0
     assert result["drive_hz"] > 0
@@ -106,12 +107,12 @@ def test_vehicle_orders_with_defaults() -> None:
 
 
 def test_vehicle_orders_bad_tire_returns_none() -> None:
-    settings = {"tire_width_mm": 0.0}
+    settings = build_diagnostic_settings({"tire_width_mm": 0.0})
     assert vehicle_orders_hz(speed_mps=25.0, settings=settings) is None
 
 
 def test_vehicle_orders_bad_ratios_returns_none() -> None:
-    settings = {"final_drive_ratio": 0.0}
+    settings = build_diagnostic_settings({"final_drive_ratio": 0.0})
     assert vehicle_orders_hz(speed_mps=25.0, settings=settings) is None
 
 
@@ -138,7 +139,10 @@ def test_vehicle_orders_projects_boundary_settings_into_order_reference_spec(
 
     monkeypatch.setattr(OrderReferenceSpec, "from_settings", _fake_from_settings)
 
-    result = vehicle_orders_hz(speed_mps=25.0, settings={"final_drive_ratio": 3.55})
+    result = vehicle_orders_hz(
+        speed_mps=25.0,
+        settings=build_diagnostic_settings({"final_drive_ratio": 3.55}),
+    )
 
     assert result == {
         "wheel_hz": 1.0,
