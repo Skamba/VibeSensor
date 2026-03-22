@@ -416,6 +416,7 @@ def test_post_analysis_failure_sets_persistent_error_status(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
+
     def _failing_analysis_runner(**_: object) -> dict[str, object]:
         raise RuntimeError("analysis exploded")
 
