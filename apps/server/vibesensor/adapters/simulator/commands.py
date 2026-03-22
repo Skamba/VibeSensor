@@ -104,6 +104,18 @@ def apply_road_fixed_scenario(clients: list[Any]) -> None:
         client.noise_scale = 1.00
 
 
+def apply_engine_order_scenario(clients: list[Any]) -> None:
+    """Apply a deterministic engine-order scenario across all sensors."""
+    for client in clients:
+        client.profile_name = "engine_order"
+        client.scene_mode = "engine-order"
+        client.scene_gain = 0.74
+        client.scene_noise_gain = 1.02
+        client.common_event_gain = 0.10
+        client.amp_scale = 0.94
+        client.noise_scale = 0.98
+
+
 def find_targets(clients: list[Any], token: str) -> list[Any]:
     target = token.strip().lower()
     if target == "all":
