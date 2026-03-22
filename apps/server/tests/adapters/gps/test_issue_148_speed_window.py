@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from vibesensor.domain import OrderMatchObservation
-from vibesensor.use_cases.diagnostics.location_analysis import _location_speedbin_summary
+from vibesensor.use_cases.diagnostics.location_analysis import summarize_order_match_locations
 from vibesensor.use_cases.diagnostics.signal_aggregation import _speed_breakdown
 
 
@@ -31,7 +31,7 @@ def test_location_speed_window_handles_boundary_straddle() -> None:
         _obs(84.0, 0.005, "Front Left"),
     ]
 
-    _, hotspot = _location_speedbin_summary(matches, lang="en")
+    _, hotspot = summarize_order_match_locations(matches, lang="en")
 
     assert hotspot is not None
     speed_range = hotspot.speed_range

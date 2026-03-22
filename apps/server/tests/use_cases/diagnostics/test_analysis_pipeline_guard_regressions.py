@@ -5,7 +5,7 @@ from __future__ import annotations
 
 Covers:
   1. findings.py burstiness → inf for near-zero median with non-zero max
-  2. findings.py _compute_effective_match_rate iterates all speed bins
+  2. order_match_rate.py _compute_effective_match_rate iterates all speed bins
   3. phase_segmentation.py math.isfinite guard for t_s=0.0
   4. domain speed_bin_label handles negative and NaN kmh
   5. update/status.py hash_tree survives file deletion mid-scan
@@ -19,7 +19,7 @@ from unittest.mock import patch
 import pytest
 
 from vibesensor.domain import speed_bin_label
-from vibesensor.use_cases.diagnostics.order_analysis import _compute_effective_match_rate
+from vibesensor.use_cases.diagnostics.order_match_rate import _compute_effective_match_rate
 from vibesensor.use_cases.updates.status import hash_tree
 
 # ------------------------------------------------------------------

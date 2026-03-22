@@ -298,7 +298,7 @@ def patch_order_hypothesis(
     monkeypatch.setattr(_order_statistics_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
         _test_plan_module,
-        "_location_speedbin_summary",
+        "summarize_order_match_locations",
         lambda _points, **_kwargs: (
             "",
             LocationAnalysisResult(
