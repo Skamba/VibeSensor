@@ -16,8 +16,13 @@
 - :mod:`~vibesensor.use_cases.run._recorder_runtime` — periodic loop and
   recorder-runtime helpers shared around ``RunRecorder``.
 - :mod:`~vibesensor.use_cases.run.post_analysis` — ``PostAnalysisWorker``:
-  background analysis thread/queue manager above the injected persistence,
-  analysis, and error-state boundaries.
+  background analysis thread/queue manager and health surface.
+- :mod:`~vibesensor.use_cases.run.post_analysis_loader` — focused run
+  metadata/sample loading plus bounded sampling for post-analysis.
+- :mod:`~vibesensor.use_cases.run.post_analysis_executor` — execution/writeback
+  coordination with explicit result outcomes for post-analysis runs.
+- :mod:`~vibesensor.use_cases.run.post_analysis_summary` — persisted-analysis
+  building over diagnostics results and sampling metadata.
 - :mod:`~vibesensor.use_cases.run.logger` — ``RunRecorder``: single
   coordinator that owns the recording lifecycle plus delegation to the
   focused helpers above.

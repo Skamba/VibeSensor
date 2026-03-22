@@ -4,39 +4,33 @@
 daemon thread that processes them sequentially. It is entirely decoupled
 from the data-collection path and can be tested independently.
 
-Persistence access, the post-stop analysis entrypoint, and write-error
-callbacks are supplied by the caller via constructor injection.
+Run loading/downsampling, persisted-analysis building, and execution/writeback
+policy live in focused collaborators; this module owns only queue/thread
+lifecycle, health state, and callback forwarding.
 """
 
 from __future__ import annotations
 
 import logging
-import sqlite3
 import time
 from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock, Thread
-from typing import Protocol, cast
 
-from vibesensor.shared.boundaries.analysis_payload import RunSuitabilityCheck
-from vibesensor.shared.boundaries.analysis_summary import (
-    AnalysisResultLike,
-    analysis_result_to_summary,
-)
-from vibesensor.shared.boundaries.persisted_analysis_codec import (
-    persisted_analysis_from_summary,
-)
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.sampling import bounded_sample
-from vibesensor.shared.types.backend_types import RunMetadata
-from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.use_cases.run.post_analysis_executor import (
+    PostAnalysisExecutionAnalysisFailure,
+    PostAnalysisExecutionPersistenceFailure,
+    PostAnalysisExecutionResult,
+    PostAnalysisExecutionSuccess,
+    PostAnalysisRunner,
+    execute_post_analysis,
+)
+from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 
 LOGGER = logging.getLogger(__name__)
 
-_MAX_POST_ANALYSIS_SAMPLES = 12_000
 _WARN_QUEUE_DEPTH = 10
 
 
@@ -57,76 +51,18 @@ class PostAnalysisHealthSnapshot:
     last_completed_error: str | None
 
 
-class PostAnalysisRunner(Protocol):
-    """Injected boundary for building the stored post-stop analysis summary."""
-
-    def __call__(
-        self,
-        *,
-        run_id: str,
-        metadata: RunMetadata,
-        samples: list[SensorFrame],
-        language: str,
-        total_sample_count: int,
-        stride: int,
-    ) -> PersistedAnalysis: ...
-
-
-def build_post_analysis_summary(
-    *,
-    run_id: str,
-    metadata: RunMetadata,
-    samples: list[SensorFrame],
-    language: str,
-    total_sample_count: int,
-    stride: int,
-) -> PersistedAnalysis:
-    """Run diagnostics analysis and return the internal persisted-analysis object."""
-    from vibesensor.domain import SuitabilityCheck
-    from vibesensor.report_i18n import tr
-    from vibesensor.use_cases.diagnostics import RunAnalysis
-
-    result = RunAnalysis(
-        metadata.to_dict(),
-        samples,
-        lang=language,
-        file_name=run_id,
-        include_samples=False,
-    ).summarize()
-    summary_payload = analysis_result_to_summary(cast(AnalysisResultLike, result))
-    summary_payload["case_id"] = result.diagnostic_case.case_id
-
-    analysis_metadata: JsonObject = {
-        "analyzed_sample_count": len(samples),
-        "total_sample_count": total_sample_count,
-        "sampling_method": "full" if stride == 1 else f"stride_{stride}",
-    }
-    summary_payload["analysis_metadata"] = analysis_metadata
-
-    if stride > 1:
-        stride_check = SuitabilityCheck(
-            check_key="SUITABILITY_CHECK_ANALYSIS_SAMPLING",
-            state="warn",
-            details=(("stride", stride),),
-        )
-        explanation = tr(
-            language,
-            "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
-            stride=str(stride),
-        )
-        run_suitability = summary_payload.get("run_suitability")
-        if not isinstance(run_suitability, list):
-            run_suitability = []
-            summary_payload["run_suitability"] = run_suitability
-        warning_payload: RunSuitabilityCheck = {
-            "check_key": stride_check.check_key,
-            "check": stride_check.check_key,
-            "state": stride_check.state,
-            "explanation": explanation,
-        }
-        run_suitability.append(warning_payload)
-
-    return persisted_analysis_from_summary(summary_payload)
+def _execution_callback_errors(
+    result: PostAnalysisExecutionResult,
+) -> tuple[str, ...]:
+    if isinstance(
+        result,
+        (
+            PostAnalysisExecutionAnalysisFailure,
+            PostAnalysisExecutionPersistenceFailure,
+        ),
+    ):
+        return result.callback_errors
+    return ()
 
 
 class PostAnalysisWorker:
@@ -303,79 +239,28 @@ class PostAnalysisWorker:
         db = self._history_db
         if db is None:
             return
-        analysis_start = time.monotonic()
-        LOGGER.info("Analysis started for run %s", run_id)
-        try:
-            metadata = db.get_run_metadata(run_id)
-            if metadata is None:
-                error_msg = "Metadata not found or corrupt; cannot analyse"
-                LOGGER.warning("Cannot analyse run %s: metadata not found", run_id)
-                with self._lock:
-                    self._last_completed_run_id = run_id
-                    self._last_completed_error = error_msg
-                try:
-                    db.store_analysis_error(run_id, error_msg)
-                except sqlite3.Error:
-                    LOGGER.warning(
-                        "Failed to store analysis error for run %s",
-                        run_id,
-                        exc_info=True,
-                    )
-                return
-            language = metadata.language or "en"
+        result = execute_post_analysis(
+            run_id=run_id,
+            db=db,
+            analysis_runner=self._analysis_runner,
+        )
+        self._record_execution_result(result)
 
-            sample_iter = (
-                sample for batch in db.iter_run_samples(run_id, batch_size=1024) for sample in batch
-            )
-            samples, total_sample_count, stride = bounded_sample(
-                sample_iter,
-                max_items=_MAX_POST_ANALYSIS_SAMPLES,
-            )
-            if not samples:
-                error_msg = "No samples collected during run"
-                LOGGER.warning("Skipping post-analysis for run %s: no samples collected", run_id)
-                with self._lock:
-                    self._last_completed_run_id = run_id
-                    self._last_completed_error = error_msg
-                db.store_analysis_error(run_id, error_msg)
-                return
-            summary = self._analysis_runner(
-                run_id=run_id,
-                metadata=metadata,
-                samples=samples,
-                language=language,
-                total_sample_count=total_sample_count,
-                stride=stride,
-            )
-            db.store_analysis(run_id, summary)
+    def _record_execution_result(
+        self,
+        result: PostAnalysisExecutionResult,
+    ) -> None:
+        completed_error = None
+        if not isinstance(result, PostAnalysisExecutionSuccess):
+            completed_error = result.completed_error
 
-            duration_s = time.monotonic() - analysis_start
-            LOGGER.info(
-                "Analysis completed for run %s: %d samples in %.2fs",
-                run_id,
-                len(samples),
-                duration_s,
-            )
-            with self._lock:
-                self._last_completed_run_id = run_id
-                self._last_completed_error = None
+        with self._lock:
+            self._last_completed_run_id = result.run_id
+            self._last_completed_error = completed_error
+
+        if isinstance(result, PostAnalysisExecutionSuccess):
             self._clear_error_cb()
-        except Exception as exc:
-            duration_s = time.monotonic() - analysis_start
-            error_msg = f"post-analysis failed for run {run_id}: {exc}"
+            return
+
+        for error_msg in _execution_callback_errors(result):
             self._error_cb(error_msg)
-            with self._lock:
-                self._last_completed_run_id = run_id
-                self._last_completed_error = str(exc)
-            LOGGER.warning(
-                "Analysis failed for run %s after %.2fs: %s",
-                run_id,
-                duration_s,
-                exc,
-                exc_info=True,
-            )
-            try:
-                db.store_analysis_error(run_id, str(exc))
-            except sqlite3.Error as store_exc:
-                self._error_cb(f"history store_analysis_error failed for run {run_id}: {store_exc}")
-                LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)
