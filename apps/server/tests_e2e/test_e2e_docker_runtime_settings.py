@@ -24,29 +24,29 @@ def test_speed_source_transitions_and_invalid_values(e2e_env: dict[str, str]) ->
     run_id = ""
     try:
         gps = api_json(
-            base, "/api/settings/speed-source", method="POST", body={"speedSource": "gps"}
+            base, "/api/settings/speed-source", method="POST", body={"speed_source": "gps"}
         )
-        assert gps["speedSource"] == "gps"
+        assert gps["speed_source"] == "gps"
 
         manual = api_json(
             base,
             "/api/settings/speed-source",
             method="POST",
-            body={"speedSource": "manual", "manualSpeedKph": 77},
+            body={"speed_source": "manual", "manual_speed_kph": 77},
         )
-        assert manual["speedSource"] == "manual"
-        assert float(manual["manualSpeedKph"]) == pytest.approx(77.0)
+        assert manual["speed_source"] == "manual"
+        assert float(manual["manual_speed_kph"]) == pytest.approx(77.0)
 
         obd2 = api_json(
-            base, "/api/settings/speed-source", method="POST", body={"speedSource": "obd2"}
+            base, "/api/settings/speed-source", method="POST", body={"speed_source": "obd2"}
         )
-        assert obd2["speedSource"] == "obd2"
+        assert obd2["speed_source"] == "obd2"
 
         api_json(
             base,
             "/api/settings/speed-source",
             method="POST",
-            body={"speedSource": "manual", "manualSpeedKph": 77},
+            body={"speed_source": "manual", "manual_speed_kph": 77},
         )
         run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
         _simulate(e2e_env, duration=3.0)
@@ -66,12 +66,12 @@ def test_speed_source_transitions_and_invalid_values(e2e_env: dict[str, str]) ->
             base,
             "/api/settings/speed-source",
             method="POST",
-            body={"speedSource": "invalid", "manualSpeedKph": 77},
+            body={"speed_source": "invalid", "manual_speed_kph": 77},
             expected_status=422,
         )
         still_manual = api_json(base, "/api/settings/speed-source")
-        assert still_manual["speedSource"] == "manual"
-        assert float(still_manual["manualSpeedKph"]) == pytest.approx(77.0)
+        assert still_manual["speed_source"] == "manual"
+        assert float(still_manual["manual_speed_kph"]) == pytest.approx(77.0)
     finally:
         api_json(base, "/api/recording/stop", method="POST")
         if run_id:
@@ -80,14 +80,17 @@ def test_speed_source_transitions_and_invalid_values(e2e_env: dict[str, str]) ->
             base,
             "/api/settings/speed-source",
             method="POST",
-            body={"speedSource": before["speedSource"], "manualSpeedKph": before["manualSpeedKph"]},
+            body={
+                "speed_source": before["speed_source"],
+                "manual_speed_kph": before["manual_speed_kph"],
+            },
         )
 
 
 def test_language_and_speed_unit_validation_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     language_before = api_json(base, "/api/settings/language")["language"]
-    unit_before = api_json(base, "/api/settings/speed-unit")["speedUnit"]
+    unit_before = api_json(base, "/api/settings/speed-unit")["speed_unit"]
     run_id = ""
     try:
         assert (
@@ -103,14 +106,14 @@ def test_language_and_speed_unit_validation_e2e(e2e_env: dict[str, str]) -> None
             == "nl"
         )
         assert (
-            api_json(base, "/api/settings/speed-unit", method="POST", body={"speedUnit": "kmh"})[
-                "speedUnit"
+            api_json(base, "/api/settings/speed-unit", method="POST", body={"speed_unit": "kmh"})[
+                "speed_unit"
             ]
             == "kmh"
         )
         assert (
-            api_json(base, "/api/settings/speed-unit", method="POST", body={"speedUnit": "mps"})[
-                "speedUnit"
+            api_json(base, "/api/settings/speed-unit", method="POST", body={"speed_unit": "mps"})[
+                "speed_unit"
             ]
             == "mps"
         )
@@ -126,7 +129,7 @@ def test_language_and_speed_unit_validation_e2e(e2e_env: dict[str, str]) -> None
             base,
             "/api/settings/speed-unit",
             method="POST",
-            body={"speedUnit": "mph"},
+            body={"speed_unit": "mph"},
             expected_status=422,
         )
 
@@ -155,4 +158,4 @@ def test_language_and_speed_unit_validation_e2e(e2e_env: dict[str, str]) -> None
         if run_id:
             _cleanup_run(base, run_id)
         api_json(base, "/api/settings/language", method="POST", body={"language": language_before})
-        api_json(base, "/api/settings/speed-unit", method="POST", body={"speedUnit": unit_before})
+        api_json(base, "/api/settings/speed-unit", method="POST", body={"speed_unit": unit_before})

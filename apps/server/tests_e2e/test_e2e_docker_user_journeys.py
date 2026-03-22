@@ -49,7 +49,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
     sim_duration = os.environ["VIBESENSOR_SIM_DURATION"]
 
     cars_before = api_json(base_url, "/api/settings/cars")
-    original_active_raw = cars_before.get("activeCarId")
+    original_active_raw = cars_before.get("active_car_id")
     original_active_car_id = (
         str(original_active_raw) if isinstance(original_active_raw, str) else None
     )
@@ -109,7 +109,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 expected_status=409,
             )
 
-            sensors_by_mac = api_json(base_url, "/api/settings/sensors")["sensorsByMac"]
+            sensors_by_mac = api_json(base_url, "/api/settings/sensors")["sensors_by_mac"]
             for mac, code in zip(seen_sensor_macs, LOCATION_CODES, strict=True):
                 normalized = mac.replace(":", "").lower()
                 assert sensors_by_mac[normalized]["location_code"] == code
@@ -137,10 +137,10 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 base_url,
                 "/api/settings/cars/active",
                 method="POST",
-                body={"carId": created_car_id},
+                body={"car_id": created_car_id},
             )
             cars_active = api_json(base_url, "/api/settings/cars")
-            assert cars_active["activeCarId"] == created_car_id
+            assert cars_active["active_car_id"] == created_car_id
             active_car = next(
                 car for car in cars_active["cars"] if str(car["id"]) == created_car_id
             )
@@ -190,10 +190,10 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 base_url,
                 "/api/settings/speed-source",
                 method="POST",
-                body={"speedSource": "manual", "manualSpeedKph": 80},
+                body={"speed_source": "manual", "manual_speed_kph": 80},
             )
             speed_now = api_json(base_url, "/api/settings/speed-source")
-            assert float(speed_now["manualSpeedKph"]) == pytest.approx(80.0)
+            assert float(speed_now["manual_speed_kph"]) == pytest.approx(80.0)
 
             start_2 = api_json(base_url, "/api/recording/start", method="POST")
             run_id_2 = str(start_2["run_id"])
@@ -293,8 +293,8 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             "/api/settings/speed-source",
             method="POST",
             body={
-                "speedSource": speed_source_before["speedSource"],
-                "manualSpeedKph": speed_source_before["manualSpeedKph"],
+                "speed_source": speed_source_before["speed_source"],
+                "manual_speed_kph": speed_source_before["manual_speed_kph"],
             },
         )
         api_json(
@@ -309,7 +309,7 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                     base_url,
                     "/api/settings/cars/active",
                     method="POST",
-                    body={"carId": original_active_car_id},
+                    body={"car_id": original_active_car_id},
                 )
             api_json(
                 base_url,

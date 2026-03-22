@@ -16,8 +16,8 @@ from tests_e2e.e2e_helpers import (
     non_ref_findings,
     parse_export_zip,
     pdf_text,
-    run_simulator,
     run_cleanup_steps,
+    run_simulator,
     wait_for,
     wait_run_status,
 )
@@ -45,7 +45,7 @@ def test_e2e_docker_engine_order_fault() -> None:
             base_url,
             "/api/settings/speed-source",
             method="POST",
-            body={"speedSource": "manual", "manualSpeedKph": 100.0},
+            body={"speed_source": "manual", "manual_speed_kph": 100.0},
         )
         start = api_json(base_url, "/api/recording/start", method="POST")
         assert start["enabled"] is True
