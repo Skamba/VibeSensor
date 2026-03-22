@@ -7,7 +7,7 @@ wrapper methods that handle locking and buffer lookup.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -18,7 +18,6 @@ from vibesensor.infra.processing.models import (
     SpectrumAxisData,
 )
 from vibesensor.infra.processing.time_align import compute_overlap
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.payload_types import (
     AlignmentInfoPayload,
     DebugSpectrumErrorPayload,
@@ -32,6 +31,7 @@ from vibesensor.shared.types.payload_types import (
     SpectrumSeriesPayload,
     TimeAlignmentPayload,
     TimeAlignmentSensorPayload,
+    WorkerPoolStats,
 )
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
@@ -40,7 +40,6 @@ if TYPE_CHECKING:
 
     from vibesensor.infra.processing.buffers import ClientBuffer
     from vibesensor.infra.processing.compute import SignalMetricsComputer
-    from vibesensor.infra.workers.worker_pool import WorkerPoolStats
 
 _EMPTY_F32: np.ndarray = np.array([], dtype=np.float32)
 
@@ -156,10 +155,15 @@ def build_intake_stats_payload(
     worker_pool_stats: WorkerPoolStats | None,
 ) -> IntakeStatsPayload:
     """Build the health/debug intake stats payload."""
-    payload: IntakeStatsPayload = dict(base_stats)
+    payload: IntakeStatsPayload = {
+        "total_ingested_samples": base_stats["total_ingested_samples"],
+        "total_compute_calls": base_stats["total_compute_calls"],
+        "last_compute_duration_s": base_stats["last_compute_duration_s"],
+        "last_compute_all_duration_s": base_stats["last_compute_all_duration_s"],
+        "last_ingest_duration_s": base_stats["last_ingest_duration_s"],
+    }
     if worker_pool_stats is not None:
-        worker_pool_payload = cast(JsonObject, dict(worker_pool_stats))
-        payload["worker_pool"] = worker_pool_payload
+        payload["worker_pool"] = worker_pool_stats
     return payload
 
 

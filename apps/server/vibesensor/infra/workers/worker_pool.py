@@ -29,7 +29,9 @@ import time
 from collections.abc import Callable
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from types import TracebackType
-from typing import TypedDict, TypeVar
+from typing import TypeVar
+
+from vibesensor.shared.types.payload_types import WorkerPoolStats
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,23 +39,6 @@ __all__ = ["WorkerPool"]
 
 T = TypeVar("T")
 R = TypeVar("R")
-
-
-class WorkerPoolStats(TypedDict):
-    max_workers: int
-    max_queue_size: int
-    max_pending_tasks: int
-    total_tasks: int
-    pending_tasks: int
-    queued_tasks: int
-    running_tasks: int
-    rejected_tasks: int
-    total_run_s: float
-    avg_run_s: float
-    total_submit_wait_s: float
-    avg_submit_wait_s: float
-    default_submit_timeout_s: float | None
-    alive: bool
 
 
 # Sensible default for a 4-core Raspberry Pi.
