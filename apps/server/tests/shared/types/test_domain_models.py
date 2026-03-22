@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from vibesensor.domain import Car
+from vibesensor.domain import Car, StrengthPeak
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.types.backend_types import (
     RunMetadata,
@@ -335,7 +335,7 @@ class TestSensorFrame:
         )
         sf = SensorFrame.from_dict(record)
         assert len(sf.top_peaks) == 1
-        assert sf.top_peaks[0]["hz"] == 25.0
+        assert sf.top_peaks[0] == StrengthPeak(hz=25.0, amp=0.05)
 
     def test_top_peaks_capped_at_10(self) -> None:
         peaks = [{"hz": float(i + 1), "amp": 0.01} for i in range(20)]
@@ -358,4 +358,4 @@ class TestSensorFrame:
         assert sf.run_id == "x"
         assert sf.speed_kmh is None
         assert sf.accel_x_g is None
-        assert sf.top_peaks == []
+        assert sf.top_peaks == ()

@@ -50,8 +50,9 @@ One row per recording session.
 
 ### `samples_v2`
 
-One row per sensor frame — **no JSON blobs**. All SensorFrame scalar fields
-are stored as typed columns; peak arrays use compact JSON in a TEXT column.
+One row per sensor frame — **no JSON blobs**. All `SensorFrame` scalar fields
+are stored as typed columns; peak arrays use compact JSON in a TEXT column and
+are rehydrated back into typed `SensorFrame.top_peaks` data on read.
 
 | Column | Type | Description |
 |--------|------|-------------|
