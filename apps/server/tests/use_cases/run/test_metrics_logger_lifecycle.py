@@ -19,6 +19,15 @@ def test_start_append_stop_produces_complete_run_in_db(
 ) -> None:
     """Full lifecycle: start -> append -> stop -> analyze -> complete with a real DB."""
     history_db = HistoryDB(tmp_path / "history.db")
+    fake_analysis = {"score": 42, "details": "looks good"}
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.logger.build_post_analysis_summary",
+        lambda **_: {
+            **fake_analysis,
+            "analysis_metadata": {},
+            "case_id": "mock-case",
+        },
+    )
     logger = make_logger(history_db=history_db)
 
     logger.start_recording()
@@ -29,21 +38,6 @@ def test_start_append_stop_produces_complete_run_in_db(
     start_mono = snapshot.start_mono_s
     logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
-    fake_analysis = {"score": 42, "details": "looks good"}
-
-    class _FakeRunAnalysis:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def summarize(self):
-            from types import SimpleNamespace
-
-            return SimpleNamespace(
-                summary=dict(fake_analysis),
-                diagnostic_case=SimpleNamespace(case_id="mock-case"),
-            )
-
-    monkeypatch.setattr("vibesensor.use_cases.diagnostics.RunAnalysis", _FakeRunAnalysis)
     logger.stop_recording()
 
     def _status():
