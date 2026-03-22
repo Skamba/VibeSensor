@@ -270,7 +270,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, language="en"))
     logger._persistence.history_run_created = True
     samples = [_sample(i) for i in range(20)]
-    db.append_samples(run_id, samples)
+    db.append_samples(run_id, [SensorFrame.from_dict(sample) for sample in samples])
     logger._persistence.written_sample_count = len(samples)
 
     # Monkeypatch the adapter summarize_run_data wrapper to a lightweight version for speed
