@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, NotRequired, Required, TypedDict
 
-from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 
 if TYPE_CHECKING:
@@ -35,7 +34,6 @@ __all__ = [
     "RunSuitabilityCheck",
     "SpectrogramResult",
     "SpeedBreakdownRow",
-    "matched_point_from_observation",
 ]
 
 
@@ -484,22 +482,3 @@ class AnalysisSummary(TypedDict):
     samples: NotRequired[list[JsonObject]]
     plots: NotRequired[PlotDataResult]
     analysis_metadata: NotRequired[JsonObject]
-
-
-# ---------------------------------------------------------------------------
-# Serializer helpers
-# ---------------------------------------------------------------------------
-
-
-def matched_point_from_observation(obs: OrderMatchObservation) -> MatchedPoint:
-    """Serialize a domain ``OrderMatchObservation`` to a boundary ``MatchedPoint`` dict."""
-    return MatchedPoint(
-        t_s=obs.t_s,
-        speed_kmh=obs.speed_kmh,
-        predicted_hz=obs.predicted_hz,
-        matched_hz=obs.matched_hz,
-        rel_error=obs.rel_error,
-        amp=obs.amp,
-        location=obs.location,
-        phase=obs.phase,
-    )
