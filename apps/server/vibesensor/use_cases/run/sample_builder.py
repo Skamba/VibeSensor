@@ -5,6 +5,7 @@ of ``RunRecorder`` or any async / threading machinery.
 """
 
 from __future__ import annotations
+
 from collections.abc import Callable
 from dataclasses import asdict
 from typing import TYPE_CHECKING, NamedTuple
