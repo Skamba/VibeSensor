@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from io import BytesIO
 
 import pytest
@@ -162,14 +162,13 @@ async def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes()
         )
         idx: int = 0
 
-        def get_run(self, run_id: str) -> dict[str, object] | None:
+        def get_run(self, run_id: str):
             result = super().get_run(run_id)
             if result is None:
                 return None
             ts = self.timestamps[min(self.idx, len(self.timestamps) - 1)]
             self.idx += 1
-            result["analysis_completed_at"] = ts
-            return result
+            return replace(result, analysis_completed_at=ts)
 
     call_count = 0
 

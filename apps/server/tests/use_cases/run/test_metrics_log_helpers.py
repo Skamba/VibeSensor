@@ -10,6 +10,7 @@ from test_support.core import wait_until
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
+from vibesensor.shared.types.history_records import AnalyzingRunHealth
 from vibesensor.use_cases.run._recorder_types import _build_run_metadata_record
 from vibesensor.use_cases.run.post_analysis import PostAnalysisHealthSnapshot
 from vibesensor.use_cases.run.sample_builder import safe_metric
@@ -19,7 +20,7 @@ class _NullDB:
     """Stub DB for tests that need a non-None history_db without real DB ops."""
 
     def analyzing_run_health(self):
-        return {"analyzing_run_count": 0, "analyzing_oldest_age_s": None}
+        return AnalyzingRunHealth(analyzing_run_count=0, analyzing_oldest_age_s=None)
 
 
 # -- RunRecorder._safe_metric ------------------------------------------------
@@ -260,7 +261,7 @@ def test_finalize_refreshes_run_metadata_from_latest_settings(
     assert fake_history_db.updated_metadata
     updated_run_id, metadata = fake_history_db.updated_metadata[-1]
     assert updated_run_id == run_id
-    assert metadata["tire_width_mm"] == 315.0
+    assert metadata.extras["tire_width_mm"] == 315.0
 
 
 def test_append_records_surfaces_create_run_failure_in_status(
@@ -405,7 +406,8 @@ def test_stop_recording_does_not_block_on_post_analysis(
     allow_summary_finish.set()
 
     def _status():
-        return (history_db.get_run(run_id) or {}).get("status")
+        run = history_db.get_run(run_id)
+        return run.status.value if run is not None else None
 
     assert wait_until(lambda: _status() == "complete", timeout_s=5.0)
 
@@ -437,12 +439,13 @@ def test_post_analysis_failure_sets_persistent_error_status(
     logger.stop_recording()
 
     def _status():
-        return (history_db.get_run(run_id) or {}).get("status")
+        run = history_db.get_run(run_id)
+        return run.status.value if run is not None else None
 
     assert wait_until(lambda: _status() == "error", timeout_s=2.0)
     run = history_db.get_run(run_id)
     assert run is not None
-    assert "analysis exploded" in str(run.get("error_message", ""))
+    assert "analysis exploded" in str(run.error_message or "")
 
 
 def test_post_analysis_burst_uses_single_daemon_worker(
@@ -569,7 +572,7 @@ def test_post_analysis_uses_run_language_from_metadata(
         stride: int,
     ):
         assert run_id == snapshot.run_id
-        assert metadata["language"] == "nl"
+        assert metadata.language == "nl"
         assert total_sample_count == len(samples)
         assert stride == 1
         return {
@@ -587,10 +590,11 @@ def test_post_analysis_uses_run_language_from_metadata(
     logger.stop_recording()
 
     def _status():
-        return (history_db.get_run(run_id) or {}).get("status")
+        run = history_db.get_run(run_id)
+        return run.status.value if run is not None else None
 
     assert wait_until(lambda: _status() == "complete", timeout_s=2.0)
-    stored = history_db.get_run(run_id).get("analysis")
+    stored = history_db.get_run(run_id).analysis
     assert stored is not None
     assert stored["lang"] == "nl"
 
@@ -707,10 +711,11 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     logger.stop_recording()
 
     def _status():
-        return (history_db.get_run(run_id) or {}).get("status")
+        run = history_db.get_run(run_id)
+        return run.status.value if run is not None else None
 
     assert wait_until(lambda: _status() == "complete", timeout_s=3.0)
-    stored = history_db.get_run(run_id).get("analysis")
+    stored = history_db.get_run(run_id).analysis
     assert stored is not None
     assert stored["row_count"] <= cap
     assert stored["analysis_metadata"]["total_sample_count"] >= stored["row_count"]

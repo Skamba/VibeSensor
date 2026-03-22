@@ -2,10 +2,38 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from typing import cast
 
 import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.types.backend_types import RunMetadata
+
+
+def _metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "sensor_model": "fixture-sensor",
+        "raw_sample_rate_hz": 800,
+        "sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "source": "test",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
+
+
+def _analysis(run_id: str, **overrides: object) -> AnalysisSummary:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "findings": [],
+        "top_causes": [],
+        "warnings": [],
+    }
+    payload.update(overrides)
+    return cast(AnalysisSummary, payload)
 
 
 def _sensor_frame_dict(i: int, *, run_id: str = "run-v2") -> dict:
@@ -45,7 +73,7 @@ def _sensor_frame_dict(i: int, *, run_id: str = "run-v2") -> dict:
 
 def test_v2_structured_roundtrip(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-v2", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-v2", "2026-01-01T00:00:00Z", _metadata("run-v2"))
     originals = [_sensor_frame_dict(i) for i in range(5)]
     db.append_samples("run-v2", originals)
 
@@ -63,7 +91,7 @@ def test_v2_structured_roundtrip(tmp_path: Path) -> None:
 
 def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-nan", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-nan", "2026-01-01T00:00:00Z", _metadata("run-nan"))
     sample = {"speed_kmh": float("nan"), "accel_x_g": float("inf"), "t_s": 1.0}
     db.append_samples("run-nan", [sample])
 
@@ -76,7 +104,7 @@ def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
 
 def test_v2_no_json_blobs_in_storage(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-check", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-check", "2026-01-01T00:00:00Z", _metadata("run-check"))
     db.append_samples("run-check", [_sensor_frame_dict(0)])
 
     with db._cursor(commit=False) as cur:
@@ -138,7 +166,7 @@ def test_v2_sensor_frame_objects(tmp_path: Path) -> None:
     from vibesensor.shared.types.sensor_frame import SensorFrame
 
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-sf", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-sf", "2026-01-01T00:00:00Z", _metadata("run-sf"))
 
     frame = SensorFrame.from_dict(_sensor_frame_dict(0, run_id="run-sf"))
     db.append_samples("run-sf", [frame])
@@ -152,7 +180,7 @@ def test_v2_sensor_frame_objects(tmp_path: Path) -> None:
 
 def test_v2_delete_cascades_legacy_and_v2(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-del2", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-del2", "2026-01-01T00:00:00Z", _metadata("run-del2"))
     db.append_samples("run-del2", [_sensor_frame_dict(i, run_id="run-del2") for i in range(3)])
 
     assert len(db.get_run_samples("run-del2")) == 3
@@ -165,7 +193,7 @@ def test_v2_delete_cascades_legacy_and_v2(tmp_path: Path) -> None:
 
 def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-full", "2026-01-01T00:00:00Z", {"source": "roundtrip"})
+    db.create_run("run-full", "2026-01-01T00:00:00Z", _metadata("run-full", source="roundtrip"))
 
     for batch_start in range(0, 20, 5):
         batch = [
@@ -174,10 +202,11 @@ def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
         db.append_samples("run-full", batch)
 
     db.finalize_run("run-full", "2026-01-01T00:00:20Z")
-    assert db.get_run("run-full")["status"] == "analyzing"
+    assert db.get_run("run-full").status.value == "analyzing"
 
-    db.store_analysis("run-full", {"score": 42})
-    assert db.get_run("run-full")["status"] == "complete"
+    analysis = _analysis("run-full", score=42)
+    db.store_analysis("run-full", analysis)
+    assert db.get_run("run-full").status.value == "complete"
 
     all_samples = db.get_run_samples("run-full")
     assert len(all_samples) == 20
@@ -189,16 +218,14 @@ def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
 
     run = db.get_run("run-full")
     assert run is not None
-    assert run["sample_count"] == 20
-    assert run["status"] == "complete"
-    analysis = db.get_run("run-full").get("analysis")
-    assert analysis is not None
-    assert analysis["score"] == 42
+    assert run.sample_count == 20
+    assert run.status.value == "complete"
+    assert db.get_run("run-full").analysis == analysis
 
 
 def test_v2_iter_with_offset(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-off", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-off", "2026-01-01T00:00:00Z", _metadata("run-off"))
     db.append_samples("run-off", [{"t_s": float(i)} for i in range(10)])
 
     rows0 = [s for b in db.iter_run_samples("run-off", offset=0) for s in b]
@@ -216,7 +243,7 @@ def test_v2_iter_with_offset(tmp_path: Path) -> None:
 
 def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-corrupt", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-corrupt", "2026-01-01T00:00:00Z", _metadata("run-corrupt"))
     db.append_samples("run-corrupt", [{"t_s": 1.0}, {"t_s": 2.0}])
     with db._cursor() as cur:
         cur.execute(
@@ -240,7 +267,7 @@ def test_v2_row_to_dict_non_list_peak_column_warns_and_uses_empty(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-peak-warn", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-peak-warn", "2026-01-01T00:00:00Z", _metadata("run-peak-warn"))
 
     with db._cursor() as cur:
         cur.execute(

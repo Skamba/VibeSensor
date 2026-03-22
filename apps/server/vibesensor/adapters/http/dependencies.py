@@ -12,7 +12,6 @@ from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.history.exports import HistoryExportDownload
-from vibesensor.use_cases.history.helpers import HistoryRecord
 from vibesensor.use_cases.history.reports import HistoryReportPdf
 from vibesensor.use_cases.run import RunRecorder
 from vibesensor.use_cases.updates.esp_flash_manager import EspFlashManager
@@ -27,7 +26,7 @@ if TYPE_CHECKING:
 class HistoryRunServiceProtocol(Protocol):
     async def list_runs(self) -> list[JsonObject]: ...
 
-    async def get_run(self, run_id: str) -> HistoryRecord: ...
+    async def get_run(self, run_id: str) -> JsonObject: ...
 
     async def get_insights(
         self,

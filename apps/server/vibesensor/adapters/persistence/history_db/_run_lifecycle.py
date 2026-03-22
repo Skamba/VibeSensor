@@ -8,8 +8,10 @@ from contextlib import AbstractContextManager
 
 from vibesensor.adapters.persistence.history_db._samples import V2_INSERT_SQL, sample_to_v2_row
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -38,10 +40,11 @@ class _HistoryDBRunLifecycleMixin:
         self,
         run_id: str,
         start_time_utc: str,
-        metadata: JsonObject,
+        metadata: RunMetadata,
         case_id: str | None = None,
     ) -> None:
-        missing = _RECOMMENDED_METADATA_KEYS - metadata.keys()
+        metadata_payload = metadata.to_dict()
+        missing = _RECOMMENDED_METADATA_KEYS - metadata_payload.keys()
         if missing:
             LOGGER.warning(
                 "create_run %s: metadata missing recommended keys: %s",
@@ -53,7 +56,7 @@ class _HistoryDBRunLifecycleMixin:
             cur.execute(
                 "INSERT INTO runs (run_id, case_id, status, start_time_utc, metadata_json, "
                 "created_at) VALUES (?, ?, 'recording', ?, ?, ?)",
-                (run_id, case_id, start_time_utc, safe_json_dumps(metadata), now),
+                (run_id, case_id, start_time_utc, safe_json_dumps(metadata_payload), now),
             )
 
     def append_samples(
@@ -87,7 +90,7 @@ class _HistoryDBRunLifecycleMixin:
         self,
         run_id: str,
         end_time_utc: str,
-        metadata: JsonObject | None = None,
+        metadata: RunMetadata | None = None,
         case_id: str | None = None,
     ) -> bool:
         now = utc_now_iso()
@@ -106,7 +109,7 @@ class _HistoryDBRunLifecycleMixin:
             params: list[object] = [end_time_utc, now]
             if metadata is not None:
                 assignments.insert(0, "metadata_json = ?")
-                params.insert(0, safe_json_dumps(metadata))
+                params.insert(0, safe_json_dumps(metadata.to_dict()))
             if case_id is not None:
                 assignments.insert(0, "case_id = ?")
                 params.insert(0, case_id)
@@ -120,12 +123,12 @@ class _HistoryDBRunLifecycleMixin:
     def update_run_metadata(
         self,
         run_id: str,
-        metadata: JsonObject,
+        metadata: RunMetadata,
     ) -> bool:
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
-                (safe_json_dumps(metadata), run_id),
+                (safe_json_dumps(metadata.to_dict()), run_id),
             )
             return bool(int(cur.rowcount) > 0)
 
@@ -147,7 +150,7 @@ class _HistoryDBRunLifecycleMixin:
     def store_analysis(
         self,
         run_id: str,
-        analysis: JsonObject,
+        analysis: AnalysisSummary,
     ) -> bool:
         missing = _EXPECTED_ANALYSIS_KEYS - analysis.keys()
         if missing:

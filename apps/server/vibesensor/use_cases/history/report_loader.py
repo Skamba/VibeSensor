@@ -6,16 +6,16 @@ import json
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
-from vibesensor.domain import CarSnapshot
+from vibesensor.domain import CarSnapshot, RunStatus
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
-from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
+from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.use_cases.history.helpers import (
-    HistoryRecord,
     async_require_run,
-    require_analysis_ready,
     resolve_run_language,
     safe_filename,
 )
@@ -31,7 +31,7 @@ class HistoryReportRequest:
 
     cache_key: ReportPdfCacheKey
     filename: str
-    analysis_summary: JsonObject
+    analysis_summary: AnalysisSummary
     domain_test_run: TestRun | None = None
 
 
@@ -54,11 +54,17 @@ class HistoryReportRequestLoader:
         requested_lang: str | None,
     ) -> HistoryReportRequest:
         run = await async_require_run(self._history_db, run_id)
-        analysis = require_analysis_ready(run)
-        if not isinstance(analysis, dict) or not isinstance(analysis.get("findings"), list):
+        if run.status == RunStatus.ANALYZING:
+            raise AnalysisNotReadyError("Analysis is still in progress", status="in_progress")
+        if run.status == RunStatus.ERROR:
+            raise AnalysisNotReadyError(str(run.error_message or "Analysis failed"), status="error")
+        if run.analysis_corrupt:
             raise AnalysisNotReadyError(
                 "Report data unavailable for this run. Re-analyze to regenerate the PDF."
             )
+        analysis = run.analysis
+        if analysis is None:
+            raise AnalysisNotReadyError("No analysis available for this run")
 
         requested_lang = self._analysis_language(run, requested_lang)
         current_active_car_snapshot = (
@@ -69,8 +75,8 @@ class HistoryReportRequestLoader:
             metadata=analysis.get("metadata"),
             current_active_car_snapshot=current_active_car_snapshot,
         )
-        analysis_summary = dict(analysis)
-        analysis_summary["warnings"] = cast(JsonValue, summary_warning_payloads(warnings))
+        analysis_summary = cast(AnalysisSummary, dict(analysis))
+        analysis_summary["warnings"] = summary_warning_payloads(warnings)
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
@@ -84,14 +90,12 @@ class HistoryReportRequestLoader:
         )
 
     @staticmethod
-    def _metadata_cache_token(metadata: object) -> str:
-        if not is_json_object(metadata):
-            return "{}"
-        return json.dumps(metadata, sort_keys=True, default=str, ensure_ascii=False)
+    def _metadata_cache_token(metadata: RunMetadata) -> str:
+        return json.dumps(metadata.to_dict(), sort_keys=True, default=str, ensure_ascii=False)
 
     def _report_pdf_cache_key(
         self,
-        run: HistoryRecord,
+        run: StoredHistoryRun,
         run_id: str,
         requested_lang: str,
         *,
@@ -100,21 +104,21 @@ class HistoryReportRequestLoader:
         return (
             run_id,
             requested_lang,
-            str(run["analysis_completed_at"]) if "analysis_completed_at" in run else None,
-            int(run.get("sample_count", 0)),
-            self._metadata_cache_token(run.get("metadata", {})),
+            run.analysis_completed_at,
+            run.sample_count,
+            self._metadata_cache_token(run.metadata),
             current_car_snapshot_token(current_active_car_snapshot),
         )
 
     @staticmethod
-    def _report_pdf_cache_lang(run: HistoryRecord, requested_lang: str) -> str:
-        analysis = run.get("analysis")
-        if is_json_object(analysis):
+    def _report_pdf_cache_lang(run: StoredHistoryRun, requested_lang: str) -> str:
+        analysis = run.analysis
+        if analysis is not None:
             persisted_lang = str(analysis.get("lang") or "").strip().lower()
             if persisted_lang:
                 return persisted_lang
         return requested_lang
 
     @staticmethod
-    def _analysis_language(run: HistoryRecord, requested: str | None) -> str:
+    def _analysis_language(run: StoredHistoryRun, requested: str | None) -> str:
         return resolve_run_language(run, requested)

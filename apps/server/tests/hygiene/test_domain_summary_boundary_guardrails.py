@@ -36,19 +36,16 @@ def test_finding_projector_in_finding_boundary_module() -> None:
 
 
 def test_history_backend_types_do_not_export_history_run_payload() -> None:
-    """History record typing must stay local to history workflows.
-
-    `HistoryRunPayload` made persistence dicts look like a general backend
-    business contract. The only supported alias is the history-local
-    `HistoryRecord` in use_cases/history/helpers.py.
-    """
+    """History record typing must live in the dedicated shared history-record module."""
     from tests._paths import SERVER_ROOT
 
     backend_types_source = (
         SERVER_ROOT / "vibesensor" / "shared" / "types" / "backend_types.py"
     ).read_text()
-    history_helpers_source = (
-        SERVER_ROOT / "vibesensor" / "use_cases" / "history" / "helpers.py"
+    history_records_source = (
+        SERVER_ROOT / "vibesensor" / "shared" / "types" / "history_records.py"
     ).read_text()
     assert "HistoryRunPayload" not in backend_types_source
-    assert "class HistoryRecord" in history_helpers_source
+    assert "class HistoryRecord" not in backend_types_source
+    assert "class HistoryRunListEntry" in history_records_source
+    assert "class StoredHistoryRun" in history_records_source

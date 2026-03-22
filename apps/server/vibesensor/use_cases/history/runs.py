@@ -10,9 +10,9 @@ from vibesensor.shared.boundaries.summary_warning import localize_warning_list
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.shared.run_context import add_current_context_warnings
-from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
+from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
+from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.use_cases.history.helpers import (
-    HistoryRecord,
     async_require_run,
     require_analysis_ready,
     resolve_run_language,
@@ -33,15 +33,11 @@ class HistoryRunService:
         self._history_db = history_db
         self._settings_store = settings_store
 
-    async def list_runs(self) -> list[JsonObject]:
+    async def list_runs(self) -> list[HistoryRunListEntry]:
         return await asyncio.to_thread(self._history_db.list_runs)
 
-    async def get_run(self, run_id: str) -> HistoryRecord:
-        run = await async_require_run(self._history_db, run_id)
-        analysis = run.get("analysis")
-        if is_json_object(analysis):
-            return {**run, "analysis": strip_internal_fields(dict(analysis))}
-        return run
+    async def get_run(self, run_id: str) -> StoredHistoryRun:
+        return await async_require_run(self._history_db, run_id)
 
     async def get_insights(
         self,
@@ -50,11 +46,11 @@ class HistoryRunService:
     ) -> JsonObject | None:
         """Return analysis insights for a run, or ``None`` if still analyzing."""
         run = await async_require_run(self._history_db, run_id)
-        if run["status"] == RunStatus.ANALYZING:
+        if run.status == RunStatus.ANALYZING:
             return None
 
         raw_analysis = require_analysis_ready(run)
-        analysis: JsonObject = dict(raw_analysis)
+        analysis = strip_internal_fields(raw_analysis)
         current_active_car_snapshot = (
             self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )
@@ -65,10 +61,10 @@ class HistoryRunService:
         )
         response_lang = resolve_run_language(run, requested_lang)
         analysis["warnings"] = cast(JsonValue, localize_warning_list(warnings, lang=response_lang))
-        analysis["run_id"] = str(run.get("run_id") or run_id)
+        analysis["run_id"] = run.run_id or run_id
         analysis["status"] = RunStatus.COMPLETE.value
 
-        return strip_internal_fields(analysis)
+        return analysis
 
     async def delete_run(self, run_id: str) -> dict[str, str]:
         deleted, reason = await asyncio.to_thread(self._history_db.delete_run_if_safe, run_id)

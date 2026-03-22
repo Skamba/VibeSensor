@@ -11,6 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
 #: Callable that turns a persisted analysis dict into PDF bytes.
 #: Signature: ``(analysis_summary, test_run) -> bytes``.
-PdfRendererFn = Callable[[dict, "TestRun | None"], bytes]
+PdfRendererFn = Callable[[AnalysisSummary, "TestRun | None"], bytes]
 
 
 @dataclass(frozen=True)

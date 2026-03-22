@@ -25,27 +25,26 @@ from vibesensor.adapters.http.dependencies import (
     TelemetryDeps,
     UpdateDeps,
 )
+from vibesensor.domain import RunStatus
 from vibesensor.infra.runtime import RuntimeHealthState
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService, PdfRendererFn
 from vibesensor.use_cases.history.runs import HistoryRunService
 
 
-def _real_pdf_renderer(analysis_summary: dict, test_run: object | None) -> bytes:
+def _real_pdf_renderer(analysis_summary: AnalysisSummary, test_run: object | None) -> bytes:
     """Default test renderer wiring the real adapter pipeline."""
     from vibesensor.adapters.pdf.mapping import map_summary
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-    from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-    from vibesensor.shared.types.json_types import JsonObject
 
-    projected_summary, projected_test_run = prepare_history_report_analysis(
-        cast(JsonObject, analysis_summary)
-    )
+    projected_summary, projected_test_run = prepare_history_report_analysis(analysis_summary)
     if projected_test_run is not None:
         test_run = projected_test_run
-    summary = cast(AnalysisSummary, projected_summary)
-    return build_report_pdf(map_summary(summary, test_run=test_run))
+    return build_report_pdf(map_summary(projected_summary, test_run=test_run))
 
 
 def make_metadata(**overrides: Any) -> dict[str, Any]:
@@ -89,26 +88,49 @@ def sample(i: int) -> dict[str, Any]:
     }
 
 
+def _coerce_metadata(metadata: dict[str, Any] | RunMetadata) -> RunMetadata:
+    return metadata if isinstance(metadata, RunMetadata) else RunMetadata.from_dict(metadata)
+
+
+def _coerce_analysis(
+    metadata: RunMetadata,
+    samples: list[dict[str, Any] | SensorFrame],
+    analysis: dict[str, Any] | AnalysisSummary,
+) -> AnalysisSummary:
+    if {"findings", "top_causes", "warnings"}.issubset(analysis):
+        return cast(AnalysisSummary, analysis)
+    baseline = summarize_run_data(
+        metadata.to_dict(),
+        [row if isinstance(row, SensorFrame) else SensorFrame.from_dict(row) for row in samples],
+        lang=metadata.language or "en",
+        include_samples=False,
+    )
+    baseline.update(analysis)
+    return cast(AnalysisSummary, baseline)
+
+
 @dataclass
 class FakeHistoryDB:
-    metadata: dict[str, Any]
-    samples: list[dict[str, Any]]
-    analysis: dict[str, Any]
+    metadata: dict[str, Any] | RunMetadata
+    samples: list[dict[str, Any] | SensorFrame]
+    analysis: dict[str, Any] | AnalysisSummary
     analysis_completed_at: str | None = "2026-01-01T00:01:00Z"
 
-    def get_run(self, run_id: str) -> dict[str, Any] | None:
+    def get_run(self, run_id: str) -> StoredHistoryRun | None:
         if run_id != "run-1":
             return None
-        result = {
-            "run_id": run_id,
-            "status": "complete",
-            "metadata": self.metadata,
-            "analysis": self.analysis,
-        }
-        if self.analysis_completed_at is not None:
-            result["analysis_completed_at"] = self.analysis_completed_at
-        result["sample_count"] = len(self.samples)
-        return result
+        metadata = _coerce_metadata(self.metadata)
+        return StoredHistoryRun(
+            run_id=run_id,
+            status=RunStatus.COMPLETE,
+            start_time_utc=metadata.start_time_utc,
+            end_time_utc=metadata.end_time_utc,
+            metadata=metadata,
+            analysis=_coerce_analysis(metadata, self.samples, self.analysis),
+            created_at=metadata.start_time_utc,
+            sample_count=len(self.samples),
+            analysis_completed_at=self.analysis_completed_at,
+        )
 
     def iter_run_samples(self, run_id: str, batch_size: int = 1000):
         if run_id != "run-1":
@@ -128,8 +150,18 @@ class FakeHistoryDB:
             for row in self.samples
         ]
 
-    def list_runs(self) -> list[dict[str, Any]]:
-        return []
+    def list_runs(self) -> list[HistoryRunListEntry]:
+        metadata = _coerce_metadata(self.metadata)
+        return [
+            HistoryRunListEntry(
+                run_id=metadata.run_id or "run-1",
+                status=RunStatus.COMPLETE,
+                start_time_utc=metadata.start_time_utc,
+                end_time_utc=metadata.end_time_utc,
+                created_at=metadata.start_time_utc,
+                sample_count=len(self.samples),
+            )
+        ]
 
     def get_active_run_id(self) -> str | None:
         return None
@@ -406,19 +438,38 @@ def make_status_router(
         run_status: str = "complete"
         run_analysis: dict[str, Any] | None = None
 
-        def get_run(self, run_id: str) -> dict[str, Any] | None:
+        def get_run(self, run_id: str) -> StoredHistoryRun | None:
             if run_id != "run-1":
                 return None
-            payload = {
-                "run_id": run_id,
-                "status": self.run_status,
-                "analysis": self.run_analysis,
-            }
-            if include_error_message and self.run_status == "error":
-                payload["error_message"] = "Analysis failed"
-            return payload
+            metadata = _coerce_metadata(self.metadata)
+            invalid_analysis = self.run_analysis is not None and not {
+                "findings",
+                "top_causes",
+                "warnings",
+            }.issubset(self.run_analysis)
+            return StoredHistoryRun(
+                run_id=run_id,
+                status=RunStatus(self.run_status),
+                start_time_utc=metadata.start_time_utc,
+                end_time_utc=metadata.end_time_utc,
+                metadata=metadata,
+                analysis=(
+                    None
+                    if self.run_analysis is None or invalid_analysis
+                    else cast(AnalysisSummary, self.run_analysis)
+                ),
+                analysis_corrupt=invalid_analysis,
+                error_message=(
+                    "Analysis failed"
+                    if include_error_message and self.run_status == "error"
+                    else None
+                ),
+                created_at=metadata.start_time_utc,
+                sample_count=len(self.samples),
+                analysis_completed_at=self.analysis_completed_at,
+            )
 
-    metadata = {"language": "en"}
+    metadata = make_metadata(language="en")
     samples = [sample(0)]
     db = StatusDB(metadata, samples, {}, run_status=status, run_analysis=analysis)
     return create_router(FakeState(db, FakeWsHub()))
