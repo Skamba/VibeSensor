@@ -5,16 +5,64 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from test_support import response_payload
 
 from tests.conftest import FakeState
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.domain.run_status import RunStatus
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 # -- Schema v4 tests ----------------------------------------------------------
+
+
+def _metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "language": "en",
+        "source": "test",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
+
+
+def _stored_run(
+    run_id: str,
+    *,
+    status: RunStatus = RunStatus.COMPLETE,
+    metadata: dict[str, object] | RunMetadata | None = None,
+    analysis: dict[str, object] | AnalysisSummary | None = None,
+    sample_count: int = 0,
+    analysis_started_at: str | None = None,
+    analysis_completed_at: str | None = None,
+) -> StoredHistoryRun:
+    if isinstance(metadata, RunMetadata):
+        typed_metadata = metadata
+    else:
+        metadata_payload = dict(metadata or {})
+        metadata_payload.setdefault("run_id", run_id)
+        typed_metadata = RunMetadata.from_dict(metadata_payload)
+    return StoredHistoryRun(
+        run_id=run_id,
+        status=status,
+        start_time_utc=typed_metadata.start_time_utc,
+        end_time_utc=typed_metadata.end_time_utc,
+        metadata=typed_metadata,
+        created_at=typed_metadata.start_time_utc,
+        sample_count=sample_count,
+        analysis=cast(AnalysisSummary | None, analysis),
+        analysis_started_at=analysis_started_at,
+        analysis_completed_at=analysis_completed_at,
+    )
 
 
 def test_fresh_db_has_analysis_columns(tmp_path: Path) -> None:
@@ -71,21 +119,21 @@ CREATE TABLE client_names (
 
 def test_store_analysis_sets_version_and_timestamps(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
     db.finalize_run("r1", "2026-01-01T00:01:00Z")
 
     # Check analyzing state has analysis_started_at
     run = db.get_run("r1")
     assert run is not None
-    assert run["status"] == "analyzing"
-    assert run.get("analysis_started_at") is not None
+    assert run.status.value == "analyzing"
+    assert run.analysis_started_at is not None
 
     db.store_analysis("r1", {"lang": "en", "findings": []})
     run = db.get_run("r1")
     assert run is not None
-    assert run["status"] == "complete"
-    assert run.get("analysis_completed_at") is not None
-    assert run["analysis"] == {"lang": "en", "findings": []}
+    assert run.status.value == "complete"
+    assert run.analysis_completed_at is not None
+    assert run.analysis == {"lang": "en", "findings": []}
     db.close()
 
 
@@ -93,7 +141,7 @@ def test_store_analysis_persists_summary_directly(
     tmp_path: Path,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
     db.finalize_run("r1", "2026-01-01T00:01:00Z")
 
     db.store_analysis("r1", {"lang": "en", "findings": []})
@@ -106,27 +154,29 @@ def test_store_analysis_persists_summary_directly(
     # No envelope — summary stored directly
     assert '"summary"' not in raw
     assert '"lang"' in raw
-    assert db.get_run("r1").get("analysis") == {"lang": "en", "findings": []}
+    run = db.get_run("r1")
+    assert run is not None
+    assert run.analysis == {"lang": "en", "findings": []}
     db.close()
 
 
 def test_store_analysis_error_sets_completed_at(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
     db.finalize_run("r1", "2026-01-01T00:01:00Z")
     db.store_analysis_error("r1", "Test error")
 
     run = db.get_run("r1")
     assert run is not None
-    assert run["status"] == "error"
-    assert run.get("error_message") == "Test error"
-    assert run.get("analysis_completed_at") is not None
+    assert run.status.value == "error"
+    assert run.error_message == "Test error"
+    assert run.analysis_completed_at is not None
     db.close()
 
 
 def test_list_runs_includes_analysis_version(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
     db.finalize_run("r1", "2026-01-01T00:01:00Z")
     db.store_analysis("r1", {"lang": "en"})
 
@@ -217,7 +267,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     assert isinstance(run_id, str) and len(run_id) > 0
 
     # Manually create history and append samples (simulate the metrics loop)
-    db.create_run(run_id, "2026-01-01T00:00:00Z", {"run_id": run_id, "language": "en"})
+    db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, language="en"))
     logger._persistence.history_run_created = True
     samples = [_sample(i) for i in range(20)]
     db.append_samples(run_id, samples)
@@ -241,11 +291,11 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     # Verify analysis is persisted
     run = db.get_run(run_id)
     assert run is not None
-    assert run["status"] == "complete"
-    assert run.get("analysis") is not None
-    assert run["analysis"]["lang"] == "en"
-    assert run.get("analysis_started_at") is not None
-    assert run.get("analysis_completed_at") is not None
+    assert run.status.value == "complete"
+    assert run.analysis is not None
+    assert run.analysis["lang"] == "en"
+    assert run.analysis_started_at is not None
+    assert run.analysis_completed_at is not None
     db.close()
 
 
@@ -280,12 +330,7 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
         def get_run(self, run_id):
             if run_id != "run-pdf":
                 return None
-            return {
-                "run_id": run_id,
-                "status": "complete",
-                "metadata": metadata,
-                "analysis": analysis,
-            }
+            return _stored_run(run_id, metadata=metadata, analysis=analysis)
 
         def iter_run_samples(self, run_id, batch_size=1000):
             if run_id != "run-pdf":
@@ -340,12 +385,7 @@ async def test_insights_returns_persisted_analysis_no_lang() -> None:
         def get_run(self, run_id):
             if run_id != "run-ins":
                 return None
-            return {
-                "run_id": run_id,
-                "status": "complete",
-                "metadata": metadata,
-                "analysis": analysis,
-            }
+            return _stored_run(run_id, metadata=metadata, analysis=analysis)
 
     app = FastAPI()
     state = _make_fake_state(_DB())
@@ -372,7 +412,7 @@ async def test_export_offloaded_to_thread() -> None:
     @dataclass
     class _DB:
         def get_run(self, run_id):
-            return {"run_id": run_id, "status": "complete", "metadata": {}}
+            return _stored_run(run_id, metadata={})
 
         def iter_run_samples(self, run_id, batch_size=1000):
             frames = [SensorFrame.from_dict(sample) for sample in samples]

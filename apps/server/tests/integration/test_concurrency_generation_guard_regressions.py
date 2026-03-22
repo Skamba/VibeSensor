@@ -20,6 +20,7 @@ from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 
@@ -61,6 +62,19 @@ def _make_logger(tmp_path: Path, **overrides):
     }
     collab_defaults.update(overrides)
     return RunRecorder(config, **collab_defaults), db
+
+
+def _metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "source": "test",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
 
 
 # ---------------------------------------------------------------------------
@@ -113,7 +127,7 @@ class TestAutoStopGenerationGuard:
 class TestDeleteRunIfSafe:
     def test_delete_complete_run(self, tmp_path: Path) -> None:
         db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", {"run_id": "r1"})
+        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         db.finalize_run("r1", "2026-01-01T00:05:00Z")
         db.store_analysis("r1", {"score": 1})
         deleted, reason = db.delete_run_if_safe("r1")
@@ -124,7 +138,7 @@ class TestDeleteRunIfSafe:
 
     def test_refuse_recording(self, tmp_path: Path) -> None:
         db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", {"run_id": "r1"})
+        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         deleted, reason = db.delete_run_if_safe("r1")
         assert deleted is False
         assert reason == "active"
@@ -133,7 +147,7 @@ class TestDeleteRunIfSafe:
 
     def test_refuse_analyzing(self, tmp_path: Path) -> None:
         db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", {"run_id": "r1"})
+        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         db.finalize_run("r1", "2026-01-01T00:05:00Z")
         deleted, reason = db.delete_run_if_safe("r1")
         assert deleted is False
@@ -149,7 +163,7 @@ class TestDeleteRunIfSafe:
 
     def test_delete_error_run(self, tmp_path: Path) -> None:
         db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", {"run_id": "r1"})
+        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         db.store_analysis_error("r1", "boom")
         deleted, reason = db.delete_run_if_safe("r1")
         assert deleted is True
@@ -165,27 +179,26 @@ class TestDeleteRunIfSafe:
 class TestFinalizeRunWithMetadata:
     def test_atomic_metadata_and_status(self, tmp_path: Path) -> None:
         db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", {"run_id": "r1"})
-        new_meta = {"run_id": "r1", "end_time_utc": "2026-01-01T00:05:00Z", "extra": "val"}
+        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
+        new_meta = _metadata("r1", end_time_utc="2026-01-01T00:05:00Z", extra="val")
         db.finalize_run("r1", "2026-01-01T00:05:00Z", metadata=new_meta)
         run = db.get_run("r1")
         assert run is not None
-        assert run["status"] == "analyzing"
-        assert run["end_time_utc"] == "2026-01-01T00:05:00Z"
-        metadata = run.get("metadata", {})
-        assert metadata.get("extra") == "val"
+        assert run.status.value == "analyzing"
+        assert run.end_time_utc == "2026-01-01T00:05:00Z"
+        assert run.metadata.extras["extra"] == "val"
         db.close()
 
     def test_only_recording_transitions(self, tmp_path: Path) -> None:
         db = HistoryDB(tmp_path / "h.db")
-        db.create_run("r1", "2026-01-01T00:00:00Z", {"run_id": "r1"})
+        db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         db.finalize_run("r1", "2026-01-01T00:05:00Z")
         # Already analyzing — second finalize with metadata should be no-op
-        db.finalize_run("r1", "2026-01-01T00:10:00Z", metadata={"extra": "v2"})
+        db.finalize_run("r1", "2026-01-01T00:10:00Z", metadata=_metadata("r1", extra="v2"))
         run = db.get_run("r1")
         assert run is not None
-        assert run["status"] == "analyzing"
-        assert run["end_time_utc"] == "2026-01-01T00:05:00Z"
+        assert run.status.value == "analyzing"
+        assert run.end_time_utc == "2026-01-01T00:05:00Z"
         db.close()
 
 
@@ -217,7 +230,7 @@ class TestFinalizeReturnGatesAnalysis:
         assert isinstance(run_id, str) and len(run_id) > 0
 
         # Simulate a run that created history and wrote samples
-        db.create_run(run_id, "2026-01-01T00:00:00Z", {"run_id": run_id})
+        db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id))
         logger._persistence.history_run_created = True
         logger._persistence.written_sample_count = 5
 

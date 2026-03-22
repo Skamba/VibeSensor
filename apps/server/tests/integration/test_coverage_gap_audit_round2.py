@@ -42,6 +42,7 @@ from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.websocket.hub import WebSocketHub
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.workers.worker_pool import WorkerPool
+from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.use_cases.history.exports import flatten_for_csv as _flatten_for_csv
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -57,6 +58,19 @@ def _proc(**kwargs) -> SignalProcessor:
     }
     defaults.update(kwargs)
     return SignalProcessor(**defaults)
+
+
+def _metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "source": "test",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
 
 
 def _inject(proc: SignalProcessor, cid: str, n: int = 1024, sr: int = 800) -> None:
@@ -405,32 +419,37 @@ class TestGPSReconnectBackoff:
 
 class TestHistoryDBAnalysisIdempotency:
     def test_store_analysis_twice_keeps_first(self, history_db: HistoryDB) -> None:
-        history_db.create_run("r1", "2026-01-01T00:00:00Z", {})
+        history_db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
         history_db.store_analysis("r1", {"findings": ["a"]})
         # Second store should be no-op (run already complete)
         history_db.store_analysis("r1", {"findings": ["b"]})
         run = history_db.get_run("r1")
         assert run is not None
-        assert run["analysis"]["findings"] == ["a"], "Second store should not overwrite"
+        assert run.analysis is not None
+        assert run.analysis["findings"] == ["a"], "Second store should not overwrite"
 
     def test_store_analysis_error_transitions_to_error(self, history_db: HistoryDB) -> None:
-        history_db.create_run("r1", "2026-01-01T00:00:00Z", {})
+        history_db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
         history_db.store_analysis_error("r1", "pipeline crash")
         run = history_db.get_run("r1")
         assert run is not None
-        assert run["status"] == "error"
-        assert run["error_message"] == "pipeline crash"
+        assert run.status.value == "error"
+        assert run.error_message == "pipeline crash"
 
     def test_get_run_analysis_returns_stored_analysis(self, history_db: HistoryDB) -> None:
-        history_db.create_run("r1", "2026-01-01T00:00:00Z", {})
+        history_db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         # No analysis yet
-        assert history_db.get_run("r1").get("analysis") is None
+        run = history_db.get_run("r1")
+        assert run is not None
+        assert run.analysis is None
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
         history_db.store_analysis("r1", {"result": "ok"})
         # Complete — should return
-        result = history_db.get_run("r1").get("analysis")
+        run = history_db.get_run("r1")
+        assert run is not None
+        result = run.analysis
         assert result is not None
         assert result["result"] == "ok"
 
@@ -442,13 +461,14 @@ class TestHistoryDBAnalysisIdempotency:
 
 class TestHistoryDBFinalizeNoOp:
     def test_finalize_run_noop_on_already_complete(self, history_db: HistoryDB) -> None:
-        history_db.create_run("r1", "2026-01-01T00:00:00Z", {})
+        history_db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
         history_db.store_analysis("r1", {"ok": True})
         # Run is now 'complete'.  Calling finalize again should be a no-op.
         history_db.finalize_run("r1", "2026-01-01T00:10:00Z")
         run = history_db.get_run("r1")
-        assert run["status"] == "complete"
+        assert run is not None
+        assert run.status.value == "complete"
 
     def test_finalize_run_noop_on_missing_run(self, history_db: HistoryDB) -> None:
         # Should not raise
@@ -459,20 +479,21 @@ class TestHistoryDBFinalizeNoOp:
         self,
         history_db: HistoryDB,
     ) -> None:
-        history_db.create_run("r1", "2026-01-01T00:00:00Z", {"v": 1})
+        history_db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", v=1))
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
         # Now analyzing — finalize_run with metadata should no-op
-        history_db.finalize_run("r1", "2026-01-01T00:10:00Z", metadata={"v": 2})
+        history_db.finalize_run("r1", "2026-01-01T00:10:00Z", metadata=_metadata("r1", v=2))
         run = history_db.get_run("r1")
         # Metadata should still be the original if the call didn't match status
-        assert run["status"] == "analyzing"
+        assert run is not None
+        assert run.status.value == "analyzing"
 
     def test_get_run_missing_returns_none(self, history_db: HistoryDB) -> None:
         assert history_db.get_run("nonexistent") is None
 
     def test_get_active_run_id(self, history_db: HistoryDB) -> None:
         assert history_db.get_active_run_id() is None
-        history_db.create_run("r1", "2026-01-01T00:00:00Z", {})
+        history_db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         assert history_db.get_active_run_id() == "r1"
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
         assert history_db.get_active_run_id() is None

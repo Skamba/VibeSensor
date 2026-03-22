@@ -24,6 +24,7 @@ from vibesensor.infra.runtime.client_snapshot import (
 )
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.registry_updates import _JITTER_EMA_ALPHA, _RESTART_SEQ_GAP
+from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.use_cases.updates.firmware_release_fetcher import GitHubReleaseFetcher
 from vibesensor.use_cases.updates.firmware_types import FirmwareCacheConfig
 from vibesensor.use_cases.updates.release_fetcher import (
@@ -38,6 +39,20 @@ from vibesensor.use_cases.updates.release_fetcher import (
 # ---------------------------------------------------------------------------
 
 _CLIENT_ID = bytes.fromhex("aabbccddeeff")
+
+
+def _metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2024-01-01T00:00:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
+
+
 _SAMPLES_200X3 = np.zeros((200, 3), dtype=np.int16)
 
 
@@ -165,7 +180,7 @@ class TestRunStatus:
 
     def test_history_db_uses_run_status(self, db: HistoryDB) -> None:
         """delete_run_if_safe should return RunStatus.ANALYZING for analyzing runs."""
-        db.create_run("run-1", "2024-01-01T00:00:00Z", {})
+        db.create_run("run-1", "2024-01-01T00:00:00Z", _metadata("run-1"))
         db.finalize_run("run-1", "2024-01-01T00:01:00Z")
         deleted, reason = db.delete_run_if_safe("run-1")
         assert not deleted

@@ -17,8 +17,22 @@ import pytest
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.shared.types.backend_types import RunMetadata
 
 # ── HistoryDB — sqlite3.Error caught, bugs propagate ─────────────────────
+
+
+def _metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "source": "test",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
 
 
 class TestHistoryDBExceptionDiscipline:
@@ -28,15 +42,15 @@ class TestHistoryDBExceptionDiscipline:
         """sqlite3.IntegrityError (a sqlite3.Error subclass) is caught by _cursor."""
         db = HistoryDB(tmp_path / "test.db")
         run_id = "run-exc-test"
-        db.create_run(run_id, "2026-01-01T00:00:00Z", {"src": "t"})
+        db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, src="t"))
 
         # Duplicate insert → IntegrityError, which is sqlite3.Error
         with pytest.raises(sqlite3.IntegrityError):
-            db.create_run(run_id, "2026-01-01T00:00:00Z", {"src": "t"})
+            db.create_run(run_id, "2026-01-01T00:00:00Z", _metadata(run_id, src="t"))
 
         # DB is still usable after IntegrityError (was rolled back)
         runs = db.list_runs()
-        assert any(r["run_id"] == run_id for r in runs)
+        assert any(r.run_id == run_id for r in runs)
         db.close()
 
     def test_type_error_in_write_tx_propagates(self, tmp_path: Path) -> None:
