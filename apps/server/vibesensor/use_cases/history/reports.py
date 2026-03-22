@@ -13,13 +13,14 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from vibesensor.domain import CarSnapshot
+from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
 from vibesensor.shared.exceptions import AnalysisNotReadyError, ProcessingError
 from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.use_cases.history.helpers import (
     HistoryRecord,
     async_require_run,
@@ -113,10 +114,13 @@ class HistoryReportService:
         current_active_car_snapshot = (
             self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )
-        analysis_summary = add_current_context_warnings(
-            analysis,
+        warnings = add_current_context_warnings(
+            analysis.get("warnings"),
+            metadata=analysis.get("metadata"),
             current_active_car_snapshot=current_active_car_snapshot,
         )
+        analysis_summary = dict(analysis)
+        analysis_summary["warnings"] = cast(JsonValue, summary_warning_payloads(warnings))
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
