@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from math import inf, nan
 
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.order_bands import (
     build_diagnostic_settings,
     tolerance_for_order,
@@ -11,7 +12,7 @@ from vibesensor.shared.order_bands import (
 _DEFAULT_SPEED_MPS = 27.7777777778  # 100 km/h
 
 
-def _default_settings_and_orders() -> tuple[dict, dict]:
+def _default_settings_and_orders() -> tuple[AnalysisSettingsSnapshot, dict[str, float]]:
     """Return ``(settings, orders)`` at the default 100 km/h test speed."""
     settings = build_diagnostic_settings({})
     orders = vehicle_orders_hz(speed_mps=_DEFAULT_SPEED_MPS, settings=settings)
@@ -33,12 +34,8 @@ def test_tolerance_for_order_honors_floor_and_cap() -> None:
 
 def test_vehicle_orders_hz_uses_tire_deflection_factor() -> None:
     """vehicle_orders_hz should compute frequencies with the deflected circumference."""
-    from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-
-    settings_no_deflection = dict(AnalysisSettingsSnapshot.DEFAULTS)
-    settings_no_deflection["tire_deflection_factor"] = 1.0
-    settings_with_deflection = dict(AnalysisSettingsSnapshot.DEFAULTS)
-    settings_with_deflection["tire_deflection_factor"] = 0.97
+    settings_no_deflection = build_diagnostic_settings({"tire_deflection_factor": 1.0})
+    settings_with_deflection = build_diagnostic_settings({"tire_deflection_factor": 0.97})
 
     orders_no = vehicle_orders_hz(speed_mps=30.0, settings=settings_no_deflection)
     orders_with = vehicle_orders_hz(speed_mps=30.0, settings=settings_with_deflection)
