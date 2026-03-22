@@ -5,40 +5,27 @@ import json
 import math
 import os
 import re
+import time
 from math import floor
 
 import pytest
 
+from tests_e2e._docker_edge_helpers import _cleanup_clients, _cleanup_run
 from tests_e2e.e2e_helpers import (
     api_bytes,
     api_json,
     history_run_ids,
+    non_ref_findings,
+    normalize_location,
     parse_export_zip,
     pdf_text,
     run_simulator,
+    run_cleanup_steps,
     wait_for,
+    wait_run_status,
 )
 
 pytestmark = pytest.mark.e2e
-
-
-# ---------------------------------------------------------------------------
-# Parsing and aggregation helpers used by validation functions
-# ---------------------------------------------------------------------------
-
-
-def _normalize_location(s: str) -> str:
-    """Lowercase and collapse whitespace/hyphens/underscores to a single space."""
-    return re.sub(r"[\s\-_]+", " ", str(s).strip().lower())
-
-
-def _non_ref_findings(data: dict) -> list[dict]:
-    """Return non-reference findings from a payload containing a 'findings' list."""
-    return [
-        f
-        for f in data.get("findings", [])
-        if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
-    ]
 
 
 def _parse_csv_value(value: str) -> object:
@@ -263,8 +250,8 @@ def _validate_primary_finding_consistency(
     Asserts that suspected_source, strongest_location, and frequency_hz_or_order
     are identical in both payloads for the first non-reference finding.
     """
-    run_findings = _non_ref_findings(run_analysis)
-    ins_findings = _non_ref_findings(insights)
+    run_findings = non_ref_findings(run_analysis)
+    ins_findings = non_ref_findings(insights)
     assert run_findings, "[cross-source] run.analysis has no non-reference findings"
     assert ins_findings, "[cross-source] insights has no non-reference findings"
 
@@ -275,8 +262,8 @@ def _validate_primary_finding_consistency(
         f"[cross-source] suspected_source mismatch: "
         f"run={run_pf.get('suspected_source')!r} insights={ins_pf.get('suspected_source')!r}"
     )
-    assert _normalize_location(str(run_pf.get("strongest_location") or "")) == (
-        _normalize_location(str(ins_pf.get("strongest_location") or ""))
+    assert normalize_location(str(run_pf.get("strongest_location") or "")) == (
+        normalize_location(str(ins_pf.get("strongest_location") or ""))
     ), (
         f"[cross-source] strongest_location mismatch: "
         f"run={run_pf.get('strongest_location')!r} insights={ins_pf.get('strongest_location')!r}"
@@ -350,17 +337,17 @@ def _validate_bucket_distribution(
 
     strongest_by_p95 = max(p95_by_loc, key=lambda k: p95_by_loc[k])
 
-    run_findings = _non_ref_findings(run_analysis)
+    run_findings = non_ref_findings(run_analysis)
     if run_findings:
         primary_location = str(run_findings[0].get("strongest_location") or "")
-        assert _normalize_location(strongest_by_p95) == _normalize_location(primary_location), (
+        assert normalize_location(strongest_by_p95) == normalize_location(primary_location), (
             f"[bucket] strongest_location_by_p95={strongest_by_p95!r} does not match "
             f"primary finding strongest_location={primary_location!r}"
         )
 
     if analysis_rows:
         first_location = str(analysis_rows[0].get("location") or "")
-        assert _normalize_location(first_location) == _normalize_location(strongest_by_p95), (
+        assert normalize_location(first_location) == normalize_location(strongest_by_p95), (
             f"[bucket] sensor_intensity_by_location[0]={first_location!r} "
             f"expected strongest={strongest_by_p95!r} (by p95)"
         )
@@ -420,7 +407,7 @@ def _validate_primary_finding_vs_graph(run_analysis: dict) -> None:
     The top-amplitude spike in the peaks_table (or fft_spectrum as fallback) must be
     within max(1.0 Hz, 10% relative) of the median matched_hz in the primary finding.
     """
-    run_findings = _non_ref_findings(run_analysis)
+    run_findings = non_ref_findings(run_analysis)
     if not run_findings:
         return
 
@@ -480,10 +467,10 @@ def _validate_pdf_report(pdf_bytes: bytes, primary_finding: dict) -> None:
         "[pdf] primary suspected_source ('wheel / tire') not found in PDF"
     )
 
-    # --- strongest location (rear-left) ---
+    # --- strongest location ---
     location_raw = str(primary_finding.get("strongest_location") or "")
     if location_raw:
-        loc_normalized = _normalize_location(location_raw)
+        loc_normalized = normalize_location(location_raw)
         assert loc_normalized in pdf or location_raw.lower() in pdf, (
             f"[pdf] strongest_location {location_raw!r} not found in PDF"
         )
@@ -512,97 +499,111 @@ def _validate_pdf_report(pdf_bytes: bytes, primary_finding: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_e2e_docker_rear_left_wheel_fault() -> None:
+@pytest.mark.parametrize(
+    "fault_wheel", ["front-left", "rear-left"], ids=["front-left", "rear-left"]
+)
+def test_e2e_docker_localized_wheel_fault(fault_wheel: str) -> None:
     base_url = os.environ["VIBESENSOR_BASE_URL"]
     sim_host = os.environ["VIBESENSOR_SIM_SERVER_HOST"]
     sim_data_port = os.environ["VIBESENSOR_SIM_DATA_PORT"]
     sim_control_port = os.environ["VIBESENSOR_SIM_CONTROL_PORT"]
     sim_duration = os.environ["VIBESENSOR_SIM_DURATION"]
-    before_ids = history_run_ids(base_url)
-
-    api_json(
-        base_url,
-        "/api/settings/speed-source",
-        method="POST",
-        body={"speedSource": "manual", "manualSpeedKph": 100.0},
-    )
-    start = api_json(base_url, "/api/recording/start", method="POST")
-    assert start["enabled"] is True
-    run_id = str(start["run_id"])
-    run_simulator(
-        base_url=base_url,
-        sim_host=sim_host,
-        sim_data_port=sim_data_port,
-        sim_control_port=sim_control_port,
-        duration_s=float(sim_duration),
-        count=4,
-    )
-
-    api_json(base_url, "/api/recording/stop", method="POST")
-    run = wait_for(
-        lambda: api_json(base_url, f"/api/history/{run_id}") if run_id not in before_ids else None,
+    expected_location = normalize_location(fault_wheel)
+    run_id: str | None = None
+    _cleanup_clients(base_url)
+    wait_for(
+        lambda: not api_json(base_url, "/api/clients").get("clients"),
         timeout_s=5.0,
         interval_s=0.5,
-        message=f"Run {run_id} did not become visible in history",
+        message="simulator clients did not quiesce before wheel-fault E2E run",
     )
-    assert run.get("status") in {"analyzing", "complete"}
-    wait_for(
-        lambda: (
-            api_json(base_url, f"/api/history/{run_id}")
-            if api_json(base_url, f"/api/history/{run_id}").get("status") == "complete"
-            else None
-        ),
-        timeout_s=90.0,
-        interval_s=1.0,
-        message=f"Run {run_id} did not complete in time",
-    )
+    time.sleep(2.5)
+    try:
+        api_json(
+            base_url,
+            "/api/settings/speed-source",
+            method="POST",
+            body={"speedSource": "manual", "manualSpeedKph": 100.0},
+        )
+        start = api_json(base_url, "/api/recording/start", method="POST")
+        assert start["enabled"] is True
+        run_id = str(start["run_id"])
+        run_simulator(
+            base_url=base_url,
+            sim_host=sim_host,
+            sim_data_port=sim_data_port,
+            sim_control_port=sim_control_port,
+            duration_s=float(sim_duration),
+            count=4,
+            fault_wheel=fault_wheel,
+        )
 
-    insights = api_json(base_url, f"/api/history/{run_id}/insights")
-    findings = _non_ref_findings(insights)
-    assert findings, "Expected non-reference findings"
+        api_json(base_url, "/api/recording/stop", method="POST")
+        wait_for(
+            lambda: run_id if run_id in history_run_ids(base_url) else None,
+            timeout_s=10.0,
+            interval_s=0.5,
+            message=f"Run {run_id} did not become visible in history",
+        )
+        run = api_json(base_url, f"/api/history/{run_id}")
+        assert run.get("status") in {"analyzing", "complete"}
+        wait_run_status(base_url, run_id, timeout_s=90.0)
 
-    primary = findings[0]
-    assert primary.get("suspected_source") == "wheel/tire"
-    primary_location = str(primary.get("strongest_location") or "").lower()
-    assert "rear left" in primary_location or "rear-left" in primary_location
-    top_causes = [item for item in insights.get("top_causes", []) if isinstance(item, dict)]
-    assert top_causes, "Expected ranked top causes"
-    assert top_causes[0].get("suspected_source") == "wheel/tire"
+        insights = api_json(base_url, f"/api/history/{run_id}/insights")
+        findings = non_ref_findings(insights)
+        assert findings, "Expected non-reference findings"
 
-    pdf_resp = api_bytes(base_url, f"/api/history/{run_id}/report.pdf?lang=en")
-    assert str(pdf_resp.headers.get("content-type", "")).startswith("application/pdf")
-    assert pdf_resp.body[:5] == b"%PDF-"
-    report_text = pdf_text(pdf_resp.body)
-    assert "primary system:" in report_text
-    assert "wheel / tire" in report_text
-    assert "rear left" in report_text or "rear-left" in report_text
-    assert "primary system: driveline" not in report_text
-    assert "primary system: engine" not in report_text
+        primary = findings[0]
+        assert primary.get("suspected_source") == "wheel/tire"
+        primary_location = normalize_location(str(primary.get("strongest_location") or ""))
+        assert expected_location in primary_location
+        top_causes = [item for item in insights.get("top_causes", []) if isinstance(item, dict)]
+        assert top_causes, "Expected ranked top causes"
+        assert top_causes[0].get("suspected_source") == "wheel/tire"
 
-    # ------------------------------------------------------------------
-    # Alignment validation: cross-source consistency checks
-    # ------------------------------------------------------------------
+        pdf_resp = api_bytes(base_url, f"/api/history/{run_id}/report.pdf?lang=en")
+        assert str(pdf_resp.headers.get("content-type", "")).startswith("application/pdf")
+        assert pdf_resp.body[:5] == b"%PDF-"
+        report_text = pdf_text(pdf_resp.body)
+        report_text_normalized = normalize_location(report_text)
+        assert "primary system:" in report_text
+        assert "wheel / tire" in report_text
+        assert expected_location in report_text_normalized
+        assert "primary system: driveline" not in report_text
+        assert "primary system: engine" not in report_text
 
-    run_payload = api_json(base_url, f"/api/history/{run_id}")
-    export_resp = api_bytes(base_url, f"/api/history/{run_id}/export")
-    assert str(export_resp.headers.get("content-type", "")).startswith("application/zip")
-    _, raw_export_samples, _ = parse_export_zip(export_resp.body)
-    export_samples = [
-        {k: _parse_csv_value(v) for k, v in row.items()} for row in raw_export_samples
-    ]
-    run_analysis = run_payload.get("analysis") or {}
+        # ------------------------------------------------------------------
+        # Alignment validation: cross-source consistency checks
+        # ------------------------------------------------------------------
 
-    # Validation 1: primary finding consistent across run payload and insights
-    _validate_primary_finding_consistency(run_analysis, insights)
+        run_payload = api_json(base_url, f"/api/history/{run_id}")
+        export_resp = api_bytes(base_url, f"/api/history/{run_id}/export")
+        assert str(export_resp.headers.get("content-type", "")).startswith("application/zip")
+        _, raw_export_samples, _ = parse_export_zip(export_resp.body)
+        export_samples = [
+            {k: _parse_csv_value(v) for k, v in row.items()} for row in raw_export_samples
+        ]
+        run_analysis = run_payload.get("analysis") or {}
 
-    # Validation 2: bucket distribution matches raw exported samples
-    _validate_bucket_distribution(run_analysis, export_samples)
+        # Validation 1: primary finding consistent across run payload and insights
+        _validate_primary_finding_consistency(run_analysis, insights)
 
-    # Validation 3: fft_spectrum bins match independently computed spectrum
-    _validate_graph_spikes(run_analysis, export_samples)
+        # Validation 2: bucket distribution matches raw exported samples
+        _validate_bucket_distribution(run_analysis, export_samples)
 
-    # Validation 4: primary finding matched Hz aligns with top graph spike
-    _validate_primary_finding_vs_graph(run_analysis)
+        # Validation 3: fft_spectrum bins match independently computed spectrum
+        _validate_graph_spikes(run_analysis, export_samples)
 
-    # Validation 5: PDF reflects primary finding source, location, and order label
-    _validate_pdf_report(pdf_resp.body, primary)
+        # Validation 4: primary finding matched Hz aligns with top graph spike
+        _validate_primary_finding_vs_graph(run_analysis)
+
+        # Validation 5: PDF reflects primary finding source, location, and order label
+        _validate_pdf_report(pdf_resp.body, primary)
+    finally:
+        cleanup_steps = [
+            ("stop recording", lambda: api_json(base_url, "/api/recording/stop", method="POST")),
+            ("cleanup simulator clients", lambda: _cleanup_clients(base_url)),
+        ]
+        if run_id is not None:
+            cleanup_steps.insert(1, ("cleanup run", lambda rid=run_id: _cleanup_run(base_url, rid)))
+        run_cleanup_steps(*cleanup_steps)

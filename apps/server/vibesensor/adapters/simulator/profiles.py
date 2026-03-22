@@ -70,6 +70,21 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         modulation_hz=0.35,
         modulation_depth=0.10,
     ),
+    "engine_order": Profile(
+        name="engine_order",
+        tones=(
+            (DEFAULT_ORDER_HZ["engine_1x"], (185.0, 128.0, 248.0)),
+            (DEFAULT_ORDER_HZ["engine_2x"], (62.0, 46.0, 92.0)),
+            (DEFAULT_ORDER_HZ["engine_1x"] * 0.5, (30.0, 22.0, 44.0)),
+        ),
+        noise_std=18.0,
+        bump_probability=0.001,
+        bump_decay=0.96,
+        bump_strength=(16.0, 13.0, 24.0),
+        modulation_hz=0.24,
+        modulation_depth=0.10,
+        reference_speed_kmh=DEFAULT_SPEED_KMH,
+    ),
     "rough_road": Profile(
         name="rough_road",
         tones=(
