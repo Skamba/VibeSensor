@@ -200,6 +200,7 @@ class UpdateJobStatus:
             runtime=UpdateRuntimeDetails.from_payload(runtime_raw),
         )
 
+
 @dataclass(frozen=True, slots=True)
 class UpdateRuntimeDetails:
     """Runtime/build metadata tracked during update lifecycle and exposed over HTTP."""
