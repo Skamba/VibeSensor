@@ -1,6 +1,6 @@
 """Weird-sensor-mix direct-injection tests.
 
-100 parameterized cases covering ambiguity-aware localization with
+154 parameterized cases covering ambiguity-aware localization with
 non-standard sensor topologies (cabin-only, mixed, sparse).
 """
 
@@ -16,6 +16,8 @@ from test_support.assertions import (
     assert_wheel_weak_spatial,
 )
 from test_support.core import (
+    ADDITIONAL_CAR_PROFILES,
+    CAR_PROFILES,
     SENSOR_DRIVER_SEAT,
     SENSOR_ENGINE,
     SENSOR_FL,
@@ -27,6 +29,7 @@ from test_support.core import (
     SENSOR_RR,
     SENSOR_TRUNK,
     assert_summary_sections,
+    profile_metadata,
 )
 from test_support.fault_scenarios import make_fault_samples
 from test_support.sample_scenarios import make_diffuse_samples, make_noise_samples
@@ -75,9 +78,15 @@ _SPARSE_SENSORS: list[tuple[str, str]] = [
     ("rear-sub", SENSOR_REAR_SUBFRAME),
 ]
 
+# Explicit topology coverage plan: one existing sports-coupe baseline plus two
+# new profiles that stretch tall-gearing and cargo/tire geometry.
+_TOPOLOGY_PROFILES = [CAR_PROFILES[2], *ADDITIONAL_CAR_PROFILES]
+_TOPOLOGY_PROFILE_IDS = [p["name"] for p in _TOPOLOGY_PROFILES]
+
 
 # ===================================================================
-# 1. test_cabin_only_no_exact_corner — 15 cases (5 mixes × 3 speeds)
+# 1. test_cabin_only_no_exact_corner — 45 cases
+#    (5 mixes × 3 speeds × 3 profiles)
 # ===================================================================
 
 
@@ -87,7 +96,13 @@ _SPARSE_SENSORS: list[tuple[str, str]] = [
     ids=[m[0] for m in _CABIN_SENSOR_MIXES],
 )
 @pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
-def test_cabin_only_no_exact_corner(mix_id: str, sensors: list[str], speed: float) -> None:
+@pytest.mark.parametrize("profile", _TOPOLOGY_PROFILES, ids=_TOPOLOGY_PROFILE_IDS)
+def test_cabin_only_no_exact_corner(
+    mix_id: str,
+    sensors: list[str],
+    speed: float,
+    profile: dict[str, float | str],
+) -> None:
     """Cabin-only sensors should not claim an exact wheel corner."""
     samples = make_fault_samples(
         fault_sensor=sensors[0],
@@ -98,8 +113,8 @@ def test_cabin_only_no_exact_corner(mix_id: str, sensors: list[str], speed: floa
         fault_vib_db=26.0,
         transfer_fraction=0.3,
     )
-    summary = run_analysis(samples)
-    tag = f"{mix_id}@{speed}"
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
+    tag = f"{mix_id}@{speed}/{profile['name']}"
     assert_summary_sections(summary)
     assert_no_exact_corner_claim(summary, confidence_threshold=0.25, msg=tag)
     assert_wheel_weak_spatial(summary, msg=tag)
@@ -265,7 +280,8 @@ def test_asymmetric_cabin_front_vs_rear(combo_id: str, sensors: list[str], speed
 
 
 # ===================================================================
-# 6. test_sparse_single_non_wheel — 12 cases (6 sensors × 2 speeds)
+# 6. test_sparse_single_non_wheel — 36 cases
+#    (6 sensors × 2 speeds × 3 profiles)
 # ===================================================================
 
 _SPARSE_SPEEDS = [60.0, 100.0]
@@ -278,7 +294,13 @@ _SPARSE_SPEED_IDS = ["60kph", "100kph"]
     ids=[s[0] for s in _SPARSE_SENSORS],
 )
 @pytest.mark.parametrize("speed", _SPARSE_SPEEDS, ids=_SPARSE_SPEED_IDS)
-def test_sparse_single_non_wheel(sensor_id: str, sensor: str, speed: float) -> None:
+@pytest.mark.parametrize("profile", _TOPOLOGY_PROFILES, ids=_TOPOLOGY_PROFILE_IDS)
+def test_sparse_single_non_wheel(
+    sensor_id: str,
+    sensor: str,
+    speed: float,
+    profile: dict[str, float | str],
+) -> None:
     """A single non-wheel sensor should not claim an exact corner."""
     samples = make_fault_samples(
         fault_sensor=sensor,
@@ -289,8 +311,8 @@ def test_sparse_single_non_wheel(sensor_id: str, sensor: str, speed: float) -> N
         fault_vib_db=26.0,
         transfer_fraction=0.0,
     )
-    summary = run_analysis(samples)
-    tag = f"{sensor_id}@{speed}"
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
+    tag = f"{sensor_id}@{speed}/{profile['name']}"
     assert_summary_sections(summary)
     assert_no_exact_corner_claim(summary, confidence_threshold=0.25, msg=tag)
 

@@ -12,19 +12,24 @@ from typing import Any
 
 import pytest
 from test_support import (
+    ADDITIONAL_CAR_PROFILE_IDS,
+    ADDITIONAL_CAR_PROFILES,
     ALL_WHEEL_SENSORS,
     CAR_PROFILE_IDS,
     CAR_PROFILES,
     CORNER_SENSORS,
+    SENSOR_DRIVER_SEAT,
     SENSOR_FL,
     SENSOR_FR,
     SENSOR_RL,
     SENSOR_RR,
+    SENSOR_TRUNK,
     SPEED_HIGH,
     SPEED_MID,
     _stable_hash,
     assert_confidence_between,
     assert_diagnosis_contract,
+    assert_no_exact_corner_claim,
     assert_pairwise_monotonic,
     assert_strongest_location,
     assert_tolerant_no_fault,
@@ -434,3 +439,55 @@ def test_speed_jitter_baseline_no_fault(profile: dict[str, Any]) -> None:
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg="speed-jitter-baseline")
+
+
+# F.14 – Cabin + engine/wheel overlap on the new profile additions (4 cases)
+
+_CABIN_OVERLAP_MIXES = [
+    ("driver-only", [SENSOR_DRIVER_SEAT]),
+    ("seat+trunk", [SENSOR_DRIVER_SEAT, SENSOR_TRUNK]),
+]
+
+
+@pytest.mark.parametrize("profile", ADDITIONAL_CAR_PROFILES, ids=ADDITIONAL_CAR_PROFILE_IDS)
+@pytest.mark.parametrize(
+    ("cabin_id", "cabin_sensors"),
+    _CABIN_OVERLAP_MIXES,
+    ids=[mix[0] for mix in _CABIN_OVERLAP_MIXES],
+)
+def test_cabin_overlap_stays_non_localized(
+    profile: dict[str, Any],
+    cabin_id: str,
+    cabin_sensors: list[str],
+) -> None:
+    """Cabin-only overlap on the new profiles should not claim an exact wheel corner."""
+    samples: list[dict[str, Any]] = []
+    samples.extend(
+        make_profile_engine_order_samples(
+            profile=profile,
+            sensors=cabin_sensors,
+            speed_kmh=SPEED_MID,
+            n_samples=15,
+            engine_amp=0.03,
+            engine_vib_db=20.0,
+        ),
+    )
+    samples.extend(
+        make_profile_fault_samples(
+            profile=profile,
+            fault_sensor=cabin_sensors[0],
+            sensors=cabin_sensors,
+            speed_kmh=SPEED_MID,
+            n_samples=30,
+            start_t_s=15.0,
+            fault_amp=0.06,
+            fault_vib_db=26.0,
+            transfer_fraction=0.3 if len(cabin_sensors) > 1 else 0.0,
+        ),
+    )
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
+    assert_no_exact_corner_claim(
+        summary,
+        confidence_threshold=0.30,
+        msg=f"{cabin_id}/{profile['name']}",
+    )

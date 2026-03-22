@@ -119,6 +119,28 @@ CAR_PROFILES: list[dict[str, Any]] = [
 
 CAR_PROFILE_IDS: list[str] = [p["name"] for p in CAR_PROFILES]
 
+# Additional profile shapes used by the broader coverage-plan expansion.
+ADDITIONAL_CAR_PROFILES: list[dict[str, Any]] = [
+    {
+        "name": "luxury_sedan",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0,
+        "final_drive_ratio": 2.79,
+        "current_gear_ratio": 0.67,
+    },
+    {
+        "name": "cargo_van",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 75.0,
+        "rim_in": 16.0,
+        "final_drive_ratio": 4.30,
+        "current_gear_ratio": 0.79,
+    },
+]
+
+ADDITIONAL_CAR_PROFILE_IDS: list[str] = [p["name"] for p in ADDITIONAL_CAR_PROFILES]
+
 
 def _normalize_wheel_slot(name: str) -> str | None:
     normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
