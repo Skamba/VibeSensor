@@ -33,11 +33,9 @@ from vibesensor.use_cases.updates.validation import (
     MIN_FREE_DISK_BYTES,
     validate_prerequisites,
 )
-from vibesensor.use_cases.updates.wifi import (
-    UpdateWifiController,
-    build_default_wifi_config,
-    parse_wifi_diagnostics,
-)
+from vibesensor.use_cases.updates.wifi import UpdateWifiController
+from vibesensor.use_cases.updates.wifi_config import build_default_wifi_config
+from vibesensor.use_cases.updates.wifi_diagnostics import parse_wifi_diagnostics
 
 LOGGER = logging.getLogger(__name__)
 
