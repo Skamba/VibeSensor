@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from test_support import response_payload
 
 from vibesensor.domain import AnalysisSettingsSnapshot
+from vibesensor.shared.types.backend_types import CarConfigPayload, CarsSnapshot
 
 
 def _make_default_snapshot() -> AnalysisSettingsSnapshot:
@@ -16,13 +17,23 @@ def _make_default_snapshot() -> AnalysisSettingsSnapshot:
 def _make_car_payload(
     car_id: str = "car-1",
     name: str = "Test Car",
-) -> dict[str, object]:
+) -> CarConfigPayload:
     return {
         "id": car_id,
         "name": name,
         "type": "sedan",
         "aspects": {"tire_width_mm": 225.0},
     }
+
+
+def _make_cars_snapshot(
+    cars: list[dict[str, object]] | None = None,
+    active_car_id: str | None = "car-1",
+) -> CarsSnapshot:
+    return CarsSnapshot(
+        cars=cars or [_make_car_payload()],
+        active_car_id=active_car_id,
+    )
 
 
 def _find_endpoint(router, path: str, method: str = "GET"):
@@ -39,10 +50,7 @@ def _settings_router(fake_state):
     from vibesensor.adapters.http.settings import create_settings_routes
 
     fake_state.settings_store.analysis_settings_snapshot.return_value = _make_default_snapshot()
-    fake_state.settings_store.get_cars.return_value = {
-        "cars": [_make_car_payload()],
-        "activeCarId": "car-1",
-    }
+    fake_state.settings_store.get_cars.return_value = _make_cars_snapshot()
     return create_settings_routes(
         fake_state.settings_store,
         fake_state.gps_monitor,
@@ -84,10 +92,10 @@ class TestDeleteCarEndpoint:
         endpoint = _find_endpoint(router, "/api/settings/cars/{car_id}", "DELETE")
         assert endpoint is not None
 
-        state.settings_store.get_cars.return_value = {
-            "cars": [],
-            "activeCarId": None,
-        }
+        state.settings_store.get_cars.return_value = _make_cars_snapshot(
+            cars=[],
+            active_car_id=None,
+        )
 
         with pytest.raises(HTTPException) as exc_info:
             await endpoint(car_id="no-such-car")
@@ -99,14 +107,11 @@ class TestDeleteCarEndpoint:
         endpoint = _find_endpoint(router, "/api/settings/cars/{car_id}", "DELETE")
         assert endpoint is not None
 
-        state.settings_store.get_cars.return_value = {
-            "cars": [_make_car_payload()],
-            "activeCarId": "car-1",
-        }
-        state.settings_store.delete_car.return_value = {
-            "cars": [],
-            "activeCarId": None,
-        }
+        state.settings_store.get_cars.return_value = _make_cars_snapshot()
+        state.settings_store.delete_car.return_value = _make_cars_snapshot(
+            cars=[],
+            active_car_id=None,
+        )
 
         result = response_payload(await endpoint(car_id="car-1"))
 
@@ -119,10 +124,7 @@ class TestDeleteCarEndpoint:
         endpoint = _find_endpoint(router, "/api/settings/cars/{car_id}", "DELETE")
         assert endpoint is not None
 
-        state.settings_store.get_cars.return_value = {
-            "cars": [_make_car_payload()],
-            "activeCarId": "car-1",
-        }
+        state.settings_store.get_cars.return_value = _make_cars_snapshot()
         state.settings_store.delete_car.side_effect = ValueError("cannot delete last car")
 
         with pytest.raises(HTTPException) as exc_info:
@@ -167,10 +169,9 @@ class TestCarsEndpoint:
 
         from vibesensor.shared.types.api_models import CarUpsertRequest
 
-        state.settings_store.add_car.return_value = {
-            "cars": [_make_car_payload(), _make_car_payload(car_id="car-2", name="Second")],
-            "activeCarId": "car-1",
-        }
+        state.settings_store.add_car.return_value = _make_cars_snapshot(
+            cars=[_make_car_payload(), _make_car_payload(car_id="car-2", name="Second")],
+        )
 
         await endpoint(req=CarUpsertRequest(name="Second", variant="Sport"))
 

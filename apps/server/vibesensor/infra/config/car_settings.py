@@ -16,6 +16,7 @@ from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.types.backend_types import (
     AnalysisSettingsPayload,
     CarConfigUpdatePayload,
+    CarsSnapshot,
     car_to_persistence_dict,
     new_car_id,
 )
@@ -58,12 +59,15 @@ class CarSettingsMixin:
 
     # -- car operations --------------------------------------------------------
 
-    def get_cars(self) -> dict[str, object]:
+    def _cars_snapshot_unlocked(self) -> CarsSnapshot:
+        return CarsSnapshot(
+            cars=[car_to_persistence_dict(car) for car in self._cars],
+            active_car_id=self._active_car_id,
+        )
+
+    def get_cars(self) -> CarsSnapshot:
         with self._lock:
-            return {
-                "cars": [car_to_persistence_dict(c) for c in self._cars],
-                "activeCarId": self._active_car_id,
-            }
+            return self._cars_snapshot_unlocked()
 
     def active_car_aspects(self) -> dict[str, float] | None:
         """Return the active car's aspects as a flat analysis-settings dict.
@@ -96,7 +100,7 @@ class CarSettingsMixin:
             return None
         return next((c for c in self._cars if c.id == car_id), None)
 
-    def set_active_car(self, car_id: str) -> dict[str, object]:
+    def set_active_car(self, car_id: str) -> CarsSnapshot:
         with self._lock:
             car = self._find_car(car_id)
             if car is None:
@@ -109,9 +113,9 @@ class CarSettingsMixin:
                 self._active_car_id = old_active
                 raise
             self._sync_analysis_settings()
-            return self.get_cars()
+            return self._cars_snapshot_unlocked()
 
-    def add_car(self, car_data: CarConfigUpdatePayload) -> dict[str, object]:
+    def add_car(self, car_data: CarConfigUpdatePayload) -> CarsSnapshot:
         with self._lock:
             payload: dict[str, object] = dict(car_data)
             payload["id"] = new_car_id()
@@ -123,9 +127,9 @@ class CarSettingsMixin:
                 self._cars.pop()  # rollback in-memory append
                 raise
             self._sync_analysis_settings()
-            return self.get_cars()
+            return self._cars_snapshot_unlocked()
 
-    def update_car(self, car_id: str, car_data: CarConfigUpdatePayload) -> dict[str, object]:
+    def update_car(self, car_id: str, car_data: CarConfigUpdatePayload) -> CarsSnapshot:
         with self._lock:
             car = self._find_car(car_id)
             if car is None:
@@ -167,7 +171,7 @@ class CarSettingsMixin:
                 self._cars[idx] = car  # rollback
                 raise
             self._sync_analysis_settings()
-            return self.get_cars()
+            return self._cars_snapshot_unlocked()
 
     def update_active_car_aspects(
         self,
@@ -195,7 +199,7 @@ class CarSettingsMixin:
             self._sync_analysis_settings()
             return dict(updated.aspects)
 
-    def delete_car(self, car_id: str) -> dict[str, object]:
+    def delete_car(self, car_id: str) -> CarsSnapshot:
         with self._lock:
             car = self._find_car(car_id)
             if car is None:
@@ -214,4 +218,4 @@ class CarSettingsMixin:
                 self._active_car_id = old_active
                 raise
             self._sync_analysis_settings()
-            return self.get_cars()
+            return self._cars_snapshot_unlocked()
