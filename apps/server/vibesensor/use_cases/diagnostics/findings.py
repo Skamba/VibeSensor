@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.shared.types.json_types import JsonObject
 
 from . import _reference_findings
+from ._context import DiagnosticsContext
 from ._peak_findings import (
     PeakFindingAnalyzer,
     _build_persistent_peak_findings,
@@ -13,7 +13,7 @@ from ._peak_findings import (
     prepare_analysis_samples,
 )
 from ._types import PhaseLabels, Sample
-from .helpers import _locations_connected_throughout_run, _tire_reference_from_metadata
+from .helpers import _locations_connected_throughout_run, _tire_reference_from_context
 from .order_pipeline import _build_order_findings
 
 __all__ = [
@@ -55,7 +55,7 @@ def finalize_findings(
 
 def _build_findings(
     *,
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     samples: list[Sample],
     speed_sufficient: bool,
     steady_speed: bool,
@@ -91,10 +91,10 @@ def _build_findings(
         by (quantised confidence, ranking_score) descending, then informational.
 
     """
-    tire_circumference_m, _ = _tire_reference_from_metadata(metadata)
+    tire_circumference_m, _ = _tire_reference_from_context(context)
     findings: list[DomainFinding]
     findings, engine_ref_sufficient = _reference_findings.build_reference_findings(
-        metadata=metadata,
+        context=context,
         samples=samples,
         speed_sufficient=speed_sufficient,
         tire_circumference_m=tire_circumference_m,
@@ -108,7 +108,7 @@ def _build_findings(
     )
 
     order_findings = _build_order_findings(
-        metadata=metadata,
+        context=context,
         samples=analysis_samples,
         speed_sufficient=speed_sufficient,
         steady_speed=steady_speed,

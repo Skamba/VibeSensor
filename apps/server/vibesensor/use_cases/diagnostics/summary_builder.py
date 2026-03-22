@@ -11,6 +11,7 @@ from vibesensor.domain import (
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     AnalysisSampleInput,
@@ -54,7 +55,7 @@ class RunAnalysis:
     """
 
     __slots__ = (
-        "_metadata",
+        "_context",
         "_raw_samples",
         "_samples",
         "_file_name",
@@ -76,7 +77,7 @@ class RunAnalysis:
         include_samples: bool = True,
         findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
     ) -> None:
-        self._metadata = metadata
+        self._context = DiagnosticsContext.from_metadata(metadata, file_name=file_name)
         self._raw_samples, self._samples = normalize_analysis_samples(samples)
         self._file_name = file_name
         self._language = normalize_lang(lang)
@@ -85,9 +86,10 @@ class RunAnalysis:
         self._test_run: TestRun | None = None
 
         _validate_required_strength_metrics(self._samples)
-        self._prepared = prepare_run_data(metadata, self._samples, file_name=file_name)
+        self._prepared = prepare_run_data(self._context, self._samples)
         self._accel_stats: AccelStatistics = compute_accel_statistics(
-            self._samples, metadata.get("sensor_model")
+            self._samples,
+            self._context.sensor_model,
         )
 
     # -- read-only access --------------------------------------------------
@@ -119,7 +121,7 @@ class RunAnalysis:
         """
         reference_complete, run_suitability, overall_strength_band_key = (
             _summary_steps.build_run_suitability_bundle(
-                self._metadata,
+                self._context,
                 self._samples,
                 prepared=self._prepared,
                 accel_stats=self._accel_stats,
@@ -138,7 +140,7 @@ class RunAnalysis:
             domain_findings,
             domain_top_causes,
         ) = _summary_steps.build_findings_bundle(
-            self._metadata,
+            self._context,
             self._samples,
             language=self._language,
             prepared=self._prepared,
@@ -149,7 +151,7 @@ class RunAnalysis:
         )
         result = _summary_result.build_analysis_result(
             file_name=self._file_name,
-            metadata=self._metadata,
+            context=self._context,
             samples=self._samples,
             raw_samples=self._raw_samples,
             language=self._language,
@@ -181,10 +183,11 @@ def build_findings_for_samples(
     language = normalize_lang(lang)
     rows = normalize_analysis_samples(samples)[1]
     _validate_required_strength_metrics(rows)
-    prepared = prepare_run_data(metadata, rows, file_name="run")
+    context = DiagnosticsContext.from_metadata(metadata, file_name="run")
+    prepared = prepare_run_data(context, rows)
     builder = findings_builder or _build_findings
     return builder(
-        metadata=dict(metadata),
+        context=context,
         samples=rows,
         speed_sufficient=prepared.speed_sufficient,
         steady_speed=prepared.is_steady_speed,

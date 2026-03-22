@@ -11,7 +11,7 @@ from vibesensor.shared.constants import (
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
 )
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._types import PhaseLabels, Sample
 from vibesensor.use_cases.diagnostics.helpers import (
     _order_reference_spec_from_context,
@@ -89,7 +89,7 @@ class OrderAnalysisSession:
     """Coordinates hypothesis testing across samples to produce order findings."""
 
     __slots__ = (
-        "_metadata",
+        "_context",
         "_samples",
         "_speed_sufficient",
         "_steady_speed",
@@ -107,7 +107,7 @@ class OrderAnalysisSession:
     def __init__(
         self,
         *,
-        metadata: JsonObject,
+        context: DiagnosticsContext,
         samples: list[Sample],
         speed_sufficient: bool,
         steady_speed: bool,
@@ -119,7 +119,7 @@ class OrderAnalysisSession:
         lang: str,
         per_sample_phases: PhaseLabels | None = None,
     ) -> None:
-        self._metadata = metadata
+        self._context = context
         self._samples = samples
         self._speed_sufficient = speed_sufficient
         self._steady_speed = steady_speed
@@ -130,7 +130,7 @@ class OrderAnalysisSession:
         self._connected_locations = connected_locations
         self._lang = lang
         self._per_sample_phases = per_sample_phases
-        self._order_reference_spec = _order_reference_spec_from_context(metadata)
+        self._order_reference_spec = _order_reference_spec_from_context(context)
         self._cached_peaks: list[list[tuple[float, float]]] = [
             _sample_top_peaks(sample) for sample in samples
         ]
@@ -177,7 +177,7 @@ class OrderAnalysisSession:
             self._samples,
             self._cached_peaks,
             hypothesis,
-            self._metadata,
+            self._context,
             self._tire_circumference_m,
             self._per_sample_phases,
             self._lang,
@@ -231,7 +231,7 @@ class OrderAnalysisSession:
 
 def _build_order_findings(
     *,
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     samples: list[Sample],
     speed_sufficient: bool,
     steady_speed: bool,
@@ -245,7 +245,7 @@ def _build_order_findings(
 ) -> list[DomainFinding]:
     """Build order-tracking findings by testing all hypotheses."""
     session = OrderAnalysisSession(
-        metadata=metadata,
+        context=context,
         samples=samples,
         speed_sufficient=speed_sufficient,
         steady_speed=steady_speed,

@@ -10,6 +10,7 @@ from vibesensor.shared.order_bands import (
     tolerance_for_order,
     vehicle_orders_hz,
 )
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics.helpers import _effective_engine_rpm
 
 # -- _as_float NaN/edge cases -------------------------------------------------
@@ -169,7 +170,7 @@ def test_effective_engine_rpm_prefers_order_reference_spec(
 
     rpm, source = _effective_engine_rpm(
         {"speed_kmh": 80.0},
-        metadata={},
+        context=DiagnosticsContext.from_metadata({}, file_name="test"),
         tire_circumference_m=None,
     )
 

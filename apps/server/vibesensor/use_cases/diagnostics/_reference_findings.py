@@ -5,8 +5,8 @@ from __future__ import annotations
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain import FindingKind, VibrationSource
 from vibesensor.shared.constants import SPEED_COVERAGE_MIN_PCT
-from vibesensor.shared.types.json_types import JsonObject
 
+from ._context import DiagnosticsContext
 from ._types import Sample
 from .helpers import _effective_engine_rpm
 
@@ -34,7 +34,7 @@ def _reference_missing_finding(
 
 def build_reference_findings(
     *,
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     samples: list[Sample],
     speed_sufficient: bool,
     tire_circumference_m: float | None,
@@ -60,7 +60,7 @@ def build_reference_findings(
 
     engine_ref_sufficient = has_engine_reference(
         samples,
-        metadata=metadata,
+        context=context,
         tire_circumference_m=tire_circumference_m,
     )
     if not engine_ref_sufficient:
@@ -84,14 +84,14 @@ def build_reference_findings(
 def engine_reference_coverage_pct(
     samples: list[Sample],
     *,
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> float:
     """Compute engine reference coverage percentage from samples and metadata."""
     engine_ref_count = sum(
         1
         for sample in samples
-        if (_effective_engine_rpm(sample, metadata, tire_circumference_m)[0] or 0) > 0
+        if (_effective_engine_rpm(sample, context, tire_circumference_m)[0] or 0) > 0
     )
     return (engine_ref_count / len(samples) * 100.0) if samples else 0.0
 
@@ -99,14 +99,14 @@ def engine_reference_coverage_pct(
 def has_engine_reference(
     samples: list[Sample],
     *,
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> bool:
     """Return whether the engine reference coverage is sufficient."""
     return bool(
         engine_reference_coverage_pct(
             samples,
-            metadata=metadata,
+            context=context,
             tire_circumference_m=tire_circumference_m,
         )
         >= SPEED_COVERAGE_MIN_PCT
