@@ -1,4 +1,4 @@
-"""Tests for GPSSpeedMonitor status_dict(), fallback logic, and set_fallback_settings()."""
+"""Tests for GPSSpeedMonitor status snapshots, fallback logic, and set_fallback_settings()."""
 
 from __future__ import annotations
 
@@ -14,41 +14,41 @@ from vibesensor.adapters.gps.gps_speed import (
 from vibesensor.shared.types.backend_types import SpeedSourceConfig
 
 # ---------------------------------------------------------------------------
-# status_dict()
+# status_snapshot()
 # ---------------------------------------------------------------------------
 
 
-class TestStatusDict:
+class TestStatusSnapshot:
     def test_disabled_monitor_status(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=False)
-        s = m.status_dict()
-        assert s["gps_enabled"] is False
-        assert s["connection_state"] == "disabled"
-        assert s["device"] is None
-        assert s["last_update_age_s"] is None
-        assert s["raw_speed_kmh"] is None
-        assert s["effective_speed_kmh"] is None
-        assert s["last_error"] is None
-        assert s["reconnect_delay_s"] is None
-        assert s["fix_mode"] is None
-        assert s["fix_dimension"] == "none"
-        assert s["speed_confidence"] == "low"
-        assert s["fallback_active"] is False
-        assert s["stale_timeout_s"] == DEFAULT_STALE_TIMEOUT_S
+        s = m.status_snapshot()
+        assert s.gps_enabled is False
+        assert s.connection_state == "disabled"
+        assert s.device is None
+        assert s.last_update_age_s is None
+        assert s.raw_speed_kmh is None
+        assert s.effective_speed_kmh is None
+        assert s.last_error is None
+        assert s.reconnect_delay_s is None
+        assert s.fix_mode is None
+        assert s.fix_dimension == "none"
+        assert s.speed_confidence == "low"
+        assert s.fallback_active is False
+        assert s.stale_timeout_s == DEFAULT_STALE_TIMEOUT_S
 
     def test_connected_with_fresh_data(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
         m.speed_mps = 10.0  # 36 km/h
         set_gps_snapshot_age(m)
-        s = m.status_dict()
-        assert s["gps_enabled"] is True
-        assert s["connection_state"] == "connected"
-        assert isinstance(s["last_update_age_s"], float)
-        assert s["last_update_age_s"] < 2.0
-        assert s["raw_speed_kmh"] == pytest.approx(36.0, abs=0.1)
-        assert s["effective_speed_kmh"] == pytest.approx(36.0, abs=0.1)
-        assert s["fallback_active"] is False
+        s = m.status_snapshot()
+        assert s.gps_enabled is True
+        assert s.connection_state == "connected"
+        assert isinstance(s.last_update_age_s, float)
+        assert s.last_update_age_s < 2.0
+        assert s.raw_speed_kmh == pytest.approx(36.0, abs=0.1)
+        assert s.effective_speed_kmh == pytest.approx(36.0, abs=0.1)
+        assert s.fallback_active is False
 
     def test_status_includes_fix_quality_metadata(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
@@ -56,48 +56,48 @@ class TestStatusDict:
         m.last_epx_m = 4.2
         m.last_epy_m = 5.1
         m.last_epv_m = 8.0
-        s = m.status_dict()
-        assert s["fix_mode"] == 2
-        assert s["fix_dimension"] == "2d"
-        assert s["speed_confidence"] == "medium"
-        assert s["epx_m"] == pytest.approx(4.2)
-        assert s["epy_m"] == pytest.approx(5.1)
-        assert s["epv_m"] == pytest.approx(8.0)
+        s = m.status_snapshot()
+        assert s.fix_mode == 2
+        assert s.fix_dimension == "2d"
+        assert s.speed_confidence == "medium"
+        assert s.epx_m == pytest.approx(4.2)
+        assert s.epy_m == pytest.approx(5.1)
+        assert s.epv_m == pytest.approx(8.0)
 
-    def test_stale_detected_on_status_dict(self) -> None:
-        """status_dict() transitions connection_state to stale when GPS data is old."""
+    def test_stale_detected_on_status_snapshot(self) -> None:
+        """status_snapshot() reports stale when GPS data is old."""
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
         m.speed_mps = 5.0
         set_gps_snapshot_age(m, age_s=999)  # way older than stale timeout
-        s = m.status_dict()
-        assert s["connection_state"] == "stale"
+        s = m.status_snapshot()
+        assert s.connection_state == "stale"
 
     def test_disconnected_shows_reconnect_delay(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "disconnected"
         m.current_reconnect_delay = 4.0
-        s = m.status_dict()
-        assert s["reconnect_delay_s"] == 4.0
+        s = m.status_snapshot()
+        assert s.reconnect_delay_s == 4.0
 
     def test_connected_hides_reconnect_delay(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
         set_gps_snapshot_age(m)
-        s = m.status_dict()
-        assert s["reconnect_delay_s"] is None
+        s = m.status_snapshot()
+        assert s.reconnect_delay_s is None
 
     def test_last_error_reported(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.last_error = "Connection refused"
-        s = m.status_dict()
-        assert s["last_error"] == "Connection refused"
+        s = m.status_snapshot()
+        assert s.last_error == "Connection refused"
 
     def test_device_info_reported(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.device_info = "/dev/ttyUSB0"
-        s = m.status_dict()
-        assert s["device"] == "/dev/ttyUSB0"
+        s = m.status_snapshot()
+        assert s.device == "/dev/ttyUSB0"
 
 
 # ---------------------------------------------------------------------------
