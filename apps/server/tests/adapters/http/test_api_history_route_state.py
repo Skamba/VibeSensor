@@ -17,6 +17,7 @@ from _history_endpoint_helpers import (
     sample,
 )
 from fastapi import HTTPException
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.http import create_router
@@ -230,11 +231,11 @@ async def test_history_run_strips_internal_analysis_fields() -> None:
                 return None
             result = super().get_run(run_id)
             assert result is not None
-            analysis = dict(result.analysis or {})
+            analysis = dict(result.analysis.to_json_object() if result.analysis is not None else {})
             analysis["some_field"] = 42
             analysis["_internal_secret"] = "should-not-appear"
             analysis["_report_template_data"] = {"lang": "en"}
-            return replace(result, analysis=analysis)
+            return replace(result, analysis=make_persisted_analysis(analysis))
 
     metadata = make_metadata()
     samples = [sample(0)]

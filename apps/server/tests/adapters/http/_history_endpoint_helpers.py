@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 
 from fastapi import FastAPI, WebSocketDisconnect
 from test_support import response_payload as _response_payload
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.history import (
@@ -30,6 +31,7 @@ from vibesensor.infra.runtime import RuntimeHealthState
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService, PdfRendererFn
@@ -95,10 +97,12 @@ def _coerce_metadata(metadata: dict[str, Any] | RunMetadata) -> RunMetadata:
 def _coerce_analysis(
     metadata: RunMetadata,
     samples: list[dict[str, Any] | SensorFrame],
-    analysis: dict[str, Any] | AnalysisSummary,
-) -> AnalysisSummary:
+    analysis: dict[str, Any] | AnalysisSummary | PersistedAnalysis,
+) -> PersistedAnalysis:
+    if isinstance(analysis, PersistedAnalysis):
+        return analysis
     if {"findings", "top_causes", "warnings"}.issubset(analysis):
-        return cast(AnalysisSummary, analysis)
+        return make_persisted_analysis(cast(AnalysisSummary, analysis))
     baseline = summarize_run_data(
         metadata.to_dict(),
         [row if isinstance(row, SensorFrame) else SensorFrame.from_dict(row) for row in samples],
@@ -106,14 +110,14 @@ def _coerce_analysis(
         include_samples=False,
     )
     baseline.update(analysis)
-    return cast(AnalysisSummary, baseline)
+    return make_persisted_analysis(cast(AnalysisSummary, baseline))
 
 
 @dataclass
 class FakeHistoryDB:
     metadata: dict[str, Any] | RunMetadata
     samples: list[dict[str, Any] | SensorFrame]
-    analysis: dict[str, Any] | AnalysisSummary
+    analysis: dict[str, Any] | AnalysisSummary | PersistedAnalysis
     analysis_completed_at: str | None = "2026-01-01T00:01:00Z"
 
     def get_run(self, run_id: str) -> StoredHistoryRun | None:
@@ -456,7 +460,7 @@ def make_status_router(
                 analysis=(
                     None
                     if self.run_analysis is None or invalid_analysis
-                    else cast(AnalysisSummary, self.run_analysis)
+                    else make_persisted_analysis(cast(dict[str, object], self.run_analysis))
                 ),
                 analysis_corrupt=invalid_analysis,
                 error_message=(

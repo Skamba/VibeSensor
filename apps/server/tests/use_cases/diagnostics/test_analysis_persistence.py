@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pytest
 from test_support import response_payload
+from test_support.persisted_analysis import make_persisted_analysis
 
 from tests.conftest import FakeState
 from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -59,7 +60,7 @@ def _stored_run(
         metadata=typed_metadata,
         created_at=typed_metadata.start_time_utc,
         sample_count=sample_count,
-        analysis=cast(AnalysisSummary | None, analysis),
+        analysis=make_persisted_analysis(analysis) if analysis is not None else None,
         analysis_started_at=analysis_started_at,
         analysis_completed_at=analysis_completed_at,
     )
@@ -128,7 +129,7 @@ def test_store_analysis_sets_version_and_timestamps(tmp_path: Path) -> None:
     assert run.status.value == "analyzing"
     assert run.analysis_started_at is not None
 
-    db.store_analysis("r1", {"lang": "en", "findings": []})
+    db.store_analysis("r1", make_persisted_analysis({"lang": "en", "findings": []}))
     run = db.get_run("r1")
     assert run is not None
     assert run.status.value == "complete"
@@ -144,7 +145,7 @@ def test_store_analysis_persists_summary_directly(
     db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
     db.finalize_run("r1", "2026-01-01T00:01:00Z")
 
-    db.store_analysis("r1", {"lang": "en", "findings": []})
+    db.store_analysis("r1", make_persisted_analysis({"lang": "en", "findings": []}))
 
     with db._cursor(commit=False) as cur:
         cur.execute("SELECT analysis_json FROM runs WHERE run_id = ?", ("r1",))
@@ -178,7 +179,7 @@ def test_list_runs_includes_analysis_version(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
     db.finalize_run("r1", "2026-01-01T00:01:00Z")
-    db.store_analysis("r1", {"lang": "en"})
+    db.store_analysis("r1", make_persisted_analysis({"lang": "en"}))
 
     runs = db.list_runs()
     assert len(runs) == 1

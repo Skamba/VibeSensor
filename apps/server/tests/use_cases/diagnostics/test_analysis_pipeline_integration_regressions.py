@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.pdf.mapping import map_summary
@@ -224,7 +225,7 @@ def test_store_analysis_idempotent(db: HistoryDB) -> None:
     """Fix 10: store_analysis skips already-complete runs."""
     db.create_run("r1", _START, _run_metadata("r1"))
     db.finalize_run("r1", _END)
-    db.store_analysis("r1", {"findings": [{"id": "first"}]})
+    db.store_analysis("r1", make_persisted_analysis({"findings": [{"id": "first"}]}))
 
     run = db.get_run("r1")
     assert run is not None
@@ -232,7 +233,7 @@ def test_store_analysis_idempotent(db: HistoryDB) -> None:
     assert run.analysis["findings"] == [{"id": "first"}]
 
     # Second store_analysis should be skipped
-    db.store_analysis("r1", {"findings": [{"id": "second"}]})
+    db.store_analysis("r1", make_persisted_analysis({"findings": [{"id": "second"}]}))
     run = db.get_run("r1")
     assert run is not None
     assert run.analysis is not None
@@ -403,7 +404,7 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     assert "run_suitability" in summary
     assert "samples" not in summary
 
-    db.store_analysis(run_id, summary)
+    db.store_analysis(run_id, make_persisted_analysis(summary))
     run = db.get_run(run_id)
     assert run is not None
     assert run.status.value == "complete"
@@ -411,16 +412,19 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     run = db.get_run(run_id)
     assert run is not None
     analysis = run.analysis
-    assert isinstance(analysis, dict)
+    assert analysis is not None
 
-    report_data = map_summary(analysis)
+    report_data = map_summary(analysis.to_json_object())
     pdf_bytes = build_report_pdf(report_data)
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 1000
     assert pdf_bytes[:5] == b"%PDF-"
 
     # Idempotency — second store_analysis should be skipped
-    db.store_analysis(run_id, {"findings": [{"id": "should-not-overwrite"}]})
+    db.store_analysis(
+        run_id,
+        make_persisted_analysis({"findings": [{"id": "should-not-overwrite"}]}),
+    )
     run2 = db.get_run(run_id)
     assert run2 is not None
     assert run2.analysis is not None

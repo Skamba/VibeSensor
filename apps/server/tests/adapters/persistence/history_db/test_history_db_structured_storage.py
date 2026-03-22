@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
@@ -207,7 +208,7 @@ def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
     assert db.get_run("run-full").status.value == "analyzing"
 
     analysis = _analysis("run-full", score=42)
-    db.store_analysis("run-full", analysis)
+    db.store_analysis("run-full", make_persisted_analysis(analysis))
     assert db.get_run("run-full").status.value == "complete"
 
     all_samples = db.get_run_samples("run-full")

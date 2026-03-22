@@ -435,6 +435,45 @@ def _check_history_report_loader_avoids_analysis_dict_rewrap() -> list[str]:
     return violations
 
 
+_ALLOWED_ANALYSIS_SUMMARY_IMPORT_PREFIXES = (
+    "shared/boundaries/",
+    "adapters/pdf/",
+)
+_ALLOWED_ANALYSIS_SUMMARY_IMPORT_FILES = frozenset(
+    {
+        "adapters/analysis_summary.py",
+        "adapters/history.py",
+        "app/container.py",
+        "use_cases/history/report_loader.py",
+        "use_cases/history/reports.py",
+    }
+)
+
+
+def _check_analysis_summary_stays_at_boundaries() -> list[str]:
+    violations: list[str] = []
+    for path in _python_files(VIBESENSOR_DIR):
+        rel = str(path.relative_to(VIBESENSOR_DIR))
+        if rel in _ALLOWED_ANALYSIS_SUMMARY_IMPORT_FILES or rel.startswith(
+            _ALLOWED_ANALYSIS_SUMMARY_IMPORT_PREFIXES
+        ):
+            continue
+        tree = _parse_python(path)
+        if tree is None:
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom):
+                continue
+            if node.module != "vibesensor.shared.boundaries.analysis_payload":
+                continue
+            if any(alias.name == "AnalysisSummary" for alias in node.names):
+                violations.append(
+                    f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
+                    "AnalysisSummary must stay in explicit boundary/projection modules"
+                )
+    return violations
+
+
 _FORBIDDEN_DOMAIN_IMPORTS = (
     "vibesensor.adapters",
     "vibesensor.infra",
@@ -1203,6 +1242,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "History report loader avoids AnalysisSummary dict re-wraps",
         _check_history_report_loader_avoids_analysis_dict_rewrap,
+    ),
+    (
+        "AnalysisSummary stays at boundaries",
+        _check_analysis_summary_stays_at_boundaries,
     ),
     ("Domain modules avoid outer-layer imports", _collect_domain_import_violations),
     (
