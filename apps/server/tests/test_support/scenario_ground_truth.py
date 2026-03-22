@@ -149,16 +149,30 @@ class ScenarioSpec:
     expect_not_engine: bool = True
 
 
-def build_summary_from_scenario(spec: ScenarioSpec) -> dict[str, Any]:
-    """Build a summary for one explicit scenario specification."""
+def build_summary_from_phases(
+    *,
+    language: str,
+    file_name: str,
+    phases: tuple[PhaseStep, ...],
+) -> dict[str, Any]:
+    """Build a summary for an explicit scenario phase sequence."""
     samples: list[dict[str, Any]] = []
     t = 0.0
-    for step in spec.phases:
+    for step in phases:
         samples.extend(step.builder(start_t_s=t, sensors=ALL_SENSORS, **step.kwargs))
         t += step.duration_s
     return summarize_run_data(
-        standard_metadata(language=spec.language),
+        standard_metadata(language=language),
         samples,
-        lang=spec.language,
+        lang=language,
+        file_name=file_name,
+    )
+
+
+def build_summary_from_scenario(spec: ScenarioSpec) -> dict[str, Any]:
+    """Build a summary for one explicit scenario specification."""
+    return build_summary_from_phases(
+        language=spec.language,
         file_name=spec.file_name,
+        phases=spec.phases,
     )
