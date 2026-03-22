@@ -13,9 +13,7 @@ from vibesensor.domain import (
 )
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.shared.boundaries.diagnostic_case import (
-    run_suitability_from_payload,
-)
+from vibesensor.shared.boundaries.run_suitability import run_suitability_from_payload
 
 
 class TestSpeedProfile:

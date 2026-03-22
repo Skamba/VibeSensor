@@ -35,7 +35,7 @@ def test_project_analysis_summary_has_no_legacy_summary_version_fast_path() -> N
     from tests._paths import SERVER_ROOT
 
     source = (
-        SERVER_ROOT / "vibesensor" / "shared" / "boundaries" / "diagnostic_case.py"
+        SERVER_ROOT / "vibesensor" / "shared" / "boundaries" / "analysis_summary_projection.py"
     ).read_text()
     assert 'analysis.get("_summary_version") == 2' not in source
 
