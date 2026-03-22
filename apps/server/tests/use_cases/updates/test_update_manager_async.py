@@ -291,7 +291,7 @@ class TestUpdateManagerAsync:
         with patch_release_fetcher() as mock_fetcher:
             mock_fetcher.return_value.check_update_available.return_value = None
             await run_update(manager, "TestNet", secret)
-        serialized = str(manager.status.to_dict())
+        serialized = str(manager.status.to_payload())
         assert secret not in serialized
         for line in manager.status.log_tail:
             assert secret not in line

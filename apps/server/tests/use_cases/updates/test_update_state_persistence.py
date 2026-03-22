@@ -88,14 +88,14 @@ def update_env(
 
 
 # ---------------------------------------------------------------------------
-# UpdateJobStatus round-trip (to_dict / from_dict)
+# UpdateJobStatus round-trip (to_payload / from_payload)
 # ---------------------------------------------------------------------------
 
 
 class TestUpdateJobStatusRoundTrip:
     def test_idle_round_trip(self) -> None:
         status = UpdateJobStatus()
-        restored = UpdateJobStatus.from_dict(status.to_dict())
+        restored = UpdateJobStatus.from_payload(status.to_payload())
         assert restored.state == UpdateState.idle
         assert restored.phase == UpdatePhase.idle
         assert restored.issues == []
@@ -121,7 +121,7 @@ class TestUpdateJobStatusRoundTrip:
             exit_code=1,
             runtime=UpdateRuntimeDetails(version="1.0.0"),
         )
-        restored = UpdateJobStatus.from_dict(status.to_dict())
+        restored = UpdateJobStatus.from_payload(status.to_payload())
         assert restored.state == UpdateState.failed
         assert restored.phase == UpdatePhase.installing
         assert restored.started_at == 1700000000.0

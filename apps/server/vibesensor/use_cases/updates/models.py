@@ -200,14 +200,6 @@ class UpdateJobStatus:
             runtime=UpdateRuntimeDetails.from_payload(runtime_raw),
         )
 
-    def to_dict(self) -> UpdateJobStatusPayload:
-        return self.to_payload()
-
-    @classmethod
-    def from_dict(cls, data: JsonObject) -> UpdateJobStatus:
-        return cls.from_payload(data)
-
-
 @dataclass(frozen=True, slots=True)
 class UpdateRuntimeDetails:
     """Runtime/build metadata tracked during update lifecycle and exposed over HTTP."""
