@@ -6,7 +6,7 @@ import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.use_cases.updates.installer import _sha256_file
+from vibesensor.use_cases.updates.artifact_validation import sha256_file
 from vibesensor.use_cases.updates.release_fetcher import ReleaseInfo
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 
@@ -81,7 +81,7 @@ async def verify_download(
     """Verify SHA-256 digest of a downloaded wheel."""
     if not release.sha256:
         return True
-    actual_sha256 = await asyncio.to_thread(_sha256_file, wheel_path)
+    actual_sha256 = await asyncio.to_thread(sha256_file, wheel_path)
     expected_sha256 = release.sha256.lower()
     if actual_sha256 == expected_sha256:
         tracker.log(f"SHA-256 verified: {actual_sha256}")
