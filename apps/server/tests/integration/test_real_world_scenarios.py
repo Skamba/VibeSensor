@@ -25,8 +25,8 @@ from test_support.core import (
     standard_metadata,
 )
 
+from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.shared.constants import KMH_TO_MPS
-from vibesensor.use_cases.diagnostics import summarize_run_data
 
 # ---------------------------------------------------------------------------
 # Shared helpers

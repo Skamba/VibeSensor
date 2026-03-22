@@ -5,7 +5,9 @@
 The report generation pipeline has two distinct phases:
 
 1. **Post-stop analysis** (`vibesensor.use_cases.diagnostics`) — runs once when a recording
-   ends, producing a persisted summary dict and a `ReportTemplateData` artifact.
+   ends, producing an app-level `AnalysisResult`. The serialized summary dict is
+   then created at the boundary by `vibesensor.shared.boundaries.analysis_summary`
+   / `vibesensor.adapters.analysis_summary`.
 2. **Report rendering** (`vibesensor.adapters.pdf`) — loads the persisted
    `ReportTemplateData` and renders a PDF.  This phase performs **zero
    analysis** — it only formats and lays out pre-computed data.
@@ -15,7 +17,8 @@ Recording stops
   → _run_post_analysis() [vibesensor.use_cases.run.post_analysis]
     → build_post_analysis_summary() [vibesensor.use_cases.run.post_analysis]
       → RunAnalysis(...).summarize() [vibesensor.use_cases.diagnostics.summary_builder]
-      → run_data_preparation.py + _summary_steps.py + _summary_result.py + summary_builder.py (preparation, phases, suitability, domain/result assembly, payload assembly)
+      → run_data_preparation.py + _summary_steps.py + _summary_result.py + summary_builder.py (preparation, phases, suitability, domain/result assembly)
+      → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_summary]
       → findings.py + _peak_findings.py + _reference_findings.py, peak_binning.py, signal_aggregation.py, top_cause_selection.py, plots.py, peak_table.py
     → map_summary() [vibesensor.adapters.pdf.mapping]
       → report_context.py (context assembly, card decisions) + mapping.py (thin template mapper) + peak_table.py + report_sections.py
@@ -92,8 +95,11 @@ needs:
 
 ## Adding new report sections
 
-1. Add any new analysis output to `summarize_run_data()` in
-   `vibesensor.use_cases.diagnostics.summary_builder`.
+1. Add any new diagnostics output to `RunAnalysis` / `AnalysisResult` in
+   `vibesensor.use_cases.diagnostics`, then project it in
+   `vibesensor.shared.boundaries.analysis_summary.analysis_result_to_summary()`
+   (or the adapter wrappers in `vibesensor.adapters.analysis_summary` if the
+   change only affects the serialized edge helper).
 2. Add a corresponding field to `ReportTemplateData` in
    `vibesensor.adapters.pdf.report_data`.
 3. Populate the new field in `map_summary()` in

@@ -12,12 +12,16 @@ from test_support import (
 )
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 
+from vibesensor.adapters.analysis_summary import (
+    analysis_result_to_summary,
+    summarize_run_data,
+)
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.diagnostic_case import (
     project_analysis_summary,
 )
 from vibesensor.shared.constants import KMH_TO_MPS
-from vibesensor.use_cases.diagnostics import RunAnalysis, summarize_run_data
+from vibesensor.use_cases.diagnostics import RunAnalysis
 
 
 def _run_suitability_state(summary: dict[str, Any], check_key: str) -> str | None:
@@ -144,7 +148,7 @@ def test_characterization_wheel_fault_summary_contract() -> None:
         file_name="characterization-wheel",
     )
     result = analysis.summarize()
-    summary = result.summary
+    summary = analysis_result_to_summary(result)
 
     top_cause = _top_cause(summary)
     origin = summary["most_likely_origin"]
@@ -181,7 +185,7 @@ def test_characterization_live_analysis_surfaces_domain_plan_ordering() -> None:
     )
 
     result = analysis.summarize()
-    summary = result.summary
+    summary = analysis_result_to_summary(result)
     test_run = analysis.test_run
 
     assert test_run is not None
@@ -210,7 +214,10 @@ def test_characterization_wheel_fault_persist_reload_round_trip(tmp_path: Path) 
         file_name="characterization-wheel-roundtrip",
     )
 
-    round_trip_summary = _persist_and_reload_summary(tmp_path, analysis.summarize().summary)
+    round_trip_summary = _persist_and_reload_summary(
+        tmp_path,
+        analysis_result_to_summary(analysis.summarize()),
+    )
     top_cause = _top_cause(round_trip_summary)
     origin = round_trip_summary["most_likely_origin"]
 

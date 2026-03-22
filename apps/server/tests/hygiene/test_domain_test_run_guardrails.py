@@ -56,6 +56,7 @@ def test_test_run_effective_top_causes() -> None:
 
 def test_run_analysis_produces_test_run() -> None:
     """``RunAnalysis.summarize()`` must populate ``test_run``."""
+    from vibesensor.adapters.analysis_summary import analysis_result_to_summary
     from vibesensor.domain import TestRun
     from vibesensor.use_cases.diagnostics.summary_builder import RunAnalysis
 
@@ -74,10 +75,11 @@ def test_run_analysis_produces_test_run() -> None:
     ]
     analysis = RunAnalysis(metadata, samples)
     result = analysis.summarize()
+    summary = analysis_result_to_summary(result)
     assert analysis.test_run is not None
     assert isinstance(analysis.test_run, TestRun)
-    assert analysis.test_run.run_id == result.summary["run_id"]
-    assert len(analysis.test_run.findings) == len(result.summary["findings"])
+    assert analysis.test_run.run_id == summary["run_id"]
+    assert len(analysis.test_run.findings) == len(summary["findings"])
 
 
 def test_test_run_reference_gap_detection() -> None:

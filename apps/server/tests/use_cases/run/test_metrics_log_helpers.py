@@ -367,6 +367,23 @@ def test_stop_recording_does_not_block_on_post_analysis(
     while analysis completes asynchronously afterward.
     """
     history_db = HistoryDB(tmp_path / "history.db")
+    summary_started = threading.Event()
+    allow_summary_finish = threading.Event()
+
+    def _slow_analysis_runner(**_: object) -> dict[str, object]:
+        summary_started.set()
+        assert allow_summary_finish.wait(timeout=5.0)
+        return {
+            "findings": [],
+            "top_causes": [],
+            "analysis_metadata": {},
+            "case_id": "mock-case",
+        }
+
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.logger.build_post_analysis_summary",
+        _slow_analysis_runner,
+    )
     logger = make_logger(history_db=history_db)
 
     logger.start_recording()
@@ -377,24 +394,6 @@ def test_stop_recording_does_not_block_on_post_analysis(
     start_mono = snapshot.start_mono_s
     logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
-    summary_started = threading.Event()
-    allow_summary_finish = threading.Event()
-
-    class _SlowRunAnalysis:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def summarize(self):
-            summary_started.set()
-            assert allow_summary_finish.wait(timeout=5.0)
-            from types import SimpleNamespace
-
-            return SimpleNamespace(
-                summary={"findings": [], "top_causes": []},
-                diagnostic_case=SimpleNamespace(case_id="mock-case"),
-            )
-
-    monkeypatch.setattr("vibesensor.use_cases.diagnostics.RunAnalysis", _SlowRunAnalysis)
     started = time.monotonic()
     logger.stop_recording()
     elapsed = time.monotonic() - started
@@ -417,6 +416,14 @@ def test_post_analysis_failure_sets_persistent_error_status(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
+
+    def _failing_analysis_runner(**_: object) -> dict[str, object]:
+        raise RuntimeError("analysis exploded")
+
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.logger.build_post_analysis_summary",
+        _failing_analysis_runner,
+    )
     logger = make_logger(history_db=history_db)
 
     logger.start_recording()
@@ -427,10 +434,6 @@ def test_post_analysis_failure_sets_persistent_error_status(
     start_mono = snapshot.start_mono_s
     logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
 
-    def _failing_init(*args, **kwargs):
-        raise RuntimeError("analysis exploded")
-
-    monkeypatch.setattr("vibesensor.use_cases.diagnostics.RunAnalysis", _failing_init)
     logger.stop_recording()
 
     def _status():

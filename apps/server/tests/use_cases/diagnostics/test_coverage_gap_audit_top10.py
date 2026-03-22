@@ -11,6 +11,7 @@ from unittest.mock import MagicMock
 import pytest
 from test_support.findings import make_finding
 
+from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.domain import (
     AnalysisSettingsSnapshot,
     Finding,
@@ -18,7 +19,6 @@ from vibesensor.domain import (
     RunSuitability,
 )
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.diagnostics.order_heuristics import (
     detect_diffuse_excitation as _detect_diffuse_excitation,
 )

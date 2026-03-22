@@ -13,7 +13,7 @@ from test_support import (
     wheel_hz,
 )
 
-from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.adapters.analysis_summary import summarize_run_data
 
 
 class TestDualFaultTwoCorners:

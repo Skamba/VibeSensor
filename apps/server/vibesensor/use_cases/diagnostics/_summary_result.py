@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import cast
 
 from vibesensor.domain import (
     Car,
@@ -20,19 +19,13 @@ from vibesensor.domain import (
     TestRun,
 )
 from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
+from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.boundaries.finding import step_payloads_from_plan
-from vibesensor.shared.boundaries.summary_serialization import (
-    build_summary_payload,
-    serialize_plot_data,
-)
-from vibesensor.shared.run_context import build_summary_warnings
-from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import JsonObject
 
-from ._types import AccelStatistics, Sample
+from ._types import AccelStatistics, PlotDataResultData, Sample
 from .plots import _plot_data
 from .run_data_preparation import (
     PreparedRunData,
@@ -44,11 +37,28 @@ from .speed_profile_helpers import _speed_stats
 
 @dataclass(frozen=True, slots=True)
 class AnalysisResult:
-    """Domain aggregates plus persisted summary payload for a completed run."""
+    """App-level analysis result for a completed run."""
+
+    file_name: str
+    metadata: JsonObject
+    samples: tuple[Sample, ...]
+    language: str
+    include_samples: bool
+    prepared: PreparedRunData
+    accel_stats: AccelStatistics
+    reference_complete: bool
+    run_suitability: RunSuitability | None
+    most_likely_origin: VibrationOrigin | None
+    phase_timeline: tuple[DrivingPhaseInterval, ...]
+    sensor_locations: tuple[str, ...]
+    connected_locations: frozenset[str]
+    sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
+    summary_speed_stats: SpeedProfileSummary
+    summary_phase_info: DrivingPhaseSummary
+    plot_data: PlotDataResultData
 
     test_run: TestRun
     diagnostic_case: DiagnosticCase
-    summary: AnalysisSummary
 
 
 def _final_top_causes(
@@ -102,11 +112,21 @@ def build_analysis_result(
     domain_findings: tuple[DomainFinding, ...],
     domain_top_causes: tuple[DomainFinding, ...],
 ) -> AnalysisResult:
-    """Build the final domain aggregates and persisted summary payload."""
+    """Build the final app-level analysis result."""
     summary_speed_stats = _speed_stats(prepared.speed_values)
     summary_phase_info = build_phase_summary(prepared.phase_segments)
     domain_test_plan = plan_test_actions(domain_findings)
-    summary_test_plan = step_payloads_from_plan(domain_test_plan)
+    plot_data = _plot_data(
+        samples=samples,
+        speed_breakdown=prepared.speed_breakdown,
+        phase_speed_breakdown=prepared.phase_speed_breakdown,
+        findings=domain_findings,
+        raw_sample_rate_hz=prepared.raw_sample_rate_hz,
+        steady_speed=prepared.is_steady_speed,
+        run_noise_baseline_g=prepared.run_noise_baseline_g,
+        per_sample_phases=prepared.per_sample_phases,
+        phase_segments=prepared.phase_segments,
+    )
 
     test_run = TestRun(
         capture=RunCapture(
@@ -134,60 +154,24 @@ def build_analysis_result(
         symptoms=domain_symptoms,
         test_plan=domain_test_plan,
     ).add_run(test_run)
-
-    summary = build_summary_payload(
-        file_name=file_name,
-        run_id=prepared.run_id,
-        samples=samples,
-        duration_s=prepared.duration_s,
-        language=language,
-        metadata=metadata,
-        raw_sample_rate_hz=prepared.raw_sample_rate_hz,
-        speed_breakdown=prepared.speed_breakdown,
-        phase_speed_breakdown=prepared.phase_speed_breakdown,
-        phase_segments=prepared.phase_segments,
-        run_noise_baseline_g=prepared.run_noise_baseline_g,
-        speed_breakdown_skipped_reason=prepared.speed_breakdown_skipped_reason,
-        findings=domain_findings,
-        top_causes=test_run.top_causes,
-        most_likely_origin=most_likely_origin,
-        test_plan=summary_test_plan,
-        phase_timeline=phase_timeline,
-        speed_stats=summary_speed_stats,
-        speed_stats_by_phase=prepared.speed_stats_by_phase,
-        phase_info=summary_phase_info,
-        sensor_locations=sensor_locations,
-        connected_locations=connected_locations,
-        sensor_intensity_by_location=sensor_intensity_by_location,
-        run_suitability=run_suitability,
-        speed_values=prepared.speed_values,
-        speed_non_null_pct=prepared.speed_non_null_pct,
-        accel_stats=accel_stats,
-        amp_metric_values=accel_stats["amp_metric_values"],
-    )
-    summary["warnings"] = build_summary_warnings(
-        metadata,
-        reference_complete=reference_complete,
-    )
-    summary["report_date"] = metadata.get("end_time_utc") or utc_now_iso()
-    summary["plots"] = serialize_plot_data(
-        _plot_data(
-            samples=samples,
-            speed_breakdown=prepared.speed_breakdown,
-            phase_speed_breakdown=prepared.phase_speed_breakdown,
-            findings=domain_findings,
-            raw_sample_rate_hz=prepared.raw_sample_rate_hz,
-            steady_speed=prepared.is_steady_speed,
-            run_noise_baseline_g=prepared.run_noise_baseline_g,
-            per_sample_phases=prepared.per_sample_phases,
-            phase_segments=prepared.phase_segments,
-        ),
-    )
-    cast(dict[str, object], summary)["_summary_version"] = 2
-    if not include_samples:
-        summary.pop("samples", None)
     return AnalysisResult(
+        file_name=file_name,
+        metadata=dict(metadata),
+        samples=tuple(samples),
+        language=language,
+        include_samples=include_samples,
+        prepared=prepared,
+        accel_stats=accel_stats,
+        reference_complete=reference_complete,
+        run_suitability=run_suitability,
+        most_likely_origin=most_likely_origin,
+        phase_timeline=tuple(phase_timeline),
+        sensor_locations=tuple(sensor_locations),
+        connected_locations=frozenset(connected_locations),
+        sensor_intensity_by_location=tuple(sensor_intensity_by_location),
+        summary_speed_stats=summary_speed_stats,
+        summary_phase_info=summary_phase_info,
+        plot_data=plot_data,
         test_run=test_run,
         diagnostic_case=diagnostic_case,
-        summary=summary,
     )
