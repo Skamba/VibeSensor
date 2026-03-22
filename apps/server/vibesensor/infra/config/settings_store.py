@@ -27,7 +27,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 from threading import RLock
-from typing import cast, get_args
+from typing import get_args
 
 from vibesensor.domain import (
     Car,
@@ -37,9 +37,23 @@ from vibesensor.domain import (
     normalize_sensor_id,
 )
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.infra.config.car_settings import CarSettingsMixin
-from vibesensor.infra.config.car_settings import _clamp_str as _clamp_str
-from vibesensor.shared.exceptions import PersistenceError as PersistenceError
+from vibesensor.infra.config.car_settings import (
+    CarSettingsMixin,
+    _clamp_str,
+)
+from vibesensor.shared.boundaries.settings_snapshot import (
+    coerce_language_code as _coerce_language,
+)
+from vibesensor.shared.boundaries.settings_snapshot import (
+    coerce_speed_unit_code as _coerce_speed_unit,
+)
+from vibesensor.shared.boundaries.settings_snapshot import (
+    validated_language_code as _validated_language,
+)
+from vibesensor.shared.boundaries.settings_snapshot import (
+    validated_speed_unit_code as _validated_speed_unit,
+)
+from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.ports import SettingsSnapshotPersistence, SpeedSourceSync
 from vibesensor.shared.types.backend_types import (
     LanguageCode,
@@ -53,7 +67,6 @@ from vibesensor.shared.types.backend_types import (
     SpeedUnitCode,
     car_to_persistence_dict,
 )
-from vibesensor.shared.types.json_types import JsonObject
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,39 +75,6 @@ VALID_LANGUAGES: frozenset[str] = frozenset(get_args(LanguageCode))
 
 VALID_SPEED_UNITS: frozenset[str] = frozenset(get_args(SpeedUnitCode))
 """Supported speed display units — derived from ``SpeedUnitCode``."""
-
-
-def _normalize_choice(value: object, default: str) -> str:
-    """Normalize a choice-like value into a lowercase trimmed token."""
-    return str(value or default).strip().lower()
-
-
-def _coerce_language(value: object) -> LanguageCode:
-    language = _normalize_choice(value, "en")
-    return "nl" if language.startswith("nl") else "en"
-
-
-def _coerce_speed_unit(value: object) -> SpeedUnitCode:
-    unit = _normalize_choice(value, "kmh")
-    return "mps" if unit == "mps" else "kmh"
-
-
-def _validated_language(value: object) -> LanguageCode | None:
-    normalized = _normalize_choice(value, "")
-    if normalized == "en":
-        return "en"
-    if normalized == "nl":
-        return "nl"
-    return None
-
-
-def _validated_speed_unit(value: object) -> SpeedUnitCode | None:
-    normalized = _normalize_choice(value, "")
-    if normalized == "kmh":
-        return "kmh"
-    if normalized == "mps":
-        return "mps"
-    return None
 
 
 class SettingsStore(CarSettingsMixin):
@@ -131,51 +111,32 @@ class SettingsStore(CarSettingsMixin):
     def _load(self) -> None:
         if self._db is None:
             return
-        raw = self._db.get_settings_snapshot()
-        if not isinstance(raw, dict):
+        snapshot = self._db.get_settings_snapshot()
+        if snapshot is None:
             return
 
         with self._lock:
-            # Cars
-            raw_cars = raw.get("cars")
-            if isinstance(raw_cars, list) and raw_cars:
-                self._cars = [Car.from_persisted_dict(c) for c in raw_cars if isinstance(c, dict)]
+            self._cars = [Car.from_persisted_dict(car) for car in snapshot["cars"]]
 
-            active_id = str(raw.get("activeCarId") or "")
+            active_id = snapshot["activeCarId"] or ""
             car_ids = {c.id for c in self._cars}
             self._active_car_id = active_id if active_id in car_ids else None
 
-            # Speed source
-            self._speed_cfg = SpeedSourceConfig.from_dict(
-                {
-                    "speedSource": raw.get("speedSource"),
-                    "manualSpeedKph": raw.get("manualSpeedKph"),
-                    "staleTimeoutS": raw.get("staleTimeoutS"),
-                },
-            )
-            self._language = _coerce_language(raw.get("language"))
-            self._speed_unit = _coerce_speed_unit(raw.get("speedUnit"))
+            self._speed_cfg = SpeedSourceConfig.from_dict(snapshot)
+            self._language = _coerce_language(snapshot["language"])
+            self._speed_unit = _coerce_speed_unit(snapshot["speedUnit"])
 
-            # Sensors
-            sensors = raw.get("sensorsByMac")
-            if isinstance(sensors, dict):
-                normalized: dict[str, SensorConfig] = {}
-                for mac, value in sensors.items():
-                    if not isinstance(value, dict):
-                        continue
-                    try:
-                        sensor_id = normalize_sensor_id(str(mac))
-                    except ValueError:
-                        continue
-                    normalized[sensor_id] = SensorConfig.from_dict(sensor_id, value)
-                self._sensors = normalized
+            self._sensors = {
+                sensor_id: SensorConfig.from_dict(sensor_id, value)
+                for sensor_id, value in snapshot["sensorsByMac"].items()
+            }
 
     def _persist(self) -> None:
         if self._db is None:
             return
         payload = self.snapshot()
         try:
-            self._db.set_settings_snapshot(cast("JsonObject", payload))
+            self._db.set_settings_snapshot(payload)
         except (sqlite3.Error, OSError) as exc:
             LOGGER.error("Failed to persist settings to SQLite", exc_info=True)
             raise PersistenceError("Failed to persist settings to SQLite") from exc
