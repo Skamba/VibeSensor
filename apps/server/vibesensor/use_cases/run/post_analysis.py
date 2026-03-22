@@ -19,15 +19,19 @@ from dataclasses import dataclass
 from threading import RLock, Thread
 from typing import Protocol, cast
 
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary, RunSuitabilityCheck
+from vibesensor.shared.boundaries.analysis_payload import RunSuitabilityCheck
 from vibesensor.shared.boundaries.analysis_summary import (
     AnalysisResultLike,
     analysis_result_to_summary,
+)
+from vibesensor.shared.boundaries.persisted_analysis_codec import (
+    persisted_analysis_from_summary,
 )
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
@@ -65,7 +69,7 @@ class PostAnalysisRunner(Protocol):
         language: str,
         total_sample_count: int,
         stride: int,
-    ) -> AnalysisSummary: ...
+    ) -> PersistedAnalysis: ...
 
 
 def build_post_analysis_summary(
@@ -76,8 +80,8 @@ def build_post_analysis_summary(
     language: str,
     total_sample_count: int,
     stride: int,
-) -> AnalysisSummary:
-    """Run diagnostics analysis and return the persisted summary payload."""
+) -> PersistedAnalysis:
+    """Run diagnostics analysis and return the internal persisted-analysis object."""
     from vibesensor.domain import SuitabilityCheck
     from vibesensor.report_i18n import tr
     from vibesensor.use_cases.diagnostics import RunAnalysis
@@ -89,15 +93,15 @@ def build_post_analysis_summary(
         file_name=run_id,
         include_samples=False,
     ).summarize()
-    summary = analysis_result_to_summary(cast(AnalysisResultLike, result))
-    summary["case_id"] = result.diagnostic_case.case_id
+    summary_payload = analysis_result_to_summary(cast(AnalysisResultLike, result))
+    summary_payload["case_id"] = result.diagnostic_case.case_id
 
     analysis_metadata: JsonObject = {
         "analyzed_sample_count": len(samples),
         "total_sample_count": total_sample_count,
         "sampling_method": "full" if stride == 1 else f"stride_{stride}",
     }
-    summary["analysis_metadata"] = analysis_metadata
+    summary_payload["analysis_metadata"] = analysis_metadata
 
     if stride > 1:
         stride_check = SuitabilityCheck(
@@ -110,10 +114,10 @@ def build_post_analysis_summary(
             "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
             stride=str(stride),
         )
-        run_suitability = summary.get("run_suitability")
+        run_suitability = summary_payload.get("run_suitability")
         if not isinstance(run_suitability, list):
             run_suitability = []
-            summary["run_suitability"] = run_suitability
+            summary_payload["run_suitability"] = run_suitability
         warning_payload: RunSuitabilityCheck = {
             "check_key": stride_check.check_key,
             "check": stride_check.check_key,
@@ -122,7 +126,7 @@ def build_post_analysis_summary(
         }
         run_suitability.append(warning_payload)
 
-    return summary
+    return persisted_analysis_from_summary(summary_payload)
 
 
 class PostAnalysisWorker:

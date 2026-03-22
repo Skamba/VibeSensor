@@ -29,6 +29,7 @@ from unittest.mock import AsyncMock
 
 import numpy as np
 import pytest
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.gps.gps_speed import (
     _GPS_RECONNECT_DELAY_S,
@@ -421,9 +422,9 @@ class TestHistoryDBAnalysisIdempotency:
     def test_store_analysis_twice_keeps_first(self, history_db: HistoryDB) -> None:
         history_db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
-        history_db.store_analysis("r1", {"findings": ["a"]})
+        history_db.store_analysis("r1", make_persisted_analysis({"findings": ["a"]}))
         # Second store should be no-op (run already complete)
-        history_db.store_analysis("r1", {"findings": ["b"]})
+        history_db.store_analysis("r1", make_persisted_analysis({"findings": ["b"]}))
         run = history_db.get_run("r1")
         assert run is not None
         assert run.analysis is not None
@@ -445,7 +446,7 @@ class TestHistoryDBAnalysisIdempotency:
         assert run is not None
         assert run.analysis is None
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
-        history_db.store_analysis("r1", {"result": "ok"})
+        history_db.store_analysis("r1", make_persisted_analysis({"result": "ok"}))
         # Complete — should return
         run = history_db.get_run("r1")
         assert run is not None
@@ -463,7 +464,7 @@ class TestHistoryDBFinalizeNoOp:
     def test_finalize_run_noop_on_already_complete(self, history_db: HistoryDB) -> None:
         history_db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
-        history_db.store_analysis("r1", {"ok": True})
+        history_db.store_analysis("r1", make_persisted_analysis({"ok": True}))
         # Run is now 'complete'.  Calling finalize again should be a no-op.
         history_db.finalize_run("r1", "2026-01-01T00:10:00Z")
         run = history_db.get_run("r1")

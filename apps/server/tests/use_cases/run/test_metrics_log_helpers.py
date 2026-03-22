@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from test_support.core import wait_until
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
@@ -345,15 +346,17 @@ def test_stop_recording_does_not_block_on_post_analysis(
     summary_started = threading.Event()
     allow_summary_finish = threading.Event()
 
-    def _slow_analysis_runner(**_: object) -> dict[str, object]:
+    def _slow_analysis_runner(**_: object):
         summary_started.set()
         assert allow_summary_finish.wait(timeout=5.0)
-        return {
-            "findings": [],
-            "top_causes": [],
-            "analysis_metadata": {},
-            "case_id": "mock-case",
-        }
+        return make_persisted_analysis(
+            {
+                "findings": [],
+                "top_causes": [],
+                "analysis_metadata": {},
+                "case_id": "mock-case",
+            }
+        )
 
     monkeypatch.setattr(
         "vibesensor.use_cases.run.logger.build_post_analysis_summary",
@@ -549,16 +552,18 @@ def test_post_analysis_uses_run_language_from_metadata(
         assert metadata.language == "nl"
         assert total_sample_count == len(samples)
         assert stride == 1
-        return {
-            "lang": language,
-            "row_count": len(samples),
-            "analysis_metadata": {
-                "analyzed_sample_count": len(samples),
-                "total_sample_count": total_sample_count,
-                "sampling_method": "full",
-            },
-            "run_suitability": [],
-        }
+        return make_persisted_analysis(
+            {
+                "lang": language,
+                "row_count": len(samples),
+                "analysis_metadata": {
+                    "analyzed_sample_count": len(samples),
+                    "total_sample_count": total_sample_count,
+                    "sampling_method": "full",
+                },
+                "run_suitability": [],
+            }
+        )
 
     logger._post_analysis._analysis_runner = _analysis_runner
     logger.stop_recording()
@@ -661,25 +666,27 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     ):
         assert run_id == snapshot.run_id
         assert language == "en"
-        return {
-            "row_count": len(samples),
-            "analysis_metadata": {
-                "analyzed_sample_count": len(samples),
-                "total_sample_count": total_sample_count,
-                "sampling_method": "full" if stride == 1 else f"stride_{stride}",
-            },
-            "run_suitability": (
-                [
-                    {
-                        "check_key": "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
-                        "state": "warn",
-                        "explanation": f"stride={stride}",
-                    }
-                ]
-                if stride > 1
-                else []
-            ),
-        }
+        return make_persisted_analysis(
+            {
+                "row_count": len(samples),
+                "analysis_metadata": {
+                    "analyzed_sample_count": len(samples),
+                    "total_sample_count": total_sample_count,
+                    "sampling_method": "full" if stride == 1 else f"stride_{stride}",
+                },
+                "run_suitability": (
+                    [
+                        {
+                            "check_key": "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+                            "state": "warn",
+                            "explanation": f"stride={stride}",
+                        }
+                    ]
+                    if stride > 1
+                    else []
+                ),
+            }
+        )
 
     logger._post_analysis._analysis_runner = _analysis_runner
     logger.stop_recording()

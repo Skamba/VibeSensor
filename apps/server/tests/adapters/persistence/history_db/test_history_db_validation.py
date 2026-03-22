@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
@@ -144,7 +145,7 @@ def test_verify_run_integrity_clean_run(tmp_path: Path) -> None:
     )
     db.append_samples("run-ok", [SensorFrame.from_dict({"i": i}) for i in range(5)])
     db.finalize_run("run-ok", "2026-01-01T00:10:00Z")
-    db.store_analysis("run-ok", _analysis("run-ok"))
+    db.store_analysis("run-ok", make_persisted_analysis(_analysis("run-ok")))
     assert db.verify_run_integrity("run-ok") == []
 
 
@@ -157,7 +158,7 @@ def test_verify_run_integrity_sample_count_mismatch(tmp_path: Path) -> None:
     )
     db.append_samples("run-m", [SensorFrame.from_dict({"i": i}) for i in range(5)])
     db.finalize_run("run-m", "2026-01-01T00:10:00Z")
-    db.store_analysis("run-m", _analysis("run-m"))
+    db.store_analysis("run-m", make_persisted_analysis(_analysis("run-m")))
     # Manually corrupt sample_count
     with db._cursor() as cur:
         cur.execute("UPDATE runs SET sample_count = 99 WHERE run_id = 'run-m'")
@@ -230,7 +231,7 @@ def test_store_analysis_warns_on_missing_summary_keys(
     db.finalize_run("run-w2", "2026-01-01T00:10:00Z")
     incomplete_summary = cast(AnalysisSummary, {"run_id": "run-w2", "score": 42})
     with caplog.at_level("WARNING"):
-        db.store_analysis("run-w2", incomplete_summary)
+        db.store_analysis("run-w2", make_persisted_analysis(incomplete_summary))
     assert "missing expected keys" in caplog.text
 
 
@@ -245,9 +246,15 @@ def test_store_analysis_rejects_terminal_status(tmp_path: Path) -> None:
         _metadata("run-t", sensor_model="a", sample_rate_hz=100),
     )
     db.finalize_run("run-t", "2026-01-01T00:10:00Z")
-    db.store_analysis("run-t", _analysis("run-t"))
+    db.store_analysis("run-t", make_persisted_analysis(_analysis("run-t")))
     # Second store_analysis should return False (already complete)
-    assert db.store_analysis("run-t", _analysis("run-t", top_causes=["unexpected"])) is False
+    assert (
+        db.store_analysis(
+            "run-t",
+            make_persisted_analysis(_analysis("run-t", top_causes=["unexpected"])),
+        )
+        is False
+    )
 
 
 def test_store_analysis_error_rejects_terminal_status(tmp_path: Path) -> None:
@@ -258,6 +265,6 @@ def test_store_analysis_error_rejects_terminal_status(tmp_path: Path) -> None:
         _metadata("run-te", sensor_model="a", sample_rate_hz=100),
     )
     db.finalize_run("run-te", "2026-01-01T00:10:00Z")
-    db.store_analysis("run-te", _analysis("run-te"))
+    db.store_analysis("run-te", make_persisted_analysis(_analysis("run-te")))
     # Error after complete should return False
     assert db.store_analysis_error("run-te", "late failure") is False
