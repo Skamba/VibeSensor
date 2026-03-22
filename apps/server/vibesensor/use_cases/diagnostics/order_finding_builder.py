@@ -9,7 +9,6 @@ from vibesensor.domain import (
     VibrationOrigin,
 )
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.use_cases.diagnostics.order_matching import OrderMatchAccumulator
 from vibesensor.use_cases.diagnostics.order_scoring import (
@@ -50,19 +49,11 @@ def assemble_order_finding(
         evidence = dict(evidence)
         evidence["_suffix"] = f" {score.location_line}"
 
-    (
-        _peak_speed_kmh,
-        _speed_window_kmh,
-        strongest_speed_band,
-        phase_evidence,
-        dominant_phase,
-    ) = compute_matched_speed_phase_evidence(
+    phase_evidence = compute_matched_speed_phase_evidence(
         match.matched_points,
         focused_speed_band=context.focused_speed_band,
         hotspot_speed_band=score.hotspot_speed_band,
     )
-    phases_raw = phase_evidence.get("phases_detected")
-    phases_detected = tuple(phases_raw) if isinstance(phases_raw, list) else ()
     finding = DomainFinding(
         finding_id="F_ORDER",
         finding_key=hypothesis.key,
@@ -70,16 +61,16 @@ def assemble_order_finding(
         confidence=score.confidence,
         order=_order_label(hypothesis.order, hypothesis.order_label_base),
         strongest_location=score.strongest_location or None,
-        strongest_speed_band=strongest_speed_band or None,
+        strongest_speed_band=phase_evidence.strongest_speed_band or None,
         kind=FindingKind.DIAGNOSTIC,
-        dominant_phase=dominant_phase,
+        dominant_phase=phase_evidence.dominant_phase,
         ranking_score=score.ranking_score,
         dominance_ratio=score.dominance_ratio,
         diffuse_excitation=score.diffuse_excitation,
         weak_spatial_separation=score.weak_spatial_separation,
         vibration_strength_db=score.absolute_strength_db,
-        cruise_fraction=_as_float(phase_evidence["cruise_fraction"]) or 0.0,
-        phases_detected=phases_detected,
+        cruise_fraction=phase_evidence.cruise_fraction,
+        phases_detected=phase_evidence.phases_detected,
         matched_points=tuple(match.matched_points),
         evidence=FindingEvidence(
             match_rate=context.effective_match_rate,
@@ -106,8 +97,8 @@ def assemble_order_finding(
             suspected_source=hypothesis.suspected_source,
             hotspot=score.domain_hotspot,
             dominance_ratio=score.dominance_ratio,
-            speed_band=strongest_speed_band or None,
-            dominant_phase=dominant_phase,
+            speed_band=phase_evidence.strongest_speed_band or None,
+            dominant_phase=phase_evidence.dominant_phase,
         ),
     )
     return score.ranking_score, finding
