@@ -73,6 +73,23 @@ class UpdateWifiConfig:
     hotspot_restore_delay_s: float
 
 
+def build_default_wifi_config(*, ap_con_name: str, wifi_ifname: str) -> UpdateWifiConfig:
+    return UpdateWifiConfig(
+        ap_con_name=ap_con_name,
+        wifi_ifname=wifi_ifname,
+        uplink_connection_name=UPLINK_CONNECTION_NAME,
+        uplink_connect_wait_s=UPLINK_CONNECT_WAIT_S,
+        uplink_connect_retries=UPLINK_CONNECT_RETRIES,
+        uplink_fallback_dns=UPLINK_FALLBACK_DNS,
+        dns_ready_min_wait_s=DNS_READY_MIN_WAIT_S,
+        dns_retry_interval_s=DNS_RETRY_INTERVAL_S,
+        dns_probe_host=DNS_PROBE_HOST,
+        nmcli_timeout_s=NMCLI_TIMEOUT_S,
+        hotspot_restore_retries=HOTSPOT_RESTORE_RETRIES,
+        hotspot_restore_delay_s=HOTSPOT_RESTORE_DELAY_S,
+    )
+
+
 class UpdateWifiController:
     """Owns hotspot shutdown, uplink connection, DNS readiness, and restore."""
 

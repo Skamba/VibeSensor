@@ -148,8 +148,8 @@ class TestUpdateManagerAsync:
         runner.set_response("socket.getaddrinfo", 1, "", "Temporary failure in name resolution")
         with (
             patch_release_fetcher() as mock_fetcher,
-            patch("vibesensor.use_cases.updates.manager.DNS_READY_MIN_WAIT_S", 0.05),
-            patch("vibesensor.use_cases.updates.manager.DNS_RETRY_INTERVAL_S", 0.01),
+            patch("vibesensor.use_cases.updates.wifi.DNS_READY_MIN_WAIT_S", 0.05),
+            patch("vibesensor.use_cases.updates.wifi.DNS_RETRY_INTERVAL_S", 0.01),
         ):
             await run_update(manager)
             mock_fetcher.assert_not_called()
@@ -170,8 +170,8 @@ class TestUpdateManagerAsync:
         runner.run = run_with_dns_retry
         with (
             patch_release_fetcher() as mock_fetcher,
-            patch("vibesensor.use_cases.updates.manager.DNS_READY_MIN_WAIT_S", 0.2),
-            patch("vibesensor.use_cases.updates.manager.DNS_RETRY_INTERVAL_S", 0.01),
+            patch("vibesensor.use_cases.updates.wifi.DNS_READY_MIN_WAIT_S", 0.2),
+            patch("vibesensor.use_cases.updates.wifi.DNS_RETRY_INTERVAL_S", 0.01),
         ):
             mock_fetcher.return_value.check_update_available.return_value = None
             await run_update(manager)
@@ -319,7 +319,7 @@ class TestUpdateManagerAsync:
         with (
             patch("shutil.which", mock_which),
             patch("vibesensor.use_cases.updates.manager.UPDATE_TIMEOUT_S", 0.5),
-            patch("vibesensor.use_cases.updates.manager.HOTSPOT_RESTORE_RETRIES", 1),
+            patch("vibesensor.use_cases.updates.wifi.HOTSPOT_RESTORE_RETRIES", 1),
         ):
             manager.start("TestNet", "pass")
             await asyncio.wait_for(manager._task, timeout=3)
