@@ -354,19 +354,15 @@
     },
     "BMW|2 Series Active Tourer (F45, 2014-2021)": {
       "car_index": 4,
-      "decision_summary": "Applied one EU-official, ratio-safe update: replaced the 6-speed automatic ratio pair with BMW-published 225xe Steptronic values (top gear 0.672, final drive 3.944). Kept other values unchanged where variant-to-gearbox/final-drive mapping was not explicitly recoverable without ambiguity. Second pass completed with additional official-source discovery; ratios remain unchanged unless explicitly confirmed in prior high-confidence evidence. Full-library redo completed with official-source and Wikipedia-overview cross-checking; ratio fields remain unchanged unless explicitly evidence-confirmed. Low-signal Wikipedia fragment placeholder notes were removed in issue #976; remaining unresolved items are intentionally limited to concise manual-review bullets.",
+      "decision_summary": "Manual review for issue #1034 kept the retained 8-speed family baseline for the non-overridden F45 variants, moved the documented 225xe 6-speed Steptronic ratio pair onto the 225xe variant explicitly, and added an explicit 220i 7-speed dual-clutch override so the documented 220i/225xe transmissions no longer rely on shared gearbox rows. Official BMW sources confirm the transmission types; the 220i numeric ratio pair uses reputable secondary references because the extracted 2018 BMW specification PDF does not expose an unambiguous final-drive field mapping.",
       "unresolved": [
         {
-          "item": "220i top-gear ratio and final-drive ratio (F45 LCI) for direct use in this schema",
-          "reason": "Official source confirms transmission type (7-speed DCT), but the extracted 2018 PDF table does not provide an unambiguous final-drive field mapping suitable for safe numeric insertion here without risk of misassignment."
+          "item": "Remaining non-overridden F45 variant gearbox mapping",
+          "reason": "Issue #1034 made the documented 220i and 225xe transmission mappings explicit, but the other listed variants still inherit the retained family baseline until authoritative variant-specific ratio tables are confirmed."
         },
         {
-          "item": "Variant-specific mapping between shared gearbox rows and each listed variant (218i, 220i, 225xe)",
-          "reason": "Current car-entry schema has shared gearbox objects only; official sources present variant-by-variant tables, so some values cannot be safely generalized to all listed variants without additional schema-level mapping."
-        },
-        {
-          "item": "8-speed automatic row applicability to listed variants",
-          "reason": "Official LCI data indicates 220i uses 7-speed DCT and 225xe uses 6-speed Steptronic; no explicit, unambiguous source in this pass tied the existing 8-speed row to one of the currently listed variants."
+          "item": "Official BMW numeric confirmation for the 220i DCT ratio pair",
+          "reason": "BMW official materials confirm the 220i uses the 7-speed dual-clutch Steptronic transmission, but the public PressClub documents retrieved for this fix do not expose an unambiguous final-drive field mapping, so the numeric ratio pair remains backed by reputable secondary references."
         }
       ],
       "sources": {
@@ -446,6 +442,18 @@
           {
             "url": "https://en.wikipedia.org/wiki/BMW_2_Series_Active_Tourer",
             "note": "Wikipedia model/table page used to cross-check variant completeness (names + engine context).",
+            "confidence": "medium"
+          }
+        ],
+        "issue_1034_220i_ratio_reference": [
+          {
+            "url": "https://www.auto-data.net/en/bmw-2-series-active-tourer-f45-lci-facelift-2018-220i-192hp-dct-32491",
+            "note": "Reputable technical data listing used to supply the 220i 7-speed DCT numeric final-drive and top-gear ratios after BMW official sources confirmed the transmission type but not a machine-extractable final-drive mapping.",
+            "confidence": "medium"
+          },
+          {
+            "url": "https://www.carfolio.com/bmw-220i-active-tourer-543939",
+            "note": "Independent technical cross-check for the 2018 BMW 220i Active Tourer DCT ratio pair used in the explicit variant override.",
             "confidence": "medium"
           }
         ]
@@ -727,23 +735,19 @@
     },
     "BMW|4 Series (G22, 2021-2026)": {
       "car_index": 8,
-      "decision_summary": "No safe ratio-field update was made: official EU BMW technical-data pages confirm EU-market variant naming (including xDrive and diesel entries) but do not provide extractable final-drive or top-gear ratios, and market/year-specific variant coverage is ambiguous for replacing existing variant drivetrains. Second pass completed with additional official-source discovery; ratios remain unchanged unless explicitly confirmed in prior high-confidence evidence. Full-library redo completed with official-source and Wikipedia-overview cross-checking; ratio fields remain unchanged unless explicitly evidence-confirmed. Low-signal Wikipedia fragment placeholder notes were removed in issue #976; remaining unresolved items are intentionally limited to concise manual-review bullets.",
+      "decision_summary": "Manual official-source review for issue #1034 corrected the supported EU-facing petrol family to 420i, 430i xDrive, and M440i xDrive, removing the stale RWD-only 430i mapping from the supported row. Ratio fields remain unchanged because the official EU technical-data pages used for this fix still do not expose extractable final-drive or top-gear values.",
       "unresolved": [
         {
-          "item": "430i drivetrain mapping for EU scope (input has RWD; BMW DE page shows 430i xDrive naming)",
-          "reason": "Official source confirms 430i xDrive exists, but does not establish complete 2021-2026 EU-wide availability matrix to safely replace/remove existing 430i RWD without overreach."
-        },
-        {
-          "item": "Whether additional EU diesel/xDrive variants should be added to this entry",
-          "reason": "BMW DE page lists 420d, 420d xDrive, 430d xDrive, M440d xDrive, but no full pan-EU/year-normalized variant policy was obtained in extractable form for this specific schema row."
+          "item": "Whether this row should later expand beyond the supported petrol-family slice",
+          "reason": "BMW Germany technical data confirms additional diesel xDrive variants, but issue #1034 stays narrowly focused on the confirmed petrol-family mismatch rather than broadening the supported row to every current market slice."
         },
         {
           "item": "Final drive ratio by variant",
-          "reason": "No official EU source retrieved here provided verifiable final-drive ratio numbers for G22 variants."
+          "reason": "No official EU source retrieved for issue #1034 provided verifiable final-drive ratio numbers for the supported G22 variants."
         },
         {
           "item": "Top gear ratio by variant",
-          "reason": "No official EU source retrieved here provided verifiable top-gear ratio numbers for G22 variants."
+          "reason": "No official EU source retrieved for issue #1034 provided verifiable top-gear ratio numbers for the supported G22 variants."
         }
       ],
       "sources": {
@@ -971,15 +975,11 @@
     },
     "BMW|5 Series (G60, 2024-2026)": {
       "car_index": 11,
-      "decision_summary": "Updated EU scope for BMW 5 Series G60 by removing non-EU petrol xDrive variants (530i xDrive, 540i xDrive), and corrected the ICE gearbox final-drive ratio to official EU 520i value (3.077). EV drivetrain layout was confirmed, but EV overall reduction ratios could not be safely mapped into current final_drive_ratio/top_gear_ratio schema fields. Second pass completed with additional official-source discovery; ratios remain unchanged unless explicitly confirmed in prior high-confidence evidence. Full-library redo completed with official-source and Wikipedia-overview cross-checking; ratio fields remain unchanged unless explicitly evidence-confirmed. Low-signal Wikipedia fragment placeholder notes were removed in issue #976; remaining unresolved items are intentionally limited to concise manual-review bullets.",
+      "decision_summary": "Manual official-source review for issue #1034 kept the supported EU row narrow to 520i plus the i5 eDrive40 and i5 M60 xDrive BEVs, and moved the i5 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the 520i 8-speed automatic row. The 520i 8-speed ratio pair remains the official 03/2025 BMW value.",
       "unresolved": [
         {
-          "item": "EV ratio field mapping for i5 eDrive40 and i5 M60 xDrive",
-          "reason": "BMW publishes single-speed EV overall reduction ratios (and front/rear motor-specific overall ratios for M60), but the current schema only provides shared ICE-style final_drive_ratio and top_gear_ratio fields; direct one-to-one mapping is not guaranteed without schema guidance."
-        },
-        {
-          "item": "Per-variant gearbox encoding for mixed ICE+EV entry",
-          "reason": "Current entry structure has a shared top-level gearboxes array, which cannot unambiguously represent different transmission/ratio systems for 520i versus i5 variants without schema extension."
+          "item": "Per-axle reduction detail for the i5 M60 xDrive",
+          "reason": "BMW publishes distinct front and rear overall reduction ratios for the dual-motor M60, but the current single-gearbox schema stores one representative EV reduction value for the variant."
         }
       ],
       "sources": {
@@ -1356,15 +1356,15 @@
     },
     "BMW|7 Series (G70, 2023-2026)": {
       "car_index": 16,
-      "decision_summary": "No safe EU-only ratio update applied in fallback pass; retained existing entry and flagged for manual evidence-backed review. Second pass completed with additional official-source discovery; ratios remain unchanged unless explicitly confirmed in prior high-confidence evidence. Full-library redo completed with official-source and Wikipedia-overview cross-checking; ratio fields remain unchanged unless explicitly evidence-confirmed. Low-signal Wikipedia fragment placeholder notes were removed in issue #976; remaining unresolved items are intentionally limited to concise manual-review bullets.",
+      "decision_summary": "Manual official-source review for issue #1034 corrected the supported EU variant set to 740d xDrive, 750e xDrive, M760e xDrive, i7 eDrive50, and i7 M70 xDrive, removing the non-European petrol variants and moving the i7 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the shared 8-speed row.",
       "unresolved": [
         {
-          "item": "BMW 7 Series (G70, 2023-2026) EU ratio-relevant variant mapping",
-          "reason": "Fallback pass without per-model authoritative ratio extraction; no-guess policy kept existing values."
+          "item": "Variant-level final_drive_ratio and top_gear_ratio confirmation for the EU combustion/PHEV variants",
+          "reason": "The official BMW launch material used for issue #1034 confirms the EU-supported 740d xDrive, 750e xDrive, and M760e xDrive variants, but it does not publish extractable numeric ratio fields for those entries."
         },
         {
-          "item": "BMW 7 Series (G70, 2023-2026) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass."
+          "item": "Official BMW numerical publication of the i7 reduction ratio",
+          "reason": "BMW official public materials used for issue #1034 confirm the single-speed EV transmission layout for the i7 variants, but the public-facing documents do not expose an exact numerical reduction ratio; the stored EV ratio uses a reputable technical reference to avoid leaving the i7 on the shared 8-speed row."
         }
       ],
       "sources": {
@@ -1420,6 +1420,25 @@
           {
             "url": "https://en.wikipedia.org/wiki/BMW_7_Series_%28G70%29",
             "note": "Wikipedia model/table page used to cross-check variant completeness (names + engine context).",
+            "confidence": "medium"
+          }
+        ],
+        "issue_1034_eu_scope": [
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0380173EN/the-new-bmw-7-series",
+            "note": "Official BMW launch article confirms the initial EU launch with only the i7, later EU additions 740d xDrive, 750e xDrive, and M760e xDrive, and states that 740i / 760i xDrive are not available in Europe.",
+            "confidence": "high"
+          },
+          {
+            "url": "https://www.press.bmwgroup.com/global/article/detail/T0412894EN/the-bmw-i7-m70-xdrive",
+            "note": "Official BMW press material confirms the i7 M70 xDrive uses a dual-motor all-electric single-speed drive layout rather than a conventional ICE automatic gearbox.",
+            "confidence": "high"
+          }
+        ],
+        "issue_1034_i7_ratio_reference": [
+          {
+            "url": "https://www.auto-data.net/en/bmw-i7-g70-105.7-kwh-455hp-edrive50-51756",
+            "note": "Reputable technical reference used to encode a representative single-speed EV reduction ratio for the i7 once official BMW sources confirmed the drivetrain layout but not the numeric ratio.",
             "confidence": "medium"
           }
         ]

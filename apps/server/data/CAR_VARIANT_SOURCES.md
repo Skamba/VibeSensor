@@ -98,9 +98,9 @@ and the confidence level of the data.
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
-| 420i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| 430i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| M440i xDrive | B58 3.0L I6 Turbo | AWD | BMW press release | High |
+| 420i | B48 2.0L I4 Turbo | RWD | BMW DE technical data | High |
+| 430i xDrive | B48 2.0L I4 Turbo | AWD | BMW DE technical data | High |
+| M440i xDrive | B58 3.0L I6 Turbo | AWD | BMW DE technical data | High |
 
 ### 5 Series (F10, 2011-2017)
 
@@ -126,9 +126,7 @@ and the confidence level of the data.
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
-| 520i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| 530i xDrive | B48 2.0L I4 Turbo | AWD | BMW press release | High |
-| 540i xDrive | B58 3.0L I6 Turbo | AWD | BMW press release | High |
+| 520i | B48 2.0L I4 Turbo | RWD | BMW press release / technical data | High |
 | i5 eDrive40 | Electric Single Motor | RWD | BMW technical data | High |
 | i5 M60 xDrive | Electric Dual Motor | AWD | BMW technical data / BMW M model page | High |
 
@@ -167,10 +165,11 @@ and the confidence level of the data.
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
-| 740i | B58 3.0L I6 Turbo | RWD | BMW press release | High |
-| 760i xDrive | N63 4.4L V8 Turbo | AWD | BMW press release | High |
+| 740d xDrive | B57 3.0L I6 Diesel | AWD | BMW press release | High |
+| 750e xDrive | B58 3.0L I6 Turbo PHEV | AWD | BMW press release | High |
+| M760e xDrive | B58 3.0L I6 Turbo PHEV | AWD | BMW press release / BMW M press material | High |
 | i7 eDrive50 | Electric Single Motor | RWD | BMW technical data | High |
-| i7 M70 xDrive | Electric Dual Motor | AWD | BMW technical data | High |
+| i7 M70 xDrive | Electric Dual Motor | AWD | BMW technical data / BMW M model page | High |
 
 ### 8 Series Coupe (G15, 2019-2025)
 
