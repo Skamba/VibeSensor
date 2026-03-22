@@ -1,30 +1,29 @@
 import type { FeatureDepsBase } from "../feature_deps_base";
 import type { AppState } from "../ui_app_state";
-import type {
-  AnalysisSettingsRequest,
-  AnalysisSettingsPayload,
-  CarUpsertRequest,
-  CarsPayload,
-  SpeedSourceKind,
-  SpeedSourceRequest,
-  SpeedSourcePayload,
-  SpeedSourceStatusPayload,
-} from "../../api/types";
+import type { CarUpsertRequest, CarsPayload } from "../../api/types";
 import {
   addSettingsCar,
   deleteSettingsCar,
-  getAnalysisSettings,
   getSettingsCars,
-  getSettingsSpeedSource,
-  getSpeedSourceStatus,
   setActiveSettingsCar,
-  setAnalysisSettings,
-  updateSettingsSpeedSource,
 } from "../../api";
 import {
   getSettingsCarListAction,
   renderSettingsCarList,
 } from "../views/settings_car_list_view";
+import {
+  createSettingsAnalysisModule,
+  type SettingsAnalysisModule,
+} from "./settings_analysis_module";
+import {
+  createSettingsGpsStatusModule,
+  type SettingsGpsStatusModule,
+} from "./settings_gps_status_module";
+import {
+  createSettingsSpeedSourceModule,
+  type SettingsSpeedSourceModule,
+} from "./settings_speed_source_module";
+import { bindSettingsTabs } from "./settings_tabs_controller";
 
 export interface SettingsFeatureDeps extends FeatureDepsBase {
   state: AppState;
@@ -52,37 +51,14 @@ export interface SettingsFeature {
 
 export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature {
   const { state, els, t, escapeHtml, fmt } = ctx;
-
-  const ANALYSIS_SETTING_KEYS = [
-    "tire_width_mm",
-    "tire_aspect_pct",
-    "rim_in",
-    "final_drive_ratio",
-    "current_gear_ratio",
-    "wheel_bandwidth_pct",
-    "driveshaft_bandwidth_pct",
-    "engine_bandwidth_pct",
-    "speed_uncertainty_pct",
-    "tire_diameter_uncertainty_pct",
-    "final_drive_uncertainty_pct",
-    "gear_uncertainty_pct",
-    "min_abs_band_hz",
-    "max_band_half_width_pct",
-    "tire_deflection_factor",
-  ] as const satisfies readonly (keyof AnalysisSettingsPayload)[];
-
-  const GPS_POLL_FAST = 2_000;
-  const GPS_POLL_SLOW = 10_000;
-  const SPEED_SOURCE_KINDS = ["gps", "manual", "obd2"] as const satisfies readonly SpeedSourceKind[];
-  let gpsPollTimer: ReturnType<typeof setTimeout> | null = null;
   let handlersBound = false;
 
-  function isSpeedSourceKind(value: string): value is SpeedSourceKind {
-    return SPEED_SOURCE_KINDS.some((kind) => kind === value);
+  function showSettingsSaveError(error: unknown): void {
+    window.alert(error instanceof Error ? error.message : t("settings.save_failed"));
   }
 
   function hasValidActiveCar(): boolean {
-    return Boolean(state.activeCarId && state.cars.some((c) => c.id === state.activeCarId));
+    return Boolean(state.activeCarId && state.cars.some((car) => car.id === state.activeCarId));
   }
 
   function syncCarDependentUiState(): void {
@@ -96,6 +72,33 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     ctx.onCarSelectionStateChange();
   }
 
+  const analysisModule: SettingsAnalysisModule = createSettingsAnalysisModule({
+    els,
+    t,
+    escapeHtml,
+    state,
+    renderSpectrum: ctx.renderSpectrum,
+    hasValidActiveCar,
+    onMissingActiveCar: syncCarDependentUiState,
+    onSaveError: showSettingsSaveError,
+  });
+  const speedSourceModule: SettingsSpeedSourceModule = createSettingsSpeedSourceModule({
+    els,
+    t,
+    escapeHtml,
+    state,
+    renderSpeedReadout: ctx.renderSpeedReadout,
+    onSaveError: showSettingsSaveError,
+  });
+  const gpsStatusModule: SettingsGpsStatusModule = createSettingsGpsStatusModule({
+    els,
+    t,
+    escapeHtml,
+    state,
+    fmt,
+    renderSpeedReadout: ctx.renderSpeedReadout,
+  });
+
   function applyCarsPayload(payload: CarsPayload): void {
     state.cars = payload.cars;
     const requestedActiveCarId = payload.activeCarId;
@@ -104,87 +107,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       : false;
     state.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
     syncCarDependentUiState();
-  }
-
-  function syncSettingsInputs(): void {
-    if (els.wheelBandwidthInput) els.wheelBandwidthInput.value = String(state.vehicleSettings.wheel_bandwidth_pct);
-    if (els.driveshaftBandwidthInput) els.driveshaftBandwidthInput.value = String(state.vehicleSettings.driveshaft_bandwidth_pct);
-    if (els.engineBandwidthInput) els.engineBandwidthInput.value = String(state.vehicleSettings.engine_bandwidth_pct);
-    if (els.speedUncertaintyInput) els.speedUncertaintyInput.value = String(state.vehicleSettings.speed_uncertainty_pct);
-    if (els.tireDiameterUncertaintyInput) els.tireDiameterUncertaintyInput.value = String(state.vehicleSettings.tire_diameter_uncertainty_pct);
-    if (els.finalDriveUncertaintyInput) els.finalDriveUncertaintyInput.value = String(state.vehicleSettings.final_drive_uncertainty_pct);
-    if (els.gearUncertaintyInput) els.gearUncertaintyInput.value = String(state.vehicleSettings.gear_uncertainty_pct);
-    if (els.minAbsBandHzInput) els.minAbsBandHzInput.value = String(state.vehicleSettings.min_abs_band_hz);
-    if (els.maxBandHalfWidthInput) els.maxBandHalfWidthInput.value = String(state.vehicleSettings.max_band_half_width_pct);
-  }
-
-  function showSettingsSaveError(error: unknown): void {
-    window.alert(error instanceof Error ? error.message : t("settings.save_failed"));
-  }
-
-  function applySpeedSourcePayload(payload: SpeedSourcePayload): void {
-    state.speedSource = payload.speedSource;
-    state.manualSpeedKph = payload.manualSpeedKph;
-    if (els.staleTimeoutInput) els.staleTimeoutInput.value = String(payload.staleTimeoutS);
-    syncSpeedSourceInputs();
-    ctx.renderSpeedReadout();
-  }
-
-  async function syncSpeedSourceToServer(payload: SpeedSourceRequest): Promise<void> {
-    try {
-      const saved = await updateSettingsSpeedSource(payload);
-      applySpeedSourcePayload(saved);
-    } catch (error) {
-      void loadSpeedSourceFromServer();
-      showSettingsSaveError(error);
-    }
-  }
-
-  async function loadSpeedSourceFromServer(): Promise<void> {
-    try {
-      const payload: SpeedSourcePayload = await getSettingsSpeedSource();
-      applySpeedSourcePayload(payload);
-    } catch (_err) { /* ignore */ }
-  }
-
-  function syncSpeedSourceInputs(): void {
-    const radios = document.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]');
-    radios.forEach((r) => { r.checked = r.value === state.speedSource; });
-    if (els.manualSpeedInput) els.manualSpeedInput.value = state.manualSpeedKph != null ? String(state.manualSpeedKph) : "";
-    if (els.headerManualSpeedInput) {
-      els.headerManualSpeedInput.value = state.manualSpeedKph != null ? String(state.manualSpeedKph) : "";
-    }
-    if (els.headerManualOverrideGroup) {
-      els.headerManualOverrideGroup.hidden = state.speedSource !== "manual";
-    }
-  }
-
-  function applyAnalysisSettingsPayload(serverSettings: AnalysisSettingsPayload): void {
-    for (const key of ANALYSIS_SETTING_KEYS) {
-      const value = serverSettings[key];
-      if (typeof value === "number") state.vehicleSettings[key] = value;
-    }
-    syncSettingsInputs();
-    ctx.renderSpectrum();
-  }
-
-  async function syncAnalysisSettingsToServer(payload: AnalysisSettingsRequest): Promise<void> {
-    try {
-      const saved = await setAnalysisSettings(payload);
-      applyAnalysisSettingsPayload(saved);
-    } catch (error) {
-      syncSettingsInputs();
-      showSettingsSaveError(error);
-    }
-  }
-
-  async function loadAnalysisSettingsFromServer(): Promise<void> {
-    try {
-      const serverSettings = await getAnalysisSettings();
-      if (serverSettings) {
-        applyAnalysisSettingsPayload(serverSettings);
-      }
-    } catch (_err) { /* ignore */ }
   }
 
   async function loadCarsFromServer(): Promise<void> {
@@ -237,7 +159,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function syncActiveCarToInputs(): void {
-    const car = state.cars.find((c) => c.id === state.activeCarId);
+    const car = state.cars.find((entry) => entry.id === state.activeCarId);
     if (!car) {
       syncCarDependentUiState();
       return;
@@ -247,89 +169,8 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         state.vehicleSettings[key] = car.aspects[key];
       }
     }
-    syncSettingsInputs();
+    analysisModule.syncSettingsInputs();
     syncCarDependentUiState();
-  }
-
-  function saveAnalysisFromInputs(): void {
-    if (!hasValidActiveCar()) {
-      syncCarDependentUiState();
-      return;
-    }
-    const wheelBandwidth = Number(els.wheelBandwidthInput?.value);
-    const driveshaftBandwidth = Number(els.driveshaftBandwidthInput?.value);
-    const engineBandwidth = Number(els.engineBandwidthInput?.value);
-    const speedUncertainty = Number(els.speedUncertaintyInput?.value);
-    const tireDiameterUncertainty = Number(els.tireDiameterUncertaintyInput?.value);
-    const finalDriveUncertainty = Number(els.finalDriveUncertaintyInput?.value);
-    const gearUncertainty = Number(els.gearUncertaintyInput?.value);
-    const minAbsBandHz = Number(els.minAbsBandHzInput?.value);
-    const maxBandHalfWidth = Number(els.maxBandHalfWidthInput?.value);
-    const validBandwidths = wheelBandwidth > 0 && wheelBandwidth <= 40 && driveshaftBandwidth > 0 && driveshaftBandwidth <= 40 && engineBandwidth > 0 && engineBandwidth <= 40;
-    const validUncertainty = speedUncertainty >= 0 && speedUncertainty <= 20 && tireDiameterUncertainty >= 0 && tireDiameterUncertainty <= 20 && finalDriveUncertainty >= 0 && finalDriveUncertainty <= 10 && gearUncertainty >= 0 && gearUncertainty <= 20;
-    const validBandLimits = minAbsBandHz >= 0 && minAbsBandHz <= 10 && maxBandHalfWidth > 0 && maxBandHalfWidth <= 25;
-    if (!validBandwidths || !validUncertainty || !validBandLimits) {
-      window.alert(t("settings.validation_error"));
-      return;
-    }
-    const payload: AnalysisSettingsRequest = {
-      wheel_bandwidth_pct: wheelBandwidth,
-      driveshaft_bandwidth_pct: driveshaftBandwidth,
-      engine_bandwidth_pct: engineBandwidth,
-      speed_uncertainty_pct: speedUncertainty,
-      tire_diameter_uncertainty_pct: tireDiameterUncertainty,
-      final_drive_uncertainty_pct: finalDriveUncertainty,
-      gear_uncertainty_pct: gearUncertainty,
-      min_abs_band_hz: minAbsBandHz,
-      max_band_half_width_pct: maxBandHalfWidth,
-    };
-    for (const key of ANALYSIS_SETTING_KEYS) {
-      if (!(key in payload)) {
-        payload[key] = state.vehicleSettings[key];
-      }
-    }
-    void syncAnalysisSettingsToServer(payload);
-  }
-
-  function saveSpeedSourceFromInputs(): void {
-    const radios = document.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]');
-    let src: SpeedSourceKind = "gps";
-    radios.forEach((r) => {
-      if (r.checked && isSpeedSourceKind(r.value)) src = r.value;
-    });
-    const manual = Number(els.manualSpeedInput?.value);
-    const payload: SpeedSourceRequest = {
-      speedSource: src,
-      manualSpeedKph: Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null,
-    };
-    const staleVal = Number(els.staleTimeoutInput?.value);
-    if (staleVal >= 3 && staleVal <= 120) payload.staleTimeoutS = staleVal;
-    void syncSpeedSourceToServer(payload);
-  }
-
-  function saveHeaderManualSpeedFromInput(): void {
-    const manual = Number(els.headerManualSpeedInput?.value);
-    const payload: SpeedSourceRequest = {
-      speedSource: "manual",
-      manualSpeedKph: Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null,
-    };
-    const staleVal = Number(els.staleTimeoutInput?.value);
-    if (staleVal >= 3 && staleVal <= 120) payload.staleTimeoutS = staleVal;
-    void syncSpeedSourceToServer(payload);
-  }
-
-  function setActiveSettingsTab(tabId: string): void {
-    els.settingsTabs.forEach((tab) => {
-      const isActive = tab.getAttribute("data-settings-tab") === tabId;
-      tab.classList.toggle("active", isActive);
-      tab.setAttribute("aria-selected", isActive ? "true" : "false");
-      tab.tabIndex = isActive ? 0 : -1;
-    });
-    els.settingsTabPanels.forEach((panel) => {
-      const isActive = panel.id === tabId;
-      panel.classList.toggle("active", isActive);
-      panel.hidden = !isActive;
-    });
   }
 
   function bindCarListEvents(): void {
@@ -347,48 +188,23 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     });
   }
 
-  function bindSettingsTabs(): void {
-    const activateTabByIndex = (index: number): void => {
-      if (!els.settingsTabs.length) return;
-      const safeIndex = ((index % els.settingsTabs.length) + els.settingsTabs.length) % els.settingsTabs.length;
-      const btn = els.settingsTabs[safeIndex];
-      const tabId = btn.getAttribute("data-settings-tab");
-      if (tabId) setActiveSettingsTab(tabId);
-      btn.focus();
-    };
-    els.settingsTabs.forEach((tab, idx) => {
-      tab.addEventListener("click", () => {
-        const tabId = tab.getAttribute("data-settings-tab");
-        if (tabId) setActiveSettingsTab(tabId);
-      });
-      tab.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tab.click(); return; }
-        if (ev.key === "ArrowRight") { ev.preventDefault(); activateTabByIndex(idx + 1); return; }
-        if (ev.key === "ArrowLeft") { ev.preventDefault(); activateTabByIndex(idx - 1); return; }
-        if (ev.key === "Home") { ev.preventDefault(); activateTabByIndex(0); return; }
-        if (ev.key === "End") { ev.preventDefault(); activateTabByIndex(els.settingsTabs.length - 1); }
-      });
-    });
-  }
-
   function bindHandlers(): void {
     if (handlersBound) {
       return;
     }
     handlersBound = true;
-    bindSettingsTabs();
+    bindSettingsTabs(els);
     bindCarListEvents();
-    els.saveAnalysisBtn?.addEventListener("click", saveAnalysisFromInputs);
-    els.saveSpeedSourceBtn?.addEventListener("click", saveSpeedSourceFromInputs);
-    els.headerManualSpeedSaveBtn?.addEventListener("click", saveHeaderManualSpeedFromInput);
-    els.headerManualSpeedInput?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        saveHeaderManualSpeedFromInput();
-      }
-    });
+    analysisModule.bindHandlers();
+    speedSourceModule.bindHandlers();
   }
 
-  async function addCarFromWizard(name: string, carType: string, aspects: Record<string, number>, variant?: string): Promise<void> {
+  async function addCarFromWizard(
+    name: string,
+    carType: string,
+    aspects: Record<string, number>,
+    variant?: string,
+  ): Promise<void> {
     try {
       const fullAspects = { ...state.vehicleSettings, ...aspects };
       const payload: CarUpsertRequest = { name, type: carType, aspects: fullAspects };
@@ -408,118 +224,19 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     } catch (_err) { /* ignore */ }
   }
 
-  // -- GPS status polling & rendering -----------------------------------------
-
-  const CONNECTION_STATE_I18N: Record<string, string> = {
-    disabled: "settings.speed.state_disabled",
-    disconnected: "settings.speed.state_disconnected",
-    connected: "settings.speed.state_connected",
-    stale: "settings.speed.state_stale",
-  };
-
-  function connectionStateLabel(cs: string): string {
-    const key = CONNECTION_STATE_I18N[cs];
-    return key ? t(key) : cs;
-  }
-
-  function speedKmhInSelectedUnit(speedKmh: number | null): number | null {
-    if (speedKmh === null || !Number.isFinite(speedKmh)) return null;
-    return state.speedUnit === "mps" ? speedKmh / 3.6 : speedKmh;
-  }
-
-  function selectedSpeedUnitLabel(): string {
-    return state.speedUnit === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh");
-  }
-
-  function renderGpsStatus(status: SpeedSourceStatusPayload): void {
-    const unitLabel = selectedSpeedUnitLabel();
-    if (els.headerGpsStatus) {
-      const stateLabel = connectionStateLabel(status.connection_state);
-      const speed = speedKmhInSelectedUnit(status.effective_speed_kmh);
-      const speedText = speed != null ? ` ${fmt(speed, 1)} ${unitLabel}` : "";
-      els.headerGpsStatus.textContent = `GPS ${stateLabel}${speedText}`;
-      const variant = status.connection_state === "connected"
-        ? "ok"
-        : (status.connection_state === "stale" ? "warn" : "muted");
-      els.headerGpsStatus.className = `pill pill--${variant}`;
-    }
-    if (els.gpsStatusState) els.gpsStatusState.textContent = connectionStateLabel(status.connection_state);
-    if (els.gpsStatusDevice) els.gpsStatusDevice.textContent = status.device ?? "--";
-    if (els.gpsStatusLastUpdate) {
-      els.gpsStatusLastUpdate.textContent = status.last_update_age_s != null
-        ? t("settings.speed.last_update_value", {
-          value: {
-            number: status.last_update_age_s,
-            options: { minimumFractionDigits: 1, maximumFractionDigits: 1 },
-          },
-        })
-        : t("settings.speed.last_update_never");
-    }
-    if (els.gpsStatusRawSpeed) {
-      const rawSpeed = speedKmhInSelectedUnit(status.raw_speed_kmh);
-      els.gpsStatusRawSpeed.textContent = rawSpeed != null ? `${fmt(rawSpeed, 1)} ${unitLabel}` : "--";
-    }
-    if (els.gpsStatusEffectiveSpeed) {
-      const effectiveSpeed = speedKmhInSelectedUnit(status.effective_speed_kmh);
-      els.gpsStatusEffectiveSpeed.textContent = effectiveSpeed != null
-        ? `${fmt(effectiveSpeed, 1)} ${unitLabel}`
-        : "--";
-    }
-    if (els.gpsStatusLastError) {
-      els.gpsStatusLastError.textContent = status.last_error ?? "--";
-    }
-    if (els.gpsStatusReconnect) {
-      els.gpsStatusReconnect.textContent = status.reconnect_delay_s != null ? `${fmt(status.reconnect_delay_s, 1)}s` : "--";
-    }
-    if (els.gpsStatusFallback) {
-      els.gpsStatusFallback.textContent = status.fallback_active ? t("settings.speed.fallback_yes") : t("settings.speed.fallback_no");
-    }
-  }
-
-  async function pollGpsStatus(): Promise<void> {
-    try {
-      const status = await getSpeedSourceStatus();
-      state.gpsFallbackActive = status.fallback_active
-        || (
-          state.speedSource !== "manual"
-          && typeof state.manualSpeedKph === "number"
-          && state.manualSpeedKph > 0
-          && status.connection_state !== "connected"
-        );
-      renderGpsStatus(status);
-      ctx.renderSpeedReadout();
-      const interval = status.connection_state === "connected" ? GPS_POLL_FAST : GPS_POLL_SLOW;
-      gpsPollTimer = setTimeout(() => void pollGpsStatus(), interval);
-    } catch {
-      gpsPollTimer = setTimeout(() => void pollGpsStatus(), GPS_POLL_SLOW);
-    }
-  }
-
-  function startGpsStatusPolling(): void {
-    if (gpsPollTimer !== null) return;
-    void pollGpsStatus();
-  }
-
-  function stopGpsStatusPolling(): void {
-    if (gpsPollTimer !== null) {
-      clearTimeout(gpsPollTimer);
-      gpsPollTimer = null;
-    }
-  }
-
   return {
     bindHandlers,
-    syncSettingsInputs,
-    loadSpeedSourceFromServer,
-    loadAnalysisSettingsFromServer,
+    syncSettingsInputs: analysisModule.syncSettingsInputs,
+    loadSpeedSourceFromServer: speedSourceModule.loadSpeedSourceFromServer,
+    loadAnalysisSettingsFromServer: analysisModule.loadAnalysisSettingsFromServer,
     loadCarsFromServer,
     renderCarList,
     syncActiveCarToInputs,
-    saveAnalysisFromInputs,
-    saveSpeedSourceFromInputs,
-    saveHeaderManualSpeedFromInput,
+    saveAnalysisFromInputs: analysisModule.saveAnalysisFromInputs,
+    saveSpeedSourceFromInputs: speedSourceModule.saveSpeedSourceFromInputs,
+    saveHeaderManualSpeedFromInput: speedSourceModule.saveHeaderManualSpeedFromInput,
     addCarFromWizard,
-    startGpsStatusPolling,
-    stopGpsStatusPolling,
+    startGpsStatusPolling: gpsStatusModule.startGpsStatusPolling,
+    stopGpsStatusPolling: gpsStatusModule.stopGpsStatusPolling,
   };
 }

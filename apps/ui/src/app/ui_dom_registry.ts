@@ -50,6 +50,7 @@ export interface UiDomElements {
   addCarWizard: HTMLElement | null;
   wizardCloseBtn: HTMLButtonElement | null;
   wizardBackBtn: HTMLButtonElement | null;
+  speedSourceRadios: HTMLInputElement[];
   manualSpeedInput: HTMLInputElement | null;
   saveSpeedSourceBtn: HTMLButtonElement | null;
   settingsTabs: HTMLElement[];
@@ -153,6 +154,9 @@ export function createUiDomRegistry(): UiDomElements {
     addCarWizard: el("addCarWizard"),
     wizardCloseBtn: btnEl("wizardCloseBtn"),
     wizardBackBtn: btnEl("wizardBackBtn"),
+    speedSourceRadios: Array.from(
+      document.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]'),
+    ),
     manualSpeedInput: inputEl("manualSpeedInput"),
     saveSpeedSourceBtn: btnEl("saveSpeedSourceBtn"),
     settingsTabs: Array.from(document.querySelectorAll(".settings-tab")),
