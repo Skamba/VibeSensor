@@ -170,7 +170,8 @@ class GitHubAPIClient:
         validate_https_url(url, context=self._api_context)
         req = Request(url, headers=self._api_headers())
         with urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+            result: JsonValue = json.loads(resp.read().decode("utf-8"))
+            return result
 
 
 class ServerReleaseFetcher(GitHubAPIClient):
