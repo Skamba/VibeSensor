@@ -19,6 +19,7 @@ from vibesensor.adapters.pdf.diagram_layout import (
     resolve_marker_states,
     source_color,
 )
+from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 
 # ── estimate_text_width ──────────────────────────────────────────────────────
 
@@ -249,7 +250,7 @@ def test_extract_amp_by_location_from_intensity() -> None:
     summary: dict[str, object] = {
         "sensor_locations": ["front-left wheel"],
         "sensor_intensity_by_location": [
-            {"location": "front-left wheel", "p95_intensity_db": 22.0},
+            LocationIntensitySummary(location="front-left wheel", p95_intensity_db=22.0),
         ],
     }
     connected, amp = extract_amp_by_location(summary, [])
@@ -262,8 +263,8 @@ def test_extract_amp_by_location_from_rows() -> None:
         "sensor_locations": ["rear-right wheel"],
         "sensor_intensity_by_location": [],
     }
-    rows: list[dict[str, object]] = [
-        {"location": "rear-right wheel", "mean_value": 15.0},
+    rows = [
+        LocationHotspotRow(location="rear-right wheel", mean_value=15.0),
     ]
     connected, amp = extract_amp_by_location(summary, rows)
     assert "rear-right wheel" in connected

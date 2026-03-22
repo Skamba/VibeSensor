@@ -10,6 +10,8 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal
 
+from vibesensor.domain import LocationHotspotRow
+
 # ── Marker & label data types ────────────────────────────────────────────────
 
 MarkerState = Literal["connected-active", "connected-inactive", "disconnected"]
@@ -340,8 +342,8 @@ def location_points(
 
 
 def extract_amp_by_location(
-    summary: dict[str, object],
-    location_rows: list[dict[str, object]],
+    summary: Mapping[str, object],
+    location_rows: Sequence[LocationHotspotRow],
     *,
     as_float: Callable[[object], float | None] | None = None,
 ) -> tuple[set[str], dict[str, float]]:
@@ -376,18 +378,13 @@ def extract_amp_by_location(
     sensor_intensity_rows = summary.get("sensor_intensity_by_location", [])
     if isinstance(sensor_intensity_rows, list):
         for row in sensor_intensity_rows:
-            if not isinstance(row, dict):
-                continue
-            loc = canonical_location(row.get("location"))
-            p95_val = coerce(row.get("p95_intensity_db"))
-            p95_db = p95_val if p95_val is not None else coerce(row.get("mean_intensity_db"))
+            loc = canonical_location(row.location)
+            p95_db = row.p95_intensity_db or row.mean_intensity_db
             if loc and p95_db is not None and p95_db > 0:
                 amp_by_location[loc] = p95_db
     for row in location_rows:
-        if not isinstance(row, dict):
-            continue
-        loc = canonical_location(row.get("location"))
-        mean_val = coerce(row.get("mean_value"))
+        loc = canonical_location(row.location)
+        mean_val = coerce(row.mean_value)
         if loc and loc not in amp_by_location and mean_val is not None and mean_val > 0:
             amp_by_location[loc] = mean_val
     connected_locations.update(amp_by_location.keys())

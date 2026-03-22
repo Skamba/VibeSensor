@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
     from vibesensor.adapters.pdf.diagram_layout import LabelRenderPlan, MarkerRenderPlan
+    from vibesensor.domain import LocationHotspotRow
 
 __all__ = ["car_location_diagram"]
 
@@ -268,8 +269,8 @@ def _draw_source_legend(
 
 def car_location_diagram(
     top_findings: Sequence[Mapping[str, object] | Any],
-    summary: dict[str, object],
-    location_rows: list[dict[str, object]],
+    summary: Mapping[str, object],
+    location_rows: Sequence[LocationHotspotRow],
     *,
     content_width: float,
     tr: Callable[..., str],

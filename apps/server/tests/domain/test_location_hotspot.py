@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain.location_hotspot import LocationHotspot
+from vibesensor.domain.location_hotspot import (
+    LocationHotspot,
+    LocationHotspotRow,
+    LocationIntensitySummary,
+    PhaseIntensitySummary,
+    StrengthBucketDistribution,
+)
 
 
 class TestComputeConfidence:
@@ -101,3 +107,57 @@ class TestComputeConfidence:
             total_samples=20,
         )
         assert few > many
+
+
+class TestLocationIntensitySummaryRows:
+    def test_from_dict_parses_typed_nested_values(self) -> None:
+        summary = LocationIntensitySummary.from_dict(
+            {
+                "location": "rear-left",
+                "sample_count": 8,
+                "sample_coverage_ratio": 0.75,
+                "p95_intensity_db": 18.0,
+                "strength_bucket_distribution": {
+                    "total": 8,
+                    "counts": {"l0": 2, "l1": 6},
+                    "percent_time_l0": 25.0,
+                    "percent_time_l1": 75.0,
+                },
+                "phase_intensity": {
+                    "cruise": {
+                        "count": 3,
+                        "mean_intensity_db": 12.0,
+                        "max_intensity_db": 18.0,
+                    },
+                },
+            },
+        )
+
+        assert summary.location == "rear-left"
+        assert summary.strength_bucket_distribution.total == 8
+        assert summary.strength_bucket_distribution.counts["l1"] == 6
+        assert summary.phase_intensity is not None
+        assert summary.phase_intensity["cruise"].max_intensity_db == 18.0
+
+    def test_strength_bucket_distribution_defaults_to_typed_object(self) -> None:
+        summary = LocationIntensitySummary(location="front-left")
+
+        assert isinstance(summary.strength_bucket_distribution, StrengthBucketDistribution)
+        assert summary.strength_bucket_distribution.total == 0
+
+    def test_location_hotspot_row_defaults_to_db_unit(self) -> None:
+        row = LocationHotspotRow(location="front-left", count=2, peak_value=18.0, mean_value=12.0)
+
+        assert row.unit == "db"
+
+    def test_phase_intensity_summary_from_dict(self) -> None:
+        phase = PhaseIntensitySummary.from_dict(
+            {
+                "count": 5,
+                "mean_intensity_db": 10.0,
+                "max_intensity_db": 16.0,
+            },
+        )
+
+        assert phase.count == 5
+        assert phase.mean_intensity_db == 10.0
