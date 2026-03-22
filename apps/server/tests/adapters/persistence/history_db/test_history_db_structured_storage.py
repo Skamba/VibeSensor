@@ -53,12 +53,12 @@ def test_v2_structured_roundtrip(tmp_path: Path) -> None:
     assert len(retrieved) == 5
     for i, row in enumerate(retrieved):
         orig = originals[i]
-        assert row["t_s"] == orig["t_s"]
-        assert row["client_id"] == orig["client_id"]
-        assert row["speed_kmh"] == orig["speed_kmh"]
-        assert row["accel_x_g"] == pytest.approx(orig["accel_x_g"])
-        assert row["vibration_strength_db"] == orig["vibration_strength_db"]
-        assert row["top_peaks"] == orig["top_peaks"]
+        assert row.t_s == orig["t_s"]
+        assert row.client_id == orig["client_id"]
+        assert row.speed_kmh == orig["speed_kmh"]
+        assert row.accel_x_g == pytest.approx(orig["accel_x_g"])
+        assert row.vibration_strength_db == orig["vibration_strength_db"]
+        assert row.to_dict()["top_peaks"] == orig["top_peaks"]
 
 
 def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
@@ -69,9 +69,9 @@ def test_v2_nan_inf_sanitized(tmp_path: Path) -> None:
 
     rows = db.get_run_samples("run-nan")
     assert len(rows) == 1
-    assert rows[0]["speed_kmh"] is None
-    assert rows[0]["accel_x_g"] is None
-    assert rows[0]["t_s"] == 1.0
+    assert rows[0].speed_kmh is None
+    assert rows[0].accel_x_g is None
+    assert rows[0].t_s == 1.0
 
 
 def test_v2_no_json_blobs_in_storage(tmp_path: Path) -> None:
@@ -145,9 +145,9 @@ def test_v2_sensor_frame_objects(tmp_path: Path) -> None:
 
     rows = db.get_run_samples("run-sf")
     assert len(rows) == 1
-    assert rows[0]["client_id"] == "aabbccddeeff"
-    assert rows[0]["speed_kmh"] == 60.0
-    assert rows[0]["top_peaks"] == frame.top_peaks
+    assert rows[0].client_id == "aabbccddeeff"
+    assert rows[0].speed_kmh == 60.0
+    assert rows[0].top_peaks == frame.top_peaks
 
 
 def test_v2_delete_cascades_legacy_and_v2(tmp_path: Path) -> None:
@@ -185,7 +185,7 @@ def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
     batched = list(db.iter_run_samples("run-full", batch_size=7))
     flat = [s for b in batched for s in b]
     assert len(flat) == 20
-    assert [s["t_s"] for s in flat] == [float(i) for i in range(20)]
+    assert [s.t_s for s in flat] == [float(i) for i in range(20)]
 
     run = db.get_run("run-full")
     assert run is not None
@@ -202,13 +202,13 @@ def test_v2_iter_with_offset(tmp_path: Path) -> None:
     db.append_samples("run-off", [{"t_s": float(i)} for i in range(10)])
 
     rows0 = [s for b in db.iter_run_samples("run-off", offset=0) for s in b]
-    assert [r["t_s"] for r in rows0] == [float(i) for i in range(10)]
+    assert [r.t_s for r in rows0] == [float(i) for i in range(10)]
 
     rows1 = [s for b in db.iter_run_samples("run-off", offset=1) for s in b]
-    assert [r["t_s"] for r in rows1] == [float(i) for i in range(1, 10)]
+    assert [r.t_s for r in rows1] == [float(i) for i in range(1, 10)]
 
     rows5 = [s for b in db.iter_run_samples("run-off", batch_size=3, offset=5) for s in b]
-    assert [r["t_s"] for r in rows5] == [5.0, 6.0, 7.0, 8.0, 9.0]
+    assert [r.t_s for r in rows5] == [5.0, 6.0, 7.0, 8.0, 9.0]
 
     rows_past = [s for b in db.iter_run_samples("run-off", offset=20) for s in b]
     assert rows_past == []
@@ -229,10 +229,10 @@ def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> No
         sample for batch in db.iter_run_samples("run-corrupt", batch_size=2) for sample in batch
     ]
     assert len(rows) == 4
-    assert rows[0].get("t_s") == 1.0
-    assert rows[1].get("t_s") == 2.0
-    assert rows[2].get("top_peaks") == []
-    assert rows[3].get("t_s") == 3.0
+    assert rows[0].t_s == 1.0
+    assert rows[1].t_s == 2.0
+    assert rows[2].top_peaks == ()
+    assert rows[3].t_s == 3.0
 
 
 def test_v2_row_to_dict_non_list_peak_column_warns_and_uses_empty(
@@ -254,5 +254,5 @@ def test_v2_row_to_dict_non_list_peak_column_warns_and_uses_empty(
         rows = db.get_run_samples("run-peak-warn")
 
     assert len(rows) == 1
-    assert rows[0]["top_peaks"] == []
+    assert rows[0].top_peaks == ()
     assert "top_peaks" in caplog.text

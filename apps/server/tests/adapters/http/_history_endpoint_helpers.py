@@ -26,6 +26,7 @@ from vibesensor.adapters.http.dependencies import (
     UpdateDeps,
 )
 from vibesensor.infra.runtime import RuntimeHealthState
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService, PdfRendererFn
 from vibesensor.use_cases.history.runs import HistoryRunService
@@ -112,13 +113,20 @@ class FakeHistoryDB:
     def iter_run_samples(self, run_id: str, batch_size: int = 1000):
         if run_id != "run-1":
             return
-        for start in range(0, len(self.samples), batch_size):
-            yield self.samples[start : start + batch_size]
+        rows = [
+            row if isinstance(row, SensorFrame) else SensorFrame.from_dict(row)
+            for row in self.samples
+        ]
+        for start in range(0, len(rows), batch_size):
+            yield rows[start : start + batch_size]
 
-    def get_run_samples(self, run_id: str) -> list[dict[str, Any]]:
+    def get_run_samples(self, run_id: str) -> list[SensorFrame]:
         if run_id != "run-1":
             return []
-        return list(self.samples)
+        return [
+            row if isinstance(row, SensorFrame) else SensorFrame.from_dict(row)
+            for row in self.samples
+        ]
 
     def list_runs(self) -> list[dict[str, Any]]:
         return []

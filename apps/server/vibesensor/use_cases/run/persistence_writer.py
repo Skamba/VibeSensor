@@ -12,10 +12,10 @@ import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
-from typing import cast
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
     "AppendRowsResult",
@@ -248,7 +248,7 @@ class RunPersistenceWriter:
         *,
         run_id: str,
         start_time_utc: str,
-        rows: list[dict[str, object]],
+        rows: list[SensorFrame],
     ) -> AppendRowsResult:
         history_db = self._history_db
         if not rows:
@@ -267,7 +267,7 @@ class RunPersistenceWriter:
                 for attempt in range(_MAX_APPEND_RETRIES):
                     try:
                         write_start = self._monotonic()
-                        history_db.append_samples(run_id, cast(list[JsonObject], rows))
+                        history_db.append_samples(run_id, rows)
                         write_dur = self._monotonic() - write_start
                         with self._lock:
                             if not self._run_id_matches(run_id):

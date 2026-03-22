@@ -16,6 +16,7 @@ from typing import TypeAlias, TypedDict, cast
 from vibesensor.domain import DrivingPhase, StrengthPeak
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +80,30 @@ class AnalysisSample:
             queue_overflow_drops=_as_float(raw.get("queue_overflow_drops")),
         )
 
+    @classmethod
+    def from_sensor_frame(cls, sample: SensorFrame) -> AnalysisSample:
+        return cls(
+            t_s=sample.t_s,
+            speed_kmh=sample.speed_kmh,
+            accel_x_g=sample.accel_x_g,
+            accel_y_g=sample.accel_y_g,
+            accel_z_g=sample.accel_z_g,
+            vibration_strength_db=sample.vibration_strength_db,
+            strength_bucket=sample.strength_bucket or "",
+            strength_floor_amp_g=sample.strength_floor_amp_g,
+            top_peaks=sample.top_peaks,
+            dominant_freq_hz=sample.dominant_freq_hz,
+            location=sample.location,
+            client_name=sample.client_name,
+            client_id=sample.client_id,
+            engine_rpm=sample.engine_rpm,
+            engine_rpm_source=sample.engine_rpm_source,
+            final_drive_ratio=sample.final_drive_ratio,
+            gear=sample.gear,
+            frames_dropped_total=float(sample.frames_dropped_total),
+            queue_overflow_drops=float(sample.queue_overflow_drops),
+        )
+
     def to_json_object(self) -> JsonObject:
         top_peaks = cast(
             list[JsonValue],
@@ -110,7 +135,7 @@ class AnalysisSample:
 
 
 Sample: TypeAlias = AnalysisSample
-AnalysisSampleInput: TypeAlias = AnalysisSample | JsonObject
+AnalysisSampleInput: TypeAlias = AnalysisSample | SensorFrame | JsonObject
 
 
 def normalize_analysis_samples(
@@ -125,6 +150,10 @@ def normalize_analysis_samples(
             raw_samples.append(sample.to_json_object())
             analysis_samples.append(sample)
             continue
+        if isinstance(sample, SensorFrame):
+            raw_samples.append(sample.to_dict())
+            analysis_samples.append(AnalysisSample.from_sensor_frame(sample))
+            continue
         raw_sample = cast(JsonObject, dict(sample))
         raw_samples.append(raw_sample)
         analysis_samples.append(AnalysisSample.from_dict(raw_sample))
@@ -134,7 +163,11 @@ def normalize_analysis_samples(
 def ensure_analysis_sample(sample: AnalysisSampleInput) -> AnalysisSample:
     """Normalize one sample row to the typed diagnostics contract."""
 
-    return sample if isinstance(sample, AnalysisSample) else AnalysisSample.from_dict(sample)
+    if isinstance(sample, AnalysisSample):
+        return sample
+    if isinstance(sample, SensorFrame):
+        return AnalysisSample.from_sensor_frame(sample)
+    return AnalysisSample.from_dict(sample)
 
 
 def ensure_analysis_samples(samples: Sequence[AnalysisSampleInput]) -> list[AnalysisSample]:

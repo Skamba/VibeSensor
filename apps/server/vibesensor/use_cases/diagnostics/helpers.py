@@ -16,6 +16,7 @@ from vibesensor.shared.constants import (
 )
 from vibesensor.shared.locations import label_for_code as _label_for_code
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
@@ -121,7 +122,7 @@ def _effective_engine_rpm(
     return float(rpm), "estimated_from_speed_and_ratios"
 
 
-def _load_run(path: Path) -> tuple[JsonObject, list[JsonObject], list[str]]:
+def _load_run(path: Path) -> tuple[JsonObject, list[SensorFrame], list[str]]:
     if not path.exists():
         raise FileNotFoundError(path)
     if path.suffix.lower() != ".jsonl":
