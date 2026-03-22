@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Never
+from typing import Never, cast
 
 from vibesensor.domain import RunStatus
+from vibesensor.shared.boundaries.summary_warning import localize_warning_list
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.ports import RunPersistence, SettingsReader
-from vibesensor.shared.run_context import add_current_context_warnings, localize_warning_list
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.shared.run_context import add_current_context_warnings
+from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.use_cases.history.helpers import (
     HistoryRecord,
     async_require_run,
@@ -57,16 +58,13 @@ class HistoryRunService:
         current_active_car_snapshot = (
             self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )
-        analysis = add_current_context_warnings(
-            analysis,
+        warnings = add_current_context_warnings(
+            analysis.get("warnings"),
+            metadata=analysis.get("metadata"),
             current_active_car_snapshot=current_active_car_snapshot,
         )
         response_lang = resolve_run_language(run, requested_lang)
-        localized_warnings = localize_warning_list(
-            analysis.get("warnings"),
-            lang=response_lang,
-        )
-        analysis["warnings"] = list(localized_warnings)
+        analysis["warnings"] = cast(JsonValue, localize_warning_list(warnings, lang=response_lang))
         analysis["run_id"] = str(run.get("run_id") or run_id)
         analysis["status"] = RunStatus.COMPLETE.value
 
