@@ -17,9 +17,7 @@ from vibesensor.adapters.analysis_summary import (
     summarize_run_data,
 )
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.shared.boundaries.diagnostic_case import (
-    project_analysis_summary,
-)
+from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import RunAnalysis
 

@@ -14,9 +14,7 @@ from vibesensor.domain import (
 from vibesensor.domain import (
     TestPlan as DomainTestPlan,
 )
-from vibesensor.shared.boundaries.diagnostic_case import (
-    project_analysis_summary,
-)
+from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.shared.boundaries.diagnostic_case import (
     test_run_from_summary as _test_run_from_summary,
 )
