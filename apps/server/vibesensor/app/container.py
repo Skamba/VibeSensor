@@ -29,6 +29,7 @@ from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun
@@ -51,22 +52,13 @@ from vibesensor.use_cases.updates.manager import UpdateManager
 LOGGER = logging.getLogger(__name__)
 
 
-def _build_pdf_bytes(analysis_summary: dict, test_run: TestRun | None) -> bytes:
+def _build_pdf_bytes(analysis_summary: AnalysisSummary, test_run: TestRun | None) -> bytes:
     """Compose adapters/pdf pipeline into a single callable for injection."""
-    from typing import cast
-
     from vibesensor.adapters.pdf.mapping import map_summary
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-    from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-    from vibesensor.shared.types.json_types import JsonObject
 
-    prepared_summary, prepared_test_run = prepare_history_report_analysis(
-        cast(JsonObject, analysis_summary)
-    )
-    summary = cast(AnalysisSummary, prepared_summary)
-    if prepared_test_run is not None:
-        test_run = prepared_test_run
-    mapped = map_summary(summary, test_run=test_run)
+    prepared_summary, prepared_test_run = prepare_history_report_analysis(analysis_summary)
+    mapped = map_summary(prepared_summary, test_run=prepared_test_run or test_run)
     return build_report_pdf(mapped)
 
 

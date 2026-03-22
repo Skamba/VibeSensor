@@ -16,6 +16,8 @@ import pytest
 
 from vibesensor.domain import CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.history_records import AnalyzingRunHealth
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------
@@ -184,29 +186,34 @@ class _FakeHistoryDB:
         self.create_calls: list[tuple[str, str]] = []
         self.append_calls: list[tuple[str, int]] = []
         self.finalize_calls: list[str] = []
-        self.updated_metadata: list[tuple[str, dict[str, Any]]] = []
+        self.updated_metadata: list[tuple[str, RunMetadata]] = []
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
+    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         self.create_calls.append((run_id, start_time_utc))
 
     def append_samples(self, run_id: str, samples: list[dict]) -> None:
         self.append_calls.append((run_id, len(samples)))
 
-    def finalize_run(self, run_id: str, end_time_utc: str, metadata: dict | None = None) -> None:
+    def finalize_run(
+        self,
+        run_id: str,
+        end_time_utc: str,
+        metadata: RunMetadata | None = None,
+    ) -> None:
         if metadata is not None:
             self.updated_metadata.append((run_id, metadata))
         self.finalize_calls.append(run_id)
 
-    def update_run_metadata(self, run_id: str, metadata: dict) -> bool:
+    def update_run_metadata(self, run_id: str, metadata: RunMetadata) -> bool:
         self.updated_metadata.append((run_id, metadata))
         return True
 
-    def analyzing_run_health(self) -> dict:
-        return {"analyzing_run_count": 0, "analyzing_oldest_age_s": None}
+    def analyzing_run_health(self) -> AnalyzingRunHealth:
+        return AnalyzingRunHealth(analyzing_run_count=0, analyzing_oldest_age_s=None)
 
 
 class _FailingCreateRunHistoryDB(_FakeHistoryDB):
-    def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
+    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         raise sqlite3.OperationalError("create_run boom")
 
 

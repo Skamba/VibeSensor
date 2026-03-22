@@ -18,6 +18,7 @@ from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.run_log import normalize_sample_record
 from vibesensor.shared.sampling import bounded_sample
+from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
@@ -42,6 +43,20 @@ def _simple_metadata(run_id: str = "test-run", lang: str = "en") -> dict[str, An
         "sensor_model": "ADXL345",
         "language": lang,
     }
+
+
+def _run_metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": _START,
+        "end_time_utc": _END,
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "language": "en",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
 
 
 def _simple_samples(n: int = 20) -> list[dict[str, Any]]:
@@ -192,30 +207,36 @@ class TestWorkerThreadRace:
 
 def test_finalize_run_only_from_recording(db: HistoryDB) -> None:
     """Fix 7: finalize_run only transitions from 'recording' state."""
-    db.create_run("r1", _START, {})
+    db.create_run("r1", _START, _run_metadata("r1"))
     db.finalize_run("r1", _END)
-    assert db.get_run("r1")["status"] == "analyzing"
+    run = db.get_run("r1")
+    assert run is not None
+    assert run.status.value == "analyzing"
 
     # Second finalize should be a no-op (already in 'analyzing')
     db.finalize_run("r1", "2026-01-01T00:10:00Z")
-    assert db.get_run("r1")["status"] == "analyzing"
+    run = db.get_run("r1")
+    assert run is not None
+    assert run.status.value == "analyzing"
 
 
 def test_store_analysis_idempotent(db: HistoryDB) -> None:
     """Fix 10: store_analysis skips already-complete runs."""
-    db.create_run("r1", _START, {})
+    db.create_run("r1", _START, _run_metadata("r1"))
     db.finalize_run("r1", _END)
     db.store_analysis("r1", {"findings": [{"id": "first"}]})
 
     run = db.get_run("r1")
     assert run is not None
-    assert run["analysis"]["findings"] == [{"id": "first"}]
+    assert run.analysis is not None
+    assert run.analysis["findings"] == [{"id": "first"}]
 
     # Second store_analysis should be skipped
     db.store_analysis("r1", {"findings": [{"id": "second"}]})
     run = db.get_run("r1")
     assert run is not None
-    assert run["analysis"]["findings"] == [{"id": "first"}]
+    assert run.analysis is not None
+    assert run.analysis["findings"] == [{"id": "first"}]
 
 
 # ---------------------------------------------------------------------------
@@ -275,9 +296,13 @@ def test_build_findings_uses_shared_speed_prep() -> None:
 
 def _setup_stale_pair(db: HistoryDB) -> None:
     """Shared setup: r1 finalized (analyzing), r2 still recording."""
-    db.create_run("r1", _START, {})
+    db.create_run("r1", _START, _run_metadata("r1"))
     db.finalize_run("r1", _END)
-    db.create_run("r2", "2026-01-01T00:10:00Z", {})
+    db.create_run(
+        "r2",
+        "2026-01-01T00:10:00Z",
+        _run_metadata("r2", start_time_utc="2026-01-01T00:10:00Z"),
+    )
 
 
 def test_stale_analyzing_run_ids(db: HistoryDB) -> None:
@@ -290,8 +315,10 @@ def test_recover_stale_does_not_touch_analyzing(db: HistoryDB) -> None:
     """Fix 14: recover_stale_recording_runs leaves 'analyzing' runs alone."""
     _setup_stale_pair(db)
     assert db.recover_stale_recording_runs() == 1  # only r2
-    assert db.get_run("r1")["status"] == "analyzing"
-    assert db.get_run("r2")["status"] == "error"
+    run1 = db.get_run("r1")
+    run2 = db.get_run("r2")
+    assert run1 is not None and run1.status.value == "analyzing"
+    assert run2 is not None and run2.status.value == "error"
 
 
 # ---------------------------------------------------------------------------
@@ -348,14 +375,18 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     """Full pipeline: create → record → finalize → analyze → persist → report."""
     run_id = "e2e-test-run"
     metadata = _simple_metadata(run_id)
-    db.create_run(run_id, _START, metadata)
-    assert db.get_run(run_id)["status"] == "recording"
+    db.create_run(run_id, _START, _run_metadata(run_id))
+    run = db.get_run(run_id)
+    assert run is not None
+    assert run.status.value == "recording"
 
     samples = _simple_samples(30)
     db.append_samples(run_id, samples)
 
     db.finalize_run(run_id, _END)
-    assert db.get_run(run_id)["status"] == "analyzing"
+    run = db.get_run(run_id)
+    assert run is not None
+    assert run.status.value == "analyzing"
 
     read_samples = db.get_run_samples(run_id)
     normalized = [normalize_sample_record(s) for s in read_samples]
@@ -373,12 +404,14 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     assert "samples" not in summary
 
     db.store_analysis(run_id, summary)
-    assert db.get_run(run_id)["status"] == "complete"
+    run = db.get_run(run_id)
+    assert run is not None
+    assert run.status.value == "complete"
 
     run = db.get_run(run_id)
     assert run is not None
-    assert isinstance(run.get("analysis"), dict)
-    analysis = run["analysis"]
+    analysis = run.analysis
+    assert isinstance(analysis, dict)
 
     report_data = map_summary(analysis)
     pdf_bytes = build_report_pdf(report_data)
@@ -390,7 +423,8 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
     db.store_analysis(run_id, {"findings": [{"id": "should-not-overwrite"}]})
     run2 = db.get_run(run_id)
     assert run2 is not None
-    assert run2["analysis"].get("run_id") == run_id
+    assert run2.analysis is not None
+    assert run2.analysis.get("run_id") == run_id
 
     assert "sensor_statistics_by_location" not in analysis
     assert analysis.get("report_date") == _END

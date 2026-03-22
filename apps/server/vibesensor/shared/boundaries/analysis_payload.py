@@ -459,6 +459,7 @@ class AnalysisSummary(TypedDict):
     accel_scale_g_per_lsb: float | None
     incomplete_for_order_analysis: bool
     metadata: JsonObject
+    case_id: NotRequired[str]
     warnings: list[SummaryWarningPayload]
     speed_breakdown: list[SpeedBreakdownRow]
     phase_speed_breakdown: list[PhaseSpeedBreakdownRow]

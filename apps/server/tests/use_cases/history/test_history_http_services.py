@@ -5,7 +5,7 @@ import io
 import json
 import zipfile
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -14,7 +14,11 @@ from vibesensor.adapters.history import (
     ProjectedHistoryRunService,
     build_projected_run_details_json,
 )
+from vibesensor.domain import RunStatus
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.exceptions import AnalysisNotReadyError
+from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
@@ -28,10 +32,10 @@ class _HistoryDbStub:
     delete_result: tuple[bool, str | None] = (True, None)
     samples: list[dict[str, Any]] | None = None
 
-    def get_run(self, run_id: str) -> dict[str, Any] | None:
+    def get_run(self, run_id: str) -> StoredHistoryRun | None:
         if self.run is None:
             return None
-        return dict(self.run)
+        return _stored_run(dict(self.run))
 
     def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
         return self.delete_result
@@ -43,6 +47,35 @@ class _HistoryDbStub:
         ]
         for start in range(0, len(rows), batch_size):
             yield rows[start : start + batch_size]
+
+
+def _stored_run(run: dict[str, Any]) -> StoredHistoryRun:
+    run_id = str(run.get("run_id") or "run-1")
+    metadata_payload = {
+        "run_id": run_id,
+        "start_time_utc": str(run.get("start_time_utc") or "2026-01-01T00:00:00Z"),
+        "end_time_utc": run.get("end_time_utc"),
+        "sensor_model": str(run.get("sensor_model") or "ADXL345"),
+        "raw_sample_rate_hz": 800,
+        "sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        **dict(run.get("metadata") or {}),
+    }
+    return StoredHistoryRun(
+        run_id=run_id,
+        status=RunStatus(str(run.get("status") or "complete")),
+        start_time_utc=str(run.get("start_time_utc") or "2026-01-01T00:00:00Z"),
+        end_time_utc=cast(str | None, run.get("end_time_utc")),
+        metadata=RunMetadata.from_dict(metadata_payload),
+        created_at=str(run.get("created_at") or "2026-01-01T00:00:00Z"),
+        sample_count=int(run.get("sample_count") or 0),
+        case_id=cast(str | None, run.get("case_id")),
+        analysis=cast(AnalysisSummary | None, run.get("analysis")),
+        analysis_corrupt=bool(run.get("analysis_corrupt", False)),
+        error_message=cast(str | None, run.get("error_message")),
+        analysis_started_at=cast(str | None, run.get("analysis_started_at")),
+        analysis_completed_at=cast(str | None, run.get("analysis_completed_at")),
+    )
 
 
 def test_raise_delete_run_error_maps_unknown_reason_to_domain_error() -> None:
@@ -124,10 +157,12 @@ async def test_projected_run_service_projects_persisted_summary_through_domain()
 def test_build_run_details_json_strips_internal_analysis_fields() -> None:
     payload = json.loads(
         build_run_details_json(
-            run={
-                "run_id": "run-1",
-                "analysis": {"visible": 1, "_internal": {"secret": True}},
-            },
+            run=_stored_run(
+                {
+                    "run_id": "run-1",
+                    "analysis": {"visible": 1, "_internal": {"secret": True}},
+                }
+            ),
             sample_count=5,
             run_id="run-1",
         ),
@@ -140,23 +175,25 @@ def test_build_run_details_json_strips_internal_analysis_fields() -> None:
 def test_build_run_details_json_projects_analysis_through_domain() -> None:
     payload = json.loads(
         build_projected_run_details_json(
-            {
-                "run_id": "run-1",
-                "analysis": {
-                    "findings": [
-                        {
-                            "finding_id": "F001",
-                            "suspected_source": "wheel/tire",
-                            "strongest_location": "front-left",
-                            "confidence": 0.71,
-                        },
-                    ],
-                    "top_causes": [],
-                    "most_likely_origin": {},
-                    "test_plan": [],
-                    "run_suitability": [],
-                },
-            },
+            _stored_run(
+                {
+                    "run_id": "run-1",
+                    "analysis": {
+                        "findings": [
+                            {
+                                "finding_id": "F001",
+                                "suspected_source": "wheel/tire",
+                                "strongest_location": "front-left",
+                                "confidence": 0.71,
+                            },
+                        ],
+                        "top_causes": [],
+                        "most_likely_origin": {},
+                        "test_plan": [],
+                        "run_suitability": [],
+                    },
+                }
+            ),
             sample_count=5,
             run_id="run-1",
         ),
@@ -169,15 +206,17 @@ def test_build_run_details_json_projects_analysis_through_domain() -> None:
 def test_build_run_details_json_sanitizes_non_finite_floats() -> None:
     """Non-finite floats in analysis are replaced with null, producing valid JSON."""
     result = build_run_details_json(
-        {
-            "run_id": "run-nan",
-            "analysis": {
-                "score": float("nan"),
-                "maximum": float("inf"),
-                "minimum": float("-inf"),
-                "valid": 42.5,
-            },
-        },
+        _stored_run(
+            {
+                "run_id": "run-nan",
+                "analysis": {
+                    "score": float("nan"),
+                    "maximum": float("inf"),
+                    "minimum": float("-inf"),
+                    "valid": 42.5,
+                },
+            }
+        ),
         sample_count=3,
         run_id="run-nan",
     )

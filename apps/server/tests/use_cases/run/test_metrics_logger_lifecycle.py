@@ -19,7 +19,13 @@ def test_start_append_stop_produces_complete_run_in_db(
 ) -> None:
     """Full lifecycle: start -> append -> stop -> analyze -> complete with a real DB."""
     history_db = HistoryDB(tmp_path / "history.db")
-    fake_analysis = {"score": 42, "details": "looks good"}
+    fake_analysis = {
+        "findings": [],
+        "top_causes": [],
+        "warnings": [],
+        "score": 42,
+        "details": "looks good",
+    }
     monkeypatch.setattr(
         "vibesensor.use_cases.run.logger.build_post_analysis_summary",
         lambda **_: {
@@ -41,11 +47,12 @@ def test_start_append_stop_produces_complete_run_in_db(
     logger.stop_recording()
 
     def _status():
-        return (history_db.get_run(run_id) or {}).get("status")
+        run = history_db.get_run(run_id)
+        return run.status.value if run is not None else None
 
     assert wait_until(lambda: _status() == "complete", timeout_s=3.0)
 
-    stored = history_db.get_run(run_id).get("analysis")
+    stored = history_db.get_run(run_id).analysis
     assert stored is not None
     assert stored["score"] == 42
     assert stored["details"] == "looks good"

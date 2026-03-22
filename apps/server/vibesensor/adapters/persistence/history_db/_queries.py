@@ -6,10 +6,18 @@ import logging
 import sqlite3
 from contextlib import AbstractContextManager
 from datetime import UTC, datetime
+from typing import cast
 
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.json_utils import safe_json_loads
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.history_records import (
+    AnalyzingRunHealth,
+    HistoryRunListEntry,
+    StoredHistoryRun,
+)
+from vibesensor.shared.types.json_types import is_json_object
 
 LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +26,23 @@ class _HistoryDBQueryMixin:
     def _cursor(self, *, commit: bool = True) -> AbstractContextManager[sqlite3.Cursor]:
         raise NotImplementedError
 
-    def list_runs(self, limit: int = 500) -> list[JsonObject]:
+    @staticmethod
+    def _fallback_run_metadata(
+        *,
+        run_id: str,
+        start_time_utc: str,
+        end_time_utc: str | None,
+    ) -> RunMetadata:
+        return RunMetadata.from_dict(
+            {
+                "run_id": run_id,
+                "start_time_utc": start_time_utc,
+                "end_time_utc": end_time_utc,
+                "sensor_model": "unknown",
+            }
+        )
+
+    def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]:
         with self._cursor(commit=False) as cur:
             limit = max(limit, 0)
             if limit > 0:
@@ -35,24 +59,23 @@ class _HistoryDBQueryMixin:
                     "FROM runs r ORDER BY r.created_at DESC",
                 )
             rows = cur.fetchall()
-        result: list[JsonObject] = []
+        result: list[HistoryRunListEntry] = []
         for row in rows:
             run_id, status_raw, start, end, created, error, sample_count = row
-            status = RunStatus(status_raw)
-            entry: JsonObject = {
-                "run_id": run_id,
-                "status": status,
-                "start_time_utc": start,
-                "end_time_utc": end,
-                "created_at": created,
-                "sample_count": sample_count,
-            }
-            if error:
-                entry["error_message"] = error
-            result.append(entry)
+            result.append(
+                HistoryRunListEntry(
+                    run_id=str(run_id),
+                    status=RunStatus(status_raw),
+                    start_time_utc=str(start),
+                    end_time_utc=str(end) if end is not None else None,
+                    created_at=str(created),
+                    sample_count=int(sample_count or 0),
+                    error_message=str(error) if error else None,
+                )
+            )
         return result
 
-    def get_run(self, run_id: str) -> JsonObject | None:
+    def get_run(self, run_id: str) -> StoredHistoryRun | None:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT run_id, case_id, status, start_time_utc, end_time_utc, "
@@ -79,38 +102,56 @@ class _HistoryDBQueryMixin:
             analysis_completed,
         ) = row
         status = RunStatus(status_raw)
-        entry: JsonObject = {
-            "run_id": rid,
-            "status": status,
-            "start_time_utc": start,
-            "end_time_utc": end,
-            "metadata": safe_json_loads(meta_json, context=f"run {run_id} metadata") or {},
-            "created_at": created,
-            "sample_count": sample_count,
-        }
-        if case_id is not None:
-            entry["case_id"] = case_id
+        parsed_metadata = safe_json_loads(meta_json, context=f"run {run_id} metadata")
+        if is_json_object(parsed_metadata):
+            metadata = RunMetadata.from_dict(parsed_metadata)
+        else:
+            if parsed_metadata is not None:
+                LOGGER.warning(
+                    "get_run: metadata for run %s parsed to %s; using fallback metadata object",
+                    run_id,
+                    type(parsed_metadata).__name__,
+                )
+            metadata = self._fallback_run_metadata(
+                run_id=str(rid),
+                start_time_utc=str(start),
+                end_time_utc=str(end) if end is not None else None,
+            )
+        analysis: AnalysisSummary | None = None
+        analysis_corrupt = False
         if analysis_json:
             parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
             if is_json_object(parsed_analysis):
-                entry["analysis"] = parsed_analysis
+                analysis = cast(AnalysisSummary, parsed_analysis)
             else:
-                entry["analysis_corrupt"] = True
-        if error:
-            entry["error_message"] = error
-        if analysis_started:
-            entry["analysis_started_at"] = analysis_started
-        if analysis_completed:
-            entry["analysis_completed_at"] = analysis_completed
-        return entry
+                analysis_corrupt = True
+        return StoredHistoryRun(
+            run_id=str(rid),
+            case_id=str(case_id) if case_id is not None else None,
+            status=status,
+            start_time_utc=str(start),
+            end_time_utc=str(end) if end is not None else None,
+            metadata=metadata,
+            analysis=analysis,
+            analysis_corrupt=analysis_corrupt,
+            error_message=str(error) if error else None,
+            created_at=str(created),
+            sample_count=int(sample_count or 0),
+            analysis_started_at=str(analysis_started) if analysis_started else None,
+            analysis_completed_at=str(analysis_completed) if analysis_completed else None,
+        )
 
-    def get_run_metadata(self, run_id: str) -> JsonObject | None:
+    def get_run_metadata(self, run_id: str) -> RunMetadata | None:
         with self._cursor(commit=False) as cur:
-            cur.execute("SELECT metadata_json FROM runs WHERE run_id = ?", (run_id,))
+            cur.execute(
+                "SELECT start_time_utc, end_time_utc, metadata_json FROM runs WHERE run_id = ?",
+                (run_id,),
+            )
             row = cur.fetchone()
         if row is None:
             return None
-        parsed = safe_json_loads(row[0], context=f"run {run_id} metadata")
+        start_time_utc, end_time_utc, metadata_json = row
+        parsed = safe_json_loads(metadata_json, context=f"run {run_id} metadata")
         if not is_json_object(parsed):
             if parsed is not None:
                 LOGGER.warning(
@@ -120,7 +161,11 @@ class _HistoryDBQueryMixin:
                     type(parsed).__name__,
                 )
             return None
-        return parsed
+        if "start_time_utc" not in parsed:
+            parsed["start_time_utc"] = str(start_time_utc)
+        if end_time_utc and "end_time_utc" not in parsed:
+            parsed["end_time_utc"] = str(end_time_utc)
+        return RunMetadata.from_dict(parsed)
 
     def get_active_run_id(self) -> str | None:
         with self._cursor(commit=False) as cur:
@@ -139,7 +184,7 @@ class _HistoryDBQueryMixin:
             )
             return [str(row[0]) for row in cur.fetchall()]
 
-    def analyzing_run_health(self) -> JsonObject:
+    def analyzing_run_health(self) -> AnalyzingRunHealth:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT COUNT(*), MIN(analysis_started_at) FROM runs WHERE status = 'analyzing'",
@@ -160,13 +205,11 @@ class _HistoryDBQueryMixin:
                     "analyzing_run_health: invalid timestamp %r; ignoring",
                     oldest_started_at,
                 )
-        result: JsonObject = {
-            "analyzing_run_count": count,
-            "analyzing_oldest_age_s": oldest_age_s,
-        }
-        if oldest_started_at is not None:
-            result["analyzing_oldest_started_at"] = oldest_started_at
-        return result
+        return AnalyzingRunHealth(
+            analyzing_run_count=count,
+            analyzing_oldest_age_s=oldest_age_s,
+            analyzing_oldest_started_at=oldest_started_at,
+        )
 
     def verify_run_integrity(self, run_id: str) -> list[str]:
         """Check a completed run for consistency issues. Returns problem descriptions."""

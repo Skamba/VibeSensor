@@ -168,8 +168,8 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
 
     run = history_db.get_run(run_id)
     assert run is not None
-    assert run["status"] == "complete"
-    analysis = run.get("analysis")
+    assert run.status.value == "complete"
+    analysis = run.analysis
     assert isinstance(analysis, dict)
 
     rows = []

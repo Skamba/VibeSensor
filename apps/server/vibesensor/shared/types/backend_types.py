@@ -6,19 +6,38 @@ import logging
 import math
 import uuid
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Final, Literal, TypeAlias
 
 from typing_extensions import NotRequired, TypedDict  # noqa: UP035 (Pydantic on Python 3.11)
 
 from vibesensor.domain.speed_source import SpeedSourceKind as SpeedSourceKind
 from vibesensor.shared.constants import NUMERIC_TYPES
+from vibesensor.shared.types.json_types import JsonObject
 
 if TYPE_CHECKING:
     from vibesensor.domain import Car, SpeedSource
 
 _isfinite = math.isfinite
 _LOGGER = logging.getLogger(__name__)
+_RUN_METADATA_FIELD_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "record_type",
+        "schema_version",
+        "run_id",
+        "start_time_utc",
+        "end_time_utc",
+        "sensor_model",
+        "firmware_version",
+        "raw_sample_rate_hz",
+        "feature_interval_s",
+        "fft_window_size_samples",
+        "fft_window_type",
+        "peak_picker_method",
+        "accel_scale_g_per_lsb",
+        "incomplete_for_order_analysis",
+    }
+)
 
 __all__ = [
     "CarConfigPayload",
@@ -277,7 +296,13 @@ PEAK_PICKER_METHOD: str = "canonical_strength_metrics_module"
 
 @dataclass(slots=True)
 class RunMetadata:
-    """Metadata record from the header of a JSONL run file."""
+    """Typed persisted run metadata.
+
+    Stable header fields live on explicit dataclass attributes. Additional
+    persisted run/context/settings metadata stays in ``extras`` so history and
+    post-analysis code can keep a typed object route without losing the richer
+    stored payload.
+    """
 
     record_type: str
     schema_version: str
@@ -293,6 +318,7 @@ class RunMetadata:
     peak_picker_method: str
     accel_scale_g_per_lsb: float | None
     incomplete_for_order_analysis: bool
+    extras: JsonObject = field(default_factory=dict)
 
     @classmethod
     def create(
@@ -324,6 +350,7 @@ class RunMetadata:
             peak_picker_method=PEAK_PICKER_METHOD,
             accel_scale_g_per_lsb=accel_scale_g_per_lsb,
             incomplete_for_order_analysis=bool(incomplete_for_order_analysis),
+            extras={},
         )
 
     @classmethod
@@ -348,10 +375,24 @@ class RunMetadata:
             peak_picker_method=str(data.get("peak_picker_method", "")),
             accel_scale_g_per_lsb=as_float_or_none(data.get("accel_scale_g_per_lsb")),
             incomplete_for_order_analysis=bool(data.get("incomplete_for_order_analysis", False)),
+            extras={
+                key: value
+                for key, value in data.items()
+                if key not in _RUN_METADATA_FIELD_KEYS
+                and (value is None or isinstance(value, (bool, int, float, str, list, dict)))
+            },
         )
 
-    def to_dict(self) -> dict[str, object]:
-        return {
+    @property
+    def language(self) -> str | None:
+        value = self.extras.get("language")
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            return normalized or None
+        return None
+
+    def to_dict(self) -> JsonObject:
+        payload: JsonObject = {
             "record_type": self.record_type,
             "schema_version": self.schema_version,
             "run_id": self.run_id,
@@ -367,3 +408,5 @@ class RunMetadata:
             "accel_scale_g_per_lsb": self.accel_scale_g_per_lsb,
             "incomplete_for_order_analysis": self.incomplete_for_order_analysis,
         }
+        payload.update(self.extras)
+        return payload

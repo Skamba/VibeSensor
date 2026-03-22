@@ -9,7 +9,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable, Mapping
 from dataclasses import asdict
-from typing import TYPE_CHECKING, NamedTuple, cast
+from typing import TYPE_CHECKING, NamedTuple
 
 from vibesensor.coerce import coerce_float
 from vibesensor.domain import CarSnapshot
@@ -259,7 +259,7 @@ def create_run_metadata(
     firmware_version: str | None = None,
     end_time_utc: str | None = None,
     incomplete_for_order_analysis: bool = False,
-) -> dict[str, object]:
+) -> JsonObject:
     """Build and return a run-metadata dict from the supplied fields."""
     return RunMetadata.create(
         run_id=run_id,
@@ -295,21 +295,16 @@ def build_run_metadata(
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
     raw_sample_rate_hz = default_sample_rate_hz if default_sample_rate_hz > 0 else None
     incomplete = raw_sample_rate_hz is None
-    metadata: JsonObject = cast(
-        JsonObject,
-        create_run_metadata(
-            run_id=run_id,
-            start_time_utc=start_time_utc,
-            sensor_model=sensor_model,
-            firmware_version=firmware_version,
-            raw_sample_rate_hz=raw_sample_rate_hz,
-            feature_interval_s=feature_interval_s,
-            fft_window_size_samples=(
-                fft_window_size_samples if fft_window_size_samples > 0 else None
-            ),
-            accel_scale_g_per_lsb=accel_scale_g_per_lsb,
-            incomplete_for_order_analysis=incomplete,
-        ),
+    metadata: JsonObject = create_run_metadata(
+        run_id=run_id,
+        start_time_utc=start_time_utc,
+        sensor_model=sensor_model,
+        firmware_version=firmware_version,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        feature_interval_s=feature_interval_s,
+        fft_window_size_samples=(fft_window_size_samples if fft_window_size_samples > 0 else None),
+        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+        incomplete_for_order_analysis=incomplete,
     )
     metadata.update(settings)
     metadata["tire_circumference_m"] = (
