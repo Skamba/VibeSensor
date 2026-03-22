@@ -8,6 +8,8 @@ from unittest.mock import patch
 import pytest
 
 from vibesensor.use_cases.updates.release_fetcher import (
+    GitHubRelease,
+    GitHubReleaseAsset,
     ReleaseFetcherConfig,
     ReleaseInfo,
     ServerReleaseFetcher,
@@ -87,6 +89,64 @@ class TestReleaseInfo:
         assert d["sha256"] == "abc123"
 
 
+class TestGitHubReleaseAsset:
+    def test_from_api_payload_requires_name_and_url_strings(self) -> None:
+        assert GitHubReleaseAsset.from_api_payload({"name": "wheel.whl", "url": "https://a"}) == (
+            GitHubReleaseAsset(name="wheel.whl", url="https://a")
+        )
+        assert GitHubReleaseAsset.from_api_payload({"name": "wheel.whl"}) is None
+        assert GitHubReleaseAsset.from_api_payload({"name": 1, "url": "https://a"}) is None
+
+
+class TestGitHubRelease:
+    def test_from_api_payload_decodes_release(self) -> None:
+        release = GitHubRelease.from_api_payload(
+            {
+                "tag_name": "server-v2025.6.15",
+                "draft": False,
+                "prerelease": False,
+                "published_at": "2025-06-15T02:00:00Z",
+                "assets": [{"name": "vibesensor-2025.6.15-py3-none-any.whl", "url": "https://a"}],
+            },
+        )
+
+        assert release == GitHubRelease(
+            tag_name="server-v2025.6.15",
+            draft=False,
+            prerelease=False,
+            published_at="2025-06-15T02:00:00Z",
+            assets=(
+                GitHubReleaseAsset(name="vibesensor-2025.6.15-py3-none-any.whl", url="https://a"),
+            ),
+        )
+
+    def test_from_api_payload_rejects_non_release_shapes(self) -> None:
+        assert GitHubRelease.from_api_payload([]) is None
+        assert GitHubRelease.from_api_payload({"tag_name": "server-v2025.6.15"}) is None
+        assert (
+            GitHubRelease.from_api_payload(
+                {
+                    "tag_name": "server-v2025.6.15",
+                    "draft": False,
+                    "prerelease": False,
+                    "assets": [{"name": "missing-url"}],
+                },
+            )
+            is None
+        )
+        assert (
+            GitHubRelease.from_api_payload(
+                {
+                    "tag_name": "server-v2025.6.15",
+                    "draft": "false",
+                    "prerelease": False,
+                    "assets": [],
+                },
+            )
+            is None
+        )
+
+
 # ---------------------------------------------------------------------------
 # ServerReleaseFetcher
 # ---------------------------------------------------------------------------
@@ -158,6 +218,23 @@ class TestServerReleaseFetcher:
             release = fetcher.find_latest_release()
         assert release.tag == "server-v2025.6.15"
 
+    def test_find_latest_rejects_malformed_release_rows(self) -> None:
+        releases = [
+            {
+                "tag_name": "server-v2025.6.16",
+                "draft": False,
+                "prerelease": False,
+                "assets": "not-a-list",
+            },
+            *MOCK_RELEASES,
+        ]
+        fetcher = self._make_fetcher()
+        with (
+            patch.object(fetcher, "_api_get", return_value=releases),
+            pytest.raises(ValueError, match="Unexpected GitHub API response format"),
+        ):
+            fetcher.find_latest_release()
+
     @pytest.mark.parametrize(
         "releases",
         [
@@ -180,6 +257,14 @@ class TestServerReleaseFetcher:
         with (
             patch.object(fetcher, "_api_get", return_value=releases),
             pytest.raises(ValueError, match="No server release found"),
+        ):
+            fetcher.find_latest_release()
+
+    def test_find_latest_rejects_non_array_api_response(self) -> None:
+        fetcher = self._make_fetcher()
+        with (
+            patch.object(fetcher, "_api_get", return_value={"unexpected": "object"}),
+            pytest.raises(ValueError, match="Unexpected GitHub API response format"),
         ):
             fetcher.find_latest_release()
 
