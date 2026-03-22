@@ -68,7 +68,7 @@ class TestSettingsStoreRollback:
 
     def test_add_car_rollback_on_persist_failure(self):
         store = SettingsStore(db=None)
-        initial_count = len(store.get_cars()["cars"])
+        initial_count = len(store.get_cars().cars)
 
         # Make persist fail
         store._db = MagicMock()
@@ -77,16 +77,16 @@ class TestSettingsStoreRollback:
         with pytest.raises(PersistenceError):
             store.add_car({"name": "New Car", "type": "suv"})
 
-        assert len(store.get_cars()["cars"]) == initial_count
+        assert len(store.get_cars().cars) == initial_count
 
     def test_delete_car_rollback_on_persist_failure(self):
         store = SettingsStore(db=None)
         store.add_car({"name": "Car 1", "type": "sedan"})
         store.add_car({"name": "Car 2", "type": "suv"})
         cars = store.get_cars()
-        car_count = len(cars["cars"])
+        car_count = len(cars.cars)
         assert car_count >= 2
-        target_id = cars["cars"][-1]["id"]
+        target_id = cars.cars[-1]["id"]
 
         store._db = MagicMock()
         store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
@@ -94,14 +94,14 @@ class TestSettingsStoreRollback:
         with pytest.raises(PersistenceError):
             store.delete_car(target_id)
 
-        assert len(store.get_cars()["cars"]) == car_count
+        assert len(store.get_cars().cars) == car_count
 
     def test_set_active_car_rollback_on_persist_failure(self):
         store = SettingsStore(db=None)
         store.add_car({"name": "Car 2", "type": "suv"})
         cars = store.get_cars()
-        original_active = cars["activeCarId"]
-        new_id = [c["id"] for c in cars["cars"] if c["id"] != original_active][0]
+        original_active = cars.active_car_id
+        new_id = [c["id"] for c in cars.cars if c["id"] != original_active][0]
 
         store._db = MagicMock()
         store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
@@ -109,14 +109,14 @@ class TestSettingsStoreRollback:
         with pytest.raises(PersistenceError):
             store.set_active_car(new_id)
 
-        assert store.get_cars()["activeCarId"] == original_active
+        assert store.get_cars().active_car_id == original_active
 
     def test_update_car_rollback_on_persist_failure(self):
         store = SettingsStore(db=None)
         store.add_car({"name": "Original Name", "type": "sedan"})
         cars = store.get_cars()
-        car_id = cars["cars"][0]["id"]
-        original_name = cars["cars"][0]["name"]
+        car_id = cars.cars[0]["id"]
+        original_name = cars.cars[0]["name"]
 
         store._db = MagicMock()
         store._db.set_settings_snapshot.side_effect = sqlite3.OperationalError("DB fail")
@@ -124,7 +124,7 @@ class TestSettingsStoreRollback:
         with pytest.raises(PersistenceError):
             store.update_car(car_id, {"name": "New Name"})
 
-        assert store.get_cars()["cars"][0]["name"] == original_name
+        assert store.get_cars().cars[0]["name"] == original_name
 
 
 # ── 4. Firmware cache streaming download ──────────────────────────────────

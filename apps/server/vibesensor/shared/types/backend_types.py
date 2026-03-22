@@ -42,6 +42,7 @@ _RUN_METADATA_FIELD_KEYS: Final[frozenset[str]] = frozenset(
 __all__ = [
     "CarConfigPayload",
     "CarConfigUpdatePayload",
+    "CarsSnapshot",
     "RUN_END_TYPE",
     "RUN_METADATA_TYPE",
     "RUN_SAMPLE_TYPE",
@@ -112,6 +113,14 @@ class SettingsSnapshotPayload(SpeedSourcePayload):
     language: LanguageCode
     speedUnit: SpeedUnitCode
     sensorsByMac: SensorsByMacPayload
+
+
+@dataclass(slots=True)
+class CarsSnapshot:
+    """Typed internal snapshot of car profiles plus active selection."""
+
+    cars: list[CarConfigPayload] = field(default_factory=list)
+    active_car_id: str | None = None
 
 
 # ---------------------------------------------------------------------------

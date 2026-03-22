@@ -191,7 +191,7 @@ class TestSettingsStoreRollbackSafety:
         """
         store = SettingsStore(db=None)
         car_data = store.add_car({"name": "TestCar", "type": "sedan"})
-        car_id = car_data["cars"][0]["id"]
+        car_id = car_data.cars[0]["id"]
 
         # Set as active so _find_car works
         store.set_active_car(car_id)

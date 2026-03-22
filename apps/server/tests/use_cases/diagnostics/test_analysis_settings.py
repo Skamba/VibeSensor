@@ -163,7 +163,7 @@ def test_update_merges_valid_values(tmp_path) -> None:
     db = HistoryDB(tmp_path / "test.db")
     store = SettingsStore(db=db)
     initial = store.add_car({"name": "Test"})
-    store.set_active_car(initial["cars"][0]["id"])
+    store.set_active_car(initial.cars[0]["id"])
     store.update_active_car_aspects({"tire_width_mm": 225.0})
     result = store.analysis_settings_snapshot()
     assert result.tire_width_mm == 225.0
@@ -177,7 +177,7 @@ def test_update_rejects_invalid_and_keeps_old(tmp_path) -> None:
     db = HistoryDB(tmp_path / "test.db")
     store = SettingsStore(db=db)
     initial = store.add_car({"name": "Test"})
-    store.set_active_car(initial["cars"][0]["id"])
+    store.set_active_car(initial.cars[0]["id"])
     store.update_active_car_aspects({"tire_width_mm": -5.0})
     assert (
         store.analysis_settings_snapshot().tire_width_mm
