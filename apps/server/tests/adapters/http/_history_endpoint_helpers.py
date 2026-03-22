@@ -11,6 +11,7 @@ from unittest.mock import MagicMock
 from fastapi import FastAPI, WebSocketDisconnect
 from test_support import response_payload as _response_payload
 
+from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.dependencies import (
     HistoryDeps,
@@ -21,7 +22,6 @@ from vibesensor.adapters.http.dependencies import (
 )
 from vibesensor.infra.runtime import RuntimeHealthState
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
-from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService, PdfRendererFn
 from vibesensor.use_cases.history.runs import HistoryRunService

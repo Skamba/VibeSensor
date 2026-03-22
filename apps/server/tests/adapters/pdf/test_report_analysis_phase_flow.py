@@ -12,8 +12,8 @@ from test_support.report_helpers import (
     wheel_metadata,
 )
 
+from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.shared.constants import KMH_TO_MPS
-from vibesensor.use_cases.diagnostics import summarize_run_data
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, segment_run_phases
 

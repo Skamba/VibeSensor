@@ -11,7 +11,8 @@ from test_support.sample_scenarios import (
     build_speed_sweep_samples,
 )
 
-from vibesensor.use_cases.diagnostics import build_findings_for_samples, summarize_run_data
+from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.use_cases.diagnostics import build_findings_for_samples
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,
