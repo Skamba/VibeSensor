@@ -10,6 +10,12 @@ from vibesensor.adapters.persistence.car_library import _DATA_FILE, CAR_LIBRARY
 _RATIO_SOURCES_FILE = _DATA_FILE.with_name("car_library_ratio_sources.json")
 _PLACEHOLDER_PHRASE = "preserved pending official-source confirmation"
 _ALLOWED_VERIFICATION_STATUSES = {
+    "verification_backlog",
+    "verified",
+    "corrected",
+    "intentionally_unsupported",
+}
+_TERMINAL_VERIFICATION_STATUSES = {
     "verified",
     "corrected",
     "intentionally_unsupported",
@@ -28,10 +34,10 @@ _LEGACY_SOURCE_KEYS = {
     "wikipedia_variant_tables",
 }
 _STATUS_SPOT_CHECKS = {
-    "BMW|1 Series (F20, 2011-2019)": "intentionally_unsupported",
-    "BMW|2 Series Active Tourer (F45, 2014-2021)": "corrected",
+    "BMW|1 Series (F20, 2011-2019)": "verification_backlog",
+    "BMW|2 Series Active Tourer (F45, 2014-2021)": "verification_backlog",
     "BMW|5 Series (G60, 2024-2026)": "corrected",
-    "Audi|A4 (B9, 2016-2025)": "corrected",
+    "Audi|A4 (B9, 2016-2025)": "verification_backlog",
 }
 
 
@@ -56,6 +62,11 @@ def _walk_strings(value: object) -> Iterator[str]:
         return
     if isinstance(value, str):
         yield value
+
+
+def _list_field(entry: dict[str, object], key: str) -> list[object]:
+    value = entry.get(key)
+    return value if isinstance(value, list) else []
 
 
 def test_car_library_ratio_sources_json_parseable() -> None:
@@ -84,14 +95,41 @@ def test_ratio_sources_all_rows_have_explicit_verification_status() -> None:
         )
 
 
-def test_ratio_sources_unsupported_rows_keep_explicit_justification() -> None:
+def test_ratio_sources_verification_backlog_rows_keep_explicit_unresolved_items() -> None:
+    data = _load_ratio_sources()
+
+    for car_key, entry in data.items():
+        if entry.get("verification_status") != "verification_backlog":
+            continue
+        assert _list_field(entry, "unresolved"), (
+            f"{car_key} must keep explicit unresolved items while verification backlog is open"
+        )
+
+
+def test_ratio_sources_terminal_rows_do_not_keep_unresolved_items() -> None:
+    data = _load_ratio_sources()
+
+    for car_key, entry in data.items():
+        if entry.get("verification_status") not in _TERMINAL_VERIFICATION_STATUSES:
+            continue
+        assert _list_field(entry, "unresolved") == [], (
+            f"{car_key} must move closed decisions out of unresolved once the row is terminal"
+        )
+
+
+def test_ratio_sources_intentionally_unsupported_rows_do_not_hide_pending_review() -> None:
     data = _load_ratio_sources()
 
     for car_key, entry in data.items():
         if entry.get("verification_status") != "intentionally_unsupported":
             continue
-        assert entry.get("unresolved"), (
-            f"{car_key} must keep explicit justification when intentionally unsupported"
+        summary = str(entry.get("decision_summary") or "").lower()
+        assert "pending authoritative verification" not in summary, (
+            f"{car_key} cannot be intentionally_unsupported while still pending verification"
+        )
+        assert _list_field(entry, "unresolved") == [], (
+            f"{car_key} cannot be intentionally_unsupported "
+            "while unresolved verification items remain"
         )
 
 

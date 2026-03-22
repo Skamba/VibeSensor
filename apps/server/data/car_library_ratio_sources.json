@@ -2,8 +2,8 @@
   "cars": {
     "BMW|1 Series (F20, 2011-2019)": {
       "car_index": 0,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official BMW F20/F21 technical pages are retired or redirected to current-generation 1 Series pages, and no official accessible source in this pass provided F20-specific gearbox/final-drive/top-gear confirmations.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official BMW F20/F21 technical pages are retired or redirected to current-generation 1 Series pages, and no official accessible source in this pass provided F20-specific gearbox/final-drive/top-gear confirmations.",
       "unresolved": [
         {
           "item": "F20/F21 EU-market drivetrain split by variant (including any xDrive variants)",
@@ -71,7 +71,7 @@
     },
     "BMW|1 Series (F40, 2019-2025)": {
       "car_index": 1,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; left unconfirmed fields unchanged.",
       "unresolved": [
         {
@@ -141,8 +141,8 @@
     },
     "BMW|2 Series Coupe (F22, 2014-2021)": {
       "car_index": 2,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
       "unresolved": [
         {
           "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
@@ -196,8 +196,8 @@
     },
     "BMW|2 Series Coupe (G42, 2022-2026)": {
       "car_index": 3,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported under the current evidence: eU official BMW sources confirm a drivetrain split (core RWD lineup vs M240i xDrive AWD) and 8-speed Steptronic presence, but they do not provide extractable, model-specific numeric final-drive/top-gear values in the fetched content; existing ratio fields are therefore preserved without changes.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains under the current evidence: eU official BMW sources confirm a drivetrain split (core RWD lineup vs M240i xDrive AWD) and 8-speed Steptronic presence, but they do not provide extractable, model-specific numeric final-drive/top-gear values in the fetched content; existing ratio fields are therefore preserved without changes.",
       "unresolved": [
         {
           "item": "Model-specific numeric final drive ratios for EU G42 variants",
@@ -267,7 +267,7 @@
     },
     "BMW|2 Series Active Tourer (F45, 2014-2021)": {
       "car_index": 4,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Issue #1034 official-source review kept the retained 8-speed family baseline for the non-overridden F45 variants, moved the documented 225xe 6-speed Steptronic ratio pair onto the 225xe variant explicitly, and added an explicit 220i 7-speed dual-clutch override so the documented 220i/225xe transmissions no longer rely on shared gearbox rows. Official BMW sources confirm the transmission types; the 220i numeric ratio pair uses reputable secondary references because the extracted 2018 BMW specification PDF does not expose an unambiguous final-drive field mapping.",
       "unresolved": [
         {
@@ -354,8 +354,8 @@
     },
     "BMW|3 Series (F30, 2012-2019)": {
       "car_index": 5,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official BMW EU-accessible sources confirmed transmission/drivetrain concepts but did not provide unambiguous final-drive/top-gear values for the exact 320i/330i/330i xDrive/340i F30 set in this entry.",
       "unresolved": [
         {
           "item": "Exact EU-market final drive ratios for 320i (B48), 330i (B48), 330i xDrive (B48), and 340i (B58) in F30 years covered by this entry",
@@ -423,7 +423,7 @@
     },
     "BMW|3 Series (G20, 2019-2025)": {
       "car_index": 6,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Official BMW Group PressClub technical data now confirms the G20 330i xDrive 8-speed automatic final-drive ratio at 2.813:1, so the current car-library override was corrected and the xDrive verification TODO was resolved. Broader G20 transmission-availability and top-gear coverage remains limited to the separate unresolved notes below, while M340i xDrive remains source-note context only because it is not represented in the current JSON entry.",
       "unresolved": [
         {
@@ -493,7 +493,7 @@
     },
     "BMW|4 Series (F32, 2014-2020)": {
       "car_index": 7,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Added EU-official xDrive drivetrain variants for 420i/430i/440i; retained existing gearbox ratio fields because official BMW specs show engine+drivetrain-specific ratio differences that cannot be safely represented by the current two generic gearbox entries without assumptions.",
       "unresolved": [
         {
@@ -561,7 +561,7 @@
     },
     "BMW|4 Series (G22, 2021-2026)": {
       "car_index": 8,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Issue #1034 official-source review corrected the supported EU-facing petrol family to 420i, 430i xDrive, and M440i xDrive, removing the stale RWD-only 430i mapping from the supported row. Ratio fields remain unchanged because the official EU technical-data pages used for this fix still do not expose extractable final-drive or top-gear values.",
       "unresolved": [
         {
@@ -623,8 +623,8 @@
     },
     "BMW|5 Series (F10, 2011-2017)": {
       "car_index": 9,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported under the current evidence: official UK BMW F10 documents confirm transmission-type diversity (manual and automatic) but do not provide verifiable final-drive or top-gear ratios per EU-market variant, so no safe ratio updates were possible.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains under the current evidence: official UK BMW F10 documents confirm transmission-type diversity (manual and automatic) but do not provide verifiable final-drive or top-gear ratios per EU-market variant, so no safe ratio updates were possible.",
       "unresolved": [
         {
           "item": "Per-variant final_drive_ratio and top_gear_ratio for EU F10 520i/530i/535i/550i",
@@ -676,8 +676,8 @@
     },
     "BMW|5 Series (G30, 2017-2023)": {
       "car_index": 10,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official sources found were either generation-mismatched (G60 current data), older-generation-mismatched (F10 brochure), or did not expose extractable G30 ratio tables in a verifiable way.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official sources found were either generation-mismatched (G60 current data), older-generation-mismatched (F10 brochure), or did not expose extractable G30 ratio tables in a verifiable way.",
       "unresolved": [
         {
           "item": "Per-variant final drive ratios for BMW 5 Series G30 EU-market 520i, 530i/530i xDrive, 540i/540i xDrive, M550i xDrive",
@@ -743,12 +743,7 @@
       "car_index": 11,
       "verification_status": "corrected",
       "decision_summary": "Issue #1034 official-source review kept the supported EU row narrow to 520i plus the i5 eDrive40 and i5 M60 xDrive BEVs, and moved the i5 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the 520i 8-speed automatic row. The 520i 8-speed ratio pair remains the official 03/2025 BMW value.",
-      "unresolved": [
-        {
-          "item": "Per-axle reduction detail for the i5 M60 xDrive",
-          "reason": "BMW publishes distinct front and rear overall reduction ratios for the dual-motor M60, but the current single-gearbox schema stores one representative EV reduction value for the variant."
-        }
-      ],
+      "unresolved": [],
       "sources": {
         "eu_scope_and_variant_filtering": [
           {
@@ -798,11 +793,17 @@
             "confidence": "medium"
           }
         ]
-      }
+      },
+      "known_limits": [
+        {
+          "item": "Per-axle reduction detail for the i5 M60 xDrive",
+          "reason": "BMW publishes distinct front and rear overall reduction ratios for the dual-motor M60, but the current single-gearbox schema stores one representative EV reduction value for the variant."
+        }
+      ]
     },
     "BMW|6 Series Gran Coupe (F06, 2013-2018)": {
       "car_index": 12,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Used BMW official EU/global press technical material to add missing EU ratio-relevant drivetrain variants and to replace a single ambiguous final-drive value with two officially documented final-drive groups from the BMW 6 Series technical sheet (12/2014).",
       "unresolved": [
         {
@@ -858,8 +859,8 @@
     },
     "BMW|6 Series Gran Turismo (G32, 2018-2024)": {
       "car_index": 13,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official EU BMW pages reviewed did not publish explicit per-variant final-drive or top-gear values for G32 in accessible content.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official EU BMW pages reviewed did not publish explicit per-variant final-drive or top-gear values for G32 in accessible content.",
       "unresolved": [
         {
           "item": "Per-variant final-drive ratios for EU G32 lineup",
@@ -915,8 +916,8 @@
     },
     "BMW|7 Series (F01, 2011-2015)": {
       "car_index": 14,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: No safe EU-only ratio update was applied because accessible official BMW sources did not yield verifiable F01 (2011-2015) drivetrain-specific top-gear/final-drive tables for these variants.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: No safe EU-only ratio update was applied because accessible official BMW sources did not yield verifiable F01 (2011-2015) drivetrain-specific top-gear/final-drive tables for these variants.",
       "unresolved": [
         {
           "item": "Variant-specific final drive ratios for EU 740i (RWD), 750i (RWD), and 750i xDrive (AWD) within F01 LCI model years",
@@ -971,8 +972,8 @@
     },
     "BMW|7 Series (G11, 2016-2022)": {
       "car_index": 15,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW 7 Series (G11, 2016-2022) EU ratio-relevant variant mapping",
@@ -1020,7 +1021,7 @@
     },
     "BMW|7 Series (G70, 2023-2026)": {
       "car_index": 16,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Issue #1034 official-source review corrected the supported EU variant set to 740d xDrive, 750e xDrive, M760e xDrive, i7 eDrive50, and i7 M70 xDrive, removing the non-European petrol variants and moving the i7 variants onto explicit single-speed EV gearbox overrides so they no longer inherit the shared 8-speed row.",
       "unresolved": [
         {
@@ -1088,8 +1089,8 @@
     },
     "BMW|8 Series Coupe (G15, 2019-2025)": {
       "car_index": 17,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW 8 Series Coupe (G15, 2019-2025) EU ratio-relevant variant mapping",
@@ -1137,8 +1138,8 @@
     },
     "BMW|8 Series Convertible (G14, 2019-2025)": {
       "car_index": 18,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW 8 Series Convertible (G14, 2019-2025) EU ratio-relevant variant mapping",
@@ -1186,8 +1187,8 @@
     },
     "BMW|8 Series Gran Coupe (G16, 2020-2025)": {
       "car_index": 19,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW 8 Series Gran Coupe (G16, 2020-2025) EU ratio-relevant variant mapping",
@@ -1235,8 +1236,8 @@
     },
     "BMW|X1 (F48, 2016-2022)": {
       "car_index": 20,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X1 (F48, 2016-2022) EU ratio-relevant variant mapping",
@@ -1284,8 +1285,8 @@
     },
     "BMW|X1 (U11, 2023-2026)": {
       "car_index": 21,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X1 (U11, 2023-2026) EU ratio-relevant variant mapping",
@@ -1333,8 +1334,8 @@
     },
     "BMW|X2 (F39, 2018-2023)": {
       "car_index": 22,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X2 (F39, 2018-2023) EU ratio-relevant variant mapping",
@@ -1382,8 +1383,8 @@
     },
     "BMW|X2 (U10, 2024-2026)": {
       "car_index": 23,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X2 (U10, 2024-2026) EU ratio-relevant variant mapping",
@@ -1431,8 +1432,8 @@
     },
     "BMW|X3 (F25, 2011-2017)": {
       "car_index": 24,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X3 (F25, 2011-2017) EU ratio-relevant variant mapping",
@@ -1480,8 +1481,8 @@
     },
     "BMW|X3 (G01, 2018-2024)": {
       "car_index": 25,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X3 (G01, 2018-2024) EU ratio-relevant variant mapping",
@@ -1529,8 +1530,8 @@
     },
     "BMW|X3 (G45, 2025-2026)": {
       "car_index": 26,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X3 (G45, 2025-2026) EU ratio-relevant variant mapping",
@@ -1578,8 +1579,8 @@
     },
     "BMW|X4 (F26, 2015-2018)": {
       "car_index": 27,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X4 (F26, 2015-2018) EU ratio-relevant variant mapping",
@@ -1627,8 +1628,8 @@
     },
     "BMW|X4 (G02, 2019-2025)": {
       "car_index": 28,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X4 (G02, 2019-2025) EU ratio-relevant variant mapping",
@@ -1676,8 +1677,8 @@
     },
     "BMW|X5 (F15, 2014-2018)": {
       "car_index": 29,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X5 (F15, 2014-2018) EU ratio-relevant variant mapping",
@@ -1725,8 +1726,8 @@
     },
     "BMW|X5 (G05, 2019-2026)": {
       "car_index": 30,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X5 (G05, 2019-2026) EU ratio-relevant variant mapping",
@@ -1774,8 +1775,8 @@
     },
     "BMW|X6 (F16, 2015-2019)": {
       "car_index": 31,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X6 (F16, 2015-2019) EU ratio-relevant variant mapping",
@@ -1823,8 +1824,8 @@
     },
     "BMW|X6 (G06, 2020-2026)": {
       "car_index": 32,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X6 (G06, 2020-2026) EU ratio-relevant variant mapping",
@@ -1872,8 +1873,8 @@
     },
     "BMW|X7 (G07, 2019-2026)": {
       "car_index": 33,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW X7 (G07, 2019-2026) EU ratio-relevant variant mapping",
@@ -1921,8 +1922,8 @@
     },
     "BMW|Z4 (G29, 2019-2026)": {
       "car_index": 34,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW Z4 (G29, 2019-2026) EU ratio-relevant variant mapping",
@@ -1970,8 +1971,8 @@
     },
     "BMW|M3 (F80, 2014-2018)": {
       "car_index": 35,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW M3 (F80, 2014-2018) EU ratio-relevant variant mapping",
@@ -2019,8 +2020,8 @@
     },
     "BMW|M3 (G80, 2021-2026)": {
       "car_index": 36,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW M3 (G80, 2021-2026) EU ratio-relevant variant mapping",
@@ -2068,8 +2069,8 @@
     },
     "BMW|M4 (F82, 2014-2020)": {
       "car_index": 37,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW M4 (F82, 2014-2020) EU ratio-relevant variant mapping",
@@ -2117,8 +2118,8 @@
     },
     "BMW|M4 (G82, 2021-2026)": {
       "car_index": 38,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW M4 (G82, 2021-2026) EU ratio-relevant variant mapping",
@@ -2166,8 +2167,8 @@
     },
     "BMW|M5 (F90, 2018-2024)": {
       "car_index": 39,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW M5 (F90, 2018-2024) EU ratio-relevant variant mapping",
@@ -2215,8 +2216,8 @@
     },
     "BMW|iX (I20, 2022-2026)": {
       "car_index": 40,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW iX (I20, 2022-2026) EU ratio-relevant variant mapping",
@@ -2264,8 +2265,8 @@
     },
     "BMW|i4 (G26, 2022-2026)": {
       "car_index": 41,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "BMW i4 (G26, 2022-2026) EU ratio-relevant variant mapping",
@@ -2313,8 +2314,8 @@
     },
     "Audi|A1 (8X, 2011-2018)": {
       "car_index": 42,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A1 (8X, 2011-2018) EU ratio-relevant variant mapping",
@@ -2362,8 +2363,8 @@
     },
     "Audi|A1 (GB, 2019-2024)": {
       "car_index": 43,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A1 (GB, 2019-2024) EU ratio-relevant variant mapping",
@@ -2411,8 +2412,8 @@
     },
     "Audi|A3 (8V, 2013-2020)": {
       "car_index": 44,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A3 (8V, 2013-2020) EU ratio-relevant variant mapping",
@@ -2460,8 +2461,8 @@
     },
     "Audi|A3 (8Y, 2021-2026)": {
       "car_index": 45,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A3 (8Y, 2021-2026) EU ratio-relevant variant mapping",
@@ -2509,8 +2510,8 @@
     },
     "Audi|A4 (B8, 2008-2016)": {
       "car_index": 46,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
@@ -2558,7 +2559,7 @@
     },
     "Audi|A4 (B9, 2016-2025)": {
       "car_index": 47,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. The shared FWD S tronic entry and the 35/40 TFSI variant overrides now use 4.234, while the 45 TFSI quattro override now uses the officially documented 4.410.",
       "unresolved": [
         {
@@ -2588,8 +2589,8 @@
     },
     "Audi|A5 (B8, 2007-2016)": {
       "car_index": 48,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A5 (B8, 2012-2016) EU ratio-relevant variant mapping",
@@ -2637,7 +2638,7 @@
     },
     "Audi|A5 (B9, 2017-2024)": {
       "car_index": 49,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. The shared FWD S tronic entry now uses 4.234, and the 45 TFSI quattro variant now carries the officially documented 4.410 override.",
       "unresolved": [
         {
@@ -2672,8 +2673,8 @@
     },
     "Audi|A6 (C7, 2011-2018)": {
       "car_index": 50,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A6 (C7, 2011-2018) EU ratio-relevant variant mapping",
@@ -2726,8 +2727,8 @@
     },
     "Audi|A6 (C8, 2019-2026)": {
       "car_index": 51,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A6 (C8, 2019-2026) EU ratio-relevant variant mapping",
@@ -2780,8 +2781,8 @@
     },
     "Audi|A7 Sportback (C7, 2011-2018)": {
       "car_index": 52,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A7 Sportback (C7, 2011-2018) EU ratio-relevant variant mapping",
@@ -2834,8 +2835,8 @@
     },
     "Audi|A7 Sportback (C8, 2019-2026)": {
       "car_index": 53,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A7 Sportback (C8, 2019-2026) EU ratio-relevant variant mapping",
@@ -2888,8 +2889,8 @@
     },
     "Audi|A8 (D4, 2011-2017)": {
       "car_index": 54,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A8 (D4, 2011-2017) EU ratio-relevant variant mapping",
@@ -2937,8 +2938,8 @@
     },
     "Audi|A8 (D5, 2018-2026)": {
       "car_index": 55,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi A8 (D5, 2018-2026) EU ratio-relevant variant mapping",
@@ -2986,8 +2987,8 @@
     },
     "Audi|Q2 (GA, 2017-2024)": {
       "car_index": 56,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi Q2 (GA, 2017-2024) EU ratio-relevant variant mapping",
@@ -3060,8 +3061,8 @@
     },
     "Audi|Q3 (8U, 2012-2018)": {
       "car_index": 57,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
@@ -3109,8 +3110,8 @@
     },
     "Audi|Q3 (F3, 2019-2026)": {
       "car_index": 58,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi Q3 (F3, 2019-2026) EU ratio-relevant variant mapping",
@@ -3158,8 +3159,8 @@
     },
     "Audi|Q5 (8R, 2011-2017)": {
       "car_index": 59,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi Q5 (8R, 2011-2017) EU ratio-relevant variant mapping",
@@ -3207,7 +3208,7 @@
     },
     "Audi|Q5 (FY, 2017-2026)": {
       "car_index": 60,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Verified Audi Q5 FY S tronic final-drive ratios from official Audi MediaCenter and Audi technical data PDFs. The shared Q5 FY S tronic entry now uses 5.302, and the stored 45 TFSI quattro override was corrected to the same officially documented value.",
       "unresolved": [
         {
@@ -3237,8 +3238,8 @@
     },
     "Audi|Q7 (4M, 2016-2026)": {
       "car_index": 61,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi Q7 (4M, 2016-2026) EU ratio-relevant variant mapping",
@@ -3286,8 +3287,8 @@
     },
     "Audi|Q8 (4M8, 2019-2026)": {
       "car_index": 62,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi Q8 (4M8, 2019-2026) EU ratio-relevant variant mapping",
@@ -3335,8 +3336,8 @@
     },
     "Audi|TT (8J, 2011-2014)": {
       "car_index": 63,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi TT (8J, 2011-2014) EU ratio-relevant variant mapping",
@@ -3384,8 +3385,8 @@
     },
     "Audi|TT (8S, 2015-2023)": {
       "car_index": 64,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi TT (8S, 2015-2023) EU ratio-relevant variant mapping",
@@ -3433,8 +3434,8 @@
     },
     "Audi|R8 (4S, 2015-2024)": {
       "car_index": 65,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi R8 (4S, 2015-2024) EU ratio-relevant variant mapping",
@@ -3482,8 +3483,8 @@
     },
     "Audi|RS 3 (8V/8Y, 2017-2026)": {
       "car_index": 66,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi RS 3 (8V/8Y, 2017-2026) EU ratio-relevant variant mapping",
@@ -3531,8 +3532,8 @@
     },
     "Audi|RS 4 Avant (B9, 2018-2024)": {
       "car_index": 67,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi RS 4 Avant (B9, 2018-2024) EU ratio-relevant variant mapping",
@@ -3580,8 +3581,8 @@
     },
     "Audi|RS 5 (B9, 2018-2024)": {
       "car_index": 68,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi RS 5 (B9, 2018-2024) EU ratio-relevant variant mapping",
@@ -3629,8 +3630,8 @@
     },
     "Audi|RS 6 Avant (C8, 2020-2026)": {
       "car_index": 69,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi RS 6 Avant (C8, 2020-2026) EU ratio-relevant variant mapping",
@@ -3683,8 +3684,8 @@
     },
     "Audi|RS 7 Sportback (C8, 2020-2026)": {
       "car_index": 70,
-      "verification_status": "intentionally_unsupported",
-      "decision_summary": "This row is intentionally unsupported pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
+      "verification_status": "verification_backlog",
+      "decision_summary": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "unresolved": [
         {
           "item": "Audi RS 7 Sportback (C8, 2020-2026) EU ratio-relevant variant mapping",
@@ -3737,7 +3738,7 @@
     },
     "Audi|e-tron GT (J1, 2022-2026)": {
       "car_index": 71,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Issue #975 official-source review confirmed the EU BEV variant mapping for Audi e-tron GT J1: the supported base variant is `e-tron GT quattro`, and the standalone `e-tron GT` alias was removed from the car library. Ratio fields remain unchanged because this issue verified variant naming and motor layout, not EV reduction-ratio mapping into the current schema.",
       "unresolved": [
         {
@@ -3767,7 +3768,7 @@
     },
     "Audi|Q4 e-tron (FZ, 2022-2026)": {
       "car_index": 72,
-      "verification_status": "corrected",
+      "verification_status": "verification_backlog",
       "decision_summary": "Issue #975 official-source review confirmed the supported EU Q4 e-tron BEV variant mapping: `40 e-tron` is the single-motor RWD entry and `50 e-tron quattro` is the dual-motor AWD entry. The unsupported non-quattro `50 e-tron` alias was removed from the car library. Ratio fields remain unchanged because this issue verified variant naming and motor layout, not EV reduction-ratio mapping into the current schema.",
       "unresolved": [
         {
