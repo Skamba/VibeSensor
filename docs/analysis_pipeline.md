@@ -11,13 +11,15 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
    post-stop reasoning live in `apps/server/vibesensor/use_cases/diagnostics/`.
    The shared vehicle-order frequency math used by both diagnostics and live
    telemetry lives in `apps/server/vibesensor/shared/order_bands.py`.
-3. **Single entrypoint** — `RunAnalysis(...).summarize()` (or the procedural
-   wrapper `summarize_run_data()`) is the pipeline entrypoint.
-4. **Public API** — external code imports from `vibesensor.use_cases.diagnostics`:
-   `summarize_run_data()`, `build_findings_for_samples()`, `summarize_log()`,
-   `RunAnalysis`, `AnalysisResult`, `build_order_bands()`, `vehicle_orders_hz()`.
-   The diagnostics package re-exports the order-band helpers from
-   `vibesensor.shared.order_bands`.
+3. **Single diagnostics entrypoint** — `RunAnalysis(...).summarize()` is the
+   diagnostics pipeline entrypoint. Boundary helpers such as
+   `summarize_run_data()` / `summarize_log()` live in
+   `apps/server/vibesensor/adapters/analysis_summary.py` and call the
+   diagnostics entrypoint explicitly.
+4. **Public API** — external app/domain code imports from
+   `vibesensor.use_cases.diagnostics`: `RunAnalysis`, `AnalysisResult`,
+   `build_findings_for_samples()`, `build_order_bands()`, `vehicle_orders_hz()`.
+   Serialized `AnalysisSummary` helpers live outside the diagnostics package.
 5. **Renderer-only report package** — `vibesensor.adapters.pdf` must not
    import from `vibesensor.use_cases.diagnostics` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
@@ -74,19 +76,19 @@ in order. Each step runs exactly once per analysis invocation.
 | 7 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
 | 8 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | `_summary_steps`, statistics | Check reference completeness plus data-quality and run-condition checks |
 | 9 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
-| 10 | Summary construction | `build_analysis_result`, `build_summary_payload` | `_summary_result`, summary_serialization | Assemble `AnalysisResult`, `TestRun`, and the final persisted `AnalysisSummary` payload |
+| 10 | App-result construction | `build_analysis_result` | `_summary_result` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, and diagnostics-local artifacts needed for later boundary serialization |
 | 11 | Plot generation | `_plot_data`, `top_peaks_table_rows` | `_summary_result`, plots, peak_table | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
-| 12 | Plot serialization | `serialize_plot_data`, `annotate_peaks_with_order_labels` | `_summary_result`, summary_serialization, peak_table | Serialize plot bundles for persistence/report payloads after internal order-label annotation |
+| 12 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_log` | `shared/boundaries/analysis_summary.py`, `adapters/analysis_summary.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
 
 ## Module Responsibilities
 
 | Module | LOC | Responsibility |
 |--------|-----|---------------|
-| `__init__.py` | ~50 | Public API re-exports, including shared order-band helpers |
+| `__init__.py` | ~50 | Diagnostics public API re-exports, including shared order-band helpers |
 | `_types.py` | ~150 | Diagnostics-local aliases and value objects (`AccelStatistics`, speed/phase breakdown rows, plot bundles, peak rows, spectrogram data) |
-| `summary_builder.py` | ~250 | Top-level pipeline orchestration: `RunAnalysis`, `summarize_origin`, and public summary/findings entrypoints |
+| `summary_builder.py` | ~250 | Top-level pipeline orchestration: `RunAnalysis`, `summarize_origin`, and findings entrypoints |
 | `_summary_steps.py` | ~150 | Findings, sensor, and suitability step builders consumed by `RunAnalysis` |
-| `_summary_result.py` | ~200 | `AnalysisResult` plus final `TestRun` / `DiagnosticCase` / persisted-summary assembly |
+| `_summary_result.py` | ~200 | `AnalysisResult` plus final `TestRun` / `DiagnosticCase` / diagnostics-local artifact assembly |
 | `run_data_preparation.py` | ~200 | Shared run timing/speed/phase/sensor preparation: `PreparedRunData`, `prepare_run_data`, phase timeline helpers |
 | `findings.py` | ~150 | Top-level finding orchestration and finalization around order + persistent-peak helpers |
 | `_peak_findings.py` | ~200 | Persistent-peak support: `PeakFindingAnalyzer`, phase filtering, and duplicate-suppression helpers |
@@ -105,7 +107,9 @@ in order. Each step runs exactly once per analysis invocation.
 | `speed_profile_helpers.py` | ~150 | Speed-profile construction and phase/speed summary helpers |
 | `plots.py` | ~300 | Chart data shaping orchestration over diagnostics-local value objects: time-series extraction plus FFT/spectrogram assembly |
 | `peak_table.py` | ~250 | Peak-table row ranking, persistence-weighted statistics, and internal order-label annotation |
-| `shared/boundaries/summary_serialization/` | ~350 | Dedicated serialization seam package from domain/app diagnostics value objects to persisted `AnalysisSummary` payloads (`_contracts.py`, `_findings.py`, `_plots.py`, `_summary.py`) |
+| `adapters/analysis_summary.py` | ~60 | Edge-facing wrappers (`summarize_run_data()`, `summarize_log()`) that call diagnostics and then serialize the result |
+| `shared/boundaries/analysis_summary.py` | ~120 | Pure boundary serializer from app-level `AnalysisResult` to persisted `AnalysisSummary` |
+| `shared/boundaries/summary_serialization/` | ~350 | Low-level serialization seam package from domain/app diagnostics value objects to persisted `AnalysisSummary` payload fragments (`_contracts.py`, `_findings.py`, `_plots.py`, `_summary.py`) |
 
 ## Data Flow
 

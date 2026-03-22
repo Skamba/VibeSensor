@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 from test_support.report_helpers import write_jsonl
 
+from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.use_cases.diagnostics import summarize_log
 
 pdfium = pytest.importorskip("pypdfium2")
 RapidOCR = pytest.importorskip("rapidocr_onnxruntime").RapidOCR

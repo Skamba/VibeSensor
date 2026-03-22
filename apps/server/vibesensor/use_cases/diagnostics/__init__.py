@@ -16,8 +16,6 @@ from vibesensor.use_cases.diagnostics.summary_builder import (
     AnalysisResult,
     RunAnalysis,
     build_findings_for_samples,
-    summarize_log,
-    summarize_run_data,
 )
 
 __all__ = [
@@ -25,7 +23,5 @@ __all__ = [
     "RunAnalysis",
     "build_findings_for_samples",
     "build_order_bands",
-    "summarize_log",
-    "summarize_run_data",
     "vehicle_orders_hz",
 ]

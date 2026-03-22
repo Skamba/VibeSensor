@@ -1,8 +1,9 @@
 """Guardrail tests enforcing analysis-folder ownership and pipeline discipline.
 
 These tests verify the architectural invariants:
-1. The analysis pipeline has a single clear entrypoint (``summarize_run_data``).
-2. Post-stop analysis code lives exclusively in the analysis folder.
+1. Diagnostics exports app/domain analysis entry points only.
+2. Boundary summary serialization lives outside ``use_cases.diagnostics``.
+3. Post-stop analysis code lives exclusively in the analysis folder.
 """
 
 from __future__ import annotations
@@ -16,18 +17,18 @@ from _paths import SERVER_ROOT
 
 _SERVER_PKG = SERVER_ROOT / "vibesensor"
 # ---------------------------------------------------------------------------
-# 1. analysis/__init__.py exports all publicly used symbols
+# 1. diagnostics/__init__.py exports only app/domain analysis symbols
 # ---------------------------------------------------------------------------
 
 _EXPECTED_PUBLIC_SYMBOLS = [
-    "summarize_run_data",
-    "summarize_log",
+    "AnalysisResult",
+    "RunAnalysis",
     "build_findings_for_samples",
 ]
 
 
 @pytest.mark.parametrize("symbol", _EXPECTED_PUBLIC_SYMBOLS)
-def test_analysis_init_exports_core_symbol(symbol: str) -> None:
+def test_analysis_init_exports_app_level_symbol(symbol: str) -> None:
     """Each expected symbol must be importable from
     ``vibesensor.use_cases.diagnostics`` and listed in ``__all__``.
     """
@@ -43,13 +44,23 @@ def test_analysis_init_exports_core_symbol(symbol: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 2. summarize_run_data is the single pipeline entrypoint
+# 2. Boundary summary serialization is outside use_cases.diagnostics
 # ---------------------------------------------------------------------------
 
 
-def test_summarize_run_data_returns_expected_structure() -> None:
-    """summarize_run_data produces a dict with the expected top-level keys."""
-    from vibesensor.use_cases.diagnostics import summarize_run_data
+def test_diagnostics_does_not_export_boundary_summary_helpers() -> None:
+    """Boundary serializers should not be exported from diagnostics use cases."""
+    import vibesensor.use_cases.diagnostics as analysis
+
+    assert not hasattr(analysis, "summarize_run_data")
+    assert not hasattr(analysis, "summarize_log")
+    assert "summarize_run_data" not in analysis.__all__
+    assert "summarize_log" not in analysis.__all__
+
+
+def test_boundary_summarize_run_data_returns_expected_structure() -> None:
+    """Boundary summarize_run_data produces a dict with the expected top-level keys."""
+    from vibesensor.adapters.analysis_summary import summarize_run_data
 
     metadata = {
         "run_id": "test-arch",

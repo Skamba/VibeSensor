@@ -5,13 +5,13 @@ from __future__ import annotations
 import pytest
 from test_support import build_speed_sweep_fault_samples, standard_metadata
 
+from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.domain import SpeedProfile
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.shared.boundaries.diagnostic_case import (
     test_run_from_summary as _reconstruct,
 )
-from vibesensor.use_cases.diagnostics import summarize_run_data
 
 
 @pytest.fixture(scope="module")

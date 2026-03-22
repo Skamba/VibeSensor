@@ -7,6 +7,7 @@ from typing import Any
 from test_support import standard_metadata
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 
+from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.shared.boundaries.diagnostic_case import (
     test_run_from_summary as _decode_test_run,
 )
@@ -81,7 +82,7 @@ class TestBoundaryDecoderConfidenceInvariant:
             file_name="invariant-decode",
         )
         result = analysis.summarize()
-        summary = result.summary
+        summary = analysis_result_to_summary(result)
 
         # Decode through the boundary (simulates historical data load)
         decoded_run = _decode_test_run(summary)
@@ -102,7 +103,7 @@ class TestBoundaryDecoderConfidenceInvariant:
             file_name="invariant-decode-tc",
         )
         result = analysis.summarize()
-        summary = result.summary
+        summary = analysis_result_to_summary(result)
 
         decoded_run = _decode_test_run(summary)
 

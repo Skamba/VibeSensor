@@ -18,9 +18,9 @@ from _history_endpoint_helpers import (
 )
 from fastapi import HTTPException
 
+from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.http import create_router
 from vibesensor.domain import CarSnapshot
-from vibesensor.use_cases.diagnostics import summarize_run_data
 
 
 @pytest.mark.asyncio

@@ -18,6 +18,7 @@ from test_support import (
     standard_metadata,
 )
 
+from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -113,7 +114,8 @@ def test_analysis_produces_wired_domain_aggregates() -> None:
     assert len(analysis.test_run.top_causes) > 0
     assert analysis.test_run.run_id == "run-roundtrip"
     top = analysis.test_run.top_causes[0]
-    assert str(top.suspected_source) == result.summary["top_causes"][0]["suspected_source"]
+    summary = analysis_result_to_summary(result)
+    assert str(top.suspected_source) == summary["top_causes"][0]["suspected_source"]
 
 
 # -- T9.21+T9.22: Persist → reload → project preserves domain meaning -----
@@ -123,7 +125,7 @@ def test_persist_reload_project_preserves_domain_meaning(tmp_path: Path) -> None
     """Summary persisted to DB and reloaded through domain reconstruction
     must carry the same domain meaning as the direct analysis output."""
     _analysis, result = _run_analysis()
-    direct_summary = result.summary
+    direct_summary = analysis_result_to_summary(result)
     run = _persist_and_reload(tmp_path, direct_summary)
 
     analysis_blob = run.get("analysis")
@@ -153,7 +155,7 @@ def test_report_from_reconstructed_aggregate(tmp_path: Path) -> None:
     """Report mapping from a reconstructed (persisted → reloaded) summary
     must produce valid ReportTemplateData with the same primary system."""
     _analysis, result = _run_analysis()
-    direct_summary = result.summary
+    direct_summary = analysis_result_to_summary(result)
     run = _persist_and_reload(tmp_path, direct_summary)
 
     analysis_blob = run.get("analysis")
@@ -182,7 +184,7 @@ def test_export_from_reconstructed_aggregate(tmp_path: Path) -> None:
     """build_run_details_json must produce valid JSON from a history run
     whose analysis was projected through domain."""
     _analysis, result = _run_analysis()
-    direct_summary = result.summary
+    direct_summary = analysis_result_to_summary(result)
     run = _persist_and_reload(tmp_path, direct_summary)
 
     export_json = build_run_details_json(
@@ -213,7 +215,7 @@ def test_cross_boundary_domain_meaning_consistency(tmp_path: Path) -> None:
     """Same scenario through direct analysis and history-reload paths must
     produce equivalent domain meaning in summary, report, and export outputs."""
     analysis, result = _run_analysis()
-    direct_summary = result.summary
+    direct_summary = analysis_result_to_summary(result)
     run = _persist_and_reload(tmp_path, direct_summary)
 
     analysis_blob = run.get("analysis")

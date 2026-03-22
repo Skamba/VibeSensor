@@ -18,13 +18,13 @@ from test_support.report_helpers import (
 )
 
 from vibesensor import __version__
+from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf._panel_systems import _draw_system_card
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_data import PartSuggestion, SystemFindingCard
 from vibesensor.shared.constants import KMH_TO_MPS
-from vibesensor.use_cases.diagnostics import summarize_log
 
 
 def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
