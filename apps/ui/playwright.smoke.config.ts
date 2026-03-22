@@ -2,6 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "tests",
+  // Smoke selection lives here so package.json and CI stay on one contract.
+  testMatch: ["smoke*.spec.ts"],
   timeout: 45_000,
   use: {
     baseURL: "http://127.0.0.1:4173",
