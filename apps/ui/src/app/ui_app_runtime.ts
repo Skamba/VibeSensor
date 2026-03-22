@@ -5,10 +5,9 @@ import { createAppFeatureBundle, type AppFeatureBundle } from "./app_feature_bun
 import type { AppState } from "./ui_app_state";
 import { createAppState } from "./ui_app_state";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
+import { DEFAULT_SHELL_VIEW_ID } from "./runtime/ui_shell_navigation_module";
 import { UiShellController } from "./runtime/ui_shell_controller";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
-
-const DEFAULT_VIEW_ID = "dashboardView";
 
 export class UiAppRuntime {
   private readonly els: UiDomElements;
@@ -75,7 +74,7 @@ export class UiAppRuntime {
     this.runAsyncTask("hydrate persisted preferences", () => this.shell.hydratePersistedPreferences());
     this.shell.applyLanguage(false);
     this.shell.renderCarSelectionWarning();
-    this.shell.setActiveView(DEFAULT_VIEW_ID);
+    this.shell.setActiveView(DEFAULT_SHELL_VIEW_ID);
     this.startBackgroundActivity();
     this.transport.startTransportMode();
   }

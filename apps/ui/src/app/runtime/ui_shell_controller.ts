@@ -1,38 +1,20 @@
 import * as I18N from "../../i18n";
-import { formatIntLocale, fmt } from "../../format";
-import {
-  getSettingsLanguage,
-  getSettingsSpeedUnit,
-  setSettingsLanguage,
-  setSettingsSpeedUnit,
-} from "../../api/settings";
+import { formatIntLocale } from "../../format";
 import type { AppFeatureBundle } from "../app_feature_bundle";
 import type { UiDomElements } from "../ui_dom_registry";
 import type { AppState } from "../ui_app_state";
-
-const DEFAULT_VIEW_ID = "dashboardView";
-
-const WS_KEY_BY_STATE: Record<string, string> = {
-  connecting: "ws.connecting",
-  connected: "ws.connected",
-  reconnecting: "ws.reconnecting",
-  stale: "ws.stale",
-  no_data: "ws.no_data",
-};
-
-const WS_VARIANT_BY_STATE: Record<string, string> = {
-  connecting: "muted",
-  connected: "ok",
-  reconnecting: "warn",
-  stale: "bad",
-  no_data: "muted",
-};
-
-const WS_BANNER_CFG: Record<string, { key: string; cls: string }> = {
-  reconnecting: { key: "ws.banner.reconnecting", cls: "connection-banner--bad" },
-  stale: { key: "ws.banner.stale", cls: "connection-banner--warn" },
-  connecting: { key: "ws.banner.connecting", cls: "connection-banner--muted" },
-};
+import {
+  createUiShellNavigationModule,
+  type UiShellNavigationModule,
+} from "./ui_shell_navigation_module";
+import {
+  createUiShellPreferencesModule,
+  type UiShellPreferencesModule,
+} from "./ui_shell_preferences_module";
+import {
+  createUiShellStatusModule,
+  type UiShellStatusModule,
+} from "./ui_shell_status_module";
 
 type UiShellControllerDeps = {
   state: AppState;
@@ -44,6 +26,12 @@ export class UiShellController {
 
   private readonly els: UiDomElements;
 
+  private readonly navigation: UiShellNavigationModule;
+
+  private readonly preferences: UiShellPreferencesModule;
+
+  private readonly status: UiShellStatusModule;
+
   private features: AppFeatureBundle | null = null;
 
   private renderSpectrumChart: (() => void) | null = null;
@@ -53,6 +41,27 @@ export class UiShellController {
   constructor(deps: UiShellControllerDeps) {
     this.state = deps.state;
     this.els = deps.els;
+    this.navigation = createUiShellNavigationModule({
+      state: this.state,
+      els: this.els,
+      onDashboardViewActivated: () => {
+        this.state.spectrumPlot?.resize();
+      },
+    });
+    this.status = createUiShellStatusModule({
+      state: this.state,
+      els: this.els,
+      t: (key, vars) => this.t(key, vars),
+      setPillState: (el, variant, text) => this.setPillState(el, variant, text),
+    });
+    this.preferences = createUiShellPreferencesModule({
+      state: this.state,
+      els: this.els,
+      t: (key, vars) => this.t(key, vars),
+      normalizeLanguage: (lang) => I18N.normalizeLang(lang),
+      applyLanguage: (forceReloadInsights = false) => this.applyLanguage(forceReloadInsights),
+      renderSpeedReadout: () => this.status.renderSpeedReadout(),
+    });
   }
 
   attachFeatures(features: AppFeatureBundle): void {
@@ -93,89 +102,19 @@ export class UiShellController {
   }
 
   renderSpeedReadout(): void {
-    if (!this.els.speed) return;
-    const unitLabel = this.selectedSpeedUnitLabel();
-    if (typeof this.state.speedMps === "number" && Number.isFinite(this.state.speedMps)) {
-      const value = this.speedValueInSelectedUnit(this.state.speedMps);
-      const isManualSource = this.state.speedSource === "manual"
-        && typeof this.state.manualSpeedKph === "number"
-        && this.state.manualSpeedKph > 0;
-      const isFallbackOverride = this.state.gpsFallbackActive
-        || this.state.rotationalSpeeds?.basis_speed_source === "fallback_manual";
-      const isOverride = isManualSource || isFallbackOverride;
-      this.els.speed.textContent = this.t(isOverride ? "speed.override" : "speed.gps", {
-        value: fmt(value!, 1),
-        unit: unitLabel,
-      });
-      return;
-    }
-    this.els.speed.textContent = this.t("speed.none", { unit: unitLabel });
+    this.status.renderSpeedReadout();
   }
 
   renderWsState(): void {
-    if (this.state.payloadError) {
-      this.setPillState(this.els.linkState, "bad", this.t("ws.payload_error_pill"));
-      return;
-    }
-    this.setPillState(
-      this.els.linkState,
-      WS_VARIANT_BY_STATE[this.state.wsState] || "muted",
-      this.t(WS_KEY_BY_STATE[this.state.wsState] || "ws.connecting"),
-    );
-
-    const banner = this.els.connectionBanner;
-    if (banner) {
-      const cfg = WS_BANNER_CFG[this.state.wsState];
-      if (cfg) {
-        banner.hidden = false;
-        banner.textContent = this.t(cfg.key);
-        banner.className = `connection-banner ${cfg.cls}`;
-      } else {
-        banner.hidden = true;
-        banner.textContent = "";
-        banner.className = "connection-banner";
-      }
-    }
-
-    const wrap = document.querySelector(".wrap");
-    if (wrap) {
-      const degraded = this.state.wsState === "reconnecting" || this.state.wsState === "stale";
-      wrap.classList.toggle("wrap--stale", degraded);
-    }
+    this.status.renderWsState();
   }
 
   renderCarSelectionWarning(): void {
-    const banner = this.els.carSelectionBanner;
-    if (!banner) return;
-    const hasValidActiveCar = Boolean(
-      this.state.activeCarId && this.state.cars.some((car) => car.id === this.state.activeCarId),
-    );
-    if (hasValidActiveCar) {
-      banner.hidden = true;
-      banner.textContent = "";
-      return;
-    }
-    banner.hidden = false;
-    banner.textContent = `${this.t("header.no_car_selected")} ${this.t("header.no_car_selected_action")}`;
+    this.status.renderCarSelectionWarning();
   }
 
   setActiveView(viewId: string): void {
-    const valid = this.els.views.some((view) => view.id === viewId);
-    this.state.activeViewId = valid ? viewId : DEFAULT_VIEW_ID;
-    for (const view of this.els.views) {
-      const isActive = view.id === this.state.activeViewId;
-      view.classList.toggle("active", isActive);
-      view.hidden = !isActive;
-    }
-    for (const button of this.els.menuButtons) {
-      const isActive = button.dataset.view === this.state.activeViewId;
-      button.classList.toggle("active", isActive);
-      button.setAttribute("aria-selected", isActive ? "true" : "false");
-      button.tabIndex = isActive ? 0 : -1;
-    }
-    if (this.state.activeViewId === DEFAULT_VIEW_ID && this.state.spectrumPlot) {
-      this.state.spectrumPlot.resize();
-    }
+    this.navigation.setActiveView(viewId);
   }
 
   applyLanguage(forceReloadInsights = false): void {
@@ -207,129 +146,13 @@ export class UiShellController {
   }
 
   bindUiEvents(): void {
-    this.bindMenuEvents();
+    this.navigation.bindHandlers();
     this.bindFeatureEvents();
-    this.bindPreferenceEvents();
+    this.preferences.bindHandlers();
   }
 
   async hydratePersistedPreferences(): Promise<void> {
-    try {
-      const languageResponse = await getSettingsLanguage();
-      if (languageResponse?.language) {
-        this.state.lang = I18N.normalizeLang(languageResponse.language);
-        this.applyLanguage(true);
-      }
-    } catch (error) {
-      console.warn("Failed to load persisted language", error);
-    }
-    try {
-      const speedUnitResponse = await getSettingsSpeedUnit();
-      if (speedUnitResponse?.speedUnit) {
-        this.state.speedUnit = this.normalizeSpeedUnit(speedUnitResponse.speedUnit);
-        if (this.els.speedUnitSelect) {
-          this.els.speedUnitSelect.value = this.state.speedUnit;
-        }
-        this.renderSpeedReadout();
-      }
-    } catch (error) {
-      console.warn("Failed to load persisted speed unit", error);
-    }
-  }
-
-  private normalizeSpeedUnit(raw: string): string {
-    return raw === "mps" ? "mps" : "kmh";
-  }
-
-  private async saveLanguage(lang: string): Promise<void> {
-    const previousLang = this.state.lang;
-    const nextLang = I18N.normalizeLang(lang);
-    try {
-      const payload = await setSettingsLanguage(nextLang);
-      this.state.lang = I18N.normalizeLang(payload?.language || nextLang);
-      if (this.els.languageSelect) {
-        this.els.languageSelect.value = this.state.lang;
-      }
-      this.applyLanguage(true);
-    } catch (error) {
-      if (this.els.languageSelect) {
-        this.els.languageSelect.value = previousLang;
-      }
-      window.alert(error instanceof Error ? error.message : this.t("settings.save_failed"));
-    }
-  }
-
-  private async saveSpeedUnit(unit: string): Promise<void> {
-    const previousUnit = this.state.speedUnit;
-    const nextUnit = this.normalizeSpeedUnit(unit);
-    try {
-      const payload = await setSettingsSpeedUnit(nextUnit);
-      this.state.speedUnit = this.normalizeSpeedUnit(payload?.speedUnit || nextUnit);
-      if (this.els.speedUnitSelect) {
-        this.els.speedUnitSelect.value = this.state.speedUnit;
-      }
-      this.renderSpeedReadout();
-    } catch (error) {
-      if (this.els.speedUnitSelect) {
-        this.els.speedUnitSelect.value = previousUnit;
-      }
-      window.alert(error instanceof Error ? error.message : this.t("settings.save_failed"));
-    }
-  }
-
-  private speedValueInSelectedUnit(speedMps: number | null): number | null {
-    if (!(typeof speedMps === "number") || !Number.isFinite(speedMps)) return null;
-    return this.state.speedUnit === "mps" ? speedMps : speedMps * 3.6;
-  }
-
-  private selectedSpeedUnitLabel(): string {
-    return this.state.speedUnit === "mps" ? this.t("speed.unit.mps") : this.t("speed.unit.kmh");
-  }
-
-  private activateMenuTabByIndex(index: number): void {
-    if (!this.els.menuButtons.length) return;
-    const safeIndex = ((index % this.els.menuButtons.length) + this.els.menuButtons.length)
-      % this.els.menuButtons.length;
-    const button = this.els.menuButtons[safeIndex];
-    const viewId = button.dataset.view;
-    if (!viewId) return;
-    this.setActiveView(viewId);
-    button.focus();
-  }
-
-  private bindMenuEvents(): void {
-    this.els.menuButtons.forEach((button, index) => {
-      const activate = (): void => {
-        const viewId = button.dataset.view;
-        if (viewId) this.setActiveView(viewId);
-      };
-      button.addEventListener("click", activate);
-      button.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          activate();
-          return;
-        }
-        if (event.key === "ArrowRight") {
-          event.preventDefault();
-          this.activateMenuTabByIndex(index + 1);
-          return;
-        }
-        if (event.key === "ArrowLeft") {
-          event.preventDefault();
-          this.activateMenuTabByIndex(index - 1);
-          return;
-        }
-        if (event.key === "Home") {
-          event.preventDefault();
-          this.activateMenuTabByIndex(0);
-          return;
-        }
-        if (event.key === "End") {
-          event.preventDefault();
-          this.activateMenuTabByIndex(this.els.menuButtons.length - 1);
-        }
-      });
-    });
+    await this.preferences.hydratePersistedPreferences();
   }
 
   private bindFeatureEvents(): void {
@@ -340,21 +163,6 @@ export class UiShellController {
     features.history.bindHandlers();
     features.update.bindUpdateHandlers();
     features.espFlash.bindHandlers();
-  }
-
-  private bindPreferenceEvents(): void {
-    if (this.els.languageSelect) {
-      this.els.languageSelect.value = this.state.lang;
-      this.els.languageSelect.addEventListener("change", () => {
-        void this.saveLanguage(this.els.languageSelect!.value);
-      });
-    }
-    if (this.els.speedUnitSelect) {
-      this.els.speedUnitSelect.value = this.state.speedUnit;
-      this.els.speedUnitSelect.addEventListener("change", () => {
-        void this.saveSpeedUnit(this.els.speedUnitSelect!.value);
-      });
-    }
   }
 
   private requireFeatures(): AppFeatureBundle {
