@@ -5,13 +5,18 @@ import io
 import json
 import zipfile
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock
 
 from fastapi import FastAPI, WebSocketDisconnect
 from test_support import response_payload as _response_payload
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.adapters.history import (
+    ProjectedHistoryExportService,
+    ProjectedHistoryRunService,
+    prepare_history_report_analysis,
+)
 from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.dependencies import (
     HistoryDeps,
@@ -21,7 +26,6 @@ from vibesensor.adapters.http.dependencies import (
     UpdateDeps,
 )
 from vibesensor.infra.runtime import RuntimeHealthState
-from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.reports import HistoryReportService, PdfRendererFn
 from vibesensor.use_cases.history.runs import HistoryRunService
@@ -29,13 +33,17 @@ from vibesensor.use_cases.history.runs import HistoryRunService
 
 def _real_pdf_renderer(analysis_summary: dict, test_run: object | None) -> bytes:
     """Default test renderer wiring the real adapter pipeline."""
-    from typing import cast
-
     from vibesensor.adapters.pdf.mapping import map_summary
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
     from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+    from vibesensor.shared.types.json_types import JsonObject
 
-    summary = cast(AnalysisSummary, analysis_summary)
+    projected_summary, projected_test_run = prepare_history_report_analysis(
+        cast(JsonObject, analysis_summary)
+    )
+    if projected_test_run is not None:
+        test_run = projected_test_run
+    summary = cast(AnalysisSummary, projected_summary)
     return build_report_pdf(map_summary(summary, test_run=test_run))
 
 
@@ -272,20 +280,21 @@ class FakeState:
         self.health_state.mark_ready()
         self.update_manager = MagicMock()
         self.esp_flash_manager = MagicMock()
-        self.run_service = HistoryRunService(
-            self.history_db,
-            self.settings_store,
-            analysis_projector=project_analysis_summary,
+        self.run_service = ProjectedHistoryRunService(
+            HistoryRunService(
+                self.history_db,
+                self.settings_store,
+            )
         )
         self.report_service = HistoryReportService(
             self.history_db,
             self.settings_store,
-            analysis_projector=project_analysis_summary,
             pdf_renderer=pdf_renderer,
         )
-        self.export_service = HistoryExportService(
-            self.history_db,
-            analysis_projector=project_analysis_summary,
+        self.export_service = ProjectedHistoryExportService(
+            HistoryExportService(
+                self.history_db,
+            )
         )
 
     @property

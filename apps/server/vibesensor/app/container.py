@@ -4,6 +4,11 @@ import logging
 from typing import TYPE_CHECKING
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+from vibesensor.adapters.history import (
+    ProjectedHistoryExportService,
+    ProjectedHistoryRunService,
+    prepare_history_report_analysis,
+)
 from vibesensor.adapters.http.dependencies import (
     HistoryDeps,
     RouterDeps,
@@ -27,7 +32,6 @@ from vibesensor.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
 
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun
-from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.shared.constants import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -54,8 +58,14 @@ def _build_pdf_bytes(analysis_summary: dict, test_run: TestRun | None) -> bytes:
     from vibesensor.adapters.pdf.mapping import map_summary
     from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
     from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+    from vibesensor.shared.types.json_types import JsonObject
 
-    summary = cast(AnalysisSummary, analysis_summary)
+    prepared_summary, prepared_test_run = prepare_history_report_analysis(
+        cast(JsonObject, analysis_summary)
+    )
+    summary = cast(AnalysisSummary, prepared_summary)
+    if prepared_test_run is not None:
+        test_run = prepared_test_run
     mapped = map_summary(summary, test_run=test_run)
     return build_report_pdf(mapped)
 
@@ -91,21 +101,20 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     )
 
     # persistence services
-    run_service = HistoryRunService(
+    history_run_service = HistoryRunService(
         history_db,
         settings_store,
-        analysis_projector=project_analysis_summary,
     )
     report_service = HistoryReportService(
         history_db,
         settings_store,
-        analysis_projector=project_analysis_summary,
         pdf_renderer=_build_pdf_bytes,
     )
-    export_service = HistoryExportService(
+    history_export_service = HistoryExportService(
         history_db,
-        analysis_projector=project_analysis_summary,
     )
+    run_service = ProjectedHistoryRunService(history_run_service)
+    export_service = ProjectedHistoryExportService(history_export_service)
 
     # ingress
     registry = ClientRegistry(

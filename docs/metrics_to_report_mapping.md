@@ -11,9 +11,10 @@ values; it reads exclusively from `ReportTemplateData` (built by
 ```
 adapters.analysis_summary.summarize_run_data(meta, samples)
   → summary dict (persisted in history_db as a versioned analysis envelope)
-    → adapters.pdf.mapping.map_summary(summary)
-      → ReportTemplateData (rebuilt on demand)
-        → history_services.reports.HistoryReportService + report.pdf_engine.build_report_pdf(ReportTemplateData)
+    → adapters.history.prepare_history_report_analysis(summary)
+      → adapters.pdf.mapping.map_summary(summary)
+        → ReportTemplateData (rebuilt on demand)
+          → history_services.reports.HistoryReportService + report.pdf_engine.build_report_pdf(ReportTemplateData)
           → PDF bytes
 ```
 

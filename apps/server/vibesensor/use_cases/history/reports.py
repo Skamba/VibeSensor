@@ -21,7 +21,6 @@ from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.use_cases.history.helpers import (
-    AnalysisProjector,
     HistoryRecord,
     async_require_run,
     require_analysis_ready,
@@ -64,7 +63,6 @@ class HistoryReportService:
     """Load persisted report data and coordinate cached PDF generation."""
 
     __slots__ = (
-        "_analysis_projector",
         "_history_db",
         "_pdf_cache",
         "_pdf_renderer",
@@ -76,10 +74,8 @@ class HistoryReportService:
         history_db: RunPersistence,
         settings_store: SettingsReader | None = None,
         *,
-        analysis_projector: AnalysisProjector,
         pdf_renderer: PdfRendererFn,
     ) -> None:
-        self._analysis_projector = analysis_projector
         self._history_db = history_db
         self._pdf_cache = HistoryReportPdfCache()
         self._pdf_renderer = pdf_renderer
@@ -121,7 +117,6 @@ class HistoryReportService:
             analysis,
             current_active_car_snapshot=current_active_car_snapshot,
         )
-        analysis_summary, domain_test_run = self._analysis_projector(analysis_summary)
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
@@ -132,7 +127,6 @@ class HistoryReportService:
             cache_key=cache_key,
             filename=f"{safe_filename(run_id)}_report.pdf",
             analysis_summary=analysis_summary,
-            domain_test_run=domain_test_run,
         )
 
     @staticmethod
