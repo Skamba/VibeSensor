@@ -16,6 +16,7 @@ from vibesensor.use_cases.diagnostics import order_scoring as _order_scoring_mod
 from vibesensor.use_cases.diagnostics import (
     order_statistics as _order_statistics_module,
 )
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.order_pipeline import (
     _build_order_findings as _findings_build_order_findings,
@@ -193,6 +194,16 @@ def analysis_metadata(**overrides: Any) -> dict[str, Any]:
     return create_run_metadata(**{k: v for k, v in defaults.items() if k in valid_keys})
 
 
+def diagnostics_context(
+    metadata: dict[str, object] | None = None,
+    **overrides: object,
+) -> DiagnosticsContext:
+    """Return a typed diagnostics context for tests."""
+    raw_metadata: dict[str, object] = dict(metadata or {})
+    raw_metadata.update(overrides)
+    return DiagnosticsContext.from_metadata(raw_metadata, file_name="test")
+
+
 def analysis_sample(
     t_s: float,
     speed_kmh: float,
@@ -268,7 +279,7 @@ class HypothesisStub:
     @staticmethod
     def predicted_hz(
         _sample: dict,
-        _metadata: dict,
+        _context: object,
         _circumference: float | None,
     ) -> tuple[float, str]:
         return 5.0, "speed_kmh"
@@ -335,8 +346,9 @@ def call_build_order_findings(
     **overrides: object,
 ) -> list[dict]:
     """Thin wrapper around _build_order_findings with sensible defaults."""
+    metadata = dict(overrides.pop("metadata", {"units": {"accel_x_g": "g"}}))
     kwargs: dict[str, object] = {
-        "metadata": {"units": {"accel_x_g": "g"}},
+        "context": overrides.pop("context", diagnostics_context(metadata)),
         "samples": samples,
         "speed_sufficient": True,
         "steady_speed": False,

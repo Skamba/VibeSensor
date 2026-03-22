@@ -17,11 +17,10 @@ from vibesensor.shared.constants import (
     SPEED_COVERAGE_MIN_PCT,
     SPEED_MIN_POINTS,
 )
-from vibesensor.shared.run_context import order_reference_context_complete
 from vibesensor.shared.statistics_utils import _mean_variance
 from vibesensor.shared.time_utils import parse_iso8601
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.strength_bands import bucket_for_strength
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     AnalysisSampleInput,
@@ -149,9 +148,9 @@ def compute_frame_integrity_counts(samples: Sequence[AnalysisSampleInput]) -> tu
 # ── Reference completeness ───────────────────────────────────────────────
 
 
-def compute_reference_completeness(metadata: JsonObject) -> bool:
+def compute_reference_completeness(context: DiagnosticsContext) -> bool:
     """Return True when enough reference metadata is present for order analysis."""
-    return bool(order_reference_context_complete(metadata))
+    return context.reference_complete
 
 
 # ── Speed and phase preparation ──────────────────────────────────────────
@@ -187,15 +186,14 @@ def prepare_speed_and_phases(
 
 
 def compute_run_timing(
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     samples: Sequence[AnalysisSampleInput],
-    file_name: str,
 ) -> tuple[str, datetime | None, datetime | None, float]:
-    """Extract run_id, start/end timestamps and duration from metadata+samples."""
+    """Extract run_id, start/end timestamps and duration from context+samples."""
     typed_samples = ensure_analysis_samples(samples)
-    run_id = str(metadata.get("run_id") or f"run-{file_name}")
-    start_ts = parse_iso8601(metadata.get("start_time_utc"))
-    end_ts = parse_iso8601(metadata.get("end_time_utc"))
+    run_id = context.run_id
+    start_ts = parse_iso8601(context.start_time_utc)
+    end_ts = parse_iso8601(context.end_time_utc)
 
     if end_ts is None and typed_samples:
         sample_max_t = max((sample.t_s or 0.0) for sample in typed_samples)

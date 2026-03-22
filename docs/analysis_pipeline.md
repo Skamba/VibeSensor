@@ -68,23 +68,25 @@ in order. Each step runs exactly once per analysis invocation.
 | # | Step | Key Function(s) | Module | Purpose |
 |---|------|-----------------|--------|---------|
 | 1 | Validation | `_validate_required_strength_metrics` | summary_builder | Validate samples contain required strength metrics |
-| 2 | Run preparation | `prepare_run_data`, `compute_run_timing`, `_run_noise_baseline_g` | run_data_preparation, statistics, helpers | Extract timing, speed stats, phase segmentation, and speed context |
-| 3 | Phase segmentation | `segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | phase_segmentation | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / COAST_DOWN / SPEED_UNKNOWN) |
-| 4 | Acceleration statistics | `compute_accel_statistics` | statistics | Per-axis and magnitude accel stats, saturation detection |
-| 5 | Findings bundle | `build_findings_bundle` → `_build_findings` | `_summary_steps`, findings, `_peak_findings` | Order tracking, pattern matching, scoring, localisation via `PeakFindingAnalyzer` and `OrderAnalysisSession` |
-| 6 | Origin & test plan | `summarize_origin`, `build_phase_timeline` | summary_builder, run_data_preparation | Determine most likely vibration source, generate timeline |
-| 7 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
-| 8 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | `_summary_steps`, statistics | Check reference completeness plus data-quality and run-condition checks |
-| 9 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
-| 10 | App-result construction | `build_analysis_result` | `_summary_result` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, and diagnostics-local artifacts needed for later boundary serialization |
-| 11 | Plot generation | `_plot_data`, `top_peaks_table_rows` | `_summary_result`, plots, peak_table | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
-| 12 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_log` | `shared/boundaries/analysis_summary.py`, `adapters/analysis_summary.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
+| 2 | Context decode | `DiagnosticsContext.from_metadata` | `_context.py` | Decode raw metadata once into typed `RunMetadataSnapshot` + `RunContextSnapshot` plus diagnostics-local convenience fields |
+| 3 | Run preparation | `prepare_run_data`, `compute_run_timing`, `_run_noise_baseline_g` | run_data_preparation, statistics, helpers | Extract timing, speed stats, phase segmentation, and speed context |
+| 4 | Phase segmentation | `segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | phase_segmentation | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / COAST_DOWN / SPEED_UNKNOWN) |
+| 5 | Acceleration statistics | `compute_accel_statistics` | statistics | Per-axis and magnitude accel stats, saturation detection |
+| 6 | Findings bundle | `build_findings_bundle` → `_build_findings` | `_summary_steps`, findings, `_peak_findings` | Order tracking, pattern matching, scoring, localisation via `PeakFindingAnalyzer` and `OrderAnalysisSession` |
+| 7 | Origin & test plan | `summarize_origin`, `build_phase_timeline` | summary_builder, run_data_preparation | Determine most likely vibration source, generate timeline |
+| 8 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
+| 9 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | `_summary_steps`, statistics | Check reference completeness plus data-quality and run-condition checks |
+| 10 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
+| 11 | App-result construction | `build_analysis_result` | `_summary_result` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization |
+| 12 | Plot generation | `_plot_data`, `top_peaks_table_rows` | `_summary_result`, plots, peak_table | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
+| 13 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_log` | `shared/boundaries/analysis_summary.py`, `adapters/analysis_summary.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
 
 ## Module Responsibilities
 
 | Module | LOC | Responsibility |
 |--------|-----|---------------|
 | `__init__.py` | ~50 | Diagnostics public API re-exports, including shared order-band helpers |
+| `_context.py` | ~300 | `DiagnosticsContext`: typed metadata/context decode from raw run metadata into `RunMetadataSnapshot`, `RunContextSnapshot`, and diagnostics-local convenience fields plus boundary metadata rehydration |
 | `_types.py` | ~150 | Diagnostics-local aliases and value objects (`AccelStatistics`, speed/phase breakdown rows, plot bundles, peak rows, spectrogram data) |
 | `summary_builder.py` | ~250 | Top-level pipeline orchestration: `RunAnalysis`, `summarize_origin`, and findings entrypoints |
 | `_summary_steps.py` | ~150 | Findings, sensor, and suitability step builders consumed by `RunAnalysis` |
@@ -122,6 +124,11 @@ in order. Each step runs exactly once per analysis invocation.
 ```
 Input: raw samples (list[JsonObject]) + metadata (JsonObject)
   │
+  ├─ _context.DiagnosticsContext.from_metadata() → typed diagnostics context
+  │    ├─ RunMetadataSnapshot
+  │    ├─ RunContextSnapshot
+  │    └─ diagnostics-local context conveniences / boundary metadata rehydration
+  │
   ├─ _types.normalize_analysis_samples() → raw rows + typed AnalysisSample objects
   │
   ├─ run_data_preparation.prepare_run_data() → PreparedRunData
@@ -136,15 +143,14 @@ Input: raw samples (list[JsonObject]) + metadata (JsonObject)
   │    └─ select_top_causes() → ranked top causes
   │
   ├─ _summary_result.build_analysis_result()
-  │    └─ shared.boundaries.summary_serialization.build_summary_payload() → AnalysisSummary dict
-  │    ├─ findings/top causes serialized from domain Finding
-  │    ├─ speed + phase breakdown rows serialized from diagnostics-local value objects
-  │    └─ origin, test plan, suitability, accel stats, phase timeline
+  │    ├─ AnalysisResult
+  │    ├─ TestRun / DiagnosticCase
+  │    └─ rehydrated metadata dict for later boundary serialization
   │
   └─ _summary_result._plot_data() → diagnostics-local PlotDataResultData
        └─ serialize_plot_data() → persisted chart payload + labeled peak table
   │
-Output: AnalysisResult (TestRun, DiagnosticCase, AnalysisSummary)
+Output: AnalysisResult (TestRun, DiagnosticCase, diagnostics-local artifacts)
 ```
 
 ## Persisted Outputs

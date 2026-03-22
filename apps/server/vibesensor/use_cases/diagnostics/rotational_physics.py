@@ -10,8 +10,7 @@ from dataclasses import dataclass
 
 from vibesensor.domain import OrderReferenceSpec, VibrationSource
 from vibesensor.shared.constants import KMH_TO_MPS, SECONDS_PER_MINUTE
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
     Sample,
@@ -30,7 +29,7 @@ from vibesensor.use_cases.diagnostics.helpers import (
 def _wheel_hz(
     sample: AnalysisSampleInput,
     tire_circumference_m: float | None,
-    metadata: JsonObject | None = None,
+    context: DiagnosticsContext | None = None,
     order_reference_spec: OrderReferenceSpec | None = None,
 ) -> float | None:
     typed_sample = ensure_analysis_sample(sample)
@@ -38,8 +37,8 @@ def _wheel_hz(
     if speed_kmh is None or speed_kmh <= 0:
         return None
     spec = order_reference_spec
-    if spec is None and metadata is not None:
-        spec = _order_reference_spec_from_context(metadata, typed_sample)
+    if spec is None and context is not None:
+        spec = _order_reference_spec_from_context(context, typed_sample)
     if spec is not None and spec.supports_wheel_reference:
         return spec.wheel_hz_from_speed_kmh(speed_kmh)
     if tire_circumference_m is None or tire_circumference_m <= 0:
@@ -49,12 +48,12 @@ def _wheel_hz(
 
 def _driveshaft_hz(
     sample: AnalysisSampleInput,
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> float | None:
     typed_sample = ensure_analysis_sample(sample)
     speed_kmh = typed_sample.speed_kmh
-    spec = _order_reference_spec_from_context(metadata, typed_sample)
+    spec = _order_reference_spec_from_context(context, typed_sample)
     if (
         speed_kmh is not None
         and speed_kmh > 0
@@ -65,10 +64,14 @@ def _driveshaft_hz(
     whz = _wheel_hz(
         typed_sample,
         tire_circumference_m,
-        metadata,
+        context,
         order_reference_spec=spec,
     )
-    fd = typed_sample.final_drive_ratio or _as_float(metadata.get("final_drive_ratio"))
+    fd = (
+        typed_sample.final_drive_ratio
+        if typed_sample.final_drive_ratio is not None
+        else context.final_drive_ratio
+    )
     if whz is None or fd is None or fd <= 0:
         return None
     return float(whz * fd)
@@ -76,12 +79,12 @@ def _driveshaft_hz(
 
 def _engine_hz(
     sample: AnalysisSampleInput,
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     rpm, src = _effective_engine_rpm(
         ensure_analysis_sample(sample),
-        metadata,
+        context,
         tire_circumference_m,
     )
     if rpm is None or rpm <= 0:
@@ -115,20 +118,20 @@ class OrderHypothesis:
     def predicted_hz(
         self,
         sample: Sample,
-        metadata: JsonObject,
+        context: DiagnosticsContext,
         tire_circumference_m: float | None,
     ) -> tuple[float | None, str]:
         if self.order_label_base == "wheel":
-            base = _wheel_hz(sample, tire_circumference_m, metadata)
+            base = _wheel_hz(sample, tire_circumference_m, context)
             return (base * self.order, "speed+tire") if base is not None else (None, "missing")
         if self.order_label_base == "driveshaft":
-            base = _driveshaft_hz(sample, metadata, tire_circumference_m)
+            base = _driveshaft_hz(sample, context, tire_circumference_m)
             if base is None:
                 return None, "missing"
             return base * self.order, "speed+tire+final_drive"
         if self.order_label_base == "engine":
-            base, src = _engine_hz(sample, metadata, tire_circumference_m)
-            return (base * self.order, src) if base is not None else (None, "missing")
+            base, src = _engine_hz(sample, context, tire_circumference_m)
+            return (base * self.order, src) if base is not None else (None, src)
         return None, "missing"
 
 
