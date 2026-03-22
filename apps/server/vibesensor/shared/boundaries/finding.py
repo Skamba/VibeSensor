@@ -17,8 +17,8 @@ from vibesensor.domain import Finding, FindingEvidence, Signature, VibrationSour
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.shared.boundaries.analysis_payload import (
+    MatchedPoint,
     TestPlanStepPayload,
-    matched_point_from_observation,
 )
 from vibesensor.shared.boundaries.vibration_origin import (
     location_hotspot_from_payload,
@@ -27,6 +27,20 @@ from vibesensor.shared.boundaries.vibration_origin import (
 from vibesensor.shared.json_utils import i18n_ref
 
 _MAX_SIGNATURES_PER_FINDING: int = 3
+
+
+def matched_point_from_observation(obs: OrderMatchObservation) -> MatchedPoint:
+    """Serialize a domain ``OrderMatchObservation`` to a boundary ``MatchedPoint`` dict."""
+    return MatchedPoint(
+        t_s=obs.t_s,
+        speed_kmh=obs.speed_kmh,
+        predicted_hz=obs.predicted_hz,
+        matched_hz=obs.matched_hz,
+        rel_error=obs.rel_error,
+        amp=obs.amp,
+        location=obs.location,
+        phase=obs.phase,
+    )
 
 
 # ---------------------------------------------------------------------------
