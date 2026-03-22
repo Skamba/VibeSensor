@@ -99,7 +99,10 @@ in order. Each step runs exactly once per analysis invocation.
 | `order_finding_builder.py` | ~120 | Final `DomainFinding` construction and evidence projection for scored order findings |
 | `order_pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, multi-location split, and `_build_order_findings()` |
 | `order_heuristics.py` | ~150 | Heuristic filters and tuning constants for diffuse excitation, localization overrides, and engine-alias suppression |
-| `peak_binning.py` | ~450 | Peak accumulation and scoring across samples |
+| `peak_accumulation.py` | ~100 | Raw peak-bin accumulation across samples |
+| `peak_classification.py` | ~60 | Peak classification thresholds and policy |
+| `peak_scoring.py` | ~180 | Peak-bin scoring, confidence, and ranking state |
+| `peak_finding_builder.py` | ~60 | Final `DomainFinding` projection for scored peak bins |
 | `signal_aggregation.py` | ~250 | Speed/location aggregation helpers |
 | `phase_segmentation.py` | ~300 | Driving-phase classification (IDLE → COAST_DOWN) |
 | `location_analysis.py` | ~300 | Per-sensor-location vibration intensity and spatial analysis |

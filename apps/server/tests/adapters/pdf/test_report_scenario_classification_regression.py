@@ -6,7 +6,7 @@ import pytest
 
 from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics.helpers import _location_label
-from vibesensor.use_cases.diagnostics.peak_binning import _classify_peak_type
+from vibesensor.use_cases.diagnostics.peak_classification import classify_peak_type
 
 
 class TestStrengthBandsAlignment:
@@ -74,7 +74,7 @@ class TestPeakClassification:
         kwargs: dict[str, float],
         expected: str,
     ) -> None:
-        assert _classify_peak_type(presence, burstiness, **kwargs) == expected
+        assert classify_peak_type(presence, burstiness, **kwargs) == expected
 
 
 class TestLocationLabel:
