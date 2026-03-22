@@ -23,6 +23,7 @@ from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.config.settings_store import SettingsStore
 from vibesensor.infra.processing import SignalProcessor
 from vibesensor.shared.sampling import bounded_sample as _bounded_sample
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 # -- shared helpers ----------------------------------------------------------
 
@@ -176,21 +177,21 @@ def test_iter_run_samples_returns_all_rows(tmp_path: Path) -> None:
     total = 37
     db = _seeded_history_db(tmp_path, "r1", total)
 
-    all_rows: list[dict] = []
+    all_rows: list[SensorFrame] = []
     for batch in db.iter_run_samples("r1", batch_size=10):
         all_rows.extend(batch)
     assert len(all_rows) == total
-    assert [r["t_s"] for r in all_rows] == [float(i) for i in range(total)]
+    assert [r.t_s for r in all_rows] == [float(i) for i in range(total)]
 
 
 def test_iter_run_samples_offset(tmp_path: Path) -> None:
     db = _seeded_history_db(tmp_path, "r2", 20)
 
-    all_rows: list[dict] = []
+    all_rows: list[SensorFrame] = []
     for batch in db.iter_run_samples("r2", batch_size=5, offset=10):
         all_rows.extend(batch)
     assert len(all_rows) == 10
-    assert all_rows[0]["t_s"] == 10.0
+    assert all_rows[0].t_s == 10.0
 
 
 # ---------------------------------------------------------------------------
