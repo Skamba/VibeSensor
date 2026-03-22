@@ -9,7 +9,6 @@ import zipfile
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, cast
 
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject
@@ -63,14 +62,6 @@ def project_history_insights(analysis: Mapping[str, object]) -> JsonObject:
     """Project persisted insights payloads for HTTP responses."""
     projected, _ = _project_history_analysis(analysis, strip_internal=True)
     return projected
-
-
-def prepare_history_report_analysis(
-    analysis: AnalysisSummary,
-) -> tuple[AnalysisSummary, TestRun | None]:
-    """Project persisted report analysis for PDF rendering without stripping template data."""
-    projected, test_run = _project_history_analysis(analysis, strip_internal=False)
-    return cast(AnalysisSummary, projected), test_run
 
 
 def build_projected_run_details_json(

@@ -1,8 +1,9 @@
 """Contract bridge tests: Analysis → Report boundary.
 
-These tests validate that the output of ``summarize_run_data()`` is a valid
-input to ``map_summary()``.  They are fast (<5 s), deterministic, and run in
-standard CI so that schema drift between the two subsystems is caught early.
+These tests validate that the output of ``summarize_run_data()`` can be
+prepared and accepted by ``map_summary()``. They are fast (<5 s),
+deterministic, and run in standard CI so schema drift between the two
+subsystems is caught early.
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ from vibesensor.adapters.analysis_summary import (
 from vibesensor.adapters.pdf.mapping import (
     filter_active_sensor_intensity,
     map_summary,
+    prepare_report_input,
     prepare_report_mapping_context,
     resolve_primary_report_candidate,
 )
@@ -67,11 +69,11 @@ def _make_steady_speed_fault_dataset() -> tuple[dict, list[dict]]:
 
 
 def test_analysis_output_accepted_by_report_mapper():
-    """summarize_run_data() output must be accepted by map_summary()."""
+    """summarize_run_data() output must prepare and map cleanly."""
     meta, samples = _make_small_dataset()
     summary = summarize_run_data(meta, samples, lang="en")
 
-    report_data = map_summary(summary)
+    report_data = map_summary(prepare_report_input(summary))
 
     assert isinstance(report_data, ReportTemplateData)
 
@@ -80,7 +82,7 @@ def test_report_data_has_populated_fields():
     """Key report fields must be non-empty after mapping real analysis output."""
     meta, samples = _make_small_dataset()
     summary = summarize_run_data(meta, samples, lang="en")
-    report_data = map_summary(summary)
+    report_data = map_summary(prepare_report_input(summary))
 
     # Structural: the report must have a title and language
     assert report_data.title
@@ -100,7 +102,7 @@ def test_analysis_without_fault_maps_cleanly():
     samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30, speed_kmh=60.0)
     summary = summarize_run_data(meta, samples, lang="en")
 
-    report_data = map_summary(summary)
+    report_data = map_summary(prepare_report_input(summary))
 
     assert isinstance(report_data, ReportTemplateData)
     assert report_data.lang == "en"
@@ -112,7 +114,7 @@ def test_multilingual_mapping():
     samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=20, speed_kmh=60.0)
     summary = summarize_run_data(meta, samples, lang="nl")
 
-    report_data = map_summary(summary)
+    report_data = map_summary(prepare_report_input(summary))
 
     assert isinstance(report_data, ReportTemplateData)
     assert report_data.lang == "nl"

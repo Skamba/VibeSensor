@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 
 _ORDER_TOP_CAUSE: dict = {
     "finding_id": "F_ORDER",
@@ -49,7 +49,7 @@ def test_map_summary_prefers_non_ref_top_cause_for_observed_location() -> None:
         },
     ]
 
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
 
     assert data.observed.strongest_location.lower() == "rear-left"
 
@@ -72,7 +72,7 @@ def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeho
         },
     ]
 
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
 
     assert data.observed.strongest_location.lower() == "rear-left"
 
@@ -98,7 +98,7 @@ def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() 
         },
     ]
 
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
 
     assert data.observed.strongest_location.lower() == "rear-left"
     assert data.observed.speed_band == "40-60 km/h"
@@ -121,7 +121,7 @@ def test_map_summary_peak_rows_render_missing_values_as_dashes() -> None:
         },
     )
 
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
 
     assert data.peak_rows
     row = data.peak_rows[0]
@@ -151,7 +151,7 @@ def test_map_summary_peak_rows_use_source_hint_for_system_label() -> None:
         },
     )
 
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
 
     assert data.peak_rows
     assert data.peak_rows[0].system == "Wheel / Tire"

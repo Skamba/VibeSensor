@@ -10,7 +10,7 @@ from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.boundaries.vibration_origin import build_origin_explanation
@@ -51,7 +51,7 @@ def test_map_summary_basic(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)
 
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert isinstance(data, ReportTemplateData)
     assert data.title
     assert data.run_datetime
@@ -63,7 +63,7 @@ def test_map_summary_basic(tmp_path: Path) -> None:
 
 def test_map_summary_no_top_causes() -> None:
     summary = minimal_summary()
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert isinstance(data, ReportTemplateData)
     assert data.system_cards == []
     assert data.certainty_tier_key == "A"
@@ -98,7 +98,7 @@ def test_map_summary_uses_domain_action_render_queries_for_next_steps() -> None:
         ],
     )
 
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
 
     assert data.next_steps[0].action
     assert data.next_steps[0].why
@@ -120,7 +120,7 @@ def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
         ],
     )
 
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert data.sensor_count == 2
     assert data.sensor_locations == ["Front Left", "Rear Left"]
     assert [row.location for row in data.sensor_intensity_by_location] == [
@@ -289,7 +289,7 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
         },
     )
 
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert data.observed.strongest_location == "Rear Left / Front Right"
 
 
@@ -312,7 +312,7 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
             ],
         },
     )
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert data.peak_rows
     row = data.peak_rows[0]
     assert row.peak_db == "18.4"
@@ -341,7 +341,7 @@ def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
             ],
         },
     )
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert data.peak_rows
     assert "noise floor" in data.peak_rows[0].relevance
 
@@ -358,7 +358,7 @@ def test_map_summary_data_trust_keeps_warning_detail() -> None:
             },
         ],
     )
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert data.data_trust
     assert data.data_trust[0].state == "warn"
     assert data.data_trust[0].check == "Frame-integriteit"
@@ -377,7 +377,7 @@ def test_map_summary_data_trust_literal_check_labels() -> None:
             },
         ],
     )
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert data.data_trust
     assert data.data_trust[0].check == "Frame integrity"
 
@@ -394,7 +394,7 @@ def test_map_summary_data_trust_includes_run_context_warnings() -> None:
             },
         ],
     )
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert any(
         item.check == "Order-analysis reference context was incomplete for this run"
         for item in data.data_trust
@@ -415,8 +415,8 @@ def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data()
     summary_en = {**base_summary, "lang": "en"}
     summary_nl = {**base_summary, "lang": "nl"}
 
-    data_en = map_summary(summary_en)
-    data_nl = map_summary(summary_nl)
+    data_en = map_summary(prepare_report_input(summary_en))
+    data_nl = map_summary(prepare_report_input(summary_nl))
 
     assert data_en.data_trust[0].check == "Speed variation"
     assert data_nl.data_trust[0].check == "Snelheidsvariatie"
@@ -436,7 +436,7 @@ def test_map_summary_certainty_reason_ignores_unrelated_reference_gap() -> None:
         ],
         findings=[{"finding_id": "REF_ENGINE"}],
     )
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert data.observed.certainty_reason
     assert "Missing reference data" not in data.observed.certainty_reason
 
@@ -461,5 +461,5 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
         ],
         findings=[{"finding_id": "REF_ENGINE"}],
     )
-    data = map_summary(summary)
+    data = map_summary(prepare_report_input(summary))
     assert "Missing reference data" in data.observed.certainty_reason
