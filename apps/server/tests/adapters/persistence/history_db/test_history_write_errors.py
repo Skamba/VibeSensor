@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 from vibesensor.use_cases.run.logger import _MAX_HISTORY_CREATE_RETRIES
 
@@ -24,17 +25,19 @@ class _FakeRecord:
     client_id: str
     name: str
     sample_rate_hz: int
-    latest_metrics: dict
+    latest_metrics: ClientMetrics
     frames_total: int = 0
     frames_dropped: int = 0
     queue_overflow_drops: int = 0
 
 
-_FAKE_LATEST_METRICS: dict = {
+_FAKE_LATEST_METRICS: ClientMetrics = {
     "combined": {
         "peaks": [{"hz": 15.0, "amp": 0.12}],
         "strength_metrics": {
             "vibration_strength_db": 22.0,
+            "peak_amp_g": 0.12,
+            "noise_floor_amp_g": 0.001,
             "strength_bucket": "l2",
             "top_peaks": [
                 {
@@ -91,7 +94,7 @@ class _FakeProcessor:
     def latest_sample_rate_hz(self, client_id: str):
         return 800
 
-    def latest_metrics(self, client_id: str) -> dict:
+    def latest_metrics(self, client_id: str) -> ClientMetrics:
         if self._registry is None:
             return {}
         rec = self._registry.get(client_id)
