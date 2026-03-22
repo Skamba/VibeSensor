@@ -641,7 +641,10 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
 ) -> None:
     # Reduce the cap so we only need ~250 iterations instead of 13 000 (28 s -> <1 s).
     cap = 200
-    monkeypatch.setattr("vibesensor.use_cases.run.post_analysis._MAX_POST_ANALYSIS_SAMPLES", cap)
+    monkeypatch.setattr(
+        "vibesensor.use_cases.run.post_analysis_loader._MAX_POST_ANALYSIS_SAMPLES",
+        cap,
+    )
 
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db)
