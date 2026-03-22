@@ -28,6 +28,7 @@ from vibesensor.use_cases.run.persistence_writer import (
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker, build_post_analysis_summary
 from vibesensor.use_cases.run.sample_flush import SampleFlushOrchestrator
 from vibesensor.use_cases.run.status_reporting import (
+    RunRecorderStatusSnapshot,
     build_run_recorder_health_snapshot,
     build_run_recorder_status,
 )
@@ -157,7 +158,7 @@ class RunRecorder:
     def _session_snapshot(self) -> ActiveRunSnapshot | None:
         return self._lifecycle.snapshot()
 
-    def status(self) -> dict[str, object]:
+    def status(self) -> RunRecorderStatusSnapshot:
         return build_run_recorder_status(
             enabled=self.enabled,
             run_id=self._run_id,
@@ -173,7 +174,7 @@ class RunRecorder:
             logger=LOGGER,
         )
 
-    def start_recording(self) -> dict[str, object]:
+    def start_recording(self) -> RunRecorderStatusSnapshot:
         completed_run_id: str | None = None
         flush_snapshot: ActiveRunSnapshot | None = None
         with self._lock:
@@ -225,7 +226,7 @@ class RunRecorder:
         self,
         *,
         _only_if_run_id: str | None = None,
-    ) -> dict[str, object]:
+    ) -> RunRecorderStatusSnapshot:
         flush_snapshot: ActiveRunSnapshot | None = None
         with self._lock:
             if _only_if_run_id is not None and self._run_id != _only_if_run_id:

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from vibesensor.shared.types.json_types import JsonObject
 
 from .sample_builder import build_run_metadata, firmware_version_for_run
+from .status_reporting import RunRecorderStatusSnapshot
 
 if TYPE_CHECKING:
     from vibesensor.use_cases.run.logger import RunRecorder
@@ -42,7 +43,7 @@ class RecorderShutdownReport:
     analysis_queue_oldest_age_s: float | None
     analysis_in_progress: bool
     write_error: str | None
-    final_status: dict[str, object]
+    final_status: RunRecorderStatusSnapshot
 
 
 def _build_run_metadata_record(

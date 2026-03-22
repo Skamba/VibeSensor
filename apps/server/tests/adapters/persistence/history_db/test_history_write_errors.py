@@ -1,7 +1,7 @@
 """Tests for history DB write-failure handling in RunRecorder (issue #296).
 
 Verifies that DB write failures are:
-1. Exposed via status()['write_error']
+1. Exposed via status().write_error
 2. Logged at the correct severity
 3. Tracked with a consecutive failure counter
 4. Samples are logged as dropped when history run creation persistently fails
@@ -147,8 +147,8 @@ class TestCreateRunFailureExposesWriteError:
         )
 
         status = logger.status()
-        assert status["write_error"] is not None
-        assert "disk full" in status["write_error"]
+        assert status.write_error is not None
+        assert "disk full" in status.write_error
         assert not logger._persistence.history_run_created
 
     def test_create_run_success_clears_write_error(self, tmp_path: Path) -> None:
@@ -163,7 +163,7 @@ class TestCreateRunFailureExposesWriteError:
             run_id,
             start_utc,
         )
-        assert logger.status()["write_error"] is not None
+        assert logger.status().write_error is not None
 
         # Second call succeeds
         logger._persistence.ensure_history_run(
@@ -171,7 +171,7 @@ class TestCreateRunFailureExposesWriteError:
             start_utc,
         )
         assert logger._persistence.history_run_created
-        assert logger.status()["write_error"] is None
+        assert logger.status().write_error is None
 
 
 class TestPersistentCreateRunFailureStopsRetrying:
@@ -194,8 +194,8 @@ class TestPersistentCreateRunFailureStopsRetrying:
         assert db.create_run.call_count == _MAX_HISTORY_CREATE_RETRIES
         assert logger._persistence.history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
         assert not logger._persistence.history_run_created
-        assert logger.status()["write_error"] is not None
-        assert "create_run failed" in logger.status()["write_error"]
+        assert logger.status().write_error is not None
+        assert "create_run failed" in str(logger.status().write_error)
 
     def test_retry_counter_resets_on_new_session(self, tmp_path: Path) -> None:
         db = MagicMock()
@@ -232,8 +232,8 @@ class TestAppendSamplesFailureExposesError:
         logger._sample_flush.append_records(run_id, start_utc, start_mono)
 
         status = logger.status()
-        assert status["write_error"] is not None
-        assert "write error" in status["write_error"]
+        assert status.write_error is not None
+        assert "write error" in str(status.write_error)
         # Sample count should NOT increment on failure
         assert logger._persistence.written_sample_count == 0
 
@@ -268,13 +268,12 @@ class TestDroppedSamplesLogged:
 
 
 class TestStatusAlwaysIncludesWriteError:
-    """The status dict always has a write_error key."""
+    """The status snapshot always exposes write_error."""
 
     def test_write_error_none_by_default(self, tmp_path: Path) -> None:
         logger = _make_logger(None, tmp_path)
         status = logger.status()
-        assert "write_error" in status
-        assert status["write_error"] is None
+        assert status.write_error is None
 
     def test_write_error_survives_through_recording(self, tmp_path: Path) -> None:
         db = MagicMock()
@@ -288,8 +287,8 @@ class TestStatusAlwaysIncludesWriteError:
         )
 
         # Error persists across status calls
-        assert logger.status()["write_error"] is not None
-        assert len(logger.status()["write_error"]) > 0
+        assert logger.status().write_error is not None
+        assert len(str(logger.status().write_error)) > 0
 
     def test_stop_recording_resets_write_error(self, tmp_path: Path) -> None:
         db = MagicMock()
@@ -301,7 +300,7 @@ class TestStatusAlwaysIncludesWriteError:
             run_id,
             start_utc,
         )
-        assert logger.status()["write_error"] is not None
+        assert logger.status().write_error is not None
 
         logger.stop_recording()
-        assert logger.status()["write_error"] is None
+        assert logger.status().write_error is None

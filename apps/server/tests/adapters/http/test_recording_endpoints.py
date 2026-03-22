@@ -5,27 +5,30 @@ from __future__ import annotations
 import pytest
 from test_support import response_payload
 
-_RECORDING_STATUS_DICT = {
-    "enabled": True,
-    "run_id": "run-abc",
-    "write_error": None,
-    "analysis_in_progress": False,
-    "samples_written": 42,
-    "samples_dropped": 0,
-    "last_completed_run_id": None,
-    "last_completed_run_error": None,
-}
+from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
 
-_IDLE_STATUS_DICT = {
-    "enabled": False,
-    "run_id": None,
-    "write_error": None,
-    "analysis_in_progress": False,
-    "samples_written": 0,
-    "samples_dropped": 0,
-    "last_completed_run_id": None,
-    "last_completed_run_error": None,
-}
+
+def _make_recording_status_snapshot(
+    *,
+    enabled: bool,
+    run_id: str | None,
+    samples_written: int,
+    samples_dropped: int = 0,
+    write_error: str | None = None,
+    analysis_in_progress: bool = False,
+    last_completed_run_id: str | None = None,
+    last_completed_run_error: str | None = None,
+) -> RunRecorderStatusSnapshot:
+    return RunRecorderStatusSnapshot(
+        enabled=enabled,
+        run_id=run_id,
+        write_error=write_error,
+        analysis_in_progress=analysis_in_progress,
+        samples_written=samples_written,
+        samples_dropped=samples_dropped,
+        last_completed_run_id=last_completed_run_id,
+        last_completed_run_error=last_completed_run_error,
+    )
 
 
 def _find_endpoint(router, path: str):
@@ -39,9 +42,21 @@ def _find_endpoint(router, path: str):
 def _recording_router(fake_state):
     from vibesensor.adapters.http.recording import create_recording_routes
 
-    fake_state.run_recorder.status.return_value = _IDLE_STATUS_DICT
-    fake_state.run_recorder.start_recording.return_value = _RECORDING_STATUS_DICT
-    fake_state.run_recorder.stop_recording.return_value = _IDLE_STATUS_DICT
+    fake_state.run_recorder.status.return_value = _make_recording_status_snapshot(
+        enabled=False,
+        run_id=None,
+        samples_written=0,
+    )
+    fake_state.run_recorder.start_recording.return_value = _make_recording_status_snapshot(
+        enabled=True,
+        run_id="run-abc",
+        samples_written=42,
+    )
+    fake_state.run_recorder.stop_recording.return_value = _make_recording_status_snapshot(
+        enabled=False,
+        run_id=None,
+        samples_written=0,
+    )
     return create_recording_routes(fake_state.run_recorder), fake_state
 
 
@@ -93,7 +108,11 @@ class TestRecordingStartEndpoint:
         """start_recording is idempotent — called again it still returns a valid status."""
         router, state = _recording_router
         endpoint = _find_endpoint(router, "/api/recording/start")
-        state.run_recorder.start_recording.return_value = _RECORDING_STATUS_DICT
+        state.run_recorder.start_recording.return_value = _make_recording_status_snapshot(
+            enabled=True,
+            run_id="run-abc",
+            samples_written=42,
+        )
 
         result = response_payload(await endpoint())
 
@@ -118,7 +137,11 @@ class TestRecordingStopEndpoint:
         """stop_recording when not recording is safe — returns idle status."""
         router, state = _recording_router
         endpoint = _find_endpoint(router, "/api/recording/stop")
-        state.run_recorder.stop_recording.return_value = _IDLE_STATUS_DICT
+        state.run_recorder.stop_recording.return_value = _make_recording_status_snapshot(
+            enabled=False,
+            run_id=None,
+            samples_written=0,
+        )
 
         result = response_payload(await endpoint())
 
