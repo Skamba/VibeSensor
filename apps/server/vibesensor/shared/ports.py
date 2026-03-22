@@ -7,13 +7,16 @@ from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.types.backend_types import ResolvedSpeedSource, RunMetadata
+from vibesensor.shared.types.backend_types import (
+    ResolvedSpeedSource,
+    RunMetadata,
+    SettingsSnapshotPayload,
+)
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
     HistoryRunListEntry,
     StoredHistoryRun,
 )
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
@@ -91,9 +94,9 @@ class SettingsReader(Protocol):
 class SettingsSnapshotPersistence(Protocol):
     """Minimal settings snapshot persistence surface needed by SettingsStore."""
 
-    def get_settings_snapshot(self) -> JsonObject | None: ...
+    def get_settings_snapshot(self) -> SettingsSnapshotPayload | None: ...
 
-    def set_settings_snapshot(self, snapshot: JsonObject) -> None: ...
+    def set_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None: ...
 
 
 class SignalSource(Protocol):
