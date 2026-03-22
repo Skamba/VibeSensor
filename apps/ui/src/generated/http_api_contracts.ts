@@ -202,8 +202,8 @@ export interface components {
      * @description Request body for selecting the active car profile.
      */
     ActiveCarRequest: {
-      /** Carid */
-      carId: string;
+      /** Car Id */
+      car_id: string;
     };
     /**
      * AmpVsPhaseRow
@@ -236,7 +236,6 @@ export interface components {
       units?: string | null;
       /** Value */
       value?: number | null;
-      [key: string]: unknown;
     };
     /**
      * AnalysisSettingsRequest
@@ -325,27 +324,19 @@ export interface components {
       /** Duration S */
       duration_s: number;
       /** End Time Utc */
-      end_time_utc?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      end_time_utc?: string | null;
       /** Feature Interval S */
       feature_interval_s: number | null;
       /** Fft Window Size Samples */
-      fft_window_size_samples?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      fft_window_size_samples?: number | null;
       /** Fft Window Type */
-      fft_window_type?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      fft_window_type?: string | null;
       /** File Name */
       file_name: string;
       /** Findings */
       findings: components["schemas"]["FindingPayload"][];
       /** Firmware Version */
-      firmware_version?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      firmware_version?: string | null;
       /** Incomplete For Order Analysis */
       incomplete_for_order_analysis: boolean;
       /** Lang */
@@ -356,9 +347,7 @@ export interface components {
       };
       most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
       /** Peak Picker Method */
-      peak_picker_method?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      peak_picker_method?: string | null;
       phase_info: components["schemas"]["PhaseInfoResponse"];
       /** Phase Segments */
       phase_segments: components["schemas"]["PhaseSegmentSummaryResponse"][];
@@ -372,9 +361,7 @@ export interface components {
       /** Record Length */
       record_length: string;
       /** Report Date */
-      report_date?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      report_date?: string | null;
       /** Rows */
       rows: number;
       /** Run Id */
@@ -396,9 +383,7 @@ export interface components {
       /** Sensor Locations Connected Throughout */
       sensor_locations_connected_throughout: string[];
       /** Sensor Model */
-      sensor_model?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      sensor_model?: string | null;
       /** Speed Breakdown */
       speed_breakdown: components["schemas"]["SpeedBreakdownRow"][];
       /** Speed Breakdown Skipped Reason */
@@ -411,16 +396,13 @@ export interface components {
         [key: string]: components["schemas"]["SpeedStatsResponse"];
       };
       /** Start Time Utc */
-      start_time_utc?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      start_time_utc?: string | null;
       /** Test Plan */
       test_plan: components["schemas"]["TestPlanStepResponse"][];
       /** Top Causes */
       top_causes: components["schemas"]["FindingPayload"][];
       /** Warnings */
       warnings: components["schemas"]["SummaryWarningResponse"][];
-      [key: string]: unknown;
     };
     /** AxisMetrics */
     AxisMetrics: {
@@ -455,11 +437,12 @@ export interface components {
     CarLibraryGearboxEntry: {
       /** Final Drive Ratio */
       final_drive_ratio: number;
+      /** Gear Ratios */
+      gear_ratios?: number[] | null;
       /** Name */
       name: string;
       /** Top Gear Ratio */
       top_gear_ratio: number;
-      [key: string]: unknown;
     };
     /**
      * CarLibraryModelEntry
@@ -484,7 +467,6 @@ export interface components {
       type: string;
       /** Variants */
       variants?: components["schemas"]["CarLibraryVariantEntry"][];
-      [key: string]: unknown;
     };
     /**
      * CarLibraryModelsResponse
@@ -507,7 +489,6 @@ export interface components {
       tire_aspect_pct: number;
       /** Tire Width Mm */
       tire_width_mm: number;
-      [key: string]: unknown;
     };
     /**
      * CarLibraryTypesResponse
@@ -541,7 +522,6 @@ export interface components {
       tire_options?: components["schemas"]["CarLibraryTireOptionEntry"][] | null;
       /** Tire Width Mm */
       tire_width_mm?: number | null;
-      [key: string]: unknown;
     };
     /**
      * CarResponse
@@ -582,8 +562,8 @@ export interface components {
      * @description Response body for the list of all car profiles with the active car ID.
      */
     CarsResponse: {
-      /** Activecarid */
-      activeCarId: string | null;
+      /** Active Car Id */
+      active_car_id: string | null;
       /** Cars */
       cars: components["schemas"]["CarResponse"][];
     };
@@ -1047,7 +1027,6 @@ export interface components {
       suspected_source: string;
       /** Weak Spatial Separation */
       weak_spatial_separation?: boolean | null;
-      [key: string]: unknown;
     };
     /**
      * FreqVsSpeedByFindingSeries
@@ -1239,6 +1218,19 @@ export interface components {
       title: string;
     };
     /**
+     * HistoryInsightsAnalyzingResponse
+     * @description Response body for a history run whose analysis is still in progress.
+     */
+    HistoryInsightsAnalyzingResponse: {
+      /** Run Id */
+      run_id: string;
+      /**
+       * Status
+       * @constant
+       */
+      status: "analyzing";
+    };
+    /**
      * HistoryInsightsResponse
      * @description Response body for the localized history insights endpoint payload.
      */
@@ -1253,27 +1245,19 @@ export interface components {
       /** Duration S */
       duration_s: number;
       /** End Time Utc */
-      end_time_utc?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      end_time_utc?: string | null;
       /** Feature Interval S */
       feature_interval_s: number | null;
       /** Fft Window Size Samples */
-      fft_window_size_samples?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      fft_window_size_samples?: number | null;
       /** Fft Window Type */
-      fft_window_type?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      fft_window_type?: string | null;
       /** File Name */
       file_name: string;
       /** Findings */
       findings: components["schemas"]["FindingPayload"][];
       /** Firmware Version */
-      firmware_version?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      firmware_version?: string | null;
       /** Incomplete For Order Analysis */
       incomplete_for_order_analysis: boolean;
       /** Lang */
@@ -1284,9 +1268,7 @@ export interface components {
       };
       most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
       /** Peak Picker Method */
-      peak_picker_method?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      peak_picker_method?: string | null;
       phase_info: components["schemas"]["PhaseInfoResponse"];
       /** Phase Segments */
       phase_segments: components["schemas"]["PhaseSegmentSummaryResponse"][];
@@ -1300,9 +1282,7 @@ export interface components {
       /** Record Length */
       record_length: string;
       /** Report Date */
-      report_date?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      report_date?: string | null;
       /** Rows */
       rows: number;
       /** Run Id */
@@ -1324,9 +1304,7 @@ export interface components {
       /** Sensor Locations Connected Throughout */
       sensor_locations_connected_throughout: string[];
       /** Sensor Model */
-      sensor_model?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
+      sensor_model?: string | null;
       /** Speed Breakdown */
       speed_breakdown: components["schemas"]["SpeedBreakdownRow"][];
       /** Speed Breakdown Skipped Reason */
@@ -1339,18 +1317,19 @@ export interface components {
         [key: string]: components["schemas"]["SpeedStatsResponse"];
       };
       /** Start Time Utc */
-      start_time_utc?: boolean | number | string | unknown[] | {
-        [key: string]: unknown;
-      } | null;
-      /** Status */
-      status?: string | null;
+      start_time_utc?: string | null;
+      /**
+       * Status
+       * @default complete
+       * @constant
+       */
+      status?: "complete";
       /** Test Plan */
       test_plan: components["schemas"]["TestPlanStepResponse"][];
       /** Top Causes */
       top_causes: components["schemas"]["FindingPayload"][];
       /** Warnings */
       warnings?: components["schemas"]["HistoryInsightWarningResponse"][];
-      [key: string]: unknown;
     };
     /**
      * HistoryListEntryResponse
@@ -1385,7 +1364,6 @@ export interface components {
      * @description Response body for a single history run with metadata and optional analysis.
      */
     HistoryRunResponse: {
-      /** Analysis */
       analysis?: components["schemas"]["AnalysisSummaryResponse"] | null;
       /** Metadata */
       metadata?: {
@@ -1395,7 +1373,6 @@ export interface components {
       run_id: string;
       /** Status */
       status: string;
-      [key: string]: unknown;
     };
     /**
      * IdentifyRequest
@@ -1836,7 +1813,6 @@ export interface components {
       } | null;
       /** State */
       state: string;
-      [key: string]: unknown;
     };
     /**
      * SensorConfigResponse
@@ -1863,8 +1839,8 @@ export interface components {
      * @description Response body mapping MAC addresses to sensor config responses.
      */
     SensorsResponse: {
-      /** Sensorsbymac */
-      sensorsByMac: {
+      /** Sensors By Mac */
+      sensors_by_mac: {
         [key: string]: components["schemas"]["SensorConfigResponse"];
       };
     };
@@ -1938,22 +1914,22 @@ export interface components {
      * @description Request body for configuring the speed source (GPS, manual, OBD2, etc.).
      */
     SpeedSourceRequest: {
-      /** Manualspeedkph */
-      manualSpeedKph?: number | null;
-      speedSource?: components["schemas"]["SpeedSourceKind"] | null;
-      /** Staletimeouts */
-      staleTimeoutS?: number | null;
+      /** Manual Speed Kph */
+      manual_speed_kph?: number | null;
+      speed_source?: components["schemas"]["SpeedSourceKind"] | null;
+      /** Stale Timeout S */
+      stale_timeout_s?: number | null;
     };
     /**
      * SpeedSourceResponse
      * @description Response body for the current speed-source configuration.
      */
     SpeedSourceResponse: {
-      /** Manualspeedkph */
-      manualSpeedKph: number | null;
-      speedSource: components["schemas"]["SpeedSourceKind"];
-      /** Staletimeouts */
-      staleTimeoutS: number;
+      /** Manual Speed Kph */
+      manual_speed_kph: number | null;
+      speed_source: components["schemas"]["SpeedSourceKind"];
+      /** Stale Timeout S */
+      stale_timeout_s: number;
     };
     /**
      * SpeedSourceStatusResponse
@@ -2030,18 +2006,21 @@ export interface components {
      */
     SpeedUnitRequest: {
       /**
-       * Speedunit
+       * Speed Unit
        * @enum {string}
        */
-      speedUnit: "kmh" | "mps";
+      speed_unit: "kmh" | "mps";
     };
     /**
      * SpeedUnitResponse
      * @description Response body confirming the active speed unit.
      */
     SpeedUnitResponse: {
-      /** Speedunit */
-      speedUnit: string;
+      /**
+       * Speed Unit
+       * @enum {string}
+       */
+      speed_unit: "kmh" | "mps";
     };
     /**
      * StrengthBucketDistributionResponse
@@ -2124,7 +2103,6 @@ export interface components {
       suspected_source?: string | null;
       /** Weak Spatial Separation */
       weak_spatial_separation?: boolean | null;
-      [key: string]: unknown;
     };
     /**
      * TestPlanStepResponse
@@ -2685,6 +2663,12 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["HistoryInsightsResponse"];
+        };
+      };
+      /** @description Accepted */
+      202: {
+        content: {
+          "application/json": components["schemas"]["HistoryInsightsAnalyzingResponse"];
         };
       };
       /** @description Validation Error */

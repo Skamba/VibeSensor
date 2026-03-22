@@ -209,11 +209,11 @@ class RotationalSpeedsPayload(TypedDict):
     order_bands: list[OrderBandPayload] | None
 
 
-class LiveWsPayload(TypedDict, total=False):
+class LiveWsPayload(TypedDict):
     schema_version: str
     server_time: str
     speed_mps: float | None
     clients: list[ClientApiRow]
     selected_client_id: str | None
     rotational_speeds: RotationalSpeedsPayload | None
-    spectra: SpectraPayload
+    spectra: NotRequired[SpectraPayload]

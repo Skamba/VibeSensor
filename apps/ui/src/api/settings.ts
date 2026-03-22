@@ -43,7 +43,7 @@ export async function setSettingsSpeedUnit(speedUnit: string): Promise<SpeedUnit
   return apiJson("/api/settings/speed-unit", {
     method: "POST",
     headers: JSON_HEADERS,
-    body: JSON.stringify({ speedUnit }),
+    body: JSON.stringify({ speed_unit: speedUnit }),
   });
 }
 
@@ -89,7 +89,7 @@ export async function setActiveSettingsCar(carId: string): Promise<CarsPayload> 
   return apiJson("/api/settings/cars/active", {
     method: "POST",
     headers: JSON_HEADERS,
-    body: JSON.stringify({ carId }),
+    body: JSON.stringify({ car_id: carId }),
   });
 }
 

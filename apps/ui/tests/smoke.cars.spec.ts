@@ -8,7 +8,7 @@ test("shows header warning and blocks car-dependent analysis save when no car is
     settingsHandler: async (route) => {
       const path = requestPath(route);
       if (path === "/api/settings/cars") {
-        await fulfillJson(route, { cars: [], activeCarId: null });
+        await fulfillJson(route, { cars: [], active_car_id: null });
         return;
       }
       await fulfillJson(route, {});
@@ -35,7 +35,7 @@ test("hides header warning when a valid selected car exists", async ({ page }) =
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       if (requestPath(route).startsWith("/api/settings/cars")) {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], activeCarId: "car-1" });
+        await fulfillJson(route, { cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }], active_car_id: "car-1" });
         return;
       }
       await fulfillJson(route, {});
@@ -55,18 +55,18 @@ test("shows warning for invalid persisted selection and after deleting selected 
       if (path === "/api/settings/cars" && method === "GET") {
         if (firstCarsGet) {
           firstCarsGet = false;
-          await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], activeCarId: "missing-car" });
+          await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], active_car_id: "missing-car" });
           return;
         }
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], activeCarId: "car-2" });
+        await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], active_car_id: "car-2" });
         return;
       }
       if (path === "/api/settings/cars/active" && method === "POST") {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], activeCarId: "car-2" });
+        await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }, { id: "car-2", name: "Two", type: "suv", aspects: {} }], active_car_id: "car-2" });
         return;
       }
       if (path === "/api/settings/cars/car-2" && method === "DELETE") {
-        await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }], activeCarId: null });
+        await fulfillJson(route, { cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }], active_car_id: null });
         return;
       }
       await fulfillJson(route, {});

@@ -116,6 +116,11 @@ async def test_models_known_brand_type_returns_entries(car_library_router) -> No
         assert m["type"] == "Sedan"
         assert isinstance(m["model"], str)
         assert len(m["gearboxes"]) >= 1
+        assert all("gear_ratios" in gearbox for gearbox in m["gearboxes"])
+        assert all(
+            gearbox["gear_ratios"] is None or len(gearbox["gear_ratios"]) >= 1
+            for gearbox in m["gearboxes"]
+        )
         assert len(m["tire_options"]) >= 2
 
 

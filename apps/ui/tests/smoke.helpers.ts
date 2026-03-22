@@ -1,4 +1,5 @@
 import { type Page, type Route } from "@playwright/test";
+import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
 
 export type FakeWebSocketOptions = {
   payload?: Record<string, unknown>;
@@ -6,7 +7,18 @@ export type FakeWebSocketOptions = {
 };
 
 export async function installFakeWebSocket(page: Page, options: FakeWebSocketOptions = {}): Promise<void> {
-  await page.addInitScript(({ payload, confirmResult }) => {
+  await page.addInitScript(({ payload, confirmResult, schemaVersion }) => {
+    const mergedPayload = payload
+      ? {
+          schema_version: schemaVersion,
+          server_time: new Date().toISOString(),
+          speed_mps: null,
+          clients: [],
+          selected_client_id: null,
+          rotational_speeds: null,
+          ...payload,
+        }
+      : null;
     class FakeWebSocket {
       static OPEN = 1;
       readyState = 1;
@@ -16,9 +28,9 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
       onerror: ((event: Event) => void) | null = null;
       constructor() {
         queueMicrotask(() => this.onopen?.(new Event("open")));
-        if (payload) {
+        if (mergedPayload) {
           queueMicrotask(() =>
-            this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) })),
+            this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(mergedPayload) })),
           );
         }
       }
@@ -32,7 +44,7 @@ export async function installFakeWebSocket(page: Page, options: FakeWebSocketOpt
     if (typeof confirmResult === "boolean") {
       window.confirm = () => confirmResult;
     }
-  }, options);
+  }, { ...options, schemaVersion: EXPECTED_SCHEMA_VERSION });
 }
 
 export type CommonRouteOptions = {

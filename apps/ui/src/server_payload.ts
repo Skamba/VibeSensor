@@ -63,12 +63,8 @@ function adaptSpectra(spectra: LiveWsPayload["spectra"]): AdaptedPayload["spectr
 
 let schemaWarningLogged = false;
 
-function warnOnUnknownSchemaVersion(schemaVersion: string | null): void {
-  if (
-    schemaVersion !== null &&
-    schemaVersion !== EXPECTED_SCHEMA_VERSION &&
-    !schemaWarningLogged
-  ) {
+function warnOnUnknownSchemaVersion(schemaVersion: string): void {
+  if (schemaVersion !== EXPECTED_SCHEMA_VERSION && !schemaWarningLogged) {
     schemaWarningLogged = true;
     console.error(
       `[VibeSensor] Unknown WS payload schema_version "${schemaVersion}" ` +
@@ -84,12 +80,12 @@ export function adaptServerPayload(payload: unknown): AdaptedPayload {
   }
 
   const validatedPayload = validateLiveWsPayload(payload);
-  warnOnUnknownSchemaVersion(validatedPayload.schema_version ?? null);
+  warnOnUnknownSchemaVersion(validatedPayload.schema_version);
 
   return {
-    clients: validatedPayload.clients ?? [],
-    speed_mps: validatedPayload.speed_mps ?? null,
-    rotational_speeds: validatedPayload.rotational_speeds ?? null,
+    clients: validatedPayload.clients,
+    speed_mps: validatedPayload.speed_mps,
+    rotational_speeds: validatedPayload.rotational_speeds,
     spectra: adaptSpectra(validatedPayload.spectra),
   };
 }
