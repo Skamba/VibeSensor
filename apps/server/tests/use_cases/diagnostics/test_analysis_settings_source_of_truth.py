@@ -35,7 +35,7 @@ def _wiring(tmp_path: Path):
     db = HistoryDB(tmp_path / "test.db")
     settings_store = SettingsStore(db=db)
     initial = settings_store.add_car({"name": "Primary"})
-    settings_store.set_active_car(initial["cars"][0]["id"])
+    settings_store.set_active_car(initial.cars[0]["id"])
     state = FakeState(
         settings_store=settings_store,
         history_db=db,

@@ -13,6 +13,7 @@ from vibesensor.shared.types.api_models import (
     ActiveCarRequest,
     AnalysisSettingsRequest,
     AnalysisSettingsResponse,
+    CarResponse,
     CarsResponse,
     CarUpsertRequest,
     LanguageRequest,
@@ -27,7 +28,9 @@ from vibesensor.shared.types.api_models import (
 )
 from vibesensor.shared.types.backend_types import (
     AnalysisSettingsPayload,
+    CarConfigPayload,
     CarConfigUpdatePayload,
+    CarsSnapshot,
     SensorConfigUpdatePayload,
     SpeedSourceUpdatePayload,
 )
@@ -44,8 +47,20 @@ def create_settings_routes(
     """Create and return the device-settings API routes."""
     router = APIRouter()
 
-    def _cars_response(payload: object) -> CarsResponse:
-        return CarsResponse.model_validate(payload)
+    def _car_response(payload: CarConfigPayload) -> CarResponse:
+        return CarResponse(
+            id=payload["id"],
+            name=payload["name"],
+            type=payload["type"],
+            aspects=dict(payload["aspects"]),
+            variant=payload.get("variant"),
+        )
+
+    def _cars_response(snapshot: CarsSnapshot) -> CarsResponse:
+        return CarsResponse(
+            cars=[_car_response(car) for car in snapshot.cars],
+            activeCarId=snapshot.active_car_id,
+        )
 
     def _car_upsert_payload(req: CarUpsertRequest) -> CarConfigUpdatePayload:
         payload: CarConfigUpdatePayload = {}
@@ -143,8 +158,8 @@ def create_settings_routes(
     async def delete_car(car_id: str) -> CarsResponse:
         # Existence check first so unknown-car yields 404 while business-logic
         # errors (e.g. "cannot delete the last car") propagate as 400.
-        cars_snapshot = _cars_response(await asyncio.to_thread(settings_store.get_cars))
-        if not any(car.id == car_id for car in cars_snapshot.cars):
+        cars_snapshot = await asyncio.to_thread(settings_store.get_cars)
+        if not any(car["id"] == car_id for car in cars_snapshot.cars):
             raise HTTPException(status_code=404, detail=f"Car {car_id!r} not found")
         with domain_errors_to_http(catch_value_error=400):
             result = await asyncio.to_thread(settings_store.delete_car, car_id)
