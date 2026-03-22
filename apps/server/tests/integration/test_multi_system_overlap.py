@@ -19,8 +19,9 @@ from typing import Any
 
 import pytest
 from test_support import (
+    ADDITIONAL_CAR_PROFILE_IDS,
+    ADDITIONAL_CAR_PROFILES,
     ALL_WHEEL_SENSORS,
-    CAR_PROFILE_IDS,
     CAR_PROFILES,
     CORNER_SENSORS,
     SPEED_HIGH,
@@ -51,6 +52,8 @@ _DRIVESHAFT_WHEEL_RATIO = 2.5
 # Reusable noise-peak sets appended to constructed spectra
 _NOISE_SINGLE: list[dict[str, float]] = [{"hz": 142.5, "amp": 0.004}]
 _NOISE_DOUBLE: list[dict[str, float]] = [{"hz": 142.5, "amp": 0.004}, {"hz": 87.3, "amp": 0.003}]
+_PROFILE_SPAN = [*CAR_PROFILES, *ADDITIONAL_CAR_PROFILES]
+_PROFILE_SPAN_IDS = [p["name"] for p in _PROFILE_SPAN]
 
 
 def _make_overlap_samples(
@@ -58,6 +61,7 @@ def _make_overlap_samples(
     fault_sensor: str,
     sensors: list[str],
     speed_kmh: float,
+    wheel_hz_override: float | None = None,
     n_samples: int = 30,
     wheel_amp: float = 0.06,
     bg_peaks: list[dict[str, float]],
@@ -72,7 +76,7 @@ def _make_overlap_samples(
     *fault_noise* / *bg_noise* default to ``_NOISE_SINGLE`` / ``_NOISE_DOUBLE``
     respectively when ``None``.
     """
-    whz = wheel_hz(speed_kmh)
+    whz = wheel_hz_override if wheel_hz_override is not None else wheel_hz(speed_kmh)
     _fn = fault_noise if fault_noise is not None else _NOISE_SINGLE
     _bn = bg_noise if bg_noise is not None else _NOISE_DOUBLE
     extra_kw: dict[str, Any] = {}
@@ -114,6 +118,7 @@ def _make_engine_plus_wheel_samples(
     fault_sensor: str,
     sensors: list[str],
     speed_kmh: float = 80.0,
+    profile: dict[str, Any] | None = None,
     n_samples: int = 30,
     wheel_amp: float = 0.06,
     engine_amp: float = 0.03,
@@ -121,12 +126,18 @@ def _make_engine_plus_wheel_samples(
     noise_vib_db: float = 8.0,
 ) -> list[dict[str, Any]]:
     """Build samples with both wheel fault (localized) and engine order (all sensors)."""
-    ehz = engine_hz(speed_kmh)
+    if profile is None:
+        ehz = engine_hz(speed_kmh)
+        whz = None
+    else:
+        whz = profile_wheel_hz(profile, speed_kmh)
+        ehz = whz * profile["final_drive_ratio"] * profile["current_gear_ratio"]
     bg = [{"hz": ehz, "amp": engine_amp}, {"hz": ehz * 2, "amp": engine_amp * 0.5}]
     return _make_overlap_samples(
         fault_sensor=fault_sensor,
         sensors=sensors,
         speed_kmh=speed_kmh,
+        wheel_hz_override=whz,
         n_samples=n_samples,
         wheel_amp=wheel_amp,
         bg_peaks=bg,
@@ -141,6 +152,7 @@ def _make_driveshaft_plus_wheel_samples(
     fault_sensor: str,
     sensors: list[str],
     speed_kmh: float = 60.0,
+    profile: dict[str, Any] | None = None,
     n_samples: int = 30,
     wheel_amp: float = 0.06,
     driveshaft_amp: float = 0.04,
@@ -148,7 +160,7 @@ def _make_driveshaft_plus_wheel_samples(
     noise_vib_db: float = 8.0,
 ) -> list[dict[str, Any]]:
     """Build samples with wheel fault + driveshaft-order vibration."""
-    whz_val = wheel_hz(speed_kmh)
+    whz_val = profile_wheel_hz(profile, speed_kmh) if profile is not None else wheel_hz(speed_kmh)
     dshaft_hz = whz_val * _DRIVESHAFT_WHEEL_RATIO
     bg = [
         {"hz": dshaft_hz, "amp": driveshaft_amp},
@@ -158,6 +170,7 @@ def _make_driveshaft_plus_wheel_samples(
         fault_sensor=fault_sensor,
         sensors=sensors,
         speed_kmh=speed_kmh,
+        wheel_hz_override=whz_val,
         n_samples=n_samples,
         wheel_amp=wheel_amp,
         bg_peaks=bg,
@@ -168,23 +181,29 @@ def _make_driveshaft_plus_wheel_samples(
 
 # ===================================================================
 # MO1 – Engine + localized wheel fault: wheel should be detected
-# 4 corners × 3 speeds = 12 cases
+# 4 corners × 3 speeds × 2 new profiles = 24 cases
 # ===================================================================
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
-def test_engine_plus_wheel_detects_wheel(corner: str, speed: float) -> None:
+@pytest.mark.parametrize("profile", ADDITIONAL_CAR_PROFILES, ids=ADDITIONAL_CAR_PROFILE_IDS)
+def test_engine_plus_wheel_detects_wheel(
+    corner: str,
+    speed: float,
+    profile: dict[str, Any],
+) -> None:
     """When both engine and wheel are present, wheel (localized) should be top finding."""
     sensor = CORNER_SENSORS[corner]
     samples = _make_engine_plus_wheel_samples(
         fault_sensor=sensor,
         sensors=ALL_WHEEL_SENSORS,
         speed_kmh=speed,
+        profile=profile,
         wheel_amp=0.06,
         engine_amp=0.02,
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     conf = top_confidence(summary)
-    assert conf > 0.0, f"No finding when engine+wheel at {corner}/{speed}"
+    assert conf > 0.0, f"No finding when engine+wheel at {corner}/{speed}/{profile['name']}"
     top = extract_top(summary)
     assert top is not None
 
@@ -224,21 +243,27 @@ def test_engine_alias_suppression(corner: str, eng_name: str, engine_amp: float)
 
 # ===================================================================
 # MO3 – Driveshaft + wheel overlap
-# 4 corners × 2 speeds = 8 cases
+# 4 corners × 2 speeds × 2 new profiles = 16 cases
 # ===================================================================
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID], ids=["low", "mid"])
-def test_driveshaft_plus_wheel_overlap(corner: str, speed: float) -> None:
+@pytest.mark.parametrize("profile", ADDITIONAL_CAR_PROFILES, ids=ADDITIONAL_CAR_PROFILE_IDS)
+def test_driveshaft_plus_wheel_overlap(
+    corner: str,
+    speed: float,
+    profile: dict[str, Any],
+) -> None:
     """Driveshaft + wheel should not crash; wheel should still be detectable."""
     sensor = CORNER_SENSORS[corner]
     samples = _make_driveshaft_plus_wheel_samples(
         fault_sensor=sensor,
         sensors=ALL_WHEEL_SENSORS,
         speed_kmh=speed,
+        profile=profile,
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     conf = top_confidence(summary)
-    assert conf > 0.0, f"No finding for driveshaft+wheel at {corner}/{speed}"
+    assert conf > 0.0, f"No finding for driveshaft+wheel at {corner}/{speed}/{profile['name']}"
 
 
 # ===================================================================
@@ -355,9 +380,9 @@ def test_engine_plus_single_sensor_wheel(
 
 # ===================================================================
 # MO7 – Profile-aware multi-system overlap
-# 5 profiles × 4 corners = 20 cases
+# 7 profiles × 4 corners = 28 cases
 # ===================================================================
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _PROFILE_SPAN, ids=_PROFILE_SPAN_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_profile_engine_plus_wheel(profile: dict[str, Any], corner: str) -> None:
     """Profile-aware engine+wheel should not crash and should produce findings."""
@@ -369,6 +394,7 @@ def test_profile_engine_plus_wheel(profile: dict[str, Any], corner: str) -> None
         fault_sensor=sensor,
         sensors=ALL_WHEEL_SENSORS,
         speed_kmh=SPEED_MID,
+        wheel_hz_override=whz,
         wheel_amp=0.06,
         bg_peaks=bg,
         engine_rpm=ehz * 60.0,
