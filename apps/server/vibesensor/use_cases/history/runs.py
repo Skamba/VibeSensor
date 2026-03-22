@@ -11,7 +11,6 @@ from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.shared.run_context import add_current_context_warnings, localize_warning_list
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.use_cases.history.helpers import (
-    AnalysisProjector,
     HistoryRecord,
     async_require_run,
     require_analysis_ready,
@@ -23,16 +22,13 @@ from vibesensor.use_cases.history.helpers import (
 class HistoryRunService:
     """Run queries and delete operations used by history endpoints."""
 
-    __slots__ = ("_analysis_projector", "_history_db", "_settings_store")
+    __slots__ = ("_history_db", "_settings_store")
 
     def __init__(
         self,
         history_db: RunPersistence,
         settings_store: SettingsReader | None = None,
-        *,
-        analysis_projector: AnalysisProjector,
     ) -> None:
-        self._analysis_projector = analysis_projector
         self._history_db = history_db
         self._settings_store = settings_store
 
@@ -43,15 +39,6 @@ class HistoryRunService:
         run = await async_require_run(self._history_db, run_id)
         analysis = run.get("analysis")
         if is_json_object(analysis):
-            if isinstance(analysis.get("findings"), list) or isinstance(
-                analysis.get("top_causes"), list
-            ):
-                projected, _ = self._analysis_projector(analysis)
-                updated_run: HistoryRecord = {
-                    **run,
-                    "analysis": strip_internal_fields(projected),
-                }
-                return updated_run
             return {**run, "analysis": strip_internal_fields(dict(analysis))}
         return run
 
@@ -67,10 +54,6 @@ class HistoryRunService:
 
         raw_analysis = require_analysis_ready(run)
         analysis: JsonObject = dict(raw_analysis)
-        if isinstance(raw_analysis.get("findings"), list) or isinstance(
-            raw_analysis.get("top_causes"), list
-        ):
-            analysis, _ = self._analysis_projector(raw_analysis)
         current_active_car_snapshot = (
             self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )

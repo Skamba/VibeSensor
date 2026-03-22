@@ -9,8 +9,10 @@ The report generation pipeline has two distinct phases:
    then created at the boundary by `vibesensor.shared.boundaries.analysis_summary`
    / `vibesensor.adapters.analysis_summary`.
 2. **Report rendering** (`vibesensor.adapters.pdf`) — loads the persisted
-   `ReportTemplateData` and renders a PDF.  This phase performs **zero
-   analysis** — it only formats and lays out pre-computed data.
+   analysis summary, re-projects domain-owned fields at the history/PDF
+   boundary, rebuilds `ReportTemplateData`, and renders a PDF. This phase
+   performs **zero analysis** — it only canonicalizes persisted summary data
+   and formats pre-computed results.
 
 ```text
 Recording stops
@@ -26,6 +28,8 @@ Recording stops
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
   → HistoryReportService.build_pdf() [vibesensor.use_cases.history.reports]
+    → prepare_history_report_analysis() [vibesensor.adapters.history]
+    → _build_pdf_bytes() [vibesensor.app.container]
     → build_report_pdf(data) [vibesensor.adapters.pdf.pdf_engine]
 ```
 
