@@ -9,13 +9,7 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
 _UI_APP_STATE_TS = REPO_ROOT / "apps" / "ui" / "src" / "app" / "ui_app_state.ts"
 _SETTINGS_ANALYSIS_MODULE_TS = (
-    REPO_ROOT
-    / "apps"
-    / "ui"
-    / "src"
-    / "app"
-    / "features"
-    / "settings_analysis_module.ts"
+    REPO_ROOT / "apps" / "ui" / "src" / "app" / "features" / "settings_analysis_module.ts"
 )
 
 
