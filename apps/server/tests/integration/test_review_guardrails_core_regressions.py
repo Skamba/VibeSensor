@@ -65,6 +65,8 @@ class TestBuildOrderBandsLocation:
         assert not hasattr(rt, "_build_order_bands")
 
     def test_build_order_bands_basic(self) -> None:
+        from vibesensor.shared.order_bands import build_diagnostic_settings
+
         orders = {
             "wheel_hz": 10.0,
             "drive_hz": 30.0,
@@ -73,7 +75,7 @@ class TestBuildOrderBandsLocation:
             "drive_uncertainty_pct": 0.03,
             "engine_uncertainty_pct": 0.04,
         }
-        settings = {}
+        settings = build_diagnostic_settings({})
         bands = build_order_bands(orders, settings)
         assert isinstance(bands, list)
         assert len(bands) >= 4  # wheel_1x, wheel_2x, drive/engine, engine_2x

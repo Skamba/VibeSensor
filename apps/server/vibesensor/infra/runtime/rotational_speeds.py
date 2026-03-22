@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.shared.constants import SECONDS_PER_MINUTE
 from vibesensor.shared.order_bands import build_order_bands, vehicle_orders_hz
@@ -34,7 +33,7 @@ def build_rotational_speeds_payload(
     *,
     basis_speed_source: str,
     speed_mps: float | None,
-    analysis_settings: Mapping[str, object],
+    analysis_settings: AnalysisSettingsSnapshot,
 ) -> RotationalSpeedsPayload:
     """Assemble the ``rotational_speeds`` sub-dict for the WS payload."""
     if speed_mps is None or speed_mps <= 0:
