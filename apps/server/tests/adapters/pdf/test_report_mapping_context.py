@@ -9,7 +9,7 @@ from vibesensor.adapters.pdf.mapping import (
     PrimaryCandidateContext,
     ReportMappingContext,
 )
-from vibesensor.domain import Finding, TestRun
+from vibesensor.domain import Finding, LocationIntensitySummary, TestRun
 from vibesensor.domain.run_capture import RunCapture
 
 # ---------------------------------------------------------------------------
@@ -105,21 +105,22 @@ class TestTopReportCandidate:
 class TestHasSignificantLocationIntensity:
     def test_with_positive_intensity(self) -> None:
         context = _make_context()
-        rows = [{"location": "front_left", "p95_intensity_db": 12.5}]
+        rows = [LocationIntensitySummary(location="front_left", p95_intensity_db=12.5)]
         assert context.has_significant_location_intensity(rows) is True
 
     def test_with_zero_intensity(self) -> None:
         context = _make_context()
-        rows = [{"location": "front_left", "p95_intensity_db": 0.0}]
+        rows = [LocationIntensitySummary(location="front_left", p95_intensity_db=0.0)]
         assert context.has_significant_location_intensity(rows) is False
 
     def test_with_empty_rows(self) -> None:
         context = _make_context()
         assert context.has_significant_location_intensity([]) is False
 
-    def test_with_non_dict_rows(self) -> None:
+    def test_with_missing_intensity_value(self) -> None:
         context = _make_context()
-        assert context.has_significant_location_intensity(["not a dict"]) is False
+        rows = [LocationIntensitySummary(location="front_left")]
+        assert context.has_significant_location_intensity(rows) is False
 
 
 # ---------------------------------------------------------------------------

@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from vibesensor.adapters.pdf.report_data import PatternEvidence
 from vibesensor.domain import (
     Finding,
+    LocationIntensitySummary,
     TestRun,
     VibrationOrigin,
 )
@@ -83,13 +84,11 @@ class ReportMappingContext:
 
     def has_significant_location_intensity(
         self,
-        sensor_intensity: list[dict[str, object]],
+        sensor_intensity: list[LocationIntensitySummary],
     ) -> bool:
         """Whether any sensor location shows significant above-noise intensity."""
         for row in sensor_intensity:
-            if not isinstance(row, dict):
-                continue
-            p95 = _as_float(row.get("p95_intensity_db"))
+            p95 = _as_float(row.p95_intensity_db)
             if p95 is not None and p95 > 0:
                 return True
         return False

@@ -16,7 +16,9 @@ from vibesensor.domain import (
     DrivingPhaseInterval,
     LocationIntensitySummary,
     OrderMatchObservation,
+    PhaseIntensitySummary,
     RunMetadataSnapshot,
+    StrengthBucketDistribution,
 )
 
 # ---------------------------------------------------------------------------
@@ -219,7 +221,13 @@ class TestLocationIntensitySummary:
             mean_intensity_db=12.5,
             p95_intensity_db=18.0,
             max_intensity_db=22.0,
-            strength_bucket_distribution={"low": 10, "mid": 50, "high": 40},
+            strength_bucket_distribution=StrengthBucketDistribution(
+                total=100,
+                counts={"l0": 10, "l1": 50, "l2": 40},
+                percent_time_l0=10.0,
+                percent_time_l1=50.0,
+                percent_time_l2=40.0,
+            ),
         )
         assert summary.location == "front_left"
         assert summary.sample_count == 100
@@ -254,15 +262,32 @@ class TestLocationIntensitySummary:
             "max_intensity_db": 20.0,
             "dropped_frames_delta": 0.0,
             "queue_overflow_drops_delta": None,
-            "strength_bucket_distribution": {"low": 5},
-            "phase_intensity": {"cruise": {"mean": 12.0}},
+            "strength_bucket_distribution": {
+                "total": 5,
+                "counts": {"l0": 5},
+                "percent_time_l0": 100.0,
+            },
+            "phase_intensity": {
+                "cruise": {
+                    "count": 2,
+                    "mean_intensity_db": 12.0,
+                    "max_intensity_db": 14.0,
+                },
+            },
         }
         summary = LocationIntensitySummary.from_dict(raw)
         assert summary.location == "rear_axle"
         assert summary.partial_coverage is True
         assert summary.sample_count == 50  # from "samples" key
         assert summary.p95_intensity_db == 15.0
-        assert summary.phase_intensity == {"cruise": {"mean": 12.0}}
+        assert summary.strength_bucket_distribution.total == 5
+        assert summary.phase_intensity == {
+            "cruise": PhaseIntensitySummary(
+                count=2,
+                mean_intensity_db=12.0,
+                max_intensity_db=14.0,
+            ),
+        }
 
     def test_from_dict_sample_count_key(self) -> None:
         raw = {"location": "x", "sample_count": 42, "sample_coverage_ratio": 0.5}
@@ -271,4 +296,4 @@ class TestLocationIntensitySummary:
 
     def test_default_strength_bucket_distribution(self) -> None:
         summary = LocationIntensitySummary(location="x")
-        assert summary.strength_bucket_distribution == {}
+        assert summary.strength_bucket_distribution == StrengthBucketDistribution()

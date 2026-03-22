@@ -176,8 +176,8 @@ class TestSensorIntensityPhaseContext:
             assert phase_intensity is not None
             assert len(phase_intensity) >= 1
             for stats in phase_intensity.values():
-                assert "count" in stats
-                assert "mean_intensity_db" in stats
+                assert stats.count > 0
+                assert stats.mean_intensity_db is not None
 
     def test_phase_intensity_absent_without_phases(self) -> None:
         rows = _sensor_intensity_by_location(
