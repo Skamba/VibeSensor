@@ -112,5 +112,6 @@ def test_key_sample_fields_survive_persistence():
 
     required_fields = {"t_s", "speed_kmh", "client_name", "vibration_strength_db"}
     for row in read_back:
+        payload = row.to_dict()
         for field in required_fields:
-            assert field in row, f"Missing field {field!r} after DB round-trip"
+            assert field in payload, f"Missing field {field!r} after DB round-trip"

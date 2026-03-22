@@ -1,9 +1,9 @@
 """Sample serialisation helpers for the ``samples_v2`` table.
 
-Pure functions and schema constants that convert between in-memory sample
-dicts / :class:`~vibesensor.shared.types.sensor_frame.SensorFrame` objects and flat
-SQLite row tuples.  Extracted from :mod:`vibesensor.adapters.persistence.history_db` to keep the
-schema-specific column definitions and conversion logic in one place.
+Pure functions and schema constants that convert between canonical
+:class:`~vibesensor.shared.types.sensor_frame.SensorFrame` objects and flat
+SQLite row tuples. Extracted from :mod:`vibesensor.adapters.persistence.history_db`
+to keep the schema-specific column definitions and conversion logic in one place.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ import math
 from typing import TypeGuard
 
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
-from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_array, is_json_object
+from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_array
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
@@ -78,15 +78,9 @@ _isfinite = math.isfinite
 # -- Row conversion -----------------------------------------------------------
 
 
-def sample_to_v2_row(run_id: str, item: JsonObject | SensorFrame) -> tuple[object, ...]:
-    """Convert a sample dict or SensorFrame to a row tuple for ``samples_v2``."""
-    if isinstance(item, SensorFrame):
-        raw_item = item.to_dict()
-        if not is_json_object(raw_item):
-            raise TypeError("SensorFrame.to_dict() must return a JSON object")
-        d = raw_item
-    else:
-        d = item
+def sample_to_v2_row(run_id: str, item: SensorFrame) -> tuple[object, ...]:
+    """Convert a typed SensorFrame to a row tuple for ``samples_v2``."""
+    d = item.to_dict()
     isfinite = _isfinite
     _get = d.get
     _json_cols = _JSON_COLUMNS
@@ -105,8 +99,8 @@ def sample_to_v2_row(run_id: str, item: JsonObject | SensorFrame) -> tuple[objec
     return tuple(vals)
 
 
-def v2_row_to_dict(row: tuple[object, ...]) -> JsonObject:
-    """Reconstruct a sample dict from a ``samples_v2`` row.
+def _v2_row_to_json_object(row: tuple[object, ...]) -> JsonObject:
+    """Reconstruct a sample JSON object from a ``samples_v2`` row.
 
     *row* layout: ``(id, <columns>)``.
     """
@@ -136,3 +130,9 @@ def v2_row_to_dict(row: tuple[object, ...]) -> JsonObject:
             d[col] = val
 
     return d
+
+
+def v2_row_to_sensor_frame(row: tuple[object, ...]) -> SensorFrame:
+    """Reconstruct a typed SensorFrame from a ``samples_v2`` row."""
+
+    return SensorFrame.from_dict(_v2_row_to_json_object(row))

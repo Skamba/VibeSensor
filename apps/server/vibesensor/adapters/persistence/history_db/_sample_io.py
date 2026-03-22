@@ -11,9 +11,9 @@ from contextlib import AbstractContextManager
 from vibesensor.adapters.persistence.history_db._samples import (
     ALLOWED_SAMPLE_TABLES,
     V2_SELECT_SQL_COLS,
-    v2_row_to_dict,
+    v2_row_to_sensor_frame,
 )
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,8 +22,8 @@ class _HistoryDBSampleIOMixin:
     def _cursor(self, *, commit: bool = True) -> AbstractContextManager[sqlite3.Cursor]:
         raise NotImplementedError
 
-    def get_run_samples(self, run_id: str) -> list[JsonObject]:
-        rows: list[JsonObject] = []
+    def get_run_samples(self, run_id: str) -> list[SensorFrame]:
+        rows: list[SensorFrame] = []
         for batch in self.iter_run_samples(run_id):
             rows.extend(batch)
         return rows
@@ -33,7 +33,7 @@ class _HistoryDBSampleIOMixin:
         run_id: str,
         batch_size: int = 1000,
         offset: int = 0,
-    ) -> Iterator[list[JsonObject]]:
+    ) -> Iterator[list[SensorFrame]]:
         if offset < 0:
             raise ValueError(f"iter_run_samples: offset must be >= 0, got {offset}")
         yield from self._iter_v2_samples(run_id, batch_size, offset)
@@ -62,7 +62,7 @@ class _HistoryDBSampleIOMixin:
         run_id: str,
         batch_size: int = 1000,
         offset: int = 0,
-    ) -> Iterator[list[JsonObject]]:
+    ) -> Iterator[list[SensorFrame]]:
         size = max(1, batch_size)
         last_id: int | None = None
         if offset > 0:
@@ -94,10 +94,10 @@ class _HistoryDBSampleIOMixin:
                     )
                 return
             last_id = batch_rows[-1][0]
-            parsed_batch: list[JsonObject] = []
+            parsed_batch: list[SensorFrame] = []
             for row in batch_rows:
                 try:
-                    parsed_batch.append(v2_row_to_dict(row))
+                    parsed_batch.append(v2_row_to_sensor_frame(row))
                 except (json.JSONDecodeError, KeyError, ValueError, TypeError):
                     total_skipped += 1
                     LOGGER.warning("Skipping corrupt v2 sample row id=%s", row[0], exc_info=True)

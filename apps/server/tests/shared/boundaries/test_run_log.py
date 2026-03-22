@@ -125,15 +125,15 @@ def test_normalize_sample_record_basic() -> None:
         "accel_z_g": 0.03,
     }
     result = normalize_sample_record(record)
-    assert result["t_s"] == 1.5
-    assert result["speed_kmh"] == 80.0
+    assert result.t_s == 1.5
+    assert result.speed_kmh == 80.0
 
 
 def test_normalize_sample_record_handles_nan_values() -> None:
     record = {"t_s": float("nan"), "speed_kmh": None}
     result = normalize_sample_record(record)
-    assert result["t_s"] is None
-    assert result["speed_kmh"] is None
+    assert result.t_s is None
+    assert result.speed_kmh is None
 
 
 def test_normalize_sample_record_filters_invalid_peaks() -> None:
@@ -146,15 +146,15 @@ def test_normalize_sample_record_filters_invalid_peaks() -> None:
         ],
     }
     result = normalize_sample_record(record)
-    assert len(result["top_peaks"]) == 1
-    assert result["top_peaks"][0]["hz"] == 10.0
+    assert len(result.top_peaks) == 1
+    assert result.top_peaks[0].hz == 10.0
 
 
 def test_normalize_sample_record_limits_peaks_to_10() -> None:
     peaks = [{"hz": float(i + 1), "amp": 0.1} for i in range(15)]
     record = {"top_peaks": peaks}
     result = normalize_sample_record(record)
-    assert len(result["top_peaks"]) == 10
+    assert len(result.top_peaks) == 10
 
 
 def test_normalize_sample_record_preserves_optional_peak_metadata() -> None:
@@ -169,8 +169,8 @@ def test_normalize_sample_record_preserves_optional_peak_metadata() -> None:
         ],
     }
     result = normalize_sample_record(record)
-    assert result["top_peaks"][0]["vibration_strength_db"] == 27.5
-    assert result["top_peaks"][0]["strength_bucket"] == "l4"
+    assert result.top_peaks[0].vibration_strength_db == 27.5
+    assert result.top_peaks[0].strength_bucket == "l4"
 
 
 def test_normalize_sample_record_preserves_strength_amplitude_fields() -> None:
@@ -179,15 +179,15 @@ def test_normalize_sample_record_preserves_strength_amplitude_fields() -> None:
         "strength_floor_amp_g": 0.004,
     }
     result = normalize_sample_record(record)
-    assert result["strength_peak_amp_g"] == 0.18
-    assert result["strength_floor_amp_g"] == 0.004
+    assert result.strength_peak_amp_g == 0.18
+    assert result.strength_floor_amp_g == 0.004
 
 
 def test_normalize_sample_record_strength_amplitudes_default_to_none_for_old_runs() -> None:
     record = {"t_s": 1.0}
     result = normalize_sample_record(record)
-    assert result["strength_peak_amp_g"] is None
-    assert result["strength_floor_amp_g"] is None
+    assert result.strength_peak_amp_g is None
+    assert result.strength_floor_amp_g is None
 
 
 # -- read_jsonl_run -----------------------------------------------------------
@@ -230,8 +230,8 @@ def test_read_jsonl_run_skips_corrupt_line_mid_file(tmp_path: Path) -> None:
     run_data = read_jsonl_run(path)
     assert run_data.metadata["run_id"] == "r2"
     assert len(run_data.samples) == 2
-    assert run_data.samples[0]["t_s"] == 1.0
-    assert run_data.samples[1]["t_s"] == 2.0
+    assert run_data.samples[0].t_s == 1.0
+    assert run_data.samples[1].t_s == 2.0
 
 
 def test_read_jsonl_run_truncated_last_line(tmp_path: Path) -> None:
@@ -248,7 +248,7 @@ def test_read_jsonl_run_truncated_last_line(tmp_path: Path) -> None:
     run_data = read_jsonl_run(path)
     assert run_data.metadata["run_id"] == "r3"
     assert len(run_data.samples) == 2
-    assert run_data.samples[-1]["t_s"] == 2.0
+    assert run_data.samples[-1].t_s == 2.0
 
 
 def test_read_jsonl_run_logs_warning_for_corrupt_lines(

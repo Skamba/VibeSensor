@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import cast
 
@@ -14,12 +14,13 @@ from vibesensor.shared.boundaries.analysis_summary import (
 )
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics import RunAnalysis
+from vibesensor.use_cases.diagnostics._types import AnalysisSampleInput
 from vibesensor.use_cases.diagnostics.helpers import _load_run
 
 
 def summarize_run_data(
     metadata: JsonObject,
-    samples: list[JsonObject],
+    samples: Sequence[AnalysisSampleInput],
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,

@@ -15,6 +15,7 @@ from vibesensor.adapters.history import (
     build_projected_run_details_json,
 )
 from vibesensor.shared.exceptions import AnalysisNotReadyError
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
@@ -36,7 +37,10 @@ class _HistoryDbStub:
         return self.delete_result
 
     def iter_run_samples(self, run_id: str, batch_size: int = 1000):
-        rows = list(self.samples or [])
+        rows = [
+            row if isinstance(row, SensorFrame) else SensorFrame.from_dict(row)
+            for row in (self.samples or [])
+        ]
         for start in range(0, len(rows), batch_size):
             yield rows[start : start + batch_size]
 

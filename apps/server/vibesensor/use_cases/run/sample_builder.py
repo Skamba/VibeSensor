@@ -156,8 +156,8 @@ def build_sample_records(
     speed_context: SpeedContext,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     default_sample_rate_hz: int,
-) -> list[dict[str, object]]:
-    """Build one batch of sample records from all active clients."""
+) -> list[SensorFrame]:
+    """Build one batch of typed sample records from all active clients."""
     (
         speed_kmh,
         gps_speed_kmh,
@@ -172,7 +172,7 @@ def build_sample_records(
         order_reference_spec.current_gear_ratio if order_reference_spec is not None else None
     )
 
-    records: list[dict[str, object]] = []
+    records: list[SensorFrame] = []
     active_client_ids = sorted(
         set(
             processor.clients_with_recent_data(
@@ -234,7 +234,7 @@ def build_sample_records(
             accel_z_g=accel_z_g,
             dominant_freq_hz=dominant_hz,
             dominant_axis="combined",
-            top_peaks=strength_metrics.to_peak_payloads(max_items=8),
+            top_peaks=tuple(peak for peak in strength_metrics.top_peaks[:8] if peak.is_valid),
             vibration_strength_db=vibration_strength_db,
             strength_bucket=strength_bucket,
             strength_peak_amp_g=strength_peak_amp_g,
@@ -242,7 +242,7 @@ def build_sample_records(
             frames_dropped_total=int(record.frames_dropped),
             queue_overflow_drops=int(record.queue_overflow_drops),
         )
-        records.append(frame.to_dict())
+        records.append(frame)
 
     return records
 

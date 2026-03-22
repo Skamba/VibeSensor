@@ -8,6 +8,7 @@ from typing import Protocol
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
 from vibesensor.shared.types.backend_types import ResolvedSpeedSource
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
     "ClockSyncBroadcaster",
@@ -46,7 +47,7 @@ class RunPersistence(Protocol):
         self,
         run_id: str,
         batch_size: int = 1000,
-    ) -> Iterator[list[JsonObject]]: ...
+    ) -> Iterator[list[SensorFrame]]: ...
 
     def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]: ...
 
@@ -57,7 +58,7 @@ class RunPersistence(Protocol):
         metadata: JsonObject,
     ) -> None: ...
 
-    def append_samples(self, run_id: str, samples: list[JsonObject]) -> None: ...
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None: ...
 
     def finalize_run(
         self,

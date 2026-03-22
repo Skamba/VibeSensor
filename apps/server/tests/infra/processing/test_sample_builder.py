@@ -12,6 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, StrengthMetrics
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.sample_builder import (
     SpeedContext,
     build_run_metadata,
@@ -273,12 +274,13 @@ class TestBuildSampleRecords:
 
         assert len(records) == 1
         frame = records[0]
-        assert frame["dominant_freq_hz"] == 15.0
-        assert frame["vibration_strength_db"] == 22.0
-        assert frame["strength_peak_amp_g"] == 0.15
-        assert frame["strength_floor_amp_g"] == 0.003
-        assert frame["strength_bucket"] == "l2"
-        assert frame["top_peaks"] == [
+        assert isinstance(frame, SensorFrame)
+        assert frame.dominant_freq_hz == 15.0
+        assert frame.vibration_strength_db == 22.0
+        assert frame.strength_peak_amp_g == 0.15
+        assert frame.strength_floor_amp_g == 0.003
+        assert frame.strength_bucket == "l2"
+        assert frame.to_dict()["top_peaks"] == [
             {
                 "hz": 15.0,
                 "amp": 0.12,

@@ -172,19 +172,19 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     analysis = run.get("analysis")
     assert isinstance(analysis, dict)
 
-    rows: list[dict[str, object]] = []
+    rows = []
     for batch in history_db.iter_run_samples(run_id, batch_size=512):
         rows.extend(batch)
     assert rows
-    assert {str(r["client_id"]) for r in rows} == _SENSOR_IDS_HEX
-    assert {str(r["location"]) for r in rows} == _SENSOR_LOCATIONS
-    assert all(float(r.get("vibration_strength_db", 0.0)) > 0.0 for r in rows[:8])
+    assert {r.client_id for r in rows} == _SENSOR_IDS_HEX
+    assert {r.location for r in rows} == _SENSOR_LOCATIONS
+    assert all((r.vibration_strength_db or 0.0) > 0.0 for r in rows[:8])
 
     front_left_mean_db = np.mean(
-        [float(r["vibration_strength_db"]) for r in rows if r["location"] == "front-left"],
+        [float(r.vibration_strength_db or 0.0) for r in rows if r.location == "front-left"],
     )
     front_right_mean_db = np.mean(
-        [float(r["vibration_strength_db"]) for r in rows if r["location"] == "front-right"],
+        [float(r.vibration_strength_db or 0.0) for r in rows if r.location == "front-right"],
     )
     assert front_left_mean_db > front_right_mean_db
 
