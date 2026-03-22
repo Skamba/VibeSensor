@@ -15,8 +15,8 @@ import math
 from collections.abc import Callable
 from typing import Any
 
-import pytest
 from test_support import make_sample
+from test_support.assertions import assert_forbidden_systems, assert_source_is
 from test_support.core import (
     FINAL_DRIVE,
     GEAR_RATIO,
@@ -155,8 +155,7 @@ class TestEngineOrderFaultScenario:
     classified as engine-sourced, not wheel-sourced.
     """
 
-    def test_engine_1x_all_sensors_classified_as_engine(self) -> None:
-        """Engine 1x peaks at RPM-derived frequency on all 4 sensors → engine source."""
+    def _engine_1x_summary(self) -> dict[str, Any]:
         meta = standard_metadata()
         engine_hz = (80.0 / 3.6 / TIRE_CIRC) * FINAL_DRIVE * GEAR_RATIO
         samples = _build_samples(
@@ -170,31 +169,31 @@ class TestEngineOrderFaultScenario:
                 24.0,
             ),
         )
+        return summarize_run_data(meta, samples, lang="en", file_name="engine_1x_test")
 
-        summary = summarize_run_data(meta, samples, lang="en", file_name="engine_1x_test")
-        assert_summary_sections(summary, min_findings=1, min_top_causes=0)
+    def test_engine_1x_all_sensors_classified_as_engine(self) -> None:
+        """Engine 1x peaks at RPM-derived frequency on all 4 sensors → engine source."""
+        summary = self._engine_1x_summary()
+        assert_summary_sections(summary, min_findings=1, min_top_causes=1)
+        assert_source_is(
+            summary,
+            "engine",
+            msg="Engine-only 1x scenario should keep engine as the top attributed source",
+        )
 
-        # Prefer top_causes when available; otherwise fall back to findings.
-        sources = [
-            str(item.get("suspected_source", "")).lower()
-            for item in summary.get("top_causes", [])
-            if isinstance(item, dict)
-        ]
-        if not sources:
-            sources = [
-                str(item.get("suspected_source", "")).lower()
-                for item in summary.get("findings", [])
-                if isinstance(item, dict)
-            ]
-
-        informative_sources = [src for src in sources if src]
-        if not informative_sources:
-            pytest.xfail("Source attribution unavailable for this synthetic engine-order scenario")
-
-        if not any("engine" in src or "driveline" in src for src in informative_sources):
-            pytest.xfail(
-                f"Engine-order source attribution not yet reliable for synthetic data: {sources!r}"
-            )
+    def test_engine_1x_all_sensors_not_misclassified_as_wheel_or_unknown(self) -> None:
+        """Engine-only scenario should not regress into wheel/tire or unknown attribution."""
+        summary = self._engine_1x_summary()
+        assert_summary_sections(summary, min_findings=1, min_top_causes=1)
+        assert_forbidden_systems(
+            summary,
+            ["wheel", "tire", "unknown"],
+            confidence_threshold=0.30,
+            msg=(
+                "Engine-only 1x scenario should not regress into wheel/tire or unknown "
+                "source attribution"
+            ),
+        )
 
 
 # ===========================================================================
