@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from test_support.report_helpers import diagnostics_context
 
 import vibesensor.use_cases.diagnostics.order_finding_builder as order_finding_builder_module
 from vibesensor.domain import OrderMatchObservation, VibrationSource
@@ -220,7 +221,7 @@ class TestAssembleOrderFinding:
 class TestOrderAnalysisSession:
     def test_empty_samples(self) -> None:
         session = OrderAnalysisSession(
-            metadata={},
+            context=diagnostics_context(),
             samples=[],
             speed_sufficient=True,
             steady_speed=False,
@@ -235,7 +236,7 @@ class TestOrderAnalysisSession:
 
     def test_no_sample_rate_returns_empty(self) -> None:
         session = OrderAnalysisSession(
-            metadata={},
+            context=diagnostics_context(),
             samples=[{"speed_kmh": 60.0}],
             speed_sufficient=True,
             steady_speed=False,
@@ -251,7 +252,7 @@ class TestOrderAnalysisSession:
     def test_returns_list_of_findings(self) -> None:
         """Smoke test with minimal matching data."""
         session = OrderAnalysisSession(
-            metadata={},
+            context=diagnostics_context(),
             samples=[],
             speed_sufficient=False,
             steady_speed=False,

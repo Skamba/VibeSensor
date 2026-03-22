@@ -20,9 +20,9 @@ from vibesensor.domain import (
 )
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
     PhaseSpeedBreakdownRowData,
@@ -165,18 +165,12 @@ class PreparedRunData:
 
 
 def prepare_run_data(
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     samples: Sequence[AnalysisSampleInput],
-    *,
-    file_name: str,
 ) -> PreparedRunData:
     """Prepare shared timing, speed, and phase context for summary generation."""
     typed_samples = ensure_analysis_samples(samples)
-    run_id, start_ts, end_ts, duration_s = compute_run_timing(
-        metadata,
-        typed_samples,
-        file_name,
-    )
+    run_id, start_ts, end_ts, duration_s = compute_run_timing(context, typed_samples)
     (
         speed_values,
         speed_stats,
@@ -199,7 +193,7 @@ def prepare_run_data(
         start_ts=start_ts,
         end_ts=end_ts,
         duration_s=duration_s,
-        raw_sample_rate_hz=_as_float(metadata.get("raw_sample_rate_hz")),
+        raw_sample_rate_hz=context.raw_sample_rate_hz,
         speed_values=speed_values,
         speed_non_null_pct=speed_non_null_pct,
         speed_sufficient=speed_sufficient,

@@ -14,7 +14,7 @@ from vibesensor.shared.constants import (
     ORDER_TOLERANCE_REL,
     SPEED_BIN_WIDTH_KMH,
 )
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
     PhaseLabels,
@@ -74,7 +74,7 @@ def match_samples_for_hypothesis(
     samples: Sequence[AnalysisSampleInput],
     cached_peaks: list[list[tuple[float, float]]],
     hypothesis: OrderHypothesis,
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     tire_circumference_m: float | None,
     per_sample_phases: PhaseLabels | None,
     lang: str,
@@ -104,7 +104,7 @@ def match_samples_for_hypothesis(
         peaks = cached_peaks[sample_idx]
         if not peaks:
             continue
-        predicted_hz, ref_source = hypothesis.predicted_hz(sample, metadata, tire_circumference_m)
+        predicted_hz, ref_source = hypothesis.predicted_hz(sample, context, tire_circumference_m)
         if predicted_hz is None or predicted_hz <= 0:
             continue
         possible += 1
