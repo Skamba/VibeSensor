@@ -19,13 +19,13 @@ from test_support import (
 )
 
 from vibesensor.adapters.analysis_summary import analysis_result_to_summary
+from vibesensor.adapters.history import build_projected_run_details_json
 from vibesensor.adapters.pdf.mapping import map_summary
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
 from vibesensor.use_cases.diagnostics import AnalysisResult, RunAnalysis
-from vibesensor.use_cases.history.exports import build_run_details_json
 
 # -- helpers ---------------------------------------------------------------
 
@@ -187,11 +187,10 @@ def test_export_from_reconstructed_aggregate(tmp_path: Path) -> None:
     direct_summary = analysis_result_to_summary(result)
     run = _persist_and_reload(tmp_path, direct_summary)
 
-    export_json = build_run_details_json(
+    export_json = build_projected_run_details_json(
         run,
         sample_count=35,
         run_id=_RUN_ID,
-        analysis_projector=project_analysis_summary,
     )
     export_data = json.loads(export_json)
 
@@ -240,11 +239,10 @@ def test_cross_boundary_domain_meaning_consistency(tmp_path: Path) -> None:
     assert direct_card_names == reloaded_card_names
 
     # 3. Export-level consistency
-    export_json = build_run_details_json(
+    export_json = build_projected_run_details_json(
         run,
         sample_count=35,
         run_id=_RUN_ID,
-        analysis_projector=project_analysis_summary,
     )
     export_data = json.loads(export_json)
     export_analysis = export_data["analysis"]
