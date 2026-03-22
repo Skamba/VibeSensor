@@ -21,7 +21,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.adapters.history import build_projected_run_details_json
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
@@ -175,8 +175,8 @@ def test_report_from_reconstructed_aggregate(tmp_path: Path) -> None:
     assert analysis_blob is not None
     reconstructed = _reproject(analysis_blob.to_json_object())
 
-    direct_report = map_summary(direct_summary)
-    reloaded_report = map_summary(reconstructed)
+    direct_report = map_summary(prepare_report_input(direct_summary))
+    reloaded_report = map_summary(prepare_report_input(reconstructed))
 
     assert isinstance(direct_report, ReportTemplateData)
     assert isinstance(reloaded_report, ReportTemplateData)
@@ -243,8 +243,8 @@ def test_cross_boundary_domain_meaning_consistency(tmp_path: Path) -> None:
     assert direct_meaning["action_ids"] == reloaded_meaning["action_ids"]
 
     # 2. Report-level consistency
-    direct_report = map_summary(direct_summary)
-    reloaded_report = map_summary(reconstructed)
+    direct_report = map_summary(prepare_report_input(direct_summary))
+    reloaded_report = map_summary(prepare_report_input(reconstructed))
     assert direct_report.observed.primary_system == reloaded_report.observed.primary_system
     assert direct_report.observed.certainty_label == reloaded_report.observed.certainty_label
     direct_card_names = [c.system_name for c in direct_report.system_cards]

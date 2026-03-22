@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
 
@@ -50,7 +50,9 @@ def main() -> int:
     out_pdf = args.output or args.input.with_name(f"{args.input.stem}_report.pdf")
     out_pdf.parent.mkdir(parents=True, exist_ok=True)
     try:
-        out_pdf.write_bytes(build_report_pdf(map_summary(summary)))
+        out_pdf.write_bytes(
+            build_report_pdf(map_summary(prepare_report_input(summary, filename=out_pdf.name)))
+        )
     except Exception as exc:
         print(
             f"Error: PDF generation failed: {exc}",

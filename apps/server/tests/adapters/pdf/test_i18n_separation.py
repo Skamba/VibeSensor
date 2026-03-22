@@ -14,7 +14,7 @@ import random
 import pytest
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.report_i18n import is_i18n_ref, tr
 from vibesensor.report_i18n import resolve_i18n as resolve_i18n_impl
 
@@ -183,9 +183,9 @@ def _render_en_nl():
     """Build analysis summary and render reports in EN and NL."""
     summary = _make_analysis_summary()
     summary["lang"] = "en"
-    report_en = map_summary(summary)
+    report_en = map_summary(prepare_report_input(summary))
     summary["lang"] = "nl"
-    report_nl = map_summary(summary)
+    report_nl = map_summary(prepare_report_input(summary))
     return report_en, report_nl
 
 

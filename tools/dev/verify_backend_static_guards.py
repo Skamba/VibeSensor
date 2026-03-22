@@ -442,10 +442,8 @@ _ALLOWED_ANALYSIS_SUMMARY_IMPORT_PREFIXES = (
 _ALLOWED_ANALYSIS_SUMMARY_IMPORT_FILES = frozenset(
     {
         "adapters/analysis_summary.py",
-        "adapters/history.py",
-        "app/container.py",
         "use_cases/history/report_loader.py",
-        "use_cases/history/reports.py",
+        "use_cases/history/report_preparation.py",
     }
 )
 
@@ -471,6 +469,51 @@ def _check_analysis_summary_stays_at_boundaries() -> list[str]:
                     f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
                     "AnalysisSummary must stay in explicit boundary/projection modules"
                 )
+    return violations
+
+
+def _check_report_pdf_entrypoint_uses_prepared_input() -> list[str]:
+    path = VIBESENSOR_DIR / "app" / "container.py"
+    tree = _parse_python(path)
+    if tree is None:
+        return []
+    violations: list[str] = []
+    found_entrypoint = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "_build_pdf_bytes":
+            found_entrypoint = True
+            if not node.args.args:
+                violations.append(
+                    f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
+                    "_build_pdf_bytes must accept PreparedReportInput"
+                )
+                continue
+            annotation = node.args.args[0].annotation
+            if not (
+                isinstance(annotation, ast.Name)
+                and annotation.id == "PreparedReportInput"
+            ):
+                violations.append(
+                    f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
+                    "_build_pdf_bytes must accept PreparedReportInput"
+                )
+        if isinstance(node, ast.ImportFrom) and (
+            node.module == "vibesensor.shared.boundaries.analysis_payload"
+        ):
+            if any(alias.name == "AnalysisSummary" for alias in node.names):
+                violations.append(
+                    f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
+                    "container PDF entrypoint must not import AnalysisSummary"
+                )
+        if isinstance(node, ast.Name) and node.id == "prepare_history_report_analysis":
+            violations.append(
+                f"{path.relative_to(REPO_ROOT)}:{node.lineno}: "
+                "container PDF entrypoint must not call prepare_history_report_analysis"
+            )
+    if not found_entrypoint:
+        violations.append(
+            f"{path.relative_to(REPO_ROOT)}: missing _build_pdf_bytes entrypoint"
+        )
     return violations
 
 
@@ -1246,6 +1289,10 @@ CHECKS: tuple[Check, ...] = (
     (
         "AnalysisSummary stays at boundaries",
         _check_analysis_summary_stays_at_boundaries,
+    ),
+    (
+        "Report PDF entrypoint uses prepared input",
+        _check_report_pdf_entrypoint_uses_prepared_input,
     ),
     ("Domain modules avoid outer-layer imports", _collect_domain_import_violations),
     (

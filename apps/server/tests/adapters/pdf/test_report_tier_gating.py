@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.domain import ConfidenceAssessment
 
 # ---------------------------------------------------------------------------
@@ -118,7 +118,7 @@ class TestTierAReportOutput:
 
     @pytest.fixture
     def tier_a_data(self):
-        return map_summary(_make_summary(confidence=0.10))
+        return map_summary(prepare_report_input(_make_summary(confidence=0.10)))
 
     def test_tier_a_no_system_cards(self, tier_a_data):
         assert tier_a_data.certainty_tier_key == "A"
@@ -157,7 +157,7 @@ class TestTierBReportOutput:
 
     @pytest.fixture
     def tier_b_data(self):
-        return map_summary(_make_summary(confidence=0.50))
+        return map_summary(prepare_report_input(_make_summary(confidence=0.50)))
 
     def test_tier_b_system_cards_present(self, tier_b_data):
         assert tier_b_data.certainty_tier_key == "B"
@@ -189,7 +189,7 @@ class TestTierCReportOutput:
 
     @pytest.fixture
     def tier_c_data(self):
-        return map_summary(_make_summary(confidence=0.75))
+        return map_summary(prepare_report_input(_make_summary(confidence=0.75)))
 
     def test_tier_c_system_cards_present(self, tier_c_data):
         assert tier_c_data.certainty_tier_key == "C"
@@ -217,7 +217,7 @@ class TestLowCertaintyRegression:
 
     @pytest.fixture
     def low_cert_data(self):
-        return map_summary(_make_summary(confidence=0.06))
+        return map_summary(prepare_report_input(_make_summary(confidence=0.06)))
 
     def test_six_percent_certainty_no_parts_to_inspect(self, low_cert_data):
         """With ~6% certainty, no parts inspection should be suggested."""
@@ -234,7 +234,9 @@ class TestLowCertaintyRegression:
 
     def test_baseline_noise_low_certainty(self):
         """Baseline Noise as primary system with low certainty stays in Tier A."""
-        data = map_summary(_make_summary(confidence=0.08, source="baseline_noise"))
+        data = map_summary(
+            prepare_report_input(_make_summary(confidence=0.08, source="baseline_noise"))
+        )
         assert data.certainty_tier_key == "A"
         assert data.system_cards == []
         assert len(data.next_steps) >= 3
@@ -249,14 +251,14 @@ class TestCertaintyTierNL:
     """Verify tier behavior works with Dutch (nl) language."""
 
     def test_tier_a_nl_capture_guidance(self):
-        data = map_summary(_make_summary(confidence=0.06, lang="nl"))
+        data = map_summary(prepare_report_input(_make_summary(confidence=0.06, lang="nl")))
         assert data.certainty_tier_key == "A"
         assert len(data.next_steps) >= 3
         actions_text = " ".join(s.action for s in data.next_steps)
         assert "snelheidsvariatie" in actions_text or "sensorlocaties" in actions_text
 
     def test_tier_b_nl_hypothesis_label(self):
-        data = map_summary(_make_summary(confidence=0.50, lang="nl"))
+        data = map_summary(prepare_report_input(_make_summary(confidence=0.50, lang="nl")))
         for card in data.system_cards:
             assert (
                 "hypothese" in card.system_name.lower() or "hypothesis" in card.system_name.lower()

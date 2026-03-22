@@ -41,7 +41,7 @@ from test_support import (
     top_confidence,
 )
 
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
 # ---------------------------------------------------------------------------
@@ -334,7 +334,9 @@ class TestPdfReportValidation:
     def _run_and_generate(self, request: pytest.FixtureRequest) -> None:
         meta, samples = _build_20s_scenario()
         request.cls.summary = run_analysis(samples, metadata=meta)
-        request.cls.pdf_bytes = build_report_pdf(map_summary(request.cls.summary))
+        request.cls.pdf_bytes = build_report_pdf(
+            map_summary(prepare_report_input(request.cls.summary))
+        )
         request.cls.pdf_text = _extract_pdf_text(request.cls.pdf_bytes)
         request.cls.top = extract_top(request.cls.summary)
 
@@ -405,7 +407,7 @@ class TestPdfReportValidation:
             rows[1]["p95_intensity_db"] = 37.2
             rows[1]["mean_intensity_db"] = 35.0
 
-        pdf_text = _extract_pdf_text(build_report_pdf(map_summary(summary)))
+        pdf_text = _extract_pdf_text(build_report_pdf(map_summary(prepare_report_input(summary))))
         assert "diagnosed location source" in pdf_text
         assert "wheel" in pdf_text
         assert "driveline" in pdf_text
@@ -430,7 +432,7 @@ class TestPdfReportValidation:
             }
             for i in range(1, 9)
         ]
-        pdf_bytes = build_report_pdf(map_summary(summary))
+        pdf_bytes = build_report_pdf(map_summary(prepare_report_input(summary)))
         reader = PdfReader(io.BytesIO(pdf_bytes))
         pdf_text = _extract_pdf_text(pdf_bytes)
 
@@ -455,7 +457,7 @@ class TestPdfReportValidation:
         # Domain reconstruction reads sensor_model from metadata sub-dict
         if isinstance(summary.get("metadata"), dict):
             summary["metadata"]["sensor_model"] = long_sensor
-        pdf_text = _extract_pdf_text(build_report_pdf(map_summary(summary)))
+        pdf_text = _extract_pdf_text(build_report_pdf(map_summary(prepare_report_input(summary))))
         assert "tailtoken-runid-12345" in pdf_text
         assert "tailtoken" in pdf_text and "sensormodel-98765" in pdf_text
 
@@ -477,8 +479,12 @@ class TestPdfLanguageParity:
 
         request.cls.summary_en = run_analysis(samples, metadata=meta_en)
         request.cls.summary_nl = run_analysis(samples, metadata=meta_nl)
-        request.cls.pdf_en = build_report_pdf(map_summary(request.cls.summary_en))
-        request.cls.pdf_nl = build_report_pdf(map_summary(request.cls.summary_nl))
+        request.cls.pdf_en = build_report_pdf(
+            map_summary(prepare_report_input(request.cls.summary_en))
+        )
+        request.cls.pdf_nl = build_report_pdf(
+            map_summary(prepare_report_input(request.cls.summary_nl))
+        )
 
     def test_both_pdfs_are_valid(self) -> None:
         """Both EN and NL PDFs are generated and valid."""

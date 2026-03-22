@@ -20,7 +20,7 @@ import pytest
 from test_support.gps import set_gps_snapshot_age
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.cli.report import main as report_cli_main
 from vibesensor.use_cases.updates.firmware_cache import FirmwareCache
 from vibesensor.use_cases.updates.firmware_release_fetcher import GitHubReleaseFetcher
@@ -236,7 +236,7 @@ class TestReportDataBuilderUTCSuffix:
             "2025-06-01T14:30:00Z",
             metadata={"car_name": "TestCar"},
         )
-        result = map_summary(summary)
+        result = map_summary(prepare_report_input(summary))
         assert result.run_datetime is not None
         assert result.run_datetime.endswith(" UTC"), (
             f"Expected UTC suffix, got: {result.run_datetime!r}"
@@ -245,5 +245,5 @@ class TestReportDataBuilderUTCSuffix:
 
     def test_date_str_no_tz_input_still_has_utc(self) -> None:
         summary = _make_summary("2025-03-15T09:45:22")
-        result = map_summary(summary)
+        result = map_summary(prepare_report_input(summary))
         assert result.run_datetime == "2025-03-15 09:45:22 UTC"
