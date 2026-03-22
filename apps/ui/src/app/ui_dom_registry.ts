@@ -81,6 +81,7 @@ export interface UiDomElements {
   staleTimeoutInput: HTMLInputElement | null;
 
   connectionBanner: HTMLElement | null;
+  appShellWrap: HTMLElement | null;
   rotationalAssumptions: HTMLElement | null;
   rotationalAssumptionsBody: HTMLElement | null;
 }
@@ -186,6 +187,7 @@ export function createUiDomRegistry(): UiDomElements {
     gpsFallbackPanel: el("gpsFallbackPanel"),
     staleTimeoutInput: inputEl("staleTimeoutInput"),
     connectionBanner: el("connectionBanner"),
+    appShellWrap: document.querySelector<HTMLElement>(".wrap"),
 
     rotationalAssumptions: el("rotationalAssumptions"),
     rotationalAssumptionsBody: el("rotationalAssumptionsBody"),
