@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.use_cases.updates.installer import UpdateInstaller
 from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdateJobStatus,
@@ -10,6 +9,10 @@ from vibesensor.use_cases.updates.models import (
     UpdateState,
 )
 from vibesensor.use_cases.updates.runner import sanitize_log_line as sanitize_log_line
+from vibesensor.use_cases.updates.venv_paths import (
+    is_reinstall_venv_ready,
+    reinstall_python_executable,
+)
 from vibesensor.use_cases.updates.wifi import parse_wifi_diagnostics
 
 
@@ -53,13 +56,13 @@ class TestUpdaterInterpreterSelection:
         venv_python.write_text("#!/usr/bin/env python3\n")
         venv_python.chmod(0o755)
         (repo / "apps" / "server" / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
-        assert UpdateInstaller.reinstall_python_executable(repo) == str(venv_python)
+        assert reinstall_python_executable(repo) == str(venv_python)
 
     def test_reinstall_python_uses_server_venv_path_even_if_missing(self, tmp_path) -> None:
         repo = tmp_path / "repo"
         repo.mkdir()
         expected = repo / "apps" / "server" / ".venv" / "bin" / "python3"
-        assert UpdateInstaller.reinstall_python_executable(repo) == str(expected)
+        assert reinstall_python_executable(repo) == str(expected)
 
     def test_reinstall_venv_readiness_requires_pyvenv_cfg(self, tmp_path) -> None:
         repo = tmp_path / "repo"
@@ -67,9 +70,9 @@ class TestUpdaterInterpreterSelection:
         venv_python.parent.mkdir(parents=True)
         venv_python.write_text("#!/usr/bin/env python3\n")
         venv_python.chmod(0o755)
-        assert not UpdateInstaller.is_reinstall_venv_ready(repo)
+        assert not is_reinstall_venv_ready(repo)
         (repo / "apps" / "server" / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
-        assert UpdateInstaller.is_reinstall_venv_ready(repo)
+        assert is_reinstall_venv_ready(repo)
 
 
 class TestSanitizeLogLine:
