@@ -17,6 +17,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdateJobStatus,
     UpdatePhase,
+    UpdateRuntimeDetails,
     UpdateState,
 )
 from vibesensor.use_cases.updates.runner import sanitize_log_line
@@ -63,7 +64,7 @@ class UpdateStatusTracker:
         return now
 
     def start_job(self, ssid: str) -> None:
-        previous_runtime = dict(self._status.runtime)
+        previous_runtime = self._status.runtime
         now = time.time()
         self._status = UpdateJobStatus(
             state=UpdateState.running,
@@ -82,7 +83,7 @@ class UpdateStatusTracker:
         self._touch(phase_changed=True)
         self.persist()
 
-    def set_runtime(self, runtime: JsonObject) -> None:
+    def set_runtime(self, runtime: UpdateRuntimeDetails) -> None:
         self._status.runtime = runtime
         self._touch()
 
@@ -216,7 +217,9 @@ class UpdateStateStore:
         try:
             raw = self._path.read_text(encoding="utf-8")
             data = json.loads(raw)
-            return UpdateJobStatus.from_dict(data)
+            if not is_json_object(data):
+                raise ValueError("update state payload must be a JSON object")
+            return UpdateJobStatus.from_payload(data)
         except (json.JSONDecodeError, ValueError, KeyError, TypeError) as exc:
             LOGGER.warning("Corrupt update state file %s: %s", self._path, exc)
             return None
@@ -226,7 +229,7 @@ class UpdateStateStore:
 
     def save(self, status: UpdateJobStatus) -> None:
         """Persist *status* atomically (temp-file + ``os.replace``)."""
-        data = status.to_dict()
+        data = status.to_payload()
         payload = json.dumps(data, indent=2, default=str) + "\n"
         tmp: str | None = None
         try:
@@ -281,7 +284,7 @@ def hash_tree(root: Path, *, ignore_names: set[str]) -> str:
     return hasher.hexdigest()
 
 
-def collect_runtime_details(repo: Path) -> JsonObject:
+def collect_runtime_details(repo: Path) -> UpdateRuntimeDetails:
     """Collect runtime versioning and static-asset verification details."""
     ui_root = repo / "apps" / "ui"
     static_root = repo / "apps" / "server" / "vibesensor" / "static"
@@ -339,13 +342,13 @@ def collect_runtime_details(repo: Path) -> JsonObject:
     )
     if not has_repo_static:
         assets_verified = has_packaged_static
-    return {
-        "version": version,
-        "commit": commit,
-        "ui_source_hash": ui_source_hash,
-        "static_assets_hash": static_assets_hash,
-        "static_build_source_hash": static_build_source_hash,
-        "static_build_commit": static_build_commit,
-        "assets_verified": assets_verified,
-        "has_packaged_static": has_packaged_static,
-    }
+    return UpdateRuntimeDetails(
+        version=version,
+        commit=commit,
+        ui_source_hash=ui_source_hash,
+        static_assets_hash=static_assets_hash,
+        static_build_source_hash=static_build_source_hash,
+        static_build_commit=static_build_commit,
+        assets_verified=assets_verified,
+        has_packaged_static=has_packaged_static,
+    )

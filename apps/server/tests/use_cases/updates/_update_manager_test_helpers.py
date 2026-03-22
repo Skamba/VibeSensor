@@ -81,8 +81,8 @@ def seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True
     )
     details = collect_runtime_details(repo)
     metadata = {
-        "ui_source_hash": details["ui_source_hash"] if valid else "stale-source-hash",
-        "static_assets_hash": details["static_assets_hash"],
+        "ui_source_hash": details.ui_source_hash if valid else "stale-source-hash",
+        "static_assets_hash": details.static_assets_hash,
         "git_commit": "deadbeef",
     }
     (repo / "apps" / "server" / "vibesensor" / "static" / ".vibesensor-ui-build.json").write_text(

@@ -39,7 +39,7 @@ def create_update_routes(
 
     @router.get("/api/update/status", response_model=UpdateStatusResponse)
     async def get_update_status() -> UpdateStatusResponse:
-        return UpdateStatusResponse.model_validate(update_manager.status.to_dict())
+        return UpdateStatusResponse.model_validate(update_manager.status.to_payload())
 
     @router.post("/api/update/start", response_model=UpdateStartResponse)
     async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
