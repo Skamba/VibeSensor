@@ -119,12 +119,12 @@ class TestSettingsStoreRollbackDbFailure:
     def store(self) -> Any:
         s = SettingsStore()
         s.add_car({"name": "Test Car", "type": "sedan"})
-        s.set_active_car(s.get_cars()["cars"][0]["id"])
+        s.set_active_car(s.get_cars().cars[0]["id"])
         return s
 
     def test_update_active_car_aspects_rollback(self, store: Any) -> None:
         cars = store.get_cars()
-        original_aspects = dict(cars["cars"][0].get("aspects", {}))
+        original_aspects = dict(cars.cars[0].get("aspects", {}))
 
         with (
             patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
@@ -134,7 +134,7 @@ class TestSettingsStoreRollbackDbFailure:
 
         # Aspects should be rolled back
         current = store.get_cars()
-        assert current["cars"][0].get("aspects", {}) == original_aspects
+        assert current.cars[0].get("aspects", {}) == original_aspects
 
     def test_update_speed_source_rollback(self, store: Any) -> None:
         original = store.get_speed_source()

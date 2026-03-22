@@ -146,7 +146,7 @@ def test_store_add_and_delete_car() -> None:
 def test_store_cannot_delete_last_car() -> None:
     store = SettingsStore()
     created = store.add_car({"name": "Temporary"})
-    car_id = created["cars"][0]["id"]
+    car_id = created.cars[0]["id"]
     store.set_active_car(car_id)
     with pytest.raises(ValueError, match="Cannot delete the last car"):
         store.delete_car(car_id)
@@ -155,7 +155,7 @@ def test_store_cannot_delete_last_car() -> None:
 def test_store_update_car_aspects() -> None:
     store = SettingsStore()
     created = store.add_car({"name": "Aspect Car"})
-    car_id = created["cars"][0]["id"]
+    car_id = created.cars[0]["id"]
     store.set_active_car(car_id)
     store.update_car(car_id, {"aspects": {"tire_width_mm": 245.0}})
     aspects = store.active_car_aspects() or {}
@@ -166,7 +166,7 @@ def test_store_update_car_aspects() -> None:
 def test_store_update_active_car_aspects() -> None:
     store = SettingsStore()
     created = store.add_car({"name": "Editable"})
-    store.set_active_car(created["cars"][0]["id"])
+    store.set_active_car(created.cars[0]["id"])
     updated = store.update_active_car_aspects({"tire_width_mm": 255.0, "rim_in": 19.0})
     assert updated["tire_width_mm"] == 255.0
     assert updated["rim_in"] == 19.0
@@ -267,7 +267,7 @@ def test_store_persists_and_loads(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     store1 = SettingsStore(db=db)
     added = store1.add_car({"name": "Persisted Car", "type": "suv"})
-    store1.set_active_car(added["cars"][0]["id"])
+    store1.set_active_car(added.cars[0]["id"])
     store1.update_speed_source({"speedSource": "manual", "manualSpeedKph": 60})
     store1.set_sensor("11:22:33:44:55:66", {"name": "Rear", "location_code": "rear_left_wheel"})
 
@@ -291,7 +291,7 @@ def test_store_persists_with_protocol_shaped_snapshot_store() -> None:
     snapshot_store = FakeSettingsSnapshotStore()
     store = SettingsStore(db=snapshot_store)
     created = store.add_car({"name": "Protocol Car", "type": "suv"})
-    car_id = created["cars"][0]["id"]
+    car_id = created.cars[0]["id"]
     store.set_active_car(car_id)
 
     reloaded = SettingsStore(db=snapshot_store)
@@ -328,10 +328,10 @@ def test_parse_manual_speed_returns_none_for_invalid() -> None:
 
 def test_store_update_car_name_and_type() -> None:
     store = SettingsStore()
-    cars = store.add_car({"name": "Original"})["cars"]
+    cars = store.add_car({"name": "Original"}).cars
     car_id = cars[0]["id"]
     result = store.update_car(car_id, {"name": "Updated", "type": "SUV"})
-    updated = next(c for c in result["cars"] if c["id"] == car_id)
+    updated = next(c for c in result.cars if c["id"] == car_id)
     assert updated["name"] == "Updated"
     assert updated["type"] == "SUV"
 
@@ -346,12 +346,12 @@ def test_store_delete_selected_car_auto_selects_remaining() -> None:
     store = SettingsStore()
     store.add_car({"name": "First"})
     added = store.add_car({"name": "Second"})
-    car_ids = [c["id"] for c in added["cars"]]
+    car_ids = [c["id"] for c in added.cars]
     store.set_active_car(car_ids[1])
     result = store.delete_car(car_ids[1])
-    assert len(result["cars"]) == 1
+    assert len(result.cars) == 1
     # Auto-selects remaining car instead of clearing to None.
-    assert result["activeCarId"] == car_ids[0]
+    assert result.active_car_id == car_ids[0]
 
 
 def test_store_delete_car_unknown_raises() -> None:
@@ -498,7 +498,7 @@ def test_store_active_car_aspects_with_active_car() -> None:
     """active_car_aspects() returns aspects dict for active car."""
     store = SettingsStore()
     result = store.add_car({"name": "Test", "type": "sedan"})
-    car_id = result["cars"][0]["id"]
+    car_id = result.cars[0]["id"]
     store.set_active_car(car_id)
     aspects = store.active_car_aspects()
     assert aspects is not None
