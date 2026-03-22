@@ -6,7 +6,8 @@ summary and the confidence level of the data.
 
 Row-level verification state now lives in
 `car_library_ratio_sources.json`, where every model row must be classified
-as `verified`, `corrected`, or `intentionally_unsupported`.
+as `verification_backlog`, `verified`, `corrected`, or
+`intentionally_unsupported`.
 
 ## Source Priority (per project rules)
 
@@ -23,6 +24,12 @@ as `verified`, `corrected`, or `intentionally_unsupported`.
   every manufacturer.
 - Authoritative ratio verification status is tracked per row in
   `car_library_ratio_sources.json`.
+- `verification_backlog` means authoritative verification work is still
+  open for the row; entries in that state must keep explicit `unresolved`
+  items and are not treated as closed verification debt.
+- Terminal states (`verified`, `corrected`, `intentionally_unsupported`)
+  must not keep `unresolved` items. Any closed product/schema constraints
+  belong under row-level `known_limits` instead.
 - Variant-specific gearbox overrides use manufacturer technical data where
   available. If a row cannot be safely verified at the represented
   granularity, that limitation is recorded in the ratio-source ledger
