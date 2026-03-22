@@ -143,7 +143,66 @@ SCENARIO_05 = ScenarioSpec(
     expect_no_weak_spatial=True,
 )
 
-FRONT_AXLE_SCENARIOS = [SCENARIO_01, SCENARIO_04, SCENARIO_05]
+SCENARIO_06 = ScenarioSpec(
+    case_id="06_intermittent_fl_en",
+    language="en",
+    file_name="06_intermittent_fl_en",
+    phases=(
+        PhaseStep(idle_phase, 15.0, {"duration_s": 15.0}),
+        PhaseStep(
+            road_noise_phase,
+            15.0,
+            {"speed_kmh": 60.0, "duration_s": 15.0, "road_vib_db": 12.0},
+        ),
+        PhaseStep(
+            fault_phase,
+            8.0,
+            {
+                "speed_kmh": 80.0,
+                "duration_s": 8.0,
+                "fault_sensor": "front-left",
+                "fault_amp": 0.05,
+                "fault_vib_db": 22.0,
+                "noise_amp": 0.005,
+                "noise_vib_db": 10.0,
+            },
+        ),
+        PhaseStep(
+            road_noise_phase,
+            10.0,
+            {
+                "speed_kmh": 80.0,
+                "duration_s": 10.0,
+                "noise_amp": 0.005,
+                "road_vib_db": 13.0,
+            },
+        ),
+        PhaseStep(
+            fault_phase,
+            24.0,
+            {
+                "speed_kmh": 80.0,
+                "duration_s": 24.0,
+                "fault_sensor": "front-left",
+                "fault_amp": 0.065,
+                "fault_vib_db": 27.0,
+                "noise_amp": 0.005,
+                "noise_vib_db": 10.0,
+            },
+        ),
+        PhaseStep(
+            road_noise_phase,
+            12.0,
+            {"speed_kmh": 60.0, "duration_s": 12.0, "road_vib_db": 11.0},
+        ),
+    ),
+    expected_source="wheel",
+    expected_location="front-left",
+    expected_speed_band_range=(70.0, 90.0),
+    confidence_range=(0.25, 0.80),
+)
+
+FRONT_AXLE_SCENARIOS = [SCENARIO_01, SCENARIO_04, SCENARIO_05, SCENARIO_06]
 
 
 @pytest.fixture(params=FRONT_AXLE_SCENARIOS, ids=lambda spec: spec.case_id)

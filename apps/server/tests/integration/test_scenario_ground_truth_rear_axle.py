@@ -72,7 +72,65 @@ SCENARIO_03 = ScenarioSpec(
     expect_no_weak_spatial=True,
 )
 
-REAR_AXLE_SCENARIOS = [SCENARIO_02, SCENARIO_03]
+SCENARIO_07 = ScenarioSpec(
+    case_id="07_midspeed_rr_noise_en",
+    language="en",
+    file_name="07_midspeed_rr_noise_en",
+    phases=(
+        PhaseStep(
+            road_noise_phase,
+            20.0,
+            {
+                "speed_kmh": 70.0,
+                "duration_s": 20.0,
+                "noise_amp": 0.006,
+                "road_vib_db": 14.0,
+            },
+        ),
+        PhaseStep(
+            fault_phase,
+            30.0,
+            {
+                "speed_kmh": 80.0,
+                "duration_s": 30.0,
+                "fault_sensor": "rear-right",
+                "fault_amp": 0.05,
+                "fault_vib_db": 22.0,
+                "noise_amp": 0.006,
+                "noise_vib_db": 14.0,
+            },
+        ),
+        PhaseStep(
+            road_noise_phase,
+            15.0,
+            {
+                "speed_kmh": 80.0,
+                "duration_s": 15.0,
+                "noise_amp": 0.006,
+                "road_vib_db": 15.0,
+            },
+        ),
+        PhaseStep(
+            fault_phase,
+            25.0,
+            {
+                "speed_kmh": 90.0,
+                "duration_s": 25.0,
+                "fault_sensor": "rear-right",
+                "fault_amp": 0.06,
+                "fault_vib_db": 24.0,
+                "noise_amp": 0.006,
+                "noise_vib_db": 14.0,
+            },
+        ),
+    ),
+    expected_source="wheel",
+    expected_location="rear-right",
+    expected_speed_band_range=(70.0, 95.0),
+    confidence_range=(0.25, 0.80),
+)
+
+REAR_AXLE_SCENARIOS = [SCENARIO_02, SCENARIO_03, SCENARIO_07]
 
 
 @pytest.fixture(params=REAR_AXLE_SCENARIOS, ids=lambda spec: spec.case_id)
