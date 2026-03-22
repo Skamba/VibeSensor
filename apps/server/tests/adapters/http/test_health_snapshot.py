@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 from vibesensor.adapters.http.health_snapshot import build_health_snapshot
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingHealth, ProcessingLoopState
+from vibesensor.shared.types.payload_types import IntakeStatsPayload, WorkerPoolStats
 
 
 def _clean_data_loss() -> dict:
@@ -27,6 +28,35 @@ def _clean_persistence() -> dict:
     }
 
 
+def _clean_intake_stats() -> IntakeStatsPayload:
+    return {
+        "total_ingested_samples": 0,
+        "total_compute_calls": 0,
+        "last_compute_duration_s": 0.0,
+        "last_compute_all_duration_s": 0.0,
+        "last_ingest_duration_s": 0.0,
+    }
+
+
+def _worker_pool_stats() -> WorkerPoolStats:
+    return {
+        "max_workers": 2,
+        "max_queue_size": 2,
+        "max_pending_tasks": 4,
+        "total_tasks": 7,
+        "pending_tasks": 1,
+        "queued_tasks": 0,
+        "running_tasks": 1,
+        "rejected_tasks": 0,
+        "total_run_s": 1.5,
+        "avg_run_s": 0.75,
+        "total_submit_wait_s": 0.2,
+        "avg_submit_wait_s": 0.1,
+        "default_submit_timeout_s": None,
+        "alive": True,
+    }
+
+
 def _make_deps(
     *,
     data_loss: dict | None = None,
@@ -42,9 +72,9 @@ def _make_deps(
     return registry, run_recorder
 
 
-def _make_processor() -> MagicMock:
+def _make_processor(*, intake_stats: IntakeStatsPayload | None = None) -> MagicMock:
     proc = MagicMock()
-    proc.intake_stats.return_value = {}
+    proc.intake_stats.return_value = intake_stats or _clean_intake_stats()
     return proc
 
 
@@ -83,6 +113,26 @@ class TestBuildHealthSnapshotOk:
             "tick_count",
         ):
             assert key in result
+
+    def test_internal_snapshot_preserves_worker_pool_stats(self) -> None:
+        loop_state = ProcessingLoopState()
+        health_state = RuntimeHealthState()
+        health_state.mark_ready()
+        registry, run_recorder = _make_deps()
+        intake_stats: IntakeStatsPayload = {
+            **_clean_intake_stats(),
+            "worker_pool": _worker_pool_stats(),
+        }
+
+        result = build_health_snapshot(
+            loop_state,
+            health_state,
+            _make_processor(intake_stats=intake_stats),
+            registry,
+            run_recorder,
+        )
+
+        assert result["intake_stats"]["worker_pool"]["total_tasks"] == 7
 
 
 class TestBuildHealthSnapshotDegraded:

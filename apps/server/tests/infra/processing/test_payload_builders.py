@@ -14,6 +14,7 @@ from vibesensor.infra.processing.payload import (
     build_intake_stats_payload,
     build_time_alignment_payload,
 )
+from vibesensor.shared.types.payload_types import IntakeStatsPayload, WorkerPoolStats
 
 
 def _config(fft_n: int = 256) -> ProcessorConfig:
@@ -71,16 +72,28 @@ def test_build_debug_spectrum_payload_returns_debug_metadata() -> None:
 
 
 def test_build_intake_stats_payload_adds_worker_pool_stats() -> None:
-    base_stats = {
+    base_stats: IntakeStatsPayload = {
         "total_ingested_samples": 10,
         "total_compute_calls": 2,
         "last_compute_duration_s": 0.1,
         "last_compute_all_duration_s": 0.2,
         "last_ingest_duration_s": 0.05,
     }
-    worker_pool_stats = {
-        "active_workers": 1,
+    worker_pool_stats: WorkerPoolStats = {
+        "max_workers": 2,
+        "max_queue_size": 2,
+        "max_pending_tasks": 4,
         "total_tasks": 7,
+        "pending_tasks": 1,
+        "queued_tasks": 0,
+        "running_tasks": 1,
+        "rejected_tasks": 0,
+        "total_run_s": 1.5,
+        "avg_run_s": 0.75,
+        "total_submit_wait_s": 0.2,
+        "avg_submit_wait_s": 0.1,
+        "default_submit_timeout_s": None,
+        "alive": True,
     }
 
     payload = build_intake_stats_payload(base_stats, worker_pool_stats)
