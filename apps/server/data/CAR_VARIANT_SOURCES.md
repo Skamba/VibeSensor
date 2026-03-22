@@ -1,8 +1,12 @@
 # Car Variant Data Sources
 
 This file documents the sources used to populate variant data in
-`car_library.json`. Each entry maps a car model to the variants added
-and the confidence level of the data.
+`car_library.json`. Each entry maps a car model to the documented variant
+summary and the confidence level of the data.
+
+Row-level verification state now lives in
+`car_library_ratio_sources.json`, where every model row must be classified
+as `verified`, `corrected`, or `intentionally_unsupported`.
 
 ## Source Priority (per project rules)
 
@@ -17,9 +21,12 @@ and the confidence level of the data.
   across official BMW and Audi press materials.
 - Drivetrain layout (FWD/RWD/AWD) is a fundamental spec published by
   every manufacturer.
-- Final drive ratios for variant-specific gearbox overrides were sourced
-  from manufacturer technical data where available. Where exact ratios
-  could not be confirmed, base-model ratios are inherited (no override).
+- Authoritative ratio verification status is tracked per row in
+  `car_library_ratio_sources.json`.
+- Variant-specific gearbox overrides use manufacturer technical data where
+  available. If a row cannot be safely verified at the represented
+  granularity, that limitation is recorded in the ratio-source ledger
+  instead of relying on broad fallback notes here.
 - Tire specifications are shared across variants within a model generation
   and are not overridden at variant level (same factory options).
 
@@ -33,7 +40,7 @@ and the confidence level of the data.
 |---------|--------|------------|--------|------------|
 | 118i | B38 1.5L I3 Turbo | RWD | BMW press release | High |
 | 120i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| M140i | B58 3.0L I6 Turbo | RWD | BMW press release | High |
+| 114i | 1.6L | RWD | BMW press release | High |
 
 ### 1 Series (F40, 2019-2025)
 
@@ -49,7 +56,7 @@ and the confidence level of the data.
 |---------|--------|------------|--------|------------|
 | 220i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
 | 230i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| M240i | B58 3.0L I6 Turbo | RWD | BMW press release | High |
+| M2 | B58B30O0 3.0L I6 Turbo | RWD | BMW press release | High |
 
 ### 2 Series Coupe (G42, 2022-2026)
 
@@ -57,7 +64,7 @@ and the confidence level of the data.
 |---------|--------|------------|--------|------------|
 | 220i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
 | 230i | B48 2.0L I4 Turbo | RWD | BMW press release | High |
-| M240i xDrive | B58 3.0L I6 Turbo | AWD | BMW press release | High |
+| 230i xDrive | B48 2.0L I4 Turbo | AWD | BMW press release | High |
 
 ### 2 Series Active Tourer (F45, 2014-2021)
 
@@ -83,8 +90,8 @@ and the confidence level of the data.
 | 320i | B48 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
 | 330i | B48 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
 | 330i xDrive | B48 2.0L I4 Turbo | AWD | 8-speed automatic (ZF 8HP) FD 2.813 | BMW PressClub technical data | High |
-| M340i | B58 3.0L I6 Turbo | RWD | – | BMW press release / technical data | High |
-| M340i xDrive | B58 3.0L I6 Turbo | AWD | – | BMW UK model listing / technical data context | Medium |
+| 320e | 1.6L I4 Turbo | RWD | – | BMW press release / technical data | High |
+| 330e | 2.0L I4 Turbo | RWD | – | BMW press release / technical data | High |
 
 ### 4 Series (F32, 2014-2020)
 
@@ -120,7 +127,7 @@ and the confidence level of the data.
 | 530i xDrive | B48 2.0L I4 Turbo | AWD | BMW press release | High |
 | 540i | B58 3.0L I6 Turbo | RWD | BMW press release | High |
 | 540i xDrive | B58 3.0L I6 Turbo | AWD | BMW press release | High |
-| M550i xDrive | N63 4.4L V8 Turbo | AWD | BMW press release | High |
+| 545e xDrive | 3.0L I6 Turbo | AWD | BMW press release | High |
 
 ### 5 Series (G60, 2024-2026)
 
@@ -399,7 +406,7 @@ and the confidence level of the data.
 | 30 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / ETKA Europe | Medium |
 | 35 TDI | 2.0L I4 TDI Diesel | FWD | Audi owner manual / ETKA Europe | Medium |
 
-### A4 (B8, 2011-2016)
+### A4 (B8, 2008-2016)
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
@@ -411,7 +418,7 @@ and the confidence level of the data.
 | 2.0 TDI quattro | 2.0L I4 TDI Diesel | AWD | Audi owner manual / brochure archive / ETKA Europe | Medium |
 | 3.0 TDI quattro | 3.0L V6 TDI Diesel | AWD | Audi owner manual / brochure archive / ETKA Europe | Medium |
 
-### A4 (B9, 2016-2024)
+### A4 (B9, 2016-2025)
 
 | Variant | Engine | Drivetrain | Gearbox Override | Source | Confidence |
 |---------|--------|------------|------------------|--------|------------|
@@ -421,7 +428,7 @@ and the confidence level of the data.
 | 30 TDI | 2.0L I4 TDI Diesel | FWD | – | Audi owner manual / ETKA Europe | Medium |
 | 35 TDI | 2.0L I4 TDI Diesel | FWD | – | Audi owner manual / ETKA Europe | Medium |
 
-### A5 (B8, 2012-2016)
+### A5 (B8, 2007-2016)
 
 | Variant | Engine | Drivetrain | Source | Confidence |
 |---------|--------|------------|--------|------------|
