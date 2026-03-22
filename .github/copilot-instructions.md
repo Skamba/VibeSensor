@@ -1,17 +1,17 @@
-Repository overview (scope: high-level orientation and behavioral rules; see `docs/ai/repo-map.md` for detailed layout, entry points, and file ownership)
+Canonical AI guidance entrypoint (scope: short repo orientation, enduring architectural invariants, and command pointers)
+
+Guidance stack
+- This file is the canonical AI guidance entrypoint and short index.
+- `.github/instructions/general.instructions.md` owns shared workflow, validation, and documentation-maintenance guardrails.
+- `.github/instructions/{backend,frontend,tests}.instructions.md` own area-specific deltas only.
+- `docs/ai/repo-map.md` is the repo map for layout, entry points, and stable ownership boundaries; it is not a second workflow or policy guide.
+- Do not create additional guidance files in `docs/ai/`.
+
+Repository overview
 - VibeSensor: Python backend (`apps/server/`), TypeScript/Vite dashboard (`apps/ui/`), ESP32 firmware (`firmware/esp/`), Pi image build (`infra/pi-image/`).
 - Key runtime artifacts: `docker-compose.yml` (local stack), `apps/server/pyproject.toml` (backend packaging and CLI entry points).
 - Units policy: raw ingest/sample acceleration values may use g, but post-stop analysis outputs (persisted summaries, findings, report-template artifacts) must expose vibration strength or intensity in dB only.
 - Canonical dB definition: `vibesensor/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
-
-Source-of-truth note
-- This file is the short AI guide.
-- AI guidance lives in this file, `.github/instructions/*.instructions.md`, and `docs/ai/repo-map.md`. Do not create additional guidance files in `docs/ai/`.
-
-Instruction sources
-- Read `docs/ai/repo-map.md` first.
-- Shared workflow, validation, and execution guardrails live in `.github/instructions/general.instructions.md` — do not duplicate them here.
-- Area-specific deltas live in `.github/instructions/{backend,frontend,tests}.instructions.md`.
 
 Architectural constraints
 - Offline-first hotspot boot: hotspot provisioning must not depend on internet connectivity. Required packages are baked into the image build stage.
