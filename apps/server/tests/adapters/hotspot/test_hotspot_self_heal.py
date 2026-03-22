@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
+from vibesensor.adapters.hotspot.health_probe import HealthState, collect_health
+from vibesensor.adapters.hotspot.parsers import HealStateStore
+from vibesensor.adapters.hotspot.remediation import _ensure_ap_connection, apply_heals
 from vibesensor.adapters.hotspot.self_heal import (
     CommandResult,
     CommandRunner,
-    HealStateStore,
-    _ensure_ap_connection,
-    collect_health,
     run_self_heal_once,
 )
 from vibesensor.app.settings import APConfig, APSelfHealConfig
@@ -186,6 +186,23 @@ def _collect_health_for(
     return collect_health(ap, ap.self_heal, runner)
 
 
+def _healthy_state() -> HealthState:
+    return HealthState(
+        nm_running=True,
+        wifi_radio_on=True,
+        rfkill_blocked=False,
+        iface_exists=True,
+        iface_up=True,
+        ap_conn_exists=True,
+        ap_conn_active=True,
+        ap_mode=True,
+        ip_ok=True,
+        dhcp_ok=True,
+        channel="7",
+        last_error_category="none",
+    )
+
+
 @pytest.mark.parametrize(
     ("overrides", "attr", "expected", "issue"),
     [
@@ -296,6 +313,22 @@ def test_run_self_heal_restarts_networkmanager_when_stopped(tmp_path: Path) -> N
     )
 
     assert result == 0
+    assert ("systemctl", "restart", "NetworkManager") in runner.commands
+
+
+def test_apply_heals_restarts_networkmanager_when_stopped(tmp_path: Path) -> None:
+    ap = _ap_cfg(tmp_path)
+    runner = _FakeRunner({("systemctl", "restart", "NetworkManager"): [_ok("")]})
+    store = HealStateStore(ap.self_heal.state_file)
+    health = _healthy_state()
+    health.nm_running = False
+    health.last_error_category = "networkmanager_down"
+    health.issues = ["networkmanager_down"]
+
+    actions = apply_heals(ap, ap.self_heal, health, runner, store)
+
+    assert [action.name for action in actions] == ["restart_networkmanager"]
+    assert actions[0].action == "systemctl restart NetworkManager"
     assert ("systemctl", "restart", "NetworkManager") in runner.commands
 
 
