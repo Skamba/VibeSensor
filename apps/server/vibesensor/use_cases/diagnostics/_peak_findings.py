@@ -9,16 +9,14 @@ from vibesensor.shared.constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF
 
 from ._types import PhaseLabels, Sample
 from .helpers import _run_noise_baseline_g
-from .peak_binning import (
-    PERSISTENT_PEAK_MAX_FINDINGS,
-    PeakBin,
-    _accumulate_peak_bin_stats,
-    _PeakBinStats,
-)
+from .peak_accumulation import PeakBinStats, accumulate_peak_bin_stats
+from .peak_finding_builder import assemble_peak_finding
+from .peak_scoring import PeakBin
 from .phase_segmentation import DrivingPhase, diagnostic_sample_mask, segment_run_phases
 
+PERSISTENT_PEAK_MAX_FINDINGS = 3
+
 __all__ = [
-    "PeakBin",
     "PeakFindingAnalyzer",
     "_build_persistent_peak_findings",
     "collect_order_frequencies",
@@ -126,7 +124,7 @@ class PeakFindingAnalyzer:
         has_phases = self._per_sample_phases is not None and len(self._per_sample_phases) == len(
             self._samples
         )
-        stats = _accumulate_peak_bin_stats(
+        stats = accumulate_peak_bin_stats(
             self._samples,
             freq_bin_hz=freq_bin_hz,
             freq_bin_hz_half=freq_bin_hz * 0.5,
@@ -144,16 +142,14 @@ class PeakFindingAnalyzer:
         bins = self._score_bins(
             stats,
             run_noise_baseline_g=run_noise_baseline_g,
-            has_phases=has_phases,
         )
         return self._select_top_findings(bins, n_samples=stats.n_samples)
 
     def _score_bins(
         self,
-        stats: _PeakBinStats,
+        stats: PeakBinStats,
         *,
         run_noise_baseline_g: float | None,
-        has_phases: bool,
     ) -> list[PeakBin]:
         bins: list[PeakBin] = []
         for bin_center, amps in stats.bin_amps.items():
@@ -173,7 +169,6 @@ class PeakFindingAnalyzer:
                     total_location_sample_counts=stats.total_location_sample_counts,
                     total_speed_bin_counts=stats.total_speed_bin_counts,
                     run_noise_baseline_g=run_noise_baseline_g,
-                    has_phases=has_phases,
                 ),
             )
         return bins
@@ -191,8 +186,8 @@ class PeakFindingAnalyzer:
         transient.sort(key=lambda item: item[0], reverse=True)
 
         results: list[DomainFinding] = []
-        for _score, peak_bin in persistent[:PERSISTENT_PEAK_MAX_FINDINGS]:
-            results.append(peak_bin.to_finding())
-        for _score, peak_bin in transient[:PERSISTENT_PEAK_MAX_FINDINGS]:
-            results.append(peak_bin.to_finding())
+        for _, peak_bin in persistent[:PERSISTENT_PEAK_MAX_FINDINGS]:
+            results.append(assemble_peak_finding(peak_bin))
+        for _, peak_bin in transient[:PERSISTENT_PEAK_MAX_FINDINGS]:
+            results.append(assemble_peak_finding(peak_bin))
         return results

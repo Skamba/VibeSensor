@@ -12,7 +12,7 @@ from test_support import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.use_cases.diagnostics.peak_binning import _classify_peak_type
+from vibesensor.use_cases.diagnostics.peak_classification import classify_peak_type
 
 
 class TestSpeedBandAttribution:
@@ -162,15 +162,15 @@ class TestConfidenceWithSpatialAmbiguity:
 
 class TestTransientDeWeighting:
     def test_transient_classified_correctly(self) -> None:
-        assert _classify_peak_type(0.10, 8.0) == "transient"
-        assert _classify_peak_type(0.05, 2.0) == "transient"
+        assert classify_peak_type(0.10, 8.0) == "transient"
+        assert classify_peak_type(0.05, 2.0) == "transient"
 
     def test_patterned_classified_correctly(self) -> None:
-        assert _classify_peak_type(0.50, 2.0) == "patterned"
-        assert _classify_peak_type(0.80, 1.5) == "patterned"
+        assert classify_peak_type(0.50, 2.0) == "patterned"
+        assert classify_peak_type(0.80, 1.5) == "patterned"
 
     def test_baseline_noise_classified(self) -> None:
-        assert _classify_peak_type(0.60, 1.5, snr=1.0) == "baseline_noise"
+        assert classify_peak_type(0.60, 1.5, snr=1.0) == "baseline_noise"
 
 
 class TestLocalizationStability:

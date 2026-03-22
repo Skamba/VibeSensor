@@ -34,7 +34,6 @@ from vibesensor.use_cases.diagnostics.order_match_rate import _compute_effective
 from vibesensor.use_cases.diagnostics.order_statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
-from vibesensor.use_cases.diagnostics.peak_binning import _classify_peak_type
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 from vibesensor.use_cases.diagnostics.signal_aggregation import (
     _phase_speed_breakdown,
@@ -57,6 +56,7 @@ def test_findings_module_no_longer_reexports_helper_names() -> None:
         "_speed_breakdown",
         "_phase_to_str",
         "_speed_profile_from_points",
+        "PeakBin",
     )
 
     for helper_name in helper_names:
@@ -164,42 +164,6 @@ class TestSharedConstants:
         assert CONFIDENCE_FLOOR < CONFIDENCE_CEILING
         assert CONFIDENCE_FLOOR >= 0.0
         assert CONFIDENCE_CEILING <= 1.0
-
-
-# -- classify_peak_type tests -------------------------------------------------
-
-
-class TestClassifyPeakType:
-    """Test _classify_peak_type classification logic."""
-
-    @pytest.mark.parametrize(
-        ("presence_ratio", "burstiness", "snr", "spatial_uniformity", "expected"),
-        [
-            (0.5, 2.0, 1.0, None, "baseline_noise"),
-            (0.05, 2.0, 5.0, None, "transient"),
-            (0.30, 6.0, 5.0, None, "transient"),
-            (0.50, 2.0, 5.0, None, "patterned"),
-            (0.25, 3.5, 5.0, None, "persistent"),
-            (0.70, 1.5, 5.0, 0.90, "baseline_noise"),
-        ],
-    )
-    def test_classification_cases(
-        self,
-        presence_ratio: float,
-        burstiness: float,
-        snr: float,
-        spatial_uniformity: float | None,
-        expected: str,
-    ) -> None:
-        assert (
-            _classify_peak_type(
-                presence_ratio,
-                burstiness,
-                snr=snr,
-                spatial_uniformity=spatial_uniformity,
-            )
-            == expected
-        )
 
 
 # -- order_findings tests -----------------------------------------------------

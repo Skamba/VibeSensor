@@ -4,7 +4,7 @@ import pytest
 from _report_persistence_helpers import build_findings, findings_at_freq, uniform_samples
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
-from vibesensor.use_cases.diagnostics.peak_binning import _classify_peak_type
+from vibesensor.use_cases.diagnostics.peak_classification import classify_peak_type
 from vibesensor.use_cases.diagnostics.peak_table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
@@ -30,7 +30,7 @@ class TestClassifyPeakType:
         ],
     )
     def test_classification(self, presence_ratio: float, burstiness: float, expected: str) -> None:
-        assert _classify_peak_type(presence_ratio=presence_ratio, burstiness=burstiness) == expected
+        assert classify_peak_type(presence_ratio=presence_ratio, burstiness=burstiness) == expected
 
 
 class TestAggregateFFTSpectrum:

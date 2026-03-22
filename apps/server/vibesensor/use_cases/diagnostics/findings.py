@@ -7,7 +7,6 @@ from vibesensor.shared.types.json_types import JsonObject
 
 from . import _reference_findings
 from ._peak_findings import (
-    PeakBin,
     PeakFindingAnalyzer,
     _build_persistent_peak_findings,
     collect_order_frequencies,
@@ -18,7 +17,6 @@ from .helpers import _locations_connected_throughout_run, _tire_reference_from_m
 from .order_pipeline import _build_order_findings
 
 __all__ = [
-    "PeakBin",
     "PeakFindingAnalyzer",
     "collect_order_frequencies",
     "finalize_findings",

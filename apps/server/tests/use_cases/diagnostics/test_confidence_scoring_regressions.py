@@ -180,7 +180,7 @@ class TestPersistentPeakNegligibleCapAligned:
         that a weak order finding at ~0.37 confidence always suppresses
         persistent peaks at the same frequency.
         """
-        from vibesensor.use_cases.diagnostics.peak_binning import PeakBin
+        from vibesensor.use_cases.diagnostics.peak_scoring import PeakBin
 
         # Build a PeakBin with high presence (patterned), low burstiness,
         # decent SNR so it classifies as patterned, but low enough absolute
@@ -200,7 +200,6 @@ class TestPersistentPeakNegligibleCapAligned:
             total_location_sample_counts={"front_left": 50},
             total_speed_bin_counts={"60-80": 50},
             run_noise_baseline_g=0.001,
-            has_phases=False,
         )
         # Must be a persistent or patterned type for the cap to apply
         assert peak_bin.peak_type in ("persistent", "patterned"), (
