@@ -13,22 +13,22 @@ from vibesensor.infra.config.settings_store import (
 )
 from vibesensor.shared.types.backend_types import (
     SensorConfig,
+    SettingsSnapshotPayload,
     _parse_manual_speed,
     car_to_persistence_dict,
 )
-from vibesensor.shared.types.json_types import JsonObject
 
 DEFAULT_CAR_ASPECTS = AnalysisSettingsSnapshot.DEFAULTS
 
 
 class FakeSettingsSnapshotStore:
-    def __init__(self, snapshot: JsonObject | None = None) -> None:
+    def __init__(self, snapshot: SettingsSnapshotPayload | None = None) -> None:
         self.snapshot = snapshot
 
-    def get_settings_snapshot(self) -> JsonObject | None:
+    def get_settings_snapshot(self) -> SettingsSnapshotPayload | None:
         return self.snapshot
 
-    def set_settings_snapshot(self, snapshot: JsonObject) -> None:
+    def set_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None:
         self.snapshot = snapshot
 
 
@@ -63,6 +63,18 @@ def _sabotaged_store(tmp_path: Path) -> SettingsStore:
 
     db.set_settings_snapshot = _boom
     return store
+
+
+def _write_raw_settings_snapshot(db: HistoryDB, value_json: str) -> None:
+    from vibesensor.shared.time_utils import utc_now_iso
+
+    with db._cursor() as cur:
+        cur.execute(
+            "INSERT INTO settings_snapshot (id, value_json, updated_at) VALUES (1, ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET value_json = excluded.value_json, "
+            "updated_at = excluded.updated_at",
+            (value_json, utc_now_iso()),
+        )
 
 
 # -- _validate_car -------------------------------------------------------------
@@ -358,14 +370,7 @@ def test_store_language_roundtrip() -> None:
 
 def test_store_corrupted_snapshot_falls_back_to_defaults(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    # Write invalid JSON directly into the settings_snapshot table
-    from vibesensor.shared.time_utils import utc_now_iso
-
-    with db._cursor() as cur:
-        cur.execute(
-            "INSERT INTO settings_snapshot (id, value_json, updated_at) VALUES (1, ?, ?)",
-            ("not-valid-json{{{", utc_now_iso()),
-        )
+    _write_raw_settings_snapshot(db, "not-valid-json{{{")
     store = SettingsStore(db=db)
     snap = store.snapshot()
     assert snap["cars"] == []
@@ -375,7 +380,7 @@ def test_store_corrupted_snapshot_falls_back_to_defaults(tmp_path: Path) -> None
 
 def test_store_snapshot_with_empty_cars_stays_empty(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.set_settings_snapshot({"cars": [], "activeCarId": ""})
+    _write_raw_settings_snapshot(db, '{"cars": [], "activeCarId": ""}')
     store = SettingsStore(db=db)
     snap = store.snapshot()
     assert snap["cars"] == []
@@ -384,11 +389,12 @@ def test_store_snapshot_with_empty_cars_stays_empty(tmp_path: Path) -> None:
 
 def test_store_invalid_persisted_active_car_id_clears_selection(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.set_settings_snapshot(
-        {
-            "cars": [{"id": "car-1", "name": "Only", "type": "sedan", "aspects": {}}],
-            "activeCarId": "missing-car",
-        },
+    _write_raw_settings_snapshot(
+        db,
+        (
+            '{"cars": [{"id": "car-1", "name": "Only", "type": "sedan", "aspects": {}}], '
+            '"activeCarId": "missing-car"}'
+        ),
     )
     store = SettingsStore(db=db)
     snap = store.snapshot()
@@ -453,7 +459,7 @@ def test_store_speed_unit_roundtrip(tmp_path: Path) -> None:
 
 def test_store_load_normalizes_language_and_speed_unit(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.set_settings_snapshot({"language": " NL ", "speedUnit": " MPS "})
+    _write_raw_settings_snapshot(db, '{"language": " NL ", "speedUnit": " MPS "}')
     store = SettingsStore(db=db)
     assert store.language == "nl"
     assert store.speed_unit == "mps"
@@ -462,7 +468,7 @@ def test_store_load_normalizes_language_and_speed_unit(tmp_path: Path) -> None:
 def test_store_load_whitespace_only_language_and_speed_unit_defaults(tmp_path: Path) -> None:
     """Whitespace-only persisted values should fall back to defaults on load."""
     db = HistoryDB(tmp_path / "history.db")
-    db.set_settings_snapshot({"language": "   ", "speedUnit": "   "})
+    _write_raw_settings_snapshot(db, '{"language": "   ", "speedUnit": "   "}')
     store = SettingsStore(db=db)
     assert store.language == "en"
     assert store.speed_unit == "kmh"
