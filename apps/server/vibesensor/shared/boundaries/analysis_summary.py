@@ -25,6 +25,7 @@ from vibesensor.shared.boundaries.summary_serialization import (
     build_summary_payload,
     serialize_plot_data,
 )
+from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
 from vibesensor.shared.run_context import build_summary_warnings
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.json_types import JsonObject
@@ -104,9 +105,11 @@ def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
         accel_stats=result.accel_stats,
         amp_metric_values=_amp_metric_values(result.accel_stats),
     )
-    summary["warnings"] = build_summary_warnings(
-        result.metadata,
-        reference_complete=result.reference_complete,
+    summary["warnings"] = summary_warning_payloads(
+        build_summary_warnings(
+            result.metadata,
+            reference_complete=result.reference_complete,
+        )
     )
     summary["report_date"] = result.metadata.get("end_time_utc") or utc_now_iso()
     summary["plots"] = serialize_plot_data(result.plot_data)

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from typing import cast
+from dataclasses import dataclass
+from typing import Literal, cast
 
 from vibesensor.domain import (
     AnalysisSettingsSnapshot,
@@ -12,14 +13,24 @@ from vibesensor.domain import (
     OrderReferenceSpec,
     RunContextSnapshot,
 )
-from vibesensor.report_i18n import tr as _tr
-from vibesensor.shared.boundaries.analysis_payload import SummaryWarningPayload
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 
 WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE = "reference_context_incomplete"
 WARNING_CODE_CAR_SETTINGS_CHANGED = "car_settings_changed"
+WarningSeverity = Literal["warn", "error"]
+
+
+@dataclass(frozen=True, slots=True)
+class RunContextWarning:
+    """App-level warning model shared by diagnostics and history workflows."""
+
+    code: str
+    severity: WarningSeverity
+    applies_to: str
+    title: JsonValue
+    detail: JsonValue | None = None
 
 
 def build_run_context_snapshot(
@@ -76,60 +87,39 @@ def build_summary_warnings(
     metadata: Mapping[str, object],
     *,
     reference_complete: bool,
-) -> list[SummaryWarningPayload]:
+) -> list[RunContextWarning]:
     """Build language-neutral trust warnings stored with the analysis summary."""
-    warnings: list[SummaryWarningPayload] = []
+    warnings: list[RunContextWarning] = []
     if not reference_complete or bool(metadata.get("incomplete_for_order_analysis")):
         warnings.append(
-            {
-                "code": WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
-                "severity": "warn",
-                "applies_to": "order_analysis",
-                "title": i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"),
-                "detail": i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"),
-            },
+            RunContextWarning(
+                code=WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
+                severity="warn",
+                applies_to="order_analysis",
+                title=i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"),
+                detail=i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"),
+            )
         )
     return warnings
 
 
 def add_current_context_warnings(
-    summary: Mapping[str, JsonValue],
-    *,
-    current_active_car_snapshot: CarSnapshot | None,
-) -> JsonObject:
-    """Return a summary copy enriched with dynamic current-context warnings."""
-    enriched = dict(summary)
-    warnings = _normalized_warning_list(enriched.get("warnings"))
-    dynamic_warning = _build_car_settings_changed_warning(
-        enriched.get("metadata"),
-        current_active_car_snapshot=current_active_car_snapshot,
-    )
-    if dynamic_warning is not None and dynamic_warning["code"] not in {
-        str(item.get("code") or "") for item in warnings
-    }:
-        warnings.append(dynamic_warning)
-    enriched["warnings"] = list(warnings)
-    return enriched
-
-
-def localize_warning_list(
     warnings: object,
     *,
-    lang: str,
-) -> list[JsonObject]:
-    """Resolve language-neutral warning entries into response-ready text."""
-    localized: list[JsonObject] = []
-    for warning in _normalized_warning_list(warnings):
-        localized.append(
-            {
-                "code": str(warning.get("code") or ""),
-                "severity": str(warning.get("severity") or "warn"),
-                "applies_to": str(warning.get("applies_to") or "order_analysis"),
-                "title": _resolve_i18n(lang, warning.get("title")),
-                "detail": _resolve_optional_i18n(lang, warning.get("detail")),
-            },
-        )
-    return localized
+    metadata: object,
+    current_active_car_snapshot: CarSnapshot | None,
+) -> list[RunContextWarning]:
+    """Return warning models enriched with any current-context warning."""
+    normalized = normalize_run_context_warnings(warnings)
+    dynamic_warning = _build_car_settings_changed_warning(
+        metadata,
+        current_active_car_snapshot=current_active_car_snapshot,
+    )
+    if dynamic_warning is not None and dynamic_warning.code not in {
+        warning.code for warning in normalized
+    }:
+        normalized.append(dynamic_warning)
+    return normalized
 
 
 def current_car_snapshot_token(current_active_car_snapshot: CarSnapshot | None) -> str:
@@ -146,7 +136,7 @@ def _build_car_settings_changed_warning(
     metadata: object,
     *,
     current_active_car_snapshot: CarSnapshot | None,
-) -> JsonObject | None:
+) -> RunContextWarning | None:
     if not is_json_object(metadata) or current_active_car_snapshot is None:
         return None
     recorded_snapshot = metadata.get("active_car_snapshot")
@@ -155,23 +145,39 @@ def _build_car_settings_changed_warning(
     current_dict = current_active_car_snapshot.to_dict()
     if _normalized_aspects(recorded_snapshot) == _normalized_aspects(current_dict):
         return None
-    return {
-        "code": WARNING_CODE_CAR_SETTINGS_CHANGED,
-        "severity": "warn",
-        "applies_to": "order_analysis",
-        "title": i18n_ref("RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_TITLE"),
-        "detail": i18n_ref(
+    return RunContextWarning(
+        code=WARNING_CODE_CAR_SETTINGS_CHANGED,
+        severity="warn",
+        applies_to="order_analysis",
+        title=i18n_ref("RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_TITLE"),
+        detail=i18n_ref(
             "RUN_CONTEXT_WARNING_CAR_SETTINGS_CHANGED_DETAIL",
             run_car=_car_label(recorded_snapshot),
             current_car=_car_label(current_dict),
         ),
-    }
+    )
 
 
-def _normalized_warning_list(warnings: object) -> list[JsonObject]:
+def normalize_run_context_warnings(warnings: object) -> list[RunContextWarning]:
     if not isinstance(warnings, list):
         return []
-    return [warning for warning in warnings if is_json_object(warning)]
+    normalized: list[RunContextWarning] = []
+    for warning in warnings:
+        if isinstance(warning, RunContextWarning):
+            normalized.append(warning)
+            continue
+        if not is_json_object(warning):
+            continue
+        normalized.append(
+            RunContextWarning(
+                code=str(warning.get("code") or ""),
+                severity=cast(WarningSeverity, str(warning.get("severity") or "warn")),
+                applies_to=str(warning.get("applies_to") or "order_analysis"),
+                title=warning.get("title"),
+                detail=warning.get("detail"),
+            )
+        )
+    return normalized
 
 
 def _normalized_aspects(snapshot: Mapping[str, object]) -> tuple[tuple[str, float], ...]:
@@ -196,16 +202,3 @@ def _car_label(snapshot: Mapping[str, object]) -> str:
     if car_type:
         return car_type
     return "captured vehicle profile"
-
-
-def _resolve_optional_i18n(lang: str, value: object) -> str | None:
-    resolved = _resolve_i18n(lang, value).strip()
-    return resolved or None
-
-
-def _resolve_i18n(lang: str, value: object) -> str:
-    from functools import partial
-
-    from vibesensor.report_i18n import resolve_i18n
-
-    return resolve_i18n(lang, value, tr=partial(_tr, lang))
