@@ -331,7 +331,11 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
 
     from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
 
-    monkeypatch.setattr(_test_plan_module, "_location_speedbin_summary", _fake_location_summary)
+    monkeypatch.setattr(
+        _test_plan_module,
+        "summarize_order_match_locations",
+        _fake_location_summary,
+    )
 
     samples = []
     for idx in range(30):

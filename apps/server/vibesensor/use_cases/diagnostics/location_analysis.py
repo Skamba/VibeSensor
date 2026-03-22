@@ -203,7 +203,7 @@ def _score_locations_in_bin(
     )
 
 
-def _location_speedbin_summary(
+def summarize_order_match_locations(
     matches: list[OrderMatchObservation],
     lang: str,
     relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
