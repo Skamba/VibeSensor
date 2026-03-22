@@ -88,7 +88,7 @@ class TestUpdateManager:
         await cancel_task(manager)
 
     @pytest.mark.asyncio
-    async def test_status_to_dict_never_leaks_password(self) -> None:
+    async def test_status_to_payload_never_leaks_password(self) -> None:
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
         manager = UpdateManager(runner=runner, repo_path="/tmp/fakerepo")
@@ -96,7 +96,7 @@ class TestUpdateManager:
         with patch("shutil.which", mock_which):
             manager.start("TestNet", "supersecret")
 
-        assert "supersecret" not in str(manager.status.to_dict())
+        assert "supersecret" not in str(manager.status.to_payload())
         await cancel_task(manager)
 
     @pytest.mark.asyncio
