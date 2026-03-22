@@ -256,11 +256,6 @@
           0.809,
           0.673
         ]
-      },
-      {
-        "name": "6-speed Steptronic (225xe iPerformance)",
-        "final_drive_ratio": 3.944,
-        "top_gear_ratio": 0.672
       }
     ],
     "tire_options": [
@@ -295,12 +290,26 @@
       {
         "name": "220i",
         "engine": "B48 2.0L I4 Turbo",
-        "drivetrain": "FWD"
+        "drivetrain": "FWD",
+        "gearboxes": [
+          {
+            "name": "7-speed Steptronic dual-clutch transmission",
+            "final_drive_ratio": 3.231,
+            "top_gear_ratio": 0.698
+          }
+        ]
       },
       {
         "name": "225xe",
         "engine": "B38 1.5L I3 Turbo PHEV",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "6-speed Steptronic (225xe iPerformance)",
+            "final_drive_ratio": 3.944,
+            "top_gear_ratio": 0.672
+          }
+        ]
       },
       {
         "name": "216i",
@@ -653,9 +662,14 @@
         "drivetrain": "RWD"
       },
       {
-        "name": "430i",
+        "name": "430i xDrive",
         "engine": "B48 2.0L I4 Turbo",
-        "drivetrain": "RWD"
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "M440i xDrive",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "AWD"
       }
     ]
   },
@@ -856,12 +870,26 @@
       {
         "name": "i5 eDrive40",
         "engine": "Electric Single Motor",
-        "drivetrain": "RWD"
+        "drivetrain": "RWD",
+        "gearboxes": [
+          {
+            "name": "Single-speed fixed gear (EV)",
+            "final_drive_ratio": 11.115,
+            "top_gear_ratio": 1.0
+          }
+        ]
       },
       {
         "name": "i5 M60 xDrive",
         "engine": "Electric Dual Motor",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "Single-speed fixed gear (EV)",
+            "final_drive_ratio": 9.374,
+            "top_gear_ratio": 1.0
+          }
+        ]
       }
     ]
   },
@@ -1244,24 +1272,43 @@
     "rim_in": 20.0,
     "variants": [
       {
-        "name": "740i",
-        "engine": "B58 3.0L I6 Turbo",
-        "drivetrain": "RWD"
+        "name": "740d xDrive",
+        "engine": "B57 3.0L I6 Diesel",
+        "drivetrain": "AWD"
       },
       {
-        "name": "760i xDrive",
-        "engine": "N63 4.4L V8 Turbo",
+        "name": "750e xDrive",
+        "engine": "B58 3.0L I6 Turbo PHEV",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "M760e xDrive",
+        "engine": "B58 3.0L I6 Turbo PHEV",
         "drivetrain": "AWD"
       },
       {
         "name": "i7 eDrive50",
         "engine": "Electric Single Motor",
-        "drivetrain": "RWD"
+        "drivetrain": "RWD",
+        "gearboxes": [
+          {
+            "name": "Single-speed fixed gear (EV)",
+            "final_drive_ratio": 11.1,
+            "top_gear_ratio": 1.0
+          }
+        ]
       },
       {
         "name": "i7 M70 xDrive",
         "engine": "Electric Dual Motor",
-        "drivetrain": "AWD"
+        "drivetrain": "AWD",
+        "gearboxes": [
+          {
+            "name": "Single-speed fixed gear (EV)",
+            "final_drive_ratio": 11.1,
+            "top_gear_ratio": 1.0
+          }
+        ]
       }
     ]
   },
