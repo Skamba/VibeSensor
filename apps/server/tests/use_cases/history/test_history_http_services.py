@@ -154,6 +154,39 @@ async def test_projected_run_service_projects_persisted_summary_through_domain()
     assert "_internal" not in analysis
 
 
+@pytest.mark.asyncio
+async def test_projected_run_service_drops_persisted_origin_without_primary_finding() -> None:
+    service = ProjectedHistoryRunService(
+        HistoryRunService(
+            _HistoryDbStub(
+                run={
+                    "run_id": "run-1",
+                    "status": "complete",
+                    "analysis": {
+                        "lang": "en",
+                        "findings": [],
+                        "top_causes": [],
+                        "test_plan": [],
+                        "run_suitability": [],
+                        "most_likely_origin": {
+                            "location": "rear left",
+                            "suspected_source": "wheel/tire",
+                            "weak_spatial_separation": True,
+                        },
+                        "_internal": {"secret": True},
+                    },
+                },
+            ),
+        )
+    )
+
+    run = await service.get_run("run-1")
+
+    analysis = run["analysis"]
+    assert analysis["most_likely_origin"] == {}
+    assert "_internal" not in analysis
+
+
 def test_build_run_details_json_strips_internal_analysis_fields() -> None:
     payload = json.loads(
         build_run_details_json(
