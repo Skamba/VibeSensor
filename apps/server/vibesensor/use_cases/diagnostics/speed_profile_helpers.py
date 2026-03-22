@@ -14,7 +14,11 @@ from vibesensor.shared.constants import (
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.statistics_utils import _mean_variance
-from vibesensor.use_cases.diagnostics._types import PhaseLabel, Sample
+from vibesensor.use_cases.diagnostics._types import (
+    AnalysisSampleInput,
+    PhaseLabel,
+    ensure_analysis_sample,
+)
 from vibesensor.use_cases.diagnostics.math_utils import _weighted_percentile
 
 
@@ -61,16 +65,17 @@ def _speed_stats(speed_values: list[float]) -> SpeedProfileSummary:
 
 
 def _speed_stats_by_phase(
-    samples: list[Sample],
+    samples: Sequence[AnalysisSampleInput],
     per_sample_phases: Sequence[PhaseLabel],
 ) -> dict[str, SpeedProfileSummary]:
     """Compute speed statistics broken down by driving phase."""
     phase_speeds: dict[str, list[float]] = defaultdict(list)
     phase_sample_counts: dict[str, int] = defaultdict(int)
-    for sample, phase in zip(samples, per_sample_phases, strict=True):
+    for raw_sample, phase in zip(samples, per_sample_phases, strict=True):
+        sample = ensure_analysis_sample(raw_sample)
         phase_key = str(phase)
         phase_sample_counts[phase_key] += 1
-        speed = _as_float(sample.get("speed_kmh"))
+        speed = sample.speed_kmh
         if speed is not None and speed > 0:
             phase_speeds[phase_key].append(speed)
     result: dict[str, SpeedProfileSummary] = {}

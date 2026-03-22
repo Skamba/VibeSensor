@@ -11,9 +11,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vibesensor.domain import Finding as DomainFinding
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._types import (
     AmpVsPhaseRowData,
+    AnalysisSampleInput,
     FreqVsSpeedByFindingSeriesData,
     MatchedAmpVsSpeedSeriesData,
     PhaseBoundaryData,
@@ -23,6 +23,7 @@ from vibesensor.use_cases.diagnostics._types import (
     PlotSeriesBundle,
     Sample,
     SpeedBreakdownRowData,
+    ensure_analysis_samples,
 )
 from vibesensor.use_cases.diagnostics.helpers import (
     _primary_vibration_strength_db,
@@ -69,9 +70,7 @@ def build_plot_series(
     freq_vs_speed_by_finding: list[FreqVsSpeedByFindingSeriesData] = []
 
     for i, sample in enumerate(samples):
-        if not isinstance(sample, dict):
-            continue
-        t_s = _as_float(sample.get("t_s"))
+        t_s = sample.t_s
         if t_s is None:
             continue
         phase_label = per_sample_phases[i].value if i < len(per_sample_phases) else "unknown"
@@ -79,7 +78,7 @@ def build_plot_series(
         if vib is not None:
             vib_mag_points.append((t_s, vib, phase_label))
         if raw_sample_rate_hz and raw_sample_rate_hz > 0:
-            dominant_hz = _as_float(sample.get("dominant_freq_hz"))
+            dominant_hz = sample.dominant_freq_hz
             if dominant_hz is not None and dominant_hz > 0:
                 dominant_freq_points.append((t_s, dominant_hz))
 
@@ -227,7 +226,7 @@ def serialize_phase_context(
 
 def _plot_data(
     *,
-    samples: list[Sample],
+    samples: Sequence[AnalysisSampleInput],
     speed_breakdown: list[SpeedBreakdownRowData],
     phase_speed_breakdown: list[PhaseSpeedBreakdownRowData],
     findings: Sequence[DomainFinding],
@@ -237,18 +236,19 @@ def _plot_data(
     per_sample_phases: list[DrivingPhase] | None = None,
     phase_segments: list[PhaseSegment] | None = None,
 ) -> PlotDataResultData:
+    typed_samples = ensure_analysis_samples(samples)
     if run_noise_baseline_g is None:
-        run_noise_baseline_g = _run_noise_baseline_g(samples)
+        run_noise_baseline_g = _run_noise_baseline_g(typed_samples)
 
     if per_sample_phases is not None and phase_segments is not None:
         resolved_phases = per_sample_phases
         resolved_phase_segments = phase_segments
     else:
-        resolved_phases, resolved_phase_segments = _segment_run_phases(samples)
+        resolved_phases, resolved_phase_segments = _segment_run_phases(typed_samples)
 
-    peak_scan = scan_peak_samples(samples)
+    peak_scan = scan_peak_samples(typed_samples)
     series = build_plot_series(
-        samples=samples,
+        samples=typed_samples,
         speed_breakdown=speed_breakdown,
         phase_speed_breakdown=phase_speed_breakdown,
         findings=findings,
@@ -259,7 +259,7 @@ def _plot_data(
     )
     peaks_table = annotate_peak_rows_with_order_labels(
         top_peaks_table_rows(
-            samples,
+            samples=typed_samples,
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=peak_scan,
         ),
@@ -274,22 +274,22 @@ def _plot_data(
         freq_vs_speed_by_finding=series.freq_vs_speed_by_finding,
         steady_speed_distribution=series.steady_speed_distribution,
         fft_spectrum=aggregate_fft_spectrum(
-            samples,
+            typed_samples,
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=peak_scan,
         ),
         fft_spectrum_raw=aggregate_fft_spectrum_raw(
-            samples,
+            typed_samples,
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=peak_scan,
         ),
         peaks_spectrogram=spectrogram_from_peaks(
-            samples,
+            typed_samples,
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=peak_scan,
         ),
         peaks_spectrogram_raw=spectrogram_from_peaks_raw(
-            samples,
+            typed_samples,
             run_noise_baseline_g=run_noise_baseline_g,
             peak_scan=peak_scan,
         ),

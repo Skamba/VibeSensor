@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path
 
 from vibesensor.domain import OrderReferenceSpec, TireSpec
@@ -16,16 +17,21 @@ from vibesensor.shared.constants import (
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.locations import label_for_code as _label_for_code
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.diagnostics._types import Sample
+from vibesensor.use_cases.diagnostics._types import (
+    AnalysisSampleInput,
+    Sample,
+    ensure_analysis_sample,
+)
 from vibesensor.vibration_strength import percentile
 
 
-def _validate_required_strength_metrics(samples: list[Sample]) -> None:
-    if not samples:
+def _validate_required_strength_metrics(samples: Sequence[AnalysisSampleInput]) -> None:
+    typed_samples = [ensure_analysis_sample(sample) for sample in samples]
+    if not typed_samples:
         return
     first_bad_idx: int | None = None
-    for idx, sample in enumerate(samples):
-        if _as_float(sample.get("vibration_strength_db")) is not None:
+    for idx, sample in enumerate(typed_samples):
+        if sample.vibration_strength_db is not None:
             return  # at least one valid sample → OK
         if first_bad_idx is None:
             first_bad_idx = idx
@@ -76,28 +82,29 @@ def _order_reference_spec_from_context(
 ) -> OrderReferenceSpec | None:
     settings: dict[str, object] = dict(metadata)
     if sample is not None:
-        if (final_drive_ratio := _as_float(sample.get("final_drive_ratio"))) is not None:
+        if (final_drive_ratio := sample.final_drive_ratio) is not None:
             settings["final_drive_ratio"] = final_drive_ratio
-        if (gear_ratio := _as_float(sample.get("gear"))) is not None:
+        if (gear_ratio := sample.gear) is not None:
             settings["current_gear_ratio"] = gear_ratio
     return OrderReferenceSpec.from_settings(settings)
 
 
 def _effective_engine_rpm(
-    sample: Sample,
+    sample: AnalysisSampleInput,
     metadata: JsonObject,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
-    measured = _as_float(sample.get("engine_rpm"))
+    typed_sample = ensure_analysis_sample(sample)
+    measured = typed_sample.engine_rpm
     if measured is not None and measured > 0:
-        return measured, str(sample.get("engine_rpm_source") or "measured")
+        return measured, typed_sample.engine_rpm_source or "measured"
 
-    estimated_in_sample = _as_float(sample.get("engine_rpm_estimated"))
+    estimated_in_sample = typed_sample.engine_rpm_estimated
     if estimated_in_sample is not None and estimated_in_sample > 0:
         return estimated_in_sample, "estimated_from_speed_and_ratios"
 
-    speed_kmh = _as_float(sample.get("speed_kmh"))
-    spec = _order_reference_spec_from_context(metadata, sample)
+    speed_kmh = typed_sample.speed_kmh
+    spec = _order_reference_spec_from_context(metadata, typed_sample)
     if (
         speed_kmh is not None
         and speed_kmh > 0
@@ -108,10 +115,10 @@ def _effective_engine_rpm(
         if rpm is not None and rpm > 0:
             return rpm, "estimated_from_speed_and_ratios"
 
-    final_drive_ratio = _as_float(sample.get("final_drive_ratio")) or _as_float(
+    final_drive_ratio = typed_sample.final_drive_ratio or _as_float(
         metadata.get("final_drive_ratio"),
     )
-    gear_val = _as_float(sample.get("gear"))
+    gear_val = typed_sample.gear
     gear_ratio = gear_val if gear_val is not None else _as_float(metadata.get("current_gear_ratio"))
     if (
         speed_kmh is None
@@ -140,31 +147,29 @@ def _load_run(path: Path) -> tuple[JsonObject, list[JsonObject], list[str]]:
 
 
 def _primary_vibration_strength_db(sample: Sample) -> float | None:
-    value = _as_float(sample.get("vibration_strength_db"))
+    typed_sample = ensure_analysis_sample(sample)
+    value = typed_sample.vibration_strength_db
     return float(value) if value is not None else None
 
 
-def _sample_top_peaks(sample: Sample) -> list[tuple[float, float]]:
-    top_peaks = sample.get("top_peaks")
+def _sample_top_peaks(sample: AnalysisSampleInput) -> list[tuple[float, float]]:
+    typed_sample = ensure_analysis_sample(sample)
     out: list[tuple[float, float]] = []
-    if isinstance(top_peaks, list):
-        for peak in top_peaks[:8]:
-            if not isinstance(peak, dict):
-                continue
-            hz = _as_float(peak.get("hz"))
-            amp = _as_float(peak.get("amp"))
-            if hz is None or amp is None or hz <= 0:
-                continue
-            # Defence-in-depth: skip sub-road-resonance frequencies that may
-            # exist in old recorded run data (new data is filtered at the FFT
-            # level via ``spectrum_min_hz``).
-            if hz < MIN_ANALYSIS_FREQ_HZ:
-                continue
-            out.append((hz, amp))
+    for peak in typed_sample.top_peaks[:8]:
+        hz = peak.hz
+        amp = peak.amp
+        if hz <= 0 or amp <= 0:
+            continue
+        # Defence-in-depth: skip sub-road-resonance frequencies that may
+        # exist in old recorded run data (new data is filtered at the FFT
+        # level via ``spectrum_min_hz``).
+        if hz < MIN_ANALYSIS_FREQ_HZ:
+            continue
+        out.append((hz, amp))
     return out
 
 
-def _estimate_strength_floor_amp_g(sample: Sample) -> float | None:
+def _estimate_strength_floor_amp_g(sample: AnalysisSampleInput) -> float | None:
     """Estimate per-sample floor amplitude.
 
     Policy: accept strictly positive ``strength_floor_amp_g``; otherwise
@@ -172,17 +177,18 @@ def _estimate_strength_floor_amp_g(sample: Sample) -> float | None:
     three peaks are available (keeps floor estimation aligned with existing
     run-baseline guards and avoids unstable sparse-peak fallbacks).
     """
-    floor_amp = _as_float(sample.get("strength_floor_amp_g"))
+    typed_sample = ensure_analysis_sample(sample)
+    floor_amp = typed_sample.strength_floor_amp_g
     if floor_amp is not None and floor_amp > 0:
         return float(floor_amp)
-    peak_amps = sorted(amp for _hz, amp in _sample_top_peaks(sample) if amp > 0)
+    peak_amps = sorted(amp for _hz, amp in _sample_top_peaks(typed_sample) if amp > 0)
     if len(peak_amps) < 3:
         return None
     floor_from_peaks = float(percentile(peak_amps, 0.20))
     return float(floor_from_peaks) if floor_from_peaks > 0 else None
 
 
-def _run_noise_baseline_g(samples: list[Sample]) -> float | None:
+def _run_noise_baseline_g(samples: Sequence[AnalysisSampleInput]) -> float | None:
     """Estimate run-level noise baseline as median of per-sample floor estimates.
 
     Per-sample floor uses ``strength_floor_amp_g`` when available; otherwise it
@@ -216,39 +222,43 @@ def _effective_baseline_floor(
     return float(max(float(MEMS_NOISE_FLOOR_G), float(val)))
 
 
-def _location_label(sample: Sample, *, lang: str = "en") -> str:
+def _location_label(sample: AnalysisSampleInput, *, lang: str = "en") -> str:
     """Return a stable language-neutral location label for the sample.
 
     NOTE: This is used as a **grouping key** across the data pipeline, so it
     must be language-invariant.  Translation to the report language happens at
     render time in the PDF builder / template layer.
     """
+    typed_sample = ensure_analysis_sample(sample)
     # Prefer structured location code (from SensorConfig) if available
-    location_code = str(sample.get("location") or "").strip()
+    location_code = typed_sample.location.strip()
     if location_code:
         translated = _label_for_code(location_code)
         return str(translated) if translated else location_code
 
-    client_name_raw = str(sample.get("client_name") or "").strip()
+    client_name_raw = typed_sample.client_name.strip()
     if client_name_raw:
         return client_name_raw
-    client_id_raw = str(sample.get("client_id") or "").strip()
+    client_id_raw = typed_sample.client_id.strip()
     if client_id_raw:
         return f"Sensor \u2026{client_id_raw[-4:]}"
     return "Unknown sensor"
 
 
-def _locations_connected_throughout_run(samples: list[Sample], *, lang: str = "en") -> set[str]:
+def _locations_connected_throughout_run(
+    samples: Sequence[AnalysisSampleInput],
+    *,
+    lang: str = "en",
+) -> set[str]:
     by_location_times: dict[str, set[float]] = defaultdict(set)
     all_times: list[float] = []
 
-    for sample in samples:
-        if not isinstance(sample, dict):
-            continue
+    for raw_sample in samples:
+        sample = ensure_analysis_sample(raw_sample)
         location = _location_label(sample, lang=lang)
         if not location:
             continue
-        t_s = _as_float(sample.get("t_s"))
+        t_s = sample.t_s
         if t_s is None:
             continue
         by_location_times[location].add(t_s)

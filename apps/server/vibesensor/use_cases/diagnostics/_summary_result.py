@@ -41,7 +41,7 @@ class AnalysisResult:
 
     file_name: str
     metadata: JsonObject
-    samples: tuple[Sample, ...]
+    samples: tuple[JsonObject, ...]
     language: str
     include_samples: bool
     prepared: PreparedRunData
@@ -98,6 +98,7 @@ def build_analysis_result(
     file_name: str,
     metadata: JsonObject,
     samples: list[Sample],
+    raw_samples: list[JsonObject],
     language: str,
     include_samples: bool,
     prepared: PreparedRunData,
@@ -137,7 +138,7 @@ def build_analysis_result(
                 configuration_snapshot=ConfigurationSnapshot.from_metadata(metadata),
             ),
             analysis_settings=_scalar_analysis_settings(metadata),
-            sample_count=len(samples),
+            sample_count=len(raw_samples),
             duration_s=prepared.duration_s,
         ),
         driving_segments=build_domain_driving_segments(prepared.phase_segments),
@@ -157,7 +158,7 @@ def build_analysis_result(
     return AnalysisResult(
         file_name=file_name,
         metadata=dict(metadata),
-        samples=tuple(samples),
+        samples=tuple(raw_samples),
         language=language,
         include_samples=include_samples,
         prepared=prepared,
