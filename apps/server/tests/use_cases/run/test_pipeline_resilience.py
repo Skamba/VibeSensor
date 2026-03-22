@@ -21,6 +21,7 @@ import pytest
 
 from vibesensor.domain import Run
 from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.logger import (
     _MAX_HISTORY_CREATE_RETRIES,
     _RETRY_COOLDOWN_BASE_S,
@@ -55,20 +56,24 @@ def _make_persist_logger(make_logger, *, history_db: object, run_id: str = "run-
     return logger
 
 
+def _sample_rows(count: int) -> list[SensorFrame]:
+    return [SensorFrame.from_dict({"t_s": float(i)}) for i in range(count)]
+
+
 class _FailingDB:
     """History DB that always fails on create_run."""
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
+    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         raise sqlite3.OperationalError("db locked")
 
 
 class _FailingAppendDB:
     """History DB that succeeds on create_run but fails on append."""
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
+    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         pass
 
-    def append_samples(self, run_id: str, samples: list[dict]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
         raise sqlite3.OperationalError("disk full")
 
 
@@ -79,10 +84,10 @@ class _FailNAppendThenSucceedDB:
         self._remaining = fail_count
         self.appended: list[tuple[str, int]] = []
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
+    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         pass
 
-    def append_samples(self, run_id: str, samples: list[dict]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
         if self._remaining > 0:
             self._remaining -= 1
             raise sqlite3.OperationalError("db locked")
@@ -96,10 +101,10 @@ class _SucceedingDB:
         self.created: list[str] = []
         self.appended: list[tuple[str, int]] = []
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
+    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         self.created.append(run_id)
 
-    def append_samples(self, run_id: str, samples: list[dict]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
         self.appended.append((run_id, len(samples)))
 
 
@@ -110,13 +115,13 @@ class _FailNThenSucceedDB:
         self._remaining = fail_count
         self.created: list[str] = []
 
-    def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
+    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         if self._remaining > 0:
             self._remaining -= 1
             raise sqlite3.OperationalError("transient error")
         self.created.append(run_id)
 
-    def append_samples(self, run_id: str, samples: list[dict]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
         pass
 
 
@@ -144,7 +149,7 @@ class TestDropCounting:
         result = logger._persistence.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
-            rows=[{"sample": 1}, {"sample": 2}, {"sample": 3}],
+            rows=_sample_rows(3),
         )
         assert result.rows_written == 0
         assert logger._persistence.dropped_sample_count == 3
@@ -159,7 +164,7 @@ class TestDropCounting:
         result = logger._persistence.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
-            rows=[{"s": 1}, {"s": 2}],
+            rows=_sample_rows(2),
         )
         assert result.rows_written == 0
         assert logger._persistence.dropped_sample_count == 2
@@ -175,7 +180,7 @@ class TestDropCounting:
         result = logger._persistence.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
-            rows=[{"s": 1}, {"s": 2}],
+            rows=_sample_rows(2),
         )
         assert result.rows_written == 2
         assert logger._persistence.dropped_sample_count == 0
@@ -190,7 +195,7 @@ class TestDropCounting:
             logger._persistence.append_rows(
                 run_id="run-1",
                 start_time_utc="2025-01-01T00:00:00Z",
-                rows=[{"s": 1}],
+                rows=_sample_rows(1),
             )
         assert logger._persistence.dropped_sample_count == 3
 
@@ -201,7 +206,7 @@ class TestDropCounting:
         logger._persistence.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
-            rows=[{"s": 1}, {"s": 2}],
+            rows=_sample_rows(2),
         )
         assert logger._persistence.dropped_sample_count == 2
 
@@ -215,7 +220,7 @@ class TestDropCounting:
         result = logger._persistence.append_rows(
             run_id="run-1",
             start_time_utc="2025-01-01T00:00:00Z",
-            rows=[{"s": 1}, {"s": 2}],
+            rows=_sample_rows(2),
         )
         assert result.rows_written == 2
         assert logger._persistence.dropped_sample_count == 0

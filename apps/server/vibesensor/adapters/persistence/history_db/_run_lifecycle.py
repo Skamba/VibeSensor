@@ -12,7 +12,6 @@ from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.json_utils import safe_json_dumps
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.backend_types import RunMetadata
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
@@ -62,28 +61,24 @@ class _HistoryDBRunLifecycleMixin:
     def append_samples(
         self,
         run_id: str,
-        samples: list[JsonObject] | list[SensorFrame],
+        samples: list[SensorFrame],
     ) -> None:
         if not samples:
             return
         if not run_id or not run_id.strip():
             raise ValueError("append_samples: run_id must be a non-empty string")
-        normalized_samples = [
-            sample if isinstance(sample, SensorFrame) else SensorFrame.from_dict(sample)
-            for sample in samples
-        ]
 
         chunk_size = 256
         with self.write_transaction_cursor() as cur:
-            for start in range(0, len(normalized_samples), chunk_size):
-                batch = normalized_samples[start : start + chunk_size]
+            for start in range(0, len(samples), chunk_size):
+                batch = samples[start : start + chunk_size]
                 cur.executemany(
                     V2_INSERT_SQL,
                     (sample_to_v2_row(run_id, sample) for sample in batch),
                 )
             cur.execute(
                 "UPDATE runs SET sample_count = sample_count + ? WHERE run_id = ?",
-                (len(normalized_samples), run_id),
+                (len(samples), run_id),
             )
 
     def finalize_run(

@@ -19,6 +19,7 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_records import AnalyzingRunHealth
 from vibesensor.shared.types.payload_types import ClientMetrics
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------
@@ -194,7 +195,7 @@ class _FakeHistoryDB:
     def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         self.create_calls.append((run_id, start_time_utc))
 
-    def append_samples(self, run_id: str, samples: list[dict]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
         self.append_calls.append((run_id, len(samples)))
 
     def finalize_run(
@@ -230,7 +231,7 @@ class _FailingAppendOnceHistoryDB(_FakeHistoryDB):
 
         self._append_failures_remaining = _MAX_APPEND_RETRIES
 
-    def append_samples(self, run_id: str, samples: list[dict]) -> None:
+    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None:
         if self._append_failures_remaining > 0:
             self._append_failures_remaining -= 1
             raise sqlite3.OperationalError("append boom")
