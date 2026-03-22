@@ -49,7 +49,7 @@ def test_fallback_speed_value_ignores_bool() -> None:
 
 def test_set_speed_override_kmh_clamps_at_max(caplog: pytest.LogCaptureFixture) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
-    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.gps.gps_speed"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.gps.speed_resolution"):
         result = monitor.set_speed_override_kmh(MAX_MANUAL_SPEED_KMH + 100.0)
 
     assert result == MAX_MANUAL_SPEED_KMH
@@ -62,7 +62,7 @@ def test_set_speed_override_kmh_at_exact_max_does_not_warn(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
-    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.gps.gps_speed"):
+    with caplog.at_level(logging.WARNING, logger="vibesensor.adapters.gps.speed_resolution"):
         result = monitor.set_speed_override_kmh(MAX_MANUAL_SPEED_KMH)
 
     assert result == MAX_MANUAL_SPEED_KMH
