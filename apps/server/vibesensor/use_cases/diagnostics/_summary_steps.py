@@ -104,11 +104,7 @@ def build_run_suitability_bundle(
 ) -> tuple[bool, RunSuitability | None, str | None]:
     """Build run-suitability checks and related confidence context."""
     reference_complete = compute_reference_completeness(metadata)
-    sensor_ids = {
-        str(client_id)
-        for sample in samples
-        if isinstance(sample, dict) and (client_id := sample.get("client_id"))
-    }
+    sensor_ids = {client_id for sample in samples if (client_id := sample.client_id)}
     total_dropped, total_overflow = compute_frame_integrity_counts(samples)
     run_suitability = RunSuitability.evaluate(
         steady_speed=prepared.is_steady_speed,

@@ -24,9 +24,10 @@ from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (
+    AnalysisSampleInput,
     PhaseSpeedBreakdownRowData,
-    Sample,
     SpeedBreakdownRowData,
+    ensure_analysis_samples,
 )
 from vibesensor.use_cases.diagnostics.helpers import (
     _location_label,
@@ -104,21 +105,18 @@ def build_domain_driving_segments(
 
 def build_sensor_analysis(
     *,
-    samples: list[Sample],
+    samples: Sequence[AnalysisSampleInput],
     language: str,
     per_sample_phases: list[DrivingPhase],
 ) -> tuple[list[str], set[str], list[LocationIntensitySummary]]:
     """Build sensor location lists and intensity rows from analysed samples."""
+    typed_samples = ensure_analysis_samples(samples)
     sensor_locations = sorted(
-        {
-            label
-            for sample in samples
-            if isinstance(sample, dict) and (label := _location_label(sample, lang=language))
-        },
+        {label for sample in typed_samples if (label := _location_label(sample, lang=language))},
     )
-    connected_locations = _locations_connected_throughout_run(samples, lang=language)
+    connected_locations = _locations_connected_throughout_run(typed_samples, lang=language)
     sensor_intensity_by_location = _sensor_intensity_by_location(
-        samples,
+        typed_samples,
         include_locations=set(sensor_locations),
         lang=language,
         connected_locations=connected_locations,
@@ -168,12 +166,17 @@ class PreparedRunData:
 
 def prepare_run_data(
     metadata: JsonObject,
-    samples: list[Sample],
+    samples: Sequence[AnalysisSampleInput],
     *,
     file_name: str,
 ) -> PreparedRunData:
     """Prepare shared timing, speed, and phase context for summary generation."""
-    run_id, start_ts, end_ts, duration_s = compute_run_timing(metadata, samples, file_name)
+    typed_samples = ensure_analysis_samples(samples)
+    run_id, start_ts, end_ts, duration_s = compute_run_timing(
+        metadata,
+        typed_samples,
+        file_name,
+    )
     (
         speed_values,
         speed_stats,
@@ -181,9 +184,9 @@ def prepare_run_data(
         speed_sufficient,
         per_sample_phases,
         phase_segments,
-    ) = prepare_speed_and_phases(samples)
-    run_noise_baseline_g = _run_noise_baseline_g(samples)
-    speed_breakdown = _speed_breakdown(samples) if speed_sufficient else []
+    ) = prepare_speed_and_phases(typed_samples)
+    run_noise_baseline_g = _run_noise_baseline_g(typed_samples)
+    speed_breakdown = _speed_breakdown(typed_samples) if speed_sufficient else []
     speed_breakdown_skipped_reason: JsonObject | None = None
     if not speed_sufficient:
         speed_breakdown_skipped_reason = i18n_ref(
@@ -207,10 +210,10 @@ def prepare_run_data(
             speed_stats,
             phase_info,
         ),
-        speed_stats_by_phase=_speed_stats_by_phase(samples, per_sample_phases),
+        speed_stats_by_phase=_speed_stats_by_phase(typed_samples, per_sample_phases),
         speed_breakdown=speed_breakdown,
         speed_breakdown_skipped_reason=speed_breakdown_skipped_reason,
-        phase_speed_breakdown=_phase_speed_breakdown(samples, per_sample_phases),
+        phase_speed_breakdown=_phase_speed_breakdown(typed_samples, per_sample_phases),
     )
 
 

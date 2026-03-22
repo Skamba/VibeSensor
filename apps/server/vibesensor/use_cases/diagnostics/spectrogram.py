@@ -8,14 +8,19 @@ dicts into a structured, reusable peak cache, plus the FFT spectrum and
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from math import floor
 from typing import Literal
 
 from vibesensor.domain import speed_bin_label
 from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.use_cases.diagnostics._types import Sample, SpectrogramResultData
+from vibesensor.use_cases.diagnostics._types import (
+    AnalysisSampleInput,
+    Sample,
+    SpectrogramResultData,
+    ensure_analysis_samples,
+)
 from vibesensor.use_cases.diagnostics.helpers import (
     _effective_baseline_floor,
     _estimate_strength_floor_amp_g,
@@ -50,8 +55,9 @@ class PeakSampleScan:
     total_speed_bin_counts: dict[str, int]
 
 
-def scan_peak_samples(samples: list[Sample]) -> PeakSampleScan:
+def scan_peak_samples(samples: Sequence[AnalysisSampleInput]) -> PeakSampleScan:
     """Scan raw samples once and cache the peak-facing data needed by plot builders."""
+    typed_samples = ensure_analysis_samples(samples)
     rows: list[PeakSampleScanRow] = []
     time_values: list[float] = []
     speed_values: list[float] = []
@@ -59,12 +65,10 @@ def scan_peak_samples(samples: list[Sample]) -> PeakSampleScan:
     total_speed_bin_counts: dict[str, int] = defaultdict(int)
     sample_count = 0
 
-    for sample in samples:
-        if not isinstance(sample, dict):
-            continue
+    for sample in typed_samples:
         sample_count += 1
-        t_s = _as_float(sample.get("t_s"))
-        speed = _as_float(sample.get("speed_kmh"))
+        t_s = sample.t_s
+        speed = sample.speed_kmh
         peaks = [(hz, amp) for hz, amp in _sample_top_peaks(sample) if hz > 0 and amp > 0]
         floor_amp = _estimate_strength_floor_amp_g(sample)
         location = _location_label(sample)
