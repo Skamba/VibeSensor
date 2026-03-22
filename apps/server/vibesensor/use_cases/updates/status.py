@@ -16,8 +16,8 @@ from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdateJobStatus,
-    UpdateRuntimeDetails,
     UpdatePhase,
+    UpdateRuntimeDetails,
     UpdateState,
 )
 from vibesensor.use_cases.updates.runner import sanitize_log_line

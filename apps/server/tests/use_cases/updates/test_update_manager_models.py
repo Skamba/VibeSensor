@@ -15,9 +15,9 @@ from vibesensor.use_cases.updates.venv_paths import (
 
 
 class TestUpdateJobStatus:
-    def test_default_status_to_dict(self) -> None:
+    def test_default_status_to_payload(self) -> None:
         status = UpdateJobStatus()
-        data = status.to_dict()
+        data = status.to_payload()
         assert data["state"] == "idle"
         assert data["phase"] == "idle"
         assert data["started_at"] is None
@@ -36,14 +36,14 @@ class TestUpdateJobStatus:
             ssid="TestNet",
             issues=[UpdateIssue(phase="installing", message="Install failed", detail="rc=1")],
         )
-        data = status.to_dict()
+        data = status.to_payload()
         assert data["state"] == "failed"
         assert data["ssid"] == "TestNet"
         assert len(data["issues"]) == 1
 
     def test_log_tail_truncated(self) -> None:
         status = UpdateJobStatus(log_tail=[f"line {i}" for i in range(100)])
-        assert len(status.to_dict()["log_tail"]) == 50
+        assert len(status.to_payload()["log_tail"]) == 50
 
 
 class TestUpdaterInterpreterSelection:

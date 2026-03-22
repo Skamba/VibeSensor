@@ -132,13 +132,13 @@ def test_finalize_non_success_does_not_set_last_success_at() -> None:
     assert mgr._status.last_success_at is None
 
 
-def test_to_dict_reflects_coherent_phase_after_finalize() -> None:
-    """to_dict() on the status must expose the corrected phase, not a stale one."""
+def test_to_payload_reflects_coherent_phase_after_finalize() -> None:
+    """to_payload() on the status must expose the corrected phase, not a stale one."""
     mgr = _manager_with_active_phase("erasing")
     mgr._finalize(state=EspFlashState.failed, error="erase failed")
 
-    d = mgr._status.to_dict()
+    d = mgr._status.to_payload()
     assert d["state"] == "failed"
     assert d["phase"] == "failed", (
-        f"to_dict() must expose coherent phase after finalization, got {d['phase']!r}"
+        f"to_payload() must expose coherent phase after finalization, got {d['phase']!r}"
     )
