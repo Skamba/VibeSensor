@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from vibesensor.domain import OrderMatchObservation, speed_bin_label
@@ -13,9 +14,12 @@ from vibesensor.shared.constants import (
     ORDER_TOLERANCE_REL,
     SPEED_BIN_WIDTH_KMH,
 )
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.diagnostics._types import PhaseLabels, Sample
+from vibesensor.use_cases.diagnostics._types import (
+    AnalysisSampleInput,
+    PhaseLabels,
+    ensure_analysis_sample,
+)
 from vibesensor.use_cases.diagnostics.helpers import (
     _estimate_strength_floor_amp_g,
     _location_label,
@@ -67,7 +71,7 @@ class OrderMatchAccumulator:
 
 
 def match_samples_for_hypothesis(
-    samples: list[Sample],
+    samples: Sequence[AnalysisSampleInput],
     cached_peaks: list[list[tuple[float, float]]],
     hypothesis: OrderHypothesis,
     metadata: JsonObject,
@@ -95,7 +99,8 @@ def match_samples_for_hypothesis(
     compliance = getattr(hypothesis, "path_compliance", 1.0)
     compliance_scale = compliance**0.5
 
-    for sample_idx, sample in enumerate(samples):
+    for sample_idx, raw_sample in enumerate(samples):
+        sample = ensure_analysis_sample(raw_sample)
         peaks = cached_peaks[sample_idx]
         if not peaks:
             continue
@@ -108,7 +113,7 @@ def match_samples_for_hypothesis(
         sample_location = _location_label(sample, lang=lang)
         if sample_location:
             possible_by_location[sample_location] += 1
-        sample_speed = _as_float(sample.get("speed_kmh"))
+        sample_speed = sample.speed_kmh
         sample_speed_bin = (
             speed_bin_label(sample_speed, bin_width=SPEED_BIN_WIDTH_KMH)
             if sample_speed is not None and sample_speed > 0
@@ -149,8 +154,8 @@ def match_samples_for_hypothesis(
         measured_vals.append(best_hz)
         matched_points.append(
             OrderMatchObservation(
-                t_s=_as_float(sample.get("t_s")),
-                speed_kmh=_as_float(sample.get("speed_kmh")),
+                t_s=sample.t_s,
+                speed_kmh=sample.speed_kmh,
                 predicted_hz=predicted_hz,
                 matched_hz=best_hz,
                 rel_error=delta_hz / max(1e-9, predicted_hz),

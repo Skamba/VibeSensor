@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Sequence
 from math import floor as _math_floor
 
 from vibesensor.domain import speed_bin_label
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 
-from ._types import PhaseLabels, Sample
+from ._types import AnalysisSampleInput, PhaseLabels, ensure_analysis_sample
 from .helpers import _estimate_strength_floor_amp_g, _location_label, _sample_top_peaks
 from .speed_profile_helpers import _phase_to_str
 
@@ -51,7 +51,7 @@ class PeakBinStats:
 
 
 def accumulate_peak_bin_stats(
-    samples: list[Sample],
+    samples: Sequence[AnalysisSampleInput],
     *,
     freq_bin_hz: float,
     freq_bin_hz_half: float,
@@ -62,7 +62,6 @@ def accumulate_peak_bin_stats(
     """Accumulate per-sample data into frequency-bin statistics."""
     stats = PeakBinStats()
 
-    local_as_float = _as_float
     local_speed_bin = speed_bin_label
     local_location = _location_label
     local_top_peaks = _sample_top_peaks
@@ -70,11 +69,10 @@ def accumulate_peak_bin_stats(
     local_phase_str = _phase_to_str
     floor_fn = _math_floor
 
-    for i, sample in enumerate(samples):
-        if not isinstance(sample, dict):
-            continue
+    for i, raw_sample in enumerate(samples):
+        sample = ensure_analysis_sample(raw_sample)
         stats.n_samples += 1
-        speed = local_as_float(sample.get("speed_kmh"))
+        speed = sample.speed_kmh
         sample_speed_bin = local_speed_bin(speed) if speed is not None and speed > 0 else None
         if sample_speed_bin is not None:
             stats.total_speed_bin_counts[sample_speed_bin] += 1

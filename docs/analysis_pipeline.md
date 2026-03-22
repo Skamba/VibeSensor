@@ -120,7 +120,9 @@ in order. Each step runs exactly once per analysis invocation.
 ## Data Flow
 
 ```
-Input: samples (list[JsonObject]) + metadata (JsonObject)
+Input: raw samples (list[JsonObject]) + metadata (JsonObject)
+  │
+  ├─ _types.normalize_analysis_samples() → raw rows + typed AnalysisSample objects
   │
   ├─ run_data_preparation.prepare_run_data() → PreparedRunData
   │    ├─ timing, speed stats, noise baseline

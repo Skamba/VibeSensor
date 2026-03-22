@@ -15,13 +15,13 @@ GPS dropouts do not silently discard valid vibration data (issue #287).
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from vibesensor.domain import DrivingPhase
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhaseSegment
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.use_cases.diagnostics._types import AnalysisSampleInput, ensure_analysis_samples
 
 # Thresholds (tuneable)
 _IDLE_SPEED_KMH = 3.0  # below this → IDLE
@@ -194,7 +194,7 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
 
 
 def segment_run_phases(
-    samples: list[JsonObject],
+    samples: Sequence[AnalysisSampleInput],
 ) -> tuple[list[DrivingPhase], list[PhaseSegment]]:
     """Classify every sample into a driving phase and return contiguous segments.
 
@@ -206,13 +206,14 @@ def segment_run_phases(
         Contiguous segments of identical phase, sorted by time.
 
     """
-    n = len(samples)
+    typed_samples = ensure_analysis_samples(samples)
+    n = len(typed_samples)
     if n == 0:
         return [], []
 
     # Extract speeds and times (preserve order)
-    speeds: list[float | None] = [_as_float(s.get("speed_kmh")) for s in samples]
-    times: list[float | None] = [_as_float(s.get("t_s")) for s in samples]
+    speeds: list[float | None] = [sample.speed_kmh for sample in typed_samples]
+    times: list[float | None] = [sample.t_s for sample in typed_samples]
 
     # Classify each sample
     per_sample: list[DrivingPhase] = []

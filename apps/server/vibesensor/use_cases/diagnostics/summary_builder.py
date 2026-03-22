@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import (
@@ -13,7 +13,8 @@ from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
-    Sample,
+    AnalysisSampleInput,
+    normalize_analysis_samples,
 )
 from vibesensor.use_cases.diagnostics.findings import _build_findings
 from vibesensor.use_cases.diagnostics.helpers import (
@@ -54,6 +55,7 @@ class RunAnalysis:
 
     __slots__ = (
         "_metadata",
+        "_raw_samples",
         "_samples",
         "_file_name",
         "_language",
@@ -67,7 +69,7 @@ class RunAnalysis:
     def __init__(
         self,
         metadata: JsonObject,
-        samples: list[Sample],
+        samples: Sequence[AnalysisSampleInput],
         *,
         file_name: str = "run",
         lang: str | None = None,
@@ -75,17 +77,17 @@ class RunAnalysis:
         findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
     ) -> None:
         self._metadata = metadata
-        self._samples = samples
+        self._raw_samples, self._samples = normalize_analysis_samples(samples)
         self._file_name = file_name
         self._language = normalize_lang(lang)
         self._include_samples = include_samples
         self._findings_builder = findings_builder
         self._test_run: TestRun | None = None
 
-        _validate_required_strength_metrics(samples)
-        self._prepared = prepare_run_data(metadata, samples, file_name=file_name)
+        _validate_required_strength_metrics(self._samples)
+        self._prepared = prepare_run_data(metadata, self._samples, file_name=file_name)
         self._accel_stats: AccelStatistics = compute_accel_statistics(
-            samples, metadata.get("sensor_model")
+            self._samples, metadata.get("sensor_model")
         )
 
     # -- read-only access --------------------------------------------------
@@ -149,6 +151,7 @@ class RunAnalysis:
             file_name=self._file_name,
             metadata=self._metadata,
             samples=self._samples,
+            raw_samples=self._raw_samples,
             language=self._language,
             include_samples=self._include_samples,
             prepared=self._prepared,
@@ -170,13 +173,13 @@ class RunAnalysis:
 def build_findings_for_samples(
     *,
     metadata: JsonObject,
-    samples: list[Sample],
+    samples: Sequence[AnalysisSampleInput],
     lang: str | None = None,
     findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
 ) -> tuple[DomainFinding, ...]:
     """Build the findings list from *samples* using the full analysis pipeline."""
     language = normalize_lang(lang)
-    rows = list(samples)
+    rows = normalize_analysis_samples(samples)[1]
     _validate_required_strength_metrics(rows)
     prepared = prepare_run_data(metadata, rows, file_name="run")
     builder = findings_builder or _build_findings
