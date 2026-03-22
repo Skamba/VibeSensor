@@ -8,7 +8,6 @@ import io
 import json
 import logging
 import tempfile
-import zipfile
 from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import TypeGuard
@@ -17,7 +16,6 @@ from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.use_cases.history.helpers import (
-    AnalysisProjector,
     HistoryRecord,
     async_require_run,
     safe_filename,
@@ -99,82 +97,71 @@ class HistoryExportDownload:
             self.spool.close()
 
 
+@dataclass
+class HistoryExportContext:
+    """Raw export artifacts ready for adapter-level packaging."""
+
+    run_id: str
+    safe_name: str
+    run: HistoryRecord
+    sample_count: int
+    raw_csv_spool: tempfile.SpooledTemporaryFile[bytes]
+
+
 class HistoryExportService:
-    """Build ZIP exports for history runs without route-local business logic."""
+    """Load raw export artifacts for history runs without delivery-layer shaping."""
 
-    __slots__ = ("_analysis_projector", "_history_db")
+    __slots__ = ("_history_db",)
 
-    def __init__(
-        self,
-        history_db: RunPersistence,
-        *,
-        analysis_projector: AnalysisProjector,
-    ) -> None:
-        self._analysis_projector = analysis_projector
+    def __init__(self, history_db: RunPersistence) -> None:
         self._history_db = history_db
 
-    async def build_export(self, run_id: str) -> HistoryExportDownload:
+    async def build_export_context(self, run_id: str) -> HistoryExportContext:
         run = await async_require_run(self._history_db, run_id)
-        spool = await asyncio.to_thread(self._build_zip_file, run, run_id)
-        file_size = spool.seek(0, 2)
-        spool.seek(0)
-        return HistoryExportDownload(
-            filename=f"{safe_filename(run_id)}.zip",
-            file_size=file_size,
-            spool=spool,
+        raw_csv_spool, sample_count = await asyncio.to_thread(self._build_raw_csv_spool, run_id)
+        return HistoryExportContext(
+            run_id=run_id,
+            safe_name=safe_filename(run_id),
+            run=run,
+            sample_count=sample_count,
+            raw_csv_spool=raw_csv_spool,
         )
 
-    def _build_zip_file(
+    def _build_raw_csv_spool(
         self,
-        run: HistoryRecord,
         run_id: str,
-    ) -> tempfile.SpooledTemporaryFile[bytes]:
+    ) -> tuple[tempfile.SpooledTemporaryFile[bytes], int]:
         sample_count = 0
-        safe_name = safe_filename(run_id)
         spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
             max_size=EXPORT_SPOOL_THRESHOLD,
         )
         try:
-            with zipfile.ZipFile(spool, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
-                with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
-                    raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")
-                    writer = csv.DictWriter(
-                        raw_csv_text,
-                        fieldnames=EXPORT_CSV_COLUMNS,
-                        extrasaction="ignore",
-                    )
-                    writer.writeheader()
-                    for batch in self._history_db.iter_run_samples(
-                        run_id,
-                        batch_size=EXPORT_BATCH_SIZE,
-                    ):
-                        sample_count += len(batch)
-                        writer.writerows(flatten_for_csv(row) for row in batch)
-                    raw_csv_text.flush()
-
-                archive.writestr(
-                    f"{safe_name}.json",
-                    build_run_details_json(
-                        run,
-                        sample_count,
-                        run_id,
-                        analysis_projector=self._analysis_projector,
-                    ),
-                )
-
+            raw_csv_text = io.TextIOWrapper(spool, encoding="utf-8", newline="")
+            writer = csv.DictWriter(
+                raw_csv_text,
+                fieldnames=EXPORT_CSV_COLUMNS,
+                extrasaction="ignore",
+            )
+            writer.writeheader()
+            for batch in self._history_db.iter_run_samples(
+                run_id,
+                batch_size=EXPORT_BATCH_SIZE,
+            ):
+                sample_count += len(batch)
+                writer.writerows(flatten_for_csv(row) for row in batch)
+            raw_csv_text.flush()
+            raw_csv_text.detach()
             spool.seek(0)
         except BaseException:
             spool.close()
             raise
-        return spool
+        return spool, sample_count
 
 
 def build_run_details_json(
     run: HistoryRecord,
     sample_count: int,
     run_id: str,
-    *,
-    analysis_projector: AnalysisProjector,
 ) -> str:
     """Build the exported JSON metadata document for a history run."""
     run_details: JsonObject = {}
@@ -184,13 +171,7 @@ def build_run_details_json(
     run_details["sample_count"] = sample_count
     analysis = run_details.get("analysis")
     if is_json_object(analysis):
-        has_findings = isinstance(analysis.get("findings"), list)
-        has_top_causes = isinstance(analysis.get("top_causes"), list)
-        if has_findings or has_top_causes:
-            projected, _ = analysis_projector(analysis)
-            run_details["analysis"] = strip_internal_fields(projected)
-        else:
-            run_details["analysis"] = strip_internal_fields(dict(analysis))
+        run_details["analysis"] = strip_internal_fields(dict(analysis))
     sanitized, had_non_finite = sanitize_for_json(run_details)
     if had_non_finite:
         LOGGER.warning("Export run %s: sanitized non-finite floats in analysis data", run_id)

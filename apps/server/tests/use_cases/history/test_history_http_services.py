@@ -9,7 +9,11 @@ from typing import Any
 
 import pytest
 
-from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
+from vibesensor.adapters.history import (
+    ProjectedHistoryExportService,
+    ProjectedHistoryRunService,
+    build_projected_run_details_json,
+)
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
 from vibesensor.use_cases.history.reports import HistoryReportPdfCache, HistoryReportService
@@ -45,7 +49,6 @@ def test_raise_delete_run_error_maps_unknown_reason_to_domain_error() -> None:
 async def test_delete_service_uses_delete_reason_mapping() -> None:
     service = HistoryRunService(
         _HistoryDbStub(delete_result=(False, "active")),
-        analysis_projector=project_analysis_summary,
     )
 
     with pytest.raises(AnalysisNotReadyError, match="Cannot delete the active run"):
@@ -65,7 +68,6 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
                 "analysis": {"lang": "nl", "findings": [], "title": "X"},
             },
         ),
-        analysis_projector=project_analysis_summary,
         pdf_renderer=lambda _s, _t: b"%PDF-stub",
     )
 
@@ -77,33 +79,34 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
 
 
 @pytest.mark.asyncio
-async def test_run_service_projects_persisted_summary_through_domain() -> None:
-    service = HistoryRunService(
-        _HistoryDbStub(
-            run={
-                "run_id": "run-1",
-                "status": "complete",
-                "analysis": {
-                    "lang": "en",
-                    "findings": [
-                        {
-                            "finding_id": "F001",
-                            "suspected_source": "wheel/tire",
-                            "strongest_location": "front-left",
-                            "strongest_speed_band": "50-80 km/h",
-                            "confidence": 0.71,
-                            "evidence_metrics": {"vibration_strength_db": 21.0},
-                        },
-                    ],
-                    "top_causes": [],
-                    "test_plan": [],
-                    "run_suitability": [],
-                    "most_likely_origin": {},
-                    "_internal": {"secret": True},
+async def test_projected_run_service_projects_persisted_summary_through_domain() -> None:
+    service = ProjectedHistoryRunService(
+        HistoryRunService(
+            _HistoryDbStub(
+                run={
+                    "run_id": "run-1",
+                    "status": "complete",
+                    "analysis": {
+                        "lang": "en",
+                        "findings": [
+                            {
+                                "finding_id": "F001",
+                                "suspected_source": "wheel/tire",
+                                "strongest_location": "front-left",
+                                "strongest_speed_band": "50-80 km/h",
+                                "confidence": 0.71,
+                                "evidence_metrics": {"vibration_strength_db": 21.0},
+                            },
+                        ],
+                        "top_causes": [],
+                        "test_plan": [],
+                        "run_suitability": [],
+                        "most_likely_origin": {},
+                        "_internal": {"secret": True},
+                    },
                 },
-            },
-        ),
-        analysis_projector=project_analysis_summary,
+            ),
+        )
     )
 
     run = await service.get_run("run-1")
@@ -114,33 +117,15 @@ async def test_run_service_projects_persisted_summary_through_domain() -> None:
     assert "_internal" not in analysis
 
 
-@pytest.mark.asyncio
-async def test_report_pdf_cache_builds_once_per_key() -> None:
-    cache = HistoryReportPdfCache()
-    calls = 0
-
-    def _build() -> bytes:
-        nonlocal calls
-        calls += 1
-        return b"%PDF-cache"
-
-    first = await cache.get_or_build(("run-1", "nl"), _build, run_id="run-1")
-    second = await cache.get_or_build(("run-1", "nl"), _build, run_id="run-1")
-
-    assert calls == 1
-    assert first == second == b"%PDF-cache"
-
-
 def test_build_run_details_json_strips_internal_analysis_fields() -> None:
     payload = json.loads(
         build_run_details_json(
-            {
+            run={
                 "run_id": "run-1",
                 "analysis": {"visible": 1, "_internal": {"secret": True}},
             },
             sample_count=5,
             run_id="run-1",
-            analysis_projector=project_analysis_summary,
         ),
     )
 
@@ -150,7 +135,7 @@ def test_build_run_details_json_strips_internal_analysis_fields() -> None:
 
 def test_build_run_details_json_projects_analysis_through_domain() -> None:
     payload = json.loads(
-        build_run_details_json(
+        build_projected_run_details_json(
             {
                 "run_id": "run-1",
                 "analysis": {
@@ -170,7 +155,6 @@ def test_build_run_details_json_projects_analysis_through_domain() -> None:
             },
             sample_count=5,
             run_id="run-1",
-            analysis_projector=project_analysis_summary,
         ),
     )
 
@@ -192,7 +176,6 @@ def test_build_run_details_json_sanitizes_non_finite_floats() -> None:
         },
         sample_count=3,
         run_id="run-nan",
-        analysis_projector=project_analysis_summary,
     )
 
     # Must be parseable by json.loads (no NaN/Infinity)
@@ -203,23 +186,22 @@ def test_build_run_details_json_sanitizes_non_finite_floats() -> None:
     assert payload["analysis"]["valid"] == 42.5
 
 
-def test_export_archive_builder_creates_csv_and_json_entries() -> None:
-    service = HistoryExportService(
-        _HistoryDbStub(
-            samples=[{"run_id": "run-1", "t_s": 1.0, "custom": "x"}],
-        ),
-        analysis_projector=project_analysis_summary,
+@pytest.mark.asyncio
+async def test_export_archive_builder_creates_csv_and_json_entries() -> None:
+    service = ProjectedHistoryExportService(
+        HistoryExportService(
+            _HistoryDbStub(
+                run={
+                    "run_id": "run-1",
+                    "analysis": {"score": 1, "_internal": "secret"},
+                },
+                samples=[{"run_id": "run-1", "t_s": 1.0, "custom": "x"}],
+            ),
+        )
     )
 
-    spool = service._build_zip_file(
-        {
-            "run_id": "run-1",
-            "analysis": {"score": 1, "_internal": "secret"},
-        },
-        "run-1",
-    )
-    body = spool.read()
-    spool.close()
+    export = await service.build_export("run-1")
+    body = b"".join(export.iter_bytes())
 
     with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
         assert set(archive.namelist()) == {"run-1.json", "run-1_raw.csv"}
@@ -229,3 +211,20 @@ def test_export_archive_builder_creates_csv_and_json_entries() -> None:
     assert exported["analysis"] == {"score": 1}
     assert "extras" not in rows[0]
     assert "custom" not in rows[0]
+
+
+@pytest.mark.asyncio
+async def test_report_pdf_cache_builds_once_per_key() -> None:
+    cache = HistoryReportPdfCache()
+    calls = 0
+
+    def _build() -> bytes:
+        nonlocal calls
+        calls += 1
+        return b"%PDF-cache"
+
+    first = await cache.get_or_build(("run-1", "nl"), _build, run_id="run-1")
+    second = await cache.get_or_build(("run-1", "nl"), _build, run_id="run-1")
+
+    assert calls == 1
+    assert first == second == b"%PDF-cache"

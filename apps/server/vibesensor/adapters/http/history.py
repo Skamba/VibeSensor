@@ -16,16 +16,18 @@ from vibesensor.shared.types.api_models import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.history.exports import HistoryExportService
-    from vibesensor.use_cases.history.reports import HistoryReportService
-    from vibesensor.use_cases.history.runs import HistoryRunService
+    from vibesensor.adapters.http.dependencies import (
+        HistoryExportServiceProtocol,
+        HistoryReportServiceProtocol,
+        HistoryRunServiceProtocol,
+    )
 
 
 def create_history_routes(
     *,
-    run_service: HistoryRunService,
-    report_service: HistoryReportService,
-    export_service: HistoryExportService,
+    run_service: HistoryRunServiceProtocol,
+    report_service: HistoryReportServiceProtocol,
+    export_service: HistoryExportServiceProtocol,
 ) -> APIRouter:
     """Create and return the run-history / report API routes."""
     router = APIRouter()
