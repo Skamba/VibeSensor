@@ -4,6 +4,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdateJobStatus,
     UpdatePhase,
+    UpdateRuntimeDetails,
     UpdateState,
 )
 from vibesensor.use_cases.updates.runner import sanitize_log_line as sanitize_log_line
@@ -26,7 +27,7 @@ class TestUpdateJobStatus:
         assert data["issues"] == []
         assert data["log_tail"] == []
         assert data["exit_code"] is None
-        assert data["runtime"] == {}
+        assert data["runtime"] == UpdateRuntimeDetails().to_payload()
 
     def test_status_with_issues(self) -> None:
         status = UpdateJobStatus(
