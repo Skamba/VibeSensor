@@ -9,8 +9,23 @@ import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.persistence.history_db._schema import SCHEMA_VERSION
+from vibesensor.shared.types.backend_types import RunMetadata
 
 # -- helpers -----------------------------------------------------------------
+
+
+def _metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2026-01-02T00:00:00Z",
+        "sensor_model": "fixture-sensor",
+        "raw_sample_rate_hz": 400,
+        "sample_rate_hz": 400,
+        "feature_interval_s": 1.0,
+        "source": "followup",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
 
 
 def _create_v4_database(db_path: Path) -> None:
@@ -256,12 +271,12 @@ def test_historydb_migrates_v8_database_without_manufacturing_case_id(tmp_path: 
     assert version == SCHEMA_VERSION
     assert case_id is None
     assert run is not None
-    assert "case_id" not in run
+    assert run.case_id is None
     with pytest.raises(
         ValueError,
         match="summary without authoritative case_id",
     ):
-        diagnostic_case_from_summary(run["analysis"])
+        diagnostic_case_from_summary(run.analysis)
     db.close()
 
 
@@ -281,7 +296,7 @@ def test_historydb_migrates_v8_database_backfills_case_id_from_analysis_summary(
     run = db.get_run("legacy-run")
 
     assert run is not None
-    assert run["case_id"] == "case-from-summary"
+    assert run.case_id == "case-from-summary"
     db.close()
 
 
@@ -303,30 +318,21 @@ def test_historydb_migrated_v8_case_id_supports_forward_only_followup_attachment
     legacy_run = db.get_run("legacy-run")
 
     assert legacy_run is not None
-    assert legacy_run["case_id"] == "case-from-summary"
-    assert diagnostic_case_from_summary(legacy_run["analysis"]).case_id == "case-from-summary"
+    assert legacy_run.case_id == "case-from-summary"
+    assert diagnostic_case_from_summary(legacy_run.analysis).case_id == "case-from-summary"
 
     db.create_run(
         "followup-run",
         "2026-01-02T00:00:00Z",
-        {
-            "source": "followup",
-            "sensor_model": "fixture-sensor",
-            "sample_rate_hz": 400,
-        },
+        _metadata("followup-run"),
     )
 
     assert (
         db.finalize_run(
             "followup-run",
             "2026-01-02T00:05:00Z",
-            metadata={
-                "source": "followup",
-                "sensor_model": "fixture-sensor",
-                "sample_rate_hz": 400,
-                "step": 2,
-            },
-            case_id=legacy_run["case_id"],
+            metadata=_metadata("followup-run", step=2),
+            case_id=legacy_run.case_id,
         )
         is True
     )
@@ -340,9 +346,9 @@ def test_historydb_migrated_v8_case_id_supports_forward_only_followup_attachment
         reopened_db.close()
 
     assert migrated_legacy_run is not None
-    assert migrated_legacy_run["case_id"] == "case-from-summary"
+    assert migrated_legacy_run.case_id == "case-from-summary"
     assert followup_run is not None
-    assert followup_run["case_id"] == "case-from-summary"
+    assert followup_run.case_id == "case-from-summary"
 
 
 def test_historydb_migrates_v9_settings_kv_to_settings_snapshot(tmp_path: Path) -> None:
@@ -429,10 +435,10 @@ def test_historydb_newer_version_raises(tmp_path: Path) -> None:
 def test_historydb_fresh_db_works_normally(tmp_path: Path) -> None:
     """A fresh database (no existing file) should work as before."""
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("r1", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1", source="test"))
     run = db.get_run("r1")
     assert run is not None
-    assert run["run_id"] == "r1"
+    assert run.run_id == "r1"
     db.close()
 
 

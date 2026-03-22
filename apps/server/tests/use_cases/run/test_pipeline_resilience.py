@@ -20,6 +20,7 @@ from unittest.mock import patch
 import pytest
 
 from vibesensor.domain import Run
+from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.use_cases.run.logger import (
     _MAX_HISTORY_CREATE_RETRIES,
     _RETRY_COOLDOWN_BASE_S,
@@ -30,6 +31,20 @@ from vibesensor.use_cases.run.post_analysis import _WARN_QUEUE_DEPTH, PostAnalys
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def _run_metadata(run_id: str, *, language: str = "en") -> RunMetadata:
+    return RunMetadata.from_dict(
+        {
+            "run_id": run_id,
+            "start_time_utc": "2025-01-01T00:00:00Z",
+            "sensor_model": "fixture-sensor",
+            "raw_sample_rate_hz": 800,
+            "sample_rate_hz": 800,
+            "feature_interval_s": 1.0,
+            "language": language,
+        }
+    )
 
 
 def _make_persist_logger(make_logger, *, history_db: object, run_id: str = "run-1") -> RunRecorder:
@@ -304,7 +319,7 @@ class TestPostAnalysisOutcomeTracking:
 
         class FakeDB:
             def get_run_metadata(self, run_id):
-                return {"language": "en"}
+                return _run_metadata(run_id, language="en")
 
             def iter_run_samples(self, run_id, batch_size=1024):
                 yield [
@@ -340,7 +355,7 @@ class TestPostAnalysisOutcomeTracking:
 
         class FakeDB:
             def get_run_metadata(self, run_id):
-                return {"language": "en"}
+                return _run_metadata(run_id, language="en")
 
             def iter_run_samples(self, run_id, batch_size=1024):
                 raise RuntimeError("sample read boom")
@@ -383,7 +398,7 @@ class TestPostAnalysisOutcomeTracking:
 
         class FakeDB:
             def get_run_metadata(self, _run_id):
-                return {"language": "en"}
+                return _run_metadata("run-empty", language="en")
 
             def iter_run_samples(self, _run_id, batch_size=1024):
                 return iter([])

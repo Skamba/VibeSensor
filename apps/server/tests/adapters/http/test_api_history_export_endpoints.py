@@ -4,7 +4,7 @@ import csv
 import io
 import json
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import pytest
 from _history_endpoint_helpers import (
@@ -144,13 +144,12 @@ async def test_history_export_sanitizes_filename_from_run_id() -> None:
     class NamedRunDB(FakeHistoryDB):
         accepted_run_id: str = run_id
 
-        def get_run(self, queried_run_id: str) -> dict[str, object] | None:
+        def get_run(self, queried_run_id: str):
             if queried_run_id != self.accepted_run_id:
                 return None
             result = super().get_run("run-1")
             assert result is not None
-            result["run_id"] = queried_run_id
-            return result
+            return replace(result, run_id=queried_run_id)
 
         def iter_run_samples(self, queried_run_id: str, batch_size: int = 1000):
             if queried_run_id != self.accepted_run_id:
