@@ -16,7 +16,8 @@ from vibesensor.adapters.history import (
 )
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
-from vibesensor.use_cases.history.reports import HistoryReportPdfCache, HistoryReportService
+from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
+from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
 from vibesensor.use_cases.history.runs import HistoryRunService, raise_delete_run_error
 
 
@@ -57,7 +58,7 @@ async def test_delete_service_uses_delete_reason_mapping() -> None:
 
 @pytest.mark.asyncio
 async def test_report_service_load_report_request_uses_persisted_language() -> None:
-    service = HistoryReportService(
+    loader = HistoryReportRequestLoader(
         _HistoryDbStub(
             run={
                 "run_id": "run-1",
@@ -67,11 +68,10 @@ async def test_report_service_load_report_request_uses_persisted_language() -> N
                 "sample_count": 12,
                 "analysis": {"lang": "nl", "findings": [], "title": "X"},
             },
-        ),
-        pdf_renderer=lambda _s, _t: b"%PDF-stub",
+        )
     )
 
-    request = await service.load_report_request("run-1", "en")
+    request = await loader.load_report_request("run-1", "en")
 
     assert request.filename == "run-1_report.pdf"
     assert request.cache_key[1] == "nl"
@@ -223,8 +223,9 @@ async def test_report_pdf_cache_builds_once_per_key() -> None:
         calls += 1
         return b"%PDF-cache"
 
-    first = await cache.get_or_build(("run-1", "nl"), _build, run_id="run-1")
-    second = await cache.get_or_build(("run-1", "nl"), _build, run_id="run-1")
+    cache_key = ("run-1", "nl", None, 0, "{}", "none")
+    first = await cache.get_or_build(cache_key, _build, run_id="run-1")
+    second = await cache.get_or_build(cache_key, _build, run_id="run-1")
 
     assert calls == 1
     assert first == second == b"%PDF-cache"
