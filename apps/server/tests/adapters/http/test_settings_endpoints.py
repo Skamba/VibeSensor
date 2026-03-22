@@ -6,6 +6,7 @@ import pytest
 from fastapi import HTTPException
 from test_support import response_payload
 
+from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.shared.types.backend_types import CarConfigPayload, CarsSnapshot
 
@@ -33,6 +34,28 @@ def _make_cars_snapshot(
     return CarsSnapshot(
         cars=cars or [_make_car_payload()],
         active_car_id=active_car_id,
+    )
+
+
+def _make_speed_source_status_snapshot() -> SpeedSourceStatusSnapshot:
+    return SpeedSourceStatusSnapshot(
+        gps_enabled=True,
+        connection_state="connected",
+        device="/dev/ttyUSB0",
+        fix_mode=3,
+        fix_dimension="3d",
+        speed_confidence="high",
+        epx_m=1.2,
+        epy_m=1.3,
+        epv_m=2.4,
+        last_update_age_s=0.5,
+        raw_speed_kmh=48.2,
+        effective_speed_kmh=48.2,
+        last_error=None,
+        reconnect_delay_s=None,
+        fallback_active=False,
+        speed_source="gps",
+        stale_timeout_s=8.0,
     )
 
 
@@ -205,25 +228,7 @@ class TestSpeedSourceEndpoint:
         endpoint = _find_endpoint(router, "/api/settings/speed-source/status", "GET")
         assert endpoint is not None
 
-        state.gps_monitor.status_dict.return_value = {
-            "gps_enabled": True,
-            "connection_state": "connected",
-            "device": "/dev/ttyUSB0",
-            "fix_mode": 3,
-            "fix_dimension": "3d",
-            "speed_confidence": "high",
-            "epx_m": 1.2,
-            "epy_m": 1.3,
-            "epv_m": 2.4,
-            "last_update_age_s": 0.5,
-            "raw_speed_kmh": 48.2,
-            "effective_speed_kmh": 48.2,
-            "last_error": None,
-            "reconnect_delay_s": None,
-            "fallback_active": False,
-            "speed_source": "gps",
-            "stale_timeout_s": 8.0,
-        }
+        state.gps_monitor.status_snapshot.return_value = _make_speed_source_status_snapshot()
 
         result = response_payload(await endpoint())
 
