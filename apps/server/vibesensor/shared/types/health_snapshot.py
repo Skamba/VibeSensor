@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal, TypedDict
 
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.payload_types import IntakeStatsPayload
 
 
 class RunRecorderHealthSnapshot(TypedDict):
@@ -44,7 +44,7 @@ class HealthSnapshotData(TypedDict):
     degradation_reasons: list[str]
     data_loss: dict[str, int]
     persistence: RunRecorderHealthSnapshot
-    intake_stats: JsonObject
+    intake_stats: IntakeStatsPayload
     tick_duration_s: float | None
     max_tick_duration_s: float | None
     tick_count: int

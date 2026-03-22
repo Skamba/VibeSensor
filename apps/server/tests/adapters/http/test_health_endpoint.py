@@ -142,3 +142,47 @@ async def test_health_endpoint_validates_through_fastapi_response_field(_health_
     assert payload_dict["data_loss"]["tracked_clients"] == 0
     assert payload_dict["persistence"]["analysis_in_progress"] is False
     assert validated.status == "ok"
+
+
+@pytest.mark.asyncio
+async def test_health_endpoint_keeps_public_intake_stats_shape_when_worker_pool_is_present(
+    _health_router,
+):
+    router, state = _health_router
+    endpoint = _find_endpoint(router, "/api/health")
+    assert endpoint is not None
+
+    state.processor.intake_stats.return_value = {
+        "total_ingested_samples": 10,
+        "total_compute_calls": 2,
+        "last_compute_duration_s": 0.1,
+        "last_compute_all_duration_s": 0.2,
+        "last_ingest_duration_s": 0.05,
+        "worker_pool": {
+            "max_workers": 2,
+            "max_queue_size": 2,
+            "max_pending_tasks": 4,
+            "total_tasks": 7,
+            "pending_tasks": 1,
+            "queued_tasks": 0,
+            "running_tasks": 1,
+            "rejected_tasks": 0,
+            "total_run_s": 1.5,
+            "avg_run_s": 0.75,
+            "total_submit_wait_s": 0.2,
+            "avg_submit_wait_s": 0.1,
+            "default_submit_timeout_s": None,
+            "alive": True,
+        },
+    }
+
+    result = response_payload(await endpoint())
+
+    assert result["intake_stats"] == {
+        "total_ingested_samples": 10,
+        "total_compute_calls": 2,
+        "last_compute_duration_s": 0.1,
+        "last_compute_all_duration_s": 0.2,
+        "last_ingest_duration_s": 0.05,
+    }
+    assert "worker_pool" not in result["intake_stats"]
