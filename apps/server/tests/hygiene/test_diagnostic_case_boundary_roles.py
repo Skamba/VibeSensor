@@ -11,6 +11,9 @@ def test_diagnostic_case_boundary_does_not_expose_domain_factories() -> None:
     assert callable(Symptom.from_metadata)
     assert not hasattr(diagnostic_case, "speed_profile_from_stats")
     assert not hasattr(diagnostic_case, "case_context_from_metadata")
+    assert not hasattr(diagnostic_case, "project_analysis_summary")
+    assert not hasattr(diagnostic_case, "run_suitability_payload")
+    assert not hasattr(diagnostic_case, "run_suitability_from_payload")
 
 
 def test_diagnostics_use_cases_do_not_reexport_boundary_factories() -> None:

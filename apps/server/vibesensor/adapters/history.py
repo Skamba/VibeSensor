@@ -8,7 +8,7 @@ import tempfile
 import zipfile
 from typing import TYPE_CHECKING
 
-from vibesensor.shared.boundaries.diagnostic_case import project_analysis_summary
+from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.use_cases.history.exports import (
     EXPORT_SPOOL_THRESHOLD,
