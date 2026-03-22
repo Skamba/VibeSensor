@@ -1,6 +1,8 @@
 ---
 applyTo: "**"
 ---
+Scope: shared workflow, validation, documentation maintenance, and execution guardrails. Keep canonical AI guidance and architectural invariants in `.github/copilot-instructions.md`, and keep repository layout/navigation in `docs/ai/repo-map.md`.
+
 Agent workflow
 - For medium/large tasks, always start with an explicit checklist plan. Use highly descriptive titles that include the problem, the fix, and user impact.
 - Work in iterative loops until done: `plan → verify current behavior → root cause → blast radius scan → implement complete maintainable fix → targeted tests → broader relevant tests → re-plan`.
