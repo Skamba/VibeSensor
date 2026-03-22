@@ -15,6 +15,10 @@ from vibesensor.use_cases.diagnostics.order_scoring import (
     OrderFindingBuildContext,
     OrderFindingScore,
 )
+from vibesensor.use_cases.diagnostics.order_statistics import (
+    OrderPhaseEvidence,
+    compute_matched_speed_phase_evidence,
+)
 from vibesensor.use_cases.diagnostics.rotational_physics import OrderHypothesis
 
 # ===========================================================================
@@ -153,12 +157,13 @@ class TestAssembleOrderFinding:
         monkeypatch.setattr(
             order_finding_builder_module,
             "compute_matched_speed_phase_evidence",
-            lambda *args, **kwargs: (
-                60.0,
-                [55.0, 65.0],
-                "60-70 km/h",
-                {"cruise_fraction": 0.5, "phases_detected": ["cruise"]},
-                "cruise",
+            lambda *args, **kwargs: OrderPhaseEvidence(
+                peak_speed_kmh=60.0,
+                speed_window_kmh=(55.0, 65.0),
+                strongest_speed_band="60-70 km/h",
+                cruise_fraction=0.5,
+                phases_detected=("cruise",),
+                dominant_phase="cruise",
             ),
         )
 
@@ -211,6 +216,45 @@ class TestAssembleOrderFinding:
         assert finding.strongest_speed_band == "60-70 km/h"
         assert finding.evidence.frequency_correlation == pytest.approx(0.9)
         assert finding.evidence.phase_confidences == (("cruise", 0.8),)
+
+
+class TestComputeMatchedSpeedPhaseEvidence:
+    def test_returns_typed_evidence_object(self) -> None:
+        points = [
+            OrderMatchObservation(
+                predicted_hz=30.0,
+                matched_hz=30.1,
+                rel_error=0.01,
+                amp=0.4,
+                location="front_left",
+                speed_kmh=62.0,
+                phase="cruise",
+            ),
+            OrderMatchObservation(
+                predicted_hz=30.0,
+                matched_hz=30.2,
+                rel_error=0.02,
+                amp=0.2,
+                location="front_left",
+                speed_kmh=58.0,
+                phase="acceleration",
+            ),
+        ]
+
+        evidence = compute_matched_speed_phase_evidence(
+            points,
+            focused_speed_band=None,
+            hotspot_speed_band="50-60 km/h",
+        )
+
+        assert isinstance(evidence, OrderPhaseEvidence)
+        assert evidence.peak_speed_kmh == pytest.approx(62.0)
+        assert evidence.speed_window_kmh is not None
+        assert evidence.speed_window_kmh[0] <= evidence.speed_window_kmh[1]
+        assert evidence.strongest_speed_band is not None
+        assert evidence.cruise_fraction == pytest.approx(0.5)
+        assert evidence.phases_detected == ("acceleration", "cruise")
+        assert evidence.dominant_phase is None
 
 
 # ===========================================================================
