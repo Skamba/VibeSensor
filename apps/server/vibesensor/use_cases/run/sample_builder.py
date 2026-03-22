@@ -6,12 +6,10 @@ of ``RunRecorder`` or any async / threading machinery.
 
 from __future__ import annotations
 
-import math
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from dataclasses import asdict
 from typing import TYPE_CHECKING, NamedTuple
 
-from vibesensor.coerce import coerce_float
 from vibesensor.domain import CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.strength_metrics import StrengthMetrics
@@ -23,25 +21,12 @@ from vibesensor.shared.run_context import (
 )
 from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
 
 if TYPE_CHECKING:
     from vibesensor.shared.ports import SignalSource
-
-_isfinite = math.isfinite
-
-
-def _safe_float(d: Mapping[str, object], key: str) -> float | None:
-    """Extract a finite float from *d[key]*, or ``None``."""
-    raw = d.get(key)
-    if raw is None:
-        return None
-    try:
-        out = coerce_float(raw)
-    except (TypeError, ValueError):
-        return None
-    return out if _isfinite(out) else None
 
 
 _SPEED_SOURCE_MAP = {
@@ -52,27 +37,14 @@ _SPEED_SOURCE_MAP = {
 }
 
 
-def safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None:
-    """Extract a single numeric metric, returning ``None`` for missing/invalid."""
-    axis_metrics = metrics.get(axis)
-    if not isinstance(axis_metrics, dict):
-        return None
-    return _safe_float(axis_metrics, key)
-
-
-def _raw_strength_metrics(metrics: Mapping[str, object]) -> Mapping[str, object] | None:
-    combined = metrics.get("combined")
-    if not isinstance(combined, Mapping):
-        return None
-    nested = combined.get("strength_metrics")
-    return nested if isinstance(nested, Mapping) else None
-
-
 def extract_strength_data(
-    metrics: Mapping[str, object],
+    metrics: ClientMetrics,
 ) -> StrengthMetrics:
     """Extract strength metrics and top peaks from client metrics."""
-    raw_strength_metrics = _raw_strength_metrics(metrics)
+    combined_metrics = metrics.get("combined")
+    raw_strength_metrics = (
+        combined_metrics.get("strength_metrics") if combined_metrics is not None else None
+    )
     return (
         StrengthMetrics.from_dict(raw_strength_metrics)
         if raw_strength_metrics is not None

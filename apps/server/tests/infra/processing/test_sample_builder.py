@@ -12,42 +12,51 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, StrengthMetrics
+from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.sample_builder import (
     SpeedContext,
     build_run_metadata,
     build_sample_records,
     dominant_hz_from_strength,
+    extract_strength_data,
     firmware_version_for_run,
-    safe_metric,
 )
 
 # ---------------------------------------------------------------------------
-# safe_metric
+# extract_strength_data
 # ---------------------------------------------------------------------------
 
 
-class TestSafeMetric:
-    def test_valid_float(self) -> None:
-        assert safe_metric({"x": {"rms": 0.05}}, "x", "rms") == 0.05
+class TestExtractStrengthData:
+    def test_empty_metrics_returns_empty_strength_metrics(self) -> None:
+        assert extract_strength_data(ClientMetrics()) == StrengthMetrics()
 
-    def test_missing_axis(self) -> None:
-        assert safe_metric({"x": {"rms": 0.05}}, "y", "rms") is None
-
-    def test_missing_key(self) -> None:
-        assert safe_metric({"x": {"rms": 0.05}}, "x", "p2p") is None
-
-    def test_nan(self) -> None:
-        assert safe_metric({"x": {"rms": float("nan")}}, "x", "rms") is None
-
-    def test_inf(self) -> None:
-        assert safe_metric({"x": {"rms": float("inf")}}, "x", "rms") is None
-
-    def test_non_numeric(self) -> None:
-        assert safe_metric({"x": {"rms": "abc"}}, "x", "rms") is None
-
-    def test_non_dict_axis(self) -> None:
-        assert safe_metric({"x": "not_dict"}, "x", "rms") is None
+    def test_combined_strength_metrics_round_trip(self) -> None:
+        metrics: ClientMetrics = {
+            "combined": {
+                "strength_metrics": {
+                    "vibration_strength_db": 18.5,
+                    "strength_bucket": "l3",
+                    "peak_amp_g": 0.02,
+                    "noise_floor_amp_g": 0.001,
+                    "top_peaks": [
+                        {
+                            "hz": 45.0,
+                            "amp": 0.015,
+                            "vibration_strength_db": 18.5,
+                            "strength_bucket": "l3",
+                        }
+                    ],
+                },
+            },
+        }
+        result = extract_strength_data(metrics)
+        assert result.vibration_strength_db == pytest.approx(18.5)
+        assert result.strength_bucket == "l3"
+        payloads = result.to_peak_payloads(max_items=8)
+        assert len(payloads) == 1
+        assert payloads[0]["hz"] == pytest.approx(45.0)
 
 
 # ---------------------------------------------------------------------------
@@ -239,6 +248,7 @@ class TestBuildSampleRecords:
             "combined": {
                 "strength_metrics": {
                     "vibration_strength_db": 22.0,
+                    "strength_bucket": "l2",
                     "peak_amp_g": 0.15,
                     "noise_floor_amp_g": 0.003,
                     "top_peaks": [

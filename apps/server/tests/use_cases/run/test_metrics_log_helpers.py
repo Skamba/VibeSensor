@@ -13,7 +13,6 @@ from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
 from vibesensor.shared.types.history_records import AnalyzingRunHealth
 from vibesensor.use_cases.run._recorder_types import _build_run_metadata_record
 from vibesensor.use_cases.run.post_analysis import PostAnalysisHealthSnapshot
-from vibesensor.use_cases.run.sample_builder import safe_metric
 
 
 class _NullDB:
@@ -21,31 +20,6 @@ class _NullDB:
 
     def analyzing_run_health(self):
         return AnalyzingRunHealth(analyzing_run_count=0, analyzing_oldest_age_s=None)
-
-
-# -- RunRecorder._safe_metric ------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("metrics", "axis", "key", "expected"),
-    [
-        pytest.param(
-            {"x": {"rms": 0.05, "p2p": 0.12}},
-            "x",
-            "rms",
-            0.05,
-            marks=pytest.mark.smoke,
-        ),
-        ({"x": {"rms": 0.05}}, "y", "rms", None),
-        ({"x": {"rms": 0.05}}, "x", "p2p", None),
-        ({"x": {"rms": float("nan")}}, "x", "rms", None),
-        ({"x": {"rms": float("inf")}}, "x", "rms", None),
-        ({"x": "not_a_dict"}, "x", "rms", None),
-        ({"x": {"rms": "abc"}}, "x", "rms", None),
-    ],
-)
-def test_safe_metric(metrics: dict, axis: str, key: str, expected: float | None) -> None:
-    assert safe_metric(metrics, axis, key) == expected
 
 
 def test_build_sample_records_uses_only_active_clients(make_logger) -> None:
