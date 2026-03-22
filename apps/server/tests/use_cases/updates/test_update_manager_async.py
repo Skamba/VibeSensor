@@ -303,7 +303,7 @@ class TestUpdateManagerAsync:
         manager, _runner, repo = setup_update_env(tmp_path)
         seed_runtime_artifacts(repo, manager, valid=False)
         details = collect_runtime_details(repo)
-        assert details["assets_verified"] is False
+        assert details.assets_verified is False
 
     async def test_timeout_handling(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)

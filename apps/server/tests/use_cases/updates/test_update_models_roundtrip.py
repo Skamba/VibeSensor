@@ -11,6 +11,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdateJobStatus,
     UpdatePhase,
+    UpdateRuntimeDetails,
     UpdateState,
 )
 
@@ -30,7 +31,7 @@ class TestUpdateJobStatusRoundTrip:
             issues=[UpdateIssue(phase="installing", message="slow pip", detail="took 90s")],
             log_tail=["line1", "line2", "line3"],
             exit_code=0,
-            runtime={"version": "1.2.3"},
+            runtime=UpdateRuntimeDetails(version="1.2.3"),
         )
         restored = UpdateJobStatus.from_dict(original.to_dict())
 
@@ -41,7 +42,7 @@ class TestUpdateJobStatusRoundTrip:
         assert restored.last_success_at == original.last_success_at
         assert restored.ssid == original.ssid
         assert restored.exit_code == original.exit_code
-        assert restored.runtime == {"version": "1.2.3"}
+        assert restored.runtime == UpdateRuntimeDetails(version="1.2.3")
         assert len(restored.issues) == 1
         assert restored.issues[0].phase == "installing"
         assert restored.issues[0].message == "slow pip"
@@ -60,7 +61,7 @@ class TestUpdateJobStatusRoundTrip:
         assert status.issues == []
         assert status.log_tail == []
         assert status.exit_code is None
-        assert status.runtime == {}
+        assert status.runtime == UpdateRuntimeDetails()
 
     def test_from_dict_truncates_log_tail_to_50_lines(self) -> None:
         """from_dict must honour the _LOG_TAIL_LIMIT of 50 lines."""
@@ -87,6 +88,21 @@ class TestUpdateJobStatusRoundTrip:
             },
         )
 
-        assert status.runtime == {}
+        assert status.runtime == UpdateRuntimeDetails()
         assert status.log_tail == ["ok", "7", "None"]
         assert status.issues == [UpdateIssue(phase="downloading", message="warn", detail="99")]
+
+    def test_from_dict_coerces_legacy_boolish_runtime_flags(self) -> None:
+        status = UpdateJobStatus.from_dict(
+            {
+                "runtime": {
+                    "assets_verified": 1,
+                    "has_packaged_static": "true",
+                },
+            },
+        )
+
+        assert status.runtime == UpdateRuntimeDetails(
+            assets_verified=True,
+            has_packaged_static=True,
+        )

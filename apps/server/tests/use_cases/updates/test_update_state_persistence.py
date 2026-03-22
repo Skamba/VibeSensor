@@ -16,6 +16,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateIssue,
     UpdateJobStatus,
     UpdatePhase,
+    UpdateRuntimeDetails,
     UpdateState,
 )
 from vibesensor.use_cases.updates.runner import CommandRunner
@@ -118,7 +119,7 @@ class TestUpdateJobStatusRoundTrip:
             ],
             log_tail=["line1", "line2", "line3"],
             exit_code=1,
-            runtime={"version": "1.0.0"},
+            runtime=UpdateRuntimeDetails(version="1.0.0"),
         )
         restored = UpdateJobStatus.from_dict(status.to_dict())
         assert restored.state == UpdateState.failed
@@ -136,7 +137,7 @@ class TestUpdateJobStatusRoundTrip:
         assert restored.issues[1].phase == "restoring_hotspot"
         assert restored.log_tail == ["line1", "line2", "line3"]
         assert restored.exit_code == 1
-        assert restored.runtime == {"version": "1.0.0"}
+        assert restored.runtime == UpdateRuntimeDetails(version="1.0.0")
 
 
 # ---------------------------------------------------------------------------
@@ -379,7 +380,7 @@ class TestPersistenceDuringLifecycle:
         tracker = UpdateStatusTracker(state_store=store)
 
         tracker.start_job("TestNet")
-        tracker.set_runtime({"version": "1.2.3"})
+        tracker.set_runtime(UpdateRuntimeDetails(version="1.2.3"))
         tracker.log("runtime collected")
         tracker.extend_issues(
             [
@@ -392,7 +393,7 @@ class TestPersistenceDuringLifecycle:
         )
 
         # In-memory state is always up-to-date
-        assert tracker.status.runtime == {"version": "1.2.3"}
+        assert tracker.status.runtime == UpdateRuntimeDetails(version="1.2.3")
         assert tracker.status.log_tail[-1] == "runtime collected"
         assert tracker.status.issues[-1].message == "Wi-Fi warning"
 
@@ -400,7 +401,7 @@ class TestPersistenceDuringLifecycle:
         tracker.persist()
         loaded = store.load()
         assert loaded is not None
-        assert loaded.runtime == {"version": "1.2.3"}
+        assert loaded.runtime == UpdateRuntimeDetails(version="1.2.3")
         assert loaded.updated_at is not None
         assert loaded.log_tail[-1] == "runtime collected"
         assert loaded.issues[-1].message == "Wi-Fi warning"
