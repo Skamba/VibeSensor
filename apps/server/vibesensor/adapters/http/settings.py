@@ -37,6 +37,7 @@ from vibesensor.shared.types.backend_types import (
 
 if TYPE_CHECKING:
     from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+    from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
     from vibesensor.infra.config.settings_store import SettingsStore
 
 
@@ -60,6 +61,29 @@ def create_settings_routes(
         return CarsResponse(
             cars=[_car_response(car) for car in snapshot.cars],
             activeCarId=snapshot.active_car_id,
+        )
+
+    def _speed_source_status_response(
+        snapshot: SpeedSourceStatusSnapshot,
+    ) -> SpeedSourceStatusResponse:
+        return SpeedSourceStatusResponse(
+            gps_enabled=snapshot.gps_enabled,
+            connection_state=snapshot.connection_state,
+            device=snapshot.device,
+            fix_mode=snapshot.fix_mode,
+            fix_dimension=snapshot.fix_dimension,
+            speed_confidence=snapshot.speed_confidence,
+            epx_m=snapshot.epx_m,
+            epy_m=snapshot.epy_m,
+            epv_m=snapshot.epv_m,
+            last_update_age_s=snapshot.last_update_age_s,
+            raw_speed_kmh=snapshot.raw_speed_kmh,
+            effective_speed_kmh=snapshot.effective_speed_kmh,
+            last_error=snapshot.last_error,
+            reconnect_delay_s=snapshot.reconnect_delay_s,
+            fallback_active=snapshot.fallback_active,
+            speed_source=snapshot.speed_source,
+            stale_timeout_s=snapshot.stale_timeout_s,
         )
 
     def _car_upsert_payload(req: CarUpsertRequest) -> CarConfigUpdatePayload:
@@ -192,7 +216,7 @@ def create_settings_routes(
 
     @router.get("/api/settings/speed-source/status", response_model=SpeedSourceStatusResponse)
     async def get_speed_source_status() -> SpeedSourceStatusResponse:
-        return SpeedSourceStatusResponse.model_validate(gps_monitor.status_dict())
+        return _speed_source_status_response(gps_monitor.status_snapshot())
 
     # -- sensors ---------------------------------------------------------------
 

@@ -137,28 +137,28 @@ def test_speed_confidence_3d_fix_returns_high() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Fix 8: status_dict() includes "speed_source" key
+# Fix 8: status snapshot exposes speed_source
 # ---------------------------------------------------------------------------
 
 
-def test_status_dict_includes_speed_source() -> None:
+def test_status_snapshot_includes_speed_source() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
-    status = monitor.status_dict()
-    assert "speed_source" in status, "status_dict() must expose speed_source for diagnostics"
+    status = monitor.status_snapshot()
+    assert status.speed_source == "none"
 
 
-def test_status_dict_speed_source_matches_resolve_speed() -> None:
+def test_status_snapshot_speed_source_matches_resolve_speed() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
     monitor.manual_source_selected = True
     monitor.override_speed_mps = 10.0
-    status = monitor.status_dict()
-    assert status["speed_source"] == "manual"
+    status = monitor.status_snapshot()
+    assert status.speed_source == "manual"
 
 
-def test_status_dict_speed_source_none_when_no_data() -> None:
+def test_status_snapshot_speed_source_none_when_no_data() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
-    status = monitor.status_dict()
-    assert status["speed_source"] == "none"
+    status = monitor.status_snapshot()
+    assert status.speed_source == "none"
 
 
 # ---------------------------------------------------------------------------

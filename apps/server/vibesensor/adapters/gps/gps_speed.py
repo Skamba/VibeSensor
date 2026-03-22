@@ -10,7 +10,8 @@ from vibesensor.adapters.gps.gps_transport import GPSTransportState
 from vibesensor.adapters.gps.speed_resolution import SpeedResolution, SpeedResolutionPolicy
 from vibesensor.adapters.gps.speed_status import (
     GPSSpeedStatusState,
-    build_status_dict,
+    SpeedSourceStatusSnapshot,
+    build_status_snapshot,
     speed_confidence,
 )
 from vibesensor.shared.types.json_types import JsonObject
@@ -223,7 +224,7 @@ class GPSSpeedMonitor:
     def _reset_fix_metadata(self) -> None:
         self._transport._reset_fix_metadata()
 
-    def status_dict(self) -> dict[str, object]:
+    def status_snapshot(self) -> SpeedSourceStatusSnapshot:
         speed_snapshot = self._speed_snapshot
         resolution = self._policy.resolve(
             gps_enabled=self.gps_enabled,
@@ -244,7 +245,7 @@ class GPSSpeedMonitor:
             current_reconnect_delay=self.current_reconnect_delay,
             stale_timeout_s=self.stale_timeout_s,
         )
-        return build_status_dict(
+        return build_status_snapshot(
             status_state,
             resolution=resolution,
             effective_connection_state=self._policy.effective_connection_state(
