@@ -1,10 +1,11 @@
-"""Status and health payload helpers extracted from ``RunRecorder``."""
+"""Status and health snapshot helpers extracted from ``RunRecorder``."""
 
 from __future__ import annotations
 
 import logging
 import sqlite3
 import time
+from dataclasses import dataclass
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
@@ -12,9 +13,22 @@ from vibesensor.use_cases.run.persistence_writer import RunPersistenceWriter
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 
 __all__ = [
+    "RunRecorderStatusSnapshot",
     "build_run_recorder_health_snapshot",
     "build_run_recorder_status",
 ]
+
+
+@dataclass(frozen=True, slots=True)
+class RunRecorderStatusSnapshot:
+    enabled: bool
+    run_id: str | None
+    write_error: str | None
+    analysis_in_progress: bool
+    samples_written: int = 0
+    samples_dropped: int = 0
+    last_completed_run_id: str | None = None
+    last_completed_run_error: str | None = None
 
 
 def build_run_recorder_status(
@@ -23,19 +37,19 @@ def build_run_recorder_status(
     run_id: str | None,
     persistence: RunPersistenceWriter,
     post_analysis: PostAnalysisWorker,
-) -> dict[str, object]:
+) -> RunRecorderStatusSnapshot:
     post_snapshot = post_analysis.snapshot()
     persist = persistence.status_snapshot()
-    return {
-        "enabled": enabled,
-        "run_id": run_id,
-        "write_error": persist.write_error,
-        "analysis_in_progress": post_analysis.is_active,
-        "samples_written": persist.written_sample_count,
-        "samples_dropped": persist.dropped_sample_count,
-        "last_completed_run_id": post_snapshot.last_completed_run_id,
-        "last_completed_run_error": post_snapshot.last_completed_error,
-    }
+    return RunRecorderStatusSnapshot(
+        enabled=enabled,
+        run_id=run_id,
+        write_error=persist.write_error,
+        analysis_in_progress=post_analysis.is_active,
+        samples_written=persist.written_sample_count,
+        samples_dropped=persist.dropped_sample_count,
+        last_completed_run_id=post_snapshot.last_completed_run_id,
+        last_completed_run_error=post_snapshot.last_completed_error,
+    )
 
 
 def build_run_recorder_health_snapshot(

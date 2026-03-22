@@ -198,7 +198,7 @@ def test_start_recording_rollover_flushes_first_pending_sample_batch(
     monkeypatch.setattr(logger, "schedule_post_analysis", scheduled.append)
 
     initial_status = logger.start_recording()
-    initial_run_id = str(initial_status["run_id"])
+    initial_run_id = str(initial_status.run_id)
     active = logger.registry.get("active")
     assert active is not None
     active.frames_total = 1
@@ -211,7 +211,7 @@ def test_start_recording_rollover_flushes_first_pending_sample_batch(
     assert fake_history_db.append_calls == [(created_run_id, 1)]
     assert fake_history_db.finalize_calls == [created_run_id]
     assert scheduled == [created_run_id]
-    assert next_status["run_id"] != created_run_id
+    assert next_status.run_id != created_run_id
 
 
 def test_finalize_refreshes_run_metadata_from_latest_settings(
@@ -254,9 +254,9 @@ def test_append_records_surfaces_create_run_failure_in_status(
     logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
     status = logger.status()
 
-    assert status["write_error"] is not None
-    assert "history create_run failed" in str(status["write_error"])
-    assert "create_run boom" in str(status["write_error"])
+    assert status.write_error is not None
+    assert "history create_run failed" in str(status.write_error)
+    assert "create_run boom" in str(status.write_error)
 
 
 def test_append_records_clears_write_error_after_successful_retry(
@@ -274,12 +274,12 @@ def test_append_records_clears_write_error_after_successful_retry(
 
     logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
     failed_status = logger.status()
-    assert failed_status["write_error"] is not None
-    assert "history append_samples failed" in str(failed_status["write_error"])
+    assert failed_status.write_error is not None
+    assert "history append_samples failed" in str(failed_status.write_error)
 
     logger._sample_flush.append_records(run_id, start_time_utc, start_mono)
     recovered_status = logger.status()
-    assert recovered_status["write_error"] is None
+    assert recovered_status.write_error is None
 
 
 def test_append_records_reports_timeout_when_no_data_for_threshold(
@@ -473,8 +473,8 @@ def test_shutdown_blocks_new_start_recording_until_wait_completes(
     def _wait(timeout_s: float = 30.0) -> bool:
         assert timeout_s == 30.0
         start_result = logger.start_recording()
-        assert start_result["enabled"] is False
-        assert start_result["run_id"] is None
+        assert start_result.enabled is False
+        assert start_result.run_id is None
         # Session was stopped by shutdown
         assert logger._run_id is None
         allow_wait.set()
@@ -485,9 +485,9 @@ def test_shutdown_blocks_new_start_recording_until_wait_completes(
     assert logger.shutdown() is True
     assert allow_wait.is_set()
     restarted = logger.start_recording()
-    assert restarted["enabled"] is True
-    assert restarted["run_id"] is not None
-    assert restarted["run_id"] != initial_run_id
+    assert restarted.enabled is True
+    assert restarted.run_id is not None
+    assert restarted.run_id != initial_run_id
 
 
 def test_shutdown_report_exposes_timeout_state(
@@ -518,7 +518,7 @@ def test_shutdown_report_exposes_timeout_state(
     assert report.active_run_id_before_stop is not None
     assert report.analysis_queue_depth == 2
     assert report.analysis_active_run_id == "run-slow"
-    assert report.final_status["enabled"] is False
+    assert report.final_status.enabled is False
 
 
 def test_post_analysis_uses_run_language_from_metadata(

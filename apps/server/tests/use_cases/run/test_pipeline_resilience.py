@@ -462,20 +462,16 @@ class TestLoggingStatusEnrichment:
         logger = make_logger(history_db=db)
 
         status = logger.status()
-        assert "samples_written" in status
-        assert "samples_dropped" in status
-        assert status["samples_written"] == 0
-        assert status["samples_dropped"] == 0
+        assert status.samples_written == 0
+        assert status.samples_dropped == 0
 
     def test_status_includes_last_completed_fields(self, make_logger, tmp_path) -> None:
         """Status response includes last_completed_run_id and last_completed_run_error."""
         logger = make_logger()
 
         status = logger.status()
-        assert "last_completed_run_id" in status
-        assert "last_completed_run_error" in status
-        assert status["last_completed_run_id"] is None
-        assert status["last_completed_run_error"] is None
+        assert status.last_completed_run_id is None
+        assert status.last_completed_run_error is None
 
 
 # ---------------------------------------------------------------------------
@@ -524,4 +520,4 @@ class TestHealthSnapshotEnrichment:
 
         # First append fails → drops counted
         assert health["samples_dropped"] > 0
-        assert status["samples_dropped"] > 0
+        assert status.samples_dropped > 0
