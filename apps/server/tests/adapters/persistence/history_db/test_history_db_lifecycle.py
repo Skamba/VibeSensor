@@ -5,15 +5,43 @@ import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
+from typing import cast
 
 import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.types.backend_types import RunMetadata
+
+
+def _metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "source": "test",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
+
+
+def _analysis(run_id: str, **overrides: object) -> AnalysisSummary:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "findings": [],
+        "top_causes": [],
+        "warnings": [],
+    }
+    payload.update(overrides)
+    return cast(AnalysisSummary, payload)
 
 
 def test_append_samples_in_chunks(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-1", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-1", "2026-01-01T00:00:00Z", _metadata("run-1"))
     calls: list[int] = []
     original_write_tx = db.write_transaction_cursor
 
@@ -45,7 +73,7 @@ def test_append_samples_in_chunks(tmp_path: Path) -> None:
 
 def test_history_db_thread_safe_appends(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-2", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-2", "2026-01-01T00:00:00Z", _metadata("run-2"))
 
     def _append(start: int) -> None:
         batch = [{"i": start + i} for i in range(50)]
@@ -108,7 +136,7 @@ def test_schema_version_future_fails_fast(tmp_path: Path) -> None:
 
 def test_iter_run_samples_batches(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-3", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-3", "2026-01-01T00:00:00Z", _metadata("run-3"))
     db.append_samples("run-3", [{"i": i} for i in range(11)])
     batches = list(db.iter_run_samples("run-3", batch_size=4))
     assert [len(batch) for batch in batches] == [4, 4, 3]
@@ -116,34 +144,34 @@ def test_iter_run_samples_batches(tmp_path: Path) -> None:
 
 def test_list_runs_uses_incremental_sample_count(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-4", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-4", "2026-01-01T00:00:00Z", _metadata("run-4"))
     db.append_samples("run-4", [{"i": 1}, {"i": 2}, {"i": 3}])
     run = db.list_runs()[0]
-    assert run["sample_count"] == 3
+    assert run.sample_count == 3
 
 
 def test_recover_stale_recording_runs_marks_error(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-5", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-5", "2026-01-01T00:00:00Z", _metadata("run-5"))
     recovered = db.recover_stale_recording_runs()
     assert recovered == 1
     run = db.get_run("run-5")
     assert run is not None
-    assert run["status"] == "error"
-    assert "Recovered stale recording during startup at" in str(run["error_message"])
+    assert run.status.value == "error"
+    assert "Recovered stale recording during startup at" in str(run.error_message)
 
 
 def test_create_run_does_not_auto_recover_recording(tmp_path: Path) -> None:
     """create_run no longer auto-recovers stale recordings — startup does that."""
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-old", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-old", "2026-01-01T00:00:00Z", _metadata("run-old"))
     # Second create should fail (unique constraint) — old run stays recording
     try:
-        db.create_run("run-old", "2026-01-01T00:01:00Z", {"source": "test"})
+        db.create_run("run-old", "2026-01-01T00:01:00Z", _metadata("run-old"))
     except Exception:
         pass
     old_run = db.get_run("run-old")
-    assert old_run is not None and old_run["status"] == "recording"
+    assert old_run is not None and old_run.status.value == "recording"
 
 
 def test_create_run_persists_case_id(tmp_path: Path) -> None:
@@ -152,30 +180,30 @@ def test_create_run_persists_case_id(tmp_path: Path) -> None:
     db.create_run(
         "run-case-create",
         "2026-01-01T00:00:00Z",
-        {"source": "test"},
+        _metadata("run-case-create"),
         case_id="case-123",
     )
 
     run = db.get_run("run-case-create")
     assert run is not None
-    assert run["case_id"] == "case-123"
+    assert run.case_id == "case-123"
 
 
 def test_recover_stale_recording_logs_warning(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-old", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-old", "2026-01-01T00:00:00Z", _metadata("run-old"))
     with caplog.at_level(logging.WARNING):
         recovered = db.recover_stale_recording_runs()
     assert recovered == 1
     run = db.get_run("run-old")
-    assert run is not None and run["status"] == "error"
+    assert run is not None and run.status.value == "error"
 
 
 def test_delete_run_cascades_samples(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-del", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-del", "2026-01-01T00:00:00Z", _metadata("run-del"))
     db.append_samples("run-del", [{"i": i} for i in range(5)])
     assert len(db.get_run_samples("run-del")) == 5
 
@@ -189,37 +217,38 @@ def test_delete_run_cascades_samples(tmp_path: Path) -> None:
 def test_run_status_transitions(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
 
-    db.create_run("run-st", "2026-01-01T00:00:00Z", {"source": "test"})
-    assert db.get_run("run-st")["status"] == "recording"
+    db.create_run("run-st", "2026-01-01T00:00:00Z", _metadata("run-st"))
+    assert db.get_run("run-st").status.value == "recording"
 
     db.finalize_run("run-st", "2026-01-01T00:10:00Z")
-    assert db.get_run("run-st")["status"] == "analyzing"
+    assert db.get_run("run-st").status.value == "analyzing"
 
-    db.store_analysis("run-st", {"score": 42})
-    assert db.get_run("run-st")["status"] == "complete"
+    db.store_analysis("run-st", _analysis("run-st", score=42))
+    assert db.get_run("run-st").status.value == "complete"
 
-    db.create_run("run-err", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-err", "2026-01-01T00:00:00Z", _metadata("run-err"))
     db.finalize_run("run-err", "2026-01-01T00:10:00Z")
     db.store_analysis_error("run-err", "something went wrong")
-    assert db.get_run("run-err")["status"] == "error"
+    assert db.get_run("run-err").status.value == "error"
 
 
 def test_store_analysis_allows_direct_recording_to_complete(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-recording", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-recording", "2026-01-01T00:00:00Z", _metadata("run-recording"))
 
-    stored = db.store_analysis("run-recording", {"score": 42})
+    analysis = _analysis("run-recording", score=42)
+    stored = db.store_analysis("run-recording", analysis)
 
     assert stored is True
     run = db.get_run("run-recording")
     assert run is not None
-    assert run["status"] == "complete"
-    assert run.get("analysis") == {"score": 42}
+    assert run.status.value == "complete"
+    assert run.analysis == analysis
 
 
 def test_append_samples_rolls_back_when_metadata_update_fails(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-rollback", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-rollback", "2026-01-01T00:00:00Z", _metadata("run-rollback"))
     original_write_tx = db.write_transaction_cursor
 
     @contextmanager
@@ -247,19 +276,19 @@ def test_append_samples_rolls_back_when_metadata_update_fails(tmp_path: Path) ->
 
     run = db.get_run("run-rollback")
     assert run is not None
-    assert run["sample_count"] == 0
+    assert run.sample_count == 0
     assert db.get_run_samples("run-rollback") == []
 
 
 def test_finalize_run_returns_false_when_already_analyzing(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-finalize", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-finalize", "2026-01-01T00:00:00Z", _metadata("run-finalize"))
 
     assert (
         db.finalize_run(
             "run-finalize",
             "2026-01-01T00:05:00Z",
-            metadata={"source": "test", "step": 1},
+            metadata=_metadata("run-finalize", step=1),
         )
         is True
     )
@@ -267,7 +296,7 @@ def test_finalize_run_returns_false_when_already_analyzing(tmp_path: Path) -> No
         db.finalize_run(
             "run-finalize",
             "2026-01-01T00:06:00Z",
-            metadata={"source": "test", "step": 2},
+            metadata=_metadata("run-finalize", step=2),
         )
         is False
     )
@@ -275,13 +304,13 @@ def test_finalize_run_returns_false_when_already_analyzing(tmp_path: Path) -> No
 
 def test_finalize_run_persists_case_id(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-case-finalize", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-case-finalize", "2026-01-01T00:00:00Z", _metadata("run-case-finalize"))
 
     assert (
         db.finalize_run(
             "run-case-finalize",
             "2026-01-01T00:05:00Z",
-            metadata={"source": "test", "step": 1},
+            metadata=_metadata("run-case-finalize", step=1),
             case_id="case-456",
         )
         is True
@@ -289,38 +318,38 @@ def test_finalize_run_persists_case_id(tmp_path: Path) -> None:
 
     run = db.get_run("run-case-finalize")
     assert run is not None
-    assert run["status"] == "analyzing"
-    assert run["metadata"]["step"] == 1
-    assert run["case_id"] == "case-456"
+    assert run.status.value == "analyzing"
+    assert run.metadata.extras["step"] == 1
+    assert run.case_id == "case-456"
 
 
 def test_analyzing_run_health_reports_oldest_age(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-an", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-an", "2026-01-01T00:00:00Z", _metadata("run-an"))
     db.finalize_run("run-an", "2026-01-01T00:01:00Z")
 
     health = db.analyzing_run_health()
 
-    assert health["analyzing_run_count"] == 1
-    assert isinstance(health.get("analyzing_oldest_age_s"), float)
+    assert health.analyzing_run_count == 1
+    assert isinstance(health.analyzing_oldest_age_s, float)
 
 
 def test_update_run_metadata_overwrites_stored_metadata(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-meta", "2026-01-01T00:00:00Z", {"tire_width_mm": 245.0})
-    assert db.update_run_metadata("run-meta", {"tire_width_mm": 285.0}) is True
+    db.create_run("run-meta", "2026-01-01T00:00:00Z", _metadata("run-meta", tire_width_mm=245.0))
+    assert db.update_run_metadata("run-meta", _metadata("run-meta", tire_width_mm=285.0)) is True
     run = db.get_run("run-meta")
     assert run is not None
-    assert run["metadata"]["tire_width_mm"] == 285.0
+    assert run.metadata.extras["tire_width_mm"] == 285.0
 
 
 def test_append_empty_samples_is_noop(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-empty", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-empty", "2026-01-01T00:00:00Z", _metadata("run-empty"))
     db.append_samples("run-empty", [{"i": 1}])
     db.append_samples("run-empty", [])
     run = db.list_runs()[0]
-    assert run["sample_count"] == 1
+    assert run.sample_count == 1
 
 
 def test_client_names_crud(tmp_path: Path) -> None:
@@ -343,7 +372,7 @@ def test_client_names_crud(tmp_path: Path) -> None:
 
 def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-ro", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-ro", "2026-01-01T00:00:00Z", _metadata("run-ro"))
     db.append_samples("run-ro", [{"i": 1}, {"i": 2}])
     db.set_settings_snapshot({"enabled": True})
     db.upsert_client_name("client-1", "Alice")
@@ -367,8 +396,8 @@ def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
     _ = db.list_runs()
     _ = list(db.iter_run_samples("run-ro", batch_size=1))
     _ = db.get_run_metadata("run-ro")
-    _ = db.get_run("run-ro").get("analysis")
-    _ = db.get_run("run-ro")["status"]
+    _ = db.get_run("run-ro").analysis
+    _ = db.get_run("run-ro").status
     _ = db.get_active_run_id()
     _ = db.get_settings_snapshot()
     _ = db.list_client_names()
@@ -384,7 +413,7 @@ def test_get_run_metadata_non_dict_json_returns_none_and_warns(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-bad-meta", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-bad-meta", "2026-01-01T00:00:00Z", _metadata("run-bad-meta"))
     with db._cursor() as cur:
         cur.execute(
             "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
@@ -409,4 +438,4 @@ def test_operations_after_close_raise(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.close()
     with pytest.raises(RuntimeError, match="closed"):
-        db.create_run("run-x", "2026-01-01T00:00:00Z", {})
+        db.create_run("run-x", "2026-01-01T00:00:00Z", _metadata("run-x"))

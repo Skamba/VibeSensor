@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import pytest
 from _history_endpoint_helpers import (
@@ -21,6 +21,7 @@ from fastapi import HTTPException
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.http import create_router
 from vibesensor.domain import CarSnapshot
+from vibesensor.shared.types.history_records import StoredHistoryRun
 
 
 @pytest.mark.asyncio
@@ -224,19 +225,16 @@ async def test_history_insights_localizes_and_adds_run_context_warnings() -> Non
 async def test_history_run_strips_internal_analysis_fields() -> None:
     @dataclass
     class InternalFieldDB(FakeHistoryDB):
-        def get_run(self, run_id: str) -> dict[str, object] | None:
+        def get_run(self, run_id: str) -> StoredHistoryRun | None:
             if run_id != "run-1":
                 return None
-            return {
-                "run_id": run_id,
-                "status": "complete",
-                "metadata": self.metadata,
-                "analysis": {
-                    "some_field": 42,
-                    "_internal_secret": "should-not-appear",
-                    "_report_template_data": {"lang": "en"},
-                },
-            }
+            result = super().get_run(run_id)
+            assert result is not None
+            analysis = dict(result.analysis or {})
+            analysis["some_field"] = 42
+            analysis["_internal_secret"] = "should-not-appear"
+            analysis["_report_template_data"] = {"lang": "en"}
+            return replace(result, analysis=analysis)
 
     metadata = make_metadata()
     samples = [sample(0)]

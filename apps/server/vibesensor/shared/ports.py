@@ -6,7 +6,13 @@ from collections.abc import Iterator, Mapping
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
-from vibesensor.shared.types.backend_types import ResolvedSpeedSource
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
+from vibesensor.shared.types.backend_types import ResolvedSpeedSource, RunMetadata
+from vibesensor.shared.types.history_records import (
+    AnalyzingRunHealth,
+    HistoryRunListEntry,
+    StoredHistoryRun,
+)
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -37,11 +43,11 @@ class ClockSyncBroadcaster(Protocol):
 class RunPersistence(Protocol):
     """Persistence operations needed by history queries and recording flows."""
 
-    def list_runs(self, limit: int = 500) -> list[JsonObject]: ...
+    def list_runs(self, limit: int = 500) -> list[HistoryRunListEntry]: ...
 
-    def get_run(self, run_id: str) -> JsonObject | None: ...
+    def get_run(self, run_id: str) -> StoredHistoryRun | None: ...
 
-    def get_run_metadata(self, run_id: str) -> JsonObject | None: ...
+    def get_run_metadata(self, run_id: str) -> RunMetadata | None: ...
 
     def iter_run_samples(
         self,
@@ -55,7 +61,7 @@ class RunPersistence(Protocol):
         self,
         run_id: str,
         start_time_utc: str,
-        metadata: JsonObject,
+        metadata: RunMetadata,
     ) -> None: ...
 
     def append_samples(self, run_id: str, samples: list[SensorFrame]) -> None: ...
@@ -64,14 +70,14 @@ class RunPersistence(Protocol):
         self,
         run_id: str,
         end_time_utc: str,
-        metadata: JsonObject | None = None,
+        metadata: RunMetadata | None = None,
     ) -> bool: ...
 
-    def store_analysis(self, run_id: str, analysis: JsonObject) -> bool: ...
+    def store_analysis(self, run_id: str, analysis: AnalysisSummary) -> bool: ...
 
     def store_analysis_error(self, run_id: str, error: str) -> bool: ...
 
-    def analyzing_run_health(self) -> JsonObject: ...
+    def analyzing_run_health(self) -> AnalyzingRunHealth: ...
 
 
 class SettingsReader(Protocol):

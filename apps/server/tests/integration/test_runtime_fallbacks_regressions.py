@@ -15,10 +15,24 @@ import pytest
 from _paths import SERVER_ROOT
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.vibration_strength import (
     strength_floor_amp_g,
     vibration_strength_db_scalar,
 )
+
+
+def _metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2024-01-01T00:00:00",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "source": "test",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
 
 
 class TestStrengthFloorFallback:
@@ -79,17 +93,21 @@ class TestStoreAnalysisErrorGuard:
     def test_error_does_not_overwrite_complete(self, tmp_path: pytest.TempPathFactory) -> None:
         db = HistoryDB(tmp_path / "test.db")
         run_id = "test-run-001"
-        db.create_run(run_id, "2024-01-01T00:00:00", {"test": True})
+        db.create_run(run_id, "2024-01-01T00:00:00", _metadata(run_id, test=True))
 
         # Complete the analysis
         db.store_analysis(run_id, {"result": "ok"})
-        status_before = db.get_run(run_id)["status"]
-        assert status_before == "complete"
+        run_before = db.get_run(run_id)
+        assert run_before is not None
+        assert run_before.status.value == "complete"
 
         # Try to overwrite with an error
         db.store_analysis_error(run_id, "spurious error")
-        status_after = db.get_run(run_id)["status"]
-        assert status_after == "complete", "store_analysis_error must not overwrite a completed run"
+        run_after = db.get_run(run_id)
+        assert run_after is not None
+        assert run_after.status.value == "complete", (
+            "store_analysis_error must not overwrite a completed run"
+        )
 
 
 class TestEvidencePeakPresentFormat:

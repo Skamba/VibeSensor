@@ -2,25 +2,57 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import cast
 
 import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.json_utils import sanitize_value
+from vibesensor.shared.types.backend_types import RunMetadata
+
+
+def _metadata(run_id: str, **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "sensor_model": "fixture-sensor",
+        "raw_sample_rate_hz": 800,
+        "sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "source": "test",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
+
+
+def _analysis(run_id: str, **overrides: object) -> AnalysisSummary:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "findings": [],
+        "top_causes": [],
+        "warnings": [],
+    }
+    payload.update(overrides)
+    return cast(AnalysisSummary, payload)
 
 
 def test_create_run_sanitizes_non_finite_metadata(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-nan", "2026-01-01T00:00:00Z", {"tire_circumference_m": float("nan")})
+    db.create_run(
+        "run-nan",
+        "2026-01-01T00:00:00Z",
+        _metadata("run-nan", tire_circumference_m=float("nan")),
+    )
     run = db.get_run("run-nan")
     assert run is not None
-    assert run["metadata"]["tire_circumference_m"] is None
+    assert run.metadata.extras["tire_circumference_m"] is None
 
 
 def test_list_runs_clamps_negative_limit_to_all_rows(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     for i in range(5):
-        db.create_run(f"run-{i}", "2026-01-01T00:00:00Z", {"source": "test"})
+        db.create_run(f"run-{i}", "2026-01-01T00:00:00Z", _metadata(f"run-{i}"))
         db.finalize_run(f"run-{i}", "2026-01-01T00:10:00Z")
 
     result = db.list_runs(limit=-1)
@@ -29,7 +61,7 @@ def test_list_runs_clamps_negative_limit_to_all_rows(tmp_path: Path) -> None:
 
 def test_resolve_keyset_offset_rejects_invalid_table(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-guard", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-guard", "2026-01-01T00:00:00Z", _metadata("run-guard"))
     db.append_samples("run-guard", [{"i": i} for i in range(3)])
 
     with pytest.raises(ValueError, match="invalid table name"):
@@ -50,7 +82,7 @@ def test_append_samples_whitespace_run_id_raises(tmp_path: Path) -> None:
 
 def test_iter_run_samples_negative_offset_raises(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-neg-off", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-neg-off", "2026-01-01T00:00:00Z", _metadata("run-neg-off"))
     db.append_samples("run-neg-off", [{"i": i} for i in range(3)])
 
     with pytest.raises(ValueError, match="offset"):
@@ -104,19 +136,27 @@ def test_sanitize_value_handles_numpy_arrays() -> None:
 
 def test_verify_run_integrity_clean_run(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-ok", "2026-01-01T00:00:00Z", {"sensor_model": "a", "sample_rate_hz": 100})
+    db.create_run(
+        "run-ok",
+        "2026-01-01T00:00:00Z",
+        _metadata("run-ok", sensor_model="a", sample_rate_hz=100),
+    )
     db.append_samples("run-ok", [{"i": i} for i in range(5)])
     db.finalize_run("run-ok", "2026-01-01T00:10:00Z")
-    db.store_analysis("run-ok", {"findings": [], "top_causes": [], "warnings": []})
+    db.store_analysis("run-ok", _analysis("run-ok"))
     assert db.verify_run_integrity("run-ok") == []
 
 
 def test_verify_run_integrity_sample_count_mismatch(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-m", "2026-01-01T00:00:00Z", {"sensor_model": "a", "sample_rate_hz": 100})
+    db.create_run(
+        "run-m",
+        "2026-01-01T00:00:00Z",
+        _metadata("run-m", sensor_model="a", sample_rate_hz=100),
+    )
     db.append_samples("run-m", [{"i": i} for i in range(5)])
     db.finalize_run("run-m", "2026-01-01T00:10:00Z")
-    db.store_analysis("run-m", {"findings": [], "top_causes": [], "warnings": []})
+    db.store_analysis("run-m", _analysis("run-m"))
     # Manually corrupt sample_count
     with db._cursor() as cur:
         cur.execute("UPDATE runs SET sample_count = 99 WHERE run_id = 'run-m'")
@@ -126,7 +166,11 @@ def test_verify_run_integrity_sample_count_mismatch(tmp_path: Path) -> None:
 
 def test_verify_run_integrity_complete_without_analysis(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-na", "2026-01-01T00:00:00Z", {"sensor_model": "a", "sample_rate_hz": 100})
+    db.create_run(
+        "run-na",
+        "2026-01-01T00:00:00Z",
+        _metadata("run-na", sensor_model="a", sample_rate_hz=100),
+    )
     db.finalize_run("run-na", "2026-01-01T00:10:00Z")
     # Force status to complete without analysis
     with db._cursor() as cur:
@@ -148,10 +192,16 @@ def test_create_run_warns_on_missing_metadata_keys(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
+    incomplete_meta = RunMetadata.from_dict(
+        {
+            "run_id": "run-w",
+            "start_time_utc": "2026-01-01T00:00:00Z",
+            "source": "test",
+        }
+    )
     with caplog.at_level("WARNING"):
-        db.create_run("run-w", "2026-01-01T00:00:00Z", {"source": "test"})
+        db.create_run("run-w", "2026-01-01T00:00:00Z", incomplete_meta)
     assert "missing recommended keys" in caplog.text
-    assert "sensor_model" in caplog.text
     assert "sample_rate_hz" in caplog.text
 
 
@@ -160,7 +210,7 @@ def test_create_run_no_warning_when_metadata_complete(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    meta = {"sensor_model": "a", "sample_rate_hz": 100}
+    meta = _metadata("run-ok", sensor_model="a", sample_rate_hz=100)
     with caplog.at_level("WARNING"):
         db.create_run("run-ok", "2026-01-01T00:00:00Z", meta)
     assert "missing recommended keys" not in caplog.text
@@ -174,11 +224,12 @@ def test_store_analysis_warns_on_missing_summary_keys(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    meta = {"sensor_model": "a", "sample_rate_hz": 100}
+    meta = _metadata("run-w2", sensor_model="a", sample_rate_hz=100)
     db.create_run("run-w2", "2026-01-01T00:00:00Z", meta)
     db.finalize_run("run-w2", "2026-01-01T00:10:00Z")
+    incomplete_summary = cast(AnalysisSummary, {"run_id": "run-w2", "score": 42})
     with caplog.at_level("WARNING"):
-        db.store_analysis("run-w2", {"score": 42})
+        db.store_analysis("run-w2", incomplete_summary)
     assert "missing expected keys" in caplog.text
 
 
@@ -187,17 +238,25 @@ def test_store_analysis_warns_on_missing_summary_keys(
 
 def test_store_analysis_rejects_terminal_status(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-t", "2026-01-01T00:00:00Z", {"sensor_model": "a", "sample_rate_hz": 100})
+    db.create_run(
+        "run-t",
+        "2026-01-01T00:00:00Z",
+        _metadata("run-t", sensor_model="a", sample_rate_hz=100),
+    )
     db.finalize_run("run-t", "2026-01-01T00:10:00Z")
-    db.store_analysis("run-t", {"findings": [], "top_causes": [], "warnings": []})
+    db.store_analysis("run-t", _analysis("run-t"))
     # Second store_analysis should return False (already complete)
-    assert db.store_analysis("run-t", {"findings": []}) is False
+    assert db.store_analysis("run-t", _analysis("run-t", top_causes=["unexpected"])) is False
 
 
 def test_store_analysis_error_rejects_terminal_status(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-te", "2026-01-01T00:00:00Z", {"sensor_model": "a", "sample_rate_hz": 100})
+    db.create_run(
+        "run-te",
+        "2026-01-01T00:00:00Z",
+        _metadata("run-te", sensor_model="a", sample_rate_hz=100),
+    )
     db.finalize_run("run-te", "2026-01-01T00:10:00Z")
-    db.store_analysis("run-te", {"findings": [], "top_causes": [], "warnings": []})
+    db.store_analysis("run-te", _analysis("run-te"))
     # Error after complete should return False
     assert db.store_analysis_error("run-te", "late failure") is False

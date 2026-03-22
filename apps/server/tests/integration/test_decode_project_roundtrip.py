@@ -25,6 +25,8 @@ from vibesensor.adapters.pdf.report_data import ReportTemplateData
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain import DiagnosticCase, TestRun
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
+from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.use_cases.diagnostics import AnalysisResult, RunAnalysis
 
 # -- helpers ---------------------------------------------------------------
@@ -50,11 +52,21 @@ def _run_analysis() -> tuple[RunAnalysis, AnalysisResult]:
     return analysis, result
 
 
-def _persist_and_reload(tmp_path: Path, summary: dict[str, Any]) -> dict[str, Any]:
+def _persist_and_reload(tmp_path: Path, summary: dict[str, Any]) -> StoredHistoryRun:
     """Persist summary to HistoryDB and reload as a run payload."""
     db = HistoryDB(tmp_path / "roundtrip.db")
     try:
-        db.create_run(_RUN_ID, "2026-01-01T00:00:00Z", standard_metadata())
+        db.create_run(
+            _RUN_ID,
+            "2026-01-01T00:00:00Z",
+            RunMetadata.from_dict(
+                {
+                    "run_id": _RUN_ID,
+                    "start_time_utc": "2026-01-01T00:00:00Z",
+                    **standard_metadata(),
+                }
+            ),
+        )
         db.finalize_run(_RUN_ID, "2026-01-01T00:01:00Z")
         db.store_analysis(_RUN_ID, summary)
         run = db.get_run(_RUN_ID)
@@ -128,7 +140,7 @@ def test_persist_reload_project_preserves_domain_meaning(tmp_path: Path) -> None
     direct_summary = analysis_result_to_summary(result)
     run = _persist_and_reload(tmp_path, direct_summary)
 
-    analysis_blob = run.get("analysis")
+    analysis_blob = run.analysis
     assert isinstance(analysis_blob, dict)
     reconstructed = _reproject(analysis_blob)
 
@@ -158,7 +170,7 @@ def test_report_from_reconstructed_aggregate(tmp_path: Path) -> None:
     direct_summary = analysis_result_to_summary(result)
     run = _persist_and_reload(tmp_path, direct_summary)
 
-    analysis_blob = run.get("analysis")
+    analysis_blob = run.analysis
     assert isinstance(analysis_blob, dict)
     reconstructed = _reproject(analysis_blob)
 
@@ -217,7 +229,7 @@ def test_cross_boundary_domain_meaning_consistency(tmp_path: Path) -> None:
     direct_summary = analysis_result_to_summary(result)
     run = _persist_and_reload(tmp_path, direct_summary)
 
-    analysis_blob = run.get("analysis")
+    analysis_blob = run.analysis
     assert isinstance(analysis_blob, dict)
     reconstructed = _reproject(analysis_blob)
 

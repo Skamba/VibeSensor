@@ -19,12 +19,14 @@ from dataclasses import dataclass
 from threading import RLock, Thread
 from typing import Protocol, cast
 
+from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary, RunSuitabilityCheck
 from vibesensor.shared.boundaries.analysis_summary import (
     AnalysisResultLike,
     analysis_result_to_summary,
 )
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.sampling import bounded_sample
+from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
@@ -58,39 +60,36 @@ class PostAnalysisRunner(Protocol):
         self,
         *,
         run_id: str,
-        metadata: JsonObject,
+        metadata: RunMetadata,
         samples: list[SensorFrame],
         language: str,
         total_sample_count: int,
         stride: int,
-    ) -> JsonObject: ...
+    ) -> AnalysisSummary: ...
 
 
 def build_post_analysis_summary(
     *,
     run_id: str,
-    metadata: JsonObject,
+    metadata: RunMetadata,
     samples: list[SensorFrame],
     language: str,
     total_sample_count: int,
     stride: int,
-) -> JsonObject:
+) -> AnalysisSummary:
     """Run diagnostics analysis and return the persisted summary payload."""
     from vibesensor.domain import SuitabilityCheck
     from vibesensor.report_i18n import tr
     from vibesensor.use_cases.diagnostics import RunAnalysis
 
     result = RunAnalysis(
-        metadata,
+        metadata.to_dict(),
         samples,
         lang=language,
         file_name=run_id,
         include_samples=False,
     ).summarize()
-    summary = cast(
-        JsonObject,
-        dict(analysis_result_to_summary(cast(AnalysisResultLike, result))),
-    )
+    summary = analysis_result_to_summary(cast(AnalysisResultLike, result))
     summary["case_id"] = result.diagnostic_case.case_id
 
     analysis_metadata: JsonObject = {
@@ -115,8 +114,9 @@ def build_post_analysis_summary(
         if not isinstance(run_suitability, list):
             run_suitability = []
             summary["run_suitability"] = run_suitability
-        warning_payload: JsonObject = {
+        warning_payload: RunSuitabilityCheck = {
             "check_key": stride_check.check_key,
+            "check": stride_check.check_key,
             "state": stride_check.state,
             "explanation": explanation,
         }
@@ -318,7 +318,7 @@ class PostAnalysisWorker:
                         exc_info=True,
                     )
                 return
-            language = str(metadata.get("language") or "en")
+            language = metadata.language or "en"
 
             sample_iter = (
                 sample for batch in db.iter_run_samples(run_id, batch_size=1024) for sample in batch

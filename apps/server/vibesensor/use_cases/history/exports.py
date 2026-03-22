@@ -10,13 +10,12 @@ import logging
 import tempfile
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import TypeGuard
 
 from vibesensor.shared.json_utils import sanitize_for_json
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
+from vibesensor.shared.types.history_records import StoredHistoryRun
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.history.helpers import (
-    HistoryRecord,
     async_require_run,
     safe_filename,
     strip_internal_fields,
@@ -62,10 +61,6 @@ CsvCell = str | int | float | None
 CsvRow = dict[str, CsvCell]
 
 
-def _is_json_value(value: object) -> TypeGuard[JsonValue]:
-    return value is None or isinstance(value, (bool, int, float, str, list, dict))
-
-
 def flatten_for_csv(row: JsonObject) -> CsvRow:
     """Convert nested/complex values to JSON strings for CSV export."""
     out: CsvRow = {}
@@ -103,7 +98,7 @@ class HistoryExportContext:
 
     run_id: str
     safe_name: str
-    run: HistoryRecord
+    run: StoredHistoryRun
     sample_count: int
     raw_csv_spool: tempfile.SpooledTemporaryFile[bytes]
 
@@ -158,20 +153,8 @@ class HistoryExportService:
         return spool, sample_count
 
 
-def build_run_details_json(
-    run: HistoryRecord,
-    sample_count: int,
-    run_id: str,
-) -> str:
-    """Build the exported JSON metadata document for a history run."""
-    run_details: JsonObject = {}
-    for key, value in run.items():
-        if _is_json_value(value):
-            run_details[key] = value
+def serialize_run_details_json(run_details: JsonObject, *, sample_count: int, run_id: str) -> str:
     run_details["sample_count"] = sample_count
-    analysis = run_details.get("analysis")
-    if is_json_object(analysis):
-        run_details["analysis"] = strip_internal_fields(dict(analysis))
     sanitized, had_non_finite = sanitize_for_json(run_details)
     if had_non_finite:
         LOGGER.warning("Export run %s: sanitized non-finite floats in analysis data", run_id)
@@ -182,3 +165,15 @@ def build_run_details_json(
         sort_keys=True,
         allow_nan=False,
     )
+
+
+def build_run_details_json(
+    run: StoredHistoryRun,
+    sample_count: int,
+    run_id: str,
+) -> str:
+    """Build the exported JSON metadata document for a history run."""
+    run_details = run.to_json_object()
+    if run.analysis is not None:
+        run_details["analysis"] = strip_internal_fields(run.analysis)
+    return serialize_run_details_json(run_details, sample_count=sample_count, run_id=run_id)
