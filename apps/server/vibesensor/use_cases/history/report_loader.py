@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from vibesensor.domain import CarSnapshot, RunStatus
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.boundaries.summary_warning import summary_warning_payloads
+from vibesensor.shared.boundaries.analysis_summary import analysis_summary_with_warnings
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
@@ -75,8 +75,7 @@ class HistoryReportRequestLoader:
             metadata=analysis.get("metadata"),
             current_active_car_snapshot=current_active_car_snapshot,
         )
-        analysis_summary = cast(AnalysisSummary, dict(analysis))
-        analysis_summary["warnings"] = summary_warning_payloads(warnings)
+        analysis_summary = analysis_summary_with_warnings(analysis, warnings)
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
