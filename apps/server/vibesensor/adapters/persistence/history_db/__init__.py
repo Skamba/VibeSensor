@@ -24,7 +24,7 @@ from vibesensor.shared.boundaries.settings_snapshot import settings_snapshot_fro
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.backend_types import SettingsSnapshotPayload
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
+from vibesensor.shared.types.json_types import is_json_object
 
 # Re-export for public API.
 __all__ = ["HistoryDB"]

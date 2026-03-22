@@ -37,8 +37,10 @@ from vibesensor.domain import (
     normalize_sensor_id,
 )
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.infra.config.car_settings import CarSettingsMixin
-from vibesensor.infra.config.car_settings import _clamp_str as _clamp_str
+from vibesensor.infra.config.car_settings import (
+    CarSettingsMixin,
+    _clamp_str as _clamp_str,
+)
 from vibesensor.shared.boundaries.settings_snapshot import (
     coerce_language_code as _coerce_language,
     coerce_speed_unit_code as _coerce_speed_unit,
@@ -51,6 +53,7 @@ from vibesensor.shared.types.backend_types import (
     LanguageCode,
     SensorConfig,
     SensorConfigUpdatePayload,
+    SensorsByMacPayload,
     SettingsSnapshotPayload,
     SpeedSourceConfig,
     SpeedSourcePayload,
