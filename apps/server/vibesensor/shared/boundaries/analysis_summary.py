@@ -73,6 +73,17 @@ def _amp_metric_values(accel_stats: AccelStatisticsLike) -> list[float]:
     return [float(value) for value in raw_values if isinstance(value, (int, float))]
 
 
+def analysis_summary_with_warnings(
+    summary: AnalysisSummary,
+    warnings: object,
+) -> AnalysisSummary:
+    """Return a typed summary copy with report-facing warning payloads replaced."""
+
+    updated_summary = summary.copy()
+    updated_summary["warnings"] = summary_warning_payloads(warnings)
+    return updated_summary
+
+
 def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
     """Serialize an app-level diagnostics result at an explicit boundary."""
     summary = build_summary_payload(
