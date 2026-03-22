@@ -38,8 +38,8 @@ from vibesensor.domain import (
 )
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.config.car_settings import (
+    _clamp_str,
     CarSettingsMixin,
-    _clamp_str as _clamp_str,
 )
 from vibesensor.shared.boundaries.settings_snapshot import (
     coerce_language_code as _coerce_language,
@@ -47,7 +47,7 @@ from vibesensor.shared.boundaries.settings_snapshot import (
     validated_language_code as _validated_language,
     validated_speed_unit_code as _validated_speed_unit,
 )
-from vibesensor.shared.exceptions import PersistenceError as PersistenceError
+from vibesensor.shared.exceptions import PersistenceError
 from vibesensor.shared.ports import SettingsSnapshotPersistence, SpeedSourceSync
 from vibesensor.shared.types.backend_types import (
     LanguageCode,
