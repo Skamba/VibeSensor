@@ -165,7 +165,8 @@ After `RunAnalysis.summarize()` returns, `PostAnalysisWorker`:
 
 History readers unwrap the envelope back to the summary shape.
 Report endpoints rebuild `ReportTemplateData` from that summary on demand
-via `adapters/pdf/mapping.py:map_summary()`.
+via `use_cases/history/report_preparation.py:prepare_report_input()` and
+`adapters/pdf/mapping.py:map_summary()`.
 
 Persisted post-stop analysis strength/intensity outputs are dB-only.
 Raw ingest/sample acceleration fields may still be expressed in g.
@@ -176,7 +177,8 @@ Raw ingest/sample acceleration fields may still be expressed in g.
    (or create a new one under `use_cases/diagnostics/`).
 2. Call it from `RunAnalysis.summarize()` at the correct point in the
    pipeline.
-3. If the new output is needed by the renderer, update
+3. If the new output is needed by the renderer, add any report-facing shaping
+   in `use_cases/history/report_preparation.py`, then update
    `adapters/pdf/mapping.py:map_summary()` and `ReportTemplateData`.
 4. Export any new public symbol from `use_cases/diagnostics/__init__.py`.
 5. Run `pytest apps/server/tests/` to verify tests still pass.

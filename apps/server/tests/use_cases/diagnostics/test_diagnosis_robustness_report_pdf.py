@@ -13,7 +13,7 @@ from test_support import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 
 
 class TestPdfContentForDiagnosedScenario:
@@ -47,7 +47,7 @@ class TestPdfContentForDiagnosedScenario:
             lang="en",
             file_name="pdf_diag_test",
         )
-        pdf_bytes = build_report_pdf(map_summary(summary))
+        pdf_bytes = build_report_pdf(map_summary(prepare_report_input(summary)))
         text_lower = extract_pdf_text(pdf_bytes).lower()
         assert "diagnostic worksheet" in text_lower
         assert "wheel" in text_lower or "tire" in text_lower
@@ -86,6 +86,8 @@ class TestPdfContentForDiagnosedScenario:
             lang="nl",
             file_name="pdf_nl_diag",
         )
-        text_lower = extract_pdf_text(build_report_pdf(map_summary(summary))).lower()
+        text_lower = extract_pdf_text(
+            build_report_pdf(map_summary(prepare_report_input(summary)))
+        ).lower()
         assert "diagnostisch werkformulier" in text_lower
         assert "km/h" in text_lower

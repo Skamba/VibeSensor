@@ -1,10 +1,10 @@
-"""report_mapping – thin mapper from report context to template data.
+"""report_mapping – thin mapper from prepared report inputs to template data.
 
 Context assembly (domain aggregate reconstruction, primary-candidate
 preparation) lives in :mod:`report_context`, with focused helper logic in
 ``_candidate_resolver.py`` and ``_card_builder.py``. This module receives
-a pre-computed context and maps it to :class:`ReportTemplateData` for the
-PDF renderer.
+an explicit prepared report input and maps it to :class:`ReportTemplateData`
+for the PDF renderer.
 """
 
 from __future__ import annotations
@@ -53,9 +53,14 @@ from vibesensor.use_cases.history.report_interpretation import (
     compute_location_hotspot_rows,
     filter_active_sensor_intensity,
 )
+from vibesensor.use_cases.history.report_preparation import (
+    PreparedReportInput,
+    prepare_report_input,
+)
 
 __all__ = [
     "PrimaryCandidateContext",
+    "PreparedReportInput",
     "Report",
     "ReportMappingContext",
     "build_report_from_summary",
@@ -63,6 +68,7 @@ __all__ = [
     "filter_active_sensor_intensity",
     "humanize_signatures",
     "map_summary",
+    "prepare_report_input",
     "prepare_report_mapping_context",
     "resolve_primary_report_candidate",
 ]
@@ -162,27 +168,27 @@ def build_version_marker() -> str:
 # ---------------------------------------------------------------------------
 
 
-def map_summary(
-    summary: AnalysisSummary,
-    *,
-    test_run: TestRun | None = None,
-) -> ReportTemplateData:
-    """Map a run summary dict into the final report template data model.
+def map_summary(prepared: PreparedReportInput) -> ReportTemplateData:
+    """Map a prepared report input into the final report template data model.
 
-    Constructs a domain :class:`~vibesensor.domain.Report` as the
-    high-level entry point, then delegates to the template-data builder
-    for PDF-specific rendering fields.
-
-    When *test_run* is supplied, reconstruction from the summary dict is
-    skipped and the caller-provided aggregate is used directly.
+    ``PreparedReportInput`` guarantees that report projection and domain
+    reconstruction have already happened on the history side, so the PDF
+    adapter can stay focused on mapping and rendering decisions.
     """
+    summary = prepared.analysis_summary
     lang = str(normalize_lang(summary.get("lang")))
     report = build_report_from_summary(summary)
 
     def tr(key: str, **kw: object) -> str:
         return str(_tr(lang, key, **kw))
 
-    return _build_report_template_data(summary, report=report, lang=lang, tr=tr, test_run=test_run)
+    return _build_report_template_data(
+        summary,
+        report=report,
+        lang=lang,
+        tr=tr,
+        test_run=prepared.domain_test_run,
+    )
 
 
 def _finding_to_presentation(f: Finding) -> FindingPresentation:

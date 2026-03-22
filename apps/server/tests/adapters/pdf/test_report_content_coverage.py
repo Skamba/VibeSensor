@@ -18,7 +18,7 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_data import PatternEvidence, ReportTemplateData
 from vibesensor.domain import Finding
@@ -318,7 +318,7 @@ def test_pdf_contains_i18n_labels(
 ) -> None:
     run_path = _make_run_jsonl(tmp_path)
     summary = summarize_log(run_path, lang=lang)
-    pdf = build_report_pdf(map_summary(summary))
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     text = extract_pdf_text(pdf)
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     missing = []

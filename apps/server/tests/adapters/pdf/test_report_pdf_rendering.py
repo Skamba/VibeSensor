@@ -20,7 +20,7 @@ from test_support.report_helpers import (
 from vibesensor import __version__
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf._panel_systems import _draw_system_card
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_data import PartSuggestion, SystemFindingCard
@@ -41,7 +41,11 @@ def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
-    x0, y0, x1, y1 = extract_media_box(build_report_pdf(map_summary(summarize_log(run_path))))
+    x0, y0, x1, y1 = extract_media_box(
+        build_report_pdf(
+            map_summary(prepare_report_input(summarize_log(run_path))),
+        )
+    )
     width = x1 - x0
     height = y1 - y0
     assert height > width
@@ -64,7 +68,7 @@ def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> No
     write_jsonl(run_path, records)
     summary = summarize_log(run_path, include_samples=False)
     assert summary["sensor_intensity_by_location"][0]["strength_bucket_distribution"]["total"] == 8
-    assert build_report_pdf(map_summary(summary)).startswith(b"%PDF")
+    assert build_report_pdf(map_summary(prepare_report_input(summary))).startswith(b"%PDF")
 
 
 def test_report_pdf_footer_contains_version_marker(tmp_path: Path, monkeypatch) -> None:
@@ -82,7 +86,9 @@ def test_report_pdf_footer_contains_version_marker(tmp_path: Path, monkeypatch) 
         )
     records.append(RUN_END)
     write_jsonl(run_path, records)
-    pdf = build_report_pdf(map_summary(summarize_log(run_path)))
+    pdf = build_report_pdf(
+        map_summary(prepare_report_input(summarize_log(run_path))),
+    )
     marker = f"v{__version__} (a1b2c3d4)"
     reader = PdfReader(BytesIO(pdf))
     text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
@@ -115,7 +121,13 @@ def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> N
     write_jsonl(run_path, records)
     text_blob = "\n".join(
         (page.extract_text() or "")
-        for page in PdfReader(BytesIO(build_report_pdf(map_summary(summarize_log(run_path))))).pages
+        for page in PdfReader(
+            BytesIO(
+                build_report_pdf(
+                    map_summary(prepare_report_input(summarize_log(run_path))),
+                )
+            )
+        ).pages
     )
     assert text_blob.count("Next steps") == 1
 
@@ -137,7 +149,11 @@ def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
     text_blob = "\n".join(
         (page.extract_text() or "")
         for page in PdfReader(
-            BytesIO(build_report_pdf(map_summary(summarize_log(run_path, lang="nl")))),
+            BytesIO(
+                build_report_pdf(
+                    map_summary(prepare_report_input(summarize_log(run_path, lang="nl"))),
+                )
+            ),
         ).pages
     )
     assert "Duur:" in text_blob
@@ -169,7 +185,9 @@ def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
     summary = summarize_log(run_path)
     text_blob = "\n".join(
         (page.extract_text() or "")
-        for page in PdfReader(BytesIO(build_report_pdf(map_summary(summary)))).pages
+        for page in PdfReader(
+            BytesIO(build_report_pdf(map_summary(prepare_report_input(summary))))
+        ).pages
     )
     assert "Firmware Version" in text_blob
     assert "esp-fw-1.2.3" in text_blob

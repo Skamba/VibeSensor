@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from vibesensor.domain import CarSnapshot, RunStatus
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
@@ -24,18 +23,15 @@ from vibesensor.use_cases.history.helpers import (
 )
 from vibesensor.use_cases.history.report_cache import ReportPdfCacheKey
 
-if TYPE_CHECKING:
-    from vibesensor.domain import TestRun
-
 
 @dataclass(frozen=True)
 class HistoryReportRequest:
-    """Resolved persisted report context ready for PDF generation."""
+    """Resolved persisted report context ready for cache lookup and preparation."""
 
     cache_key: ReportPdfCacheKey
     filename: str
+    language: str
     analysis_summary: AnalysisSummary
-    domain_test_run: TestRun | None = None
 
 
 class HistoryReportRequestLoader:
@@ -89,6 +85,7 @@ class HistoryReportRequestLoader:
         return HistoryReportRequest(
             cache_key=cache_key,
             filename=f"{safe_filename(run_id)}_report.pdf",
+            language=self._report_pdf_cache_lang(run, requested_lang),
             analysis_summary=analysis_summary,
         )
 

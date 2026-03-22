@@ -13,7 +13,7 @@ from test_support.report_helpers import report_sample as _base_sample
 
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf._panel_diagram import assert_aspect_preserved, fit_rect_preserve_aspect
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 
 
@@ -35,7 +35,7 @@ def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    pdf = build_report_pdf(map_summary(summary))
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     assert pdf.startswith(b"%PDF")
 
     reader = PdfReader(BytesIO(pdf))
@@ -55,7 +55,7 @@ def test_report_pdf_two_pages(tmp_path: Path) -> None:
     write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    pdf = build_report_pdf(map_summary(summary))
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     reader = PdfReader(BytesIO(pdf))
     assert len(reader.pages) == 2
 
@@ -108,7 +108,7 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
         samples=[],
     )
 
-    pdf = build_report_pdf(map_summary(summary))
+    pdf = build_report_pdf(map_summary(prepare_report_input(summary)))
     # Domain resolves via i18n with zeroed details (payload details not recovered)
     assert b"saturation" in pdf
     assert b"detected" in pdf

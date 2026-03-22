@@ -8,7 +8,7 @@ from test_support.core import standard_metadata
 from test_support.sample_scenarios import build_speed_sweep_samples, make_sample
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.adapters.pdf.mapping import map_summary
+from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics._reference_findings import _reference_missing_finding
@@ -77,7 +77,7 @@ class TestReportMetadataCompleteness:
             build_speed_sweep_samples(n=20, vib_db=18.0),
             include_samples=False,
         )
-        template = map_summary(summary)
+        template = map_summary(prepare_report_input(summary))
         assert template.duration_text is not None
         assert template.sample_count > 0
         assert template.sensor_count >= 1
@@ -88,7 +88,7 @@ class TestReportMetadataCompleteness:
             build_speed_sweep_samples(n=40, peak_amp=0.06, vib_db=22.0),
             include_samples=False,
         )
-        template = map_summary(summary)
+        template = map_summary(prepare_report_input(summary))
         for step in template.next_steps:
             assert step.action
 

@@ -79,10 +79,10 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     render_count = 0
     real_renderer = _real_pdf_renderer
 
-    def counting_renderer(summary: dict, test_run: object | None) -> bytes:
+    def counting_renderer(prepared: object) -> bytes:
         nonlocal render_count
         render_count += 1
-        return real_renderer(summary, test_run)
+        return real_renderer(prepared)
 
     db = FakeHistoryDB(metadata, samples, analysis)
     state = FakeState(db, FakeWsHub(), pdf_renderer=counting_renderer)
@@ -113,7 +113,7 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
 async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> None:
     call_count = 0
 
-    def fake_renderer(_summary: dict, _test_run: object | None) -> bytes:
+    def fake_renderer(_prepared: object) -> bytes:
         nonlocal call_count
         call_count += 1
         return b"%PDF-cached"
@@ -132,7 +132,7 @@ async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> 
 async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persisted() -> None:
     call_count = 0
 
-    def fake_renderer(_summary: dict, _test_run: object | None) -> bytes:
+    def fake_renderer(_prepared: object) -> bytes:
         nonlocal call_count
         call_count += 1
         return b"%PDF-cached-cross-lang"
@@ -172,7 +172,7 @@ async def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes()
 
     call_count = 0
 
-    def fake_renderer(_summary: dict, _test_run: object | None) -> bytes:
+    def fake_renderer(_prepared: object) -> bytes:
         nonlocal call_count
         call_count += 1
         return b"%PDF-versioned"
