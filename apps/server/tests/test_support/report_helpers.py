@@ -9,10 +9,10 @@ from typing import Any
 import pytest
 
 from vibesensor.domain import LocationHotspot
-from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
 from vibesensor.use_cases.diagnostics import (
     order_pipeline as order_findings_module,
 )
+from vibesensor.use_cases.diagnostics import order_scoring as _order_scoring_module
 from vibesensor.use_cases.diagnostics import (
     order_statistics as _order_statistics_module,
 )
@@ -297,8 +297,8 @@ def patch_order_hypothesis(
     monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [HypothesisStub()])
     monkeypatch.setattr(_order_statistics_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
-        _test_plan_module,
-        "_location_speedbin_summary",
+        _order_scoring_module,
+        "summarize_order_match_locations",
         lambda _points, **_kwargs: (
             "",
             LocationAnalysisResult(

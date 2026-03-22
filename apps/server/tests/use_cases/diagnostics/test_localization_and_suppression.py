@@ -21,7 +21,7 @@ from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.locations import WHEEL_LOCATION_CODES, is_wheel_location
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
-from vibesensor.use_cases.diagnostics.location_analysis import _location_speedbin_summary
+from vibesensor.use_cases.diagnostics.location_analysis import summarize_order_match_locations
 
 # ---------------------------------------------------------------------------
 # Helpers (reused from test_scenario_ground_truth patterns)
@@ -175,7 +175,7 @@ class TestSourceAwareLocalization:
                 ),
             )
 
-        _, hotspot = _location_speedbin_summary(
+        _, hotspot = summarize_order_match_locations(
             matches,
             lang="en",
             suspected_source="wheel/tire",
@@ -212,7 +212,7 @@ class TestSourceAwareLocalization:
                 ),
             )
 
-        _, hotspot = _location_speedbin_summary(
+        _, hotspot = summarize_order_match_locations(
             matches,
             lang="en",
             suspected_source="engine",
@@ -248,7 +248,7 @@ class TestSourceAwareLocalization:
                 ),
             )
 
-        _, hotspot = _location_speedbin_summary(
+        _, hotspot = summarize_order_match_locations(
             matches,
             lang="en",
             suspected_source="wheel/tire",

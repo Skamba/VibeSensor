@@ -1,16 +1,19 @@
-"""Tests for OrderMatchAccumulator properties and OrderAnalysisSession."""
+"""Tests for order-matching contracts, finding assembly, and OrderAnalysisSession."""
 
 from __future__ import annotations
 
 import pytest
 
-import vibesensor.use_cases.diagnostics.order_analysis as order_analysis_module
+import vibesensor.use_cases.diagnostics.order_finding_builder as order_finding_builder_module
 from vibesensor.domain import OrderMatchObservation, VibrationSource
-from vibesensor.use_cases.diagnostics.order_analysis import (
-    OrderFindingBuildContext,
+from vibesensor.use_cases.diagnostics.order_matching import (
     OrderMatchAccumulator,
 )
 from vibesensor.use_cases.diagnostics.order_pipeline import OrderAnalysisSession
+from vibesensor.use_cases.diagnostics.order_scoring import (
+    OrderFindingBuildContext,
+    OrderFindingScore,
+)
 from vibesensor.use_cases.diagnostics.rotational_physics import OrderHypothesis
 
 # ===========================================================================
@@ -142,43 +145,20 @@ class TestOrderMatchAccumulatorProperties:
 
 
 class TestAssembleOrderFinding:
-    def test_ranking_score_uses_compliance_adjusted_error_denominator(
+    def test_assemble_order_finding_uses_scoring_contract(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(
-            order_analysis_module,
-            "compute_phase_stats",
-            lambda *args, **kwargs: ({}, 1),
-        )
-        monkeypatch.setattr(
-            order_analysis_module,
-            "compute_amplitude_and_error_stats",
-            lambda *args, **kwargs: (0.02, 0.002, 0.10, 0.9, 0.9),
-        )
-        monkeypatch.setattr(
-            order_analysis_module,
+            order_finding_builder_module,
             "compute_matched_speed_phase_evidence",
-            lambda *args, **kwargs: (60.0, None, None, {"cruise_fraction": 0.0}, None),
-        )
-        monkeypatch.setattr(
-            order_analysis_module,
-            "detect_diffuse_excitation",
-            lambda *args, **kwargs: (False, 1.0),
-        )
-        monkeypatch.setattr(
-            order_analysis_module,
-            "apply_localization_override",
-            lambda **kwargs: (0.40, False),
-        )
-        monkeypatch.setattr(
-            order_analysis_module,
-            "compute_order_confidence",
-            lambda **kwargs: 0.75,
-        )
-        monkeypatch.setattr(
-            "vibesensor.use_cases.diagnostics.location_analysis._location_speedbin_summary",
-            lambda *args, **kwargs: ("", None),
+            lambda *args, **kwargs: (
+                60.0,
+                [55.0, 65.0],
+                "60-70 km/h",
+                {"cruise_fraction": 0.5, "phases_detected": ["cruise"]},
+                "cruise",
+            ),
         )
 
         hypothesis = OrderHypothesis(
@@ -200,25 +180,36 @@ class TestAssembleOrderFinding:
             lang="en",
         )
 
-        score_low, finding_low = order_analysis_module.assemble_order_finding(
+        score, finding = order_finding_builder_module.assemble_order_finding(
             hypothesis,
             _make_accumulator(rel_error=0.10, compliance=1.0),
             context=context,
-        )
-        score_high, finding_high = order_analysis_module.assemble_order_finding(
-            hypothesis,
-            _make_accumulator(rel_error=0.10, compliance=4.0),
-            context=context,
+            score=OrderFindingScore(
+                confidence=0.75,
+                ranking_score=0.84,
+                absolute_strength_db=31.5,
+                mean_floor=0.002,
+                mean_relative_error=0.10,
+                frequency_correlation=0.9,
+                phases_with_evidence=1,
+                per_phase_confidence={"cruise": 0.8},
+                diffuse_excitation=False,
+                weak_spatial_separation=False,
+                dominance_ratio=None,
+                location_line="front-left hotspot",
+                domain_hotspot=None,
+                strongest_location="front_left",
+                hotspot_speed_band="60-70 km/h",
+            ),
         )
 
-        low_error_factor = 1.0 - min(1.0, 0.10 / (0.25 * 1.0))
-        high_error_factor = 1.0 - min(1.0, 0.10 / (0.25 * 4.0))
-        expected_ratio = high_error_factor / low_error_factor
-
-        assert score_high > score_low
-        assert score_high == pytest.approx(score_low * expected_ratio, rel=1e-6)
-        assert finding_low.ranking_score == pytest.approx(score_low, rel=1e-6)
-        assert finding_high.ranking_score == pytest.approx(score_high, rel=1e-6)
+        assert score == pytest.approx(0.84)
+        assert finding.confidence == pytest.approx(0.75)
+        assert finding.ranking_score == pytest.approx(0.84)
+        assert finding.strongest_location == "front_left"
+        assert finding.strongest_speed_band == "60-70 km/h"
+        assert finding.evidence.frequency_correlation == pytest.approx(0.9)
+        assert finding.evidence.phase_confidences == (("cruise", 0.8),)
 
 
 # ===========================================================================

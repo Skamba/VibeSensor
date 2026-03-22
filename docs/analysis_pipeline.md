@@ -93,7 +93,10 @@ in order. Each step runs exactly once per analysis invocation.
 | `findings.py` | ~150 | Top-level finding orchestration and finalization around order + persistent-peak helpers |
 | `_peak_findings.py` | ~200 | Persistent-peak support: `PeakFindingAnalyzer`, phase filtering, and duplicate-suppression helpers |
 | `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
-| `order_analysis.py` | ~500 | Order-tracking core: hypothesis matching, confidence scoring, and finding assembly primitives |
+| `order_matching.py` | ~200 | Order-tracking hypothesis/sample matching plus the stable `OrderMatchAccumulator` contract |
+| `order_match_rate.py` | ~50 | Focused speed-band and per-location match-rate rescue policy |
+| `order_scoring.py` | ~200 | Confidence/ranking assembly plus location-summary coordination for matched order hypotheses |
+| `order_finding_builder.py` | ~120 | Final `DomainFinding` construction and evidence projection for scored order findings |
 | `order_pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, multi-location split, and `_build_order_findings()` |
 | `order_heuristics.py` | ~150 | Heuristic filters and tuning constants for diffuse excitation, localization overrides, and engine-alias suppression |
 | `peak_binning.py` | ~450 | Peak accumulation and scoring across samples |

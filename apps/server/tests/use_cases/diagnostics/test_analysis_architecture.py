@@ -111,7 +111,10 @@ def test_boundary_summarize_run_data_returns_expected_structure() -> None:
 
 _ANALYSIS_ONLY_NAMES: frozenset[str] = frozenset(
     {
-        "order_analysis.py",
+        "order_finding_builder.py",
+        "order_match_rate.py",
+        "order_matching.py",
+        "order_scoring.py",
         "phase_segmentation.py",
         "plot_data.py",
         "strength_labels.py",
