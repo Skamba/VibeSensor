@@ -15,6 +15,7 @@ import sqlite3
 from pathlib import Path
 
 import pytest
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -129,7 +130,7 @@ class TestDeleteRunIfSafe:
         db = HistoryDB(tmp_path / "h.db")
         db.create_run("r1", "2026-01-01T00:00:00Z", _metadata("r1"))
         db.finalize_run("r1", "2026-01-01T00:05:00Z")
-        db.store_analysis("r1", {"score": 1})
+        db.store_analysis("r1", make_persisted_analysis({"score": 1}))
         deleted, reason = db.delete_run_if_safe("r1")
         assert deleted is True
         assert reason is None

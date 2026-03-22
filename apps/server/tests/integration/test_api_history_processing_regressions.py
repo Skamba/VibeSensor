@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 
 import pytest
+from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.http._helpers import safe_filename as _safe_filename
 from vibesensor.adapters.persistence.history_db import HistoryDB
@@ -97,10 +98,10 @@ class TestHistoryDBAnalysisValidation:
 
     def test_accepts_dict_analysis(self, tmp_path: Path) -> None:
         db = self._make_db(tmp_path)
-        db.store_analysis("run-1", {"findings": []})
+        db.store_analysis("run-1", make_persisted_analysis({"findings": []}))
         run = db.get_run("run-1")
         assert run is not None
-        assert isinstance(run.analysis, dict)
+        assert run.analysis is not None
 
 
 # --- Bug 9: Division by zero when sample_rate_hz == 0 --------------------

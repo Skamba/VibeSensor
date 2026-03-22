@@ -10,6 +10,7 @@ from test_support import (
     make_sample,
     standard_metadata,
 )
+from test_support.persisted_analysis import make_persisted_analysis
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 
 from vibesensor.adapters.analysis_summary import (
@@ -88,7 +89,7 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
             ),
         )
         db.finalize_run("characterization-roundtrip", "2026-01-01T00:01:00Z")
-        db.store_analysis("characterization-roundtrip", summary)
+        db.store_analysis("characterization-roundtrip", make_persisted_analysis(summary))
         run = db.get_run("characterization-roundtrip")
     finally:
         db.close()
@@ -96,7 +97,7 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
     assert run is not None
     analysis = run.analysis
     assert analysis is not None
-    projected, _ = project_analysis_summary(analysis)
+    projected, _ = project_analysis_summary(analysis.to_json_object())
     return dict(projected)
 
 

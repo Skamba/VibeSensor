@@ -9,6 +9,9 @@ from typing import TYPE_CHECKING
 from vibesensor.domain import CarSnapshot, RunStatus
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.boundaries.analysis_summary import analysis_summary_with_warnings
+from vibesensor.shared.boundaries.persisted_analysis_codec import (
+    persisted_analysis_to_summary,
+)
 from vibesensor.shared.exceptions import AnalysisNotReadyError
 from vibesensor.shared.ports import RunPersistence, SettingsReader
 from vibesensor.shared.run_context import add_current_context_warnings, current_car_snapshot_token
@@ -65,17 +68,18 @@ class HistoryReportRequestLoader:
         analysis = run.analysis
         if analysis is None:
             raise AnalysisNotReadyError("No analysis available for this run")
+        analysis_summary = persisted_analysis_to_summary(analysis)
 
         requested_lang = self._analysis_language(run, requested_lang)
         current_active_car_snapshot = (
             self._settings_store.active_car_snapshot() if self._settings_store is not None else None
         )
         warnings = add_current_context_warnings(
-            analysis.get("warnings"),
-            metadata=analysis.get("metadata"),
+            analysis_summary.get("warnings"),
+            metadata=analysis_summary.get("metadata"),
             current_active_car_snapshot=current_active_car_snapshot,
         )
-        analysis_summary = analysis_summary_with_warnings(analysis, warnings)
+        analysis_summary = analysis_summary_with_warnings(analysis_summary, warnings)
         cache_key = self._report_pdf_cache_key(
             run,
             run_id,
@@ -113,7 +117,7 @@ class HistoryReportRequestLoader:
     def _report_pdf_cache_lang(run: StoredHistoryRun, requested_lang: str) -> str:
         analysis = run.analysis
         if analysis is not None:
-            persisted_lang = str(analysis.get("lang") or "").strip().lower()
+            persisted_lang = analysis.language.strip().lower()
             if persisted_lang:
                 return persisted_lang
         return requested_lang
