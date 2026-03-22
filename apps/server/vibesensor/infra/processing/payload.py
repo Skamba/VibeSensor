@@ -1,25 +1,37 @@
-"""Payload formatting for spectrum and multi-spectrum views.
+"""Payload formatting for processing-facing debug and spectrum views.
 
-Pure functions that assemble API/WebSocket payload dicts from
-:class:`~vibesensor.infra.processing.buffers.ClientBuffer` state.  Called by
-:class:`~vibesensor.infra.processing.processor.SignalProcessor` wrapper methods
-that handle locking and buffer lookup.
+Pure functions that assemble API/WebSocket/debug payload dicts from
+processing state. Called by :class:`~vibesensor.infra.processing.processor.SignalProcessor`
+wrapper methods that handle locking and buffer lookup.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
 from vibesensor.infra.processing.fft import float_list
-from vibesensor.infra.processing.models import SpectrumAxisData
+from vibesensor.infra.processing.models import (
+    DebugSpectrumRequest,
+    ProcessorConfig,
+    SpectrumAxisData,
+)
 from vibesensor.infra.processing.time_align import compute_overlap
+from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.payload_types import (
     AlignmentInfoPayload,
+    DebugSpectrumErrorPayload,
+    DebugSpectrumPayload,
+    DebugSpectrumStatsPayload,
+    DebugSpectrumTopBinPayload,
     FrequencyWarningPayload,
+    IntakeStatsPayload,
+    SharedWindowPayload,
     SpectraPayload,
     SpectrumSeriesPayload,
+    TimeAlignmentPayload,
+    TimeAlignmentSensorPayload,
 )
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
@@ -27,6 +39,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from vibesensor.infra.processing.buffers import ClientBuffer
+    from vibesensor.infra.processing.compute import SignalMetricsComputer
+    from vibesensor.infra.workers.worker_pool import WorkerPoolStats
 
 _EMPTY_F32: np.ndarray = np.array([], dtype=np.float32)
 
@@ -71,6 +85,146 @@ def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
     buf.cached_spectrum_payload = payload
     buf.cached_spectrum_payload_generation = buf.spectrum_generation
     return payload
+
+
+def build_debug_spectrum_payload(
+    request: DebugSpectrumRequest,
+    config: ProcessorConfig,
+    metrics: SignalMetricsComputer,
+) -> DebugSpectrumPayload | DebugSpectrumErrorPayload:
+    """Build the route-facing debug spectrum payload from a copied FFT request."""
+    if request.fft_block is None:
+        return {
+            "error": "insufficient samples",
+            "count": request.count,
+            "fft_n": config.fft_n,
+        }
+
+    fft_block = request.fft_block
+    raw_mean = fft_block.mean(axis=1).tolist()
+    raw_std = fft_block.std(axis=1).tolist()
+    raw_min = fft_block.min(axis=1).tolist()
+    raw_max = fft_block.max(axis=1).tolist()
+
+    fft_result = metrics.compute_fft_spectrum(fft_block, request.sample_rate_hz)
+    freq_slice = fft_result["freq_slice"]
+    combined_amp = fft_result["combined_amp"]
+    strength_metrics = fft_result["strength_metrics"]
+    detrended_std = (fft_block - fft_block.mean(axis=1, keepdims=True)).std(axis=1).tolist()
+
+    sorted_idx = np.argsort(combined_amp)[::-1]
+    spectrum = fft_result["spectrum_by_axis"]
+    top_bins: list[DebugSpectrumTopBinPayload] = []
+    for index in sorted_idx[:10]:
+        top_bins.append(
+            {
+                "bin": int(index),
+                "freq_hz": float(freq_slice[index]),
+                "combined_amp_g": float(combined_amp[index]),
+                "x_amp_g": float(spectrum["x"]["amp"][index]),
+                "y_amp_g": float(spectrum["y"]["amp"][index]),
+                "z_amp_g": float(spectrum["z"]["amp"][index]),
+            },
+        )
+
+    raw_stats: DebugSpectrumStatsPayload = {
+        "mean_g": raw_mean,
+        "std_g": raw_std,
+        "min_g": raw_min,
+        "max_g": raw_max,
+    }
+    return {
+        "client_id": request.client_id,
+        "sample_rate_hz": request.sample_rate_hz,
+        "fft_n": config.fft_n,
+        "fft_scale": metrics.fft_scale,
+        "window": "hann",
+        "spectrum_min_hz": config.spectrum_min_hz,
+        "spectrum_max_hz": config.spectrum_max_hz,
+        "freq_bins": len(freq_slice),
+        "freq_resolution_hz": float(request.sample_rate_hz) / config.fft_n,
+        "raw_stats": raw_stats,
+        "detrended_std_g": detrended_std,
+        "vibration_strength_db": float(strength_metrics.get("vibration_strength_db", 0)),
+        "top_bins_by_amplitude": top_bins,
+        "strength_peaks": list(strength_metrics.get("top_peaks", [])),
+    }
+
+
+def build_intake_stats_payload(
+    base_stats: IntakeStatsPayload,
+    worker_pool_stats: WorkerPoolStats | None,
+) -> IntakeStatsPayload:
+    """Build the health/debug intake stats payload."""
+    payload: IntakeStatsPayload = dict(base_stats)
+    if worker_pool_stats is not None:
+        worker_pool_payload = cast(JsonObject, dict(worker_pool_stats))
+        payload["worker_pool"] = worker_pool_payload
+    return payload
+
+
+def build_time_alignment_payload(
+    buffers: dict[str, ClientBuffer],
+    client_ids: list[str],
+    analysis_time_range_fn: Callable[[ClientBuffer], tuple[float, float, bool] | None],
+) -> TimeAlignmentPayload:
+    """Build time-alignment info for the requested sensors from locked buffer state."""
+    per_sensor: dict[str, TimeAlignmentSensorPayload] = {}
+    ranges: list[tuple[float, float]] = []
+    included: list[str] = []
+    excluded: list[str] = []
+    all_synced = True
+
+    for client_id in client_ids:
+        buf = buffers.get(client_id)
+        if buf is None:
+            excluded.append(client_id)
+            continue
+        time_range = analysis_time_range_fn(buf)
+        if time_range is None:
+            excluded.append(client_id)
+            continue
+        start, end, synced = time_range
+        if not synced:
+            all_synced = False
+        per_sensor[client_id] = {
+            "start_s": start,
+            "end_s": end,
+            "duration_s": end - start,
+            "synced": synced,
+        }
+        ranges.append((start, end))
+        included.append(client_id)
+
+    if len(ranges) < 2:
+        return {
+            "per_sensor": per_sensor,
+            "shared_window": None,
+            "overlap_ratio": 1.0 if len(ranges) == 1 else 0.0,
+            "aligned": True,
+            "clock_synced": all_synced and bool(included),
+            "sensors_included": included,
+            "sensors_excluded": excluded,
+        }
+
+    overlap = compute_overlap([start for start, _ in ranges], [end for _, end in ranges])
+    shared: SharedWindowPayload | None = None
+    if overlap.overlap_s > 0:
+        shared = {
+            "start_s": overlap.shared_start,
+            "end_s": overlap.shared_end,
+            "duration_s": overlap.overlap_s,
+        }
+
+    return {
+        "per_sensor": per_sensor,
+        "shared_window": shared,
+        "overlap_ratio": round(overlap.overlap_ratio, 4),
+        "aligned": overlap.aligned,
+        "clock_synced": all_synced,
+        "sensors_included": included,
+        "sensors_excluded": excluded,
+    }
 
 
 def build_multi_spectrum_payload(
