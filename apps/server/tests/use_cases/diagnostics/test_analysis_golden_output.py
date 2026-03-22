@@ -19,6 +19,8 @@ from vibesensor.adapters.analysis_summary import (
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.analysis_summary_projection import project_analysis_summary
 from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.use_cases.diagnostics import RunAnalysis
 
 
@@ -72,12 +74,18 @@ def _action_ids(summary: dict[str, Any]) -> list[str]:
 
 def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict[str, Any]:
     db = HistoryDB(tmp_path / "history.db")
-    run: dict[str, Any] | None = None
+    run: StoredHistoryRun | None = None
     try:
         db.create_run(
             "characterization-roundtrip",
             "2026-01-01T00:00:00Z",
-            standard_metadata(),
+            RunMetadata.from_dict(
+                {
+                    "run_id": "characterization-roundtrip",
+                    "start_time_utc": "2026-01-01T00:00:00Z",
+                    **standard_metadata(),
+                }
+            ),
         )
         db.finalize_run("characterization-roundtrip", "2026-01-01T00:01:00Z")
         db.store_analysis("characterization-roundtrip", summary)
@@ -86,8 +94,8 @@ def _persist_and_reload_summary(tmp_path: Path, summary: dict[str, Any]) -> dict
         db.close()
 
     assert run is not None
-    analysis = run.get("analysis")
-    assert isinstance(analysis, dict)
+    analysis = run.analysis
+    assert analysis is not None
     projected, _ = project_analysis_summary(analysis)
     return dict(projected)
 

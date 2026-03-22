@@ -12,8 +12,23 @@ import pytest
 from vibesensor.adapters.http._helpers import safe_filename as _safe_filename
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.infra.processing import SignalProcessor
+from vibesensor.shared.types.backend_types import RunMetadata
 
 _SAFE_RE = re.compile(r"^[a-zA-Z0-9._-]+$")
+
+
+def _metadata(run_id: str = "run-1", **overrides: object) -> RunMetadata:
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "source": "test",
+    }
+    payload.update(overrides)
+    return RunMetadata.from_dict(payload)
+
 
 # --- Bug 1 & 2: Content-Disposition / zip filename sanitisation -----------
 
@@ -65,7 +80,7 @@ class TestHistoryDBAnalysisValidation:
     @staticmethod
     def _make_db(tmp_path: Path) -> HistoryDB:
         db = HistoryDB(tmp_path / "history.db")
-        db.create_run("run-1", "2026-01-01T00:00:00Z", {"source": "test"})
+        db.create_run("run-1", "2026-01-01T00:00:00Z", _metadata())
         return db
 
     def test_rejects_non_dict_analysis(self, tmp_path: Path) -> None:
@@ -77,14 +92,15 @@ class TestHistoryDBAnalysisValidation:
             )
         run = db.get_run("run-1")
         assert run is not None
-        assert "analysis" not in run
+        assert run.analysis is None
+        assert run.analysis_corrupt is True
 
     def test_accepts_dict_analysis(self, tmp_path: Path) -> None:
         db = self._make_db(tmp_path)
         db.store_analysis("run-1", {"findings": []})
         run = db.get_run("run-1")
         assert run is not None
-        assert isinstance(run.get("analysis"), dict)
+        assert isinstance(run.analysis, dict)
 
 
 # --- Bug 9: Division by zero when sample_rate_hz == 0 --------------------

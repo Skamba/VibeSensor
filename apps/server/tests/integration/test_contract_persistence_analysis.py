@@ -19,6 +19,7 @@ from test_support import (
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.types.backend_types import RunMetadata
 
 
 def _create_populated_db(
@@ -28,7 +29,17 @@ def _create_populated_db(
     """Create an in-memory DB with a run containing *samples*."""
     db = HistoryDB(Path(":memory:"))
     run_id = "contract-test-run"
-    db.create_run(run_id, start_time_utc="2025-01-01T00:00:00Z", metadata=meta)
+    db.create_run(
+        run_id,
+        start_time_utc="2025-01-01T00:00:00Z",
+        metadata=RunMetadata.from_dict(
+            {
+                "run_id": run_id,
+                "start_time_utc": "2025-01-01T00:00:00Z",
+                **meta,
+            }
+        ),
+    )
     db.append_samples(run_id, samples)
     return db, run_id
 
