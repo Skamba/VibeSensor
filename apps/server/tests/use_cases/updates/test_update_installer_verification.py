@@ -7,7 +7,10 @@ from unittest.mock import patch
 
 import pytest
 
+from vibesensor.use_cases.updates.artifact_validation import WheelArtifactValidator
+from vibesensor.use_cases.updates.firmware_refresh import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
+from vibesensor.use_cases.updates.rollback_snapshot import RollbackSnapshotStore
 from vibesensor.use_cases.updates.status import UpdateStateStore, UpdateStatusTracker
 
 
@@ -112,7 +115,7 @@ async def test_snapshot_for_rollback_fails_when_metadata_write_fails(tmp_path: P
 
     with (
         patch("vibesensor.__version__", "2025.6.14"),
-        patch.object(UpdateInstaller, "_write_rollback_metadata", side_effect=OSError("disk full")),
+        patch.object(RollbackSnapshotStore, "write_metadata", side_effect=OSError("disk full")),
     ):
         assert await installer.snapshot_for_rollback() is False
 
@@ -178,4 +181,45 @@ async def test_rollback_without_metadata_uses_valid_newest_wheel(tmp_path: Path)
         "Rollback metadata missing; falling back to newest rollback wheel without checksum pin"
         in line
         for line in tracker.status.log_tail
+    )
+
+
+def test_wheel_validator_rejects_corrupt_wheel_without_installer(tmp_path: Path) -> None:
+    tracker = UpdateStatusTracker(state_store=UpdateStateStore(tmp_path / "update_status.json"))
+    validator = WheelArtifactValidator(tracker)
+    broken_wheel = tmp_path / "broken.whl"
+    broken_wheel.write_text("not a wheel", encoding="utf-8")
+
+    ok = validator.validate_wheel(
+        broken_wheel,
+        phase="installing",
+        context="Downloaded wheel",
+        fatal=False,
+    )
+
+    assert not ok
+    assert any(issue.message == "Downloaded wheel is corrupt" for issue in tracker.status.issues)
+
+
+@pytest.mark.asyncio
+async def test_firmware_refresher_uses_module_fallback_without_installer(tmp_path: Path) -> None:
+    installer, commands, tracker = _make_installer(tmp_path)
+    refresher = FirmwareRefresher(
+        commands=commands,
+        tracker=tracker,
+        repo=installer._config.repo,
+        timeout_s=30,
+    )
+
+    await refresher.refresh_esp_firmware("server-v2025.6.15")
+
+    assert any(
+        call[0][:3]
+        == [
+            str(installer._config.repo / "apps" / "server" / ".venv" / "bin" / "python3"),
+            "-m",
+            "vibesensor.use_cases.updates.firmware_cache",
+        ]
+        and call[0][-2:] == ["--tag", "server-v2025.6.15"]
+        for call in commands.calls
     )
