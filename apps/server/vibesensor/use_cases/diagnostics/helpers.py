@@ -6,7 +6,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
 
-from vibesensor.domain import OrderReferenceSpec, TireSpec
+from vibesensor.domain import OrderReferenceSpec
 from vibesensor.shared.boundaries.run_log import read_jsonl_run
 from vibesensor.shared.constants import (
     KMH_TO_MPS,
@@ -14,9 +14,9 @@ from vibesensor.shared.constants import (
     MIN_ANALYSIS_FREQ_HZ,
     SECONDS_PER_MINUTE,
 )
-from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.locations import label_for_code as _label_for_code
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
     Sample,
@@ -53,45 +53,27 @@ def _sensor_limit_g(sensor_model: object) -> float | None:
     return None
 
 
-def _tire_reference_from_metadata(metadata: JsonObject) -> tuple[float | None, str | None]:
-    spec = _order_reference_spec_from_context(metadata)
+def _tire_reference_from_context(context: DiagnosticsContext) -> tuple[float | None, str | None]:
+    spec = _order_reference_spec_from_context(context)
     if spec is not None and spec.supports_wheel_reference:
         return spec.tire_circumference_m, "order_reference_spec"
 
-    direct = _as_float(metadata.get("tire_circumference_m"))
+    direct = context.tire_circumference_m
     if direct is not None and direct > 0:
-        return direct, "metadata.tire_circumference_m"
-
-    _w = _as_float(metadata.get("tire_width_mm"))
-    _a = _as_float(metadata.get("tire_aspect_pct"))
-    _r = _as_float(metadata.get("rim_in"))
-    if _w is not None and _a is not None and _r is not None:
-        _df = _as_float(metadata.get("tire_deflection_factor"))
-        _spec = TireSpec.from_aspects(
-            {"tire_width_mm": _w, "tire_aspect_pct": _a, "rim_in": _r},
-            deflection_factor=_df if _df is not None else 1.0,
-        )
-        if _spec is not None and _spec.circumference_m > 0:
-            return _spec.circumference_m, "derived_from_tire_dimensions"
+        return direct, "diagnostics_context.tire_circumference_m"
     return None, None
 
 
 def _order_reference_spec_from_context(
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     sample: Sample | None = None,
 ) -> OrderReferenceSpec | None:
-    settings: dict[str, object] = dict(metadata)
-    if sample is not None:
-        if (final_drive_ratio := sample.final_drive_ratio) is not None:
-            settings["final_drive_ratio"] = final_drive_ratio
-        if (gear_ratio := sample.gear) is not None:
-            settings["current_gear_ratio"] = gear_ratio
-    return OrderReferenceSpec.from_settings(settings)
+    return context.effective_order_reference_spec(sample)
 
 
 def _effective_engine_rpm(
     sample: AnalysisSampleInput,
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     tire_circumference_m: float | None,
 ) -> tuple[float | None, str]:
     typed_sample = ensure_analysis_sample(sample)
@@ -104,7 +86,7 @@ def _effective_engine_rpm(
         return estimated_in_sample, "estimated_from_speed_and_ratios"
 
     speed_kmh = typed_sample.speed_kmh
-    spec = _order_reference_spec_from_context(metadata, typed_sample)
+    spec = _order_reference_spec_from_context(context, typed_sample)
     if (
         speed_kmh is not None
         and speed_kmh > 0
@@ -115,11 +97,13 @@ def _effective_engine_rpm(
         if rpm is not None and rpm > 0:
             return rpm, "estimated_from_speed_and_ratios"
 
-    final_drive_ratio = typed_sample.final_drive_ratio or _as_float(
-        metadata.get("final_drive_ratio"),
+    final_drive_ratio = (
+        typed_sample.final_drive_ratio
+        if typed_sample.final_drive_ratio is not None
+        else context.final_drive_ratio
     )
     gear_val = typed_sample.gear
-    gear_ratio = gear_val if gear_val is not None else _as_float(metadata.get("current_gear_ratio"))
+    gear_ratio = gear_val if gear_val is not None else context.current_gear_ratio
     if (
         speed_kmh is None
         or speed_kmh <= 0

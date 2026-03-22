@@ -8,8 +8,8 @@ from statistics import median as _median
 from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, RunSuitability
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.types.json_types import JsonObject
 
+from ._context import DiagnosticsContext
 from ._types import AccelStatistics, Sample
 from .findings import _build_findings
 from .phase_segmentation import DrivingPhase
@@ -27,7 +27,7 @@ from .top_cause_selection import select_top_causes
 
 
 def build_findings_bundle(
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     samples: list[Sample],
     *,
     language: str,
@@ -45,7 +45,7 @@ def build_findings_bundle(
     """Build findings plus derived diagnosis narrative fields."""
     builder = findings_builder or _build_findings
     domain_findings = builder(
-        metadata=metadata,
+        context=context,
         samples=samples,
         speed_sufficient=prepared.speed_sufficient,
         steady_speed=prepared.is_steady_speed,
@@ -96,14 +96,14 @@ def build_sensor_bundle(
 
 
 def build_run_suitability_bundle(
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     samples: list[Sample],
     *,
     prepared: PreparedRunData,
     accel_stats: AccelStatistics,
 ) -> tuple[bool, RunSuitability | None, str | None]:
     """Build run-suitability checks and related confidence context."""
-    reference_complete = compute_reference_completeness(metadata)
+    reference_complete = compute_reference_completeness(context)
     sensor_ids = {client_id for sample in samples if (client_id := sample.client_id)}
     total_dropped, total_overflow = compute_frame_integrity_counts(samples)
     run_suitability = RunSuitability.evaluate(

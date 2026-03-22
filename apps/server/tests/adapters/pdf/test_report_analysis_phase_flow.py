@@ -7,6 +7,7 @@ from test_support.report_helpers import analysis_metadata as _make_metadata
 from test_support.report_helpers import analysis_sample as _make_sample
 from test_support.report_helpers import (
     call_build_order_findings,
+    diagnostics_context,
     make_order_finding_samples,
     patch_order_hypothesis,
     wheel_metadata,
@@ -154,7 +155,7 @@ def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
         side_effect=_patched_segment_run_phases,
     ):
         _findings_build_findings(
-            metadata={"units": {"accel_x_g": "g"}},
+            context=diagnostics_context({"units": {"accel_x_g": "g"}}),
             samples=samples,
             speed_sufficient=True,
             steady_speed=False,

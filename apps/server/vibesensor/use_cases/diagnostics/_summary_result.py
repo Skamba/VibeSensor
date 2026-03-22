@@ -5,8 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 
 from vibesensor.domain import (
-    Car,
-    ConfigurationSnapshot,
     DiagnosticCase,
     DrivingPhaseInterval,
     LocationIntensitySummary,
@@ -15,7 +13,6 @@ from vibesensor.domain import (
     RunSuitability,
     Sensor,
     SpeedSource,
-    Symptom,
     TestRun,
 )
 from vibesensor.domain import Finding as DomainFinding
@@ -25,6 +22,7 @@ from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.types.json_types import JsonObject
 
+from ._context import DiagnosticsContext
 from ._types import AccelStatistics, PlotDataResultData, Sample
 from .plots import _plot_data
 from .run_data_preparation import (
@@ -80,23 +78,10 @@ def _final_top_causes(
     return tuple(result)
 
 
-def _scalar_analysis_settings(
-    metadata: JsonObject,
-) -> tuple[tuple[str, int | float | bool | str], ...]:
-    raw_settings = metadata.get("analysis_settings")
-    if not isinstance(raw_settings, dict):
-        return ()
-    return tuple(
-        (key, value)
-        for key, value in sorted(raw_settings.items())
-        if isinstance(value, (int, float, bool, str))
-    )
-
-
 def build_analysis_result(
     *,
     file_name: str,
-    metadata: JsonObject,
+    context: DiagnosticsContext,
     samples: list[Sample],
     raw_samples: list[JsonObject],
     language: str,
@@ -114,6 +99,7 @@ def build_analysis_result(
     domain_top_causes: tuple[DomainFinding, ...],
 ) -> AnalysisResult:
     """Build the final app-level analysis result."""
+    context_metadata = context.to_metadata_dict()
     summary_speed_stats = _speed_stats(prepared.speed_values)
     summary_phase_info = build_phase_summary(prepared.phase_segments)
     domain_test_plan = plan_test_actions(domain_findings)
@@ -135,9 +121,9 @@ def build_analysis_result(
             setup=RunSetup(
                 sensors=Sensor.from_location_codes(sensor_locations) if sensor_locations else (),
                 speed_source=SpeedSource(),
-                configuration_snapshot=ConfigurationSnapshot.from_metadata(metadata),
+                configuration_snapshot=context.to_configuration_snapshot(),
             ),
-            analysis_settings=_scalar_analysis_settings(metadata),
+            analysis_settings=context.scalar_analysis_settings,
             sample_count=len(raw_samples),
             duration_s=prepared.duration_s,
         ),
@@ -148,8 +134,8 @@ def build_analysis_result(
         suitability=run_suitability,
         test_plan=domain_test_plan,
     )
-    domain_car = Car.from_metadata(metadata)
-    domain_symptoms = (Symptom.from_metadata(metadata),)
+    domain_car = context.to_car()
+    domain_symptoms = (context.to_symptom(),)
     diagnostic_case = DiagnosticCase.start(
         car=domain_car,
         symptoms=domain_symptoms,
@@ -157,7 +143,7 @@ def build_analysis_result(
     ).add_run(test_run)
     return AnalysisResult(
         file_name=file_name,
-        metadata=dict(metadata),
+        metadata=context_metadata,
         samples=tuple(raw_samples),
         language=language,
         include_samples=include_samples,

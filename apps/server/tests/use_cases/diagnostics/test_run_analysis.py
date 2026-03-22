@@ -11,6 +11,7 @@ from vibesensor.adapters.analysis_summary import (
     summarize_run_data,
 )
 from vibesensor.domain import SpeedProfile
+from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
     build_phase_summary,
@@ -83,7 +84,8 @@ class TestPreparedRunDataProperties:
             for index, speed_kmh in enumerate(speeds)
         ]
 
-        prepared = prepare_run_data(metadata, samples, file_name="test")
+        context = DiagnosticsContext.from_metadata(metadata, file_name="test")
+        prepared = prepare_run_data(context, samples)
         speed_stats = _speed_stats(prepared.speed_values)
         phase_info = build_phase_summary(prepared.phase_segments)
 
