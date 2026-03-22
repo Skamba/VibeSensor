@@ -1,9 +1,9 @@
-"""Tests for issue #284: effective_speed_mps and status_dict() must not mutate state.
+"""Tests for issue #284: effective_speed_mps and status snapshots must not mutate state.
 
 Verifies that:
 - resolve_speed() is pure (no side effects)
 - effective_speed_mps property does not mutate any instance state
-- status_dict() does not mutate connection_state
+- status_snapshot() does not mutate connection_state
 - fallback_active is always consistent with the speed value returned
 - Multiple reads per tick yield consistent results
 """
@@ -106,13 +106,13 @@ class TestEffectiveSpeedNoMutation:
 
 
 # ---------------------------------------------------------------------------
-# status_dict() does not mutate connection_state
+# status_snapshot() does not mutate connection_state
 # ---------------------------------------------------------------------------
 
 
-class TestStatusDictNoMutation:
-    def test_status_dict_does_not_mutate_connection_state(self) -> None:
-        """Previously, status_dict() would change connection_state from
+class TestStatusSnapshotNoMutation:
+    def test_status_snapshot_does_not_mutate_connection_state(self) -> None:
+        """Previously, GPS status reporting would change connection_state from
         'connected' to 'stale' as a side effect.  It must no longer do so.
         """
         m = GPSSpeedMonitor(gps_enabled=True)
@@ -120,20 +120,20 @@ class TestStatusDictNoMutation:
         m.speed_mps = 5.0
         set_gps_snapshot_age(m, age_s=999)  # stale
 
-        s = m.status_dict()
-        # The dict should report "stale" ...
-        assert s["connection_state"] == "stale"
+        s = m.status_snapshot()
+        # The snapshot should report "stale" ...
+        assert s.connection_state == "stale"
         # ... but the underlying attribute must remain unchanged.
         assert m.connection_state == "connected"
 
-    def test_status_dict_does_not_mutate_on_fresh_data(self) -> None:
+    def test_status_snapshot_does_not_mutate_on_fresh_data(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.connection_state = "connected"
         m.speed_mps = 10.0
         set_gps_snapshot_age(m)
 
-        s = m.status_dict()
-        assert s["connection_state"] == "connected"
+        s = m.status_snapshot()
+        assert s.connection_state == "connected"
         assert m.connection_state == "connected"
 
 
