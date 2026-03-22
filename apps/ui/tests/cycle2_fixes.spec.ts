@@ -157,7 +157,7 @@ test.describe("spectrum heavy-frame animation compatibility", () => {
 // ---------------------------------------------------------------------------
 test.describe("manual speed validation logic", () => {
   function validateManualSpeed(raw: number): number | null {
-    // Mirrors the fixed guard in settings_feature.ts
+    // Mirrors the fixed guard in settings_speed_source_module.ts
     return Number.isFinite(raw) && raw > 0 && raw <= 500 ? raw : null;
   }
 

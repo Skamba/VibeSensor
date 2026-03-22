@@ -8,8 +8,8 @@ from tests._paths import REPO_ROOT
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
 _UI_APP_STATE_TS = REPO_ROOT / "apps" / "ui" / "src" / "app" / "ui_app_state.ts"
-_SETTINGS_FEATURE_TS = (
-    REPO_ROOT / "apps" / "ui" / "src" / "app" / "features" / "settings_feature.ts"
+_SETTINGS_ANALYSIS_MODULE_TS = (
+    REPO_ROOT / "apps" / "ui" / "src" / "app" / "features" / "settings_analysis_module.ts"
 )
 
 
@@ -30,14 +30,14 @@ def _parse_ui_vehicle_defaults() -> dict[str, float]:
 
 
 def _parse_ui_setting_keys() -> list[str]:
-    """Extract ANALYSIS_SETTING_KEYS from settings_feature.ts."""
-    text = _SETTINGS_FEATURE_TS.read_text()
+    """Extract ANALYSIS_SETTING_KEYS from settings_analysis_module.ts."""
+    text = _SETTINGS_ANALYSIS_MODULE_TS.read_text()
     match = re.search(
         r"ANALYSIS_SETTING_KEYS\s*=\s*\[([^\]]+)\]",
         text,
         re.DOTALL,
     )
-    assert match, "Could not find ANALYSIS_SETTING_KEYS in settings_feature.ts"
+    assert match, "Could not find ANALYSIS_SETTING_KEYS in settings_analysis_module.ts"
     return re.findall(r'"(\w+)"', match.group(1))
 
 
