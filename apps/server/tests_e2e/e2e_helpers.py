@@ -4,10 +4,12 @@ import csv
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import time
 import zipfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.error import HTTPError
@@ -103,6 +105,20 @@ def api_bytes(
 def pdf_text(pdf_bytes: bytes) -> str:
     reader = PdfReader(io.BytesIO(pdf_bytes))
     return "\n".join(filter(None, (page.extract_text() for page in reader.pages))).lower()
+
+
+def normalize_location(text: str) -> str:
+    """Lowercase and collapse whitespace/hyphens/underscores to a single space."""
+    return re.sub(r"[\s\-_]+", " ", str(text).strip().lower())
+
+
+def non_ref_findings(data: dict) -> list[dict]:
+    """Return non-reference findings from a payload containing a findings list."""
+    return [
+        finding
+        for finding in data.get("findings", [])
+        if isinstance(finding, dict) and not str(finding.get("finding_id", "")).startswith("REF_")
+    ]
 
 
 def run_simulator(
@@ -205,3 +221,15 @@ def parse_export_zip(raw: bytes) -> tuple[dict, list[dict[str, str]], set[str]]:
         run_json = json.loads(archive.read(json_name).decode("utf-8"))
         rows = list(csv.DictReader(io.StringIO(archive.read(csv_name).decode("utf-8"))))
     return run_json, rows, names
+
+
+def run_cleanup_steps(*steps: tuple[str, Callable[[], object]]) -> None:
+    errors: list[Exception] = []
+    for label, step in steps:
+        try:
+            step()
+        except Exception as exc:
+            exc.add_note(f"cleanup step failed: {label}")
+            errors.append(exc)
+    if errors:
+        raise ExceptionGroup("one or more E2E cleanup steps failed", errors)

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from vibesensor.adapters.simulator.commands import (
+    apply_engine_order_scenario,
     apply_one_wheel_mild_scenario,
     apply_road_fixed_scenario,
     choose_default_profile,
@@ -56,6 +57,8 @@ async def async_main(args: argparse.Namespace) -> None:
 
     if args.scenario == "one-wheel-mild":
         apply_one_wheel_mild_scenario(clients, args.fault_wheel)
+    elif args.scenario == "engine-order":
+        apply_engine_order_scenario(clients)
     elif args.scenario == "road-fixed":
         apply_road_fixed_scenario(clients)
 
@@ -154,11 +157,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--scenario",
-        choices=("road", "one-wheel-mild", "road-fixed"),
+        choices=("road", "one-wheel-mild", "engine-order", "road-fixed"),
         default="road",
         help=(
-            "Simulation scenario: random road scene, deterministic mild"
-            " single-wheel fault, or fixed road baseline (no randomization)"
+            "Simulation scenario: random road scene, deterministic mild "
+            "single-wheel fault, deterministic engine-order excitation, "
+            "or fixed road baseline (no randomization)"
         ),
     )
     parser.add_argument(
