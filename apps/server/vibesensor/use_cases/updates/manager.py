@@ -9,6 +9,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from vibesensor.use_cases.updates.firmware_refresh import FirmwareRefresher
 from vibesensor.use_cases.updates.installer import UpdateInstaller, UpdateInstallerConfig
 from vibesensor.use_cases.updates.models import (
     UpdateJobStatus,
@@ -208,6 +209,7 @@ class UpdateManager:
             tracker=tracker,
             config=self._installer_config,
         )
+        firmware_refresher = self._build_firmware_refresher(commands=commands)
         cancel_requested = self._cancel_event.is_set
 
         if not await validate_prerequisites(
@@ -241,7 +243,7 @@ class UpdateManager:
             return
         if release_check.release is None:
             tracker.log(f"Already up-to-date (version={current_version})")
-            await installer.refresh_esp_firmware(pinned_tag=release_check.latest_tag)
+            await firmware_refresher.refresh_esp_firmware(pinned_tag=release_check.latest_tag)
             if cancel_requested():
                 return
             await self._complete_update_success(
@@ -274,7 +276,7 @@ class UpdateManager:
             )
             if not await verify_download(tracker, release_check.release, wheel_path):
                 return
-            await installer.refresh_esp_firmware(pinned_tag=release_check.release.tag)
+            await firmware_refresher.refresh_esp_firmware(pinned_tag=release_check.release.tag)
             if cancel_requested():
                 return
 
@@ -380,6 +382,18 @@ class UpdateManager:
                 ap_con_name=self._ap_con_name,
                 wifi_ifname=self._wifi_ifname,
             ),
+        )
+
+    def _build_firmware_refresher(
+        self,
+        *,
+        commands: UpdateCommandExecutor | None = None,
+    ) -> FirmwareRefresher:
+        return FirmwareRefresher(
+            commands=commands or self._build_command_executor(),
+            tracker=self._tracker,
+            repo=self._repo,
+            timeout_s=self._installer_config.firmware_refresh_timeout_s,
         )
 
     async def _snapshot_for_rollback(self) -> bool:
