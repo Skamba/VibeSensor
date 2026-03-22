@@ -26,6 +26,7 @@ from vibesensor.shared.boundaries.analysis_summary import (
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ class PostAnalysisRunner(Protocol):
         *,
         run_id: str,
         metadata: JsonObject,
-        samples: list[JsonObject],
+        samples: list[SensorFrame],
         language: str,
         total_sample_count: int,
         stride: int,
@@ -69,7 +70,7 @@ def build_post_analysis_summary(
     *,
     run_id: str,
     metadata: JsonObject,
-    samples: list[JsonObject],
+    samples: list[SensorFrame],
     language: str,
     total_sample_count: int,
     stride: int,

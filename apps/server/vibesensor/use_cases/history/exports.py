@@ -148,7 +148,7 @@ class HistoryExportService:
                 batch_size=EXPORT_BATCH_SIZE,
             ):
                 sample_count += len(batch)
-                writer.writerows(flatten_for_csv(row) for row in batch)
+                writer.writerows(flatten_for_csv(row.to_dict()) for row in batch)
             raw_csv_text.flush()
             raw_csv_text.detach()
             spool.seek(0)

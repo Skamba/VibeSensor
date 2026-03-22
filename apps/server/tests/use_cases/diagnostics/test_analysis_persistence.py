@@ -12,6 +12,7 @@ from test_support import response_payload
 
 from tests.conftest import FakeState
 from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 # -- Schema v4 tests ----------------------------------------------------------
 
@@ -289,8 +290,9 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
         def iter_run_samples(self, run_id, batch_size=1000):
             if run_id != "run-pdf":
                 return
-            for start in range(0, len(samples), batch_size):
-                yield samples[start : start + batch_size]
+            frames = [SensorFrame.from_dict(sample) for sample in samples]
+            for start in range(0, len(frames), batch_size):
+                yield frames[start : start + batch_size]
 
         def list_runs(self):
             return []
@@ -373,8 +375,9 @@ async def test_export_offloaded_to_thread() -> None:
             return {"run_id": run_id, "status": "complete", "metadata": {}}
 
         def iter_run_samples(self, run_id, batch_size=1000):
-            for start in range(0, len(samples), batch_size):
-                yield samples[start : start + batch_size]
+            frames = [SensorFrame.from_dict(sample) for sample in samples]
+            for start in range(0, len(frames), batch_size):
+                yield frames[start : start + batch_size]
 
     app = FastAPI()
     state = _make_fake_state(_DB())

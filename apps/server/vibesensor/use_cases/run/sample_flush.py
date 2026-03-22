@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from dataclasses import replace
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.ports import ClientTracker, SignalSource, SpeedProvider
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
 from vibesensor.use_cases.run.persistence_writer import RunPersistenceWriter
 from vibesensor.use_cases.run.sample_builder import build_sample_records, resolve_speed_context
@@ -57,7 +59,7 @@ class SampleFlushOrchestrator:
         run_id: str,
         t_s: float,
         timestamp_utc: str,
-    ) -> list[dict[str, object]]:
+    ) -> list[SensorFrame]:
         analysis_settings_snapshot = self._analysis_settings_snapshot()
         speed_resolution = self._gps_monitor.resolve_speed()
         return build_sample_records(
@@ -82,7 +84,7 @@ class SampleFlushOrchestrator:
         run_id: str,
         live_start_mono_s: float,
         timestamp_utc: str,
-    ) -> list[dict[str, object]]:
+    ) -> list[SensorFrame]:
         live_t_s = max(0.0, self._monotonic() - live_start_mono_s)
         return self.build_sample_records(
             run_id=run_id,
@@ -102,7 +104,7 @@ class SampleFlushOrchestrator:
         start_time_utc: str,
         run_start_mono_s: float,
         *,
-        prebuilt_rows: list[dict[str, object]] | None = None,
+        prebuilt_rows: list[SensorFrame] | None = None,
     ) -> bool:
         now_mono_s = self._monotonic()
         if self._current_run_id() != run_id:
@@ -118,9 +120,7 @@ class SampleFlushOrchestrator:
         current_timestamp = self._timestamp_utc()
 
         if prebuilt_rows is not None:
-            rows = [
-                {**row, "t_s": t_s, "timestamp_utc": current_timestamp} for row in prebuilt_rows
-            ]
+            rows = [replace(row, t_s=t_s, timestamp_utc=current_timestamp) for row in prebuilt_rows]
         else:
             rows = self.build_sample_records(
                 run_id=run_id,

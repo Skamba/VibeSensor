@@ -57,17 +57,17 @@ def test_build_sample_records_uses_only_active_clients(make_logger) -> None:
     )
 
     assert len(rows) == 1
-    assert rows[0]["client_id"] == "active"
-    assert rows[0]["client_name"] == "front-left wheel"
-    assert rows[0]["location"] == "front_left_wheel"
-    peaks = rows[0]["top_peaks"]
-    assert isinstance(peaks, list) and peaks
-    assert peaks[0]["hz"] == 15.0
-    assert peaks[0]["amp"] == 0.12
-    assert peaks[0]["vibration_strength_db"] == 22.0
-    assert peaks[0]["strength_bucket"] == "l2"
-    assert rows[0]["strength_peak_amp_g"] == 0.15
-    assert rows[0]["strength_floor_amp_g"] == 0.003
+    assert rows[0].client_id == "active"
+    assert rows[0].client_name == "front-left wheel"
+    assert rows[0].location == "front_left_wheel"
+    peaks = rows[0].top_peaks
+    assert peaks
+    assert peaks[0].hz == 15.0
+    assert peaks[0].amp == 0.12
+    assert peaks[0].vibration_strength_db == 22.0
+    assert peaks[0].strength_bucket == "l2"
+    assert rows[0].strength_peak_amp_g == 0.15
+    assert rows[0].strength_floor_amp_g == 0.003
 
 
 def test_build_sample_records_caps_combined_and_axis_peak_lists(make_logger, fake_registry) -> None:
@@ -87,7 +87,7 @@ def test_build_sample_records_caps_combined_and_axis_peak_lists(make_logger, fak
         timestamp_utc="2026-02-16T12:00:00+00:00",
     )
 
-    assert len(rows[0]["top_peaks"]) == 8
+    assert len(rows[0].top_peaks) == 8
 
 
 @pytest.mark.parametrize(
@@ -122,11 +122,11 @@ def test_speed_source_reports(
     )
 
     assert len(rows) == 1
-    assert rows[0]["speed_source"] == expected_source
+    assert rows[0].speed_source == expected_source
     if expected_speed_kmh is None:
-        assert rows[0]["speed_kmh"] is None
+        assert rows[0].speed_kmh is None
     else:
-        assert rows[0]["speed_kmh"] == pytest.approx(expected_speed_kmh, abs=0.01)
+        assert rows[0].speed_kmh == pytest.approx(expected_speed_kmh, abs=0.01)
 
 
 def test_stop_without_samples_does_not_persist_history_run(make_logger, fake_history_db) -> None:

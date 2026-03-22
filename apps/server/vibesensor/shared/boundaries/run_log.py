@@ -6,7 +6,6 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
 
 from vibesensor.shared.types.backend_types import (
     RUN_END_TYPE,
@@ -32,16 +31,14 @@ class RunData:
     """Parsed contents of a JSONL run file: metadata, samples, and source path."""
 
     metadata: JsonObject
-    samples: list[JsonObject]
+    samples: list[SensorFrame]
     source_path: Path
 
 
-def normalize_sample_record(record: JsonObject) -> JsonObject:
-    """Normalize a raw sample dict into canonical form."""
-    frame = SensorFrame.from_dict(record)
-    normalized = dict(record)
-    normalized.update(cast(JsonObject, frame.to_dict()))
-    return normalized
+def normalize_sample_record(record: JsonObject | SensorFrame) -> SensorFrame:
+    """Normalize a raw sample payload into the canonical typed sample object."""
+
+    return record if isinstance(record, SensorFrame) else SensorFrame.from_dict(record)
 
 
 def read_jsonl_run(path: Path) -> RunData:
@@ -51,7 +48,7 @@ def read_jsonl_run(path: Path) -> RunData:
 
     metadata: JsonObject | None = None
     end_record: JsonObject | None = None
-    samples: list[JsonObject] = []
+    samples: list[SensorFrame] = []
     skipped = 0
     _loads = json.loads
     _meta_type = RUN_METADATA_TYPE
