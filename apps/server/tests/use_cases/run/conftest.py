@@ -18,6 +18,7 @@ from vibesensor.domain import CarSnapshot
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_records import AnalyzingRunHealth
+from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 # ---------------------------------------------------------------------------
@@ -30,7 +31,7 @@ class _FakeRecord:
     client_id: str
     name: str
     sample_rate_hz: int
-    latest_metrics: dict
+    latest_metrics: ClientMetrics
     location_code: str = ""
     frames_total: int = 0
     frames_dropped: int = 0
@@ -81,6 +82,8 @@ class _FakeRegistry:
                         "strength_metrics": {
                             "vibration_strength_db": 28.0,
                             "strength_bucket": "l4",
+                            "peak_amp_g": 0.26,
+                            "noise_floor_amp_g": 0.004,
                             "top_peaks": [
                                 {
                                     "hz": 28.0,
@@ -143,7 +146,7 @@ class _FakeProcessor:
     def latest_sample_rate_hz(self, client_id: str):
         return 800
 
-    def latest_metrics(self, client_id: str) -> dict:
+    def latest_metrics(self, client_id: str) -> ClientMetrics:
         if self._registry is None:
             return {}
         rec = self._registry.get(client_id)

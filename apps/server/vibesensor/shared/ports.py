@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator
 from typing import Protocol
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot
@@ -17,6 +17,7 @@ from vibesensor.shared.types.history_records import (
     HistoryRunListEntry,
     StoredHistoryRun,
 )
+from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
@@ -108,7 +109,7 @@ class SignalSource(Protocol):
         max_age_s: float = 3.0,
     ) -> list[str]: ...
 
-    def latest_metrics(self, client_id: str) -> Mapping[str, object]: ...
+    def latest_metrics(self, client_id: str) -> ClientMetrics: ...
 
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None: ...
 
