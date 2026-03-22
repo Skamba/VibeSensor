@@ -7,6 +7,7 @@ amplitude/error aggregation, and speed-phase evidence derivation.
 from __future__ import annotations
 
 from collections import Counter
+from dataclasses import dataclass
 
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.constants import (
@@ -154,12 +155,24 @@ _PHASE_ONSET_RELEVANT: frozenset[str] = frozenset(
 )
 
 
+@dataclass(frozen=True, slots=True)
+class OrderPhaseEvidence:
+    """Typed speed/phase evidence derived from matched order observations."""
+
+    peak_speed_kmh: float | None
+    speed_window_kmh: tuple[float, float] | None
+    strongest_speed_band: str | None
+    cruise_fraction: float
+    phases_detected: tuple[str, ...]
+    dominant_phase: str | None
+
+
 def compute_matched_speed_phase_evidence(
     matched_points: list[OrderMatchObservation],
     *,
     focused_speed_band: str | None,
     hotspot_speed_band: str,
-) -> tuple[float | None, list[float], str | None, dict[str, object], str | None]:
+) -> OrderPhaseEvidence:
     """Derive speed-profile and phase-evidence from matched points."""
     cruise_value = DrivingPhase.CRUISE.value
     speed_points: list[tuple[float, float]] = []
@@ -190,10 +203,8 @@ def compute_matched_speed_phase_evidence(
 
     matched_phase_strs = [str(point.phase or "") for point in matched_points if point.phase]
     cruise_matched = sum(1 for phase in matched_phase_strs if phase == cruise_value)
-    phase_evidence: dict[str, object] = {
-        "cruise_fraction": cruise_matched / len(matched_phase_strs) if matched_phase_strs else 0.0,
-        "phases_detected": sorted(set(matched_phase_strs)),
-    }
+    cruise_fraction = cruise_matched / len(matched_phase_strs) if matched_phase_strs else 0.0
+    phases_detected = tuple(sorted(set(matched_phase_strs)))
     dominant_phase: str | None = None
     onset_phase_labels = [phase for phase in matched_phase_strs if phase in _PHASE_ONSET_RELEVANT]
     if onset_phase_labels and len(onset_phase_labels) >= max(2, len(matched_points) // 2):
@@ -201,11 +212,12 @@ def compute_matched_speed_phase_evidence(
         if top_count / len(matched_points) >= 0.50:
             dominant_phase = top_phase
 
-    return (
+    return OrderPhaseEvidence(
         peak_speed_kmh,
-        list(speed_window_kmh) if speed_window_kmh is not None else [],
+        speed_window_kmh,
         strongest_speed_band or None,
-        phase_evidence,
+        cruise_fraction,
+        phases_detected,
         dominant_phase,
     )
 
