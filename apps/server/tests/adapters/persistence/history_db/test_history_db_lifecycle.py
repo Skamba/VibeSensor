@@ -11,7 +11,7 @@ import pytest
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.backend_types import RunMetadata, SettingsSnapshotPayload
 
 
 def _metadata(run_id: str, **overrides: object) -> RunMetadata:
@@ -37,6 +37,19 @@ def _analysis(run_id: str, **overrides: object) -> AnalysisSummary:
     }
     payload.update(overrides)
     return cast(AnalysisSummary, payload)
+
+
+def _settings_snapshot() -> SettingsSnapshotPayload:
+    return {
+        "cars": [],
+        "activeCarId": None,
+        "speedSource": "gps",
+        "manualSpeedKph": None,
+        "staleTimeoutS": 10.0,
+        "language": "en",
+        "speedUnit": "kmh",
+        "sensorsByMac": {},
+    }
 
 
 def test_append_samples_in_chunks(tmp_path: Path) -> None:
@@ -374,7 +387,7 @@ def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-ro", "2026-01-01T00:00:00Z", _metadata("run-ro"))
     db.append_samples("run-ro", [{"i": 1}, {"i": 2}])
-    db.set_settings_snapshot({"enabled": True})
+    db.set_settings_snapshot(_settings_snapshot())
     db.upsert_client_name("client-1", "Alice")
 
     class _ConnProxy:
@@ -404,7 +417,7 @@ def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
 
     assert proxy.commit_calls == 0
 
-    db.set_settings_snapshot({"enabled": False})
+    db.set_settings_snapshot(_settings_snapshot())
     assert proxy.commit_calls == 1
 
 

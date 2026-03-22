@@ -20,8 +20,10 @@ from vibesensor.adapters.persistence.history_db._schema import (
     SCHEMA_SQL,
     SCHEMA_VERSION,
 )
+from vibesensor.shared.boundaries.settings_snapshot import settings_snapshot_from_payload
 from vibesensor.shared.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.shared.time_utils import utc_now_iso
+from vibesensor.shared.types.backend_types import SettingsSnapshotPayload
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
 # Re-export for public API.
@@ -192,16 +194,16 @@ class HistoryDB(_HistoryDBRunLifecycleMixin, _HistoryDBSampleIOMixin, _HistoryDB
 
     # -- settings_snapshot persistence -----------------------------------------
 
-    def get_settings_snapshot(self) -> JsonObject | None:
+    def get_settings_snapshot(self) -> SettingsSnapshotPayload | None:
         with self._cursor(commit=False) as cur:
             cur.execute("SELECT value_json FROM settings_snapshot WHERE id = 1")
             row = cur.fetchone()
         if row is None:
             return None
         snapshot = safe_json_loads(row[0], context="settings_snapshot")
-        return snapshot if is_json_object(snapshot) else None
+        return settings_snapshot_from_payload(snapshot) if is_json_object(snapshot) else None
 
-    def set_settings_snapshot(self, snapshot: JsonObject) -> None:
+    def set_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
