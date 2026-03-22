@@ -115,7 +115,9 @@ class TestGitHubRelease:
             draft=False,
             prerelease=False,
             published_at="2025-06-15T02:00:00Z",
-            assets=(GitHubReleaseAsset(name="vibesensor-2025.6.15-py3-none-any.whl", url="https://a"),),
+            assets=(
+                GitHubReleaseAsset(name="vibesensor-2025.6.15-py3-none-any.whl", url="https://a"),
+            ),
         )
 
     def test_from_api_payload_rejects_non_release_shapes(self) -> None:
