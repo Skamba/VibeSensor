@@ -14,7 +14,7 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _effective_baseline_floor,
     _run_noise_baseline_g,
 )
-from vibesensor.use_cases.diagnostics.peak_binning import _classify_peak_type
+from vibesensor.use_cases.diagnostics.peak_classification import classify_peak_type
 from vibesensor.use_cases.diagnostics.spectrogram import (
     PeakSampleScan,
     safe_percentile,
@@ -183,7 +183,7 @@ def top_peaks_table_rows(
                 presence_ratio=item.presence_ratio,
                 burstiness=item.burstiness,
                 persistence_score=item.persistence_score,
-                peak_classification=_classify_peak_type(
+                peak_classification=classify_peak_type(
                     presence_ratio=item.presence_ratio,
                     burstiness=item.burstiness,
                     snr=item.p95_vs_run_noise_ratio,
