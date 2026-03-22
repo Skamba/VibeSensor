@@ -13,7 +13,7 @@ Module topology
 - **Services**: ``manager.py`` — backend restart scheduling and runtime update
   lifecycle orchestration.
 - **Operations**: ``installer.py`` (install/rollback), ``wifi.py`` (Wi-Fi
-  connect/restore, diagnostics, network constants), ``releases.py``
+  connect/restore, diagnostics, and default-config assembly), ``releases.py``
   (GitHub release discovery), ``runner.py`` (process execution and
   command helpers), ``firmware_release_fetcher.py`` (GitHub firmware HTTP
   discovery/download), ``firmware_bundle.py`` (firmware bundle filesystem

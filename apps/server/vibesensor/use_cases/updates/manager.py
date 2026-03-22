@@ -33,18 +33,8 @@ from vibesensor.use_cases.updates.validation import (
     validate_prerequisites,
 )
 from vibesensor.use_cases.updates.wifi import (
-    DNS_PROBE_HOST,
-    DNS_READY_MIN_WAIT_S,
-    DNS_RETRY_INTERVAL_S,
-    HOTSPOT_RESTORE_DELAY_S,
-    HOTSPOT_RESTORE_RETRIES,
-    NMCLI_TIMEOUT_S,
-    UPLINK_CONNECT_RETRIES,
-    UPLINK_CONNECT_WAIT_S,
-    UPLINK_CONNECTION_NAME,
-    UPLINK_FALLBACK_DNS,
-    UpdateWifiConfig,
     UpdateWifiController,
+    build_default_wifi_config,
     parse_wifi_diagnostics,
 )
 
@@ -386,19 +376,9 @@ class UpdateManager:
         return UpdateWifiController(
             commands=commands or self._build_command_executor(),
             tracker=self._tracker,
-            config=UpdateWifiConfig(
+            config=build_default_wifi_config(
                 ap_con_name=self._ap_con_name,
                 wifi_ifname=self._wifi_ifname,
-                uplink_connection_name=UPLINK_CONNECTION_NAME,
-                uplink_connect_wait_s=UPLINK_CONNECT_WAIT_S,
-                uplink_connect_retries=UPLINK_CONNECT_RETRIES,
-                uplink_fallback_dns=UPLINK_FALLBACK_DNS,
-                dns_ready_min_wait_s=DNS_READY_MIN_WAIT_S,
-                dns_retry_interval_s=DNS_RETRY_INTERVAL_S,
-                dns_probe_host=DNS_PROBE_HOST,
-                nmcli_timeout_s=NMCLI_TIMEOUT_S,
-                hotspot_restore_retries=HOTSPOT_RESTORE_RETRIES,
-                hotspot_restore_delay_s=HOTSPOT_RESTORE_DELAY_S,
             ),
         )
 
