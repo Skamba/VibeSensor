@@ -7,9 +7,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.adapters.pdf.presentation import strength_label, strength_text
-from vibesensor.domain import ConfidenceAssessment, Finding
+from vibesensor.domain import ConfidenceAssessment, Finding, LocationIntensitySummary
 from vibesensor.report_i18n import human_source
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.history.report_interpretation import resolve_primary_report_facts
 
 if TYPE_CHECKING:
@@ -47,7 +46,7 @@ class PrimaryCandidateContext:
 def resolve_primary_report_candidate(
     *,
     context: ReportMappingContext,
-    sensor_intensity: list[JsonObject],
+    sensor_intensity: list[LocationIntensitySummary],
     tr: Callable[..., str],
     lang: str,
 ) -> PrimaryCandidateContext:

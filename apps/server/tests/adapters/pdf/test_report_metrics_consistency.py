@@ -215,7 +215,7 @@ def _assert_unit_consistency(rd: ReportTemplateData) -> None:
         _assert_valid_float(pr.strength_db, "strength_db")
         _assert_valid_float(pr.freq_hz, "freq_hz")
 
-    units = {row.get("unit") for row in rd.location_hotspot_rows if isinstance(row, dict)}
+    units = {row.unit for row in rd.location_hotspot_rows}
     assert len(units) <= 1, f"Mixed units in location hotspot rows: {units}"
 
 

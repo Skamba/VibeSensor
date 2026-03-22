@@ -123,7 +123,7 @@ def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
     data = map_summary(summary)
     assert data.sensor_count == 2
     assert data.sensor_locations == ["Front Left", "Rear Left"]
-    assert [row["location"] for row in data.sensor_intensity_by_location] == [
+    assert [row.location for row in data.sensor_intensity_by_location] == [
         "Front Left",
         "Rear Left",
     ]

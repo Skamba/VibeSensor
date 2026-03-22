@@ -11,6 +11,7 @@ from vibesensor.adapters.pdf.diagram_layout import (
 )
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_style import REPORT_COLORS
+from vibesensor.domain import LocationIntensitySummary
 
 
 def _rectangles_overlap(
@@ -119,7 +120,7 @@ def test_sparse_layout_renders_only_connected_sensor_labels() -> None:
     summary = {
         "sensor_locations": ["front-left wheel", "rear-right wheel"],
         "sensor_intensity_by_location": [
-            {"location": "front-left wheel", "p95_intensity_db": 22.0},
+            LocationIntensitySummary(location="front-left wheel", p95_intensity_db=22.0),
         ],
     }
     diagram = car_location_diagram(
@@ -167,10 +168,10 @@ def test_legend_shows_diagnostic_source_only_and_source_labels_do_not_overlap() 
             "rear-right wheel",
         ],
         "sensor_intensity_by_location": [
-            {"location": "front-left wheel", "p95_intensity_db": 31.1},
-            {"location": "front-right wheel", "p95_intensity_db": 34.9},
-            {"location": "rear-left wheel", "p95_intensity_db": 30.9},
-            {"location": "rear-right wheel", "p95_intensity_db": 31.4},
+            LocationIntensitySummary(location="front-left wheel", p95_intensity_db=31.1),
+            LocationIntensitySummary(location="front-right wheel", p95_intensity_db=34.9),
+            LocationIntensitySummary(location="rear-left wheel", p95_intensity_db=30.9),
+            LocationIntensitySummary(location="rear-right wheel", p95_intensity_db=31.4),
         ],
     }
     diagram = car_location_diagram(

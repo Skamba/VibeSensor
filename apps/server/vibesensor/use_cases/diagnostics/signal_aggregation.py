@@ -6,9 +6,14 @@ import math
 from collections import defaultdict
 from collections.abc import Sequence
 
-from vibesensor.domain import LocationIntensitySummary, speed_band_sort_key, speed_bin_label
+from vibesensor.domain import (
+    LocationIntensitySummary,
+    PhaseIntensitySummary,
+    StrengthBucketDistribution,
+    speed_band_sort_key,
+    speed_bin_label,
+)
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
     PhaseSpeedBreakdownRowData,
@@ -191,30 +196,43 @@ def _sensor_intensity_by_location(
         overflow_delta = _counter_delta(overflow_vals)
         bucket_counts = strength_bucket_counts.get(location, _EMPTY_BUCKET_COUNTS)
         bucket_total = max(0, strength_bucket_totals.get(location, 0))
-        bucket_distribution: JsonObject = {
-            "total": bucket_total,
-            "counts": dict(bucket_counts),
-        }
-        for idx in range(6):
-            key = f"l{idx}"
-            bucket_distribution[f"percent_time_{key}"] = (
-                (bucket_counts.get(key, 0) / bucket_total * 100.0) if bucket_total > 0 else 0.0
-            )
+        bucket_distribution = StrengthBucketDistribution(
+            total=bucket_total,
+            counts=dict(bucket_counts),
+            percent_time_l0=(bucket_counts.get("l0", 0) / bucket_total * 100.0)
+            if bucket_total > 0
+            else 0.0,
+            percent_time_l1=(bucket_counts.get("l1", 0) / bucket_total * 100.0)
+            if bucket_total > 0
+            else 0.0,
+            percent_time_l2=(bucket_counts.get("l2", 0) / bucket_total * 100.0)
+            if bucket_total > 0
+            else 0.0,
+            percent_time_l3=(bucket_counts.get("l3", 0) / bucket_total * 100.0)
+            if bucket_total > 0
+            else 0.0,
+            percent_time_l4=(bucket_counts.get("l4", 0) / bucket_total * 100.0)
+            if bucket_total > 0
+            else 0.0,
+            percent_time_l5=(bucket_counts.get("l5", 0) / bucket_total * 100.0)
+            if bucket_total > 0
+            else 0.0,
+        )
         sample_count = int(sample_counts.get(location, 0))
         sample_coverage_ratio = (sample_count / max_sample_count) if max_sample_count > 0 else 1.0
         sample_coverage_warning = max_sample_count >= 5 and sample_coverage_ratio <= 0.20
         partial_coverage = bool(
             connected_locations is not None and location not in connected_locations,
         )
-        location_phase_intensity: JsonObject | None = None
+        location_phase_intensity: dict[str, PhaseIntensitySummary] | None = None
         if has_phases:
             loc_phases = phase_amp.get(location, {})
             location_phase_intensity = {
-                phase_key: {
-                    "count": len(phase_vals),
-                    "mean_intensity_db": _mean(phase_vals) if phase_vals else None,
-                    "max_intensity_db": max(phase_vals) if phase_vals else None,
-                }
+                phase_key: PhaseIntensitySummary(
+                    count=len(phase_vals),
+                    mean_intensity_db=_mean(phase_vals) if phase_vals else None,
+                    max_intensity_db=max(phase_vals) if phase_vals else None,
+                )
                 for phase_key, phase_vals in loc_phases.items()
                 if phase_vals
             }

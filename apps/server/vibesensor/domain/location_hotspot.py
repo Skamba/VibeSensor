@@ -12,7 +12,13 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-__all__ = ["LocationHotspot", "LocationIntensitySummary"]
+__all__ = [
+    "LocationHotspot",
+    "LocationHotspotRow",
+    "LocationIntensitySummary",
+    "PhaseIntensitySummary",
+    "StrengthBucketDistribution",
+]
 
 from ._numeric import coerce_float, coerce_int
 
@@ -196,6 +202,101 @@ class LocationHotspot:
         return self
 
 
+@dataclass(frozen=True, slots=True)
+class StrengthBucketDistribution:
+    """Typed strength-level bucket distribution for a location."""
+
+    total: int = 0
+    counts: dict[str, int] = field(default_factory=dict)
+    percent_time_l0: float = 0.0
+    percent_time_l1: float = 0.0
+    percent_time_l2: float = 0.0
+    percent_time_l3: float = 0.0
+    percent_time_l4: float = 0.0
+    percent_time_l5: float = 0.0
+
+    @classmethod
+    def from_dict(cls, raw: Mapping[str, object] | None) -> StrengthBucketDistribution:
+        """Parse from a raw bucket-distribution mapping."""
+
+        def _opt_float(value: object) -> float | None:
+            if value is None or not isinstance(value, (int, float, str)):
+                return None
+            try:
+                return coerce_float(value)
+            except (TypeError, ValueError):
+                return None
+
+        if not isinstance(raw, Mapping):
+            return cls()
+        counts_raw = raw.get("counts")
+        counts: dict[str, int] = {}
+        if isinstance(counts_raw, Mapping):
+            for key, value in counts_raw.items():
+                try:
+                    counts[str(key)] = coerce_int(value)
+                except (TypeError, ValueError):
+                    continue
+        try:
+            total = coerce_int(raw.get("total", 0))
+        except (TypeError, ValueError):
+            total = 0
+        return cls(
+            total=total,
+            counts=counts,
+            percent_time_l0=_opt_float(raw.get("percent_time_l0")) or 0.0,
+            percent_time_l1=_opt_float(raw.get("percent_time_l1")) or 0.0,
+            percent_time_l2=_opt_float(raw.get("percent_time_l2")) or 0.0,
+            percent_time_l3=_opt_float(raw.get("percent_time_l3")) or 0.0,
+            percent_time_l4=_opt_float(raw.get("percent_time_l4")) or 0.0,
+            percent_time_l5=_opt_float(raw.get("percent_time_l5")) or 0.0,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class PhaseIntensitySummary:
+    """Typed phase-specific intensity metrics for one location."""
+
+    count: int = 0
+    mean_intensity_db: float | None = None
+    max_intensity_db: float | None = None
+
+    @classmethod
+    def from_dict(cls, raw: Mapping[str, object] | None) -> PhaseIntensitySummary:
+        """Parse from a raw phase-intensity mapping."""
+
+        def _opt_float(value: object) -> float | None:
+            if value is None or not isinstance(value, (int, float, str)):
+                return None
+            try:
+                return coerce_float(value)
+            except (TypeError, ValueError):
+                return None
+
+        if not isinstance(raw, Mapping):
+            return cls()
+        try:
+            count = coerce_int(raw.get("count", 0))
+        except (TypeError, ValueError):
+            count = 0
+        return cls(
+            count=count,
+            mean_intensity_db=_opt_float(raw.get("mean_intensity_db")),
+            max_intensity_db=_opt_float(raw.get("max_intensity_db")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class LocationHotspotRow:
+    """Precomputed location hotspot row for report/PDF mapping."""
+
+    location: str = ""
+    count: int = 0
+    unit: str = "db"
+    peak_value: float = 0.0
+    mean_value: float = 0.0
+
+
 # ---------------------------------------------------------------------------
 # LocationIntensitySummary
 # ---------------------------------------------------------------------------
@@ -220,18 +321,16 @@ class LocationIntensitySummary:
     max_intensity_db: float | None = None
     dropped_frames_delta: float | None = None
     queue_overflow_drops_delta: float | None = None
-    strength_bucket_distribution: Mapping[str, object] = field(default_factory=dict)
-    phase_intensity: Mapping[str, object] | None = None
+    strength_bucket_distribution: StrengthBucketDistribution = field(
+        default_factory=StrengthBucketDistribution,
+    )
+    phase_intensity: dict[str, PhaseIntensitySummary] | None = None
 
     def __post_init__(self) -> None:
         if self.sample_count < 0:
             raise ValueError("sample_count must be >= 0")
         if not (0.0 <= self.sample_coverage_ratio <= 1.0):
             raise ValueError("sample_coverage_ratio must be in [0.0, 1.0]")
-        # Normalize strength_bucket_distribution from any input to a dict
-        sbd = self.strength_bucket_distribution
-        if not isinstance(sbd, dict):
-            object.__setattr__(self, "strength_bucket_distribution", dict(sbd))
 
     @classmethod
     def from_dict(cls, raw: Mapping[str, object]) -> LocationIntensitySummary:
@@ -261,13 +360,23 @@ class LocationIntensitySummary:
         except (TypeError, ValueError):
             sample_coverage_ratio = 0.0
 
-        sbd = raw.get("strength_bucket_distribution")
-        if not isinstance(sbd, dict):
-            sbd = {}
+        strength_bucket_distribution_raw = raw.get("strength_bucket_distribution")
+        strength_bucket_distribution_payload = (
+            strength_bucket_distribution_raw
+            if isinstance(strength_bucket_distribution_raw, Mapping)
+            else None
+        )
+        sbd = StrengthBucketDistribution.from_dict(strength_bucket_distribution_payload)
 
-        pi = raw.get("phase_intensity")
-        if pi is not None and not isinstance(pi, dict):
-            pi = None
+        phase_intensity_raw = raw.get("phase_intensity")
+        phase_intensity: dict[str, PhaseIntensitySummary] | None = None
+        if isinstance(phase_intensity_raw, Mapping):
+            parsed_phase_intensity = {
+                str(phase_key): PhaseIntensitySummary.from_dict(stats)
+                for phase_key, stats in phase_intensity_raw.items()
+                if isinstance(stats, Mapping)
+            }
+            phase_intensity = parsed_phase_intensity or None
 
         return cls(
             location=str(raw.get("location", "")),
@@ -282,5 +391,5 @@ class LocationIntensitySummary:
             dropped_frames_delta=_opt_float("dropped_frames_delta"),
             queue_overflow_drops_delta=_opt_float("queue_overflow_drops_delta"),
             strength_bucket_distribution=sbd,
-            phase_intensity=pi if isinstance(pi, dict) else None,
+            phase_intensity=phase_intensity,
         )

@@ -24,8 +24,8 @@ __all__ = [
 from dataclasses import dataclass, field
 
 from vibesensor.coerce import coerce_float
+from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.types.json_types import JsonObject
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -182,8 +182,8 @@ class ReportTemplateData:
     # renderer never needs to read raw samples or call analysis code.
     findings: list[FindingPresentation] = field(default_factory=list)
     top_causes: list[FindingPresentation] = field(default_factory=list)
-    sensor_intensity_by_location: list[JsonObject] = field(default_factory=list)
-    location_hotspot_rows: list[JsonObject] = field(default_factory=list)
+    sensor_intensity_by_location: list[LocationIntensitySummary] = field(default_factory=list)
+    location_hotspot_rows: list[LocationHotspotRow] = field(default_factory=list)
 
 
 def build_report_from_summary(summary: AnalysisSummary) -> Report:
