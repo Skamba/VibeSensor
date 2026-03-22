@@ -6,6 +6,10 @@ from datetime import UTC, datetime
 
 import pytest
 
+from vibesensor.adapters.analysis_summary import (
+    analysis_result_to_summary,
+    summarize_run_data,
+)
 from vibesensor.domain import SpeedProfile
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
@@ -116,7 +120,7 @@ class TestRunAnalysis:
         ]
         analysis = RunAnalysis(metadata, samples, file_name="test_run")
         result = analysis.summarize()
-        summary = result.summary
+        summary = analysis_result_to_summary(result)
         assert "findings" in summary
         assert "run_id" in summary
         assert summary["file_name"] == "test_run"
@@ -125,8 +129,6 @@ class TestRunAnalysis:
 
     def test_summarize_matches_function_api(self) -> None:
         """RunAnalysis.summarize() should produce identical output to summarize_run_data()."""
-        from vibesensor.use_cases.diagnostics.summary_builder import summarize_run_data
-
         metadata = {"raw_sample_rate_hz": 100.0}
         samples = [
             {
@@ -141,7 +143,9 @@ class TestRunAnalysis:
         ]
         # The function API delegates to RunAnalysis, so they should be equivalent
         summary_via_function = summarize_run_data(metadata, samples, file_name="f")
-        summary_via_class = RunAnalysis(metadata, samples, file_name="f").summarize().summary
+        summary_via_class = analysis_result_to_summary(
+            RunAnalysis(metadata, samples, file_name="f").summarize(),
+        )
         # Key structural fields should match
         assert summary_via_function["run_id"] == summary_via_class["run_id"]
         assert summary_via_function["rows"] == summary_via_class["rows"]
@@ -174,4 +178,4 @@ class TestRunAnalysis:
         ]
         analysis = RunAnalysis(metadata, samples, include_samples=False)
         result = analysis.summarize()
-        assert "samples" not in result.summary
+        assert "samples" not in analysis_result_to_summary(result)

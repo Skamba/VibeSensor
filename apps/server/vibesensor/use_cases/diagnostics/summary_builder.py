@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import (
@@ -11,7 +10,6 @@ from vibesensor.domain import (
 )
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
-from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
@@ -19,7 +17,6 @@ from vibesensor.use_cases.diagnostics._types import (
 )
 from vibesensor.use_cases.diagnostics.findings import _build_findings
 from vibesensor.use_cases.diagnostics.helpers import (
-    _load_run,
     _validate_required_strength_metrics,
 )
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
@@ -50,11 +47,9 @@ class RunAnalysis:
     """Cohesive object around a single analyzed run.
 
     Owns run timing, speed/phase preparation, data quality, suitability,
-    sensor bundle, findings bundle, and summary export.  Replaces the
-    procedural orchestration in ``summarize_run_data`` with a richer
-    object that keeps all derived state together.
-
-    The public ``summarize_run_data()`` function delegates here.
+    sensor bundle, findings bundle, and app-level result assembly. It keeps
+    all derived state together so boundary serializers can explicitly
+    project the final wire payload at the edges.
     """
 
     __slots__ = (
@@ -115,11 +110,10 @@ class RunAnalysis:
     # -- orchestration -----------------------------------------------------
 
     def summarize(self) -> AnalysisResult:
-        """Run the full analysis pipeline and return the output coordinator.
+        """Run the full analysis pipeline and return the app-level result.
 
-        Returns an :class:`AnalysisResult` carrying the domain aggregates
-        (``test_run``, ``diagnostic_case``) alongside the boundary
-        ``summary`` dict.
+        Returns an :class:`AnalysisResult` carrying the domain/app artifacts
+        needed for explicit boundary serialization elsewhere.
         """
         reference_complete, run_suitability, overall_strength_band_key = (
             _summary_steps.build_run_suitability_bundle(
@@ -173,32 +167,6 @@ class RunAnalysis:
         return result
 
 
-def summarize_run_data(
-    metadata: JsonObject,
-    samples: list[Sample],
-    lang: str | None = None,
-    file_name: str = "run",
-    include_samples: bool = True,
-    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
-) -> AnalysisSummary:
-    """Analyze pre-loaded run data and return the full summary dict.
-
-    Delegates to :class:`RunAnalysis` which owns the full orchestration.
-    """
-    return (
-        RunAnalysis(
-            metadata,
-            samples,
-            file_name=file_name,
-            lang=lang,
-            include_samples=include_samples,
-            findings_builder=findings_builder,
-        )
-        .summarize()
-        .summary
-    )
-
-
 def build_findings_for_samples(
     *,
     metadata: JsonObject,
@@ -223,22 +191,4 @@ def build_findings_for_samples(
         lang=language,
         per_sample_phases=prepared.per_sample_phases,
         run_noise_baseline_g=prepared.run_noise_baseline_g,
-    )
-
-
-def summarize_log(
-    log_path: Path,
-    lang: str | None = None,
-    include_samples: bool = True,
-    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
-) -> AnalysisSummary:
-    """Read a JSONL run file and analyse it."""
-    metadata, samples, _warnings = _load_run(log_path)
-    return summarize_run_data(
-        metadata,
-        samples,
-        lang=lang,
-        file_name=log_path.name,
-        include_samples=include_samples,
-        findings_builder=findings_builder,
     )

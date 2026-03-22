@@ -3,7 +3,7 @@ from __future__ import annotations
 from test_support.report_helpers import analysis_metadata as make_metadata
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
-from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.use_cases.diagnostics.findings import _build_persistent_peak_findings
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 

@@ -19,6 +19,10 @@ from dataclasses import dataclass
 from threading import RLock, Thread
 from typing import Protocol, cast
 
+from vibesensor.shared.boundaries.analysis_summary import (
+    AnalysisResultLike,
+    analysis_result_to_summary,
+)
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.json_types import JsonObject
@@ -82,7 +86,10 @@ def build_post_analysis_summary(
         file_name=run_id,
         include_samples=False,
     ).summarize()
-    summary = cast(JsonObject, dict(result.summary))
+    summary = cast(
+        JsonObject,
+        dict(analysis_result_to_summary(cast(AnalysisResultLike, result))),
+    )
     summary["case_id"] = result.diagnostic_case.case_id
 
     analysis_metadata: JsonObject = {

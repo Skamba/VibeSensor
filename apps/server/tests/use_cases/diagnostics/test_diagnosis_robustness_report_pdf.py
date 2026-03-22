@@ -12,8 +12,8 @@ from test_support import (
     wheel_hz,
 )
 
+from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.pdf.mapping import map_summary
-from vibesensor.use_cases.diagnostics import summarize_run_data
 
 
 class TestPdfContentForDiagnosedScenario:

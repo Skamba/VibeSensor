@@ -13,7 +13,7 @@ from test_support.sample_scenarios import (
     make_noise_samples,
     make_ramp_samples,
 )
-from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.adapters.analysis_summary import summarize_run_data
 
 ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 

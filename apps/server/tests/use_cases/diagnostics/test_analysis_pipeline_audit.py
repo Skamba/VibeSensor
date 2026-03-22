@@ -201,7 +201,7 @@ class TestNoPipelineErrorIsolation:
     """Demonstrate that a failure in one stage kills the entire summary."""
 
     def test_findings_failure_kills_entire_summary(self):
-        from vibesensor.use_cases.diagnostics import summarize_run_data
+        from vibesensor.adapters.analysis_summary import summarize_run_data
 
         metadata: dict[str, Any] = {
             "run_id": "test-run",

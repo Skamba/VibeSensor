@@ -9,9 +9,9 @@ values; it reads exclusively from `ReportTemplateData` (built by
 ## Data flow
 
 ```
-analysis.summarize_run_data(meta, samples)
+adapters.analysis_summary.summarize_run_data(meta, samples)
   → summary dict (persisted in history_db as a versioned analysis envelope)
-    → analysis.map_summary(summary)
+    → adapters.pdf.mapping.map_summary(summary)
       → ReportTemplateData (rebuilt on demand)
         → history_services.reports.HistoryReportService + report.pdf_engine.build_report_pdf(ReportTemplateData)
           → PDF bytes

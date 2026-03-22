@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from _paths import SERVER_ROOT
 
-from vibesensor.use_cases.diagnostics import summarize_run_data
+from vibesensor.adapters.analysis_summary import summarize_run_data
 
 _GUARDED_RAW_ROOTS = frozenset(
     {"samples", "metadata", "analysis_metadata", "_report_template_data"},

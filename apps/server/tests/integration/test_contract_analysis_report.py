@@ -16,6 +16,10 @@ from test_support import (
     standard_metadata,
 )
 
+from vibesensor.adapters.analysis_summary import (
+    analysis_result_to_summary,
+    summarize_run_data,
+)
 from vibesensor.adapters.pdf.mapping import (
     filter_active_sensor_intensity,
     map_summary,
@@ -23,7 +27,7 @@ from vibesensor.adapters.pdf.mapping import (
     resolve_primary_report_candidate,
 )
 from vibesensor.adapters.pdf.report_data import ReportTemplateData
-from vibesensor.use_cases.diagnostics import RunAnalysis, summarize_run_data
+from vibesensor.use_cases.diagnostics import RunAnalysis
 
 
 def _make_small_dataset() -> tuple[dict, list[dict]]:
@@ -119,7 +123,7 @@ def test_report_certainty_uses_confidence_assessment_reason() -> None:
     meta, samples = _make_steady_speed_fault_dataset()
     analysis = RunAnalysis(meta, samples, lang="en", file_name="ca-reason-proof")
     result = analysis.summarize()
-    summary = result.summary
+    summary = analysis_result_to_summary(result)
 
     assert analysis.test_run is not None
     assert analysis.test_run.speed_profile is not None

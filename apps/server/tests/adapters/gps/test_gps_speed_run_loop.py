@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 import pytest
 
@@ -48,15 +48,27 @@ async def _gps_server_scenario(
 ) -> AsyncIterator[GPSSpeedMonitor]:
     """Start a mock gpsd that sends *lines*, yield the connected monitor, then tear down."""
     monitor = GPSSpeedMonitor(gps_enabled=True)
+    handler_tasks: set[asyncio.Task[None]] = set()
 
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        for line in lines:
-            writer.write(line)
-        await writer.drain()
-        await asyncio.sleep(settle_s)
-        writer.close()
-        await writer.wait_closed()
+    async def _serve_client(
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+    ) -> None:
+        try:
+            await reader.readline()
+            for line in lines:
+                writer.write(line)
+            await writer.drain()
+            await asyncio.sleep(settle_s)
+        finally:
+            writer.close()
+            with suppress(ConnectionResetError, BrokenPipeError):
+                await writer.wait_closed()
+
+    def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        task = asyncio.create_task(_serve_client(reader, writer))
+        handler_tasks.add(task)
+        task.add_done_callback(handler_tasks.discard)
 
     server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
     host, port = server.sockets[0].getsockname()[:2]
@@ -68,6 +80,12 @@ async def _gps_server_scenario(
         await asyncio.gather(task, return_exceptions=True)
         server.close()
         await server.wait_closed()
+        if handler_tasks:
+            done, pending = await asyncio.wait(handler_tasks, timeout=1.0)
+            if pending:
+                for pending_task in pending:
+                    pending_task.cancel()
+                await asyncio.gather(*pending, return_exceptions=True)
 
 
 async def _await_speed(monitor: GPSSpeedMonitor, *, timeout_s: float = 2.5) -> None:
