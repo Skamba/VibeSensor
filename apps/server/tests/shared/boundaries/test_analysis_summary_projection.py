@@ -35,3 +35,25 @@ def test_project_analysis_summary_projects_run_suitability_from_reconstructed_te
             "explanation": test_run.suitability.checks[0].explanation_i18n_ref(),
         }
     ]
+
+
+def test_project_analysis_summary_drops_persisted_origin_without_primary_finding() -> None:
+    summary = {
+        "case_id": "case-001",
+        "run_id": "run-001",
+        "metadata": {"car_name": "Guard Car", "car_type": "sedan"},
+        "findings": [],
+        "top_causes": [],
+        "test_plan": [],
+        "run_suitability": [],
+        "most_likely_origin": {
+            "location": "rear left",
+            "suspected_source": "wheel/tire",
+            "weak_spatial_separation": True,
+        },
+    }
+
+    projected, test_run = project_analysis_summary(summary)
+
+    assert test_run.primary_finding is None
+    assert projected["most_likely_origin"] == {}
