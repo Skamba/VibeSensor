@@ -1,4 +1,4 @@
-"""Order-analysis orchestration above the core matching and assembly helpers."""
+"""Order-analysis orchestration above focused matching, rescue, scoring, and assembly helpers."""
 
 from __future__ import annotations
 
@@ -17,13 +17,20 @@ from vibesensor.use_cases.diagnostics.helpers import (
     _order_reference_spec_from_context,
     _sample_top_peaks,
 )
-from vibesensor.use_cases.diagnostics.order_analysis import (
-    OrderFindingBuildContext,
-    _compute_effective_match_rate,
+from vibesensor.use_cases.diagnostics.order_finding_builder import (
     assemble_order_finding,
-    match_samples_for_hypothesis,
 )
 from vibesensor.use_cases.diagnostics.order_heuristics import suppress_engine_aliases
+from vibesensor.use_cases.diagnostics.order_match_rate import (
+    _compute_effective_match_rate,
+)
+from vibesensor.use_cases.diagnostics.order_matching import (
+    match_samples_for_hypothesis,
+)
+from vibesensor.use_cases.diagnostics.order_scoring import (
+    OrderFindingBuildContext,
+    score_order_finding,
+)
 from vibesensor.use_cases.diagnostics.rotational_physics import OrderHypothesis, _order_hypotheses
 
 # Maximum dominance ratio for splitting a finding into per-location findings.
@@ -197,20 +204,28 @@ class OrderAnalysisSession:
         if effective_match_rate < min_match_rate:
             return None
 
+        build_context = OrderFindingBuildContext(
+            effective_match_rate=effective_match_rate,
+            focused_speed_band=focused_speed_band,
+            per_location_dominant=per_location_dominant,
+            match_rate=match.match_rate,
+            min_match_rate=min_match_rate,
+            constant_speed=constant_speed,
+            steady_speed=self._steady_speed,
+            connected_locations=self._connected_locations,
+            lang=self._lang,
+        )
+        score = score_order_finding(
+            hypothesis,
+            match,
+            context=build_context,
+        )
+
         return assemble_order_finding(
             hypothesis,
             match,
-            context=OrderFindingBuildContext(
-                effective_match_rate=effective_match_rate,
-                focused_speed_band=focused_speed_band,
-                per_location_dominant=per_location_dominant,
-                match_rate=match.match_rate,
-                min_match_rate=min_match_rate,
-                constant_speed=constant_speed,
-                steady_speed=self._steady_speed,
-                connected_locations=self._connected_locations,
-                lang=self._lang,
-            ),
+            context=build_context,
+            score=score,
         )
 
 

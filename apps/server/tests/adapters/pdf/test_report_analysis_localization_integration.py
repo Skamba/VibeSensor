@@ -8,10 +8,10 @@ from vibesensor.domain import LocationHotspot, OrderMatchObservation
 from vibesensor.shared.boundaries.finding import finding_from_payload
 from vibesensor.shared.constants import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import build_findings_for_samples
-from vibesensor.use_cases.diagnostics import location_analysis as _test_plan_module
+from vibesensor.use_cases.diagnostics import order_scoring as _order_scoring_module
 from vibesensor.use_cases.diagnostics.location_analysis import (
     LocationAnalysisResult,
-    _location_speedbin_summary,
+    summarize_order_match_locations,
 )
 from vibesensor.use_cases.diagnostics.summary_builder import summarize_origin
 
@@ -81,7 +81,7 @@ def _make_loc_result(
     )
 
 
-def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> None:
+def test_summarize_order_match_locations_reports_ambiguous_location_for_near_tie() -> None:
     matches = [
         _obs(85.0, 0.0110, "Rear Right"),
         _obs(85.0, 0.0102, "Rear Left"),
@@ -89,7 +89,7 @@ def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> 
         _obs(86.0, 0.0103, "Rear Left"),
     ]
 
-    sentence, hotspot = _location_speedbin_summary(matches, lang="en")
+    sentence, hotspot = summarize_order_match_locations(matches, lang="en")
 
     assert hotspot is not None
     assert hotspot.ambiguous_location
@@ -101,24 +101,24 @@ def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> 
     assert "ambiguous location" in str(sentence.get("location", ""))
 
 
-def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_count() -> None:
+def test_summarize_order_match_locations_weak_spatial_threshold_adapts_to_location_count() -> None:
     base_matches = [
         _obs(85.0, 1.30, "Front Left"),
         _obs(85.0, 1.00, "Front Right"),
     ]
 
-    _, hotspot_2 = _location_speedbin_summary(base_matches, lang="en")
+    _, hotspot_2 = summarize_order_match_locations(base_matches, lang="en")
     assert hotspot_2 is not None
     assert hotspot_2.weak_spatial_separation is False
 
-    _, hotspot_3 = _location_speedbin_summary(
+    _, hotspot_3 = summarize_order_match_locations(
         base_matches + [_obs(85.0, 0.40, "Rear Left")],
         lang="en",
     )
     assert hotspot_3 is not None
     assert hotspot_3.weak_spatial_separation is True
 
-    _, hotspot_4 = _location_speedbin_summary(
+    _, hotspot_4 = summarize_order_match_locations(
         base_matches
         + [
             _obs(85.0, 0.40, "Rear Left"),
@@ -147,7 +147,7 @@ def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> Non
     assert origin.weak_spatial_separation is True
 
 
-def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None:
+def test_summarize_order_match_locations_can_restrict_to_relevant_speed_bins() -> None:
     matches = [
         _obs(65.0, 0.030, "Rear Left"),
         _obs(66.0, 0.028, "Rear Left"),
@@ -155,8 +155,8 @@ def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None
         _obs(106.0, 0.020, "Front Right"),
     ]
 
-    _, unconstrained = _location_speedbin_summary(matches, lang="en")
-    _, focused = _location_speedbin_summary(
+    _, unconstrained = summarize_order_match_locations(matches, lang="en")
+    _, focused = summarize_order_match_locations(
         matches,
         lang="en",
         relevant_speed_bins=["100-110 km/h"],
@@ -172,7 +172,7 @@ def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None
     assert float(high_text) <= 110.0
 
 
-def test_location_speedbin_summary_reports_weighted_boundary_straddling_window() -> None:
+def test_summarize_order_match_locations_reports_weighted_boundary_straddling_window() -> None:
     matches = [
         _obs(74.0, 0.005, "Front Left"),
         _obs(75.0, 0.005, "Front Left"),
@@ -187,7 +187,7 @@ def test_location_speedbin_summary_reports_weighted_boundary_straddling_window()
         _obs(84.0, 0.005, "Front Left"),
     ]
 
-    _, hotspot = _location_speedbin_summary(matches, lang="en")
+    _, hotspot = summarize_order_match_locations(matches, lang="en")
     assert hotspot is not None
     speed_range = hotspot.speed_range
     low_text, high_text = speed_range.replace(" km/h", "").split("-", maxsplit=1)
@@ -197,14 +197,19 @@ def test_location_speedbin_summary_reports_weighted_boundary_straddling_window()
     assert speed_range not in {"70-80 km/h", "80-90 km/h"}
 
 
-def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outlier_bin() -> None:
+def test_summarize_order_match_locations_prefers_better_sample_coverage_over_tiny_outlier_bin() -> (
+    None
+):
     sparse_loud_bin = [
         _obs(85.0, 0.120, "Rear Left"),
         _obs(86.0, 0.120, "Rear Left"),
     ]
     dense_moderate_bin = [_obs(95.0 + (0.1 * idx), 0.090, "Front Left") for idx in range(20)]
 
-    _, hotspot = _location_speedbin_summary(sparse_loud_bin + dense_moderate_bin, lang="en")
+    _, hotspot = summarize_order_match_locations(
+        sparse_loud_bin + dense_moderate_bin,
+        lang="en",
+    )
     assert hotspot is not None
     assert hotspot.display_location == "Front Left"
     speed_range = hotspot.speed_range
@@ -213,7 +218,7 @@ def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outl
     assert 95.0 <= low <= high <= 97.0
 
 
-def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() -> None:
+def test_summarize_order_match_locations_prefers_multi_sensor_corroborated_location() -> None:
     matches = [
         _obs(92.0, 0.120, "Front Right", matched_hz=33.0, rel_error=0.40),
         _obs(92.0, 0.055, "Front Left", matched_hz=40.0, rel_error=0.01),
@@ -221,13 +226,13 @@ def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() 
         _obs(92.0, 0.047, "Rear Right", matched_hz=39.9, rel_error=0.01),
     ]
 
-    _, hotspot = _location_speedbin_summary(matches, lang="en")
+    _, hotspot = summarize_order_match_locations(matches, lang="en")
     assert hotspot is not None
     assert hotspot.top_location == "Front Left"
     assert hotspot.corroborated_by_n_sensors >= 3
 
 
-def test_location_speedbin_summary_prefers_connected_throughout_locations() -> None:
+def test_summarize_order_match_locations_prefers_connected_throughout_locations() -> None:
     matches = [
         _obs(85.0, 0.022, "Front Left"),
         _obs(86.0, 0.023, "Front Left"),
@@ -235,7 +240,11 @@ def test_location_speedbin_summary_prefers_connected_throughout_locations() -> N
         _obs(86.0, 0.048, "Rear Right"),
     ]
 
-    _, hotspot = _location_speedbin_summary(matches, lang="en", connected_locations={"Front Left"})
+    _, hotspot = summarize_order_match_locations(
+        matches,
+        lang="en",
+        connected_locations={"Front Left"},
+    )
     assert hotspot is not None
     assert hotspot.top_location == "Front Left"
     assert hotspot.partial_coverage is False
@@ -253,8 +262,8 @@ def test_build_findings_penalizes_low_localization_confidence(
         )
 
     monkeypatch.setattr(
-        _test_plan_module,
-        "_location_speedbin_summary",
+        _order_scoring_module,
+        "summarize_order_match_locations",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "strong location",
             _make_loc_result(
@@ -271,8 +280,8 @@ def test_build_findings_penalizes_low_localization_confidence(
     )
 
     monkeypatch.setattr(
-        _test_plan_module,
-        "_location_speedbin_summary",
+        _order_scoring_module,
+        "summarize_order_match_locations",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "ambiguous location",
             _make_loc_result(
@@ -303,8 +312,8 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
         )
 
     monkeypatch.setattr(
-        _test_plan_module,
-        "_location_speedbin_summary",
+        _order_scoring_module,
+        "summarize_order_match_locations",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "strong location",
             _make_loc_result(
@@ -321,8 +330,8 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     )
 
     monkeypatch.setattr(
-        _test_plan_module,
-        "_location_speedbin_summary",
+        _order_scoring_module,
+        "summarize_order_match_locations",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "weak location",
             _make_loc_result(
@@ -339,8 +348,8 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     )
 
     monkeypatch.setattr(
-        _test_plan_module,
-        "_location_speedbin_summary",
+        _order_scoring_module,
+        "summarize_order_match_locations",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "near tie location",
             _make_loc_result(
