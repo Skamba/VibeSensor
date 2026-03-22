@@ -29,6 +29,12 @@ EXCLUDED_DIRS = {
     ".pytest_cache",
     ".ruff_cache",
 }
+ALLOWED_AI_GUIDANCE_DOCS = {"docs/ai/repo-map.md"}
+AGENTS_CANONICAL_LINK = ".github/copilot-instructions.md"
+COPILOT_CANONICAL_MARKER = (
+    "This file is the canonical AI guidance entrypoint and short index."
+)
+REPO_MAP_SCOPE_MARKER = "This file is the repo map, not a workflow or policy guide."
 
 
 def _walk_files(repo_root: Path) -> list[str]:
@@ -160,6 +166,66 @@ def _check_markdown_links(markdown_files: list[str], repo_root: Path) -> list[st
     return issues
 
 
+def _read_text(repo_root: Path, relative_path: str) -> str | None:
+    try:
+        return (repo_root / relative_path).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def _check_ai_guidance_stack(markdown_files: list[str], repo_root: Path) -> list[str]:
+    """Flag AI guidance drift in the canonical entrypoint stack."""
+    issues: list[str] = []
+
+    docs_ai_files = {path for path in markdown_files if path.startswith("docs/ai/")}
+    unexpected_guides = sorted(docs_ai_files - ALLOWED_AI_GUIDANCE_DOCS)
+    missing_guides = sorted(ALLOWED_AI_GUIDANCE_DOCS - docs_ai_files)
+    for path in unexpected_guides:
+        issues.append(f"unexpected docs/ai guidance file: {path}")
+    for path in missing_guides:
+        issues.append(f"missing expected docs/ai guidance file: {path}")
+
+    agents_text = _read_text(repo_root, "AGENTS.md")
+    if agents_text is None:
+        issues.append("missing AGENTS.md")
+    else:
+        agent_links = re.findall(r"\[[^\]]+\]\(([^)]+)\)", agents_text)
+        if agent_links != [AGENTS_CANONICAL_LINK]:
+            issues.append(
+                "AGENTS.md should link only to .github/copilot-instructions.md"
+            )
+
+    copilot_text = _read_text(repo_root, ".github/copilot-instructions.md")
+    if copilot_text is None:
+        issues.append("missing .github/copilot-instructions.md")
+    else:
+        if COPILOT_CANONICAL_MARKER not in copilot_text:
+            issues.append(
+                ".github/copilot-instructions.md must declare the canonical AI guidance entrypoint"
+            )
+        if ".github/instructions/general.instructions.md" not in copilot_text:
+            issues.append(
+                ".github/copilot-instructions.md must point to general.instructions.md"
+            )
+        if "docs/ai/repo-map.md" not in copilot_text:
+            issues.append(
+                ".github/copilot-instructions.md must point to docs/ai/repo-map.md"
+            )
+
+    repo_map_text = _read_text(repo_root, "docs/ai/repo-map.md")
+    if repo_map_text is None:
+        issues.append("missing docs/ai/repo-map.md")
+    else:
+        if REPO_MAP_SCOPE_MARKER not in repo_map_text:
+            issues.append("docs/ai/repo-map.md must declare repo-map-only scope")
+        if ".github/copilot-instructions.md" not in repo_map_text:
+            issues.append(
+                "docs/ai/repo-map.md must point back to .github/copilot-instructions.md"
+            )
+
+    return issues
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     all_files = _tracked_files(repo_root)
@@ -173,6 +239,7 @@ def main() -> int:
     issues.extend(_check_large_code_blocks(docs_files))
     issues.extend(_check_runtime_docs_reading(source_files))
     issues.extend(_check_markdown_links(markdown_files, repo_root))
+    issues.extend(_check_ai_guidance_stack(markdown_files, repo_root))
 
     if issues:
         print(f"❌ {len(issues)} docs issue(s):")
@@ -181,7 +248,7 @@ def main() -> int:
         return 1
 
     print(
-        "✅ No docs misuse, runtime docs access, or broken local markdown links detected."
+        "✅ No docs misuse, runtime docs access, broken local markdown links, or AI guidance stack drift detected."
     )
     return 0
 
