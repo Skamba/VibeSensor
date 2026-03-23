@@ -17,7 +17,12 @@ from vibesensor.domain import Finding, FindingEvidence, Signature, VibrationSour
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.shared.boundaries.analysis_payload import (
+    AmplitudeMetric,
+    FindingEvidenceMetrics,
+    FindingPayload,
+    LocationHotspotPayload,
     MatchedPoint,
+    PhaseEvidence,
     TestPlanStepPayload,
 )
 from vibesensor.shared.boundaries.vibration_origin import (
@@ -25,6 +30,7 @@ from vibesensor.shared.boundaries.vibration_origin import (
     vibration_origin_from_payload,
 )
 from vibesensor.shared.json_utils import i18n_ref
+from vibesensor.shared.types.history_analysis_contracts import payload_value_from_json
 
 _MAX_SIGNATURES_PER_FINDING: int = 3
 
@@ -78,13 +84,13 @@ def step_payloads_from_plan(test_plan: TestPlan) -> list[TestPlanStepPayload]:
     return [step_payload_from_action(action) for action in test_plan.prioritized_actions]
 
 
-def _amplitude_metric_payload(finding: Finding) -> dict[str, object]:
+def _amplitude_metric_payload(finding: Finding) -> AmplitudeMetric:
     """Project the canonical presentation-only amplitude summary for a finding."""
     return {
         "name": "vibration_strength_db",
         "value": finding.vibration_strength_db,
         "units": "dB",
-        "definition": i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
+        "definition": payload_value_from_json(i18n_ref("METRIC_VIBRATION_STRENGTH_DB")),
     }
 
 
@@ -257,13 +263,13 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
 
 def finding_payload_from_domain(
     finding: Finding,
-) -> dict[str, object]:
+) -> FindingPayload:
     """Project a domain Finding to the current persisted/public payload dict.
 
     Produces the documented ``FindingPayload`` contract from domain objects
     alone, without pass-through shortcuts to original payload dicts.
     """
-    payload: dict[str, object] = {
+    payload: FindingPayload = {
         "finding_id": finding.finding_id,
         "finding_key": finding.finding_key,
         "suspected_source": str(finding.suspected_source),
@@ -298,7 +304,7 @@ def finding_payload_from_domain(
     # Evidence metrics
     if finding.evidence is not None:
         ev = finding.evidence
-        metrics: dict[str, object] = {
+        metrics: FindingEvidenceMetrics = {
             "match_rate": ev.match_rate,
             "presence_ratio": ev.presence_ratio,
             "burstiness": ev.burstiness,
@@ -333,7 +339,7 @@ def finding_payload_from_domain(
 
     # Phase evidence
     if finding.cruise_fraction > 0.0 or finding.phases_detected:
-        phase_evidence: dict[str, object] = {"cruise_fraction": finding.cruise_fraction}
+        phase_evidence: PhaseEvidence = {"cruise_fraction": finding.cruise_fraction}
         if finding.phases_detected:
             phase_evidence["phases_detected"] = list(finding.phases_detected)
         payload["phase_evidence"] = phase_evidence
@@ -341,7 +347,7 @@ def finding_payload_from_domain(
     # Location hotspot
     if finding.location is not None:
         loc = finding.location
-        hotspot: dict[str, object] = {
+        hotspot: LocationHotspotPayload = {
             "top_location": loc.strongest_location,
             "dominance_ratio": loc.dominance_ratio,
             "localization_confidence": loc.localization_confidence,

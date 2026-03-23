@@ -942,6 +942,8 @@ export interface components {
       run_noise_baseline_db?: number | null;
       /** Sample Count */
       sample_count?: number | null;
+      /** Snr Db */
+      snr_db?: number | null;
       /** Spatial Concentration */
       spatial_concentration?: number | null;
       /** Spatial Uniformity */
