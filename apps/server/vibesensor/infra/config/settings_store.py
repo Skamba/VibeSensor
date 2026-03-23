@@ -26,8 +26,9 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+from collections.abc import Callable
 from threading import RLock
-from typing import get_args
+from typing import TypeVar, get_args
 
 from vibesensor.domain import (
     Car,
@@ -76,6 +77,9 @@ VALID_LANGUAGES: frozenset[str] = frozenset(get_args(LanguageCode))
 
 VALID_SPEED_UNITS: frozenset[str] = frozenset(get_args(SpeedUnitCode))
 """Supported speed display units — derived from ``SpeedUnitCode``."""
+
+_SettingsSnapshotT = TypeVar("_SettingsSnapshotT")
+_SettingsResultT = TypeVar("_SettingsResultT")
 
 
 class SettingsStore(CarSettingsMixin):
@@ -141,6 +145,29 @@ class SettingsStore(CarSettingsMixin):
         except (sqlite3.Error, OSError) as exc:
             LOGGER.error("Failed to persist settings to SQLite", exc_info=True)
             raise PersistenceError("Failed to persist settings to SQLite") from exc
+
+    def _update_with_rollback(
+        self,
+        *,
+        snapshot: Callable[[], _SettingsSnapshotT],
+        apply: Callable[[_SettingsSnapshotT], bool],
+        restore: Callable[[_SettingsSnapshotT], None],
+        after_persist: Callable[[], None] | None = None,
+        result: Callable[[], _SettingsResultT],
+    ) -> _SettingsResultT:
+        with self._lock:
+            previous = snapshot()
+            changed = apply(previous)
+            if not changed:
+                return result()
+            try:
+                self._persist()
+            except PersistenceError:
+                restore(previous)
+                raise
+            if after_persist is not None:
+                after_persist()
+            return result()
 
     def _sync_analysis_settings(self) -> None:
         """Recompute in-memory analysis settings from the active car's aspects."""
@@ -215,16 +242,21 @@ class SettingsStore(CarSettingsMixin):
             return self._speed_cfg.to_dict()
 
     def update_speed_source(self, data: SpeedSourceUpdatePayload) -> SpeedSourcePayload:
-        with self._lock:
-            old_dict = self._speed_cfg.to_dict()
+        def _apply(_previous: SpeedSourcePayload) -> bool:
             self._speed_cfg.apply_update(data)
-            try:
-                self._persist()
-            except PersistenceError:
-                self._speed_cfg = SpeedSourceConfig.from_dict(old_dict)
-                raise
-            self._sync_speed_source()
-            return self._speed_cfg.to_dict()
+            return True
+
+        return self._update_with_rollback(
+            snapshot=self._speed_cfg.to_dict,
+            apply=_apply,
+            restore=lambda previous: setattr(
+                self,
+                "_speed_cfg",
+                SpeedSourceConfig.from_dict(previous),
+            ),
+            after_persist=self._sync_speed_source,
+            result=self._speed_cfg.to_dict,
+        )
 
     # -- sensors ---------------------------------------------------------------
 
@@ -232,42 +264,51 @@ class SettingsStore(CarSettingsMixin):
         with self._lock:
             return {sid: s.to_dict() for sid, s in self._sensors.items()}
 
+    def _sensor_configs_snapshot_unlocked(self) -> dict[str, SensorConfig]:
+        return {
+            sensor_id: SensorConfig.from_dict(sensor_id, cfg.to_dict())
+            for sensor_id, cfg in self._sensors.items()
+        }
+
     def set_sensor(self, mac: str, data: SensorConfigUpdatePayload) -> SensorsByMacPayload:
         sensor_id = normalize_sensor_id(mac)
-        with self._lock:
+
+        def _apply(_previous: dict[str, SensorConfig]) -> bool:
             existing = self._sensors.get(sensor_id)
-            is_new = existing is None
             if existing is None:
-                existing = SensorConfig(sensor_id=sensor_id, name=sensor_id, location_code="")
-            old_name, old_location = existing.name, existing.location_code
+                updated = SensorConfig(sensor_id=sensor_id, name=sensor_id, location_code="")
+            else:
+                updated = SensorConfig.from_dict(sensor_id, existing.to_dict())
             if "name" in data:
                 name = _clamp_str(data["name"], 64)
-                existing.name = name or sensor_id
+                updated.name = name or sensor_id
             if "location_code" in data:
-                existing.location_code = _clamp_str(data["location_code"], 64)
-            self._sensors[sensor_id] = existing
-            try:
-                self._persist()
-            except PersistenceError:
-                if is_new:
-                    self._sensors.pop(sensor_id, None)
-                else:
-                    existing.name, existing.location_code = old_name, old_location
-                raise
-            return {sensor_id: existing.to_dict()}
+                updated.location_code = _clamp_str(data["location_code"], 64)
+            self._sensors[sensor_id] = updated
+            return True
+
+        return self._update_with_rollback(
+            snapshot=self._sensor_configs_snapshot_unlocked,
+            apply=_apply,
+            restore=lambda previous: setattr(self, "_sensors", previous),
+            result=lambda: {sensor_id: self._sensors[sensor_id].to_dict()},
+        )
 
     def remove_sensor(self, mac: str) -> bool:
         sensor_id = normalize_sensor_id(mac)
-        with self._lock:
-            old_sensor = self._sensors.pop(sensor_id, None)
-            if old_sensor is None:
-                return False
-            try:
-                self._persist()
-            except PersistenceError:
-                self._sensors[sensor_id] = old_sensor
-                raise
-            return True
+        removed = False
+
+        def _apply(_previous: dict[str, SensorConfig]) -> bool:
+            nonlocal removed
+            removed = self._sensors.pop(sensor_id, None) is not None
+            return removed
+
+        return self._update_with_rollback(
+            snapshot=self._sensor_configs_snapshot_unlocked,
+            apply=_apply,
+            restore=lambda previous: setattr(self, "_sensors", previous),
+            result=lambda: removed,
+        )
 
     @property
     def language(self) -> LanguageCode:
@@ -278,15 +319,17 @@ class SettingsStore(CarSettingsMixin):
         language = _validated_language(value)
         if language is None:
             raise ValueError(f"language must be one of {sorted(VALID_LANGUAGES)}")
-        with self._lock:
-            old_language = self._language
+
+        def _apply(_previous: LanguageCode) -> bool:
             self._language = language
-            try:
-                self._persist()
-            except PersistenceError:
-                self._language = old_language
-                raise
-            return self._language
+            return True
+
+        return self._update_with_rollback(
+            snapshot=lambda: self._language,
+            apply=_apply,
+            restore=lambda previous: setattr(self, "_language", previous),
+            result=lambda: self._language,
+        )
 
     @property
     def speed_unit(self) -> SpeedUnitCode:
@@ -297,12 +340,14 @@ class SettingsStore(CarSettingsMixin):
         unit = _validated_speed_unit(value)
         if unit is None:
             raise ValueError(f"speed_unit must be one of {sorted(VALID_SPEED_UNITS)}")
-        with self._lock:
-            old_unit = self._speed_unit
+
+        def _apply(_previous: SpeedUnitCode) -> bool:
             self._speed_unit = unit
-            try:
-                self._persist()
-            except PersistenceError:
-                self._speed_unit = old_unit
-                raise
-            return self._speed_unit
+            return True
+
+        return self._update_with_rollback(
+            snapshot=lambda: self._speed_unit,
+            apply=_apply,
+            restore=lambda previous: setattr(self, "_speed_unit", previous),
+            result=lambda: self._speed_unit,
+        )

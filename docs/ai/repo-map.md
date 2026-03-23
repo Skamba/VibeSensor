@@ -40,6 +40,7 @@ This file is the repo map, not a workflow or policy guide. Use `.github/copilot-
 - `infra/workers/`: worker-pool infrastructure.
 - `use_cases/diagnostics/`: post-stop diagnostics pipeline. See `docs/analysis_pipeline.md` for the module map and data flow.
 - `use_cases/history/`: history queries, report loading/preparation/caching, and export orchestration. See `docs/report_pipeline.md` for report-specific flow.
+- `infra/runtime/health_snapshot.py`: application-level runtime health snapshot assembly for the `/api/health` route.
 - `use_cases/run/`: recording pipeline orchestration. `logger.py` is the `RunRecorder` entrypoint, and the `post_analysis*.py` modules split queueing, loading, execution, and summary shaping.
 - `use_cases/updates/`: wheel-based updater workflow, firmware handling, Wi-Fi, rollback, and status coordination.
 - `shared/`: cross-cutting ports, model/payload types, JSON helpers, and boundary codecs. Key stable owners include `shared/types/persisted_analysis.py`, `shared/types/analysis_views.py`, `shared/types/history_analysis_contracts.py`, `shared/types/run_schema.py`, `shared/types/car_config.py`, `shared/types/speed_source_config.py`, and the codec/projection modules under `shared/boundaries/`.

@@ -12,6 +12,9 @@ findings.  The domain ``Finding`` lives in ``vibesensor.domain``.
 """
 
 from vibesensor.shared.order_bands import build_order_bands, vehicle_orders_hz
+from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuilder
+from vibesensor.use_cases.diagnostics._run_loader import _load_run as load_run
+from vibesensor.use_cases.diagnostics._types import AnalysisSampleInput
 from vibesensor.use_cases.diagnostics.summary_builder import (
     AnalysisResult,
     RunAnalysis,
@@ -20,8 +23,11 @@ from vibesensor.use_cases.diagnostics.summary_builder import (
 
 __all__ = [
     "AnalysisResult",
+    "AnalysisSampleInput",
+    "FindingsBuilder",
     "RunAnalysis",
     "build_findings_for_samples",
     "build_order_bands",
+    "load_run",
     "vehicle_orders_hz",
 ]

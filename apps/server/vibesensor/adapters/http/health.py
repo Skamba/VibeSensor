@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
-from vibesensor.adapters.http.health_snapshot import build_health_snapshot
+from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
 from vibesensor.shared.types.api_models import HealthResponse
 
 if TYPE_CHECKING:
@@ -30,7 +30,13 @@ def create_health_routes(
     @router.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
         return HealthResponse.model_validate(
-            build_health_snapshot(loop_state, health_state, processor, registry, run_recorder)
+            build_system_health_snapshot(
+                loop_state,
+                health_state,
+                processor,
+                registry,
+                run_recorder,
+            )
         )
 
     return router
