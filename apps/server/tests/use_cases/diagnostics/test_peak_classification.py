@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.use_cases.diagnostics.peak_classification import classify_peak_type
+from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
 
 
 class TestClassifyPeakType:

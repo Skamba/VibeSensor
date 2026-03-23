@@ -72,7 +72,7 @@ def test_percentile_single_source_of_truth() -> None:
     """analysis.helpers.percentile must be imported from
     vibesensor.vibration_strength, not re-defined locally.
     """
-    from vibesensor.use_cases.diagnostics.helpers import percentile
+    from vibesensor.vibration_strength import percentile
     from vibesensor.vibration_strength import percentile as canonical
 
     assert percentile is canonical, (

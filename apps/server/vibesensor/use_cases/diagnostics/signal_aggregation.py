@@ -14,16 +14,16 @@ from vibesensor.domain import (
     speed_bin_label,
 )
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
+from vibesensor.use_cases.diagnostics._counters import counter_delta
+from vibesensor.use_cases.diagnostics._sample_metrics import _primary_vibration_strength_db
+from vibesensor.use_cases.diagnostics._sensor_locations import (
+    _location_label,
+)
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
     PhaseSpeedBreakdownRowData,
     SpeedBreakdownRowData,
     ensure_analysis_samples,
-)
-from vibesensor.use_cases.diagnostics.helpers import (
-    _location_label,
-    _primary_vibration_strength_db,
-    counter_delta,
 )
 from vibesensor.use_cases.diagnostics.math_utils import _mean
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase

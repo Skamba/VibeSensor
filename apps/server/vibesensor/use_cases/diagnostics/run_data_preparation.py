@@ -23,16 +23,16 @@ from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.use_cases.diagnostics._sample_metrics import _run_noise_baseline_g
+from vibesensor.use_cases.diagnostics._sensor_locations import (
+    _location_label,
+    _locations_connected_throughout_run,
+)
 from vibesensor.use_cases.diagnostics._types import (
     AnalysisSampleInput,
     PhaseSpeedBreakdownRowData,
     SpeedBreakdownRowData,
     ensure_analysis_samples,
-)
-from vibesensor.use_cases.diagnostics.helpers import (
-    _location_label,
-    _locations_connected_throughout_run,
-    _run_noise_baseline_g,
 )
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,

@@ -12,7 +12,7 @@ import pytest
 
 from vibesensor.infra.config.settings_store import PersistenceError, SettingsStore
 from vibesensor.infra.processing import ClientBuffer, SignalProcessor
-from vibesensor.use_cases.diagnostics.helpers import counter_delta
+from vibesensor.use_cases.diagnostics._counters import counter_delta
 
 # ---------------------------------------------------------------------------
 # counter_delta shared helper

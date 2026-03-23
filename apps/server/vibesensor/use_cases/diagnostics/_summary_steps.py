@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from statistics import median as _median
 
-from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, RunSuitability
-from vibesensor.domain import Finding as DomainFinding
+from vibesensor.domain import LocationIntensitySummary, RunSuitability
 from vibesensor.domain.vibration_origin import VibrationOrigin
 
+from ._analysis_models import (
+    FindingsBuilder,
+    FindingsBundle,
+    FindingsBundleRequest,
+)
 from ._context import DiagnosticsContext
 from ._types import AccelStatistics, Sample
 from .findings import _build_findings
@@ -27,43 +30,22 @@ from .top_cause_selection import select_top_causes
 
 
 def build_findings_bundle(
-    context: DiagnosticsContext,
-    samples: list[Sample],
+    request: FindingsBundleRequest,
     *,
-    language: str,
-    prepared: PreparedRunData,
-    overall_strength_band_key: str | None,
-    has_reference_gaps: bool,
-    sensor_count: int,
-    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
-) -> tuple[
-    VibrationOrigin | None,
-    list[DrivingPhaseInterval],
-    tuple[DomainFinding, ...],
-    tuple[DomainFinding, ...],
-]:
+    findings_builder: FindingsBuilder | None = None,
+) -> FindingsBundle:
     """Build findings plus derived diagnosis narrative fields."""
     builder = findings_builder or _build_findings
-    domain_findings = builder(
-        context=context,
-        samples=samples,
-        speed_sufficient=prepared.speed_sufficient,
-        steady_speed=prepared.is_steady_speed,
-        speed_stddev_kmh=prepared.speed_stddev_kmh,
-        speed_non_null_pct=prepared.speed_non_null_pct,
-        raw_sample_rate_hz=prepared.raw_sample_rate_hz,
-        lang=language,
-        per_sample_phases=prepared.per_sample_phases,
-        run_noise_baseline_g=prepared.run_noise_baseline_g,
-    )
+    prepared = request.prepared
+    domain_findings = builder(request.findings_request)
     domain_findings = tuple(
         finding
         if finding.confidence_assessment is not None
         else finding.with_confidence_assessment(
-            strength_band_key=overall_strength_band_key or "",
+            strength_band_key=request.overall_strength_band_key or "",
             steady_speed=prepared.is_steady_speed,
-            has_reference_gaps=has_reference_gaps,
-            sensor_count=sensor_count,
+            has_reference_gaps=request.has_reference_gaps,
+            sensor_count=request.sensor_count,
         )
         for finding in domain_findings
     )
@@ -73,11 +55,11 @@ def build_findings_bundle(
         domain_findings,
         min_confidence=0.25,
     )
-    return (
-        VibrationOrigin.from_ranked_findings(diagnostic_findings),
-        phase_timeline,
-        domain_findings,
-        select_top_causes(domain_findings),
+    return FindingsBundle(
+        most_likely_origin=VibrationOrigin.from_ranked_findings(diagnostic_findings),
+        phase_timeline=tuple(phase_timeline),
+        domain_findings=domain_findings,
+        domain_top_causes=select_top_causes(domain_findings),
     )
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import (
@@ -11,16 +11,22 @@ from vibesensor.domain import (
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.use_cases.diagnostics._context import DiagnosticsContext
+from vibesensor.use_cases.diagnostics._analysis_models import (
+    AnalysisResultBuildRequest,
+    FindingsBuilder,
+    FindingsBuildRequest,
+    FindingsBundleRequest,
+)
+from vibesensor.use_cases.diagnostics._context_decode import build_diagnostics_context
 from vibesensor.use_cases.diagnostics._types import (
     AccelStatistics,
     AnalysisSampleInput,
     normalize_analysis_samples,
 )
-from vibesensor.use_cases.diagnostics.findings import _build_findings
-from vibesensor.use_cases.diagnostics.helpers import (
+from vibesensor.use_cases.diagnostics._validation import (
     _validate_required_strength_metrics,
 )
+from vibesensor.use_cases.diagnostics.findings import _build_findings
 from vibesensor.use_cases.diagnostics.run_data_preparation import (
     PreparedRunData,
     prepare_run_data,
@@ -75,9 +81,9 @@ class RunAnalysis:
         file_name: str = "run",
         lang: str | None = None,
         include_samples: bool = True,
-        findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+        findings_builder: FindingsBuilder | None = None,
     ) -> None:
-        self._context = DiagnosticsContext.from_metadata(metadata, file_name=file_name)
+        self._context = build_diagnostics_context(metadata, file_name=file_name)
         self._raw_samples, self._samples = normalize_analysis_samples(samples)
         self._file_name = file_name
         self._language = normalize_lang(lang)
@@ -134,39 +140,45 @@ class RunAnalysis:
                 per_sample_phases=self._prepared.per_sample_phases,
             )
         )
-        (
-            most_likely_origin,
-            phase_timeline,
-            domain_findings,
-            domain_top_causes,
-        ) = _summary_steps.build_findings_bundle(
-            self._context,
-            self._samples,
-            language=self._language,
-            prepared=self._prepared,
-            overall_strength_band_key=overall_strength_band_key,
-            has_reference_gaps=not reference_complete,
-            sensor_count=len(sensor_locations),
+        findings_request = FindingsBuildRequest(
+            context=self._context,
+            samples=self._samples,
+            speed_sufficient=self._prepared.speed_sufficient,
+            steady_speed=self._prepared.is_steady_speed,
+            speed_stddev_kmh=self._prepared.speed_stddev_kmh,
+            speed_non_null_pct=self._prepared.speed_non_null_pct,
+            raw_sample_rate_hz=self._prepared.raw_sample_rate_hz,
+            lang=self._language,
+            per_sample_phases=self._prepared.per_sample_phases,
+            run_noise_baseline_g=self._prepared.run_noise_baseline_g,
+        )
+        findings_bundle = _summary_steps.build_findings_bundle(
+            FindingsBundleRequest(
+                findings_request=findings_request,
+                prepared=self._prepared,
+                overall_strength_band_key=overall_strength_band_key,
+                has_reference_gaps=not reference_complete,
+                sensor_count=len(sensor_locations),
+            ),
             findings_builder=self._findings_builder,
         )
         result = _summary_result.build_analysis_result(
-            file_name=self._file_name,
-            context=self._context,
-            samples=self._samples,
-            raw_samples=self._raw_samples,
-            language=self._language,
-            include_samples=self._include_samples,
-            prepared=self._prepared,
-            accel_stats=self._accel_stats,
-            sensor_locations=sensor_locations,
-            connected_locations=connected_locations,
-            sensor_intensity_by_location=sensor_intensity_by_location,
-            reference_complete=reference_complete,
-            run_suitability=run_suitability,
-            most_likely_origin=most_likely_origin,
-            phase_timeline=phase_timeline,
-            domain_findings=domain_findings,
-            domain_top_causes=domain_top_causes,
+            AnalysisResultBuildRequest(
+                file_name=self._file_name,
+                context=self._context,
+                samples=self._samples,
+                raw_samples=self._raw_samples,
+                language=self._language,
+                include_samples=self._include_samples,
+                prepared=self._prepared,
+                accel_stats=self._accel_stats,
+                sensor_locations=sensor_locations,
+                connected_locations=connected_locations,
+                sensor_intensity_by_location=sensor_intensity_by_location,
+                reference_complete=reference_complete,
+                run_suitability=run_suitability,
+                findings_bundle=findings_bundle,
+            ),
         )
         self._test_run = result.test_run
         return result
@@ -177,24 +189,26 @@ def build_findings_for_samples(
     metadata: JsonObject,
     samples: Sequence[AnalysisSampleInput],
     lang: str | None = None,
-    findings_builder: Callable[..., tuple[DomainFinding, ...]] | None = None,
+    findings_builder: FindingsBuilder | None = None,
 ) -> tuple[DomainFinding, ...]:
     """Build the findings list from *samples* using the full analysis pipeline."""
     language = normalize_lang(lang)
     rows = normalize_analysis_samples(samples)[1]
     _validate_required_strength_metrics(rows)
-    context = DiagnosticsContext.from_metadata(metadata, file_name="run")
+    context = build_diagnostics_context(metadata, file_name="run")
     prepared = prepare_run_data(context, rows)
     builder = findings_builder or _build_findings
     return builder(
-        context=context,
-        samples=rows,
-        speed_sufficient=prepared.speed_sufficient,
-        steady_speed=prepared.is_steady_speed,
-        speed_stddev_kmh=prepared.speed_stddev_kmh,
-        speed_non_null_pct=prepared.speed_non_null_pct,
-        raw_sample_rate_hz=prepared.raw_sample_rate_hz,
-        lang=language,
-        per_sample_phases=prepared.per_sample_phases,
-        run_noise_baseline_g=prepared.run_noise_baseline_g,
+        FindingsBuildRequest(
+            context=context,
+            samples=rows,
+            speed_sufficient=prepared.speed_sufficient,
+            steady_speed=prepared.is_steady_speed,
+            speed_stddev_kmh=prepared.speed_stddev_kmh,
+            speed_non_null_pct=prepared.speed_non_null_pct,
+            raw_sample_rate_hz=prepared.raw_sample_rate_hz,
+            lang=language,
+            per_sample_phases=prepared.per_sample_phases,
+            run_noise_baseline_g=prepared.run_noise_baseline_g,
+        ),
     )
