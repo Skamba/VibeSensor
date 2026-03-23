@@ -77,6 +77,13 @@ class PostAnalysisExecutionPersistenceFailure:
     callback_errors: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class PostAnalysisExecutionRetryableFailure:
+    run_id: str
+    error_message: str
+    callback_errors: tuple[str, ...] = ()
+
+
 PostAnalysisExecutionResult = (
     PostAnalysisExecutionSuccess
     | PostAnalysisExecutionMissingMetadata
@@ -85,6 +92,12 @@ PostAnalysisExecutionResult = (
     | PostAnalysisExecutionPersistenceFailure
 )
 
+PostAnalysisAttemptResult = PostAnalysisExecutionResult | PostAnalysisExecutionRetryableFailure
+
+
+def is_retryable_post_analysis_error(exc: Exception) -> bool:
+    return isinstance(exc, (sqlite3.Error, OSError, MemoryError))
+
 
 def execute_post_analysis(
     *,
@@ -92,12 +105,19 @@ def execute_post_analysis(
     db: RunPersistence,
     analysis_runner: PostAnalysisRunner,
     load_run: PostAnalysisLoader = load_post_analysis_run,
-) -> PostAnalysisExecutionResult:
+    defer_retryable_error_storage: bool = False,
+) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
     LOGGER.info("Analysis started for run %s", run_id)
     try:
         load_result = load_run(run_id=run_id, db=db)
     except Exception as exc:  # includes sample-read and metadata-read failures
+        if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
+            return _retryable_failure_result(
+                run_id=run_id,
+                analysis_start=analysis_start,
+                exc=exc,
+            )
         return _failure_result(
             run_id=run_id,
             analysis_start=analysis_start,
@@ -136,6 +156,12 @@ def execute_post_analysis(
         )
         db.store_analysis(loaded.run_id, summary)
     except Exception as exc:
+        if defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
+            return _retryable_failure_result(
+                run_id=loaded.run_id,
+                analysis_start=analysis_start,
+                exc=exc,
+            )
         return _failure_result(
             run_id=loaded.run_id,
             analysis_start=analysis_start,
@@ -178,6 +204,27 @@ def _store_load_error(
     return PostAnalysisExecutionNoSamples(
         run_id=run_id,
         completed_error=completed_error,
+    )
+
+
+def _retryable_failure_result(
+    *,
+    run_id: str,
+    analysis_start: float,
+    exc: Exception,
+) -> PostAnalysisExecutionRetryableFailure:
+    duration_s = time.monotonic() - analysis_start
+    LOGGER.warning(
+        "Post-analysis attempt failed for run %s after %.2fs; retrying if budget remains: %s",
+        run_id,
+        duration_s,
+        exc,
+        exc_info=True,
+    )
+    return PostAnalysisExecutionRetryableFailure(
+        run_id=run_id,
+        error_message=str(exc),
+        callback_errors=(f"post-analysis failed for run {run_id}: {exc}",),
     )
 
 
