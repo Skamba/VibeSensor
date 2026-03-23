@@ -20,14 +20,22 @@ Primary references:
 
 ## Local setup
 
+Before the first bootstrap, run `make doctor` if you want a quick prerequisite
+check against the pinned Python/Node versions and the optional Docker/firmware
+tooling. Run bare `make` any time you want the current repo command menu.
+
 ### Docker path
 
-Follow the [Quick Start](README.md#docker-fastest) in the README.
+Use [README.md#docker-quick-product-check](README.md#docker-quick-product-check)
+for a production-style container quick check, or
+[README.md#docker-dev-mode-source-mounted-hot-reload](README.md#docker-dev-mode-source-mounted-hot-reload)
+for the source-mounted backend-reload + Vite dev-server flow.
 
 ### Native backend path
 
-Start with [README.md#native-python](README.md#native-python) for the native
-bootstrap commands.
+Start with
+[README.md#native-python--vite-recommended-for-backend-or-ui-iteration](README.md#native-python--vite-recommended-for-backend-or-ui-iteration)
+for the native bootstrap commands.
 
 If you're iterating on the dashboard itself, use
 [apps/ui/README.md](apps/ui/README.md) for the frontend dev-server, build, and

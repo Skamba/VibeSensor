@@ -1,0 +1,29 @@
+services:
+  vibesensor-server:
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      PYTHONPATH: /workspace/apps/server
+    command:
+      - vibesensor-server
+      - --reload
+      - --config
+      - /workspace/apps/server/config.docker.yaml
+
+  vibesensor-ui-dev:
+    image: node:22-slim
+    network_mode: host
+    working_dir: /workspace/apps/ui
+    depends_on:
+      - vibesensor-server
+    volumes:
+      - .:/workspace
+      - vibesensor-ui-node_modules:/workspace/apps/ui/node_modules
+    command:
+      - sh
+      - -lc
+      - npm ci && npm run dev -- --host 0.0.0.0 --port 5173
+
+volumes:
+  vibesensor-ui-node_modules:
