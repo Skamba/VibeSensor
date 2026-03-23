@@ -13,6 +13,7 @@ import asyncio
 import contextlib
 import logging
 import shutil
+import time
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,6 +27,12 @@ StartUdpReceiver = Callable[
     ...,
     Coroutine[object, object, tuple[asyncio.DatagramTransport, asyncio.Task[None]]],
 ]
+TaskFactory = Callable[[], Coroutine[object, object, object]]
+
+_TASK_RESTART_MAX_ATTEMPTS = 3
+_TASK_RESTART_BASE_DELAY_S = 1.0
+_TASK_RESTART_MAX_DELAY_S = 10.0
+_TASK_RESTART_RESET_AFTER_S = 60.0
 
 
 class LifecycleControlPlane(Protocol):
@@ -177,6 +184,11 @@ class LifecycleManager:
 
         task.add_done_callback(_record_failure)
 
+    @staticmethod
+    def _restart_delay_s(restart_count: int) -> float:
+        exponent = max(0, restart_count - 1)
+        return float(min(_TASK_RESTART_MAX_DELAY_S, _TASK_RESTART_BASE_DELAY_S * (2**exponent)))
+
     def _start_task(
         self,
         coroutine: Coroutine[object, object, object],
@@ -184,6 +196,67 @@ class LifecycleManager:
         name: str,
     ) -> asyncio.Task[object]:
         task = asyncio.create_task(coroutine, name=name)
+        self._monitor_task(task)
+        return task
+
+    def _start_supervised_task(
+        self,
+        task_factory: TaskFactory,
+        *,
+        name: str,
+    ) -> asyncio.Task[object]:
+        async def _run_supervised() -> None:
+            restart_count = 0
+            while True:
+                started_at = time.monotonic()
+                try:
+                    await task_factory()
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:
+                    runtime_s = time.monotonic() - started_at
+                    if runtime_s >= _TASK_RESTART_RESET_AFTER_S:
+                        restart_count = 0
+                    if restart_count >= _TASK_RESTART_MAX_ATTEMPTS:
+                        raise
+                    restart_count += 1
+                    delay_s = self._restart_delay_s(restart_count)
+                    self._health_state.record_task_failure(name, self._task_failure_message(exc))
+                    LOGGER.error(
+                        "Managed task %s failed; restarting in %.1fs (%d/%d).",
+                        name,
+                        delay_s,
+                        restart_count,
+                        _TASK_RESTART_MAX_ATTEMPTS,
+                        exc_info=exc,
+                    )
+                    await asyncio.sleep(delay_s)
+                    self._health_state.clear_task_failure(name)
+                    continue
+
+                runtime_s = time.monotonic() - started_at
+                if runtime_s >= _TASK_RESTART_RESET_AFTER_S:
+                    restart_count = 0
+                unexpected_exit = RuntimeError(f"managed task {name} exited unexpectedly")
+                if restart_count >= _TASK_RESTART_MAX_ATTEMPTS:
+                    raise unexpected_exit
+                restart_count += 1
+                delay_s = self._restart_delay_s(restart_count)
+                self._health_state.record_task_failure(
+                    name,
+                    self._task_failure_message(unexpected_exit),
+                )
+                LOGGER.error(
+                    "Managed task %s exited unexpectedly; restarting in %.1fs (%d/%d).",
+                    name,
+                    delay_s,
+                    restart_count,
+                    _TASK_RESTART_MAX_ATTEMPTS,
+                )
+                await asyncio.sleep(delay_s)
+                self._health_state.clear_task_failure(name)
+
+        task = asyncio.create_task(_run_supervised(), name=name)
         self._monitor_task(task)
         return task
 
@@ -225,6 +298,8 @@ class LifecycleManager:
                 processor=self._runtime.processor,
                 queue_maxsize=self._runtime.udp_data_queue_maxsize,
             )
+            if self._data_consumer_task is not None:
+                self._monitor_task(self._data_consumer_task)
 
             phase = "control_plane"
             self._health_state.set_phase(phase)
@@ -234,13 +309,18 @@ class LifecycleManager:
 
             phase = "processing-loop"
             self._health_state.set_phase(phase)
-            self.tasks.append(self._start_task(self._runtime.processing_loop.run(), name=phase))
+            self.tasks.append(
+                self._start_supervised_task(
+                    lambda: self._runtime.processing_loop.run(),
+                    name=phase,
+                ),
+            )
 
             phase = "ws-broadcast"
             self._health_state.set_phase(phase)
             self.tasks.append(
-                self._start_task(
-                    self._runtime.ws_hub.run(
+                self._start_supervised_task(
+                    lambda: self._runtime.ws_hub.run(
                         UI_PUSH_HZ,
                         self._runtime.ws_broadcast.build_payload,
                         on_tick=self._runtime.ws_broadcast.on_tick,
@@ -251,13 +331,18 @@ class LifecycleManager:
 
             phase = "metrics-log"
             self._health_state.set_phase(phase)
-            self.tasks.append(self._start_task(self._runtime.run_recorder.run(), name=phase))
+            self.tasks.append(
+                self._start_supervised_task(
+                    lambda: self._runtime.run_recorder.run(),
+                    name=phase,
+                ),
+            )
 
             phase = "gps-speed"
             self._health_state.set_phase(phase)
             self.tasks.append(
-                self._start_task(
-                    self._runtime.gps_monitor.run(
+                self._start_supervised_task(
+                    lambda: self._runtime.gps_monitor.run(
                         host=self._runtime.gpsd_host,
                         port=self._runtime.gpsd_port,
                     ),

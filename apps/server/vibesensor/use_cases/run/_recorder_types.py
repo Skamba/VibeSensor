@@ -78,6 +78,8 @@ def _shutdown_report(recorder: RunRecorder, timeout_s: float) -> RecorderShutdow
         final_status = recorder.stop_recording()
         analysis_completed = recorder.wait_for_post_analysis(timeout_s)
         health = recorder.health_snapshot()
+        if not analysis_completed:
+            recorder.shutdown_post_analysis(timeout_s=1.0)
         return RecorderShutdownReport(
             completed=analysis_completed,
             active_run_id_before_stop=active_run_id_before_stop,

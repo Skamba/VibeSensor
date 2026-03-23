@@ -16,7 +16,7 @@ from _update_manager_test_helpers import (
     setup_update_env,
 )
 
-from vibesensor.use_cases.updates.models import UpdateState
+from vibesensor.use_cases.updates.models import UpdatePhase, UpdateState
 from vibesensor.use_cases.updates.status import collect_runtime_details
 
 
@@ -324,6 +324,23 @@ class TestUpdateManagerAsync:
             manager.start("TestNet", "pass")
             await asyncio.wait_for(manager._task, timeout=3)
         assert manager.status.state == UpdateState.failed
+
+    async def test_cleanup_records_hotspot_restore_failure(self, tmp_path) -> None:
+        manager, runner, _ = setup_update_env(tmp_path)
+        manager.status.state = UpdateState.running
+        manager.status.phase = UpdatePhase.installing
+        runner.default_response = (1, "", "nmcli failed")
+
+        with (
+            patch("vibesensor.use_cases.updates.wifi_config.HOTSPOT_RESTORE_RETRIES", 1),
+            patch("vibesensor.use_cases.updates.wifi_config.HOTSPOT_RESTORE_DELAY_S", 0),
+        ):
+            await manager._cleanup_after_update()
+
+        assert any(
+            issue.message == "Failed to restore hotspot during cleanup"
+            for issue in manager.status.issues
+        )
 
     async def test_check_update_failure_fails_update(self, tmp_path) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)
