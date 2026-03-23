@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from dataclasses import asdict
+from collections.abc import Collection, Mapping, Sequence
+from dataclasses import asdict, dataclass
 from typing import cast
 
 from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, RunSuitability
@@ -49,6 +49,40 @@ from ._plots import (
     serialize_phase_speed_breakdown,
     serialize_speed_breakdown,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class AnalysisSummaryBuildContext:
+    """Already-computed artifacts required to assemble an analysis summary payload."""
+
+    file_name: str
+    run_id: str
+    samples: Sequence[JsonObject]
+    duration_s: float
+    language: str
+    metadata: JsonObject
+    raw_sample_rate_hz: float | None
+    speed_breakdown: Sequence[SpeedBreakdownRowLike]
+    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowLike]
+    phase_segments: Sequence[PhaseSegmentLike]
+    run_noise_baseline_g: float | None
+    speed_breakdown_skipped_reason: JsonObject | None
+    findings: tuple[DomainFinding, ...]
+    top_causes: tuple[DomainFinding, ...]
+    most_likely_origin: VibrationOrigin | None
+    test_plan: list[TestPlanStepPayload]
+    phase_timeline: Sequence[DrivingPhaseInterval]
+    speed_stats: SpeedProfileSummary
+    speed_stats_by_phase: Mapping[str, SpeedProfileSummary]
+    phase_info: DrivingPhaseSummary
+    sensor_locations: list[str]
+    connected_locations: Collection[str]
+    sensor_intensity_by_location: Sequence[LocationIntensitySummary]
+    run_suitability: RunSuitability | None
+    speed_values: list[float]
+    speed_non_null_pct: float
+    accel_stats: AccelStatisticsLike
+    amp_metric_values: list[float]
 
 
 def _float_list(stats: AccelStatisticsLike, key: str) -> list[float]:
@@ -189,37 +223,7 @@ def serialize_origin_summary(
     }
 
 
-def build_summary_payload(
-    *,
-    file_name: str,
-    run_id: str,
-    samples: list[JsonObject],
-    duration_s: float,
-    language: str,
-    metadata: JsonObject,
-    raw_sample_rate_hz: float | None,
-    speed_breakdown: Sequence[SpeedBreakdownRowLike],
-    phase_speed_breakdown: Sequence[PhaseSpeedBreakdownRowLike],
-    phase_segments: Sequence[PhaseSegmentLike],
-    run_noise_baseline_g: float | None,
-    speed_breakdown_skipped_reason: JsonObject | None,
-    findings: tuple[DomainFinding, ...],
-    top_causes: tuple[DomainFinding, ...],
-    most_likely_origin: VibrationOrigin | None,
-    test_plan: list[TestPlanStepPayload],
-    phase_timeline: list[DrivingPhaseInterval],
-    speed_stats: SpeedProfileSummary,
-    speed_stats_by_phase: dict[str, SpeedProfileSummary],
-    phase_info: DrivingPhaseSummary,
-    sensor_locations: list[str],
-    connected_locations: set[str],
-    sensor_intensity_by_location: list[LocationIntensitySummary],
-    run_suitability: RunSuitability | None,
-    speed_values: list[float],
-    speed_non_null_pct: float,
-    accel_stats: AccelStatisticsLike,
-    amp_metric_values: list[float],
-) -> AnalysisSummary:
+def build_summary_payload(context: AnalysisSummaryBuildContext) -> AnalysisSummary:
     """Assemble the final summary payload from already-computed artifacts."""
     phase_timeline_payload: list[PhaseTimelineEntryPayload] = [
         {
@@ -230,60 +234,65 @@ def build_summary_payload(
             "speed_max_kmh": entry.speed_max_kmh,
             "has_fault_evidence": entry.has_fault_evidence,
         }
-        for entry in phase_timeline
+        for entry in context.phase_timeline
     ]
     return {
-        "file_name": file_name,
-        "run_id": run_id,
-        "rows": len(samples),
-        "duration_s": duration_s,
-        "record_length": format_duration_mm_ss(duration_s),
-        "lang": language,
-        "report_date": _json_str(metadata.get("end_time_utc"))
-        or _json_str(metadata.get("report_date")),
-        "start_time_utc": _json_str(metadata.get("start_time_utc")),
-        "end_time_utc": _json_str(metadata.get("end_time_utc")),
-        "sensor_model": _json_str(metadata.get("sensor_model")),
-        "firmware_version": _json_str(metadata.get("firmware_version")),
-        "raw_sample_rate_hz": raw_sample_rate_hz,
-        "feature_interval_s": _as_float(metadata.get("feature_interval_s")),
-        "fft_window_size_samples": _json_int(metadata.get("fft_window_size_samples")),
-        "fft_window_type": _json_str(metadata.get("fft_window_type")),
-        "peak_picker_method": _json_str(metadata.get("peak_picker_method")),
-        "accel_scale_g_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
-        "incomplete_for_order_analysis": bool(metadata.get("incomplete_for_order_analysis")),
-        "metadata": _json_object(metadata),
+        "file_name": context.file_name,
+        "run_id": context.run_id,
+        "rows": len(context.samples),
+        "duration_s": context.duration_s,
+        "record_length": format_duration_mm_ss(context.duration_s),
+        "lang": context.language,
+        "report_date": _json_str(context.metadata.get("end_time_utc"))
+        or _json_str(context.metadata.get("report_date")),
+        "start_time_utc": _json_str(context.metadata.get("start_time_utc")),
+        "end_time_utc": _json_str(context.metadata.get("end_time_utc")),
+        "sensor_model": _json_str(context.metadata.get("sensor_model")),
+        "firmware_version": _json_str(context.metadata.get("firmware_version")),
+        "raw_sample_rate_hz": context.raw_sample_rate_hz,
+        "feature_interval_s": _as_float(context.metadata.get("feature_interval_s")),
+        "fft_window_size_samples": _json_int(context.metadata.get("fft_window_size_samples")),
+        "fft_window_type": _json_str(context.metadata.get("fft_window_type")),
+        "peak_picker_method": _json_str(context.metadata.get("peak_picker_method")),
+        "accel_scale_g_per_lsb": _as_float(context.metadata.get("accel_scale_g_per_lsb")),
+        "incomplete_for_order_analysis": bool(
+            context.metadata.get("incomplete_for_order_analysis")
+        ),
+        "metadata": _json_object(context.metadata),
         "warnings": [],
-        "speed_breakdown": serialize_speed_breakdown(speed_breakdown),
-        "phase_speed_breakdown": serialize_phase_speed_breakdown(phase_speed_breakdown),
-        "phase_segments": serialize_phase_segments(phase_segments),
-        "run_noise_baseline_db": noise_baseline_db(run_noise_baseline_g),
-        "speed_breakdown_skipped_reason": _json_object_or_none(speed_breakdown_skipped_reason),
-        "findings": serialize_findings(findings),
-        "top_causes": serialize_findings(top_causes),
-        "most_likely_origin": serialize_origin_summary(most_likely_origin),
-        "test_plan": test_plan,
+        "speed_breakdown": serialize_speed_breakdown(context.speed_breakdown),
+        "phase_speed_breakdown": serialize_phase_speed_breakdown(context.phase_speed_breakdown),
+        "phase_segments": serialize_phase_segments(context.phase_segments),
+        "run_noise_baseline_db": noise_baseline_db(context.run_noise_baseline_g),
+        "speed_breakdown_skipped_reason": _json_object_or_none(
+            context.speed_breakdown_skipped_reason
+        ),
+        "findings": serialize_findings(context.findings),
+        "top_causes": serialize_findings(context.top_causes),
+        "most_likely_origin": serialize_origin_summary(context.most_likely_origin),
+        "test_plan": context.test_plan,
         "phase_timeline": phase_timeline_payload,
-        "speed_stats": cast(SpeedStatsPayload, speed_stats.to_dict()),
+        "speed_stats": cast(SpeedStatsPayload, context.speed_stats.to_dict()),
         "speed_stats_by_phase": {
-            k: cast(SpeedStatsPayload, v.to_dict()) for k, v in speed_stats_by_phase.items()
+            key: cast(SpeedStatsPayload, value.to_dict())
+            for key, value in context.speed_stats_by_phase.items()
         },
-        "phase_info": cast(PhaseInfoPayload, phase_info.to_dict()),
-        "sensor_locations": sensor_locations,
-        "sensor_locations_connected_throughout": sorted(connected_locations),
-        "sensor_count_used": len(sensor_locations),
+        "phase_info": cast(PhaseInfoPayload, context.phase_info.to_dict()),
+        "sensor_locations": context.sensor_locations,
+        "sensor_locations_connected_throughout": sorted(context.connected_locations),
+        "sensor_count_used": len(context.sensor_locations),
         "sensor_intensity_by_location": [
             cast(LocationIntensitySummaryPayload, asdict(row))
-            for row in sensor_intensity_by_location
+            for row in context.sensor_intensity_by_location
         ],
-        "run_suitability": run_suitability_payload(run_suitability),
-        "samples": _json_objects(samples),
+        "run_suitability": run_suitability_payload(context.run_suitability),
+        "samples": _json_objects(context.samples),
         "data_quality": build_data_quality_dict(
-            samples,
-            speed_values,
-            speed_stats,
-            speed_non_null_pct,
-            accel_stats,
-            amp_metric_values,
+            context.samples,
+            context.speed_values,
+            context.speed_stats,
+            context.speed_non_null_pct,
+            context.accel_stats,
+            context.amp_metric_values,
         ),
     }

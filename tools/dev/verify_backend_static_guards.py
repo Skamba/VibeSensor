@@ -472,6 +472,105 @@ def _check_analysis_summary_stays_at_boundaries() -> list[str]:
     return violations
 
 
+def _check_analysis_summary_adapter_uses_public_diagnostics_api() -> list[str]:
+    path = VIBESENSOR_DIR / "adapters" / "analysis_summary.py"
+    failures: list[str] = []
+    imported_public_api = False
+    for lineno, module, names, _level in _scan_imports(path):
+        if module == "vibesensor.use_cases.diagnostics":
+            imported_public_api = True
+        if module.startswith("vibesensor.use_cases.diagnostics._"):
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)}:{lineno}: adapters must not import private diagnostics modules"
+            )
+        if any(name.startswith("vibesensor.use_cases.diagnostics._") for name in names):
+            failures.append(
+                f"{path.relative_to(REPO_ROOT)}:{lineno}: adapters must not import private diagnostics modules"
+            )
+    if not imported_public_api:
+        failures.append(
+            f"{path.relative_to(REPO_ROOT)} must import diagnostics helpers through vibesensor.use_cases.diagnostics"
+        )
+    return failures
+
+
+def _check_summary_payload_uses_build_context() -> list[str]:
+    path = (
+        VIBESENSOR_DIR
+        / "shared"
+        / "boundaries"
+        / "summary_serialization"
+        / "_summary.py"
+    )
+    tree = _parse_python(path)
+    if tree is None:
+        return [f"Unable to parse {path.relative_to(REPO_ROOT)}"]
+    build_context_found = False
+    build_summary_signature_ok = False
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.ClassDef)
+            and node.name == "AnalysisSummaryBuildContext"
+        ):
+            build_context_found = True
+        if isinstance(node, ast.FunctionDef) and node.name == "build_summary_payload":
+            build_summary_signature_ok = (
+                len(node.args.args) == 1
+                and not node.args.kwonlyargs
+                and node.args.args[0].arg == "context"
+            )
+    failures: list[str] = []
+    if not build_context_found:
+        failures.append(
+            f"{path.relative_to(REPO_ROOT)} must define AnalysisSummaryBuildContext"
+        )
+    if not build_summary_signature_ok:
+        failures.append(
+            f"{path.relative_to(REPO_ROOT)} must accept a single context object in build_summary_payload"
+        )
+    return failures
+
+
+def _check_settings_store_uses_shared_update_helper() -> list[str]:
+    settings_path = VIBESENSOR_DIR / "infra" / "config" / "settings_store.py"
+    car_settings_path = VIBESENSOR_DIR / "infra" / "config" / "car_settings.py"
+    settings_source = _read_text(settings_path)
+    car_settings_source = _read_text(car_settings_path)
+    failures: list[str] = []
+    if "def _update_with_rollback(" not in settings_source:
+        failures.append(
+            f"{settings_path.relative_to(REPO_ROOT)} must define the shared _update_with_rollback helper"
+        )
+    if settings_source.count("except PersistenceError") != 1:
+        failures.append(
+            f"{settings_path.relative_to(REPO_ROOT)} must keep PersistenceError rollback handling in one helper"
+        )
+    if "except PersistenceError" in car_settings_source:
+        failures.append(
+            f"{car_settings_path.relative_to(REPO_ROOT)} must delegate rollback handling to SettingsStore._update_with_rollback"
+        )
+    return failures
+
+
+def _check_health_snapshot_moves_out_of_http_adapter() -> list[str]:
+    health_builder_path = VIBESENSOR_DIR / "adapters" / "http" / "health_snapshot.py"
+    health_route_path = VIBESENSOR_DIR / "adapters" / "http" / "health.py"
+    failures: list[str] = []
+    if health_builder_path.exists():
+        failures.append(
+            f"{health_builder_path.relative_to(REPO_ROOT)} should not exist; health assembly belongs in infra/runtime"
+        )
+    route_source = _read_text(health_route_path)
+    if (
+        "from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot"
+        not in route_source
+    ):
+        failures.append(
+            f"{health_route_path.relative_to(REPO_ROOT)} must import build_system_health_snapshot from vibesensor.infra.runtime.health_snapshot"
+        )
+    return failures
+
+
 def _check_report_pdf_entrypoint_uses_prepared_input() -> list[str]:
     path = VIBESENSOR_DIR / "app" / "container.py"
     tree = _parse_python(path)
@@ -1306,6 +1405,22 @@ CHECKS: tuple[Check, ...] = (
     (
         "AnalysisSummary stays at boundaries",
         _check_analysis_summary_stays_at_boundaries,
+    ),
+    (
+        "analysis_summary adapter uses public diagnostics API",
+        _check_analysis_summary_adapter_uses_public_diagnostics_api,
+    ),
+    (
+        "Summary serialization uses a build context",
+        _check_summary_payload_uses_build_context,
+    ),
+    (
+        "SettingsStore uses one rollback helper",
+        _check_settings_store_uses_shared_update_helper,
+    ),
+    (
+        "Health snapshot assembly stays out of HTTP adapters",
+        _check_health_snapshot_moves_out_of_http_adapter,
     ),
     (
         "Report PDF entrypoint uses prepared input",

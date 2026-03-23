@@ -28,6 +28,7 @@ from ._plots import (
     serialize_speed_breakdown,
 )
 from ._summary import (
+    AnalysisSummaryBuildContext,
     build_data_quality_dict,
     build_summary_payload,
     noise_baseline_db,
@@ -37,6 +38,7 @@ from ._summary import (
 __all__ = [
     "AccelStatisticsLike",
     "AmpVsPhaseRowLike",
+    "AnalysisSummaryBuildContext",
     "FreqVsSpeedByFindingSeriesLike",
     "MatchedAmpVsSpeedSeriesLike",
     "PeakTableRowLike",
