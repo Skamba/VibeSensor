@@ -6,12 +6,9 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-from vibesensor.shared.types.backend_types import (
-    LanguageCode,
-    ResolvedSpeedSource,
-    SpeedSourceKind,
-    SpeedUnitCode,
-)
+from vibesensor.domain import SpeedSourceKind
+from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
+from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
 
 from .base import _FrozenBase
 

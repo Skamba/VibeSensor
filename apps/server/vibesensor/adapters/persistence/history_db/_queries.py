@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.json_utils import safe_json_loads
-from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
     HistoryRunListEntry,
@@ -17,6 +16,7 @@ from vibesensor.shared.types.history_records import (
 )
 from vibesensor.shared.types.json_types import is_json_object
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.shared.types.run_schema import RunMetadata
 
 LOGGER = logging.getLogger(__name__)
 

@@ -22,8 +22,8 @@ from vibesensor.shared.run_context import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
 )
-from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_records import StoredHistoryRun
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService, build_run_details_json
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache

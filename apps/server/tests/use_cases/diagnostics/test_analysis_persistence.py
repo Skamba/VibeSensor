@@ -15,8 +15,8 @@ from tests.conftest import FakeState
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.analysis_payload import AnalysisSummary
-from vibesensor.shared.types.backend_types import RunMetadata
 from vibesensor.shared.types.history_records import StoredHistoryRun
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 # -- Schema v4 tests ----------------------------------------------------------

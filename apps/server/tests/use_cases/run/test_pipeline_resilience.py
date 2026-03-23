@@ -20,7 +20,7 @@ from unittest.mock import patch
 import pytest
 
 from vibesensor.domain import Run
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.logger import (
     _MAX_HISTORY_CREATE_RETRIES,

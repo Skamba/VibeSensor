@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.sampling import bounded_sample
-from vibesensor.shared.types.backend_types import RunMetadata
+from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 
 _MAX_POST_ANALYSIS_SAMPLES = 12_000
