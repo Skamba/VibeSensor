@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from vibesensor.shared.constants import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ
+from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ
 from vibesensor.vibration_strength import percentile
 
 from ._types import AnalysisSampleInput, Sample, ensure_analysis_sample

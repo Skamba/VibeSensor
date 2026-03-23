@@ -23,7 +23,7 @@ from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.pdf.report_data import PatternEvidence, ReportTemplateData
 from vibesensor.domain import Finding
 from vibesensor.shared.boundaries.finding import finding_from_payload
-from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 
 _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"

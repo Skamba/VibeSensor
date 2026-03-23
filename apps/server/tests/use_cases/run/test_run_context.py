@@ -1,4 +1,4 @@
-"""Tests for shared run-context helpers."""
+"""Tests for run-context orchestration helpers."""
 
 from __future__ import annotations
 
@@ -7,14 +7,15 @@ import json
 import pytest
 
 from vibesensor.domain import AnalysisSettingsSnapshot, CarSnapshot, RunContextSnapshot
-from vibesensor.shared.run_context import (
+from vibesensor.shared.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
     RunContextWarning,
+)
+from vibesensor.use_cases.run.run_context import (
     add_current_context_warnings,
     apply_run_context_snapshot,
     build_run_context_snapshot,
-    build_summary_warnings,
     current_car_snapshot_token,
     order_reference_context_complete,
 )
@@ -196,14 +197,9 @@ class TestBoundaryHelpers:
         }
 
 
-class TestRunContextWarnings:
-    def test_build_summary_warnings_returns_app_level_models(self) -> None:
-        warnings = build_summary_warnings(
-            {"incomplete_for_order_analysis": True},
-            reference_complete=False,
-        )
-
-        assert warnings == [
+def test_add_current_context_warnings_returns_app_level_models() -> None:
+    warnings = add_current_context_warnings(
+        [
             RunContextWarning(
                 code=WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
                 severity="warn",
@@ -211,37 +207,25 @@ class TestRunContextWarnings:
                 title={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"},
                 detail={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"},
             )
-        ]
+        ],
+        metadata={
+            "active_car_snapshot": {
+                "id": "car-a",
+                "name": "Track Car",
+                "type": "coupe",
+                "aspects": {"tire_width_mm": 245.0},
+            }
+        },
+        current_active_car_snapshot=CarSnapshot(
+            car_id="car-b",
+            name="Daily Car",
+            car_type="wagon",
+            aspects={"tire_width_mm": 225.0},
+        ),
+    )
 
-    def test_add_current_context_warnings_returns_app_level_models(self) -> None:
-        warnings = add_current_context_warnings(
-            [
-                RunContextWarning(
-                    code=WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
-                    severity="warn",
-                    applies_to="order_analysis",
-                    title={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_TITLE"},
-                    detail={"_i18n_key": "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"},
-                )
-            ],
-            metadata={
-                "active_car_snapshot": {
-                    "id": "car-a",
-                    "name": "Track Car",
-                    "type": "coupe",
-                    "aspects": {"tire_width_mm": 245.0},
-                }
-            },
-            current_active_car_snapshot=CarSnapshot(
-                car_id="car-b",
-                name="Daily Car",
-                car_type="wagon",
-                aspects={"tire_width_mm": 225.0},
-            ),
-        )
-
-        assert [warning.code for warning in warnings] == [
-            WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
-            WARNING_CODE_CAR_SETTINGS_CHANGED,
-        ]
-        assert all(isinstance(warning, RunContextWarning) for warning in warnings)
+    assert [warning.code for warning in warnings] == [
+        WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
+        WARNING_CODE_CAR_SETTINGS_CHANGED,
+    ]
+    assert all(isinstance(warning, RunContextWarning) for warning in warnings)

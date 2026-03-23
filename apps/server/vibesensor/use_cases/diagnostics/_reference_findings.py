@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain import FindingKind, VibrationSource
-from vibesensor.shared.constants import SPEED_COVERAGE_MIN_PCT
+from vibesensor.shared.constants.analysis import SPEED_COVERAGE_MIN_PCT
 
 from ._context import DiagnosticsContext
 from ._reference_resolution import _effective_engine_rpm

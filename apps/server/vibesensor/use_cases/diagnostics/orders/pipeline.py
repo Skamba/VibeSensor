@@ -7,7 +7,7 @@ from dataclasses import dataclass, replace
 
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain import VibrationSource
-from vibesensor.shared.constants import (
+from vibesensor.shared.constants.analysis import (
     CONSTANT_SPEED_STDDEV_KMH,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,

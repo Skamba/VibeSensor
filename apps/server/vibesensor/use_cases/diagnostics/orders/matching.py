@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from vibesensor.domain import OrderMatchObservation, speed_bin_label
-from vibesensor.shared.constants import (
+from vibesensor.shared.constants.analysis import (
     ORDER_MIN_COVERAGE_POINTS,
     ORDER_MIN_MATCH_POINTS,
     ORDER_TOLERANCE_MIN_HZ,

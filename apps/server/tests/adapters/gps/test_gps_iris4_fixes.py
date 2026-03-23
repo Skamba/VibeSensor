@@ -15,7 +15,7 @@ from vibesensor.adapters.gps.gps_speed import (
     MAX_MANUAL_SPEED_KMH,
     GPSSpeedMonitor,
 )
-from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.shared.constants.units import KMH_TO_MPS
 
 # ---------------------------------------------------------------------------
 # Fix 2 & 3: resolve_speed() and _fallback_speed_value() exclude bool values

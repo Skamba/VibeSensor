@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from vibesensor.app.settings import AppConfig, load_config
-from vibesensor.shared.constants import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
+from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 
 
 def summarize(cfg: AppConfig) -> dict[str, object]:

@@ -15,7 +15,7 @@ from test_support.report_helpers import (
 from vibesensor.adapters.analysis_summary import summarize_log
 from vibesensor.adapters.pdf.mapping import map_summary, prepare_report_input
 from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.constants import KMH_TO_MPS
+from vibesensor.shared.constants.units import KMH_TO_MPS
 
 
 def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:

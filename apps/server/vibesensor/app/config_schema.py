@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.shared.constants import NUMERIC_TYPES
+from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 
 from .config_paths import REPO_DIR
 

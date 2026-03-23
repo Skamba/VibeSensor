@@ -15,7 +15,7 @@ import numpy as np
 import numpy.typing as npt
 
 from vibesensor.infra.processing.models import Axis, AxisPeak, FftSpectrumResult, SpectrumByAxis
-from vibesensor.shared.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
+from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 from vibesensor.vibration_strength import (
     PEAK_THRESHOLD_FLOOR_RATIO,
     STRENGTH_EPSILON_MIN_G,
