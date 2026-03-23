@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from _update_manager_test_helpers import FakeRunner, cancel_task, mock_which
 
+from vibesensor.shared.exceptions import ConfigurationError, UpdateError
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import UpdatePhase, UpdateState
 
@@ -24,16 +25,16 @@ class TestUpdateManager:
 
     def test_start_validates_ssid(self) -> None:
         manager, _ = self.make_manager()
-        with pytest.raises(ValueError, match="SSID"):
+        with pytest.raises(ConfigurationError, match="SSID"):
             manager.start("", "pw")
-        with pytest.raises(ValueError, match="SSID"):
+        with pytest.raises(ConfigurationError, match="SSID"):
             manager.start("   ", "pw")
-        with pytest.raises(ValueError, match="SSID"):
+        with pytest.raises(ConfigurationError, match="SSID"):
             manager.start("x" * 65, "pw")
 
     def test_start_validates_password_length(self) -> None:
         manager, _ = self.make_manager()
-        with pytest.raises(ValueError, match="Password"):
+        with pytest.raises(ConfigurationError, match="Password"):
             manager.start("TestNet", "p" * 129)
 
     @pytest.mark.asyncio
@@ -55,7 +56,7 @@ class TestUpdateManager:
         with patch("shutil.which", mock_which):
             manager.start("TestNet", "pass123")
             assert manager.status.state == UpdateState.running
-            with pytest.raises(RuntimeError, match="already in progress"):
+            with pytest.raises(UpdateError, match="already in progress"):
                 manager.start("OtherNet", "pass456")
 
         manager.cancel()
